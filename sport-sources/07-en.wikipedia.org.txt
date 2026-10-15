@@ -1,0 +1,2245 @@
+Source: https://en.wikipedia.org/wiki/Belmont_Stakes
+Final URL: https://en.wikipedia.org/wiki/Belmont_Stakes
+HTTP 200
+Fetched: 2026-10-15T02:20:12.870Z
+
+Belmont Stakes - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+History
+Toggle History subsection
+1.1
+1867–1929: Early years
+1.2
+1930–2000: Evolution of the Triple Crown series
+1.3
+2001–present: Recent years
+1.3.1
+Temporary move to Saratoga
+1.3.2
+Introduction of Thoroughbred Championship Series
+2
+Locations
+3
+Distance and race details
+4
+Traditions
+Toggle Traditions subsection
+4.1
+Trophy
+4.2
+Official song
+4.3
+Official drink
+5
+Records
+6
+Trivia
+7
+Fillies in the Belmont
+8
+Foreign-born winners
+9
+Winners (since 1867)
+10
+Sire lines
+Toggle Sire lines subsection
+10.1
+Darley Arabian line
+10.2
+Godolphin Arabian line
+10.3
+Byerley Turk line
+11
+See also
+12
+Explanatory notes
+13
+Citations
+14
+External links
+Toggle the table of contents
+Belmont Stakes
+11 languages
+Čeština
+Deutsch
+Esperanto
+Español
+Français
+日本語
+Polski
+Português
+Simple English
+Svenska
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikimedia Commons
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+American stakes race for Thoroughbreds, part of the Triple Crown
+[[File:Union Rags - 2012 Belmont Stakes.jpg|235px]]"},"caption":{"wt":"'''\"The Test of the Champion\"'''<br /> '''\"The Test of Champions\"'''<br />'''\"The Run for the Carnations\"'''<br />'''\"The Third Jewel of the Triple Crown\"'''"},"class":{"wt":"Grade I"},"location":{"wt":"[[Belmont Park]]<br /> [[Elmont, New York]], U.S."},"inaugurated":{"wt":"{{start date and age|1867|06|19|p=y}}"},"race type":{"wt":"[[Thoroughbred]]"},"website":{"wt":"{{URL|https://www.nyra.com/belmont-stakes}}"},"distance":{"wt":"{{convert|1+1/2|mi|furlong km|abbr=on}}"},"record":{"wt":"2:24, [[Secretariat (horse)|Secretariat]] ([[1973 Belmont Stakes|1973]]) ''[[#Records|more]]''"},"surface":{"wt":"Dirt"},"track":{"wt":"Left-handed"},"qualification":{"wt":"3-year-old"},"weight":{"wt":"[[Colt (horse)|Colt]]/[[Gelding]]: {{convert|126|lb}}; [[Filly]]: {{convert|121|lb}}"},"purse":{"wt":"US$ 2 million (2024)"},"bonuses":{"wt":""}},"i":0}}]}'>Horse race
+Belmont Stakes Previous: 2026 Belmont Stakes
+June 6, 2026 ( 2026-06-06 )
+Next: 2027 Belmont Stakes
+June 5, 2027 ( 2027-06-05 )
+"The Test of the Champion"
+"The Test of Champions"
+"The Run for the Carnations"
+"The Third Jewel of the Triple Crown"
+Class Grade I
+Location Belmont Park
+Elmont, New York , U.S.
+Inaugurated June 19, 1867 (159 years ago) ( 1867-06-19 )
+Race type Thoroughbred
+Website www .nyra .com /belmont-stakes
+Race information
+Distance 1 + 1 ⁄ 2 mi (12 furlongs; 2.4 km)
+Record 2:24, Secretariat ( 1973 ) more
+Surface Dirt
+Track Left-handed
+Qualification 3-year-old
+Weight Colt / Gelding : 126 pounds (57 kg); Filly : 121 pounds (55 kg)
+Purse US$ 2 million (2024)
+The Belmont Stakes is an American Grade I stakes race for three-year-old Thoroughbreds run at Belmont Park in Elmont, New York . It is run over the worldwide classic distance of 1 + 1 ⁄ 2 miles (12 furlongs; 2,414 metres) . Colts and geldings carry a weight of 126 pounds (57 kg) ; fillies carry 121 pounds (55 kg) . The race, nicknamed "The Test of the Champion", [ 1 ] "The Test of Champions" [ 2 ] and "The Run for the Carnations", is the traditional third and final leg of the Triple Crown and will be the second race in the Thoroughbred Championship Series . It is usually held on the first or second Saturday in June, five weeks after the Kentucky Derby and three weeks after the Preakness Stakes . The 1973 Belmont Stakes and Triple Crown winner Secretariat holds the track record (which is also a world record on dirt) of 2:24.
+The race covers one full lap of Belmont Park, known as "The Championship Track" because nearly every major American champion in racing history has competed on the racetrack. Belmont Park, with its large, wide, sweeping turns and long homestretch, is considered one of the fairest racetracks in America. [ 3 ] Despite the distance, the race tends to favor horses with tactical speed: relatively few winners close from far behind the early leaders. [ 4 ]
+The attendance at the Belmont Stakes is among the American thoroughbred racing top-attended events . The 2004 Belmont Stakes drew a television audience of 21.9 million viewers, and had the highest household viewing rate since 1977 when Seattle Slew won the Triple Crown. [ 5 ]
+The 158th Belmont Stakes was run on Saturday, June 6, 2026, at Saratoga Race Course and was won by Golden Tempo .
+History
+[ edit ]
+1867–1929: Early years
+[ edit ]
+August Belmont Trophy , presented annually to the winning owner since 1926.
+The first Belmont Stakes was held at Jerome Park Racetrack in the Bronx , built in 1866 by stock market speculator Leonard Jerome (1817–1891) and financed by August Belmont Sr. (1816–1890), for whom the race was named. The first race in 1867 saw the filly Ruthless win, while the following year was won by General Duke . [ 6 ] The first post parade in the United States was at the 14th Belmont, in 1880. The race continued to be held at Jerome Park until 1890, when it was moved to the nearby facility, Morris Park Racecourse . [ 7 ] The 1895 race was almost not held because of new laws that banned bookmaking in New York: it was eventually rescheduled for November 2. [ 8 ] The race remained at Morris Park Racecourse until the May 1905 opening of the new Belmont Park , 430-acre (1.7 km 2 ) racetrack in Elmont, New York, on Long Island , just outside the New York City borough of Queens . [ 7 ] When anti-gambling legislation was passed in New York State, Belmont Racetrack was closed, and the race was cancelled in 1911 and 1912. [ 9 ]
+The first winner of the Triple Crown was Sir Barton , in 1919, before the series was recognized as such. [ 10 ] In 1920, the Belmont was won by the great Man o' War , who won by 20 lengths, setting a new stakes and American record, while under a stout pull. [ 11 ]
+Starting in 1926, the winner of the Belmont Stakes has been presented with August Belmont Trophy . The owner may keep the trophy for one year, and also receives a silver miniature for permanent use. [ 7 ]
+1930–2000: Evolution of the Triple Crown series
+[ edit ]
+Main article: Triple Crown of Thoroughbred Racing (United States)
+1940 winner Bimelech in the winner's circle
+The term Triple Crown was first used when Gallant Fox won the three races in 1930, but the term did not enter widespread use until 1935 when his son Omaha repeated the feat. Sir Barton was then honored retroactively. [ 12 ] Since 1931, the order of Triple Crown races has been the Kentucky Derby first, followed by the Preakness Stakes, and then the Belmont Stakes. Prior to 1931, the Preakness was run before the Derby eleven times. On May 12, 1917, and again on May 13, 1922, the Preakness and the Derby were run on the same day. On eleven occasions, the Belmont Stakes was run before the Preakness Stakes. [ 13 ] The date of each event is now set by the Kentucky Derby , which is always held on the first Saturday in May. The Preakness Stakes is currently held two weeks later; and the Belmont Stakes is held three weeks after the Preakness (five weeks after the Derby). The earliest possible date for the Derby is May 1, and the latest is May 7; the earliest possible date for the Belmont is thus June 5, and the latest is June 11. [ 14 ] In 2020, due to the cancellation of the original dates due to the COVID-19 pandemic , the order changed with the Belmont first on June 20, the Kentucky Derby on September 5 and the Preakness on October 3—all with no spectators—before the Triple Crown races resumed their normal schedule in 2021.
+In 1937, War Admiral became the fourth Triple Crown winner after winning the Belmont in a new track record time of 2:28 3/5. [ 15 ] In the 1940s, four Triple Crown winners followed: Whirlaway in 1941, Count Fleet in 1943, Assault in 1946 and Citation in 1948. Count Fleet won the race by a then-record margin of twenty-five lengths. [ 16 ] He also set a stakes record of 2:28 1/5, a record tied by Citation. In 1957, the stakes record was smashed when Gallant Man ran the Belmont in 2:26 3/5 in a year when the Triple Crown series was split three ways. [ 17 ]
+The Belmont Stakes race was held at Aqueduct Racetrack from 1963 to 1967, while the track at Belmont was restored and renovated.
+The largest crowd of the 20th century was in 1971 with over 80,000 people, supplemented by the city's Latino community, there to cheer on their new hero, Cañonero II , the Venezuelan colt who had won the Kentucky Derby and Preakness Stakes and was poised to win the U.S. Triple Crown . However, due to a foot infection that had bothered the horse for several days, Cañonero II failed to win the Triple Crown when he struggled across the finish line in 4th place behind Pass Catcher , ridden by Walter Blum . Despite this loss, Cañonero II was named the winner of the first Eclipse Award for Outstanding Three-Year-Old Male Horse . [ 18 ]
+On June 9, 1973, Secretariat won the Belmont Stakes by thirty-one lengths in a record time of 2:24, becoming a Triple Crown champion, ending a 25-year gap between Citation , the Belmont and Triple Crown winner in 1948. Secretariat's record still stands as the fastest running of the Belmont Stakes and an American record for 1 + 1 ⁄ 2 miles on the dirt. [ 19 ] In 1977, Seattle Slew became the first horse to win the Triple Crown while undefeated. Affirmed was the last winner of the Triple Crown in the 20th century, taking the Belmont Stakes in 2:26 4/5 on June 10, 1978. Ridden by eighteen-year-old Steve Cauthen, Affirmed defeated rival Alydar with Jorge Velásquez in the saddle. At the time the race was the third-slowest start and the third-fastest finish with the quarter in 25, the half in 50, 3/4 in 1:14, the mile in 1:37 2/5. [ 20 ]
+In 1988, Secretariat's son Risen Star won the Belmont in 2:26 2/5, then the second-fastest time in the history of the race. The next year, Easy Goer lowered the mark for second-fastest time to 2:26. Easy Goer also holds a Beyer Speed Figure of 122 for the race, the best of any Triple Crown race since these ratings were first published in 1987. [ 21 ]
+2001–present: Recent years
+[ edit ]
+The crowd packs the facility when a Triple Crown is on the line
+For three years in a row, horses came to the Belmont Stakes with a Triple Crown on the line only to fail. In 2002, Belmont Park hosted what was then the largest crowd in its history when 103,222 saw War Emblem lose to longshot Sarava after stumbling at the start. In 2003, 101,864 watched Funny Cide finish third behind Empire Maker . In 2004, the attendance record was shattered when 120,139 people saw Smarty Jones upset by Birdstone . [ 22 ]
+In 2007, Rags to Riches became the first filly to win the race since Tanya in 1905. Three more failed Triple Crown bids followed: in 2008, Big Brown lost to Da' Tara ; in 2012, I'll Have Another was withdrawn due to injury; and in 2014, California Chrome was beaten by Tonalist . This fueled debate about whether the series needed to be changed, for example by lengthening the period between races. [ 23 ]
+American Pharoah won the 2015 race, becoming the 12th horse in history to win the Triple Crown and the first in 37 years. The crowd that year was limited for the first time, to 90,000. [ 24 ] His time of 2:26.65 was the sixth-fastest in Belmont Stakes history, and the second-fastest time for a Triple Crown winner. [ 25 ] In 2018, Justify became the 13th Triple Crown winner and only the second horse to do so while undefeated. [ 26 ]
+Justify won the 150th Belmont Stakes in 2018 to become the 13th Triple Crown champion.
+The 152nd running of the Belmont Stakes took place without in-person fans on June 20, 2020, [ 27 ] delayed from June 6 as a result of the COVID-19 pandemic . Leading to the announcement, NYRA considered various dates after evaluating the spring-summer meeting at Belmont Park and after the other three majors set their respective dates: the Kentucky Derby moving to September 5, the Preakness Stakes moving to October 3, and the Breeders' Cup Classic slated for November 7. Governor Andrew Cuomo of New York announced on May 16 that horse racing tracks statewide, including Belmont Park, would be permitted to resume races without in-person fans on June 1. [ 28 ] The 2020 contest also marked the first time in history that the Belmont Stakes served as the Triple Crown's opening leg, with its running length shortened accordingly to 1 + 1 ⁄ 8 miles (9 furlongs) , [ 29 ] its shortest distance since 1894. [ 30 ]
+Temporary move to Saratoga
+[ edit ]
+The New York Racing Association held both the 2024 Belmont Stakes and the 2025 Belmont Stakes at Saratoga Race Course because of ongoing construction and renovations at Belmont Park. [ 31 ] The purse of the race was increased to US$2 million, with the winner receiving $1,200,000. It was run at a shorter distance of 1 + 1 ⁄ 4 miles (2.0 km) instead of the usual 1 + 1 ⁄ 2 miles (2.4 km) due to the smaller size of the Saratoga dirt track. [ 31 ] [ 32 ] [ 33 ]
+On June 13, 2025, it was announced that the 2026 Belmont Stakes would also be held at Saratoga Race Course. [ 34 ] [ 35 ]
+The 2026 Belmont Stakes was the final running held at Saratoga Race Course before the race will return to its rebuilt home at Belmont Park in 2027. [ 36 ]
+Introduction of Thoroughbred Championship Series
+[ edit ]
+On August 5, 2026, the NYRA and Churchill Downs Incorporated announced the Thoroughbred Championship Series (TCS), a six-race series for three-year-old thoroughbreds that is set to begin in 2027. The Belmont Stakes was designated as the second race of the new series, skipping over the Preakness Stakes in the process. [ 37 ] The TCS has called the future of the Triple Crown into jeopardy as result. [ 38 ]
+Locations
+[ edit ]
+Over the years the race has been held at five racetracks in the state of New York:
+1867–1889: Jerome Park Racetrack (23 times)
+1890–1904: Morris Park Racecourse (15 times)
+1905–1910: 1st Belmont Park (6 times)
+1911–1912: Not held due to Hart-Agnew Law
+1913–1962: 1st Belmont Park (56 times)
+1963–1967: Aqueduct Racetrack (5 times)
+1968–2023: 2nd Belmont Park (56 times)
+2024–2026: Saratoga Race Course (3 times)
+Distance and race details
+[ edit ]
+Race Length
+Years
+A mile and a furlong (1.125 miles)
+1893–1894, 2020
+A mile and a quarter
+1890–1892, 1895, 1904–1905, 2024–2026
+A mile and three furlongs (1.375 miles)
+1896–1903, 1906–1925
+A mile and a half
+1874–1889, 1926–2019, 2021–2023
+A mile and five furlongs (1.625 miles)
+1867–1873
+The purse for the first running in 1867 was $1,500 added, [ 39 ] meaning the purse was supplemented by nomination and entry fees. This made the total purse $2,500, with the winner receiving $1,850. The purse increased sharply in the Roaring Twenties, from Man O'War's earnings of $7,950 in 1920 to Gallant Fox's take of $66,040 in 1930. Purses declined as a result of the Great Depression, with War Admiral earning only $28,020 in 1937, then began to recover. Throughout the sixties and early seventies, the value to the winner was roughly $100,000, depending on the added money generated by entry fees (larger fields thus leading to higher prize money). The purse was repeatedly raised in the eighties and nineties, reaching $500,000 added, with the winner receiving roughly $400,000. [ 6 ] In 1998, the purse was changed to $1,000,000 guaranteed, with the winner receiving $600,000. In 2014, the purse was raised to $1,500,000. [ 40 ]
+With one exception, the race has been run at a level weight of 126 pounds (with a 5-pound allowance for fillies) since 1900. The 126 pounds comes from the English Classics , where the standard weight is 9 stone, with one stone equaling 14 pounds. In 1913, the Belmont was run as a handicap with the winner carrying only 109 pounds compared to the runner-up carrying 126 pounds. Races run prior to 1900 had varied weight conditions. [ 6 ]
+The first post parade in the United States was at the 14th Belmont, in 1880. Before 1921, the race was run in the clockwise tradition of English racing. Since then, the race has been run in the American, or counter-clockwise, direction.
+Traditions
+[ edit ]
+The winner's blanket, made of white carnations The Belmont Stakes is traditionally called "The Test of the Champion" because it is by far the longest of the Triple Crown races (1.5 miles–a full lap around the enormous Belmont main track). It is also one of the longest first-class races on dirt in the United States. Most three-year-olds are unaccustomed to the distance, and lack the experience, if not the stamina , to maintain a winning speed for so long. In a long race such as the Belmont, positioning of the horse and the timing of the move to chase for the lead can be critical.
+Unlike the Kentucky Derby or Preakness Stakes, a notable recording artist does not sing the national anthem during the pre-race ceremony.
+It is also known as "The Run for the Carnations" because the winning horse is draped with a blanket of white carnations after the race, in similar fashion to the blanket of roses and black-eyed Susans for the Derby and Preakness, respectively.
+Trophy
+[ edit ]
+The winning owner is ceremonially presented with the silver winner's trophy , designed by Paulding Farnham for Tiffany and Co. It was first presented to August Belmont Jr. in 1896 and donated by the Belmont family for annual presentation in 1926.
+Official song
+[ edit ]
+Despite the fact that the Belmont Stakes is the oldest of the Triple Crown races, its traditions have been more subject to change. Until 1996, the post parade song was " The Sidewalks of New York ". From 1997 to 2009, the song was changed to a recording by Frank Sinatra of the " Theme from New York, New York " in an attempt to appeal to younger fans. [ 41 ] In 2010, the song was changed to Jay-Z 's " Empire State of Mind " sung by Jasmine V [ 42 ] before reverting to "Theme from New York, New York " from 2011 [ 43 ] through the present. This tradition is similar to the singing of the state song at the post parades of the first two Triple Crown races: " My Old Kentucky Home " at the Kentucky Derby and " Maryland, My Maryland " at the Preakness Stakes. [ 7 ] The change of song gave rise to "the myth of Mamie O'Rourke", a reference to a character in the lyrics of "The Sidewalks of New York." Before American Pharoah won the Triple Crown in 2015, some claimed that changing the official Belmont song "cursed" the Triple Crown and was why no horse had won since Affirmed in 1978. Others note that there was no Triple Crown winner between 1979 and 1996, even though "Sidewalks" was still played. [ 44 ]
+Official drink
+[ edit ]
+{{Cite web|url=https://www.nyra.com/belmont-stakes/event-info/food-beverage/|title=Food & Beverage &#124; Belmont Stakes|website=Nyra.com|access-date=June 12, 2026}}</ref>:\n*1 1/2 oz. bourbon whiskey\n*2 oz. lemonade\n*1 oz. pomegranate juice\n*Lemon wedge, orange zest, or cherry (for garnish)"}},"i":0}}]}'>
+Belmont Breeze Single Serving Ingredients [ 45 ] :
+1 1/2 oz. bourbon whiskey
+2 oz. lemonade
+1 oz. pomegranate juice
+Lemon wedge, orange zest, or cherry (for garnish)
+Along with the change of song in 1997, the official drink was also changed, from the "White Carnation" to the "Belmont Breeze." [ 46 ] The New York Times reviewed both cocktails unfavorably, calling the Belmont Breeze "a significant improvement over the nigh undrinkable White Carnation" despite the fact that it "tastes like a refined trashcan punch". [ 47 ]
+In 2011, the Belmont Breeze was again changed to the current official drink known as the "Belmont Jewel."
+While the origin of the white carnation as the official flower of the Belmont Stakes is unknown, traditionally, pure white carnations stand for love and luck. It takes approximately 700 "select" carnations imported from Colombia to create the 40-pound blanket draped over the winner of the Belmont Stakes. The NYRA has long used The Pennock Company , a wholesale florist based in Philadelphia to import the carnations used for the mantle. [ 48 ]
+Records
+[ edit ]
+Kenny McPeek – 2002 Belmont Stakes (G1) win with Sarava , who at odds of 70–1, upset War Emblem 's bid for the Triple Crown. [ 49 ]
+Speed record: [ 50 ] [ a ]
+2:24 flat – Secretariat (1973; 1 + 1 ⁄ 2 miles). Secretariat also holds the fastest 1 ⁄ 2 -, 3 ⁄ 4 -, 1- and 1 + 1 ⁄ 4 -mile fractions in Belmont history.
+2:14.20 – Man o' War (1920; 1 + 3 ⁄ 8 miles)
+2:56 flat – Harry Bassett (1871; 1 + 5 ⁄ 8 miles)
+1:46.53 – Tiz the Law (2020; 1 + 1 ⁄ 8 miles)
+2:00.69 – Sovereignty (2025; 1 + 1 ⁄ 4 miles)
+Biggest Margin of Victory: [ 50 ]
+31 lengths – Secretariat (1973)
+25 Lengths – Count Fleet (1943)
+20 Lengths – Man o' War (1920)
+Most wins by a jockey : [ 50 ]
+6 – Jim McLaughlin (1882, 1883, 1884, 1886, 1887, 1888)
+6 – Eddie Arcaro (1941, 1942, 1945, 1948, 1952, 1955)
+Most wins by a trainer : [ 50 ]
+8 – James G. Rowe Sr. (1883, 1884, 1901, 1904, 1907, 1908, 1910, 1913)
+Most wins by an owner: [ 50 ]
+6 – Belair Stud (1930, 1932, 1935, 1936, 1939, 1955)
+6 – James R. Keene (1879, 1901, 1904, 1907, 1908, 1910)
+Trivia
+[ edit ]
+James G. Rowe Sr. and George M. Odom have each won the Belmont Stakes as a jockey and a trainer.
+On 5 June 1993, thoroughbred racing's all-time leading female jockey, Julie Krone , became the first woman to win a Triple Crown race when she rode to victory in the Belmont Stakes aboard Colonial Affair .
+In 1984, Sarah Lundy became the first female trainer to saddle a horse in the Belmont Stakes, sending out Minstrel Star, who finished eleventh.
+The 2004 race had the biggest attendance in the park's history with 120,139.
+Sarava , at odds of 70–1, upset War Emblem 's bid for the Triple Crown. [ 49 ]
+Braulio Baeza has the distinction of winning three Belmont Stakes over three different surfaces. He won in his Belmont Stakes debut on 65 to 1 long-shot Sherluck in 1961 at the old Belmont Park, won in 1963 on Chateaugay when the race was run at Aqueduct, and won in 1969 on Arts and Letters at the new Belmont Park.
+Prior to the 2016 running, bay horses had the most victories with 56. Chestnuts were close behind with 54 wins, followed by 33 dark bay/browns. Only three gray/ roan horses had won [ 50 ] ( Belmar in 1895, Native Dancer in 1953, and High Echelon in 1970). In 2016, gray horses swept the top three positions. [ 51 ]
+Fifteen Belmont Stakes winners have sired at least one Belmont winner. Leading this list is Man o' War , who sired three subsequent winners — American Flag , Crusader and Triple Crown winner War Admiral . [ 50 ]
+Twenty-three horses missed their chance at a Triple Crown by not winning the Belmont. Eight of these finished second: Pensive (1944), Tim Tam (1958), Forward Pass (1968), Majestic Prince (1969), Sunday Silence (1989), Silver Charm (1997), Real Quiet (1998), and Smarty Jones (2004). Five finished third: Northern Dancer (1964), Spectacular Bid (1979), Pleasant Colony (1981), Charismatic (1999), and Funny Cide (2003). Four finished fourth: Kauai King (1966), Canonero II (1971), Alysheba (1987), and California Chrome (2014). Carry Back (1961) finished seventh, War Emblem (2002) finished eighth and Big Brown (2008) did not finish. Finally, three Derby/Preakness winners did not race in the Belmont: Burgoo King (1932), Bold Venture (1936) and I'll Have Another (2012), though I'll Have Another was injured and was scratched the day before his Belmont Stakes in 2012. [ 50 ]
+In June 1971, mentalist The Amazing Kreskin predicted that the winner of the next Belmont Stakes "would have an S in the third or fourth letter of his name." The winning horse that year was Pass Catcher . [ 52 ]
+On June 10, 2023, Jena M. Antonucci became the first woman to train a winner of an American Triple Crown race, having conditioned Arcangelo to victory in the 2023 Belmont Stakes . [ 53 ]
+Fillies in the Belmont
+[ edit ]
+Only 24 fillies have run in the Belmont; three of which have won:
+1867 – Ruthless
+1905 – Tanya
+2007 – Rags to Riches
+This gives them a respectable 13% win rate when entered. [ 54 ] For context, three fillies have won the Kentucky Derby while six have won the Preakness Stakes. On average, fillies have won between 2% and 3% of the Triple Crown races, with similar numbers for geldings ; while about 95% of these races have been won by colts. The last filly as of June 11, 2022, to run in the Belmont was in 2022 when Nest ran second (placed) behind the winner her stable mate Mo Donegal .
+Foreign-born winners
+[ edit ]
+1874 – Saxon
+1898 – Bowling Brook
+1917 – Hourless
+1918 – Johren
+1957 – Gallant Man
+1958 – Cavan
+1960 – Celtic Ash
+1990 – Go And Go
+1998 – Victory Gallop
+Winners (since 1867)
+[ edit ]
+Triple Crown winners are in bold .
+Year
+Winner
+Jockey
+Trainer
+Owner
+Track
+Distance
+Track
+Time*
+2026
+Golden Tempo
+José Ortiz
+Cherie DeVaux
+Phipps Stable , St. Elias Stable
+Saratoga
+1 + 1 ⁄ 4 -miles
+Fast
+2:03.49
+2025
+Sovereignty
+Junior Alvarado
+William I. Mott
+Godolphin
+Good
+2:00.69
+2024
+Dornoch
+Luis Saez
+Danny Gargan
+West Paces Racing, et al.
+Fast
+2:01.64
+2023
+Arcangelo
+Javier Castellano
+Jena M. Antonucci
+Blue Rose Farm
+Belmont Park
+1 + 1 ⁄ 2 -miles
+Fast
+2:29.23
+2022
+Mo Donegal
+Irad Ortiz Jr.
+Todd A. Pletcher
+Repole Stable & Donegal Racing
+Fast
+2:28.28
+2021
+Essential Quality
+Luis Saez
+Brad H. Cox
+Godolphin Stables
+Fast
+2:27.11
+2020
+Tiz the Law
+Manny Franco
+Barclay Tagg
+Sackatoga Stable
+1 + 1 ⁄ 8 -miles
+Fast
+1:46.53
+2019
+Sir Winston
+Joel Rosario
+Mark E. Casse
+Tracy Farmer
+1 + 1 ⁄ 2 -miles
+Fast
+2:28.30
+2018
+Justify
+Mike Smith
+Bob Baffert
+WinStar Farm , et al.
+Fast
+2:28.18
+2017
+Tapwrit
+José Ortiz
+Todd A. Pletcher
+Bridlewood Farm, et al.
+Fast
+2:30.02
+2016
+Creator
+Irad Ortiz Jr.
+Steven M. Asmussen
+WinStar Farm & Bobby Flay
+Fast
+2:28.51
+2015
+American Pharoah
+Victor Espinoza
+Bob Baffert
+Zayat Stables, LLC
+Fast
+2:26.65
+2014
+Tonalist
+Joel Rosario
+Christophe Clement
+Robert S. Evans
+Fast
+2:28.52
+2013
+Palace Malice
+Mike Smith
+Todd A. Pletcher
+Dogwood Stable
+Fast
+2:30.70
+2012
+Union Rags
+John R. Velazquez
+Michael Matz
+Phyllis M. Wyeth
+Fast
+2:30.42
+2011
+Ruler on Ice
+Jose Valdivia Jr.
+Kelly Breen
+George and Lori Hall
+Sloppy (sealed)
+2:30.88
+2010
+Drosselmeyer
+Mike Smith
+William Mott
+WinStar Farm LLC
+Fast
+2:31.57
+2009
+Summer Bird
+Kent Desormeaux
+Tim Ice
+Kalarikkal & Vilasini Jayaraman
+Fast
+2:27.54
+2008
+Da'Tara
+Alan Garcia
+Nick Zito
+Robert V. LaPenta
+Fast
+2:29.65
+2007
+Rags to Riches †
+John R. Velazquez
+Todd A. Pletcher
+Michael Tabor & Derrick Smith
+Fast
+2:28.74
+2006
+Jazil
+Fernando Jara
+Kiaran McLaughlin
+Shadwell Farm
+Fast
+2:27.86
+2005
+Afleet Alex
+Jeremy Rose
+Timothy Ritchey
+Cash is King LLC
+Fast
+2:28.75
+2004
+Birdstone
+Edgar Prado
+Nick Zito
+Marylou Whitney Stables
+Fast
+2:27.50
+2003
+Empire Maker
+Jerry Bailey
+Robert Frankel
+Juddmonte Farms
+Sloppy
+2:28.26
+2002
+Sarava
+Edgar Prado
+Kenneth McPeek
+New Phoenix Stable
+Fast
+2:29.71
+2001
+Point Given
+Gary Stevens
+Bob Baffert
+The Thoroughbred Corp.
+Fast
+2:26.56
+2000
+Commendable
+Pat Day
+D. Wayne Lukas
+Bob & Beverly Lewis
+Fast
+2:31.19
+1999
+Lemon Drop Kid
+José A. Santos
+Scotty Schulhofer
+Jeanne G. Vance
+Fast
+2:27.88
+1998
+Victory Gallop
+Gary Stevens
+W. Elliott Walden
+Prestonwood Farm
+Fast
+2:29.16
+1997
+Touch Gold
+Chris McCarron
+David Hofmans
+Frank Stronach
+Fast
+2:28.82
+1996
+Editor's Note
+René R. Douglas
+D. Wayne Lukas
+Overbrook Farm
+Fast
+2:28.96
+1995
+Thunder Gulch
+Gary Stevens
+D. Wayne Lukas
+Michael Tabor
+Fast
+2:32.02
+1994
+Tabasco Cat
+Pat Day
+D. Wayne Lukas
+David P. Reynolds & Overbrook Farm
+Fast
+2:26.82
+1993
+Colonial Affair
+Julie Krone
+Scotty Schulhofer
+Centennial Farms
+Good
+2:29.97
+1992
+A.P. Indy
+Ed Delahoussaye
+Neil Drysdale
+Tomonori Tsurumaki
+Good
+2:26.13
+1991
+Hansel
+Jerry Bailey
+Frank L. Brothers
+Lazy Lane Farm
+Fast
+2:28.10
+1990
+Go And Go
+Michael Kinane
+Dermot K. Weld
+Moyglare Stud Farm
+Good
+2:27.20
+1989
+Easy Goer
+Pat Day
+C. R. McGaughey III
+Ogden Phipps
+Fast
+2:26.00
+1988
+Risen Star
+Ed Delahoussaye
+Louie J. Roussel III
+Louie J. Roussel III
+Fast
+2:26.40
+1987
+Bet Twice
+Craig Perret
+Jimmy Croll
+Blanche P. Levy
+Fast
+2:28.20
+1986
+Danzig Connection
+Chris McCarron
+Woody Stephens
+Henryk de Kwiatkowski
+Sloppy
+2:29.80
+1985
+Creme Fraiche
+Eddie Maple
+Brushwood Stables
+Muddy
+2:27.00
+1984
+Swale
+Laffit Pincay Jr.
+Claiborne Farm
+Fast
+2:27.20
+1983
+Caveat
+August Belmont IV
+Fast
+2:27.80
+1982
+Conquistador Cielo
+Henryk de Kwiatkowski
+Sloppy
+2:28.20
+1981
+Summing
+George Martens
+Luis S. Barrera
+Charles T. Wilson Jr.
+Fast
+2:29.00
+1980
+Temperence Hill
+Eddie Maple
+Joseph B. Cantey
+Loblolly Stable
+Muddy
+2:29.80
+1979
+Coastal
+Ruben Hernandez
+David A. Whiteley
+William Haggin Perry
+Fast
+2:28.60
+1978
+Affirmed
+Steve Cauthen
+Laz Barrera
+Harbor View Farm
+Fast
+2:26.80
+1977
+Seattle Slew
+Jean Cruguet
+William H. Turner Jr.
+Karen L. Taylor
+Muddy
+2:29.60
+1976
+Bold Forbes
+Ángel Cordero Jr.
+Laz Barrera
+E. Rodriguez Tizol
+Fast
+2:29.00
+1975
+Avatar
+Bill Shoemaker
+Tommy Doyle
+Arthur A. Seeligson Jr.
+Fast
+2:28.20
+1974
+Little Current
+Miguel A. Rivera
+Lou Rondinello
+Darby Dan Farm
+Fast
+2:29.20
+1973
+Secretariat
+Ron Turcotte
+Lucien Laurin
+Meadow Stable
+Fast
+2:24.00
+1972
+Riva Ridge
+Meadow Stud
+Fast
+2:28.00
+1971
+Pass Catcher
+Walter Blum
+Eddie Yowell
+October House Farm
+Fast
+2:30.40
+1970
+High Echelon
+John L. Rotz
+John W. Jacobs
+Ethel D. Jacobs
+Sloppy
+2:34.00
+1969
+Arts and Letters
+Braulio Baeza
+J. Elliott Burch
+Rokeby Stables
+Fast
+2:28.80
+1968
+Stage Door Johnny
+Heliodoro Gustines
+John M. Gaver Sr.
+Greentree Stable
+Fast
+2:27.20
+1967
+Damascus
+Bill Shoemaker
+Frank Y. Whiteley Jr.
+Edith W. Bancroft
+Aqueduct
+Fast
+2:28.80
+1966
+Amberoid
+William Boland
+Lucien Laurin
+Reginald N. Webster
+Fast
+2:29.60
+1965
+Hail To All
+Johnny Sellers
+Eddie Yowell
+Zelda Cohen
+Fast
+2:28.40
+1964
+Quadrangle
+Manuel Ycaza
+J. Elliott Burch
+Rokeby Stables
+Fast
+2:28.40
+1963
+Chateaugay
+Braulio Baeza
+James P. Conway
+Darby Dan Farm
+Good
+2:30.20
+1962
+Jaipur
+Bill Shoemaker
+Bert Mulholland
+George D. Widener Jr.
+Belmont Park
+Fast
+2:28.80
+1961
+Sherluck
+Braulio Baeza
+Harold Young
+Jacob Sher
+Fast
+2:29.20
+1960
+Celtic Ash
+Bill Hartack
+Thomas J. Barry
+Joseph E. O'Connell
+Fast
+2:29.20
+1959
+Sword Dancer
+Bill Shoemaker
+J. Elliott Burch
+Brookmeade Stable
+Sloppy
+2:28.40
+1958
+Cavan
+Pete Anderson
+Thomas J. Barry
+Joseph E. O'Connell
+Fast
+2:30.20
+1957
+Gallant Man
+Bill Shoemaker
+John A. Nerud
+Ralph Lowe
+Fast
+2:26.60
+1956
+Needles
+David Erb
+Hugh L. Fontaine
+D & H Stable
+Fast
+2:29.80
+1955
+Nashua
+Eddie Arcaro
+Jim Fitzsimmons
+Belair Stud
+Fast
+2:29.00
+1954
+High Gun
+Eric Guerin
+Max Hirsch
+King Ranch
+Fast
+2:30.80
+1953
+Native Dancer
+Bill Winfrey
+Alfred G. Vanderbilt Jr.
+Fast
+2:28.60
+1952
+One Count
+Eddie Arcaro
+Oscar White
+Sarah F. Jeffords
+Fast
+2:30.20
+1951
+Counterpoint
+Dave Gorman
+Sylvester Veitch
+Cornelius V. Whitney
+Fast
+2:29.00
+1950
+Middleground
+William Boland
+Max Hirsch
+King Ranch
+Fast
+2:28.60
+1949
+Capot
+Ted Atkinson
+John M. Gaver Sr.
+Greentree Stable
+Fast
+2:30.20
+1948
+Citation
+Eddie Arcaro
+Horace A. Jones
+Calumet Farm
+Fast
+2:28.20
+1947
+Phalanx
+Ruperto Donoso
+Sylvester Veitch
+Cornelius V. Whitney
+Fast
+2:29.40
+1946
+Assault
+Warren Mehrtens
+Max Hirsch
+King Ranch
+Fast
+2:30.80
+1945
+Pavot
+Eddie Arcaro
+Oscar White
+Walter M. Jeffords Sr.
+Fast
+2:30.20
+1944
+Bounding Home
+Gayle Smith
+Matthew P. Brady
+William Ziegler Jr.
+Fast
+2:32.20
+1943
+Count Fleet
+Johnny Longden
+Don Cameron
+Fannie Hertz
+Fast
+2:28.20
+1942
+Shut Out
+Eddie Arcaro
+John M. Gaver Sr.
+Greentree Stable
+Fast
+2:29.20
+1941
+Whirlaway
+Ben A. Jones
+Calumet Farm
+Fast
+2:31.00
+1940
+Bimelech
+Fred A. Smith
+William A. Hurley
+Edward R. Bradley
+Fast
+2:29.60
+1939
+Johnstown
+James Stout
+Jim Fitzsimmons
+Belair Stud
+Fast
+2:29.60
+1938
+Pasteurized
+George M. Odom
+Carol Harriman Plunkett
+Fast
+2:29.40
+1937
+War Admiral
+Charley Kurtsinger
+George Conway
+Glen Riddle Farm
+Fast
+2:28.60
+1936
+Granville
+James Stout
+Jim Fitzsimmons
+Belair Stud
+Fast
+2:30.00
+1935
+Omaha
+Willie Saunders
+Sloppy
+2:30.60
+1934
+Peace Chance
+Wayne D. Wright
+Pete Coyne
+Joseph E. Widener
+Fast
+2:29.20
+1933
+Hurryoff
+Mack Garner
+Henry McDaniel
+Fast
+2:32.60
+1932
+Faireno
+Tommy Malley
+Jim Fitzsimmons
+Belair Stud
+Fast
+2:32.80
+1931
+Twenty Grand
+Charley Kurtsinger
+James G. Rowe Jr.
+Greentree Stable
+Fast
+2:29.60
+1930
+Gallant Fox
+Earl Sande
+Jim Fitzsimmons
+Belair Stud
+Good
+2:31.60
+1929
+Blue Larkspur
+Mack Garner
+Herbert J. Thompson
+Edward R. Bradley
+Sloppy
+2:32.80
+1928
+Vito
+Clarence Kummer
+Max Hirsch
+Alfred H. Cosden
+Fast
+2:33.20
+1927
+Chance Shot
+Earl Sande
+Pete Coyne
+Joseph E. Widener
+Fast
+2:32.40
+1926
+Crusader
+Albert Johnson
+George Conway
+Glen Riddle Farm
+Sloppy
+2:32.20
+1925
+American Flag
+Albert Johnson
+Gwyn R. Tompkins
+1 3 ⁄ 8 -miles
+Fast
+2:16.80
+1924
+Mad Play
+Earl Sande
+Sam Hildreth
+Rancocas Stable
+Good
+2:18.80
+1923
+Zev
+Good
+2:19.00
+1922
+Pillory
+Charles H. Miller
+Thomas J. Healey
+Richard T. Wilson Jr.
+Fast
+2:18.80
+1921
+Grey Lag
+Earl Sande
+Sam Hildreth
+Rancocas Stable
+Fast
+2:16.80
+1920
+Man o' War
+Clarence Kummer
+Louis Feustel
+Glen Riddle Farm
+Fast
+2:14.20
+1919
+Sir Barton
+Johnny Loftus
+H. Guy Bedwell
+J. K. L. Ross
+Fast
+2:17.40
+1918
+Johren
+Frank Robinson
+Albert Simons
+Harry P. Whitney
+Fast
+2:20.40
+1917
+Hourless
+James H. Butwell
+Sam Hildreth
+August Belmont Jr.
+Good
+2:17.80
+1916
+Friar Rock
+Everett Haynes
+Muddy
+2:22.00
+1915
+The Finn
+George Byrne
+Edward W. Heffner
+Harry C. Hallenbeck
+Fast
+2:18.40
+1914
+Luke McLuke
+Merritt C. Buxton
+John F. Schorr
+John W. Schorr
+Fast
+2:20.00
+1913
+Prince Eugene
+Roscoe Troxler
+James G. Rowe Sr.
+Harry P. Whitney
+Fast
+2:18.00
+1912
+No races held due to the Hart–Agnew Law .
+1911
+1910
+Sweep
+James H. Butwell
+James G. Rowe Sr.
+James R. Keene
+Belmont Park
+1 3 ⁄ 8 -miles
+Fast
+2:22.00
+1909
+Joe Madden
+Eddie Dugan
+Sam Hildreth
+Sam Hildreth
+(not listed)
+2:21.60
+1908
+Colin
+Joe Notter
+James G. Rowe Sr.
+James R. Keene
+(not listed)
+N/A
+1907
+Peter Pan
+George Mountain
+(not listed)
+N/A
+1906
+Burgomaster
+Lucien Lyne
+John W. Rogers
+Harry P. Whitney
+(not listed)
+2:20.00
+1905
+Tanya ‡
+Gene Hildebrand
+1 1 ⁄ 4 -miles
+(not listed)
+2:08.00
+1904
+Delhi
+George M. Odom
+James G. Rowe Sr.
+James R. Keene
+Morris Park
+Fast
+2:06.60
+1903
+Africander
+John Bullman
+Richard O. Miller
+Hampton Stable
+1 3 ⁄ 8 -miles
+Fast
+2:21.75
+1902
+Masterman
+John J. Hyland
+August Belmont Jr.
+Fast
+2:22.60
+1901
+Commando
+Henry Spencer
+James G. Rowe Sr.
+James R. Keene
+Fast
+2:21.00
+1900
+Ildrim
+Nash Turner
+H. Eugene Leigh
+H. Eugene Leigh
+Fast
+2:21.25
+1899
+Jean Bereaud
+Richard Clawson
+Sam Hildreth
+Sydney Paget
+Fast
+2:23.00
+1898
+Bowling Brook
+Fred Littlefield
+R. Wyndham Walden
+Alfred Hennen Morris & Dave Hennen Morris
+Heavy
+2:32.00
+1897
+Scottish Chieftain
+Joe Scherrer
+Matt Byrnes
+Marcus Daly
+Fast
+2:23.25
+1896
+Hastings
+Henry Griffin
+John J. Hyland
+Belmont Stable
+Good
+2:24.50
+1895
+Belmar
+Fred Taral
+Edward Feakes
+Preakness Stables
+1 1 ⁄ 4 -miles
+Heavy
+2:11.50
+1894
+Henry of Navarre
+Willie Simms
+Byron McClelland
+Byron McClelland
+1 1 ⁄ 8 -miles
+Fast
+1:56.50
+1893
+Comanche
+Gus Hannon
+Empire Stable
+Fast
+1:53.25
+1892
+Patron
+William Hayward
+Louis Stuart
+Louis Stuart
+1 1 ⁄ 4 -miles
+Muddy
+2:17.00
+1891
+Foxford
+Edward H. Garrison
+Michael Donavan
+C. E. Rand
+Good
+2:08.75
+1890
+Burlington
+Shelby "Pike" Barnes
+Albert Cooper
+Hough Bros.
+Fast
+2:07.75
+1889
+Eric
+William Hayward
+John Huggins
+A. J. Cassatt
+Jerome Park
+1 1 ⁄ 2 -miles
+Good
+2:47.25
+1888
+Sir Dixon
+Jim McLaughlin
+Frank McCabe
+Dwyer Bros. Stable
+Fast
+2:40.25
+1887
+Hanover
+Heavy
+2:43.50
+1886
+Inspector B
+Fast
+2:41.00
+1885
+Tyrant
+Patsy Duffy
+William R. Claypool
+James B. A. Haggin
+Good
+2:43.00
+1884
+Panique
+Jim McLaughlin
+James G. Rowe Sr.
+Dwyer Bros. Stable
+Good
+2:42.00
+1883
+George Kinney
+Fast
+2:42.50
+1882
+Forester
+Lewis Stewart
+Appleby & Johnson
+Fast
+2:43.00
+1881
+Saunterer
+Tom Costello
+R. Wyndham Walden
+George L. Lorillard
+Heavy
+2:47.00
+1880
+Grenada
+Lloyd Hughes
+Good
+2:47.00
+1879
+Spendthrift
+George Evans
+Thomas Puryear
+James R. Keene
+Sloppy
+2:42.75
+1878
+Duke of Magenta
+Lloyd Hughes
+R. Wyndham Walden
+George L. Lorillard
+Muddy
+2:43.50
+1877
+Cloverbrook
+Cyrus Holloway
+Jeter Walden
+Edwin Augustus Clabaugh
+Heavy
+2:46.00
+1876
+Algerine
+William Donohue
+Thomas W. Doswell
+Doswell & Co.
+Fast
+2:40.50
+1875
+Calvin
+Robert Swim
+Ansel Williamson
+H. Price McGrath
+Fast
+2:42.25
+1874
+Saxon
+George Barbee
+William Pryor
+Pierre Lorillard IV
+Fast
+2:39.50
+1873
+Springbok
+James G. Rowe Sr.
+David McDaniel
+David McDaniel
+1 5 ⁄ 8 -miles
+Fair
+3:01.75
+1872
+Joe Daniels
+Fair
+2:58.25
+1871
+Harry Bassett
+W. Miller
+Fast
+2:56.00
+1870
+Kingfisher
+Edward D. Brown
+Raleigh Colston Sr.
+Daniel Swigert
+Fast
+2:59.50
+1869
+Fenian
+C. Miller
+Jacob Pincus
+August Belmont
+Heavy
+3:04.25
+1868
+General Duke
+Robert Swim
+Andrew Thompson
+McConnell & Co.
+Fast
+3:02.00
+1867
+Ruthless †
+Gilbert Patrick
+A. Jack Minor
+Francis Morris
+Heavy
+3:05.00
+Note: Timed to the 1 ⁄ 4 second 1867 to 1901 and 1903, and to the 1 ⁄ 5 second in 1902 and from 1904 to 1991. Decimal timing, to the nearest 1 ⁄ 100 , is now used, though race calls and many charts still use fifths.
+A † designates a filly .
+Sire lines
+[ edit ]
+Winners of the Belmont Stakes can be connected to each other due to the practice of arranging horse breeding based on their previous success. All of the horses can be traced back to the three foundational sires, with Godolphin Arabian the ancestor of 18 winners, Byerley Turk the ancestor of 14 winners, and Darley Arabian the ancestor of 125 winners, including all winners since 2009.
+The Mr Prospector direct sire line has produced 3 of the last 4 Belmont Stakes winners, most recently Golden Tempo in 2026.
+Darley Arabian line
+[ edit ]
+the Darley Arabian (1700c) sire line (all branched through the Eclipse (1764) line) [ 55 ] produced 126 Stakes winners (121 colts, 2 geldings, 3 fillies), including all winners from 2009 to present. The main branches of this sire line are:
+the Joe Andrews (1778) branch produced 1 winner (most recently Saxon in 1874 ) [ 56 ]
+the King Fergus (1775) branch (all branched through the Voltigeur (1847) line), produced 15 winners. His sire line continued primarily through his son Vedette (1854) with 13 winners, due primarily to his son Galopin (1872) with 10 winners (exclusively through St Simon (1881), most recently Colonial Affair in 1993 ) [ 57 ] [ 58 ] [ 59 ]
+the Potoooooooo (1773) branch [ 60 ] produced 110 winners (all branched through the Waxy (1790) line). The primary branch of this sire line is through Whalebone (1807), which has produced 108 winners. In turn, the primary branch continues through Sir Hercules (1826), which has produced 86 winners, and then the Birdcatcher (1833) branch [ 61 ] which produced 80 winners. From Birdcatcher, the branch of The Baron (1842) has produced 72 winners (nearly exclusively through the Stockwell (1849) line with 71 winners). [ 62 ] Birdcatcher's grandson Doncaster (1870) sired Bend Or (1877), whose sire line accounts for 66 winners. [ 63 ] The main branch of the Bend Or sire line continued through his son Bona Vista (1889) with 58 winners, exclusively through the Phalaris (1913) line, which has dominated in the last several decades (including all winners from 2009 to present) through the following sons: [ 64 ] [ 65 ]
+the Pharamond (1925) branch (1 winner, most recently Capot in 1949 ); [ 64 ]
+the Sickle (1924) branch (26 winners exclusively through Native Dancer (1950) with his win in the 1953 Belmont Stakes , continued primarily through his son Raise a Native (1961) with 23 winners, down through Mr Prospector (1970) with 20 winners through 11 different sons: Conquistador Cielo , with his win in the 1982 Belmont Stakes , and 10 other sons through their progeny (most recently Golden Tempo in 2026 ), continued primarily through his son Fappiano (1977) with 6 winners (nearly exclusively through his son Unbridled (1987) with 5 winners, most recently Arcangelo in 2023 ));
+the Pharos (1920) branch (31 winners all branched through the Nearco (1935) line, through his sons Mossborough (1947), Royal Charger (1942), Nearctic (1954), and Nasrullah (1940)). The Mossborough branch produced 1 winner (most recently Cavan in 1958 ), The Royal Charger branch produced 4 winners (most recently Temperence Hill in 1980 ), the Nearctic branch produced 10 winners (nearly exclusively through his son Northern Dancer (1961) with 9 winners, most recently Sovereignty in 2025 ), while the Nasrullah branch produced 16 winners, (most recently Mo Donegal in 2022 ), primarily through his son Bold Ruler (1954) with 13 winners primarily through his son Boldnesian (1963) with 9 winners (exclusively through the Seattle Slew (1974) line, with his win in the 1977 Belmont Stakes and 8 other progeny, nearly exclusively through A.P. Indy , winner of the 1992 Belmont Stakes and 6 other progeny winners, with 5 winners through A.P. Indy's son Pulpit (1994) (exclusively through Pulpit's son Tapit (2001)), most recently Essential Quality in 2021 ).
+special notes:
+the Whalebone (1807) branch produced two main lines: the primary branch of Sir Hercules (1826), and the secondary branch of Camel (1822) which produced 18 winners (exclusively through the Touchstone (1831) line). The Camel branch continued primarily through two of this grandsons: the Newminster (1848) branch (8 winners, primarily through the Bay Ronald (1893) line with 6 winners, most recently Creme Fraiche in 1985 ) and the Orlando (1841) branch (9 winners, exclusively through the Eclipse (1855) line, most recently Shut Out in 1942 ). [ 66 ] [ 67 ]
+the Sir Hercules (1826) branch produced two main lines: the primary branch of Birdcatcher (1833), and the secondary branch of Faugh-a-Ballagh (1841) which produced 6 winners (exclusively through the Leamington (1853) line), most recently 1894 Belmont Stakes winner Henry of Navarre . [ 68 ]
+the Birdcatcher (1833) branch produced two main lines: the primary branch of The Baron (1842), and the secondary branch of Oxford (1857) which produced 7 winners (exclusively through the Sterling (1868) line), most recently 1964 Belmont Stakes winner Quadrangle . [ 69 ]
+the Bend Or (1877) branch produced two main lines: the primary branch of Bona Vista (1889), and the secondary branch of Ormonde (1883) which produced 7 winners (exclusively through the Teddy (1913) line), most recently 1967 Belmont Stakes winner Damascus . [ 70 ]
+Godolphin Arabian line
+[ edit ]
+the Godolphin Arabian (1724c) sire line [ 71 ] produced 18 colts. The main branches of this sire (all branched through the West Australian (1850) line) are:
+the Solon (1861) branch produced 2 winners (exclusively through the Ogden (1894) line, most recently Zev in 1923 ) [ 72 ] [ 73 ]
+the Australian (1858) branch produced 16 winners, including:
+Joe Daniels (1869), winner of the 1872 Belmont Stakes [ 74 ]
+Springbok (1870), winner of the 1873 Belmont Stakes [ 75 ]
+the Abd-El-Kader (1865) branch produced 1 winner (most recently Algerine in 1876 ) [ 76 ]
+the Spendthrift (1876) branch produced 13 winners, including his win in the 1879 Belmont Stakes [ 77 ] and 12 progeny including:
+the Kingston (1884) branch produced 1 winner (most recently Ildrim in 1900 ) [ 78 ]
+the Hastings (1893) branch produced 11 winners (his win in the 1896 Belmont Stakes [ 79 ] and 10 progeny, including 1902 Belmont Stakes winner Masterman (1899) [ 80 ] and 9 winners through the Fair Play (1905) line, with 5 winners primarily through the Man o' War (1917) line, with his win in the 1920 Belmont Stakes [ 81 ] plus 4 winners through his progeny, most recently Da'Tara in 2008 ) [ 82 ] [ 83 ] [ 84 ] [ 85 ] [ 86 ] [ 87 ] [ 88 ] [ 89 ]
+Byerley Turk line
+[ edit ]
+the Byerley Turk (1680c) sire line [ 90 ] [ 91 ] [ 92 ] produced 14 winners (13 colts, 1 gelding). The main branches of this sire (all branched through the Herod (1758) line) are:
+the Florizel (1768) branch produced 7 winners (all branched through the Boston (1833) line). The main branches of this sire line are:
+the Ringgold (1842) branch produced 1 winner (most recently Calvin in 1875 ) [ 93 ]
+the Lexington (1850) branch produced 6 winners (most recently Eric in 1889 ) [ 94 ] [ 95 ] [ 96 ] [ 97 ] [ 98 ] [ 99 ]
+the Woodpecker (1773) branch produced 7 winners (all branched through the Buzzard (1787) line). The main branches of this sire line are:
+the Castrel (1801) branch produced 2 winners (all branched through the Pantaloon (1824) line, most recently Huryoff in 1933 ) [ 100 ] [ 101 ]
+the Selim (1802) branch produced 5 winners (all branched through the Sultan (1816) line). The main branches of this sire line are:
+the Bay Middleton (1833) branch produced 1 winner (most recently Amberoid in 1966 ) [ 102 ]
+the Glencoe (1831) branch produced 4 winners (all branched through the Hindoo (1878) line), including Hanover , winner of the 1887 Belmont Stakes and 3 other progeny (most recently Prince Eugene in 1913 ) [ 103 ] [ 104 ] [ 105 ] [ 106 ]
+Belmont Stakes winners with male-line descendants including other Belmont Stakes winners
+Native Dancer ( 1953 winner ) – 25 colts; most recently Golden Tempo ( 2026 ) [ 107 ] [ 108 ] [ 109 ] [ 110 ] [ 111 ] [ 112 ] [ 113 ] [ 114 ] [ 115 ] [ 116 ] [ 117 ] [ 118 ] [ 119 ] [ 120 ] [ 121 ] [ 122 ] [ 123 ] [ 124 ] [ 125 ] [ 126 ] [ 127 ] [ 128 ] [ 129 ]
+Spendthrift ( 1879 winner ) – 12 colts; most recently Da' Tara ( 2008 ) [ 79 ] [ 78 ] [ 80 ] [ 81 ] [ 82 ] [ 86 ] [ 87 ] [ 83 ] [ 85 ] [ 84 ] [ 88 ] [ 89 ]
+Hastings ( 1896 winner ) – 10 colts; most recently Da' Tara (2008) [ 80 ] [ 81 ] [ 82 ] [ 86 ] [ 87 ] [ 83 ] [ 85 ] [ 84 ] [ 88 ] [ 89 ]
+Seattle Slew ( 1977 winner ) – 8 colts; most recently Essential Quality ( 2021 ) [ 130 ] [ 131 ] [ 132 ] [ 133 ] [ 134 ] [ 135 ] [ 136 ] [ 137 ]
+Commando ( 1901 winner ) – 6 colts; most recently Shut Out ( 1942 ) [ 138 ] [ 139 ] [ 140 ] [ 141 ] [ 142 ] [ 143 ]
+A.P. Indy ( 1992 winner ) – 6 colts; most recently Essential Quality (2021) [ 132 ] [ 133 ] [ 134 ] [ 135 ] [ 136 ] [ 137 ]
+Man o' War ( 1920 winner ) – 4 colts; most recently Da' Tara (2008) [ 86 ] [ 87 ] [ 88 ] [ 89 ]
+Peter Pan ( 1907 winner ) – 3 colts; most recently Shut Out (1942) [ 141 ] [ 142 ] [ 143 ]
+Gallant Fox ( 1930 winner ) – 2 colts; most recently Granville ( 1936 ) [ 144 ] [ 145 ]
+Count Fleet ( 1943 winner ) – 2 colts; most recently One Count ( 1952 ) [ 146 ] [ 147 ]
+Duke of Magenta ( 1878 winner ) – 1 colt; Eric ( 1889 ) [ 99 ]
+Hanover ( 1887 winner ) – 1 colt; Joe Madden ( 1909 ) [ 105 ]
+The Finn ( 1915 winner ) – 1 colt; Zev ( 1923 ) [ 73 ]
+Chance Shot ( 1927 winner ) – 1 colt; Peace Chance ( 1934 ) [ 84 ]
+Friar Rock ( 1916 winner ) – 1 colt; Phalanx ( 1947 ) [ 148 ]
+Sword Dancer ( 1959 winner ) – 1 colt; Damascus ( 1967 ) [ 70 ]
+Secretariat ( 1973 winner ) – 1 colt; Risen Star ( 1988 ) [ 149 ]
+Thunder Gulch ( 1995 winner ) – 1 colt; Point Given ( 2001 ) [ 119 ]
+Birdstone ( 2004 winner ) – 1 colt; Summer Bird ( 2009 ) [ 124 ]
+Empire Maker ( 2003 winner ) – 1 colt; American Pharoah ( 2015 ) [ 128 ]
+See also
+[ edit ]
+Horses portal
+Sports portal
+United States portal
+American thoroughbred racing top attended events
+Belmont Stakes top three finishers
+Grand Slam of Thoroughbred Racing
+List of Belmont Stakes broadcasters
+Triple Crown of Thoroughbred Racing
+Triple Crown Productions
+Explanatory notes
+[ edit ]
+↑ Before 1991, times were measured in fractions. Since then, decimal times to the hundredth have been used. When comparing the fractional times to decimal values, it is racing convention to round the decimal time down to the nearest fifth. Thus A.P. Indy's time of 2:26.13 is considered equivalent to Easy Goer's time of 2:26 flat.
+Citations
+[ edit ]
+↑ "The Test of the Champion" . National Museum of Racing and Hall of Fame . Archived from the original on June 14, 2024 . Retrieved June 11, 2024 .
+↑ Church, Ben (June 8, 2024). "Belmont Stakes: How to watch as two champions go head-to-head at this year's race" . KWWL. Archived from the original on June 11, 2024 . Retrieved June 11, 2024 .
+↑ Edward L. Bowen and Richard Stone Reeves (2005). Belmont Park: A Century of Champions . Eclipse Press Blood-Horse publications. ISBN 978-1-58150-122-3 . Retrieved May 29, 2018 .
+↑ Greenberg, Neil. "Analysis | This 15-1 long shot is poised to win the Belmont Stakes" . The Washington Post . Archived from the original on June 8, 2019 . Retrieved May 24, 2020 .
+↑ "Viewership of 2008 Belmont Stakes" . Archived from the original on October 21, 2012.
+1 2 3 "Past Winners" . belmontstakes.com . Archived from the original on May 24, 2016 . Retrieved May 28, 2016 .
+1 2 3 4 "Belmont Stakes Records & Traditions" . New York Racing Association. Archived from the original on May 31, 2011 . Retrieved November 4, 2011 .
+↑ Sowers, Richard (2014). The Kentucky Derby, Preakness and Belmont Stakes : a comprehensive history . Jefferson, North Carolina: McFarland & Company, Inc., Publishers. ISBN 978-0-7864-7698-5 .
+↑ "Horse Racing's Triple Crown: 10 Fast Facts – History in the Headlines" . history.com . Archived from the original on May 25, 2016 . Retrieved May 30, 2016 .
+↑ "History Challenge: The first Triple Crown winner, Sir Barton" . Daily Racing Form . Archived from the original on August 16, 2016 . Retrieved May 30, 2016 .
+↑ "Chart of the 1920 Belmont Stakes" (PDF) . Belmont Stakes . Archived from the original (PDF) on March 10, 2012 . Retrieved May 30, 2016 .
+↑ "10 things to know about the Triple Crown" . The Courier-Journal . Retrieved May 30, 2016 .
+↑ "Preakness Stakes" . Turfnsport.com. Archived from the original on April 29, 2011 . Retrieved October 7, 2010 .
+↑ "Triple Crown Races" . Triple Crown Racing . Archived from the original on May 24, 2016 . Retrieved May 30, 2016 .
+↑ "Chart of the 1937 Belmont" (PDF) . Belmont Stakes . Archived from the original (PDF) on June 29, 2016 . Retrieved May 30, 2016 .
+↑ Nusca, Andrew (June 7, 2015). "Here are the 12 winners of the Triple Crown" . Fortune . Archived from the original on June 11, 2016 . Retrieved May 30, 2016 .
+↑ Livingston, Barbara. "Bygone Belmont winners" . Daily Racing Form . Archived from the original on August 16, 2016 . Retrieved May 30, 2016 .
+↑ Hammonds, Evan. "First Time By: Inaugural Eclipse Awards" . BloodHorse.com . Archived from the original on June 24, 2016 . Retrieved May 30, 2016 .
+↑ "Statistics – North American Records" . Equibase . Archived from the original on May 1, 2025 . Retrieved June 4, 2016 .
+↑ "Fastest Belmonts" . belmontstakes.com . Archived from the original on June 10, 2016 . Retrieved May 30, 2016 .
+↑ Beyer, Andrew (May 17, 2004). "On the Fast Track To History" . The Washington Post . Archived from the original on July 14, 2017 . Retrieved August 24, 2017 .
+↑ "Belmont Stakes Attendance" . belmont-stakes.info . Archived from the original on May 26, 2015 . Retrieved May 30, 2016 .
+↑ Mihoces, Gary. "California Chrome fails to win Belmont, Triple Crown" . USA Today . Archived from the original on May 5, 2016 . Retrieved May 29, 2016 .
+↑ "American Pharoah wins the Triple Crown" . Yahoo! Sports. June 6, 2015. Archived from the original on May 8, 2016 . Retrieved May 26, 2016 .
+↑ Petrella, Steve (June 7, 2015). "American Pharoah posts sixth-best winning time in Belmont Stakes history" . Sporting News . Archived from the original on July 1, 2016 . Retrieved June 4, 2016 .
+↑ Britton, Bianca (July 26, 2018). "Undefeated Triple Crown winner Justify retires from racing" . CNN. Archived from the original on August 21, 2018 . Retrieved August 19, 2018 .
+↑ "Belmont Stakes to be held June 20 – without fans" . cbsnews.com-US . May 19, 2020. Archived from the original on November 30, 2024 . Retrieved May 20, 2020 .
+↑ "Amid Ongoing COVID-19 Pandemic, Governor Cuomo Announces Horse Racing Tracks Statewide and Watkins Glen International Racetrack Will be Allowed to Open Without Fans as of June 1st" . Governor Andrew M. Cuomo. May 16, 2020. Archived from the original on May 31, 2020 . Retrieved May 16, 2020 .
+↑ Whyno, Stephen (May 19, 2020). "Belmont set for June 20 without fans, leads off Triple Crown" . AP NEWS . Associated Press . Archived from the original on April 5, 2023 . Retrieved June 17, 2020 .
+↑ Inabinett, Mark (June 17, 2020). "Belmont Stakes 2020: Morning line favors Tiz the Law" . al.com . Archived from the original on June 22, 2020 . Retrieved June 20, 2020 .
+1 2 Bonesteel, Matt (December 6, 2023). "Belmont Stakes moving to Saratoga in 2024 amid track reconstruction" . The Washington Post . Archived from the original on January 5, 2024 . Retrieved December 6, 2023 .
+↑ "Governor Hochul Welcomes the 2024 Belmont Stakes to the Saratoga Race Course" (Press release). Albany, NY: Office of New York Governor Kathy Hochul. December 6, 2023. Archived from the original on December 7, 2023 . Retrieved December 6, 2023 .
+↑ Smith, Keagan (June 7, 2025). "2025 Belmont Stakes results: winner, finish order" . DraftKings Network . Retrieved June 8, 2025 .
+↑ Eschen, Tom (June 6, 2025). "Location of Belmont in 2026 will be announced in coming weeks" . WRGB. Archived from the original on July 23, 2025 . Retrieved June 8, 2025 .
+↑ Page, Matthew (June 13, 2025). "Belmont Stakes to return to Saratoga for final time in 2026" . amNewYork . Archived from the original on June 13, 2025 . Retrieved June 13, 2025 .
+↑ BourbonBlog News (June 6, 2026). "Belmont Stakes Runs Tonight at Saratoga for the Final Time: What to Drink, and Which Horses to Watch" . BourbonBlog.com . Retrieved June 22, 2026 .
+↑ Kuzydym, Stephanie (August 3, 2026). "Churchill Downs, NYRA announce new Thoroughbred Championship Series" . The Courier-Journal . Retrieved August 5, 2026 .
+↑ O’Neil, Dana (August 4, 2026). "Horse racing's schedule is getting a makeover. It may be the death knell for the Preakness and the iconic Triple Crown" . CNN . Retrieved August 5, 2026 .
+↑ "Largest and Smallest Purses wins at Belmont Stakes | Belmont Stakes Betting" . Belmont-stakes.info . Archived from the original on May 26, 2015.
+↑ Wing, Eric. "Belmont Stakes purse raised to $1.5 million" . New York Racing Association . Archived from the original on August 4, 2016.
+↑ "Belmont Stakes Traditions" . Horseracing.about.com. June 15, 2010. Archived from the original on May 16, 2010 . Retrieved October 7, 2010 .
+↑ "The Belmont Stakes singing a new tune" . newsobserver.com. Associated Press. June 4, 2010. Archived from the original on October 29, 2012 . Retrieved June 19, 2012 .
+↑ "Sinatra's voice returns to Belmont Stakes" . The Boston Globe . Associated Press. June 4, 2011 . Retrieved June 19, 2012 . {{ cite web }} : CS1 maint: deprecated archival service ( link )
+↑ Scheinman, John (May 30, 2014). "Five Myths About the Triple Crown" . The Washington Post . Archived from the original on August 19, 2018 . Retrieved May 30, 2014 .
+↑ "Food & Beverage | Belmont Stakes" . Nyra.com . Retrieved June 12, 2026 .
+↑ "Belmont Stakes Traditions" . Horseracing.about.com. June 15, 2010. Archived from the original on May 16, 2010 . Retrieved October 7, 2010 .
+↑ Powell, Julie (June 8, 2005). "The Summer Cook; The Appetites Are Nearing the Gate" . The New York Times . Archived from the original on July 8, 2018 . Retrieved June 9, 2012 .
+↑ York Racing Association website, Belmont Park home page [ dead link ] ; article by Ashley Herriman.
+1 2 "Belmont Stakes Attendance, Wagering Set Records" . BloodHorse.com. Archived from the original on May 22, 2012 . Retrieved October 7, 2010 .
+1 2 3 4 5 6 7 8 "History" . belmontstakes.com . Archived from the original on June 4, 2016 . Retrieved June 6, 2016 .
+↑ "Creator wins Belmont Stakes by a nose | Toronto Star" . Toronto Star . June 11, 2016. Archived from the original on June 12, 2016 . Retrieved June 12, 2016 .
+↑ "26 Jun 1971, Page 4 – Standard-Speaker at Newspapers.com" . Archived from the original on May 11, 2022 . Retrieved May 11, 2022 – via Newspapers.com.
+↑ Drape, Joe (June 10, 2023). "Arcangelo's Belmont Victory Makes Trainer First Woman to Win a Triple Crown Race" . The New York Times . Archived from the original on June 11, 2023 . Retrieved June 14, 2023 .
+↑ "Runners" (PDF) . belmontstakes.com . Archived from the original (PDF) on May 28, 2015 . Retrieved June 6, 2016 .
+↑ "Sire Lines" . bloodlines.net . Archived from the original on April 22, 2021 . Retrieved April 20, 2021 .
+↑ "Saxon Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Sire Lines King Fergus" . bloodlines.net . Archived from the original on February 3, 2021 . Retrieved April 20, 2021 .
+↑ "St. Simon Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Colonial Affair Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Pot8os Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Birdcatcher Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Stockwell Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Bend Or Sire Line" . bloodlines.net . Archived from the original on April 1, 2022 . Retrieved April 20, 2021 .
+1 2 "Phalaris Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Nearco Sire Line" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Camel Sire Line" . bloodlines.net . Archived from the original on April 22, 2021 . Retrieved May 23, 2021 .
+↑ "Himyar's Other Line" . cs.bloodhorse.com . Archived from the original on May 23, 2021 . Retrieved May 23, 2021 .
+↑ "Henry of Navarre Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Quadrangle Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Damascus Horse Pedigree" . Pedigree Online . Archived from the original on July 11, 2021 . Retrieved July 6, 2021 .
+↑ "Matchem Sire Line" . bloodlines.net . Archived from the original on February 26, 2021 . Retrieved July 6, 2021 .
+↑ "The Finn Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Zev Horse Pedigree" . Pedigree Online . Archived from the original on April 22, 2021 . Retrieved July 6, 2021 .
+↑ "Joe Daniels Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Springbok Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Algerine Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Spendthrift Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Ildrim Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Hastings Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 3 "Masterman Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 3 "Man O War Horse Pedigree" . Pedigree Online . Archived from the original on July 11, 2021 . Retrieved July 6, 2021 .
+1 2 3 "Mad Play Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 3 "Chance Shot Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 3 4 "Peace Chance Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 3 "Faireno Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 3 4 "American Flag Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 3 4 "Crusader Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 3 4 "War Admiral Horse Pedigree" . Pedigree Online . Archived from the original on April 21, 2021 . Retrieved July 6, 2021 .
+1 2 3 4 "Da Tara Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Thoroughbred Bloodlines Sire Lines Byerley Turk" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Thoroughbred Bloodlines Sire Lines Byerley Turk King Herod" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Thoroughbred Bloodlines Sire Lines Byerley Turk King Herod Buzzard Selim" . bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Calvin Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "General Duke Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Kingfisher Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Harry Bassett" . Pedigreeequery.com . Retrieved June 12, 2026 . [ dead link ]
+↑ "Vauxhall Horse Pedigree" . Pedigreeequery.com . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Duke of Magenta Horse Pedigree" . Pedigree Online . Archived from the original on July 11, 2021 . Retrieved July 6, 2021 .
+1 2 "Eric Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Comanche Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Hurryoff Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Amberoid Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Hanover Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Burgomaster Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Joe Madden Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Prince Eugene Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "High Echelon Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Little Current Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Affirmed Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Coastal Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Conquistador Cielo Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Easy Goer Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Hansel Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Thunder Gulch Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Editors Note Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Victory Gallop Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Lemon Drop Kid Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Commendable Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Point Given Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Empire Maker Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Birdstone Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Afleet Alex Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Jazil Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Summer Bird Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Drosselmeyer Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Ruler On Ice Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Palace Malice Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "American Pharoah Horse Pedigree" . Pedigree Online . Archived from the original on April 19, 2021 . Retrieved July 6, 2021 .
+↑ "Arcangelo Horse Pedigree" . Pedigree Online . Archived from the original on June 11, 2023 . Retrieved June 11, 2023 .
+↑ "Ap Indy Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Swale Horse Pedigree" . Pedigree Online . Archived from the original on May 10, 2022 . Retrieved July 6, 2021 .
+1 2 "Rags To Riches Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Tonalist Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Creator Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Tapwrit Horse Pedigree" . Pedigree Online . Archived from the original on July 12, 2021 . Retrieved July 6, 2021 .
+1 2 "Tiz The Law Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Essential Quality Horse Pedigree" . Pedigree Online . Archived from the original on July 11, 2021 . Retrieved July 6, 2021 .
+↑ "Peter Pan Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Colin Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Luke Mcluke Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Blue Larkspur Horse Pedigree" . Pedigree Online . Archived from the original on May 5, 2021 . Retrieved July 6, 2021 .
+1 2 "Bimelech Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+1 2 "Shut Out Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Omaha Horse Pedigree" . Pedigree Online . Archived from the original on April 19, 2021 . Retrieved July 6, 2021 .
+↑ "Granville Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Counterpoint Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "One Count Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Phalanx Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+↑ "Risen Star Horse Pedigree" . Pedigree Online . Archived from the original on July 9, 2021 . Retrieved July 6, 2021 .
+External links
+[ edit ]
+Wikimedia Commons has media related to Belmont Stakes .
+Official website
+Details of all past Belmont Stakes courtesy of the New York Racing Association
+Belmont Stakes History & Facts [ dead link ]
+Ten Things You Should Know about the Belmont Stakes at Hello Race Fans! Archived August 13, 2020, at the Wayback Machine
+v
+t
+e
+Belmont Stakes
+Jerome Park
+1867
+1868
+1869
+1870
+1871
+1872
+1873
+1874
+1875
+1876
+1877
+1878
+1879
+1880
+1881
+1882
+1883
+1884
+1885
+1886
+1887
+1888
+1889
+Morris Park
+1890
+1891
+1892
+1893
+1894
+1895
+1896
+1897
+1898
+1899
+1900
+1901
+1902
+1903
+1904
+Belmont Park
+1905
+1906
+1907
+1908
+1909
+1910
+1911
+1912
+1913
+1914
+1915
+1916
+1917
+1918
+1919
+1920
+1921
+1922
+1923
+1924
+1925
+1926
+1927
+1928
+1929
+1930
+1931
+1932
+1933
+1934
+1935
+1936
+1937
+1938
+1939
+1940
+1941
+1942
+1943
+1944
+1945
+1946
+1947
+1948
+1949
+1950
+1951
+1952
+1953
+1954
+1955
+1956
+1957
+1958
+1959
+1960
+1961
+1962
+Aqueduct
+1963
+1964
+1965
+1966
+1967
+Belmont Park
+1968
+1969
+1970
+1971
+1972
+1973
+1974
+1975
+1976
+1977
+1978
+1979
+1980
+1981
+1982
+1983
+1984
+1985
+1986
+1987
+1988
+1989
+1990
+1991
+1992
+1993
+1994
+1995
+1996
+1997
+1998
+1999
+2000
+2001
+2002
+2003
+2004
+2005
+2006
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+Saratoga
+2024
+2025
+2026
+Related
+Top three finishers
+Broadcasters
+August Belmont Trophy
+" The Sidewalks of New York "
+" Theme from New York, New York "
+Triple Crown
+Belmont Stakes Winners
+v
+t
+e
+Belmont Stakes winners
+1860s
+1867 Ruthless ♥
+1868 General Duke
+1869 Fenian
+1870s
+1870 Kingfisher
+1871 Harry Bassett
+1872 Joe Daniels
+1873 Springbok
+1874 Saxon
+1875 Calvin
+1876 Algerine
+1877 Cloverbrook
+1878 Duke Of Magenta
+1879 Spendthrift
+1880s
+1880 Grenada
+1881 Saunterer
+1882 Forester
+1883 George Kinney
+1884 Panique
+1885 Tyrant
+1886 Inspector B
+1887 Hanover
+1888 Sir Dixon
+1889 Eric
+1890s
+1890 Burlington
+1891 Foxford
+1892 Patron
+1893 Commanche
+1894 Henry of Navarre
+1895 Belmar
+1896 Hastings
+1897 Scottish Chieftain
+1898 Bowling Brook
+1899 Jean Bereaud
+1900s
+1900 Ildrim
+1901 Commando
+1902 Masterman
+1903 Africander
+1904 Delhi
+1905 Tanya ♥
+1906 Burgomaster
+1907 Peter Pan
+1908 Colin
+1909 Joe Madden
+1910s
+1910 Sweep
+1913 Prince Eugene
+1914 Luke McLuke
+1915 The Finn
+1916 Friar Rock
+1917 Hourless
+1918 Johren
+1919 Sir Barton ₩
+1920s
+1920 Man o' War
+1921 Grey Lag
+1922 Pillory
+1923 Zev
+1924 Mad Play
+1925 American Flag
+1926 Crusader
+1927 Chance Shot
+1928 Vito
+1929 Blue Larkspur
+1930s
+1930 Gallant Fox ₩
+1931 Twenty Grand
+1932 Faireno
+1933 Hurryoff
+1934 Peace Chance
+1935 Omaha ₩
+1936 Granville
+1937 War Admiral ₩
+1938 Pasteurized
+1939 Johnstown
+1940s
+1940 Bimelech
+1941 Whirlaway ₩
+1942 Shut Out
+1943 Count Fleet ₩
+1944 Bounding Home
+1945 Pavot
+1946 Assault ₩
+1947 Phalanx
+1948 Citation ₩
+1949 Capot
+1950s
+1950 Middleground
+1951 Counterpoint
+1952 One Count
+1953 Native Dancer
+1954 High Gun
+1955 Nashua
+1956 Needles
+1957 Gallant Man
+1958 Cavan
+1959 Sword Dancer
+1960s
+1960 Celtic Ash
+1961 Sherluck
+1962 Jaipur
+1963 Chateaugay
+1964 Quadrangle
+1965 Hail To All
+1966 Amberoid
+1967 Damascus
+1968 Stage Door Johnny
+1969 Arts and Letters
+1970s
+1970 High Echelon
+1971 Pass Catcher
+1972 Riva Ridge
+1973 Secretariat ₩
+1974 Little Current
+1975 Avatar
+1976 Bold Forbes
+1977 Seattle Slew ₩
+1978 Affirmed ₩
+1979 Coastal
+1980s
+1980 Temperence Hill
+1981 Summing
+1982 Conquistador Cielo
+1983 Caveat
+1984 Swale
+1985 Creme Fraiche
+1986 Danzig Connection
+1987 Bet Twice
+1988 Risen Star
+1989 Easy Goer
+1990s
+1990 Go and Go
+1991 Hansel
+1992 A.P. Indy
+1993 Colonial Affair
+1994 Tabasco Cat
+1995 Thunder Gulch
+1996 Editor's Note
+1997 Touch Gold
+1998 Victory Gallop
+1999 Lemon Drop Kid
+2000s
+2000 Commendable
+2001 Point Given
+2002 Sarava
+2003 Empire Maker
+2004 Birdstone
+2005 Afleet Alex
+2006 Jazil
+2007 Rags to Riches ♥
+2008 Da' Tara
+2009 Summer Bird
+2010s
+2010 Drosselmeyer
+2011 Ruler on Ice
+2012 Union Rags
+2013 Palace Malice
+2014 Tonalist
+2015 American Pharoah ₩
+2016 Creator
+2017 Tapwrit
+2018 Justify ₩
+2019 Sir Winston
+2020s
+2020 Tiz the Law
+2021 Essential Quality
+2022 Mo Donegal
+2023 Arcangelo
+2024 Dornoch
+2025 Sovereignty
+2026 Golden Tempo
+Legend – ₩ = Triple Crown Winners, ♥ = Filly
+v
+t
+e
+Triple Crowns and Grand Slams of horse racing
+Thoroughbreds
+England
+Triple Crown
+2000 Guineas Stakes
+Epsom Derby
+St Leger Stakes
+Fillies
+1,000 Guineas Stakes
+Epsom Oaks
+St. Leger Stakes
+Stayers
+Ascot Gold Cup
+Goodwood Cup
+Doncaster Cup
+United States
+Triple Crown
+Kentucky Derby
+Preakness Stakes
+Belmont Stakes
+Grand Slam
+Triple Crown and Travers Stakes or Breeders' Cup Classic
+Fillies
+Kentucky Oaks
+Black-Eyed Susan Stakes
+Acorn Stakes
+Triple Tiara
+Acorn Stakes
+Mother Goose Stakes
+Coaching Club American Oaks
+Handicap
+Metropolitan Handicap
+Brooklyn Handicap
+Suburban Handicap
+Turf Trinity
+Belmont Derby
+Saratoga Derby Invitational Stakes
+Jockey Club Derby
+Turf Tiara
+Belmont Oaks
+Saratoga Oaks Invitational Stakes
+Jockey Club Oaks
+Grand Slam
+of Grass
+Colonial Turf Cup
+Virginia Derby
+Secretariat Stakes
+Breeders' Cup Turf
+Australia
+Australia
+Randwick Guineas
+Rosehill Guineas
+Australian Derby
+Spring Grand
+Slam
+Caulfield Cup
+Cox Plate
+Melbourne Cup
+Two Year Old
+Golden Slipper Stakes
+Sires Produce Stakes
+Champagne Stakes
+Canada
+Triple Crown
+King's Plate
+Prince of Wales Stakes
+Breeders' Stakes
+Triple Tiara
+Woodbine Oaks
+Bison City Stakes
+Wonder Where Stakes
+France
+Triple Crown
+Poule d'Essai des Poulains
+Prix du Jockey Club
+Grand Prix de Paris
+Fillies
+Poule d'Essai des Pouliches
+Prix de Diane
+Prix Vermeille
+Germany
+Triple Crown
+Mehl-Mülhens-Rennen
+Deutsches Derby
+Deutsches St. Leger
+Hong Kong
+Triple Crown
+Hong Kong Stewards' Cup
+Hong Kong Gold Cup
+Hong Kong Champions & Chater Cup
+Speed
+Centenary Sprint Cup
+Queen's Silver Jubilee Cup
+Chairman's Sprint Prize
+Four Year Old
+Hong Kong Classic Mile
+Hong Kong Classic Cup
+Hong Kong Derby
+Ireland
+Triple Crown
+Irish 2,000 Guineas
+Irish Derby
+Irish St. Leger
+Italy
+Triple Crown
+Premio Parioli
+Derby Italiano
+St. Leger Italiano
+Fillies
+Premio Regina Elena
+Japan
+Triple Crown
+Satsuki Shō
+Tokyo Yūshun
+Kikuka-shō
+Fillies
+Oka Shō
+Yushun Himba
+Shūka Shō
+Dirt Triple
+Crown
+Haneda Hai
+Tokyo Derby
+Japan Dirt Classic
+New Zealand
+Triple Crown
+Tarzino Trophy
+Horlicks Plate
+Livamol Spring Classic
+WFA
+Zabeel Classic
+Herbie Dyke Stakes
+New Zealand Stakes
+Sprint
+Railway Stakes
+Telegraph Stakes
+Waikato Sprint
+Fillies & Mares
+Cuddle Stakes
+Breeders Stakes
+Travis Stakes
+Uruguay
+Triple Crown
+Gran Premio Polla de Potrillos
+Gran Premio Jockey Club
+Gran Premio Nacional
+Others
+Americas
+Argentina
+Gran Premio Polla de Potrillos
+Barbados
+Brazil
+Chile
+Dominican Republic
+Clásico El Ensayo
+Ecuador
+Jamaica
+Mexico
+Panama
+Peru
+Derby Nacional
+Puerto Rico
+Trinidad and Tobago
+Venezuela
+Africa
+Kenya
+Asia
+India
+Indian Derby
+Indonesia
+Indonesia Derby
+Macau
+Philippines
+Europe
+Belgium
+Denmark
+Hungary
+The Netherlands
+Norway
+Poland
+Spain
+Switzerland
+Sweden
+Turkey
+Gazi Derby
+Harness
+United States
+Pacers
+Cane Pace
+Messenger Stakes
+Little Brown Jug
+Trotters
+Hambletonian
+Yonkers Trot
+Kentucky Futurity
+France
+Trotters
+Prix d'Amérique
+Undefeated Winners • Individual Winners • Back-to-Back Winning Jockeys • Winningest Jockeys
+Retrieved from " https://en.wikipedia.org/w/index.php?title=Belmont_Stakes&oldid=1379797538 "
+Categories : Belmont Stakes
+United States Triple Crown of Thoroughbred Racing
+Grade 1 stakes races in the United States
+Flat horse races for three-year-olds
+Belmont Park
+Horse races in New York (state)
+Horse races established in 1867
+1867 establishments in New York (state)
+Morris Park Racecourse
+June in sports
+Annual sporting events in the United States
+Sports in Long Island
+Hidden categories: Articles with short description
+Short description is different from Wikidata
+Use mdy dates from June 2026
+Use American English from June 2026
+All Wikipedia articles written in American English
+CS1 maint: deprecated archival service
+All articles with dead external links
+Articles with dead external links from August 2026
+Articles with dead external links from June 2026
+Commons category link is on Wikidata
+Articles with dead external links from May 2026
+Webarchive template wayback links
+This page was last edited on 12 October 2026, at 00:39 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+Belmont Stakes
+11 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"Belmont Stakes","url":"https:\/\/en.wikipedia.org\/wiki\/Belmont_Stakes","sameAs":"http:\/\/www.wikidata.org\/entity\/Q612758","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q612758","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2002-07-16T21:26:47Z","dateModified":"2026-10-12T00:39:46Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/commons\/6\/61\/Union_Rags_-_2012_Belmont_Stakes.jpg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"annual horse race in New York"}

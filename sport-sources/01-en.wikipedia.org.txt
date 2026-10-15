@@ -1,0 +1,1411 @@
+Source: https://en.wikipedia.org/wiki/2027_UCI_World_Tour
+Final URL: https://en.wikipedia.org/wiki/2027_UCI_World_Tour
+HTTP 200
+Fetched: 2026-10-15T02:20:12.514Z
+
+UCI World Tour - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+History
+2
+Events (since 2019)
+3
+Results (2009–2018)
+Toggle Results (2009–2018) subsection
+3.1
+Individual ranking
+3.2
+Team ranking
+3.3
+Nation ranking
+4
+Wins by race
+Toggle Wins by race subsection
+4.1
+2009–2016
+4.2
+2017–2023
+4.3
+2024–present
+5
+Wins by cyclist
+6
+Wins by country
+7
+Wins by team
+8
+UCI WorldTeams
+Toggle UCI WorldTeams subsection
+8.1
+Current UCI WorldTeams (2026 season)
+8.2
+Previous UCI WorldTeams
+9
+Notes
+10
+See also
+11
+References
+12
+External links
+Toggle the table of contents
+UCI World Tour
+35 languages
+Alemannisch
+العربية
+Asturianu
+Беларуская
+Català
+Čeština
+Dansk
+Deutsch
+Español
+Euskara
+فارسی
+Suomi
+Føroyskt
+Français
+Gaeilge
+Galego
+עברית
+Magyar
+Bahasa Indonesia
+Italiano
+日本語
+Қазақша
+한국어
+Latviešu
+Македонски
+Nederlands
+Norsk bokmål
+Polski
+Português
+Русский
+Српски / srpski
+Svenska
+Türkçe
+Українська
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikimedia Commons
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+(Redirected from 2027 UCI World Tour )
+Premier men's elite road cycling tour
+For the women's UCI WorldTour, see UCI Women's WorldTour .
+race by race basis)"},"countries":{"wt":"International"},"champion":{"wt":"<!-- This has not been a rankings system since the end of 2018: do not replace with those top of the [[UCI World Ranking]] -->Rider: [[Simon Yates (cyclist)|Simon Yates]] (2018)<br />Team: [[Quick Step]] (2018)"},"most_titles":{"wt":"{{nowrap|Rider: {{flagicon|Spain}} [[Joaquim Rodríguez]]<br>(3 titles)<br>\nTeam: [[Movistar Team (men's team)|Movistar Team]]<br>(4 titles)}}"},"current leaders":{"wt":""},"website":{"wt":"{{url|https://www.uci.org/|UCI.org}}"}},"i":0}}]}'> UCI World Tour Current season, competition or edition:
+2026 UCI World Tour
+Sport Cycling
+Founded 2009
+Organising body Union Cycliste Internationale
+No. of teams 18 (Others invited on
+race by race basis)
+Countries International
+Most recent
+champions
+Rider: Simon Yates (2018)
+Team: Quick Step (2018)
+Most titles Rider: Joaquim Rodríguez
+(3 titles)
+Team: Movistar Team
+(4 titles)
+Website UCI.org
+The UCI World Tour (stylized as WorldTour ) is the premier men's elite road cycling tour, sitting above the UCI ProSeries and various regional UCI Continental Circuits . It refers to both the tour of 38 events and, until 2019, an annual ranking system based upon performances in these. The World Ranking was launched in 2009, (known from 2009–2010 as the UCI World Ranking ) and merged fully with its predecessor the UCI ProTour in 2011. UCI WorldTeams must compete at all events that were part of the tour prior to the 2017 expansion.
+History
+[ edit ]
+Until the end of 2004, the Union Cycliste Internationale (UCI) maintained both the UCI Road World Rankings , which awarded results for all its sanctioned races, and the UCI Road World Cup , which was awarded on the basis of performance in ten selected one-day events. Both were replaced from the 2005 season by the UCI ProTour and UCI Continental Circuits . However, disputes between the UCI and ASO , the organisers of the Tour de France and other classics, and eventually with the organisers of the Tours of Italy and Spain , meant that by 2008 the ProTour was devalued as a ranking method, as only one of the Monument events, and three other classics , remained under the auspices of the UCI. As a result, the UCI World Ranking was introduced, merging performances from both the ProTour and other prestigious events. [ 1 ]
+At the start of 2011, the ProTour and World Ranking were fully merged again. [ 2 ] The ranking system was re-branded as the 'World Tour', whilst 'ProTeam' [ 3 ] was retained as a registration category for professional teams. All ProTeams gain automatic entry to World Tour events.
+Despite finishing second in the team rankings in 2012, Team Katusha were initially refused a place in the top tier for 2013. [ 4 ] After appeal to the Court of Arbitration for Sport , they were reinstated in February 2013, having already missed the 2013 Tour Down Under . [ 5 ] Although the UCI had earlier asserted that the reinstatement of Katusha would result in demotion of another team, they eventually announced that there would be 19 ProTour teams for that one season. [ 6 ] In 2015, there are only 17 teams, as there was no applicant for the 18th slot.
+For the 2017 season the UCI added 10 new events to the calendar, bringing the total number of events to 38. The new events are: Tour of California , Tour of Qatar , Abu Dhabi Tour , Tour of Turkey , Dwars door Vlaanderen , Omloop Het Nieuwsblad , Cadel Evans Great Ocean Road Race , London–Surrey Classic , Eschborn–Frankfurt City Loop and Strade Bianche .
+In 2019, the Three Days of De Panne (a one-day race, although its name retains a description of its former format) was added to the tour, and the Abu Dhabi Tour, having merged with the 2.HC ranked Dubai Tour , was rebranded as the UAE Tour . The World Tour ceased to be a ranking series, replaced in this regard by the UCI World Ranking .
+Events (since 2019)
+[ edit ]
+The UCI World Tour consists of 36 events. These events are made up from:
+The three Grand Tours
+The five Monument one-day races
+Nine further stage races in Europe
+Thirteen further one-day races in Europe
+One stage race in Australia
+One stage race in United Arab Emirates
+One stage race in China
+One one-day race in Australia
+Two one-day races in Canada
+Race
+World Ranking Points (2026) [ 7 ]
+Winner
+Second
+Third
+final position for
+which points are given
+Tour de France
+Overall
+1300
+1040
+880
+60th (15 points)
+Each stage
+210
+150
+110
+15th (5 points)
+Giro d'Italia
+Vuelta a España
+Overall
+1100
+885
+750
+60th (10 points)
+Each stage
+180
+130
+95
+15th (2 points)
+Giro di Lombardia
+Milan–San Remo
+Tour of Flanders
+Paris–Roubaix
+Liège–Bastogne–Liège
+800
+640
+520
+60th (5 points)
+Tour Down Under
+Paris–Nice
+Tirreno–Adriatico
+Tour de Romandie
+Tour Auvergne-Rhône-Alpes
+Tour de Suisse
+UAE Tour [ i ]
+Overall
+500
+400
+325
+60th (3 points)
+Each stage
+60
+40
+30
+10th (2 points)
+Amstel Gold Race
+Gent–Wevelgem
+La Flèche Wallonne
+Grand Prix Cycliste de Québec
+Grand Prix Cycliste de Montréal
+Strade Bianche
+500
+400
+325
+60th (3 points)
+Volta a Catalunya
+Tour of the Basque Country
+Tour de Pologne
+Benelux Tour
+Tour of Guangxi
+Overall
+400
+320
+260
+60th (2 points)
+Each stage
+50
+30
+25
+10th (1 point)
+E3 Saxo Classic
+Clásica de San Sebastián
+Hamburg Cyclassics
+GP Ouest-France
+Omloop Het Nieuwsblad
+Dwars door Vlaanderen
+Great Ocean Road Race
+Eschborn–Frankfurt
+Tour of Bruges
+Copenhagen Sprint
+400
+320
+260
+60th (2 points)
+In 2009 and 2010, only riders for ProTour teams and Professional Continental teams could earn points. When a national squad, that is not a UCI registered team, participated in a race, its members were not eligible to receive points. In 2011, a rule change meant that only riders on ProTeam squads were eligible for points.
+From 2012 to 2015, the team time trial at the UCI Road World Championships contributed points to the team classification only.
+Results (2009–2018)
+[ edit ]
+Since 2019, the UCI Men's road racing world ranking , which includes points earned in races that are not part of the WorldTour, has superseded the points allocations for this series of races as the official rankings table for the sport.
+Individual ranking
+[ edit ]
+Year
+1st
+2nd
+3rd
+4th
+5th
+2009
+Alberto Contador
+Astana 527 pts
+Alejandro Valverde
+Caisse d'Epargne 483 pts
+Samuel Sánchez
+Euskaltel–Euskadi 357 pts
+Andy Schleck
+Team Saxo Bank 334 pts
+Cadel Evans
+Silence–Lotto 333 pts
+2010
+Joaquim Rodríguez
+Team Katusha 561 pts
+Philippe Gilbert
+Omega Pharma–Lotto 437 pts
+Luis León Sánchez
+Caisse d'Epargne 413 pts
+Cadel Evans
+BMC Racing Team 390 pts
+Vincenzo Nibali
+Liquigas–Doimo 390 pts
+2011
+Philippe Gilbert
+Omega Pharma–Lotto 718 pts
+Cadel Evans
+BMC Racing Team 584 pts
+Joaquim Rodríguez
+Team Katusha 446 pts
+Michele Scarponi
+Lampre–ISD 419 pts
+Tony Martin
+HTC–Highroad 349 pts
+2012
+Joaquim Rodríguez
+Team Katusha 692 pts
+Bradley Wiggins
+Team Sky 601 pts
+Tom Boonen
+Omega Pharma–Quick-Step 410 pts
+Vincenzo Nibali
+Liquigas–Cannondale 400 pts
+Alejandro Valverde
+Movistar Team 394 pts
+2013
+Joaquim Rodríguez
+Team Katusha 607 pts
+Chris Froome
+Team Sky 587 pts
+Alejandro Valverde
+Movistar Team 540 pts
+Peter Sagan
+Cannondale 491 pts
+Vincenzo Nibali
+Astana 474 pts
+2014
+Alejandro Valverde
+Movistar Team 686 pts
+Alberto Contador
+Tinkoff–Saxo 620 pts
+Simon Gerrans
+Orica–GreenEDGE 478 pts
+Rui Costa
+Lampre–Merida 461 pts
+Vincenzo Nibali
+Astana 392 pts
+2015
+Alejandro Valverde
+Movistar Team 675 pts
+Joaquim Rodríguez
+Team Katusha 474 pts
+Nairo Quintana
+Movistar Team 457 pts
+Alexander Kristoff
+Team Katusha 453 pts
+Fabio Aru
+Astana 448 pts
+2016
+Peter Sagan
+Tinkoff 669 pts
+Nairo Quintana
+Movistar Team 609 pts
+Chris Froome
+Team Sky 564 pts
+Alejandro Valverde
+Movistar Team 436 pts
+Alberto Contador
+Tinkoff 428 pts
+2017
+Greg Van Avermaet
+BMC Racing Team 3582 pts
+Chris Froome
+Team Sky 3452 pts
+Tom Dumoulin
+Team Sunweb 2545 pts
+Peter Sagan
+Bora–Hansgrohe 2544 pts
+Vincenzo Nibali
+Bahrain–Merida 2196 pts
+2018
+Simon Yates
+Mitchelton–Scott
+3072 pts
+Peter Sagan
+Bora–Hansgrohe
+2992 pts
+Alejandro Valverde
+Movistar Team
+2609 pts
+Geraint Thomas
+Team Sky
+2534 pts
+Greg Van Avermaet
+BMC Racing Team
+2442 pts
+Team ranking
+[ edit ]
+Year
+1st
+2nd
+3rd
+2009
+Astana
+Caisse d'Epargne
+Team Columbia–High Road
+2010
+Team Saxo Bank
+Liquigas–Doimo
+Rabobank
+2011
+Omega Pharma–Lotto
+Team Sky
+Leopard Trek
+2012
+Team Sky
+Team Katusha
+Liquigas–Cannondale
+2013
+Movistar Team
+Team Sky
+Team Katusha
+2014
+Movistar Team
+BMC Racing Team
+Tinkoff–Saxo
+2015
+Movistar Team
+Team Katusha
+Team Sky
+2016
+Movistar Team
+Tinkoff
+Team Sky
+2017
+Team Sky
+Quick-Step Floors
+BMC Racing Team
+2018
+Quick-Step Floors
+Team Sky
+Bora–Hansgrohe
+Nation ranking
+[ edit ]
+Year
+1st
+2nd
+3rd
+2009
+Spain
+Italy
+Australia
+2010
+Spain
+Italy
+Belgium
+2011
+Italy
+Belgium
+Australia
+2012
+Spain
+Great Britain
+Italy
+2013
+Spain
+Italy
+Colombia
+2014
+Spain
+Italy
+Belgium
+2015
+Spain
+Italy
+Colombia
+2016
+Spain
+Colombia
+Great Britain
+2017
+Belgium
+Italy
+France
+2018
+Belgium
+France
+Italy
+Wins by race
+[ edit ]
+2009–2016
+[ edit ]
+Year 2009 2010 2011 2012 2013 2014 2015 2016
+Tour Down Under Davis Greipel (1/2) Meyer Gerrans (2/9) Slagter Gerrans (5/9) Dennis Gerrans (9/9)
+Paris–Nice LL Sánchez (1/3) Contador (3/9) T Martin (2/4) Wiggins (2/5) Porte (1/8) Betancur Porte (2/8) Thomas (2/6)
+Tirreno–Adriatico Scarponi (1/3) Garzelli Evans (2/4) Nibali (2/9) Nibali (3/9) Contador (5/9) Quintana (3/7) Van Avermaet (1/7)
+Milan–San Remo Cavendish Freire Goss (2/2) Gerrans (3/9) Ciolek Kristoff (1/8) Degenkolb (3/4) Démare (2/2)
+Volta Ciclista a Catalunya Valverde (1/14) J Rodríguez (1/6) Scarponi (2/3) Albasini D Martin (2/4) J Rodríguez (5/6) Porte (3/8) Quintana (4/7)
+Record Bank E3 Harelbeke Part of the UCI Europe Tour Boonen (3/6) Cancellara (4/7) Sagan (4/10) Thomas (1/6) Kwiat ­ kowski (2/8)
+Gent–Wevelgem Boasson Hagen (1/5) Eisel Boonen (2/6) Boonen (4/6) Sagan (2/10) Degenkolb (2/4) Paolini Sagan (5/10)
+Ronde van Vlaanderen Devolder Cancellara (2/7) Nuyens Boonen (5/6) Cancellara (5/7) Cancellara (7/7) Kristoff (3/8) Sagan (6/10)
+Vuelta al País Vasco Contador (1/9) Horner (1/2) Klöden S Sánchez Quintana (1/7) Contador (6/9) J Rodríguez (6/6) Contador (9/9)
+Paris–Roubaix Boonen (1/6) Cancellara (3/7) Van ­ summeren Boonen (6/6) Cancellara (6/7) Terpstra (1/4) Degenkolb (4/4) Hayman
+Amstel Gold Race Ivanov Gilbert (2/13) Gilbert (4/13) Gasparotto (1/2) Kreuziger (2/2) Gilbert (9/13) Kwiat ­ kowski (1/8) Gasparotto (2/2)
+La Flèche Wallonne Rebellin Evans (1/4) Gilbert (5/13) J Rodríguez (2/6) Moreno Valverde (4/14) Valverde (6/14) Valverde (8/14)
+Liège–Bastogne–Liège A Schleck (1/2) Vinokourov Gilbert (6/13) Iglinsky D Martin (3/4) Gerrans (6/9) Valverde (7/14) Poels
+Tour de Romandie Kreuziger (1/2) Špilak (1/3) Evans (3/4) Wiggins (3/5) Froome (2/12) Froome (5/12) Zakarin Quintana (5/7)
+Giro d'Italia Menchov Basso Scarponi (3/3) Hesjedal Nibali (4/9) Quintana (2/7) Contador (8/9) Nibali (7/9)
+Critérium du Dauphiné Valverde (2/14) Brajkovič Wiggins (1/5) Wiggins (4/5) Froome (3/12) Talansky Froome (6/12) Froome (8/12)
+Tour de Suisse Cancellara (1/7) F Schleck Leipheimer Costa (2/5) Costa (3/5) Costa (4/5) Špilak (2/3) López (1/2)
+Tour de France Contador (2/9) A Schleck (2/2) Evans (4/4) Wiggins (5/5) Froome (4/12) Nibali (5/9) Froome (7/12) Froome (9/12)
+Clásica Ciclista San Sebastián Barredo LL Sánchez (2/3) Gilbert (7/13) LL Sánchez (3/3) Gallopin Valverde (5/14) A Yates (1/6) Mollema (1/2)
+Tour de Pologne Ballan D Martin (1/4) Sagan (1/10) Moser Weening Majka Izagirre (1/2) Wellens (4/7)
+BinckBank Tour Boasson Hagen (2/5) T Martin (1/4) Boasson Hagen (3/5) Boom Štybar (1/3) Wellens (1/7) Wellens (2/7) Terpstra (2/4)
+Vuelta a España Valverde (3/14) Nibali (1/9) Froome (1/12) Contador (4/9) Horner (2/2) Contador (7/9) Aru Quintana (6/7)
+Cyclassics Hamburg Farrar (1/2) Farrar (2/2) Boasson Hagen (4/5) Démare (1/2) Degenkolb (1/4) Kristoff (2/8) Greipel (2/2) Ewan
+Bretagne Classic Ouest-France Gerrans (1/9) Goss (1/2) Bole Boasson Hagen (5/5) Pozzato Chavanel Kristoff (4/8) Naesen (1/2)
+Grand Prix Cycliste de Québec Not on calendar Voeckler Gilbert (8/13) Gerrans (4/9) Gesink (2/2) Gerrans (7/9) Urán Sagan (7/10)
+Grand Prix Cycliste de Montréal Not on calendar Gesink (1/2) Costa (1/5) Nordhaug Sagan (3/10) Gerrans (8/9) Wellens (3/7) Van Avermaet (2/7)
+Il Lombardia Gilbert (1/13) Gilbert (3/13) Zaugg J Rodríguez (3/6) J Rodríguez (4/6) D Martin (4/4) Nibali (6/9) Chaves
+Tour of Beijing Not on calendar T Martin (3/4) T Martin (4/4) Intxausti Gilbert (10/13) Not on calendar
+2017–2023
+[ edit ]
+Year 2017 2018 2019 2020 2021 2022 2023
+Tour Down Under Porte (4/8) Impey (1/2) Impey (2/2) Porte (7/8) Cancelled Vine (1/2)
+Cadel Evans Great Ocean Road Race Arndt McCarthy Viviani (4/6) Devenyns Cancelled Mayrhofer
+UAE Tour Costa (5/5) Valverde (13/14) Roglič (3/18) A Yates (2/6) Pogačar (3/39) Pogačar (8/39) Evenepoel (6/11)
+Omloop Het Nieuwsblad Van Avermaet (3/7) Valgren (1/2) Štybar (2/3) Stuyven (1/2) Ballerini van Aert (5/9) van Baarle (3/3)
+Strade Bianche Kwiat ­ kowski (3/8) Benoot Alaphilippe (3/7) van Aert (1/9) van der Poel (5/17) Pogačar (9/39) Pidcock (1/2)
+Paris–Nice Henao Soler Bernal (2/5) Schach ­ mann (1/2) Schach ­ mann (2/2) Roglič (11/18) Pogačar (13/39)
+Tirreno–Adriatico Quintana (7/7) Kwiat ­ kowski (6/8) Roglič (4/18) S Yates (2/3) Pogačar (4/39) Pogačar (10/39) Roglič (13/18)
+Milan–San Remo Kwiat ­ kowski (4/8) Nibali (9/9) Alaphilippe (4/7) van Aert (2/9) Stuyven (2/2) Mohorič (2/3) van der Poel (8/17)
+Classic Brugge-De Panne Part of the UCI Europe Tour Groene ­ wegen (1/2) Lampaert (3/3) S Bennett (1/2) Merlier Philipsen (2/7)
+E3 BinckBank Classic Van Avermaet (4/7) Terpstra (3/4) Štybar (3/3) Cancelled Asgreen (1/2) van Aert (6/9) van Aert (8/9)
+Volta a Catalunya Valverde (9/14) Valverde (14/14) López (2/2) Cancelled A Yates (3/6) Higuita Roglič (14/18)
+Gent–Wevelgem Van Avermaet (5/7) Sagan (9/10) Kristoff (8/8) Pedersen (1/4) van Aert (3/9) Girmay Laporte (1/2)
+Dwars door Vlaanderen Lampaert (1/3) Lampaert (2/3) van der Poel (1/17) Cancelled van Baarle (1/3) van der Poel (6/17) Laporte (2/2)
+Ronde van Vlaanderen Gilbert (11/13) Terpstra (4/4) Bettiol van der Poel (4/17) Asgreen (2/2) van der Poel (7/17) Pogačar (14/39)
+Itzulia Basque Country Valverde (10/14) Roglič (1/18) Izagirre (2/2) Cancelled Roglič (9/18) Martínez (2/2) Vingegaard (2/10)
+Paris–Roubaix Van Avermaet (6/7) Sagan (10/10) Gilbert (13/13) Cancelled Colbrelli (2/2) van Baarle (2/3) van der Poel (9/17)
+Presidential Cycling Tour of Turkey Ulissi (2/2) Prades Großschartner Part of the UCI ProSeries
+Amstel Gold Race Gilbert (12/13) Valgren (2/2) van der Poel (2/17) Cancelled van Aert (4/9) Kwiat ­ kowski (8/8) Pogačar (15/39)
+La Flèche Wallonne Valverde (11/14) Alaphilippe (1/7) Alaphilippe (5/7) Hirschi (1/3) Alaphilippe (6/7) Teuns (2/2) Pogačar (16/39)
+Liège–Bastogne–Liège Valverde (12/14) Jungels Fuglsang (2/4) Roglič (7/18) Pogačar (5/39) Evenepoel (3/11) Evenepoel (7/11)
+Eschborn–Frankfurt Kristoff (5/8) Kristoff (7/8) Ackermann (2/2) Cancelled Philipsen (1/7) S Bennett (2/2) Kragh Andersen
+Tour de Romandie Porte (5/8) Roglič (2/18) Roglič (5/18) Cancelled Thomas (5/6) Vlasov {{cite press release|url=https://www.uci.org/pressrelease/the-uci-takes-strong-measures-in-the-face-of-the-situation-in-ukraine/6V8FrkqsPbhbeMIc8rgb3t|title=The UCI takes strong measures in the face of the situation in Ukraine|publisher=[[Union Cycliste Internationale|UCI]]|date=1 March 2022|access-date=7 April 2022}}</ref>"},"name":{"wt":"\"rus-blr\""}},"i":0}}]}'> [ ii ] A Yates (4/6)
+Tour of California G Bennett Bernal (1/5) Pogačar (1/39) Not on calendar
+Giro d'Italia Dumoulin (1/2) Froome (12/12) Carapaz (1/2) Geoghegan Hart Bernal (5/5) Hindley Roglič (15/18)
+Critérium du Dauphiné Fuglsang (1/4) Thomas (3/6) Fuglsang (3/4) Martínez (1/2) Porte (8/8) Roglič (12/18) Vingegaard (3/10)
+Tour de Suisse Špilak (3/3) Porte (6/8) Bernal (3/5) Cancelled Carapaz (2/2) Thomas (6/6) Skjelmose (1/2)
+Tour de France Froome (10/12) Thomas (4/6) Bernal (4/5) Pogačar (2/39) Pogačar (6/39) Vingegaard (1/10) Vingegaard (4/10)
+Clásica San Sebastián Kwiat ­ kowski (5/8) Alaphilippe (2/7) Evenepoel (1/11) Cancelled Powless (1/2) Evenepoel (4/11) Evenepoel (8/11)
+London–Surrey Classic Kristoff (6/8) Ackermann (1/2) Viviani (5/6) Cancelled Not on calendar
+Tour de Pologne Teuns (1/2) Kwiat ­ kowski (7/8) Sivakov Evenepoel (2/11) Almeida (1/4) Hayter Mohorič (3/3)
+Benelux Tour Dumoulin (2/2) Mohorič (1/3) De Plus van der Poel (3/17) Colbrelli (1/2) Cancelled Wellens (6/7)
+Hamburg Cyclassics Viviani (1/6) Viviani (3/6) Viviani (6/6) Cancelled Haller Pedersen (2/4)
+Bretagne Classic-Ouest-France Viviani (2/6) Naesen (2/2) Vanmarcke Matthews (4/6) Cosnefroy (1/2) van Aert (7/9) Madouas
+Vuelta a España Froome (11/12) S Yates (1/3) Roglič (6/18) Roglič (8/18) Roglič (10/18) Evenepoel (5/11) Kuss
+Grand Prix Cycliste de Québec Sagan (8/10) Matthews (1/6) Matthews (3/6) Cancelled Cosnefroy (2/2) De Lie (1/3)
+Grand Prix Cycliste de Montréal Ulissi (1/2) Matthews (2/6) Van Avermaet (7/7) Cancelled Pogačar (11/39) A Yates (5/6)
+Il Lombardia Nibali (8/9) Pinot Mollema (2/2) Fuglsang (4/4) Pogačar (7/39) Pogačar (12/39) Pogačar (17/39)
+Tour of Guangxi Wellens (5/7) Moscon Mas (1/2) Cancelled Vader
+2024–present
+[ edit ]
+Year 2024 2025 2026
+Tour Down Under Williams (1/2) Narváez Vine (2/2)
+Cadel Evans Great Ocean Road Race Pithie Schmid Andresen
+UAE Tour Van Eetvelt (1/2) Pogačar (25/39) del Toro (1/4)
+Omloop Het Nieuwsblad Tratnik Wærenskjold van der Poel (16/17)
+Strade Bianche Pogačar (18/39) Pogačar (26/39) Pogačar (33/39)
+Paris–Nice Jorgenson (1/3) Jorgenson (3/3) Vingegaard (8/10)
+Tirreno–Adriatico Vingegaard (5/10) Ayuso (2/2) del Toro (2/4)
+Milan–San Remo Philipsen (3/7 van der Poel (13/16) Pogačar (34/39)
+Classic Brugge-De Panne Philipsen (4/7) Molano Groenewegen (2/2)
+E3 BinckBank Classic van der Poel (10/17) van der Poel (14/17) van der Poel (17/17)
+Volta a Catalunya Pogačar (19/39) Roglič (18/18) Vingegaard (9/10)
+Gent–Wevelgem Pedersen (3/4) Pedersen (4/4) Philipsen (5/7)
+Dwars door Vlaanderen Jorgenson (2/3) Powless (2/2) Ganna
+Ronde van Vlaanderen van der Poel (11/17) Pogačar (27/39) Pogačar (35/39)
+Itzulia Basque Country Ayuso (1/2) Almeida (2/4) Seixas (1/3)
+Paris–Roubaix van der Poel (12/17) van der Poel (15/17) van Aert (9/9)
+Amstel Gold Race Pidcock (2/2) Skjelmose (2/2) Evenepoel (9/11)
+La Flèche Wallonne Williams (2/2) Pogačar (28/39) Seixas (2/3)
+Liège–Bastogne–Liège Pogačar (20/39) Pogačar (29/39) Pogačar (36/39)
+Tour de Romandie C Rodríguez Almeida (3/4) Pogačar (37/39)
+Eschborn–Frankfurt Van Gils Matthews (6/6) Zimmermann
+Giro d'Italia Pogačar (21/39) S Yates (3/3) Vingegaard (10/10)
+Critérium du Dauphiné Roglič (16/18) Pogačar (30/39) del Toro (3/4)
+Tour de Suisse A Yates (6/6) Almeida (4/4) Pogačar (38/39)
+Copenhagen Sprint Not on calendar Meeus Philipsen (6/7)
+Tour de France Pogačar (22/38) Pogačar (31/39) Pogačar (39/39)
+Clásica San Sebastián Hirschi (2/3) Ciccone Evenepoel (10/11)
+Tour de Pologne Vingegaard (6/10) McNulty (1/2) Brenner
+Hamburg Cyclassics Kooij Townsend Magnier
+Benelux Tour Wellens (7/7) De Lie (2/3) Philipsen (7/7)
+Bretagne Classic-Ouest-France Hirschi (3/3) De Lie (3/3) Aranburu
+Vuelta a España Roglič (17/18) Vingegaard (7/10) Mas (2/2)
+Grand Prix Cycliste de Québec Matthews (5/6) Alaphilippe (7/7) Evenepoel (11/11)
+Grand Prix Cycliste de Montréal Pogačar (23/39) McNulty (2/2) del Toro (4/4)
+Il Lombardia Pogačar (24/39) Pogačar (32/39) Seixas (3/3)
+Tour of Guangxi Van Eetvelt (2/2) Double
+Wins by cyclist
+[ edit ]
+Riders in bold are still active.
+Rank
+Cyclist
+Total
+Grand Tour wins</span>"}]],"parts":[{"template":{"target":{"wt":"abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"[[Grand Tour (cycling)|Grand Tour]]"},"2":{"wt":"Grand Tour wins"}},"i":0}}]}'> Grand Tour
+Monument wins</span>"}]],"parts":[{"template":{"target":{"wt":"abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"[[Cycling monument|Monument]]"},"2":{"wt":"Monument wins"}},"i":0}}]}'> Monument
+Stage-race wins, not including Grand Tours</span>"}]],"parts":[{"template":{"target":{"wt":"abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Stage-race"},"2":{"wt":"Stage-race wins, not including Grand Tours"}},"i":0}}]}'>Stage-race
+One-day wins, not including Monuments</span>"}]],"parts":[{"template":{"target":{"wt":"abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"One-day"},"2":{"wt":"One-day wins, not including Monuments"}},"i":0}}]}'>One-day
+Year of first and latest win</span>"}]],"parts":[{"template":{"target":{"wt":"abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Years"},"2":{"wt":"Year of first and latest win"}},"i":0}}]}'>Years
+References</span>"}]],"parts":[{"template":{"target":{"wt":"abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Ref."},"2":{"wt":"References"}},"i":0}}]}'>Ref.
+1
+Tadej Pogačar
+39
+6
+13
+11
+9
+2019–2026
+[ 9 ]
+2
+Primož Roglič
+18
+5
+1
+12
+0
+2018–2025
+[ 10 ]
+3
+Mathieu van der Poel
+17
+0
+8
+1
+8
+2019–2026
+[ 11 ]
+4
+Alejandro Valverde [ a ]
+14
+1
+2
+6
+5
+2009–2018
+[ 12 ]
+5
+Philippe Gilbert [ b ]
+13
+0
+5
+1
+7
+2009–2019
+[ 13 ]
+6
+Chris Froome
+12
+7
+0
+5
+0
+2011–2018
+[ 14 ]
+7
+Remco Evenepoel
+11
+1
+2
+2
+6
+2019–2026
+[ 15 ]
+8
+Peter Sagan
+10
+0
+2
+1
+7
+2011–2018
+[ 16 ]
+Jonas Vingegaard
+10
+4
+0
+6
+0
+2022–2026
+[ 17 ]
+10
+Alberto Contador [ c ]
+9
+4
+0
+5
+0
+2009–2016
+[ 18 ]
+Simon Gerrans [ d ]
+9
+0
+2
+3
+4
+2009–2016
+[ 19 ]
+Vincenzo Nibali [ e ]
+9
+4
+3
+2
+0
+2010–2018
+[ 20 ]
+Wout van Aert
+9
+0
+2
+0
+7
+2020–2026
+[ 21 ]
+14
+Alexander Kristoff
+8
+0
+2
+0
+6
+2014–2019
+[ 22 ]
+Michał Kwiatkowski
+8
+0
+1
+2
+5
+2015–2022
+[ 23 ]
+Richie Porte
+8
+0
+0
+8
+0
+2013–2021
+[ 24 ]
+17
+Julian Alaphilippe
+7
+0
+1
+0
+6
+2018–2025
+[ 25 ]
+Fabian Cancellara [ f ]
+7
+0
+5
+1
+1
+2009–2014
+[ 26 ]
+Jasper Philipsen
+7
+0
+1
+1
+5
+2021–2026
+[ 27 ]
+Nairo Quintana
+7
+2
+0
+5
+0
+2013–2017
+[ 28 ]
+Greg Van Avermaet
+7
+0
+1
+1
+5
+2016–2019
+[ 29 ]
+Tim Wellens
+7
+0
+0
+6
+1
+2014–2024
+[ 30 ]
+↑ Valverde also won two monuments ( 2006 Liège–Bastogne–Liège and 2008 Liège–Bastogne–Liège ) and 2006 La Flèche Wallonne prior to the creation of the UCI World Tour
+↑ Gilbert also won 2006 Omloop Het Volk and 2008 Omloop Het Volk prior to the creation of the UCI World Tour
+↑ Contador also won three Grand Tours ( 2007 Tour de France , 2008 Giro d'Italia and 2008 Vuelta a España ), 2007 Paris–Nice and the 2008 Tour of the Basque Country prior to the creation of the UCI World Tour
+↑ Gerrans also won the 2006 Tour Down Under prior to the creation of the UCI World Tour
+↑ Nibali also won 2006 GP Ouest-France prior to the creation of the UCI World Tour
+↑ Cancellara also won two monuments ( 2006 Paris–Roubaix and 2008 Milan–San Remo ), 2008 Tirreno–Adriatico and 2008 Monte Paschi Eroica prior to the creation of the UCI World Tour
+Wins by country
+[ edit ]
+Rank Nation Wins Riders
+1. Belgium 84 Gilbert (13), Evenepoel (11), van Aert (9), Philipsen (7), Van Avermaet (7), Wellens (7), Boonen (6), De Lie (3), Lampaert (3), Naesen (2), Stuyven (2), Teuns (2), Van Eetvelt (2), Benoot , De Plus , Devenyns , Devolder , Meeus , Merlier , Nuyens , Van Gils , Vanmarcke , Vansummeren
+2. Slovenia 55 Pogačar (39), Roglič (18), Mohorič (3), Špilak (3), Bole , Brajkovič , Tratnik
+3. Spain 47 Valverde (14), Contador (9), J Rodríguez (6), LL Sánchez (3), Ayuso (2), Izagirre (2), Mas (2), Aranburu , Barredo , Freire , Intxausti , Moreno , Prades , C Rodríguez , S Sánchez , Soler
+4. Great Britain 40 Froome (12), Thomas (6), A Yates (6), Wiggins (5), S Yates (3), Pidcock (2), Williams (2), Cavendish , Double , Geoghegan Hart , Hayter
+5. Australia 38 Gerrans (9), Porte (8), Matthews (6), Evans (4), Goss (2), Vine (2), Davis , Dennis , Ewan , Hayman , Hindley , McCarthy , Meyer
+Netherlands van der Poel (17), Terpstra (4), van Baarle (3), Dumoulin (2), Gesink (2), Groenewegen (2), Mollema (2), Boom , Kooij , Poels , Slagter , Vader , Weening
+7. Italy 37 Nibali (9), Viviani (6), Scarponi (3), Colbrelli (2), Gasparotto (2), Ulissi (2), Aru , Ballan , Ballerini , Basso , Bettiol , Ciccone , Ganna , Garzelli , Moscon , Moser , Paolini , Pozzato , Rebellin
+8. Denmark 26 Vingegaard (10), Fuglsang (4), Pedersen (4), Asgreen (2), Skjelmose (2), Valgren (2), Andresen , Kragh Andersen
+9. Colombia 22 Quintana (7), Bernal (5), López (2), Martínez (2), Betancur , Chaves , Henao , Higuita , Molano , Urán
+France Alaphilippe (7), Seixas (3), Cosnefroy (2), Démare (2), Laporte (2), Chavanel , Gallopin , Madouas , Magnier , Pinot , Voeckler
+11. Germany 20 Degenkolb (4), T Martin (4), Ackermann (2), Greipel (2), Schachmann (2), Arndt , Brenner , Ciolek , Klöden , Mayrhofer , Zimmermann
+12. Norway 15 Kristoff (8), Boasson Hagen (5), Nordhaug , Wærenskjold
+13. United States 14 Jorgenson (3), Farrar (2), Horner (2), McNulty (2), Powless (2), Kuss , Leipheimer , Talansky
+14. Switzerland 13 Cancellara (7), Hirschi (3), Albasini , Schmid , Zaugg
+15. Slovakia 10 Sagan (10)
+16. Poland 9 Kwiatkowski (8), Majka
+Portugal Costa (5), Almeida (4)
+18. Ireland 7 D Martin (4), S Bennett (2), Townsend
+19. Czech Republic 5 Štybar (3), Kreuziger (2)
+20. Luxembourg 4 A Schleck (2), Jungels , F Schleck
+Mexico del Toro (4)
+Russia Ivanov , Menchov , Sivakov , Zakarin
+23. Austria 3 Eisel , Großschartner , Haller
+Ecuador Carapaz (2), Narváez
+25. Kazakhstan 2 Iglinsky , Vinokourov
+New Zealand G Bennett , Pithie
+South Africa Impey (2)
+28. Canada 1 Hesjedal
+Eritrea Girmay
+Wins by team
+[ edit ]
+Teams in italics are no longer active.
+Rank Team Wins Riders
+1. UAE Team Emirates XRG 73 Pogačar (39), del Toro (4), Almeida (3), A Yates (3), Ayuso (2), Costa (2), Hirschi (2), Kristoff (2), McNulty (2), Scarponi (2), Ulissi (2), Vine (2), Wellens (2), Ballan , Bole , Molano , Narváez , Pozzato , Špilak
+2. Netcompany–Ineos 60 Froome (12), Kwiatkowski (7), Thomas (6), Bernal (5), Wiggins (5), Porte (4), Boasson Hagen (3), Pidcock (2), van Baarle (2), Viviani (2), Carapaz , Ganna , Geoghegan Hart , Hayter , Henao , Martínez , Moscon , Nordhaug , Poels , C Rodríguez , Sivakov , A Yates
+3. Visma–Lease a Bike 55 Roglič (15), Vingegaard (10), van Aert (9), Jorgenson (3), Gesink (2), Laporte (2), G Bennett , Boom , De Plus , Freire , Groenewegen , Kooij , Kuss , Menchov , LL Sánchez , Slagter , Tratnik , Vader , van Baarle , S Yates
+4. Soudal–Quick-Step 51 Evenepoel (8), Alaphilippe (6), Boonen (6), Terpstra (4), Viviani (4), Gilbert (3), Lampaert (3), Štybar (3), Asgreen (2), Almeida , Ballerini , S Bennett , Davis , Devenyns , Devolder , Jungels , Kwiatkowski , Magnier , T Martin , Mas , Urán
+5. Movistar Team 31 Valverde (14), Quintana (7), Costa (3), LL Sánchez (2), Carapaz , Intxausti , Izagirre , Mas , Soler
+5. Alpecin–Premier Tech 26 van der Poel (17), Philipsen (7), Kragh Andersen , Merlier
+7. Team Jayco–AlUla 23 Gerrans (8), Impey (2), Matthews (2), A Yates (2), S Yates (2), Albasini , Chaves , Double , Ewan , Hayman , Schmid , Weening
+8. Lotto–Intermarché 22 Gilbert (8), Wellens (5), De Lie (3), Van Eetvelt (2), Benoot , Greipel , Van Gils , Zimmermann
+9. XDS Astana Team 21 Nibali (5), Fuglsang (4), Contador (3), López (2), Valgren (2), Aru , Gasparotto , Iglinsky , Izagirre , Vinokourov
+Red Bull–Bora–Hansgrohe Evenepoel (3), Roglič (3), Sagan (3), Ackermann (2), Schachmann (2), S Bennett , Großschartner , Haller , Higuita , Hindley , McCarthy , Meeus , Vlasov
+11. Lidl–Trek 19 Cancellara (4), Pedersen (4), Mollema (2), Skjelmose (2), Stuyven (2), Ciccone , Gallopin , Horner , Porte , Zaugg
+12. CCC Pro Team 18 Van Avermaet (7), Evans (4), Porte (3), Gilbert (2), Dennis , Teuns
+Team Katusha–Alpecin Kristoff (6), J Rodríguez (6), Špilak (2), Ivanov , Moreno , Paolini , Zakarin
+Tinkoff Contador (6), Cancellara (3), Sagan (3), A Schleck (2), Kreuziger , Majka , Nuyens , F Schleck
+15. EF Education–EasyPost 15 D Martin (4), Farrar (2), Powless (2), Bettiol , Hesjedal , Martínez , Meyer , Talansky , Vanmarcke , Vansummeren
+16. Team Picnic–PostNL 13 Degenkolb (4), Matthews (4), Dumoulin (2), Arndt , Hirschi , Mayrhofer
+17. HTC–Highroad 10 T Martin (3), Boasson Hagen (2), Goss (2), Cavendish , Eisel , Greipel
+18. Liquigas 9 Sagan (4), Nibali (2), Basso , Kreuziger , Moser
+19. Team Bahrain Victorious 8 Mohorič (3), Colbrelli (2), Nibali (2), Teuns
+Decathlon CMA CGM Team Seixas (3), Cosnefroy (2), Andresen , Betancur , Naesen
+21. Groupama–FDJ United 5 Démare (2), Madouas , Pinot , Pithie
+22. Team RadioShack 4 Brajkovič , Horner , Klöden , Leipheimer
+23. Intermarché–Wanty 2 Gasparotto , Girmay
+NSN Cycling Team Williams (2)
+GW Erco SportFitness Rebellin , Scarponi
+IAM Cycling Chavanel , Naesen
+Tudor Pro Cycling Team Alaphilippe , Brenner
+28. Team TotalEnergies 1 Voeckler
+Cofidis Aranburu
+Uno-X Mobility Wærenskjold
+Acqua & Sapone Garzelli
+Cervélo TestTeam Gerrans
+Euskadi–Murias Prades
+Euskaltel–Euskadi S Sánchez
+Pinarello–Q36.5 Pro Cycling Team Townsend
+Team Qhubeka NextHash Ciolek
+Unibet Rose Rockets Groenewegen
+UCI WorldTeams
+[ edit ]
+Main article: UCI WorldTeam
+Current UCI WorldTeams (2026 season)
+[ edit ]
+Team Country Seasons in World Tour No. of seasons Previous team names
+Decathlon CMA CGM Team France 2009–2026 18 AG2R La Mondiale (2009–2020), AG2R Citroën Team (2021–2023), Decathlon–AG2R La Mondiale (2024–2025)
+EF Education–EasyPost United States 2009–2026 18 Garmin–Slipstream (2009), Garmin–Transitions (2010), Garmin–Cervélo (2011), Garmin–Barracuda (2012), Garmin–Sharp (2012–2014), Cannondale–Garmin (2015), Cannondale (2016), Cannondale–Drapac (2016–2017), EF Education First–Drapac p/b Cannondale (2018), EF Education First (2019), EF Pro Cycling (2020), EF Education–Nippo (2021)
+Movistar Team Spain 2009–2026 18 Caisse d'Epargne (2009–2010)
+Soudal–Quick-Step Belgium 2009–2026 18 Quick-Step (2009–2011), Omega Pharma–Quick-Step (2012–2014), Etixx–Quick-Step (2015–2016), Quick-Step Floors (2017–2018), Deceuninck–Quick-Step (2019–2021), Quick-Step Alpha Vinyl Team (2022)
+UAE Team Emirates XRG Italy (2009–2016)
+United Arab Emirates (2017–2026) 2009–2026 18 Lampre–NGC (2009), Lampre–Farnese Vini (2010), Lampre–Farnese (2010), Lampre–ISD (2011–2012), Lampre–Merida (2013–2016), UAE Abu Dhabi (2017), UAE Team Emirates (2017-2024)
+Visma–Lease a Bike Netherlands 2009–2026 18 Rabobank (2009–2012), Blanco Pro Cycling (2013), Belkin Pro Cycling (2013–2014), LottoNL–Jumbo (2015–2018), Team Jumbo–Visma (2019–2023)
+XDS Astana Team Kazakhstan 2009–2026 18 Astana (2009–2020), Astana–Premier Tech (2021), Astana Qazaqstan Team (2022-2024)
+Groupama–FDJ United France 2009–2010, 2012–2026 17 Française des Jeux (2009–2010), FDJ (2010, 2013, 2015–2018), FDJ–BigMat (2012), FDJ.fr (2013–2014), Groupama–FDJ (2018–2025)
+Netcompany–Ineos Great Britain 2010–2026 17 Team Sky (2010–2019), Team INEOS (2019–2020)
+Lidl–Trek Luxembourg (2011–2013)
+United States (2014–2025)
+Germany (2026) 2011–2026 16 Leopard Trek (2011), RadioShack–Nissan (2012), RadioShack–Leopard (2013), Trek Factory Racing (2014–2015), Trek–Segafredo (2016–2023)
+Lotto–Intermarché Belgium 2009–2022, 2026 15 Silence–Lotto (2009), Omega Pharma–Lotto (2010–2011), Lotto–Belisol (2012–2014), Lotto–Soudal (2015–2022)
+Team Jayco–AlUla Australia 2012–2026 15 GreenEDGE (2012), Orica–GreenEDGE (2012–2016), Orica–BikeExchange (2016), Orica–Scott (2017), Mitchelton–Scott (2018–2020), Team BikeExchange (2021), Team BikeExchange–Jayco (2022)
+Team Picnic–PostNL Netherlands (2013–2014, 2022–2026)
+Germany (2015–2021) 2013–2026 14 Argos–Shimano (2013), Giant–Shimano (2014), Team Giant–Alpecin (2015–2016), Team Sunweb (2017–2020), Team DSM (2021–2023), Team dsm–firmenich (2023), Team dsm–firmenich PostNL (2024)
+Team Bahrain Victorious Bahrain 2017–2026 10 Bahrain–Merida (2017–2019), Bahrain–McLaren (2020)
+Red Bull–Bora–Hansgrohe Germany 2017–2026 10 Bora–Hansgrohe (2017–2024)
+Alpecin–Premier Tech Belgium 2023–2026 4 Alpecin–Deceuninck (2023–2025)
+NSN Cycling Team Israel (2020-2022)
+Switzerland (2026) 2020–2022, 2026 4 Israel Start-Up Nation (2020–2021), Israel–Premier Tech (2022)
+Uno-X Mobility Norway 2026 1
+Previous UCI WorldTeams
+[ edit ]
+Teams in italics are no longer active.
+Team Country Seasons in World Tour No. of seasons Previous team names
+Team Katusha–Alpecin Russia (2009–2016)
+Switzerland (2017–2019) 2009–2019 11 Team Katusha (2009–2016)
+CCC Team United States (2011–2018)
+Poland (2019–2020)
+2011–2020 10 BMC Racing Team (2011–2018)
+Tinkoff Denmark (2009–2013)
+Russia (2014–2016) 2009–2016 8 Team Saxo Bank (2009–2010, 2012), Saxo Bank–SunGard (2011), Saxo Bank–Tinkoff Bank (2012), Saxo–Tinkoff (2013), Tinkoff–Saxo (2014–2015)
+Cofidis France 2009, 2020–2025 7
+Team Qhubeka NextHash South Africa 2016–2021 6 Team Dimension Data (2016–2019), NTT Pro Cycling (2020), Team Qhubeka Assos (2021)
+Cannondale Italy 2009–2014 6 Liquigas (2009), Liquigas–Doimo (2009–2010), Liquigas–Cannondale (2011–2012)
+Euskaltel–Euskadi Spain 2009–2013 5
+Intermarché–Wanty Belgium 2021–2025 5 Intermarché–Wanty–Gobert Matériaux (2021–2022), Intermarché–Circus–Wanty (2023)
+HTC–Highroad United States 2009–2011 3 Team Columbia–High Road (2009), Team Columbia–HTC (2009), Team HTC–Columbia (2010)
+Vacansoleil–DCM Netherlands 2011–2013 3
+Arkéa–B&B Hotels France 2023–2025 3 Arkéa–Samsic (2023)
+Footon–Servetto–Fuji Spain 2009–2010 2 Fuji–Servetto (2009)
+IAM Cycling Switzerland 2015–2016 2
+Team Europcar France 2009, 2014 2 Bbox Bouygues Telecom (2009)
+Team Milram Germany 2009–2010 2
+Team RadioShack United States 2010–2011 2
+Notes
+[ edit ]
+↑ Prior to its merger with the Dubai Tour in 2019, this was known as the Abu Dhabi Tour .
+↑ As of 1 March 2022, the UCI announced that cyclists from Russia and Belarus would no longer compete under the name or flag of those respective countries due to the Russian invasion of Ukraine . [ 8 ]
+See also
+[ edit ]
+UCI race classifications
+References
+[ edit ]
+↑ "UCI listing of events and dates for the 2009 calendar" . Uci.ch . Retrieved 2012-07-16 .
+↑ ProTour is dead, long live the World Tour Cyclingweekly. Accessed 14-01-11
+↑ Presse Release - Registration of UCI ProTeams for the 2011 season UCI. Accessed 14-01-11
+↑ "Katusha denied 2013 WorldTour licence" . Cycling News . Future Publishing. 10 December 2012 . Retrieved 19 February 2013 .
+↑ "CAS orders WorldTour licence for Katusha" . Cycling News . Future Publishing. 15 February 2013 . Retrieved 19 February 2013 .
+↑ "UCI confirms 19 WorldTour teams for 2013" . Cycling News . Future Publishing. 18 February 2013 . Retrieved 19 February 2013 .
+↑ "UCI Rankings points scale" . Retrieved 6 February 2026 .
+↑ "The UCI takes strong measures in the face of the situation in Ukraine" (Press release). UCI . 1 March 2022 . Retrieved 7 April 2022 .
+↑ "Tadej Pogacar" . Pro Cycling Stats . Retrieved 19 March 2025 .
+↑ "Primoz Roglic" . Pro Cycling Stats . Retrieved 19 March 2025 .
+↑ "Mathieu van der Poel" . Pro Cycling Stats . Retrieved 19 March 2025 .
+↑ "Alejandro Valverde" . Pro Cycling Stats . Retrieved 19 March 2025 .
+↑ "Philippe Gilbert" . Pro Cycling Stats . Retrieved 19 March 2025 .
+↑ "Chris Froome" . Pro Cycling Stats . Retrieved 19 March 2025 .
+↑ "Remco Evenepoel" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Peter Sagan" . Pro Cycling Stats . Retrieved 19 March 2025 .
+↑ "Jonas Vingegaard" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Alberto Contador" . Pro Cycling Stats . Retrieved 19 March 2025 .
+↑ "Simon Gerrans" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Vincenzo Nibali" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Wout van Aert" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Alexander Kristoff" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Michal Kwiatkowski" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Richie Porte" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Julian Alaphilippe" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Fabian Cancellara" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Jasper Philipsen" . Pro Cycling Stats . Retrieved 23 August 2026 .
+↑ "Nairo Quintana" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Greg van Avermaet" . Pro Cycling Stats . Retrieved 24 March 2025 .
+↑ "Tim Wellens" . Pro Cycling Stats . Retrieved 24 March 2025 .
+External links
+[ edit ]
+Wikimedia Commons has media related to UCI World Tour .
+Official website
+v
+t
+e
+UCI World Tour
+Seasons
+2009 Ranking
+2010 Ranking
+Merged with the UCI ProTour
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+UCI WorldTeams
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+Grand Tour
+Giro d'Italia
+Tour de France
+Vuelta a España
+Major week races
+Paris–Nice
+Tirreno–Adriatico
+Volta a Catalunya
+Tour of the Basque Country
+Tour de Romandie
+Tour Auvergne-Rhône-Alpes
+Tour de Suisse
+Monuments
+Milan–San Remo
+Tour of Flanders
+Paris–Roubaix
+Liège–Bastogne–Liège
+Il Lombardia
+Classics
+Omloop Het Nieuwsblad
+Strade Bianche
+Tour of Bruges
+E3 Saxo Classic
+Gent–Wevelgem
+Dwars door Vlaanderen
+Amstel Gold Race
+La Flèche Wallonne
+Eschborn–Frankfurt
+Clásica de San Sebastián
+Hamburg Cyclassics
+Bretagne Classic
+Grand Prix Cycliste de Québec
+Grand Prix Cycliste de Montréal
+Other races
+Tour Down Under
+Great Ocean Road Race
+UAE Tour
+Copenhagen Sprint
+Tour de Pologne
+Benelux Tour
+Tour of Guangxi
+Former races
+Abu Dhabi Tour
+Presidential Tour of Turkey
+Tour of Beijing
+Tour of California
+Tour of Qatar
+RideLondon–Surrey Classic
+TTT at the World Championships
+v
+t
+e
+UCI Road World Cup , UCI ProTour , UCI World Tour and UCI World Ranking winners
+UCI Road World Cup
+1989 : Sean Kelly
+1990 : Gianni Bugno
+1991 : Maurizio Fondriest
+1992 : Olaf Ludwig
+1993 : Maurizio Fondriest
+1994 : Gianluca Bortolami
+1995 : Johan Museeuw
+1996 : Johan Museeuw
+1997 : Michele Bartoli
+1998 : Michele Bartoli
+1999 : Andrei Tchmil
+2000 : Erik Zabel
+2001 : Erik Dekker
+2002 : Paolo Bettini
+2003 : Paolo Bettini
+2004 : Paolo Bettini
+UCI ProTour
+2005 : Danilo Di Luca
+2006 : Alejandro Valverde
+2007 : Cadel Evans
+2008 : Alejandro Valverde
+2009 , 2010 : non-ranking system
+UCI World Tour
+2009 : Alberto Contador
+2010 : Joaquim Rodríguez
+2011 : Philippe Gilbert
+2012 : Joaquim Rodríguez
+2013 : Joaquim Rodríguez
+2014 : Alejandro Valverde
+2015 : Alejandro Valverde
+2016 : Peter Sagan
+2017 : Greg Van Avermaet
+2018 : Simon Yates
+2019 , 2020 , 2021 : non-ranking system
+UCI World Ranking
+2009: Alberto Contador
+2010: Joaquim Rodríguez
+2011: Philippe Gilbert
+2012: Joaquim Rodríguez
+2013: Joaquim Rodríguez
+2014: Alejandro Valverde
+2015: Alejandro Valverde
+2016: Peter Sagan
+2017: Greg Van Avermaet
+2018: Alejandro Valverde
+2019: Primož Roglič
+2020: Primož Roglič
+2021: Tadej Pogačar
+2022: Tadej Pogačar
+2023: Tadej Pogačar
+2024: Tadej Pogačar
+2025: Tadej Pogačar
+v
+t
+e
+Road bicycle racing top-level season-long rankings, tours and series
+Men
+Challenge Desgrange-Colombo (1948–1958)
+Super Prestige Pernod (1958–1987)
+UCI Road World Rankings (1984–2004)
+UCI Road World Cup (1989–2004)
+UCI ProTour (2005–2010)
+UCI Men's road racing world ranking (2009-2010·2016–present)
+UCI World Tour (2009–present)
+Women
+UCI Women's Road World Rankings (1994–present)
+UCI Women's Road World Cup (1998–2015)
+UCI Women's World Tour (2016–present)
+v
+t
+e
+International cycling
+Africa
+CAC
+UCI Africa Tour
+African Games
+African Championships
+Road
+Track
+Mountain bike
+Asia
+ACC
+UCI Asia Tour
+Asian Games
+Asian Championships
+Road
+Track
+Mountain bike
+America
+COPACI
+UCI America Tour
+Pan American Games
+Pan-American Cycling Championships
+Road
+Track
+Cyclo-cross
+Mountain bike
+Europe
+UEC
+UCI Europe Tour
+European Championships:
+BMX
+Cyclo-cross
+Gravel
+Mountain bike
+Road
+Track
+Oceania
+OCC
+UCI Oceania Tour
+Oceania Championships
+Road
+Track
+Mountain bike
+World
+UCI
+UCI World Tour
+UCI ProSeries
+UCI Women's World Tour
+UCI Women's ProSeries
+World Championships
+UCI World Cups:
+Men's road
+Women's road
+Mountain bike
+Track
+Cyclo-cross
+BMX
+UCI World Series:
+Gran Fondo
+Gravel
+Olympics
+Youth Olympics
+Paralympics
+Arab Games
+Commonwealth Games
+Mediterranean Games
+World University Cycling Championship
+Cyclists
+Teams
+Competitions
+Federations
+Achievements by nation
+v
+t
+e
+International sports world tours and series
+Ball sports
+Badminton
+Beach volleyball
+Golf
+Lawn bowl
+outdoor
+indoor
+Racquetball
+men
+women
+Rugby sevens
+men
+women
+Squash
+Table tennis
+Tennis
+men
+women
+Summer sports
+Archery
+Athletics
+outdoor
+indoor
+combined events
+continental
+cross country
+race walking
+Bodyboarding
+Canoe slalom
+Chess
+Cue sports
+pool
+Euro Tour
+Women's
+snooker
+Diving
+high diving
+Fencing
+Gymnastics
+artistic
+rhythmic
+World Cup
+Grand Prix
+Judo
+Modern pentathlon
+Shooting
+Skyrunning
+Surfing
+Winter sports
+Biathlon
+Figure skating
+Skiing
+alpine
+cross-country
+freestyle
+nordic combined
+ski jumping
+Sledding
+bobsleigh
+luge
+skeleton
+Snowboarding
+Speed skating
+long track
+short track
+Racing sports
+Automobile racing
+electric
+endurance
+karting
+open wheel
+rally
+touring
+Cycling
+BMX Racing
+BMX Freestyle
+cyclo-cross
+mountain biking
+men's road
+women's road
+track
+six-day racing
+Motorcycle racing
+grand prix
+superbike
+motocross
+speedway
+sidecar
+Mountain running
+Rowing
+Sailing
+Swimming
+marathon
+Triathlon
+v
+t
+e
+Road bicycle racing
+List of road bicycle races
+men
+women
+UCI Circuits
+UCI World Tour
+UCI World Ranking
+UCI ProSeries
+UCI Continental Circuits
+UCI Women's World Tour
+UCI Women's ProSeries
+International Games
+Olympic Games
+Paralympic Games
+Commonwealth Games
+Asian Games
+Games of the Small States of Europe
+Island Games
+Pan American Games
+Central American and Caribbean Games
+Friendship Games
+Universiade
+Championships
+UCI Road World Championships
+World University Cycling Championship
+Continental
+African
+Asian
+European
+Oceania
+Pan American
+National road cycling championships
+UCI cycling teams
+WorldTeams
+Professional Continental
+Continental
+Women's Teams
+Events
+Race stage
+Criterium
+Individual time trial
+Team time trial
+See also
+Triple Crown of Cycling
+Retrieved from " https://en.wikipedia.org/w/index.php?title=UCI_World_Tour&oldid=1379574678 "
+Categories : UCI World Tour
+Men's road cycling
+Recurring sporting events established in 2009
+UCI tours
+Hidden categories: Articles with short description
+Short description matches Wikidata
+Commons category link is on Wikidata
+Official website different in Wikidata and Wikipedia
+This page was last edited on 10 October 2026, at 20:23 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+UCI World Tour
+35 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"UCI World Tour","url":"https:\/\/en.wikipedia.org\/wiki\/UCI_World_Tour","sameAs":"http:\/\/www.wikidata.org\/entity\/Q635366","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q635366","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2009-04-11T14:00:54Z","dateModified":"2026-10-10T20:23:54Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/e\/e8\/UCI_World_Tour_logo.svg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"premier men's elite road cycling tour"}

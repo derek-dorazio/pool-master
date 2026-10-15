@@ -1,68 +1,103 @@
 {
-  "fetchedAt": "2026-10-15T02:18:41.714Z",
+  "fetchedAt": "2026-10-15T02:21:17.798Z",
   "results": [
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/racing/nascar-premier/scoreboard?dates=2027",
+      "url": "https://en.wikipedia.org/wiki/2027_UCI_World_Tour",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "01-site.api.espn.com.txt"
+      "file": "01-en.wikipedia.org.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/racing/irl/scoreboard?dates=2027",
+      "url": "https://en.wikipedia.org/wiki/2027_UCI_Women%27s_World_Tour",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "02-site.api.espn.com.txt"
+      "file": "02-en.wikipedia.org.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=2027",
+      "url": "https://en.wikipedia.org/wiki/World_Marathon_Majors",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "03-site.api.espn.com.txt"
+      "file": "03-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/2027_NASCAR_Cup_Series",
+      "url": "https://en.wikipedia.org/wiki/Kentucky_Derby",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "04-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/2027_IndyCar_Series",
+      "url": "https://en.wikipedia.org/wiki/Breeders%27_Cup_Classic",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "05-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/2027_Formula_One_World_Championship",
+      "url": "https://en.wikipedia.org/wiki/Preakness_Stakes",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "06-en.wikipedia.org.txt"
     },
     {
-      "url": "https://www.nascar.com/nascar-cup-series/2027/schedule/",
-      "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "07-nascar.com.txt"
+      "url": "https://en.wikipedia.org/wiki/Belmont_Stakes",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-en.wikipedia.org.txt"
     },
     {
-      "url": "https://www.indycar.com/schedule",
+      "url": "https://www.procyclingstats.com/races.php?year=2027&circuit=1",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "08-indycar.com.txt"
+      "file": "08-procyclingstats.com.txt"
     },
     {
-      "url": "https://www.formula1.com/en/racing/2027",
+      "url": "https://www.procyclingstats.com/races.php?year=2027&circuit=24",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "09-formula1.com.txt"
+      "file": "09-procyclingstats.com.txt"
+    },
+    {
+      "url": "https://www.worldmarathonmajors.com/races",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "10-worldmarathonmajors.com.txt"
+    },
+    {
+      "url": "https://www.kentuckyderby.com/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "11-kentuckyderby.com.txt"
+    },
+    {
+      "url": "https://www.breederscup.com/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "12-breederscup.com.txt"
+    },
+    {
+      "url": "https://www.preakness.com/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "13-preakness.com.txt"
+    },
+    {
+      "url": "https://www.belmontstakes.com/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "14-belmontstakes.com.txt"
     }
   ]
 }

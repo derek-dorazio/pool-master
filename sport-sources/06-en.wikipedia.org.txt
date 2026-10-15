@@ -1,9 +1,9 @@
-Source: https://en.wikipedia.org/wiki/2027_Formula_One_World_Championship
-Final URL: https://en.wikipedia.org/wiki/2027_Formula_One_World_Championship
+Source: https://en.wikipedia.org/wiki/Preakness_Stakes
+Final URL: https://en.wikipedia.org/wiki/Preakness_Stakes
 HTTP 200
-Fetched: 2026-10-15T02:18:21.346Z
+Fetched: 2026-10-15T02:20:12.852Z
 
-2027 Formula One World Championship - Wikipedia
+Preakness Stakes - Wikipedia
 Jump to content
 Main menu
 Main menu
@@ -38,50 +38,51 @@ move to sidebar
 hide
 (Top)
 1
-Entries
-Toggle Entries subsection
-1.1
-Driver changes
+History
 2
-Calendar
-Toggle Calendar subsection
-2.1
-Calendar changes
+Evolution of the Triple Crown series
 3
-Regulation changes
-Toggle Regulation changes subsection
-3.1
-Technical regulations
-3.2
-Sporting regulations
+Traditions
 4
-Season summary
+Winning the race
 5
-Notes
+Purse money
 6
-References
+InfieldFest
 7
+Records
+8
+Fillies in the Preakness
+9
+Winners (since 1873)
+10
+Sire lines
+Toggle Sire lines subsection
+10.1
+Darley Arabian line
+10.2
+Byerley Turk line
+10.3
+Godolphin Arabian line
+11
+See also
+12
+References
+13
 External links
 Toggle the table of contents
-2027 Formula One World Championship
-19 languages
-Afrikaans
-Čeština
+Preakness Stakes
+12 languages
+Dansk
 Deutsch
+Esperanto
 Español
-فارسی
 Français
-Galego
-עברית
-Magyar
 日本語
-Nederlands
 Polski
 Português
-Русский
 Simple English
-Slovenčina
-Српски / srpski
+Svenska
 Türkçe
 中文
 Edit links
@@ -113,296 +114,1714 @@ Download as PDF
 Printable version
 In other projects
 Wikimedia Commons
+Wikinews
 Wikidata item
 Appearance
 move to sidebar
 hide
 From Wikipedia, the free encyclopedia
-Scheduled Formula One season
-"},"support_series":{"wt":"{{UBL| [[2027 Formula 2 Championship|Formula 2 Championship]] | [[2027 FIA Formula 3 Championship|FIA Formula 3 Championship]] | [[2027 F1 Academy season|F1 Academy]] | [[2027 Porsche Supercup|Porsche Supercup]] }}"}},"i":1}}]}'>
-2027 FIA Formula One
-World Championship
-Previous
+American stakes race for Thoroughbreds, part of the Triple Crown
+[[File:147th Preakness Stakes (52094131900).jpg|250px]]"},"caption":{"wt":"'''\"The Middle Jewel of the Triple Crown\"<br />\"The Run for the Black-Eyed Susans\"'''"},"class":{"wt":"Grade I"},"location":{"wt":"[[Pimlico Race Course]]<br />[[Baltimore]], Maryland, U.S."},"inaugurated":{"wt":"May 27, 1873 ({{Time ago|May 27, 1873}})"},"race type":{"wt":"[[Flat racing|Flat]] / [[Thoroughbred]]"},"website":{"wt":"{{URL|https://www.preakness.com/}}"},"distance":{"wt":"{{convert|1+3/16|mi|furlong km|1}}"},"record":{"wt":"1:53.0, [[Secretariat (horse)|Secretariat]] ([[1973 Preakness Stakes|1973]]) ''[[#Records|more]]''"},"track":{"wt":"Left-handed"},"qualification":{"wt":"3-year-old"},"weight":{"wt":"[[Colt (horse)|Colt]]/[[Gelding]]: {{convert|126|lb}}<br />[[Filly]]: {{convert|121|lb}}"},"purse":{"wt":"US$2 million (2024) <br/> 1st: $1.2 million <ref name =\"R2024\"/>"}},"i":0}}]}'>Horse race
+Preakness Stakes Previous: 2026 Preakness Stakes
+May 16, 2026 ( 2026-05-16 )
+Next: 2027 Preakness Stakes
+May 23, 2027 ( 2027-05-23 )
+"The Middle Jewel of the Triple Crown"
+"The Run for the Black-Eyed Susans"
+Class Grade I
+Location Pimlico Race Course
+Baltimore , Maryland, U.S.
+Inaugurated May 27, 1873 (153 years ago)
+Race type Flat / Thoroughbred
+Website www .preakness .com
+Race information
+Distance 1 + 3 ⁄ 16 miles (9.5 furlongs; 1.9 km)
+Record 1:53.0, Secretariat ( 1973 ) more
+Track Left-handed
+Qualification 3-year-old
+Weight Colt / Gelding : 126 pounds (57 kg)
+Filly : 121 pounds (55 kg)
+Purse US$2 million (2024)
+1st: $1.2 million [ 1 ]
+The Preakness Stakes is an American thoroughbred horse race traditionally held annually on the third Saturday in May at Pimlico Race Course in Baltimore , Maryland . The Preakness Stakes is a Grade I race run over a distance of 1 + 3 ⁄ 16 miles (9.5 furlongs; 1.9 kilometers) on dirt. Colts and geldings carry 126 pounds (57 kg) ; fillies 121 pounds (55 kg) . [ 2 ] It is the second jewel (or leg) [ 3 ] of the Triple Crown , held three weeks and one day after the Kentucky Derby and two weeks before the Belmont Stakes .
+First run in 1873, the Preakness Stakes was named by Maryland governor Oden Bowie after the colt who won the first Dinner Party Stakes at Pimlico. Annual "Preakness Weekend" races include both the Saturday Preakness Stakes [ 4 ] and a Grade II race on Friday for fillies only named the Black-Eyed Susan Stakes . [ 5 ] Attendance at the Preakness Stakes ranks second in North America among equestrian events, surpassed only by the Kentucky Derby.
+The 151st running of the Preakness Stakes was held on Saturday, May 16, 2026, with Napoleon Solo winning the race. It was moved to Laurel Park amid Pimlico's reconstruction. The 152nd running will be held on a Sunday — May 23, 2027 — in part to accommodate that year's Black-Eyed Susan Stakes being run on the Saturday instead of the Friday.
+History
+[ edit ]
+Two years before the Kentucky Derby was run for the first time, Pimlico introduced its new stakes race for three-year-olds, the Preakness, during its first spring race meet in 1873. Then Maryland governor Oden Bowie named the then mile and one-half (2.41 km) race in honor of the colt Preakness from Milton Holbrook Sanford's Preakness Stud in Preakness , Wayne Township , New Jersey , who won the Dinner Party Stakes on the day Pimlico opened (October 25, 1870). The New Jersey name was said to have come from the Native American name Pra-qua-les (" Quail Woods ") for the area. [ 6 ] After Preakness won the Dinner Party Stakes, his jockey, Billy Hayward, untied a silk bag of gold coins that hung from a wire stretched across the track from the judges' stand. This was the supposed way that the "wire" at the finish line was introduced and how the awarding of "purse" money came to be. [ 7 ] In reality, the term "purse", meaning prize money, had been in use for well over a century. [ 8 ]
+Sir Barton , winner in 1919
+The first Preakness, held on May 27, 1873, drew seven starters. John Chamberlain's three-year-old, Survivor , collected the $2,050 winning purse by galloping home easily by 10 lengths . This was the largest margin of victory until 2004, when Smarty Jones won by 11 1/2 lengths. [ 9 ]
+In 1890, Morris Park Racecourse in The Bronx, New York , hosted the Preakness Stakes. This race was run under handicap conditions, and the age restriction was lifted. The race was won by a five-year-old horse named Montague. After 1890, there was no race run for three years. [ 10 ] For the 15 years from 1894 through 1908, the race was held at Gravesend Race Track on Coney Island , New York . In 1909 it returned to Pimlico. [ 11 ]
+Seven editions of the Preakness Stakes have been run under handicap conditions, in which more accomplished or favored horses are assigned to carry heavier weight. It was first run under these conditions in 1890 and again in the years 1910–1915. During these years, the race was known as the Preakness Handicap. [ 10 ]
+In March 2009 Magna Entertainment Corp. , which owns Pimlico, filed for Chapter 11 bankruptcy thus throwing open the possibility the Stakes could move again. On April 13, 2009, the Maryland Legislature approved a plan to buy the Stakes and the Pimlico course if Magna Entertainment could not find a buyer. [ 12 ]
+Attendance at the Preakness Stakes ranks second in North America and usually surpasses the attendance of all other stakes races including the Belmont Stakes, the Breeders' Cup and the Kentucky Oaks . The attendance of the Preakness Stakes typically only trails the Kentucky Derby. For more information see American thoroughbred racing top attended events .
+In February 2017, the Maryland Stadium Authority released the first phase of a study saying that Pimlico needed $250 million in renovations. As of May of that year, no one showed interest in financing the work. The Stronach Group , owner of Pimlico Race Course and Laurel Park, was only interested in moving the Preakness Stakes to Laurel Park unless someone else financed work on Pimlico. [ 13 ]
+In October 2019, The Stronach Group reached an agreement in principle with the city of Baltimore and groups representing Maryland horsemen that would permanently keep the Preakness at Pimlico. As part of the agreement, Pimlico's grandstand would be demolished and replaced with a smaller structure, and temporary seating would be added to handle the attendance during Preakness week. [ 14 ] [ 15 ]
+The Racing and Community Development Act, approved by the Maryland state legislature in May 2020, allows the Maryland Stadium Authority to issue $375 million in bonds for the renovation of both Stronach Group tracks. [ 16 ]
+The 145th running of the Preakness Stakes was held on Saturday, October 3, 2020, a delay resulting from the COVID-19 outbreak earlier in the year, [ 17 ] and setting the year's contest four weeks after the also-delayed Kentucky Derby. It was held without spectators for health reasons because of the outbreak. [ 18 ]
+In April 2024, the Maryland General Assembly approved a bill that would consolidate Maryland thoroughbred racing at Pimlico and provide for the reconstruction of the Pimlico facility. [ 19 ] As part of the initiative, a state board approved a $14.3 million contract to begin demolishing and redeveloping the outdated Pimlico Race Course. [ 20 ] As a result of the planned reconstruction of the Pimlico grandstand, the Preakness Stakes will be temporarily relocated to Laurel Park in 2026, with a return to Pimlico scheduled for 2027. [ 21 ]
+In January 2025 management of thoroughbred racing in Maryland changed from the Stronach Group to the newly-formed, state-owned Maryland Thoroughbred Racetrack Operating Authority (MTROA). The Stronach Group retained intellectual ownership of the Preakness, for which the MTROA pays an annual licensing fee. [ 21 ]
+In April 2026, Churchill Downs Incorporated (whose Churchill Downs property is home to the Kentucky Derby ) announced that they had acquired the intellectual rights to the Preakness Stakes and Black-Eyed Susan Stakes from The Stronach Group for $85 million. [ 22 ] Following the announcement of the deal, the Maryland Jockey Club (now a non-profit entity of the MTROA) announced that they would retain operational control, licensing and media rights to the race. [ 23 ] In June 2026 the state of Maryland exercised its right of first refusal under state law, matching Churchill Downs' $85 million offer and giving the state the right to use the Preakness and Black-Eyed Susan name and branding. [ 24 ]
+Evolution of the Triple Crown series
+[ edit ]
+The Preakness is the second leg in American thoroughbred racing's Triple Crown series and almost always attracts the Kentucky Derby winner, some of the other horses that ran in the Derby, and often a few horses that did not start in the Derby. The Preakness is 1 + 3 ⁄ 16 miles, or 9 + 1 ⁄ 2 furlongs (1.88 km), compared to the Kentucky Derby, which is 1 + 1 ⁄ 4 miles / 10 furlongs (2 km). It is followed by the third leg, the Belmont Stakes, which is 1 + 1 ⁄ 2 miles / 12 furlongs (2.4 km).
+Since 1932, the order of Triple Crown races has the Kentucky Derby first, followed by the Preakness Stakes and then the Belmont Stakes. Prior to 1932, the Preakness was run before the Derby eleven times. On May 12, 1917, and again on May 13, 1922, the Preakness and the Derby were run on the same day. [ 25 ]
+Until 2027, the Preakness was run on the third Saturday in May, two weeks after the Kentucky Derby, and three weeks before the Belmont Stakes. Consequently, the race was run no earlier than May 15, and no later than May 21. One exception was 2020, as that race was run in early October due to the COVID-19 pandemic .
+On August 5, 2026, officials announced that the date of the Preakness would be moved to the fourth Sunday in May, three weeks after the Kentucky Derby and two weeks before the Belmont Stakes. The date was moved to incentivize trainers who run horses in the Derby to also run their horses in the Preakness, especially after the formation of the Thoroughbred Championship Series which does not include the Preakness on its schedule. [ 26 ] [ 27 ]
+Traditions
+[ edit ]
+The weather vane at Pimlico is painted with the winner's colors (pictured: colors of 2021 winner Rombauer ).
+Traditionally, just after the horses for the Preakness were called to the post, the audience was invited to sing the third verse of " Maryland, My Maryland ", the then-official state song of Maryland. For many years, the Baltimore Colts' Marching Band would lead the song from the infield; [ 28 ] in later years, it was sung by the United States Naval Academy Glee Club . [ 29 ] Use of the song was discontinued as of the 2020 edition of the race—the song "which celebrates the Confederacy , is considered by some to be racist." [ 30 ] [ 31 ] (The song lost its status as state song the following year. [ 32 ] )
+As soon as the Preakness winner has been declared official, a painter climbs a ladder to the top of a replica of the Old Clubhouse cupola . The colors of the victorious owner's silks are applied on the jockey and horse that are part of the weather vane atop the infield structure. The practice began in 1909 when a horse and rider weather vane sat atop the old Members' Clubhouse, which was constructed when Pimlico opened in 1870. The Victorian building was destroyed by fire in June 1966. A replica of the old building's cupola was built to stand in the Preakness winner's circle in the infield. [ 33 ]
+A blanket of yellow flowers daubed with black lacquer to recreate the appearance of a black-eyed Susan [ 34 ] is placed around the winning horse's neck at this time, [ 35 ] and a replica of the Woodlawn Vase is given to the winning horse's owner. Should that horse have also won the Kentucky Derby , speculation and excitement immediately begin to mount as to whether that horse will go on to win the Triple Crown of Thoroughbred Racing at the Belmont Stakes in June.
+Winning the race
+[ edit ]
+In 1917, the first Woodlawn Vase was awarded to the Preakness winner, who was not allowed to keep it. Eventually, a half-size reproduction of the trophy was given to winners to keep permanently. The original trophy is kept at the Baltimore Museum of Art and brought to the race each year under guard, for the winner's presentation ceremony. [ 36 ]
+The Winner's Circle and Old Clubhouse lined with Black-Eyed Susans on Preakness Day, May 20, 2023.
+In 1940, it was proposed to drape the winning horse in a garland of the Maryland State flower, Rudbeckia hirta , commonly called black-eyed Susans. This posed a problem, as the race is run nearly two months before the flowers come into bloom in late June or July. At first, yellow Viking daisies were painted to resemble black-eyed Susans . Painted flowers have been discontinued since the first decade of the current millennium and Viking Poms, a member of the chrysanthemum family, are now used. [ 37 ] Although the Preakness is sometimes referred to as "the race for the black-eyed Susans", no black-eyed Susan is ever used. [ 38 ] [ 39 ]
+In 1918, 26 horses entered the race, and it was run in two divisions, providing for two winners that year. Currently, the race is limited to 14 horses.
+In 1948, the Preakness was televised for the first time by CBS .
+The Preakness has been run at seven different distances:
+1 + 1 ⁄ 2 miles (2.41 km) : 1873–1888, 1890
+1 + 1 ⁄ 4 miles (2.01 km) : 1889
+1 + 1 ⁄ 16 miles (1.71 km) : 1894–1900, 1908
+1 mile 70 yards (1.67 km) : 1901–1907
+1 mile (1.61 km) : 1909, 1910
+1 + 1 ⁄ 8 miles (1.81 km) : 1911–1924
+1 + 3 ⁄ 16 miles (1.91 km) : 1925–present
+Purse money
+[ edit ]
+At its inauguration in 1873, the Preakness carried a value of $1,000. The first major increase occurred in 1919 when the race had a $25,000 value. It climbed to $100,000 in 1946 and in 1959 was raised to $150,000. Subsequent increases occurred from 1979 to 1989, when the purse rose four times from $200,000 to $500,000, before going to $1 million in 1997. [ 40 ] On December 12, 2013, the Maryland Jockey Club announced for the 2014 running of the Preakness, the purse would be increased from $1,000,000 to $1,500,000. [ 40 ]
+InfieldFest
+[ edit ]
+The race has had something of a party atmosphere in the past, especially in the infield, which is general admission. [ 41 ] The course had a " bring your own booze " policy until 2009, formerly including kegs of beer but in the 2000s restricted to all the beer cans a person could carry in a cooler. [ 41 ] However, despite crowds in excess of 100,000, the BYOB policy was canceled in 2009 after videos of intoxicated people running along the tops of lines of portable toilets while being pelted by beer cans reached a large audience. [ 42 ] [ 43 ]
+In 2009, with the alcohol ban, race attendance dropped to 77,850 after topping 100,000 for eight consecutive years. In 2010, and the Maryland Jockey Club responded with a new event called "InfieldFest" with performances by musical acts, the "Mug Club", which included an infield ticket and an unlimited-refill beer mug, and a mascot named " Kegasus ", a play on keg and pegasus (though actually a centaur ). [ 42 ] The much-derided Kegasus was retired in 2013. [ 44 ] In 2010, ticket sales had recovered to 95,760 and have since stayed high. [ 43 ]
+Aside from InfieldFest, the race is known for its fancy hats and official cocktail , the Black-eyed Susan, made with vodka , St-Germain liqueur and pineapple, lime and orange juices. [ 45 ]
+Records
+[ edit ]
+Speed record:
+1 + 3 ⁄ 16 miles (1.91 km) – 1:53 – Secretariat (1973)
+Secretariat , the 1973 winner (and ultimately Triple Crown winner) was originally credited with a running time of 1:55. Two Daily Racing Form clockers, however, had timed Secretariat's Preakness in 1:53 3 ⁄ 5 , which would be a new stakes record. A hearing was held over the time discrepancy, where a video replay showed Secretariat reached the wire faster than Canonero II, the then-current record holder, but instead of giving Secretariat the record, the Maryland Jockey Club decided to split the difference and make its official time that of Pimlico's clocker, who had timed the race in 1:54 2 ⁄ 5 . The matter was finally resolved in June 2012, when a meeting of the Maryland Racing Commission unanimously ruled to change Secretariat's final time to 1:53 based on testimony and analysis of the race replays. [ 46 ] Consequently, Secretariat holds the current official record for all three Triple Crown races. [ 47 ]
+Other records at other distances:
+2:36.75, Montague ( 1890 , 1 + 1 ⁄ 2 miles)
+2:17.50, Buddhist ( 1889 , 1 1 ⁄ 4 miles)
+1:46.40, Royal Tourist ( 1908 , 1 1 ⁄ 16 miles)
+1:44.20, Bryn Mawr ( 1904 , 1 mile 70 yards)
+1:39.80, Effendi ( 1909 , 1 mile)
+1:51, Watervale ( 1911 , 1 1 ⁄ 8 miles)
+Margin of Victory:
+11½ lengths – Smarty Jones (2004)
+Most wins by a jockey :
+6 – Eddie Arcaro (1941, 1948, 1950, 1951, 1955, 1957)
+Most wins by a trainer :
+8 – Bob Baffert (1997, 1998, 2001, 2002, 2010, 2015, 2018, 2023)
+Most wins by an owner:
+7 – Calumet Farm (1941, 1944, 1947, 1948, 1956, 1958, 1968, 2013) (also the leading breeder with 7)
+Fillies in the Preakness
+[ edit ]
+Six fillies have won the Preakness:
+2020 – Swiss Skydiver
+2009 – Rachel Alexandra
+1924 – Nellie Morse
+1915 – Rhine Maiden
+1906 – Whimsical
+1903 – Flocarline
+Winners (since 1873)
+[ edit ]
+Triple Crown winners are in bold .
+Year
+Horse
+Jockey
+Trainer
+Owner
+Distance
+Time*
+Purse
+Ref.
 2026
-Next
-2028
-Races by country
-Races by venue
-Support series: Formula 2 Championship
-FIA Formula 3 Championship
-F1 Academy
-Porsche Supercup
-The 2027 FIA Formula One World Championship is a planned motor racing championship for Formula One cars which will be the 78th running of the Formula One World Championship . It is recognised by the Fédération Internationale de l'Automobile (FIA), the governing body of international motorsport , as the highest class of competition for open-wheel racing cars . The championship is scheduled to be contested over twenty-four Grands Prix held around the world. Drivers and teams are set to compete for the titles of World Drivers' Champion and World Constructors' Champion , respectively.
-Entries
+Napoleon Solo
+Paco Lopez
+Chad Summers
+Gold Square, LLC
+1 + 3 ⁄ 16
+1:58.69
+$2,000,000
+[ 48 ]
+2025
+Journalism
+Umberto Rispoli
+Michael W. McCarthy
+Bridlewood Farm, Don Alberto Stable, Eclipse Thoroughbred Partners, Elayne Stables 5, Robert V. LaPenta, Derrick Smith, Mrs. John Magnier and Michael Tabor
+1 + 3 ⁄ 16
+1:55.47
+$2,000,000
+[ 49 ]
+2024
+Seize the Grey
+Jaime A. Torres
+D. Wayne Lukas
+MyRacehorse
+1 + 3 ⁄ 16
+1:56.82
+$2,000,000
+[ 1 ]
+2023
+National Treasure
+John R. Velazquez
+Bob Baffert
+SF Racing LLC, Starlight Racing, Madaket Stables LLC, Masterson, Robert E., Stonestreet Stables LLC, Schoenfarber, Jay A., Waves Edge Capital LLC and Donovan, Catherine
+1 + 3 ⁄ 16
+1:55.12
+$1,650,000
+[ 50 ]
+2022
+Early Voting
+José Ortiz
+Chad Brown
+Klaravich Stables
+1 + 3 ⁄ 16
+1:54.54
+$1,500,000
+[ 51 ]
+2021
+Rombauer
+Flavien Prat
+Michael W. McCarthy
+Diane Fradkin & John Fradkin
+1 + 3 ⁄ 16
+1:53.62
+$1,000,000
+[ 52 ]
+2020
+Swiss Skydiver †
+Robby Albarado
+Kenneth McPeek
+Peter J. Callahan
+1 + 3 ⁄ 16
+1:53.28
+$1,050,000
+[ 53 ]
+2019
+War of Will
+Tyler Gaffalione
+Mark E. Casse
+Gary Barber
+1 + 3 ⁄ 16
+1:54.34
+$1,500,000
+[ 54 ]
+2018
+Justify
+Mike Smith
+Bob Baffert
+WinStar Farm & China Horse Club
+1 + 3 ⁄ 16
+1:55.93
+$1,500,000
+[ 55 ]
+2017
+Cloud Computing
+Javier Castellano
+Chad Brown
+Klaravich Stables & William Lawrence
+1 + 3 ⁄ 16
+1:55.98
+$1,500,000
+[ 56 ]
+2016
+Exaggerator
+Kent Desormeaux
+J. Keith Desormeaux
+Big Chief Racing, Head Of Plains Partners, Rocker O Ranch & J. Keith Desormeaux
+1 + 3 ⁄ 16
+1:58.31
+$1,500,000
+[ 57 ]
+2015
+American Pharoah
+Victor Espinoza
+Bob Baffert
+Zayat Stables, LLC
+1 + 3 ⁄ 16
+1:58.46
+$1,500,000
+[ 58 ]
+2014
+California Chrome
+Victor Espinoza
+Art Sherman
+Steve Coburn & Perry Martin
+1 + 3 ⁄ 16
+1:54.84
+$1,500,000
+[ 59 ]
+2013
+Oxbow
+Gary Stevens
+D. Wayne Lukas
+Calumet Farm
+1 + 3 ⁄ 16
+1:57.54
+$1,000,000
+[ 60 ]
+2012
+I'll Have Another
+Mario Gutierrez
+Doug O'Neill
+J. Paul Reddam
+1 + 3 ⁄ 16
+1:55.94
+$1,000,000
+[ 61 ]
+2011
+Shackleford
+Jesus Castanon
+Dale Romans
+Mike Lauffer & William D. Cubbedge
+1 + 3 ⁄ 16
+1:56.47
+$1,500,000
+[ 62 ]
+2010
+Lookin At Lucky
+Martin Garcia
+Bob Baffert
+Michael Pegram
+1 + 3 ⁄ 16
+1:55.47
+$1,000,000
+[ 63 ]
+2009
+Rachel Alexandra †
+Calvin Borel
+Steven M. Asmussen
+Stonestreet Stab. & Harold T. McCormick
+1 + 3 ⁄ 16
+1:55.08
+$1,100,000
+[ 64 ]
+2008
+Big Brown
+Kent Desormeaux
+Richard Dutrow
+IEAH Stables & Paul Pompa
+1 + 3 ⁄ 16
+1:54.86
+$1,000,000
+[ 65 ]
+2007
+Curlin
+Robby Albarado
+Steven M. Asmussen
+Stonestreet Stables
+1 + 3 ⁄ 16
+1:53.46
+$1,000,000
+[ 66 ]
+2006
+Bernardini
+Javier Castellano
+Tom Albertrani
+Darley Stables
+1 + 3 ⁄ 16
+1:54.65
+$1,000,000
+[ 67 ]
+2005
+Afleet Alex
+Jeremy Rose
+Timothy Ritchey
+Cash Is King Stable
+1 + 3 ⁄ 16
+1:55.04
+$1,000,000
+[ 68 ]
+2004
+Smarty Jones
+Stewart Elliott
+John Servis
+Someday Farm
+1 + 3 ⁄ 16
+1:55.59
+$1,000,000
+[ 69 ]
+2003
+Funny Cide
+Jose Santos
+Barclay Tagg
+Sackatoga Stable
+1 + 3 ⁄ 16
+1:55.61
+$1,000,000
+[ 70 ]
+2002
+War Emblem
+Victor Espinoza
+Bob Baffert
+The Thoroughbred Corp.
+1 + 3 ⁄ 16
+1:56.40
+$1,000,000
+[ 71 ]
+2001
+Point Given
+Gary Stevens
+Bob Baffert
+The Thoroughbred Corp.
+1 + 3 ⁄ 16
+1:55.40
+$1,000,000
+[ 72 ]
+2000
+Red Bullet
+Jerry Bailey
+Joe Orseno
+Stronach Stables
+1 + 3 ⁄ 16
+1:56.00
+$1,000,000
+[ 73 ]
+1999
+Charismatic
+Chris Antley
+D. Wayne Lukas
+Bob & Beverly Lewis
+1 + 3 ⁄ 16
+1:55.20
+$1,000,000
+[ 74 ]
+1998
+Real Quiet
+Kent Desormeaux
+Bob Baffert
+Michael Pegram
+1 + 3 ⁄ 16
+1:54.60
+$1,000,000
+[ 75 ]
+1997
+Silver Charm
+Gary Stevens
+Bob Baffert
+Bob & Beverly Lewis
+1 + 3 ⁄ 16
+1:54.80
+$1,000,000
+[ 76 ]
+1996
+Louis Quatorze
+Pat Day
+Nick Zito
+William J. Condren, A. Cornacchia & Georgia E. Hofmann
+1 + 3 ⁄ 16
+1:53.40
+$800,000
+[ 77 ]
+1995
+Timber Country
+Pat Day
+D. Wayne Lukas
+Overbrook Farm , Robert B. Lewis & Gainesway Farm
+1 + 3 ⁄ 16
+1:54.40
+$750,000
+[ 78 ]
+1994
+Tabasco Cat
+Pat Day
+D. Wayne Lukas
+David P. Reynolds & Overbrook Farm
+1 + 3 ⁄ 16
+1:56.40
+$750,000
+[ 79 ]
+1993
+Prairie Bayou
+Mike Smith
+Tom Bohannan
+Loblolly Stable
+1 + 3 ⁄ 16
+1:56.60
+$750,000
+[ 80 ]
+1992
+Pine Bluff
+Chris McCarron
+Tom Bohannan
+Loblolly Stable
+1 + 3 ⁄ 16
+1:55.60
+$750,000
+[ 81 ]
+1991
+Hansel
+Jerry Bailey
+Frank L. Brothers
+Lazy Lane Farms
+1 + 3 ⁄ 16
+1:54.00
+$750,000
+[ 82 ]
+1990
+Summer Squall
+Pat Day
+Neil J. Howard
+Dogwood Stable
+1 + 3 ⁄ 16
+1:53.60
+$750,000
+1989
+Sunday Silence
+Pat Valenzuela
+Charles Whittingham
+H-G-W Partners
+1 + 3 ⁄ 16
+1:53.80
+$750,000
+1988
+Risen Star
+Ed Delahoussaye
+Louie Roussel
+Louie Roussel & R. Lamarque
+1 + 3 ⁄ 16
+1:56.20
+$700,000
+1987
+Alysheba
+Chris McCarron
+Jack Van Berg
+Dorothy Scharbauer
+1 + 3 ⁄ 16
+1:55.80
+$700,000
+1986
+Snow Chief
+Alex Solis
+Melvin F. Stute
+Carl Grinstead
+1 + 3 ⁄ 16
+1:54.80
+$700,000
+1985
+Tank's Prospect
+Pat Day
+D. Wayne Lukas
+Eugene V. Klein
+1 + 3 ⁄ 16
+1:53.40
+$700,000
+1984
+Gate Dancer
+Angel Cordero
+Jack Van Berg
+Kenneth Opstein
+1 + 3 ⁄ 16
+1:53.60
+$400,000
+1983
+Deputed Testamony
+Donnie Miller Jr.
+J. William Boniface
+Bonita Farm
+1 + 3 ⁄ 16
+1:55.40
+$400,000
+1982
+Aloma's Ruler
+Jack Kaenel
+John J. Lenzini Jr.
+Nathan Scherr
+1 + 3 ⁄ 16
+1:55.40
+$350,000
+1981
+Pleasant Colony
+Jorge Velásquez
+John P. Campo
+Buckland Farm
+1 + 3 ⁄ 16
+1:54.60
+$350,000
+1980
+Codex
+Angel Cordero
+D. Wayne Lukas
+Tartan Stable
+1 + 3 ⁄ 16
+1:54.20
+$300,000
+1979
+Spectacular Bid
+Ronnie Franklin
+Bud Delp
+Hawksworth Farm
+1 + 3 ⁄ 16
+1:54.20
+$300,000
+1978
+Affirmed
+Steve Cauthen
+Laz Barrera
+Harbor View Farm
+1 + 3 ⁄ 16
+1:54.40
+$250,000
+1977
+Seattle Slew
+Jean Cruguet
+Bill Turner
+Karen L. Taylor
+1 + 3 ⁄ 16
+1:54.40
+$250,000
+1976
+Elocutionist
+John Lively
+Paul T. Adwell
+Eugene C. Cashman
+1 + 3 ⁄ 16
+1:55.00
+$250,000
+1975
+Master Derby
+Darrel McHargue
+Smiley Adams
+Golden Chance Farm
+1 + 3 ⁄ 16
+1:56.40
+$250,000
+1974
+Little Current
+Miguel A. Rivera
+Lou Rondinello
+Darby Dan Farm
+1 + 3 ⁄ 16
+1:54.60
+$250,000
+1973
+Secretariat
+Ron Turcotte
+Lucien Laurin
+Meadow Stable
+1 + 3 ⁄ 16
+1:53.00
+$250,000
+1972
+Bee Bee Bee
+Eldon Nelson
+Del W. Carroll
+William S. Farish III
+1 + 3 ⁄ 16
+1:55.60
+$250,000
+1971
+Canonero II
+Gustavo Ávila
+Juan Arias
+Edgar Caibett
+1 + 3 ⁄ 16
+1:54.00
+$250,000
+1970
+Personality
+Eddie Belmonte
+John W. Jacobs
+Ethel D. Jacobs
+1 + 3 ⁄ 16
+1:56.20
+$200,000
+1969
+Majestic Prince
+Bill Hartack
+Johnny Longden
+Frank M. McMahon
+1 + 3 ⁄ 16
+1:55.60
+$200,000
+1968
+Forward Pass
+Ismael Valenzuela
+Henry Forrest
+Calumet Farm
+1 + 3 ⁄ 16
+1:56.80
+$200,000
+1967
+Damascus
+Bill Shoemaker
+Frank Whiteley
+Edith W. Bancroft
+1 + 3 ⁄ 16
+1:55.20
+$200,000
+1966
+Kauai King
+Don Brumfield
+Henry Forrest
+Ford Stable (Mike Ford)
+1 + 3 ⁄ 16
+1:55.40
+$200,000
+1965
+Tom Rolfe
+Ron Turcotte
+Frank Whiteley
+Powhatan Stable
+1 + 3 ⁄ 16
+1:56.20
+$200,000
+1964
+Northern Dancer
+Bill Hartack
+Horatio Luro
+Windfields Farm
+1 + 3 ⁄ 16
+1:56.80
+$200,000
+1963
+Candy Spots
+Bill Shoemaker
+Mesh Tenney
+Rex C. Ellsworth
+1 + 3 ⁄ 16
+1:56.20
+$200,000
+1962
+Greek Money
+John L. Rotz
+Virgil W. Raines
+Brandywine Stable
+1 + 3 ⁄ 16
+1:56.20
+$200,000
+1961
+Carry Back
+Johnny Sellers
+Jack A. Price
+Katherine Price
+1 + 3 ⁄ 16
+1:57.60
+$200,000
+1960
+Bally Ache
+Bobby Ussery
+Jimmy Pitt
+Turfland
+1 + 3 ⁄ 16
+1:57.60
+$250,000
+1959
+Royal Orbit
+William Harmatz
+Reggie Cornell
+Halina Gregory Braunstein
+1 + 3 ⁄ 16
+1:57.00
+$250,000
+1958
+Tim Tam
+Ismael Valenzuela
+Horace A. Jones
+Calumet Farm
+1 + 3 ⁄ 16
+1:57.20
+$165,000
+1957
+Bold Ruler
+Eddie Arcaro
+Jim Fitzsimmons
+Wheatley Stable
+1 + 3 ⁄ 16
+1:56.20
+$110,000
+1956
+Fabius
+Bill Hartack
+Horace A. Jones
+Calumet Farm
+1 + 3 ⁄ 16
+1:58.40
+$150,000
+1955
+Nashua
+Eddie Arcaro
+Jim Fitzsimmons
+Belair Stud
+1 + 3 ⁄ 16
+1:54.60
+$110,000
+1954
+Hasty Road
+John H. Adams
+Harry Trotsek
+Hasty House Farm
+1 + 3 ⁄ 16
+1:57.40
+$150,000
+1953
+Native Dancer
+Eric Guerin
+Bill Winfrey
+Alfred G. Vanderbilt II
+1 + 3 ⁄ 16
+1:57.80
+$110,000
+1952
+Blue Man
+Conn McCreary
+Woody Stephens
+White Oak Stable
+1 + 3 ⁄ 16
+1:57.40
+$150,000
+1951
+Bold
+Eddie Arcaro
+Preston M. Burch
+Brookmeade Stable
+1 + 3 ⁄ 16
+1:56.40
+$150,000
+1950
+Hill Prince
+Eddie Arcaro
+Casey Hayes
+Christopher Chenery
+1 + 3 ⁄ 16
+1:59.20
+$100,000
+1949
+Capot
+Ted Atkinson
+John M. Gaver Sr.
+Greentree Stable
+1 + 3 ⁄ 16
+1:56.00
+$150,000
+1948
+Citation
+Eddie Arcaro
+Horace A. Jones
+Calumet Farm
+1 + 3 ⁄ 16
+2:02.40
+$160,000
+1947
+Faultless
+Douglas Dodson
+Horace A. Jones
+Calumet Farm
+1 + 3 ⁄ 16
+1:59.00
+$160,000
+1946
+Assault
+Warren Mehrtens
+Max Hirsch
+King Ranch
+1 + 3 ⁄ 16
+2:01.40
+$160,000
+1945
+Polynesian
+Wayne D. Wright
+Morris H. Dixon
+Gertrude T. Widener
+1 + 3 ⁄ 16
+1:58.80
+$110,000
+1944
+Pensive
+Conn McCreary
+Ben A. Jones
+Calumet Farm
+1 + 3 ⁄ 16
+1:59.20
+$100,000
+1943
+Count Fleet
+Johnny Longden
+Don Cameron
+Fannie Hertz
+1 + 3 ⁄ 16
+1:57.40
+$75,000
+1942
+Alsab
+Basil James
+Sarge Swenke
+Mrs. Albert Sabath
+1 + 3 ⁄ 16
+1:57.00
+$100,000
+1941
+Whirlaway
+Eddie Arcaro
+Ben A. Jones
+Calumet Farm
+1 + 3 ⁄ 16
+1:58.80
+$75,000
+1940
+Bimelech
+Fred A. Smith
+William A. Hurley
+Edward R. Bradley
+1 + 3 ⁄ 16
+1:58.60
+$75,000
+1939
+Challedon
+George Seabo
+Louis Schaefer
+William L. Brann
+1 + 3 ⁄ 16
+1:59.80
+$75,000
+1938
+Dauber
+Maurice Peters
+Richard E. Handlen
+Foxcatcher Farms
+1 + 3 ⁄ 16
+1:59.80
+$75,000
+1937
+War Admiral
+Charley Kurtsinger
+George Conway
+Glen Riddle Farm
+1 + 3 ⁄ 16
+1:58.40
+$75,000
+1936
+Bold Venture
+George Woolf
+Max Hirsch
+Morton L. Schwartz
+1 + 3 ⁄ 16
+1:59.00
+$50,000
+1935
+Omaha
+Willie Saunders
+Jim Fitzsimmons
+Belair Stud
+1 + 3 ⁄ 16
+1:58.40
+$50,000
+1934
+High Quest
+Robert Jones
+Robert Augustus Smith
+Brookmeade Stable
+1 + 3 ⁄ 16
+1:58.20
+$50,000
+1933
+Head Play
+Charley Kurtsinger
+Thomas P. Hayes
+Suzanne Mason
+1 + 3 ⁄ 16
+2:02.00
+$50,000
+1932
+Burgoo King
+Eugene James
+H. J. Thompson
+Edward R. Bradley
+1 + 3 ⁄ 16
+1:59.80
+$90,000
+1931
+Mate
+George Ellis
+James W. Healy
+Albert C. Bostwick Jr.
+1 + 3 ⁄ 16
+1:59.00
+$90,000
+1930
+Gallant Fox
+Earl Sande
+Jim Fitzsimmons
+Belair Stud
+1 + 3 ⁄ 16
+2:00.60
+$90,000
+1929
+Dr. Freeland
+Louis Schaefer
+Thomas J. Healey
+Walter J. Salmon Sr.
+1 + 3 ⁄ 16
+2:01.60
+$90,000
+1928
+Victorian
+Raymond Workman
+James G. Rowe Jr.
+Harry P. Whitney
+1 + 3 ⁄ 16
+2:00.20
+$90,000
+1927
+Bostonian
+Whitey Abel
+Fred Hopkins
+Harry P. Whitney
+1 + 3 ⁄ 16
+2:01.60
+$100,000
+1926
+Display
+John Maiben
+Thomas J. Healey
+Walter J. Salmon Sr.
+1 + 3 ⁄ 16
+1:59.80
+$90,000
+1925
+Coventry
+Clarence Kummer
+William B. Duke
+Gifford A. Cochran
+1 + 3 ⁄ 16
+1:59.00
+$90,000
+1924
+Nellie Morse †
+John Merimee
+Albert B. Gordon
+Bud Fisher
+1 + 1 ⁄ 8
+1:57.20
+$90,000
+1923
+Vigil
+Benny Marinelli
+Thomas J. Healey
+Walter J. Salmon Sr.
+1 + 1 ⁄ 8
+1:53.60
+$90,000
+1922
+Pillory
+Louis Morris
+Thomas J. Healey
+Richard T. Wilson Jr.
+1 + 1 ⁄ 8
+1:51.60
+$90,000
+1921
+Broomspun
+Frank Coltiletti
+James G. Rowe Sr.
+Harry P. Whitney
+1 + 1 ⁄ 8
+1:54.20
+$75,000
+1920
+Man o' War
+Clarence Kummer
+Louis Feustel
+Glen Riddle Farm
+1 + 1 ⁄ 8
+1:51.60
+$40,000
+1919
+Sir Barton
+Johnny Loftus
+H. Guy Bedwell
+J. K. L. Ross
+1 + 1 ⁄ 8
+1:53.00
+$40,000
+1918
+War Cloud
+Johnny Loftus
+Walter B. Jennings
+A. Kingsley Macomber
+1 + 1 ⁄ 8
+1:53.60
+$20,000
+1918
+Jack Hare Jr.
+Charles Peak
+Frank D. Weir
+William E. Applegate
+1 + 1 ⁄ 8
+1:53.40
+$20,000
+1917
+Kalitan
+Everett Haynes
+Bill Hurley
+Edward R. Bradley
+1 + 1 ⁄ 8
+1:54.40
+$7,500
+1916
+Damrosch
+Linus McAtee
+Albert G. Weston
+J. K. L. Ross
+1 + 1 ⁄ 8
+1:54.80
+$2,000
+1915
+Rhine Maiden †
+Douglas Hoffman
+Frank Devers
+Edward F. Whitney
+1 + 1 ⁄ 8
+1:58.00
+$2,000
+1914
+Holiday
+Andy Schuttinger
+J. Simon Healy
+Mrs. Archibald Barklie
+1 + 1 ⁄ 8
+1:53.80
+$2,000
+1913
+Buskin
+James Butwell
+John Whalen
+John Whalen
+1 + 1 ⁄ 8
+1:53.40
+$3,000
+1912
+Colonel Holloway
+Clarence Turner
+Dave Woodford
+Beverwyck Stable
+1 + 1 ⁄ 8
+1:56.60
+$2,500
+1911
+Watervale
+Eddie Dugan
+John Whalen
+August Belmont Jr.
+1 + 1 ⁄ 8
+1:51.00
+$4,500
+1910
+Layminster
+Roy Estep
+J. Simon Healy
+Edward B. Cassatt
+1 mile
+1:40.60
+$5,500
+1909
+Effendi
+Willie Doyle
+Frank C. Frisbie
+W. T. Ryan
+1 mile
+1:39.80
+$5,500
+1908
+Royal Tourist
+Eddie Dugan
+A. Jack Joyner
+Harry P. Whitney
+1 + 1 ⁄ 16
+1:46.40
+$4,000
+1907
+Don Enrique
+George Mountain
+A. Jack Joyner
+August Belmont Jr.
+1 mile 70 yards
+1:45.40
+$3,800
+1906
+Whimsical †
+Walter Miller
+Tim J. Gaynor
+Tim J. Gaynor
+1 mile 70 yards
+1:45.00
+$3,800
+1905
+Cairngorm
+Willie Davis
+A. Jack Joyner
+Sydney Paget
+1 mile 70 yards
+1:45.80
+$3,600
+1904
+Bryn Mawr
+Gene Hildebrand
+W. Fred Presgrave
+Goughacres Stable
+1 mile 70 yards
+1:44.20
+$3,800
+1903
+Flocarline †
+William Gannon
+Henry C. Riddle
+Myron H. Tichenor
+1 mile 70 yards
+1:44.80
+$3,000
+1902
+Old England
+Lee Jackson
+Green B. Morris
+Green B. Morris
+1 mile 70 yards
+1:45.80
+$3,750
+1901
+The Parader
+Frank Landry
+Thomas J. Healey
+Richard T. Wilson Jr.
+1 mile 70 yards
+1:47.20
+$2,650
+1900
+Hindus
+Henry Spencer
+John H. Morris
+George J. Long
+1 + 1 ⁄ 16
+1:48.40
+$3,000
+1899
+Half Time
+Richard Clawson
+Frank McCabe
+Philip J. Dwyer
+1 + 1 ⁄ 16
+1:47.00
+$2,500
+1898
+Sly Fox
+Willie Simms
+Hardy Campbell Jr.
+Charles F. Dwyer
+1 + 1 ⁄ 16
+1:49.75
+$2,400
+1897
+Paul Kauvar
+T. Thorpe
+Thomas P. Hayes
+Thomas P. Hayes
+1 + 1 ⁄ 16
+1:51.25
+$2,400
+1896
+Margrave
+Henry Griffin
+Byron McClelland
+August Belmont Jr.
+1 + 1 ⁄ 16
+1:51.00
+$2,250
+1895
+Belmar
+Fred Taral
+Edward Feakes
+Preakness Stables
+1 + 1 ⁄ 16
+1:50.50
+$2,250
+1894
+Assignee
+Fred Taral
+William Lakeland
+James R. Keene & Foxhall P. Keene
+1 + 1 ⁄ 16
+1:49.25
+$3,000
+1893
+no race held
+1892
+no race held
+1891
+no race held
+1890
+Montague
+Willie Martin
+Edward Feakes
+Preakness Stables
+1 + 1 ⁄ 2
+2:36.75
+$2,000
+1889
+Buddhist
+George Anderson
+John W. Rogers
+Samuel S. Brown
+1 + 1 ⁄ 4
+2:17.50
+$2,000
+1888
+Refund
+Fred Littlefield
+R. W. Walden
+R. Wyndham Walden
+1 + 1 ⁄ 2
+2:49.00
+$2,000
+1887
+Dunboyne
+William Donohue
+William Jennings Sr.
+William Jennings Sr.
+1 + 1 ⁄ 2
+2:39.50
+$2,500
+1886
+The Bard
+Sam H. Fisher
+John Huggins
+Alexander J. Cassatt
+1 + 1 ⁄ 2
+2:45.00
+$3,000
+1885
+Tecumseh
+Jim McLaughlin
+Charles S. Littlefield
+W. Donohue
+1 + 1 ⁄ 2
+2:49.00
+$3,000
+1884
+Knight of Ellerslie
+Sam H. Fisher
+Thomas Doswell
+Richard J. Hancock & Thomas Doswell
+1 + 1 ⁄ 2
+2:39.50
+$3,000
+1883
+Jacobus
+George Barbee
+Richard Dwyer
+James E. Kelley
+1 + 1 ⁄ 2
+2:42.50
+$2,500
+1882
+Vanguard
+Tom Costello
+R. W. Walden
+George L. Lorillard
+1 + 1 ⁄ 2
+2:44.50
+$2,000
+1881
+Saunterer
+Tom Costello
+R. W. Walden
+George L. Lorillard
+1 + 1 ⁄ 2
+2:40.50
+$3,000
+1880
+Grenada
+Lloyd Hughes
+R. W. Walden
+George L. Lorillard
+1 + 1 ⁄ 2
+2:40.50
+$3,000
+1879
+Harold
+Lloyd Hughes
+R. W. Walden
+George L. Lorillard
+1 + 1 ⁄ 2
+2:40.50
+$4,000
+1878
+Duke of Magenta
+Cyrus Holloway
+R. W. Walden
+George L. Lorillard
+1 + 1 ⁄ 2
+2:41.75
+$3,500
+1877
+Cloverbrook
+Cyrus Holloway
+Jeter Walden
+Edward A. Clabaugh
+1 + 1 ⁄ 2
+2:45.50
+$2,500
+1876
+Shirley
+George Barbee
+William Brown
+Pierre Lorillard IV
+1 + 1 ⁄ 2
+2:44.75
+$3,000
+1875
+Tom Ochiltree
+Lloyd Hughes
+R. W. Walden
+John F. Chamberlain
+1 + 1 ⁄ 2
+2:43.50
+$3,000
+1874
+Culpepper
+William Donohue
+Hugh Gaffney
+Hugh Gaffney
+1 + 1 ⁄ 2
+2:56.50
+$3,000
+1873
+Survivor
+George Barbee
+A. Davis Pryor
+John F. Chamberlain
+1 + 1 ⁄ 2
+2:43.00
+$3,000
+Notes:
+Timed to 1 ⁄ 4 second 1873 to 1899, to 1 ⁄ 5 second 1900 to 2002, to 0.01 second since 2003.
+All winners have been three years old, except Montague in 1890 who was five years old. [ 10 ]
+\n§ D. Wayne Lukas swept the 1995 Triple Crown with two different horses.<ref>{{cite web|last1=Durso|first1=Joseph|title=Thunder Gulch, Only No. 2, Brings Lukas a Triple|url=https://www.nytimes.com/1995/06/11/sports/horse-racing-thunder-gulch-only-no-2-brings-lukas-a-triple.html|website=The New York Times|access-date=July 17, 2016|date=June 11, 1995|archive-date=August 19, 2016|archive-url=https://web.archive.org/web/20160819071701/http://www.nytimes.com/1995/06/11/sports/horse-racing-thunder-gulch-only-no-2-brings-lukas-a-triple.html|url-status=live}}\n</ref>\n\n",{"template":{"target":{"wt":"refend","href":"./Template:Refend"},"params":{},"i":1}}]}'>
+A † designates a filly .
+§ D. Wayne Lukas swept the 1995 Triple Crown with two different horses. [ 83 ]
+See also: Triple Crown Productions § Highest combined Triple Crown finish
+Sire lines
 [ edit ]
-The following constructors and drivers are under contract to compete in the 2027 World Championship. All teams are due to compete with tyres supplied by Pirelli . [ 1 ] Each team is required to enter at least two drivers, one for each of the two mandatory cars.
-Teams and drivers that are contracted to compete in the 2027 World Championship
-Entrant
-Constructor
-Power unit
-Race drivers
-No.
-Driver name
-Gucci Racing Alpine F1 Team [ 2 ]
-Alpine - Mercedes
-Mercedes [ 3 ] [ 4 ]
-10
-Pierre Gasly [ 5 ]
-43
-Franco Colapinto [ 6 ]
-Aston Martin Aramco F1 Team [ 7 ]
-Aston Martin Aramco - Honda
-Honda [ 8 ]
-14
-Fernando Alonso [ 9 ]
-18
-Lance Stroll [ 9 ]
-Atlassian Williams F1 Team [ 10 ]
-Atlassian Williams - Mercedes
-Mercedes [ 11 ]
-23
-Alexander Albon [ 12 ]
-55
-Carlos Sainz Jr. [ 13 ]
-Audi Revolut F1 Team [ 14 ] [ 15 ] [ 16 ]
-Audi
-Audi [ 14 ]
-5
-"}},"i":0}}]}'> Gabriel Bortoleto [ 17 ]
-27
-Nico Hülkenberg [ 17 ]
-Cadillac Formula 1 Team [ 18 ] [ 19 ]
-Cadillac - Ferrari
-Ferrari [ 20 ]
-11
-Sergio Pérez [ 17 ]
-77
-Valtteri Bottas [ 17 ]
-Scuderia Ferrari HP [ 21 ]
-Ferrari
-Ferrari [ 22 ]
-16
-Charles Leclerc [ 23 ]
-44
-Lewis Hamilton [ 17 ]
-TGR Haas F1 Team [ 24 ]
-Haas - Ferrari
-Ferrari [ 25 ] [ 26 ]
-TBC
-TBA
-TBC
-TBA
-McLaren Mastercard F1 Team [ 27 ]
-McLaren - Mercedes
-Mercedes [ 28 ]
-4
-Lando Norris [ 29 ]
-81
-Oscar Piastri [ 30 ]
-Mercedes-AMG Petronas F1 Team [ 31 ]
-Mercedes
-Mercedes [ 22 ]
-12
-Kimi Antonelli [ 17 ]
-63
-George Russell [ 17 ]
-Visa Cash App Racing Bulls F1 Team [ 32 ]
-Racing Bulls - Red Bull Ford
-Red Bull Ford [ 33 ]
-TBC
-TBA
-TBC
-TBA
-Oracle Red Bull Racing [ 34 ]
-Red Bull Racing - Red Bull Ford
-Red Bull Ford [ 33 ]
-3
-Max Verstappen [ 35 ]
-6
-Isack Hadjar [ 36 ]
-Driver changes
+Winners of the Preakness Stakes can be connected to each other due to the practice of arranging horse breeding based on their previous success. All of the horses can be traced back to the three foundational sires, with Godolphin Arabian the ancestor of 7 winners, Byerley Turk the ancestor of 13 winners, and Darley Arabian the ancestor of 132 winners, including all winners since 1938.
+The Mr Prospector direct sire line has produced the last 6 Preakness Stakes winners, with 4 of those winners descended through his son Fappiano .
+Darley Arabian line
 [ edit ]
-Esteban Ocon is set to depart Haas at the end of the 2026 season after two seasons. [ 37 ]
-Calendar
+the Darley Arabian (1700c) sire line (all branched through the Eclipse (1764) line) [ 84 ] produced 132 Stakes winners (123 colts, 3 geldings, 6 fillies), including all winners from 1938 to present. The main branches of this sire line are:
+the King Fergus (1775) branch (all branched through the Voltigeur (1847) line), produced 13 winners. His sire line continued primarily through his son Vedette (1854) with 12 winners, due primarily to his son Galopin (1872) with 9 winners (exclusively through St. Simon (1881), most recently Pleasant Colony in 1981 ). [ 85 ] [ 86 ] [ 87 ]
+the Potoooooooo (1773) branch [ 88 ] produced 118 winners (all branched through the Waxy (1790) line), including all winners from 1982 to present. The primary branch of this sire line is through Whalebone (1807), which has produced 117 winners. In turn, the primary branch continues through Sir Hercules (1826), which has produced 99 winners (including all winners since 1984), and then the Birdcatcher (1833) branch [ 89 ] which produced 92 winners. From Birdcatcher, the branch of The Baron (1842) has produced 87 winners (exclusively through the Stockwell (1849) line). [ 90 ] Birdcatcher's grandson Doncaster (1870) sired Bend Or (1877), whose sire line accounts for 79 winners. [ 91 ] The main branch of the Bend Or sire line continued through his son Bona Vista (1889) with 65 winners, nearly exclusively through the Phalaris (1913) line with 64 winners, which has dominated in the last several decades (including all winners from 1984 to present) through the following sons: [ 92 ] [ 93 ]
+the Fairway (1925) branch (1 winner, most recently Bally Ache in 1960 ); [ 92 ]
+the Pharamond (1925) branch (5 winners, most recently Silver Charm in 1997 ); [ 92 ]
+the Sickle (1924) branch, which has produced all winners from 2021 to present, (29 winners exclusively through Polynesian (1942) with his win in the 1945 Preakness Stakes , continued exclusively through his son Native Dancer (1950) with his win in the 1953 Preakness Stakes , continued primarily through his son Raise a Native (1961) with 25 winners, down through Mr Prospector (1970) with 22 winners (including all winners from 2021 to present) through 9 different sons: Tank’s Prospect , with his win in the 1985 Preakness Stakes , and 8 other sons through their progeny, with his son Fappiano (1977) accounting for 7 winners, (most recently Napoleon Solo in 2026 ));
+the Pharos (1920) branch (29 winners all branched through the Nearco (1935) line, through his sons Royal Charger (1942), Nearctic (1954), and Nasrullah (1940)). The Royal Charger branch produced 5 winners (most recently Swiss Skydiver in 2020 ), the Nasrullah branch produced 11 winners primarily due to his son Bold Ruler (1954) with 10 winners (most recently California Chrome in 2014 ), while the Nearctic branch produced 13 winners, exclusively through his son Northern Dancer (1961) with his win in the 1964 Preakness Stakes , and direct male progeny of 12 winners, most recently War of Will in 2019 , with his son Storm Bird (1978) accounting for 5 winners (most recently Justify in 2018 ).
+special notes:
+the Whalebone (1807) branch produced two main lines: the primary branch of Sir Hercules and the secondary branch of Camel (1822) (14 winners exclusively through the Touchstone (1831) line), which produced 1983 Preakness Stakes winner Deputed Testimony through his grandson Newminster 's (1848) branch. [ 94 ] Since then, each winner of the Preakness Stakes has gone through Whalebone's more frequent sire line branch of Sir Herecules (1826). The Newminster branch is the more common of the two branches derived through Camel with 8 winners. Newminster's brother Orlando (1841) produced 6 winners (exclusively through the Commando (1898) line with 6 winners), most recently Carry Back in 1961 . [ 95 ] [ 96 ]
+the Sir Hercules (1826) branch produced two main lines: the primary branch of Birdcatcher (1833), and the secondary branch of Faugh-a-Ballagh (1841) which produced 6 winners (exclusively through the Leamington (1853) line), most recently 1901 Preakness Stakes winner The Parader . [ 97 ]
+the Birdcatcher (1833) branch produced two main lines: the primary branch of The Baron (1842), and the secondary branch of Oxford (1857) which produced 6 winners (exclusively through the Sterling (1868) line), most recently 1946 Preakness Stakes winner Assault . [ 98 ]
+the Bend Or (1877) branch produced two main lines: the primary branch of Bona Vista (1889), and the secondary branch of Ormonde (1883) which produced 10 winners (primarily through the Teddy (1913) line with 8 winners), most recently 1967 Preakness Stakes winner Damascus . [ 99 ]
+Byerley Turk line
 [ edit ]
-Nations that are scheduled to host a Grand Prix in 2027 are highlighted in green, with circuit locations marked with a black dot. Former host nations are shown in dark grey, and former host circuits are marked with a white dot. De facto borders are shown.
-The 2027 calendar is scheduled to comprise twenty-four Grands Prix. [ 38 ] The Bahrain , Australian , Japanese , Canadian , Monaco , British , Italian , São Paulo , Qatar , and Abu Dhabi Grands Prix will feature the sprint format . [ 39 ]
-Round
-Grand Prix
-Circuit
-Race date
-1
-Bahrain Grand Prix
-Bahrain International Circuit , Sakhir
-14 March
-2
-Saudi Arabian Grand Prix
-Jeddah Corniche Circuit , Jeddah
-21 March
-3
-Australian Grand Prix
-Albert Park Circuit , Melbourne
-4 April
-4
-Japanese Grand Prix
-Suzuka Circuit , Suzuka
-11 April
-5
-Chinese Grand Prix
-Shanghai International Circuit , Shanghai
-18 April
-6
-Miami Grand Prix
-Miami International Autodrome , Miami Gardens, Florida
-2 May
-7
-Canadian Grand Prix
-Circuit Gilles Villeneuve , Montreal
-23 May
-8
-Monaco Grand Prix
-Circuit de Monaco , Monaco
-6 June
-9
-Portuguese Grand Prix
-Algarve International Circuit , Portimão
-20 June
-10
-British Grand Prix
-Silverstone Circuit , Silverstone
-4 July
-11
-Austrian Grand Prix
-Red Bull Ring , Spielberg
-11 July
-12
-Belgian Grand Prix
-Circuit de Spa-Francorchamps , Stavelot
-25 July
-13
-Hungarian Grand Prix
-Hungaroring , Mogyoród
-1 August
-14
-Italian Grand Prix
-Monza Circuit , Monza
-5 September
-15
-Spanish Grand Prix
-Madring , Madrid
-12 September
-16
-Azerbaijan Grand Prix
-Baku City Circuit , Baku
-26 September
-17
-Turkish Grand Prix
-Istanbul Park , Istanbul
-3 October
-18
-Singapore Grand Prix
-Marina Bay Street Circuit , Singapore
-10 October
-19
-United States Grand Prix
-Circuit of the Americas , Austin, Texas
-24 October
-20
-Mexico City Grand Prix
-Autódromo Hermanos Rodríguez , Mexico City
-31 October
-21
-São Paulo Grand Prix
-Interlagos Circuit , São Paulo
-7 November
-22
-Las Vegas Grand Prix
-Las Vegas Strip Circuit , Paradise, Nevada
-20 November [ a ]
-23
-Qatar Grand Prix
-Lusail International Circuit , Lusail
-5 December
-24
-Abu Dhabi Grand Prix
-Yas Marina Circuit , Abu Dhabi
-12 December
-Source: [ 38 ]
-Calendar changes
+the Byerley Turk (1680c) sire line [ 100 ] [ 101 ] [ 102 ] produced 13 winners (10 colts, 3 geldings). The main branches of this sire (all branched through the Herod (1758) line) are:
+the Highflyer (1774) branch produced 1 winner, most recently Montague in 1890 [ 103 ]
+the Florizel (1768) branch produced 6 winners (all branched through the Lexington (1850) line), most recently Hindus in 1900 [ 104 ] [ 105 ] [ 106 ] [ 107 ] [ 108 ] [ 109 ]
+the Woodpecker (1773) branch produced 6 winners (all branched through the Buzzard (1787) line). The main branches of this sire line are:
+the Castrel (1801) branch produced 1 winner, most recently Kalitan in 1917 [ 110 ]
+the Selim (1802) branch produced 5 winners (all branched through the Vandal (1850) line). The main branches of this sire line are:
+Survivor (1870), winner of the 1873 Preakness Stakes [ 111 ]
+the Virgil (1864) branch produced 4 winners ( 1882 Preakness Stakes winner Vanguard , [ 112 ] and 3 winners branched through the Hindoo (1878) line), most recently Buskin in 1913 [ 113 ] [ 114 ] [ 115 ]
+Godolphin Arabian line
 [ edit ]
-The Dutch Grand Prix will not be held in 2027, as the organisers announced that the 2026 edition would be the final running of the Grand Prix. [ 40 ] The Portuguese and Turkish Grands Prix will return to the calendar for the first time since 2021 . The Barcelona-Catalunya Grand Prix will be absent from the 2027 calendar and will be held in 2028, 2030 and 2032 as part of a rotation agreement with the Belgian Grand Prix , which will be held in 2027, 2029 and 2031. [ 41 ] The Bahrain Grand Prix is set to return to the Bahrain International Circuit after its 2026 edition was relocated to the Sepang International Circuit in Malaysia due to the 2026 Iran war , while the Saudi Arabian Grand Prix is scheduled to return after its 2026 edition was also cancelled. [ 42 ]
-Regulation changes
+the Godolphin Arabian (1724c) sire line [ 116 ] produced 7 winners (6 colts, 1 gelding). The main branches of this sire (all branched through the Australian (1858) line) are:
+the Attila (1871) branch produced 1 winner, most recently Tecumseh in 1885 [ 117 ]
+the Spendthrift (1876) branch produced 6 winners ( 1894 Preakness Stakes winner Assignee (1891) [ 118 ] and 5 winners branched through the Hastings (1893) line), including:
+Don Enrique (1904), winner of the 1907 Preakness Stakes [ 119 ]
+the Fair Play (1905) branch produced 4 winners, most recently War Admiral in 1937 [ 120 ] [ 121 ] [ 122 ] [ 123 ]
+Preakness Stakes winners with male-line descendants including other Preakness Stakes winners
+Polynesian ( 1945 winner ) – 27 winners (26 colts, 1 gelding); most recently Journalism ( 2025 ) [ 124 ] [ 125 ] [ 126 ] [ 127 ] [ 128 ] [ 129 ] [ 130 ] [ 131 ] [ 132 ] [ 133 ] [ 134 ] [ 135 ] [ 136 ] [ 137 ] [ 138 ] [ 139 ] [ 140 ] [ 141 ] [ 142 ] [ 143 ] [ 144 ] [ 145 ] [ 146 ] [ 147 ] [ 148 ]
+Native Dancer ( 1953 winner ) – 26 winners (25 colts, 1 gelding); most recently Journalism (2025) [ 125 ] [ 126 ] [ 127 ] [ 128 ] [ 129 ] [ 130 ] [ 131 ] [ 132 ] [ 133 ] [ 134 ] [ 135 ] [ 136 ] [ 137 ] [ 138 ] [ 139 ] [ 140 ] [ 141 ] [ 142 ] [ 143 ] [ 144 ] [ 145 ] [ 146 ] [ 147 ] [ 148 ]
+Northern Dancer ( 1964 winner ) – 12 winners (11 colts, 1 filly); most recently War of Will ( 2019 ) [ 149 ] [ 150 ] [ 151 ] [ 152 ] [ 153 ] [ 154 ] [ 155 ] [ 156 ] [ 157 ] [ 158 ] [ 159 ] [ 160 ]
+Bold Ruler ( 1957 winner ) – 7 colts; most recently California Chrome ( 2014 ) [ 161 ] [ 162 ] [ 163 ] [ 164 ] [ 165 ] [ 166 ] [ 167 ]
+Seattle Slew ( 1977 winner ) – 2 colts; most recently California Chrome (2014) [ 166 ] [ 167 ]
+Gallant Fox ( 1930 winner ) – 1 colt; Omaha ( 1935 ) [ 168 ]
+Man o' War ( 1920 winner ) – 1 colt; War Admiral ( 1937 ) [ 123 ]
+Bold Venture ( 1936 winner ) – 1 colt; Assault ( 1946 ) [ 98 ]
+Citation ( 1948 winner ) – 1 colt; Fabius ( 1956 ) [ 169 ]
+Secretariat ( 1973 winner ) – 1 colt; Risen Star ( 1988 ) [ 165 ]
+Summer Squall ( 1990 winner ) – 1 colt; Charismatic ( 1999 ) [ 154 ]
+Curlin ( 2007 winner ) – 1 colt; Exaggerator ( 2016 ) [ 144 ]
+See also
 [ edit ]
-Technical regulations
-[ edit ]
-The engine regulations introduced in 2026 will be amended to increase internal combustion engine power from 400kW to 420kW while reducing maximum electrical power deployment in the MGU-K from 350kW to 300kW. This changes the ratio of power from 53:47 to 58:42, before changing to 60:40 in 2028. [ 43 ] As a result, fuel flow will increase 5%, which in turn has required overall race distance to be shortened from 305 km (190 mi) to 290 km (180 mi) to allow teams to continue to use elements of their 2026 chassis designs which can include the fuel tank. [ 44 ] Harvesting will be increased from 350kW to 375kW. Together, these regulation changes are intended to reduce electrical energy exhaustion and decrease the need for lift-and-coast or 'super clipping' on long straights. [ 45 ]
-In addition to engine changes, gearbox homologation will also be scrapped starting in 2027, allowing teams to alter their design in-season as they see fit. [ 46 ]
-Sporting regulations
-[ edit ]
-Due to refinements on fuel flow regulations for 2027, every single race except for the Monaco Grand Prix will now have a distance of 290 km (180 mi) instead of 305 km (190 mi) , which means the race distance would be reduced by either two or three laps. The FIA will also gain more flexibility in extending free practice sessions in case of interruptions. Additionally, the three hour clock which was used to determine the length of a race when including stoppages has been scrapped and will be replaced by a hard stop time for racing activity. The two hour race limit will remain the same. [ 46 ]
-Season summary
-[ edit ]
-On 4 September 2026, the second F1 Live event following F1 75 Live in 2025 was announced for 18 February 2027. It will be held in Milan , Italy. [ 47 ] A single pre-season test will be held at the Bahrain International Circuit in Sakhir on 24–27 February. [ 38 ]
-Notes
-[ edit ]
-↑ Saturday race.
+Horses portal
+Sports portal
+United States portal
+American thoroughbred racing top attended events
+Black-Eyed Susan Stakes
+Grand Slam of Thoroughbred Racing
+List of Preakness Stakes broadcasters
+Maryland Jockey Club
+Preakness Stakes top four finishers
+Thoroughbred Owners and Breeders Association
+Triple Crown Productions
+Triple Crown of Thoroughbred Racing
 References
 [ edit ]
-↑ "Pirelli to continue as Formula 1's exclusive tyre supplier until 2027" . Formula1.com . 10 October 2023 . Retrieved 30 April 2024 .
-↑ Mallinson, Sam (27 May 2026). "Luxury takes the grid: Gucci enters Formula One with Alpine, becoming its Title Partner" . Alpine Cars . Archived from the original on 27 May 2026 . Retrieved 27 May 2026 .
-↑ "Alpine confirm they are to shut down works engine programme at the end of 2025" . Formula 1.com . 30 September 2024 . Retrieved 30 September 2024 .
-↑ "Alpine to use Mercedes power units and gearboxes from 2026" . Formula 1.com . 12 November 2024 . Retrieved 12 November 2024 .
-↑ "Gasly signs new contract extension with Alpine" . www.formula1.com . Retrieved 11 September 2025 .
-↑ "Alpine confirmó a Franco Colapinto como piloto para 2027" [ Alpine confirmed Franco Colapinto as a driver for 2027 ] . La Nación (in Spanish) . Retrieved 27 August 2026 .
-↑ "Honda to make full-scale F1 return in 2026 as they join forces with Aston Martin" . Formula 1 . Retrieved 5 July 2024 .
-↑ "Aston Martin confirm Honda as F1 engine partner from 2026 as Japanese manufacturer makes official return to sport" . Sky Sports . 24 May 2023 . Retrieved 8 February 2024 .
-1 2 "Lance Stroll and Fernando Alonso commit to Aston Martin Aramco as 2027 driver line-up is confirmed" . www.astonmartinf1.com . Retrieved 29 September 2026 .
-↑ Mann-Bryans, Mark (11 February 2025). "Record title sponsorship for Williams F1 as Atlassian deal announced" . Autosport . Retrieved 11 February 2025 .
-↑ "Williams F1 team to use Mercedes engines until at least 2030" . Reuters . 8 January 2024 . Retrieved 8 February 2024 .
-↑ "Williams confirm Albon will remain with the team in 2027" . www.formula1.com . Retrieved 18 August 2026 .
-↑ "Carlos Sainz commits to Atlassian Williams F1 Team, completing 2027 driver line-up | Atlassian Williams F1 Team" . williamsf1 . Retrieved 19 August 2026 .
-1 2 "Audi expands commitment to Formula 1 with 100% takeover of Sauber | Formula 1®" . Formula1.com . 8 March 2024 . Retrieved 7 May 2024 .
-↑ van Denderen, Ludo (2 April 2024). "Bad news for Swiss F1 fans: Audi opts for German national anthem" . GPblog.com . Retrieved 14 May 2024 .
-↑ Noble, Jon (30 July 2025). "Audi reveals new title sponsor for its F1 debut" . The Race . Retrieved 30 July 2025 .
-1 2 3 4 5 6 7 Formula 1 [@F1] (20 August 2026). "Another piece of the 2027 puzzle 🧩 Max is confirmed at Red Bull Racing for 2027 and beyond 🤝" ( Tweet ) . Retrieved 20 August 2026 – via X (formerly Twitter) . {{ cite web }} : CS1 maint: numeric names: authors list ( link ) CS1 maint: url-status ( link )
-↑ "Statement on General Motors application to join FIA Formula One World Championship in 2026" . Formula 1.com . 25 November 2024 . Retrieved 25 November 2024 .
-↑ "General Motors launches Cadillac Formula 1 Team and power unit" . news.gm.com . 25 November 2024. Archived from the original on 26 November 2024 . Retrieved 25 November 2024 .
-↑ "Ferrari enters a multi-year agreement with Andretti Formula Racing" . Ferrari . 10 December 2024. Archived from the original on 10 December 2024 . Retrieved 10 December 2024 .
-↑ "Ferrari and HP Announce a Title Partnership" . press.hp.com . Retrieved 24 April 2024 .
-1 2 "What engine every F1 team is using for 2026 rules" . The Race . 26 August 2025. Archived from the original on 20 September 2025 . Retrieved 16 October 2025 .
-↑ "Charles Leclerc and Scuderia Ferrari HP: the story continues" . www.ferrari.com . Retrieved 3 June 2026 .
-↑ "Haas sign new title sponsor for 2023 in multi-year deal" . Formula1.com . 20 October 2022 . Retrieved 22 October 2022 .
-↑ Grandprix.com. "Haas to stick with Ferrari amid engine crisis" . grandprix.com . Archived from the original on 30 August 2020 . Retrieved 30 August 2020 .
-↑ McDonagh, Connor (16 July 2024). "Haas extend Ferrari technical partnership until the end of 2028 F1 season | F1 | Crash" . Crash.net . Retrieved 16 July 2024 .
-↑ Smith, Luke (27 August 2025). "Why McLaren F1 finally said yes to Mastercard after a decade without a title sponsor" . The Athletic . The New York Times . ISSN 0362-4331 . Retrieved 27 August 2025 .
-↑ "McLaren Formula 1 Team and Mercedes-Benz renew power unit agreement until 2030" . McLaren . 24 November 2023 . Retrieved 22 December 2025 .
-↑ "F1: Norris assina extensão de contrato multianual com a McLaren" [ F1: Norris signs multi-year contract extension with McLaren ] . motorsport.uol.com.br (in Portuguese). 26 January 2024 . Retrieved 26 January 2024 .
-↑ Phillips, Ryan (11 March 2025). "McLaren Locks Up Budding Star Driver With Multi-Year Contract Extension" . Sports Illustrated . Minute Media . ISSN 0038-822X . Archived from the original on 12 March 2025 . Retrieved 27 April 2025 .
-↑ Noble, Jonathan (28 September 2022). "Mercedes signs early Petronas deal extension ahead of new F1 2026 rules" . us.motorsport.com . Retrieved 24 April 2024 .
-↑ "AlphaTauri's new name for 2024 is confirmed" . www.formula1.com . 24 January 2024 . Retrieved 25 January 2024 .
-1 2 "Ford Returns To Formula 1; Strategic Partner To Oracle Red Bull Racing For 2026 Season And Beyond | Ford Media Center" . media.ford.com . Retrieved 8 May 2024 . Red Bull Ford will provide the power units for both the Oracle Red Bull Racing and Scuderia AlphaTauri teams from 2026 to at least 2030.
-↑ "Acordo Red Bull/Oracle é "o maior na história da F1" " [ The Red Bull/Oracle deal is "the biggest in F1 history" ] (in Portuguese). www.autoracing.com.br. 10 February 2022 . Retrieved 25 January 2024 .
-↑ "Verstappen extends Red Bull deal to 2030" . bbc.com . 20 August 2026 . Retrieved 16 September 2026 .
-↑ "Red Bull announce new deal with Hadjar for 2027 ahead of his return in Azerbaijan" . Formula 1.com. 23 September 2026 . Retrieved 23 September 2026 .
-↑ "Ocon confirms he will leave Haas at end of 2026 season" . Formula 1.com. 30 September 2026 . Retrieved 30 September 2026 .
-1 2 3 "Formula 1 reveals calendar for 2027 season with 10 Sprint events" . Formula 1 . 16 September 2026 . Retrieved 16 September 2026 .
-↑ Barretto, Lawrence (16 September 2026). "What's new with the F1 Sprint in 2027?" . Formula 1 . Retrieved 29 September 2026 .
-↑ "Formula 1 to celebrate final Dutch Grand Prix in 2026" . Formula 1 . Archived from the original on 4 December 2024 . Retrieved 4 December 2024 .
-↑ "F1 announces multi-year extension with the Circuit de Barcelona-Catalunya to race in rotation with Circuit de Spa-Francorchamps" . Formula One . 16 February 2026 . Retrieved 16 February 2026 .
-↑ Noble, Jon (29 July 2026). "The latest on F1 calendar chaos and 2027 season opener" . The Race . Retrieved 20 August 2026 .
-↑ "FIA's WMSC ratifies F1 regulatory changes for 2027 and 2028" . Formula 1 . 23 June 2026 . Retrieved 13 September 2026 .
-↑ "F1 Grand Prix distances set to be reduced for 2027 season along with introduction of 'hard stop' time on race days" . Sky Sports . 21 September 2026 . Retrieved 22 September 2026 .
-↑ Nichol, Jake (3 March 2026). "What is super clipping in F1 and how does it work?" . RacingNews365 . Retrieved 13 September 2026 .
-1 2 "Regulatory changes for 2026 and 2027 agreed at latest F1 Commission meeting" . Formula One Management. 21 September 2026 . Retrieved 21 September 2026 .
-↑ "F1 Live to return in 2027 with unmissable three-day fan event in Milan" . Formula One Management. 4 September 2026 . Retrieved 19 September 2026 .
+1 2 "Chart of the 2024 Preakness Stakes" . Equibase . May 18, 2024. Archived from the original on August 12, 2024 . Retrieved May 19, 2024 .
+↑ Preakness 148 (MAY 2023). Preakness Weekend 2023 - May 19–20. Pimlico Race Course, 5201 Park Heights Ave., Baltimore, MD 21215 USA. Archived May 3, 2021, at the Wayback Machine
+↑ Terrell, Katherine - ESPN Staff Writer (May 19, 2023). 2023 Preakness: Date, time, odds, jockeys, betting tips. ESPN . Archived May 20, 2023, at the Wayback Machine
+↑ Schwartz, Tim, and Walker, Childs (May 19, 2023). 2023 Preakness: Here’s what to know, including post time, who’s racing, draws and odds, Preakness LIVE information and more. Baltimore Sun.
+↑ Preakness 148 (MAY 2023). Black-Eyed Susan - May 19, Preakness Weekend 2023 - May 19–20. Pimlico Race Course, 5201 Park Heights Ave., Baltimore, MD 21215 USA. Archived May 3, 2021, at the Wayback Machine
+↑ "Preakness Stakes – Preakness Origins" . preakness-stakes.info . Archived from the original on May 2, 2015 . Retrieved May 18, 2015 .
+↑ Dandrea, Phil (2010). Sham: Great Was Second Best . Acanthus Publishing. ISBN 978-0-9842173-3-5 . Archived from the original on December 1, 2018 . Retrieved September 22, 2011 .
+↑ Pick, William; Johnson, R. (1803). The Turf Register (Volume I) . A. Bartholoman, High-Ousegate.
+↑ "Rogers, Mike. "History Fills Old Hilltop", PressBox (Baltimore), April 2009" . Archived from the original on June 12, 2012 . Retrieved April 16, 2009 .
+1 2 3 Sowers, Richard B. The Kentucky Derby, Preakness, and Belmont: A Comprehensive History
+↑ "Preakness Stakes – History" . preakness-stakes.info . Archived from the original on April 13, 2015 . Retrieved May 18, 2015 .
+↑ "Md. legislators OK billon buying Preakness Stakes" . The Courier-Journal . Retrieved May 18, 2015 .
+↑ Walker, Childs (May 17, 2017). "Preakness 2017: Shifting the Preakness from Pimlico to Laurel Park might not be such a long shot" . The Baltimore Sun . Archived from the original on May 22, 2017 . Retrieved June 1, 2017 .
+↑ Barker, Jeff; Wood, Pamela (October 5, 2019). " 'Historic' deal aims to keep Preakness in Baltimore; track owner, city reach agreement after 4 months of talks" . The Baltimore Sun . Archived from the original on October 6, 2019 . Retrieved October 6, 2019 .
+↑ Hegarty, Matt (October 5, 2019). "Coalition lays out plan for major redevelopment of Pimlico, Laurel" . drf.com . Daily Racing Form. Archived from the original on October 6, 2019 . Retrieved October 6, 2019 .
+↑ "Pimlico to be renovated, keep Preakness after bill passes" . NBC . May 9, 2020. Archived from the original on August 6, 2020 . Retrieved May 10, 2020 .
+↑ "145th Preakness Stakes date set in October" . WBAL . May 16, 2020. Archived from the original on May 21, 2020 . Retrieved May 16, 2020 .
+↑ "Preakness to be run without fans as Maryland continues to cope with coronavirus pandemic" . Baltimore Sun . September 2, 2020. Archived from the original on September 3, 2020 . Retrieved September 2, 2020 .
+↑ Witte, Brian (April 8, 2024). "Maryland lawmakers OK plan to rebuild Pimlico Race Course, home of the Preakness" . Associated Press. Archived from the original on April 9, 2024 . Retrieved April 9, 2024 .
+↑ "Preakness Stakes to Move to Laurel Park in 2026 During $14.3M Pimlico Renovation" . BZNews . May 21, 2025. Archived from the original on June 16, 2025 . Retrieved May 22, 2025 .
+1 2 Walker, Childs (December 30, 2024). "Maryland thoroughbred horse racing prepares to step into its future in 2025" . timeswv.com . Baltimore Sun. Archived from the original on January 3, 2025 . Retrieved January 2, 2025 .
+↑ Hegarty, Matt (April 21, 2026). "Churchill buys Preakness intellectual property rights from 1/ST Racing" . Daily Racing Form . Retrieved April 21, 2026 .
+↑ Angst, Frank (April 21, 2026). "Churchill Downs Inc. Purchases Preakness Stakes" . The Blood-Horse . Retrieved April 21, 2026 .
+↑ Sanderlin, Lee O.; Gardner, Hayes (June 18, 2026). "Maryland matches Churchill Downs' $85 million offer for Preakness IP" . The Baltimore Banner . Retrieved June 18, 2026 .
+↑ Turf'n'Sport Archived April 29, 2011, at the Wayback Machine , Retrieved on May 4, 2009.
+↑ Kalland, Robby (August 5, 2026). "Preakness Stakes to be held on Sunday, one week later than normal, to hopefully get more Triple Crown entrants" . CBS Sports . Retrieved August 5, 2026 .
+↑ Crane, Steve (August 4, 2026). "Preakness, Pimlico left out of new race series by Churchill Downs, Belmont" . Maryland Matters . Retrieved August 5, 2026 .
+↑ Rodricks, Dan. "Just one verse of state song to be aired" . The Baltimore Sun . Retrieved September 30, 2014 .
+↑ Brunelli, Laureen Miles. "Maryland, My Maryland" . Archived from the original on October 6, 2014 . Retrieved September 30, 2014 .
+↑ Ginsburg, David (October 3, 2020). "Preakness 2020: No fans, no traffic, no booze, no May heat" . AP . Archived from the original on October 8, 2020 . Retrieved October 3, 2020 .
+↑ Vespe, Frank (September 10, 2020). "Preakness: No More 'Maryland, My Maryland' " . bloodhorse.com . Archived from the original on October 7, 2020 . Retrieved October 3, 2020 .
+↑ "Maryland state song, which refers to Lincoln as "tyrant" and urges secession, is repealed" . CBS News. May 20, 2021 . Retrieved May 26, 2021 .
+↑ "Preakness Stakes – Weather Vane" . preakness-stakes.info . Retrieved May 18, 2015 .
+↑ Human Flower Project Archived May 17, 2019, at the Wayback Machine , Retrieved on May 4, 2009.
+↑ "Preakness Stakes – Black Eyed Susan" . preakness-stakes.info . Archived from the original on May 12, 2015 . Retrieved May 18, 2015 .
+↑ "Preakness Stakes – Woodlawn Vase" . preakness-stakes.info . Archived from the original on May 2, 2015 . Retrieved May 18, 2015 .
+↑ Reimer, Susan "Neither Susans nor daisies" The Baltimore Sun , Friday, May 16, 2014
+↑ David Klatt, The Secret Behind the Preakness' Black-Eyed Susan Blanket Archived June 24, 2009, at the Wayback Machine May 14, 2009.
+↑ The Black-Eyed Susan Blanket Archived April 19, 2009, at the Wayback Machine . Accessed 2009.05.14.
+1 2 "Preakness purse increased to $1.5 million – Handicappers' Edge" . brisnet.com . December 13, 2013. Archived from the original on June 4, 2015 . Retrieved May 18, 2015 .
+1 2 Elbow Room in the Infield Archived January 5, 2014, at the Wayback Machine The New York Times , May 16, 2009
+1 2 "At Preakness, Not Everybody's Idea of Fun" , The New York Times , May 17, 2011
+1 2 Mihoces, Gary. "Preakness Stakes mascot Kegasus defends image" Archived May 21, 2011, at the Wayback Machine . USA Today , May 16, 2011. Retrieved on May 18, 2011.
+↑ "Kegasus, the beer-guzzling Preakness mascot, unlikely to return in 2013" Archived August 17, 2016, at the Wayback Machine , Baltimore Business Journal , February 25, 2013
+↑ "A guide to attending the 139th Preakness" Archived May 9, 2015, at the Wayback Machine , The Washington Post , May 13, 2014.
+↑ Hegarty, Matt (June 19, 2012). "Secretariat awarded Preakness record at 1:53 after review" . Daily Racing Form . Archived from the original on March 24, 2016 . Retrieved June 19, 2012 .
+↑ Haskin, Steve. "Viva Big Red!" . cs.bloodhorse.com . Archived from the original on January 17, 2025 . Retrieved July 17, 2016 .
+↑ "STAKES Preakness S. Grade 1 - Thorougbred" (PDF) . Equibase . May 16, 2026 . Retrieved May 16, 2026 .
+↑ "Chart of the 2025 Preakness Stakes" . Equibase . May 17, 2025. Archived from the original on May 20, 2025 . Retrieved May 18, 2025 .
+↑ "Chart of the 2023 Preakness Stakes" . Equibase . May 20, 2023.
+↑ "Chart of the 2022 Preakness Stakes" . Equibase . May 21, 2022. Archived from the original on May 22, 2022 . Retrieved May 22, 2022 .
+↑ "Chart of the 2021 Preakness Stakes" . Equibase . May 15, 2021. Archived from the original on October 29, 2021 . Retrieved May 15, 2021 .
+↑ "Chart of the 2020 Preakness Stakes" . Equibase . October 3, 2020 . Retrieved October 3, 2020 .
+↑ "Chart of the 2019 Preakness Stakes" . Equibase . May 18, 2019. Archived from the original on October 22, 2020 . Retrieved May 19, 2019 .
+↑ "Chart of the 2018 Preakness Stakes" . Equibase . May 19, 2018. Archived from the original on September 30, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2017 Preakness Stakes" . Equibase . May 20, 2017. Archived from the original on October 17, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2016 Preakness Stakes" . Equibase . May 21, 2016.
+↑ "Chart of the 2015 Preakness Stakes" . Equibase . May 16, 2015.
+↑ "Chart of the 2014 Preakness Stakes" . Equibase . May 17, 2014. Archived from the original on October 20, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2013 Preakness Stakes" . Equibase . May 18, 2013. Archived from the original on October 22, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2012 Preakness Stakes" . Equibase . May 19, 2012. Archived from the original on October 17, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2011 Preakness Stakes" . Equibase . May 21, 2011. Archived from the original on October 21, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2010 Preakness Stakes" . Equibase . May 15, 2010. Archived from the original on October 18, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2009 Preakness Stakes" . Equibase . May 16, 2009. Archived from the original on October 23, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2008 Preakness Stakes" . Equibase . May 17, 2008. Archived from the original on October 19, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2007 Preakness Stakes" . Equibase . May 19, 2007. Archived from the original on September 30, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2006 Preakness Stakes" . Equibase . May 20, 2006. Archived from the original on October 22, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2005 Preakness Stakes" . Equibase . May 21, 2005. Archived from the original on October 22, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2004 Preakness Stakes" . Equibase . May 15, 2004. Archived from the original on October 18, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2003 Preakness Stakes" . Equibase . May 17, 2003. Archived from the original on October 22, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2002 Preakness Stakes" . Equibase . May 18, 2002. Archived from the original on October 21, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2001 Preakness Stakes" . Equibase . May 19, 2001. Archived from the original on October 22, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 2000 Preakness Stakes" . Equibase . May 20, 2000. Archived from the original on October 17, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 1999 Preakness Stakes" . Equibase . May 15, 1999. Archived from the original on October 21, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 1998 Preakness Stakes" . Equibase . May 16, 1998. Archived from the original on October 22, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 1997 Preakness Stakes" . Equibase . May 17, 1997. Archived from the original on October 17, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 1996 Preakness Stakes" . Equibase . May 18, 1996. Archived from the original on October 17, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 1995 Preakness Stakes" . Equibase . May 20, 1995. Archived from the original on October 20, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 1994 Preakness Stakes" . Equibase . May 21, 1994. Archived from the original on October 22, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 1993 Preakness Stakes" . Equibase . May 15, 1993. Archived from the original on October 22, 2020 . Retrieved October 4, 2020 .
+↑ "Chart of the 1992 Preakness Stakes" . Equibase . May 16, 1992.
+↑ "Chart of the 1991 Preakness Stakes" . Equibase . May 18, 1991. Archived from the original on October 23, 2020 . Retrieved October 4, 2020 .
+↑ Durso, Joseph (June 11, 1995). "Thunder Gulch, Only No. 2, Brings Lukas a Triple" . The New York Times . Archived from the original on August 19, 2016 . Retrieved July 17, 2016 .
+↑ "Sire Lines" . www.bloodlines.net . Archived from the original on April 22, 2021 . Retrieved April 20, 2021 .
+↑ "Sire Lines King Fergus" . www.bloodlines.net . Archived from the original on February 3, 2021 . Retrieved April 20, 2021 .
+↑ "St. Simon Sire Line" . www.bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Pleasant Colony Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ "Pot8os Sire Line" . www.bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Birdcatcher Sire Line" . www.bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Stockwell Sire Line" . www.bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Bend Or Sire Line" . www.bloodlines.net . Archived from the original on April 1, 2022 . Retrieved April 20, 2021 .
+1 2 3 "Phalaris Sire Line" . www.bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Nearco Sire Line" . www.bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Camel Sire Line" . www.bloodlines.net . Archived from the original on April 22, 2021 . Retrieved May 23, 2021 .
+↑ "Himyar's Other Line" . cs.bloodhorse.com . Archived from the original on May 23, 2021 . Retrieved May 23, 2021 .
+↑ "Carry Back Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ The Parader Pedigree
+1 2 "Assault Pedigree" . Archived from the original on April 19, 2021 . Retrieved July 3, 2021 .
+↑ "Damascus Pedigree" . Archived from the original on July 11, 2021 . Retrieved July 3, 2021 .
+↑ "Thoroughbred Bloodlines Sire Lines Byerley Turk" . www.bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Thoroughbred Bloodlines Sire Lines Byerley Turk King Herod" . www.bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Thoroughbred Bloodlines Sire Lines Byerley Turk King Herod Buzzard Selim" . www.bloodlines.net . Archived from the original on April 20, 2021 . Retrieved April 20, 2021 .
+↑ "Montague" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ "Tom Ochiltree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ Shirley
+↑ "Cloverbrook" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ "Duke of Magenta" . Archived from the original on July 11, 2021 . Retrieved July 3, 2021 .
+↑ Dunboyne
+↑ "Hindus" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ "Kalitan" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ "Survivor" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ "Vanguard" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ "Buddhist" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ Half Time
+↑ Buskin
+↑ "Matchem Sire Line" . www.bloodlines.net . Archived from the original on February 26, 2021 . Retrieved July 3, 2021 .
+↑ Tecumseh
+↑ "Assignee" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ Don Enrique
+↑ "Man O War" . Archived from the original on July 11, 2021 . Retrieved July 3, 2021 .
+↑ "Display" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ "Head Play" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "War Admiral Pedigree" . Archived from the original on April 21, 2021 . Retrieved July 3, 2021 .
+↑ Native Dancer Pedigree
+1 2 "Kauai King Pedigree" . Archived from the original on May 22, 2021 . Retrieved July 3, 2021 .
+1 2 Majestic Prince Pedigree
+1 2 Little Current Pedigree
+1 2 "Affirmed Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "Tanks Prospect Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "Alysheba Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "Hansel Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "Timber Country Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 Real Quiet Pedigree
+1 2 "Red Bullet Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "Point Given Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "War Emblem Pedigree" . Archived from the original on July 11, 2021 . Retrieved July 3, 2021 .
+1 2 "Funny Cide Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "Smarty Jones Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "Afleet Alex Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "Curlin Pedigree" . Archived from the original on July 10, 2021 . Retrieved July 3, 2021 .
+1 2 "Lookin at Lucky Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 I'll Have Another Pedigree
+1 2 "American Pharoah Pedigree" . Archived from the original on April 19, 2021 . Retrieved July 3, 2021 .
+1 2 3 "Exaggerator Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "Cloud Computing Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 Rombauer Pedigree
+1 2 "Early Voting Pedigree" . Archived from the original on May 25, 2022 . Retrieved May 23, 2022 .
+1 2 "National Treasure Pedigree" . Archived from the original on May 21, 2023 . Retrieved May 21, 2023 .
+↑ "Gate Dancer Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ Summer Squall Pedigree
+↑ "Pine Bluff Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ Tabasco Cat Pedigree
+↑ "Charismatic Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 "Charismatic Pedigree" . Archived from the original on April 19, 2021 . Retrieved July 3, 2021 .
+↑ "Big Brown Pedigree" . Archived from the original on April 19, 2021 . Retrieved July 3, 2021 .
+↑ "Rachel Alexandra Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ Shackleford Pedigree
+↑ "Oxbow Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ "Justify Pedigree" . Archived from the original on April 19, 2021 . Retrieved July 3, 2021 .
+↑ "War of Will Pedigree" . Archived from the original on July 11, 2021 . Retrieved July 3, 2021 .
+↑ "Secretariat Pedigree" . Archived from the original on November 16, 2018 . Retrieved July 3, 2021 .
+↑ "Master Derby Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+↑ "Seattle Slew Pedigree" . Archived from the original on July 11, 2021 . Retrieved July 3, 2021 .
+↑ "Spectacular Bid Pedigree" . Archived from the original on July 9, 2021 . Retrieved July 3, 2021 .
+1 2 Risen Star Pedigree
+1 2 Bernardini Pedigree
+1 2 "California Chrome Pedigree" . Archived from the original on April 19, 2021 . Retrieved July 3, 2021 .
+↑ "Omaha Pedigree" . Archived from the original on April 19, 2021 . Retrieved July 3, 2021 .
+↑ Fabius Pedigree
 External links
 [ edit ]
-Formula One portal
+Wikimedia Commons has media related to Preakness Stakes .
+Official website
 v
 t
 e
-Formula One seasons
-1950s
+Preakness Stakes
+Pimlico
+1873
+1874
+1875
+1876
+1877
+1878
+1879
+1880
+1881
+1882
+1883
+1884
+1885
+1885
+1886
+1888
+1889
+Morris Park
+1890 (1891–1893 race not run)
+Gravesend
+1894
+1895
+1896
+1897
+1898
+1899
+1900
+1901
+1902
+1903
+1904
+1905
+1906
+1907
+Pimlico
+1908
+1909
+1910
+1911
+1912
+1913
+1914
+1915
+1916
+1917
+1918
+1919
+1920
+1921
+1922
+1923
+1924
+1925
+1926
+1927
+1928
+1929
+1930
+1931
+1932
+1933
+1934
+1935
+1936
+1937
+1938
+1939
+1940
+1941
+1942
+1943
+1944
+1945
+1946
+1947
+1948
+1949
 1950
 1951
 1952
@@ -413,7 +1832,6 @@ Formula One seasons
 1957
 1958
 1959
-1960s
 1960
 1961
 1962
@@ -424,7 +1842,6 @@ Formula One seasons
 1967
 1968
 1969
-1970s
 1970
 1971
 1972
@@ -435,7 +1852,6 @@ Formula One seasons
 1977
 1978
 1979
-1980s
 1980
 1981
 1982
@@ -446,7 +1862,6 @@ Formula One seasons
 1987
 1988
 1989
-1990s
 1990
 1991
 1992
@@ -457,7 +1872,6 @@ Formula One seasons
 1997
 1998
 1999
-2000s
 2000
 2001
 2002
@@ -468,7 +1882,6 @@ Formula One seasons
 2007
 2008
 2009
-2010s
 2010
 2011
 2012
@@ -479,93 +1892,564 @@ Formula One seasons
 2017
 2018
 2019
-2020s
 2020
 2021
 2022
 2023
 2024
 2025
-2026
-2027
+Laurel Park 2026
+Related
+Top four finishers
+Broadcasters
+" Maryland, My Maryland "
+Woodlawn Vase
+Triple Crown
+Preakness Stakes Winners
 v
 t
 e
-World championships in 2027
-Summer sports and
-indoor sports
-Aquatics
-artistic swimming
-diving
-high diving
-open water swimming
-swimming
-water polo
-Association football (women)
-Athletics
-Baseball
-Men
-Women
-Basketball
-M 3x3
-W 3x3
-Canoeing
-slalom
-sprint
-Cricket
-Handball
-men
-women
-Netball
-Rowing
-Rugby
-Sailing
-Softball (women's)
-Table tennis
-Volleyball
-men
-women
-Winter sport
-Alpine skiing
-Biathlon
-Freestyle skiing
-Nordic skiing
-Short track speed skating
-Snowboarding
-Speed skating
-Cue and mind sports
-Chess
-women
-Snooker
-open
-Motor sports
-Endurance auto racing
-Formula E
-Formula One
-MotoGP
-Moto2
-Moto3
-Bagger World Cup
-Superbike
-Supersport
-Sportbike
-Women
-Speedway
-Grand Prix
-Rally
-Retrieved from " https://en.wikipedia.org/w/index.php?title=2027_Formula_One_World_Championship&oldid=1380083939 "
-Categories : 2027 in Formula One
-2027 in formula racing
-Formula One seasons
-Scheduled motorsport seasons
+Preakness Stakes winners
+1870s
+1873 Survivor
+1874 Culpepper
+1875 Tom Ochiltree
+1876 Shirley
+1877 Cloverbrook
+1878 Duke of Magenta
+1879 Harold
+1880s
+1880 Grenada
+1881 Saunterer
+1882 Vanguard
+1883 Jacobus
+1884 Knight of Ellerslie
+1885 Tecumseh
+1886 The Bard
+1887 Dunboyne
+1888 Refund
+1889 Buddhist
+1890s
+1890 Montague
+1894 Assignee
+1895 Belmar
+1896 Margrave
+1897 Paul Kauvar
+1898 Sly Fox
+1899 Half Time
+1900s
+1900 Hindus
+1901 The Parader
+1902 Old England
+1903 Flocarline ♥
+1904 Bryn Mawr
+1905 Cairngorm
+1906 Whimsical ♥
+1907 Don Enrique
+1908 Royal Tourist
+1909 Effendi
+1910s
+1910 Layminster
+1911 Watervale
+1912 Colonel Holloway
+1913 Buskin
+1914 Holiday
+1915 Rhine Maiden ♥
+1916 Damrosch
+1917 Kalitan
+1918 War Cloud
+1918 Jack Hare Jr.
+1919 Sir Barton ₩
+1920s
+1920 Man o' War
+1921 Broomspun
+1922 Pillory
+1923 Vigil
+1924 Nellie Morse ♥
+1925 Coventry
+1926 Display
+1927 Bostonian
+1928 Victorian
+1929 Dr. Freeland
+1930s
+1930 Gallant Fox ₩
+1931 Mate
+1932 Burgoo King
+1933 Head Play
+1934 High Quest
+1935 Omaha ₩
+1936 Bold Venture
+1937 War Admiral ₩
+1938 Dauber
+1939 Challedon
+1940s
+1940 Bimelech
+1941 Whirlaway ₩
+1942 Alsab
+1943 Count Fleet ₩
+1944 Pensive
+1945 Polynesian
+1946 Assault ₩
+1947 Faultless
+1948 Citation ₩
+1949 Capot
+1950s
+1950 Hill Prince
+1951 Bold
+1952 Blue Man
+1953 Native Dancer
+1954 Hasty Road
+1955 Nashua
+1956 Fabius
+1957 Bold Ruler
+1958 Tim Tam
+1959 Royal Orbit
+1960s
+1960 Bally Ache
+1961 Carry Back
+1962 Greek Money
+1963 Candy Spots
+1964 Northern Dancer
+1965 Tom Rolfe
+1966 Kauai King
+1967 Damascus
+1968 Forward Pass
+1969 Majestic Prince
+1970s
+1970 Personality
+1971 Canonero II
+1972 Bee Bee Bee
+1973 Secretariat ₩
+1974 Little Current
+1975 Master Derby
+1976 Elocutionist
+1977 Seattle Slew ₩
+1978 Affirmed ₩
+1979 Spectacular Bid
+1980s
+1980 Codex
+1981 Pleasant Colony
+1982 Aloma's Ruler
+1983 Deputed Testamony
+1984 Gate Dancer
+1985 Tank's Prospect
+1986 Snow Chief
+1987 Alysheba
+1988 Risen Star
+1989 Sunday Silence
+1990s
+1990 Summer Squall
+1991 Hansel
+1992 Pine Bluff
+1993 Prairie Bayou
+1994 Tabasco Cat
+1995 Timber Country
+1996 Louis Quatorze
+1997 Silver Charm
+1998 Real Quiet
+1999 Charismatic
+2000s
+2000 Red Bullet
+2001 Point Given
+2002 War Emblem
+2003 Funny Cide
+2004 Smarty Jones
+2005 Afleet Alex
+2006 Bernardini
+2007 Curlin
+2008 Big Brown
+2009 Rachel Alexandra ♥
+2010s
+2010 Lookin At Lucky
+2011 Shackleford
+2012 I'll Have Another
+2013 Oxbow
+2014 California Chrome
+2015 American Pharoah ₩
+2016 Exaggerator
+2017 Cloud Computing
+2018 Justify ₩
+2019 War of Will
+2020s
+2020 Swiss Skydiver ♥
+2021 Rombauer
+2022 Early Voting
+2023 National Treasure
+2024 Seize the Grey
+2025 Journalism
+2026 Napoleon Solo
+Legend – ₩ = Triple Crown Winners, ♥ = Filly
+v
+t
+e
+Triple Crowns and Grand Slams of horse racing
+Thoroughbreds
+England
+Triple Crown
+2000 Guineas Stakes
+Epsom Derby
+St Leger Stakes
+Fillies
+1,000 Guineas Stakes
+Epsom Oaks
+St. Leger Stakes
+Stayers
+Ascot Gold Cup
+Goodwood Cup
+Doncaster Cup
+United States
+Triple Crown
+Kentucky Derby
+Preakness Stakes
+Belmont Stakes
+Grand Slam
+Triple Crown and Travers Stakes or Breeders' Cup Classic
+Fillies
+Kentucky Oaks
+Black-Eyed Susan Stakes
+Acorn Stakes
+Triple Tiara
+Acorn Stakes
+Mother Goose Stakes
+Coaching Club American Oaks
+Handicap
+Metropolitan Handicap
+Brooklyn Handicap
+Suburban Handicap
+Turf Trinity
+Belmont Derby
+Saratoga Derby Invitational Stakes
+Jockey Club Derby
+Turf Tiara
+Belmont Oaks
+Saratoga Oaks Invitational Stakes
+Jockey Club Oaks
+Grand Slam
+of Grass
+Colonial Turf Cup
+Virginia Derby
+Secretariat Stakes
+Breeders' Cup Turf
+Australia
+Australia
+Randwick Guineas
+Rosehill Guineas
+Australian Derby
+Spring Grand
+Slam
+Caulfield Cup
+Cox Plate
+Melbourne Cup
+Two Year Old
+Golden Slipper Stakes
+Sires Produce Stakes
+Champagne Stakes
+Canada
+Triple Crown
+King's Plate
+Prince of Wales Stakes
+Breeders' Stakes
+Triple Tiara
+Woodbine Oaks
+Bison City Stakes
+Wonder Where Stakes
+France
+Triple Crown
+Poule d'Essai des Poulains
+Prix du Jockey Club
+Grand Prix de Paris
+Fillies
+Poule d'Essai des Pouliches
+Prix de Diane
+Prix Vermeille
+Germany
+Triple Crown
+Mehl-Mülhens-Rennen
+Deutsches Derby
+Deutsches St. Leger
+Hong Kong
+Triple Crown
+Hong Kong Stewards' Cup
+Hong Kong Gold Cup
+Hong Kong Champions & Chater Cup
+Speed
+Centenary Sprint Cup
+Queen's Silver Jubilee Cup
+Chairman's Sprint Prize
+Four Year Old
+Hong Kong Classic Mile
+Hong Kong Classic Cup
+Hong Kong Derby
+Ireland
+Triple Crown
+Irish 2,000 Guineas
+Irish Derby
+Irish St. Leger
+Italy
+Triple Crown
+Premio Parioli
+Derby Italiano
+St. Leger Italiano
+Fillies
+Premio Regina Elena
+Japan
+Triple Crown
+Satsuki Shō
+Tokyo Yūshun
+Kikuka-shō
+Fillies
+Oka Shō
+Yushun Himba
+Shūka Shō
+Dirt Triple
+Crown
+Haneda Hai
+Tokyo Derby
+Japan Dirt Classic
+New Zealand
+Triple Crown
+Tarzino Trophy
+Horlicks Plate
+Livamol Spring Classic
+WFA
+Zabeel Classic
+Herbie Dyke Stakes
+New Zealand Stakes
+Sprint
+Railway Stakes
+Telegraph Stakes
+Waikato Sprint
+Fillies & Mares
+Cuddle Stakes
+Breeders Stakes
+Travis Stakes
+Uruguay
+Triple Crown
+Gran Premio Polla de Potrillos
+Gran Premio Jockey Club
+Gran Premio Nacional
+Others
+Americas
+Argentina
+Gran Premio Polla de Potrillos
+Barbados
+Brazil
+Chile
+Dominican Republic
+Clásico El Ensayo
+Ecuador
+Jamaica
+Mexico
+Panama
+Peru
+Derby Nacional
+Puerto Rico
+Trinidad and Tobago
+Venezuela
+Africa
+Kenya
+Asia
+India
+Indian Derby
+Indonesia
+Indonesia Derby
+Macau
+Philippines
+Europe
+Belgium
+Denmark
+Hungary
+The Netherlands
+Norway
+Poland
+Spain
+Switzerland
+Sweden
+Turkey
+Gazi Derby
+Harness
+United States
+Pacers
+Cane Pace
+Messenger Stakes
+Little Brown Jug
+Trotters
+Hambletonian
+Yonkers Trot
+Kentucky Futurity
+France
+Trotters
+Prix d'Amérique
+Undefeated Winners • Individual Winners • Back-to-Back Winning Jockeys • Winningest Jockeys
+v
+t
+e
+City of Baltimore
+Topics
+Accent
+Culture
+Crime
+Ethnicities
+Events
+Film
+Flag
+Seal
+Markets
+Media
+Music
+Neighborhoods
+People
+Attractions
+Churches
+Federal Hill
+Fells Point
+Fort McHenry
+Harborplace
+The Gallery at Harborplace
+Harborplace Redevelopment
+Renaissance Baltimore Harborplace Hotel
+Harborplace Tower
+Inner Harbor
+Johns Hopkins Hospital
+Museums
+Baltimore Museum of Art
+Baltimore Streetcar Museum
+Public art
+Maryland Center for History and Culture
+Maryland Science Center
+Mount Vernon
+National Aquarium
+National Museum of Railroad History & Innovation
+Port Discovery
+Ships
+Skyscrapers
+Walters Art Museum
+Washington Monument
+Zoo
+Entertainment
+Arch Social Club
+Charm City Art Space
+Hammerjack's
+Hippodrome
+Lithuanian Hall
+MECU-Pier Six
+Meyerhoff Symphony Hall
+Lyric
+Ottobar
+Power Plant Live!
+Nevermore Hall
+Education
+Enoch Pratt Free Library
+Baltimore City Public Schools
+Private Schools
+Colleges and Universities
+City Community College
+Baltimore Underground Science Space (BUGSS)
+Government
+Mayor ( Brandon Scott )
+City Council
+Comptroller (William B. Henry II)
+City Hall
+Delegates
+Senators
+Archives
+Courts
+Fire
+Health
+Police
+Sheriff's Office
+State's Attorney
+Transportation
+State Agencies
+History
+National Register sites
+Baltimore City Landmarks
+Historical timeline
+Battle of Baltimore
+Defenders Day
+Baltimore bank riot
+Riot of 1861
+Baltimore Crew
+Great Baltimore Fire
+Fort Holabird
+Riot of 1968
+Howard Street Tunnel fire
+2015 Baltimore protests
+Francis Scott Key Bridge collapse
+Industry
+Back River Wastewater Treatment Plant
+Baltimore and Ohio Railroad
+Bethlehem Steel
+Constellation
+CoverGirl
+DeBaufre Bakeries
+Hecht's
+Grace
+JoS. A. Bank Clothiers
+Legg Mason
+McCormick & Company
+Schmidt Bakeries
+T. Rowe Price
+Royal Farms
+Under Armour
+Parks
+Carroll
+Clifton
+Cylburn
+Druid Hill
+Gwynns Falls
+Leakin
+Herring Run
+Patterson
+Sherwood
+Wyman
+Robert Baker
+Sports
+Orioles ( Camden Yards )
+Ravens ( M&T Bank Stadium )
+Blast ( TU Arena )
+Marathon
+Baltimore Grand Prix
+Johns Hopkins men's lacrosse and women's lacrosse ( Homewood Field )
+Kinetic Race
+Maryland Cycling Classic
+Preakness ( Pimlico Race Course )
+Transportation
+Metro SubwayLink
+Light RailLink
+Buses
+MARC Train
+Penn Station
+BWI Marshall Airport
+Martin State Airport
+Port of Baltimore
+Baltimore Belt Line
+Misc.
+Baltimore metropolitan area
+Baltimore–Washington metropolitan area
+Baltimore portal
+Category
+Retrieved from " https://en.wikipedia.org/w/index.php?title=Preakness_Stakes&oldid=1377475375 "
+Categories : Preakness Stakes
+United States Triple Crown of Thoroughbred Racing
+Grade 1 stakes races in the United States
+Flat horse races for three-year-olds
+Pimlico Race Course
+Horse races in Maryland
+Horse races established in 1873
+1873 establishments in Maryland
+Sports competitions in Baltimore
+Annual sporting events in the United States
+May in sports
 Hidden categories: Articles with short description
-Short description matches Wikidata
-Use dmy dates from August 2026
-CS1 Spanish-language sources (es)
-CS1 maint: numeric names: authors list
-CS1 maint: url-status
-CS1 Portuguese-language sources (pt)
-This page was last edited on 13 October 2026, at 18:01 (UTC) .
+Short description is different from Wikidata
+Use American English from May 2026
+All Wikipedia articles written in American English
+Use mdy dates from September 2026
+Webarchive template wayback links
+Commons category link from Wikidata
+Official website not in Wikidata
+This page was last edited on 29 September 2026, at 15:52 (UTC) .
 Page was rendered with Parsoid .
 Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
 additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
@@ -582,9 +2466,9 @@ Mobile view
 Search
 Search
 Toggle the table of contents
-2027 Formula One World Championship
-19 languages
+Preakness Stakes
+12 languages
 Add topic
 
 --- embedded JSON ---
-{"@context":"https:\/\/schema.org","@type":"Article","name":"2027 Formula One World Championship","url":"https:\/\/en.wikipedia.org\/wiki\/2027_Formula_One_World_Championship","sameAs":"http:\/\/www.wikidata.org\/entity\/Q115942643","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q115942643","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2023-01-19T18:13:29Z","dateModified":"2026-10-13T18:01:35Z","headline":"scheduled Formula One season"}
+{"@context":"https:\/\/schema.org","@type":"Article","name":"Preakness Stakes","url":"https:\/\/en.wikipedia.org\/wiki\/Preakness_Stakes","sameAs":"http:\/\/www.wikidata.org\/entity\/Q1856617","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q1856617","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2002-07-16T15:31:07Z","dateModified":"2026-09-29T15:52:48Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/commons\/4\/45\/147th_Preakness_Stakes_%2852094131900%29.jpg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"horse race in Baltimore, Maryland, USA"}
