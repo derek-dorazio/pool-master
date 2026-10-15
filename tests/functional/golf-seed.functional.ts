@@ -72,6 +72,10 @@ async function cleanup(): Promise<void> {
 let admin: RegisteredUserContext;
 
 beforeAll(async () => {
+  // The migrations' reference rows, restored in case an earlier suite cleared the sports table.
+  const db = getFunctionalPrisma();
+  await db.sport.upsert({ where: { sport: Sport.GOLF }, create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.HORSE_RACING }, create: { sport: Sport.HORSE_RACING, participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' }, update: {} });
   admin = await buildRegisteredUser({ displayName: 'Load Admin' });
   await promoteToRootAdmin(admin);
 });
