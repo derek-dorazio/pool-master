@@ -1,9 +1,9 @@
-Source: https://en.wikipedia.org/wiki/Sydney_Marathon
-Final URL: https://en.wikipedia.org/wiki/Sydney_Marathon
-HTTP 200
-Fetched: 2026-10-15T02:24:11.773Z
+Source: https://en.wikipedia.org/wiki/2027_Giro_d%27Italia
+Final URL: https://en.wikipedia.org/wiki/2027_Giro_d%27Italia
+HTTP 404
+Fetched: 2026-10-15T02:28:33.651Z
 
-Sydney Marathon - Wikipedia
+2027 Giro d'Italia - Wikipedia
 Jump to content
 Main menu
 Main menu
@@ -33,432 +33,48 @@ Personal tools
 Donate
 Create account
 Log in
-Contents
-move to sidebar
-hide
-(Top)
-1
-History
-2
-Course
-3
-Other awards
-4
-Other races
-5
-Notes
-6
-References
-Toggle the table of contents
-Sydney Marathon
-10 languages
-Deutsch
-Español
-فارسی
-Français
-日本語
-Nederlands
-Português
-ไทย
-粵語
-中文
-Edit links
+2027 Giro d'Italia
+Add languages
+Page contents not supported in other languages.
 Article
 Talk
 English
-Read
-Edit
-View history
 Tools
 Tools
 move to sidebar
 hide
 Actions
-Read
-Edit
-View history
 General
 What links here
-Related changes
 Upload file
-Permanent link
+Printable version
 Page information
-Cite this page
 Get shortened URL
 Switch to legacy parser
-Print/export
-Download as PDF
-Printable version
 In other projects
-Wikidata item
 Appearance
 move to sidebar
 hide
 From Wikipedia, the free encyclopedia
-Annual race in Australia held since 2000
-<small>(also 10 km, 4.2&nbsp;km)</small>"},"est":{"wt":"{{start date and age|2001|p=y}}"},"record":{"wt":"Men's: '''2:04:42''' (2026)<br />{{flagicon|ETH}} [[Addisu Gobena]]<br />Women's: '''2:18:22''' (2025)<br />{{flagicon|NED}} [[Sifan Hassan]]"},"participants":{"wt":"32,964 finishers (2025)<ref>{{Cite web|url=https://www.multisportaustralia.com.au/races/sydney-marathon-2025|title = Results List}}</ref>"},"homepage":{"wt":"{{URL|https://tcssydneymarathon.com/|Sydney Marathon}}"},"current":{"wt":"[[2025 Sydney Marathon]]"}},"i":0}}]}'> Sydney Marathon
-Sydney Opera House near the finish line in 2005
-Date Late August
-Location Sydney, Australia
-Event type Road
-Distance Marathon
-(also 10 km, 4.2 km)
-Primary sponsor TCS and ASICS
-Established 2001 (25 years ago) ( 2001 )
-Course records Men's: 2:04:42 (2026)
-Addisu Gobena
-Women's: 2:18:22 (2025)
-Sifan Hassan
-Official site Sydney Marathon
-Participants 32,964 finishers (2025) [ 1 ]
-2026 Sydney Marathon
-The Sydney Marathon is a marathon held annually in Sydney , Australia. The event was first held on the 30th of April 2000 and called The Host City Marathon as a test event for the Sydney 2000 Olympic Games, and has continued every year since, as a legacy of the 2000 Summer Olympics . [ 2 ] The marathon is categorized as a Platinum Label Road Race by World Athletics . Previously held in the middle of September, the race moved to late August from 2025, as part of its elevation to the World Marathon Majors . [ 3 ] [ 4 ] [ 5 ]
-The Sydney Marathon also includes a 5 km (3.1 mi) race. [ 6 ]
-History
-[ edit ]
-See also: List of winners of the Sydney Marathon
-The Sydney Marathon started in April 2000, following the same course as the marathon during the 2000 Summer Olympics . [ 3 ] [ 7 ] The women's race in 2001 was won by Krishna Stanton , who had never run a marathon before, and was doing the event as a result of a challenge from a friend. [ 7 ]
-In 2014 the marathon was awarded a Silver Label Road Race by the International Association of Athletics Federations (IAAF), then in December 2014 the race was awarded a Gold Label Road Race [ 8 ] in time for the 2015 race and it is now a Platinum Label Road Race . [ 3 ]
-The 2020 in-person edition of the race was cancelled due to the coronavirus pandemic , with all entries automatically transferred to 2021, and all registrants given the option of also running the race virtually for free. {{Cite web|url=https://sydneyrunningfestival.com.au/eventupdate/|title = Event Update}}</ref>"}},"i":0}}]}'> [ a ] [ 10 ] [ 11 ] Moses Kibet won the 2022 race in 2:07:02, a new course record, and the fastest marathon time run on Australian soil. [ 3 ]
-In July 2022, organisers of the race announced that they were applying to be added to the list of World Marathon Majors . Following two consecutive successful assessments as a candidate race, the marathon was elevated to the series on 4 November 2024, and ran its first race as a World Marathon Major on 31 August 2025. [ 12 ] [ 5 ] The 2025 Sydney Marathon produced the fastest times ever recorded in Australia in both the men's and women's events, with Hailemaryam Kiros beating the previous record set by Brimin Kipkorir in 2024 by 12 seconds, and Sifan Hassan beating Workenesh Edesa 's 2024 time by over four minutes. [ 13 ]
-Course
-[ edit ]
-The marathon course initially followed the same course that was used in the 2000 Summer Olympics. [ 7 ]
-In 2010 the marathon course was changed to flatten it out which, according to the organisers, makes it "a faster, more scenic and spectator friendly course." [ 14 ]
-The marathon runs on a point-to-point course that begins in North Sydney, crosses over the Sydney Harbour Bridge , runs through Pyrmont and The Rocks, down Oxford Street and Anzac Parade towards Kingsford, before returning to the city via Moore Park and Centennial Park, ending in front of the Sydney Opera House . [ 3 ] [ 15 ]
-Other awards
-[ edit ]
-To date, eight runners have competed in every Sydney Marathon, and have been dubbed "Blue Line Legends". [ 16 ]
-In addition, runners who have completed at least 10 marathons are eligible to be inducted into the Bridge Club. [ 17 ] [ b ]
-Other races
-[ edit ]
-In addition to the marathon, a 5 kilometres (3.1 mi) "Mini Marathon" are also held as part of the event.
-The "Mini Marathon" is run the day before the full marathon, and also finishes at the Sydney Opera House .
-The event also featured a half marathon and a 10 km distance, which were last run in 2023 and 2025 respectively. Both distances were removed as part of Sydney's candidacy and eventual entry into the World Marathon Majors.
-Notes
-[ edit ]
-↑ Before being cancelled, it was postponed to 8 November 2020 , with all registrants given the option of obtaining a 75% refund or transferring their entry to another runner or to 2021. [ 9 ]
-↑ The marathons do not have to be run on consecutive years. [ 17 ]
-References
-[ edit ]
-↑ "Results List" .
-↑ "Event FAQs" . Sydney Running Festival . Retrieved 1 January 2014 .
-1 2 3 4 5 Payten, Iain (6 January 2023). "Sydney chasing Kipchoge in race to join world's 'major' marathons" . The Sydney Morning Herald . Retrieved 7 January 2023 .
-↑ "Archived copy" . www.worldathletics.org . Archived from the original on 2 September 2020 . Retrieved 12 January 2022 . {{ cite web }} : CS1 maint: archived copy as title ( link )
-1 2 "Sydney Marathon to join elite ranks of world marathon majors alongside London and New York City" . ABC News . 3 November 2024 . Retrieved 4 November 2024 .
-↑ "TCS Sydney Mini Marathon" . TCS Sydney Marathon . Retrieved 1 September 2025 .
-1 2 3 "Sydney Marathon: 2001 Results" . Coolrunning. 28 October 2001 . Retrieved 1 January 2014 .
-↑ "Blackmores Sydney Marathon Awarded IAAF Road Race Gold Label" . Sydney Running Festival . Retrieved 13 December 2014 .
-↑ "Event Update" .
-↑ "Blackmores Sydney Running Festival - Event Update September 2020" . 14 September 2020. Archived from the original on 22 September 2020.
-↑ "Virtual Event- FAQ" . Archived from the original on 22 September 2020.
-↑ "Sydney Marathon Passes Stage One Of Abbott World Marathon Majors Assessment" . 28 November 2023 . Retrieved 29 November 2023 .
-↑ "Sydney Marathon 2025: Records broken as Sifan Hassan, Hailemaryam Kiros win" . 31 August 2025 . Retrieved 14 September 2025 .
-↑ "Course FAQs" . Sydney Running Festival . Retrieved 1 January 2014 .
-↑ "Marathon" . Archived from the original on 26 February 2020.
-↑ https://web.archive.org/web/20200728203650/https://sydneyrunningfestival.com.au/bluelineledgends
-1 2 "Bridge Club" . Archived from the original on 28 July 2020.
-v
-t
-e
-Sydney Marathon
-Years
-2001
-2002
-2003
-2004
-2005
-2006
-2007
-2008
-2009
-2010
-2011
-2012
-2013
-2014
-2015
-2016
-2017
-2018
-2019
-2020
-2021
-2022
-2023
-2024
-2025
-2026
-List of winners
-v
-t
-e
-Marathon races in Australia
-Adelaide Marathon
-Alice Springs Marathon
-Bunbury Marathon
-Brisbane Marathon
-Canberra Marathon
-Gold Coast Marathon
-Great Ocean Road Marathon
-Melbourne Marathon
-Perth Marathon
-Sydney Marathon
-Sunshine Coast Marathon
-Townsville Marathon
-Traralgon Marathon
-v
-t
-e
-World Marathon Majors
-Marathons
-Tokyo
-winners
-Boston
-winners
-London
-winners
-Sydney
-winners
-Berlin
-winners
-Chicago
-winners
-New York City
-winners
-Cape Town
-winners
-Results
-Final standings
-Marathons at the World Athletics Championships
-IAAF World Marathon Cup
-Marathons at the Olympics
-v
-t
-e
-World Athletics Label Road Races
-Editions
-2008
-2009
-2010
-2011
-2012
-2013
-2014
-2015
-2016
-2017
-2018
-2019
-2020
-2021
-2022
-2023
-2024
-2025
-2026
-Platinum
-Marathon
-Amsterdam
-Berlin
-Boston
-Chicago
-London
-Nagoya Women's
-New York City
-Osaka Women's
-Seoul
-Shanghai
-Sydney
-Tokyo
-Valencia
-Xiamen
-Half marathon
-Bangsaen
-Guadalajara
-Gold
-Marathon
-Barcelona
-Beijing
-Buriram
-Daegu
-Doha
-Guangzhou
-Hangzhou
-Hong Kong
-Houston
-İstanbul
-Lagos
-Ljubljana
-Mexico City
-Mumbai
-New Taipei
-Osaka
-Rotterdam
-Singapore
-Taipei
-Half Marathon
-Barcelona
-Copenhagen
-Gifu
-Houston
-Istanbul
-New Delhi
-Ras Al Khaimah
-Valencia
-Yangzhou
-10K
-Bengaluru
-Port-Gentil
-San Silvestre Vallecana (Madrid)
-Elite
-Marathon
-Abu Dhabi
-Bali
-Bangsaen
-Beppu-Oita
-Dublin
-Enschede
-Frankfurt
-Fukuoka
-Hōfu
-Honolulu
-Huangpu (China)
-Kigali International
-Lisbon
-Mersin
-Nanjing
-Paris
-Prague
-Riyadh
-Rome
-Seville
-Tallinn
-Toronto Waterfront
-Vienna
-Half marathon
-Antrim Coast (Northern Ireland)
-Berlin
-Bogotá
-Cardiff
-Lisbon
-Marugame
-Prague
-Tallinn
-10K
-Beach to Beacon (Maine)
-Brașov
-Prague Grand Prix
-Label
-Marathon
-Athens
-Bangkok
-Belfast
-Belgrade
-Bengaluru
-Bratislava
-Bucharest
-Buenos Aires
-Cape Town
-Castellón
-Copenhagen
-Cholpon-Ata
-Dubai
-Durban
-Geneva
-Gold Coast
-Guadalajara
-Hannover
-Hyderabad
-İzmir
-Jakarta
-Kobe
-Košice
-Kuala Lumpur
-Madrid
-Málaga
-Marrakesh
-Milan
-Nairobi
-Ottawa
-Pattaya
-Porto
-Rabat
-Riga
-Rio de Janeiro
-Sao Paulo
-Sapporo
-Sofia
-Stockholm
-Sunshine Coast
-Tashkent
-Tel Aviv
-Tunis
-Venice
-Vilnius
-Warsaw
-Zagreb
-20km / Half Marathon
-Bangkok
-Belfast
-Buenos Aires
-České Budějovice
-Chicago
-Gold Coast
-Hamburg
-Karlovy Vary
-Málaga
-Madrid
-New York City
-Olomouc
-Paris Semi
-Paris 20k
-Pattaya
-Perth
-Pittsburgh
-Porto
-Pune
-Riga
-Roma-Ostia
-Great North Run (South Shields, UK)
-Stockholm
-Ústí nad Labem
-Warsaw
-10km (one 11.3 km)
-Atlanta (July)
-Bangkok
-Boston
-Boulder
-Castelbuono
-Castellón
-Falmouth (Cape Cod, Massachusetts) (11.3km)
-Great Ethiopian Run (Addis Ababa)
-Madrid
-Pattaya
-Riga
-Valencia
-5-8km
-Manchester (Connecticut) - 8km
-Riga - 5km
-1 mile
-Fifth Avenue Mile (New York City)
-Riga
-Retrieved from " https://en.wikipedia.org/w/index.php?title=Sydney_Marathon&oldid=1372468559 "
-Categories : Marathons in Australia
-Sports competitions in Sydney
-Annual sporting events in Australia
-Sydney Opera House
-World Marathon Majors
-Hidden categories: Articles with short description
-Short description is different from Wikidata
-Use Australian English from September 2018
-All Wikipedia articles written in Australian English
-Use dmy dates from January 2014
-CS1 maint: archived copy as title
-This page was last edited on 31 August 2026, at 22:06 (UTC) .
-Page was rendered with Parsoid .
-Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
-additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+There is a draft of this article at Draft:2027 Giro d'Italia . If you are writing about the same topic, please do not create an article here. Instead, edit the draft and then publish it once it is ready.
+Look for 2027 Giro d'Italia on one of Wikipedia's sister projects :
+Wiktionary (dictionary)
+Wikibooks (textbooks)
+Wikiquote (quotations)
+Wikisource (library)
+Wikiversity (learning resources)
+Commons (media)
+Wikivoyage (travel guide)
+Wikidata (linked database)
+Wikispecies (species directory)
+Wikipedia does not have an article with this exact name. Please search for 2027 Giro d'Italia in Wikipedia to check for alternative titles or spellings.
+You need to log in or create an account and be autoconfirmed to create new articles. Alternatively, you can use the article wizard to submit a draft for review, or request a new article .
+Search for " 2027 Giro d'Italia " in existing articles.
+Look for pages within Wikipedia that link to this title .
+Other reasons this message may be displayed:
+Titles on Wikipedia are case sensitive except for the first character; please check alternative capitalizations and consider adding a redirect here to the correct title.
+If the page has been deleted, check the deletion log , and see Why was the page I created deleted?
+Retrieved from " https://en.wikipedia.org/wiki/2027_Giro_d%27Italia "
 Privacy policy
 About Wikipedia
 Disclaimers
@@ -471,10 +87,5 @@ Cookie statement
 Mobile view
 Search
 Search
-Toggle the table of contents
-Sydney Marathon
-10 languages
+2027 Giro d'Italia
 Add topic
-
---- embedded JSON ---
-{"@context":"https:\/\/schema.org","@type":"Article","name":"Sydney Marathon","url":"https:\/\/en.wikipedia.org\/wiki\/Sydney_Marathon","sameAs":"http:\/\/www.wikidata.org\/entity\/Q15553343","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q15553343","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2014-01-01T21:10:43Z","dateModified":"2026-08-31T22:06:16Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/commons\/6\/6a\/SydneyOperaHouse9112005.jpg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"marathon held annually in Sydney, Australia"}

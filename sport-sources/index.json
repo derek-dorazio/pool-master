@@ -1,103 +1,131 @@
 {
-  "fetchedAt": "2026-10-15T02:24:48.115Z",
+  "fetchedAt": "2026-10-15T02:30:27.262Z",
   "results": [
     {
-      "url": "https://en.wikipedia.org/wiki/Tokyo_Marathon",
+      "url": "https://www.espn.com/racing/schedule/_/series/sprint/year/2027",
       "rendered": false,
       "status": "OK",
-      "httpStatus": 200,
-      "file": "01-en.wikipedia.org.txt"
+      "httpStatus": 202,
+      "file": "01-espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Boston_Marathon",
+      "url": "https://www.nascar.com/nascar-cup-series/2027/schedule/",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "02-en.wikipedia.org.txt"
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "02-nascar.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/London_Marathon",
+      "url": "https://en.wikipedia.org/wiki/2027_Daytona_500",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
       "file": "03-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Cape_Town_Marathon",
+      "url": "https://en.wikipedia.org/wiki/2027_Tour_de_France",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
       "file": "04-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Sydney_Marathon",
+      "url": "https://en.wikipedia.org/wiki/2027_Giro_d%27Italia",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
       "file": "05-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Berlin_Marathon",
+      "url": "https://en.wikipedia.org/wiki/2027_Vuelta_a_Espa%C3%B1a",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
       "file": "06-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/Chicago_Marathon",
+      "url": "https://en.wikipedia.org/wiki/2027_in_men%27s_road_cycling",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
       "file": "07-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/New_York_City_Marathon",
+      "url": "https://en.wikipedia.org/wiki/2027_in_women%27s_road_cycling",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
       "file": "08-en.wikipedia.org.txt"
     },
     {
-      "url": "https://firstcycling.com/race.php?y=2027&t=1",
-      "rendered": false,
+      "url": "https://www.motorsport.com/nascar-cup/schedule/2027/",
+      "rendered": true,
       "status": "HTTP_ERROR",
       "httpStatus": 403,
-      "file": "09-firstcycling.com.txt"
+      "file": "09-motorsport.com.txt"
     },
     {
-      "url": "https://firstcycling.com/race.php?y=2027&t=1&g=2",
-      "rendered": false,
+      "url": "https://www.foxsports.com/nascar/cup-series/schedule",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "10-foxsports.com.txt"
+    },
+    {
+      "url": "https://www.cbssports.com/nascar/schedule/",
+      "rendered": true,
       "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "10-firstcycling.com.txt"
+      "httpStatus": 404,
+      "file": "11-cbssports.com.txt"
     },
     {
-      "url": "https://www.marathon.tokyo/en/",
+      "url": "https://www.daytonainternationalspeedway.com/",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "11-marathon.tokyo.txt"
+      "file": "12-daytonainternationalspeedway.com.txt"
     },
     {
-      "url": "https://www.baa.org/races/boston-marathon",
+      "url": "https://www.uci.org/calendar/road",
+      "rendered": true,
+      "status": "FAILED",
+      "reason": "page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.uci.org/calendar/road\", waiting until \"domcontentloaded\"\n",
+      "file": null
+    },
+    {
+      "url": "https://www.letour.fr/en/",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "12-baa.org.txt"
+      "file": "14-letour.fr.txt"
     },
     {
-      "url": "https://www.tcslondonmarathon.com/",
+      "url": "https://www.giroditalia.it/en/",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "13-tcslondonmarathon.com.txt"
+      "file": "15-giroditalia.it.txt"
     },
     {
-      "url": "https://www.capetownmarathon.com/",
+      "url": "https://www.lavuelta.es/en",
       "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "14-capetownmarathon.com.txt"
+      "file": "16-lavuelta.es.txt"
+    },
+    {
+      "url": "https://www.cyclingnews.com/races/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "17-cyclingnews.com.txt"
+    },
+    {
+      "url": "https://www.chicagomarathon.com/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "18-chicagomarathon.com.txt"
     },
     {
       "url": "https://www.sydneymarathon.com/",
@@ -107,39 +135,11 @@
       "file": null
     },
     {
-      "url": "https://www.bmw-berlin-marathon.com/en/",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "16-bmw-berlin-marathon.com.txt"
-    },
-    {
-      "url": "https://www.bankofamericachicagomarathon.com/",
-      "rendered": true,
-      "status": "FAILED",
-      "reason": "page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.bankofamericachicagomarathon.com/\nCall log:\n  - navigating to \"https://www.bankofamericachicagomarathon.com/\", waiting until \"domcontentloaded\"\n",
-      "file": null
-    },
-    {
-      "url": "https://www.nyrr.org/tcsnycmarathon",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "18-nyrr.org.txt"
-    },
-    {
-      "url": "https://www.jayski.com/2027-nascar-cup-series-schedule/",
+      "url": "https://www.nyrr.org/tcsnycmarathon/runners/race-information",
       "rendered": true,
       "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "19-jayski.com.txt"
-    },
-    {
-      "url": "https://www.racing-reference.info/season-stats/2027/W/",
-      "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "20-racing-reference.info.txt"
+      "httpStatus": 404,
+      "file": "20-nyrr.org.txt"
     }
   ]
 }

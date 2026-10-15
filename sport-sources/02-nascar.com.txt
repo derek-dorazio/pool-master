@@ -1,20 +1,20 @@
-Source: https://www.racing-reference.info/season-stats/2027/W/
-Final URL: https://www.racing-reference.info/season-stats/2027/W/
+Source: https://www.nascar.com/nascar-cup-series/2027/schedule/
+Final URL: https://www.nascar.com/nascar-cup-series/2027/schedule/
 HTTP 403
-Fetched: 2026-10-15T02:24:48.084Z
+Fetched: 2026-10-15T02:28:32.512Z
 
 Attention Required! | Cloudflare
 Please enable cookies.
 Sorry, you have been blocked
-You are unable to access racing-reference.info
+You are unable to access nascar.com
 Why have I been blocked?
 This website is using a security service to protect itself from online attacks. The action you just performed triggered the security solution. There are several actions that could trigger this block including submitting a certain word or phrase, a SQL command or malformed data.
 What can I do to resolve this?
 You can email the site owner to let them know you were blocked. Please include what you were doing when this page came up and the Cloudflare Ray ID found at the bottom of this page.
-Cloudflare Ray ID: a4ab5e98bd75681e
-•
+Cloudflare Ray ID: a4ab6417191dc3a8
+&bull;
 Your IP:
 Click to reveal
-52.156.141.242
-•
+20.169.68.34
+&bull;
 Performance & security by Cloudflare
