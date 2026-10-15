@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "RUNNING",
+    "season": 2025,
+    "sportLeagues": [
+      "World Marathon Majors (men)"
+    ],
+    "contents": [
+      "PLAYERS",
+      "FIELDS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data test slate, leading men's marathoners of 2025 in a rough order from memory (unchecked)",
+    "sources": [
+      {
+        "name": "World Marathon Majors (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/World_Marathon_Majors"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "World Marathon Majors (men)",
+      "players": [
+        {
+          "key": "world-marathon-majors-men-sabastian-sawe",
+          "name": "Sabastian Sawe",
+          "countryCode": "KE",
+          "ranking": 1
+        },
+        {
+          "key": "world-marathon-majors-men-jacob-kiplimo",
+          "name": "Jacob Kiplimo",
+          "countryCode": "UG",
+          "ranking": 2
+        },
+        {
+          "key": "world-marathon-majors-men-john-korir",
+          "name": "John Korir",
+          "countryCode": "KE",
+          "ranking": 3
+        },
+        {
+          "key": "world-marathon-majors-men-benson-kipruto",
+          "name": "Benson Kipruto",
+          "countryCode": "KE",
+          "ranking": 4
+        },
+        {
+          "key": "world-marathon-majors-men-alexander-mutiso",
+          "name": "Alexander Mutiso",
+          "countryCode": "KE",
+          "ranking": 5
+        },
+        {
+          "key": "world-marathon-majors-men-tadese-takele",
+          "name": "Tadese Takele",
+          "countryCode": "ET",
+          "ranking": 6
+        },
+        {
+          "key": "world-marathon-majors-men-tamirat-tola",
+          "name": "Tamirat Tola",
+          "countryCode": "ET",
+          "ranking": 7
+        },
+        {
+          "key": "world-marathon-majors-men-conner-mantz",
+          "name": "Conner Mantz",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "world-marathon-majors-men-alphonce-simbu",
+          "name": "Alphonce Simbu",
+          "countryCode": "TZ",
+          "ranking": 9
+        },
+        {
+          "key": "world-marathon-majors-men-amos-kipruto",
+          "name": "Amos Kipruto",
+          "countryCode": "KE",
+          "ranking": 10
+        },
+        {
+          "key": "world-marathon-majors-men-deresa-geleta",
+          "name": "Deresa Geleta",
+          "countryCode": "ET",
+          "ranking": 11
+        },
+        {
+          "key": "world-marathon-majors-men-vincent-kipkemoi",
+          "name": "Vincent Kipkemoi",
+          "countryCode": "KE",
+          "ranking": 12
+        },
+        {
+          "key": "world-marathon-majors-men-abdi-nageeye",
+          "name": "Abdi Nageeye",
+          "countryCode": "NL",
+          "ranking": 13
+        },
+        {
+          "key": "world-marathon-majors-men-bashir-abdi",
+          "name": "Bashir Abdi",
+          "countryCode": "BE",
+          "ranking": 14
+        },
+        {
+          "key": "world-marathon-majors-men-hassan-chahdi",
+          "name": "Hassan Chahdi",
+          "countryCode": "FR",
+          "ranking": 15
+        },
+        {
+          "key": "world-marathon-majors-men-eliud-kipchoge",
+          "name": "Eliud Kipchoge",
+          "countryCode": "KE",
+          "ranking": 16
+        },
+        {
+          "key": "world-marathon-majors-men-kenenisa-bekele",
+          "name": "Kenenisa Bekele",
+          "countryCode": "ET",
+          "ranking": 17
+        },
+        {
+          "key": "world-marathon-majors-men-zouhair-talbi",
+          "name": "Zouhair Talbi",
+          "countryCode": "MA",
+          "ranking": 18
+        },
+        {
+          "key": "world-marathon-majors-men-akira-akasaki",
+          "name": "Akira Akasaki",
+          "countryCode": "JP",
+          "ranking": 19
+        },
+        {
+          "key": "world-marathon-majors-men-clayton-young",
+          "name": "Clayton Young",
+          "countryCode": "US",
+          "ranking": 20
+        }
+      ],
+      "events": []
+    }
+  ]
+}

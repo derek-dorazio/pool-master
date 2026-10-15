@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "CYCLING",
+    "season": 2027,
+    "sportLeagues": [
+      "UCI WorldTour",
+      "UCI Women's WorldTour"
+    ],
+    "contents": [
+      "SCHEDULE"
+    ]
+  },
+  "testData": false,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data skill",
+    "sources": [
+      {
+        "name": "ProCyclingStats, 2027 UCI WorldTour calendar",
+        "url": "https://www.procyclingstats.com/races.php?year=2027&circuit=1"
+      },
+      {
+        "name": "ProCyclingStats, 2027 UCI Women's WorldTour calendar",
+        "url": "https://www.procyclingstats.com/races.php?year=2027&circuit=24"
+      },
+      {
+        "name": "RCS Sport race calendar on giroditalia.it (Strade Bianche, Tirreno-Adriatico, Milano-Sanremo, Giro d'Italia, Giro d'Italia Women, Il Lombardia)",
+        "url": "https://www.giroditalia.it/en/"
+      },
+      {
+        "name": "Tour de France official site (2 to 25 July 2027)",
+        "url": "https://www.letour.fr/en/"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "UCI WorldTour",
+      "players": [],
+      "events": [
+        {
+          "key": "strade-bianche",
+          "name": "Strade Bianche",
+          "startDate": "2027-03-06",
+          "endDate": "2027-03-06",
+          "venue": null,
+          "location": null,
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "tirreno-adriatico",
+          "name": "Tirreno-Adriatico",
+          "startDate": "2027-03-08",
+          "endDate": "2027-03-14",
+          "venue": null,
+          "location": null,
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "milano-sanremo",
+          "name": "Milano-Sanremo",
+          "startDate": "2027-03-20",
+          "endDate": "2027-03-20",
+          "venue": null,
+          "location": null,
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "giro-d-italia",
+          "name": "Giro d'Italia",
+          "startDate": "2027-05-08",
+          "endDate": "2027-05-30",
+          "venue": null,
+          "location": null,
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "tour-de-france",
+          "name": "Tour de France",
+          "startDate": "2027-07-02",
+          "endDate": "2027-07-25",
+          "venue": null,
+          "location": null,
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "il-lombardia",
+          "name": "Il Lombardia",
+          "startDate": "2027-10-09",
+          "endDate": "2027-10-09",
+          "venue": null,
+          "location": null,
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        }
+      ]
+    },
+    {
+      "name": "UCI Women's WorldTour",
+      "players": [],
+      "events": [
+        {
+          "key": "giro-d-italia-women",
+          "name": "Giro d'Italia Women",
+          "startDate": "2027-05-29",
+          "endDate": "2027-06-06",
+          "venue": null,
+          "location": null,
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        }
+      ]
+    }
+  ]
+}

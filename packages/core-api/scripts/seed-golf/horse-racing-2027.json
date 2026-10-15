@@ -1,14 +1,56 @@
 {
   "schemaVersion": 1,
-  "scope": { "sport": "HORSE_RACING", "season": 2027, "sportLeagues": ["US Thoroughbred"], "contents": ["SCHEDULE"] },
+  "scope": {
+    "sport": "HORSE_RACING",
+    "season": 2027,
+    "sportLeagues": [
+      "US Thoroughbred"
+    ],
+    "contents": [
+      "SCHEDULE"
+    ]
+  },
   "testData": false,
   "provenance": {
-    "gatheredAt": "2026-10-14",
+    "gatheredAt": "2026-10-15",
     "gatheredBy": "load-sport-data skill",
     "sources": [
-      { "name": "Pegasus World Cup official site (date: Saturday, Jan 30, 2027; Gulfstream Park)", "url": "https://www.pegasusworldcup.com/" },
-      { "name": "Wikipedia, Pegasus World Cup (venue and city)", "url": "https://en.wikipedia.org/wiki/Pegasus_World_Cup" },
-      { "name": "Wikipedia, Gulfstream Park (city)", "url": "https://en.wikipedia.org/wiki/Gulfstream_Park" }
+      {
+        "name": "Pegasus World Cup official site (date: Saturday, Jan 30, 2027; Gulfstream Park)",
+        "url": "https://www.pegasusworldcup.com/"
+      },
+      {
+        "name": "Wikipedia, Pegasus World Cup (venue and city)",
+        "url": "https://en.wikipedia.org/wiki/Pegasus_World_Cup"
+      },
+      {
+        "name": "Wikipedia, Gulfstream Park (city)",
+        "url": "https://en.wikipedia.org/wiki/Gulfstream_Park"
+      },
+      {
+        "name": "Kentucky Derby official site (Saturday, May 1, 2027)",
+        "url": "https://www.kentuckyderby.com/"
+      },
+      {
+        "name": "Wikipedia, Kentucky Derby (date, Churchill Downs, Louisville)",
+        "url": "https://en.wikipedia.org/wiki/Kentucky_Derby"
+      },
+      {
+        "name": "Preakness official site (Sunday, May 23, 2027; Pimlico Race Course)",
+        "url": "https://www.preakness.com/"
+      },
+      {
+        "name": "Wikipedia, Preakness Stakes (date, Pimlico, Baltimore)",
+        "url": "https://en.wikipedia.org/wiki/Preakness_Stakes"
+      },
+      {
+        "name": "Belmont Stakes official site (Saturday, June 5, 2027; Belmont Park)",
+        "url": "https://www.belmontstakes.com/"
+      },
+      {
+        "name": "Wikipedia, Belmont Stakes (date, Belmont Park, Elmont)",
+        "url": "https://en.wikipedia.org/wiki/Belmont_Stakes"
+      }
     ]
   },
   "sportLeagues": [
@@ -23,6 +65,39 @@
           "endDate": "2027-01-30",
           "venue": "Gulfstream Park",
           "location": "Hallandale Beach, Florida",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "kentucky-derby",
+          "name": "Kentucky Derby",
+          "startDate": "2027-05-01",
+          "endDate": "2027-05-01",
+          "venue": "Churchill Downs",
+          "location": "Louisville, Kentucky",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "preakness-stakes",
+          "name": "Preakness Stakes",
+          "startDate": "2027-05-23",
+          "endDate": "2027-05-23",
+          "venue": "Pimlico Race Course",
+          "location": "Baltimore, Maryland",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "belmont-stakes",
+          "name": "Belmont Stakes",
+          "startDate": "2027-06-05",
+          "endDate": "2027-06-05",
+          "venue": "Belmont Park",
+          "location": "Elmont, New York",
           "rounds": 1,
           "roundsPar": null,
           "field": []

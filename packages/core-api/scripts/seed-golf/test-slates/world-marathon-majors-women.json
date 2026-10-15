@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "RUNNING",
+    "season": 2025,
+    "sportLeagues": [
+      "World Marathon Majors (women)"
+    ],
+    "contents": [
+      "PLAYERS",
+      "FIELDS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data test slate, leading women's marathoners of 2025 in a rough order from memory (unchecked)",
+    "sources": [
+      {
+        "name": "World Marathon Majors (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/World_Marathon_Majors"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "World Marathon Majors (women)",
+      "players": [
+        {
+          "key": "world-marathon-majors-women-tigst-assefa",
+          "name": "Tigst Assefa",
+          "countryCode": "ET",
+          "ranking": 1
+        },
+        {
+          "key": "world-marathon-majors-women-peres-jepchirchir",
+          "name": "Peres Jepchirchir",
+          "countryCode": "KE",
+          "ranking": 2
+        },
+        {
+          "key": "world-marathon-majors-women-hellen-obiri",
+          "name": "Hellen Obiri",
+          "countryCode": "KE",
+          "ranking": 3
+        },
+        {
+          "key": "world-marathon-majors-women-sifan-hassan",
+          "name": "Sifan Hassan",
+          "countryCode": "NL",
+          "ranking": 4
+        },
+        {
+          "key": "world-marathon-majors-women-ruth-chepngetich",
+          "name": "Ruth Chepngetich",
+          "countryCode": "KE",
+          "ranking": 5
+        },
+        {
+          "key": "world-marathon-majors-women-joyciline-jepkosgei",
+          "name": "Joyciline Jepkosgei",
+          "countryCode": "KE",
+          "ranking": 6
+        },
+        {
+          "key": "world-marathon-majors-women-sharon-lokedi",
+          "name": "Sharon Lokedi",
+          "countryCode": "KE",
+          "ranking": 7
+        },
+        {
+          "key": "world-marathon-majors-women-tigist-ketema",
+          "name": "Tigist Ketema",
+          "countryCode": "ET",
+          "ranking": 8
+        },
+        {
+          "key": "world-marathon-majors-women-brigid-kosgei",
+          "name": "Brigid Kosgei",
+          "countryCode": "KE",
+          "ranking": 9
+        },
+        {
+          "key": "world-marathon-majors-women-megertu-alemu",
+          "name": "Megertu Alemu",
+          "countryCode": "ET",
+          "ranking": 10
+        },
+        {
+          "key": "world-marathon-majors-women-rosemary-wanjiru",
+          "name": "Rosemary Wanjiru",
+          "countryCode": "KE",
+          "ranking": 11
+        },
+        {
+          "key": "world-marathon-majors-women-vivian-cheruiyot",
+          "name": "Vivian Cheruiyot",
+          "countryCode": "KE",
+          "ranking": 12
+        },
+        {
+          "key": "world-marathon-majors-women-hawi-feysa",
+          "name": "Hawi Feysa",
+          "countryCode": "ET",
+          "ranking": 13
+        },
+        {
+          "key": "world-marathon-majors-women-sutume-kebede",
+          "name": "Sutume Kebede",
+          "countryCode": "ET",
+          "ranking": 14
+        },
+        {
+          "key": "world-marathon-majors-women-yalemzerf-yehualaw",
+          "name": "Yalemzerf Yehualaw",
+          "countryCode": "ET",
+          "ranking": 15
+        },
+        {
+          "key": "world-marathon-majors-women-mary-ngugi-cooper",
+          "name": "Mary Ngugi-Cooper",
+          "countryCode": "KE",
+          "ranking": 16
+        },
+        {
+          "key": "world-marathon-majors-women-fiona-o-keeffe",
+          "name": "Fiona O'Keeffe",
+          "countryCode": "US",
+          "ranking": 17
+        },
+        {
+          "key": "world-marathon-majors-women-emily-sisson",
+          "name": "Emily Sisson",
+          "countryCode": "US",
+          "ranking": 18
+        },
+        {
+          "key": "world-marathon-majors-women-dakotah-popehn",
+          "name": "Dakotah Popehn",
+          "countryCode": "US",
+          "ranking": 19
+        },
+        {
+          "key": "world-marathon-majors-women-yuka-suzuki",
+          "name": "Yuka Suzuki",
+          "countryCode": "JP",
+          "ranking": 20
+        }
+      ],
+      "events": []
+    }
+  ]
+}

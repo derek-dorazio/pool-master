@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "AUTO_RACING",
+    "season": 2025,
+    "sportLeagues": [
+      "IndyCar"
+    ],
+    "contents": [
+      "PLAYERS",
+      "FIELDS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data test slate, full-time 2025 IndyCar drivers ranked roughly by final standings from memory (unchecked)",
+    "sources": [
+      {
+        "name": "2025 IndyCar Series (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025_IndyCar_Series"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "IndyCar",
+      "players": [
+        {
+          "key": "indycar-alex-palou",
+          "name": "Álex Palou",
+          "countryCode": "ES",
+          "ranking": 1
+        },
+        {
+          "key": "indycar-pato-o-ward",
+          "name": "Pato O'Ward",
+          "countryCode": "MX",
+          "ranking": 2
+        },
+        {
+          "key": "indycar-scott-dixon",
+          "name": "Scott Dixon",
+          "countryCode": "NZ",
+          "ranking": 3
+        },
+        {
+          "key": "indycar-kyle-kirkwood",
+          "name": "Kyle Kirkwood",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "indycar-christian-lundgaard",
+          "name": "Christian Lundgaard",
+          "countryCode": "DK",
+          "ranking": 5
+        },
+        {
+          "key": "indycar-josef-newgarden",
+          "name": "Josef Newgarden",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "indycar-scott-mclaughlin",
+          "name": "Scott McLaughlin",
+          "countryCode": "NZ",
+          "ranking": 7
+        },
+        {
+          "key": "indycar-will-power",
+          "name": "Will Power",
+          "countryCode": "AU",
+          "ranking": 8
+        },
+        {
+          "key": "indycar-david-malukas",
+          "name": "David Malukas",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "indycar-colton-herta",
+          "name": "Colton Herta",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "indycar-felix-rosenqvist",
+          "name": "Felix Rosenqvist",
+          "countryCode": "SE",
+          "ranking": 11
+        },
+        {
+          "key": "indycar-marcus-armstrong",
+          "name": "Marcus Armstrong",
+          "countryCode": "NZ",
+          "ranking": 12
+        },
+        {
+          "key": "indycar-alexander-rossi",
+          "name": "Alexander Rossi",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "indycar-santino-ferrucci",
+          "name": "Santino Ferrucci",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "indycar-rinus-veekay",
+          "name": "Rinus VeeKay",
+          "countryCode": "NL",
+          "ranking": 15
+        },
+        {
+          "key": "indycar-graham-rahal",
+          "name": "Graham Rahal",
+          "countryCode": "US",
+          "ranking": 16
+        },
+        {
+          "key": "indycar-conor-daly",
+          "name": "Conor Daly",
+          "countryCode": "US",
+          "ranking": 17
+        },
+        {
+          "key": "indycar-louis-foster",
+          "name": "Louis Foster",
+          "countryCode": "GB",
+          "ranking": 18
+        },
+        {
+          "key": "indycar-marcus-ericsson",
+          "name": "Marcus Ericsson",
+          "countryCode": "SE",
+          "ranking": 19
+        },
+        {
+          "key": "indycar-christian-rasmussen",
+          "name": "Christian Rasmussen",
+          "countryCode": "DK",
+          "ranking": 20
+        },
+        {
+          "key": "indycar-kyffin-simpson",
+          "name": "Kyffin Simpson",
+          "countryCode": "KY",
+          "ranking": 21
+        },
+        {
+          "key": "indycar-robert-shwartzman",
+          "name": "Robert Shwartzman",
+          "countryCode": "IL",
+          "ranking": 22
+        },
+        {
+          "key": "indycar-nolan-siegel",
+          "name": "Nolan Siegel",
+          "countryCode": "US",
+          "ranking": 23
+        },
+        {
+          "key": "indycar-devlin-defrancesco",
+          "name": "Devlin DeFrancesco",
+          "countryCode": "CA",
+          "ranking": 24
+        },
+        {
+          "key": "indycar-sting-ray-robb",
+          "name": "Sting Ray Robb",
+          "countryCode": "US",
+          "ranking": 25
+        },
+        {
+          "key": "indycar-jacob-abel",
+          "name": "Jacob Abel",
+          "countryCode": "US",
+          "ranking": 26
+        },
+        {
+          "key": "indycar-callum-ilott",
+          "name": "Callum Ilott",
+          "countryCode": "GB",
+          "ranking": 27
+        }
+      ],
+      "events": []
+    }
+  ]
+}

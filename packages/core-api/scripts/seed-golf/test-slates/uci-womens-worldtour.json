@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "CYCLING",
+    "season": 2025,
+    "sportLeagues": [
+      "UCI Women's WorldTour"
+    ],
+    "contents": [
+      "PLAYERS",
+      "FIELDS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data test slate, leading women's WorldTour riders of 2025 in a rough order from memory (unchecked)",
+    "sources": [
+      {
+        "name": "2025 UCI Women's World Tour (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025_UCI_Women%27s_World_Tour"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "UCI Women's WorldTour",
+      "players": [
+        {
+          "key": "uci-womens-worldtour-demi-vollering",
+          "name": "Demi Vollering",
+          "countryCode": "NL",
+          "ranking": 1
+        },
+        {
+          "key": "uci-womens-worldtour-lotte-kopecky",
+          "name": "Lotte Kopecky",
+          "countryCode": "BE",
+          "ranking": 2
+        },
+        {
+          "key": "uci-womens-worldtour-pauline-ferrand-prevot",
+          "name": "Pauline Ferrand-Prévot",
+          "countryCode": "FR",
+          "ranking": 3
+        },
+        {
+          "key": "uci-womens-worldtour-katarzyna-niewiadoma",
+          "name": "Katarzyna Niewiadoma",
+          "countryCode": "PL",
+          "ranking": 4
+        },
+        {
+          "key": "uci-womens-worldtour-marlen-reusser",
+          "name": "Marlen Reusser",
+          "countryCode": "CH",
+          "ranking": 5
+        },
+        {
+          "key": "uci-womens-worldtour-elisa-longo-borghini",
+          "name": "Elisa Longo Borghini",
+          "countryCode": "IT",
+          "ranking": 6
+        },
+        {
+          "key": "uci-womens-worldtour-lorena-wiebes",
+          "name": "Lorena Wiebes",
+          "countryCode": "NL",
+          "ranking": 7
+        },
+        {
+          "key": "uci-womens-worldtour-kimberley-le-court-pienaar",
+          "name": "Kimberley Le Court Pienaar",
+          "countryCode": "MU",
+          "ranking": 8
+        },
+        {
+          "key": "uci-womens-worldtour-puck-pieterse",
+          "name": "Puck Pieterse",
+          "countryCode": "NL",
+          "ranking": 9
+        },
+        {
+          "key": "uci-womens-worldtour-anna-van-der-breggen",
+          "name": "Anna van der Breggen",
+          "countryCode": "NL",
+          "ranking": 10
+        },
+        {
+          "key": "uci-womens-worldtour-sarah-gigante",
+          "name": "Sarah Gigante",
+          "countryCode": "AU",
+          "ranking": 11
+        },
+        {
+          "key": "uci-womens-worldtour-evita-muzic",
+          "name": "Évita Muzic",
+          "countryCode": "FR",
+          "ranking": 12
+        },
+        {
+          "key": "uci-womens-worldtour-mischa-bredewold",
+          "name": "Mischa Bredewold",
+          "countryCode": "NL",
+          "ranking": 13
+        },
+        {
+          "key": "uci-womens-worldtour-elisa-balsamo",
+          "name": "Elisa Balsamo",
+          "countryCode": "IT",
+          "ranking": 14
+        },
+        {
+          "key": "uci-womens-worldtour-marianne-vos",
+          "name": "Marianne Vos",
+          "countryCode": "NL",
+          "ranking": 15
+        },
+        {
+          "key": "uci-womens-worldtour-shirin-van-anrooij",
+          "name": "Shirin van Anrooij",
+          "countryCode": "NL",
+          "ranking": 16
+        },
+        {
+          "key": "uci-womens-worldtour-liane-lippert",
+          "name": "Liane Lippert",
+          "countryCode": "DE",
+          "ranking": 17
+        },
+        {
+          "key": "uci-womens-worldtour-juliette-labous",
+          "name": "Juliette Labous",
+          "countryCode": "FR",
+          "ranking": 18
+        },
+        {
+          "key": "uci-womens-worldtour-neve-bradbury",
+          "name": "Neve Bradbury",
+          "countryCode": "AU",
+          "ranking": 19
+        },
+        {
+          "key": "uci-womens-worldtour-gaia-realini",
+          "name": "Gaia Realini",
+          "countryCode": "IT",
+          "ranking": 20
+        },
+        {
+          "key": "uci-womens-worldtour-charlotte-kool",
+          "name": "Charlotte Kool",
+          "countryCode": "NL",
+          "ranking": 21
+        },
+        {
+          "key": "uci-womens-worldtour-chiara-consonni",
+          "name": "Chiara Consonni",
+          "countryCode": "IT",
+          "ranking": 22
+        }
+      ],
+      "events": []
+    }
+  ]
+}

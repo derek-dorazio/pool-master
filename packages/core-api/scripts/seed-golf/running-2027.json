@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "RUNNING",
+    "season": 2027,
+    "sportLeagues": [
+      "World Marathon Majors (men)",
+      "World Marathon Majors (women)"
+    ],
+    "contents": [
+      "SCHEDULE"
+    ]
+  },
+  "testData": false,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data skill",
+    "sources": [
+      {
+        "name": "World Marathon Majors race directory (Tokyo, Boston, London both days, Cape Town, Sydney, Berlin; Chicago and New York TBD)",
+        "url": "https://www.worldmarathonmajors.com/races"
+      },
+      {
+        "name": "Wikipedia, World Marathon Majors (Cape Town's first Major on May 23, 2027)",
+        "url": "https://en.wikipedia.org/wiki/World_Marathon_Majors"
+      },
+      {
+        "name": "Tokyo Marathon official site (March 7, 2027)",
+        "url": "https://www.marathon.tokyo/en/"
+      },
+      {
+        "name": "Boston Athletic Association (April 19, 2027)",
+        "url": "https://www.baa.org/races/boston-marathon"
+      },
+      {
+        "name": "TCS London Marathon official site (Saturday 24 and Sunday 25 April 2027)",
+        "url": "https://www.tcslondonmarathon.com/"
+      },
+      {
+        "name": "Wikipedia, London Marathon (two days in 2027)",
+        "url": "https://en.wikipedia.org/wiki/London_Marathon"
+      },
+      {
+        "name": "Sanlam Cape Town Marathon official site (22-23 May 2027 weekend)",
+        "url": "https://www.capetownmarathon.com/"
+      },
+      {
+        "name": "BMW Berlin Marathon official site (September 26, 2027)",
+        "url": "https://www.bmw-berlin-marathon.com/en/"
+      },
+      {
+        "name": "Bank of America Chicago Marathon official site (October 10, 2027)",
+        "url": "https://www.chicagomarathon.com/"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "World Marathon Majors (men)",
+      "players": [],
+      "events": [
+        {
+          "key": "tokyo-marathon",
+          "name": "Tokyo Marathon",
+          "startDate": "2027-03-07",
+          "endDate": "2027-03-07",
+          "venue": null,
+          "location": "Tokyo, Japan",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "boston-marathon",
+          "name": "Boston Marathon",
+          "startDate": "2027-04-19",
+          "endDate": "2027-04-19",
+          "venue": null,
+          "location": "Boston, Massachusetts, US",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "london-marathon",
+          "name": "London Marathon",
+          "startDate": "2027-04-24",
+          "endDate": "2027-04-25",
+          "venue": null,
+          "location": "London, United Kingdom",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "cape-town-marathon",
+          "name": "Cape Town Marathon",
+          "startDate": "2027-05-23",
+          "endDate": "2027-05-23",
+          "venue": null,
+          "location": "Cape Town, South Africa",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "sydney-marathon",
+          "name": "Sydney Marathon",
+          "startDate": "2027-08-29",
+          "endDate": "2027-08-29",
+          "venue": null,
+          "location": "Sydney, Australia",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "berlin-marathon",
+          "name": "Berlin Marathon",
+          "startDate": "2027-09-26",
+          "endDate": "2027-09-26",
+          "venue": null,
+          "location": "Berlin, Germany",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "chicago-marathon",
+          "name": "Chicago Marathon",
+          "startDate": "2027-10-10",
+          "endDate": "2027-10-10",
+          "venue": null,
+          "location": "Chicago, Illinois, US",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        }
+      ]
+    },
+    {
+      "name": "World Marathon Majors (women)",
+      "players": [],
+      "events": [
+        {
+          "key": "tokyo-marathon",
+          "name": "Tokyo Marathon",
+          "startDate": "2027-03-07",
+          "endDate": "2027-03-07",
+          "venue": null,
+          "location": "Tokyo, Japan",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "boston-marathon",
+          "name": "Boston Marathon",
+          "startDate": "2027-04-19",
+          "endDate": "2027-04-19",
+          "venue": null,
+          "location": "Boston, Massachusetts, US",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "london-marathon",
+          "name": "London Marathon",
+          "startDate": "2027-04-24",
+          "endDate": "2027-04-25",
+          "venue": null,
+          "location": "London, United Kingdom",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "cape-town-marathon",
+          "name": "Cape Town Marathon",
+          "startDate": "2027-05-23",
+          "endDate": "2027-05-23",
+          "venue": null,
+          "location": "Cape Town, South Africa",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "sydney-marathon",
+          "name": "Sydney Marathon",
+          "startDate": "2027-08-29",
+          "endDate": "2027-08-29",
+          "venue": null,
+          "location": "Sydney, Australia",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "berlin-marathon",
+          "name": "Berlin Marathon",
+          "startDate": "2027-09-26",
+          "endDate": "2027-09-26",
+          "venue": null,
+          "location": "Berlin, Germany",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "chicago-marathon",
+          "name": "Chicago Marathon",
+          "startDate": "2027-10-10",
+          "endDate": "2027-10-10",
+          "venue": null,
+          "location": "Chicago, Illinois, US",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        }
+      ]
+    }
+  ]
+}

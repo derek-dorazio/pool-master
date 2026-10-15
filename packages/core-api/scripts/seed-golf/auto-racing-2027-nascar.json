@@ -1,0 +1,414 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "AUTO_RACING",
+    "season": 2027,
+    "sportLeagues": [
+      "NASCAR Cup Series"
+    ],
+    "contents": [
+      "SCHEDULE"
+    ]
+  },
+  "testData": false,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data skill",
+    "sources": [
+      {
+        "name": "Wikipedia, 2027 NASCAR Cup Series (race names, tracks, cities, dates)",
+        "url": "https://en.wikipedia.org/wiki/2027_NASCAR_Cup_Series"
+      },
+      {
+        "name": "DriverAverages.com, 2027 Cup Series schedule (dates and tracks)",
+        "url": "https://www.driveraverages.com/nascar/year.php?yr_id=2027"
+      },
+      {
+        "name": "Daytona International Speedway (Daytona 500 on February 21, 2027)",
+        "url": "https://www.daytonainternationalspeedway.com/"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "NASCAR Cup Series",
+      "players": [],
+      "events": [
+        {
+          "key": "daytona-500",
+          "name": "Daytona 500",
+          "startDate": "2027-02-21",
+          "endDate": "2027-02-21",
+          "venue": "Daytona International Speedway",
+          "location": "Daytona Beach, Florida",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "autotrader-400",
+          "name": "Autotrader 400",
+          "startDate": "2027-02-28",
+          "endDate": "2027-02-28",
+          "venue": "EchoPark Speedway",
+          "location": "Hampton, Georgia",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "duramax-grand-prix",
+          "name": "DuraMAX Grand Prix",
+          "startDate": "2027-03-07",
+          "endDate": "2027-03-07",
+          "venue": "Circuit of the Americas",
+          "location": "Austin, Texas",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "straight-talk-wireless-500",
+          "name": "Straight Talk Wireless 500",
+          "startDate": "2027-03-14",
+          "endDate": "2027-03-14",
+          "venue": "Phoenix Raceway",
+          "location": "Avondale, Arizona",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "pennzoil-400",
+          "name": "Pennzoil 400",
+          "startDate": "2027-03-21",
+          "endDate": "2027-03-21",
+          "venue": "Las Vegas Motor Speedway",
+          "location": "Las Vegas, Nevada",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "goodyear-400",
+          "name": "Goodyear 400",
+          "startDate": "2027-04-04",
+          "endDate": "2027-04-04",
+          "venue": "Darlington Raceway",
+          "location": "Darlington, South Carolina",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "food-city-500",
+          "name": "Food City 500",
+          "startDate": "2027-04-11",
+          "endDate": "2027-04-11",
+          "venue": "Bristol Motor Speedway",
+          "location": "Bristol, Tennessee",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "cook-out-400",
+          "name": "Cook Out 400",
+          "startDate": "2027-04-18",
+          "endDate": "2027-04-18",
+          "venue": "Martinsville Speedway",
+          "location": "Ridgeway, Virginia",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "jack-links-500",
+          "name": "Jack Link's 500",
+          "startDate": "2027-04-25",
+          "endDate": "2027-04-25",
+          "venue": "Talladega Superspeedway",
+          "location": "Lincoln, Alabama",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "wurth-400",
+          "name": "Würth 400",
+          "startDate": "2027-05-02",
+          "endDate": "2027-05-02",
+          "venue": "Texas Motor Speedway",
+          "location": "Fort Worth, Texas",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "adventhealth-400",
+          "name": "AdventHealth 400",
+          "startDate": "2027-05-09",
+          "endDate": "2027-05-09",
+          "venue": "Kansas Speedway",
+          "location": "Kansas City, Kansas",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "dover-motor-speedway-race",
+          "name": "Dover Motor Speedway race",
+          "startDate": "2027-05-16",
+          "endDate": "2027-05-16",
+          "venue": "Dover Motor Speedway",
+          "location": "Dover, Delaware",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "coca-cola-600",
+          "name": "Coca-Cola 600",
+          "startDate": "2027-05-30",
+          "endDate": "2027-05-30",
+          "venue": "Charlotte Motor Speedway",
+          "location": "Concord, North Carolina",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "cracker-barrel-400",
+          "name": "Cracker Barrel 400",
+          "startDate": "2027-06-06",
+          "endDate": "2027-06-06",
+          "venue": "Nashville Superspeedway",
+          "location": "Lebanon, Tennessee",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "the-great-american-getaway-400",
+          "name": "The Great American Getaway 400",
+          "startDate": "2027-06-13",
+          "endDate": "2027-06-13",
+          "venue": "Pocono Raceway",
+          "location": "Blakeslee, Pennsylvania",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "firekeepers-casino-400",
+          "name": "FireKeepers Casino 400",
+          "startDate": "2027-06-20",
+          "endDate": "2027-06-20",
+          "venue": "Michigan International Speedway",
+          "location": "Brooklyn, Michigan",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "eero-400",
+          "name": "eero 400",
+          "startDate": "2027-06-27",
+          "endDate": "2027-06-27",
+          "venue": "Chicagoland Speedway",
+          "location": "Joliet, Illinois",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "iowa-corn-350",
+          "name": "Iowa Corn 350",
+          "startDate": "2027-07-04",
+          "endDate": "2027-07-04",
+          "venue": "Iowa Speedway",
+          "location": "Newton, Iowa",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "toyota-save-mart-350",
+          "name": "Toyota/Save Mart 350",
+          "startDate": "2027-07-11",
+          "endDate": "2027-07-11",
+          "venue": "Sonoma Raceway",
+          "location": "Sonoma, California",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "dollar-tree-400",
+          "name": "Dollar Tree 400",
+          "startDate": "2027-07-18",
+          "endDate": "2027-07-18",
+          "venue": "EchoPark Speedway",
+          "location": "Hampton, Georgia",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "brickyard-400",
+          "name": "Brickyard 400",
+          "startDate": "2027-07-25",
+          "endDate": "2027-07-25",
+          "venue": "Indianapolis Motor Speedway",
+          "location": "Speedway, Indiana",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "anduril-250",
+          "name": "Anduril 250",
+          "startDate": "2027-08-01",
+          "endDate": "2027-08-01",
+          "venue": "Coronado Street Course",
+          "location": "San Diego, California",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "bass-pro-shops-night-race",
+          "name": "Bass Pro Shops Night Race",
+          "startDate": "2027-08-14",
+          "endDate": "2027-08-14",
+          "venue": "Bristol Motor Speedway",
+          "location": "Bristol, Tennessee",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "enjoy-illinois-300",
+          "name": "Enjoy Illinois 300",
+          "startDate": "2027-08-22",
+          "endDate": "2027-08-22",
+          "venue": "World Wide Technology Raceway",
+          "location": "Madison, Illinois",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "coke-zero-sugar-400",
+          "name": "Coke Zero Sugar 400",
+          "startDate": "2027-08-28",
+          "endDate": "2027-08-28",
+          "venue": "Daytona International Speedway",
+          "location": "Daytona Beach, Florida",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "cook-out-southern-500",
+          "name": "Cook Out Southern 500",
+          "startDate": "2027-09-05",
+          "endDate": "2027-09-05",
+          "venue": "Darlington Raceway",
+          "location": "Darlington, South Carolina",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "go-bowling-at-the-glen",
+          "name": "Go Bowling at The Glen",
+          "startDate": "2027-09-19",
+          "endDate": "2027-09-19",
+          "venue": "Watkins Glen International",
+          "location": "Watkins Glen, New York",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "hollywood-casino-400",
+          "name": "Hollywood Casino 400",
+          "startDate": "2027-10-03",
+          "endDate": "2027-10-03",
+          "venue": "Kansas Speedway",
+          "location": "Kansas City, Kansas",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "south-point-400",
+          "name": "South Point 400",
+          "startDate": "2027-10-10",
+          "endDate": "2027-10-10",
+          "venue": "Las Vegas Motor Speedway",
+          "location": "Las Vegas, Nevada",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "bank-of-america-400",
+          "name": "Bank of America 400",
+          "startDate": "2027-10-17",
+          "endDate": "2027-10-17",
+          "venue": "Charlotte Motor Speedway",
+          "location": "Concord, North Carolina",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "freeway-insurance-500",
+          "name": "Freeway Insurance 500",
+          "startDate": "2027-10-24",
+          "endDate": "2027-10-24",
+          "venue": "Phoenix Raceway",
+          "location": "Avondale, Arizona",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "yellawood-500",
+          "name": "YellaWood 500",
+          "startDate": "2027-10-31",
+          "endDate": "2027-10-31",
+          "venue": "Talladega Superspeedway",
+          "location": "Lincoln, Alabama",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "xfinity-500",
+          "name": "Xfinity 500",
+          "startDate": "2027-11-07",
+          "endDate": "2027-11-07",
+          "venue": "Martinsville Speedway",
+          "location": "Ridgeway, Virginia",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "straight-talk-wireless-400",
+          "name": "Straight Talk Wireless 400",
+          "startDate": "2027-11-14",
+          "endDate": "2027-11-14",
+          "venue": "Homestead–Miami Speedway",
+          "location": "Homestead, Florida",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        }
+      ]
+    }
+  ]
+}

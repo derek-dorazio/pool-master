@@ -252,7 +252,9 @@ The shape is in `packages/core-api/scripts/seed-golf/sport-data-file.ts`.
 A test slate fills the field of one event on the site with a fixed list of players, for
 trying contests before the real field is announced. There is one per sport league in
 `packages/core-api/scripts/seed-golf/test-slates/`: `pga-tour.json` and `lpga-tour.json`
-(the test seed's ranked golfers) and `formula-1.json` (every driver who started a 2025 race).
+(the test seed's ranked golfers), and one per sport league of every other sport, named for the
+league (`formula-1.json`, `us-thoroughbred.json`), whose players come from memory: they are
+for trying contests only.
 Its envelope says `testData` with `contents` `PLAYERS` and `FIELDS` and no events; any sport
 in the registry can have one.
 

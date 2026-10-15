@@ -51,7 +51,8 @@ start and end dates, venue, location, rounds, par; each player in a field and th
 - **Both agree:** load it.
 - **They disagree:** leave it out of the file, and list it for the user with both values
   and both links. Never pick one silently.
-- **Only the official league site has it:** load it, and say so in the summary.
+- **Only the official league site, or the event's own organiser, has it:** load it, and say
+  so in the summary. A marathon's date on its own site counts; a fan or stats site does not.
 - **Neither has it:** leave it out (a `null` venue, no ranking on that field entry).
 - **A feed returns nothing or a changed shape:** say so; do not fall back to search
   snippets for data you load.

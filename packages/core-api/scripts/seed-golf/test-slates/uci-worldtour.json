@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "CYCLING",
+    "season": 2025,
+    "sportLeagues": [
+      "UCI WorldTour"
+    ],
+    "contents": [
+      "PLAYERS",
+      "FIELDS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data test slate, leading men's WorldTour riders of 2025 in a rough order from memory (unchecked)",
+    "sources": [
+      {
+        "name": "2025 UCI World Tour (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025_UCI_World_Tour"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "UCI WorldTour",
+      "players": [
+        {
+          "key": "uci-worldtour-tadej-pogacar",
+          "name": "Tadej Pogačar",
+          "countryCode": "SI",
+          "ranking": 1
+        },
+        {
+          "key": "uci-worldtour-jonas-vingegaard",
+          "name": "Jonas Vingegaard",
+          "countryCode": "DK",
+          "ranking": 2
+        },
+        {
+          "key": "uci-worldtour-remco-evenepoel",
+          "name": "Remco Evenepoel",
+          "countryCode": "BE",
+          "ranking": 3
+        },
+        {
+          "key": "uci-worldtour-mathieu-van-der-poel",
+          "name": "Mathieu van der Poel",
+          "countryCode": "NL",
+          "ranking": 4
+        },
+        {
+          "key": "uci-worldtour-joao-almeida",
+          "name": "João Almeida",
+          "countryCode": "PT",
+          "ranking": 5
+        },
+        {
+          "key": "uci-worldtour-isaac-del-toro",
+          "name": "Isaac del Toro",
+          "countryCode": "MX",
+          "ranking": 6
+        },
+        {
+          "key": "uci-worldtour-mads-pedersen",
+          "name": "Mads Pedersen",
+          "countryCode": "DK",
+          "ranking": 7
+        },
+        {
+          "key": "uci-worldtour-wout-van-aert",
+          "name": "Wout van Aert",
+          "countryCode": "BE",
+          "ranking": 8
+        },
+        {
+          "key": "uci-worldtour-tom-pidcock",
+          "name": "Tom Pidcock",
+          "countryCode": "GB",
+          "ranking": 9
+        },
+        {
+          "key": "uci-worldtour-primoz-roglic",
+          "name": "Primož Roglič",
+          "countryCode": "SI",
+          "ranking": 10
+        },
+        {
+          "key": "uci-worldtour-juan-ayuso",
+          "name": "Juan Ayuso",
+          "countryCode": "ES",
+          "ranking": 11
+        },
+        {
+          "key": "uci-worldtour-florian-lipowitz",
+          "name": "Florian Lipowitz",
+          "countryCode": "DE",
+          "ranking": 12
+        },
+        {
+          "key": "uci-worldtour-jonathan-milan",
+          "name": "Jonathan Milan",
+          "countryCode": "IT",
+          "ranking": 13
+        },
+        {
+          "key": "uci-worldtour-tim-merlier",
+          "name": "Tim Merlier",
+          "countryCode": "BE",
+          "ranking": 14
+        },
+        {
+          "key": "uci-worldtour-jasper-philipsen",
+          "name": "Jasper Philipsen",
+          "countryCode": "BE",
+          "ranking": 15
+        },
+        {
+          "key": "uci-worldtour-richard-carapaz",
+          "name": "Richard Carapaz",
+          "countryCode": "EC",
+          "ranking": 16
+        },
+        {
+          "key": "uci-worldtour-ben-healy",
+          "name": "Ben Healy",
+          "countryCode": "IE",
+          "ranking": 17
+        },
+        {
+          "key": "uci-worldtour-matteo-jorgenson",
+          "name": "Matteo Jorgenson",
+          "countryCode": "US",
+          "ranking": 18
+        },
+        {
+          "key": "uci-worldtour-simon-yates",
+          "name": "Simon Yates",
+          "countryCode": "GB",
+          "ranking": 19
+        },
+        {
+          "key": "uci-worldtour-oscar-onley",
+          "name": "Oscar Onley",
+          "countryCode": "GB",
+          "ranking": 20
+        },
+        {
+          "key": "uci-worldtour-paul-seixas",
+          "name": "Paul Seixas",
+          "countryCode": "FR",
+          "ranking": 21
+        },
+        {
+          "key": "uci-worldtour-arnaud-de-lie",
+          "name": "Arnaud De Lie",
+          "countryCode": "BE",
+          "ranking": 22
+        },
+        {
+          "key": "uci-worldtour-biniam-girmay",
+          "name": "Biniam Girmay",
+          "countryCode": "ER",
+          "ranking": 23
+        },
+        {
+          "key": "uci-worldtour-giulio-ciccone",
+          "name": "Giulio Ciccone",
+          "countryCode": "IT",
+          "ranking": 24
+        }
+      ],
+      "events": []
+    }
+  ]
+}
