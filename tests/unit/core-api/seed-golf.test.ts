@@ -59,9 +59,9 @@ describe('event dates for the API', () => {
       startDate: '2027-01-30T22:40:00.000Z',
       endDate: '2027-01-30T23:00:00.000Z',
     });
-    expect(shiftedEventDates({ startDate: '2027-05-01', endDate: '2027-05-01', startsAt: '2027-05-01T18:57:00-05:00' }, 0)).toEqual({
-      startDate: '2027-05-01T23:57:00.000Z',
-      endDate: '2027-05-01T23:57:00.000Z',
+    expect(shiftedEventDates({ startDate: '2027-05-01', endDate: '2027-05-01', startsAt: '2027-05-01T19:30:00-04:00' }, 0)).toEqual({
+      startDate: '2027-05-01T23:30:00.000Z',
+      endDate: '2027-05-01T23:30:00.000Z',
     });
   });
 });

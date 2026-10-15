@@ -296,9 +296,19 @@ class Loader {
         ? `start ${day(stored.startDate)} → ${day(dates.startDate)}`
         : `start ${stored.startDate} → ${dates.startDate}`);
     }
-    if (compareDates && day(stored.endDate) !== day(dates.endDate)) {
+    // With an exact start the end can sit at the start (an evening post time), so it moves with it.
+    const endChanged = event.startsAt === undefined
+      ? day(stored.endDate) !== day(dates.endDate)
+      : stored.endDate === null || Date.parse(stored.endDate) !== Date.parse(dates.endDate);
+    if (compareDates && endChanged) {
       body.endDate = dates.endDate;
-      changes.push(`end ${day(stored.endDate) ?? 'none'} → ${day(dates.endDate)}`);
+      changes.push(event.startsAt === undefined
+        ? `end ${day(stored.endDate) ?? 'none'} → ${day(dates.endDate)}`
+        : `end ${stored.endDate ?? 'none'} → ${dates.endDate}`);
+    }
+    if (this.resultsEnteredByHand && stored.autoLifecycleEnabled) {
+      body.autoLifecycleEnabled = false;
+      changes.push('automatic lifecycle → off');
     }
     if (stored.venue !== event.venue) {
       body.venue = event.venue;

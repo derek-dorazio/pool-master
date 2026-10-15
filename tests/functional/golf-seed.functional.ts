@@ -409,6 +409,17 @@ describe('Loading a real horse racing schedule and field through the admin API',
     expect(classic.startDate).toBe('2027-11-06T23:50:00.000Z');
     expect(Date.parse(expectDefined(classic.endDate))).toBeGreaterThanOrEqual(Date.parse(classic.startDate));
   });
+
+  it('turns automatic lifecycle off on a race an admin had already created with it on', async () => {
+    const league = expectDefined(await leagueNamed(circuit, Sport.HORSE_RACING));
+    const stored = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === race));
+    await getFunctionalPrisma().sportEvent.update({ where: { id: stored.id }, data: { autoLifecycleEnabled: true } });
+
+    const rows = await loadSportData(parsed(file('2027-01-30T17:40:00-05:00', [{ player: `${prefix}-h2` }, { player: `${prefix}-h1` }])), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(changes(rows).find((row) => row.subject === LoadSubject.EVENT && row.name === race)?.detail).toContain('automatic lifecycle → off');
+    expect(expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === race)).autoLifecycleEnabled).toBe(false);
+  });
 });
 
 describe('Filling an event from a test slate through the admin API', () => {
