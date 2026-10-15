@@ -42,8 +42,8 @@ data* workflow, the same way golf's schedules and fields do
 odds* on need an admin signed in.
 
 1. **The schedule.** `horse-racing-2027.json` (in `packages/core-api/scripts/seed-golf/`)
-   holds the 2027 US Thoroughbred races, so far the Pegasus World Cup on Saturday,
-   January 30, 2027 at Gulfstream Park. Run the workflow with it, dry run first. It creates
+   holds the 2027 US Thoroughbred races announced so far: the Pegasus World Cup and the three
+   Triple Crown races (the Preakness is on a Sunday in 2027). Run the workflow with it, dry run first. It creates
    the **US Thoroughbred** circuit if the site has none and each race as a **draft**, with
    *Races* `1` and automatic lifecycle **off**: no feed sends a finishing order, so a race
    that completed itself would settle its contests on no result.

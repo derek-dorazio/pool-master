@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "AUTO_RACING",
+    "season": 2027,
+    "sportLeagues": [
+      "Formula 1"
+    ],
+    "contents": [
+      "SCHEDULE"
+    ]
+  },
+  "testData": false,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data skill",
+    "sources": [
+      {
+        "name": "Formula 1, 2027 race calendar (race weekends and order)",
+        "url": "https://www.formula1.com/en/racing/2027"
+      },
+      {
+        "name": "Wikipedia, 2027 Formula One World Championship (race dates, circuits, cities)",
+        "url": "https://en.wikipedia.org/wiki/2027_Formula_One_World_Championship"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "Formula 1",
+      "players": [],
+      "events": [
+        {
+          "key": "bahrain-grand-prix",
+          "name": "Bahrain Grand Prix",
+          "startDate": "2027-03-14",
+          "endDate": "2027-03-14",
+          "venue": "Bahrain International Circuit",
+          "location": "Sakhir, Bahrain",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "saudi-arabian-grand-prix",
+          "name": "Saudi Arabian Grand Prix",
+          "startDate": "2027-03-21",
+          "endDate": "2027-03-21",
+          "venue": "Jeddah Corniche Circuit",
+          "location": "Jeddah, Saudi Arabia",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "australian-grand-prix",
+          "name": "Australian Grand Prix",
+          "startDate": "2027-04-04",
+          "endDate": "2027-04-04",
+          "venue": "Albert Park Circuit",
+          "location": "Melbourne, Australia",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "japanese-grand-prix",
+          "name": "Japanese Grand Prix",
+          "startDate": "2027-04-11",
+          "endDate": "2027-04-11",
+          "venue": "Suzuka Circuit",
+          "location": "Suzuka, Japan",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "chinese-grand-prix",
+          "name": "Chinese Grand Prix",
+          "startDate": "2027-04-18",
+          "endDate": "2027-04-18",
+          "venue": "Shanghai International Circuit",
+          "location": "Shanghai, China",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "miami-grand-prix",
+          "name": "Miami Grand Prix",
+          "startDate": "2027-05-02",
+          "endDate": "2027-05-02",
+          "venue": "Miami International Autodrome",
+          "location": "Miami Gardens, Florida, US",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "canadian-grand-prix",
+          "name": "Canadian Grand Prix",
+          "startDate": "2027-05-23",
+          "endDate": "2027-05-23",
+          "venue": "Circuit Gilles Villeneuve",
+          "location": "Montreal, Canada",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "monaco-grand-prix",
+          "name": "Monaco Grand Prix",
+          "startDate": "2027-06-06",
+          "endDate": "2027-06-06",
+          "venue": "Circuit de Monaco",
+          "location": "Monaco",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "portuguese-grand-prix",
+          "name": "Portuguese Grand Prix",
+          "startDate": "2027-06-20",
+          "endDate": "2027-06-20",
+          "venue": "Algarve International Circuit",
+          "location": "Portimão, Portugal",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "british-grand-prix",
+          "name": "British Grand Prix",
+          "startDate": "2027-07-04",
+          "endDate": "2027-07-04",
+          "venue": "Silverstone Circuit",
+          "location": "Silverstone, United Kingdom",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "austrian-grand-prix",
+          "name": "Austrian Grand Prix",
+          "startDate": "2027-07-11",
+          "endDate": "2027-07-11",
+          "venue": "Red Bull Ring",
+          "location": "Spielberg, Austria",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "belgian-grand-prix",
+          "name": "Belgian Grand Prix",
+          "startDate": "2027-07-25",
+          "endDate": "2027-07-25",
+          "venue": "Circuit de Spa-Francorchamps",
+          "location": "Stavelot, Belgium",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "hungarian-grand-prix",
+          "name": "Hungarian Grand Prix",
+          "startDate": "2027-08-01",
+          "endDate": "2027-08-01",
+          "venue": "Hungaroring",
+          "location": "Mogyoród, Hungary",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "italian-grand-prix",
+          "name": "Italian Grand Prix",
+          "startDate": "2027-09-05",
+          "endDate": "2027-09-05",
+          "venue": "Monza Circuit",
+          "location": "Monza, Italy",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "spanish-grand-prix",
+          "name": "Spanish Grand Prix",
+          "startDate": "2027-09-12",
+          "endDate": "2027-09-12",
+          "venue": "Madring",
+          "location": "Madrid, Spain",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "azerbaijan-grand-prix",
+          "name": "Azerbaijan Grand Prix",
+          "startDate": "2027-09-26",
+          "endDate": "2027-09-26",
+          "venue": "Baku City Circuit",
+          "location": "Baku, Azerbaijan",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "turkish-grand-prix",
+          "name": "Turkish Grand Prix",
+          "startDate": "2027-10-03",
+          "endDate": "2027-10-03",
+          "venue": "Istanbul Park",
+          "location": "Istanbul, Türkiye",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "singapore-grand-prix",
+          "name": "Singapore Grand Prix",
+          "startDate": "2027-10-10",
+          "endDate": "2027-10-10",
+          "venue": "Marina Bay Street Circuit",
+          "location": "Singapore",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "united-states-grand-prix",
+          "name": "United States Grand Prix",
+          "startDate": "2027-10-24",
+          "endDate": "2027-10-24",
+          "venue": "Circuit of the Americas",
+          "location": "Austin, Texas, US",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "mexico-city-grand-prix",
+          "name": "Mexico City Grand Prix",
+          "startDate": "2027-10-31",
+          "endDate": "2027-10-31",
+          "venue": "Autódromo Hermanos Rodríguez",
+          "location": "Mexico City, Mexico",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "sao-paulo-grand-prix",
+          "name": "São Paulo Grand Prix",
+          "startDate": "2027-11-07",
+          "endDate": "2027-11-07",
+          "venue": "Interlagos Circuit",
+          "location": "São Paulo, Brazil",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "las-vegas-grand-prix",
+          "name": "Las Vegas Grand Prix",
+          "startDate": "2027-11-20",
+          "endDate": "2027-11-20",
+          "venue": "Las Vegas Strip Circuit",
+          "location": "Paradise, Nevada, US",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "qatar-grand-prix",
+          "name": "Qatar Grand Prix",
+          "startDate": "2027-12-05",
+          "endDate": "2027-12-05",
+          "venue": "Lusail International Circuit",
+          "location": "Lusail, Qatar",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        },
+        {
+          "key": "abu-dhabi-grand-prix",
+          "name": "Abu Dhabi Grand Prix",
+          "startDate": "2027-12-12",
+          "endDate": "2027-12-12",
+          "venue": "Yas Marina Circuit",
+          "location": "Abu Dhabi, United Arab Emirates",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": []
+        }
+      ]
+    }
+  ]
+}

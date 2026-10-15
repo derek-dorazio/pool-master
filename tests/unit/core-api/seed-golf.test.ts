@@ -120,16 +120,115 @@ describe('golf-2026.json', () => {
   });
 });
 
+const SEED_DIR = join(__dirname, '../../../packages/core-api/scripts/seed-golf');
+
+function readDataFile(name: string, allowTestData: boolean) {
+  return parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, name), 'utf8')) as unknown, { allowTestData });
+}
+
+function eventRows(file: SportDataFile, league = 0) {
+  return file.sportLeagues[league].events.map((event) => [event.name, event.startDate, event.endDate, event.rounds, event.roundsPar]);
+}
+
 describe('horse-racing-2027.json', () => {
-  it('is a real 2027 US Thoroughbred schedule holding the Pegasus World Cup as a one-race event with no par', () => {
-    const file = parseSportDataFile(
-      JSON.parse(readFileSync(join(__dirname, '../../../packages/core-api/scripts/seed-golf/horse-racing-2027.json'), 'utf8')) as unknown,
-      { allowTestData: false },
-    );
+  it('is a real 2027 US Thoroughbred schedule: the Pegasus World Cup and the three Triple Crown races, each a one-race event with no par', () => {
+    const file = readDataFile('horse-racing-2027.json', false);
 
     expect(file.scope).toEqual({ sport: Sport.HORSE_RACING, season: 2027, sportLeagues: ['US Thoroughbred'], contents: [SportDataContent.SCHEDULE] });
-    expect(file.sportLeagues[0].events.map((event) => [event.name, event.startDate, event.rounds, event.roundsPar])).toEqual([
-      ['Pegasus World Cup', '2027-01-30', 1, null],
+    expect(eventRows(file)).toEqual([
+      ['Pegasus World Cup', '2027-01-30', '2027-01-30', 1, null],
+      ['Kentucky Derby', '2027-05-01', '2027-05-01', 1, null],
+      ['Preakness Stakes', '2027-05-23', '2027-05-23', 1, null],
+      ['Belmont Stakes', '2027-06-05', '2027-06-05', 1, null],
     ]);
+  });
+});
+
+describe('auto-racing-2027-formula-1.json', () => {
+  it('is a real 2027 Formula 1 schedule of 24 one-day Grands Prix, Bahrain on March 14 to Abu Dhabi on December 12', () => {
+    const file = readDataFile('auto-racing-2027-formula-1.json', false);
+    const events = file.sportLeagues[0].events;
+
+    expect(file.scope).toEqual({ sport: Sport.AUTO_RACING, season: 2027, sportLeagues: ['Formula 1'], contents: [SportDataContent.SCHEDULE] });
+    expect(events).toHaveLength(24);
+    expect([events[0].name, events[0].startDate]).toEqual(['Bahrain Grand Prix', '2027-03-14']);
+    expect([events[23].name, events[23].startDate]).toEqual(['Abu Dhabi Grand Prix', '2027-12-12']);
+    expect(events.every((event) => event.startDate === event.endDate && event.rounds === 1 && event.field.length === 0)).toBe(true);
+  });
+});
+
+describe('auto-racing-2027-nascar.json', () => {
+  it('is a real 2027 NASCAR Cup Series schedule of the 34 points races both sources agree on, Daytona 500 first and Homestead last', () => {
+    const file = readDataFile('auto-racing-2027-nascar.json', false);
+    const events = file.sportLeagues[0].events;
+
+    expect(file.scope).toEqual({ sport: Sport.AUTO_RACING, season: 2027, sportLeagues: ['NASCAR Cup Series'], contents: [SportDataContent.SCHEDULE] });
+    expect(events).toHaveLength(34);
+    expect([events[0].name, events[0].startDate, events[0].venue]).toEqual(['Daytona 500', '2027-02-21', 'Daytona International Speedway']);
+    expect([events[33].startDate, events[33].venue]).toEqual(['2027-11-14', 'Homestead–Miami Speedway']);
+    expect(events.map((event) => event.venue)).not.toContain('Richmond Raceway');
+    expect(events.map((event) => event.venue)).not.toContain('New Hampshire Motor Speedway');
+  });
+});
+
+describe('cycling-2027.json', () => {
+  it('holds the 2027 WorldTour races two sources date alike, Grand Tours as one race spanning every stage', () => {
+    const file = readDataFile('cycling-2027.json', false);
+
+    expect(file.scope).toEqual({ sport: Sport.CYCLING, season: 2027, sportLeagues: ['UCI WorldTour', "UCI Women's WorldTour"], contents: [SportDataContent.SCHEDULE] });
+    expect(eventRows(file, 0)).toEqual([
+      ['Strade Bianche', '2027-03-06', '2027-03-06', 1, null],
+      ['Tirreno-Adriatico', '2027-03-08', '2027-03-14', 1, null],
+      ['Milano-Sanremo', '2027-03-20', '2027-03-20', 1, null],
+      ["Giro d'Italia", '2027-05-08', '2027-05-30', 1, null],
+      ['Tour de France', '2027-07-02', '2027-07-25', 1, null],
+      ['Il Lombardia', '2027-10-09', '2027-10-09', 1, null],
+    ]);
+    expect(eventRows(file, 1)).toEqual([["Giro d'Italia Women", '2027-05-29', '2027-06-06', 1, null]]);
+  });
+});
+
+describe('running-2027.json', () => {
+  it("gives the men's and women's World Marathon Majors the same seven announced 2027 races, London over both days of its weekend", () => {
+    const file = readDataFile('running-2027.json', false);
+
+    expect(file.scope).toEqual({
+      sport: Sport.RUNNING,
+      season: 2027,
+      sportLeagues: ['World Marathon Majors (men)', 'World Marathon Majors (women)'],
+      contents: [SportDataContent.SCHEDULE],
+    });
+    expect(eventRows(file, 0)).toEqual([
+      ['Tokyo Marathon', '2027-03-07', '2027-03-07', 1, null],
+      ['Boston Marathon', '2027-04-19', '2027-04-19', 1, null],
+      ['London Marathon', '2027-04-24', '2027-04-25', 1, null],
+      ['Cape Town Marathon', '2027-05-23', '2027-05-23', 1, null],
+      ['Sydney Marathon', '2027-08-29', '2027-08-29', 1, null],
+      ['Berlin Marathon', '2027-09-26', '2027-09-26', 1, null],
+      ['Chicago Marathon', '2027-10-10', '2027-10-10', 1, null],
+    ]);
+    expect(eventRows(file, 1)).toEqual(eventRows(file, 0));
+  });
+});
+
+describe('test slates', () => {
+  it.each([
+    ['us-thoroughbred.json', Sport.HORSE_RACING, 'US Thoroughbred'],
+    ['formula-1.json', Sport.AUTO_RACING, 'Formula 1'],
+    ['nascar-cup-series.json', Sport.AUTO_RACING, 'NASCAR Cup Series'],
+    ['indycar.json', Sport.AUTO_RACING, 'IndyCar'],
+    ['uci-worldtour.json', Sport.CYCLING, 'UCI WorldTour'],
+    ['uci-womens-worldtour.json', Sport.CYCLING, "UCI Women's WorldTour"],
+    ['world-marathon-majors-men.json', Sport.RUNNING, 'World Marathon Majors (men)'],
+    ['world-marathon-majors-women.json', Sport.RUNNING, 'World Marathon Majors (women)'],
+  ])('%s is test data for %s %s: players ranked 1 to n in order, no events, so it only fills a field already on the site', (name, sport, league) => {
+    const file = readDataFile(`test-slates/${name}`, true);
+
+    expect(file.testData).toBe(true);
+    expect(file.scope.sport).toBe(sport);
+    expect(file.scope.sportLeagues).toEqual([league]);
+    expect(file.scope.contents).toEqual([SportDataContent.PLAYERS, SportDataContent.FIELDS]);
+    expect(file.sportLeagues[0].events).toEqual([]);
+    expect(file.sportLeagues[0].players.map((player) => player.ranking)).toEqual(file.sportLeagues[0].players.map((_, index) => index + 1));
   });
 });

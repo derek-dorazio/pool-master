@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "AUTO_RACING",
+    "season": 2025,
+    "sportLeagues": [
+      "NASCAR Cup Series"
+    ],
+    "contents": [
+      "PLAYERS",
+      "FIELDS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data test slate, full-time 2025 Cup Series drivers ranked roughly by final standings from memory (unchecked)",
+    "sources": [
+      {
+        "name": "2025 NASCAR Cup Series (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025_NASCAR_Cup_Series"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "NASCAR Cup Series",
+      "players": [
+        {
+          "key": "nascar-cup-series-kyle-larson",
+          "name": "Kyle Larson",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "nascar-cup-series-denny-hamlin",
+          "name": "Denny Hamlin",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "nascar-cup-series-william-byron",
+          "name": "William Byron",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "nascar-cup-series-chase-briscoe",
+          "name": "Chase Briscoe",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "nascar-cup-series-christopher-bell",
+          "name": "Christopher Bell",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "nascar-cup-series-ryan-blaney",
+          "name": "Ryan Blaney",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "nascar-cup-series-joey-logano",
+          "name": "Joey Logano",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "nascar-cup-series-chase-elliott",
+          "name": "Chase Elliott",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "nascar-cup-series-bubba-wallace",
+          "name": "Bubba Wallace",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "nascar-cup-series-tyler-reddick",
+          "name": "Tyler Reddick",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "nascar-cup-series-ross-chastain",
+          "name": "Ross Chastain",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "nascar-cup-series-alex-bowman",
+          "name": "Alex Bowman",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "nascar-cup-series-austin-cindric",
+          "name": "Austin Cindric",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "nascar-cup-series-josh-berry",
+          "name": "Josh Berry",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "nascar-cup-series-shane-van-gisbergen",
+          "name": "Shane van Gisbergen",
+          "countryCode": "US",
+          "ranking": 15
+        },
+        {
+          "key": "nascar-cup-series-austin-dillon",
+          "name": "Austin Dillon",
+          "countryCode": "US",
+          "ranking": 16
+        },
+        {
+          "key": "nascar-cup-series-kyle-busch",
+          "name": "Kyle Busch",
+          "countryCode": "US",
+          "ranking": 17
+        },
+        {
+          "key": "nascar-cup-series-ryan-preece",
+          "name": "Ryan Preece",
+          "countryCode": "US",
+          "ranking": 18
+        },
+        {
+          "key": "nascar-cup-series-chris-buescher",
+          "name": "Chris Buescher",
+          "countryCode": "US",
+          "ranking": 19
+        },
+        {
+          "key": "nascar-cup-series-brad-keselowski",
+          "name": "Brad Keselowski",
+          "countryCode": "US",
+          "ranking": 20
+        },
+        {
+          "key": "nascar-cup-series-carson-hocevar",
+          "name": "Carson Hocevar",
+          "countryCode": "US",
+          "ranking": 21
+        },
+        {
+          "key": "nascar-cup-series-michael-mcdowell",
+          "name": "Michael McDowell",
+          "countryCode": "US",
+          "ranking": 22
+        },
+        {
+          "key": "nascar-cup-series-aj-allmendinger",
+          "name": "AJ Allmendinger",
+          "countryCode": "US",
+          "ranking": 23
+        },
+        {
+          "key": "nascar-cup-series-daniel-suarez",
+          "name": "Daniel Suárez",
+          "countryCode": "US",
+          "ranking": 24
+        },
+        {
+          "key": "nascar-cup-series-ty-gibbs",
+          "name": "Ty Gibbs",
+          "countryCode": "US",
+          "ranking": 25
+        },
+        {
+          "key": "nascar-cup-series-erik-jones",
+          "name": "Erik Jones",
+          "countryCode": "US",
+          "ranking": 26
+        },
+        {
+          "key": "nascar-cup-series-noah-gragson",
+          "name": "Noah Gragson",
+          "countryCode": "US",
+          "ranking": 27
+        },
+        {
+          "key": "nascar-cup-series-john-hunter-nemechek",
+          "name": "John Hunter Nemechek",
+          "countryCode": "US",
+          "ranking": 28
+        },
+        {
+          "key": "nascar-cup-series-zane-smith",
+          "name": "Zane Smith",
+          "countryCode": "US",
+          "ranking": 29
+        },
+        {
+          "key": "nascar-cup-series-todd-gilliland",
+          "name": "Todd Gilliland",
+          "countryCode": "US",
+          "ranking": 30
+        },
+        {
+          "key": "nascar-cup-series-ricky-stenhouse-jr",
+          "name": "Ricky Stenhouse Jr.",
+          "countryCode": "US",
+          "ranking": 31
+        },
+        {
+          "key": "nascar-cup-series-riley-herbst",
+          "name": "Riley Herbst",
+          "countryCode": "US",
+          "ranking": 32
+        },
+        {
+          "key": "nascar-cup-series-cole-custer",
+          "name": "Cole Custer",
+          "countryCode": "US",
+          "ranking": 33
+        },
+        {
+          "key": "nascar-cup-series-justin-haley",
+          "name": "Justin Haley",
+          "countryCode": "US",
+          "ranking": 34
+        },
+        {
+          "key": "nascar-cup-series-ty-dillon",
+          "name": "Ty Dillon",
+          "countryCode": "US",
+          "ranking": 35
+        },
+        {
+          "key": "nascar-cup-series-cody-ware",
+          "name": "Cody Ware",
+          "countryCode": "US",
+          "ranking": 36
+        }
+      ],
+      "events": []
+    }
+  ]
+}

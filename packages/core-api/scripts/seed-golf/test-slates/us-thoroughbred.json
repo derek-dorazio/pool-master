@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "HORSE_RACING",
+    "season": 2025,
+    "sportLeagues": [
+      "US Thoroughbred"
+    ],
+    "contents": [
+      "PLAYERS",
+      "FIELDS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-15",
+    "gatheredBy": "load-sport-data test slate, leading US dirt horses of 2025 in a rough order from memory (unchecked)",
+    "sources": [
+      {
+        "name": "2025 Breeders' Cup Classic (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025_Breeders%27_Cup_Classic"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "US Thoroughbred",
+      "players": [
+        {
+          "key": "us-thoroughbred-forever-young",
+          "name": "Forever Young",
+          "countryCode": "JP",
+          "ranking": 1
+        },
+        {
+          "key": "us-thoroughbred-sovereignty",
+          "name": "Sovereignty",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "us-thoroughbred-journalism",
+          "name": "Journalism",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "us-thoroughbred-fierceness",
+          "name": "Fierceness",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "us-thoroughbred-sierra-leone",
+          "name": "Sierra Leone",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "us-thoroughbred-mindframe",
+          "name": "Mindframe",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "us-thoroughbred-baeza",
+          "name": "Baeza",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "us-thoroughbred-citizen-bull",
+          "name": "Citizen Bull",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "us-thoroughbred-white-abarrio",
+          "name": "White Abarrio",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "us-thoroughbred-locked",
+          "name": "Locked",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "us-thoroughbred-rodriguez",
+          "name": "Rodriguez",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "us-thoroughbred-sandman",
+          "name": "Sandman",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "us-thoroughbred-nysos",
+          "name": "Nysos",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "us-thoroughbred-magnitude",
+          "name": "Magnitude",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "us-thoroughbred-disarm",
+          "name": "Disarm",
+          "countryCode": "US",
+          "ranking": 15
+        },
+        {
+          "key": "us-thoroughbred-thorpedo-anna",
+          "name": "Thorpedo Anna",
+          "countryCode": "US",
+          "ranking": 16
+        }
+      ],
+      "events": []
+    }
+  ]
+}
