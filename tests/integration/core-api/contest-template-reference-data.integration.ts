@@ -1,8 +1,14 @@
 import {
+  ContestFormat,
   ContestRulesWithEntryLimitSchema,
+  PARTICIPANT_SCORING_SETTINGS_SCHEMAS,
+  SUPPORTED_SPORTS,
   SelectionType,
   Sport,
   assertNever,
+  getSportDefinition,
+  getTieredRosterSize,
+  sportAllowsSelectionType,
 } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
@@ -15,7 +21,8 @@ import {
 // sport league is offered only for that league's events, so a template pointing at a league of
 // another sport would be offered nowhere it can be used: checked for every sport, so a mis-seeded
 // row of any future sport fails here. Auto racing's series and their points presets (#624, and
-// Formula 1 in #625) are checked value by value. No mocks.
+// Formula 1 in #625) are checked value by value, and every sport's presets, golf and horse racing
+// included, against the rules contest creation holds them to. No mocks.
 
 beforeAll(async () => {
   await setupIntegrationTests();
@@ -314,5 +321,108 @@ describe('Seeded running series and their Top 10 templates', () => {
       ['wmm-women-random-draw-top-10', 1, 1],
       ['wmm-women-tiered-top-10', 1, 4],
     ]);
+  });
+});
+
+// What contest creation holds a template's rules to, checked on every seeded template of every
+// sport rather than sport by sport, so a preset seeded for a new sport or series that no
+// commissioner could create a contest from fails here instead of on the create page.
+describe('Every seeded contest template, whatever its sport', () => {
+  async function activeTemplates() {
+    return getPrisma().contestConfigTemplate.findMany({
+      where: { active: true },
+      include: { sportLeague: true },
+      orderBy: [{ sport: 'asc' }, { templateKey: 'asc' }],
+    });
+  }
+
+  it('parses as its own selection type\'s rules, one the sport offers, scored by a definition the sport offers or one that needs no settings', async () => {
+    const templates = await activeTemplates();
+
+    expect(new Set(templates.map((template) => template.sport))).toEqual(new Set(SUPPORTED_SPORTS));
+    const problems = templates.flatMap((template) => {
+      const definition = getSportDefinition(template.sport);
+      const parsed = ContestRulesWithEntryLimitSchema.safeParse(template.configJson);
+      if (!parsed.success) {
+        return [`${template.templateKey}: rules do not parse`];
+      }
+      const rules = parsed.data;
+      const found: string[] = [];
+      if (rules.selectionType !== template.selectionType) {
+        found.push(`${template.templateKey}: ${rules.selectionType} rules on a ${template.selectionType} template`);
+      }
+      if (!sportAllowsSelectionType(definition, rules.selectionType)) {
+        found.push(`${template.templateKey}: ${template.sport} offers no ${rules.selectionType} selection`);
+      }
+      if (rules.scoring && !definition.scoringDefinitions.includes(rules.scoring.participantScoringDefinitionId)) {
+        found.push(`${template.templateKey}: ${template.sport} offers no ${rules.scoring.participantScoringDefinitionId} scoring`);
+      }
+      // With no preset, the sport's first definition is used with its default settings, which
+      // only a definition that takes none has.
+      const [defaultDefinitionId] = definition.scoringDefinitions;
+      if (!rules.scoring && !PARTICIPANT_SCORING_SETTINGS_SCHEMAS[defaultDefinitionId].safeParse({}).success) {
+        found.push(`${template.templateKey}: no scoring preset, and ${defaultDefinitionId} needs settings`);
+      }
+      return found;
+    });
+
+    expect(problems).toEqual([]);
+  });
+
+  it('counts no more scores than an entry holds: a tiered preset on its sport\'s default tiers, a budget roster, or a draw\'s hand', async () => {
+    const templates = await activeTemplates();
+
+    const problems = templates.flatMap((template) => {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      const held = (() => {
+        switch (rules.selectionType) {
+          case SelectionType.TIERED:
+            return getTieredRosterSize(getSportDefinition(template.sport).defaultTierLayout.tierCount, rules.picksPerTier);
+          case SelectionType.BUDGET_PICK:
+            return rules.rosterSize;
+          case SelectionType.RANDOM_DRAW:
+            return rules.picksPerEntry;
+          default:
+            return assertNever(rules, 'selection type');
+        }
+      })();
+      return rules.countedScores > held ? [`${template.templateKey}: counts ${rules.countedScores} of ${held}`] : [];
+    });
+
+    expect(problems).toEqual([]);
+  });
+
+  it('gives each seeded sport league, and each sport with no league seeded, a roster default and a preset for every selection type its sport offers', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { active: true, contestFormat: ContestFormat.ROSTER },
+    });
+    const leagues = await getPrisma().sportLeague.findMany({ include: { sport: true }, orderBy: { name: 'asc' } });
+
+    // What the create page offers for an event: its league's own presets with the sport-wide ones.
+    const scopes = [
+      ...leagues.map((league) => ({
+        name: league.name,
+        sport: league.sport.sport,
+        offered: templates.filter((template) => template.sport === league.sport.sport
+          && (template.sportLeagueId === null || template.sportLeagueId === league.id)),
+      })),
+      ...SUPPORTED_SPORTS
+        .filter((sport) => !leagues.some((league) => league.sport.sport === sport))
+        .map((sport) => ({
+          name: `${sport} (sport-wide)`,
+          sport,
+          offered: templates.filter((template) => template.sport === sport && template.sportLeagueId === null),
+        })),
+    ];
+
+    const problems = scopes.flatMap(({ name, sport, offered }) => [
+      ...(offered.some((template) => template.isDefault) ? [] : [`${name}: no default preset`]),
+      ...getSportDefinition(sport).selectionTypes
+        .filter((selectionType) => !offered.some((template) => template.selectionType === selectionType))
+        .map((selectionType) => `${name}: no ${selectionType} preset`),
+    ]);
+
+    expect(scopes.map(({ name }) => name)).toEqual(expect.arrayContaining(['IndyCar', "UCI Women's WorldTour", 'World Marathon Majors (women)']));
+    expect(problems).toEqual([]);
   });
 });
