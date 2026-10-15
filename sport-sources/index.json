@@ -1,145 +1,117 @@
 {
-  "fetchedAt": "2026-10-15T02:30:27.262Z",
+  "fetchedAt": "2026-10-15T02:34:11.661Z",
   "results": [
     {
-      "url": "https://www.espn.com/racing/schedule/_/series/sprint/year/2027",
+      "url": "https://www.driveraverages.com/nascar/year.php?yr_id=2027",
       "rendered": false,
       "status": "OK",
-      "httpStatus": 202,
-      "file": "01-espn.com.txt"
+      "httpStatus": 200,
+      "file": "01-driveraverages.com.txt"
     },
     {
-      "url": "https://www.nascar.com/nascar-cup-series/2027/schedule/",
+      "url": "https://www.cyclingstage.com/cycling-calendar-2027/",
       "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "02-nascar.com.txt"
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-cyclingstage.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/2027_Daytona_500",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 404,
-      "file": "03-en.wikipedia.org.txt"
-    },
-    {
-      "url": "https://en.wikipedia.org/wiki/2027_Tour_de_France",
+      "url": "https://www.cyclingstage.com/womens-cycling-calendar-2027/",
       "rendered": false,
       "status": "HTTP_ERROR",
       "httpStatus": 404,
-      "file": "04-en.wikipedia.org.txt"
+      "file": "03-cyclingstage.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/2027_Giro_d%27Italia",
+      "url": "https://cqranking.com/men/asp/gen/calendar.asp?year=2027",
       "rendered": false,
       "status": "HTTP_ERROR",
       "httpStatus": 404,
-      "file": "05-en.wikipedia.org.txt"
+      "file": "04-cqranking.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/2027_Vuelta_a_Espa%C3%B1a",
+      "url": "https://cqranking.com/women/asp/gen/calendar.asp?year=2027",
       "rendered": false,
       "status": "HTTP_ERROR",
       "httpStatus": 404,
-      "file": "06-en.wikipedia.org.txt"
+      "file": "05-cqranking.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/wiki/2027_in_men%27s_road_cycling",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 404,
-      "file": "07-en.wikipedia.org.txt"
-    },
-    {
-      "url": "https://en.wikipedia.org/wiki/2027_in_women%27s_road_cycling",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 404,
-      "file": "08-en.wikipedia.org.txt"
-    },
-    {
-      "url": "https://www.motorsport.com/nascar-cup/schedule/2027/",
+      "url": "https://www.mrn.com/race-series/nascar-cup-series/schedule/",
       "rendered": true,
       "status": "HTTP_ERROR",
       "httpStatus": 403,
-      "file": "09-motorsport.com.txt"
+      "file": "06-mrn.com.txt"
     },
     {
-      "url": "https://www.foxsports.com/nascar/cup-series/schedule",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "10-foxsports.com.txt"
-    },
-    {
-      "url": "https://www.cbssports.com/nascar/schedule/",
+      "url": "https://www.goprn.com/nascar-cup-series/schedule/",
       "rendered": true,
       "status": "HTTP_ERROR",
       "httpStatus": 404,
-      "file": "11-cbssports.com.txt"
+      "file": "07-goprn.com.txt"
     },
     {
-      "url": "https://www.daytonainternationalspeedway.com/",
+      "url": "https://frontstretch.com/2027-nascar-cup-series-schedule/",
       "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "12-daytonainternationalspeedway.com.txt"
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "08-frontstretch.com.txt"
     },
     {
-      "url": "https://www.uci.org/calendar/road",
-      "rendered": true,
-      "status": "FAILED",
-      "reason": "page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.uci.org/calendar/road\", waiting until \"domcontentloaded\"\n",
-      "file": null
-    },
-    {
-      "url": "https://www.letour.fr/en/",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "14-letour.fr.txt"
-    },
-    {
-      "url": "https://www.giroditalia.it/en/",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "15-giroditalia.it.txt"
-    },
-    {
-      "url": "https://www.lavuelta.es/en",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "16-lavuelta.es.txt"
-    },
-    {
-      "url": "https://www.cyclingnews.com/races/",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "17-cyclingnews.com.txt"
-    },
-    {
-      "url": "https://www.chicagomarathon.com/",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "18-chicagomarathon.com.txt"
-    },
-    {
-      "url": "https://www.sydneymarathon.com/",
-      "rendered": true,
-      "status": "FAILED",
-      "reason": "page.goto: net::ERR_CONNECTION_CLOSED at https://www.sydneymarathon.com/\nCall log:\n  - navigating to \"https://www.sydneymarathon.com/\", waiting until \"domcontentloaded\"\n",
-      "file": null
-    },
-    {
-      "url": "https://www.nyrr.org/tcsnycmarathon/runners/race-information",
+      "url": "https://www.nbcsports.com/nascar/news/2027-nascar-cup-series-schedule",
       "rendered": true,
       "status": "HTTP_ERROR",
       "httpStatus": 404,
-      "file": "20-nyrr.org.txt"
+      "file": "09-nbcsports.com.txt"
+    },
+    {
+      "url": "https://www.flandersclassics.be/en/calendar",
+      "rendered": true,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
+      "file": "10-flandersclassics.be.txt"
+    },
+    {
+      "url": "https://www.aso.fr/en/cycling",
+      "rendered": true,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
+      "file": "11-aso.fr.txt"
+    },
+    {
+      "url": "https://www.lavuelta.es/en/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "12-lavuelta.es.txt"
+    },
+    {
+      "url": "https://www.letour.fr/en/the-tour-de-france-femmes",
+      "rendered": true,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
+      "file": "13-letour.fr.txt"
+    },
+    {
+      "url": "https://www.uci.org/road/calendar",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "14-uci.org.txt"
+    },
+    {
+      "url": "https://www.tourdownunder.com.au/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "15-tourdownunder.com.au.txt"
+    },
+    {
+      "url": "https://www.uaetour.com/en",
+      "rendered": true,
+      "status": "FAILED",
+      "reason": "page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.uaetour.com/en\nCall log:\n  - navigating to \"https://www.uaetour.com/en\", waiting until \"domcontentloaded\"\n",
+      "file": null
     }
   ]
 }

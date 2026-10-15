@@ -1,7 +1,7 @@
-Source: https://www.lavuelta.es/en
-Final URL: https://www.lavuelta.es/en
+Source: https://www.lavuelta.es/en/
+Final URL: https://www.lavuelta.es/en/
 HTTP 200
-Fetched: 2026-10-15T02:30:05.800Z
+Fetched: 2026-10-15T02:33:38.848Z
 
 Official website of La Vuelta
 News
@@ -62,7 +62,7 @@ News
 CHILE WILL HOST DESAFÍO CHILE BY LA VUELTA
 News
 Granada crowns Johannessen and Mas
-D-324 06 39 55
+D-324 06 36 22
 Days
 Hrs
 Mins

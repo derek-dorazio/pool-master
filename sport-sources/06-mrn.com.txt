@@ -1,0 +1,11 @@
+Source: https://www.mrn.com/race-series/nascar-cup-series/schedule/
+Final URL: https://www.mrn.com/race-series/nascar-cup-series/schedule/
+HTTP 403
+Fetched: 2026-10-15T02:33:05.082Z
+
+Just a moment... www.mrn.com
+Performing security verification
+This website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.
+Verification successful. Waiting for www.mrn.com to respond
+Ray ID: a4ab6a6088944715
+Performance and Security by Cloudflare Privacy
