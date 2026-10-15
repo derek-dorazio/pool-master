@@ -6,7 +6,7 @@ import {
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
-import { isCall, submitAndRead } from './helpers/browser-writes';
+import { WRITE_TIMEOUT_MS, isCall, submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
 
@@ -232,7 +232,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect
         .poll(
           () => listedIds.some((listed) => ids.every((id) => listed.has(id))),
-          { message: 'the player list never reloaded with every new golfer' },
+          // The list is unpaged and grows on QA, so its reload gets a server read's budget.
+          { message: 'the player list never reloaded with every new golfer', timeout: WRITE_TIMEOUT_MS },
         )
         .toBe(true);
       page.off('response', recordList);
@@ -247,9 +248,15 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       } catch (error) {
         // #678 — QA alone has failed here, and its trace is out of reach, so the log says what the
         // page showed: the search text, the rows, and any error state.
-        const shown = await page.getByTestId('root-admin-participant-list-page').innerText();
+        // A diagnostic that cannot be read must not replace the assertion failure.
+        const unreadable = (readError: unknown) => `<unreadable: ${String(readError)}>`;
+        const shown = await page
+          .getByTestId('root-admin-participant-list-page')
+          .innerText({ timeout: 1_000 })
+          .catch(unreadable);
+        const searched = await search.inputValue({ timeout: 1_000 }).catch(unreadable);
         console.log(
-          `[journey ${run.runId}] player list at failure: url=${page.url()} search="${await search.inputValue()}"\n${shown.slice(0, 2000)}`,
+          `[journey ${run.runId}] player list at failure: url=${page.url()} search="${searched}"\n${shown.slice(0, 2000)}`,
         );
         throw error;
       }
