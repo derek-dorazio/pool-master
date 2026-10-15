@@ -1,0 +1,68 @@
+{
+  "fetchedAt": "2026-10-15T02:18:41.714Z",
+  "results": [
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/racing/nascar-premier/scoreboard?dates=2027",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/racing/irl/scoreboard?dates=2027",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=2027",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2027_NASCAR_Cup_Series",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2027_IndyCar_Series",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2027_Formula_One_World_Championship",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://www.nascar.com/nascar-cup-series/2027/schedule/",
+      "rendered": true,
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "07-nascar.com.txt"
+    },
+    {
+      "url": "https://www.indycar.com/schedule",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "08-indycar.com.txt"
+    },
+    {
+      "url": "https://www.formula1.com/en/racing/2027",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "09-formula1.com.txt"
+    }
+  ]
+}
