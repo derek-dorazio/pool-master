@@ -250,7 +250,8 @@ filling them in rather than by finding guards scattered through the code:
   extension tables beside the cross-sport event core. Never one table set per sport. An
   entry's settled total is not one of them: it is one integer in every family, read through
   the contest's scoring definition, so it lives on `ContestEntryStanding.totalScore` and a
-  family adds no settled-total table. Each family's backend module lives in its own folder under `packages/core-api/src/modules/scoring-families/`.
+  family adds no settled-total table. Each family's backend module lives in its own folder
+  under `packages/core-api/src/modules/scoring-families/`.
   A family scores the field per contest, given that contest's scoring settings (the
   participant scoring rule's `config`, typed per scoring definition by
   `PARTICIPANT_SCORING_SETTINGS_SCHEMAS` on write and read), returns each participant score

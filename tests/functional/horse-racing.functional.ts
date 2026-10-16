@@ -218,11 +218,11 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const [commissionerPoints, memberPoints] = [pointsOf(commissionerEntryId), pointsOf(memberEntryId)];
     const placeOf = (own: number, other: number) => (own === other ? 'T1' : own > other ? '1' : '2');
     const expected = {
-      [commissionerEntryId]: { totalPoints: commissionerPoints, displayPosition: placeOf(commissionerPoints, memberPoints) },
-      [memberEntryId]: { totalPoints: memberPoints, displayPosition: placeOf(memberPoints, commissionerPoints) },
+      [commissionerEntryId]: { totalScore: commissionerPoints, displayPosition: placeOf(commissionerPoints, memberPoints) },
+      [memberEntryId]: { totalScore: memberPoints, displayPosition: placeOf(memberPoints, commissionerPoints) },
     };
     const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; totalScore: number | null }>) =>
-      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalPoints: entry.totalScore, displayPosition: entry.displayPosition }]));
+      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalScore: entry.totalScore, displayPosition: entry.displayPosition }]));
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(board.scoringDefinitionId).toBe('FINISH_POSITION_POINTS');
     expect(standingsOf(board.entries)).toEqual(expected);
