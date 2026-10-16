@@ -109,8 +109,15 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 |---|---|
 | `headToHeadScoringFamily` in `scoring-families/head-to-head/` | `finishPositionScoringFamily` in `scoring-families/finish-position/` |
 | `basketballSportDefinition`, `americanFootballSportDefinition`, `tennisSportDefinition` | `horseRacingSportDefinition` |
-| `SportVocabulary.match`: "game" for basketball and football, "match" for tennis | The existing vocabulary nouns (`event`, `round`), so screens say the sport's word |
+| `SportVocabulary.match`: "game" for basketball and football, "match" for tennis and soccer | The existing vocabulary nouns (`event`, `round`), so screens say the sport's word |
 | `ContestEntryScorer`, `rosterEntryScorer`, `predictionEntryScorer` | `SelectionEngine` / `tieredEngine`: an interface and one implementation per kind |
+
+**Code values and screen words are separate** (*Derek 2026-10-16*). Every name above is a code
+value. What a screen shows comes from a per-sport dictionary, the sport definition's
+`vocabulary` (`packages/shared/domain/sports/sport-definition.ts`), which screens already read
+for "golfer" or "horse" and "tournament" or "race". New screen words are added to it by key:
+`match` ("game" or "match"), with round labels from `roundLabel`. No screen derives a word from
+an enum value, and no sport's word is hardcoded in a shared screen.
 
 Naming questions:
 
