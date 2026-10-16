@@ -31,10 +31,11 @@ plan keeps the sport research and the style catalog.
   needs a `PREDICTION` contest format beside today's `ROSTER`, a match-pick table, a lock per
   match instead of per contest, and standings per round. It reuses the match, the scoring
   settings (round values, seed bonus) and everything on the pool side.
-- **New model objects for knockout (built first):** `SportEventMatch`,
-  `ContestEntryKnockoutStanding`, three enums (`MatchStatus`, `MatchSide`, plus new values in
+- **New model objects for knockout (built first):** `SportEventMatch`, three enums (`MatchStatus`, `MatchSide`, plus new values in
   `ScoringFamily`, `TournamentFormat` and `Sport`), the `KNOCKOUT_ROUND_POINTS` scoring
-  definition with typed settings, and new sport definitions (basketball first).
+  definition with typed settings, and new sport definitions (basketball first). The settled
+  total moves onto `ContestEntryStanding.totalScore` for every sport first (#695, Q3.9), so
+  knockout adds no settled-total table.
 - **New model objects for pick'em (built later):** `ContestEntryPrediction`,
   `ContestEntryRoundStanding`, a spread on the match, `ContestFormat.PREDICTION`, three
   selection types (`PICK_EM`, `SURVIVOR`, `BRACKET`), a tournament format per event, and
@@ -65,7 +66,6 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 | Name | What it is | Pattern it follows |
 |---|---|---|
 | `SportEventMatch` | One match in one round of one event | An event-owned child, like `SportEventRound` and `SportEventTier`. Prefixed because bare "match" already means provider matching (`SportLeague.matchKeyword`, participant mapping confidence) |
-| `ContestEntryKnockoutStanding` | A knockout entry's settled points | `ContestEntry<Result>Standing`, like `ContestEntryGolfStanding` and `ContestEntryRaceStanding` |
 | `ContestEntryPrediction` | One pick'em prediction on one match | `ContestEntry<Thing>`, like `ContestEntryPick` and `ContestEntryStanding` |
 | `ContestEntryRoundStanding` | An entry's points and position for one round | `ContestEntryStanding` narrowed to a round, as `SportEventParticipantRound` narrows its parent |
 
@@ -73,6 +73,7 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 
 | Name | Pattern it follows |
 |---|---|
+| `ContestEntryStanding.totalScore` (#695) | The entry's settled total in its scoring definition's unit, as `position` is already on the same row; replaces the golf and race extension tables |
 | `matchNumber` | `roundNumber`, `tierNumber`, `entryNumber` |
 | `homeSportEventParticipantId`, `awaySportEventParticipantId` | A foreign key is named after the model it points at (`ContestEntryPick.sportEventParticipantId`), with the side in front |
 | `winnerSide` | An enum, not a third foreign key, so the winner can only be one of the two sides |
@@ -123,10 +124,9 @@ Naming questions:
   matches `ContestFormat.PREDICTION`.
 - **N3 Seed bonus or upset bonus?** *Recommendation:* "seed bonus" in code and on screen.
   *Rationale:* it is Derek's term from 2026-10-11 and the earlier docs; one word everywhere.
-- **N4 `ContestEntryKnockoutStanding` or `ContestEntryHeadToHeadStanding`?** *Recommendation:*
-  `Knockout`. *Rationale:* the existing extensions are named for the result they hold (`Golf`,
-  `Race`), not for the family (`StrokePlay`, `FinishPosition`), and knockout points are the only
-  roster scoring on the family for now.
+- **N4 What should the settled knockout total table be called?** *Decided by Derek
+  2026-10-16:* there is no such table. Every sport's settled total is one integer, so it moves
+  onto `ContestEntryStanding.totalScore` (#695, Q3.9).
 - **N5 `SEASON`, `LEAGUE_SEASON` or `REGULAR_SEASON`?** *Recommendation:* `SEASON`.
   *Rationale:* "league" would collide with `League`, the office pool (§10), and soccer and AFL
   seasons are not called "regular".
@@ -573,20 +573,23 @@ copy that a correction must keep in step.
   each row's matches the way it attaches `raceResult` for racing (the interface's own comment
   anticipated this: "it reads matches ... as its own field read").
 - `liveScores: null`.
-- `entryStandingDetail(total)` / `settledEntryTotal(standing)`: write and read the new
-  `ContestEntryKnockoutStanding.totalPoints`.
+- No settled-total methods: after #695, settlement writes the entry's total to
+  `ContestEntryStanding.totalScore` for every family, and the interface no longer has
+  `entryStandingDetail` or `settledEntryTotal`.
 - The leaderboard's `ParticipantScoreDetail` gains a head-to-head arm:
   `{ scoringFamily: HEAD_TO_HEAD, wins, seedBonusPoints, isAlive, roundReached }`, so a pick
   shows "3 wins, +7 seed bonus, still alive".
 
-**Q3.9 Settled totals: a new `ContestEntryKnockoutStanding`, or share racing's table?**
-`ContestEntryRaceStanding` holds exactly one column, `totalPoints`, which is what knockout
-needs too. *Recommendation:* a new `ContestEntryKnockoutStanding`, following the existing rule
-that each family owns its own extension tables. *Rationale:* settlement already dispatches the
-extension per family; sharing would mean renaming the racing table (a migration in a sport that
-just shipped) and a table whose meaning depends on which family wrote it. The cost is one small
-table. (The alternative, renaming it to `ContestEntryPointsStanding` for every points-based
-family, is reasonable if Derek prefers fewer tables.)
+**Q3.9 Where does an entry's settled total live?** *Decided by Derek 2026-10-16:* on the
+core standing row, `ContestEntryStanding.totalScore`, for every sport, filed as **#695** and done
+**before** knockout implementation starts. An entry's settled total is one integer everywhere
+(golf -12 to par, a Derby entry 8 points, a March Madness entry 47); its unit, direction and
+display come from the contest's scoring definition, which already says them. The golf and race
+extension tables (`ContestEntryGolfStanding`, `ContestEntryRaceStanding`) are migrated into the
+column and dropped, the scoring family interface loses its two settled-total methods, and the
+leaderboard entry DTO carries one `totalScore`. What really differs by sport (golf rounds, race
+results, matches, and the per-pick leaderboard blocks) keeps its own tables. Knockout and
+pick'em then add no settled-total table at all.
 
 **Q3.10 "Max possible points" on the leaderboard?** March Madness pools often show how many
 points an entry can still reach. *Recommendation:* not in the first release; a follow-up ticket
@@ -650,12 +653,10 @@ classDiagram
   }
   class ContestEntry
   class ContestEntryPick
-  class ContestEntryStanding
-  class ContestEntryGolfStanding
-  class ContestEntryRaceStanding
-  class ContestEntryKnockoutStanding {
-    <<new>>
-    Int totalPoints
+  class ContestEntryStanding {
+    <<changed>>
+    Int position
+    Int totalScore, from #695
   }
 
   class Sport {
@@ -708,9 +709,6 @@ classDiagram
   ContestEntry "1" --> "*" ContestEntryPick
   ContestEntryPick "*" --> "1" SportEventParticipant
   ContestEntry "1" --> "0..1" ContestEntryStanding
-  ContestEntryStanding "1" --> "0..1" ContestEntryGolfStanding
-  ContestEntryStanding "1" --> "0..1" ContestEntryRaceStanding
-  ContestEntryStanding "1" --> "0..1" ContestEntryKnockoutStanding
 
   Sport "1" --> "*" SportEvent : via SportLeague and EventSeries
   SportEvent "1" --> "*" SportEventRound
@@ -725,7 +723,7 @@ classDiagram
   SportEventParticipant "1" --> "0..1" SportEventParticipantStanding
 
   style SportEventMatch fill:#fff3c4,stroke:#c99a00,stroke-width:2px
-  style ContestEntryKnockoutStanding fill:#fff3c4,stroke:#c99a00,stroke-width:2px
+  style ContestEntryStanding fill:#e3f0ff,stroke:#3b78c4
   style MatchStatus fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style MatchSide fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style ParticipantContestScoringRule fill:#e3f0ff,stroke:#3b78c4
@@ -745,8 +743,7 @@ classDiagram
     <<interface>>
     scoreField(field, event, scoring)
     liveScores
-    entryStandingDetail(total)
-    settledEntryTotal(standing)
+    settled-total methods removed by #695
   }
   class SelectionEngine {
     <<interface>>
@@ -803,6 +800,7 @@ classDiagram
   style americanFootballSportDefinition fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style tennisSportDefinition fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style ScoringFamily fill:#e3f0ff,stroke:#3b78c4
+  style ScoringFamilyModule fill:#e3f0ff,stroke:#3b78c4
 ```
 
 No selection engine changes: tiered, budget and random draw work on a knockout field as they
@@ -825,7 +823,7 @@ invites someone to assume it works.
 | Contest setup | The knockout scoring definition with round values and seed bonus; presets from league templates |
 | Selection room | Unchanged engines; sport vocabulary for team or player; seed shown beside each pick |
 | Leaderboard | Points, wins, seed bonus, alive or out per pick; round labels from the sport definition |
-| Settlement | Unchanged flow; the family writes `ContestEntryKnockoutStanding` |
+| Settlement | Unchanged flow; writes `ContestEntryStanding.totalScore` like every sport after #695 |
 | Contracts | New DTOs for matches and results (mapped from domain types, `rules/service-rules.md` §4); the leaderboard detail union gains the head-to-head arm |
 | Lint | No sport branching: knockout rules are configuration and the family, never `sport === BASKETBALL` |
 
@@ -1131,6 +1129,9 @@ To be filed under #599 after Derek's review. Each is one PR opened against main,
 named skill. The order keeps every merge free of dead code: each ticket ships something its
 successor or an admin uses.
 
+0. **Settled total on the entry standing** (#695, filed 2026-10-16, dispatched ahead of the
+   rest): `ContestEntryStanding.totalScore` replaces the golf and race settled-total tables
+   (Q3.9). Must merge before ticket 1 starts.
 1. **Basketball and the bracket** (`add-sport`, `model-change`). `Sport.BASKETBALL` with the
    NCAA men's and women's sport leagues (reference data in the migration);
    `TournamentFormat.KNOCKOUT_BRACKET`; `ScoringFamily.HEAD_TO_HEAD` registered with a module
@@ -1140,8 +1141,8 @@ successor or an admin uses.
    the database checks.
 2. **Knockout scoring and results** (`add-endpoint`). `KNOCKOUT_ROUND_POINTS` with
    `KnockoutRoundPointsSettings` and `SeedBonusRule`; results entry API (mark winner, advance,
-   eliminate, standings, correction lock); `scoreField`, leaderboard detail arm, settlement into
-   `ContestEntryKnockoutStanding`; round-values length check (Q3.3); the "Doubling" and
+   eliminate, standings, correction lock); `scoreField` and the leaderboard pick detail arm
+   (settlement needs nothing new after #695); round-values length check (Q3.3); the "Doubling" and
    "Doubling + seed bonus" templates for both NCAA leagues. Unit tests for the scoring math
    (seed bonus, unseeded, equal seeds, multiplier, byes) and a functional test from release to
    settlement.
