@@ -954,14 +954,14 @@ How it fits the model:
 or when pick'em is built?** *Recommendation:* when the first pick'em ticket builds it, per the
 docs-ride-with-code rule (`rules/workflow-rules.md` §6); this doc records the decision until
 then. *Rationale:* the concepts file describes what the product does today, and no code has
-round release yet.
+round release yet. *Decided by Derek 2026-10-16: as recommended.*
 
 **Q5.9 Does a released round ever need to be reopened** (a game postponed to another week,
 a wrong spread)? *Recommendation:* no undo; a postponed game is cancelled in its round and added
 to the round it moves to (still in setup); a wrong spread can be corrected only while nobody
 has made a prediction on that match, and is refused with a typed error after that.
 *Rationale:* this matches "no undo" on contest open, and a correction that cannot change a pick
-already made is harmless.
+already made is harmless. *Decided by Derek 2026-10-16: as recommended.*
 
 ### 5.4 Model change for pick'em
 
