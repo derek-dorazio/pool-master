@@ -115,8 +115,8 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 Naming questions:
 
 - **N1 Match, game or fixture?** *Decided by Derek 2026-10-16:* `SportEventMatch` in the model.
-  The word on screen comes from the sport's vocabulary (to confirm: "game" for basketball and
-  football, "match" for tennis and soccer).
+  The word on screen comes from the sport's vocabulary: "game" for basketball and football,
+  "match" for tennis and soccer (Derek 2026-10-16).
 - **N2 What is a pick'em row called?** *Decided by Derek 2026-10-16:* `ContestEntryMatchPrediction`.
   "Match" says what it is on; "prediction" matches `ContestFormat.PREDICTION` and avoids #544's
   meaning of a pick (one participant chosen), since a predicted draw names no team. Screens
