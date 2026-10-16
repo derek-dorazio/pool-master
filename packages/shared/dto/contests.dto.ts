@@ -189,16 +189,6 @@ export const ScoredContestEntryPickDtoSchema = z.object({
 }).describe('One pick on a contest entry, with whether it counts.');
 export type ScoredContestEntryPickDto = z.infer<typeof ScoredContestEntryPickDtoSchema>;
 
-export const ContestEntryGolfStandingDtoSchema = z.object({
-  totalScoreToPar: z.number().int().nullable().describe('The entry\'s total against par: the sum of its counting picks\' contest scores (each pick\'s golf.scoreToPar). Null until a pick is scored.'),
-}).describe('Golf extension of a contest entry standing: the total its position was ranked from.');
-export type ContestEntryGolfStandingDto = z.infer<typeof ContestEntryGolfStandingDtoSchema>;
-
-export const ContestEntryRaceStandingDtoSchema = z.object({
-  totalPoints: z.number().int().nullable().describe('The entry\'s points: the sum of its counting picks\' points (each pick\'s race.points). Null until a pick is scored.'),
-}).describe('Finish-position extension of a contest entry standing: the points total its position was ranked from.');
-export type ContestEntryRaceStandingDto = z.infer<typeof ContestEntryRaceStandingDtoSchema>;
-
 export const ContestEntryStandingDtoSchema = z.object({
   entryId: z.string().describe('Contest entry identifier.'),
   entryName: z.string().describe('Entry display name.'),
@@ -210,10 +200,9 @@ export const ContestEntryStandingDtoSchema = z.object({
   displayPosition: z.string().nullable().describe('Position as shown, "T" prefixed for a tie.'),
   countingPickLimit: z.number().int().min(0).describe('How many picks count toward the total under the counting rule: its N.'),
   scoredPickCount: z.number().int().min(0).describe('How many picks currently have an event standing.'),
-  golf: ContestEntryGolfStandingDtoSchema.nullable().describe('Present for a golf contest; null otherwise.'),
-  race: ContestEntryRaceStandingDtoSchema.nullable().describe('Present for a finish-position contest (a horse race); null otherwise.'),
+  totalScore: z.number().int().nullable().describe('The entry\'s total, the sum of its counting picks\' contest scores, in the unit of the response\'s scoring definition (a golf to-par total, a race\'s points). Null until a pick is scored.'),
   picks: z.array(ScoredContestEntryPickDtoSchema).describe('The entry\'s picks, counting picks first.'),
-}).describe('One entry\'s standing in a contest leaderboard. The score lives in the sport\'s extension.');
+}).describe('One entry\'s standing in a contest leaderboard. Each pick\'s score lives in its sport\'s block.');
 export type ContestEntryStandingDto = z.infer<typeof ContestEntryStandingDtoSchema>;
 
 export const ContestCountingRuleDtoSchema = z.object({
@@ -296,7 +285,6 @@ registerSchema('ContestEntryParticipantDetailDto', ContestEntryParticipantDetail
 registerSchema('ParticipantScoringDefinitionId', ParticipantScoringDefinitionIdSchema);
 registerSchema('ScoredContestEntryPickGolfDto', ScoredContestEntryPickGolfDtoSchema);
 registerSchema('ScoredContestEntryPickDto', ScoredContestEntryPickDtoSchema);
-registerSchema('ContestEntryGolfStandingDto', ContestEntryGolfStandingDtoSchema);
 registerSchema('ContestEntryStandingDto', ContestEntryStandingDtoSchema);
 registerSchema('ContestCountingRuleDto', ContestCountingRuleDtoSchema);
 registerSchema('ContestLeaderboardResponse', ContestLeaderboardResponseSchema);

@@ -213,9 +213,9 @@ describe('horse racing contest — read and settled from the finishing order', (
     expect(response.statusCode).toBe(200);
     const board = ContestLeaderboardResponseSchema.parse(response.json());
     expect(board.scoringDefinitionId).toBe('FINISH_POSITION_POINTS');
-    expect(board.entries.map((entry) => [entry.entryId, entry.displayPosition, entry.race?.totalPoints, entry.golf])).toEqual([
-      [winners.id, '1', 6, null],
-      [scratch.id, '2', 3, null],
+    expect(board.entries.map((entry) => [entry.entryId, entry.displayPosition, entry.totalScore])).toEqual([
+      [winners.id, '1', 6],
+      [scratch.id, '2', 3],
     ]);
     expect(board.participants.find((participant) => participant.participant.name === `Arrow ${suffix}`)?.race)
       .toMatchObject({ finishPosition: 1, resultStatus: 'FINISHED', isOfficial: true });
@@ -228,11 +228,11 @@ describe('horse racing contest — read and settled from the finishing order', (
     const response = await getApp().inject({ method: 'GET', url: `/api/v1/contests/${contest.id}/leaderboard`, headers: owner.headers });
 
     const board = ContestLeaderboardResponseSchema.parse(response.json());
-    expect(board.entries.map((entry) => entry.race?.totalPoints ?? null)).toEqual([null, null]);
+    expect(board.entries.map((entry) => entry.totalScore)).toEqual([null, null]);
   });
 
-  it('settles the contest, freezing each entry\'s points on its race standing and none on a golf one', async () => {
-    const { prisma, suffix, event, contest, winners, scratch } = await seedContest();
+  it('settles the contest, freezing each entry\'s points as its standing total, and the completed board reads them back', async () => {
+    const { prisma, suffix, event, owner, contest, winners, scratch } = await seedContest();
     await createRaceResultService(prisma).applyResults(event.id, officialOrder(suffix));
 
     await expect(createContestSettlementService(prisma).settleCompletedSportEvent(event.id))
@@ -241,13 +241,19 @@ describe('horse racing contest — read and settled from the finishing order', (
     const standings = await prisma.contestEntryStanding.findMany({
       where: { contestId: contest.id },
       orderBy: { position: 'asc' },
-      include: { race: true, golf: true },
     });
-    expect(standings.map((row) => [row.contestEntryId, row.position, row.race?.totalPoints, row.golf])).toEqual([
-      [winners.id, 1, 6, null],
-      [scratch.id, 2, 3, null],
+    expect(standings.map((row) => [row.contestEntryId, row.position, row.totalScore])).toEqual([
+      [winners.id, 1, 6],
+      [scratch.id, 2, 3],
     ]);
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: contest.id }, select: { status: true } }))
       .resolves.toEqual({ status: 'COMPLETED' });
+
+    const response = await getApp().inject({ method: 'GET', url: `/api/v1/contests/${contest.id}/leaderboard`, headers: owner.headers });
+    const board = ContestLeaderboardResponseSchema.parse(response.json());
+    expect(board.entries.map((entry) => [entry.entryId, entry.displayPosition, entry.totalScore])).toEqual([
+      [winners.id, '1', 6],
+      [scratch.id, '2', 3],
+    ]);
   });
 });

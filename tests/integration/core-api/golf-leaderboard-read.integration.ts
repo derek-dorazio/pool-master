@@ -207,7 +207,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     const parsed = ContestLeaderboardResponseSchema.parse(response.json());
     expect(parsed.scoringDefinitionId).toBe('GOLF_RELATIVE_TO_PAR_TOTAL');
     expect(parsed.sport).toBe(Sport.GOLF);
-    expect(parsed.entries.map((entry) => [entry.entryId, entry.golf?.totalScoreToPar, entry.position])).toEqual([
+    expect(parsed.entries.map((entry) => [entry.entryId, entry.totalScore, entry.position])).toEqual([
       [entryTwo.id, -9, 1],
       [entryOne.id, -7, 2],
     ]);
@@ -240,7 +240,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     // (entry one won at -11 under a best-3 rule) so the test proves which one was read.
     const settledAt = new Date('2026-05-31T22:00:00.000Z');
     await prisma.contest.update({ where: { id: contest.id }, data: { status: 'COMPLETED' } });
-    for (const [entryId, totalScoreToPar, position] of [[entryOne.id, -11, 1], [entryTwo.id, -4, 2]] as const) {
+    for (const [entryId, totalScore, position] of [[entryOne.id, -11, 1], [entryTwo.id, -4, 2]] as const) {
       await prisma.contestEntryStanding.create({
         data: {
           contestId: contest.id,
@@ -251,7 +251,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
           scoredPickCount: 3,
           asOf: settledAt,
           settledAt,
-          golf: { create: { totalScoreToPar } },
+          totalScore,
         },
       });
     }
@@ -262,7 +262,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     });
     expect(settledResponse.statusCode).toBe(200);
     const settled = ContestLeaderboardResponseSchema.parse(settledResponse.json());
-    expect(settled.entries.map((entry) => [entry.entryId, entry.golf?.totalScoreToPar, entry.position])).toEqual([
+    expect(settled.entries.map((entry) => [entry.entryId, entry.totalScore, entry.position])).toEqual([
       [entryOne.id, -11, 1],
       [entryTwo.id, -4, 2],
     ]);

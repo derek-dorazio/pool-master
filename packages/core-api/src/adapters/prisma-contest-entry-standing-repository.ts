@@ -1,6 +1,6 @@
 /**
- * Prisma adapter for ContestEntryStandingRepository: the frozen entry standing (#246), core row
- * plus its scoring family's extension (golf's, or a race's), written and read together.
+ * Prisma adapter for ContestEntryStandingRepository: the frozen entry standing (#246), with the
+ * settled total every scoring family stores on the one row (#695).
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -16,10 +16,6 @@ export class PrismaContestEntryStandingRepository implements ContestEntryStandin
   async findByContest(contestId: string): Promise<ContestEntryStandingResult[]> {
     const rows = await this.prisma.contestEntryStanding.findMany({
       where: { contestId },
-      include: {
-        golf: { select: { totalScoreToPar: true } },
-        race: { select: { totalPoints: true } },
-      },
       orderBy: [{ position: { sort: 'asc', nulls: 'last' } }, { contestEntryId: 'asc' }],
     });
     return rows.map((row) => ({
@@ -32,26 +28,16 @@ export class PrismaContestEntryStandingRepository implements ContestEntryStandin
       scoredPickCount: row.scoredPickCount,
       asOf: row.asOf,
       settledAt: row.settledAt,
-      golf: row.golf ? { totalScoreToPar: row.golf.totalScoreToPar } : null,
-      race: row.race ? { totalPoints: row.race.totalPoints } : null,
+      totalScore: row.totalScore,
     }));
   }
 
   async upsert(write: ContestEntryStandingWrite): Promise<void> {
-    const { golf, race, contestEntryId, ...core } = write;
+    const { contestEntryId, ...standing } = write;
     await this.prisma.contestEntryStanding.upsert({
       where: { contestEntryId },
-      create: {
-        contestEntryId,
-        ...core,
-        ...(golf && { golf: { create: golf } }),
-        ...(race && { race: { create: race } }),
-      },
-      update: {
-        ...core,
-        ...(golf && { golf: { upsert: { create: golf, update: golf } } }),
-        ...(race && { race: { upsert: { create: race, update: race } } }),
-      },
+      create: { contestEntryId, ...standing },
+      update: standing,
     });
   }
 }

@@ -57,7 +57,7 @@ describe('toContestLeaderboardResponse', () => {
     expect(ContestLeaderboardResponseSchema.parse(response).sport).toBe(Sport.GOLF);
   });
 
-  it('publishes a horse racing entry\'s total and each pick\'s points on the race blocks, leaving the golf ones null', () => {
+  it('publishes a horse racing entry\'s total as its totalScore and each pick\'s points on the race block, leaving the golf one null', () => {
     const response = toContestLeaderboardResponse({
       contestId: 'contest-1',
       sportEventId: 'event-1',
@@ -97,7 +97,7 @@ describe('toContestLeaderboardResponse', () => {
     });
 
     const [entry] = ContestLeaderboardResponseSchema.parse(response).entries;
-    expect([entry.golf, entry.race]).toEqual([null, { totalPoints: 8 }]);
+    expect(entry.totalScore).toBe(8);
     expect([entry.picks[0].golf, entry.picks[0].race]).toEqual([null, { points: 5 }]);
   });
 });

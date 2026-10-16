@@ -197,11 +197,11 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
     // --- The board, then the settled contest --------------------------------------------------
     // Commissioner: 10 + 9 + 8 + 0 (Ayuso abandoned) + 7 (Roglic fourth) = 34. Member: Almeida fifth for 6, so 33.
     const expected = {
-      [commissionerEntryId]: { totalPoints: 34, displayPosition: '1' },
-      [memberEntryId]: { totalPoints: 33, displayPosition: '2' },
+      [commissionerEntryId]: { totalScore: 34, displayPosition: '1' },
+      [memberEntryId]: { totalScore: 33, displayPosition: '2' },
     };
-    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; race: { totalPoints: number | null } | null }>) =>
-      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalPoints: entry.race?.totalPoints, displayPosition: entry.displayPosition }]));
+    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; totalScore: number | null }>) =>
+      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalScore: entry.totalScore, displayPosition: entry.displayPosition }]));
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(board.scoringDefinitionId).toBe('FINISH_POSITION_POINTS');
     expect(standingsOf(board.entries)).toEqual(expected);

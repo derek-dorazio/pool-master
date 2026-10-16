@@ -6,12 +6,13 @@
  * Everything below is the join and the shaping that follows from that, kept out of the
  * component so each branch is unit-testable on its own.
  *
- * What is deliberately NOT here: anything a scoring family decides — its columns, its cells
- * and how a total reads. The response's sport names its definition, the definition names its
- * scoring family, and `SCORING_FAMILY_UI` answers for that family (#606).
+ * What is deliberately NOT here: anything a scoring family decides — its columns and its cells.
+ * The response's sport names its definition, the definition names its scoring family, and
+ * `SCORING_FAMILY_UI` answers for that family (#606). An entry's total is one number in every
+ * family (#695), read through the response's scoring definition.
  */
 
-import { getSportDefinition } from '@poolmaster/shared/domain';
+import { getSportDefinition, PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import type { ContestLeaderboardResponse } from '@/lib/api';
 import {
   formatCurrentRoundLabel,
@@ -69,6 +70,7 @@ export interface LeaderboardView {
 export function buildLeaderboardView(response: ContestLeaderboardResponse): LeaderboardView {
   const sport = getSportDefinition(response.sport);
   const family = getScoringFamilyUi(sport).leaderboard(response, sport);
+  const scoringDefinition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];
   const participantsById = new Map(
     response.participants.map((participant) => [participant.id, participant]),
   );
@@ -79,7 +81,7 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse): Lead
     squadId: entry.squadId,
     squadName: entry.squadName,
     displayPosition: entry.displayPosition,
-    total: family.entryTotal(entry),
+    total: entry.totalScore === null ? null : scoringDefinition.format(entry.totalScore),
     countingPickLimit: entry.countingPickLimit,
     scoredPickCount: entry.scoredPickCount,
     picks: entry.picks.flatMap((pick) => {

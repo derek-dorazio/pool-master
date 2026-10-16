@@ -15,7 +15,6 @@
  */
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import type { ContestEntryStandingResult, ContestEntryStandingWrite } from '@poolmaster/shared/db';
 import type { ContestScoringSettings, SportEvent } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type { ParticipantScore } from '../contests/contest-leaderboard-calculator';
@@ -24,9 +23,6 @@ import type { LiveScorePersistenceResult } from '../ingestion/core/score-publish
 
 /** What scoring a field reads off its event. */
 export type FieldScoringEvent = Pick<SportEvent, 'sport' | 'rounds' | 'roundsPar' | 'status'>;
-
-/** The family's extension on a settled entry standing: its own block set, every other family's null. */
-export type EntryStandingDetail = Pick<ContestEntryStandingWrite, 'golf' | 'race'>;
 
 export interface LiveScoreWriteDeps {
   prisma: PrismaClient;
@@ -78,10 +74,4 @@ export interface ScoringFamilyModule {
    * any other category.
    */
   liveScores: LiveScoreWriter | null;
-
-  /** The family's extension row for an entry's settled total. */
-  entryStandingDetail(total: number | null): EntryStandingDetail;
-
-  /** An entry's settled total, read back off the family's extension row. */
-  settledEntryTotal(standing: ContestEntryStandingResult): number | null;
 }

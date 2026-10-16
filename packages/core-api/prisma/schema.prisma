@@ -832,8 +832,10 @@ model ContestEntry {
 /// Written once per entry by settlement when the linked SportEvent completes, and read by
 /// the leaderboard of a COMPLETED contest instead of recomputing from live event scores:
 /// a provider correction after settlement must not silently rewrite a finished result.
-/// `position` is direction-free (1 is best), as on SportEventParticipantStanding; the raw
-/// score lives in the sport's extension row.
+/// `position` is direction-free (1 is best), as on SportEventParticipantStanding. `totalScore`
+/// is the entry's settled total that position was ranked from, in the unit of the contest's
+/// scoring definition (golf's to-par total, a race's points); null while unscored. Every scoring
+/// family stores it here, so no family keeps a settled-total table of its own (#695).
 ///
 /// `countingPickLimit` is the rule's N captured at settlement (best N picks count).
 /// Configuration stays editable after a contest is reopened, so without it a frozen result
@@ -849,15 +851,14 @@ model ContestEntryStanding {
   displayPosition   String?   @map("display_position") @db.VarChar(20)
   countingPickLimit Int       @map("counting_pick_limit")
   scoredPickCount   Int       @map("scored_pick_count")
+  totalScore        Int?      @map("total_score")
   asOf              DateTime? @map("as_of") @db.Timestamptz
   settledAt         DateTime  @map("settled_at") @db.Timestamptz
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  contest      Contest                   @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  contestEntry ContestEntry              @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
-  golf         ContestEntryGolfStanding?
-  race         ContestEntryRaceStanding?
+  contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  contestEntry ContestEntry @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
 
   @@index([contestId, position])
   @@map("contest_entry_standings")
@@ -883,34 +884,6 @@ model ContestDraw {
   drawnBy User?   @relation(fields: [drawnByUserId], references: [id], onDelete: SetNull)
 
   @@map("contest_draws")
-}
-
-/// Golf extension of ContestEntryStanding: the entry total its position was ranked from.
-/// Keyed 1:1 to the core standing row.
-model ContestEntryGolfStanding {
-  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestEntryStandingId String   @unique @map("contest_entry_standing_id") @db.Uuid
-  totalScoreToPar        Int?     @map("total_score_to_par")
-  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  contestEntryStanding ContestEntryStanding @relation(fields: [contestEntryStandingId], references: [id], onDelete: Cascade)
-
-  @@map("contest_entry_golf_standings")
-}
-
-/// Finish-position extension of ContestEntryStanding (#622): the points total its position was
-/// ranked from. Keyed 1:1 to the core standing row, beside the golf extension.
-model ContestEntryRaceStanding {
-  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestEntryStandingId String   @unique @map("contest_entry_standing_id") @db.Uuid
-  totalPoints            Int?     @map("total_points")
-  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  contestEntryStanding ContestEntryStanding @relation(fields: [contestEntryStandingId], references: [id], onDelete: Cascade)
-
-  @@map("contest_entry_race_standings")
 }
 
 /// A pick on a contest entry — references a SportEventParticipant.

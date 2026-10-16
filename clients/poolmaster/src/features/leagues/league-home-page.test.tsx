@@ -118,7 +118,7 @@ function entryList(contestId: string, entries: ReturnType<typeof entry>[]) {
   });
 }
 
-function standing(position: number, squadId: string, squadName: string, totalScoreToPar: number) {
+function standing(position: number, squadId: string, squadName: string, totalScore: number) {
   return {
     entryId: `entry-${squadId}`,
     entryName: `${squadName} entry`,
@@ -130,7 +130,7 @@ function standing(position: number, squadId: string, squadName: string, totalSco
     displayPosition: String(position),
     countingPickLimit: 4,
     scoredPickCount: 4,
-    golf: { totalScoreToPar },
+    totalScore,
     picks: [],
   };
 }

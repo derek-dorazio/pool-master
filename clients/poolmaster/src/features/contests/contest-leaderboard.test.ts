@@ -271,8 +271,7 @@ describe('buildLeaderboardView', () => {
       displayPosition: '1',
       countingPickLimit: 2,
       scoredPickCount: 2,
-      golf: { totalScoreToPar: -7 },
-      race: null,
+      totalScore: -7,
       picks: [],
       ...overrides,
     };
@@ -332,9 +331,9 @@ describe('buildLeaderboardView', () => {
     const view = buildLeaderboardView(responseFixture({
       participants: [rory, scottie],
       entries: [
-        entryFixture({ entryId: 'entry-a', displayPosition: 'T1', golf: { totalScoreToPar: -7 } }),
-        entryFixture({ entryId: 'entry-b', displayPosition: 'T1', golf: { totalScoreToPar: -7 } }),
-        entryFixture({ entryId: 'entry-c', displayPosition: '3', golf: { totalScoreToPar: -2 } }),
+        entryFixture({ entryId: 'entry-a', displayPosition: 'T1', totalScore: -7 }),
+        entryFixture({ entryId: 'entry-b', displayPosition: 'T1', totalScore: -7 }),
+        entryFixture({ entryId: 'entry-c', displayPosition: '3', totalScore: -2 }),
       ],
     }));
 
@@ -353,7 +352,7 @@ describe('buildLeaderboardView', () => {
       entries: [entryFixture({
         displayPosition: null,
         scoredPickCount: 0,
-        golf: { totalScoreToPar: null },
+        totalScore: null,
         picks: [pickFixture({
           pickId: 'pick-1',
           sportEventParticipantId: 'sep-3',
@@ -368,22 +367,13 @@ describe('buildLeaderboardView', () => {
     expect(roundCellsOf(view.entries[0].picks[0])).toEqual([null, null]);
   });
 
-  it('shows no total for a contest with no golf extension on the standing', () => {
-    const view = buildLeaderboardView(responseFixture({
-      participants: [rory],
-      entries: [entryFixture({ golf: null, picks: [] })],
-    }));
-
-    expect(view.entries[0].total).toBeNull();
-  });
-
   it('carries the dropped flag through for the picks that fall outside the counting places', () => {
     const view = buildLeaderboardView(responseFixture({
       participants: [rory, scottie],
       entries: [entryFixture({
         countingPickLimit: 1,
         scoredPickCount: 2,
-        golf: { totalScoreToPar: -5 },
+        totalScore: -5,
         picks: [
           pickFixture({ pickId: 'pick-1', sportEventParticipantId: 'sep-1' }),
           pickFixture({
@@ -409,7 +399,7 @@ describe('buildLeaderboardView', () => {
       entries: [entryFixture({
         countingPickLimit: 3,
         scoredPickCount: 1,
-        golf: { totalScoreToPar: -5 },
+        totalScore: -5,
         picks: [pickFixture({ pickId: 'pick-1', sportEventParticipantId: 'sep-1' })],
       })],
     }));

@@ -79,7 +79,7 @@ export interface ContestEntryPickRepository {
   countByContest(contestId: string): Promise<number>;
 }
 
-/** A settled entry standing: the core row and its family's extension (golf's or a race's), when it has one. */
+/** A settled entry standing, with the total its position was ranked from. */
 export interface ContestEntryStandingResult {
   id: string;
   contestId: string;
@@ -90,9 +90,8 @@ export interface ContestEntryStandingResult {
   scoredPickCount: number;
   asOf: Date | null;
   settledAt: Date;
-  golf: { totalScoreToPar: number | null } | null;
-  /** The finish-position extension: the points total the position was ranked from. */
-  race: { totalPoints: number | null } | null;
+  /** The entry's settled total in the contest's scoring-definition unit (golf's to-par, a race's points); null while unscored. */
+  totalScore: number | null;
 }
 
 export type ContestEntryStandingWrite = Omit<ContestEntryStandingResult, 'id'>;
@@ -100,6 +99,6 @@ export type ContestEntryStandingWrite = Omit<ContestEntryStandingResult, 'id'>;
 /** The frozen contest-entry standing (#246): written by settlement, read by a settled contest. */
 export interface ContestEntryStandingRepository {
   findByContest(contestId: string): Promise<ContestEntryStandingResult[]>;
-  /** One per entry: creates or overwrites the entry's standing, core and family extension together. */
+  /** One per entry: creates or overwrites the entry's standing. */
   upsert(write: ContestEntryStandingWrite): Promise<void>;
 }

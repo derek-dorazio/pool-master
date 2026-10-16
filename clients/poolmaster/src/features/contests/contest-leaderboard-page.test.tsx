@@ -184,7 +184,7 @@ function contestResponse(status: ContestStatusFixture) {
 }
 
 /** The leaderboard read, with the entry's total as a parameter so two reads can differ. */
-function leaderboardResponse(entryTotalScoreToPar = -5) {
+function leaderboardResponse(entryTotalScore = -5) {
   return {
     data: {
       contestId: 'contest-1',
@@ -220,7 +220,7 @@ function leaderboardResponse(entryTotalScoreToPar = -5) {
         displayPosition: 'T1',
         countingPickLimit: 1,
         scoredPickCount: 2,
-        golf: { totalScoreToPar: entryTotalScoreToPar },
+        totalScore: entryTotalScore,
         picks: [
           {
             pickId: 'pick-1',

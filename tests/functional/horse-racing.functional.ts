@@ -203,7 +203,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     expect(provisional.response.status).toBe(200);
     expect(expectDefined(provisional.data).participants.map((row) => row.race?.isOfficial)).toEqual([false, false, false, false]);
     const provisionalBoard = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
-    expect(provisionalBoard.entries.map((entry) => entry.race?.totalPoints ?? null)).toEqual([null, null]);
+    expect(provisionalBoard.entries.map((entry) => entry.totalScore)).toEqual([null, null]);
 
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
     expect(official.response.status).toBe(200);
@@ -218,15 +218,14 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const [commissionerPoints, memberPoints] = [pointsOf(commissionerEntryId), pointsOf(memberEntryId)];
     const placeOf = (own: number, other: number) => (own === other ? 'T1' : own > other ? '1' : '2');
     const expected = {
-      [commissionerEntryId]: { totalPoints: commissionerPoints, displayPosition: placeOf(commissionerPoints, memberPoints) },
-      [memberEntryId]: { totalPoints: memberPoints, displayPosition: placeOf(memberPoints, commissionerPoints) },
+      [commissionerEntryId]: { totalScore: commissionerPoints, displayPosition: placeOf(commissionerPoints, memberPoints) },
+      [memberEntryId]: { totalScore: memberPoints, displayPosition: placeOf(memberPoints, commissionerPoints) },
     };
-    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; race: { totalPoints: number | null } | null }>) =>
-      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalPoints: entry.race?.totalPoints, displayPosition: entry.displayPosition }]));
+    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; totalScore: number | null }>) =>
+      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalScore: entry.totalScore, displayPosition: entry.displayPosition }]));
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(board.scoringDefinitionId).toBe('FINISH_POSITION_POINTS');
     expect(standingsOf(board.entries)).toEqual(expected);
-    expect(board.entries.every((entry) => entry.golf === null)).toBe(true);
 
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);

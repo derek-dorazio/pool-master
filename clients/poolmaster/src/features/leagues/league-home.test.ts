@@ -34,8 +34,7 @@ function entryFixture(index: number, overrides: Partial<LeaderboardEntry> = {}):
     displayPosition: String(index),
     countingPickLimit: 4,
     scoredPickCount: 4,
-    golf: { totalScoreToPar: index - 6 },
-    race: null,
+    totalScore: index - 6,
     picks: [],
     ...overrides,
   };
@@ -207,7 +206,7 @@ describe('buildTopStandings', () => {
 
   it('shows a null total for an entry with no scored picks yet', () => {
     const result = buildTopStandings(
-      leaderboardFixture([entryFixture(1, { golf: { totalScoreToPar: null }, displayPosition: null })]),
+      leaderboardFixture([entryFixture(1, { totalScore: null, displayPosition: null })]),
       null,
     );
 

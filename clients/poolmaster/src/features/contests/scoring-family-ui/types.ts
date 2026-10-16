@@ -1,13 +1,13 @@
 /**
  * What a scoring family contributes to the shared contest screens (#606). The leaderboard's
  * frame — entry bars, position, name, total, search, paging — is the same in every sport; the
- * columns after the total, their cells, the entry and pick totals and any footnote are the
- * family's. A family answers in data, so the page renders every family through one markup.
+ * columns after the total, their cells, the pick totals and any footnote are the family's;
+ * the entry total is one number in every family (#695). A family answers in data, so the page
+ * renders every family through one markup.
  */
 
 import type { SportDefinition } from '@poolmaster/shared/domain';
 import type {
-  ContestEntryStandingDto,
   ContestLeaderboardResponse,
   ScoredContestEntryPickDto,
   SportEventParticipantDto,
@@ -55,8 +55,6 @@ export interface LeaderboardPickDetail {
 export interface ScoringFamilyLeaderboard {
   detailColumns: LeaderboardDetailColumn[];
   footnote: LeaderboardFootnote | null;
-  /** The entry's total, formatted. Null until one of its picks is scored. */
-  entryTotal(entry: ContestEntryStandingDto): string | null;
   pickDetail(
     entryId: string,
     pick: ScoredContestEntryPickDto,

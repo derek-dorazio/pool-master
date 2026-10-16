@@ -7976,12 +7976,7 @@ export interface components {
                 points: number | null;
             } | null;
         };
-        /** @description Golf extension of a contest entry standing: the total its position was ranked from. */
-        ContestEntryGolfStandingDto: {
-            /** @description The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored. */
-            totalScoreToPar: number | null;
-        };
-        /** @description One entry's standing in a contest leaderboard. The score lives in the sport's extension. */
+        /** @description One entry's standing in a contest leaderboard. Each pick's score lives in its sport's block. */
         ContestEntryStandingDto: {
             /** @description Contest entry identifier. */
             entryId: string;
@@ -8006,16 +8001,8 @@ export interface components {
             countingPickLimit: number;
             /** @description How many picks currently have an event standing. */
             scoredPickCount: number;
-            /** @description Present for a golf contest; null otherwise. */
-            golf: {
-                /** @description The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored. */
-                totalScoreToPar: number | null;
-            } | null;
-            /** @description Present for a finish-position contest (a horse race); null otherwise. */
-            race: {
-                /** @description The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored. */
-                totalPoints: number | null;
-            } | null;
+            /** @description The entry's total, the sum of its counting picks' contest scores, in the unit of the response's scoring definition (a golf to-par total, a race's points). Null until a pick is scored. */
+            totalScore: number | null;
             /** @description The entry's picks, counting picks first. */
             picks: {
                 /** @description ContestEntryPick row identifier. */
@@ -8304,16 +8291,8 @@ export interface components {
                 countingPickLimit: number;
                 /** @description How many picks currently have an event standing. */
                 scoredPickCount: number;
-                /** @description Present for a golf contest; null otherwise. */
-                golf: {
-                    /** @description The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored. */
-                    totalScoreToPar: number | null;
-                } | null;
-                /** @description Present for a finish-position contest (a horse race); null otherwise. */
-                race: {
-                    /** @description The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored. */
-                    totalPoints: number | null;
-                } | null;
+                /** @description The entry's total, the sum of its counting picks' contest scores, in the unit of the response's scoring definition (a golf to-par total, a race's points). Null until a pick is scored. */
+                totalScore: number | null;
                 /** @description The entry's picks, counting picks first. */
                 picks: {
                     /** @description ContestEntryPick row identifier. */
