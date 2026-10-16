@@ -1155,7 +1155,7 @@ successor or an admin uses.
 
 0. **Settled total on the entry standing** (#695, filed 2026-10-16, dispatched ahead of the
    rest): `ContestEntryStanding.totalScore` replaces the golf and race settled-total tables
-   (Q3.9). Must merge before ticket 1 starts.
+   (Q3.9). Merged 2026-10-16 as PR #696.
 1. **Basketball and the bracket** (`add-sport`, `model-change`). `Sport.BASKETBALL` with the
    NCAA men's and women's sport leagues (reference data in the migration);
    `TournamentFormat.KNOCKOUT_BRACKET`; `ScoringFamily.HEAD_TO_HEAD` registered with a module
