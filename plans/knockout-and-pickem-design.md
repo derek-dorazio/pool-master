@@ -65,7 +65,6 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 | `SportEventMatch` | One match in one round of one event | An event-owned child, like `SportEventRound` and `SportEventTier`. Prefixed because bare "match" already means provider matching (`SportLeague.matchKeyword`, participant mapping confidence) |
 | `ContestEntryKnockoutStanding` | A knockout entry's settled points | `ContestEntry<Result>Standing`, like `ContestEntryGolfStanding` and `ContestEntryRaceStanding` |
 | `ContestEntryPrediction` | One pick'em prediction on one match | `ContestEntry<Thing>`, like `ContestEntryPick` and `ContestEntryStanding` |
-| `ContestEntryPredictionScore` | 1:1 extension holding a predicted exact score (soccer, later) | `<Parent><Variant>` extension, like `SportEventParticipantGolfRound` |
 | `ContestEntryRoundStanding` | An entry's points and position for one round | `ContestEntryStanding` narrowed to a round, as `SportEventParticipantRound` narrows its parent |
 | `SportEventMatchSpread` | A match's published spread | A child of `SportEventMatch`, named for what it holds |
 
@@ -136,11 +135,12 @@ Naming questions:
   the prefix stops the generated Prisma type from colliding with the domain type of the same
   name when a file imports both.
 - **N8 Should one prediction row hold every format's columns?** `rules/domain-model-conventions-rules.md`
-  §9 says a column that only means something for some rows belongs in its own table. *Recommendation:*
-  `confidence` stays on the prediction (as `cost` sits on `ContestEntryPick` for budget
-  contests); predicted exact scores go in the `ContestEntryPredictionScore` extension when score
-  predictors are built. *Rationale:* a predicted score is a different kind of answer, the way a
-  golf round is a different result from a race result.
+  §9 says a column that only means something for some rows belongs in its own table.
+  *Recommendation:* `confidence` stays on the prediction (as `cost` sits on `ContestEntryPick`
+  for budget contests). *Decided by Derek 2026-10-16:* no per-team score predictions to start,
+  in any sport, soccer included; a predicted score is a single total-points tiebreaker (section
+  5.2). A `ContestEntryPredictionScore` extension (predicted home and away score) is added later
+  only if exact-score pools are wanted.
 
 ---
 
@@ -864,9 +864,15 @@ so it waits.
 
 - **`ContestEntryPrediction`**: entry, match (`sportEventMatchId`), the team predicted to win
   (`sportEventParticipantId`, the same column name as on `ContestEntryPick`; null for a predicted
-  draw), optional `confidence`, `pickedAt`. Unique on (entry, match). Score predictions (soccer's
-  exact scores) go in a 1:1 extension, `ContestEntryPredictionScore`, added with that format
-  (section 0, N8).
+  draw), optional `confidence`, `pickedAt`. Unique on (entry, match).
+- **Tiebreakers are one number: total points scored** (*decided by Derek 2026-10-16*). An entry
+  predicts the combined points of a named match, both teams together (3 for a 2-1 soccer
+  score), as NCAA tournament pools do for the final and NFL pools do for the Monday night game.
+  This applies to every sport, soccer included. A bracket or one-event pool uses the existing
+  `ContestEntry.tiebreakerValue`; a weekly pick'em pool needs one value per entry per round,
+  a small (entry, round, value) row designed with the round standings slice. Predicting each
+  team's score (exact-score soccer pools) is left for later, as a `ContestEntryPredictionScore`
+  extension if wanted.
 - **`ContestEntryRoundStanding`**: an entry's points and position for one round (weekly
   winners), beside the season `ContestEntryStanding`.
 - **`SportEventMatchSpread`**: a match's spread from the home side, with when and by whom it was
