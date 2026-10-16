@@ -637,11 +637,12 @@ participant, and knockout screens refer to the squad by its name or as "your ent
 *Rationale:* "team" is the only word fans use for a basketball team, while the squad already has
 a name to show; renaming the squad on screen would ripple through every league page.
 
-**Q3.13 Which event pilots the foundation?** *Recommendation:* the NFL playoffs in January
-(13 games, light to enter) if the foundation merges by early January; the Australian Open as an
-optional second pilot; March Madness as the launch. *Rationale:* the NFL playoffs are a real
-event with real interest, small enough to enter by hand; the Australian Open is 254 singles
-matches over two weeks, a heavy admin load for a pilot.
+**Q3.13 Which event pilots the foundation?** *Decided by Derek 2026-10-16:* there is no live
+release date; knockout is tested in QA only. The NFL playoffs are the **QA test data**: a
+14-team, 13-game bracket with byes, small enough to load and enter by hand, which exercises
+seeds, byes, the upset bonus and settlement. A completed bracket (the playoffs played in
+January 2026) can be loaded with its real results, so tests do not depend on today's date.
+March Madness and the Australian Open are later events, not deadlines.
 
 ### 3.6 Model change for knockout
 
@@ -1162,23 +1163,24 @@ successor or an admin uses.
    and the upset bonus with presets; seeds in the selection room; leaderboard wins, upset bonus points
    and alive/out per pick; the "team" copy sweep (Q3.12).
 5. **NFL playoffs** (`add-sport`, then `load-sport-data`). `Sport.AMERICAN_FOOTBALL`, the NFL
-   league, byes in the bracket (Q3.4), four-round templates; the 2027 playoff bracket loaded
-   once seeds are set (early January). The pilot (Q3.13).
+   league, byes in the bracket (Q3.4), four-round templates; a completed NFL playoff bracket
+   loaded as QA test data with its results (Q3.13).
 6. **Matches in sport data files** (`load-sport-data`). The data file envelope gains a
    `matches` list with bracket links, cross-checked against a second source like fields are;
    used by 5 and 8. Could merge before 5 if 5 needs it first.
 7. **Tennis** (`add-sport`, optional pilot). `Sport.TENNIS`, ATP and WTA leagues, seven-round
    templates, unseeded rule (Q3.1); the 2027 Australian Open singles draws if Derek wants the
    second pilot.
-8. **March Madness 2027 launch** (`load-sport-data`). Men's and women's 68-team fields and
+8. **March Madness 2027** (`load-sport-data`, no launch date set). Men's and women's 68-team fields and
    brackets loaded on Selection Sunday (about March 14, 2027), First Four handling (Q3.7);
    applied only on Derek's yes, per the skill.
 9. **Later:** "max possible points" (Q3.10); snake draft for team pools (#199); soccer
    knockouts and the Champions League (data on the same family).
 
 Ticket 1 and ticket 2 can be planned together and built back to back; 3 and 4 can run in
-parallel once 2 has merged. Everything through 5 should merge by early January for the NFL
-pilot; 8 needs only data once 1 to 4 and 6 are in.
+parallel once 2 has merged. There is no live release date (Q3.13): the order is what matters,
+with #695 first and the NFL test bracket (5) as the first end-to-end check in QA; 8 needs only
+data once 1 to 4 and 6 are in.
 
 ---
 
