@@ -36,8 +36,10 @@ plan keeps the sport research and the style catalog.
   `ScoringFamily`, `TournamentFormat` and `Sport`), the `KNOCKOUT_ROUND_POINTS` scoring
   definition with typed settings, and new sport definitions (basketball first).
 - **New model objects for pick'em (built later):** `ContestEntryPrediction`,
-  `ContestEntryRoundStanding`, `SportEventMatchSpread` (spreads), `ContestFormat.PREDICTION`,
-  three selection types (`PICK_EM`, `SURVIVOR`, `BRACKET`) and a tournament format per event.
+  `ContestEntryRoundStanding`, a spread on the match, `ContestFormat.PREDICTION`, three
+  selection types (`PICK_EM`, `SURVIVOR`, `BRACKET`), a tournament format per event, and
+  **round release** (each round of a multi-round contest is set up, then released for entry,
+  like a golf event; section 5.3).
 - **Order:** knockout foundation and basketball, then a January pilot (NFL playoffs; the
   Australian Open optionally), then March Madness for Selection Sunday (about March 14, 2027).
   Pick'em follows for the 2027 NFL season. Ticket breakdown in section 6.
@@ -66,7 +68,6 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 | `ContestEntryKnockoutStanding` | A knockout entry's settled points | `ContestEntry<Result>Standing`, like `ContestEntryGolfStanding` and `ContestEntryRaceStanding` |
 | `ContestEntryPrediction` | One pick'em prediction on one match | `ContestEntry<Thing>`, like `ContestEntryPick` and `ContestEntryStanding` |
 | `ContestEntryRoundStanding` | An entry's points and position for one round | `ContestEntryStanding` narrowed to a round, as `SportEventParticipantRound` narrows its parent |
-| `SportEventMatchSpread` | A match's published spread | A child of `SportEventMatch`, named for what it holds |
 
 **Columns**
 
@@ -79,6 +80,7 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 | `isNeutralSite` | `is` for booleans, like `isActive` and `isOfficial` |
 | `scheduledDate` | `SportEventRound.scheduledDate` and `SportEvent.startDate` |
 | `homeScore`, `awayScore` | Plain value columns |
+| `homeSpread` (pick'em, later) | Plain value column; null until set, locked when its round is released |
 | `regionLabel` (bracket, later) | `SportEventTier.label` |
 | `sportEventParticipantId`, `confidence`, `pickedAt` on a prediction | The same names as on `ContestEntryPick` |
 
@@ -88,6 +90,7 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 |---|---|
 | `MatchStatus`: `SCHEDULED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` | `<Entity>Status`, in the short form `RaceResultStatus` uses; the values reuse `SportEventStatus` words |
 | `MatchSide`: `HOME`, `AWAY` | A closed set, as an enum |
+| `SportEventRoundStatus`: `DRAFT`, `SCHEDULED`, `COMPLETED` (pick'em, later) | `<Entity>Status` with the event's own words, so "release" is `DRAFT` -> `SCHEDULED` at both levels |
 | `ScoringFamily.HEAD_TO_HEAD` | Names how results are stored, like `STROKE_PLAY` and `FINISH_POSITION` |
 | Scoring definition `KNOCKOUT_ROUND_POINTS` | `<what is scored>_POINTS`, like `FINISH_POSITION_POINTS` |
 | `KnockoutRoundPointsSettings` | `<Definition>Settings`, like `FinishPositionPointsSettings` |
@@ -127,8 +130,9 @@ Naming questions:
 - **N5 `SEASON`, `LEAGUE_SEASON` or `REGULAR_SEASON`?** *Recommendation:* `SEASON`.
   *Rationale:* "league" would collide with `League`, the office pool (§10), and soccer and AFL
   seasons are not called "regular".
-- **N6 Spread or line?** *Recommendation:* `SportEventMatchSpread`. *Rationale:* "line" already
-  means a seed line (tiers) and a bracket line.
+- **N6 Spread or line?** *Recommendation:* "spread" (`homeSpread`). *Rationale:* "line" already
+  means a seed line (tiers) and a bracket line. *Decided by Derek 2026-10-16:* the spread is a
+  column on the match, not a child table, with no published-at field (section 5.2).
 - **N7 Prisma enum names.** Most status enums carry a `Prisma` prefix in the schema
   (`PrismaContestStatus`, the #186 convention), but `RaceResultStatus` does not.
   *Recommendation:* `PrismaMatchStatus` and `PrismaMatchSide`, following #186. *Rationale:*
@@ -875,8 +879,10 @@ so it waits.
   extension if wanted.
 - **`ContestEntryRoundStanding`**: an entry's points and position for one round (weekly
   winners), beside the season `ContestEntryStanding`.
-- **`SportEventMatchSpread`**: a match's spread from the home side, with when and by whom it was
-  published. Publishing is an explicit admin action per round, not a time-based lock.
+- **The spread is a column on the match** (*decided by Derek 2026-10-16*): `homeSpread`, the
+  points from the home team's side, null until set. Like tiers and prices it changes freely
+  while being set up and locks when its round is released (section 5.3). No published-at
+  field and no history table: a pool is scored against the one spread that locked.
 - **Selection types** `PICK_EM` (straight-up, confidence, against the spread as configuration),
   `SURVIVOR` and `BRACKET`, each with a typed arm in `ContestSelectionConfig`.
 - **Engine pick window.** Each engine declares when its picks close and are revealed:
@@ -917,7 +923,47 @@ already define the structure.
 Scoring reuse: a correct bracket pick scores with the same `KnockoutRoundPointsSettings` as a
 knockout pool (round value plus seed bonus), so commissioners meet one set of scoring words.
 
-### 5.3 Model change for pick'em
+### 5.3 Round release: every round is set up, then released
+
+*Decided by Derek 2026-10-16:* a contest whose picks are made round by round (weekly pick'em,
+survivor) treats **each round the way a golf event is treated today**: an admin sets it up or
+syncs it, then releases it for entry. Until a round is released its matches, teams and spreads
+can change freely; release locks them and opens the round's games for picks. This is the same
+explicit-release rule that events (`DRAFT` -> `SCHEDULED`) and contests (`DRAFT` -> `OPEN`)
+follow, applied one level down, and no time-based lock replaces it.
+
+Why per round and not at event release: an NFL season is one event released before the season,
+but week 6's games and spreads are only known the week before; in a bracket, later rounds'
+matchups do not exist until earlier rounds finish.
+
+How it fits the model:
+
+- **`SportEventRound` gains a status**, `SportEventRoundStatus`: `DRAFT` (being set up),
+  `SCHEDULED` (released for entry, the same word event release uses) and `COMPLETED` (every
+  match final, which is when the round's standings and weekly winners settle).
+- **Release a round** is an admin action. It refuses a round whose matches are missing a team,
+  or a spread when a contest on the event scores against the spread, and it locks those
+  values. Release order is free: an admin may release week 7 before week 6 is played.
+- **The pick window** for a match-by-match engine (`UNTIL_MATCH_START`) opens when the match's
+  round is released and closes at the match's start.
+- **Single-window events are unchanged.** A golf tournament, a race and a knockout roster pool
+  (or a full bracket) take every pick before the event starts, so their rounds are released
+  together with the event and nothing new is asked of the admin.
+
+**Q5.8 Should round release go into `rules/domain-model-concepts.md` §4 as a general verb now,
+or when pick'em is built?** *Recommendation:* when the first pick'em ticket builds it, per the
+docs-ride-with-code rule (`rules/workflow-rules.md` §6); this doc records the decision until
+then. *Rationale:* the concepts file describes what the product does today, and no code has
+round release yet.
+
+**Q5.9 Does a released round ever need to be reopened** (a game postponed to another week,
+a wrong spread)? *Recommendation:* no undo; a postponed game is cancelled in its round and added
+to the round it moves to (still in setup); a wrong spread can be corrected only while nobody
+has made a prediction on that match, and is refused with a typed error after that.
+*Rationale:* this matches "no undo" on contest open, and a correction that cannot change a pick
+already made is harmless.
+
+### 5.4 Model change for pick'em
 
 **Figure 5: pick'em additions on top of the knockout model.** New in this phase: `<<new>>`,
 yellow; changed: `<<changed>>`, blue. The match is plain because knockout already built it.
@@ -956,19 +1002,24 @@ classDiagram
     TournamentFormat tournamentFormat  + SEASON
   }
   class SportEventRound {
+    <<changed>>
     Int roundNumber
+    SportEventRoundStatus status, new
+  }
+  class SportEventRoundStatus {
+    <<new>>
+    DRAFT
+    SCHEDULED
+    COMPLETED
   }
   class SportEventParticipant
   class SportEventMatch {
     MatchStatus status
     MatchSide winnerSide
     DateTime scheduledDate
+    <<changed>>
+    Decimal homeSpread, new
     String regionLabel, new
-  }
-  class SportEventMatchSpread {
-    <<new>>
-    Decimal homeSpread
-    DateTime publishedAt
   }
 
   Contest "1" --> "*" ContestEntry
@@ -984,11 +1035,13 @@ classDiagram
   SportEvent "1" --> "*" SportEventRound
   SportEvent "1" --> "*" SportEventMatch
   SportEventMatch "*" --> "1" SportEventRound
-  SportEventMatch "1" --> "0..1" SportEventMatchSpread : spread
+  SportEventRound ..> SportEventRoundStatus
 
   style ContestEntryPrediction fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style ContestEntryRoundStanding fill:#fff3c4,stroke:#c99a00,stroke-width:2px
-  style SportEventMatchSpread fill:#fff3c4,stroke:#c99a00,stroke-width:2px
+  style SportEventRoundStatus fill:#fff3c4,stroke:#c99a00,stroke-width:2px
+  style SportEventRound fill:#e3f0ff,stroke:#3b78c4
+  style SportEventMatch fill:#e3f0ff,stroke:#3b78c4
   style Contest fill:#e3f0ff,stroke:#3b78c4
   style ContestConfiguration fill:#e3f0ff,stroke:#3b78c4
   style SportEvent fill:#e3f0ff,stroke:#3b78c4
@@ -1061,13 +1114,13 @@ settlement do the roster sum inline; moving that behind `rosterEntryScorer` happ
 pick'em ticket, not before, so the seam is shaped by its second user (the #323 lesson the
 architecture plan cites).
 
-### 5.4 Pick'em slices (after knockout; not filed)
+### 5.5 Pick'em slices (after knockout; not filed)
 
 Kept from `plans/pickem-pools.md` §5 with the model above: (1) per-event tournament format,
 `SEASON`, and an NFL season event with weeks as rounds and its matches loaded; (2)
 `PREDICTION` format, `ContestEntryPrediction`, the `PICK_EM` engine (straight-up and confidence),
 per-match lock and reveal; (3) prediction scoring, round standings and weekly winners; (4) the
-round entry screen and season/week leaderboard; (5) survivor; (6) spreads; (7) bracket, using
+round entry screen and season/week leaderboard; round release can land with (1) or (2); (5) survivor; (6) spreads; (7) bracket, using
 the bracket links knockout already built. Target: the 2027 NFL season (early September 2027).
 
 ---
@@ -1124,8 +1177,8 @@ pilot; 8 needs only data once 1 to 4 and 6 are in.
 Recorded here so the tickets carry them (docs ride with code, `rules/workflow-rules.md` §6):
 
 - `rules/domain-model-concepts.md`: the match, bracket words ("bye", "seed bonus", "seed"),
-  the second meaning of "team" (Q3.12), and, in the pick'em phase, the prediction contest and
-  `ACTIVE` accepting picks.
+  the second meaning of "team" (Q3.12), and, in the pick'em phase, the prediction contest,
+  `ACTIVE` accepting picks, and **release a round** as a verb (section 5.3).
 - `rules/architecture-rules.md` §4 *Sport extension*: the head-to-head family, and later the
   entry scorer seam keyed by contest format.
 - `docs/DOMAIN-OPERATIONS.md`: bracket setup and result entry operations with their error codes.
