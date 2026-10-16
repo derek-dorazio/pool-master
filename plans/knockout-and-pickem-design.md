@@ -136,11 +136,10 @@ Naming questions:
 - **N6 Spread or line?** *Recommendation:* "spread" (`homeSpread`). *Rationale:* "line" already
   means a seed line (tiers) and a bracket line. *Decided by Derek 2026-10-16:* the spread is a
   column on the match, not a child table, with no published-at field (section 5.2).
-- **N7 Prisma enum names.** Most status enums carry a `Prisma` prefix in the schema
-  (`PrismaContestStatus`, the #186 convention), but `RaceResultStatus` does not.
-  *Recommendation:* `PrismaMatchStatus` and `PrismaMatchSide`, following #186. *Rationale:*
-  the prefix stops the generated Prisma type from colliding with the domain type of the same
-  name when a file imports both.
+- **N7 Enum names.** *Decided by Derek 2026-10-16:* `MatchStatus` and `MatchSide` (`HOME`,
+  `AWAY`; feeds use the same pair, ESPN as `homeAway` and Sportradar as `qualifier`), with
+  `PrismaMatchStatus` and `PrismaMatchSide` as the schema copies, following the #186 prefix
+  convention.
 - **N8 Should one prediction row hold every format's columns?** `rules/domain-model-conventions-rules.md`
   §9 says a column that only means something for some rows belongs in its own table.
   *Recommendation:* `confidence` stays on the prediction (as `cost` sits on `ContestEntryPick`
