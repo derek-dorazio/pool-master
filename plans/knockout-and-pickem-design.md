@@ -36,7 +36,7 @@ plan keeps the sport research and the style catalog.
   definition with typed settings, and new sport definitions (basketball first). The settled
   total moves onto `ContestEntryStanding.totalScore` for every sport first (#695, Q3.9), so
   knockout adds no settled-total table.
-- **New model objects for pick'em (built later):** `ContestEntryPrediction`,
+- **New model objects for pick'em (built later):** `ContestEntryMatchPrediction`,
   `ContestEntryRoundStanding`, a spread on the match, `ContestFormat.PREDICTION`, three
   selection types (`PICK_EM`, `SURVIVOR`, `BRACKET`), a tournament format per event, and
   **round release** (each round of a multi-round contest is set up, then released for entry,
@@ -66,7 +66,7 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 | Name | What it is | Pattern it follows |
 |---|---|---|
 | `SportEventMatch` | One match in one round of one event | An event-owned child, like `SportEventRound` and `SportEventTier`. Prefixed because bare "match" already means provider matching (`SportLeague.matchKeyword`, participant mapping confidence) |
-| `ContestEntryPrediction` | One pick'em prediction on one match | `ContestEntry<Thing>`, like `ContestEntryPick` and `ContestEntryStanding` |
+| `ContestEntryMatchPrediction` | One pick'em prediction on one match | `ContestEntry<Thing>`, like `ContestEntryPick` and `ContestEntryStanding` |
 | `ContestEntryRoundStanding` | An entry's points and position for one round | `ContestEntryStanding` narrowed to a round, as `SportEventParticipantRound` narrows its parent |
 
 **Columns**
@@ -114,14 +114,13 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 
 Naming questions:
 
-- **N1 Match, game or fixture?** *Recommendation:* `SportEventMatch` in the model, with the
-  sport's vocabulary showing "game" or "match" on screen. *Rationale:* "match" is the
-  cross-sport word (tennis, soccer, rugby, darts), and the vocabulary already handles words
-  like this ("tournament" or "race").
-- **N2 `ContestEntryPrediction` or `ContestEntryMatchPick`?** *Recommendation:*
-  `ContestEntryPrediction`; screens still say "pick". *Rationale:* #544 made a pick one
-  participant chosen, and a predicted draw or exact score is not a participant. The name also
-  matches `ContestFormat.PREDICTION`.
+- **N1 Match, game or fixture?** *Decided by Derek 2026-10-16:* `SportEventMatch` in the model.
+  The word on screen comes from the sport's vocabulary (to confirm: "game" for basketball and
+  football, "match" for tennis and soccer).
+- **N2 What is a pick'em row called?** *Decided by Derek 2026-10-16:* `ContestEntryMatchPrediction`.
+  "Match" says what it is on; "prediction" matches `ContestFormat.PREDICTION` and avoids #544's
+  meaning of a pick (one participant chosen), since a predicted draw names no team. Screens
+  still say "pick". `ContestEntryMatchSelection` was ruled out: "selection" is the process.
 - **N3 Seed bonus or upset bonus?** *Recommendation:* "seed bonus" in code and on screen.
   *Rationale:* it is Derek's term from 2026-10-11 and the earlier docs; one word everywhere.
 - **N4 What should the settled knockout total table be called?** *Decided by Derek
@@ -143,7 +142,7 @@ Naming questions:
   *Recommendation:* `confidence` stays on the prediction (as `cost` sits on `ContestEntryPick`
   for budget contests). *Decided by Derek 2026-10-16:* no per-team score predictions to start,
   in any sport, soccer included; a predicted score is a single total-points tiebreaker (section
-  5.2). A `ContestEntryPredictionScore` extension (predicted home and away score) is added later
+  5.2). A `ContestEntryMatchPredictionScore` extension (predicted home and away score) is added later
   only if exact-score pools are wanted.
 
 ---
@@ -864,7 +863,7 @@ so it waits.
 
 ### 5.2 New objects
 
-- **`ContestEntryPrediction`**: entry, match (`sportEventMatchId`), the team predicted to win
+- **`ContestEntryMatchPrediction`**: entry, match (`sportEventMatchId`), the team predicted to win
   (`sportEventParticipantId`, the same column name as on `ContestEntryPick`; null for a predicted
   draw), optional `confidence`, `pickedAt`. Unique on (entry, match).
 - **Tiebreakers are one number: total points scored** (*decided by Derek 2026-10-16*). An entry
@@ -873,7 +872,7 @@ so it waits.
   This applies to every sport, soccer included. A bracket or one-event pool uses the existing
   `ContestEntry.tiebreakerValue`; a weekly pick'em pool needs one value per entry per round,
   a small (entry, round, value) row designed with the round standings slice. Predicting each
-  team's score (exact-score soccer pools) is left for later, as a `ContestEntryPredictionScore`
+  team's score (exact-score soccer pools) is left for later, as a `ContestEntryMatchPredictionScore`
   extension if wanted.
 - **`ContestEntryRoundStanding`**: an entry's points and position for one round (weekly
   winners), beside the season `ContestEntryStanding`.
@@ -983,7 +982,7 @@ classDiagram
     ContestEntryStatus status
   }
   class ContestEntryPick
-  class ContestEntryPrediction {
+  class ContestEntryMatchPrediction {
     <<new>>
     Int confidence
     DateTime pickedAt
@@ -1022,9 +1021,9 @@ classDiagram
 
   Contest "1" --> "*" ContestEntry
   ContestEntry "1" --> "*" ContestEntryPick : ROSTER contests
-  ContestEntry "1" --> "*" ContestEntryPrediction : PREDICTION contests
-  ContestEntryPrediction "*" --> "1" SportEventMatch : predicts
-  ContestEntryPrediction "*" --> "0..1" SportEventParticipant : predicted winner
+  ContestEntry "1" --> "*" ContestEntryMatchPrediction : PREDICTION contests
+  ContestEntryMatchPrediction "*" --> "1" SportEventMatch : predicts
+  ContestEntryMatchPrediction "*" --> "0..1" SportEventParticipant : predicted winner
   ContestEntry "1" --> "0..1" ContestEntryStanding : season
   ContestEntry "1" --> "*" ContestEntryRoundStanding : per round
   ContestEntryRoundStanding "*" --> "1" SportEventRound
@@ -1035,7 +1034,7 @@ classDiagram
   SportEventMatch "*" --> "1" SportEventRound
   SportEventRound ..> SportEventRoundStatus
 
-  style ContestEntryPrediction fill:#fff3c4,stroke:#c99a00,stroke-width:2px
+  style ContestEntryMatchPrediction fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style ContestEntryRoundStanding fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style SportEventRoundStatus fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style SportEventRound fill:#e3f0ff,stroke:#3b78c4
@@ -1116,7 +1115,7 @@ architecture plan cites).
 
 Kept from `plans/pickem-pools.md` §5 with the model above: (1) per-event tournament format,
 `SEASON`, and an NFL season event with weeks as rounds and its matches loaded; (2)
-`PREDICTION` format, `ContestEntryPrediction`, the `PICK_EM` engine (straight-up and confidence),
+`PREDICTION` format, `ContestEntryMatchPrediction`, the `PICK_EM` engine (straight-up and confidence),
 per-match lock and reveal; (3) prediction scoring, round standings and weekly winners; (4) the
 round entry screen and season/week leaderboard; round release can land with (1) or (2); (5) survivor; (6) spreads; (7) bracket, using
 the bracket links knockout already built. Target: the 2027 NFL season (early September 2027).
