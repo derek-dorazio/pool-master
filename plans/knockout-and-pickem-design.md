@@ -19,24 +19,24 @@ plan keeps the sport research and the style catalog.
 ## TL;DR
 
 - **Both pool kinds share one new thing: the match.** A `SportEventMatch` records who played
-  whom in which round of an event, and who won. Knockout needs it for the seed bonus (you can
+  whom in which round of an event, and who won. Knockout needs it for the upset bonus (you can
   only give a 12 seed a bonus if you know it beat a 5 seed); pick'em needs it because a pick
   *is* a prediction about a match. It is built once, in the knockout work, already shaped for
   brackets and pick'em (bracket slots, where the winner goes next, empty sides until decided).
 - **Knockout pools are a new scoring family, not a new kind of contest.** Entries pick a
   roster exactly as in golf and racing today (tiered, budget, random draw). Only results and
   scoring are new: the event's results are matches, and a pick scores
-  `round value + seed bonus` for every match it wins.
+  `round value + upset bonus` for every match it wins.
 - **Pick'em pools are a new kind of contest.** An entry holds predictions, not a roster. That
   needs a `PREDICTION` contest format beside today's `ROSTER`, a match-pick table, a lock per
   match instead of per contest, and standings per round. It reuses the match, the scoring
-  settings (round values, seed bonus) and everything on the pool side.
+  settings (round values, upset bonus) and everything on the pool side.
 - **New model objects for knockout (built first):** `SportEventMatch`, three enums (`MatchStatus`, `MatchSide`, plus new values in
   `ScoringFamily`, `TournamentFormat` and `Sport`), the `KNOCKOUT_ROUND_POINTS` scoring
   definition with typed settings, and new sport definitions (basketball first). The settled
   total moves onto `ContestEntryStanding.totalScore` for every sport first (#695, Q3.9), so
   knockout adds no settled-total table.
-- **New model objects for pick'em (built later):** `ContestEntryPrediction`,
+- **New model objects for pick'em (built later):** `ContestEntryMatchPrediction`,
   `ContestEntryRoundStanding`, a spread on the match, `ContestFormat.PREDICTION`, three
   selection types (`PICK_EM`, `SURVIVOR`, `BRACKET`), a tournament format per event, and
   **round release** (each round of a multi-round contest is set up, then released for entry,
@@ -66,7 +66,7 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 | Name | What it is | Pattern it follows |
 |---|---|---|
 | `SportEventMatch` | One match in one round of one event | An event-owned child, like `SportEventRound` and `SportEventTier`. Prefixed because bare "match" already means provider matching (`SportLeague.matchKeyword`, participant mapping confidence) |
-| `ContestEntryPrediction` | One pick'em prediction on one match | `ContestEntry<Thing>`, like `ContestEntryPick` and `ContestEntryStanding` |
+| `ContestEntryMatchPrediction` | One pick'em prediction on one match | `ContestEntry<Thing>`, like `ContestEntryPick` and `ContestEntryStanding` |
 | `ContestEntryRoundStanding` | An entry's points and position for one round | `ContestEntryStanding` narrowed to a round, as `SportEventParticipantRound` narrows its parent |
 
 **Columns**
@@ -95,8 +95,8 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 | `ScoringFamily.HEAD_TO_HEAD` | Names how results are stored, like `STROKE_PLAY` and `FINISH_POSITION` |
 | Scoring definition `KNOCKOUT_ROUND_POINTS` | `<what is scored>_POINTS`, like `FINISH_POSITION_POINTS` |
 | `KnockoutRoundPointsSettings` | `<Definition>Settings`, like `FinishPositionPointsSettings` |
-| `SeedBonusRule`: `NONE`, `SEED_DIFFERENCE` | Derek's term for the rule (2026-10-11) |
-| `TournamentFormat.KNOCKOUT_BRACKET`, `TournamentFormat.SEASON` | Describes the event's structure, like `STROKE_PLAY_TOURNAMENT` and `RACE` |
+| `UpsetBonusRule`: `NONE`, `SEED_DIFFERENCE` | Derek's choice (N3); the value names how the bonus is computed |
+| `TournamentFormat.KNOCKOUT_BRACKET`, `TournamentFormat.MATCH_SCHEDULE` | Describes the event's structure, like `STROKE_PLAY_TOURNAMENT` and `RACE` |
 | `Sport.BASKETBALL`, `Sport.AMERICAN_FOOTBALL`, `Sport.TENNIS` | Like `AUTO_RACING`: the sport itself, with the competitions as sport leagues |
 | `ContestFormat.PREDICTION` | Beside `ROSTER`: what an entry holds |
 | `SelectionType.PICK_EM`, `SURVIVOR`, `BRACKET` | Names the process, like `TIERED`, `BUDGET_PICK` and `RANDOM_DRAW` |
@@ -109,41 +109,50 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 |---|---|
 | `headToHeadScoringFamily` in `scoring-families/head-to-head/` | `finishPositionScoringFamily` in `scoring-families/finish-position/` |
 | `basketballSportDefinition`, `americanFootballSportDefinition`, `tennisSportDefinition` | `horseRacingSportDefinition` |
-| `SportVocabulary.match`: "game" for basketball and football, "match" for tennis | The existing vocabulary nouns (`event`, `round`), so screens say the sport's word |
+| `SportVocabulary.match`: "game" for basketball and football, "match" for tennis and soccer | The existing vocabulary nouns (`event`, `round`), so screens say the sport's word |
 | `ContestEntryScorer`, `rosterEntryScorer`, `predictionEntryScorer` | `SelectionEngine` / `tieredEngine`: an interface and one implementation per kind |
+
+**Code values and screen words are separate** (*Derek 2026-10-16*). Every name above is a code
+value. What a screen shows comes from a per-sport dictionary, the sport definition's
+`vocabulary` (`packages/shared/domain/sports/sport-definition.ts`), which screens already read
+for "golfer" or "horse" and "tournament" or "race". New screen words are added to it by key:
+`match` ("game" or "match"), with round labels from `roundLabel`. No screen derives a word from
+an enum value, and no sport's word is hardcoded in a shared screen.
 
 Naming questions:
 
-- **N1 Match, game or fixture?** *Recommendation:* `SportEventMatch` in the model, with the
-  sport's vocabulary showing "game" or "match" on screen. *Rationale:* "match" is the
-  cross-sport word (tennis, soccer, rugby, darts), and the vocabulary already handles words
-  like this ("tournament" or "race").
-- **N2 `ContestEntryPrediction` or `ContestEntryMatchPick`?** *Recommendation:*
-  `ContestEntryPrediction`; screens still say "pick". *Rationale:* #544 made a pick one
-  participant chosen, and a predicted draw or exact score is not a participant. The name also
-  matches `ContestFormat.PREDICTION`.
-- **N3 Seed bonus or upset bonus?** *Recommendation:* "seed bonus" in code and on screen.
-  *Rationale:* it is Derek's term from 2026-10-11 and the earlier docs; one word everywhere.
+- **N1 Match, game or fixture?** *Decided by Derek 2026-10-16:* `SportEventMatch` in the model.
+  The word on screen comes from the sport's vocabulary: "game" for basketball and football,
+  "match" for tennis and soccer (Derek 2026-10-16).
+- **N2 What is a pick'em row called?** *Decided by Derek 2026-10-16:* `ContestEntryMatchPrediction`.
+  "Match" says what it is on; "prediction" matches `ContestFormat.PREDICTION` and avoids #544's
+  meaning of a pick (one participant chosen), since a predicted draw names no team. Screens
+  still say "pick". `ContestEntryMatchSelection` was ruled out: "selection" is the process.
+- **N3 Seed bonus or upset bonus?** *Decided by Derek 2026-10-16:* "upset bonus" in code and on
+  screen (`UpsetBonusRule`, `upsetBonus`, `upsetBonusPoints`). The rule's value stays
+  `SEED_DIFFERENCE`, which says how the bonus is computed.
 - **N4 What should the settled knockout total table be called?** *Decided by Derek
   2026-10-16:* there is no such table. Every sport's settled total is one integer, so it moves
   onto `ContestEntryStanding.totalScore` (#695, Q3.9).
-- **N5 `SEASON`, `LEAGUE_SEASON` or `REGULAR_SEASON`?** *Recommendation:* `SEASON`.
-  *Rationale:* "league" would collide with `League`, the office pool (§10), and soccer and AFL
-  seasons are not called "regular".
+- **N5 What is the format for an event of scheduled matches (an NFL season)?** *Decided by Derek
+  2026-10-16:* `TournamentFormat.MATCH_SCHEDULE`: matches played on a schedule, grouped into
+  rounds, nobody eliminated. It pairs with `KNOCKOUT_BRACKET`. `SEASON` was rejected (too many
+  meanings, and `LEAGUE_SEASON` collides with `League`); a pool name such as `PICK_EM` was not
+  used because the format describes the real event, and pick'em and survivor are selection
+  types that both run on it.
 - **N6 Spread or line?** *Recommendation:* "spread" (`homeSpread`). *Rationale:* "line" already
   means a seed line (tiers) and a bracket line. *Decided by Derek 2026-10-16:* the spread is a
   column on the match, not a child table, with no published-at field (section 5.2).
-- **N7 Prisma enum names.** Most status enums carry a `Prisma` prefix in the schema
-  (`PrismaContestStatus`, the #186 convention), but `RaceResultStatus` does not.
-  *Recommendation:* `PrismaMatchStatus` and `PrismaMatchSide`, following #186. *Rationale:*
-  the prefix stops the generated Prisma type from colliding with the domain type of the same
-  name when a file imports both.
+- **N7 Enum names.** *Decided by Derek 2026-10-16:* `MatchStatus` and `MatchSide` (`HOME`,
+  `AWAY`; feeds use the same pair, ESPN as `homeAway` and Sportradar as `qualifier`), with
+  `PrismaMatchStatus` and `PrismaMatchSide` as the schema copies, following the #186 prefix
+  convention.
 - **N8 Should one prediction row hold every format's columns?** `rules/domain-model-conventions-rules.md`
   §9 says a column that only means something for some rows belongs in its own table.
   *Recommendation:* `confidence` stays on the prediction (as `cost` sits on `ContestEntryPick`
   for budget contests). *Decided by Derek 2026-10-16:* no per-team score predictions to start,
   in any sport, soccer included; a predicted score is a single total-points tiebreaker (section
-  5.2). A `ContestEntryPredictionScore` extension (predicted home and away score) is added later
+  5.2). A `ContestEntryMatchPredictionScore` extension (predicted home and away score) is added later
   only if exact-score pools are wanted.
 
 ---
@@ -416,7 +425,7 @@ Draws: a `COMPLETED` match with no `winnerSide` is a draw. A knockout event neve
 with no winner. Soccer group stages will use it.
 
 **Q2.2 Should a match point at the field row (`SportEventParticipant`) or the participant?**
-*Recommendation:* the field row. *Rationale:* the seed that the seed bonus reads lives on the
+*Recommendation:* the field row. *Rationale:* the seed that the upset bonus reads lives on the
 field row, picks already point at field rows (`rules/domain-model-concepts.md` §1, "a pick
 points at a `SportEventParticipant`"), and it guarantees a match can only involve teams entered
 in that event.
@@ -461,24 +470,24 @@ Australian Open men's singles). Entries pick a roster with any built selection t
 - **Random draw:** the sweepstake, each entry dealt teams at random (#601).
 
 Picks lock at the event's start, as today. During the event every pick earns, **for each match
-it wins**, the value of that round plus an seed bonus when it beats a better seed. The entry's
+it wins**, the value of that round plus an upset bonus when it beats a better seed. The entry's
 total is the sum of its best `countedScores` picks, as today. Ranking is higher-is-better.
 
 ### 3.2 Scoring rules (decided by Derek 2026-10-11)
 
 1. **Round values.** Each win is worth the value set for its round, for example 1, 2, 4, 8,
    16, 32 (doubling) or flat 1s.
-2. **Seed bonus.** When a worse seed (a higher number) beats a better seed, the winner also
+2. **Upset bonus.** When a worse seed (a higher number) beats a better seed, the winner also
    earns the seed difference: a 12 seed beating a 5 seed in round 1 scores 1 + (12 - 5) = 8.
    No bonus when the better seed wins or the seeds are equal.
 
-A pick's score is `sum over its wins of (roundValues[round] + seedBonus(win))`.
+A pick's score is `sum over its wins of (roundValues[round] + upsetBonus(win))`.
 
 Typed settings for the new scoring definition, in `packages/shared/domain/contest-scoring.ts`
 beside the finish-position points table:
 
 ```ts
-export const SeedBonusRule = {
+export const UpsetBonusRule = {
   NONE: 'NONE',
   /** Winner's seed minus loser's seed, when the winner is the worse seed. */
   SEED_DIFFERENCE: 'SEED_DIFFERENCE',
@@ -487,14 +496,14 @@ export const SeedBonusRule = {
 KnockoutRoundPointsSettings = {
   /** roundValues[0] is a round-1 win, roundValues[1] a round-2 win, ... One per event round. */
   roundValues: int[]            // 1..8 entries, each >= 0
-  seedBonus:
+  upsetBonus:
     | { rule: 'NONE' }
     | { rule: 'SEED_DIFFERENCE'; multiplier: int >= 1 }
 }
 ```
 
 Presets ship as contest templates per sport league (`ContestConfigTemplate.sportLeagueId`):
-"Doubling" and "Doubling + seed bonus" for every knockout league, with round counts to match
+"Doubling" and "Doubling + upset bonus" for every knockout league, with round counts to match
 (six rounds for March Madness, seven for a Slam draw, four for the NFL playoffs).
 
 **Q3.1 What does an unseeded participant get?** Tennis seeds 32 of 128 players.
@@ -538,7 +547,7 @@ wins, which is how NFL playoff pools score byes; it also needs no "bye match" ro
 
 **Q3.5 Seeds frozen at release?** Today a field refresh can still change `seedNumber`.
 *Recommendation:* release locks seeds on knockout events, as it already locks tiers and prices.
-*Rationale:* the seed bonus is computed from seeds, so a seed changed mid-event would rewrite
+*Rationale:* the upset bonus is computed from seeds, so a seed changed mid-event would rewrite
 every past score. (`next-sport-adoption.md` §1 already assumes seeds "as they stood at the
 event's release".)
 
@@ -569,7 +578,7 @@ copy that a correction must keep in step.
 `headToHeadScoringFamily` implements `ScoringFamilyModule` unchanged:
 
 - `scoreField(field, event, scoring)`: for each field row, sum its won matches' round values and
-  seed bonuses under the contest's `KNOCKOUT_ROUND_POINTS` settings. The field read attaches
+  upset bonuses under the contest's `KNOCKOUT_ROUND_POINTS` settings. The field read attaches
   each row's matches the way it attaches `raceResult` for racing (the interface's own comment
   anticipated this: "it reads matches ... as its own field read").
 - `liveScores: null`.
@@ -577,8 +586,8 @@ copy that a correction must keep in step.
   `ContestEntryStanding.totalScore` for every family, and the interface no longer has
   `entryStandingDetail` or `settledEntryTotal`.
 - The leaderboard's `ParticipantScoreDetail` gains a head-to-head arm:
-  `{ scoringFamily: HEAD_TO_HEAD, wins, seedBonusPoints, isAlive, roundReached }`, so a pick
-  shows "3 wins, +7 seed bonus, still alive".
+  `{ scoringFamily: HEAD_TO_HEAD, wins, upsetBonusPoints, isAlive, roundReached }`, so a pick
+  shows "3 wins, +7 upset bonus, still alive".
 
 **Q3.9 Where does an entry's settled total live?** *Decided by Derek 2026-10-16:* on the
 core standing row, `ContestEntryStanding.totalScore`, for every sport, filed as **#695** and done
@@ -628,11 +637,12 @@ participant, and knockout screens refer to the squad by its name or as "your ent
 *Rationale:* "team" is the only word fans use for a basketball team, while the squad already has
 a name to show; renaming the squad on screen would ripple through every league page.
 
-**Q3.13 Which event pilots the foundation?** *Recommendation:* the NFL playoffs in January
-(13 games, light to enter) if the foundation merges by early January; the Australian Open as an
-optional second pilot; March Madness as the launch. *Rationale:* the NFL playoffs are a real
-event with real interest, small enough to enter by hand; the Australian Open is 254 singles
-matches over two weeks, a heavy admin load for a pilot.
+**Q3.13 Which event pilots the foundation?** *Decided by Derek 2026-10-16:* there is no live
+release date; knockout is tested in QA only. The NFL playoffs are the **QA test data**: a
+14-team, 13-game bracket with byes, small enough to load and enter by hand, which exercises
+seeds, byes, the upset bonus and settlement. A completed bracket (the playoffs played in
+January 2026) can be loaded with its real results, so tests do not depend on today's date.
+March Madness and the Australian Open are later events, not deadlines.
 
 ### 3.6 Model change for knockout
 
@@ -756,15 +766,15 @@ classDiagram
   }
   class headToHeadScoringFamily {
     <<new>>
-    scoreField: round values + seed bonus per win
+    scoreField: round values + upset bonus per win
     liveScores = null
   }
   class KnockoutRoundPointsSettings {
     <<new>>
     Int[] roundValues
-    SeedBonus seedBonus
+    UpsetBonus upsetBonus
   }
-  class SeedBonusRule {
+  class UpsetBonusRule {
     <<new>>
     NONE
     SEED_DIFFERENCE
@@ -787,7 +797,7 @@ classDiagram
   tennisSportDefinition ..|> SportDefinition
   headToHeadScoringFamily ..|> ScoringFamilyModule
   headToHeadScoringFamily ..> KnockoutRoundPointsSettings : reads
-  KnockoutRoundPointsSettings ..> SeedBonusRule
+  KnockoutRoundPointsSettings ..> UpsetBonusRule
   SportDefinition ..> ScoringFamily
   tieredEngine ..|> SelectionEngine
   budgetPickEngine ..|> SelectionEngine
@@ -795,7 +805,7 @@ classDiagram
 
   style headToHeadScoringFamily fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style KnockoutRoundPointsSettings fill:#fff3c4,stroke:#c99a00,stroke-width:2px
-  style SeedBonusRule fill:#fff3c4,stroke:#c99a00,stroke-width:2px
+  style UpsetBonusRule fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style basketballSportDefinition fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style americanFootballSportDefinition fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style tennisSportDefinition fill:#fff3c4,stroke:#c99a00,stroke-width:2px
@@ -820,9 +830,9 @@ invites someone to assume it works.
 |---|---|
 | Event admin | A bracket tab on knockout events: matches by round, edit pairings before release, mark winners after start |
 | Release | Also requires a complete round-1 bracket (Q3.6); locks seeds (Q3.5) |
-| Contest setup | The knockout scoring definition with round values and seed bonus; presets from league templates |
+| Contest setup | The knockout scoring definition with round values and upset bonus; presets from league templates |
 | Selection room | Unchanged engines; sport vocabulary for team or player; seed shown beside each pick |
-| Leaderboard | Points, wins, seed bonus, alive or out per pick; round labels from the sport definition |
+| Leaderboard | Points, wins, upset bonus, alive or out per pick; round labels from the sport definition |
 | Settlement | Unchanged flow; writes `ContestEntryStanding.totalScore` like every sport after #695 |
 | Contracts | New DTOs for matches and results (mapped from domain types, `rules/service-rules.md` §4); the leaderboard detail union gains the head-to-head arm |
 | Lint | No sport branching: knockout rules are configuration and the family, never `sport === BASKETBALL` |
@@ -857,14 +867,14 @@ widening it.
 (`Sport.tournamentFormat`). The NFL needs a knockout event (playoffs) and a season event
 (weeks of games) in the same sport. *Recommendation:* in the pick'em phase, add
 `SportEvent.tournamentFormat`, with the sport definition listing allowed formats and a default;
-add `TournamentFormat.SEASON`. Validity: `KNOCKOUT_BRACKET` allows `ROSTER` and
-`PREDICTION` (team pools and bracket or game pick'em); `SEASON` allows `PREDICTION`.
+add `TournamentFormat.MATCH_SCHEDULE`. Validity: `KNOCKOUT_BRACKET` allows `ROSTER` and
+`PREDICTION` (team pools and bracket or game pick'em); `MATCH_SCHEDULE` allows `PREDICTION`.
 *Rationale:* it is the smallest change that lets one sport run both; not needed for knockout,
 so it waits.
 
 ### 5.2 New objects
 
-- **`ContestEntryPrediction`**: entry, match (`sportEventMatchId`), the team predicted to win
+- **`ContestEntryMatchPrediction`**: entry, match (`sportEventMatchId`), the team predicted to win
   (`sportEventParticipantId`, the same column name as on `ContestEntryPick`; null for a predicted
   draw), optional `confidence`, `pickedAt`. Unique on (entry, match).
 - **Tiebreakers are one number: total points scored** (*decided by Derek 2026-10-16*). An entry
@@ -873,7 +883,7 @@ so it waits.
   This applies to every sport, soccer included. A bracket or one-event pool uses the existing
   `ContestEntry.tiebreakerValue`; a weekly pick'em pool needs one value per entry per round,
   a small (entry, round, value) row designed with the round standings slice. Predicting each
-  team's score (exact-score soccer pools) is left for later, as a `ContestEntryPredictionScore`
+  team's score (exact-score soccer pools) is left for later, as a `ContestEntryMatchPredictionScore`
   extension if wanted.
 - **`ContestEntryRoundStanding`**: an entry's points and position for one round (weekly
   winners), beside the season `ContestEntryStanding`.
@@ -919,7 +929,7 @@ selection type. *Rationale:* regions only group matches on screen; the links bet
 already define the structure.
 
 Scoring reuse: a correct bracket pick scores with the same `KnockoutRoundPointsSettings` as a
-knockout pool (round value plus seed bonus), so commissioners meet one set of scoring words.
+knockout pool (round value plus upset bonus), so commissioners meet one set of scoring words.
 
 ### 5.3 Round release: every round is set up, then released
 
@@ -983,7 +993,7 @@ classDiagram
     ContestEntryStatus status
   }
   class ContestEntryPick
-  class ContestEntryPrediction {
+  class ContestEntryMatchPrediction {
     <<new>>
     Int confidence
     DateTime pickedAt
@@ -997,7 +1007,7 @@ classDiagram
   }
   class SportEvent {
     <<changed>>
-    TournamentFormat tournamentFormat  + SEASON
+    TournamentFormat tournamentFormat  + MATCH_SCHEDULE
   }
   class SportEventRound {
     <<changed>>
@@ -1022,9 +1032,9 @@ classDiagram
 
   Contest "1" --> "*" ContestEntry
   ContestEntry "1" --> "*" ContestEntryPick : ROSTER contests
-  ContestEntry "1" --> "*" ContestEntryPrediction : PREDICTION contests
-  ContestEntryPrediction "*" --> "1" SportEventMatch : predicts
-  ContestEntryPrediction "*" --> "0..1" SportEventParticipant : predicted winner
+  ContestEntry "1" --> "*" ContestEntryMatchPrediction : PREDICTION contests
+  ContestEntryMatchPrediction "*" --> "1" SportEventMatch : predicts
+  ContestEntryMatchPrediction "*" --> "0..1" SportEventParticipant : predicted winner
   ContestEntry "1" --> "0..1" ContestEntryStanding : season
   ContestEntry "1" --> "*" ContestEntryRoundStanding : per round
   ContestEntryRoundStanding "*" --> "1" SportEventRound
@@ -1035,7 +1045,7 @@ classDiagram
   SportEventMatch "*" --> "1" SportEventRound
   SportEventRound ..> SportEventRoundStatus
 
-  style ContestEntryPrediction fill:#fff3c4,stroke:#c99a00,stroke-width:2px
+  style ContestEntryMatchPrediction fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style ContestEntryRoundStanding fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style SportEventRoundStatus fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style SportEventRound fill:#e3f0ff,stroke:#3b78c4
@@ -1115,8 +1125,8 @@ architecture plan cites).
 ### 5.5 Pick'em slices (after knockout; not filed)
 
 Kept from `plans/pickem-pools.md` §5 with the model above: (1) per-event tournament format,
-`SEASON`, and an NFL season event with weeks as rounds and its matches loaded; (2)
-`PREDICTION` format, `ContestEntryPrediction`, the `PICK_EM` engine (straight-up and confidence),
+`MATCH_SCHEDULE`, and an NFL season event with weeks as rounds and its matches loaded; (2)
+`PREDICTION` format, `ContestEntryMatchPrediction`, the `PICK_EM` engine (straight-up and confidence),
 per-match lock and reveal; (3) prediction scoring, round standings and weekly winners; (4) the
 round entry screen and season/week leaderboard; round release can land with (1) or (2); (5) survivor; (6) spreads; (7) bracket, using
 the bracket links knockout already built. Target: the 2027 NFL season (early September 2027).
@@ -1140,36 +1150,37 @@ successor or an admin uses.
    `Contest.scoringStopsOnElimination` (Q3.14). Integration tests for the bracket queries and
    the database checks.
 2. **Knockout scoring and results** (`add-endpoint`). `KNOCKOUT_ROUND_POINTS` with
-   `KnockoutRoundPointsSettings` and `SeedBonusRule`; results entry API (mark winner, advance,
+   `KnockoutRoundPointsSettings` and `UpsetBonusRule`; results entry API (mark winner, advance,
    eliminate, standings, correction lock); `scoreField` and the leaderboard pick detail arm
    (settlement needs nothing new after #695); round-values length check (Q3.3); the "Doubling" and
-   "Doubling + seed bonus" templates for both NCAA leagues. Unit tests for the scoring math
-   (seed bonus, unseeded, equal seeds, multiplier, byes) and a functional test from release to
+   "Doubling + upset bonus" templates for both NCAA leagues. Unit tests for the scoring math
+   (upset bonus, unseeded, equal seeds, multiplier, byes) and a functional test from release to
    settlement.
 3. **Admin bracket and results screens** (`add-frontend-feature`). A bracket tab on knockout
    events: matches by round with labels from the sport definition, pairing edits before release,
    one tap to mark a winner after start, correction errors shown in product copy.
 4. **Commissioner and member screens** (`add-frontend-feature`). Scoring setup for round values
-   and the seed bonus with presets; seeds in the selection room; leaderboard wins, seed bonus points
+   and the upset bonus with presets; seeds in the selection room; leaderboard wins, upset bonus points
    and alive/out per pick; the "team" copy sweep (Q3.12).
 5. **NFL playoffs** (`add-sport`, then `load-sport-data`). `Sport.AMERICAN_FOOTBALL`, the NFL
-   league, byes in the bracket (Q3.4), four-round templates; the 2027 playoff bracket loaded
-   once seeds are set (early January). The pilot (Q3.13).
+   league, byes in the bracket (Q3.4), four-round templates; a completed NFL playoff bracket
+   loaded as QA test data with its results (Q3.13).
 6. **Matches in sport data files** (`load-sport-data`). The data file envelope gains a
    `matches` list with bracket links, cross-checked against a second source like fields are;
    used by 5 and 8. Could merge before 5 if 5 needs it first.
 7. **Tennis** (`add-sport`, optional pilot). `Sport.TENNIS`, ATP and WTA leagues, seven-round
    templates, unseeded rule (Q3.1); the 2027 Australian Open singles draws if Derek wants the
    second pilot.
-8. **March Madness 2027 launch** (`load-sport-data`). Men's and women's 68-team fields and
+8. **March Madness 2027** (`load-sport-data`, no launch date set). Men's and women's 68-team fields and
    brackets loaded on Selection Sunday (about March 14, 2027), First Four handling (Q3.7);
    applied only on Derek's yes, per the skill.
 9. **Later:** "max possible points" (Q3.10); snake draft for team pools (#199); soccer
    knockouts and the Champions League (data on the same family).
 
 Ticket 1 and ticket 2 can be planned together and built back to back; 3 and 4 can run in
-parallel once 2 has merged. Everything through 5 should merge by early January for the NFL
-pilot; 8 needs only data once 1 to 4 and 6 are in.
+parallel once 2 has merged. There is no live release date (Q3.13): the order is what matters,
+with #695 first and the NFL test bracket (5) as the first end-to-end check in QA; 8 needs only
+data once 1 to 4 and 6 are in.
 
 ---
 
@@ -1177,7 +1188,7 @@ pilot; 8 needs only data once 1 to 4 and 6 are in.
 
 Recorded here so the tickets carry them (docs ride with code, `rules/workflow-rules.md` §6):
 
-- `rules/domain-model-concepts.md`: the match, bracket words ("bye", "seed bonus", "seed"),
+- `rules/domain-model-concepts.md`: the match, bracket words ("bye", "upset bonus", "seed"),
   the second meaning of "team" (Q3.12), and, in the pick'em phase, the prediction contest,
   `ACTIVE` accepting picks, and **release a round** as a verb (section 5.3).
 - `rules/architecture-rules.md` §4 *Sport extension*: the head-to-head family, and later the
