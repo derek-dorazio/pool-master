@@ -441,8 +441,8 @@ one naming scheme for every sport keeps the enums and the API single.
 this one"?**
 *Recommendation:* each match names where its winner goes (`advancesToMatchId`, `advancesToSide`).
 *Rationale:* one link per match, and irregular brackets fall out naturally: an NFL top seed's
-bye is just a team placed straight into a Divisional match; a March Madness First Four game
-feeds one side of a Round of 64 game. "Fed by" needs two links and breaks on byes.
+bye is just a team placed straight into a Divisional match (the March Madness First Four needs
+no link at all; see Q3.7). "Fed by" needs two links and breaks on byes.
 
 **Q2.5 Should a match record how it was decided (walkover, retirement, forfeit)?**
 *Recommendation:* not now. A walkover is a win with no score. *Rationale:* scoring treats every
@@ -507,15 +507,20 @@ Presets ship as contest templates per sport league (`ContestConfigTemplate.sport
 (six rounds for March Madness, seven for a Slam draw, four for the NFL playoffs).
 
 **Q3.1 What does an unseeded participant get?** Tennis seeds 32 of 128 players.
-*Recommendation:* no bonus when either side is unseeded. *Rationale:* an unseeded player
-beating a 30 seed is not the kind of upset the rule rewards, and inventing a seed (33) makes
-the bonus arbitrary. A ranking-based bonus for tennis can come later if leagues ask. March
-Madness and the NFL seed every team, so it does not arise there.
+*Decided by Derek 2026-10-16:* an unseeded participant counts as the worst seed in the field.
+The worst seed is the highest seed number among the event's field rows, read when the event is
+released (seeds are locked then, like tiers). In a Slam draw with 32 seeds, an unseeded player
+counts as seed 32: beating the 30 seed earns a bonus of 2, beating the 1 seed earns 31, and two
+unseeded players meeting earn no bonus. The rule needs no new column: the scorer substitutes
+the worst seed when a field row's seed is empty. March Madness and the NFL seed every team, so
+it does not arise there.
 
-**Q3.2 Should the bonus have a multiplier or a cap?** *Recommendation:* a multiplier defaulting
-to 1, no cap. *Rationale:* a multiplier is one integer and covers the "double the bonus" house
-rule; caps and "from round 2 on" variants are rare and can be added to the union later without
-a migration (the settings are JSON validated by the schema).
+**Q3.2 Should the bonus have a multiplier or a cap, and is it on by default?** *Decided by Derek
+2026-10-16:* the upset bonus is off by default. A new knockout contest starts with
+`{ rule: 'NONE' }`, and the commissioner turns it on. When it is on, the multiplier defaults to
+1 and there is no cap. *Rationale:* a multiplier is one integer and covers the "double the
+bonus" house rule; caps and "from round 2 on" variants are rare and can be added to the union
+later without a migration (the settings are JSON validated by the schema).
 
 **Q3.3 Must the round values table match the event's round count?** *Recommendation:* yes;
 creating or changing a contest refuses a table whose length differs from the event's rounds.
@@ -558,15 +563,24 @@ existing gate for "ready for commissioners".
 
 **Q3.7 March Madness First Four.** The field is announced Sunday as 68 teams; four play-in games
 on Tuesday and Wednesday decide the last four Round of 64 places; the Round of 64 starts
-Thursday. *Recommendation:* a 68-team field released on Selection Sunday, event start (the pick
-lock) at the first Round of 64 tip, and the First Four entered as matches in the bracket feeding
-their Round of 64 slots but worth no points (they are played before the event's first round, so
-they are not a scored round). A First Four loser is eliminated before the lock, so entries that
-picked it can swap. *Rationale:* commissioners can open contests on Sunday night, which is when
-people want to pick, and nobody is stuck with a team that never reached the Round of 64. To
-confirm in implementation: what an already submitted entry shows when one of its picks is
-eliminated before the lock (inferred, not checked: the same path as a golfer withdrawing before
-tee-off).
+Thursday. *Decided by Derek 2026-10-16:* each play-in slot is **one combined field member**
+("Texas / Xavier"), so the field is 64 entries and the bracket starts at the Round of 64. An
+entry can pick the slot like any team. Whoever wins the play-in game becomes that field member,
+and every pick follows automatically, because picks point at the field row, not at the team
+(`rules/domain-model-concepts.md` §1). No First Four matches are entered or scored, and nothing
+else in the model changes.
+
+How it is carried out: the field row for the slot starts out pointing at a participant standing
+for the pairing, and the admin's "set play-in winner" action points the row at the winning
+team. A seed and tier belong to the slot, so they carry over unchanged. Q3.7a below covers the
+one detail.
+
+**Q3.7a What does the slot's field row point at before the play-in is decided?** A field row
+must point at a participant. *Recommendation:* a participant created for the pairing (named
+"Texas / Xavier", type `TEAM`), which the winner replaces and which is then inactivated, as
+tours and players are today. *Rationale:* it keeps "every field row has a participant" true
+with no nullable column. A slot that points at one of the two teams would show the wrong name
+until the game is played.
 
 **Q3.8 Should each field row cache its wins (a knockout extension table, like golf's
 standing)?** *Recommendation:* no; the family computes wins from the event's matches.
