@@ -631,7 +631,6 @@ export async function cleanupTestData(): Promise<void> {
   }
 
   await prisma.providerSyncRun.deleteMany();
-  await prisma.contestEntryGolfStanding.deleteMany();
   await prisma.sportEventParticipantGolfRound.deleteMany();
   await prisma.sportEventParticipantRound.deleteMany();
   // Keep standing cleanup before SportEventParticipant because the standing

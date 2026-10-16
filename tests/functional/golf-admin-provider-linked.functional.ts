@@ -44,7 +44,7 @@ import { standardEventPricing } from '../support/budget-pricing';
 //      and an EVENTPARTICIPANTS "details" sync never mutates SportEvent.status
 //      or a SCORES_ONLY event's admin-authored header and schedule (#118).
 //   5. A league contest against the linked tournament settles
-//      ContestEntryGolfStanding for the sync-driven scores.
+//      each entry's ContestEntryStanding total for the sync-driven scores.
 //   6. unlinkEventScoreSource — a later sync tick does not touch
 //      the now-unlinked event's data (unlink-then-no-touch).
 //
@@ -480,9 +480,9 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(toDone.response.status).toBe(200);
     expect(expectDefined(toDone.data).event.status).toBe('COMPLETED');
 
-    const settlement = await db.contestEntryStanding.findMany({ where: { contestId }, include: { golf: true } });
+    const settlement = await db.contestEntryStanding.findMany({ where: { contestId } });
     expect(settlement.length).toBeGreaterThanOrEqual(1);
-    expect(settlement.every((s) => Number.isInteger(s.golf?.totalScoreToPar))).toBe(true);
+    expect(settlement.every((s) => Number.isInteger(s.totalScore))).toBe(true);
     expect(settlement.every((s) => s.settledAt instanceof Date)).toBe(true);
     const settledContest = await db.contest.findUniqueOrThrow({ where: { id: contestId } });
     expect(settledContest.status).toBe('COMPLETED');

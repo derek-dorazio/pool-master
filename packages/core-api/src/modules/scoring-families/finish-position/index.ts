@@ -2,9 +2,8 @@
  * Finish position (racing, #622): a runner's contest score is the points its finishing place
  * earns from the contest's points table (`FINISH_POSITION_POINTS`); a non-finisher scores the
  * table's "did not finish" value (score-runner.ts holds every rule). Results are the admin's
- * finishing order, stored in the race result extension row of each field row, and an entry's
- * settled total in `ContestEntryRaceStanding`. It takes no live scores: no racing feed exists yet
- * (plans/racing-sports.md Q9.4).
+ * finishing order, stored in the race result extension row of each field row. It takes no live
+ * scores: no racing feed exists yet (plans/racing-sports.md Q9.4).
  */
 import { ScoringFamily } from '@poolmaster/shared/domain';
 import type { ScoringFamilyModule } from '../scoring-family-module';
@@ -27,12 +26,4 @@ export const finishPositionScoringFamily: ScoringFamilyModule = {
   },
 
   liveScores: null,
-
-  entryStandingDetail(total) {
-    return { golf: null, race: { totalPoints: total } };
-  },
-
-  settledEntryTotal(standing) {
-    return standing.race?.totalPoints ?? null;
-  },
 };

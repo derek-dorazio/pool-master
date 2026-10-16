@@ -464,10 +464,10 @@ test('act 4: the root admin starts the race, loads its official finishing order,
     const leaderboard = await page.request.get(`/api/v1/contests/${state.contestId}/leaderboard`);
     expect(leaderboard.ok(), `GET the leaderboard answered ${leaderboard.status()}`).toBe(true);
     const body = (await leaderboard.json()) as {
-      entries: Array<{ entryId: string; position: number | null; race: { totalPoints: number | null } | null }>;
+      entries: Array<{ entryId: string; position: number | null; totalScore: number | null }>;
     };
     const entry = body.entries.find((candidate) => candidate.entryId === state.entryId);
-    expect(entry?.race?.totalPoints).toBe(EXPECTED_ENTRY_POINTS);
+    expect(entry?.totalScore).toBe(EXPECTED_ENTRY_POINTS);
     expect(entry?.position).toBe(1);
 
     await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);

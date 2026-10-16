@@ -155,10 +155,9 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     const readStandings = async () => (await prisma.contestEntryStanding.findMany({
       where: { contestId: directContest.id },
       orderBy: { position: 'asc' },
-      include: { golf: true },
     })).map((standing) => ({
       contestEntryId: standing.contestEntryId,
-      totalScoreToPar: standing.golf?.totalScoreToPar,
+      totalScore: standing.totalScore,
       position: standing.position,
       displayPosition: standing.displayPosition,
       countingPickLimit: standing.countingPickLimit,
@@ -167,7 +166,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     const frozen = [
       {
         contestEntryId: directEntries.winner.id,
-        totalScoreToPar: -9,
+        totalScore: -9,
         position: 1,
         displayPosition: '1',
         countingPickLimit: 2,
@@ -175,7 +174,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       },
       {
         contestEntryId: directEntries.runnerUp.id,
-        totalScoreToPar: 1,
+        totalScore: 1,
         position: 2,
         displayPosition: '2',
         countingPickLimit: 2,
@@ -219,14 +218,12 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       standingsUpserted: 2,
     });
     const resettled = await readStandings();
-    expect(resettled.map((standing) => [standing.totalScoreToPar, standing.displayPosition])).toEqual([
+    expect(resettled.map((standing) => [standing.totalScore, standing.displayPosition])).toEqual([
       [1, 'T1'],
       [1, 'T1'],
     ]);
-    // Still one row per entry: the resettle updated the standings in place (core and extension).
-    await expect(prisma.contestEntryGolfStanding.count({
-      where: { contestEntryStanding: { contestId: directContest.id } },
-    })).resolves.toBe(2);
+    // Still one row per entry: the resettle updated the standings in place.
+    await expect(prisma.contestEntryStanding.count({ where: { contestId: directContest.id } })).resolves.toBe(2);
   });
 });
 
@@ -436,17 +433,15 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     // -8 for the leader; +2 played plus +8 for each of rounds 3 and 4 for the cut golfer.
     const standing = await prisma.contestEntryStanding.findFirstOrThrow({
       where: { contestEntryId: entry.id },
-      include: { golf: true },
     });
-    expect(standing.golf?.totalScoreToPar).toBe(10);
+    expect(standing.totalScore).toBe(10);
     expect(standing.scoredPickCount).toBe(2);
     // A golfer still marked in the event when it completes, missing rounds 3 and 4, gets their
     // 80s too: -8 for the leader, E plus +16 for them.
     const unflaggedStanding = await prisma.contestEntryStanding.findFirstOrThrow({
       where: { contestEntryId: unflaggedEntry.id },
-      include: { golf: true },
     });
-    expect(unflaggedStanding.golf?.totalScoreToPar).toBe(8);
+    expect(unflaggedStanding.totalScore).toBe(8);
     await expect(prisma.contestEntryStanding.findFirst({ where: { contestEntryId: draftEntry.id } })).resolves.toBeNull();
   });
 });

@@ -36,12 +36,4 @@ export const strokePlayScoringFamily: ScoringFamilyModule = {
       );
     },
   },
-
-  entryStandingDetail(total) {
-    return { golf: { totalScoreToPar: total }, race: null };
-  },
-
-  settledEntryTotal(standing) {
-    return standing.golf?.totalScoreToPar ?? null;
-  },
 };

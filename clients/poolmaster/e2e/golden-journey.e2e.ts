@@ -1237,7 +1237,7 @@ type ContestLeaderboardBody = {
     displayPosition: string | null;
     scoredPickCount: number;
     countingPickLimit: number;
-    golf: { totalScoreToPar: number | null } | null;
+    totalScore: number | null;
     picks: Array<{ pickId: string; sportEventParticipantId: string; isCounting: boolean; isDropped: boolean }>;
   }>;
 };
@@ -1305,7 +1305,7 @@ async function readContestLeaderboard(page: Page, contestId: string, entryId: st
   return {
     countingRuleCount: body.countingRule.count,
     entry: {
-      total: standing.golf?.totalScoreToPar ?? null,
+      total: standing.totalScore,
       position: standing.position,
       displayPosition: standing.displayPosition,
       scoredPickCount: standing.scoredPickCount,

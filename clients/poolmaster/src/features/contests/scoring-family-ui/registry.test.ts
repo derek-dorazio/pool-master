@@ -11,6 +11,7 @@ import type {
   ScoredContestEntryPickDto,
   SportEventParticipantDto,
 } from '@/lib/api';
+import { buildLeaderboardView } from '../contest-leaderboard';
 import { getScoringFamilyUi, SCORING_FAMILY_UI } from './registry';
 import { strokePlayUi } from './stroke-play';
 
@@ -68,8 +69,7 @@ const entry: ContestEntryStandingDto = {
   displayPosition: '1',
   countingPickLimit: 1,
   scoredPickCount: 1,
-  golf: { totalScoreToPar: 16 },
-  race: null,
+  totalScore: 16,
   picks: [unplayedPick],
 };
 
@@ -107,7 +107,7 @@ describe('stroke-play leaderboard', () => {
   it('formats the entry and pick totals against par through the scoring definition', () => {
     const board = strokePlayUi.leaderboard(golfLeaderboard, golf);
 
-    expect(board.entryTotal(entry)).toBe('+16');
+    expect(buildLeaderboardView(golfLeaderboard).entries[0].total).toBe('+16');
     expect(board.pickDetail('entry-1', unplayedPick, cutGolfer).total).toBe('+16');
   });
 

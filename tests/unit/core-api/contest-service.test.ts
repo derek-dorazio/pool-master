@@ -1775,7 +1775,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
       scoredPickCount: 4,
       asOf: settledAt,
       settledAt,
-      golf: { totalScoreToPar: score },
+      totalScore: score,
     });
     const service = buildService({
       contests: contestRepoFor({ status: ContestStatus.COMPLETED }),

@@ -949,7 +949,7 @@ describe('mock contest feed provider event-first verification', () => {
       });
 
     const beforeLive = await readGolfLeaderboard(directContest.id, rootAdmin.headers);
-    expect(beforeLive.entries.every((entry) => entry.golf?.totalScoreToPar === null)).toBe(true);
+    expect(beforeLive.entries.every((entry) => entry.totalScore === null)).toBe(true);
     expect(beforeLive.entries.every((entry) => entry.scoredPickCount === 0)).toBe(true);
 
     // Live scores are accepted only while the event is in progress, and the provider never
@@ -974,7 +974,7 @@ describe('mock contest feed provider event-first verification', () => {
 
     const leaderboardAfterR2 = await readGolfLeaderboard(directContest.id, rootAdmin.headers);
     const leaderAfterR2 = leaderboardAfterR2.entries.find((entry) => entry.entryId === directEntries.leader.id);
-    expect(leaderAfterR2?.golf?.totalScoreToPar).not.toBeNull();
+    expect(leaderAfterR2?.totalScore).not.toBeNull();
     expect(leaderAfterR2?.scoredPickCount).toBe(3);
     expect(leaderAfterR2?.countingPickLimit).toBe(2);
     expect(leaderAfterR2?.picks.filter((pick) => pick.isCounting)).toHaveLength(2);

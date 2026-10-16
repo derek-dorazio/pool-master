@@ -88,10 +88,6 @@ export const strokePlayUi: ScoringFamilyUi = {
           text: 'Rounds in italics were not played (missed cut, withdrawal, or no score) and count as 80 strokes against that round\'s par.',
         }
         : null,
-      entryTotal(entry) {
-        const total = entry.golf?.totalScoreToPar ?? null;
-        return total === null ? null : definition.format(total);
-      },
       pickDetail(entryId, pick, participant) {
         const roundsByNumber = new Map(
           participant.rounds.map((round) => [round.roundNumber, round]),

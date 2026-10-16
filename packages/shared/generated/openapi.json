@@ -15546,23 +15546,6 @@
         "additionalProperties": false,
         "description": "One pick on a contest entry, with whether it counts."
       },
-      "ContestEntryGolfStandingDto": {
-        "type": "object",
-        "properties": {
-          "totalScoreToPar": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "description": "The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored."
-          }
-        },
-        "required": [
-          "totalScoreToPar"
-        ],
-        "additionalProperties": false,
-        "description": "Golf extension of a contest entry standing: the total its position was ranked from."
-      },
       "ContestEntryStandingDto": {
         "type": "object",
         "properties": {
@@ -15619,45 +15602,12 @@
             "minimum": 0,
             "description": "How many picks currently have an event standing."
           },
-          "golf": {
+          "totalScore": {
             "type": [
-              "object",
+              "integer",
               "null"
             ],
-            "properties": {
-              "totalScoreToPar": {
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "description": "The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored."
-              }
-            },
-            "required": [
-              "totalScoreToPar"
-            ],
-            "additionalProperties": false,
-            "description": "Present for a golf contest; null otherwise."
-          },
-          "race": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "totalPoints": {
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "description": "The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored."
-              }
-            },
-            "required": [
-              "totalPoints"
-            ],
-            "additionalProperties": false,
-            "description": "Present for a finish-position contest (a horse race); null otherwise."
+            "description": "The entry's total, the sum of its counting picks' contest scores, in the unit of the response's scoring definition (a golf to-par total, a race's points). Null until a pick is scored."
           },
           "picks": {
             "type": "array",
@@ -15769,12 +15719,11 @@
           "displayPosition",
           "countingPickLimit",
           "scoredPickCount",
-          "golf",
-          "race",
+          "totalScore",
           "picks"
         ],
         "additionalProperties": false,
-        "description": "One entry's standing in a contest leaderboard. The score lives in the sport's extension."
+        "description": "One entry's standing in a contest leaderboard. Each pick's score lives in its sport's block."
       },
       "ContestCountingRuleDto": {
         "type": "object",
@@ -16441,45 +16390,12 @@
                   "minimum": 0,
                   "description": "How many picks currently have an event standing."
                 },
-                "golf": {
+                "totalScore": {
                   "type": [
-                    "object",
+                    "integer",
                     "null"
                   ],
-                  "properties": {
-                    "totalScoreToPar": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "description": "The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored."
-                    }
-                  },
-                  "required": [
-                    "totalScoreToPar"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Present for a golf contest; null otherwise."
-                },
-                "race": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "totalPoints": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "description": "The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored."
-                    }
-                  },
-                  "required": [
-                    "totalPoints"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Present for a finish-position contest (a horse race); null otherwise."
+                  "description": "The entry's total, the sum of its counting picks' contest scores, in the unit of the response's scoring definition (a golf to-par total, a race's points). Null until a pick is scored."
                 },
                 "picks": {
                   "type": "array",
@@ -16591,12 +16507,11 @@
                 "displayPosition",
                 "countingPickLimit",
                 "scoredPickCount",
-                "golf",
-                "race",
+                "totalScore",
                 "picks"
               ],
               "additionalProperties": false,
-              "description": "One entry's standing in a contest leaderboard. The score lives in the sport's extension."
+              "description": "One entry's standing in a contest leaderboard. Each pick's score lives in its sport's block."
             },
             "description": "Contest entries, best first."
           },

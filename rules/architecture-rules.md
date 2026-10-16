@@ -247,8 +247,10 @@ filling them in rather than by finding guards scattered through the code:
 - **The sport's scoring family** holds what is behaviour: how results are stored, scored and
   shown. Several sports share a family (golf is stroke play; tennis and March Madness are
   knockout advancement; races are finish position), and each family owns one set of result
-  extension tables beside the cross-sport event core. Never one table set per sport. Each
-  family's backend module lives in its own folder under `packages/core-api/src/modules/scoring-families/`.
+  extension tables beside the cross-sport event core. Never one table set per sport. An
+  entry's settled total is not one of them: it is one integer in every family, read through
+  the contest's scoring definition, so it lives on `ContestEntryStanding.totalScore` and a
+  family adds no settled-total table. Each family's backend module lives in its own folder under `packages/core-api/src/modules/scoring-families/`.
   A family scores the field per contest, given that contest's scoring settings (the
   participant scoring rule's `config`, typed per scoring definition by
   `PARTICIPANT_SCORING_SETTINGS_SCHEMAS` on write and read), returns each participant score

@@ -11,6 +11,7 @@ import type {
   ScoredContestEntryPickDto,
   SportEventParticipantDto,
 } from '@/lib/api';
+import { buildLeaderboardView } from '../contest-leaderboard';
 import { getScoringFamilyUi } from './registry';
 import { finishPositionUi, formatFinish } from './finish-position';
 
@@ -80,8 +81,7 @@ const entry: ContestEntryStandingDto = {
   displayPosition: '1',
   countingPickLimit: 3,
   scoredPickCount: 1,
-  golf: null,
-  race: { totalPoints: 8 },
+  totalScore: 8,
   picks: [pick],
 };
 
@@ -111,10 +111,11 @@ describe('finish-position leaderboard', () => {
 
   it('shows the entry total and the pick\'s points as plain points, and a dash while unscored', () => {
     const board = finishPositionUi.leaderboard(raceLeaderboard([runner({})]), horseRacing);
+    const unscored = { ...raceLeaderboard([runner({})]), entries: [{ ...entry, totalScore: null }] };
 
-    expect(board.entryTotal(entry)).toBe('8');
+    expect(buildLeaderboardView(raceLeaderboard([runner({})])).entries[0].total).toBe('8');
     expect(board.pickDetail('entry-1', pick, runner({})).total).toBe('5');
-    expect(board.entryTotal({ ...entry, race: { totalPoints: null } })).toBeNull();
+    expect(buildLeaderboardView(unscored).entries[0].total).toBeNull();
     expect(board.pickDetail('entry-1', { ...pick, race: { points: null } }, runner({})).total).toBeNull();
   });
 

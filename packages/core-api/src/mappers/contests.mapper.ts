@@ -238,34 +238,25 @@ export function toContestEntryListResponse(input: {
 type LeaderboardEntryDto = ContestLeaderboardResponse['entries'][number];
 type LeaderboardPickDto = LeaderboardEntryDto['picks'][number];
 
-/** How a scoring family's detail blocks appear on a leaderboard entry and its picks (#606). */
-interface LeaderboardFamilyDetailMapper {
-  entry(entry: ContestEntryStandingRow): Pick<LeaderboardEntryDto, 'golf' | 'race'>;
-  pick(pick: ScoredContestEntryPickRow): Pick<LeaderboardPickDto, 'golf' | 'race'>;
-}
+/** How a scoring family's detail block appears on a leaderboard pick (#606). */
+type LeaderboardFamilyPickDetailMapper = (pick: ScoredContestEntryPickRow) => Pick<LeaderboardPickDto, 'golf' | 'race'>;
 
-const LEADERBOARD_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, LeaderboardFamilyDetailMapper>> = {
-  [ScoringFamily.STROKE_PLAY]: {
-    entry: (entry) => ({ golf: { totalScoreToPar: entry.score }, race: null }),
-    pick: (pick) => ({
-      golf: {
-        scoreToPar: pick.participant.score,
-        unplayedRoundNumbers: participantScoreDetailFor(ScoringFamily.STROKE_PLAY, pick.participant.detail)
-          .unplayedRoundNumbers,
-      },
-      race: null,
-    }),
-  },
-  [ScoringFamily.FINISH_POSITION]: {
-    entry: (entry) => ({ golf: null, race: { totalPoints: entry.score } }),
-    pick: (pick) => ({ golf: null, race: { points: pick.participant.score } }),
-  },
+const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, LeaderboardFamilyPickDetailMapper>> = {
+  [ScoringFamily.STROKE_PLAY]: (pick) => ({
+    golf: {
+      scoreToPar: pick.participant.score,
+      unplayedRoundNumbers: participantScoreDetailFor(ScoringFamily.STROKE_PLAY, pick.participant.detail)
+        .unplayedRoundNumbers,
+    },
+    race: null,
+  }),
+  [ScoringFamily.FINISH_POSITION]: (pick) => ({ golf: null, race: { points: pick.participant.score } }),
 };
 
 export function toContestLeaderboardResponse(
   leaderboard: ContestLeaderboardModel,
 ): ContestLeaderboardResponse {
-  const detail = LEADERBOARD_DETAIL_BY_SCORING_FAMILY[getSportDefinition(leaderboard.sport).scoringFamily];
+  const pickDetail = LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY[getSportDefinition(leaderboard.sport).scoringFamily];
   return {
     contestId: leaderboard.contestId,
     sportEventId: leaderboard.sportEventId,
@@ -284,7 +275,7 @@ export function toContestLeaderboardResponse(
       displayPosition: entry.displayPosition,
       countingPickLimit: entry.countingPickLimit,
       scoredPickCount: entry.scoredPickCount,
-      ...detail.entry(entry),
+      totalScore: entry.score,
       picks: entry.picks.map((pick) => ({
         pickId: pick.pickId,
         sportEventParticipantId: pick.sportEventParticipantId,
@@ -292,7 +283,7 @@ export function toContestLeaderboardResponse(
         slot: pick.slot,
         isCounting: pick.isCounting,
         isDropped: pick.isDropped,
-        ...detail.pick(pick),
+        ...pickDetail(pick),
       })),
     })),
     asOf: leaderboard.asOf?.toISOString() ?? null,

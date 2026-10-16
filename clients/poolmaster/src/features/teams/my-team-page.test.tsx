@@ -290,8 +290,8 @@ describe('My team › My entries', () => {
       countingRule: { type: 'BEST_N', count: 4 },
       participants: [],
       entries: [
-        { entryId: 'e-9', entryName: 'Leaders', entryNumber: 1, squadId: 'team-9', squadName: 'Leaders', status: 'SUBMITTED', position: 1, displayPosition: '1', countingPickLimit: 4, scoredPickCount: 0, golf: { totalScoreToPar: -8 }, picks: [] },
-        { entryId: 'e-1', entryName: 'Mine', entryNumber: 1, squadId: 'team-1', squadName: 'Casey Crushers', status: 'SUBMITTED', position: 2, displayPosition: 'T2', countingPickLimit: 4, scoredPickCount: 0, golf: { totalScoreToPar: -3 }, picks: [] },
+        { entryId: 'e-9', entryName: 'Leaders', entryNumber: 1, squadId: 'team-9', squadName: 'Leaders', status: 'SUBMITTED', position: 1, displayPosition: '1', countingPickLimit: 4, scoredPickCount: 0, totalScore: -8, picks: [] },
+        { entryId: 'e-1', entryName: 'Mine', entryNumber: 1, squadId: 'team-1', squadName: 'Casey Crushers', status: 'SUBMITTED', position: 2, displayPosition: 'T2', countingPickLimit: 4, scoredPickCount: 0, totalScore: -3, picks: [] },
       ],
       asOf: '2026-04-11T18:00:00.000Z',
     }));

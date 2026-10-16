@@ -56,10 +56,6 @@ export const finishPositionUi: ScoringFamilyUi = {
           text: `The finishing places shown are provisional: points count once the ${sport.vocabulary.round.one} result is official.`,
         }
         : null,
-      entryTotal(entry) {
-        const total = entry.race?.totalPoints ?? null;
-        return total === null ? null : definition.format(total);
-      },
       pickDetail(entryId, pick, participant) {
         const points = pick.race?.points ?? null;
         return {

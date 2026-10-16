@@ -214,8 +214,8 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
       [memberEntryId]: { totalPoints: 27, displayPosition: '1' },
       [commissionerEntryId]: { totalPoints: 26, displayPosition: '2' },
     };
-    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; race: { totalPoints: number | null } | null }>) =>
-      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalPoints: entry.race?.totalPoints, displayPosition: entry.displayPosition }]));
+    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; totalScore: number | null }>) =>
+      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalPoints: entry.totalScore, displayPosition: entry.displayPosition }]));
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(board.scoringDefinitionId).toBe('FINISH_POSITION_POINTS');
     expect(standingsOf(board.entries)).toEqual(expected);

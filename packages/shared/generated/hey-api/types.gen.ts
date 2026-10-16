@@ -7497,17 +7497,7 @@ export type ScoredContestEntryPickDto = {
 };
 
 /**
- * Golf extension of a contest entry standing: the total its position was ranked from.
- */
-export type ContestEntryGolfStandingDto = {
-    /**
-     * The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored.
-     */
-    totalScoreToPar: number | null;
-};
-
-/**
- * One entry's standing in a contest leaderboard. The score lives in the sport's extension.
+ * One entry's standing in a contest leaderboard. Each pick's score lives in its sport's block.
  */
 export type ContestEntryStandingDto = {
     /**
@@ -7551,23 +7541,9 @@ export type ContestEntryStandingDto = {
      */
     scoredPickCount: number;
     /**
-     * Present for a golf contest; null otherwise.
+     * The entry's total, the sum of its counting picks' contest scores, in the unit of the response's scoring definition (a golf to-par total, a race's points). Null until a pick is scored.
      */
-    golf: {
-        /**
-         * The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored.
-         */
-        totalScoreToPar: number | null;
-    } | null;
-    /**
-     * Present for a finish-position contest (a horse race); null otherwise.
-     */
-    race: {
-        /**
-         * The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored.
-         */
-        totalPoints: number | null;
-    } | null;
+    totalScore: number | null;
     /**
      * The entry's picks, counting picks first.
      */
@@ -7953,23 +7929,9 @@ export type ContestLeaderboardResponse = {
          */
         scoredPickCount: number;
         /**
-         * Present for a golf contest; null otherwise.
+         * The entry's total, the sum of its counting picks' contest scores, in the unit of the response's scoring definition (a golf to-par total, a race's points). Null until a pick is scored.
          */
-        golf: {
-            /**
-             * The entry's total against par: the sum of its counting picks' contest scores (each pick's golf.scoreToPar). Null until a pick is scored.
-             */
-            totalScoreToPar: number | null;
-        } | null;
-        /**
-         * Present for a finish-position contest (a horse race); null otherwise.
-         */
-        race: {
-            /**
-             * The entry's points: the sum of its counting picks' points (each pick's race.points). Null until a pick is scored.
-             */
-            totalPoints: number | null;
-        } | null;
+        totalScore: number | null;
         /**
          * The entry's picks, counting picks first.
          */

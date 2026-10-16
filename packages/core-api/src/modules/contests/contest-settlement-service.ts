@@ -5,7 +5,6 @@ import type {
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import { ContestStatus, SportEventStatus } from '@poolmaster/shared/domain';
-import { scoringFamilyForSport } from '../scoring-families';
 import {
   buildContestEntryStanding,
   rankContestEntryStandings,
@@ -81,7 +80,6 @@ export class ContestSettlementService {
     }
 
     const completedAt = input?.completedAt ?? sportEvent.endDate ?? sportEvent.startDate;
-    const scoringFamily = scoringFamilyForSport(sportEvent.sport);
     // The field is the event's, read once; each contest scores it under its own settings below.
     const field = await loadEventField(this.deps, sportEventId);
     // A COMPLETED contest is already settled: its standing is the frozen result, and re-running
@@ -146,7 +144,7 @@ export class ContestSettlementService {
           scoredPickCount: entry.scoredPickCount,
           asOf,
           settledAt: completedAt,
-          ...scoringFamily.entryStandingDetail(entry.score),
+          totalScore: entry.score,
         });
         standingsUpserted++;
       }

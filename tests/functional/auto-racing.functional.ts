@@ -202,8 +202,8 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
       [memberEntryId]: { totalPoints: 142, displayPosition: '1' },
       [commissionerEntryId]: { totalPoints: 141, displayPosition: '2' },
     };
-    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; race: { totalPoints: number | null } | null }>) =>
-      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalPoints: entry.race?.totalPoints, displayPosition: entry.displayPosition }]));
+    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; totalScore: number | null }>) =>
+      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalPoints: entry.totalScore, displayPosition: entry.displayPosition }]));
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(board.scoringDefinitionId).toBe('FINISH_POSITION_POINTS');
     expect(standingsOf(board.entries)).toEqual(expected);
@@ -345,8 +345,8 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
       [commissionerEntryId]: { totalPoints: 42, displayPosition: '1' },
       [memberEntryId]: { totalPoints: 39, displayPosition: '2' },
     };
-    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; race: { totalPoints: number | null } | null }>) =>
-      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalPoints: entry.race?.totalPoints, displayPosition: entry.displayPosition }]));
+    const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; totalScore: number | null }>) =>
+      Object.fromEntries(entries.map((entry) => [entry.entryId, { totalPoints: entry.totalScore, displayPosition: entry.displayPosition }]));
 
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
