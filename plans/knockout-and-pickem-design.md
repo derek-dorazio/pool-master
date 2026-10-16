@@ -96,7 +96,7 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 | Scoring definition `KNOCKOUT_ROUND_POINTS` | `<what is scored>_POINTS`, like `FINISH_POSITION_POINTS` |
 | `KnockoutRoundPointsSettings` | `<Definition>Settings`, like `FinishPositionPointsSettings` |
 | `UpsetBonusRule`: `NONE`, `SEED_DIFFERENCE` | Derek's choice (N3); the value names how the bonus is computed |
-| `TournamentFormat.KNOCKOUT_BRACKET`, `TournamentFormat.SEASON` | Describes the event's structure, like `STROKE_PLAY_TOURNAMENT` and `RACE` |
+| `TournamentFormat.KNOCKOUT_BRACKET`, `TournamentFormat.MATCH_SCHEDULE` | Describes the event's structure, like `STROKE_PLAY_TOURNAMENT` and `RACE` |
 | `Sport.BASKETBALL`, `Sport.AMERICAN_FOOTBALL`, `Sport.TENNIS` | Like `AUTO_RACING`: the sport itself, with the competitions as sport leagues |
 | `ContestFormat.PREDICTION` | Beside `ROSTER`: what an entry holds |
 | `SelectionType.PICK_EM`, `SURVIVOR`, `BRACKET` | Names the process, like `TIERED`, `BUDGET_PICK` and `RANDOM_DRAW` |
@@ -127,9 +127,12 @@ Naming questions:
 - **N4 What should the settled knockout total table be called?** *Decided by Derek
   2026-10-16:* there is no such table. Every sport's settled total is one integer, so it moves
   onto `ContestEntryStanding.totalScore` (#695, Q3.9).
-- **N5 `SEASON`, `LEAGUE_SEASON` or `REGULAR_SEASON`?** *Recommendation:* `SEASON`.
-  *Rationale:* "league" would collide with `League`, the office pool (§10), and soccer and AFL
-  seasons are not called "regular".
+- **N5 What is the format for an event of scheduled matches (an NFL season)?** *Decided by Derek
+  2026-10-16:* `TournamentFormat.MATCH_SCHEDULE`: matches played on a schedule, grouped into
+  rounds, nobody eliminated. It pairs with `KNOCKOUT_BRACKET`. `SEASON` was rejected (too many
+  meanings, and `LEAGUE_SEASON` collides with `League`); a pool name such as `PICK_EM` was not
+  used because the format describes the real event, and pick'em and survivor are selection
+  types that both run on it.
 - **N6 Spread or line?** *Recommendation:* "spread" (`homeSpread`). *Rationale:* "line" already
   means a seed line (tiers) and a bracket line. *Decided by Derek 2026-10-16:* the spread is a
   column on the match, not a child table, with no published-at field (section 5.2).
@@ -857,8 +860,8 @@ widening it.
 (`Sport.tournamentFormat`). The NFL needs a knockout event (playoffs) and a season event
 (weeks of games) in the same sport. *Recommendation:* in the pick'em phase, add
 `SportEvent.tournamentFormat`, with the sport definition listing allowed formats and a default;
-add `TournamentFormat.SEASON`. Validity: `KNOCKOUT_BRACKET` allows `ROSTER` and
-`PREDICTION` (team pools and bracket or game pick'em); `SEASON` allows `PREDICTION`.
+add `TournamentFormat.MATCH_SCHEDULE`. Validity: `KNOCKOUT_BRACKET` allows `ROSTER` and
+`PREDICTION` (team pools and bracket or game pick'em); `MATCH_SCHEDULE` allows `PREDICTION`.
 *Rationale:* it is the smallest change that lets one sport run both; not needed for knockout,
 so it waits.
 
@@ -997,7 +1000,7 @@ classDiagram
   }
   class SportEvent {
     <<changed>>
-    TournamentFormat tournamentFormat  + SEASON
+    TournamentFormat tournamentFormat  + MATCH_SCHEDULE
   }
   class SportEventRound {
     <<changed>>
@@ -1115,7 +1118,7 @@ architecture plan cites).
 ### 5.5 Pick'em slices (after knockout; not filed)
 
 Kept from `plans/pickem-pools.md` §5 with the model above: (1) per-event tournament format,
-`SEASON`, and an NFL season event with weeks as rounds and its matches loaded; (2)
+`MATCH_SCHEDULE`, and an NFL season event with weeks as rounds and its matches loaded; (2)
 `PREDICTION` format, `ContestEntryMatchPrediction`, the `PICK_EM` engine (straight-up and confidence),
 per-match lock and reveal; (3) prediction scoring, round standings and weekly winners; (4) the
 round entry screen and season/week leaderboard; round release can land with (1) or (2); (5) survivor; (6) spreads; (7) bracket, using
