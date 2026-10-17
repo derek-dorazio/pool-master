@@ -24,6 +24,10 @@ import {
 // Formula 1 in #625) are checked value by value, and every sport's presets, golf and horse racing
 // included, against the rules contest creation holds them to. No mocks.
 
+// Only a sport with a scoring definition can host a contest, so only it is owed presets. Basketball
+// has none until knockout scoring lands, and contest creation refuses it meanwhile.
+const SCORED_SPORTS = SUPPORTED_SPORTS.filter((sport) => getSportDefinition(sport).scoringDefinitions.length > 0);
+
 beforeAll(async () => {
   await setupIntegrationTests();
   // The cleanup every suite runs keeps a league that a template names, and its sport's row.
@@ -339,7 +343,7 @@ describe('Every seeded contest template, whatever its sport', () => {
   it('parses as its own selection type\'s rules, one the sport offers, scored by a definition the sport offers or one that needs no settings', async () => {
     const templates = await activeTemplates();
 
-    expect(new Set(templates.map((template) => template.sport))).toEqual(new Set(SUPPORTED_SPORTS));
+    expect(new Set(templates.map((template) => template.sport))).toEqual(new Set(SCORED_SPORTS));
     const problems = templates.flatMap((template) => {
       const definition = getSportDefinition(template.sport);
       const parsed = ContestRulesWithEntryLimitSchema.safeParse(template.configJson);
@@ -400,13 +404,13 @@ describe('Every seeded contest template, whatever its sport', () => {
 
     // What the create page offers for an event: its league's own presets with the sport-wide ones.
     const scopes = [
-      ...leagues.map((league) => ({
+      ...leagues.filter((league) => SCORED_SPORTS.includes(league.sport.sport)).map((league) => ({
         name: league.name,
         sport: league.sport.sport,
         offered: templates.filter((template) => template.sport === league.sport.sport
           && (template.sportLeagueId === null || template.sportLeagueId === league.id)),
       })),
-      ...SUPPORTED_SPORTS
+      ...SCORED_SPORTS
         .filter((sport) => !leagues.some((league) => league.sport.sport === sport))
         .map((sport) => ({
           name: `${sport} (sport-wide)`,
