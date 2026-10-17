@@ -137,6 +137,7 @@ export function buildSelectionParticipants(input: {
         status: legacyStatus,
         price: valuation?.price ?? undefined,
         ranking: entry.ranking ?? undefined,
+        seedNumber: entry.seedNumber ?? null,
         tier: valuation?.tierLabel ?? null,
         orderIndex: valuation?.tierOrderIndex ?? undefined,
         isAvailable,

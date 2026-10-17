@@ -2,6 +2,7 @@ import type { SportNoun } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
 import { Alert, formatDateTimeDisplay, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
 import { countParticipants } from './contest-rules';
+import { selectionParticipantLabel } from './contest-sport';
 import type { SelectionGroup } from './contest-entry-selection';
 
 /**
@@ -77,7 +78,7 @@ export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectio
         <ul aria-label={`Dealt ${noun.many}`} className="divide-y divide-border">
           {dealtGolfers.map((golfer) => (
             <li className="px-4 py-3 text-sm" key={golfer.sportEventParticipantId}>
-              <div className="font-medium text-foreground">{golfer.participantName}</div>
+              <div className="font-medium text-foreground">{selectionParticipantLabel(golfer)}</div>
               {golfer.team ? <div className="mt-1 text-xs text-muted-foreground">{golfer.team}</div> : null}
             </li>
           ))}

@@ -13,6 +13,7 @@ import {
   generateInviteLink,
   getContest,
   getContestLeaderboard,
+  getSelectionState,
   listEventParticipants,
   listSports,
   loadEventBracket,
@@ -190,6 +191,11 @@ describe('SDK Functional: Basketball knockout scoring', () => {
       return entryId;
     };
     const entryId = await enterWith(member.client, ['Duke', 'Houston', 'Vermont', 'Texas']);
+
+    // The selection room shows each team with its bracket seed.
+    const room = expectDefined((await getSelectionState({ client: member.client, path: { contestId }, query: { entryId } })).data);
+    const seeds = new Map((room.selectionGroups ?? []).flatMap((group) => group.participants).map((row) => [row.participantName, row.seedNumber]));
+    expect(FIELD.map((team) => seeds.get(`${team.name} ${RUN}`))).toEqual(FIELD.map((team) => team.seed));
 
     // --- The tournament tips off and the results go in ------------------------------------------
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');

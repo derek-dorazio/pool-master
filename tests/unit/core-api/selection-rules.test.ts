@@ -328,6 +328,22 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
     );
   });
 
+  it('carries each field row\'s bracket seed into the room, and null for a row the event left unseeded', () => {
+    const participants = buildSelectionParticipants({
+      field: [
+        fieldRow({ id: 'sep-1', participantId: 'participant-1', seedNumber: 1 }),
+        fieldRow({ id: 'sep-2', participantId: 'participant-2' }),
+      ],
+      participantsById: new Map([
+        ['participant-1', participant('participant-1', { name: 'Duke' })],
+        ['participant-2', participant('participant-2', { name: 'Vermont' })],
+      ]),
+      valuationBySportEventParticipantId: new Map(),
+    });
+
+    expect(participants.map((row) => [row.participantName, row.seedNumber])).toEqual([['Duke', 1], ['Vermont', null]]);
+  });
+
   it('orders by tier position first, then name, then field-row id so the list is stable', () => {
     const participants = buildSelectionParticipants({
       field: [

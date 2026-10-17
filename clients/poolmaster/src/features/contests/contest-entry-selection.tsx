@@ -1,5 +1,5 @@
 import { formatParticipantStatusLabel, type Sport, type SportNoun } from "@poolmaster/shared/domain";
-import { unavailableParticipantLabel } from "./contest-sport";
+import { selectionParticipantLabel, unavailableParticipantLabel } from "./contest-sport";
 import type { EntryTiebreakerUi } from "./scoring-family-ui/types";
 import type { SelectionStateResponse } from "@/lib/api";
 import {
@@ -124,7 +124,7 @@ export function SelectionParticipantCard({
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="font-medium text-foreground">
-              {participant.participantName}
+              {selectionParticipantLabel(participant)}
             </div>
             <div className="mt-1 text-sm text-muted-foreground">
               {participant.team ?? participant.role ?? "In the field"}
@@ -160,7 +160,7 @@ function SelectedParticipantChips({ group }: { group: SelectionGroup }) {
           data-testid={`contest-entry-selected-${participant.sportEventParticipantId}`}
           key={participant.sportEventParticipantId}
         >
-          {participant.participantName}
+          {selectionParticipantLabel(participant)}
         </Chip>
       ))}
     </div>
@@ -295,7 +295,7 @@ export function LockedSelectionGroup({
               >
                 <div className="min-w-0">
                   <div className="truncate font-medium text-foreground">
-                    {participant.participantName}
+                    {selectionParticipantLabel(participant)}
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {participant.team ??

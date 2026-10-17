@@ -375,7 +375,7 @@ export function ContestDetailPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               {picksRevealed
                 ? 'Picks are visible. Expand a row to see each entry’s lineup. Scores live on the leaderboard.'
-                : 'Picks are hidden until the event starts. Your own entry expands to its picks; other teams show only how many picks they’ve made.'}
+                : 'Picks are hidden until the event starts. Your own entry expands to its picks; other entries show only how many picks they have.'}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -420,7 +420,7 @@ export function ContestDetailPage() {
             <EmptyState
               body={
                 myOnly
-                  ? 'Your team does not have an entry in this contest yet.'
+                  ? 'You don’t have an entry in this contest yet.'
                   : 'No contest entries exist yet.'
               }
             />
@@ -453,11 +453,11 @@ export function ContestDetailPage() {
                         <span className="font-medium text-foreground">{entry.name}</span>
                         {isOwnEntry ? (
                           <Chip tone="active">
-                            Your team
+                            Yours
                           </Chip>
                         ) : null}
                         {entry.status === ContestEntryStatus.SUBMITTED ? null : (
-                          // A draft counts nowhere until its team submits it (#481).
+                          // A draft counts nowhere until it is submitted (#481).
                           <Chip
                             data-testid={`contest-board-entry-status-${entry.id}`}
                             tone={CONTEST_ENTRY_STATUS_TONES[entry.status]}

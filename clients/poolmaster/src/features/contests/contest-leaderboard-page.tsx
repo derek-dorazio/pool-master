@@ -70,7 +70,7 @@ function entryBlockId(entryId: string) {
   return `contest-leaderboard-entry-${entryId}`;
 }
 
-/** Whether an entry matches the "Find a team" box: its entry name or its team's name. */
+/** Whether an entry matches the "Find an entry" box: its entry name or its squad's name. */
 function matchesSearch(entry: LeaderboardEntryRow, search: string) {
   const needle = search.trim().toLowerCase();
   return !needle
@@ -139,7 +139,7 @@ function EntryBlock({
               {entry.displayPosition ?? NO_SCORE}
             </span>
             <span className="font-medium text-foreground">{entry.entryName}</span>
-            {isMine ? <Chip tone="active">Your team</Chip> : null}
+            {isMine ? <Chip tone="active">Yours</Chip> : null}
           </span>
           <span className="mt-1 block text-xs text-muted-foreground">
             {entry.squadName} · best {entry.countingPickLimit} of {entry.picks.length} count ·{' '}
@@ -216,7 +216,7 @@ export function ContestLeaderboardPage() {
   const [collapsedEntryIds, setCollapsedEntryIds] = useState<ReadonlySet<string>>(() => new Set());
   const [search, setSearch] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
-  // Set by Jump to my team; once the page holding that entry renders, it is scrolled into view.
+  // Set by Jump to my entry; once the page holding that entry renders, it is scrolled into view.
   const [jumpTargetId, setJumpTargetId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
@@ -398,14 +398,14 @@ export function ContestLeaderboardPage() {
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-3">
             <div className="flex flex-wrap items-center gap-3">
               <Input
-                aria-label="Find a team"
+                aria-label="Find an entry"
                 className="max-w-xs"
                 data-testid="contest-leaderboard-search"
                 onChange={(event) => {
                   setSearch(event.target.value);
                   setPageIndex(0);
                 }}
-                placeholder="Find a team"
+                placeholder="Find an entry"
                 type="search"
                 value={search}
               />
@@ -416,7 +416,7 @@ export function ContestLeaderboardPage() {
                   size="sm"
                   variant="secondary"
                 >
-                  Jump to my team
+                  Jump to my entry
                 </Button>
               ) : null}
             </div>
@@ -449,7 +449,7 @@ export function ContestLeaderboardPage() {
           {view.entries.length === 0 ? (
             <EmptyState body="No entries have been scored in this contest yet." />
           ) : matchingEntries.length === 0 ? (
-            <EmptyState body="No team or entry matches that name." testId="contest-leaderboard-no-match" />
+            <EmptyState body="No entry matches that name." testId="contest-leaderboard-no-match" />
           ) : (
             pageEntries.map((entry) => (
               <EntryBlock

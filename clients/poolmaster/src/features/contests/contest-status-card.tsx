@@ -130,12 +130,12 @@ function OpenCard({
   return (
     <StatusCardFrame
       eyebrow="Open for entries"
-      title={entered ? `${entered.teamCount} of ${teamCount} teams have entered` : 'Open for entries'}
+      title={entered ? `${entered.teamCount} of ${teamCount} have entered` : 'Open for entries'}
     >
       {entered ? (
         <div className="flex flex-wrap gap-2.5">
           <Stat label="Entries" testId="contest-stat-entries" value={entered.submittedEntryCount} />
-          <Stat label="Teams to go" testId="contest-stat-teams-to-go" value={Math.max(teamCount - entered.teamCount, 0)} />
+          <Stat label="Yet to enter" testId="contest-stat-teams-to-go" value={Math.max(teamCount - entered.teamCount, 0)} />
           <Stat label="Until close" testId="contest-stat-until-close" value={formatTimeUntil(event.startDate)} />
         </div>
       ) : null}
@@ -260,7 +260,7 @@ function PlayedCard({
       {entered ? (
         <div className="flex flex-wrap gap-2.5">
           <Stat label="Entries" testId="contest-stat-entries" value={entered.submittedEntryCount} />
-          <Stat label="Teams" testId="contest-stat-teams" value={entered.teamCount} />
+          <Stat label="Entered" testId="contest-stat-teams" value={entered.teamCount} />
         </div>
       ) : null}
       <div>
@@ -278,7 +278,7 @@ function PlayedCard({
 
 /**
  * What a contest needs from its commissioner now, by status: before opening, the readiness checks
- * and Open to league; while open, how many teams have entered (or, for a random draw, Run draw
+ * and Open to league; while open, how many squads have entered (or, for a random draw, Run draw
  * and then when it ran); once live or final, the way to
  * its leaderboard.
  */

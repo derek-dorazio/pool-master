@@ -30,3 +30,10 @@ export function contestEntryTiebreaker(sport: Sport | null | undefined): EntryTi
 export function unavailableParticipantLabel(participant: SelectionParticipant, sport: Sport | null): string {
   return participant.status ? formatParticipantStatusLabel(participant.status, sport) : 'Unavailable';
 }
+
+/** A participant as the room names it: "(1) Duke" when the event seeds its field (#701), else the name. */
+export function selectionParticipantLabel(participant: Pick<SelectionParticipant, 'participantName' | 'seedNumber'>) {
+  return participant.seedNumber === null
+    ? participant.participantName
+    : `(${participant.seedNumber}) ${participant.participantName}`;
+}

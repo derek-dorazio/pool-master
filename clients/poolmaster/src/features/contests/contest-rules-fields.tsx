@@ -174,7 +174,7 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
 /**
  * The rules inputs for a contest's format: picks per tier and scores that count for a tiered
  * contest, golfers per entry and scores that count under the event's salary cap for a budget
- * one, golfers dealt per entry and scores that count for a random draw, then entries per team with No limit. Create and Edit contest both use it, so a new format
+ * one, golfers dealt per entry and scores that count for a random draw, then entries per member with No limit. Create and Edit contest both use it, so a new format
  * adds its fields here once.
  */
 export function ContestRulesFields({
@@ -198,7 +198,7 @@ export function ContestRulesFields({
     <div className="space-y-4">
       {RULES_INPUTS[selectionType]({ onChange, participant, salaryCap, tierCount, values })}
       <div className="grid gap-4 md:grid-cols-2">
-        <FormField label="Entries per team">
+        <FormField label="Entries per member">
           <Input
             data-testid="contest-max-entries"
             disabled={values.unlimitedEntries}

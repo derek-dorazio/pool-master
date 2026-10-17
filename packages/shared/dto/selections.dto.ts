@@ -56,6 +56,7 @@ export const SelectionParticipantDtoSchema = z.object({
   status: z.string().nullable().optional(),
   price: z.number().nullable().optional(),
   ranking: z.number().nullable().optional(),
+  seedNumber: z.number().int().nullable().describe('The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody.'),
   orderIndex: z.number().nullable().optional(),
   isAvailable: z.boolean(),
   isSelected: z.boolean().optional().describe('Whether the currently selected entry has this participant selected.'),

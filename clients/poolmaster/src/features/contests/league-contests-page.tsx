@@ -104,7 +104,7 @@ export function LeagueContestsPage() {
       <PageHeader
         description={
           isMyEntriesFilter
-            ? "Active contests where your team has an entry."
+            ? "Active contests where you have an entry."
             : "Active contests in this league."
         }
         title="Contests"
@@ -156,7 +156,7 @@ export function LeagueContestsPage() {
               <EmptyState
                 body={
                   isMyEntriesFilter
-                    ? "Your team does not have entries in any active contests yet."
+                    ? "You don’t have entries in any active contests yet."
                     : "No active contests are available for this league yet."
                 }
               />

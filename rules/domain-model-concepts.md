@@ -50,8 +50,8 @@ The tenant/global split is access rule A11 in `docs/DOMAIN-OPERATIONS.md`.
 ## 2. Vocabulary
 
 "On screen" is the webapp's word where it differs from the model. The model word is the one
-for code, contracts and prompts about code — `rules/poolmaster-webapp-rules.md` §1 *"Team" Is
-A UI Label, Not A Domain Term*.
+for code, contracts and prompts about code — `rules/poolmaster-webapp-rules.md` §1 *A Squad Is
+Shown By Its Name*.
 
 ### People and leagues
 
@@ -60,7 +60,7 @@ A UI Label, Not A Domain Term*.
 | `User` | account, owner | A person who can sign in. Global; belongs to no league | A league member — that is the `LeagueMembership` edge |
 | `League` | league | A private office pool: a group of people who run contests together. Has a short `leagueCode` used in URLs | `SportLeague`, a real-world tour |
 | `LeagueMembership` | member, commissioner | A user's place in one league, with `role` `COMMISSIONER` or `MEMBER`. **Commissioner is a role on this edge**, not a separate kind of user | Root admin, which is `User.isRootAdmin` and spans every league |
-| `Squad` | team | A user's entrant vehicle in one league: a name, an icon and its owners. It enters contests | A sports team (a `Participant`), and "team" in plain English |
+| `Squad` | its name | A user's entrant vehicle in one league: a name, an icon and its owners. It enters contests | A sports team (a `Participant`), and "team" in plain English |
 | `SquadMembership` | owner, co-owner | A user owning one squad. Every member of a squad is an owner; there is no primary owner | `LeagueMembership`, which carries the role |
 | `LeagueInvitation` | invite, invite link | An email invite or a reusable link into a league | `SquadOwnerInvitation` |
 | `SquadOwnerInvitation` | co-owner invite | An invite to become a co-owner of one squad, optionally replacing an owner | A league invite: it does not create a squad |
@@ -93,8 +93,9 @@ A UI Label, Not A Domain Term*.
 
 ### Words that mean more than one thing
 
-- **Team**: the on-screen name for a `Squad`; a `Participant` whose `participantType` is
-  `TEAM`; and the plain English word. In code and contracts, say `Squad`.
+- **Team**: on screen, a `Participant` whose `participantType` is `TEAM` (the sport
+  vocabulary's word); a `Squad` is shown by its name instead. In code and contracts, the
+  user's group is a `Squad`.
 - **League**: the office pool is `League`; a real-world tour is `SportLeague`.
 - **Selection, pick, draft** (#544): **selection** is the process and its configuration
   (`SelectionType`, `SelectionStatus`, the `selections` module and `/api/v1/selections`

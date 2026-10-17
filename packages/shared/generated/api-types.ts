@@ -9136,6 +9136,8 @@ export interface components {
                     status?: string | null;
                     price?: number | null;
                     ranking?: number | null;
+                    /** @description The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody. */
+                    seedNumber: number | null;
                     orderIndex?: number | null;
                     isAvailable: boolean;
                     /** @description Whether the currently selected entry has this participant selected. */
@@ -9232,6 +9234,8 @@ export interface components {
                     status?: string | null;
                     price?: number | null;
                     ranking?: number | null;
+                    /** @description The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody. */
+                    seedNumber: number | null;
                     orderIndex?: number | null;
                     isAvailable: boolean;
                     /** @description Whether the currently selected entry has this participant selected. */

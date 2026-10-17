@@ -15,7 +15,7 @@ import {
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
-import { unavailableParticipantLabel } from './contest-sport';
+import { selectionParticipantLabel, unavailableParticipantLabel } from './contest-sport';
 import type { SelectionGroup, SelectionParticipant } from './contest-entry-selection';
 
 type BudgetLineupSummary = NonNullable<SelectionStateResponse['lineupSummary']>;
@@ -126,7 +126,7 @@ function BudgetParticipantRow({
     >
       <Checkbox aria-label={actionLabel} checked={isSelected} readOnly tabIndex={-1} />
       <span className="min-w-0 flex-1">
-        <span className="block font-medium text-foreground">{participant.participantName}</span>
+        <span className="block font-medium text-foreground">{selectionParticipantLabel(participant)}</span>
         <span className="block text-xs text-muted-foreground">{actionLabel}</span>
       </span>
       <span className="font-semibold tabular-nums text-foreground">
@@ -186,7 +186,7 @@ export function BudgetLineupBuilder({
                 size="sm"
                 variant="secondary"
               >
-                {`${participant.participantName} · ${formatDollars(participant.price ?? 0)} ×`}
+                {`${selectionParticipantLabel(participant)} · ${formatDollars(participant.price ?? 0)} ×`}
               </Button>
             ))}
           </div>
@@ -250,7 +250,7 @@ export function LockedBudgetLineup({
               data-testid={`contest-entry-locked-participant-${participant.sportEventParticipantId}`}
               key={participant.sportEventParticipantId}
             >
-              <span className="font-medium text-foreground">{participant.participantName}</span>
+              <span className="font-medium text-foreground">{selectionParticipantLabel(participant)}</span>
               <Chip>{formatDollars(participant.price ?? 0)}</Chip>
             </div>
           ))}

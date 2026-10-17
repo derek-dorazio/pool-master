@@ -91,12 +91,12 @@ export function formatEntriesPerTeam(maxEntriesPerSquad: number | null | undefin
   return maxEntriesPerSquad == null ? 'No limit' : String(maxEntriesPerSquad);
 }
 
-/** "1 entry per team", "3 entries per team" or "No limit on entries per team", for a sentence. */
+/** "1 entry per member", "3 entries per member" or "No limit on entries per member", for a sentence. */
 export function formatEntriesPerTeamSentence(maxEntriesPerSquad: number | null | undefined) {
   if (maxEntriesPerSquad == null) {
-    return 'No limit on entries per team';
+    return 'No limit on entries per member';
   }
-  return `${pluralize(maxEntriesPerSquad, 'entry', 'entries')} per team`;
+  return `${pluralize(maxEntriesPerSquad, 'entry', 'entries')} per member`;
 }
 
 /**

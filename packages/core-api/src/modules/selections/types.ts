@@ -36,6 +36,8 @@ export interface SelectionParticipant {
   status?: string | null;
   price?: number;
   ranking?: number;
+  /** The bracket seed (#701): 1 is the best; null where the event seeds nobody. */
+  seedNumber: number | null;
   tier?: string | null;
   orderIndex?: number;
   isAvailable: boolean;

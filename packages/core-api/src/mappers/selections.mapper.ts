@@ -37,6 +37,7 @@ function toSelectionParticipantDto(
     status: participant.status ?? null,
     price: participant.price ?? null,
     ranking: participant.ranking ?? null,
+    seedNumber: participant.seedNumber,
     orderIndex: participant.orderIndex ?? null,
     isAvailable: participant.isAvailable,
     isSelected: participant.isSelected,

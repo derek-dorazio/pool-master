@@ -444,7 +444,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('league-home-identity-name')).toHaveText(run.leagueName);
     });
 
-    await test.step('create a contest on act 1\'s tournament: one pick per tier on six tiers, counted 4, one entry per team', async () => {
+    await test.step('create a contest on act 1\'s tournament: one pick per tier on six tiers, counted 4, one entry per member', async () => {
       // Contest setup lives in Commissioner tools, reached from the league menu.
       await page.getByTestId('league-menu-commissioner-tools').click();
       await page.getByTestId('commissioner-tools-menu-contests').click();

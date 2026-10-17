@@ -9,19 +9,26 @@ this file does not repeat them. The one-application prohibition itself is
 
 ---
 
-## 1. "Team" Is A UI Label, Not A Domain Term
+## 1. A Squad Is Shown By Its Name
 
-The user-facing name for a **Squad** is **Team**. There is no `Team` model —
-`features/teams/` calls `*Squad*` SDK operations throughout.
+Screens never need a word for a **Squad**. A squad is shown by its own name ("Derek's Great
+Golf Guys"); copy about the viewer's own squad speaks to the viewer ("You don't have an entry
+in this contest yet", a **Yours** chip, "Entries per member"); and picking is always for a
+contest entry, never for a squad: "Pick 8 teams for your entry", "Derek's Great Golf Guys
+picked Duke".
+
+On screen, **team** then means only a sport participant: the sport vocabulary's word for a
+basketball or football participant (Duke, the Chiefs). **Squad** is never shown either; it is
+the contract word.
 
 Keep that boundary in both directions: use **Squad** in anything contract-shaped — schema,
-domain types, DTOs, mappers, route names, SDK calls — and **Team** only in what a user
-reads. Do not introduce "team" into the contract layer to match the UI, and do not surface
-"squad" to users to match the schema.
+domain types, DTOs, mappers, route names, SDK calls — and never introduce "team" into the
+contract layer. `features/teams/` predates this rule and calls `*Squad*` SDK operations
+throughout.
 
-The reason the domain layer avoids "team" is that the word is overloaded in this product:
-a league member's entrant vehicle is called a team in the UI, and an event *participant* may
-itself be a team (an NBA team) rather than an individual. Squad disambiguates the first.
+The one exception still standing is the league pages that manage a squad itself: the side
+menu's **My team** and **Teams**, the join page's team name and icon, and co-owner invites.
+They keep "team" until those pages are renamed; new screens do not copy it.
 
 The entity relationships behind this — and the vocabulary for the rest of the domain — are
 [domain-model-concepts.md](domain-model-concepts.md). This file states only the UI-label

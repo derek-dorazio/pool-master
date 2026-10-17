@@ -274,7 +274,7 @@ describe('Commissioner tools › Contests › one contest', () => {
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
-    expect(await screen.findByText('1 of 3 teams have entered')).toBeInTheDocument();
+    expect(await screen.findByText('1 of 3 have entered')).toBeInTheDocument();
     expect(screen.getByTestId('contest-stat-entries')).toHaveTextContent('2');
     expect(screen.getByTestId('contest-stat-teams-to-go')).toHaveTextContent('2');
     expect(screen.getByRole('link', { name: 'View in league' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
