@@ -265,7 +265,7 @@ describe('League Home', () => {
     expect(await upNext.findByText('Checking your entry...')).toBeInTheDocument();
     expect(upNext.getByRole('link', { name: 'View contest' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/open-1');
     expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-home-other-contests')).not.toHaveTextContent('Your team has not entered');
+    expect(screen.getByTestId('league-home-other-contests')).not.toHaveTextContent('You haven’t entered');
   });
 
   it('says it could not check the entry, rather than offering picks, when the entries cannot be loaded', async () => {
@@ -280,7 +280,7 @@ describe('League Home', () => {
     expect(await upNext.findByText("We couldn't check your entry.")).toBeInTheDocument();
     expect(upNext.getByRole('link', { name: 'View contest' })).toBeInTheDocument();
     expect(upNext.queryByRole('link', { name: 'Make your picks' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-home-other-contests')).not.toHaveTextContent('Your team has not entered');
+    expect(screen.getByTestId('league-home-other-contests')).not.toHaveTextContent('You haven’t entered');
   });
 
   it('puts nothing up next once a contest\'s cutoff has passed, even while it still reads open', async () => {
@@ -339,7 +339,7 @@ describe('League Home', () => {
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-other-contests')).findByText('Your team has not entered')).toBeInTheDocument();
+    expect(await within(await screen.findByTestId('league-home-other-contests')).findByText('You haven’t entered')).toBeInTheDocument();
     expect(screen.queryByTestId('league-home-live-standings')).not.toBeInTheDocument();
     expect(getContestLeaderboardMock).not.toHaveBeenCalled();
   });

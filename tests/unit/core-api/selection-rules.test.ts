@@ -1,4 +1,4 @@
-import { SelectionStatus, SelectionType } from '@poolmaster/shared/domain';
+import { SelectionStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -277,6 +277,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
       ],
       participantsById: new Map([['participant-1', participant('participant-1', { name: 'Eliminated Golfer' })]]),
       valuationBySportEventParticipantId: new Map(),
+      sport: Sport.GOLF,
     });
 
     expect(participants).toEqual([
@@ -304,6 +305,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
       valuationBySportEventParticipantId: new Map([
         ['sep-1', { tierLabel: 'Tier 1', tierOrderIndex: 1, price: 25 }],
       ]),
+      sport: Sport.GOLF,
     });
 
     expect(participants[0]).toEqual(
@@ -328,7 +330,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
     );
   });
 
-  it('carries each field row\'s bracket seed into the room, and null for a row the event left unseeded', () => {
+  it('carries each field row\'s bracket seed into a basketball room, and null for a row the event left unseeded', () => {
     const participants = buildSelectionParticipants({
       field: [
         fieldRow({ id: 'sep-1', participantId: 'participant-1', seedNumber: 1 }),
@@ -339,9 +341,21 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
         ['participant-2', participant('participant-2', { name: 'Vermont' })],
       ]),
       valuationBySportEventParticipantId: new Map(),
+      sport: Sport.BASKETBALL,
     });
 
     expect(participants.map((row) => [row.participantName, row.seedNumber])).toEqual([['Duke', 1], ['Vermont', null]]);
+  });
+
+  it('sends no seed into a golf room, though the golf field row carries its tour-ranking seed number', () => {
+    const participants = buildSelectionParticipants({
+      field: [fieldRow({ id: 'sep-1', participantId: 'participant-1', seedNumber: 1 })],
+      participantsById: new Map([['participant-1', participant('participant-1', { name: 'Scottie Scheffler' })]]),
+      valuationBySportEventParticipantId: new Map(),
+      sport: Sport.GOLF,
+    });
+
+    expect(participants[0]?.seedNumber).toBeNull();
   });
 
   it('orders by tier position first, then name, then field-row id so the list is stable', () => {
@@ -362,6 +376,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
         ['sep-tier-1', { tierLabel: 'Tier 1', tierOrderIndex: 1, price: null }],
         ['sep-tier-2', { tierLabel: 'Tier 1', tierOrderIndex: 2, price: null }],
       ]),
+      sport: Sport.GOLF,
     });
 
     expect(participants.map((p) => p.sportEventParticipantId)).toEqual([

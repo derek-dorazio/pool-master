@@ -26,9 +26,11 @@ domain types, DTOs, mappers, route names, SDK calls — and never introduce "tea
 contract layer. `features/teams/` predates this rule and calls `*Squad*` SDK operations
 throughout.
 
-The one exception still standing is the league pages that manage a squad itself: the side
-menu's **My team** and **Teams**, the join page's team name and icon, and co-owner invites.
-They keep "team" until those pages are renamed; new screens do not copy it.
+The one exception still standing is the copy that manages a squad itself: the side menu's
+**My team** and **Teams** and their pages, the join page's team name and icon, co-owner
+invites, the league home's **Your team** card, "Create your team to enter" where a member has
+no squad yet, and the leave-league warning. They keep "team" until those pages are renamed;
+new screens do not copy it.
 
 The entity relationships behind this — and the vocabulary for the rest of the domain — are
 [domain-model-concepts.md](domain-model-concepts.md). This file states only the UI-label

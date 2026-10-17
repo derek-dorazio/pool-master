@@ -130,7 +130,7 @@ function OpenCard({
   return (
     <StatusCardFrame
       eyebrow="Open for entries"
-      title={entered ? `${entered.teamCount} of ${teamCount} have entered` : 'Open for entries'}
+      title={entered ? `${entered.teamCount} of ${teamCount} members have entered` : 'Open for entries'}
     >
       {entered ? (
         <div className="flex flex-wrap gap-2.5">
