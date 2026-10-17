@@ -25,6 +25,7 @@ import type {
   SportEventParticipantRoundRepository,
   SportEventParticipantStandingRepository,
   SportEventParticipantValuationRepository,
+  SportEventMatchRepository,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventTierRepository,
@@ -32,7 +33,7 @@ import type {
   SportLeagueRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
-import { findSportRow } from '@poolmaster/shared/domain';
+import { findSportRow, MatchStatus, ParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   GolfRoundResult,
   GolfStandingResult,
@@ -41,6 +42,7 @@ import type {
   ParticipantProviderMapping,
   SportConfig,
   SportEvent,
+  SportEventMatch,
   SportEventParticipant,
   SportEventParticipantGolfRound,
   SportEventParticipantGolfStanding,
@@ -83,6 +85,7 @@ export class InMemorySportEvents {
   golfRoundRows: SportEventParticipantGolfRound[] = [];
   golfStandingRows: SportEventParticipantGolfStanding[] = [];
   raceResultRows: SportEventParticipantRaceResult[] = [];
+  matchRows: SportEventMatch[] = [];
 
   id(prefix: string): string {
     this.sequence += 1;
@@ -396,6 +399,13 @@ export class InMemorySportEvents {
         this.valuationRows = this.valuationRows.filter((row) => row.sportEventParticipantId !== id);
       },
       countPicks: async (id) => this.picksByEntry.get(id) ?? 0,
+      fillPlayInSlot: async ({ id, winnerParticipantId, pairingParticipantId }) => {
+        const row = this.field.find((entry) => entry.id === id);
+        const pairing = this.participants.find((participant) => participant.id === pairingParticipantId);
+        if (!row || !pairing) throw new Error('unknown field row or participant');
+        row.participantId = winnerParticipantId;
+        pairing.status = ParticipantStatus.INACTIVE;
+      },
     };
   }
 
@@ -561,6 +571,35 @@ export class InMemorySportEvents {
           if (!standing) throw new Error('unknown standing');
           Object.assign(standing, { position: rank.position, displayPosition: rank.displayPosition });
         }
+      },
+    };
+  }
+
+  matchRepo(): SportEventMatchRepository {
+    return {
+      findBySportEvent: async (sportEventId) => this.matchRows
+        .filter((row) => row.sportEventId === sportEventId)
+        .sort((left, right) => left.matchNumber - right.matchNumber)
+        .map((row) => ({ ...row })),
+      replaceBracket: async (sportEventId, matches) => {
+        const roundNumbers = new Set(this.roundRows.filter((round) => round.sportEventId === sportEventId).map((round) => round.roundNumber));
+        if (matches.some((match) => !roundNumbers.has(match.roundNumber))) throw new Error('unknown round');
+        this.matchRows = [
+          ...this.matchRows.filter((row) => row.sportEventId !== sportEventId),
+          ...matches.map((match) => stamp({
+            ...match,
+            sportEventId,
+            status: MatchStatus.SCHEDULED,
+            winnerSide: null,
+            homeScore: null,
+            awayScore: null,
+          })),
+        ];
+      },
+      update: async (id, patch) => {
+        const row = this.matchRows.find((match) => match.id === id);
+        if (!row) throw new Error('unknown match');
+        Object.assign(row, Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)));
       },
     };
   }

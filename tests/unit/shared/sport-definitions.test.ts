@@ -5,10 +5,12 @@ import {
   SelectionType,
   Sport,
   type SportDefinition,
+  TournamentFormat,
   getDefaultTournamentFormatForSport,
   getSportDefinition,
   getValidContestFormatsForTournamentFormat,
   sportAllowsSelectionType,
+  sportPlaysBracket,
 } from '@poolmaster/shared/domain';
 import { getSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
 
@@ -215,5 +217,50 @@ describe('sportAllowsSelectionType', () => {
 
     expect(sportAllowsSelectionType(tieredOnly, SelectionType.BUDGET_PICK)).toBe(false);
     expect(sportAllowsSelectionType(tieredOnly, SelectionType.TIERED)).toBe(true);
+  });
+});
+
+describe('basketball', () => {
+  const basketball = getSportDefinition(Sport.BASKETBALL);
+
+  it('is a team sport played as a knockout bracket, scored head to head, with no scoring definition until knockout scoring arrives', () => {
+    expect(basketball.name).toBe('Basketball');
+    expect(basketball.participantType).toBe('TEAM');
+    expect(basketball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
+    expect(basketball.tournamentFormat).toBe(TournamentFormat.KNOCKOUT_BRACKET);
+    expect(basketball.scoringDefinitions).toEqual([]);
+    expect(sportPlaysBracket(Sport.BASKETBALL)).toBe(true);
+  });
+
+  it('gives a new tournament six rounds and the four seed lines as four tiers of 16', () => {
+    expect(basketball.defaultRounds).toBe(6);
+    expect(basketball.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 16 });
+    expect(basketball.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
+  });
+
+  it('labels a six-round bracket First Round through National Championship', () => {
+    expect([1, 2, 3, 4, 5, 6].map((roundNumber) => basketball.roundLabel(roundNumber, 6))).toEqual([
+      'First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship',
+    ]);
+  });
+
+  it('names a shorter bracket\'s rounds back from its final, so a four-round bracket starts at the Sweet 16', () => {
+    expect([1, 2, 3, 4].map((roundNumber) => basketball.roundLabel(roundNumber, 4))).toEqual([
+      'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship',
+    ]);
+  });
+
+  it('calls a participant a team and the moment entries close the opening tip-off', () => {
+    expect(basketball.vocabulary.participant).toEqual({ one: 'team', many: 'teams' });
+    expect(basketball.vocabulary.eventStart).toBe('opening tip-off');
+    expect(basketball.vocabulary.eliminated).toBe('Eliminated');
+  });
+});
+
+describe('sportPlaysBracket', () => {
+  it('is true only for a sport whose tournament format is a knockout bracket', () => {
+    for (const definition of definitions) {
+      expect(sportPlaysBracket(definition.sport)).toBe(definition.tournamentFormat === TournamentFormat.KNOCKOUT_BRACKET);
+    }
   });
 });

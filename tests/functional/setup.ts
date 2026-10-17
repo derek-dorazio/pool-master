@@ -261,6 +261,15 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
+  // Matches name field rows and each other with RESTRICT foreign keys, so the whole bracket of
+  // an event goes before its teams.
+  await database.sportEventMatch.deleteMany({
+    where: {
+      sportEvent: {
+        sportEventParticipants: { some: { id: { in: sportEventParticipantIds } } },
+      },
+    },
+  });
   await database.sportEventParticipantGolfRound.deleteMany({
     where: {
       participantRound: {

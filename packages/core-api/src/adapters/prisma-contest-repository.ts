@@ -129,7 +129,6 @@ function mapToContest(row: {
   selectionType: SelectionType;
   sportEvent?: { sport: Sport } | null;
   draw?: { drawnAt: Date } | null;
-  scoringStopsOnElimination: boolean;
   startsAt: Date | null;
   endsAt: Date | null;
   createdAt: Date;
@@ -144,7 +143,6 @@ function mapToContest(row: {
     contestFormat: row.contestFormat,
     selectionType: row.selectionType,
     sport: row.sportEvent?.sport,
-    scoringStopsOnElimination: row.scoringStopsOnElimination,
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
     drawnAt: row.draw?.drawnAt ?? undefined,

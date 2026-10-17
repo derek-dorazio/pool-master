@@ -480,6 +480,15 @@ async function cleanupSportEventParticipantArtifacts(
     return;
   }
 
+  // Matches name field rows and each other with RESTRICT foreign keys, so the whole bracket of
+  // an event goes before its teams.
+  await database.sportEventMatch.deleteMany({
+    where: {
+      sportEvent: {
+        sportEventParticipants: { some: { id: { in: sportEventParticipantIds } } },
+      },
+    },
+  });
   await database.sportEventParticipantGolfRound.deleteMany({
     where: {
       participantRound: {
@@ -631,6 +640,8 @@ export async function cleanupTestData(): Promise<void> {
   }
 
   await prisma.providerSyncRun.deleteMany();
+  // Matches name field rows, rounds and each other with RESTRICT foreign keys, so the bracket goes first.
+  await prisma.sportEventMatch.deleteMany();
   await prisma.sportEventParticipantGolfRound.deleteMany();
   await prisma.sportEventParticipantRound.deleteMany();
   // Keep standing cleanup before SportEventParticipant because the standing

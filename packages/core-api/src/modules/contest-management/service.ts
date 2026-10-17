@@ -554,7 +554,17 @@ export class ContestManagementService {
     if (kept && offered(kept.participantScoringDefinitionId)) {
       return kept;
     }
-    const [defaultDefinitionId] = definition.scoringDefinitions;
+    const defaultDefinitionId = definition.scoringDefinitions.at(0);
+    if (defaultDefinitionId === undefined) {
+      this.logger.warn({
+        sportEventId: sportEvent.id,
+        sport: sportEvent.sport,
+      }, 'contest management scoring refused: the sport offers no scoring definition yet');
+      throw new ContestManagementError(
+        `A ${sportEvent.sport} contest can't be scored yet.`,
+        CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
+      );
+    }
     const defaults = defaultContestScoringSettings(defaultDefinitionId);
     if (!defaults) {
       this.logger.warn({

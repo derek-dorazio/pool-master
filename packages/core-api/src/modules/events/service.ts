@@ -39,6 +39,7 @@ import { deriveGolfTournamentRounds } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
 import { hasSportEventStarted } from './operational-timing';
 import type { EventLifecycleService } from './event-lifecycle-service';
+import type { SportEventBracketService } from './sport-event-bracket-service';
 import type { SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
 
@@ -111,6 +112,7 @@ export interface SportEventServiceDeps {
   sports: SportRepository;
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
+  bracket: Pick<SportEventBracketService, 'releaseBlockers'>;
   lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition'>;
   logger?: FastifyBaseLogger;
   now?: () => Date;
@@ -360,8 +362,9 @@ export class SportEventService {
    * contests on the event and its tiers and prices are locked for good. 409
    * SPORT_EVENT_NOT_DRAFT once released; 409 SPORT_EVENT_ALREADY_STARTED once its start time
    * has passed; 422 SPORT_EVENT_NOT_READY while its field is empty, any active participant
-   * has no tier, any tier has no active participant (no entry could pick from it), or its
-   * prices are not assigned or miss an active participant (#93).
+   * has no tier, any tier has no active participant (no entry could pick from it), its
+   * prices are not assigned or miss an active participant (#93), or, for a sport that plays a
+   * bracket, its bracket is incomplete (#698).
    */
   async releaseEvent(sportEventId: string): Promise<SportEventSummary> {
     const summary = await this.requireSummary(sportEventId);
@@ -385,7 +388,7 @@ export class SportEventService {
         409,
       );
     }
-    const missing = describeReleaseBlockers(summary);
+    const missing = [...describeReleaseBlockers(summary), ...await this.deps.bracket.releaseBlockers(event)];
     if (missing.length > 0) {
       this.deps.logger?.warn(
         {

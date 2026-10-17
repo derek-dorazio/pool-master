@@ -36,5 +36,6 @@ export {
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
 } from './prisma-golf-repositories';
+export { PrismaSportEventMatchRepository } from './prisma-match-repositories';
 export { PrismaSportEventParticipantRaceResultRepository } from './prisma-race-repositories';
 export { lockContestRow, lockContestRows } from './contest-row-lock';

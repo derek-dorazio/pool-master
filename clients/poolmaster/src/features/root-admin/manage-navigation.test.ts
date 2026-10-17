@@ -50,6 +50,7 @@ describe('Manage menu and breadcrumbs per sport', () => {
       ['Auto racing', false],
       ['Cycling', false],
       ['Running', false],
+      ['Basketball', false],
     ]);
   });
 
@@ -58,6 +59,13 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(getManageBreadcrumbLabel(['sports', 'cycling', 'events'], 2)).toBe('Races');
     expect(getManageBreadcrumbLabel(['sports', 'cycling', 'participants'], 2)).toBe('Riders');
     expect(getManageBreadcrumbLabel(['sports', 'cycling', 'leagues'], 2)).toBe('Tours');
+  });
+
+  it('names a basketball trail in basketball words: Basketball, Tournaments, Teams, Leagues', () => {
+    expect(getManageBreadcrumbLabel(['sports', 'basketball', 'events'], 1)).toBe('Basketball');
+    expect(getManageBreadcrumbLabel(['sports', 'basketball', 'events'], 2)).toBe('Tournaments');
+    expect(getManageBreadcrumbLabel(['sports', 'basketball', 'participants'], 2)).toBe('Teams');
+    expect(getManageBreadcrumbLabel(['sports', 'basketball', 'leagues'], 2)).toBe('Leagues');
   });
 
   it('names a running trail in running words: Running, Races, Runners, Series', () => {

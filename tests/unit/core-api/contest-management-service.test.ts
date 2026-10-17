@@ -58,7 +58,6 @@ function createContestRepo(): ContestRepository {
     }),
     create: mockFn<ContestRepository['create']>(async (contest) => ({
       id: 'contest-1',
-      scoringStopsOnElimination: false,
       ...contest,
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -1495,6 +1494,23 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, raceRequest({
       configuration: { ...drawRules, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
     }))).rejects.toMatchObject({ code: CONTEST_SCORING_DEFINITION_NOT_ALLOWED, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a basketball contest with 422 CONTEST_SCORING_DEFINITION_NOT_ALLOWED while basketball has no scoring definition, writing nothing', async () => {
+    const contestCoreRepo = createContestRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET }),
+    );
+
+    await expect(service.createContest({ leagueId: 'league-1' }, raceRequest({ name: 'Bracket Pool' })))
+      .rejects.toMatchObject({ code: CONTEST_SCORING_DEFINITION_NOT_ALLOWED, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 

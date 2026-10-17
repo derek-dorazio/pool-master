@@ -7,7 +7,12 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { getDefaultTournamentFormatForSport, type Sport, type SportEventStatus } from '@poolmaster/shared/domain';
+import {
+  getDefaultTournamentFormatForSport,
+  type Sport,
+  sportPlaysBracket,
+  SportEventStatus,
+} from '@poolmaster/shared/domain';
 import type {
   SportEvent,
   SportEventDetail,
@@ -234,6 +239,8 @@ export class IngestionPersistence {
     }
 
     let sportEventParticipantsPersisted = 0;
+    // A released bracket's seeds are locked (#698): the upset bonus reads them as they stood at release.
+    const seedsLocked = sportPlaysBracket(persistedEvent.sport) && persistedEvent.status !== SportEventStatus.DRAFT;
 
     for (const participant of detail.participants) {
       const mapping = await this.prisma.participantProviderMapping.findUnique({
@@ -249,7 +256,6 @@ export class IngestionPersistence {
       }
 
       const oddsToWin = readEventScopedOddsToWin(participant, detail.externalId);
-      const seedNumber = readIntegerMetadata(participant.metadata, 'seed');
       const existingEventParticipant = await this.prisma.sportEventParticipant.findUnique({
         where: {
           sportEventId_participantId: {
@@ -258,6 +264,9 @@ export class IngestionPersistence {
           },
         },
       });
+      const seedNumber = seedsLocked && existingEventParticipant
+        ? existingEventParticipant.seedNumber
+        : readIntegerMetadata(participant.metadata, 'seed');
       // #384 — the field's own ranking wins. When the field gives none, the rank already on
       // the row stays rather than being blanked.
       const ranking = participant.ranking

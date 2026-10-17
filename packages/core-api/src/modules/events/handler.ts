@@ -37,6 +37,13 @@ import type {
   RaceResultPreviewResponse,
   RaceResultUploadRequest,
 } from '@poolmaster/shared/dto/race-results.dto';
+import type {
+  FillPlayInSlotRequest,
+  LoadSportEventBracketRequest,
+  SportEventBracketResponse,
+  SportEventMatchResponse,
+  UpdateSportEventMatchRequest,
+} from '@poolmaster/shared/dto/bracket.dto';
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
@@ -45,6 +52,7 @@ import {
   mapLiveSimulationToResponse,
   mapRaceResultPreviewToDto,
   mapProviderEventYearImportToResponse,
+  mapSportEventMatchToDto,
   mapSportEventParticipantToDto,
   mapSportEventRoundToDto,
   mapSportEventTierToDto,
@@ -77,7 +85,7 @@ export interface EventHandlerDeps {
  * the provider-sync errors, which carry neither, are mapped here.
  */
 export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion }: EventHandlerDeps) {
-  const { sportEvents, rounds, field, tiers, golfScores, raceResults } = services;
+  const { sportEvents, rounds, field, tiers, golfScores, raceResults, bracket } = services;
 
   async function eventResponse(eventId: string): Promise<SportEventResponse> {
     return { event: mapSportEventToDto(await sportEvents.requireSummary(eventId)) };
@@ -363,6 +371,43 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       const { eventId, roundNumber, sportEventParticipantId } = request.params;
       await requireEvent(eventId);
       await golfScores.updateRoundScore(eventId, roundNumber, sportEventParticipantId, request.body);
+      const participant = (await field.listEventParticipants(eventId)).find((view) => view.entry.id === sportEventParticipantId);
+      return { participant: mapSportEventParticipantToDto(participant as NonNullable<typeof participant>) };
+    },
+
+    getEventBracket: async (request: FastifyRequest<EventParams>): Promise<SportEventBracketResponse> => {
+      // As in getEvent: a draft's bracket is a 404 to anyone but a root admin.
+      const releasedOnly = request.authUser?.isRootAdmin !== true;
+      await sportEvents.requireSummary(request.params.eventId, { releasedOnly });
+      return { matches: (await bracket.listBracket(request.params.eventId)).map(mapSportEventMatchToDto) };
+    },
+
+    loadEventBracket: async (
+      request: FastifyRequest<EventParams & { Body: LoadSportEventBracketRequest }>,
+    ): Promise<SportEventBracketResponse> => {
+      const matches = await bracket.loadBracket(request.params.eventId, request.body.matches.map((match) => ({
+        ...match,
+        scheduledDate: match.scheduledDate === null ? null : new Date(match.scheduledDate),
+      })));
+      return { matches: matches.map(mapSportEventMatchToDto) };
+    },
+
+    updateEventBracketMatch: async (
+      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: UpdateSportEventMatchRequest }>,
+    ): Promise<SportEventMatchResponse> => {
+      const { scheduledDate, ...edit } = request.body;
+      const match = await bracket.updateMatch(request.params.eventId, request.params.matchNumber, {
+        ...edit,
+        ...(scheduledDate !== undefined && { scheduledDate: scheduledDate === null ? null : new Date(scheduledDate) }),
+      });
+      return { match: mapSportEventMatchToDto(match) };
+    },
+
+    setEventPlayInWinner: async (
+      request: FastifyRequest<{ Params: { eventId: string; sportEventParticipantId: string }; Body: FillPlayInSlotRequest }>,
+    ): Promise<SportEventParticipantResponse> => {
+      const { eventId, sportEventParticipantId } = request.params;
+      await bracket.fillPlayInSlot(eventId, sportEventParticipantId, request.body.participantId);
       const participant = (await field.listEventParticipants(eventId)).find((view) => view.entry.id === sportEventParticipantId);
       return { participant: mapSportEventParticipantToDto(participant as NonNullable<typeof participant>) };
     },

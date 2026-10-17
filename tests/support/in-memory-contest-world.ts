@@ -177,7 +177,6 @@ export class InMemoryContestWorld {
       status: ContestStatus.OPEN,
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,
-      scoringStopsOnElimination: false,
       createdAt: T0,
       updatedAt: T0,
       ...overrides,

@@ -1,0 +1,48 @@
+/**
+ * Prisma adapter for the match port (#698): an event's bracket. Loading a bracket replaces every
+ * match of the event in one transaction; the links between matches use ids the caller chose, so
+ * the whole bracket is written in one insert and its foreign keys are checked once at its end.
+ */
+
+import type { PrismaClient } from '@prisma/client';
+import type { SportEventMatchPatch, SportEventMatchRepository, SportEventMatchWrite } from '@poolmaster/shared/db';
+import type { SportEventMatch } from '@poolmaster/shared/domain';
+
+export class PrismaSportEventMatchRepository implements SportEventMatchRepository {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async findBySportEvent(sportEventId: string): Promise<SportEventMatch[]> {
+    const rows = await this.prisma.sportEventMatch.findMany({
+      where: { sportEventId },
+      include: { sportEventRound: { select: { roundNumber: true } } },
+      orderBy: { matchNumber: 'asc' },
+    });
+    return rows.map(({ sportEventRound, sportEventRoundId: _roundId, ...row }) => ({
+      ...row,
+      roundNumber: sportEventRound.roundNumber,
+    }));
+  }
+
+  async replaceBracket(sportEventId: string, matches: readonly SportEventMatchWrite[]): Promise<void> {
+    const rounds = await this.prisma.sportEventRound.findMany({
+      where: { sportEventId },
+      select: { id: true, roundNumber: true },
+    });
+    const roundIdByNumber = new Map(rounds.map((round) => [round.roundNumber, round.id]));
+    const data = matches.map(({ roundNumber, ...match }) => {
+      const sportEventRoundId = roundIdByNumber.get(roundNumber);
+      if (sportEventRoundId === undefined) {
+        throw new Error(`Sport event ${sportEventId} has no round ${roundNumber}`);
+      }
+      return { ...match, sportEventId, sportEventRoundId };
+    });
+    await this.prisma.$transaction([
+      this.prisma.sportEventMatch.deleteMany({ where: { sportEventId } }),
+      this.prisma.sportEventMatch.createMany({ data }),
+    ]);
+  }
+
+  async update(id: string, patch: SportEventMatchPatch): Promise<void> {
+    await this.prisma.sportEventMatch.update({ where: { id }, data: patch });
+  }
+}

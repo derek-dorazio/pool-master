@@ -54,7 +54,7 @@ import type {
   SportLeague,
   ValuationSource,
 } from '@poolmaster/shared/domain';
-import { EventPricingConfigSchema, SportEventStatus } from '@poolmaster/shared/domain';
+import { EventPricingConfigSchema, ParticipantStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { mapToParticipant } from './prisma-participant-repository';
 
 type Db = PrismaClient;
@@ -265,6 +265,8 @@ export class PrismaSportEventRepository implements SportEventRepository {
     // their core rows. Deleting only the event row failed for any event with a round.
     const field = { sportEventParticipant: { sportEventId: id } };
     await this.prisma.$transaction([
+      // The bracket first: its matches name field rows and rounds.
+      this.prisma.sportEventMatch.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: field } }),
       this.prisma.sportEventParticipantRound.deleteMany({ where: field }),
       this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: field } }),
@@ -531,6 +533,13 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
 
   async countPicks(id: string): Promise<number> {
     return this.prisma.contestEntryPick.count({ where: { sportEventParticipantId: id } });
+  }
+
+  async fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.sportEventParticipant.update({ where: { id: input.id }, data: { participantId: input.winnerParticipantId } }),
+      this.prisma.participant.update({ where: { id: input.pairingParticipantId }, data: { status: ParticipantStatus.INACTIVE } }),
+    ]);
   }
 }
 

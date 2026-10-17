@@ -207,7 +207,7 @@ describe('IngestionPersistence', () => {
             fieldLocked: true,
             metadata: detail.metadata,
           })
-          .mockResolvedValueOnce({ id: 'sport-event-1' }),
+          .mockResolvedValueOnce({ id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED' }),
       },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),

@@ -101,7 +101,6 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
     status: ContestStatus.DRAFT,
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
-    scoringStopsOnElimination: false,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

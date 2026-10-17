@@ -12,6 +12,7 @@ import { ScoringFamily, getSportDefinition, type Sport } from '@poolmaster/share
 const STORES_RACE_RESULTS: Readonly<Record<ScoringFamily, boolean>> = {
   [ScoringFamily.STROKE_PLAY]: false,
   [ScoringFamily.FINISH_POSITION]: true,
+  [ScoringFamily.HEAD_TO_HEAD]: false,
 };
 
 /** Whether an event of this sport stores race results, by its sport's scoring family. */

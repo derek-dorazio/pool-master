@@ -6223,7 +6223,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ],
             "description": "Sport this template applies to."
           },
@@ -6932,7 +6933,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ],
             "description": "Only templates for this sport."
           },
@@ -6980,7 +6982,8 @@
                     "HORSE_RACING",
                     "AUTO_RACING",
                     "CYCLING",
-                    "RUNNING"
+                    "RUNNING",
+                    "BASKETBALL"
                   ],
                   "description": "Sport this template applies to."
                 },
@@ -7759,7 +7762,8 @@
                   "HORSE_RACING",
                   "AUTO_RACING",
                   "CYCLING",
-                  "RUNNING"
+                  "RUNNING",
+                  "BASKETBALL"
                 ],
                 "description": "Sport this template applies to."
               },
@@ -9044,7 +9048,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ],
             "description": "The sport."
           },
@@ -9060,7 +9065,8 @@
             "type": "string",
             "enum": [
               "STROKE_PLAY_TOURNAMENT",
-              "RACE"
+              "RACE",
+              "KNOCKOUT_BRACKET"
             ],
             "description": "Structural format of the sport's events; decides which contest formats are valid."
           },
@@ -9106,7 +9112,8 @@
                     "HORSE_RACING",
                     "AUTO_RACING",
                     "CYCLING",
-                    "RUNNING"
+                    "RUNNING",
+                    "BASKETBALL"
                   ],
                   "description": "The sport."
                 },
@@ -9122,7 +9129,8 @@
                   "type": "string",
                   "enum": [
                     "STROKE_PLAY_TOURNAMENT",
-                    "RACE"
+                    "RACE",
+                    "KNOCKOUT_BRACKET"
                   ],
                   "description": "Structural format of the sport's events; decides which contest formats are valid."
                 },
@@ -9236,7 +9244,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ],
             "description": "Only sport leagues of this sport."
           },
@@ -9420,7 +9429,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ],
             "description": "The sport the new sport league belongs to."
           },
@@ -10301,7 +10311,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ],
             "description": "Sport the event belongs to."
           },
@@ -10577,7 +10588,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ],
             "description": "Only events of this sport."
           },
@@ -10638,7 +10650,8 @@
                     "HORSE_RACING",
                     "AUTO_RACING",
                     "CYCLING",
-                    "RUNNING"
+                    "RUNNING",
+                    "BASKETBALL"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -10939,7 +10952,8 @@
                   "HORSE_RACING",
                   "AUTO_RACING",
                   "CYCLING",
-                  "RUNNING"
+                  "RUNNING",
+                  "BASKETBALL"
                 ],
                 "description": "Sport the event belongs to."
               },
@@ -11385,7 +11399,8 @@
                     "HORSE_RACING",
                     "AUTO_RACING",
                     "CYCLING",
-                    "RUNNING"
+                    "RUNNING",
+                    "BASKETBALL"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -15075,6 +15090,7 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
+              "BASKETBALL",
               null
             ]
           },
@@ -15766,7 +15782,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ],
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
           },
@@ -16592,6 +16609,7 @@
                   "AUTO_RACING",
                   "CYCLING",
                   "RUNNING",
+                  "BASKETBALL",
                   null
                 ]
               },
@@ -16728,6 +16746,7 @@
                     "AUTO_RACING",
                     "CYCLING",
                     "RUNNING",
+                    "BASKETBALL",
                     null
                   ]
                 },
@@ -18271,7 +18290,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "minItems": 1
@@ -18370,7 +18390,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "minItems": 1,
@@ -18379,7 +18400,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ],
             "description": "Sports that scheduled ingestion is allowed to run automatically."
           },
@@ -18484,7 +18506,8 @@
                       "HORSE_RACING",
                       "AUTO_RACING",
                       "CYCLING",
-                      "RUNNING"
+                      "RUNNING",
+                      "BASKETBALL"
                     ]
                   },
                   "minItems": 1
@@ -18682,7 +18705,8 @@
                         "HORSE_RACING",
                         "AUTO_RACING",
                         "CYCLING",
-                        "RUNNING"
+                        "RUNNING",
+                        "BASKETBALL"
                       ]
                     },
                     "minItems": 1,
@@ -18691,7 +18715,8 @@
                       "HORSE_RACING",
                       "AUTO_RACING",
                       "CYCLING",
-                      "RUNNING"
+                      "RUNNING",
+                      "BASKETBALL"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -18796,7 +18821,8 @@
                               "HORSE_RACING",
                               "AUTO_RACING",
                               "CYCLING",
-                              "RUNNING"
+                              "RUNNING",
+                              "BASKETBALL"
                             ]
                           },
                           "minItems": 1
@@ -18907,7 +18933,8 @@
                         "HORSE_RACING",
                         "AUTO_RACING",
                         "CYCLING",
-                        "RUNNING"
+                        "RUNNING",
+                        "BASKETBALL"
                       ]
                     },
                     "minItems": 1,
@@ -18916,7 +18943,8 @@
                       "HORSE_RACING",
                       "AUTO_RACING",
                       "CYCLING",
-                      "RUNNING"
+                      "RUNNING",
+                      "BASKETBALL"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -19021,7 +19049,8 @@
                               "HORSE_RACING",
                               "AUTO_RACING",
                               "CYCLING",
-                              "RUNNING"
+                              "RUNNING",
+                              "BASKETBALL"
                             ]
                           },
                           "minItems": 1
@@ -19595,7 +19624,8 @@
                               "HORSE_RACING",
                               "AUTO_RACING",
                               "CYCLING",
-                              "RUNNING"
+                              "RUNNING",
+                              "BASKETBALL"
                             ]
                           },
                           "minItems": 1,
@@ -19604,7 +19634,8 @@
                             "HORSE_RACING",
                             "AUTO_RACING",
                             "CYCLING",
-                            "RUNNING"
+                            "RUNNING",
+                            "BASKETBALL"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -19709,7 +19740,8 @@
                                     "HORSE_RACING",
                                     "AUTO_RACING",
                                     "CYCLING",
-                                    "RUNNING"
+                                    "RUNNING",
+                                    "BASKETBALL"
                                   ]
                                 },
                                 "minItems": 1
@@ -19820,7 +19852,8 @@
                               "HORSE_RACING",
                               "AUTO_RACING",
                               "CYCLING",
-                              "RUNNING"
+                              "RUNNING",
+                              "BASKETBALL"
                             ]
                           },
                           "minItems": 1,
@@ -19829,7 +19862,8 @@
                             "HORSE_RACING",
                             "AUTO_RACING",
                             "CYCLING",
-                            "RUNNING"
+                            "RUNNING",
+                            "BASKETBALL"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -19934,7 +19968,8 @@
                                     "HORSE_RACING",
                                     "AUTO_RACING",
                                     "CYCLING",
-                                    "RUNNING"
+                                    "RUNNING",
+                                    "BASKETBALL"
                                   ]
                                 },
                                 "minItems": 1
@@ -20465,7 +20500,8 @@
                         "HORSE_RACING",
                         "AUTO_RACING",
                         "CYCLING",
-                        "RUNNING"
+                        "RUNNING",
+                        "BASKETBALL"
                       ]
                     },
                     "minItems": 1,
@@ -20572,7 +20608,8 @@
                               "HORSE_RACING",
                               "AUTO_RACING",
                               "CYCLING",
-                              "RUNNING"
+                              "RUNNING",
+                              "BASKETBALL"
                             ]
                           },
                           "minItems": 1
@@ -20922,7 +20959,8 @@
                         "HORSE_RACING",
                         "AUTO_RACING",
                         "CYCLING",
-                        "RUNNING"
+                        "RUNNING",
+                        "BASKETBALL"
                       ]
                     },
                     "minItems": 1,
@@ -20931,7 +20969,8 @@
                       "HORSE_RACING",
                       "AUTO_RACING",
                       "CYCLING",
-                      "RUNNING"
+                      "RUNNING",
+                      "BASKETBALL"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -21036,7 +21075,8 @@
                               "HORSE_RACING",
                               "AUTO_RACING",
                               "CYCLING",
-                              "RUNNING"
+                              "RUNNING",
+                              "BASKETBALL"
                             ]
                           },
                           "minItems": 1
@@ -21147,7 +21187,8 @@
                         "HORSE_RACING",
                         "AUTO_RACING",
                         "CYCLING",
-                        "RUNNING"
+                        "RUNNING",
+                        "BASKETBALL"
                       ]
                     },
                     "minItems": 1,
@@ -21156,7 +21197,8 @@
                       "HORSE_RACING",
                       "AUTO_RACING",
                       "CYCLING",
-                      "RUNNING"
+                      "RUNNING",
+                      "BASKETBALL"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -21261,7 +21303,8 @@
                               "HORSE_RACING",
                               "AUTO_RACING",
                               "CYCLING",
-                              "RUNNING"
+                              "RUNNING",
+                              "BASKETBALL"
                             ]
                           },
                           "minItems": 1
@@ -21793,7 +21836,8 @@
                               "HORSE_RACING",
                               "AUTO_RACING",
                               "CYCLING",
-                              "RUNNING"
+                              "RUNNING",
+                              "BASKETBALL"
                             ]
                           },
                           "minItems": 1,
@@ -21802,7 +21846,8 @@
                             "HORSE_RACING",
                             "AUTO_RACING",
                             "CYCLING",
-                            "RUNNING"
+                            "RUNNING",
+                            "BASKETBALL"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -21907,7 +21952,8 @@
                                     "HORSE_RACING",
                                     "AUTO_RACING",
                                     "CYCLING",
-                                    "RUNNING"
+                                    "RUNNING",
+                                    "BASKETBALL"
                                   ]
                                 },
                                 "minItems": 1
@@ -22018,7 +22064,8 @@
                               "HORSE_RACING",
                               "AUTO_RACING",
                               "CYCLING",
-                              "RUNNING"
+                              "RUNNING",
+                              "BASKETBALL"
                             ]
                           },
                           "minItems": 1,
@@ -22027,7 +22074,8 @@
                             "HORSE_RACING",
                             "AUTO_RACING",
                             "CYCLING",
-                            "RUNNING"
+                            "RUNNING",
+                            "BASKETBALL"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -22132,7 +22180,8 @@
                                     "HORSE_RACING",
                                     "AUTO_RACING",
                                     "CYCLING",
-                                    "RUNNING"
+                                    "RUNNING",
+                                    "BASKETBALL"
                                   ]
                                 },
                                 "minItems": 1
@@ -23299,6 +23348,560 @@
         "additionalProperties": false,
         "description": "A dry run of a race result. Nothing is written."
       },
+      "MatchStatusDto": {
+        "type": "string",
+        "enum": [
+          "SCHEDULED",
+          "IN_PROGRESS",
+          "COMPLETED",
+          "CANCELLED"
+        ],
+        "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played."
+      },
+      "MatchSideDto": {
+        "type": "string",
+        "enum": [
+          "HOME",
+          "AWAY"
+        ],
+        "description": "One side of a match. On a neutral site HOME is the upper line of the bracket."
+      },
+      "SportEventMatchDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sportEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roundNumber": {
+            "type": "integer",
+            "description": "The round the match is played in; its label comes from the sport definition's round labels."
+          },
+          "matchNumber": {
+            "type": "integer",
+            "description": "Unique within the event: the bracket slot and the display order."
+          },
+          "homeSportEventParticipantId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match."
+          },
+          "awaySportEventParticipantId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The field row on the away side; null until it is decided."
+          },
+          "isNeutralSite": {
+            "type": "boolean",
+            "description": "True when neither side is at home: screens then say \"vs\" rather than \"@\"."
+          },
+          "scheduledDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Tip-off or kickoff; null until it is announced."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED"
+            ],
+            "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played."
+          },
+          "winnerSide": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "HOME",
+              "AWAY",
+              null
+            ],
+            "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has."
+          },
+          "homeScore": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "The home side's score; in a series, games won."
+          },
+          "awayScore": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "The away side's score; in a series, games won."
+          },
+          "advancesToMatchId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The match the winner moves on to; null for the final."
+          },
+          "advancesToSide": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "HOME",
+              "AWAY",
+              null
+            ],
+            "description": "The side of that match the winner fills; null for the final."
+          }
+        },
+        "required": [
+          "id",
+          "sportEventId",
+          "roundNumber",
+          "matchNumber",
+          "homeSportEventParticipantId",
+          "awaySportEventParticipantId",
+          "isNeutralSite",
+          "scheduledDate",
+          "status",
+          "winnerSide",
+          "homeScore",
+          "awayScore",
+          "advancesToMatchId",
+          "advancesToSide"
+        ],
+        "additionalProperties": false,
+        "description": "One game or match of an event, which in a bracket is also a slot naming where its winner goes."
+      },
+      "SportEventBracketResponse": {
+        "type": "object",
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "sportEventId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "roundNumber": {
+                  "type": "integer",
+                  "description": "The round the match is played in; its label comes from the sport definition's round labels."
+                },
+                "matchNumber": {
+                  "type": "integer",
+                  "description": "Unique within the event: the bracket slot and the display order."
+                },
+                "homeSportEventParticipantId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match."
+                },
+                "awaySportEventParticipantId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "The field row on the away side; null until it is decided."
+                },
+                "isNeutralSite": {
+                  "type": "boolean",
+                  "description": "True when neither side is at home: screens then say \"vs\" rather than \"@\"."
+                },
+                "scheduledDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "Tip-off or kickoff; null until it is announced."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "CANCELLED"
+                  ],
+                  "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played."
+                },
+                "winnerSide": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "HOME",
+                    "AWAY",
+                    null
+                  ],
+                  "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has."
+                },
+                "homeScore": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "The home side's score; in a series, games won."
+                },
+                "awayScore": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "The away side's score; in a series, games won."
+                },
+                "advancesToMatchId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "The match the winner moves on to; null for the final."
+                },
+                "advancesToSide": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "HOME",
+                    "AWAY",
+                    null
+                  ],
+                  "description": "The side of that match the winner fills; null for the final."
+                }
+              },
+              "required": [
+                "id",
+                "sportEventId",
+                "roundNumber",
+                "matchNumber",
+                "homeSportEventParticipantId",
+                "awaySportEventParticipantId",
+                "isNeutralSite",
+                "scheduledDate",
+                "status",
+                "winnerSide",
+                "homeScore",
+                "awayScore",
+                "advancesToMatchId",
+                "advancesToSide"
+              ],
+              "additionalProperties": false,
+              "description": "One game or match of an event, which in a bracket is also a slot naming where its winner goes."
+            },
+            "description": "Every match of the event in match-number order; empty until the bracket is loaded."
+          }
+        },
+        "required": [
+          "matches"
+        ],
+        "additionalProperties": false,
+        "description": "An event's bracket."
+      },
+      "SportEventMatchResponse": {
+        "type": "object",
+        "properties": {
+          "match": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "sportEventId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "roundNumber": {
+                "type": "integer",
+                "description": "The round the match is played in; its label comes from the sport definition's round labels."
+              },
+              "matchNumber": {
+                "type": "integer",
+                "description": "Unique within the event: the bracket slot and the display order."
+              },
+              "homeSportEventParticipantId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match."
+              },
+              "awaySportEventParticipantId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "The field row on the away side; null until it is decided."
+              },
+              "isNeutralSite": {
+                "type": "boolean",
+                "description": "True when neither side is at home: screens then say \"vs\" rather than \"@\"."
+              },
+              "scheduledDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "Tip-off or kickoff; null until it is announced."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SCHEDULED",
+                  "IN_PROGRESS",
+                  "COMPLETED",
+                  "CANCELLED"
+                ],
+                "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played."
+              },
+              "winnerSide": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "HOME",
+                  "AWAY",
+                  null
+                ],
+                "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has."
+              },
+              "homeScore": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "The home side's score; in a series, games won."
+              },
+              "awayScore": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "The away side's score; in a series, games won."
+              },
+              "advancesToMatchId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "The match the winner moves on to; null for the final."
+              },
+              "advancesToSide": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "HOME",
+                  "AWAY",
+                  null
+                ],
+                "description": "The side of that match the winner fills; null for the final."
+              }
+            },
+            "required": [
+              "id",
+              "sportEventId",
+              "roundNumber",
+              "matchNumber",
+              "homeSportEventParticipantId",
+              "awaySportEventParticipantId",
+              "isNeutralSite",
+              "scheduledDate",
+              "status",
+              "winnerSide",
+              "homeScore",
+              "awayScore",
+              "advancesToMatchId",
+              "advancesToSide"
+            ],
+            "additionalProperties": false,
+            "description": "One game or match of an event, which in a bracket is also a slot naming where its winner goes."
+          }
+        },
+        "required": [
+          "match"
+        ],
+        "additionalProperties": false,
+        "description": "One match of an event's bracket."
+      },
+      "LoadSportEventBracketRequest": {
+        "type": "object",
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "matchNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Unique within the bracket: the slot and the display order."
+                },
+                "roundNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "A round the event has."
+                },
+                "homeSportEventParticipantId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "A field row of the event, or null when an earlier match's winner fills the side (or its team is not known yet)."
+                },
+                "awaySportEventParticipantId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "A field row of the event, or null as for the home side."
+                },
+                "isNeutralSite": {
+                  "type": "boolean"
+                },
+                "scheduledDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "advancesTo": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "matchNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "A match of this bracket in a later round."
+                    },
+                    "side": {
+                      "type": "string",
+                      "enum": [
+                        "HOME",
+                        "AWAY"
+                      ],
+                      "description": "The side of that match the winner fills, which must not name a team."
+                    }
+                  },
+                  "required": [
+                    "matchNumber",
+                    "side"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Where the winner moves on to; null for the final, and only for the final."
+                }
+              },
+              "required": [
+                "matchNumber",
+                "roundNumber",
+                "homeSportEventParticipantId",
+                "awaySportEventParticipantId",
+                "isNeutralSite",
+                "scheduledDate",
+                "advancesTo"
+              ],
+              "additionalProperties": false,
+              "description": "One match of a bracket being loaded. A team placed straight into a later round (a bye) is named on that match's side."
+            },
+            "minItems": 1,
+            "maxItems": 255
+          }
+        },
+        "required": [
+          "matches"
+        ],
+        "additionalProperties": false,
+        "description": "The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side."
+      },
+      "UpdateSportEventMatchRequest": {
+        "type": "object",
+        "properties": {
+          "homeSportEventParticipantId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Omitted keeps it; null empties the side. Only until the event is released."
+          },
+          "awaySportEventParticipantId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Omitted keeps it; null empties the side. Only until the event is released."
+          },
+          "isNeutralSite": {
+            "type": "boolean"
+          },
+          "scheduledDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Omitted keeps it; null clears it."
+          }
+        },
+        "additionalProperties": false,
+        "description": "One match edit. Its time and site can change at any point; its sides only until the event is released."
+      },
+      "FillPlayInSlotRequest": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The team that won the play-in game: an active participant of the event's sport not yet on the field."
+          }
+        },
+        "required": [
+          "participantId"
+        ],
+        "additionalProperties": false,
+        "description": "The play-in winner for a field row that stands for a play-in pairing (\"Texas / Xavier\"). The row then names the winner and keeps its seed, tier, price and picks; the pairing's participant is inactivated."
+      },
       "EventSyncRequest": {
         "type": "object",
         "properties": {
@@ -23386,7 +23989,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "description": "Sports the provider covers that ingestion is scheduled for."
@@ -23464,7 +24068,8 @@
                       "HORSE_RACING",
                       "AUTO_RACING",
                       "CYCLING",
-                      "RUNNING"
+                      "RUNNING",
+                      "BASKETBALL"
                     ]
                   },
                   "description": "Sports the provider covers that ingestion is scheduled for."
@@ -23516,7 +24121,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ]
           },
           "eventId": {
@@ -23594,7 +24200,8 @@
                       "HORSE_RACING",
                       "AUTO_RACING",
                       "CYCLING",
-                      "RUNNING"
+                      "RUNNING",
+                      "BASKETBALL"
                     ]
                   },
                   "eventId": {
@@ -23752,7 +24359,8 @@
                       "HORSE_RACING",
                       "AUTO_RACING",
                       "CYCLING",
-                      "RUNNING"
+                      "RUNNING",
+                      "BASKETBALL"
                     ]
                   },
                   "eventExternalId": {
@@ -24039,7 +24647,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ]
           },
           "status": {
@@ -24087,7 +24696,8 @@
                     "HORSE_RACING",
                     "AUTO_RACING",
                     "CYCLING",
-                    "RUNNING"
+                    "RUNNING",
+                    "BASKETBALL"
                   ]
                 },
                 "eventId": {
@@ -24165,7 +24775,8 @@
                             "HORSE_RACING",
                             "AUTO_RACING",
                             "CYCLING",
-                            "RUNNING"
+                            "RUNNING",
+                            "BASKETBALL"
                           ]
                         },
                         "eventId": {
@@ -24323,7 +24934,8 @@
                             "HORSE_RACING",
                             "AUTO_RACING",
                             "CYCLING",
-                            "RUNNING"
+                            "RUNNING",
+                            "BASKETBALL"
                           ]
                         },
                         "eventExternalId": {
@@ -24615,7 +25227,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ]
           },
           "eventId": {
@@ -24656,7 +25269,8 @@
                     "HORSE_RACING",
                     "AUTO_RACING",
                     "CYCLING",
-                    "RUNNING"
+                    "RUNNING",
+                    "BASKETBALL"
                   ]
                 },
                 "eventId": {
@@ -24734,7 +25348,8 @@
                             "HORSE_RACING",
                             "AUTO_RACING",
                             "CYCLING",
-                            "RUNNING"
+                            "RUNNING",
+                            "BASKETBALL"
                           ]
                         },
                         "eventId": {
@@ -24892,7 +25507,8 @@
                             "HORSE_RACING",
                             "AUTO_RACING",
                             "CYCLING",
-                            "RUNNING"
+                            "RUNNING",
+                            "BASKETBALL"
                           ]
                         },
                         "eventExternalId": {
@@ -25202,7 +25818,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ]
           }
         },
@@ -25245,7 +25862,8 @@
                     "HORSE_RACING",
                     "AUTO_RACING",
                     "CYCLING",
-                    "RUNNING"
+                    "RUNNING",
+                    "BASKETBALL"
                   ]
                 }
               },
@@ -25284,7 +25902,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ]
           },
           "name": {
@@ -25371,7 +25990,8 @@
               "HORSE_RACING",
               "AUTO_RACING",
               "CYCLING",
-              "RUNNING"
+              "RUNNING",
+              "BASKETBALL"
             ]
           },
           "sportLeagueId": {
@@ -25420,7 +26040,8 @@
                     "HORSE_RACING",
                     "AUTO_RACING",
                     "CYCLING",
-                    "RUNNING"
+                    "RUNNING",
+                    "BASKETBALL"
                   ]
                 },
                 "name": {
@@ -30457,7 +31078,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "in": "query",
@@ -30649,7 +31271,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "in": "query",
@@ -31238,7 +31861,7 @@
         "tags": [
           "Events"
         ],
-        "description": "DRAFT → SCHEDULED. Commissioners can then see the event and build contests on it, and its tiers and prices are locked for good. Refused unless the field is loaded, every active participant has a tier, every tier has an active participant, and the start time has not passed. Root admin only.",
+        "description": "DRAFT → SCHEDULED. Commissioners can then see the event and build contests on it, and its tiers and prices are locked for good. Refused unless the field is loaded, every active participant has a tier, every tier has an active participant, and the start time has not passed. An event whose sport plays a bracket also needs its bracket complete (every side of every match named or filled by an earlier winner, every active field member in it, nobody withdrawn left in it), and its seeds lock at release. Root admin only.",
         "parameters": [
           {
             "schema": {
@@ -31302,7 +31925,7 @@
             }
           },
           "422": {
-            "description": "SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, or prices are not assigned or miss an active participant.",
+            "description": "SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, prices are not assigned or miss an active participant, or a bracket event's bracket is incomplete.",
             "content": {
               "application/json": {
                 "schema": {
@@ -31987,7 +32610,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price would change: its tiers and prices are locked.",
+        "description": "Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event's price would change: its tiers and prices are locked. 409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event's seed would change: the upset bonus reads the seeds as they stood at release.",
         "requestBody": {
           "required": true,
           "content": {
@@ -32319,7 +32942,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Re-runs the preview, then patches every changed row in one transaction, all or none. 422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED, with nothing written, when any row is not MATCHED or is a duplicate. Omitted values are left alone; null clears. A later field refresh from the provider replaces these values as it does grid edits. Returns the field. Root admin only.",
+        "description": "Re-runs the preview, then patches every changed row in one transaction, all or none. 422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED, with nothing written, when any row is not MATCHED or is a duplicate. Omitted values are left alone; null clears. A later field refresh from the provider replaces these values as it does grid edits, except a released bracket event's seeds. 409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event's seed would change. Returns the field. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -32392,6 +33015,16 @@
               }
             }
           },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Standard API error envelope.",
             "content": {
@@ -32412,7 +33045,7 @@
         "tags": [
           "Events"
         ],
-        "description": "409 EVENT_PARTICIPANT_HAS_PICKS once a contest entry has picked it — withdraw it instead. Root admin only.",
+        "description": "409 EVENT_PARTICIPANT_HAS_PICKS once a contest entry has picked it — withdraw it instead. 409 EVENT_PARTICIPANT_IN_BRACKET while a bracket match names it. Root admin only.",
         "parameters": [
           {
             "schema": {
@@ -33394,6 +34027,394 @@
         }
       }
     },
+    "/api/v1/events/{eventId}/bracket": {
+      "get": {
+        "operationId": "getEventBracket",
+        "summary": "Get a sport event's bracket",
+        "tags": [
+          "Events"
+        ],
+        "description": "Every match of the event in match-number order, empty until the bracket is loaded. Any signed-in user may read a released event's bracket; a DRAFT event's is a root admin's only. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's bracket.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventBracketResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "loadEventBracket",
+        "summary": "Load a sport event's bracket",
+        "tags": [
+          "Events"
+        ],
+        "description": "Replaces every match of the event with the matches sent, all or none. A side may be left empty while its team is not known; release needs the bracket complete. 409 SPORT_EVENT_BRACKET_LOCKED once the event is released. 422 BRACKET_INVALID, naming every problem, when a match number repeats, a round is not the event's, a side names a field row the event lacks or one already named, a winner advances to a match that is missing or not in a later round or to a side that names a team or that another match fills, or there is not exactly one final in the last round. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoadSportEventBracketRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's bracket.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventBracketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}": {
+      "patch": {
+        "operationId": "updateEventBracketMatch",
+        "summary": "Edit one match of a sport event's bracket",
+        "tags": [
+          "Events"
+        ],
+        "description": "Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSportEventMatchRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "matchNumber",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One match of an event's bracket.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventMatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/participants/{sportEventParticipantId}/play-in-winner": {
+      "put": {
+        "operationId": "setEventPlayInWinner",
+        "summary": "Set the winner of a play-in place",
+        "tags": [
+          "Events"
+        ],
+        "description": "For a field row that stands for a play-in pairing (\"Texas / Xavier\"): the row then names the team that won, keeping its seed, tier, price and every pick of it, and the pairing's participant is inactivated. 404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 404 PARTICIPANT_NOT_FOUND when the winner is not an active participant of the event's sport; 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the winner already has a field row; 409 PLAY_IN_SLOT_ALREADY_PLAYED once the place has started or played a bracket match. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the field row. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FillPlayInSlotRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportEventParticipantId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One field row.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventParticipantResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sports/": {
       "get": {
         "operationId": "listSports",
@@ -33433,7 +34454,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "in": "query",
@@ -34766,7 +35788,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "in": "path",
@@ -34835,7 +35858,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "in": "path",
@@ -34996,7 +36020,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "in": "query",
@@ -35100,7 +36125,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "in": "path",
@@ -35239,7 +36265,8 @@
                 "HORSE_RACING",
                 "AUTO_RACING",
                 "CYCLING",
-                "RUNNING"
+                "RUNNING",
+                "BASKETBALL"
               ]
             },
             "in": "query",

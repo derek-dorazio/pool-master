@@ -3,13 +3,13 @@
  * its family; everything here is reached through the event's sport, never by comparing sports
  * (`rules/architecture-rules.md` §4 *Sport extension*).
  *
- * The shape was checked against the three families planned; stroke play and finish position are built:
+ * The shape was checked against the three families planned; all three are registered:
  * - **Stroke play** (golf): strokes per round, a to-par total, unplayed rounds scored as 80.
  * - **Finish position** (racing): one finishing place per race (or per stage), scored from the
  *   contest's points table; a non-finisher scores the table's "did not finish" value.
- * - **Knockout advancement** (tennis, March Madness): points per match won, by the round's
- *   value plus a seed upset bonus. It reads matches (who beat whom), which arrive with that
- *   family as its own field read; the methods below take what it would need from the field.
+ * - **Head to head** (basketball's bracket, #698): points per match won, by the round's value
+ *   plus a seed upset bonus (#699). It reads the event's matches (who beat whom) as its own field
+ *   read; the methods below take what it needs from the field.
  *
  * Each method is here because golf already does it and a second family does it differently.
  */

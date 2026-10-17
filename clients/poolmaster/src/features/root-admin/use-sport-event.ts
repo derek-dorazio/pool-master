@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEvent, listEventParticipants, listEventRounds, listEventTiers } from '@/lib/api';
-import type { SportEventDto, SportEventParticipantDto, SportEventRoundDto, SportEventTierDto } from '@/lib/api';
+import { getEvent, getEventBracket, listEventParticipants, listEventRounds, listEventTiers } from '@/lib/api';
+import type {
+  SportEventDto,
+  SportEventMatchDto,
+  SportEventParticipantDto,
+  SportEventRoundDto,
+  SportEventTierDto,
+} from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
@@ -65,6 +71,22 @@ export function useSportEventRoundsQuery(eventId: string) {
         throwApiError(response.error, 'Event rounds response is missing data.');
       }
       return response.data.rounds;
+    },
+    enabled: eventId !== '',
+    retry: false,
+  });
+}
+
+/** A bracket event's matches in match-number order (#698); empty until its bracket is loaded. */
+export function useSportEventBracketQuery(eventId: string) {
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.manageSport.bracket(eventId),
+    queryFn: async (): Promise<SportEventMatchDto[]> => {
+      const response = await getEventBracket({ path: { eventId } });
+      if (!response.data?.matches) {
+        throwApiError(response.error, 'Event bracket response is missing data.');
+      }
+      return response.data.matches;
     },
     enabled: eventId !== '',
     retry: false,

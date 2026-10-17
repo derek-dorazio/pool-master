@@ -15,9 +15,13 @@ import { expectDefined } from '../../support/expect-defined';
 
 // The scoring-family conformance suite (#606): every family in the registry gets these checks.
 
-/** A contest's scoring in a sport: its default definition, with representative settings. */
+/**
+ * A contest's scoring in a sport: its default definition, with representative settings. A sport
+ * whose family has no definition yet (basketball until #699) has no contest to score, so its
+ * family is handed another family's definition, which it must leave unscored.
+ */
 function defaultScoring(sport: Sport): ContestScoringSettings {
-  const [participantScoringDefinitionId] = getSportDefinition(sport).scoringDefinitions;
+  const participantScoringDefinitionId = getSportDefinition(sport).scoringDefinitions.at(0) ?? 'GOLF_RELATIVE_TO_PAR_TOTAL';
   switch (participantScoringDefinitionId) {
     case 'GOLF_RELATIVE_TO_PAR_TOTAL':
       return { participantScoringDefinitionId, config: {} };
@@ -45,6 +49,12 @@ describe.each(Object.values(ScoringFamily))('scoring family %s', (family) => {
 describe('stroke play', () => {
   it('accepts GOLF live scores, the category its golf round rows are written from', () => {
     expect(getScoringFamilyModule(ScoringFamily.STROKE_PLAY).liveScores?.category).toBe('GOLF');
+  });
+});
+
+describe('head to head', () => {
+  it('accepts no live scores, so the score publisher skips any batch for a bracket event', () => {
+    expect(getScoringFamilyModule(ScoringFamily.HEAD_TO_HEAD).liveScores).toBeNull();
   });
 });
 

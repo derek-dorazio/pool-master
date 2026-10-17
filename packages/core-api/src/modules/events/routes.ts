@@ -1,7 +1,7 @@
 /**
  * The SportEvent operation set and its children's — rounds, the field
  * (SportEventParticipant), tiers and valuations, the golf score corrections (#236), and a
- * race's finishing order (#622).
+ * race's finishing order (#622), and a bracket's matches (#698).
  *
  * Before #236 everything here past `listEvents` was a golf-named admin operation under
  * /admin/sports/golf, and the event browser's participant list was a third projection of
@@ -19,6 +19,7 @@ import '@poolmaster/shared/dto/ingestion.dto';
 import '@poolmaster/shared/dto/events.dto';
 import '@poolmaster/shared/dto/golf-scores.dto';
 import '@poolmaster/shared/dto/race-results.dto';
+import '@poolmaster/shared/dto/bracket.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { requireRootAdmin } from '../../core/root-admin-guard';
@@ -191,14 +192,15 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       tags: TAGS,
       summary: 'Release a draft sport event for contests',
       description: 'DRAFT → SCHEDULED. Commissioners can then see the event and build contests on it, and its tiers and prices are locked for good. '
-        + 'Refused unless the field is loaded, every active participant has a tier, every tier has an active participant, and the start time has not passed. Root admin only.',
+        + 'Refused unless the field is loaded, every active participant has a tier, every tier has an active participant, and the start time has not passed. '
+        + 'An event whose sport plays a bracket also needs its bracket complete (every side of every match named or filled by an earlier winner, every active field member in it, nobody withdrawn left in it), and its seeds lock at release. Root admin only.',
       operationId: 'releaseEvent',
       params: EVENT_PARAMS,
       response: {
         200: schemaRef('SportEventResponse'),
         ...errors(401, 403, 404),
         409: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_DRAFT: the event has already been released. SPORT_EVENT_ALREADY_STARTED: its start time has passed.' },
-        422: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, or prices are not assigned or miss an active participant.' },
+        422: { ...schemaRef('ErrorEnvelope'), description: 'SPORT_EVENT_NOT_READY: the field is not loaded, an active participant has no tier, a tier has no active participant, prices are not assigned or miss an active participant, or a bracket event\'s bracket is incomplete.' },
       },
     },
     handler: handler.releaseEvent,
@@ -333,7 +335,8 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Update a sport event\'s field',
-      description: 'Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event\'s price would change: its tiers and prices are locked.',
+      description: 'Patches field rows and their manual prices, all or none. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED when a released event\'s price would change: its tiers and prices are locked. '
+        + '409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event\'s seed would change: the upset bonus reads the seeds as they stood at release.',
       operationId: 'updateEventParticipants',
       params: EVENT_PARAMS,
       body: schemaRef('UpdateSportEventParticipantsRequest'),
@@ -394,11 +397,12 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       description:
         'Re-runs the preview, then patches every changed row in one transaction, all or none. 422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED, '
         + 'with nothing written, when any row is not MATCHED or is a duplicate. Omitted values are left alone; null clears. '
-        + 'A later field refresh from the provider replaces these values as it does grid edits. Returns the field. Root admin only.',
+        + 'A later field refresh from the provider replaces these values as it does grid edits, except a released bracket event\'s seeds. '
+        + '409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event\'s seed would change. Returns the field. Root admin only.',
       operationId: 'applyEventParticipantUpload',
       params: EVENT_PARAMS,
       body: schemaRef('SportEventParticipantUploadRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(400, 401, 403, 404, 422) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(400, 401, 403, 404, 409, 422) },
     },
     handler: handler.applyEventParticipantUpload,
   });
@@ -408,7 +412,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Remove a participant from a sport event\'s field',
-      description: '409 EVENT_PARTICIPANT_HAS_PICKS once a contest entry has picked it — withdraw it instead. Root admin only.',
+      description: '409 EVENT_PARTICIPANT_HAS_PICKS once a contest entry has picked it — withdraw it instead. 409 EVENT_PARTICIPANT_IN_BRACKET while a bracket match names it. Root admin only.',
       operationId: 'removeEventParticipant',
       params: {
         type: 'object',
@@ -571,5 +575,80 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(400, 401, 403, 404, 422) },
     },
     handler: handler.applyRaceResults,
+  });
+
+  // --- Bracket: an event's matches, for a sport that plays a bracket (#698) ---------------
+
+  const BRACKET_NOT_A_BRACKET = 'SPORT_EVENT_NOT_BRACKET when the event\'s sport is not played as a bracket.';
+
+  fastify.get('/:eventId/bracket', {
+    schema: {
+      tags: TAGS,
+      summary: 'Get a sport event\'s bracket',
+      description: 'Every match of the event in match-number order, empty until the bracket is loaded. Any signed-in user may read a released event\'s bracket; a DRAFT event\'s is a root admin\'s only. '
+        + `422 ${BRACKET_NOT_A_BRACKET}`,
+      operationId: 'getEventBracket',
+      params: EVENT_PARAMS,
+      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(401, 404, 422) },
+    },
+    handler: handler.getEventBracket,
+  });
+
+  fastify.put('/:eventId/bracket', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Load a sport event\'s bracket',
+      description: 'Replaces every match of the event with the matches sent, all or none. A side may be left empty while its team is not known; release needs the bracket complete. '
+        + '409 SPORT_EVENT_BRACKET_LOCKED once the event is released. 422 BRACKET_INVALID, naming every problem, when a match number repeats, a round is not the event\'s, a side names a field row the event lacks or one already named, '
+        + 'a winner advances to a match that is missing or not in a later round or to a side that names a team or that another match fills, or there is not exactly one final in the last round. '
+        + `422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
+      operationId: 'loadEventBracket',
+      params: EVENT_PARAMS,
+      body: schemaRef('LoadSportEventBracketRequest'),
+      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+    },
+    handler: handler.loadEventBracket,
+  });
+
+  fastify.patch('/:eventId/bracket/matches/:matchNumber', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Edit one match of a sport event\'s bracket',
+      description: 'Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). '
+        + '422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match\'s winner fills, or both sides one team. '
+        + `404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 ${BRACKET_NOT_A_BRACKET} Root admin only.`,
+      operationId: 'updateEventBracketMatch',
+      params: {
+        type: 'object',
+        required: ['eventId', 'matchNumber'],
+        properties: { eventId: uuid, matchNumber: { type: 'integer', minimum: 1 } },
+      },
+      body: schemaRef('UpdateSportEventMatchRequest'),
+      response: { 200: schemaRef('SportEventMatchResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+    },
+    handler: handler.updateEventBracketMatch,
+  });
+
+  fastify.put('/:eventId/participants/:sportEventParticipantId/play-in-winner', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Set the winner of a play-in place',
+      description: 'For a field row that stands for a play-in pairing ("Texas / Xavier"): the row then names the team that won, keeping its seed, tier, price and every pick of it, and the pairing\'s participant is inactivated. '
+        + '404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 404 PARTICIPANT_NOT_FOUND when the winner is not an active participant of the event\'s sport; '
+        + '409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the winner already has a field row; 409 PLAY_IN_SLOT_ALREADY_PLAYED once the place has started or played a bracket match. '
+        + `422 ${BRACKET_NOT_A_BRACKET} Returns the field row. Root admin only.`,
+      operationId: 'setEventPlayInWinner',
+      params: {
+        type: 'object',
+        required: ['eventId', 'sportEventParticipantId'],
+        properties: { eventId: uuid, sportEventParticipantId: uuid },
+      },
+      body: schemaRef('FillPlayInSlotRequest'),
+      response: { 200: schemaRef('SportEventParticipantResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+    },
+    handler: handler.setEventPlayInWinner,
   });
 }
