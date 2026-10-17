@@ -8914,6 +8914,10 @@ export type SelectionStateResponse = {
             status?: string | null;
             price?: number | null;
             ranking?: number | null;
+            /**
+             * The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody.
+             */
+            seedNumber: number | null;
             orderIndex?: number | null;
             isAvailable: boolean;
             /**
@@ -9033,6 +9037,10 @@ export type SelectionPickResponse = {
             status?: string | null;
             price?: number | null;
             ranking?: number | null;
+            /**
+             * The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody.
+             */
+            seedNumber: number | null;
             orderIndex?: number | null;
             isAvailable: boolean;
             /**

@@ -160,7 +160,7 @@ export function OtherContestsCard({
                       ? 'Create your team to enter'
                       : entriesState !== 'ready'
                         ? ENTRY_STATE_NOTE[entriesState]
-                        : hasEntry ? 'Your team has an entry' : 'Your team has not entered'}
+                        : hasEntry ? 'You have an entry' : 'You haven’t entered'}
                   </div>
                 </div>
                 <div className="flex flex-none items-center gap-2">

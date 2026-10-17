@@ -342,14 +342,14 @@ describe('LeagueContestsPage, beyond the default list', () => {
     expect(screen.queryByTestId('league-contest-contest-1')).not.toBeInTheDocument();
   });
 
-  it('says the team has no entries under "My Contests" when it has entered none', async () => {
+  it('says the viewer has no entries under "My Contests" when they have entered none', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue({ data: { contests: [contest('contest-1', 'Masters Pick 6')] } });
     listContestEntriesMock.mockResolvedValue(entryList('contest-1', ['team-2']));
 
     renderLeagueContestsPage('/league/BIGDAWGS/contests?filter=my-entries');
 
-    expect(await screen.findByText('Your team does not have entries in any active contests yet.')).toBeInTheDocument();
+    expect(await screen.findByText('You don’t have entries in any active contests yet.')).toBeInTheDocument();
   });
 
   it('shows an error under "My Contests" when reading the team\'s entries fails, rather than claiming it has none', async () => {
@@ -363,6 +363,6 @@ describe('LeagueContestsPage, beyond the default list', () => {
     renderLeagueContestsPage('/league/BIGDAWGS/contests?filter=my-entries');
 
     expect(await screen.findByText("We couldn't load your contests.")).toBeInTheDocument();
-    expect(screen.queryByText('Your team does not have entries in any active contests yet.')).not.toBeInTheDocument();
+    expect(screen.queryByText('You don’t have entries in any active contests yet.')).not.toBeInTheDocument();
   });
 });

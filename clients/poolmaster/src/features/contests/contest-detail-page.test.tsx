@@ -787,7 +787,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(screen.queryByText('No contest entries exist yet.')).not.toBeInTheDocument();
   });
 
-  it('says the team has no entry when "My entries only" is on and it has none', async () => {
+  it('says the viewer has no entry when "My entries only" is on and they have none', async () => {
     primeMocks({
       entries: [buildEntry({ id: 'entry-3', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team Entry 1' })],
     });
@@ -796,7 +796,7 @@ describe('ContestDetailPage (Contest Board)', () => {
 
     fireEvent.click(await screen.findByTestId('contest-board-my-only-toggle'));
 
-    expect(await screen.findByText('Your team does not have an entry in this contest yet.')).toBeInTheDocument();
+    expect(await screen.findByText('You don’t have an entry in this contest yet.')).toBeInTheDocument();
   });
 
   it('says an own entry has no picks yet when it is opened before any golfer is chosen', async () => {

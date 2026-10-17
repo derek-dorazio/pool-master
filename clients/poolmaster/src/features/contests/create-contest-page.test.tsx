@@ -280,7 +280,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Pick 6, best 4');
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 6'));
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
-      'Masters Tournament Pick 6 · Masters TournamentPick 1 golfer from each of 6 tiers. The best 4 scores count. 1 entry per team.',
+      'Masters Tournament Pick 6 · Masters TournamentPick 1 golfer from each of 6 tiers. The best 4 scores count. 1 entry per member.',
     );
     expect(screen.getByTestId('create-contest-submit')).toHaveTextContent('Create contest');
   });
@@ -369,7 +369,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.click(screen.getByTestId('contest-max-entries-unlimited'));
 
     expect(screen.getByTestId('contest-template-custom')).toBeChecked();
-    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('The best 5 scores count. No limit on entries per team.');
+    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('The best 5 scores count. No limit on entries per member.');
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
@@ -646,7 +646,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
     expect(screen.getByTestId('contest-budget-salary-cap')).toHaveTextContent('$50,000 salary cap');
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Budget Pick 6'));
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
-      'Pick 6 golfers whose prices fit under the $50,000 salary cap. The best 4 scores count. 1 entry per team.',
+      'Pick 6 golfers whose prices fit under the $50,000 salary cap. The best 4 scores count. 1 entry per member.',
     );
 
     fireEvent.change(screen.getByTestId('contest-budget-roster-size'), { target: { value: '5' } });
@@ -746,7 +746,7 @@ describe('Commissioner tools › Contests › Create contest › Random draw for
     expect(screen.getByLabelText('Scores that count')).toHaveValue(2);
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Sweepstake'));
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
-      'The draw deals each entry 3 golfers at random. The best 2 scores count. 1 entry per team.',
+      'The draw deals each entry 3 golfers at random. The best 2 scores count. 1 entry per member.',
     );
 
     fireEvent.click(screen.getByTestId('create-contest-submit'));
@@ -856,7 +856,7 @@ describe('Commissioner tools › Contests › Create contest for a horse race', 
     expect(screen.getByTestId('contest-scoring-did-not-finish-points')).toHaveValue(0);
     expect(screen.getByTestId('create-contest-event')).toHaveTextContent('Entries close at the post time.');
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
-      'Pick 1 horse from each of 3 tiers. Every score counts. Points by finishing place: 5, 3, 1. 1 entry per team.',
+      'Pick 1 horse from each of 3 tiers. Every score counts. Points by finishing place: 5, 3, 1. 1 entry per member.',
     );
 
     fireEvent.change(screen.getByTestId('contest-scoring-points-table'), { target: { value: '10, 6, 4, 2' } });

@@ -12,10 +12,12 @@
 
 import {
   deriveLegacyParticipantStatus,
+  sportPlaysBracket,
   SelectionStatus,
   type Contest,
   type ContestEntry,
   type Participant,
+  type Sport,
   type SportEventParticipant,
   type SquadMembership,
 } from '@poolmaster/shared/domain';
@@ -120,7 +122,14 @@ export function buildSelectionParticipants(input: {
   field: readonly SportEventParticipant[];
   participantsById: ReadonlyMap<string, Participant>;
   valuationBySportEventParticipantId: ReadonlyMap<string, ParticipantValuation>;
+  /**
+   * The event's sport, whose bracket seeds the room shows (#701). A golf or race field carries a
+   * seed number too (its tour ranking order), which is no bracket seed, so only a sport that plays
+   * a bracket sends one. Null for a contest on no event.
+   */
+  sport: Sport | null;
 }): SelectionParticipant[] {
+  const showsSeeds = input.sport !== null && sportPlaysBracket(input.sport);
   return input.field
     .map((entry) => {
       const participant = input.participantsById.get(entry.participantId);
@@ -137,6 +146,7 @@ export function buildSelectionParticipants(input: {
         status: legacyStatus,
         price: valuation?.price ?? undefined,
         ranking: entry.ranking ?? undefined,
+        seedNumber: showsSeeds ? entry.seedNumber ?? null : null,
         tier: valuation?.tierLabel ?? null,
         orderIndex: valuation?.tierOrderIndex ?? undefined,
         isAvailable,

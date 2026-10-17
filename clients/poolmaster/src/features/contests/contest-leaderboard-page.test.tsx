@@ -821,12 +821,12 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.queryByTestId('contest-menu-my-entry')).not.toBeInTheDocument();
   });
 
-  it('finds a team by its team name or entry name, and says so when nothing matches', async () => {
+  it('finds an entry by its entry name or its squad\'s name, and says so when nothing matches', async () => {
     primeMocks({ leaderboard: leaderboardWithTwoEntries() });
 
     renderLeaderboard();
 
-    const search = await screen.findByRole('searchbox', { name: 'Find a team' });
+    const search = await screen.findByRole('searchbox', { name: 'Find an entry' });
     fireEvent.change(search, { target: { value: 'eagle' } });
 
     expect(screen.getByTestId('contest-leaderboard-entry-entry-2')).toBeInTheDocument();
@@ -857,22 +857,22 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
   });
 
-  it('jumps to the page holding the viewer\'s best-placed entry, clearing the search, and marks it as their team', async () => {
+  it('jumps to the page holding the viewer\'s best-placed entry, clearing the search, and marks it as theirs', async () => {
     primeMocks({ leaderboard: leaderboardWithEntries(30), mySquadId: 'squad-28' });
 
     renderLeaderboard();
 
-    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find a team' }), { target: { value: 'Team 3' } });
+    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find an entry' }), { target: { value: 'Team 3' } });
     // The button needs the viewer's team, which the league context read brings after the contest.
     fireEvent.click(await screen.findByTestId('contest-leaderboard-jump-to-mine'));
 
     const mine = screen.getByTestId('contest-leaderboard-entry-entry-28');
-    expect(mine).toHaveTextContent('Your team');
-    expect(screen.getByRole('searchbox', { name: 'Find a team' })).toHaveValue('');
+    expect(mine).toHaveTextContent('Yours');
+    expect(screen.getByRole('searchbox', { name: 'Find an entry' })).toHaveValue('');
     expect(screen.queryByTestId('contest-leaderboard-entry-entry-1')).not.toBeInTheDocument();
   });
 
-  it('offers no Jump to my team when the viewer\'s team is not on the leaderboard', async () => {
+  it('offers no Jump to my entry when the viewer has no entry on the leaderboard', async () => {
     primeMocks({ mySquadId: 'squad-elsewhere' });
 
     renderLeaderboard();

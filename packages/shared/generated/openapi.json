@@ -19167,6 +19167,13 @@
                           "null"
                         ]
                       },
+                      "seedNumber": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "description": "The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody."
+                      },
                       "orderIndex": {
                         "type": [
                           "number",
@@ -19185,6 +19192,7 @@
                       "sportEventParticipantId",
                       "participantId",
                       "participantName",
+                      "seedNumber",
                       "isAvailable"
                     ],
                     "additionalProperties": false,
@@ -19525,6 +19533,13 @@
                           "null"
                         ]
                       },
+                      "seedNumber": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "description": "The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody."
+                      },
                       "orderIndex": {
                         "type": [
                           "number",
@@ -19543,6 +19558,7 @@
                       "sportEventParticipantId",
                       "participantId",
                       "participantName",
+                      "seedNumber",
                       "isAvailable"
                     ],
                     "additionalProperties": false,

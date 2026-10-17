@@ -758,7 +758,7 @@ export function ContestEntryPage() {
               ) : null
             ) : (
               <Alert className="mt-5">
-                This entry belongs to another team.
+                {entrySummary ? `This entry belongs to ${entrySummary.squadName}.` : 'This entry belongs to someone else.'}
               </Alert>
             )}
           </Tile>

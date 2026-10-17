@@ -35,7 +35,7 @@ type RulesResult =
   | { configuration: ContestConfigurationRequest; error: null }
   | { configuration: null; error: string };
 
-/** Entries per team, the part of the rules every format shares. */
+/** Entries per member, the part of the rules every format shares. */
 function withEntryLimit<T extends object>(values: ContestRulesValues, rules: T):
   | { configuration: T & { maxEntriesPerSquad?: number }; error: null }
   | { configuration: null; error: string } {
@@ -44,7 +44,7 @@ function withEntryLimit<T extends object>(values: ContestRulesValues, rules: T):
   }
   const maxEntriesPerSquad = parseWholeNumber(values.maxEntriesPerTeam);
   if (maxEntriesPerSquad === null) {
-    return { configuration: null, error: 'Entries per team must be a positive whole number.' };
+    return { configuration: null, error: 'Entries per member must be a positive whole number.' };
   }
   return { configuration: { ...rules, maxEntriesPerSquad }, error: null };
 }

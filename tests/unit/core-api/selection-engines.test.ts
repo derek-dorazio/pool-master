@@ -51,6 +51,7 @@ function participant(participantId: string, tierLabel: string | null): Selection
     participantId,
     participantName: `Golfer ${participantId}`,
     tier: tierLabel,
+    seedNumber: null,
     isAvailable: true,
   };
 }

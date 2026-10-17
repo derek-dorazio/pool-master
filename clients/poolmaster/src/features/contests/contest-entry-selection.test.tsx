@@ -26,6 +26,7 @@ function buildParticipant(
     status: "ACTIVE",
     price: undefined,
     ranking: orderIndex,
+    seedNumber: null,
     orderIndex,
     isAvailable: true,
     isSelected,
@@ -85,6 +86,30 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
 
     await user.click(screen.getByTestId("contest-entry-group-toggle-tier-a"));
     expect(handleToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows each team's bracket seed before its name in a basketball tier, on the option and the saved chip", () => {
+    const group = buildGroup(["sep-1"]);
+    group.participants = [
+      { ...buildParticipant("sep-1", "Duke", 1, true), seedNumber: 1 },
+      { ...buildParticipant("sep-2", "Vermont", 2), seedNumber: 16 },
+    ];
+
+    render(
+      <EditableSelectionGroup
+        noun={getSportDefinition(Sport.BASKETBALL).vocabulary.participant} sport="BASKETBALL"
+        canSelect
+        group={group}
+        isBusy={false}
+        isExpanded
+        onParticipantSelect={vi.fn()}
+        onToggle={vi.fn()}
+        setToggleRef={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("contest-entry-participant-sep-2")).toHaveTextContent("(16) Vermont");
+    expect(screen.getByTestId("contest-entry-selected-sep-1")).toHaveTextContent("(1) Duke");
   });
 
   it("rule: marks replacement choices when a tier is full", () => {

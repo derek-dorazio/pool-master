@@ -88,7 +88,7 @@ describe('contest rules form', () => {
 
   it('refuses a picks-per-tier or entry limit that is not a positive whole number', () => {
     expect(parseContestRules({ ...valid, picksPerTier: '0' }, SelectionType.TIERED, 6, GOLFER).error).toBe('Picks per tier must be a positive whole number.');
-    expect(parseContestRules({ ...valid, maxEntriesPerTeam: '1.5' }, SelectionType.TIERED, 6, GOLFER).error).toBe('Entries per team must be a positive whole number.');
+    expect(parseContestRules({ ...valid, maxEntriesPerTeam: '1.5' }, SelectionType.TIERED, 6, GOLFER).error).toBe('Entries per member must be a positive whole number.');
   });
 
   it('turns budget fields into budget rules, leaving the salary cap to the event', () => {
@@ -135,9 +135,9 @@ describe('Create contest wording', () => {
     expect(suggestContestName('The Masters', SelectionType.BUDGET_PICK, null, 0)).toBe('The Masters Budget');
   });
 
-  it('says entries per team as a phrase a member reads', () => {
-    expect(formatEntriesPerTeamSentence(1)).toBe('1 entry per team');
-    expect(formatEntriesPerTeamSentence(3)).toBe('3 entries per team');
-    expect(formatEntriesPerTeamSentence(null)).toBe('No limit on entries per team');
+  it('says entries per member as a phrase a member reads', () => {
+    expect(formatEntriesPerTeamSentence(1)).toBe('1 entry per member');
+    expect(formatEntriesPerTeamSentence(3)).toBe('3 entries per member');
+    expect(formatEntriesPerTeamSentence(null)).toBe('No limit on entries per member');
   });
 });

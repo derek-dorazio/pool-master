@@ -238,7 +238,7 @@ export function ManageContestPage() {
         />
         <SettingsRow label="Rules" testId="manage-contest-rules" value={rules} />
         <SettingsRow
-          label="Entries per team"
+          label="Entries per member"
           testId="manage-contest-entries-per-team"
           value={formatEntriesPerTeam(configuration.maxEntriesPerSquad)}
         />
