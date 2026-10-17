@@ -967,6 +967,20 @@ plays. A single-event contest has one row. Added to #713. In pick'em each pick a
 own game's kickoff. A week not submitted before its first kickoff doesn't count, as a golf
 draft left at tee-off doesn't, and the week screen warns before the first game.
 
+How one week runs (described to Derek 2026-10-17):
+- The **week's event** goes `DRAFT` (games loaded, still changeable), then released
+  (`SCHEDULED`; games lock and picks open), then `IN_PROGRESS` at the first kickoff, then
+  `COMPLETED`, when the week settles with its weekly winner.
+- The **entry's week** (`ContestEntryEvent`) goes `DRAFT` (each pick saves, "11 of 16
+  picked"), then `SUBMITTED` once every game is picked. Picks stay changeable after submitting.
+- **Each game** locks its picks at its own kickoff, and reveals them at the same moment. Others
+  see an entry's Thursday pick after Thursday's kickoff, but not its Sunday picks until those
+  start. In pick'em this per-game reveal replaces the event-level reveal.
+- **After the first kickoff, a submitted week stays submitted.** A pick on a game not yet
+  started can be swapped to the other team but not cleared, so a late edit can't silently void
+  the week.
+- Weeks run side by side: week 7 can be picked and submitted while week 6 is still playing.
+
 **Q5.5 What does `ACTIVE` mean for a pick'em contest?** *Decided by Derek 2026-10-17:* every
 week is its own mini workflow. Its event is set up, released, picked and submitted, then goes
 live and settles. The contest keeps the same four statuses as every contest. It is `ACTIVE`
