@@ -43,8 +43,8 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
 
 1. **Scoring family.** Does an existing family already score this sport?
    - Stroke play: lowest total wins (golf).
-   - Head to head: a bracket of matches, points per round won (basketball; tennis and NFL
-     playoffs next). Its matches are `SportEventMatch` rows in the event core, not family tables.
+   - Head to head: a bracket of matches, points per round won plus an optional seed upset
+     bonus (basketball; tennis and NFL playoffs next). Its matches are `SportEventMatch` rows in the event core, not family tables.
    - Finish position: points by place (horse racing, auto racing, cycling).
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.
@@ -81,7 +81,9 @@ In order:
    contest templates carrying them in `config_json.scoring`, in the reference-data migration.
    Make every settings field required, never defaulted: the settings travel in a discriminated
    union, and a JSON Schema `default` inside a `oneOf` is not applied (Ajv strict mode refuses
-   it).
+   it). In a nested union whose arms differ in fields (an upset bonus of none, or of a
+   multiplier), list the arm with the extra field first: request validation tries the arms in
+   order and strips a field the arm it is trying does not declare, so the field never arrives.
 4. **Scoring family.** Reusing one: nothing beyond the registry entry. New one: implement the
    scoring-family interface, add its extension tables beside the core round and standing rows
    (one table set per family, never per sport), and register it in the scoring-family registry

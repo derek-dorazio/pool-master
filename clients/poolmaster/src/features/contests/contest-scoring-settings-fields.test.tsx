@@ -1,12 +1,13 @@
 import { getSportDefinition, Sport } from '@poolmaster/shared/domain';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { FinishPositionPointsFields } from './contest-scoring-settings-fields';
+import { EMPTY_SCORING_SETTINGS_VALUES } from './contest-scoring-settings';
+import { FinishPositionPointsFields, KnockoutRoundPointsFields } from './contest-scoring-settings-fields';
 
 // The points table's hint reads the sport's own name for its top places, so a second
 // finish-position sport never inherits horse racing's "Win / Place / Show".
 
-const values = { pointsTable: '5, 3, 1', didNotFinishPoints: '0' };
+const values = { ...EMPTY_SCORING_SETTINGS_VALUES, pointsTable: '5, 3, 1', didNotFinishPoints: '0' };
 
 describe('FinishPositionPointsFields', () => {
   it('names the top places in horse racing\'s words and the participant as a horse', () => {
@@ -39,5 +40,23 @@ describe('FinishPositionPointsFields', () => {
     expect(screen.getByText('Points by finishing place, winner first. A place beyond the table scores 0.')).toBeInTheDocument();
     expect(screen.queryByText(/Win \/ Place \/ Show/)).not.toBeInTheDocument();
     expect(screen.getByText('What a driver scores when it does not finish, is disqualified or does not start.')).toBeInTheDocument();
+  });
+});
+
+describe('KnockoutRoundPointsFields', () => {
+  const vocabulary = getSportDefinition(Sport.BASKETBALL).vocabulary;
+
+  it('asks for a win\'s points in each round and shows the multiplier only with the upset bonus on', () => {
+    const { rerender } = render(
+      <KnockoutRoundPointsFields onChange={vi.fn()} values={{ ...EMPTY_SCORING_SETTINGS_VALUES, roundValues: '1, 2' }} vocabulary={vocabulary} />,
+    );
+
+    expect(screen.getByTestId('contest-scoring-round-values')).toHaveValue('1, 2');
+    expect(screen.queryByTestId('contest-scoring-upset-bonus-multiplier')).not.toBeInTheDocument();
+
+    rerender(
+      <KnockoutRoundPointsFields onChange={vi.fn()} values={{ ...EMPTY_SCORING_SETTINGS_VALUES, upsetBonusRule: 'SEED_DIFFERENCE' }} vocabulary={vocabulary} />,
+    );
+    expect(screen.getByTestId('contest-scoring-upset-bonus-multiplier')).toHaveValue(1);
   });
 });

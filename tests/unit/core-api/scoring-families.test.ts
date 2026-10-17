@@ -15,18 +15,16 @@ import { expectDefined } from '../../support/expect-defined';
 
 // The scoring-family conformance suite (#606): every family in the registry gets these checks.
 
-/**
- * A contest's scoring in a sport: its default definition, with representative settings. A sport
- * whose family has no definition yet (basketball until #699) has no contest to score, so its
- * family is handed another family's definition, which it must leave unscored.
- */
+/** A contest's scoring in a sport: its default definition, with representative settings. */
 function defaultScoring(sport: Sport): ContestScoringSettings {
-  const participantScoringDefinitionId = getSportDefinition(sport).scoringDefinitions.at(0) ?? 'GOLF_RELATIVE_TO_PAR_TOTAL';
+  const participantScoringDefinitionId = expectDefined(getSportDefinition(sport).scoringDefinitions.at(0), `${sport}'s scoring definition`);
   switch (participantScoringDefinitionId) {
     case 'GOLF_RELATIVE_TO_PAR_TOTAL':
       return { participantScoringDefinitionId, config: {} };
     case 'FINISH_POSITION_POINTS':
       return { participantScoringDefinitionId, config: { pointsTable: [5, 3, 1], didNotFinishPoints: 0 } };
+    case 'KNOCKOUT_ROUND_POINTS':
+      return { participantScoringDefinitionId, config: { roundValues: [1, 2, 4, 8], upsetBonus: { rule: 'NONE' } } };
     default:
       return assertNever(participantScoringDefinitionId);
   }

@@ -327,6 +327,7 @@ function buildGolfFieldView(input: {
       golf: { strokes: round.strokes, scoreToPar: round.scoreToPar, thru: round.thru },
     })),
     raceResult: null,
+    matches: [],
     affiliatedWithSportLeague: true,
   };
 }

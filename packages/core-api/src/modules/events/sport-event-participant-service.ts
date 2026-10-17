@@ -41,6 +41,7 @@ import {
   type ParticipantInactiveReason,
   type Participant,
   type SportEvent,
+  type SportEventMatch,
   type SportEventParticipant,
   type SportEventParticipantGolfRound,
   type SportEventParticipantGolfStanding,
@@ -80,6 +81,8 @@ export interface SportEventParticipantView {
   rounds: ParticipantRoundView[];
   /** The finish-position extension: how the runner's race ended, once a result is entered. */
   raceResult: SportEventParticipantRaceResult | null;
+  /** The bracket matches naming this row on either side, in match order: head to head scores from them (#699). */
+  matches: SportEventMatch[];
   /** Whether the participant is affiliated with the event's sport league — false flags an invite from elsewhere. */
   affiliatedWithSportLeague: boolean;
 }
@@ -202,7 +205,7 @@ export class SportEventParticipantService {
   async listEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
     const event = await this.requireEvent(sportEventId);
     const field = await this.deps.field.findBySportEvent(sportEventId);
-    const [participants, valuations, standings, rounds, golfStandings, golfRounds, raceResults, affiliated] = await Promise.all([
+    const [participants, valuations, standings, rounds, golfStandings, golfRounds, raceResults, matches, affiliated] = await Promise.all([
       this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
       this.deps.valuations.findBySportEvent(sportEventId),
       this.deps.standings.findBySportEvent(sportEventId),
@@ -210,6 +213,7 @@ export class SportEventParticipantService {
       this.deps.golfStandings.findBySportEvent(sportEventId),
       this.deps.golfRounds.findBySportEvent(sportEventId),
       this.deps.raceResults.findBySportEvent(sportEventId),
+      this.deps.matches.findBySportEvent(sportEventId),
       this.affiliatedParticipantIds(event),
     ]);
 
@@ -235,6 +239,9 @@ export class SportEventParticipantService {
         standing: standing ? { standing, golf: golfByStanding.get(standing.id) ?? null } : null,
         rounds: roundsByEntry.get(entry.id) ?? [],
         raceResult: raceResultByEntry.get(entry.id) ?? null,
+        matches: matches.filter((match) => (
+          match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id
+        )),
         affiliatedWithSportLeague: affiliated.has(entry.participantId),
       };
     });

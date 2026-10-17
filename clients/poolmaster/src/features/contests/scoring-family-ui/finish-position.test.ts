@@ -68,6 +68,7 @@ const pick: ScoredContestEntryPickDto = {
   isDropped: false,
   golf: null,
   race: { points: 5 },
+  knockout: null,
 };
 
 const entry: ContestEntryStandingDto = {

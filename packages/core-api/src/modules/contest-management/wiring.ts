@@ -77,6 +77,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
         tournamentFormat: sport?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport),
         participantCount: event.participantCount ?? null,
         loadedParticipantCount: loaded.get(sportEventId) ?? 0,
+        rounds: event.rounds ?? null,
         salaryCap: event.pricingConfig?.salaryCap ?? null,
       };
     },

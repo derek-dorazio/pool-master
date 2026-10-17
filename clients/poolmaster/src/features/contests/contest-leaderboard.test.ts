@@ -104,6 +104,7 @@ function pickFixture(
     isDropped: false,
     golf: null,
     race: null,
+    knockout: null,
     ...overrides,
   };
 }

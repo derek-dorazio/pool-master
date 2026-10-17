@@ -33,7 +33,7 @@ import type {
   SportLeagueRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
-import { findSportRow, MatchStatus, ParticipantStatus } from '@poolmaster/shared/domain';
+import { findSportRow, MatchSide, MatchStatus, ParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   GolfRoundResult,
   GolfStandingResult,
@@ -600,6 +600,26 @@ export class InMemorySportEvents {
         const row = this.matchRows.find((match) => match.id === id);
         if (!row) throw new Error('unknown match');
         Object.assign(row, Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)));
+      },
+      applyResult: async ({ result, sideFill, standings }) => {
+        const { id, ...values } = result;
+        const row = this.matchRows.find((match) => match.id === id);
+        if (!row) throw new Error('unknown match');
+        Object.assign(row, values);
+        if (sideFill) {
+          const next = this.matchRows.find((match) => match.id === sideFill.id);
+          if (!next) throw new Error('unknown match');
+          if (sideFill.side === MatchSide.HOME) next.homeSportEventParticipantId = sideFill.sportEventParticipantId;
+          else next.awaySportEventParticipantId = sideFill.sportEventParticipantId;
+        }
+        for (const { sportEventParticipantId, ...standing } of standings) {
+          let stored = this.standingRows.find((candidate) => candidate.sportEventParticipantId === sportEventParticipantId);
+          if (!stored) {
+            stored = stamp({ id: this.id('standing'), sportEventParticipantId, ...standing });
+            this.standingRows.push(stored);
+          }
+          Object.assign(stored, standing);
+        }
       },
     };
   }

@@ -256,11 +256,11 @@ filling them in rather than by finding guards scattered through the code:
   participant scoring rule's `config`, typed per scoring definition by
   `PARTICIPANT_SCORING_SETTINGS_SCHEMAS` on write and read), returns each participant score
   with a detail keyed by family, and declares the one live-score category it accepts, or none.
-  Built: stroke play (golf) and finish position (horse racing, auto racing, cycling, running).
-  Head to head (basketball) is registered with no scoring definition yet, so a contest on it is
-  refused 422 `CONTEST_SCORING_DEFINITION_NOT_ALLOWED`; its bracket (`SportEventMatch`) is part
-  of the event core, not a family extension table, since pick'em reads the same matches. Finish position's admin
-  results entry (the finishing order) lives in its folder; golf's score corrections predate the
+  Built: stroke play (golf), finish position (horse racing, auto racing, cycling, running) and
+  head to head (basketball, scored by knockout round points). Head to head's results are its
+  bracket (`SportEventMatch`), part of the event core rather than a family extension table,
+  since pick'em reads the same matches. Finish position's admin results entry (the finishing
+  order) and head to head's match results live in their folders; golf's score corrections predate the
   folders and live in `modules/golf`. Each refuses an event whose sport's family does not keep
   its results with 422 `EVENT_SCORING_FAMILY_MISMATCH`.
   Settings a definition cannot default (a points table) are required on contest setup rather

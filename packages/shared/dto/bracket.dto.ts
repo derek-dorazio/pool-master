@@ -72,6 +72,13 @@ export const FillPlayInSlotRequestSchema = z.object({
 }).describe('The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing\'s participant is inactivated.');
 export type FillPlayInSlotRequest = z.infer<typeof FillPlayInSlotRequestSchema>;
 
+export const RecordSportEventMatchResultRequestSchema = z.object({
+  winnerSide: MatchSideDtoSchema.describe('The side that won.'),
+  homeScore: z.number().int().min(0).nullable().describe('The home side\'s score (games won, for a series), or null with the away score null too.'),
+  awayScore: z.number().int().min(0).nullable().describe('The away side\'s score, or null with the home score null too.'),
+}).describe('A match\'s result: who won, and both scores or neither. The winner\'s score must be the higher.');
+export type RecordSportEventMatchResultRequest = z.infer<typeof RecordSportEventMatchResultRequestSchema>;
+
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('MatchStatusDto', MatchStatusDtoSchema);
 registerSchema('MatchSideDto', MatchSideDtoSchema);
@@ -81,3 +88,4 @@ registerSchema('SportEventMatchResponse', SportEventMatchResponseSchema);
 registerSchema('LoadSportEventBracketRequest', LoadSportEventBracketRequestSchema);
 registerSchema('UpdateSportEventMatchRequest', UpdateSportEventMatchRequestSchema);
 registerSchema('FillPlayInSlotRequest', FillPlayInSlotRequestSchema);
+registerSchema('RecordSportEventMatchResultRequest', RecordSportEventMatchResultRequestSchema);

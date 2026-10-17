@@ -40,6 +40,7 @@ import type {
 import type {
   FillPlayInSlotRequest,
   LoadSportEventBracketRequest,
+  RecordSportEventMatchResultRequest,
   SportEventBracketResponse,
   SportEventMatchResponse,
   UpdateSportEventMatchRequest,
@@ -85,7 +86,7 @@ export interface EventHandlerDeps {
  * the provider-sync errors, which carry neither, are mapped here.
  */
 export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion }: EventHandlerDeps) {
-  const { sportEvents, rounds, field, tiers, golfScores, raceResults, bracket } = services;
+  const { sportEvents, rounds, field, tiers, golfScores, raceResults, matchResults, bracket } = services;
 
   async function eventResponse(eventId: string): Promise<SportEventResponse> {
     return { event: mapSportEventToDto(await sportEvents.requireSummary(eventId)) };
@@ -401,6 +402,20 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
         ...(scheduledDate !== undefined && { scheduledDate: scheduledDate === null ? null : new Date(scheduledDate) }),
       });
       return { match: mapSportEventMatchToDto(match) };
+    },
+
+    recordEventMatchResult: async (
+      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: RecordSportEventMatchResultRequest }>,
+    ): Promise<SportEventBracketResponse> => {
+      const matches = await matchResults.recordResult(request.params.eventId, request.params.matchNumber, request.body);
+      return { matches: matches.map(mapSportEventMatchToDto) };
+    },
+
+    clearEventMatchResult: async (
+      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
+    ): Promise<SportEventBracketResponse> => {
+      const matches = await matchResults.clearResult(request.params.eventId, request.params.matchNumber);
+      return { matches: matches.map(mapSportEventMatchToDto) };
     },
 
     setEventPlayInWinner: async (

@@ -223,12 +223,12 @@ describe('sportAllowsSelectionType', () => {
 describe('basketball', () => {
   const basketball = getSportDefinition(Sport.BASKETBALL);
 
-  it('is a team sport played as a knockout bracket, scored head to head, with no scoring definition until knockout scoring arrives', () => {
+  it('is a team sport played as a knockout bracket, scored head to head by knockout round points', () => {
     expect(basketball.name).toBe('Basketball');
     expect(basketball.participantType).toBe('TEAM');
     expect(basketball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
     expect(basketball.tournamentFormat).toBe(TournamentFormat.KNOCKOUT_BRACKET);
-    expect(basketball.scoringDefinitions).toEqual([]);
+    expect(basketball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
     expect(sportPlaysBracket(Sport.BASKETBALL)).toBe(true);
   });
 

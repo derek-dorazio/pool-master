@@ -56,6 +56,7 @@ const unplayedPick: ScoredContestEntryPickDto = {
   isDropped: false,
   golf: { scoreToPar: 16, unplayedRoundNumbers: [1, 2] },
   race: null,
+  knockout: null,
 };
 
 const entry: ContestEntryStandingDto = {

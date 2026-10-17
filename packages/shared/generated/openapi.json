@@ -5630,6 +5630,84 @@
                       "config"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "KNOCKOUT_ROUND_POINTS"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "roundValues": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "minItems": 1,
+                            "maxItems": 8,
+                            "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                          },
+                          "upsetBonus": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "rule": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SEED_DIFFERENCE"
+                                    ]
+                                  },
+                                  "multiplier": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                  }
+                                },
+                                "required": [
+                                  "rule",
+                                  "multiplier"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "rule": {
+                                    "type": "string",
+                                    "enum": [
+                                      "NONE"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "rule"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                          }
+                        },
+                        "required": [
+                          "roundValues",
+                          "upsetBonus"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
                   }
                 ],
                 "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -5735,6 +5813,84 @@
                       "config"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "KNOCKOUT_ROUND_POINTS"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "roundValues": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "minItems": 1,
+                            "maxItems": 8,
+                            "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                          },
+                          "upsetBonus": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "rule": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SEED_DIFFERENCE"
+                                    ]
+                                  },
+                                  "multiplier": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                  }
+                                },
+                                "required": [
+                                  "rule",
+                                  "multiplier"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "rule": {
+                                    "type": "string",
+                                    "enum": [
+                                      "NONE"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "rule"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                          }
+                        },
+                        "required": [
+                          "roundValues",
+                          "upsetBonus"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
                   }
                 ],
                 "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -5833,6 +5989,84 @@
                         ],
                         "additionalProperties": false,
                         "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "KNOCKOUT_ROUND_POINTS"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "roundValues": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "minItems": 1,
+                            "maxItems": 8,
+                            "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                          },
+                          "upsetBonus": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "rule": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SEED_DIFFERENCE"
+                                    ]
+                                  },
+                                  "multiplier": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                  }
+                                },
+                                "required": [
+                                  "rule",
+                                  "multiplier"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "rule": {
+                                    "type": "string",
+                                    "enum": [
+                                      "NONE"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "rule"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                          }
+                        },
+                        "required": [
+                          "roundValues",
+                          "upsetBonus"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
                       }
                     },
                     "required": [
@@ -6380,6 +6614,84 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -6485,6 +6797,84 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -6583,6 +6973,84 @@
                             ],
                             "additionalProperties": false,
                             "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
                           }
                         },
                         "required": [
@@ -7139,6 +7607,84 @@
                                 "config"
                               ],
                               "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "KNOCKOUT_ROUND_POINTS"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {
+                                    "roundValues": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "minItems": 1,
+                                      "maxItems": 8,
+                                      "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                                    },
+                                    "upsetBonus": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "rule": {
+                                              "type": "string",
+                                              "enum": [
+                                                "SEED_DIFFERENCE"
+                                              ]
+                                            },
+                                            "multiplier": {
+                                              "type": "integer",
+                                              "minimum": 1,
+                                              "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                            }
+                                          },
+                                          "required": [
+                                            "rule",
+                                            "multiplier"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "rule": {
+                                              "type": "string",
+                                              "enum": [
+                                                "NONE"
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "rule"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ],
+                                      "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                                    }
+                                  },
+                                  "required": [
+                                    "roundValues",
+                                    "upsetBonus"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
                             }
                           ],
                           "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -7244,6 +7790,84 @@
                                 "config"
                               ],
                               "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "KNOCKOUT_ROUND_POINTS"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {
+                                    "roundValues": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "minItems": 1,
+                                      "maxItems": 8,
+                                      "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                                    },
+                                    "upsetBonus": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "rule": {
+                                              "type": "string",
+                                              "enum": [
+                                                "SEED_DIFFERENCE"
+                                              ]
+                                            },
+                                            "multiplier": {
+                                              "type": "integer",
+                                              "minimum": 1,
+                                              "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                            }
+                                          },
+                                          "required": [
+                                            "rule",
+                                            "multiplier"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "rule": {
+                                              "type": "string",
+                                              "enum": [
+                                                "NONE"
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "rule"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ],
+                                      "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                                    }
+                                  },
+                                  "required": [
+                                    "roundValues",
+                                    "upsetBonus"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
                             }
                           ],
                           "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -7342,6 +7966,84 @@
                                   ],
                                   "additionalProperties": false,
                                   "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "KNOCKOUT_ROUND_POINTS"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {
+                                    "roundValues": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "minItems": 1,
+                                      "maxItems": 8,
+                                      "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                                    },
+                                    "upsetBonus": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "rule": {
+                                              "type": "string",
+                                              "enum": [
+                                                "SEED_DIFFERENCE"
+                                              ]
+                                            },
+                                            "multiplier": {
+                                              "type": "integer",
+                                              "minimum": 1,
+                                              "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                            }
+                                          },
+                                          "required": [
+                                            "rule",
+                                            "multiplier"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "rule": {
+                                              "type": "string",
+                                              "enum": [
+                                                "NONE"
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "rule"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ],
+                                      "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                                    }
+                                  },
+                                  "required": [
+                                    "roundValues",
+                                    "upsetBonus"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
                                 }
                               },
                               "required": [
@@ -7514,6 +8216,84 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -7619,6 +8399,84 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -7717,6 +8575,84 @@
                             ],
                             "additionalProperties": false,
                             "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
                           }
                         },
                         "required": [
@@ -7919,6 +8855,84 @@
                               "config"
                             ],
                             "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "KNOCKOUT_ROUND_POINTS"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {
+                                  "roundValues": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 8,
+                                    "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                                  },
+                                  "upsetBonus": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "rule": {
+                                            "type": "string",
+                                            "enum": [
+                                              "SEED_DIFFERENCE"
+                                            ]
+                                          },
+                                          "multiplier": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                          }
+                                        },
+                                        "required": [
+                                          "rule",
+                                          "multiplier"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "rule": {
+                                            "type": "string",
+                                            "enum": [
+                                              "NONE"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "rule"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ],
+                                    "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                                  }
+                                },
+                                "required": [
+                                  "roundValues",
+                                  "upsetBonus"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
                           }
                         ],
                         "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -8024,6 +9038,84 @@
                               "config"
                             ],
                             "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "KNOCKOUT_ROUND_POINTS"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {
+                                  "roundValues": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 8,
+                                    "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                                  },
+                                  "upsetBonus": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "rule": {
+                                            "type": "string",
+                                            "enum": [
+                                              "SEED_DIFFERENCE"
+                                            ]
+                                          },
+                                          "multiplier": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                          }
+                                        },
+                                        "required": [
+                                          "rule",
+                                          "multiplier"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "rule": {
+                                            "type": "string",
+                                            "enum": [
+                                              "NONE"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "rule"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ],
+                                    "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                                  }
+                                },
+                                "required": [
+                                  "roundValues",
+                                  "upsetBonus"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
                           }
                         ],
                         "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -8122,6 +9214,84 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "KNOCKOUT_ROUND_POINTS"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {
+                                  "roundValues": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 8,
+                                    "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                                  },
+                                  "upsetBonus": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "rule": {
+                                            "type": "string",
+                                            "enum": [
+                                              "SEED_DIFFERENCE"
+                                            ]
+                                          },
+                                          "multiplier": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                          }
+                                        },
+                                        "required": [
+                                          "rule",
+                                          "multiplier"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "rule": {
+                                            "type": "string",
+                                            "enum": [
+                                              "NONE"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "rule"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ],
+                                    "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                                  }
+                                },
+                                "required": [
+                                  "roundValues",
+                                  "upsetBonus"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
                               }
                             },
                             "required": [
@@ -14739,6 +15909,84 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -14844,6 +16092,84 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -14942,6 +16268,84 @@
                             ],
                             "additionalProperties": false,
                             "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
                           }
                         },
                         "required": [
@@ -15439,7 +16843,8 @@
         "type": "string",
         "enum": [
           "GOLF_RELATIVE_TO_PAR_TOTAL",
-          "FINISH_POSITION_POINTS"
+          "FINISH_POSITION_POINTS",
+          "KNOCKOUT_ROUND_POINTS"
         ]
       },
       "ScoredContestEntryPickGolfDto": {
@@ -15547,6 +16952,43 @@
             ],
             "additionalProperties": false,
             "description": "Present for a finish-position contest (a horse race); null otherwise."
+          },
+          "knockout": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "points": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result."
+              },
+              "wins": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Matches the team has won."
+              },
+              "upsetBonusPoints": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "The part of the points that is upset bonus; 0 when the bonus is off."
+              },
+              "isAlive": {
+                "type": "boolean",
+                "description": "False once the team has lost a match."
+              }
+            },
+            "required": [
+              "points",
+              "wins",
+              "upsetBonusPoints",
+              "isAlive"
+            ],
+            "additionalProperties": false,
+            "description": "Present for a head-to-head contest (a basketball bracket); null otherwise."
           }
         },
         "required": [
@@ -15557,7 +16999,8 @@
           "isCounting",
           "isDropped",
           "golf",
-          "race"
+          "race",
+          "knockout"
         ],
         "additionalProperties": false,
         "description": "One pick on a contest entry, with whether it counts."
@@ -15706,6 +17149,43 @@
                   ],
                   "additionalProperties": false,
                   "description": "Present for a finish-position contest (a horse race); null otherwise."
+                },
+                "knockout": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "points": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result."
+                    },
+                    "wins": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Matches the team has won."
+                    },
+                    "upsetBonusPoints": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "The part of the points that is upset bonus; 0 when the bonus is off."
+                    },
+                    "isAlive": {
+                      "type": "boolean",
+                      "description": "False once the team has lost a match."
+                    }
+                  },
+                  "required": [
+                    "points",
+                    "wins",
+                    "upsetBonusPoints",
+                    "isAlive"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Present for a head-to-head contest (a basketball bracket); null otherwise."
                 }
               },
               "required": [
@@ -15716,7 +17196,8 @@
                 "isCounting",
                 "isDropped",
                 "golf",
-                "race"
+                "race",
+                "knockout"
               ],
               "additionalProperties": false,
               "description": "One pick on a contest entry, with whether it counts."
@@ -15791,7 +17272,8 @@
             "type": "string",
             "enum": [
               "GOLF_RELATIVE_TO_PAR_TOTAL",
-              "FINISH_POSITION_POINTS"
+              "FINISH_POSITION_POINTS",
+              "KNOCKOUT_ROUND_POINTS"
             ],
             "description": "The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds."
           },
@@ -16495,6 +17977,43 @@
                         ],
                         "additionalProperties": false,
                         "description": "Present for a finish-position contest (a horse race); null otherwise."
+                      },
+                      "knockout": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "points": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "description": "The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result."
+                          },
+                          "wins": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Matches the team has won."
+                          },
+                          "upsetBonusPoints": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "The part of the points that is upset bonus; 0 when the bonus is off."
+                          },
+                          "isAlive": {
+                            "type": "boolean",
+                            "description": "False once the team has lost a match."
+                          }
+                        },
+                        "required": [
+                          "points",
+                          "wins",
+                          "upsetBonusPoints",
+                          "isAlive"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Present for a head-to-head contest (a basketball bracket); null otherwise."
                       }
                     },
                     "required": [
@@ -16505,7 +18024,8 @@
                       "isCounting",
                       "isDropped",
                       "golf",
-                      "race"
+                      "race",
+                      "knockout"
                     ],
                     "additionalProperties": false,
                     "description": "One pick on a contest entry, with whether it counts."
@@ -23901,6 +25421,42 @@
         ],
         "additionalProperties": false,
         "description": "The play-in winner for a field row that stands for a play-in pairing (\"Texas / Xavier\"). The row then names the winner and keeps its seed, tier, price and picks; the pairing's participant is inactivated."
+      },
+      "RecordSportEventMatchResultRequest": {
+        "type": "object",
+        "properties": {
+          "winnerSide": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "AWAY"
+            ],
+            "description": "The side that won."
+          },
+          "homeScore": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "The home side's score (games won, for a series), or null with the away score null too."
+          },
+          "awayScore": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "The away side's score, or null with the home score null too."
+          }
+        },
+        "required": [
+          "winnerSide",
+          "homeScore",
+          "awayScore"
+        ],
+        "additionalProperties": false,
+        "description": "A match's result: who won, and both scores or neither. The winner's score must be the higher."
       },
       "EventSyncRequest": {
         "type": "object",
@@ -34246,6 +35802,208 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result": {
+      "put": {
+        "operationId": "recordEventMatchResult",
+        "summary": "Enter a match's result",
+        "tags": [
+          "Events"
+        ],
+        "description": "Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. 422 MATCH_RESULT_INVALID for one score without the other, or a winner without the higher score. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result: clear that result first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordSportEventMatchResultRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "matchNumber",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's bracket.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventBracketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "clearEventMatchResult",
+        "summary": "Clear a match's result",
+        "tags": [
+          "Events"
+        ],
+        "description": "The match is scheduled again, the side its winner filled is emptied and the standings are rewritten. Clearing a match with no result changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result: clear that result first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "matchNumber",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's bracket.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventBracketResponse"
                 }
               }
             }
