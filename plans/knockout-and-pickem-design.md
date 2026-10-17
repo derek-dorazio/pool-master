@@ -638,10 +638,14 @@ source; `seedNumber` holds the bracket seed (1-16 per region, 1-7 per NFL confer
 Slam draw).
 
 **Q3.11 Sport naming: `BASKETBALL` with NCAA leagues, or `NCAA_BASKETBALL` as the sport?**
-*Recommendation:* `BASKETBALL`, with the men's and women's NCAA tournaments as sport leagues
-(and the NBA as another league later); likewise `AMERICAN_FOOTBALL` with the NFL (college
-football later). *Rationale:* it follows Derek's auto racing decision (one sport, series as
-sport leagues), and the NBA playoffs and college football then need only data.
+*Decided by Derek 2026-10-16:* `BASKETBALL`, with the NCAA men's and women's tournaments as
+sport leagues and the NBA and WNBA playoffs as further leagues; likewise `AMERICAN_FOOTBALL`
+with the NFL (college football later). *Rationale:* it follows Derek's auto racing decision
+(one sport, series as sport leagues), so a new league needs only data.
+The NBA and WNBA playoffs play each round as a series (best of seven; the WNBA's first round is
+best of three). In a bracket a series is one `SportEventMatch`: its winner advances, and
+`homeScore`/`awayScore` hold games won (4-2). No new table or column is needed; a per-game
+record inside a series is out of scope until a pool scores individual games.
 
 **Q3.12 The word "team" means two things on screen.** A squad is called "team" on screen
 (`rules/poolmaster-webapp-rules.md` §1), and a March Madness participant is also a "team"
