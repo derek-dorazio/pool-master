@@ -27,8 +27,7 @@ export const basketballSportDefinition: SportDefinition = {
   defaultRounds: 6,
   defaultTierLayout: { tierCount: 4, tierSize: 16 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
-  // The knockout scoring definition (round points with an upset bonus) arrives with results (#699).
-  scoringDefinitions: [],
+  scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   vocabulary: {
     participant: { one: 'team', many: 'teams' },
     event: { one: 'tournament', many: 'tournaments' },

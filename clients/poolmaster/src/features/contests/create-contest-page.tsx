@@ -14,6 +14,7 @@ import {
   SUPPORTED_SPORTS,
   getSportDefinition,
   sportAllowsSelectionType,
+  UpsetBonusRule,
   type ContestScoringSettings,
   type Sport,
   type SportDefinition,
@@ -107,12 +108,15 @@ const createContestFormSchema = z.object({
   picksPerTier: z.string(),
   pointsTable: z.string(),
   rosterSize: z.string(),
+  roundValues: z.string(),
   scoringDefinitionId: ParticipantScoringDefinitionIdSchema,
   selectedTemplateId: z.string(),
   selectionType: z.enum(creatableSelectionTypes),
   sport: z.custom<Sport>((value) => SUPPORTED_SPORTS.some((sport) => sport === value)),
   sportEventId: z.string().min(1, 'Choose an event for the contest.'),
   unlimitedEntries: z.boolean(),
+  upsetBonusMultiplier: z.string(),
+  upsetBonusRule: z.enum([UpsetBonusRule.NONE, UpsetBonusRule.SEED_DIFFERENCE]),
 });
 
 type CreateContestFormValues = z.infer<typeof createContestFormSchema>;
@@ -253,6 +257,9 @@ export function CreateContestPage() {
         ? SCORING_SETTINGS_UI[definitionId].toValues(scoring, {
           pointsTable: current.pointsTable,
           didNotFinishPoints: current.didNotFinishPoints,
+          roundValues: current.roundValues,
+          upsetBonusRule: current.upsetBonusRule,
+          upsetBonusMultiplier: current.upsetBonusMultiplier,
         })
         : {}),
     };

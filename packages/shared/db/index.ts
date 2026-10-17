@@ -57,6 +57,10 @@ export type {
   SportEventParticipantRaceResultRepository,
 } from './race-ports';
 export type {
+  BracketStandingWrite,
+  MatchResultApply,
+  MatchResultWrite,
+  MatchSideFill,
   SportEventMatchPatch,
   SportEventMatchRepository,
   SportEventMatchWrite,

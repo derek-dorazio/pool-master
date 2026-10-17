@@ -34,6 +34,7 @@ import {
 import type { MailDeliveryProvider } from '../email';
 import { GolfScoreService } from '../golf/golf-score-service';
 import { RaceResultService } from '../scoring-families/finish-position/race-result-service';
+import { MatchResultService } from '../scoring-families/head-to-head/match-result-service';
 import { sportStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { sportStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
@@ -100,7 +101,16 @@ export interface SportEventServices {
   field: SportEventParticipantService;
   golfScores: GolfScoreService;
   raceResults: RaceResultService;
+  matchResults: MatchResultService;
   sportLeagues: SportLeagueService;
+}
+
+export function createMatchResultService(prisma: PrismaClient, logger?: FastifyBaseLogger): MatchResultService {
+  return new MatchResultService({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    matches: new PrismaSportEventMatchRepository(prisma),
+    logger,
+  });
 }
 
 /** The event's field as every reader sees it — the event admin screens and the contest golf reads alike. */
@@ -158,6 +168,7 @@ export function createSportEventServices(
     field: createSportEventParticipantService(prisma, logger),
     golfScores: createGolfScoreService(prisma, logger),
     raceResults: createRaceResultService(prisma, logger),
+    matchResults: createMatchResultService(prisma, logger),
     sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, affiliations, participants, logger }),
   };
 }

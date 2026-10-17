@@ -5,7 +5,13 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
-import type { SportEventMatchPatch, SportEventMatchRepository, SportEventMatchWrite } from '@poolmaster/shared/db';
+import type {
+  MatchResultApply,
+  SportEventMatchPatch,
+  SportEventMatchRepository,
+  SportEventMatchWrite,
+} from '@poolmaster/shared/db';
+import { MatchSide } from '@poolmaster/shared/domain';
 import type { SportEventMatch } from '@poolmaster/shared/domain';
 
 export class PrismaSportEventMatchRepository implements SportEventMatchRepository {
@@ -44,5 +50,25 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
 
   async update(id: string, patch: SportEventMatchPatch): Promise<void> {
     await this.prisma.sportEventMatch.update({ where: { id }, data: patch });
+  }
+
+  async applyResult({ result, sideFill, standings }: MatchResultApply): Promise<void> {
+    const { id, ...values } = result;
+    await this.prisma.$transaction([
+      this.prisma.sportEventMatch.update({ where: { id }, data: values }),
+      ...(sideFill
+        ? [this.prisma.sportEventMatch.update({
+          where: { id: sideFill.id },
+          data: sideFill.side === MatchSide.HOME
+            ? { homeSportEventParticipantId: sideFill.sportEventParticipantId }
+            : { awaySportEventParticipantId: sideFill.sportEventParticipantId },
+        })]
+        : []),
+      ...standings.map(({ sportEventParticipantId, ...standing }) => this.prisma.sportEventParticipantStanding.upsert({
+        where: { sportEventParticipantId },
+        create: { sportEventParticipantId, ...standing },
+        update: standing,
+      })),
+    ]);
   }
 }

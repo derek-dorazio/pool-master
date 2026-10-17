@@ -630,8 +630,14 @@ that is not `COMPLETED`, and a field row's delete while a match names it.
 | Read the bracket | `authenticated` | `getEventBracket`, in match-number order. A `DRAFT` event is 404 `EVENT_NOT_FOUND` to anyone but a root admin. 422 `SPORT_EVENT_NOT_BRACKET` for a sport that plays none |
 | Load the bracket | `rootAdmin` | `loadEventBracket` replaces the whole bracket, until release (409 `SPORT_EVENT_BRACKET_LOCKED` after). 422 `BRACKET_INVALID` lists every problem: a repeated match number, an unknown round, a side not on the field or named twice, an advance to a missing or not-later match, two matches feeding one side, a fed side that also names a team, or other than one final in the last round. Completeness is checked at release, not here |
 | Edit a match | `rootAdmin` | `updateEventBracketMatch` by match number: time and site at any point, sides only until release (409 `SPORT_EVENT_BRACKET_LOCKED`). 404 `BRACKET_MATCH_NOT_FOUND`; 422 `BRACKET_INVALID` for a side problem |
+| Enter a result | `rootAdmin` | `recordEventMatchResult` by match number (#699): the winner's side, with both scores or neither (a series' score is games won). In one write it completes the match, puts the winner on its side of the next match, and rewrites every team's standing from the bracket: champion `COMPLETE` and first, teams out in the same round sharing a place, a loser `ELIMINATED`, `currentRound` the latest round with a match. Only on a released event (409 `SPORT_EVENT_NOT_RELEASED` for a draft). 422 `MATCH_SIDES_NOT_SET` while a side waits for its team; 422 `MATCH_RESULT_INVALID` for one score without the other, or the winner not scoring more. Changing the winner is 409 `SPORT_EVENT_MATCH_RESULT_LOCKED` once the next match has a result; fixing only the scores is always allowed |
+| Clear a result | `rootAdmin` | `clearEventMatchResult`: the match is scheduled again, the side its winner filled is emptied and the standings are rewritten. A match with no result is left as it is. 409 `SPORT_EVENT_MATCH_RESULT_LOCKED` once the next match has a result |
 
-Results entry for matches arrives with knockout scoring (#699).
+A bracket contest scores by `KNOCKOUT_ROUND_POINTS`: each win scores its round's value, plus
+the seed difference times the multiplier when the upset bonus is on and the worse seed wins
+(an unseeded team counts as the field's worst seed; a bye scores nothing). Contest setup
+requires one round value per round of the event: 422 `CONTEST_SCORING_ROUNDS_MISMATCH`
+otherwise. Until the bracket has a result, no team is scored.
 
 ### SportEventParticipantRound, SportEventParticipantStanding — base rows
 

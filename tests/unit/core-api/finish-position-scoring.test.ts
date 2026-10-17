@@ -51,7 +51,7 @@ function field(runners: RunnerInput[]): SportEventParticipantView[] {
       updatedAt: new Date('2026-05-02T22:00:00.000Z'),
       ...result,
     };
-    return { entry, participant, valuation: null, standing: null, rounds: [], raceResult, affiliatedWithSportLeague: true };
+    return { entry, participant, valuation: null, standing: null, rounds: [], raceResult, matches: [], affiliatedWithSportLeague: true };
   });
 }
 

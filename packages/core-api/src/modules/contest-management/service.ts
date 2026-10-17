@@ -25,6 +25,7 @@ import {
   CONTEST_NOT_DRAFT,
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
+  CONTEST_SCORING_ROUNDS_MISMATCH,
   CONTEST_SCORING_SETTINGS_REQUIRED,
   CONTEST_SELECTION_TYPE_NOT_ALLOWED,
 } from '@poolmaster/shared/dto';
@@ -72,6 +73,8 @@ export interface ContestCreateSportEventState {
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
+  /** The event's round count, which a knockout round-points table must match (#699); null when unset. */
+  rounds: number | null;
   /** The salary cap the event's field was priced against, or null when it never was (#93). */
   salaryCap: number | null;
 }
@@ -486,6 +489,7 @@ export class ContestManagementService {
       );
     }
     const scoring = this.resolveContestScoring(sportEvent, scoringInput);
+    this.assertScoringFitsEvent(sportEvent, scoring);
     switch (rules.selectionType) {
       case SelectionType.TIERED:
         await this.assertTieredRulesFitTierCount(sportEvent.id, rules);
@@ -578,6 +582,36 @@ export class ContestManagementService {
       );
     }
     return defaults;
+  }
+
+  /**
+   * Settings that must agree with the event (#699, design Q3.3): a knockout round-points table has
+   * one value per round of the event, so a short table never quietly scores a late round as 0
+   * (422 CONTEST_SCORING_ROUNDS_MISMATCH). The other definitions' settings fit any event.
+   */
+  private assertScoringFitsEvent(sportEvent: ContestCreateSportEventState, scoring: ContestScoringSettings): void {
+    switch (scoring.participantScoringDefinitionId) {
+      case 'GOLF_RELATIVE_TO_PAR_TOTAL':
+      case 'FINISH_POSITION_POINTS':
+        return;
+      case 'KNOCKOUT_ROUND_POINTS': {
+        const valueCount = scoring.config.roundValues.length;
+        if (valueCount === sportEvent.rounds) {
+          return;
+        }
+        this.logger.warn({
+          sportEventId: sportEvent.id,
+          rounds: sportEvent.rounds,
+          roundValues: valueCount,
+        }, 'contest management scoring refused: the round values do not match the event\'s rounds');
+        throw new ContestManagementError(
+          `The round values give ${valueCount} round(s), but the event has ${sportEvent.rounds ?? 'no'} rounds: give one value per round.`,
+          CONTEST_SCORING_ROUNDS_MISMATCH,
+        );
+      }
+      default:
+        return assertNever(scoring);
+    }
   }
 
   /** A contest's rules are checked against its event, so a contest with none has no rules to keep. */
@@ -747,8 +781,8 @@ async function syncDerivedScoring(
  * definition: its `config` column, typed by `PARTICIPANT_SCORING_SETTINGS_SCHEMAS`. Golf's to-par
  * total takes none, so it writes the empty object. (cutRule/playoffHandling/displayScoring/
  * tiebreaker were dropped in plans/124 §4.6a: each was locked to one value and never changed a
- * score.) Finish-position points has no default: the points table is the commissioner's choice,
- * or the template's preset, never one the server picks (null).
+ * score.) Finish-position and knockout round points have no default: the table is the
+ * commissioner's choice, or the template's preset, never one the server picks (null).
  */
 function defaultContestScoringSettings(
   participantScoringDefinitionId: ParticipantScoringDefinitionId,
@@ -756,7 +790,10 @@ function defaultContestScoringSettings(
   switch (participantScoringDefinitionId) {
     case 'GOLF_RELATIVE_TO_PAR_TOTAL':
       return { participantScoringDefinitionId, config: {} };
+    // A points table, and a knockout table of one value per round of the event, come from the
+    // commissioner or a template, never from the server.
     case 'FINISH_POSITION_POINTS':
+    case 'KNOCKOUT_ROUND_POINTS':
       return null;
     default:
       return assertNever(participantScoringDefinitionId);

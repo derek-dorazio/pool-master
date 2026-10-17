@@ -10,6 +10,7 @@ import { ParticipantRoundStatus } from './enums';
 export const ParticipantScoringDefinitionIdSchema = z.enum([
   'GOLF_RELATIVE_TO_PAR_TOTAL',
   'FINISH_POSITION_POINTS',
+  'KNOCKOUT_ROUND_POINTS',
 ]);
 export type ParticipantScoringDefinitionId = z.infer<
   typeof ParticipantScoringDefinitionIdSchema
@@ -86,6 +87,16 @@ export const PARTICIPANT_SCORING_DEFINITIONS = {
     format: (value: number): string => String(value),
     formatRound: null,
   },
+  /**
+   * Knockout round points (#699): the value of each round a team wins a match in, plus an upset
+   * bonus when the contest has one on, more is better. A match is one result, not round scores.
+   */
+  KNOCKOUT_ROUND_POINTS: {
+    direction: 'HIGHER_IS_BETTER',
+    unit: 'POINTS',
+    format: (value: number): string => String(value),
+    formatRound: null,
+  },
 } as const satisfies Record<ParticipantScoringDefinitionId, ParticipantScoringDefinition>;
 
 /** The most places a finish-position points table may score. */
@@ -113,6 +124,43 @@ export const FinishPositionPointsSettingsSchema = z.object({
 }).describe('Finish-position points settings: the contest\'s points table and its "did not finish" value.');
 export type FinishPositionPointsSettings = z.infer<typeof FinishPositionPointsSettingsSchema>;
 
+/** The most rounds a knockout round-points table may score: a 128-place draw plays seven, the NFL four. */
+export const KNOCKOUT_ROUND_VALUES_MAX_ROUNDS = 8;
+
+/** How a knockout win over a better seed earns more (plans/knockout-and-pickem-design.md §3.2). */
+export const UpsetBonusRule = {
+  NONE: 'NONE',
+  /** The winner's seed minus the loser's, times the multiplier, when the winner is the worse seed. */
+  SEED_DIFFERENCE: 'SEED_DIFFERENCE',
+} as const;
+export type UpsetBonusRule = (typeof UpsetBonusRule)[keyof typeof UpsetBonusRule];
+
+// The arm with a field of its own goes first: request validation tries the OpenAPI anyOf in order
+// and strips a field the arm does not declare, so a NONE arm tried first would drop `multiplier`.
+export const UpsetBonusSchema = z.discriminatedUnion('rule', [
+  z.object({
+    rule: z.literal(UpsetBonusRule.SEED_DIFFERENCE),
+    multiplier: z.number().int().min(1).describe('What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus.'),
+  }),
+  z.object({ rule: z.literal(UpsetBonusRule.NONE) }),
+]).describe('The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field\'s worst seed.');
+export type UpsetBonus = z.infer<typeof UpsetBonusSchema>;
+
+/**
+ * A knockout contest's settings (#699, plans/knockout-and-pickem-design.md §3.2): `roundValues[0]`
+ * is what a round-1 win scores, `roundValues[1]` a round-2 win, and so on, one value per round of
+ * the event (contest setup refuses a table of another length). A team placed straight into a later
+ * round (a bye) scores nothing for the round it skipped.
+ */
+export const KnockoutRoundPointsSettingsSchema = z.object({
+  roundValues: z.array(z.number().int().min(0))
+    .min(1)
+    .max(KNOCKOUT_ROUND_VALUES_MAX_ROUNDS)
+    .describe(`Points for a win in each round, round 1 first, one value per round of the event (at most ${KNOCKOUT_ROUND_VALUES_MAX_ROUNDS}). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].`),
+  upsetBonus: UpsetBonusSchema,
+}).describe('Knockout round-points settings: the value of a win in each round and the upset bonus.');
+export type KnockoutRoundPointsSettings = z.infer<typeof KnockoutRoundPointsSettingsSchema>;
+
 /**
  * What a contest may set for its scoring definition: the Zod schema of a participant scoring
  * rule's `config` column, keyed by the definition id. Exhaustive over the definition ids, so a
@@ -128,6 +176,7 @@ export type FinishPositionPointsSettings = z.infer<typeof FinishPositionPointsSe
 export const PARTICIPANT_SCORING_SETTINGS_SCHEMAS = {
   GOLF_RELATIVE_TO_PAR_TOTAL: z.object({}),
   FINISH_POSITION_POINTS: FinishPositionPointsSettingsSchema,
+  KNOCKOUT_ROUND_POINTS: KnockoutRoundPointsSettingsSchema,
 } as const satisfies Record<ParticipantScoringDefinitionId, z.ZodType>;
 
 /** One definition's settings, as its schema parses them. */
@@ -159,6 +208,10 @@ export const ContestScoringSettingsSchema = z.discriminatedUnion('participantSco
   z.object({
     participantScoringDefinitionId: z.literal('FINISH_POSITION_POINTS'),
     config: PARTICIPANT_SCORING_SETTINGS_SCHEMAS.FINISH_POSITION_POINTS,
+  }),
+  z.object({
+    participantScoringDefinitionId: z.literal('KNOCKOUT_ROUND_POINTS'),
+    config: PARTICIPANT_SCORING_SETTINGS_SCHEMAS.KNOCKOUT_ROUND_POINTS,
   }),
 ]).describe("A contest's participant scoring definition with its settings. The definition must be one the event's sport offers; omitted, the contest takes its template's preset or its sport's default.");
 

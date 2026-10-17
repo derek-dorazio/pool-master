@@ -104,6 +104,12 @@ export const CONTEST_SCORING_DEFINITION_NOT_ALLOWED = 'CONTEST_SCORING_DEFINITIO
  */
 export const CONTEST_SCORING_SETTINGS_REQUIRED = 'CONTEST_SCORING_SETTINGS_REQUIRED';
 
+/**
+ * Error code for a knockout round-points table whose length differs from the event's round count
+ * (#699): one value per round, so no late round scores 0 by omission.
+ */
+export const CONTEST_SCORING_ROUNDS_MISMATCH = 'CONTEST_SCORING_ROUNDS_MISMATCH';
+
 /** Error code for a selection type the event's sport does not offer (#602). */
 export const CONTEST_SELECTION_TYPE_NOT_ALLOWED = 'CONTEST_SELECTION_TYPE_NOT_ALLOWED';
 

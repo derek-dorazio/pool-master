@@ -20,6 +20,7 @@ import {
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_NOT_DRAFT,
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
+  CONTEST_SCORING_ROUNDS_MISMATCH,
   CONTEST_SCORING_SETTINGS_REQUIRED,
   type CreateContestRequest,
 } from '@poolmaster/shared/dto';
@@ -211,6 +212,7 @@ function createSportEventReader(overrides?: Partial<{
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
+  rounds: number | null;
   salaryCap: number | null;
   activeFieldPrices: number[];
 }>): {
@@ -229,6 +231,7 @@ function createSportEventReader(overrides?: Partial<{
         overrides?.tournamentFormat ?? TournamentFormat.STROKE_PLAY_TOURNAMENT,
       participantCount: overrides?.participantCount ?? 72,
       loadedParticipantCount: overrides?.loadedParticipantCount ?? 72,
+      rounds: overrides?.rounds === undefined ? 4 : overrides.rounds,
       salaryCap: overrides?.salaryCap ?? null,
     }),
   };
@@ -1497,21 +1500,51 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  it('refuses a basketball contest with 422 CONTEST_SCORING_DEFINITION_NOT_ALLOWED while basketball has no scoring definition, writing nothing', async () => {
+  function basketballService(rounds: number) {
     const contestCoreRepo = createContestRepo();
+    const scoringRuleRepo = createParticipantScoringRuleRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
+      scoringRuleRepo,
       createSportEventTierServiceStub(),
       undefined,
-      createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET }),
+      createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET, rounds }),
     );
+    return { contestCoreRepo, scoringRuleRepo, service };
+  }
+
+  const knockoutScoring = (roundValues: number[]): ContestScoringSettings => ({
+    participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+    config: { roundValues, upsetBonus: { rule: 'NONE' } },
+  });
+
+  it('refuses a basketball contest with neither knockout round values nor a template with 422 CONTEST_SCORING_SETTINGS_REQUIRED, writing nothing', async () => {
+    const { contestCoreRepo, service } = basketballService(4);
 
     await expect(service.createContest({ leagueId: 'league-1' }, raceRequest({ name: 'Bracket Pool' })))
-      .rejects.toMatchObject({ code: CONTEST_SCORING_DEFINITION_NOT_ALLOWED, statusCode: 422 });
+      .rejects.toMatchObject({ code: CONTEST_SCORING_SETTINGS_REQUIRED, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses knockout round values that do not give one value per round of the event with 422 CONTEST_SCORING_ROUNDS_MISMATCH, writing nothing', async () => {
+    const { contestCoreRepo, service } = basketballService(4);
+
+    await expect(service.createContest({ leagueId: 'league-1' }, raceRequest({
+      name: 'Bracket Pool',
+      configuration: { ...drawRules, scoring: knockoutScoring([1, 2, 4, 8, 16, 32]) },
+    }))).rejects.toMatchObject({ code: CONTEST_SCORING_ROUNDS_MISMATCH, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('creates a basketball contest scored by the knockout round values sent, one per round of the event', async () => {
+    const { scoringRuleRepo, service } = basketballService(4);
+    const scoring = knockoutScoring([1, 2, 4, 8]);
+
+    await service.createContest({ leagueId: 'league-1' }, raceRequest({ name: 'Bracket Pool', configuration: { ...drawRules, scoring } }));
+
+    expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({ scoring }));
   });
 
   it('keeps a draft\'s points table when a rules update sends no scoring', async () => {

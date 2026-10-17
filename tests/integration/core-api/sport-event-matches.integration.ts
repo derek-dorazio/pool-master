@@ -155,6 +155,53 @@ describe('PrismaSportEventMatchRepository', () => {
   });
 });
 
+describe('PrismaSportEventMatchRepository.applyResult', () => {
+  it('completes the match, fills the next match\'s side and writes every standing in one transaction, then rewrites them', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first, , final] = await repos().matches.findBySportEvent(event.id);
+    const asOf = new Date('2027-03-19T04:00:00.000Z');
+
+    await repos().matches.applyResult({
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80 },
+      sideFill: { id: final.id, side: MatchSide.HOME, sportEventParticipantId: entryOf('Vermont').id },
+      standings: [
+        { sportEventParticipantId: entryOf('Vermont').id, position: 1, displayPosition: '1', status: 'ACTIVE', currentRound: 2, asOf },
+        { sportEventParticipantId: entryOf('Duke').id, position: 4, displayPosition: '4', status: 'ELIMINATED', currentRound: 1, asOf },
+      ],
+    });
+    await repos().matches.applyResult({
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81 },
+      sideFill: null,
+      standings: [{ sportEventParticipantId: entryOf('Duke').id, position: 3, displayPosition: 'T3', status: 'ELIMINATED', currentRound: 1, asOf }],
+    });
+
+    const [completed, , filled] = await repos().matches.findBySportEvent(event.id);
+    expect(completed).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81 });
+    expect(filled.homeSportEventParticipantId).toBe(entryOf('Vermont').id);
+    const standings = await getPrisma().sportEventParticipantStanding.findMany({ where: { sportEventParticipant: { sportEventId: event.id } } });
+    expect(Object.fromEntries(standings.map((row) => [row.sportEventParticipantId, [row.displayPosition, row.status]]))).toEqual({
+      [entryOf('Duke').id]: ['T3', 'ELIMINATED'],
+      [entryOf('Vermont').id]: ['1', 'ACTIVE'],
+    });
+  });
+
+  it('writes nothing when one part of the result is refused by the database', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+
+    await expect(repos().matches.applyResult({
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70 },
+      sideFill: { id: randomUUID(), side: MatchSide.HOME, sportEventParticipantId: entryOf('Duke').id },
+      standings: [],
+    })).rejects.toThrow();
+
+    const [unchanged] = await repos().matches.findBySportEvent(event.id);
+    expect(unchanged).toMatchObject({ status: MatchStatus.SCHEDULED, winnerSide: null });
+  });
+});
+
 describe('PrismaSportEventParticipantRepository.fillPlayInSlot', () => {
   it('points the field row at the winning team and inactivates the pairing, together', async () => {
     const { event, sport, entryOf } = await createBracketEvent();

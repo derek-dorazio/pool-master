@@ -71,8 +71,12 @@ export type ParticipantScoreDetail =
     scoringFamily: typeof ScoringFamily.FINISH_POSITION;
   }
   | {
-    /** Head to head: unscored until its knockout scoring definition (#699) adds wins and the upset bonus. */
+    /** Head to head (#699): how the team's knockout points came about. */
     scoringFamily: typeof ScoringFamily.HEAD_TO_HEAD;
+    wins: number;
+    upsetBonusPoints: number;
+    isAlive: boolean;
+    roundReached: number | null;
   };
 
 /**

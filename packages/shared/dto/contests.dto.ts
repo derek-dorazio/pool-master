@@ -177,6 +177,15 @@ export const ScoredContestEntryPickRaceDtoSchema = z.object({
 }).describe('Finish-position extension of a scored pick: the runner\'s points from the contest\'s points table.');
 export type ScoredContestEntryPickRaceDto = z.infer<typeof ScoredContestEntryPickRaceDtoSchema>;
 
+export const ScoredContestEntryPickKnockoutDtoSchema = z.object({
+  points: z.number().int().nullable().describe('The team\'s points in this contest: each round it won a match in scores that round\'s value, plus the upset bonus when the contest has one on. Null until the bracket has a result.'),
+  wins: z.number().int().min(0).describe('Matches the team has won.'),
+  upsetBonusPoints: z.number().int().min(0).describe('The part of the points that is upset bonus; 0 when the bonus is off.'),
+  isAlive: z.boolean().describe('False once the team has lost a match.'),
+  roundReached: z.number().int().min(1).nullable().describe('The latest round the team has a match in; null when it is in none.'),
+}).describe('Head-to-head extension of a scored pick: the team\'s knockout points and how they came about.');
+export type ScoredContestEntryPickKnockoutDto = z.infer<typeof ScoredContestEntryPickKnockoutDtoSchema>;
+
 export const ScoredContestEntryPickDtoSchema = z.object({
   pickId: z.string().describe('ContestEntryPick row identifier.'),
   sportEventParticipantId: z.string().describe('The picked field row. Its scores are the matching entry of `participants`; a pick is a pointer, not a copy.'),
@@ -186,6 +195,7 @@ export const ScoredContestEntryPickDtoSchema = z.object({
   isDropped: z.boolean().describe('Whether this scored pick is currently dropped because better picks fill the counting places.'),
   golf: ScoredContestEntryPickGolfDtoSchema.nullable().describe('Present for a golf contest; null otherwise.'),
   race: ScoredContestEntryPickRaceDtoSchema.nullable().describe('Present for a finish-position contest (a horse race); null otherwise.'),
+  knockout: ScoredContestEntryPickKnockoutDtoSchema.nullable().describe('Present for a head-to-head contest (a basketball bracket); null otherwise.'),
 }).describe('One pick on a contest entry, with whether it counts.');
 export type ScoredContestEntryPickDto = z.infer<typeof ScoredContestEntryPickDtoSchema>;
 

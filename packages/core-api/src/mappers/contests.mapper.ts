@@ -239,7 +239,7 @@ type LeaderboardEntryDto = ContestLeaderboardResponse['entries'][number];
 type LeaderboardPickDto = LeaderboardEntryDto['picks'][number];
 
 /** How a scoring family's detail block appears on a leaderboard pick (#606). */
-type LeaderboardFamilyPickDetailMapper = (pick: ScoredContestEntryPickRow) => Pick<LeaderboardPickDto, 'golf' | 'race'>;
+type LeaderboardFamilyPickDetailMapper = (pick: ScoredContestEntryPickRow) => Pick<LeaderboardPickDto, 'golf' | 'race' | 'knockout'>;
 
 const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, LeaderboardFamilyPickDetailMapper>> = {
   [ScoringFamily.STROKE_PLAY]: (pick) => ({
@@ -249,10 +249,20 @@ const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, 
         .unplayedRoundNumbers,
     },
     race: null,
+    knockout: null,
   }),
-  [ScoringFamily.FINISH_POSITION]: (pick) => ({ golf: null, race: { points: pick.participant.score } }),
-  // No contest can be scored head to head until its scoring definition arrives (#699).
-  [ScoringFamily.HEAD_TO_HEAD]: () => ({ golf: null, race: null }),
+  [ScoringFamily.FINISH_POSITION]: (pick) => ({ golf: null, race: { points: pick.participant.score }, knockout: null }),
+  [ScoringFamily.HEAD_TO_HEAD]: (pick) => {
+    const { wins, upsetBonusPoints, isAlive, roundReached } = participantScoreDetailFor(
+      ScoringFamily.HEAD_TO_HEAD,
+      pick.participant.detail,
+    );
+    return {
+      golf: null,
+      race: null,
+      knockout: { points: pick.participant.score, wins, upsetBonusPoints, isAlive, roundReached },
+    };
+  },
 };
 
 export function toContestLeaderboardResponse(

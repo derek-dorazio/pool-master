@@ -1822,6 +1822,30 @@ export interface paths {
         patch: operations["updateEventBracketMatch"];
         trace?: never;
     };
+    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Enter a match's result
+         * @description Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. 422 MATCH_RESULT_INVALID for one score without the other, or a winner without the higher score. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result: clear that result first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         */
+        put: operations["recordEventMatchResult"];
+        post?: never;
+        /**
+         * Clear a match's result
+         * @description The match is scheduled again, the side its winner filled is emptied and the standings are rewritten. Clearing a match with no result changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result: clear that result first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         */
+        delete: operations["clearEventMatchResult"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/participants/{sportEventParticipantId}/play-in-winner": {
         parameters: {
             query?: never;
@@ -4465,6 +4489,24 @@ export interface components {
                     /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                     didNotFinishPoints: number;
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
             };
         } | {
             /** @enum {string} */
@@ -4490,6 +4532,24 @@ export interface components {
                     /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                     didNotFinishPoints: number;
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
             };
         } | {
             /** @enum {string} */
@@ -4514,6 +4574,24 @@ export interface components {
                     pointsTable: number[];
                     /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                     didNotFinishPoints: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
                 };
             };
         };
@@ -4698,6 +4776,24 @@ export interface components {
                         /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                         didNotFinishPoints: number;
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
                 };
             } | {
                 /** @enum {string} */
@@ -4723,6 +4819,24 @@ export interface components {
                         /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                         didNotFinishPoints: number;
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
                 };
             } | {
                 /** @enum {string} */
@@ -4747,6 +4861,24 @@ export interface components {
                         pointsTable: number[];
                         /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                         didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
                     };
                 };
             };
@@ -4938,6 +5070,24 @@ export interface components {
                             /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                             didNotFinishPoints: number;
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
                     };
                 } | {
                     /** @enum {string} */
@@ -4963,6 +5113,24 @@ export interface components {
                             /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                             didNotFinishPoints: number;
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
                     };
                 } | {
                     /** @enum {string} */
@@ -4987,6 +5155,24 @@ export interface components {
                             pointsTable: number[];
                             /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                             didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
                         };
                     };
                 };
@@ -5029,6 +5215,24 @@ export interface components {
                         /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                         didNotFinishPoints: number;
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
                 };
             } | {
                 /** @enum {string} */
@@ -5054,6 +5258,24 @@ export interface components {
                         /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                         didNotFinishPoints: number;
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
                 };
             } | {
                 /** @enum {string} */
@@ -5078,6 +5300,24 @@ export interface components {
                         pointsTable: number[];
                         /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                         didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
                     };
                 };
             };
@@ -5152,6 +5392,24 @@ export interface components {
                             /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                             didNotFinishPoints: number;
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
                     };
                 } | {
                     /** @enum {string} */
@@ -5177,6 +5435,24 @@ export interface components {
                             /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                             didNotFinishPoints: number;
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
                     };
                 } | {
                     /** @enum {string} */
@@ -5201,6 +5477,24 @@ export interface components {
                             pointsTable: number[];
                             /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                             didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
                         };
                     };
                 };
@@ -7787,6 +8081,24 @@ export interface components {
                         /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                         didNotFinishPoints: number;
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
                 };
             } | {
                 /** @enum {string} */
@@ -7812,6 +8124,24 @@ export interface components {
                         /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                         didNotFinishPoints: number;
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
                 };
             } | {
                 /** @enum {string} */
@@ -7836,6 +8166,24 @@ export interface components {
                         pointsTable: number[];
                         /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
                         didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
                     };
                 };
             };
@@ -8002,7 +8350,7 @@ export interface components {
             pickedAt: string;
         };
         /** @enum {string} */
-        ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS";
+        ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS";
         /** @description Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes. */
         ScoredContestEntryPickGolfDto: {
             /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
@@ -8038,6 +8386,19 @@ export interface components {
             race: {
                 /** @description The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its "did not finish" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official. */
                 points: number | null;
+            } | null;
+            /** @description Present for a head-to-head contest (a basketball bracket); null otherwise. */
+            knockout: {
+                /** @description The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result. */
+                points: number | null;
+                /** @description Matches the team has won. */
+                wins: number;
+                /** @description The part of the points that is upset bonus; 0 when the bonus is off. */
+                upsetBonusPoints: number;
+                /** @description False once the team has lost a match. */
+                isAlive: boolean;
+                /** @description The latest round the team has a match in; null when it is in none. */
+                roundReached: number | null;
             } | null;
         };
         /** @description One entry's standing in a contest leaderboard. Each pick's score lives in its sport's block. */
@@ -8096,6 +8457,19 @@ export interface components {
                     /** @description The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its "did not finish" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official. */
                     points: number | null;
                 } | null;
+                /** @description Present for a head-to-head contest (a basketball bracket); null otherwise. */
+                knockout: {
+                    /** @description The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result. */
+                    points: number | null;
+                    /** @description Matches the team has won. */
+                    wins: number;
+                    /** @description The part of the points that is upset bonus; 0 when the bonus is off. */
+                    upsetBonusPoints: number;
+                    /** @description False once the team has lost a match. */
+                    isAlive: boolean;
+                    /** @description The latest round the team has a match in; null when it is in none. */
+                    roundReached: number | null;
+                } | null;
             }[];
         };
         /** @description How an entry's picks combine into its total. */
@@ -8123,7 +8497,7 @@ export interface components {
              * @description The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
              * @enum {string}
              */
-            scoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS";
+            scoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS";
             /** @description How an entry's picks combine into its total. */
             countingRule: {
                 /**
@@ -8385,6 +8759,19 @@ export interface components {
                     race: {
                         /** @description The runner's points in this contest: the contest's points table at its finishing place (0 beyond the table), or its "did not finish" points when it did not finish, was disqualified, did not start or was scratched. Null until the race result is official. */
                         points: number | null;
+                    } | null;
+                    /** @description Present for a head-to-head contest (a basketball bracket); null otherwise. */
+                    knockout: {
+                        /** @description The team's points in this contest: each round it won a match in scores that round's value, plus the upset bonus when the contest has one on. Null until the bracket has a result. */
+                        points: number | null;
+                        /** @description Matches the team has won. */
+                        wins: number;
+                        /** @description The part of the points that is upset bonus; 0 when the bonus is off. */
+                        upsetBonusPoints: number;
+                        /** @description False once the team has lost a match. */
+                        isAlive: boolean;
+                        /** @description The latest round the team has a match in; null when it is in none. */
+                        roundReached: number | null;
                     } | null;
                 }[];
             }[];
@@ -10925,6 +11312,18 @@ export interface components {
              * @description The team that won the play-in game: an active participant of the event's sport not yet on the field.
              */
             participantId: string;
+        };
+        /** @description A match's result: who won, and both scores or neither. The winner's score must be the higher. */
+        RecordSportEventMatchResultRequest: {
+            /**
+             * @description The side that won.
+             * @enum {string}
+             */
+            winnerSide: "HOME" | "AWAY";
+            /** @description The home side's score (games won, for a series), or null with the away score null too. */
+            homeScore: number | null;
+            /** @description The away side's score, or null with the home score null too. */
+            awayScore: number | null;
         };
         /** @description Feed-aware event sync request. */
         EventSyncRequest: {
@@ -17790,6 +18189,155 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    recordEventMatchResult: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                matchNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordSportEventMatchResultRequest"];
+            };
+        };
+        responses: {
+            /** @description An event's bracket. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventBracketResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    clearEventMatchResult: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                matchNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description An event's bracket. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventBracketResponse"];
                 };
             };
             /** @description Standard API error envelope. */

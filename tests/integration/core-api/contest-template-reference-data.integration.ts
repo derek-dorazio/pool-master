@@ -24,8 +24,7 @@ import {
 // Formula 1 in #625) are checked value by value, and every sport's presets, golf and horse racing
 // included, against the rules contest creation holds them to. No mocks.
 
-// Only a sport with a scoring definition can host a contest, so only it is owed presets. Basketball
-// has none until knockout scoring lands, and contest creation refuses it meanwhile.
+// Only a sport with a scoring definition can host a contest, so only it is owed presets.
 const SCORED_SPORTS = SUPPORTED_SPORTS.filter((sport) => getSportDefinition(sport).scoringDefinitions.length > 0);
 
 beforeAll(async () => {
@@ -325,6 +324,61 @@ describe('Seeded running series and their Top 10 templates', () => {
       ['wmm-women-random-draw-top-10', 1, 1],
       ['wmm-women-tiered-top-10', 1, 4],
     ]);
+  });
+});
+
+// The NCAA tournaments' knockout presets (#699), checked value by value.
+const DOUBLING_ROUND_VALUES = [1, 2, 4, 8, 16, 32];
+
+describe('Seeded NCAA basketball leagues and their knockout templates', () => {
+  it('seeds both NCAA Division I leagues with a Doubling and a Doubling + upset bonus template for each selection type, the tiered Doubling one the default', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.BASKETBALL },
+      include: { sportLeague: { include: { sport: true } } },
+      orderBy: [{ templateKey: 'asc' }],
+    });
+
+    expect(templates.map((template) => [
+      template.sportLeague?.name,
+      template.templateKey,
+      template.selectionType,
+      template.isDefault,
+      template.active,
+    ])).toEqual([
+      ['NCAA Division I Men', 'ncaa-men-budget-doubling', SelectionType.BUDGET_PICK, false, true],
+      ['NCAA Division I Men', 'ncaa-men-budget-doubling-upset-bonus', SelectionType.BUDGET_PICK, false, true],
+      ['NCAA Division I Men', 'ncaa-men-random-draw-doubling', SelectionType.RANDOM_DRAW, false, true],
+      ['NCAA Division I Men', 'ncaa-men-random-draw-doubling-upset-bonus', SelectionType.RANDOM_DRAW, false, true],
+      ['NCAA Division I Men', 'ncaa-men-tiered-doubling', SelectionType.TIERED, true, true],
+      ['NCAA Division I Men', 'ncaa-men-tiered-doubling-upset-bonus', SelectionType.TIERED, false, true],
+      ['NCAA Division I Women', 'ncaa-women-budget-doubling', SelectionType.BUDGET_PICK, false, true],
+      ['NCAA Division I Women', 'ncaa-women-budget-doubling-upset-bonus', SelectionType.BUDGET_PICK, false, true],
+      ['NCAA Division I Women', 'ncaa-women-random-draw-doubling', SelectionType.RANDOM_DRAW, false, true],
+      ['NCAA Division I Women', 'ncaa-women-random-draw-doubling-upset-bonus', SelectionType.RANDOM_DRAW, false, true],
+      ['NCAA Division I Women', 'ncaa-women-tiered-doubling', SelectionType.TIERED, true, true],
+      ['NCAA Division I Women', 'ncaa-women-tiered-doubling-upset-bonus', SelectionType.TIERED, false, true],
+    ]);
+    expect(new Set(templates.map((template) => template.sportLeague?.sport.sport))).toEqual(new Set([Sport.BASKETBALL]));
+  });
+
+  it('presets round values 1, 2, 4, 8, 16 and 32, with no upset bonus on Doubling and the seed difference times 1 on Doubling + upset bonus', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sport: Sport.BASKETBALL } });
+
+    expect(templates).toHaveLength(12);
+    for (const template of templates) {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      expect(rules.selectionType).toBe(template.selectionType);
+      expect(rules.maxEntriesPerSquad).toBe(1);
+      expect(rules.scoring).toEqual({
+        participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+        config: {
+          roundValues: DOUBLING_ROUND_VALUES,
+          upsetBonus: template.templateKey.endsWith('-upset-bonus')
+            ? { rule: 'SEED_DIFFERENCE', multiplier: 1 }
+            : { rule: 'NONE' },
+        },
+      });
+    }
   });
 });
 

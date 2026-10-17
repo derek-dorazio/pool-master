@@ -631,6 +631,44 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     handler: handler.updateEventBracketMatch,
   });
 
+  const MATCH_PARAMS = {
+    type: 'object',
+    required: ['eventId', 'matchNumber'],
+    properties: { eventId: uuid, matchNumber: { type: 'integer', minimum: 1 } },
+  } as const;
+  const MATCH_RESULT_LOCKED = '409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result: clear that result first.';
+
+  fastify.put('/:eventId/bracket/matches/:matchNumber/result', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Enter a match\'s result',
+      description: 'Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team\'s event standing from the bracket (the champion 1, a team that lost ELIMINATED). '
+        + 'Re-sending a match\'s result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. '
+        + '422 MATCH_RESULT_INVALID for one score without the other, or a winner without the higher score. '
+        + `${MATCH_RESULT_LOCKED} 422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
+      operationId: 'recordEventMatchResult',
+      params: MATCH_PARAMS,
+      body: schemaRef('RecordSportEventMatchResultRequest'),
+      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+    },
+    handler: handler.recordEventMatchResult,
+  });
+
+  fastify.delete('/:eventId/bracket/matches/:matchNumber/result', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Clear a match\'s result',
+      description: 'The match is scheduled again, the side its winner filled is emptied and the standings are rewritten. Clearing a match with no result changes nothing. '
+        + `409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. ${MATCH_RESULT_LOCKED} 422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
+      operationId: 'clearEventMatchResult',
+      params: MATCH_PARAMS,
+      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.clearEventMatchResult,
+  });
+
   fastify.put('/:eventId/participants/:sportEventParticipantId/play-in-winner', {
     ...write,
     schema: {

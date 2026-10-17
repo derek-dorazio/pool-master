@@ -1,11 +1,13 @@
 import {
   FinishPositionPointsSettingsSchema,
+  KnockoutRoundPointsSettingsSchema,
+  UpsetBonusRule,
   type ContestScoringSettings,
   type ParticipantScoringDefinitionId,
   type SportVocabulary,
 } from '@poolmaster/shared/domain';
 import type { ReactElement } from 'react';
-import { FinishPositionPointsFields } from './contest-scoring-settings-fields';
+import { FinishPositionPointsFields, KnockoutRoundPointsFields } from './contest-scoring-settings-fields';
 
 /**
  * A contest's scoring settings as Create contest holds them: text from the inputs. Only the
@@ -17,12 +19,21 @@ export type ScoringSettingsValues = {
   pointsTable: string;
   /** What a finish-position runner that does not finish scores. */
   didNotFinishPoints: string;
+  /** A knockout contest's points for a win in each round, first round first: "1, 2, 4, 8". */
+  roundValues: string;
+  /** Whether a knockout win by the worse seed adds the seed difference. */
+  upsetBonusRule: UpsetBonusRule;
+  /** What the seed difference is multiplied by when the upset bonus is on. */
+  upsetBonusMultiplier: string;
 };
 
 /** Before a preset fills them: blank, so nothing is sent that the commissioner did not see. */
 export const EMPTY_SCORING_SETTINGS_VALUES: ScoringSettingsValues = {
   pointsTable: '',
   didNotFinishPoints: '',
+  roundValues: '',
+  upsetBonusRule: UpsetBonusRule.NONE,
+  upsetBonusMultiplier: '1',
 };
 
 type ScoringSettingsResult =
@@ -97,6 +108,65 @@ const finishPositionPointsUi: ScoringSettingsUi = {
     : null),
 };
 
+/** A whole number of 1 or more, or NaN for a blank or anything else. */
+function parseMultiplier(text: string): number {
+  const trimmed = text.trim();
+  return trimmed === '' ? Number.NaN : Number(trimmed);
+}
+
+const knockoutRoundPointsUi: ScoringSettingsUi = {
+  Fields: KnockoutRoundPointsFields,
+  toValues: (scoring, current) => (scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS'
+    ? {
+      ...current,
+      roundValues: scoring.config.roundValues.join(', '),
+      upsetBonusRule: scoring.config.upsetBonus.rule,
+      upsetBonusMultiplier: scoring.config.upsetBonus.rule === UpsetBonusRule.SEED_DIFFERENCE
+        ? String(scoring.config.upsetBonus.multiplier)
+        : current.upsetBonusMultiplier,
+    }
+    : current),
+  parse: (values) => {
+    const roundValues = parsePointsTable(values.roundValues);
+    if (roundValues === null) {
+      return { scoring: null, error: 'Enter the points for a win in each round as whole numbers, first round first, such as 1, 2, 4, 8.' };
+    }
+    const upsetBonus = values.upsetBonusRule === UpsetBonusRule.SEED_DIFFERENCE
+      ? { rule: UpsetBonusRule.SEED_DIFFERENCE, multiplier: parseMultiplier(values.upsetBonusMultiplier) }
+      : { rule: UpsetBonusRule.NONE };
+    // The shared schema is the server's own check: its message is the one the form shows.
+    const parsed = KnockoutRoundPointsSettingsSchema.safeParse({ roundValues, upsetBonus });
+    if (!parsed.success) {
+      const issue = parsed.error.issues.at(0);
+      return {
+        scoring: null,
+        error: issue?.path.at(0) === 'upsetBonus'
+          ? 'The upset bonus multiplier must be a whole number, 1 or more.'
+          : issue?.message ?? 'The round points are not valid.',
+      };
+    }
+    return {
+      scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: parsed.data },
+      error: null,
+    };
+  },
+  describe: (scoring) => {
+    if (scoring?.participantScoringDefinitionId !== 'KNOCKOUT_ROUND_POINTS') {
+      return null;
+    }
+    const { roundValues, upsetBonus } = scoring.config;
+    const perRound = `Points for a win in each round: ${roundValues.join(', ')}.`;
+    switch (upsetBonus.rule) {
+      case UpsetBonusRule.NONE:
+        return perRound;
+      case UpsetBonusRule.SEED_DIFFERENCE:
+        return upsetBonus.multiplier === 1
+          ? `${perRound} A win over a better seed adds the seed difference.`
+          : `${perRound} A win over a better seed adds the seed difference times ${upsetBonus.multiplier}.`;
+    }
+  },
+};
+
 /** Golf's total against par takes no settings: nothing to show, nothing to send. */
 const noSettingsUi: ScoringSettingsUi = {
   Fields: null,
@@ -114,4 +184,5 @@ const noSettingsUi: ScoringSettingsUi = {
 export const SCORING_SETTINGS_UI: Readonly<Record<ParticipantScoringDefinitionId, ScoringSettingsUi>> = {
   GOLF_RELATIVE_TO_PAR_TOTAL: noSettingsUi,
   FINISH_POSITION_POINTS: finishPositionPointsUi,
+  KNOCKOUT_ROUND_POINTS: knockoutRoundPointsUi,
 };

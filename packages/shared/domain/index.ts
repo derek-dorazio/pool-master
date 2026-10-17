@@ -17,16 +17,21 @@ export {
   FINISH_POSITION_POINTS_TABLE_MAX_PLACES,
   FinishPositionPointsSettingsSchema,
   isRoundComplete,
+  KNOCKOUT_ROUND_VALUES_MAX_ROUNDS,
+  KnockoutRoundPointsSettingsSchema,
   PARTICIPANT_SCORING_DEFINITIONS,
   PARTICIPANT_SCORING_SETTINGS_SCHEMAS,
   ParticipantScoringDefinitionIdSchema,
   parseContestScoringSettings,
   rankSortedScores,
+  UpsetBonusRule,
+  UpsetBonusSchema,
 } from './contest-scoring';
 export type {
   ContestScoringSettings,
   ContestScoringSettingsParse,
   FinishPositionPointsSettings,
+  KnockoutRoundPointsSettings,
   ParticipantScoringSettings,
   ParticipantScoringDefinition,
   ParticipantRoundScore,
@@ -34,6 +39,7 @@ export type {
   ScoreDirection,
   ScoreRank,
   ScoreUnit,
+  UpsetBonus,
 } from './contest-scoring';
 export type {
   ContestConfigTemplate,
