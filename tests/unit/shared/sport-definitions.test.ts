@@ -250,6 +250,10 @@ describe('basketball', () => {
     ]);
   });
 
+  it('calls a stored round past the event\'s round count Round N, never a name counted from the final', () => {
+    expect(basketball.roundLabel(7, 6)).toBe('Round 7');
+  });
+
   it('calls a participant a team and the moment entries close the opening tip-off', () => {
     expect(basketball.vocabulary.participant).toEqual({ one: 'team', many: 'teams' });
     expect(basketball.vocabulary.eventStart).toBe('opening tip-off');
