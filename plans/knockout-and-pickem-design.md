@@ -69,6 +69,7 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 | `SportEventMatch` | One match in one round of one event | An event-owned child, like `SportEventRound` and `SportEventTier`. Prefixed because bare "match" already means provider matching (`SportLeague.matchKeyword`, participant mapping confidence) |
 | `ContestEntryMatchPrediction` | One pick'em prediction on one match | `ContestEntry<Thing>`, like `ContestEntryPick` and `ContestEntryStanding` |
 | `ContestSportEvent` | One event a contest covers, in order (Q5.2) | A join named for its two ends, like `SportEventParticipant` |
+| `ContestEntryEvent` | An entry's draft/submitted status for one event of its contest (Q5.4) | `ContestEntry` narrowed to an event; takes over `ContestEntry.status` |
 | `ContestEntryEventStanding` | An entry's points and position for one event of a multi-event contest (a pick'em week, one major) | `ContestEntryStanding` narrowed to an event. Replaces the per-round standing proposed earlier (Q5.2) |
 
 **Columns**
@@ -955,25 +956,31 @@ against-the-spread pick is still "this team covers". One rule serves every forma
 (`plans/pickem-pools.md` Q3.1 already chose a new table over extending `ContestEntryPick`; this
 keeps that.)
 
-**Q5.4 Entry status for pick'em.** Entries are `DRAFT` until submitted, and only `SUBMITTED`
-entries count. *Recommendation:* pick'em and survivor entries are created `SUBMITTED` (each pick
-saves on its own, and the round screen shows "6 of 14 picked"); bracket entries keep the draft
-and submit flow, refused until every game is picked. *Rationale:* a season-long pool has no
-moment at which a lineup is "complete", while a bracket does.
+**Q5.4 Entry status for pick'em.** *Decided by Derek 2026-10-17:* every entry, in every
+contest, keeps today's draft and submit flow. An entry is `DRAFT` until submitted, and picks
+can be changed until the start. A change that leaves picks missing sends it back to `DRAFT`, and
+only submitted picks count. Nobody else sees an entry's picks before the start (picks are
+revealed when the event goes `IN_PROGRESS`, as today). In a multi-event contest the status is
+**per event**: "submit week 6", "submit your Masters picks". So it moves from `ContestEntry`
+to a new `ContestEntryEvent` row (entry, event, status, submittedAt), one per event the entry
+plays. A single-event contest has one row. Added to #713. In pick'em each pick also locks at its
+own game's kickoff. A week not submitted before its first kickoff doesn't count, as a golf
+draft left at tee-off doesn't, and the week screen warns before the first game.
 
-**Q5.5 What does `ACTIVE` mean for a pick'em contest?** *Recommendation:* the same statuses
-for every contest; for pick'em, `ACTIVE` keeps accepting picks on matches not yet started,
-because the engine's lock scope says so. `rules/domain-model-concepts.md` §4 is updated when
-this is built. *Rationale:* a second status set would ripple through every contest screen
-(same as `plans/pickem-pools.md` Q3.2).
+**Q5.5 What does `ACTIVE` mean for a pick'em contest?** *Decided by Derek 2026-10-17:* every
+week is its own mini workflow. Its event is set up, released, picked and submitted, then goes
+live and settles. The contest keeps the same four statuses as every contest. It is `ACTIVE`
+from the first event's start to the last event's settlement, and what can be picked is decided
+by each event's own status, not the contest's. No second status set is needed.
+`rules/domain-model-concepts.md` §4 is updated when #713 builds it.
 
-**Q5.6 Late joiners.** *Recommendation:* allow entering a pick'em contest while it is `ACTIVE`,
-scoring zero for rounds already played, with a commissioner switch to close joining.
-*Rationale:* season pools routinely take people in week 3 (same as `plans/pickem-pools.md`
-Q3.3).
+**Q5.6 Late joiners.** *Decided by Derek 2026-10-17 (whichever is easiest):* no late joining.
+New entries are refused once the contest is `ACTIVE` (its first event has started), which is
+today's rule for every contest, so nothing new is built. A "join after the start" option can
+come later if leagues ask.
 
 **Q5.7 Bracket regions.** March Madness brackets are drawn in four named regions.
-*Recommendation:* a short display label on the match (`regionLabel`), added with the bracket
+*Decided by Derek 2026-10-17:* a short display label on the match (`regionLabel`), added with the bracket
 selection type. *Rationale:* regions only group matches on screen; the links between matches
 already define the structure.
 
@@ -1040,7 +1047,13 @@ classDiagram
     ContestSelectionConfig  + pick'em, survivor, bracket arms
   }
   class ContestEntry {
+    <<changed>>
+    status moves to ContestEntryEvent
+  }
+  class ContestEntryEvent {
+    <<new>>
     ContestEntryStatus status
+    DateTime submittedAt
   }
   class ContestEntryPick
   class ContestEntryMatchPrediction {
@@ -1087,6 +1100,8 @@ classDiagram
   ContestEntryMatchPrediction "*" --> "1" SportEventMatch : predicts
   ContestEntryMatchPrediction "*" --> "0..1" SportEventParticipant : predicted winner
   ContestEntry "1" --> "0..1" ContestEntryStanding : contest total
+  ContestEntry "1" --> "1..*" ContestEntryEvent : per event status
+  ContestEntryEvent "*" --> "1" SportEvent
   ContestEntry "1" --> "*" ContestEntryEventStanding : per event
   ContestEntryEventStanding "*" --> "1" SportEvent
   Contest "1" --> "1..*" ContestSportEvent
@@ -1100,6 +1115,8 @@ classDiagram
   style ContestEntryMatchPrediction fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style ContestEntryEventStanding fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style ContestSportEvent fill:#fff3c4,stroke:#c99a00,stroke-width:2px
+  style ContestEntryEvent fill:#fff3c4,stroke:#c99a00,stroke-width:2px
+  style ContestEntry fill:#e3f0ff,stroke:#3b78c4
   style SportEventRoundStatus fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style SportEventRound fill:#e3f0ff,stroke:#3b78c4
   style SportEventMatch fill:#e3f0ff,stroke:#3b78c4
