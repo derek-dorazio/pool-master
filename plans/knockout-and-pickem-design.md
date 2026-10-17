@@ -873,7 +873,7 @@ score depends on the prediction (the side, the confidence weight, the spread), n
 member alone.
 
 **Q5.1 How does the system tell roster contests from pick'em contests?**
-*Recommendation:* add `ContestFormat.PREDICTION`. A contest's format decides how entries are
+*Decided by Derek 2026-10-17:* add `ContestFormat.PREDICTION`. A contest's format decides how entries are
 scored: `ROSTER` asks the sport's scoring family to score the field and sums each entry's best
 picks (today's path); `PREDICTION` scores each entry's match picks against match results.
 *Rationale:* `ContestFormat` exists for exactly this distinction (its validity matrix against
