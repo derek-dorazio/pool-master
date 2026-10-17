@@ -8,7 +8,7 @@ import { MatchSide, MatchStatus } from '@poolmaster/shared/domain';
 import { registerSchema } from './schema-registry';
 
 /** The most matches one bracket holds: a 128-place draw has 127. */
-export const BRACKET_MATCHES_MAX = 255;
+export const BRACKET_MATCHES_MAX = 127;
 
 export const MatchStatusDtoSchema = z.nativeEnum(MatchStatus).describe('Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.');
 export const MatchSideDtoSchema = z.nativeEnum(MatchSide).describe('One side of a match. On a neutral site HOME is the upper line of the bracket.');

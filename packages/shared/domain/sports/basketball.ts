@@ -42,6 +42,9 @@ export const basketballSportDefinition: SportDefinition = {
   // National Championship; a shorter one keeps the names counted back from its final.
   roundLabel: (roundNumber, roundCount) => {
     const fromFinal = roundCount - roundNumber;
-    return ROUND_NAMES_FROM_FINAL.at(fromFinal) ?? OPENING_ROUND_NAMES.at(roundNumber - 1) ?? `Round ${roundNumber}`;
+    // A stored round past the count (the count was lowered) has no name from the final: `at` would
+    // read a negative index from the end.
+    const fromFinalName = fromFinal >= 0 ? ROUND_NAMES_FROM_FINAL.at(fromFinal) : undefined;
+    return fromFinalName ?? OPENING_ROUND_NAMES.at(roundNumber - 1) ?? `Round ${roundNumber}`;
   },
 };

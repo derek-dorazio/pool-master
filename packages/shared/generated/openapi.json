@@ -23844,7 +23844,7 @@
               "description": "One match of a bracket being loaded. A team placed straight into a later round (a bye) is named on that match's side."
             },
             "minItems": 1,
-            "maxItems": 255
+            "maxItems": 127
           }
         },
         "required": [
