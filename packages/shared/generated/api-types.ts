@@ -7328,6 +7328,8 @@ export interface components {
             ranking: number | null;
             oddsToWin: number | null;
             seedNumber: number | null;
+            /** @description Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket. */
+            isPlayInPlace: boolean;
             /** @description The canonical participant. */
             participant: {
                 /** @description Participant identifier. */
@@ -7526,6 +7528,8 @@ export interface components {
                 ranking: number | null;
                 oddsToWin: number | null;
                 seedNumber: number | null;
+                /** @description Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket. */
+                isPlayInPlace: boolean;
                 /** @description The canonical participant. */
                 participant: {
                     /** @description Participant identifier. */
@@ -7737,6 +7741,8 @@ export interface components {
                 seedNumber?: number | null;
                 /** @description A manual price; null clears it. */
                 price?: number | null;
+                /** @description Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release. */
+                isPlayInPlace?: boolean;
             }[];
         };
         /** @description One field row. */
@@ -7763,6 +7769,8 @@ export interface components {
                 ranking: number | null;
                 oddsToWin: number | null;
                 seedNumber: number | null;
+                /** @description Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket. */
+                isPlayInPlace: boolean;
                 /** @description The canonical participant. */
                 participant: {
                     /** @description Participant identifier. */
@@ -8526,6 +8534,8 @@ export interface components {
                 ranking: number | null;
                 oddsToWin: number | null;
                 seedNumber: number | null;
+                /** @description Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket. */
+                isPlayInPlace: boolean;
                 /** @description The canonical participant. */
                 participant: {
                     /** @description Participant identifier. */

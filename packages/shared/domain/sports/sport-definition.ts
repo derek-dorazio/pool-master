@@ -45,6 +45,11 @@ export interface SportVocabulary {
    * "Win / Place / Show" for horse racing. Absent for a sport with no such name.
    */
   topPlaces?: string;
+  /**
+   * One head-to-head match of the event's bracket: "game" / "games" for basketball. Absent for a
+   * sport that plays no bracket; a bracket screen of a sport without one says "match".
+   */
+  match?: SportNoun;
 }
 
 /** How a new event's pick tiers are laid out before an admin edits them. */

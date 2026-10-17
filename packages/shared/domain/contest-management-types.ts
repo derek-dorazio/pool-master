@@ -74,6 +74,8 @@ export interface SportEventParticipant extends DomainEntity {
   oddsToWin?: number;
   /** Event-relative seed number (e.g., NCAA tournament seed). */
   seedNumber?: number;
+  /** A bracket place standing for a play-in pairing until its winner fills it (#709). */
+  isPlayInPlace: boolean;
   metadata: Record<string, unknown>;
 }
 

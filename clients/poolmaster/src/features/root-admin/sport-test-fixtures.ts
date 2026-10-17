@@ -92,6 +92,7 @@ export function fieldEntryFixture(
     ranking: null,
     oddsToWin: null,
     seedNumber: null,
+    isPlayInPlace: false,
     participant: participantFixture({ id: participantId }),
     valuation: null,
     standing: null,

@@ -251,17 +251,17 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
   function withPlayInPlace() {
     const context = setup({ status: SportEventStatus.SCHEDULED });
     const pairing = context.store.addParticipant(context.sportRow.id, 'Texas / Xavier', { participantType: 'TEAM' });
-    const slot = context.store.addToField(context.event.id, pairing.id, { seedNumber: 11 });
+    const slot = context.store.addToField(context.event.id, pairing.id, { seedNumber: 11, isPlayInPlace: true });
     const xavier = context.store.addParticipant(context.sportRow.id, 'Xavier', { participantType: 'TEAM' });
     return { ...context, pairing, slot, xavier };
   }
 
-  it('points the play-in place at the winning team, keeping the row and its seed, and inactivates the pairing', async () => {
+  it('points the play-in place at the winning team, keeping the row and its seed, inactivates the pairing and leaves the row a play-in place no more', async () => {
     const { service, store, event, pairing, slot, xavier } = withPlayInPlace();
 
     await service.fillPlayInSlot(event.id, slot.id, xavier.id);
 
-    expect(store.field.find((entry) => entry.id === slot.id)).toMatchObject({ participantId: xavier.id, seedNumber: 11 });
+    expect(store.field.find((entry) => entry.id === slot.id)).toMatchObject({ participantId: xavier.id, seedNumber: 11, isPlayInPlace: false });
     expect(store.participants.find((participant) => participant.id === pairing.id)?.status).toBe(ParticipantStatus.INACTIVE);
   });
 
@@ -280,6 +280,15 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
 
     await expect(service.fillPlayInSlot(event.id, slot.id, golfer.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
     await expect(service.fillPlayInSlot(event.id, slot.id, retired.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND' });
+  });
+
+  it('refuses (409 EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE) a row that is not a play-in place, leaving the team and its participant alone', async () => {
+    const { service, store, event, duke, xavier } = withPlayInPlace();
+
+    await expect(service.fillPlayInSlot(event.id, duke.id, xavier.id))
+      .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE', statusCode: 409 });
+    expect(store.field.find((entry) => entry.id === duke.id)?.participantId).toBe(duke.participantId);
+    expect(store.participants.find((participant) => participant.id === duke.participantId)?.status).toBe(ParticipantStatus.ACTIVE);
   });
 
   it('refuses (404 EVENT_PARTICIPANT_NOT_FOUND) a field row of another event', async () => {

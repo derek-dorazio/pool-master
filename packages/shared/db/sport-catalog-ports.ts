@@ -184,6 +184,7 @@ export interface SportEventParticipantPatch {
   ranking?: number | null;
   oddsToWin?: number | null;
   seedNumber?: number | null;
+  isPlayInPlace?: boolean;
 }
 
 export type SportEventParticipantCreate = SportEventParticipantPatch & { participantId: string };
@@ -210,7 +211,7 @@ export interface SportEventParticipantRepository {
   /**
    * Points a play-in slot's field row at the team that won the play-in and inactivates the
    * participant that stood for the pairing, in one transaction (#698). The row keeps its seed,
-   * tier, price and picks.
+   * tier, price and picks, and is no longer a play-in place (#709).
    */
   fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }): Promise<void>;
 }

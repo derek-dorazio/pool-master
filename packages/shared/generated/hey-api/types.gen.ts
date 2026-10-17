@@ -6546,6 +6546,10 @@ export type SportEventParticipantDto = {
     oddsToWin: number | null;
     seedNumber: number | null;
     /**
+     * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
+     */
+    isPlayInPlace: boolean;
+    /**
      * The canonical participant.
      */
     participant: {
@@ -6790,6 +6794,10 @@ export type SportEventParticipantListResponse = {
         ranking: number | null;
         oddsToWin: number | null;
         seedNumber: number | null;
+        /**
+         * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
+         */
+        isPlayInPlace: boolean;
         /**
          * The canonical participant.
          */
@@ -7065,6 +7073,10 @@ export type UpdateSportEventParticipantsRequest = {
          * A manual price; null clears it.
          */
         price?: number | null;
+        /**
+         * Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release.
+         */
+        isPlayInPlace?: boolean;
     }>;
 };
 
@@ -7096,6 +7108,10 @@ export type SportEventParticipantResponse = {
         ranking: number | null;
         oddsToWin: number | null;
         seedNumber: number | null;
+        /**
+         * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
+         */
+        isPlayInPlace: boolean;
         /**
          * The canonical participant.
          */
@@ -8124,6 +8140,10 @@ export type ContestLeaderboardResponse = {
         ranking: number | null;
         oddsToWin: number | null;
         seedNumber: number | null;
+        /**
+         * Whether this bracket place stands for a play-in pairing ("Texas / Xavier") still to be filled with its winner. Always false on an event that plays no bracket.
+         */
+        isPlayInPlace: boolean;
         /**
          * The canonical participant.
          */

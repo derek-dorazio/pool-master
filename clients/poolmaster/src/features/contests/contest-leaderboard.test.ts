@@ -60,6 +60,7 @@ function participantFixture(
     ranking: null,
     oddsToWin: null,
     seedNumber: null,
+    isPlayInPlace: false,
     participant: {
       id: `participant-${overrides.id}`,
       sportId: 'sport-golf',

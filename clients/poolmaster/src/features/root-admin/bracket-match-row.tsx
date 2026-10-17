@@ -1,0 +1,259 @@
+import { useState } from 'react';
+import { MatchSide, MatchStatus, type SportVocabulary } from '@poolmaster/shared/domain';
+import { clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
+import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
+import { Button, formatDateTimeDisplay, Select, StatusBadge } from '@/features/shared/ui';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { getLogger } from '@/lib/logger';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { QueryKeys } from '@/lib/query-keys';
+import { bracketErrorMessages, describeEntry, feederOf, matchNoun, sideEntry } from './bracket-copy';
+
+const logger = getLogger().child({ feature: 'root-admin-bracket' });
+
+const MATCH_STATUS_LABEL: Record<MatchStatus, string> = {
+  [MatchStatus.SCHEDULED]: 'Scheduled',
+  [MatchStatus.IN_PROGRESS]: 'In progress',
+  [MatchStatus.COMPLETED]: 'Final',
+  [MatchStatus.CANCELLED]: 'Cancelled',
+};
+
+const MATCH_STATUS_TONE: Record<MatchStatus, 'neutral' | 'active' | 'final' | 'warning'> = {
+  [MatchStatus.SCHEDULED]: 'neutral',
+  [MatchStatus.IN_PROGRESS]: 'active',
+  [MatchStatus.COMPLETED]: 'final',
+  [MatchStatus.CANCELLED]: 'warning',
+};
+
+/** The select's value for a side left without a team. */
+const NO_TEAM = '';
+
+export type BracketContext = {
+  eventId: string;
+  vocabulary: SportVocabulary;
+  bracket: readonly SportEventMatchDto[];
+  field: readonly SportEventParticipantDto[];
+  fieldById: ReadonlyMap<string, SportEventParticipantDto>;
+};
+
+/** A side's team, with its seed, or who fills it while that is still to be decided. */
+function describeSide(match: SportEventMatchDto, side: MatchSide, context: BracketContext): string {
+  const entry = sideEntry(match, side, context.fieldById);
+  if (entry) {
+    return describeEntry(entry);
+  }
+  const feeder = feederOf(match, side, context.bracket);
+  return feeder ? `Winner of ${matchNoun(context.vocabulary).one} ${feeder.matchNumber}` : 'To be decided';
+}
+
+/** "Duke vs Vermont" on a neutral site, "Bills @ Chiefs" otherwise. */
+function describePairing(match: SportEventMatchDto, context: BracketContext): string {
+  const home = describeSide(match, MatchSide.HOME, context);
+  const away = describeSide(match, MatchSide.AWAY, context);
+  return match.isNeutralSite ? `${home} vs ${away}` : `${away} @ ${home}`;
+}
+
+/**
+ * The bracket and its field change together: a result moves its winner on and rewrites
+ * standings. The event's key prefixes its bracket and field keys, so it refreshes all three.
+ */
+function bracketInvalidates(eventId: string) {
+  return [QueryKeys.rootAdmin.manageSport.event(eventId)];
+}
+
+/**
+ * One match of the bracket tab (#700). Before release an admin edits the pairing of any side no
+ * earlier match fills; once the event is released one tap names the winner, and a final result
+ * can be switched or cleared while the next match has none.
+ */
+export function BracketMatchRow({ match, released, context }: { match: SportEventMatchDto; released: boolean; context: BracketContext }) {
+  const [editing, setEditing] = useState(false);
+  const noun = matchNoun(context.vocabulary);
+  const errorCopy = bracketErrorMessages(context.vocabulary, match, context.bracket);
+
+  const result = useInvalidatingMutation({
+    mutationFn: async (winnerSide: MatchSide | null) => {
+      const path = { eventId: context.eventId, matchNumber: match.matchNumber };
+      const response = winnerSide === null
+        ? await clearEventMatchResult({ path })
+        : await recordEventMatchResult({ path, body: { winnerSide, homeScore: null, awayScore: null } });
+      if (response.error) {
+        throwApiError(response.error);
+      }
+      return response.data;
+    },
+    invalidates: bracketInvalidates(context.eventId),
+    onError: (error, winnerSide) => {
+      logger.warn({ action: 'event.bracket.result.failed', data: { matchNumber: match.matchNumber, winnerSide }, err: error }, 'Match result was rejected');
+    },
+  });
+
+  const home = sideEntry(match, MatchSide.HOME, context.fieldById);
+  const away = sideEntry(match, MatchSide.AWAY, context.fieldById);
+  const decided = match.status === MatchStatus.COMPLETED;
+  const homeFed = feederOf(match, MatchSide.HOME, context.bracket) !== undefined;
+  const awayFed = feederOf(match, MatchSide.AWAY, context.bracket) !== undefined;
+  const pairingEditable = !released && !(homeFed && awayFed);
+
+  return (
+    <tr className="border-t border-border align-top" data-testid={`root-admin-bracket-match-${match.matchNumber}`}>
+      <td className="px-4 py-2 font-medium">{match.matchNumber}</td>
+      <td className="px-4 py-2" data-testid={`root-admin-bracket-pairing-${match.matchNumber}`}>
+        {editing ? (
+          <PairingEditor context={context} homeFed={homeFed} awayFed={awayFed} match={match} onDone={() => setEditing(false)} />
+        ) : describePairing(match, context)}
+      </td>
+      <td className="px-4 py-2 text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, 'To be announced')}</td>
+      <td className="px-4 py-2">
+        <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{MATCH_STATUS_LABEL[match.status]}</StatusBadge>
+      </td>
+      <td className="px-4 py-2">
+        {pairingEditable && !editing ? (
+          <Button data-testid={`root-admin-bracket-edit-${match.matchNumber}`} onClick={() => setEditing(true)} size="sm" variant="secondary">
+            Edit pairing
+          </Button>
+        ) : null}
+        {released && home && away && match.status !== MatchStatus.CANCELLED ? (
+          <div className="flex flex-wrap gap-2">
+            {([[MatchSide.HOME, home], [MatchSide.AWAY, away]] as const).map(([side, entry]) => {
+              const won = decided && match.winnerSide === side;
+              return (
+                <Button
+                  aria-pressed={won}
+                  data-testid={`root-admin-bracket-winner-${match.matchNumber}-${side}`}
+                  disabled={won || result.isPending}
+                  key={side}
+                  onClick={() => result.mutate(side)}
+                  size="sm"
+                  variant={won ? 'primary' : 'secondary'}
+                >
+                  {won ? `${entry.participant.name} won` : `${entry.participant.name} wins`}
+                </Button>
+              );
+            })}
+            {decided ? (
+              <Button
+                data-testid={`root-admin-bracket-clear-${match.matchNumber}`}
+                disabled={result.isPending}
+                onClick={() => result.mutate(null)}
+                size="sm"
+                variant="ghost"
+              >
+                Clear result
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+        {released && (!home || !away) ? (
+          <p className="text-sm text-muted-foreground">{`Waiting on both ${context.vocabulary.participant.many}`}</p>
+        ) : null}
+        {result.isError ? (
+          <p className="mt-2 text-sm text-destructive" data-testid={`root-admin-bracket-error-${match.matchNumber}`} role="alert">
+            {extractErrorMessage(result.error, { codeMessages: errorCopy, fallback: `This ${noun.one}'s result could not be saved. Try again.` })}
+          </p>
+        ) : null}
+      </td>
+    </tr>
+  );
+}
+
+/**
+ * A draft match's two sides as selects of the field. A side an earlier match fills stays as it
+ * is; a team already placed in another match is not offered, so moving one frees its side first.
+ */
+function PairingEditor({
+  match,
+  homeFed,
+  awayFed,
+  context,
+  onDone,
+}: {
+  match: SportEventMatchDto;
+  homeFed: boolean;
+  awayFed: boolean;
+  context: BracketContext;
+  onDone: () => void;
+}) {
+  const [homeId, setHomeId] = useState(match.homeSportEventParticipantId ?? NO_TEAM);
+  const [awayId, setAwayId] = useState(match.awaySportEventParticipantId ?? NO_TEAM);
+  const noun = matchNoun(context.vocabulary);
+  const team = context.vocabulary.participant;
+
+  const placedElsewhere = new Set(context.bracket
+    .filter((other) => other.id !== match.id)
+    .flatMap((other) => [other.homeSportEventParticipantId, other.awaySportEventParticipantId])
+    .filter((id): id is string => id !== null));
+  const options = context.field.filter((entry) => entry.isActive && !placedElsewhere.has(entry.id));
+
+  const save = useInvalidatingMutation({
+    mutationFn: async () => {
+      const response = await updateEventBracketMatch({
+        path: { eventId: context.eventId, matchNumber: match.matchNumber },
+        body: {
+          ...(homeFed ? {} : { homeSportEventParticipantId: homeId === NO_TEAM ? null : homeId }),
+          ...(awayFed ? {} : { awaySportEventParticipantId: awayId === NO_TEAM ? null : awayId }),
+        },
+      });
+      if (response.error) {
+        throwApiError(response.error);
+      }
+      return response.data;
+    },
+    invalidates: bracketInvalidates(context.eventId),
+    onSuccess: onDone,
+    onError: (error) => {
+      logger.warn({ action: 'event.bracket.pairing.failed', data: { matchNumber: match.matchNumber }, err: error }, 'Pairing edit was rejected');
+    },
+  });
+
+  function sideSelect(side: MatchSide, value: string, onChange: (next: string) => void) {
+    // A neutral-site pairing reads "home vs away", so its sides are simply first and second.
+    const label = match.isNeutralSite
+      ? `${side === MatchSide.HOME ? 'First' : 'Second'} ${team.one}`
+      : `${side === MatchSide.HOME ? 'Home' : 'Away'} ${team.one}`;
+    return (
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        {label}
+        <Select
+          data-testid={`root-admin-bracket-side-${match.matchNumber}-${side}`}
+          onChange={(change) => onChange(change.target.value)}
+          value={value}
+        >
+          <option value={NO_TEAM}>{`No ${team.one} yet`}</option>
+          {options.map((entry) => (
+            <option key={entry.id} value={entry.id}>{describeEntry(entry)}</option>
+          ))}
+        </Select>
+      </label>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {homeFed ? <p className="text-sm">{describeSide(match, MatchSide.HOME, context)}</p> : sideSelect(MatchSide.HOME, homeId, setHomeId)}
+      {awayFed ? <p className="text-sm">{describeSide(match, MatchSide.AWAY, context)}</p> : sideSelect(MatchSide.AWAY, awayId, setAwayId)}
+      <div className="flex gap-2">
+        <Button
+          data-testid={`root-admin-bracket-save-${match.matchNumber}`}
+          disabled={save.isPending || (homeId !== NO_TEAM && homeId === awayId)}
+          onClick={() => save.mutate()}
+          size="sm"
+        >
+          Save pairing
+        </Button>
+        <Button disabled={save.isPending} onClick={onDone} size="sm" variant="ghost">Cancel</Button>
+      </div>
+      {homeId !== NO_TEAM && homeId === awayId ? (
+        <p className="text-sm text-destructive">{`A ${team.one} can't play itself. Pick two different ${team.many}.`}</p>
+      ) : null}
+      {save.isError ? (
+        <p className="text-sm text-destructive" data-testid={`root-admin-bracket-pairing-error-${match.matchNumber}`} role="alert">
+          {extractErrorMessage(save.error, {
+            codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
+            fallback: `This ${noun.one}'s pairing could not be saved. Try again.`,
+          })}
+        </p>
+      ) : null}
+    </div>
+  );
+}

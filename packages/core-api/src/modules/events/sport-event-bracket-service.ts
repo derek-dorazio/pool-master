@@ -270,8 +270,10 @@ export class SportEventBracketService {
   /**
    * The First Four (design Q3.7): points a play-in place's field row, which stands for the
    * pairing ("Texas / Xavier"), at the team that won the play-in, and inactivates the pairing's
-   * participant. The row keeps its seed, tier, price and every pick of it. 404
-   * EVENT_PARTICIPANT_NOT_FOUND for a row not on the event, 404 PARTICIPANT_NOT_FOUND for a
+   * participant. The row keeps its seed, tier, price and every pick of it, and is no longer a
+   * play-in place. 404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event, 409
+   * EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE for a row not marked as one (#709: filling Duke's row would
+   * make every pick of Duke a pick of the winner), 404 PARTICIPANT_NOT_FOUND for a
    * winner that is not a participant of the event's sport, 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD
    * when the winner already has a field row, 409 PLAY_IN_SLOT_ALREADY_PLAYED once the place has
    * played or started a bracket match.
@@ -284,6 +286,14 @@ export class SportEventBracketService {
         `Field row ${sportEventParticipantId} is not on sport event ${sportEventId}.`,
         'EVENT_PARTICIPANT_NOT_FOUND',
         404,
+      );
+    }
+    if (!entry.isPlayInPlace) {
+      this.deps.logger?.warn({ sportEventId, sportEventParticipantId }, 'Refused to fill a field row that is not a play-in place');
+      throw new SportEventError(
+        `Field row ${sportEventParticipantId} is not a play-in place, so it cannot take a play-in winner.`,
+        'EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE',
+        409,
       );
     }
     const [pairing, winner] = await Promise.all([

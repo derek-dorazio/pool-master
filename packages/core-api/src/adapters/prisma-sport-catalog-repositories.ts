@@ -537,7 +537,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
 
   async fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }): Promise<void> {
     await this.prisma.$transaction([
-      this.prisma.sportEventParticipant.update({ where: { id: input.id }, data: { participantId: input.winnerParticipantId } }),
+      this.prisma.sportEventParticipant.update({ where: { id: input.id }, data: { participantId: input.winnerParticipantId, isPlayInPlace: false } }),
       this.prisma.participant.update({ where: { id: input.pairingParticipantId }, data: { status: ParticipantStatus.INACTIVE } }),
     ]);
   }
@@ -799,6 +799,7 @@ function fieldPatch(patch: SportEventParticipantPatch) {
     ...(patch.ranking !== undefined && { ranking: patch.ranking }),
     ...(patch.oddsToWin !== undefined && { oddsToWin: patch.oddsToWin }),
     ...(patch.seedNumber !== undefined && { seedNumber: patch.seedNumber }),
+    ...(patch.isPlayInPlace !== undefined && { isPlayInPlace: patch.isPlayInPlace }),
   };
 }
 
@@ -812,6 +813,7 @@ export function toSportEventParticipant(row: Prisma.SportEventParticipantGetPayl
     ranking: row.ranking ?? undefined,
     oddsToWin: row.oddsToWin === null ? undefined : Number(row.oddsToWin),
     seedNumber: row.seedNumber ?? undefined,
+    isPlayInPlace: row.isPlayInPlace,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
