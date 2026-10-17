@@ -93,7 +93,6 @@ function contest(overrides: Partial<Contest> = {}): Contest {
     status: ContestStatus.OPEN,
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
-    scoringStopsOnElimination: false,
     ...TIMESTAMPS,
     ...overrides,
   };

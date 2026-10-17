@@ -1,5 +1,5 @@
 import { expect, jest } from '@jest/globals';
-import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
@@ -24,6 +24,7 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
     golfStandings: store.golfStandingRepo(),
     golfRounds: store.golfRoundRepo(),
     raceResults: store.raceResultRepo(),
+    matches: store.matchRepo(),
     random: () => 0.5,
   });
   return { store, service, sport, sportLeague, event };
@@ -151,6 +152,50 @@ describe('SportEventParticipantService — changing the field', () => {
     expect(store.field.map((entry) => entry.id)).toEqual([picked.id]);
     await expect(service.removeParticipant(event.id, picked.id)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_HAS_PICKS', statusCode: 409 });
     await expect(service.removeParticipant('other-event', picked.id)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('refuses to remove a team a bracket match names (409 EVENT_PARTICIPANT_IN_BRACKET), keeping the row', async () => {
+    const { store, service, sport, event } = setup(Sport.BASKETBALL);
+    const duke = store.addToField(event.id, store.addParticipant(sport.id, 'Duke').id);
+    store.matchRows.push({
+      id: 'match-1', sportEventId: event.id, roundNumber: 1, matchNumber: 1,
+      homeSportEventParticipantId: null, awaySportEventParticipantId: duke.id, isNeutralSite: true,
+      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null,
+      advancesToMatchId: null, advancesToSide: null, createdAt: new Date(), updatedAt: new Date(),
+    });
+
+    await expect(service.removeParticipant(event.id, duke.id)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_IN_BRACKET', statusCode: 409 });
+    expect(store.field.map((entry) => entry.id)).toEqual([duke.id]);
+  });
+});
+
+// A bracket's upset bonus reads seeds as they stood at release, so release locks them there (#698).
+describe('SportEventParticipantService — seeds on a released bracket', () => {
+  it('refuses a seed change on a released basketball event (409 SPORT_EVENT_SEEDS_LOCKED), writing nothing', async () => {
+    const { store, service, sport, event } = setup(Sport.BASKETBALL, SportEventStatus.SCHEDULED);
+    const duke = store.addToField(event.id, store.addParticipant(sport.id, 'Duke').id, { seedNumber: 1, ranking: 1 });
+
+    await expect(service.updateParticipants(event.id, [{ sportEventParticipantId: duke.id, seedNumber: 2, ranking: 3 }]))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_SEEDS_LOCKED', statusCode: 409 });
+    expect(duke).toMatchObject({ seedNumber: 1, ranking: 1 });
+  });
+
+  it('still saves a released bracket\'s other values, and a seed sent unchanged', async () => {
+    const { store, service, sport, event } = setup(Sport.BASKETBALL, SportEventStatus.SCHEDULED);
+    const duke = store.addToField(event.id, store.addParticipant(sport.id, 'Duke').id, { seedNumber: 1, ranking: 1 });
+
+    const [view] = await service.updateParticipants(event.id, [{ sportEventParticipantId: duke.id, seedNumber: 1, ranking: 2, isActive: false }]);
+
+    expect(view.entry).toMatchObject({ seedNumber: 1, ranking: 2, isActive: false });
+  });
+
+  it('changes a bracket\'s seeds freely while the event is a draft', async () => {
+    const { store, service, sport, event } = setup(Sport.BASKETBALL, SportEventStatus.DRAFT);
+    const duke = store.addToField(event.id, store.addParticipant(sport.id, 'Duke').id, { seedNumber: 1 });
+
+    const [view] = await service.updateParticipants(event.id, [{ sportEventParticipantId: duke.id, seedNumber: 2 }]);
+
+    expect(view.entry.seedNumber).toBe(2);
   });
 });
 
@@ -286,6 +331,7 @@ describe('SportEventParticipantService — field upload', () => {
       golfStandings: store.golfStandingRepo(),
       golfRounds: store.golfRoundRepo(),
       raceResults: store.raceResultRepo(),
+      matches: store.matchRepo(),
     });
 
     for (const rows of [

@@ -195,7 +195,6 @@ export interface Contest extends DomainEntity {
   // Timing
   startsAt?: Date;
   endsAt?: Date;
-  scoringStopsOnElimination: boolean;
   /**
    * When a random-draw contest's draw dealt its picks (#601). Set only by the draw; from then
    * on the contest takes no entry changes and its picks are public.

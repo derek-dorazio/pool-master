@@ -83,6 +83,7 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
     'GET /api/v1/events/:eventId/rounds',
     'GET /api/v1/events/:eventId/participants',
     'GET /api/v1/events/:eventId/tiers',
+    'GET /api/v1/events/:eventId/bracket',
     'GET /api/v1/sport-leagues/:sportLeagueId',
     'GET /api/v1/sport-leagues/:sportLeagueId/affiliations',
     'GET /api/v1/participants/:id',

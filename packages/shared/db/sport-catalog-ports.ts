@@ -207,6 +207,12 @@ export interface SportEventParticipantRepository {
   delete(id: string): Promise<void>;
   /** Contest-entry picks made of this field row. */
   countPicks(id: string): Promise<number>;
+  /**
+   * Points a play-in slot's field row at the team that won the play-in and inactivates the
+   * participant that stood for the pairing, in one transaction (#698). The row keeps its seed,
+   * tier, price and picks.
+   */
+  fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }): Promise<void>;
 }
 
 export interface SportEventTierRepository {

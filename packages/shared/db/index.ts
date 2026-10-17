@@ -57,6 +57,11 @@ export type {
   SportEventParticipantRaceResultRepository,
 } from './race-ports';
 export type {
+  SportEventMatchPatch,
+  SportEventMatchRepository,
+  SportEventMatchWrite,
+} from './match-ports';
+export type {
   EventSeriesRepository,
   ParticipantLeagueAffiliationRepository,
   ParticipantMatchQuery,

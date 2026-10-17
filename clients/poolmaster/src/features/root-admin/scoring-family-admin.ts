@@ -1,6 +1,7 @@
 import { ScoringFamily, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import type { ComponentType } from 'react';
 import type { SportEventDto } from '@/lib/api';
+import { BracketPanel } from './bracket-panel';
 import { GolfRoundScoresPanel } from './golf-round-scores-panel';
 import { RaceFinishingOrderPanel } from './race-finishing-order-panel';
 
@@ -35,6 +36,11 @@ export const SCORING_FAMILY_ADMIN_UI: Readonly<Record<ScoringFamily, ScoringFami
   [ScoringFamily.FINISH_POSITION]: {
     resultsLabel: 'Results',
     ResultsPanel: RaceFinishingOrderPanel,
+    scoresUnplayedRoundsAgainstPar: false,
+  },
+  [ScoringFamily.HEAD_TO_HEAD]: {
+    resultsLabel: 'Bracket',
+    ResultsPanel: BracketPanel,
     scoresUnplayedRoundsAgainstPar: false,
   },
 };

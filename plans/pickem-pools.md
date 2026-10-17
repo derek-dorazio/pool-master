@@ -125,7 +125,8 @@ Survivor (also called eliminator or knockout pool) is straight-up pick'em with:
 2. **Each team at most once per season** for that entry.
 3. **Elimination instead of points:** a loss (or a tie, by setting) knocks the entry out;
    optional strikes allow 1-3 losses first. Standings rank alive entries first, then by rounds
-   survived. `Contest.scoringStopsOnElimination` already carries this meaning.
+   survived. Elimination needs its own contest setting: the never-read
+   `Contest.scoringStopsOnElimination` column was deleted with #698.
 
 Variants: two picks per round late in the season, buybacks, survivor on a knockout event
 (March Madness: one team per day, never the same team twice).
@@ -185,7 +186,7 @@ Questions:
 | Ranking | `compareScores`, `rankSortedScores`, `ContestEntryStanding` | Higher-is-better points, unchanged ranking |
 | Contest lifecycle | Contest `DRAFT -> OPEN -> ACTIVE -> COMPLETED` | Same statuses; what each allows changes (section 3.3) |
 | Tiebreaker input | `ContestEntry.tiebreakerValue` | Fits a season-end tiebreaker; per-round tiebreakers need more (section 3.2) |
-| Survivor elimination | `Contest.scoringStopsOnElimination` | An existing column with the right meaning |
+| Survivor elimination | (new contest setting) | `Contest.scoringStopsOnElimination` was never read and was deleted with #698 |
 
 ### 3.2 What is new
 

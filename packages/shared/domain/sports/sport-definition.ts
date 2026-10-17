@@ -77,8 +77,12 @@ export interface SportDefinition {
   defaultTierLayout: SportTierLayout;
   /** Selection types a commissioner may choose for this sport. Each has an engine. */
   selectionTypes: readonly [SelectionType, ...SelectionType[]];
-  /** Scoring definitions a contest in this sport may rank by; the first is the default. */
-  scoringDefinitions: readonly [ParticipantScoringDefinitionId, ...ParticipantScoringDefinitionId[]];
+  /**
+   * Scoring definitions a contest in this sport may rank by; the first is the default. Empty while
+   * the sport's family has no scoring definition yet (head to head until #699): its events can be
+   * set up and released, but contest management refuses a contest on them.
+   */
+  scoringDefinitions: readonly ParticipantScoringDefinitionId[];
   vocabulary: SportVocabulary;
   /** How one round is labelled: "Round 2" for golf, "Quarterfinal" for tennis. */
   roundLabel: (roundNumber: number, roundCount: number) => string;

@@ -166,6 +166,8 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'field'] as const,
       tiers: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'tiers'] as const,
+      bracket: (eventId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'bracket'] as const,
       liveSimulation: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'live-simulation'] as const,
       participants: ['poolmaster', 'root-admin', 'manage-sport', 'participants'] as const,

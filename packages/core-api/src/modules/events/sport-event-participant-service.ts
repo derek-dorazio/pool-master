@@ -26,6 +26,7 @@ import type {
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
   SportEventParticipantPatch,
+  SportEventMatchRepository,
   SportEventParticipantRaceResultRepository,
   SportEventParticipantRepository,
   SportEventParticipantRoundRepository,
@@ -35,6 +36,8 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   ParticipantStatus,
+  sportPlaysBracket,
+  SportEventStatus,
   type ParticipantInactiveReason,
   type Participant,
   type SportEvent,
@@ -187,6 +190,7 @@ export interface SportEventParticipantServiceDeps {
   golfStandings: SportEventParticipantGolfStandingRepository;
   golfRounds: SportEventParticipantGolfRoundRepository;
   raceResults: Pick<SportEventParticipantRaceResultRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
   random?: () => number;
   logger?: FastifyBaseLogger;
 }
@@ -292,7 +296,9 @@ export class SportEventParticipantService {
   /**
    * One save of the field grid: every patched row and its manual price, all or none. Rank,
    * odds, seed and withdrawals stay editable after release; a price does not (409
-   * SPORT_EVENT_TIERS_LOCKED, #431).
+   * SPORT_EVENT_TIERS_LOCKED, #431), and neither does a seed on an event played as a bracket,
+   * whose upset bonus reads the seeds as they stood at release (409 SPORT_EVENT_SEEDS_LOCKED,
+   * #698). A seed sent unchanged is not a change.
    */
   async updateParticipants(sportEventId: string, updates: readonly FieldEntryUpdate[]): Promise<SportEventParticipantView[]> {
     const event = await this.requireEvent(sportEventId);
@@ -304,7 +310,23 @@ export class SportEventParticipantService {
         throw error;
       }
     }
-    const onField = new Set((await this.deps.field.findBySportEvent(sportEventId)).map((entry) => entry.id));
+    const field = await this.deps.field.findBySportEvent(sportEventId);
+    const seedsLocked = sportPlaysBracket(event.sport) && event.status !== SportEventStatus.DRAFT;
+    if (seedsLocked) {
+      const seedById = new Map(field.map((entry) => [entry.id, entry.seedNumber ?? null]));
+      const reseeded = updates.filter((update) => update.seedNumber !== undefined
+        && seedById.has(update.sportEventParticipantId)
+        && update.seedNumber !== seedById.get(update.sportEventParticipantId));
+      if (reseeded.length > 0) {
+        this.deps.logger?.warn({ sportEventId, status: event.status, reseeded: reseeded.length }, 'Refused a seed change on a released bracket');
+        throw new SportEventError(
+          `Sport event ${sportEventId} has been released for contests, so its seeds are locked.`,
+          'SPORT_EVENT_SEEDS_LOCKED',
+          409,
+        );
+      }
+    }
+    const onField = new Set(field.map((entry) => entry.id));
     const notOnField = updates.filter((update) => !onField.has(update.sportEventParticipantId));
     if (notOnField.length > 0) {
       throw new SportEventError(
@@ -413,7 +435,10 @@ export class SportEventParticipantService {
     return this.updateParticipants(sportEventId, updates);
   }
 
-  /** Removes a field row. Refused (409) once any contest entry has picked it — withdraw instead. */
+  /**
+   * Removes a field row. Refused (409) once any contest entry has picked it — withdraw instead —
+   * and while a bracket match names it (#698).
+   */
   async removeParticipant(sportEventId: string, sportEventParticipantId: string): Promise<void> {
     const entry = await this.deps.field.findById(sportEventParticipantId);
     if (!entry || entry.sportEventId !== sportEventId) {
@@ -428,6 +453,16 @@ export class SportEventParticipantService {
       throw new SportEventError(
         `Field row ${sportEventParticipantId} has ${picks} contest entry pick(s) and cannot be removed — withdraw it instead.`,
         'EVENT_PARTICIPANT_HAS_PICKS',
+        409,
+      );
+    }
+    const inBracket = (await this.deps.matches.findBySportEvent(sportEventId)).some((match) => (
+      match.homeSportEventParticipantId === sportEventParticipantId || match.awaySportEventParticipantId === sportEventParticipantId
+    ));
+    if (inBracket) {
+      throw new SportEventError(
+        `Field row ${sportEventParticipantId} is in the event's bracket and cannot be removed — take it out of its match first.`,
+        'EVENT_PARTICIPANT_IN_BRACKET',
         409,
       );
     }

@@ -6,11 +6,13 @@
 import { ScoringFamily, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import type { ScoringFamilyModule } from './scoring-family-module';
 import { finishPositionScoringFamily } from './finish-position';
+import { headToHeadScoringFamily } from './head-to-head';
 import { strokePlayScoringFamily } from './stroke-play';
 
 const MODULE_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, ScoringFamilyModule>> = {
   [ScoringFamily.STROKE_PLAY]: strokePlayScoringFamily,
   [ScoringFamily.FINISH_POSITION]: finishPositionScoringFamily,
+  [ScoringFamily.HEAD_TO_HEAD]: headToHeadScoringFamily,
 };
 
 export function getScoringFamilyModule(family: ScoringFamily): ScoringFamilyModule {

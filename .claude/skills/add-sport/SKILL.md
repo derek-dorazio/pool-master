@@ -43,7 +43,8 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
 
 1. **Scoring family.** Does an existing family already score this sport?
    - Stroke play: lowest total wins (golf).
-   - Knockout advancement: points per round won (tennis, March Madness, NFL playoffs).
+   - Head to head: a bracket of matches, points per round won (basketball; tennis and NFL
+     playoffs next). Its matches are `SportEventMatch` rows in the event core, not family tables.
    - Finish position: points by place (horse racing, auto racing, cycling).
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.
@@ -69,6 +70,8 @@ In order:
 2. **Sport definition.** Add its `SportDefinition` to the sport registry: participant type,
    scoring family, tournament format, default rounds and tier layout, selection types, scoring
    definitions, vocabulary and round labels. Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
+   A sport whose family lands before its scoring may register with no scoring definitions;
+   contest create then refuses it until the scoring slice adds one.
 3. **Scoring definitions.** If the sport needs a new participant scoring definition, add it to
    the exhaustive scoring-definition record with its direction, unit and formatters, and its
    contest settings schema to the settings record (the empty object when it takes none).
@@ -151,6 +154,10 @@ down: a lesson that was true mid-series may not be by the end.
 - **Comparing the sport by value.** `event.sport === Sport.TENNIS` outside the sport registry
   and scoring-family folders is the bug this structure exists to prevent; lint rejects it.
   Put the difference in the definition or the family.
+- **Keying format behaviour off the sport.** What a bracket needs (its release checks, the
+  seed lock at release) follows the tournament format through `sportPlaysBracket`, so the next
+  bracket sport inherits it. Its release checks join the event service's blocker list rather
+  than adding a second release path.
 - **A `switch` without an exhaustive default.** End it in `default: assertNever(value)`, so the
   next sport fails the build instead of falling through silently.
 - **One extension table set per sport.** Tennis and March Madness share knockout tables. A

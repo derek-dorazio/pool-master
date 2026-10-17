@@ -251,6 +251,8 @@ const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, 
     race: null,
   }),
   [ScoringFamily.FINISH_POSITION]: (pick) => ({ golf: null, race: { points: pick.participant.score } }),
+  // No contest can be scored head to head until its scoring definition arrives (#699).
+  [ScoringFamily.HEAD_TO_HEAD]: () => ({ golf: null, race: null }),
 };
 
 export function toContestLeaderboardResponse(

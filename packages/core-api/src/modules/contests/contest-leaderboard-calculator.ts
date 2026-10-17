@@ -69,6 +69,10 @@ export type ParticipantScoreDetail =
   | {
     /** Finish position: the score is the runner's points, so there is nothing to add. */
     scoringFamily: typeof ScoringFamily.FINISH_POSITION;
+  }
+  | {
+    /** Head to head: unscored until its knockout scoring definition (#699) adds wins and the upset bonus. */
+    scoringFamily: typeof ScoringFamily.HEAD_TO_HEAD;
   };
 
 /**

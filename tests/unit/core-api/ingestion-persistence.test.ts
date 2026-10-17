@@ -207,7 +207,7 @@ describe('IngestionPersistence', () => {
             fieldLocked: true,
             metadata: detail.metadata,
           })
-          .mockResolvedValueOnce({ id: 'sport-event-1' }),
+          .mockResolvedValueOnce({ id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED' }),
       },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),
@@ -263,6 +263,58 @@ describe('IngestionPersistence', () => {
         }),
       }),
     ]);
+  });
+
+  // #698 — a released bracket's seeds are fixed: the field sync keeps the stored seed, while a
+  // draft still takes the provider's.
+  it.each([
+    ['keeps the stored seed 3 on a released', 'SCHEDULED', 3],
+    ['takes the provider\'s seed 1 on a draft', 'DRAFT', 1],
+  ])('%s basketball event', async (_label, status, expectedSeed) => {
+    const detail: SportEventDetail = {
+      ...buildInProgressEvent(),
+      sport: Sport.BASKETBALL,
+      status: 'SCHEDULED',
+      participants: [{
+        externalId: 'team-01',
+        providerId: 'mock-contest-feed',
+        sport: Sport.BASKETBALL,
+        name: 'Duke',
+        active: true,
+        metadata: { seed: 1 },
+      }],
+    };
+    const upsert = jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' });
+    const prisma = {
+      sportEvent: {
+        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+        findUnique: jest.fn()
+          .mockResolvedValueOnce(linkedRow({ sport: Sport.BASKETBALL, status, rounds: 6 }))
+          .mockResolvedValueOnce({ id: 'sport-event-1', sport: Sport.BASKETBALL, status }),
+      },
+      contest: { findMany: jest.fn().mockResolvedValue([]) },
+      participantProviderMapping: { findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }) },
+      participant: { update: jest.fn().mockResolvedValue({ id: 'participant-1' }) },
+      sportEventParticipant: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'sport-event-participant-1',
+          isActive: true,
+          inactiveReason: null,
+          ranking: null,
+          oddsToWin: null,
+          seedNumber: 3,
+          metadata: { seed: 3 },
+        }),
+        upsert,
+      },
+    };
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+
+    await persistence.persistEventDetailWithDiagnostics(detail);
+
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      update: expect.objectContaining({ seedNumber: expectedSeed }),
+    }));
   });
 
   // #118, #435 — an admin owns the header, rounds and status of every event, linked for

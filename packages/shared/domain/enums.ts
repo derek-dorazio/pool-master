@@ -18,6 +18,7 @@ export const Sport = {
   AUTO_RACING: 'AUTO_RACING',
   CYCLING: 'CYCLING',
   RUNNING: 'RUNNING',
+  BASKETBALL: 'BASKETBALL',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
 
@@ -89,8 +90,35 @@ export const TournamentFormat = {
   STROKE_PLAY_TOURNAMENT: 'STROKE_PLAY_TOURNAMENT',
   /** One race: one field, one finishing order (#623). */
   RACE: 'RACE',
+  /**
+   * A knockout bracket (#698): matches round by round, each winner moving on to the match its
+   * bracket slot names, until one is left.
+   */
+  KNOCKOUT_BRACKET: 'KNOCKOUT_BRACKET',
 } as const;
 export type TournamentFormat = (typeof TournamentFormat)[keyof typeof TournamentFormat];
+
+/**
+ * Where one match of an event stands (#698). A match is COMPLETED once its result is in; a
+ * CANCELLED one was never played.
+ */
+export const MatchStatus = {
+  SCHEDULED: 'SCHEDULED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+} as const;
+export type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
+
+/**
+ * One side of a match (#698). On a neutral site HOME is the upper line of the bracket; screens
+ * say "vs" there and "@" otherwise.
+ */
+export const MatchSide = {
+  HOME: 'HOME',
+  AWAY: 'AWAY',
+} as const;
+export type MatchSide = (typeof MatchSide)[keyof typeof MatchSide];
 
 /**
  * How one field member's race ended (#622): the finish-position family's result status. Only a

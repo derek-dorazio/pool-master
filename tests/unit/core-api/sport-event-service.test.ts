@@ -2,6 +2,7 @@ import { expect } from '@jest/globals';
 import { MANUAL_ADMIN_PROVIDER_ID, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { SportEventService } from '../../../packages/core-api/src/modules/events/service';
+import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
@@ -46,6 +47,13 @@ function setup(sportName: Sport = Sport.GOLF) {
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
     tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo() }),
+    bracket: new SportEventBracketService({
+      sportEvents,
+      rounds: store.roundRepo(),
+      field: store.fieldRepo(),
+      participants: store.participantRepo(),
+      matches: store.matchRepo(),
+    }),
     lifecycle,
     now: () => NOW,
   });
@@ -281,6 +289,31 @@ describe('SportEventService.releaseEvent (#431)', () => {
 
     expect(released.event.status).toBe(SportEventStatus.SCHEDULED);
     expect(store.events[0].status).toBe(SportEventStatus.SCHEDULED);
+  });
+
+  it('refuses a basketball draft whose bracket is not loaded with 422 SPORT_EVENT_NOT_READY, though its field is tiered and priced', async () => {
+    const { store, service, sportLeague } = setup(Sport.BASKETBALL);
+    const event = await draftWithField(store, 2, 2, { sport: Sport.BASKETBALL, sportLeagueId: sportLeague.id });
+
+    await expect(service.releaseEvent(event.id)).rejects.toMatchObject({
+      code: 'SPORT_EVENT_NOT_READY',
+      statusCode: 422,
+      message: expect.stringContaining('its bracket is not loaded'),
+    });
+    expect(store.events[0].status).toBe(SportEventStatus.DRAFT);
+  });
+
+  it('releases a basketball draft once its bracket holds every active team', async () => {
+    const { store, service, sportLeague } = setup(Sport.BASKETBALL);
+    const event = await draftWithField(store, 2, 2, { sport: Sport.BASKETBALL, sportLeagueId: sportLeague.id });
+    await store.roundRepo().createMany(event.id, [{ roundNumber: 1, scheduledDate: event.startDate }]);
+    const [home, away] = store.field;
+    await store.matchRepo().replaceBracket(event.id, [{
+      id: 'final', roundNumber: 1, matchNumber: 1, homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,
+      isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSide: null,
+    }]);
+
+    await expect(service.releaseEvent(event.id)).resolves.toMatchObject({ event: { status: SportEventStatus.SCHEDULED } });
   });
 
   it('refuses a draft whose field is empty with 422 SPORT_EVENT_NOT_READY, leaving it a draft', async () => {

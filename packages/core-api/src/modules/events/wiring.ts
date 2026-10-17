@@ -17,6 +17,7 @@ import {
   PrismaParticipantRepository,
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
+  PrismaSportEventMatchRepository,
   PrismaSportEventParticipantRaceResultRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventParticipantRoundRepository,
@@ -38,6 +39,7 @@ import { sportStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
 import { EventLifecycleService, type CompletedSportEventSettlement } from './event-lifecycle-service';
 import { SportEventService } from './service';
+import { SportEventBracketService } from './sport-event-bracket-service';
 import { SportEventParticipantService } from './sport-event-participant-service';
 import { SportEventRoundService } from './sport-event-round-service';
 import { SportEventTierService } from './sport-event-tier-service';
@@ -78,9 +80,22 @@ export function createRaceResultService(prisma: PrismaClient, logger?: FastifyBa
   });
 }
 
+/** An event's bracket of matches (#698), for an event whose sport plays one. */
+export function createSportEventBracketService(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventBracketService {
+  return new SportEventBracketService({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    rounds: new PrismaSportEventRoundRepository(prisma),
+    field: new PrismaSportEventParticipantRepository(prisma),
+    participants: new PrismaParticipantRepository(prisma),
+    matches: new PrismaSportEventMatchRepository(prisma),
+    logger,
+  });
+}
+
 export interface SportEventServices {
   sportEvents: SportEventService;
   rounds: SportEventRoundService;
+  bracket: SportEventBracketService;
   tiers: SportEventTierService;
   field: SportEventParticipantService;
   golfScores: GolfScoreService;
@@ -101,6 +116,7 @@ export function createSportEventParticipantService(prisma: PrismaClient, logger?
     golfStandings: new PrismaSportEventParticipantGolfStandingRepository(prisma),
     golfRounds: new PrismaSportEventParticipantGolfRoundRepository(prisma),
     raceResults: new PrismaSportEventParticipantRaceResultRepository(prisma),
+    matches: new PrismaSportEventMatchRepository(prisma),
     logger,
   });
 }
@@ -123,9 +139,11 @@ export function createSportEventServices(
 
   const rounds = new SportEventRoundService({ rounds: new PrismaSportEventRoundRepository(prisma), logger });
   const tiers = createSportEventTierService(prisma, logger);
+  const bracket = createSportEventBracketService(prisma, logger);
   return {
     rounds,
     tiers,
+    bracket,
     sportEvents: new SportEventService({
       sportEvents: events,
       eventSeries: new PrismaEventSeriesRepository(prisma),
@@ -133,6 +151,7 @@ export function createSportEventServices(
       sports,
       rounds,
       tiers,
+      bracket,
       lifecycle,
       logger,
     }),

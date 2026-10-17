@@ -513,7 +513,7 @@ link with `maxUses` / `currentUses`.
 
 Cluster: `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `SportEventParticipantRound`, `SportEventParticipantStanding`,
-`SportEventTier`, `SportEventParticipantValuation`, `Participant`,
+`SportEventTier`, `SportEventParticipantValuation`, `SportEventMatch`, `Participant`,
 `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`.
 The tree is `SportLeague → EventSeries → SportEvent`: an event is one edition of a series, in
 one event year, and the series is its only parent.
@@ -585,7 +585,7 @@ are gone (#236).
 | Import an event year from a provider | `rootAdmin` | `importEventYearFromProvider` creates each provider event for a sport league's tour starting in that calendar year that PoolMaster lacks, each as `createEventFromProviderEvent` would, linked for scores. A provider event belongs to the tour when its tour name equals the sport league's `matchKeyword`, ignoring case. Events already linked, and series that already have an edition that year, are skipped and reported, so a re-run creates nothing. 422 `SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD`; 404 `PROVIDER_NOT_FOUND` or `SPORT_LEAGUE_NOT_FOUND` (#385) |
 | Update | `rootAdmin` | `updateEvent` edits any event, linked to a provider or not. A provider sync never overwrites these fields (#435). The round schedule follows the edit: a new start date moves every round (start and end) by the same amount, and a higher round count adds the missing rounds, each a day after the one before. Lowering the count keeps the stored rounds, but the lifecycle scheduler ignores any past the new count |
 | Delete | `rootAdmin` | 409 `EVENT_HAS_CONTESTS`. Deletes the event's rounds and tiers first — before #236 it failed on the foreign key for any event that had them |
-| Release for contests | `rootAdmin` | `releaseEvent`, `POST /events/:eventId/release` (#431): `DRAFT` → `SCHEDULED`, the only way out of `DRAFT` apart from cancelling. 409 `SPORT_EVENT_NOT_DRAFT`; 409 `SPORT_EVENT_ALREADY_STARTED` once the start time has passed; 422 `SPORT_EVENT_NOT_READY` until the field is loaded, every active participant has a tier and a price (#93), and every tier has an active participant (the event's `emptyTierLabels` lists the tiers that do not: no entry could pick from them). Release locks the event's tiers and prices for good; rank, odds and withdrawals stay editable, and a participant added later stays untiered. The event's start time is the contest cutoff: no contest is created or opened after it |
+| Release for contests | `rootAdmin` | `releaseEvent`, `POST /events/:eventId/release` (#431): `DRAFT` → `SCHEDULED`, the only way out of `DRAFT` apart from cancelling. 409 `SPORT_EVENT_NOT_DRAFT`; 409 `SPORT_EVENT_ALREADY_STARTED` once the start time has passed; 422 `SPORT_EVENT_NOT_READY` until the field is loaded, every active participant has a tier and a price (#93), and every tier has an active participant (the event's `emptyTierLabels` lists the tiers that do not: no entry could pick from them). A bracket event (#698) also needs its bracket: every side of every match names a team or is fed by an earlier match, every active team is in it, and no withdrawn team is. Release locks the event's tiers and prices for good; rank, odds and withdrawals stay editable, and a participant added later stays untiered. The event's start time is the contest cutoff: no contest is created or opened after it |
 | Transition, link / unlink the score source | `rootAdmin` | `transitionEvent`, `linkEventScoreSource`, `unlinkEventScoreSource`. `transitionEvent` refuses `DRAFT` → `SCHEDULED` with 409 `SPORT_EVENT_RELEASE_REQUIRED`: that move is `releaseEvent`'s. `linkEventScoreSource` refuses a provider that is not registered (404 `PROVIDER_NOT_FOUND`) or does not cover the event's sport (422 `PROVIDER_SPORT_MISMATCH`), since no scores could ever arrive through it |
 | Start simulated live scoring | `rootAdmin` | `startEventLiveSimulation` asks the linked provider to play the event's four rounds forward on its own clock, so a live contest's leaderboard can be tested; calling again restarts from round 1. Scores still arrive through the live-score sync, which polls only while the event is `IN_PROGRESS`. 409 `EVENT_NOT_LINKED` when unlinked, 422 `LIVE_SIMULATION_UNSUPPORTED` unless the provider reports `supportsLiveSimulation` (only the QA mock feed does), 404 `PROVIDER_EVENT_NOT_FOUND` when the provider no longer has the linked event |
 | Read simulated live scoring | `rootAdmin` | `getEventLiveSimulation` reports the running simulation's clock and current round, so the score-source card can keep it current; 409 `EVENT_NOT_LINKED` when unlinked, 422 `LIVE_SIMULATION_UNSUPPORTED` as for start, and 404 `LIVE_SIMULATION_NOT_RUNNING` when none has been started, the provider restarted, or the provider no longer has the linked event |
@@ -609,13 +609,29 @@ Carries `ranking` (the rank that applied at this event), `seedNumber`, `oddsToWi
 | Operation | Role | Notes |
 |---|---|---|
 | List for an event | `authenticated` | `listEventParticipants`. Embeds the canonical `Participant`, the valuation, the standing and each round, with their golf rows, and a race's result (`race`). One read serves the field grid, the tier board and the score corrections |
-| Add, edit, remove | `rootAdmin` | `addEventParticipants`, `updateEventParticipants` (price included, until release: 409 `SPORT_EVENT_TIERS_LOCKED` after), `removeEventParticipant` — 409 `EVENT_PARTICIPANT_HAS_PICKS` once a contest entry picked it |
+| Add, edit, remove | `rootAdmin` | `addEventParticipants`, `updateEventParticipants` (price included, until release: 409 `SPORT_EVENT_TIERS_LOCKED` after; on a released bracket event a changed seed is 409 `SPORT_EVENT_SEEDS_LOCKED`, and a provider sync keeps the stored seed), `removeEventParticipant` — 409 `EVENT_PARTICIPANT_HAS_PICKS` once a contest entry picked it, 409 `EVENT_PARTICIPANT_IN_BRACKET` while a match names it |
+| Fill a play-in place | `rootAdmin` | `setEventPlayInWinner` repoints a field row that stands for a play-in pairing ("Texas / Xavier") to the winner, which keeps the row's seed, tier, price, picks and bracket place; the pairing's participant is inactivated. 422 `SPORT_EVENT_NOT_BRACKET`; 404 `EVENT_PARTICIPANT_NOT_FOUND`, or `PARTICIPANT_NOT_FOUND` for a winner that is not an active participant of the sport; 409 `EVENT_PARTICIPANT_ALREADY_ON_FIELD`, or `PLAY_IN_SLOT_ALREADY_PLAYED` once the row's match has started |
 | Bulk-adjust by upload | `rootAdmin` | `previewEventParticipantUpload` (writes nothing) and `applyEventParticipantUpload`: rows set `ranking`, `oddsToWin`, `seedNumber`, `isActive`, `inactiveReason` on participants **already on the field** — omitted leaves a value, null clears it. Rows resolve within the field by `participantId`, then `externalId`, then exact case-insensitive `playerName`, first identifier only. A participant not on the field is UNRESOLVED (the upload never adds one); one named twice is a `DUPLICATE_PARTICIPANT` row error. Apply is all or none through the `updateEventParticipants` write path, 422 `EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED` otherwise (#128). Here and in the grid save, `ranking` and `seedNumber` are whole numbers from 1 to 2,147,483,647 (the 32-bit columns' limit); anything else is a 400 validation error (#437) |
 | Seed from the sport league, refresh from the provider | `rootAdmin` | `seedEventParticipants` (golf only for now); `refreshEventParticipants` queues a provider sync (202), which writes each golfer's ranking from the provider's field onto the event participant (#384) |
 
 **Golf surfaces render `ELIMINATED` as "Cut"** (decision 1). That is a display mapping, not
 a stored value: `formatParticipantStatusLabel` in the shared domain, used by every surface
 that shows the status.
+
+### SportEventMatch — a bracket event's games
+
+The matches of an event whose sport's tournament format is `KNOCKOUT_BRACKET` (#698). Each
+names its round, its home and away field rows, and the match and side its winner advances to;
+the database refuses a match feeding itself, two matches feeding one side, a winner on a match
+that is not `COMPLETED`, and a field row's delete while a match names it.
+
+| Operation | Role | Notes |
+|---|---|---|
+| Read the bracket | `authenticated` | `getEventBracket`, in match-number order. A `DRAFT` event is 404 `EVENT_NOT_FOUND` to anyone but a root admin. 422 `SPORT_EVENT_NOT_BRACKET` for a sport that plays none |
+| Load the bracket | `rootAdmin` | `loadEventBracket` replaces the whole bracket, until release (409 `SPORT_EVENT_BRACKET_LOCKED` after). 422 `BRACKET_INVALID` lists every problem: a repeated match number, an unknown round, a side not on the field or named twice, an advance to a missing or not-later match, two matches feeding one side, a fed side that also names a team, or other than one final in the last round. Completeness is checked at release, not here |
+| Edit a match | `rootAdmin` | `updateEventBracketMatch` by match number: time and site at any point, sides only until release (409 `SPORT_EVENT_BRACKET_LOCKED`). 404 `BRACKET_MATCH_NOT_FOUND`; 422 `BRACKET_INVALID` for a side problem |
+
+Results entry for matches arrives with knockout scoring (#699).
 
 ### SportEventParticipantRound, SportEventParticipantStanding — base rows
 

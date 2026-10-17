@@ -6,7 +6,7 @@
  */
 
 import type { DomainEntity, Participant } from './types';
-import type { ParticipantRoundStatus, ParticipantStandingStatus, RaceResultStatus, ValuationSource } from './enums';
+import type { MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantStandingStatus, RaceResultStatus, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {
@@ -144,4 +144,32 @@ export interface SportEventParticipantRaceResult extends DomainEntity {
   resultStatus: RaceResultStatus;
   isOfficial: boolean;
   riderName: string | null;
+}
+
+// --- Matches (#698) -----------------------------------------------------------
+// Core event data, beside the round schedule: one game of one round, two sides and a result.
+
+/**
+ * One game or match of an event, played in one of its rounds. In a knockout bracket it is also a
+ * bracket slot: `advancesToMatchId` and `advancesToSide` name the match and side its winner moves
+ * on to (null for the final). A side is a field row, null until it is decided (a later-round slot
+ * waiting on its feeder match). A COMPLETED match with no `winnerSide` is a draw, which a knockout
+ * never allows. In a series (the NBA's best of seven) the scores are games won.
+ */
+export interface SportEventMatch extends DomainEntity {
+  sportEventId: string;
+  /** The round it is played in, by number. */
+  roundNumber: number;
+  /** Unique within the event: the bracket slot and the display order. */
+  matchNumber: number;
+  homeSportEventParticipantId: string | null;
+  awaySportEventParticipantId: string | null;
+  isNeutralSite: boolean;
+  scheduledDate: Date | null;
+  status: MatchStatus;
+  winnerSide: MatchSide | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  advancesToMatchId: string | null;
+  advancesToSide: MatchSide | null;
 }

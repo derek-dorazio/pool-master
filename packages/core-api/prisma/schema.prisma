@@ -262,6 +262,7 @@ enum PrismaSport {
   AUTO_RACING
   CYCLING
   RUNNING
+  BASKETBALL
 }
 
 /// Tournament structural format — drives which contest types are valid
@@ -271,6 +272,23 @@ enum PrismaTournamentFormat {
   STROKE_PLAY_TOURNAMENT
   /// One race: one field, one finishing order (#623).
   RACE
+  /// A knockout bracket of matches, each winner moving on to the slot it names (#698).
+  KNOCKOUT_BRACKET
+}
+
+/// Where one match stands (#698). Mirrors the domain `MatchStatus`.
+enum PrismaMatchStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+/// One side of a match (#698). Mirrors the domain `MatchSide`; on a neutral site HOME is the
+/// upper line of the bracket.
+enum PrismaMatchSide {
+  HOME
+  AWAY
 }
 
 /// How one field member's race ended (#622). Mirrors the domain `RaceResultStatus`. Only a
@@ -687,18 +705,17 @@ model ParticipantProviderMapping {
 // =============================================================================
 
 model Contest {
-  id                        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueId                  String              @map("league_id") @db.Uuid
-  sportEventId              String?             @map("sport_event_id") @db.Uuid
-  name                      String
-  status                    PrismaContestStatus @default(DRAFT)
-  contestFormat             PrismaContestFormat @default(ROSTER) @map("contest_format")
-  selectionType             PrismaSelectionType @map("selection_type")
-  scoringStopsOnElimination Boolean             @default(false) @map("scoring_stops_on_elimination")
-  startsAt                  DateTime?           @map("starts_at") @db.Timestamptz
-  endsAt                    DateTime?           @map("ends_at") @db.Timestamptz
-  createdAt                 DateTime            @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                 DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId      String              @map("league_id") @db.Uuid
+  sportEventId  String?             @map("sport_event_id") @db.Uuid
+  name          String
+  status        PrismaContestStatus @default(DRAFT)
+  contestFormat PrismaContestFormat @default(ROSTER) @map("contest_format")
+  selectionType PrismaSelectionType @map("selection_type")
+  startsAt      DateTime?           @map("starts_at") @db.Timestamptz
+  endsAt        DateTime?           @map("ends_at") @db.Timestamptz
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
   league         League                 @relation(fields: [leagueId], references: [id])
   sportEvent     SportEvent?            @relation(fields: [sportEventId], references: [id])
@@ -968,6 +985,7 @@ model SportEvent {
   sportEventParticipants SportEventParticipant[]
   tiers                  SportEventTier[]
   roundSchedule          SportEventRound[]
+  matches                SportEventMatch[]
   eventSeries            EventSeries             @relation(fields: [eventSeriesId], references: [id])
 
   @@unique([providerId, externalId])
@@ -1000,6 +1018,8 @@ model SportEventParticipant {
   rounds      SportEventParticipantRound[]
   standing    SportEventParticipantStanding?
   raceResult  SportEventParticipantRaceResult?
+  homeMatches SportEventMatch[]                @relation("SportEventMatchHome")
+  awayMatches SportEventMatch[]                @relation("SportEventMatchAway")
 
   @@unique([sportEventId, participantId])
   @@index([sportEventId])
@@ -1024,9 +1044,50 @@ model SportEventRound {
 
   sportEvent        SportEvent                   @relation(fields: [sportEventId], references: [id])
   participantRounds SportEventParticipantRound[]
+  matches           SportEventMatch[]
 
   @@unique([sportEventId, roundNumber])
   @@map("sport_event_rounds")
+}
+
+/// One game or match of an event, played in one of its rounds (#698). Core event data, beside the
+/// round schedule; a result is written by the head-to-head family. In a bracket it is also a slot:
+/// `advancesToMatchId`/`advancesToSide` name where its winner goes (null for the final). A side is
+/// a field row, null until decided. Database checks: the two sides differ, `advancesToSide` is set
+/// exactly when `advancesToMatchId` is, a winner only on a COMPLETED match, scores never negative.
+/// That both sides and the next match belong to the match's own event is the bracket service's check.
+model SportEventMatch {
+  id                          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventId                String            @map("sport_event_id") @db.Uuid
+  sportEventRoundId           String            @map("sport_event_round_id") @db.Uuid
+  matchNumber                 Int               @map("match_number")
+  homeSportEventParticipantId String?           @map("home_sport_event_participant_id") @db.Uuid
+  awaySportEventParticipantId String?           @map("away_sport_event_participant_id") @db.Uuid
+  isNeutralSite               Boolean           @map("is_neutral_site")
+  scheduledDate               DateTime?         @map("scheduled_date") @db.Timestamptz
+  status                      PrismaMatchStatus @default(SCHEDULED)
+  winnerSide                  PrismaMatchSide?  @map("winner_side")
+  homeScore                   Int?              @map("home_score")
+  awayScore                   Int?              @map("away_score")
+  advancesToMatchId           String?           @map("advances_to_match_id") @db.Uuid
+  advancesToSide              PrismaMatchSide?  @map("advances_to_side")
+  createdAt                   DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                   DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportEvent      SportEvent             @relation(fields: [sportEventId], references: [id])
+  sportEventRound SportEventRound        @relation(fields: [sportEventRoundId], references: [id])
+  home            SportEventParticipant? @relation("SportEventMatchHome", fields: [homeSportEventParticipantId], references: [id], onDelete: Restrict)
+  away            SportEventParticipant? @relation("SportEventMatchAway", fields: [awaySportEventParticipantId], references: [id], onDelete: Restrict)
+  advancesTo      SportEventMatch?       @relation("SportEventMatchAdvancesTo", fields: [advancesToMatchId], references: [id], onDelete: NoAction)
+  fedBy           SportEventMatch[]      @relation("SportEventMatchAdvancesTo")
+
+  @@unique([sportEventId, matchNumber])
+  // Two matches cannot feed the same side of the next one.
+  @@unique([advancesToMatchId, advancesToSide])
+  @@index([sportEventRoundId])
+  @@index([homeSportEventParticipantId])
+  @@index([awaySportEventParticipantId])
+  @@map("sport_event_matches")
 }
 
 /// One participant's part in one round of an event — the (participant, round)

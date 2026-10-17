@@ -69,7 +69,7 @@ A UI Label, Not A Domain Term*.
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
-| `Sport` | sport | Golf, horse racing, auto racing, cycling and running, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
+| `Sport` | sport | Golf, horse racing, auto racing, cycling, running and basketball, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
 | `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA | `League`, the office pool |
 | `EventSeries` | (series) | A recurring named event, "The Masters", across all years | One year's edition, which is the `SportEvent` |
 | `SportEvent` | tournament, event | One edition of a series in one `eventYear`, with a start date, round count and status | `Contest`, which is the pool's game played on it |
@@ -78,6 +78,7 @@ A UI Label, Not A Domain Term*.
 | `SportEventParticipant` | the field, a golfer in the field | A participant entered in one event, with that event's rank, odds, seed and active/withdrawn/cut state | The global `Participant` |
 | `SportEventTier`, `SportEventParticipantValuation` | tier, price | Tiers belong to the **event** and are shared by every contest on it; the valuation puts one field member in one tier, with a price | A contest-level setting: there is no per-contest tier override |
 | `SportEventParticipantStanding` | position, leaderboard row | A field member's running position in the event (1 is best, every sport) | An entry's standing in a contest |
+| `SportEventMatch` | match, game, bracket | One game of a knockout event's bracket (#698): its round, its home and away field members (either empty until an earlier match's winner fills it), a neutral-site flag, a time, a status, the winning side and both scores, and the match and side its winner advances to. A playoff series is one match whose score is games won. Only a sport whose tournament format is `KNOCKOUT_BRACKET` has them | A `Contest`, and a `SportEventRound`, the round it is played in |
 | `SportEventParticipantRaceResult` | finish, result | How one runner's race ended (finish position): its place, or did not finish, disqualified, did not start; whether the race's result is official; its rider and post position. The admin enters it | `SportEventParticipantStanding`, its place in the event, which the finishing order writes beside it |
 
 ### Contests and entries
@@ -132,6 +133,12 @@ A UI Label, Not A Domain Term*.
   which applies to the whole race. Until then its places are provisional.
 - **Dead heat**: runners who share a finishing place. Both take that place's full points, and the
   next place is skipped (1, 2, 2, 4).
+- **Bracket, seed, play-in (basketball)**: the bracket is the event's matches. A **seed** is the
+  field member's `seedNumber`, locked once a bracket event is released. A First Four
+  **play-in** place is one field member standing for the pairing ("Texas / Xavier"); its winner
+  takes over that field row, keeping its seed, tier, price and picks, and the pairing's
+  participant is inactivated. A side with no team is filled by an earlier match's winner; a team with a **bye** is named
+  straight on a later round's match, with no earlier match feeding its side.
 - **Active**: `isActive` on a league, squad, user or field member (present in normal views),
   and the contest status `ACTIVE` (its event is in progress). Different things.
 
