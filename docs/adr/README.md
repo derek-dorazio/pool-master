@@ -59,3 +59,4 @@ Not ADR candidates:
 - [ADR-0007 — Small validity matrices live in code, not the database](./0007-small-validity-matrices-live-in-code.md)
 - [ADR-0008 — Agent guidance is task-shaped and single-tool](./0008-single-tool-task-shaped-agent-guidance.md)
 - [ADR-0009 — Admin-authored events and score-only linking are the only provider pattern](./0009-admin-authored-events-score-only-linking.md)
+- [ADR-0010 — React Native with Expo for the iPhone and Android app](./0010-react-native-expo-for-mobile.md)

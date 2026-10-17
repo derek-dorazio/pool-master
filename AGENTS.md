@@ -42,7 +42,7 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 | Defines product behavior, use cases, or screens | `poolmaster-webapp-rules.md`, `ux-rules.md` |
 | Changes process, plans, tracker state, or rules themselves | `workflow-rules.md` — §0 *Document Lifecycle*, §6 *Branching, Review, Merge*; `working-style.md` |
 | Touches CI, deployment, or infrastructure | `architecture-rules.md`, `workflow-rules.md` §3 *Required Local Validation Before Push* |
-| Is iOS or Android work | `swift-rules.md` / `android-rules.md` — both clients are planned, not built |
+| Is iOS or Android work | `mobile-rules.md` — one React Native app with Expo, planned, not built |
 | Is a review of someone else's diff | `review-triggers.md` — §2 for what the author should have disclosed, §5 *Reviewing for performance cost* when the diff has a performance surface |
 
 **Before any push**, `workflow-rules.md` §3 defines the required gate set, and
