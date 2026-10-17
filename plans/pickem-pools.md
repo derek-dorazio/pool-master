@@ -281,8 +281,9 @@ Questions:
 Question:
 
 - **Q4.1** Admin-entered schedules and results for the NFL pilot, or a feed from the start?
-  Recommendation: admin entry with a CSV schedule import; about 16 results a week is light work,
-  and it keeps the pilot independent of a paid feed.
+  *Decided by Derek 2026-10-17:* the schedule loads through the "Load sport data" pipeline like
+  every sport league (no CSV import); weekly results are marked on the same admin results
+  screen as knockout matches until a live feed exists.
 
 ---
 
@@ -309,7 +310,7 @@ Question:
 Question:
 
 - **Q5.1** Target the 2027 NFL season (starts early September 2027) for slices 1-5?
-  Recommendation: yes; it gives room to finish the sport registry and the knockout family
+  *Decided by Derek 2026-10-17:* yes; it gives room to finish the sport registry and the knockout family
   first, and the NFL playoffs in January 2027 can still run as a tiered team pool on the
   knockout family.
 
