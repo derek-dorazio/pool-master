@@ -931,8 +931,8 @@ format value would only restate what the match links already say. Until slice 1,
   predicts the combined points of a named match, both teams together (3 for a 2-1 soccer
   score), as NCAA tournament pools do for the final and NFL pools do for the Monday night game.
   This applies to every sport, soccer included. A bracket or one-event pool uses the existing
-  `ContestEntry.tiebreakerValue`; a weekly pick'em pool needs one value per entry per round,
-  a small (entry, event, value) row designed with the event standings slice. Predicting each
+  `ContestEntry.tiebreakerValue`; a weekly pick'em pool keeps one value per entry per week
+  as `tiebreakerValue` on `ContestEntryEvent` (#717). Predicting each
   team's score (exact-score soccer pools) is left for later, as a `ContestEntryMatchPredictionScore`
   extension if wanted.
 - **`ContestEntryEventStanding`** (from #713): an entry's points and position for one event
@@ -1205,15 +1205,26 @@ settlement do the roster sum inline; moving that behind `rosterEntryScorer` happ
 pick'em ticket, not before, so the seam is shaped by its second user (the #323 lesson the
 architecture plan cites).
 
-### 5.5 Pick'em slices (after knockout; not filed)
+### 5.5 Pick'em tickets
 
-Kept from `plans/pickem-pools.md` §5 with the model above: (0) multi-event contests (#713,
-Q5.2), with the golf majors pool (#714) as its first use; (1) NFL week events with their games
-loaded through the sport data pipeline, and the Q5.2a format rename; (2)
-`PREDICTION` format, `ContestEntryMatchPrediction`, the `PICK_EM` engine (straight-up and confidence),
-per-match lock and reveal; (3) prediction scoring, event standings and weekly winners; (4) the
-week entry screen and season/week leaderboard; round release can land with (1) or (2); (5) survivor; (6) spreads; (7) bracket, using
-the bracket links knockout already built. Target: the 2027 NFL season (early September 2027).
+Filed under #607 on 2026-10-17 after Derek's review; every question in section 5 is decided.
+Each is one PR opened against main, after knockout.
+
+0. **Multi-event contests** (#713; `model-change`): `ContestSportEvent`, `ContestEntryEvent`
+   (entry status per event), `ContestEntryEventStanding`. First use: the golf majors pool (#714).
+1. **NFL weeks as events** (#715): one event per week with its games, from the sport data
+   pipeline; `KNOCKOUT_BRACKET` renamed to `MATCHES` (Q5.2a).
+2. **Prediction contests and the weekly submit flow** (#716): `PREDICTION`,
+   `ContestEntryMatchPrediction`, `PICK_EM` (straight-up, confidence), per-game lock and reveal.
+3. **Prediction scoring and weekly winners** (#717): the entry scorer, the weekly tiebreaker,
+   per-week settlement.
+4. **Week pick screen and season leaderboard** (#718).
+5. **Survivor** (#719).
+6. **Against the spread** (#720): `homeSpread`, locked at week release.
+7. **Bracket pools** (#721): pick every game of a knockout, scored with the knockout round values.
+
+Deferred: AFL tipping (#710), Super Bowl squares (#711), prop pools (#712). Target: the 2027 NFL
+season (early September 2027).
 
 ---
 
