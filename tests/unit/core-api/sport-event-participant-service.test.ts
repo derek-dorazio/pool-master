@@ -349,3 +349,35 @@ describe('SportEventParticipantService — field upload', () => {
     await expect(service.previewUpload('missing', [{ externalId: 'x' }])).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
   });
 });
+
+// A play-in place stands for a pairing until its winner fills it (#709): marked before release.
+describe('SportEventParticipantService — play-in places', () => {
+  it('marks and unmarks a bracket draft\'s field row as a play-in place', async () => {
+    const { store, service, sport, event } = setup(Sport.BASKETBALL, SportEventStatus.DRAFT);
+    const pairing = store.addToField(event.id, store.addParticipant(sport.id, 'Texas / Xavier').id);
+
+    const [marked] = await service.updateParticipants(event.id, [{ sportEventParticipantId: pairing.id, isPlayInPlace: true }]);
+    expect(marked.entry.isPlayInPlace).toBe(true);
+    const [unmarked] = await service.updateParticipants(event.id, [{ sportEventParticipantId: pairing.id, isPlayInPlace: false }]);
+    expect(unmarked.entry.isPlayInPlace).toBe(false);
+  });
+
+  it('refuses a play-in place change once the bracket is released (409 SPORT_EVENT_BRACKET_LOCKED), but saves one sent unchanged', async () => {
+    const { store, service, sport, event } = setup(Sport.BASKETBALL, SportEventStatus.SCHEDULED);
+    const duke = store.addToField(event.id, store.addParticipant(sport.id, 'Duke').id, { ranking: 1 });
+
+    await expect(service.updateParticipants(event.id, [{ sportEventParticipantId: duke.id, isPlayInPlace: true }]))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_BRACKET_LOCKED', statusCode: 409 });
+    expect(duke.isPlayInPlace).toBe(false);
+    const [view] = await service.updateParticipants(event.id, [{ sportEventParticipantId: duke.id, isPlayInPlace: false, ranking: 2 }]);
+    expect(view.entry.ranking).toBe(2);
+  });
+
+  it('refuses a play-in place on an event that plays no bracket (422 SPORT_EVENT_NOT_BRACKET)', async () => {
+    const { store, service, sport, event } = setup(Sport.GOLF, SportEventStatus.DRAFT);
+    const golfer = store.addToField(event.id, store.addParticipant(sport.id, 'Golfer').id);
+
+    await expect(service.updateParticipants(event.id, [{ sportEventParticipantId: golfer.id, isPlayInPlace: true }]))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_BRACKET', statusCode: 422 });
+  });
+});

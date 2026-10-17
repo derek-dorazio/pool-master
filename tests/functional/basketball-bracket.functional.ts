@@ -126,6 +126,15 @@ describe('SDK Functional: Basketball bracket', () => {
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`)).id;
 
+    // --- The pairing's row is marked a play-in place; only such a row can take a play-in winner --
+    const marked = await updateEventParticipants({
+      client: a,
+      path: { eventId },
+      body: { participants: [{ sportEventParticipantId: rowOf(PAIRING), isPlayInPlace: true }] },
+    });
+    expect(marked.error).toBeUndefined();
+    expect(expectDefined(marked.data).participants.find((row) => row.id === rowOf(PAIRING))?.isPlayInPlace).toBe(true);
+
     // --- No release without a bracket, and no bracket with two finals ---------------------------
     const early = await releaseEvent({ client: a, path: { eventId } });
     expectFunctionalError(early, { status: 422, code: 'SPORT_EVENT_NOT_READY' });
@@ -194,6 +203,16 @@ describe('SDK Functional: Basketball bracket', () => {
     });
     expect(expectDefined(moved.data).match.scheduledDate).toBe('2099-03-21T18:30:00.000Z');
 
+    // A row that is not a play-in place cannot take a play-in winner, so a real team stays put.
+    expectFunctionalError(
+      await setEventPlayInWinner({
+        client: a,
+        path: { eventId, sportEventParticipantId: rowOf('Vermont') },
+        body: { participantId: expectDefined(teamIdOf.get('Texas')) },
+      }),
+      { status: 409, code: 'EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE' },
+    );
+
     // --- The First Four winner takes the pairing's place, keeping its seed and its match --------
     const filled = await setEventPlayInWinner({
       client: a,
@@ -207,14 +226,14 @@ describe('SDK Functional: Basketball bracket', () => {
     const pairing = await getFunctionalPrisma().participant.findUniqueOrThrow({ where: { id: expectDefined(teamIdOf.get(PAIRING)) } });
     expect(pairing.status).toBe('INACTIVE');
 
-    // The winner is now on the field, so naming it again for the place is refused.
+    // The place is filled, so it is a play-in place no more and a second winner is refused.
     expectFunctionalError(
       await setEventPlayInWinner({
         client: a,
         path: { eventId, sportEventParticipantId: rowOf(PAIRING) },
         body: { participantId: expectDefined(teamIdOf.get('Texas')) },
       }),
-      { status: 409, code: 'EVENT_PARTICIPANT_ALREADY_ON_FIELD' },
+      { status: 409, code: 'EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE' },
     );
   });
 });

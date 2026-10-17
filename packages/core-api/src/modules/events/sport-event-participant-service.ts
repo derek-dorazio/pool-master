@@ -35,6 +35,7 @@ import type {
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import {
+  getSportDefinition,
   ParticipantStatus,
   sportPlaysBracket,
   SportEventStatus,
@@ -305,7 +306,9 @@ export class SportEventParticipantService {
    * odds, seed and withdrawals stay editable after release; a price does not (409
    * SPORT_EVENT_TIERS_LOCKED, #431), and neither does a seed on an event played as a bracket,
    * whose upset bonus reads the seeds as they stood at release (409 SPORT_EVENT_SEEDS_LOCKED,
-   * #698). A seed sent unchanged is not a change.
+   * #698). A seed sent unchanged is not a change. Marking a row as a play-in place (#709) is
+   * only for a bracket event (422 SPORT_EVENT_NOT_BRACKET) before release (409
+   * SPORT_EVENT_BRACKET_LOCKED); one sent unchanged is not a change.
    */
   async updateParticipants(sportEventId: string, updates: readonly FieldEntryUpdate[]): Promise<SportEventParticipantView[]> {
     const event = await this.requireEvent(sportEventId);
@@ -329,6 +332,28 @@ export class SportEventParticipantService {
         throw new SportEventError(
           `Sport event ${sportEventId} has been released for contests, so its seeds are locked.`,
           'SPORT_EVENT_SEEDS_LOCKED',
+          409,
+        );
+      }
+    }
+    const playInById = new Map(field.map((entry) => [entry.id, entry.isPlayInPlace]));
+    const remarked = updates.filter((update) => update.isPlayInPlace !== undefined
+      && playInById.has(update.sportEventParticipantId)
+      && update.isPlayInPlace !== playInById.get(update.sportEventParticipantId));
+    if (remarked.length > 0) {
+      if (!sportPlaysBracket(event.sport)) {
+        this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused a play-in place on an event that plays no bracket');
+        throw new SportEventError(
+          `A ${getSportDefinition(event.sport).name.toLowerCase()} event is not played as a bracket, so it has no play-in places.`,
+          'SPORT_EVENT_NOT_BRACKET',
+          422,
+        );
+      }
+      if (event.status !== SportEventStatus.DRAFT) {
+        this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused a play-in place change on a released bracket');
+        throw new SportEventError(
+          `Sport event ${sportEventId} has been released for contests, so its play-in places are locked.`,
+          'SPORT_EVENT_BRACKET_LOCKED',
           409,
         );
       }

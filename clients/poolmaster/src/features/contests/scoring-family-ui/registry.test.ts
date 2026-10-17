@@ -26,6 +26,7 @@ const cutGolfer: SportEventParticipantDto = {
   ranking: null,
   oddsToWin: null,
   seedNumber: null,
+  isPlayInPlace: false,
   participant: {
     id: 'participant-1',
     sportId: 'sport-golf',

@@ -135,7 +135,7 @@ export class InMemorySportEvents {
   }
 
   addToField(sportEventId: string, participantId: string, overrides: Partial<SportEventParticipant> = {}): SportEventParticipant {
-    const entry = stamp({ id: this.id('sep'), sportEventId, participantId, isActive: true, metadata: {}, ...overrides });
+    const entry = stamp({ id: this.id('sep'), sportEventId, participantId, isActive: true, isPlayInPlace: false, metadata: {}, ...overrides });
     this.field.push(entry);
     return entry;
   }
@@ -404,6 +404,7 @@ export class InMemorySportEvents {
         const pairing = this.participants.find((participant) => participant.id === pairingParticipantId);
         if (!row || !pairing) throw new Error('unknown field row or participant');
         row.participantId = winnerParticipantId;
+        row.isPlayInPlace = false;
         pairing.status = ParticipantStatus.INACTIVE;
       },
     };

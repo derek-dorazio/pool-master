@@ -135,8 +135,9 @@ A UI Label, Not A Domain Term*.
   next place is skipped (1, 2, 2, 4).
 - **Bracket, seed, play-in (basketball)**: the bracket is the event's matches. A **seed** is the
   field member's `seedNumber`, locked once a bracket event is released. A First Four
-  **play-in** place is one field member standing for the pairing ("Texas / Xavier"); its winner
-  takes over that field row, keeping its seed, tier, price and picks, and the pairing's
+  **play-in** place is one field member standing for the pairing ("Texas / Xavier"), marked
+  `isPlayInPlace` before release; only a marked row takes a winner, and its winner
+  takes over that field row, ending the mark, keeping its seed, tier, price and picks, and the pairing's
   participant is inactivated. A side with no team is filled by an earlier match's winner; a team with a **bye** is named
   straight on a later round's match, with no earlier match feeding its side.
 - **Active**: `isActive` on a league, squad, user or field member (present in normal views),

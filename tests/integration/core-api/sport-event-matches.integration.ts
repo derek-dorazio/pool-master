@@ -203,7 +203,7 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
 });
 
 describe('PrismaSportEventParticipantRepository.fillPlayInSlot', () => {
-  it('points the field row at the winning team and inactivates the pairing, together', async () => {
+  it('points the field row at the winning team, ends its play-in place and inactivates the pairing, together', async () => {
     const { event, sport, entryOf } = await createBracketEvent();
     const prisma = getPrisma();
     const pairing = await prisma.participant.create({ data: { sportId: sport.id, name: 'Texas / Xavier', participantType: 'TEAM' } });
@@ -211,10 +211,12 @@ describe('PrismaSportEventParticipantRepository.fillPlayInSlot', () => {
     await repos().field.createMany(event.id, [{ participantId: pairing.id, seedNumber: 11 }]);
     const slot = expectDefined((await repos().field.findBySportEvent(event.id)).find((entry) => entry.participantId === pairing.id));
     expect(entryOf('Duke')).toBeDefined();
+    await repos().field.updateMany([{ id: slot.id, updates: { isPlayInPlace: true } }]);
+    await expect(repos().field.findById(slot.id)).resolves.toMatchObject({ isPlayInPlace: true });
 
     await repos().field.fillPlayInSlot({ id: slot.id, winnerParticipantId: xavier.id, pairingParticipantId: pairing.id });
 
-    await expect(repos().field.findById(slot.id)).resolves.toMatchObject({ participantId: xavier.id, seedNumber: 11 });
+    await expect(repos().field.findById(slot.id)).resolves.toMatchObject({ participantId: xavier.id, seedNumber: 11, isPlayInPlace: false });
     await expect(prisma.participant.findUnique({ where: { id: pairing.id } })).resolves.toMatchObject({ status: ParticipantStatus.INACTIVE });
   });
 });

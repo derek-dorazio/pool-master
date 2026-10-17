@@ -1007,6 +1007,9 @@ model SportEventParticipant {
   ranking        Int?
   oddsToWin      Decimal?                   @map("odds_to_win") @db.Decimal(10, 2)
   seedNumber     Int?                       @map("seed_number")
+  /// A bracket place that stands for a play-in pairing ("Texas / Xavier") until its winner is
+  /// known (#709). Only such a row can be filled; filling clears it.
+  isPlayInPlace  Boolean                    @default(false) @map("is_play_in_place")
   metadata       Json                       @default("{}")
   createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime                   @updatedAt @map("updated_at") @db.Timestamptz

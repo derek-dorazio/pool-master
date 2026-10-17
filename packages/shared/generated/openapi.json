@@ -13729,6 +13729,10 @@
               "null"
             ]
           },
+          "isPlayInPlace": {
+            "type": "boolean",
+            "description": "Whether this bracket place stands for a play-in pairing (\"Texas / Xavier\") still to be filled with its winner. Always false on an event that plays no bracket."
+          },
           "participant": {
             "type": "object",
             "properties": {
@@ -14193,6 +14197,7 @@
           "ranking",
           "oddsToWin",
           "seedNumber",
+          "isPlayInPlace",
           "participant",
           "valuation",
           "standing",
@@ -14260,6 +14265,10 @@
                     "integer",
                     "null"
                   ]
+                },
+                "isPlayInPlace": {
+                  "type": "boolean",
+                  "description": "Whether this bracket place stands for a play-in pairing (\"Texas / Xavier\") still to be filled with its winner. Always false on an event that plays no bracket."
                 },
                 "participant": {
                   "type": "object",
@@ -14725,6 +14734,7 @@
                 "ranking",
                 "oddsToWin",
                 "seedNumber",
+                "isPlayInPlace",
                 "participant",
                 "valuation",
                 "standing",
@@ -14872,6 +14882,10 @@
                     "null"
                   ],
                   "description": "A manual price; null clears it."
+                },
+                "isPlayInPlace": {
+                  "type": "boolean",
+                  "description": "Marks the row as a play-in place, standing for a pairing until its winner fills it. Only on a bracket event before release."
                 }
               },
               "required": [
@@ -14942,6 +14956,10 @@
                   "integer",
                   "null"
                 ]
+              },
+              "isPlayInPlace": {
+                "type": "boolean",
+                "description": "Whether this bracket place stands for a play-in pairing (\"Texas / Xavier\") still to be filled with its winner. Always false on an event that plays no bracket."
               },
               "participant": {
                 "type": "object",
@@ -15407,6 +15425,7 @@
               "ranking",
               "oddsToWin",
               "seedNumber",
+              "isPlayInPlace",
               "participant",
               "valuation",
               "standing",
@@ -17353,6 +17372,10 @@
                     "null"
                   ]
                 },
+                "isPlayInPlace": {
+                  "type": "boolean",
+                  "description": "Whether this bracket place stands for a play-in pairing (\"Texas / Xavier\") still to be filled with its winner. Always false on an event that plays no bracket."
+                },
                 "participant": {
                   "type": "object",
                   "properties": {
@@ -17817,6 +17840,7 @@
                 "ranking",
                 "oddsToWin",
                 "seedNumber",
+                "isPlayInPlace",
                 "participant",
                 "valuation",
                 "standing",

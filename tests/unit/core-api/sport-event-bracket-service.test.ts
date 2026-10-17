@@ -251,17 +251,17 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
   function withPlayInPlace() {
     const context = setup({ status: SportEventStatus.SCHEDULED });
     const pairing = context.store.addParticipant(context.sportRow.id, 'Texas / Xavier', { participantType: 'TEAM' });
-    const slot = context.store.addToField(context.event.id, pairing.id, { seedNumber: 11 });
+    const slot = context.store.addToField(context.event.id, pairing.id, { seedNumber: 11, isPlayInPlace: true });
     const xavier = context.store.addParticipant(context.sportRow.id, 'Xavier', { participantType: 'TEAM' });
     return { ...context, pairing, slot, xavier };
   }
 
-  it('points the play-in place at the winning team, keeping the row and its seed, and inactivates the pairing', async () => {
+  it('points the play-in place at the winning team, keeping the row and its seed, inactivates the pairing and leaves the row a play-in place no more', async () => {
     const { service, store, event, pairing, slot, xavier } = withPlayInPlace();
 
     await service.fillPlayInSlot(event.id, slot.id, xavier.id);
 
-    expect(store.field.find((entry) => entry.id === slot.id)).toMatchObject({ participantId: xavier.id, seedNumber: 11 });
+    expect(store.field.find((entry) => entry.id === slot.id)).toMatchObject({ participantId: xavier.id, seedNumber: 11, isPlayInPlace: false });
     expect(store.participants.find((participant) => participant.id === pairing.id)?.status).toBe(ParticipantStatus.INACTIVE);
   });
 
