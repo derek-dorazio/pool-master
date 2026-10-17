@@ -1221,7 +1221,13 @@ Each is one PR opened against main, after knockout.
 4. **Week pick screen and season leaderboard** (#718).
 5. **Survivor** (#719).
 6. **Against the spread** (#720): `homeSpread`, locked at week release.
-7. **Bracket pools** (#721): pick every game of a knockout, scored with the knockout round values.
+7. **Bracket pools** (#721): pick every game of a knockout, scored with the knockout round values;
+   also second-chance brackets (start at a later round) and "max possible points" (Q3.10),
+   added by Derek 2026-10-17.
+
+**Order for March Madness 2027** (Derek 2026-10-17): #713, then the core of #716 (predictions
+and the engine pick window), then #721, ahead of the weekly pick'em tickets. NFL reseeding is
+#722 (knockout), needed before bracket pools run on the NFL.
 
 Deferred: AFL tipping (#710), Super Bowl squares (#711), prop pools (#712). Target: the 2027 NFL
 season (early September 2027).
@@ -1273,7 +1279,9 @@ successor or an admin uses.
    is one match, Q3.11).
 10. **College Football Playoff** (#707; a league on `AMERICAN_FOOTBALL` after 5, byes as in the
    NFL, first-round campus games not neutral).
-11. **Later:** "max possible points" (Q3.10); snake draft for team pools (#199); soccer
+11. **Reseeded brackets** (#722): the NFL reseeds after Wild Card; reseeded rounds carry no
+   links, the admin places teams, bracket entries derive matchups from their own picks.
+12. **Later:** "max possible points" moved into #721 (Q3.10); snake draft for team pools (#199); soccer
    knockouts and the Champions League (data on the same family).
 
 Ticket 1 and ticket 2 can be planned together and built back to back; 3 and 4 can run in
