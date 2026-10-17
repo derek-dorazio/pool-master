@@ -57,10 +57,10 @@ then college football (needs a "pick N of these games" rule).
 
 Questions:
 
-- **Q1.1** NFL first, with ATS in the first release or added after? Recommendation: straight-up
+- **Q1.1** NFL first, with ATS in the first release or added after? *Decided by Derek 2026-10-17:* straight-up
   and confidence first; ATS as the next slice, because lines need a data source and a lock rule.
-- **Q1.2** Is AFL tipping in scope at all, given an Australian audience? Recommendation: design
-  for it now (the margin tiebreaker and draws cost little), build when a league asks.
+- **Q1.2** Is AFL tipping in scope at all, given an Australian audience? *Decided by Derek 2026-10-17:*
+  designed now, built when a league asks; deferred as #710 (uses the shared total-points tiebreaker, not a margin).
 
 ---
 
@@ -163,10 +163,10 @@ a rebuild.
 
 Questions:
 
-- **Q2.1** Are squares worth a small ticket for the Super Bowl (February 2027)? Recommendation:
-  yes as a later small ticket; it needs only one match with quarter scores, but it is not
+- **Q2.1** Are squares worth a small ticket for the Super Bowl (February 2027)? *Decided by Derek 2026-10-17:*
+  yes as a later small ticket, deferred as #711; it needs only one match with quarter scores, but it is not
   pick'em, so it stays out of this epic's first slices.
-- **Q2.2** Prop pools: out of scope? Recommendation: yes; free-form questions are a different
+- **Q2.2** Prop pools: out of scope? *Decided by Derek 2026-10-17:* yes, deferred as #712 with an approach; free-form questions are a different
   product.
 
 ---
