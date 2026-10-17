@@ -1,6 +1,6 @@
 # PoolMaster — Mobile Rules
 
-These rules govern the iPhone and Android app. It is **planned, not built**: `clients/mobile`
+These rules govern the iPhone and Android app. It is **not built or scheduled**: `clients/mobile`
 holds no code yet. The choice of stack, and why, is ADR-0010.
 
 ## 1. One App, React Native with Expo

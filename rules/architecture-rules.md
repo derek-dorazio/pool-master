@@ -7,7 +7,7 @@ All plan documents and implementation work must conform to these rules. This is 
 - **[Service Rules](service-rules.md)** — backend TypeScript, Fastify, Prisma, OpenAPI, DTO, and mapper rules
 - **[PoolMaster Webapp Rules](poolmaster-webapp-rules.md)** — single-webapp product behavior, role-based access expectations, and archived-app policy
 - **[React UI Rules](react-ui-rules.md)** — PoolMaster React app technology, generated API client usage, TanStack Query, and frontend testing patterns
-- **[Mobile Rules](mobile-rules.md)** — the planned iPhone and Android app: one React Native app with Expo
+- **[Mobile Rules](mobile-rules.md)** — the future iPhone and Android app: one React Native app with Expo
 - **[Testing Rules](testing-rules.md)** — unit, integration, contract, smoke, and browser E2E rules
 - **[Workflow Rules](workflow-rules.md)** — action-plan tracking and rule/documentation update requirements
 - **[Domain Model Concepts](domain-model-concepts.md)** — what the domain is: the entity chain, per-entity vocabulary and on-screen names, and what common phrases mean in the model
