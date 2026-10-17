@@ -95,7 +95,7 @@ function PlayInUnmarkButton({ eventId, row, vocabulary }: { eventId: string; row
         size="sm"
         variant="ghost"
       >
-        Not a play-in place
+        Remove play-in mark
       </Button>
       {mutation.isError ? (
         <p className="text-sm text-destructive" role="alert">

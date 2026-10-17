@@ -51,7 +51,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
         {bracket.length > 0 ? (
           <p className="mt-1 text-sm text-muted-foreground" data-testid="root-admin-bracket-help">
             {released
-              ? `Tap the ${vocabulary.participant.one} that won each ${noun.one}. The winner moves on to its next ${noun.one}.`
+              ? `Choose the ${vocabulary.participant.one} that won each ${noun.one}. The winner moves on to its next ${noun.one}.`
               : `Pairings can change until the ${vocabulary.event.one} is released. Results are entered after that.`}
           </p>
         ) : null}

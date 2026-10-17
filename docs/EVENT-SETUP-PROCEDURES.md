@@ -202,7 +202,7 @@ field is built on the Field tab and its games are loaded through `loadEventBrack
   are offered, so to swap two teams, empty one side first. A side an earlier game's winner fills
   cannot be edited. Under *Play-in places*, mark each field row that stands for a First Four
   pairing ("Texas / Xavier").
-- **After release**, tap the team that won each game; the winner moves to its next game and
+- **After release**, choose the team that won each game; the winner moves to its next game and
   the standings update. A wrong winner can be switched, or the result cleared, until the next
   game has a result. Each play-in place takes its winner once, from the sport's active teams
   not already in the tournament.
