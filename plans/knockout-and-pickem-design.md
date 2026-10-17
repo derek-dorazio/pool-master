@@ -948,7 +948,7 @@ format value would only restate what the match links already say. Until slice 1,
   pick window (`areContestEntriesOpen`) asks the engine instead of assuming the event start.
 
 **Q5.3 Should a match pick name the team, or say HOME/AWAY?**
-*Recommendation:* name the team (`sportEventParticipantId`, a field row). *Rationale:* a bracket pick
+*Decided by Derek 2026-10-17:* name the team (`sportEventParticipantId`, a field row). *Rationale:* a bracket pick
 for a later round is "Duke wins match 61" before anyone knows Duke's opponent, so HOME/AWAY
 cannot express it; survivor's "each team once a season" is a direct check on the team; and an
 against-the-spread pick is still "this team covers". One rule serves every format.
