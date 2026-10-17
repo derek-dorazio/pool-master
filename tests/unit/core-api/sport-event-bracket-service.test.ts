@@ -282,6 +282,15 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
     await expect(service.fillPlayInSlot(event.id, slot.id, retired.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND' });
   });
 
+  it('refuses (409 EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE) a row that is not a play-in place, leaving the team and its participant alone', async () => {
+    const { service, store, event, duke, xavier } = withPlayInPlace();
+
+    await expect(service.fillPlayInSlot(event.id, duke.id, xavier.id))
+      .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE', statusCode: 409 });
+    expect(store.field.find((entry) => entry.id === duke.id)?.participantId).toBe(duke.participantId);
+    expect(store.participants.find((participant) => participant.id === duke.participantId)?.status).toBe(ParticipantStatus.ACTIVE);
+  });
+
   it('refuses (404 EVENT_PARTICIPANT_NOT_FOUND) a field row of another event', async () => {
     const { service, store, event, xavier } = withPlayInPlace();
     const other = store.addEvent({ sport: Sport.BASKETBALL });
