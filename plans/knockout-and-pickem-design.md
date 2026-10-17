@@ -649,11 +649,12 @@ record inside a series is out of scope until a pool scores individual games.
 
 **Q3.12 The word "team" means two things on screen.** A squad is called "team" on screen
 (`rules/poolmaster-webapp-rules.md` §1), and a March Madness participant is also a "team"
-("pick 8 teams for your team"). *Recommendation:* the sport vocabulary says "team" for the
-participant, and knockout screens refer to the squad by its name or as "your entry", never
-"your team"; the web ticket sweeps the picker, entry and leaderboard copy for it.
-*Rationale:* "team" is the only word fans use for a basketball team, while the squad already has
-a name to show; renaming the squad on screen would ripple through every league page.
+("pick 8 teams for your team"). *Decided by Derek 2026-10-16:* screens never need the word "team" or "squad" for the squad.
+A squad is shown by its name ("Derek's Great Golf Guys"), and picking is always for a contest
+entry, never for a team: "Pick 8 teams for your entry", "Derek's Great Golf Guys picked Duke".
+In basketball and football "team" then means only the participant (the sport vocabulary's
+word). The web ticket (4) sweeps the picker, entry and leaderboard copy for squad-as-"team"
+wording.
 
 **Q3.13 Which event pilots the foundation?** *Decided by Derek 2026-10-16:* there is no live
 release date; knockout is tested in QA only. The NFL playoffs are the **QA test data**: a
@@ -1153,7 +1154,7 @@ the bracket links knockout already built. Target: the 2027 NFL season (early Sep
 
 ## 6. Knockout implementation tickets
 
-To be filed under #599 after Derek's review. Each is one PR opened against main, through the
+Filed under #599 on 2026-10-17 after Derek's review. Each is one PR opened against main, through the
 named skill. The order keeps every merge free of dead code: each ticket ships something its
 successor or an admin uses.
 
@@ -1192,7 +1193,8 @@ successor or an admin uses.
 8. **March Madness 2027** (`load-sport-data`, no launch date set). Men's and women's 68-team fields and
    brackets loaded on Selection Sunday (about March 14, 2027), First Four handling (Q3.7);
    applied only on Derek's yes, per the skill.
-9. **Later:** "max possible points" (Q3.10); snake draft for team pools (#199); soccer
+9. **Later:** NBA and WNBA playoffs (data only on `BASKETBALL`, series as one match, Q3.11);
+   "max possible points" (Q3.10); snake draft for team pools (#199); soccer
    knockouts and the Champions League (data on the same family).
 
 Ticket 1 and ticket 2 can be planned together and built back to back; 3 and 4 can run in
@@ -1207,8 +1209,11 @@ data once 1 to 4 and 6 are in.
 Recorded here so the tickets carry them (docs ride with code, `rules/workflow-rules.md` §6):
 
 - `rules/domain-model-concepts.md`: the match, bracket words ("bye", "upset bonus", "seed"),
-  the second meaning of "team" (Q3.12), and, in the pick'em phase, the prediction contest,
+  the squad shown by its name and picks made for an entry, never "your team" (Q3.12), and, in the pick'em phase, the prediction contest,
   `ACTIVE` accepting picks, and **release a round** as a verb (section 5.3).
+- `rules/poolmaster-webapp-rules.md` §1: today it makes "Team" the screen name for a squad.
+  Ticket 4 rewrites it to Derek's Q3.12 decision: the squad is shown by its name, and picks are
+  for an entry.
 - `rules/architecture-rules.md` §4 *Sport extension*: the head-to-head family, and later the
   entry scorer seam keyed by contest format.
 - `docs/DOMAIN-OPERATIONS.md`: bracket setup and result entry operations with their error codes.
