@@ -1193,8 +1193,11 @@ successor or an admin uses.
 8. **March Madness 2027** (#705; `load-sport-data`, no launch date set). Men's and women's 68-team fields and
    brackets loaded on Selection Sunday (about March 14, 2027), First Four handling (Q3.7);
    applied only on Derek's yes, per the skill.
-9. **Later:** NBA and WNBA playoffs (data only on `BASKETBALL`, series as one match, Q3.11);
-   "max possible points" (Q3.10); snake draft for team pools (#199); soccer
+9. **NBA and WNBA playoffs** (#706; league rows, templates and data on `BASKETBALL`; a series
+   is one match, Q3.11).
+10. **College Football Playoff** (#707; a league on `AMERICAN_FOOTBALL` after 5, byes as in the
+   NFL, first-round campus games not neutral).
+11. **Later:** "max possible points" (Q3.10); snake draft for team pools (#199); soccer
    knockouts and the Champions League (data on the same family).
 
 Ticket 1 and ticket 2 can be planned together and built back to back; 3 and 4 can run in
