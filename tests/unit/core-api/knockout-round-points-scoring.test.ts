@@ -201,7 +201,7 @@ describe('knockout round points — upset bonus', () => {
     expect(upsetBonusFor(SEED_DIFFERENCE, 4, 4)).toBe(0);
   });
 
-  it('shows the bonus part, wins, whether the team is alive and the latest round it has a match in as the pick\'s detail', () => {
+  it('shows the bonus part, wins and whether the team is alive as the pick\'s detail', () => {
     const field = bracketField(SEEDED, [
       { matchNumber: 1, round: 1, home: 'Duke', away: 'Vermont', winner: MatchSide.AWAY, advancesTo: 3 },
       { matchNumber: 2, round: 1, home: 'Houston', away: 'Texas', winner: MatchSide.HOME, advancesTo: 3 },
@@ -211,8 +211,8 @@ describe('knockout round points — upset bonus', () => {
     const details = Object.fromEntries(family.scoreField(field, TOURNAMENT, knockout([1, 2], SEED_DIFFERENCE)).map((row) => [row.name, row.detail]));
 
     expect(details).toMatchObject({
-      Vermont: { scoringFamily: ScoringFamily.HEAD_TO_HEAD, wins: 1, upsetBonusPoints: 3, isAlive: true, roundReached: 2 },
-      Duke: { scoringFamily: ScoringFamily.HEAD_TO_HEAD, wins: 0, upsetBonusPoints: 0, isAlive: false, roundReached: 1 },
+      Vermont: { scoringFamily: ScoringFamily.HEAD_TO_HEAD, wins: 1, upsetBonusPoints: 3, isAlive: true },
+      Duke: { scoringFamily: ScoringFamily.HEAD_TO_HEAD, wins: 0, upsetBonusPoints: 0, isAlive: false },
     });
   });
 });

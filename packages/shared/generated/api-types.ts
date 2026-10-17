@@ -8397,8 +8397,6 @@ export interface components {
                 upsetBonusPoints: number;
                 /** @description False once the team has lost a match. */
                 isAlive: boolean;
-                /** @description The latest round the team has a match in; null when it is in none. */
-                roundReached: number | null;
             } | null;
         };
         /** @description One entry's standing in a contest leaderboard. Each pick's score lives in its sport's block. */
@@ -8467,8 +8465,6 @@ export interface components {
                     upsetBonusPoints: number;
                     /** @description False once the team has lost a match. */
                     isAlive: boolean;
-                    /** @description The latest round the team has a match in; null when it is in none. */
-                    roundReached: number | null;
                 } | null;
             }[];
         };
@@ -8770,8 +8766,6 @@ export interface components {
                         upsetBonusPoints: number;
                         /** @description False once the team has lost a match. */
                         isAlive: boolean;
-                        /** @description The latest round the team has a match in; null when it is in none. */
-                        roundReached: number | null;
                     } | null;
                 }[];
             }[];

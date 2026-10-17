@@ -182,7 +182,6 @@ export const ScoredContestEntryPickKnockoutDtoSchema = z.object({
   wins: z.number().int().min(0).describe('Matches the team has won.'),
   upsetBonusPoints: z.number().int().min(0).describe('The part of the points that is upset bonus; 0 when the bonus is off.'),
   isAlive: z.boolean().describe('False once the team has lost a match.'),
-  roundReached: z.number().int().min(1).nullable().describe('The latest round the team has a match in; null when it is in none.'),
 }).describe('Head-to-head extension of a scored pick: the team\'s knockout points and how they came about.');
 export type ScoredContestEntryPickKnockoutDto = z.infer<typeof ScoredContestEntryPickKnockoutDtoSchema>;
 

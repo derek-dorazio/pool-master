@@ -33,8 +33,6 @@ export interface KnockoutTeamRecord {
   upsetBonusPoints: number;
   /** False once the team has lost a match. */
   isAlive: boolean;
-  /** The latest round the team has a match in, or null when it is in none. */
-  roundReached: number | null;
 }
 
 export interface KnockoutTeamScore {
@@ -84,7 +82,6 @@ export function scoreKnockoutField(
   const seedById = new Map(field.map((row) => [row.entry.id, row.entry.seedNumber ?? worstSeed]));
 
   return field.map((row) => {
-    const roundNumbers = row.matches.map((match) => match.roundNumber);
     const results = row.matches.flatMap((match) => {
       const result = decided.get(match.id);
       return result ? [result] : [];
@@ -100,7 +97,6 @@ export function scoreKnockoutField(
       wins: won.length,
       upsetBonusPoints,
       isAlive: results.length === won.length,
-      roundReached: roundNumbers.length > 0 ? Math.max(...roundNumbers) : null,
     };
     const scoredRounds = roundPoints.filter((points): points is number => points !== undefined);
     if (decided.size === 0 || scoredRounds.length < roundPoints.length) {

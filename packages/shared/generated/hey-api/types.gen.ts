@@ -7928,10 +7928,6 @@ export type ScoredContestEntryPickDto = {
          * False once the team has lost a match.
          */
         isAlive: boolean;
-        /**
-         * The latest round the team has a match in; null when it is in none.
-         */
-        roundReached: number | null;
     } | null;
 };
 
@@ -8053,10 +8049,6 @@ export type ContestEntryStandingDto = {
              * False once the team has lost a match.
              */
             isAlive: boolean;
-            /**
-             * The latest round the team has a match in; null when it is in none.
-             */
-            roundReached: number | null;
         } | null;
     }>;
 };
@@ -8466,10 +8458,6 @@ export type ContestLeaderboardResponse = {
                  * False once the team has lost a match.
                  */
                 isAlive: boolean;
-                /**
-                 * The latest round the team has a match in; null when it is in none.
-                 */
-                roundReached: number | null;
             } | null;
         }>;
     }>;

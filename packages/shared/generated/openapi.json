@@ -16979,22 +16979,13 @@
               "isAlive": {
                 "type": "boolean",
                 "description": "False once the team has lost a match."
-              },
-              "roundReached": {
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": 1,
-                "description": "The latest round the team has a match in; null when it is in none."
               }
             },
             "required": [
               "points",
               "wins",
               "upsetBonusPoints",
-              "isAlive",
-              "roundReached"
+              "isAlive"
             ],
             "additionalProperties": false,
             "description": "Present for a head-to-head contest (a basketball bracket); null otherwise."
@@ -17185,22 +17176,13 @@
                     "isAlive": {
                       "type": "boolean",
                       "description": "False once the team has lost a match."
-                    },
-                    "roundReached": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 1,
-                      "description": "The latest round the team has a match in; null when it is in none."
                     }
                   },
                   "required": [
                     "points",
                     "wins",
                     "upsetBonusPoints",
-                    "isAlive",
-                    "roundReached"
+                    "isAlive"
                   ],
                   "additionalProperties": false,
                   "description": "Present for a head-to-head contest (a basketball bracket); null otherwise."
@@ -18022,22 +18004,13 @@
                           "isAlive": {
                             "type": "boolean",
                             "description": "False once the team has lost a match."
-                          },
-                          "roundReached": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 1,
-                            "description": "The latest round the team has a match in; null when it is in none."
                           }
                         },
                         "required": [
                           "points",
                           "wins",
                           "upsetBonusPoints",
-                          "isAlive",
-                          "roundReached"
+                          "isAlive"
                         ],
                         "additionalProperties": false,
                         "description": "Present for a head-to-head contest (a basketball bracket); null otherwise."

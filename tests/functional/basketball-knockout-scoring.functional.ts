@@ -220,10 +220,10 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     expect(board.scoringDefinitionId).toBe('KNOCKOUT_ROUND_POINTS');
     const picks = Object.fromEntries(board.entries.flatMap((entry) => entry.picks).map((pick) => [nameOf(pick.sportEventParticipantId), pick.knockout]));
     expect(picks).toEqual({
-      Duke: { points: 1, wins: 1, upsetBonusPoints: 0, isAlive: false, roundReached: 2 },
-      Vermont: { points: 30, wins: 2, upsetBonusPoints: 27, isAlive: true, roundReached: 2 },
-      Houston: { points: 0, wins: 0, upsetBonusPoints: 0, isAlive: false, roundReached: 1 },
-      Texas: { points: 0, wins: 0, upsetBonusPoints: 0, isAlive: false, roundReached: 1 },
+      Duke: { points: 1, wins: 1, upsetBonusPoints: 0, isAlive: false },
+      Vermont: { points: 30, wins: 2, upsetBonusPoints: 27, isAlive: true },
+      Houston: { points: 0, wins: 0, upsetBonusPoints: 0, isAlive: false },
+      Texas: { points: 0, wins: 0, upsetBonusPoints: 0, isAlive: false },
     });
     const champion = expectDefined(board.participants.find((row) => row.id === rowOf('Vermont')));
     expect(champion.standing).toMatchObject({ position: 1, status: 'COMPLETE' });

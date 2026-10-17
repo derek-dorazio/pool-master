@@ -253,14 +253,14 @@ const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, 
   }),
   [ScoringFamily.FINISH_POSITION]: (pick) => ({ golf: null, race: { points: pick.participant.score }, knockout: null }),
   [ScoringFamily.HEAD_TO_HEAD]: (pick) => {
-    const { wins, upsetBonusPoints, isAlive, roundReached } = participantScoreDetailFor(
+    const { wins, upsetBonusPoints, isAlive } = participantScoreDetailFor(
       ScoringFamily.HEAD_TO_HEAD,
       pick.participant.detail,
     );
     return {
       golf: null,
       race: null,
-      knockout: { points: pick.participant.score, wins, upsetBonusPoints, isAlive, roundReached },
+      knockout: { points: pick.participant.score, wins, upsetBonusPoints, isAlive },
     };
   },
 };

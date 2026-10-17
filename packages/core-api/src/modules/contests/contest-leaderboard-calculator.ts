@@ -76,7 +76,6 @@ export type ParticipantScoreDetail =
     wins: number;
     upsetBonusPoints: number;
     isAlive: boolean;
-    roundReached: number | null;
   };
 
 /**

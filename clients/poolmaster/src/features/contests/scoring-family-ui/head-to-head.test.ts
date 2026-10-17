@@ -57,8 +57,8 @@ function pick(knockout: ScoredContestEntryPickDto['knockout']): ScoredContestEnt
   };
 }
 
-const upsetWin = pick({ points: 6, wins: 1, upsetBonusPoints: 5, isAlive: true, roundReached: 2 });
-const plainWin = pick({ points: 1, wins: 1, upsetBonusPoints: 0, isAlive: true, roundReached: 2 });
+const upsetWin = pick({ points: 6, wins: 1, upsetBonusPoints: 5, isAlive: true });
+const plainWin = pick({ points: 1, wins: 1, upsetBonusPoints: 0, isAlive: true });
 
 function bracketLeaderboard(picks: ScoredContestEntryPickDto[]): ContestLeaderboardResponse {
   const entry: ContestEntryStandingDto = {
@@ -114,7 +114,7 @@ describe('head-to-head leaderboard', () => {
   });
 
   it('shows dashes for a pick not scored yet', () => {
-    const unscored = pick({ points: null, wins: 0, upsetBonusPoints: 0, isAlive: true, roundReached: 1 });
+    const unscored = pick({ points: null, wins: 0, upsetBonusPoints: 0, isAlive: true });
     const board = headToHeadUi.leaderboard(bracketLeaderboard([unscored]), basketball);
     const detail = board.pickDetail('entry-1', unscored, team());
 
@@ -125,7 +125,7 @@ describe('head-to-head leaderboard', () => {
 
 describe('formatKnockoutStatus', () => {
   it('shows a team that lost as Eliminated, the sport\'s word', () => {
-    expect(formatKnockoutStatus(pick({ points: 0, wins: 0, upsetBonusPoints: 0, isAlive: false, roundReached: 1 }), team(), basketball)).toBe('Eliminated');
+    expect(formatKnockoutStatus(pick({ points: 0, wins: 0, upsetBonusPoints: 0, isAlive: false }), team(), basketball)).toBe('Eliminated');
   });
 
   it('shows the team that won the final as Champion', () => {
@@ -135,6 +135,6 @@ describe('formatKnockoutStatus', () => {
 
   it('shows a withdrawn team in the sport\'s word, and nothing for a team yet to play', () => {
     expect(formatKnockoutStatus(plainWin, team({ isActive: false }), basketball)).toBe('Withdrawn');
-    expect(formatKnockoutStatus(pick({ points: 0, wins: 0, upsetBonusPoints: 0, isAlive: true, roundReached: 1 }), team(), basketball)).toBeNull();
+    expect(formatKnockoutStatus(pick({ points: 0, wins: 0, upsetBonusPoints: 0, isAlive: true }), team(), basketball)).toBeNull();
   });
 });
