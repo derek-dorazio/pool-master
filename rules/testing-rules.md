@@ -2,7 +2,7 @@
 
 All services and clients must follow these testing standards. This document defines the testing strategy, contract verification rules, functional test expectations, and when old tests should be removed rather than preserved.
 
-> **Architecture dependency:** This document assumes the stack in [architecture-rules.md](architecture-rules.md): Fastify + TypeScript backend, the single React PoolMaster web client, native iOS/Android clients, DTO-driven OpenAPI, and shared generated `hey-api` clients.
+> **Architecture dependency:** This document assumes the stack in [architecture-rules.md](architecture-rules.md): Fastify + TypeScript backend, the single React PoolMaster web client, a future React Native mobile app, DTO-driven OpenAPI, and shared generated `hey-api` clients.
 
 ---
 
@@ -28,10 +28,8 @@ All services and clients must follow these testing standards. This document defi
 
 ### Mobile
 
-| Platform | Tooling |
-|---|---|
-| iOS | XCTest / XCUITest |
-| Android | JUnit / Compose UI tests / instrumentation where needed |
+Not built or scheduled: one React Native app with Expo for iOS and Android. Tooling is in
+`rules/mobile-rules.md` §4 *Testing*.
 
 ### Testing Persona Boundary
 

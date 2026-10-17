@@ -7,8 +7,7 @@ All plan documents and implementation work must conform to these rules. This is 
 - **[Service Rules](service-rules.md)** — backend TypeScript, Fastify, Prisma, OpenAPI, DTO, and mapper rules
 - **[PoolMaster Webapp Rules](poolmaster-webapp-rules.md)** — single-webapp product behavior, role-based access expectations, and archived-app policy
 - **[React UI Rules](react-ui-rules.md)** — PoolMaster React app technology, generated API client usage, TanStack Query, and frontend testing patterns
-- **[Swift Rules](swift-rules.md)** — iOS SwiftUI client rules
-- **[Android Rules](android-rules.md)** — Android Kotlin + Jetpack Compose rules
+- **[Mobile Rules](mobile-rules.md)** — the future iPhone and Android app: one React Native app with Expo
 - **[Testing Rules](testing-rules.md)** — unit, integration, contract, smoke, and browser E2E rules
 - **[Workflow Rules](workflow-rules.md)** — action-plan tracking and rule/documentation update requirements
 - **[Domain Model Concepts](domain-model-concepts.md)** — what the domain is: the entity chain, per-entity vocabulary and on-screen names, and what common phrases mean in the model
@@ -47,11 +46,12 @@ The go-forward web frontend is a single role-based application: `clients/poolmas
 - New web work targets the single PoolMaster app. **Do not split functionality across
   multiple React apps.**
 
-### Unbuilt clients
+### Unbuilt mobile app
 
-`rules/swift-rules.md` and `rules/android-rules.md` describe clients that do not exist in
-this repo. They are retained as the starting position for whenever those clients begin, and
-nothing in this file should be read as asserting they are built.
+The iPhone and Android app will be one React Native app built with Expo, in
+`clients/mobile` (ADR-0010), not separate Swift and Kotlin apps. `rules/mobile-rules.md`
+describes it; nothing is built yet, and nothing in this file should be read as asserting
+it is.
 
 ---
 
