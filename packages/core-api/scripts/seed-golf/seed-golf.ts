@@ -38,7 +38,7 @@
  * instead, because removing it would break that entry.
  */
 
-import { findSportRow, getSportDefinition, MatchSide, ScoringFamily, type Sport, sportPlaysBracket } from '@poolmaster/shared/domain';
+import { findSportRow, getSportDefinition, MatchSide, ScoringFamily, type Sport, SportEventStatus, sportPlaysBracket } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
@@ -107,7 +107,7 @@ type BracketMatchWrite = LoadSportEventBracketRequest['matches'][number];
 type FieldSource = Pick<SportDataEvent, 'name' | 'field'>;
 
 /** An event that has started, or will not run as scheduled: the loader leaves it alone. */
-const EDITABLE_STATUSES: ReadonlySet<StoredEvent['status']> = new Set(['DRAFT', 'SCHEDULED']);
+const EDITABLE_STATUSES: ReadonlySet<StoredEvent['status']> = new Set([SportEventStatus.DRAFT, SportEventStatus.SCHEDULED]);
 /** How far a renamed event's start may be from the file's and still be the same event. */
 const RENAME_MATCH_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -200,16 +200,17 @@ function filledPlayInPlaces(
 /**
  * What the file would change on an event's bracket. Before release (`locked` false) any
  * difference in a match's round, sides, site, time or link, or a match only one side has, means
- * loading the bracket whole again. After release pairings are locked and results fill the later
- * sides, so only each match's site and time are compared, as one edit per match; a match only
- * one side has is a conflict.
+ * loading the bracket whole again. After release pairings are locked, so only each match's site
+ * and time are changed, as one edit per match. A match only one side has, or a changed round,
+ * link or named side, is then a conflict. Results fill the later sides, so only the sides the
+ * file names are compared, and a filled play-in place (`filled`) matches its pairing.
  */
 function bracketChanges(
   matches: readonly SportDataMatch[],
   participantIds: ReadonlyMap<string, string | null>,
   storedField: readonly StoredFieldRow[],
   storedBracket: readonly StoredMatch[],
-  locked: boolean,
+  { locked, filled }: { locked: boolean; filled: ReadonlyMap<string, StoredFieldRow> },
 ): { changes: string[]; conflicts: string[]; edits: Array<{ matchNumber: number; edit: UpdateSportEventMatchRequest }> } {
   const byNumber = new Map(storedBracket.map((match) => [match.matchNumber, match]));
   const numberById = new Map(storedBracket.map((match) => [match.id, match.matchNumber]));
@@ -219,11 +220,28 @@ function bracketChanges(
   const extra = storedBracket.filter((match) => !fileNumbers.has(match.matchNumber)).map((match) => match.matchNumber);
   const timeMoved = (match: SportDataMatch, stored: StoredMatch): boolean => match.scheduledAt !== undefined
     && (stored.scheduledDate === null || Date.parse(stored.scheduledDate) !== Date.parse(match.scheduledAt));
+  const sameSide = (key: string | null, rowId: string | null): boolean => {
+    if (key === null) return rowId === null;
+    if (rowId !== null && filled.get(key)?.id === rowId) return true;
+    const participantId = participantIds.get(key) ?? null;
+    return participantId !== null && rowId !== null && participantOfRow.get(rowId) === participantId;
+  };
+  const sameLink = (match: SportDataMatch, stored: StoredMatch): boolean => {
+    const advancesTo = stored.advancesToMatchId === null ? null : numberById.get(stored.advancesToMatchId) ?? null;
+    return advancesTo === (match.advancesTo?.matchNumber ?? null) && stored.advancesToSide === (match.advancesTo?.side ?? null);
+  };
 
   if (locked) {
+    const repaired = matches.filter((match) => {
+      const stored = byNumber.get(match.matchNumber);
+      return stored !== undefined && (stored.roundNumber !== match.roundNumber || !sameLink(match, stored)
+        || (match.home !== null && !sameSide(match.home, stored.homeSportEventParticipantId))
+        || (match.away !== null && !sameSide(match.away, stored.awaySportEventParticipantId)));
+    }).map((match) => match.matchNumber);
     const conflicts = [
       ...(missing.length > 0 ? [`${matchList(missing)} not on the site`] : []),
       ...(extra.length > 0 ? [`${matchList(extra)} not in the file`] : []),
+      ...(repaired.length > 0 ? [`pairing, round or link of ${matchList(repaired)} differs`] : []),
     ];
     const edits = matches.flatMap((match) => {
       const stored = byNumber.get(match.matchNumber);
@@ -237,22 +255,15 @@ function bracketChanges(
   }
 
   if (storedBracket.length === 0) return { changes: [`${matches.length} matches`], conflicts: [], edits: [] };
-  const sameSide = (key: string | null, rowId: string | null): boolean => {
-    if (key === null) return rowId === null;
-    const participantId = participantIds.get(key) ?? null;
-    return participantId !== null && rowId !== null && participantOfRow.get(rowId) === participantId;
-  };
   const changed = matches.filter((match) => {
     const stored = byNumber.get(match.matchNumber);
     if (!stored) return false;
-    const advancesTo = stored.advancesToMatchId === null ? null : numberById.get(stored.advancesToMatchId);
     return stored.roundNumber !== match.roundNumber
       || !sameSide(match.home, stored.homeSportEventParticipantId)
       || !sameSide(match.away, stored.awaySportEventParticipantId)
       || stored.isNeutralSite !== match.isNeutralSite
       || timeMoved(match, stored)
-      || (advancesTo ?? null) !== (match.advancesTo?.matchNumber ?? null)
-      || stored.advancesToSide !== (match.advancesTo?.side ?? null);
+      || !sameLink(match, stored);
   }).map((match) => match.matchNumber);
   const changes = [
     ...(changed.length > 0 ? [`${matchList(changed)} changed`] : []),
@@ -415,7 +426,7 @@ class Loader {
       changes.push(`name ${stored.name} → ${event.name}`);
     }
     // A released test event keeps the dates its own run gave it; only a draft moves to this run's.
-    const compareDates = !this.file.testData || stored.status === 'DRAFT';
+    const compareDates = !this.file.testData || stored.status === SportEventStatus.DRAFT;
     // A file that gives the exact start (a post time) moves a start on the same day too.
     const startChanged = event.startsAt === undefined
       ? day(stored.startDate) !== day(dates.startDate)
@@ -585,7 +596,7 @@ class Loader {
 
     const editable = EDITABLE_STATUSES.has(stored.status);
     // Release locks a bracket event's pairings, seeds and play-in places with its field.
-    const bracketLocked = sportPlaysBracket(this.sport) && stored.status !== 'DRAFT';
+    const bracketLocked = sportPlaysBracket(this.sport) && stored.status !== SportEventStatus.DRAFT;
     const eventPlan = loadsSchedule ? this.eventChanges(event, stored) : { body: {}, changes: [] };
     const storedField = loadsField || loadsBracket
       ? (await must(listEventParticipants({ client, path: { eventId: stored.id } }), `Read the field of ${event.name}`)).participants
@@ -595,8 +606,8 @@ class Loader {
       : [];
     const filled = bracketLocked ? filledPlayInPlaces(event, participantIds, storedField, storedBracket) : new Map<string, StoredFieldRow>();
     const fieldPlan = loadsField ? this.fieldChanges(league, event, participantIds, storedField, filled) : null;
-    const bracketPlan = loadsBracket ? bracketChanges(matches, participantIds, storedField, storedBracket, bracketLocked) : null;
-    const finishesDraft = this.file.testData && stored.status === 'DRAFT';
+    const bracketPlan = loadsBracket ? bracketChanges(matches, participantIds, storedField, storedBracket, { locked: bracketLocked, filled }) : null;
+    const finishesDraft = this.file.testData && stored.status === SportEventStatus.DRAFT;
 
     if (!editable) {
       const differences = [...eventPlan.changes, ...(fieldPlan?.changes ?? [])];

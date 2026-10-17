@@ -546,7 +546,7 @@ describe('Loading a real basketball bracket through the admin API', () => {
     await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY });
   });
 
-  it('after release changes only a match time, leaves a filled play-in place alone, and reports a changed field as a conflict', async () => {
+  it('after release changes only a match time, leaves a filled play-in place alone, and reports a changed pairing or field as a conflict', async () => {
     const event = await storedEvent();
     const eventId = event.id;
     const rows = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId } })).data).participants;
@@ -578,6 +578,17 @@ describe('Loading a real basketball bracket through the admin API', () => {
     const field = await fieldOf(eventId);
     expect(field.get(teamName('Texas'))).toMatchObject({ isActive: true, seedNumber: 15 });
     expect(field.has(teamName(PAIRING))).toBe(false);
+
+    const swapped = file((event) => {
+      event.matches = baseMatches().map((match) => {
+        if (match.matchNumber === 1) return { ...match, away: key('Houston') };
+        if (match.matchNumber === 2) return { ...match, home: key('Vermont') };
+        return match;
+      });
+    });
+    expect(changes(await loadSportData(parsed(swapped), { getClient, now: NOW, mode: LoadMode.DRY_RUN }))).toEqual([
+      bracketRow(LoadAction.CONFLICT, 'SCHEDULED, so the bracket is not changed: pairing, round or link of matches 1, 2 differs'),
+    ]);
 
     const dropped = file((event) => {
       event.field = event.field.filter((entry) => entry.player !== key('Vermont'));
