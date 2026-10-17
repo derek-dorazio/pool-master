@@ -1161,36 +1161,36 @@ successor or an admin uses.
 0. **Settled total on the entry standing** (#695, filed 2026-10-16, dispatched ahead of the
    rest): `ContestEntryStanding.totalScore` replaces the golf and race settled-total tables
    (Q3.9). Merged 2026-10-16 as PR #696.
-1. **Basketball and the bracket** (`add-sport`, `model-change`). `Sport.BASKETBALL` with the
+1. **Basketball and the bracket** (#698; `add-sport`, `model-change`). `Sport.BASKETBALL` with the
    NCAA men's and women's sport leagues (reference data in the migration);
    `TournamentFormat.KNOCKOUT_BRACKET`; `ScoringFamily.HEAD_TO_HEAD` registered with a module
    that has no scoring definition yet; `SportEventMatch` with `MatchStatus` and `MatchSide`;
    admin API to load and edit a bracket; release checks (Q3.6) and seed lock (Q3.5); delete
    `Contest.scoringStopsOnElimination` (Q3.14). Integration tests for the bracket queries and
    the database checks.
-2. **Knockout scoring and results** (`add-endpoint`). `KNOCKOUT_ROUND_POINTS` with
+2. **Knockout scoring and results** (#699; `add-endpoint`). `KNOCKOUT_ROUND_POINTS` with
    `KnockoutRoundPointsSettings` and `UpsetBonusRule`; results entry API (mark winner, advance,
    eliminate, standings, correction lock); `scoreField` and the leaderboard pick detail arm
    (settlement needs nothing new after #695); round-values length check (Q3.3); the "Doubling" and
    "Doubling + upset bonus" templates for both NCAA leagues. Unit tests for the scoring math
    (upset bonus, unseeded, equal seeds, multiplier, byes) and a functional test from release to
    settlement.
-3. **Admin bracket and results screens** (`add-frontend-feature`). A bracket tab on knockout
+3. **Admin bracket and results screens** (#700; `add-frontend-feature`). A bracket tab on knockout
    events: matches by round with labels from the sport definition, pairing edits before release,
    one tap to mark a winner after start, correction errors shown in product copy.
-4. **Commissioner and member screens** (`add-frontend-feature`). Scoring setup for round values
+4. **Commissioner and member screens** (#701; `add-frontend-feature`). Scoring setup for round values
    and the upset bonus with presets; seeds in the selection room; leaderboard wins, upset bonus points
    and alive/out per pick; the "team" copy sweep (Q3.12).
-5. **NFL playoffs** (`add-sport`, then `load-sport-data`). `Sport.AMERICAN_FOOTBALL`, the NFL
+5. **NFL playoffs** (#702; `add-sport`, then `load-sport-data`). `Sport.AMERICAN_FOOTBALL`, the NFL
    league, byes in the bracket (Q3.4), four-round templates; a completed NFL playoff bracket
    loaded as QA test data with its results (Q3.13).
-6. **Matches in sport data files** (`load-sport-data`). The data file envelope gains a
+6. **Matches in sport data files** (#703; `load-sport-data`). The data file envelope gains a
    `matches` list with bracket links, cross-checked against a second source like fields are;
    used by 5 and 8. Could merge before 5 if 5 needs it first.
-7. **Tennis** (`add-sport`, optional pilot). `Sport.TENNIS`, ATP and WTA leagues, seven-round
+7. **Tennis** (#704; `add-sport`, optional pilot). `Sport.TENNIS`, ATP and WTA leagues, seven-round
    templates, unseeded rule (Q3.1); the 2027 Australian Open singles draws if Derek wants the
    second pilot.
-8. **March Madness 2027** (`load-sport-data`, no launch date set). Men's and women's 68-team fields and
+8. **March Madness 2027** (#705; `load-sport-data`, no launch date set). Men's and women's 68-team fields and
    brackets loaded on Selection Sunday (about March 14, 2027), First Four handling (Q3.7);
    applied only on Derek's yes, per the skill.
 9. **Later:** NBA and WNBA playoffs (data only on `BASKETBALL`, series as one match, Q3.11);
