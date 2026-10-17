@@ -36,11 +36,12 @@ plan keeps the sport research and the style catalog.
   definition with typed settings, and new sport definitions (basketball first). The settled
   total moves onto `ContestEntryStanding.totalScore` for every sport first (#695, Q3.9), so
   knockout adds no settled-total table.
-- **New model objects for pick'em (built later):** `ContestEntryMatchPrediction`,
-  `ContestEntryRoundStanding`, a spread on the match, `ContestFormat.PREDICTION`, three
-  selection types (`PICK_EM`, `SURVIVOR`, `BRACKET`), a tournament format per event, and
-  **round release** (each round of a multi-round contest is set up, then released for entry,
-  like a golf event; section 5.3).
+- **New model objects for pick'em (built later):** **multi-event contests** first
+  (`ContestSportEvent`, `ContestEntryEventStanding`; #713, Q5.2): each NFL week is its own event
+  and a contest spans several events, which also gives golf a four-majors pool (#714). Then
+  `ContestEntryMatchPrediction`, a spread on the match, `ContestFormat.PREDICTION`, three
+  selection types (`PICK_EM`, `SURVIVOR`, `BRACKET`), and **round release** for multi-round
+  events picked game by game (section 5.3).
 - **Order:** knockout foundation and basketball, then a January pilot (NFL playoffs; the
   Australian Open optionally), then March Madness for Selection Sunday (about March 14, 2027).
   Pick'em follows for the 2027 NFL season. Ticket breakdown in section 6.
@@ -67,7 +68,8 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 |---|---|---|
 | `SportEventMatch` | One match in one round of one event | An event-owned child, like `SportEventRound` and `SportEventTier`. Prefixed because bare "match" already means provider matching (`SportLeague.matchKeyword`, participant mapping confidence) |
 | `ContestEntryMatchPrediction` | One pick'em prediction on one match | `ContestEntry<Thing>`, like `ContestEntryPick` and `ContestEntryStanding` |
-| `ContestEntryRoundStanding` | An entry's points and position for one round | `ContestEntryStanding` narrowed to a round, as `SportEventParticipantRound` narrows its parent |
+| `ContestSportEvent` | One event a contest covers, in order (Q5.2) | A join named for its two ends, like `SportEventParticipant` |
+| `ContestEntryEventStanding` | An entry's points and position for one event of a multi-event contest (a pick'em week, one major) | `ContestEntryStanding` narrowed to an event. Replaces the per-round standing proposed earlier (Q5.2) |
 
 **Columns**
 
@@ -96,7 +98,7 @@ process; a pick is one participant chosen). The rest of this doc uses these name
 | Scoring definition `KNOCKOUT_ROUND_POINTS` | `<what is scored>_POINTS`, like `FINISH_POSITION_POINTS` |
 | `KnockoutRoundPointsSettings` | `<Definition>Settings`, like `FinishPositionPointsSettings` |
 | `UpsetBonusRule`: `NONE`, `SEED_DIFFERENCE` | Derek's choice (N3); the value names how the bonus is computed |
-| `TournamentFormat.KNOCKOUT_BRACKET`, `TournamentFormat.MATCH_SCHEDULE` | Describes the event's structure, like `STROKE_PLAY_TOURNAMENT` and `RACE` |
+| `TournamentFormat.KNOCKOUT_BRACKET` | Describes the sport's events, like `STROKE_PLAY_TOURNAMENT` and `RACE`. `MATCH_SCHEDULE` was dropped with Q5.2; see Q5.2a |
 | `Sport.BASKETBALL`, `Sport.AMERICAN_FOOTBALL`, `Sport.TENNIS` | Like `AUTO_RACING`: the sport itself, with the competitions as sport leagues |
 | `ContestFormat.PREDICTION` | Beside `ROSTER`: what an entry holds |
 | `SelectionType.PICK_EM`, `SURVIVOR`, `BRACKET` | Names the process, like `TIERED`, `BUDGET_PICK` and `RANDOM_DRAW` |
@@ -134,8 +136,9 @@ Naming questions:
 - **N4 What should the settled knockout total table be called?** *Decided by Derek
   2026-10-16:* there is no such table. Every sport's settled total is one integer, so it moves
   onto `ContestEntryStanding.totalScore` (#695, Q3.9).
-- **N5 What is the format for an event of scheduled matches (an NFL season)?** *Decided by Derek
-  2026-10-16:* `TournamentFormat.MATCH_SCHEDULE`: matches played on a schedule, grouped into
+- **N5 What is the format for an event of scheduled matches (an NFL season)?** *Superseded by Q5.2
+  (Derek 2026-10-17): an NFL week is its own event, so there is no season event and no per-event
+  format; see Q5.2a.* Earlier decision (2026-10-16): `TournamentFormat.MATCH_SCHEDULE`: matches played on a schedule, grouped into
   rounds, nobody eliminated. It pairs with `KNOCKOUT_BRACKET`. `SEASON` was rejected (too many
   meanings, and `LEAGUE_SEASON` collides with `League`); a pool name such as `PICK_EM` was not
   used because the format describes the real event, and pick'em and survivor are selection
@@ -882,14 +885,41 @@ interface about results, not about pools. The pick'em plan proposed an entry-lev
 family instead; the family interface shipped in #606 without one, and a format switch avoids
 widening it.
 
-**Q5.2 Where does an event's tournament format live?** Today it is per sport
-(`Sport.tournamentFormat`). The NFL needs a knockout event (playoffs) and a season event
-(weeks of games) in the same sport. *Recommendation:* in the pick'em phase, add
-`SportEvent.tournamentFormat`, with the sport definition listing allowed formats and a default;
-add `TournamentFormat.MATCH_SCHEDULE`. Validity: `KNOCKOUT_BRACKET` allows `ROSTER` and
-`PREDICTION` (team pools and bracket or game pick'em); `MATCH_SCHEDULE` allows `PREDICTION`.
-*Rationale:* it is the smallest change that lets one sport run both; not needed for knockout,
-so it waits.
+**Q5.2 How are the 18 weeks of an NFL season grouped, and where does an event's format live?**
+*Decided by Derek 2026-10-17 (option B):* **each NFL week is its own event, and a contest can
+span several events.** There is no season event and no new grouping object: events already
+carry a sport league and a year, and the commissioner picks the contest's events from that list
+(with "add all"). Filed as **#713**, pick'em slice 0, before any pick'em ticket.
+
+- **The link:** `ContestSportEvent` (contest, event, `sequence`) replaces `Contest.sportEventId`.
+  Every contest uses it; a golf or race contest has one row, so there is one code path.
+- **Entries and picks:** one entry per member per contest, as today. Picks already point at a
+  field row, so each pick belongs to its event unchanged.
+- **Pick window:** picks for an event open when that event is released and close at its start
+  (or at each game's start in pick'em). The contest goes `ACTIVE` at the first event's start and
+  `COMPLETED` when the last event settles.
+- **Standings:** the contest total stays on `ContestEntryStanding.totalScore`; a new
+  `ContestEntryEventStanding` gives each event's points and position (the weekly winner, or one
+  major's result). It replaces the per-round standing proposed before.
+- **Release:** each week is set up and released exactly like a golf event, so the round release
+  of section 5.3 is needed only where one event has several rounds picked game by game.
+- **Two pool types on one event** were already allowed: an event's format describes the real
+  competition, and each contest picks its own contest format. One NFL playoffs event can host
+  a team pool, a bracket pool and a weekly pick'em at once.
+
+*Rationale (Derek's):* a format setting on each event or on the sport could not describe a
+season of weeks, and a pool covering the regular season plus the playoffs needs several events
+anyway. It also opens pools we can't run today: a four-majors golf pool (**#714**), golf's
+One and Done, and a season-long F1 pool.
+
+**Q5.2a What format does an NFL regular-season week carry?** `Sport.tournamentFormat` stays on
+the sport, and #708 gave basketball `KNOCKOUT_BRACKET`. A regular-season week is a set of games
+with no bracket. *Recommendation:* when the first non-bracket match event lands (pick'em slice
+1), rename `KNOCKOUT_BRACKET` to `MATCHES`, meaning results are games between two sides. Whether
+an event's games form a bracket is then read from the match links (`advancesToMatchId`). Knockout
+round points and bracket picks are refused at release on an event whose games aren't linked.
+*Rationale:* the sport has one shape (games) whether or not they form a bracket, so a second
+format value would only restate what the match links already say. Until slice 1, nothing changes.
 
 ### 5.2 New objects
 
@@ -901,11 +931,11 @@ so it waits.
   score), as NCAA tournament pools do for the final and NFL pools do for the Monday night game.
   This applies to every sport, soccer included. A bracket or one-event pool uses the existing
   `ContestEntry.tiebreakerValue`; a weekly pick'em pool needs one value per entry per round,
-  a small (entry, round, value) row designed with the round standings slice. Predicting each
+  a small (entry, event, value) row designed with the event standings slice. Predicting each
   team's score (exact-score soccer pools) is left for later, as a `ContestEntryMatchPredictionScore`
   extension if wanted.
-- **`ContestEntryRoundStanding`**: an entry's points and position for one round (weekly
-  winners), beside the season `ContestEntryStanding`.
+- **`ContestEntryEventStanding`** (from #713): an entry's points and position for one event
+  of the contest (weekly winners), beside the contest total on `ContestEntryStanding`.
 - **The spread is a column on the match** (*decided by Derek 2026-10-16*): `homeSpread`, the
   points from the home team's side, null until set. Like tiers and prices it changes freely
   while being set up and locks when its round is released (section 5.3). No published-at
@@ -959,9 +989,10 @@ can change freely; release locks them and opens the round's games for picks. Thi
 explicit-release rule that events (`DRAFT` -> `SCHEDULED`) and contests (`DRAFT` -> `OPEN`)
 follow, applied one level down, and no time-based lock replaces it.
 
-Why per round and not at event release: an NFL season is one event released before the season,
-but week 6's games and spreads are only known the week before; in a bracket, later rounds'
-matchups do not exist until earlier rounds finish.
+Why per round and not at event release: in a bracket picked game by game (weekly pick'em over
+the playoffs), later rounds' matchups do not exist until earlier rounds finish. *Since Q5.2
+(2026-10-17)* each regular-season NFL week is its own event, so a week is released by the
+existing event release and needs nothing here.
 
 How it fits the model:
 
@@ -984,8 +1015,8 @@ then. *Rationale:* the concepts file describes what the product does today, and 
 round release yet. *Decided by Derek 2026-10-16: as recommended.*
 
 **Q5.9 Does a released round ever need to be reopened** (a game postponed to another week,
-a wrong spread)? *Recommendation:* no undo; a postponed game is cancelled in its round and added
-to the round it moves to (still in setup); a wrong spread can be corrected only while nobody
+a wrong spread)? *Recommendation:* no undo; a postponed game is cancelled in its week's event and added
+to the event it moves to (still in setup); a wrong spread can be corrected only while nobody
 has made a prediction on that match, and is refused with a typed error after that.
 *Rationale:* this matches "no undo" on contest open, and a correction that cannot change a pick
 already made is harmless. *Decided by Derek 2026-10-16: as recommended.*
@@ -1018,16 +1049,17 @@ classDiagram
     DateTime pickedAt
   }
   class ContestEntryStanding
-  class ContestEntryRoundStanding {
+  class ContestSportEvent {
+    <<new>>
+    Int sequence
+  }
+  class ContestEntryEventStanding {
     <<new>>
     Int points
     Int position
     String displayPosition
   }
-  class SportEvent {
-    <<changed>>
-    TournamentFormat tournamentFormat  + MATCH_SCHEDULE
-  }
+  class SportEvent
   class SportEventRound {
     <<changed>>
     Int roundNumber
@@ -1054,10 +1086,11 @@ classDiagram
   ContestEntry "1" --> "*" ContestEntryMatchPrediction : PREDICTION contests
   ContestEntryMatchPrediction "*" --> "1" SportEventMatch : predicts
   ContestEntryMatchPrediction "*" --> "0..1" SportEventParticipant : predicted winner
-  ContestEntry "1" --> "0..1" ContestEntryStanding : season
-  ContestEntry "1" --> "*" ContestEntryRoundStanding : per round
-  ContestEntryRoundStanding "*" --> "1" SportEventRound
-  Contest "*" --> "1" SportEvent
+  ContestEntry "1" --> "0..1" ContestEntryStanding : contest total
+  ContestEntry "1" --> "*" ContestEntryEventStanding : per event
+  ContestEntryEventStanding "*" --> "1" SportEvent
+  Contest "1" --> "1..*" ContestSportEvent
+  ContestSportEvent "*" --> "1" SportEvent
   Contest "1" --> "1" ContestConfiguration
   SportEvent "1" --> "*" SportEventRound
   SportEvent "1" --> "*" SportEventMatch
@@ -1065,13 +1098,13 @@ classDiagram
   SportEventRound ..> SportEventRoundStatus
 
   style ContestEntryMatchPrediction fill:#fff3c4,stroke:#c99a00,stroke-width:2px
-  style ContestEntryRoundStanding fill:#fff3c4,stroke:#c99a00,stroke-width:2px
+  style ContestEntryEventStanding fill:#fff3c4,stroke:#c99a00,stroke-width:2px
+  style ContestSportEvent fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style SportEventRoundStatus fill:#fff3c4,stroke:#c99a00,stroke-width:2px
   style SportEventRound fill:#e3f0ff,stroke:#3b78c4
   style SportEventMatch fill:#e3f0ff,stroke:#3b78c4
   style Contest fill:#e3f0ff,stroke:#3b78c4
   style ContestConfiguration fill:#e3f0ff,stroke:#3b78c4
-  style SportEvent fill:#e3f0ff,stroke:#3b78c4
 ```
 
 **Figure 6: pick'em additions to the code seams** (yellow new, blue changed).
@@ -1143,11 +1176,12 @@ architecture plan cites).
 
 ### 5.5 Pick'em slices (after knockout; not filed)
 
-Kept from `plans/pickem-pools.md` §5 with the model above: (1) per-event tournament format,
-`MATCH_SCHEDULE`, and an NFL season event with weeks as rounds and its matches loaded; (2)
+Kept from `plans/pickem-pools.md` §5 with the model above: (0) multi-event contests (#713,
+Q5.2), with the golf majors pool (#714) as its first use; (1) NFL week events with their games
+loaded through the sport data pipeline, and the Q5.2a format rename; (2)
 `PREDICTION` format, `ContestEntryMatchPrediction`, the `PICK_EM` engine (straight-up and confidence),
-per-match lock and reveal; (3) prediction scoring, round standings and weekly winners; (4) the
-round entry screen and season/week leaderboard; round release can land with (1) or (2); (5) survivor; (6) spreads; (7) bracket, using
+per-match lock and reveal; (3) prediction scoring, event standings and weekly winners; (4) the
+week entry screen and season/week leaderboard; round release can land with (1) or (2); (5) survivor; (6) spreads; (7) bracket, using
 the bracket links knockout already built. Target: the 2027 NFL season (early September 2027).
 
 ---
