@@ -11,6 +11,11 @@
  * optional start time for a sport whose cutoff is a set moment (a race's post time). A test
  * seed is golf's alone, because its made-up results are stroke rounds.
  *
+ * A sport that plays a bracket (basketball) may also carry each event's bracket: its matches,
+ * where each winner moves on to, and the field places that stand for a play-in pairing. The
+ * file names each side by a player key from the event's field, and the loader turns that into
+ * the field row.
+ *
  * A test slate is the one file any sport in the registry may have: one sport league's players
  * and no events, loaded as the field of an event already on the site that the run names
  * (isTestSlate). It is test data, for trying contests on an event before its real field is
@@ -18,7 +23,8 @@
  */
 
 import { z } from 'zod';
-import { getSportDefinition, ScoringFamily, type Sport, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { getSportDefinition, MatchSide, ScoringFamily, type Sport, sportPlaysBracket, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { findBracketProblems } from '../../src/modules/events/sport-event-bracket-service';
 
 /** The one envelope version this loader reads; any other is refused rather than misread. */
 export const SPORT_DATA_SCHEMA_VERSION = 1;
@@ -31,6 +37,8 @@ export const SportDataContent = {
   PLAYERS: 'PLAYERS',
   /** Each event's field: who plays, their ranking and seed. */
   FIELDS: 'FIELDS',
+  /** Each event's bracket: its matches, where each winner moves on to, and their times. */
+  BRACKET: 'BRACKET',
   /** Made-up odds, tiers, prices and scores; test data only. */
   RESULTS: 'RESULTS',
 } as const;
@@ -51,6 +59,13 @@ const FieldEntrySchema = z.object({
   /** A `key` from the same sport league's players. The field's order is its seed order. */
   player: z.string().min(1),
   ranking: z.number().int().positive().optional(),
+  /**
+   * The bracket seed, where it is not the entry's place in the field: 1-16 in each March
+   * Madness region, 1-7 in each NFL conference. Left out, the seed is that place.
+   */
+  seed: z.number().int().positive().optional(),
+  /** A bracket sport's only: this place stands for a play-in pairing ("Texas / Xavier"), whose winner is named after release. */
+  isPlayInPlace: z.boolean().optional(),
   // Test data only (RESULTS):
   oddsToWin: z.number().positive().optional(),
   /** Strokes per round played. A withdrawal's last entry is the partial round. */
@@ -59,6 +74,20 @@ const FieldEntrySchema = z.object({
   finish: z.enum(['MC', 'WD']).optional(),
   /** Holes a withdrawn golfer finished in their last round. */
   withdrawnThru: z.number().int().min(1).max(17).optional(),
+}).strict();
+
+const MatchSchema = z.object({
+  /** Unique within the event: the bracket slot and the display order. */
+  matchNumber: z.number().int().min(1),
+  roundNumber: z.number().int().min(1),
+  /** A player key from the event's field, or null where an earlier match's winner fills the side. */
+  home: z.string().min(1).nullable(),
+  away: z.string().min(1).nullable(),
+  isNeutralSite: z.boolean(),
+  /** Tip-off or kickoff, with its UTC offset, once it is announced. A time left out keeps the site's. */
+  scheduledAt: z.string().datetime({ offset: true }).optional(),
+  /** Where the winner moves on to; null for the final, and only for the final. */
+  advancesTo: z.object({ matchNumber: z.number().int().min(1), side: z.nativeEnum(MatchSide) }).strict().nullable(),
 }).strict();
 
 const EventSchema = z.object({
@@ -81,6 +110,8 @@ const EventSchema = z.object({
   /** Test data only: whether the made-up winner is the public one. */
   winner: z.enum(['public', 'generated']).optional(),
   field: z.array(FieldEntrySchema),
+  /** A bracket sport's only: the event's bracket, every match of it. */
+  matches: z.array(MatchSchema).optional(),
 }).strict();
 
 const SportLeagueSchema = z.object({
@@ -111,6 +142,7 @@ type ParsedSportDataFile = z.infer<typeof SportDataFileSchema>;
 
 export type SportDataPlayer = z.infer<typeof PlayerSchema>;
 export type SportDataFieldEntry = z.infer<typeof FieldEntrySchema>;
+export type SportDataMatch = z.infer<typeof MatchSchema>;
 export type SportDataEvent = z.infer<typeof EventSchema>;
 export type SportDataLeague = z.infer<typeof SportLeagueSchema>;
 export type SportDataFile = Omit<ParsedSportDataFile, 'scope'> & {
@@ -133,6 +165,14 @@ export interface ParseSportDataFileOptions {
 const TEST_ONLY_FIELD_KEYS = ['oddsToWin', 'rounds', 'finish', 'withdrawnThru'] as const;
 
 const TEST_SLATE_CONTENTS: readonly SportDataContent[] = [SportDataContent.PLAYERS, SportDataContent.FIELDS];
+
+/** What a test seed holds: a golf season with made-up results, which plays no bracket. */
+export const TEST_SEED_CONTENTS: readonly SportDataContent[] = [
+  SportDataContent.SCHEDULE,
+  SportDataContent.PLAYERS,
+  SportDataContent.FIELDS,
+  SportDataContent.RESULTS,
+];
 
 /**
  * A test slate: test data that holds only PLAYERS and FIELDS. Its one sport league's players,
@@ -158,7 +198,29 @@ function duplicates(values: readonly string[]): string[] {
   return [...repeated];
 }
 
-function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar: boolean, problems: string[]): void {
+/**
+ * The bracket's shape problems, by the same check the bracket endpoint applies, with each side
+ * named by a player key; empty when the event's field is the file's to say.
+ */
+function bracketProblems(event: SportDataEvent, matches: readonly SportDataMatch[]): string[] {
+  return findBracketProblems(
+    matches.map((match) => ({
+      matchNumber: match.matchNumber,
+      roundNumber: match.roundNumber,
+      homeSportEventParticipantId: match.home,
+      awaySportEventParticipantId: match.away,
+      isNeutralSite: match.isNeutralSite,
+      scheduledDate: null,
+      advancesTo: match.advancesTo,
+    })),
+    {
+      roundNumbers: new Set(Array.from({ length: event.rounds }, (_, index) => index + 1)),
+      fieldIds: new Set(event.field.map((entry) => entry.player)),
+    },
+  );
+}
+
+function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar: boolean, playsBracket: boolean, problems: string[]): void {
   const contents = new Set(file.scope.contents);
   for (const key of duplicates(league.players.map((player) => player.key))) {
     problems.push(`${league.name}: player key ${key} appears more than once.`);
@@ -182,6 +244,15 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
     }
     for (const key of duplicates(event.field.map((entry) => entry.player))) {
       problems.push(`${where}: ${key} is in the field more than once.`);
+    }
+    const matches = event.matches ?? [];
+    if (matches.length > 0) {
+      if (!playsBracket) problems.push(`${where}: has a bracket, which only a sport played as a bracket has.`);
+      else if (!contents.has(SportDataContent.BRACKET)) problems.push(`${where}: has a bracket, but the scope's contents leave out BRACKET.`);
+      else for (const problem of bracketProblems(event, matches)) problems.push(`${where}: bracket: ${problem}.`);
+    }
+    if (!playsBracket && event.field.some((entry) => entry.isPlayInPlace !== undefined || entry.seed !== undefined)) {
+      problems.push(`${where}: marks a seed or a play-in place, which only a sport played as a bracket has.`);
     }
     for (const entry of event.field) {
       if (!playerKeys.has(entry.player)) problems.push(`${where}: ${entry.player} is not in ${league.name}'s players.`);
@@ -225,9 +296,16 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
     problems.push(`scope.sport ${sport} cannot have a test seed: its made-up results are stroke rounds, so only golf has one. Use a real file or a test slate.`);
   }
 
+  const playsBracket = isSport(sport) && sportPlaysBracket(sport);
   const contents = new Set(file.scope.contents);
   if (contents.has(SportDataContent.FIELDS) && !contents.has(SportDataContent.PLAYERS)) {
     problems.push('scope.contents has FIELDS without PLAYERS: a field names its players, so the file carries them.');
+  }
+  if (contents.has(SportDataContent.BRACKET) && !contents.has(SportDataContent.FIELDS)) {
+    problems.push('scope.contents has BRACKET without FIELDS: a bracket names field places, so the file carries the field.');
+  }
+  if (isSport(sport) && contents.has(SportDataContent.BRACKET) && !playsBracket) {
+    problems.push(`scope.contents has BRACKET, but a ${getSportDefinition(sport).name.toLowerCase()} event is not played as a bracket.`);
   }
   if (slate) {
     if (file.sportLeagues.length !== 1) problems.push(`A test slate holds one sport league; this one has ${file.sportLeagues.length}.`);
@@ -237,9 +315,9 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
     }
   }
   if (file.testData) {
-    const missing = Object.values(SportDataContent).filter((content) => !contents.has(content));
+    const missing = TEST_SEED_CONTENTS.filter((content) => !contents.has(content));
     if (!slate && missing.length > 0) {
-      problems.push(`testData needs every kind of contents (a test seed), or just PLAYERS and FIELDS (a test slate); missing ${missing.join(', ')}.`);
+      problems.push(`testData needs ${TEST_SEED_CONTENTS.join(', ')} (a test seed), or just PLAYERS and FIELDS (a test slate); missing ${missing.join(', ')}.`);
     }
     if (!options.allowTestData) problems.push('testData is true, and this target does not take test data.');
   } else if (contents.has(SportDataContent.RESULTS)) {
@@ -258,7 +336,7 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
     problems.push(`Sport league ${name} appears more than once.`);
   }
   // An unknown sport is already refused; its par is not worth a second problem.
-  for (const league of file.sportLeagues) checkLeague(league, file, strokePlay || !isSport(sport), problems);
+  for (const league of file.sportLeagues) checkLeague(league, file, strokePlay || !isSport(sport), playsBracket || !isSport(sport), problems);
 
   if (problems.length > 0 || !isSport(sport)) throw new SportDataFileError(problems);
   return { ...file, scope: { ...file.scope, sport } };

@@ -1,16 +1,32 @@
-import { createEvent, listEventParticipants, listEvents, listParticipants, listSportLeagues, listSports } from '@poolmaster/shared/generated/hey-api';
-import { findSportRow, Sport } from '@poolmaster/shared/domain';
+import {
+  autoAssignEventPrices,
+  autoAssignEventTiers,
+  createEvent,
+  createParticipant,
+  getEventBracket,
+  listEventParticipants,
+  listEvents,
+  listParticipants,
+  listSportLeagues,
+  listSports,
+  releaseEvent,
+  setEventPlayInWinner,
+  updateEventParticipants,
+} from '@poolmaster/shared/generated/hey-api';
+import { findSportRow, MatchSide, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import {
   parseSportDataFile,
   SportDataContent,
+  TEST_SEED_CONTENTS,
   type SportDataFieldEntry,
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { standardEventPricing } from '../support/budget-pricing';
 
 // Loading a sport data file through the real admin API: a test seed a commissioner can build
 // contests on, a real file filled in by comparison, and a second run that changes nothing.
@@ -53,6 +69,7 @@ async function cleanup(): Promise<void> {
   const leagueIds = (await db.sportLeague.findMany({ where: { name: { contains: RUN } }, select: { id: true } })).map((league) => league.id);
   const eventIds = (await db.sportEvent.findMany({ where: { name: { contains: RUN } }, select: { id: true } })).map((event) => event.id);
   const fieldIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { id: true } })).map((row) => row.id);
+  await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: { sportEventParticipantId: { in: fieldIds } } } });
   await db.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: fieldIds } } });
   await db.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: fieldIds } } } });
@@ -76,6 +93,7 @@ beforeAll(async () => {
   const db = getFunctionalPrisma();
   await db.sport.upsert({ where: { sport: Sport.GOLF }, create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' }, update: {} });
   await db.sport.upsert({ where: { sport: Sport.HORSE_RACING }, create: { sport: Sport.HORSE_RACING, participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.BASKETBALL }, create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'KNOCKOUT_BRACKET' }, update: {} });
   admin = await buildRegisteredUser({ displayName: 'Load Admin' });
   await promoteToRootAdmin(admin);
 });
@@ -107,7 +125,7 @@ describe('Loading a golf test seed through the admin API', () => {
   });
   const seed: SportDataFile = {
     schemaVersion: 1,
-    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [tour], contents: Object.values(SportDataContent) },
+    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [tour], contents: [...TEST_SEED_CONTENTS] },
     testData: true,
     provenance: provenance(),
     sportLeagues: [{
@@ -419,6 +437,157 @@ describe('Loading a real horse racing schedule and field through the admin API',
 
     expect(changes(rows).find((row) => row.subject === LoadSubject.EVENT && row.name === race)?.detail).toContain('automatic lifecycle → off');
     expect(expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === race)).autoLifecycleEnabled).toBe(false);
+  });
+});
+
+describe('Loading a real basketball bracket through the admin API', () => {
+  const prefix = `${RUN}-hoops`;
+  const conference = `Hoops ${prefix}`;
+  const tournament = `${prefix} Tournament`;
+  const getClient = () => Promise.resolve(admin.client);
+  const key = (team: string) => `${prefix}-${team}`;
+  const teamName = (team: string) => `${team} ${prefix}`;
+  const PAIRING = 'Texas-Xavier';
+  type Match = NonNullable<SportDataFile['sportLeagues'][number]['events'][number]['matches']>[number];
+  // Two semifinals, one of them against a play-in place, whose winners meet in the final.
+  const baseMatches = (): Match[] => [
+    { matchNumber: 1, roundNumber: 1, home: key('Duke'), away: key('Vermont'), isNeutralSite: true, scheduledAt: '2027-03-20T12:15:00-04:00', advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
+    { matchNumber: 2, roundNumber: 1, home: key('Houston'), away: key(PAIRING), isNeutralSite: true, advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
+    { matchNumber: 3, roundNumber: 2, home: null, away: null, isNeutralSite: true, advancesTo: null },
+  ];
+  const file = (edit: (event: SportDataFile['sportLeagues'][number]['events'][number]) => void = () => {}): SportDataFile => {
+    const event: SportDataFile['sportLeagues'][number]['events'][number] = {
+      key: 'tournament', name: tournament, startDate: '2027-03-20', endDate: '2027-03-22', venue: null, location: null, rounds: 2, roundsPar: null,
+      field: [
+        { player: key('Duke'), seed: 1 },
+        { player: key('Vermont'), seed: 16 },
+        { player: key('Houston'), seed: 2 },
+        { player: key(PAIRING), seed: 15, isPlayInPlace: true },
+      ],
+      matches: baseMatches(),
+    };
+    edit(event);
+    return {
+      schemaVersion: 1,
+      scope: { sport: Sport.BASKETBALL, season: 2027, sportLeagues: [conference], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET] },
+      testData: false,
+      provenance: provenance(),
+      sportLeagues: [{
+        name: conference,
+        players: ['Duke', 'Vermont', 'Houston', PAIRING].map((team, index) => ({ key: key(team), name: teamName(team), countryCode: 'US', ranking: index + 1 })),
+        events: [event],
+      }],
+    };
+  };
+  const bracketRow = (action: LoadAction, detail: string | null): LoadRow => ({ sportLeague: conference, subject: LoadSubject.BRACKET, action, name: tournament, detail });
+
+  async function storedEvent() {
+    const league = expectDefined(await leagueNamed(conference, Sport.BASKETBALL));
+    return expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === tournament));
+  }
+
+  /** Each match as "home vs away", by team name, with its round, time and where its winner goes. */
+  async function bracketOf(eventId: string) {
+    const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId } })).data).participants;
+    const nameOf = new Map(field.map((row) => [row.id, row.participant.name]));
+    const { matches } = expectDefined((await getEventBracket({ client: admin.client, path: { eventId } })).data);
+    const numberOf = new Map(matches.map((match) => [match.id, match.matchNumber]));
+    return matches.map((match) => ({
+      matchNumber: match.matchNumber,
+      roundNumber: match.roundNumber,
+      home: match.homeSportEventParticipantId === null ? null : nameOf.get(match.homeSportEventParticipantId),
+      away: match.awaySportEventParticipantId === null ? null : nameOf.get(match.awaySportEventParticipantId),
+      scheduledDate: match.scheduledDate,
+      advancesTo: match.advancesToMatchId === null ? null : { matchNumber: numberOf.get(match.advancesToMatchId), side: match.advancesToSide },
+    }));
+  }
+
+  it('reports the bracket in a dry run without writing, then loads it after the field with region seeds and the play-in place marked', async () => {
+    const dry = await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.DRY_RUN });
+    expect(changes(dry)).toContainEqual(bracketRow(LoadAction.ADD, '3 matches'));
+    expect(await leagueNamed(conference, Sport.BASKETBALL)).toBeUndefined();
+
+    const rows = await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(counts(rows)).toEqual({ 'SPORT_LEAGUE ADD': 1, 'PLAYER ADD': 4, 'EVENT ADD': 1, 'FIELD ADD': 1, 'BRACKET ADD': 1 });
+    const event = await storedEvent();
+    expect(await bracketOf(event.id)).toEqual([
+      { matchNumber: 1, roundNumber: 1, home: teamName('Duke'), away: teamName('Vermont'), scheduledDate: '2027-03-20T16:15:00.000Z', advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
+      { matchNumber: 2, roundNumber: 1, home: teamName('Houston'), away: teamName(PAIRING), scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
+      { matchNumber: 3, roundNumber: 2, home: null, away: null, scheduledDate: null, advancesTo: null },
+    ]);
+    const field = await fieldOf(event.id);
+    expect([...field.values()].map((row) => [row.participant.name, row.seedNumber, row.isPlayInPlace])).toEqual(expect.arrayContaining([
+      [teamName('Duke'), 1, false],
+      [teamName('Vermont'), 16, false],
+      [teamName('Houston'), 2, false],
+      [teamName(PAIRING), 15, true],
+    ]));
+    expect(changes(await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY }))).toEqual([]);
+  });
+
+  it('loads a draft\'s bracket whole again when a pairing or a time changes, and keeps a time the file leaves out', async () => {
+    const swapped = file((event) => {
+      const matches = baseMatches();
+      matches[0] = { ...matches[0], away: key(PAIRING), scheduledAt: undefined };
+      matches[1] = { ...matches[1], away: key('Vermont'), scheduledAt: '2027-03-20T14:45:00-04:00' };
+      event.matches = matches.map(({ scheduledAt, ...match }) => (scheduledAt === undefined ? match : { ...match, scheduledAt }));
+    });
+
+    expect(changes(await loadSportData(parsed(swapped), { getClient, now: NOW, mode: LoadMode.APPLY }))).toEqual([
+      bracketRow(LoadAction.UPDATE, 'matches 1, 2 changed; bracket loaded whole again'),
+    ]);
+    const event = await storedEvent();
+    expect((await bracketOf(event.id)).slice(0, 2)).toEqual([
+      expect.objectContaining({ home: teamName('Duke'), away: teamName(PAIRING), scheduledDate: '2027-03-20T16:15:00.000Z' }),
+      expect.objectContaining({ home: teamName('Houston'), away: teamName('Vermont'), scheduledDate: '2027-03-20T18:45:00.000Z' }),
+    ]);
+    // Back to the first pairing, for the release below.
+    await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY });
+  });
+
+  it('after release changes only a match time, leaves a filled play-in place alone, and reports a changed field as a conflict', async () => {
+    const event = await storedEvent();
+    const eventId = event.id;
+    const rows = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId } })).data).participants;
+    expect((await updateEventParticipants({
+      client: admin.client,
+      path: { eventId },
+      body: { participants: rows.map((row, index) => ({ sportEventParticipantId: row.id, oddsToWin: 2 + index * 5 })) },
+    })).response.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: admin.client, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: admin.client, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect((await releaseEvent({ client: admin.client, path: { eventId } })).error).toBeUndefined();
+
+    // The First Four is played: Texas takes the pairing's place.
+    const { sports } = expectDefined((await listSports({ client: admin.client })).data);
+    const texas = expectDefined((await createParticipant({
+      client: admin.client,
+      body: { sportId: expectDefined(findSportRow(sports, Sport.BASKETBALL)).id, participantType: 'TEAM', name: teamName('Texas'), externalId: key('Texas') },
+    })).data).participant;
+    const place = expectDefined((await fieldOf(eventId)).get(teamName(PAIRING)));
+    expect((await setEventPlayInWinner({ client: admin.client, path: { eventId, sportEventParticipantId: place.id }, body: { participantId: texas.id } })).error).toBeUndefined();
+
+    const finalTime = file((event) => {
+      event.matches = baseMatches().map((match) => (match.matchNumber === 3 ? { ...match, scheduledAt: '2027-03-22T21:00:00-04:00' } : match));
+    });
+    expect(changes(await loadSportData(parsed(finalTime), { getClient, now: NOW, mode: LoadMode.APPLY }))).toEqual([
+      bracketRow(LoadAction.UPDATE, 'time or site of match 3'),
+    ]);
+    expect((await bracketOf(eventId))[2]).toMatchObject({ scheduledDate: '2027-03-23T01:00:00.000Z' });
+    const field = await fieldOf(eventId);
+    expect(field.get(teamName('Texas'))).toMatchObject({ isActive: true, seedNumber: 15 });
+    expect(field.has(teamName(PAIRING))).toBe(false);
+
+    const dropped = file((event) => {
+      event.field = event.field.filter((entry) => entry.player !== key('Vermont'));
+      event.matches = baseMatches().map((match) => (match.matchNumber === 1 ? { ...match, away: null } : match));
+    });
+    expect(changes(await loadSportData(parsed(dropped), { getClient, now: NOW, mode: LoadMode.APPLY }))).toContainEqual({
+      sportLeague: conference, subject: LoadSubject.FIELD, action: LoadAction.CONFLICT, name: tournament,
+      detail: `SCHEDULED, so the field is locked with its bracket: 1 withdrawn (${teamName('Vermont')})`,
+    });
+    expect((await fieldOf(eventId)).get(teamName('Vermont'))).toMatchObject({ isActive: true });
   });
 });
 

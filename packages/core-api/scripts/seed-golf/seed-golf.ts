@@ -24,6 +24,13 @@
  * draft that an earlier run stopped part-way through is finished the same way. A real file
  * never releases an event, writes odds, tiers, prices or scores, or deletes anything.
  *
+ * A file with BRACKET in its contents also loads each event's bracket, after its field. Before
+ * release a bracket that differs anywhere is loaded whole again, as the admin's Load bracket
+ * does. Release locks a bracket event's pairings, seeds and play-in places, and results fill
+ * its later sides, so after release only a match's time and site are changed, and a field that
+ * differs is a conflict. A play-in place already filled with its winner is recognised by its
+ * bracket place and left alone.
+ *
  * A test slate (isTestSlate) fills the field of one event already on the site, named by the
  * run, with the slate's players in file order; it never creates a sport league or an event.
  * It is re-entrant the same way, unless the run asks to replace the field: then every field
@@ -31,12 +38,15 @@
  * instead, because removing it would break that entry.
  */
 
-import { findSportRow, getSportDefinition, ScoringFamily, type Sport } from '@poolmaster/shared/domain';
+import { findSportRow, getSportDefinition, MatchSide, ScoringFamily, type Sport, sportPlaysBracket } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
+  LoadSportEventBracketRequest,
+  SportEventBracketResponse,
   SportEventListResponse,
   SportEventParticipantResponse,
+  UpdateSportEventMatchRequest,
   UpdateSportEventParticipantsRequest,
   UpdateSportEventRequest,
 } from '@poolmaster/shared/generated/hey-api';
@@ -49,6 +59,7 @@ import {
   createEvent,
   createParticipant,
   createSportLeague,
+  getEventBracket,
   getSettingsGroup,
   listEventParticipants,
   listParticipantLeagueAffiliations,
@@ -56,14 +67,24 @@ import {
   listParticipants,
   listSportLeagues,
   listSports,
+  loadEventBracket,
   releaseEvent,
   removeEventParticipant,
   updateEvent,
+  updateEventBracketMatch,
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
 import { golferRoundScore, seedDateOffsetDays, shiftedEventDates } from './seed-golf-data';
-import { isTestSlate, SportDataContent, type SportDataEvent, type SportDataFieldEntry, type SportDataFile, type SportDataLeague } from './sport-data-file';
+import {
+  isTestSlate,
+  SportDataContent,
+  type SportDataEvent,
+  type SportDataFieldEntry,
+  type SportDataFile,
+  type SportDataLeague,
+  type SportDataMatch,
+} from './sport-data-file';
 
 export interface LoadSportDataOptions {
   /** A root-admin client. Called before each event, so a long run can sign in again. */
@@ -80,6 +101,8 @@ export interface LoadSportDataOptions {
 type StoredEvent = SportEventListResponse['events'][number];
 type StoredFieldRow = SportEventParticipantResponse['participant'];
 type FieldPatch = UpdateSportEventParticipantsRequest['participants'][number];
+type StoredMatch = SportEventBracketResponse['matches'][number];
+type BracketMatchWrite = LoadSportEventBracketRequest['matches'][number];
 /** What a field is written from: a file event's field, or a test slate's players. */
 type FieldSource = Pick<SportDataEvent, 'name' | 'field'>;
 
@@ -130,6 +153,113 @@ async function defaultPricing(client: Client): Promise<AutoAssignSportEventPrice
   if (group.key !== 'BUDGET_PRICING_CONFIG') throw new Error(`Read budget pricing settings returned ${group.key}`);
   const { name, ...values } = found(group.value.profiles[0], 'The default budget pricing profile');
   return { profileName: name, ...values };
+}
+
+/** "matches 3, 7": match numbers as a run's detail names them. */
+function matchList(numbers: readonly number[]): string {
+  return `match${numbers.length === 1 ? '' : 'es'} ${names(numbers.map(String))}`;
+}
+
+/** The field row a stored match names on one side. */
+function storedSide(match: StoredMatch, side: MatchSide): string | null {
+  return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
+}
+
+/**
+ * The play-in places of a released bracket event already filled with their winner, by the file
+ * entry's player key. Filling points the place's field row at the winning team, so the file's
+ * pairing ("Texas / Xavier") has no row of its own; its row is the one on the bracket side the
+ * file gives the pairing.
+ */
+function filledPlayInPlaces(
+  event: SportDataEvent,
+  participantIds: ReadonlyMap<string, string | null>,
+  storedField: readonly StoredFieldRow[],
+  storedBracket: readonly StoredMatch[],
+): Map<string, StoredFieldRow> {
+  const filled = new Map<string, StoredFieldRow>();
+  const onField = new Set(storedField.map((row) => row.participantId));
+  const listed = new Set(event.field.flatMap((entry) => {
+    const participantId = participantIds.get(entry.player);
+    return participantId ? [participantId] : [];
+  }));
+  for (const entry of event.field) {
+    const participantId = participantIds.get(entry.player);
+    if (entry.isPlayInPlace !== true || (participantId && onField.has(participantId))) continue;
+    for (const match of event.matches ?? []) {
+      const side = match.home === entry.player ? MatchSide.HOME : match.away === entry.player ? MatchSide.AWAY : null;
+      const storedMatch = side === null ? undefined : storedBracket.find((candidate) => candidate.matchNumber === match.matchNumber);
+      const rowId = side === null || !storedMatch ? null : storedSide(storedMatch, side);
+      const row = storedField.find((candidate) => candidate.id === rowId);
+      if (row && !listed.has(row.participantId)) filled.set(entry.player, row);
+    }
+  }
+  return filled;
+}
+
+/**
+ * What the file would change on an event's bracket. Before release (`locked` false) any
+ * difference in a match's round, sides, site, time or link, or a match only one side has, means
+ * loading the bracket whole again. After release pairings are locked and results fill the later
+ * sides, so only each match's site and time are compared, as one edit per match; a match only
+ * one side has is a conflict.
+ */
+function bracketChanges(
+  matches: readonly SportDataMatch[],
+  participantIds: ReadonlyMap<string, string | null>,
+  storedField: readonly StoredFieldRow[],
+  storedBracket: readonly StoredMatch[],
+  locked: boolean,
+): { changes: string[]; conflicts: string[]; edits: Array<{ matchNumber: number; edit: UpdateSportEventMatchRequest }> } {
+  const byNumber = new Map(storedBracket.map((match) => [match.matchNumber, match]));
+  const numberById = new Map(storedBracket.map((match) => [match.id, match.matchNumber]));
+  const participantOfRow = new Map(storedField.map((row) => [row.id, row.participantId]));
+  const fileNumbers = new Set(matches.map((match) => match.matchNumber));
+  const missing = matches.filter((match) => !byNumber.has(match.matchNumber)).map((match) => match.matchNumber);
+  const extra = storedBracket.filter((match) => !fileNumbers.has(match.matchNumber)).map((match) => match.matchNumber);
+  const timeMoved = (match: SportDataMatch, stored: StoredMatch): boolean => match.scheduledAt !== undefined
+    && (stored.scheduledDate === null || Date.parse(stored.scheduledDate) !== Date.parse(match.scheduledAt));
+
+  if (locked) {
+    const conflicts = [
+      ...(missing.length > 0 ? [`${matchList(missing)} not on the site`] : []),
+      ...(extra.length > 0 ? [`${matchList(extra)} not in the file`] : []),
+    ];
+    const edits = matches.flatMap((match) => {
+      const stored = byNumber.get(match.matchNumber);
+      if (!stored) return [];
+      const edit: UpdateSportEventMatchRequest = {};
+      if (stored.isNeutralSite !== match.isNeutralSite) edit.isNeutralSite = match.isNeutralSite;
+      if (match.scheduledAt !== undefined && timeMoved(match, stored)) edit.scheduledDate = new Date(match.scheduledAt).toISOString();
+      return Object.keys(edit).length > 0 ? [{ matchNumber: match.matchNumber, edit }] : [];
+    });
+    return { changes: edits.length > 0 ? [`time or site of ${matchList(edits.map((entry) => entry.matchNumber))}`] : [], conflicts, edits };
+  }
+
+  if (storedBracket.length === 0) return { changes: [`${matches.length} matches`], conflicts: [], edits: [] };
+  const sameSide = (key: string | null, rowId: string | null): boolean => {
+    if (key === null) return rowId === null;
+    const participantId = participantIds.get(key) ?? null;
+    return participantId !== null && rowId !== null && participantOfRow.get(rowId) === participantId;
+  };
+  const changed = matches.filter((match) => {
+    const stored = byNumber.get(match.matchNumber);
+    if (!stored) return false;
+    const advancesTo = stored.advancesToMatchId === null ? null : numberById.get(stored.advancesToMatchId);
+    return stored.roundNumber !== match.roundNumber
+      || !sameSide(match.home, stored.homeSportEventParticipantId)
+      || !sameSide(match.away, stored.awaySportEventParticipantId)
+      || stored.isNeutralSite !== match.isNeutralSite
+      || timeMoved(match, stored)
+      || (advancesTo ?? null) !== (match.advancesTo?.matchNumber ?? null)
+      || stored.advancesToSide !== (match.advancesTo?.side ?? null);
+  }).map((match) => match.matchNumber);
+  const changes = [
+    ...(changed.length > 0 ? [`${matchList(changed)} changed`] : []),
+    ...(missing.length > 0 ? [`${matchList(missing)} added`] : []),
+    ...(extra.length > 0 ? [`${matchList(extra)} removed`] : []),
+  ];
+  return { changes: changes.length > 0 ? [...changes, 'bracket loaded whole again'] : [], conflicts: [], edits: [] };
 }
 
 class Loader {
@@ -334,9 +464,16 @@ class Loader {
    * for a player a dry run would create), row patches for ranking, seed and (test data) odds,
    * reinstatements for withdrawn rows the file lists again, and withdrawals for active rows
    * the file no longer lists. When the run replaces the field, every row the file does not
-   * list is to be removed instead.
+   * list is to be removed instead. A play-in place already filled with its winner (`filled`,
+   * by player key) is that entry's row, and is left as it is.
    */
-  private fieldChanges(league: SportDataLeague, event: FieldSource, participantIds: ReadonlyMap<string, string | null>, storedField: readonly StoredFieldRow[]): {
+  private fieldChanges(
+    league: SportDataLeague,
+    event: FieldSource,
+    participantIds: ReadonlyMap<string, string | null>,
+    storedField: readonly StoredFieldRow[],
+    filled: ReadonlyMap<string, StoredFieldRow> = new Map(),
+  ): {
     add: Array<{ name: string; participantId: string | null }>;
     patches: Array<{ participantId: string; patch: Omit<FieldPatch, 'sportEventParticipantId'> }>;
     withdrawn: StoredFieldRow[];
@@ -349,15 +486,26 @@ class Loader {
     const patches: Array<{ participantId: string; patch: Omit<FieldPatch, 'sportEventParticipantId'> }> = [];
     const listed = new Set<string>();
     const reinstated: string[] = [];
+    const remarked: string[] = [];
     event.field.forEach((entry, index) => {
       const name = players.get(entry.player) ?? entry.player;
       const participantId = found(participantIds.get(entry.player), `${event.name}: the participant id for ${entry.player}`);
+      const filledPlace = filled.get(entry.player);
+      if (filledPlace) {
+        listed.add(filledPlace.participantId);
+        return;
+      }
       const row = participantId === null ? undefined : byParticipant.get(participantId);
       if (participantId !== null) listed.add(participantId);
       if (!row) add.push({ name, participantId });
       const patch: Omit<FieldPatch, 'sportEventParticipantId'> = {};
       if (entry.ranking !== undefined && row?.ranking !== entry.ranking) patch.ranking = entry.ranking;
-      if (row?.seedNumber !== index + 1) patch.seedNumber = index + 1;
+      const seed = entry.seed ?? index + 1;
+      if (row?.seedNumber !== seed) patch.seedNumber = seed;
+      if (entry.isPlayInPlace !== undefined && (row?.isPlayInPlace ?? false) !== entry.isPlayInPlace) {
+        patch.isPlayInPlace = entry.isPlayInPlace;
+        remarked.push(name);
+      }
       if (entry.oddsToWin !== undefined && row?.oddsToWin !== entry.oddsToWin) patch.oddsToWin = entry.oddsToWin;
       // Back in the field after a withdrawal (a re-commitment).
       if (!this.testSeed && row && !row.isActive && row.inactiveReason === 'WITHDRAWN') {
@@ -371,10 +519,12 @@ class Loader {
     const removed = this.replaceField ? unlisted : [];
     const withdrawn = this.replaceField ? [] : unlisted.filter((row) => row.isActive);
     const addedIds = new Set(add.map((entry) => entry.participantId));
-    const updated = patches.filter((entry) => !addedIds.has(entry.participantId) && entry.patch.isActive === undefined).length;
+    const updated = patches.filter(({ participantId, patch }) => !addedIds.has(participantId) && patch.isActive === undefined
+      && (patch.ranking !== undefined || patch.seedNumber !== undefined || patch.oddsToWin !== undefined)).length;
     const changes = [
       ...(add.length > 0 ? [`${add.length} added (${names(add.map((entry) => entry.name))})`] : []),
       ...(updated > 0 ? [`${updated} re-ranked or re-seeded`] : []),
+      ...(remarked.length > 0 ? [`${remarked.length} play-in marks changed (${names(remarked)})`] : []),
       ...(reinstated.length > 0 ? [`${reinstated.length} reinstated (${names(reinstated)})`] : []),
       ...(withdrawn.length > 0 ? [`${withdrawn.length} withdrawn (${names(withdrawn.map((row) => row.participant.name))})`] : []),
       ...(removed.length > 0 ? [`${removed.length} removed (${names(removed.map((row) => row.participant.name))}); any a contest entry has picked are withdrawn instead`] : []),
@@ -394,6 +544,9 @@ class Loader {
     const loadsSchedule = this.contents.has(SportDataContent.SCHEDULE);
     // An empty field means the file has no field for this event yet (not announced), never that everyone withdrew.
     const loadsField = this.contents.has(SportDataContent.FIELDS) && event.field.length > 0;
+    // Likewise an event with no matches has no bracket in the file yet.
+    const matches = event.matches ?? [];
+    const loadsBracket = this.contents.has(SportDataContent.BRACKET) && matches.length > 0;
     const { stored } = input;
 
     if (!stored) {
@@ -406,6 +559,7 @@ class Loader {
         const plan = this.fieldChanges(league, event, participantIds, []);
         this.report({ ...at, subject: LoadSubject.FIELD, action: LoadAction.ADD, detail: `${plan.add.length} players` });
       }
+      if (loadsBracket) this.report({ ...at, subject: LoadSubject.BRACKET, action: LoadAction.ADD, detail: `${matches.length} matches` });
       if (!this.apply) return;
       const created = await must(createEvent({
         client,
@@ -424,16 +578,24 @@ class Loader {
         await must(updateEvent({ client, path: { eventId: created.event.id }, body: { roundsPar: event.roundsPar } }), `Set par for ${event.name}`);
       }
       if (loadsField) await this.writeField(client, created.event.id, league, event, participantIds, []);
+      if (loadsBracket) await this.writeBracket(client, created.event.id, event, participantIds, []);
       if (this.file.testData) await this.finishTestEvent(client, created.event.id, event, participantIds);
       return;
     }
 
     const editable = EDITABLE_STATUSES.has(stored.status);
+    // Release locks a bracket event's pairings, seeds and play-in places with its field.
+    const bracketLocked = sportPlaysBracket(this.sport) && stored.status !== 'DRAFT';
     const eventPlan = loadsSchedule ? this.eventChanges(event, stored) : { body: {}, changes: [] };
-    const storedField = loadsField
+    const storedField = loadsField || loadsBracket
       ? (await must(listEventParticipants({ client, path: { eventId: stored.id } }), `Read the field of ${event.name}`)).participants
       : [];
-    const fieldPlan = loadsField ? this.fieldChanges(league, event, participantIds, storedField) : null;
+    const storedBracket = loadsBracket || (loadsField && bracketLocked)
+      ? (await must(getEventBracket({ client, path: { eventId: stored.id } }), `Read the bracket of ${event.name}`)).matches
+      : [];
+    const filled = bracketLocked ? filledPlayInPlaces(event, participantIds, storedField, storedBracket) : new Map<string, StoredFieldRow>();
+    const fieldPlan = loadsField ? this.fieldChanges(league, event, participantIds, storedField, filled) : null;
+    const bracketPlan = loadsBracket ? bracketChanges(matches, participantIds, storedField, storedBracket, bracketLocked) : null;
     const finishesDraft = this.file.testData && stored.status === 'DRAFT';
 
     if (!editable) {
@@ -449,15 +611,63 @@ class Loader {
 
     const eventDetail = [...eventPlan.changes, ...(finishesDraft ? ['finishes the draft: odds, tiers, prices, scores, release'] : [])];
     this.report({ ...at, subject: LoadSubject.EVENT, action: eventDetail.length > 0 ? LoadAction.UPDATE : LoadAction.SKIP, detail: eventDetail.join('; ') || null });
+    const writesField = fieldPlan !== null && fieldPlan.changes.length > 0 && !bracketLocked;
     if (fieldPlan) {
-      this.report({ ...at, subject: LoadSubject.FIELD, action: fieldPlan.changes.length > 0 ? LoadAction.UPDATE : LoadAction.SKIP, detail: fieldPlan.changes.join('; ') || null });
+      const action = fieldPlan.changes.length === 0 ? LoadAction.SKIP : bracketLocked ? LoadAction.CONFLICT : LoadAction.UPDATE;
+      const detail = action === LoadAction.CONFLICT
+        ? `${stored.status}, so the field is locked with its bracket: ${fieldPlan.changes.join('; ')}`
+        : fieldPlan.changes.join('; ') || null;
+      this.report({ ...at, subject: LoadSubject.FIELD, action, detail });
+    }
+    if (bracketPlan) {
+      const action = bracketPlan.conflicts.length > 0 ? LoadAction.CONFLICT
+        : bracketPlan.changes.length === 0 ? LoadAction.SKIP
+          : storedBracket.length === 0 ? LoadAction.ADD : LoadAction.UPDATE;
+      const detail = action === LoadAction.CONFLICT
+        ? `${stored.status}, so the bracket is not changed: ${[...bracketPlan.conflicts, ...bracketPlan.changes].join('; ')}`
+        : bracketPlan.changes.join('; ') || null;
+      this.report({ ...at, subject: LoadSubject.BRACKET, action, detail });
     }
     if (!this.apply) return;
     if (eventPlan.changes.length > 0) {
       await must(updateEvent({ client, path: { eventId: stored.id }, body: eventPlan.body }), `Update ${event.name}`);
     }
-    if (fieldPlan && fieldPlan.changes.length > 0) await this.writeField(client, stored.id, league, event, participantIds, storedField);
+    if (fieldPlan && writesField) await this.writeField(client, stored.id, league, event, participantIds, storedField);
+    if (bracketPlan && bracketPlan.conflicts.length === 0 && bracketPlan.changes.length > 0) {
+      if (bracketLocked) {
+        for (const { matchNumber, edit } of bracketPlan.edits) {
+          await must(updateEventBracketMatch({ client, path: { eventId: stored.id, matchNumber }, body: edit }), `Update match ${matchNumber} of ${event.name}`);
+        }
+      } else {
+        await this.writeBracket(client, stored.id, event, participantIds, storedBracket);
+      }
+    }
     if (finishesDraft) await this.finishTestEvent(client, stored.id, event, participantIds);
+  }
+
+  /**
+   * Loads the file's bracket whole, each side's player key turned into its field row; a match
+   * time the file leaves out keeps the one stored for that match number.
+   */
+  private async writeBracket(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>, storedBracket: readonly StoredMatch[]): Promise<void> {
+    const { participants: rows } = await must(listEventParticipants({ client, path: { eventId } }), `Read the field of ${event.name}`);
+    const rowByParticipant = new Map(rows.map((row) => [row.participantId, row.id]));
+    const storedTime = new Map(storedBracket.map((match) => [match.matchNumber, match.scheduledDate]));
+    const rowOf = (key: string | null): string | null => {
+      if (key === null) return null;
+      const participantId = found(participantIds.get(key) ?? undefined, `${event.name}: the participant id for ${key}`);
+      return found(rowByParticipant.get(participantId), `${event.name}: the field row for ${key}`);
+    };
+    const body: BracketMatchWrite[] = (event.matches ?? []).map((match) => ({
+      matchNumber: match.matchNumber,
+      roundNumber: match.roundNumber,
+      homeSportEventParticipantId: rowOf(match.home),
+      awaySportEventParticipantId: rowOf(match.away),
+      isNeutralSite: match.isNeutralSite,
+      scheduledDate: match.scheduledAt === undefined ? storedTime.get(match.matchNumber) ?? null : new Date(match.scheduledAt).toISOString(),
+      advancesTo: match.advancesTo,
+    }));
+    await must(loadEventBracket({ client, path: { eventId }, body: { matches: body } }), `Load the bracket of ${event.name}`);
   }
 
   /** Writes the field; returns the names of rows it withdrew because a contest entry had picked them. */

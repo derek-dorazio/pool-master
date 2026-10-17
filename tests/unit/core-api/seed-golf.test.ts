@@ -6,7 +6,7 @@ import {
   seedDateOffsetDays,
   shiftedEventDates,
 } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
-import { parseSportDataFile, SportDataContent, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
+import { parseSportDataFile, SportDataContent, TEST_SEED_CONTENTS, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 
 function seedWithStarts(...startDates: string[]): Pick<SportDataFile, 'sportLeagues'> {
   return {
@@ -93,8 +93,8 @@ describe('golf-2026.json', () => {
     { allowTestData: true },
   );
 
-  it('is a 2026 golf test seed whose envelope names both tours and every kind of contents', () => {
-    expect(seed.scope).toEqual({ sport: Sport.GOLF, season: 2026, sportLeagues: ['PGA TOUR', 'LPGA Tour'], contents: Object.values(SportDataContent) });
+  it('is a 2026 golf test seed whose envelope names both tours and a test seed\'s contents', () => {
+    expect(seed.scope).toEqual({ sport: Sport.GOLF, season: 2026, sportLeagues: ['PGA TOUR', 'LPGA Tour'], contents: [...TEST_SEED_CONTENTS] });
     expect(seed.testData).toBe(true);
   });
 
