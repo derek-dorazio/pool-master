@@ -192,6 +192,21 @@ Final standings are built from the scores PoolMaster has already received.
   that mock event, which blocks the next tournament from using it. *Unlink score source*
   frees it. Simulated events are one per tournament and never need this.
 
+## Basketball tournaments
+
+A basketball tournament is a knockout bracket, resulted by hand on its **Bracket** tab. Its
+field is built on the Field tab and its games are loaded through `loadEventBracket`
+([`DOMAIN-OPERATIONS.md`](DOMAIN-OPERATIONS.md), *SportEventMatch*). Then on the Bracket tab:
+
+- **Before release**, *Edit pairing* changes a game's two teams. Only teams no other game holds
+  are offered, so to swap two teams, empty one side first. A side an earlier game's winner fills
+  cannot be edited. Under *Play-in places*, mark each field row that stands for a First Four
+  pairing ("Texas / Xavier").
+- **After release**, tap the team that won each game; the winner moves to its next game and
+  the standings update. A wrong winner can be switched, or the result cleared, until the next
+  game has a result. Each play-in place takes its winner once, from the sport's active teams
+  not already in the tournament.
+
 ## Loading sport data
 
 Sport leagues, players, events and fields can be loaded from a data file instead of typed

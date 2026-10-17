@@ -1,0 +1,60 @@
+import { MatchSide, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
+import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
+import type { ErrorCodeMessages } from '@/lib/errors';
+
+/** What a bracket screen calls one match when the sport's vocabulary names none. */
+const MATCH: SportNoun = { one: 'match', many: 'matches' };
+
+/** One match of the sport's bracket as its screens say it: "game" for basketball. */
+export function matchNoun(vocabulary: SportVocabulary): SportNoun {
+  return vocabulary.match ?? MATCH;
+}
+
+/** A field row as the bracket names it: "(1) Duke", or just the name when it has no seed. */
+export function describeEntry(entry: SportEventParticipantDto): string {
+  return entry.seedNumber === null ? entry.participant.name : `(${entry.seedNumber}) ${entry.participant.name}`;
+}
+
+/** The field row on one side of a match, if a team is named there. */
+export function sideEntry(
+  match: SportEventMatchDto,
+  side: MatchSide,
+  fieldById: ReadonlyMap<string, SportEventParticipantDto>,
+): SportEventParticipantDto | undefined {
+  const sportEventParticipantId = side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
+  return sportEventParticipantId === null ? undefined : fieldById.get(sportEventParticipantId);
+}
+
+/** The earlier match whose winner fills one side of this one, if any. */
+export function feederOf(match: SportEventMatchDto, side: MatchSide, bracket: readonly SportEventMatchDto[]): SportEventMatchDto | undefined {
+  return bracket.find((other) => other.advancesToMatchId === match.id && other.advancesToSide === side);
+}
+
+/**
+ * The bracket's refusals in product copy, worded for the sport (#700). `match` is the match the
+ * admin acted on, so a locked result can name the match to clear first.
+ */
+export function bracketErrorMessages(
+  vocabulary: SportVocabulary,
+  match?: SportEventMatchDto,
+  bracket: readonly SportEventMatchDto[] = [],
+): ErrorCodeMessages {
+  const noun = matchNoun(vocabulary);
+  const team = vocabulary.participant;
+  const next = match ? bracket.find((candidate) => candidate.id === match.advancesToMatchId) : undefined;
+  return {
+    SPORT_EVENT_MATCH_RESULT_LOCKED: next
+      ? `This ${noun.one}'s winner has already played ${noun.one} ${next.matchNumber}. Clear that result first.`
+      : `This ${noun.one}'s winner has already played its next ${noun.one}. Clear that result first.`,
+    MATCH_SIDES_NOT_SET: `Both ${team.many} in this ${noun.one} aren't known yet. Enter the results of the ${noun.many} before it first.`,
+    MATCH_RESULT_INVALID: 'That result could not be saved. Check it and try again.',
+    SPORT_EVENT_NOT_RELEASED: `Release the ${vocabulary.event.one} before entering results.`,
+    SPORT_EVENT_BRACKET_LOCKED: `The ${vocabulary.event.one} has been released, so its pairings are locked.`,
+    BRACKET_INVALID: `That pairing could not be saved. Each ${team.one} plays one opening ${noun.one}, and two different ${team.many} meet in a ${noun.one}.`,
+    BRACKET_MATCH_NOT_FOUND: `That ${noun.one} is no longer in the bracket. Refresh the page.`,
+    EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: `That place is not a play-in place, so its ${team.one} can't be replaced.`,
+    EVENT_PARTICIPANT_ALREADY_ON_FIELD: `That ${team.one} is already in the ${vocabulary.event.one}.`,
+    PLAY_IN_SLOT_ALREADY_PLAYED: `That place has already played a ${noun.one}, so its ${team.one} can't change.`,
+    PARTICIPANT_NOT_FOUND: `That ${team.one} is no longer active. Pick another.`,
+  };
+}

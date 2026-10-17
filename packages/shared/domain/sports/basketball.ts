@@ -36,6 +36,7 @@ export const basketballSportDefinition: SportDefinition = {
     eliminated: 'Eliminated',
     withdrawn: 'Withdrawn',
     eventStart: 'opening tip-off',
+    match: { one: 'game', many: 'games' },
   },
   // A six-round bracket reads First Round, Second Round, Sweet 16, Elite Eight, Final Four,
   // National Championship; a shorter one keeps the names counted back from its final.
