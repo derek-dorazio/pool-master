@@ -44,7 +44,7 @@ export function CommissionerToolsLayout() {
         },
         {
           isActive: isAtOrUnder(pathname, teamsPath),
-          label: 'Teams',
+          label: 'Members',
           testId: 'commissioner-tools-menu-teams',
           to: teamsPath,
         },

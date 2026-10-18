@@ -18,7 +18,7 @@ export function InvitesPage() {
   return (
     <section className="space-y-6" data-testid="admin-invites-page">
       <PageHeader
-        description="Each person you invite joins with a team of their own."
+        description="Each person you invite joins under a name of their own."
         title="Invites"
       />
       <LeagueInvitations

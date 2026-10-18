@@ -6,7 +6,7 @@ describe('App', () => {
     render(<App />);
 
     expect(
-      screen.getByText(/run your league, manage your team, and keep every pool night organized/i),
+      screen.getByText(/run your league, make your picks, and keep every pool night organized/i),
     ).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /create account/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();

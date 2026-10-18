@@ -17,7 +17,7 @@ export function AdminEditTeamPage() {
     return null;
   }
   if (teamsQuery.isLoading) {
-    return <LoadingState body="Loading team..." />;
+    return <LoadingState body="Loading this member..." />;
   }
 
   const team = teamsQuery.data?.find((candidate) => candidate.id === teamId);
@@ -26,5 +26,5 @@ export function AdminEditTeamPage() {
     return <Navigate replace to={managePath} />;
   }
 
-  return <EditTeamForm key={team.id} leagueId={league.id} returnTo={managePath} team={team} />;
+  return <EditTeamForm isViewerOwn={false} key={team.id} leagueId={league.id} returnTo={managePath} team={team} />;
 }

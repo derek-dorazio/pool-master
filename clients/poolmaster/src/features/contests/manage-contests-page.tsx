@@ -79,7 +79,7 @@ function EntriesCell({ contest, teamCount }: { contest: ContestDto; teamCount: n
   return (
     <span className="tabular-nums">
       {entryCount}
-      {contest.status === ContestStatus.OPEN ? <span className="text-muted-foreground"> of {teamCount} teams</span> : null}
+      {contest.status === ContestStatus.OPEN ? <span className="text-muted-foreground"> of {teamCount} members</span> : null}
     </span>
   );
 }

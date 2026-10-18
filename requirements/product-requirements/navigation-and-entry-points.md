@@ -20,24 +20,25 @@ account-scope only — see `domain-concepts.md`.
 ## League Context — the league menu
 
 Inside a league, one menu under the app bar serves every member: **Home**,
-**Contests**, **My team** and **Teams**. Home is the landing page. My team is
-scoped to the signed-in user (their team, their entries, their history);
-Home, Contests and Teams are scoped to the whole league and are read-only for
+**Contests**, the viewer's own squad — shown by its name, **Yours** until they
+have one — and **Members**. Home is the landing page. The viewer's own entry is
+scoped to the signed-in user (their squad, their entries, their history);
+Home, Contests and Members are scoped to the whole league and are read-only for
 members.
 
 Do not mix MY and LEAGUE data in the same section. The edit-authority boundary
-("I can edit my team; I cannot edit others'") is also the scope boundary —
+("I can edit my squad; I cannot edit others'") is also the scope boundary —
 conflating them makes the save/commit model and permissions harder to reason
 about. League Home is a summary page and may show a card for each, linking to
 the page that owns it.
 
-## Team Context
+## Squad Context
 
-My team is the signed-in user's own team, and the only member page where a
-team can be changed: Edit team (name and icon on one page), its owners, and
-Leave league. Every other team has a read-only page, reached from a row of the
-league's Teams directory; a link to the viewer's own team opens My team.
-Commissioners manage any team from Commissioner tools › Teams › Manage team,
+The viewer's own page is the signed-in user's own squad, and the only member
+page where a squad can be changed: Edit (name and icon on one page), its owners,
+and Leave league. Every other squad has a read-only page, reached from a row of
+the league's Members directory; a link to the viewer's own squad opens their own
+page. Commissioners manage any squad from Commissioner tools › Members › Manage,
 never from the member pages.
 
 ## Contest Context
@@ -50,7 +51,7 @@ menu stable across a contest's lifecycle.
 ## History Context
 
 League history is contest-centric: browse completed contests by sport and
-contest type. A user's own entry history for a league lives under My Team;
+contest type. A user's own entry history for a league lives under their own page;
 the league-wide completed-contest archive lives under League.
 
 ## Member Pages vs. Commissioner Tools

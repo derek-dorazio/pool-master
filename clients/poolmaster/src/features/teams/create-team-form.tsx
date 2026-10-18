@@ -52,23 +52,24 @@ export function CreateTeamForm({
   return (
     <FormPage
       cancelTo={buildLeaguePath(leagueCode)}
-      description="Every league member plays as a team. Pick a name and an icon; you can change both later."
+      description="Every member plays in this league under a name and an icon of their choosing. You can change both later."
       errorMessage={createMutation.isError
-        ? extractErrorMessage(createMutation.error, { fallback: 'We could not create your team.' })
+        ? extractErrorMessage(createMutation.error, { fallback: 'We could not save your name and icon.' })
         : null}
       isPending={createMutation.isPending}
       isSubmitDisabled={isInactiveLeague}
       onSubmit={(event) => void form.handleSubmit((values) => createMutation.mutate(values))(event)}
       pendingLabel="Creating..."
-      submitLabel="Create team"
+      submitLabel="Save"
       submitTestId="create-team-save"
       testId="create-team-page"
-      title="Create your team"
+      title="Choose your name and icon"
     >
       <TeamFormFields
         disabled={isInactiveLeague || createMutation.isPending}
         form={form}
         idPrefix="create-team"
+        isViewerOwn
       />
     </FormPage>
   );

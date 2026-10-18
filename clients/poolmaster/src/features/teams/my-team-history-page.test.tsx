@@ -239,12 +239,12 @@ describe('MyTeamHistoryPage', () => {
     expect(error).toHaveTextContent("We couldn't load historical contests right now.");
   });
 
-  it('pool-master-7wj.7 shows the no-team state when the viewer has no active team', async () => {
+  it('tells a viewer with no squad in the league that they are not playing in it yet, without reading entries', async () => {
     primeHistoryShell({ squads: [] });
 
     renderMyTeamHistoryPage();
 
-    expect(await screen.findByTestId('my-team-history-no-team')).toHaveTextContent('No team yet');
+    expect(await screen.findByTestId('my-team-history-no-team')).toHaveTextContent('Not playing in this league yet');
     expect(listContestEntriesMock).not.toHaveBeenCalled();
   });
 

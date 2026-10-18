@@ -26,12 +26,6 @@ domain types, DTOs, mappers, route names, SDK calls — and never introduce "tea
 contract layer. `features/teams/` predates this rule and calls `*Squad*` SDK operations
 throughout.
 
-The one exception still standing is the copy that manages a squad itself: the side menu's
-**My team** and **Teams** and their pages, the join page's team name and icon, co-owner
-invites, the league home's **Your team** card, "Create your team to enter" where a member has
-no squad yet, and the leave-league warning. They keep "team" until those pages are renamed;
-new screens do not copy it.
-
 The entity relationships behind this — and the vocabulary for the rest of the domain — are
 [domain-model-concepts.md](domain-model-concepts.md). This file states only the UI-label
 rule.
@@ -59,7 +53,7 @@ This line governs every permission decision here:
 - **Commissioners never touch a user's account.** Not inactivate, not delete, not password
   reset, not root-admin toggle. Those are the user's own actions or a root admin's.
 - **League-role actions live on league surfaces**, not on the user page. Promote, demote and
-  remove-owner sit on Commissioner tools › Teams (Manage team) and on My team. Account
+  remove-owner sit on Commissioner tools › Members (Manage) and on the viewer's own page. Account
   actions sit on account surfaces only: the user's own on their user page, a root admin's on
   that user's page in Manage (Manage › Users).
 - **League membership *is* team ownership in that league.** There is no separate

@@ -108,9 +108,9 @@ export function LeagueHomePage() {
     <section className="space-y-6" data-testid="league-home">
       {teamSetupFailed ? (
         <Alert data-testid="league-team-setup-failed" tone="warning">
-          <p>You&apos;re in the league. We couldn&apos;t save your team name and icon. You can set them from My team.</p>
+          <p>You&apos;re in the league, but we couldn&apos;t save the name and icon you chose. You can set them now.</p>
           <LinkButton className="mt-3" size="sm" to={buildLeagueTeamPath(leagueCode)} variant="subtle">
-            My team
+            Set your name and icon
           </LinkButton>
         </Alert>
       ) : null}

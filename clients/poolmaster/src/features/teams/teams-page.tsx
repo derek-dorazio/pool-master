@@ -34,7 +34,7 @@ export function TeamsPage() {
     () => [
       {
         id: 'team',
-        header: 'Team',
+        header: 'Name',
         accessorFn: (row) => row.team.name,
         cell: ({ row }) => <TeamNameCell leagueCode={leagueCode} team={row.original.team} />,
       },
@@ -58,32 +58,32 @@ export function TeamsPage() {
     [leagueCode],
   );
 
-  const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading teams...' });
+  const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading members...' });
   if (leagueContext.state === 'blocked' || !league) {
     return leagueContext.element;
   }
 
   return (
     <section className="space-y-6" data-testid="teams-page">
-      <PageHeader description={`Every team in ${league.name} and who owns it.`} title="Teams" />
+      <PageHeader description={`Every member of ${league.name} and the name they play under.`} title="Members" />
 
       {teamsQuery.isLoading ? (
-        <LoadingState body="Loading teams..." testId="teams-page-teams-loading" />
+        <LoadingState body="Loading members..." testId="teams-page-teams-loading" />
       ) : teamsQuery.isError ? (
         <ErrorState
-          body="We couldn't load teams for this league."
+          body="We couldn't load this league's members."
           testId="teams-page-teams-error"
-          title="Teams unavailable"
+          title="Members unavailable"
         />
       ) : (
         <DataGrid
           columns={columns}
           data={rows}
-          emptyMessage={rows.length ? 'No team or owner matches that search.' : 'No teams exist for this league yet.'}
+          emptyMessage={rows.length ? 'No members match that search.' : 'No one has joined this league yet.'}
           getRowId={(row) => row.team.id}
           pageSize={TEAMS_PER_PAGE}
           rowTestId={(row) => `league-team-${row.team.id}`}
-          search={{ label: 'Find a team or owner', testId: 'teams-search' }}
+          search={{ label: 'Find a member or owner', testId: 'teams-search' }}
           showColumnFilters={false}
           tableTestId="teams-table"
         />

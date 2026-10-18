@@ -64,7 +64,7 @@ export function MyTeamOwnersPanel({
       <Tile radius="lg">
         <h4 className="text-sm font-semibold text-foreground">Add co-owner</h4>
         <p className="mt-2 text-sm text-muted-foreground">
-          Invite another person to co-manage this team. People already in this league can&apos;t be invited.
+          Invite another person to co-own {selectedTeam.name}. People already in this league can&apos;t be invited.
         </p>
         <div className="mt-4 flex gap-3">
           <Input
@@ -96,7 +96,7 @@ export function MyTeamOwnersPanel({
       <div className="space-y-3">
         {activeMembers.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            This team does not have any active members yet.
+            {selectedTeam.name} does not have any active owners yet.
           </p>
         ) : (
           activeMembers.map((member: TeamMember) => (
@@ -196,7 +196,7 @@ export function MyTeamOwnersPanel({
         <Tile radius="lg">
           <h4 className="text-sm font-semibold text-foreground">Replace owner</h4>
           <p className="mt-2 text-sm text-muted-foreground">
-            Replacing an owner removes them from this team and the league, and invites the replacement email to take their place.
+            Replacing an owner removes them from {selectedTeam.name} and the league, and invites the replacement email to take their place.
           </p>
           <div className="mt-4 flex gap-3">
             <Input
