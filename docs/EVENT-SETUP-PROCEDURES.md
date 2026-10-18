@@ -309,6 +309,27 @@ season, a league the scope does not name, made-up odds or scores in a real file,
 data on a target that does not take it. The filename is for people and is never read.
 The shape is in `packages/core-api/scripts/seed-golf/sport-data-file.ts`.
 
+### Loading every test file, with test players
+
+Two options on *Load sport data* are for QA only. The run reads the site's environment from
+`/version` first and refuses either anywhere but QA (or a local site).
+
+- **`all_test_data`** loads every test data file in the folder in one run, in place of `file`
+  (the test slates are left out, since each fills one named event). A file that fails is
+  listed in the summary and the rest still load. Locally it is `--all-test-data`.
+- **`with_participants`** also loads the pool side of each test file: six test players
+  (`qa-avery-adams` to `qa-finley-fox`, `@example.com` addresses that take no mail, all with
+  the password in `test-participants.ts`), and for each sport league a league named
+  "*sport league* test pool". The E2E root admin creates it and is its commissioner; each
+  player joins with an invite link, which gives them their squad. Each of the league's next
+  three events open for entries gets a contest from the sport league's default tiered or
+  budget template (never a random draw, which deals the picks itself), opened, and every
+  player's squad enters, picks a lineup and submits it. Locally it is `--with-participants`.
+
+Both are re-entrant like every load: each step looks first and only adds what is missing, so a
+second run lists everything as a skip, and a run after a failure part-way fills in the rest. A
+draft entry gets the picks it lacks and is submitted; a submitted one is left alone.
+
 ### Test slates: a test field on an event that is already there
 
 A test slate fills the field of one event on the site with a fixed list of players, for

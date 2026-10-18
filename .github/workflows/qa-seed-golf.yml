@@ -16,6 +16,10 @@
 # site, named in `event`, for trying contests before the real field is out. With
 # `replace_field` it removes every field row the slate does not list rather than withdrawing
 # it; a row a contest entry has picked is withdrawn instead.
+# `all_test_data` loads every test data file in the folder in one run, in place of `file`.
+# `with_participants` also loads test players, a league per sport league, contests on its next
+# events and a submitted entry from each player. Both are QA only: the loader reads the site's
+# environment first and refuses anything else. Like every load, both are safe to run again.
 # See docs/EVENT-SETUP-PROCEDURES.md, "Loading sport data".
 name: Load sport data
 
@@ -41,6 +45,14 @@ on:
         description: Test slate only, replace the participant field instead of filling it in
         type: boolean
         default: false
+      all_test_data:
+        description: Load every test data file (not the test slates); file is ignored
+        type: boolean
+        default: false
+      with_participants:
+        description: Also load test players, leagues, contests and entries (QA only)
+        type: boolean
+        default: false
 
 # It only reads the checkout; QA is written through the API with the admin secrets.
 permissions:
@@ -54,7 +66,7 @@ jobs:
   load:
     name: load
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 120
     env:
       POOLMASTER_SEED_BASE_URL: https://qa.ultimateofficepoolmanager.com
       POOLMASTER_SEED_ADMIN_IDENTIFIER: ${{ secrets.POOLMASTER_E2E_ADMIN_IDENTIFIER }}
@@ -64,6 +76,8 @@ jobs:
       LOAD_MODE: ${{ inputs.mode }}
       LOAD_EVENT: ${{ inputs.event }}
       LOAD_REPLACE_FIELD: ${{ inputs.replace_field }}
+      LOAD_ALL_TEST_DATA: ${{ inputs.all_test_data }}
+      LOAD_WITH_PARTICIPANTS: ${{ inputs.with_participants }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -78,9 +92,15 @@ jobs:
       - name: Load into QA
         shell: bash
         run: |
-          args=(--file "$LOAD_FILE" --mode "$LOAD_MODE" --allow-test-data --report load-report.md)
-          if [ -n "$LOAD_EVENT" ]; then args+=(--event "$LOAD_EVENT"); fi
-          if [ "$LOAD_REPLACE_FIELD" = "true" ]; then args+=(--replace-field); fi
+          args=(--mode "$LOAD_MODE" --allow-test-data --report load-report.md)
+          if [ "$LOAD_ALL_TEST_DATA" = "true" ]; then
+            args+=(--all-test-data)
+          else
+            args+=(--file "$LOAD_FILE")
+            if [ -n "$LOAD_EVENT" ]; then args+=(--event "$LOAD_EVENT"); fi
+            if [ "$LOAD_REPLACE_FIELD" = "true" ]; then args+=(--replace-field); fi
+          fi
+          if [ "$LOAD_WITH_PARTICIPANTS" = "true" ]; then args+=(--with-participants); fi
           npm run seed:golf -- "${args[@]}" 2>&1 | tee load.log
       - name: Summary
         if: always()
