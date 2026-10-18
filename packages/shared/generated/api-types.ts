@@ -716,7 +716,7 @@ export interface paths {
         };
         /**
          * List squads in a league
-         * @description Returns the squads associated with the current league for team management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
+         * @description Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
          */
         get: operations["listLeagueSquads"];
         put?: never;
@@ -746,15 +746,15 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Permanently delete an inactive team
-         * @description Permanently deletes an inactive team and cascades related team-owned data. This route is root-admin only and exists to support QA cleanup flows from Team Home.
+         * Permanently delete an inactive squad
+         * @description Permanently deletes an inactive squad and cascades related squad-owned data. This route is root-admin only and exists to support QA cleanup flows from the web app.
          */
         delete: operations["deleteLeagueSquad"];
         options?: never;
         head?: never;
         /**
          * Update squad details
-         * @description Updates mutable squad fields such as naming and presentation detail for an active team owner, league commissioner, or root admin.
+         * @description Updates mutable squad fields such as naming and presentation detail for an active squad owner, league commissioner, or root admin.
          */
         patch: operations["updateLeagueSquad"];
         trace?: never;
@@ -769,10 +769,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Inactivate a team
-         * @description Inactivates the target team, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the team's owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).
+         * Inactivate a squad
+         * @description Inactivates the target squad, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the squad's owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original squad (#218).
          *
-         *     **League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners' league memberships, so it is league administration rather than team management.
+         *     **League commissioners and root admins only (#219).** Squad owners may invite and remove co-owners on their own squad, but ending a squad also ends its owners' league memberships, so it is league administration rather than squad management.
          */
         post: operations["inactivateLeagueSquad"];
         delete?: never;
@@ -791,8 +791,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Add or reactivate a team owner
-         * @description Adds an owner to the team or reactivates an existing inactive owner membership for an active team owner, league commissioner, or root admin.
+         * Add or reactivate a squad owner
+         * @description Adds an owner to the squad or reactivates an existing inactive owner membership for an active squad owner, league commissioner, or root admin.
          */
         post: operations["addSquadOwner"];
         delete?: never;
@@ -812,8 +812,8 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Remove a team owner
-         * @description Removes the owner relationship between the target user and team. The backend blocks removal of the final active owner and requires team inactivation instead.
+         * Remove a squad owner
+         * @description Removes the owner relationship between the target user and squad. The backend blocks removal of the final active owner and requires squad inactivation instead.
          */
         delete: operations["removeSquadOwner"];
         options?: never;
@@ -829,8 +829,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List team-owner invitations for a league
-         * @description Returns pending and historical team-owner invitations visible to the current commissioner, active team owner, or root admin.
+         * List co-owner invitations for a league
+         * @description Returns pending and historical co-owner invitations visible to the current commissioner, active squad owner, or root admin.
          */
         get: operations["listSquadOwnerInvitations"];
         put?: never;
@@ -852,7 +852,7 @@ export interface paths {
         put?: never;
         /**
          * Invite a co-owner by email
-         * @description Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active team owners, league commissioners, and root admins may start this flow.
+         * @description Starts the co-owner invite flow for a squad. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active squad owners, league commissioners, and root admins may start this flow.
          */
         post: operations["createSquadOwnerInvitation"];
         delete?: never;
@@ -871,8 +871,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Replace an active team owner
-         * @description Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A team owner may replace a co-owner; a league commissioner or root admin may also replace a team's only owner, and the team stays active for the replacement.
+         * Replace an active squad owner
+         * @description Guided replacement flow that removes the selected current owner (ending their squad and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A squad owner may replace a co-owner; a league commissioner or root admin may also replace a squad's only owner, and the squad stays active for the replacement.
          */
         post: operations["replaceSquadOwner"];
         delete?: never;
@@ -892,8 +892,8 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Revoke a pending team-owner invitation
-         * @description Revokes a pending co-owner invitation so it can no longer be accepted. Active team owners, league commissioners, and root admins may revoke invitations in their allowed scope.
+         * Revoke a pending co-owner invitation
+         * @description Revokes a pending co-owner invitation so it can no longer be accepted. Active squad owners, league commissioners, and root admins may revoke invitations in their allowed scope.
          */
         delete: operations["revokeSquadOwnerInvitation"];
         options?: never;
@@ -949,8 +949,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Preview a team-owner invitation by invite code
-         * @description Returns the minimal league and team identity needed to render the public team-owner invitation flow before or after authentication.
+         * Preview a co-owner invitation by invite code
+         * @description Returns the minimal league and squad identity needed to render the public co-owner invitation flow before or after authentication.
          */
         get: operations["getTeamOwnerInvitationPreview"];
         put?: never;
@@ -971,8 +971,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Accept a team-owner invitation using an invite code
-         * @description Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a team that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
+         * Accept a co-owner invitation using an invite code
+         * @description Accepts a co-owner invitation for the authenticated user and provisions league membership plus squad ownership on the target squad. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a squad that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
          */
         post: operations["acceptTeamOwnerInvitation"];
         delete?: never;
@@ -991,12 +991,12 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Register a new account against a team-owner invitation and accept it
-         * @description Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited team — registration, league membership and team ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their team.
+         * Register a new account against a co-owner invitation and accept it
+         * @description Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited squad — registration, league membership and squad ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their squad.
          *
          *     Unauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.
          *
-         *     The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a team that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
+         *     The account is created with the address the invitation was sent to; the request carries no email. A co-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a squad that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
          */
         post: operations["registerWithTeamOwnerInvitation"];
         delete?: never;
@@ -1176,7 +1176,7 @@ export interface paths {
         head?: never;
         /**
          * Update a contest entry
-         * @description Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
+         * @description Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no squad.
          */
         patch: operations["updateContestEntry"];
         trace?: never;
@@ -1212,12 +1212,12 @@ export interface paths {
         put?: never;
         /**
          * Create the current user contest entry
-         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
+         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad.
          */
         post: operations["enterContest"];
         /**
          * Delete the current user contest entry
-         * @description Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
+         * @description Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad.
          */
         delete: operations["leaveContest"];
         options?: never;
@@ -2448,7 +2448,7 @@ export interface paths {
         };
         /**
          * Get current selection state for a contest
-         * @description Returns the current selection-room state for one event of the contest (#713): `sportEventId`, else its next event that has not started, else its last; 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. It includes the event's field, its picks, and each entry's status in it. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry's spend against the salary cap. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. Until the event's picks are revealed (the contest is live and the event has started, or a random draw has dealt) the pick history carries only the caller's own entries, and entryId selects another team's entry only once they are; otherwise it falls back to the caller's own. 409 CONTEST_EVENT_REQUIRED for a contest that covers no event.
+         * @description Returns the current selection-room state for one event of the contest (#713): `sportEventId`, else its next event that has not started, else its last; 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. It includes the event's field, its picks, and each entry's status in it. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry's spend against the salary cap. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. Until the event's picks are revealed (the contest is live and the event has started, or a random draw has dealt) the pick history carries only the caller's own entries, and entryId selects another squad's entry only once they are; otherwise it falls back to the caller's own. 409 CONTEST_EVENT_REQUIRED for a contest that covers no event.
          */
         get: operations["getSelectionState"];
         put?: never;
@@ -2490,7 +2490,7 @@ export interface paths {
         put?: never;
         /**
          * Submit a contest entry's picks for one event
-         * @description Submits the caller's entry for one event of its contest (#713: "submit week 6", "submit your Masters picks") once that event's lineup is complete, and returns the refreshed selection state for that event. Each event of an entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted event changes nothing. A later pick change that leaves the lineup short or over the cap sends that event back to DRAFT. An event is submitted only while the contest is OPEN or ACTIVE and that event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. Only a member of the entry's team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
+         * @description Submits the caller's entry for one event of its contest (#713: "submit week 6", "submit your Masters picks") once that event's lineup is complete, and returns the refreshed selection state for that event. Each event of an entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted event changes nothing. A later pick change that leaves the lineup short or over the cap sends that event back to DRAFT. An event is submitted only while the contest is OPEN or ACTIVE and that event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. Only a member of the entry's squad may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
          */
         post: operations["submitContestEntry"];
         delete?: never;

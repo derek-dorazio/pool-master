@@ -171,7 +171,7 @@ export function JoinTeamOwnerPage() {
     mutationFn: async () => {
       const response = await acceptTeamOwnerInvitation({ body: { inviteCode } });
       if (!response.data?.invitation) {
-        throwApiError(response.error, 'Team-owner invitation acceptance response is missing data.');
+        throwApiError(response.error, 'Invitation acceptance response is missing data.');
       }
 
       return response.data.invitation;

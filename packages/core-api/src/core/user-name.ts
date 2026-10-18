@@ -4,5 +4,5 @@ export function formatUserFullName(firstName?: string | null, lastName?: string 
 }
 
 export function buildDefaultSquadName(firstName?: string | null, lastName?: string | null): string {
-  return `${formatUserFullName(firstName, lastName)}'s Team`;
+  return formatUserFullName(firstName, lastName);
 }
