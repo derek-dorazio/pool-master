@@ -62,4 +62,19 @@ describe('check-contract-verification', () => {
       'RetiredResponseSchema is listed but is not an exported response schema; delete its entry.',
     ]);
   });
+
+  it('fails a gap list longer than the ceiling, so a new schema cannot be parked on it', () => {
+    const findings = evaluateContractVerification({
+      schemas,
+      checked: new Set(),
+      gaps: [
+        { schema: 'SportEventBracketResponseSchema', endpoints: 'GET /bracket' },
+        { schema: 'SportEventMatchResponseSchema', endpoints: 'PATCH /bracket/matches/:matchNumber' },
+      ],
+      ceiling: 1,
+    });
+    assert.deepEqual(findings.map((finding) => finding.message), [
+      '2 gaps are listed, over the ceiling of 1. A new response schema gets its contract-verification case, not a gap entry.',
+    ]);
+  });
 });

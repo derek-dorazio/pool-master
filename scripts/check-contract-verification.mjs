@@ -12,7 +12,8 @@
  * `tests/` as `<Name>ResponseSchema.safeParse(` or `.parse(`, or as the first argument of
  * `expectMatchesSchema(` (tests/support/expect-matches-schema.ts), or be listed in
  * `contract-verification-gaps.mjs`. A listed schema that is checked now, or a listed name that is
- * not an exported schema, fails too, so the list only shrinks.
+ * not an exported schema, fails too, and so does a list longer than `GAP_CEILING`, so the list only
+ * shrinks.
  *
  * WHAT IT DOES NOT PROVE. That the check runs against the right endpoint, or that the endpoint's
  * every response shape (a knockout pick as well as a golf one) is exercised. It proves a schema
@@ -29,6 +30,13 @@ export const DTO_DIR = 'packages/shared/dto';
 export const TEST_ROOTS = ['tests'];
 const GAPS_FILE = 'scripts/contract-verification-gaps.mjs';
 
+/**
+ * The most entries the gap list may hold. Lower it each time an entry is deleted; never raise it.
+ * Without it a new schema could go on the list with its endpoint and pass, so growing the list now
+ * means editing this line, which a reviewer sees.
+ */
+export const GAP_CEILING = 15;
+
 /** The `<Name>ResponseSchema` constants a DTO file exports. */
 export function readResponseSchemaNames(text) {
   return [...text.matchAll(/^export const (\w+ResponseSchema)\b/gm)].map((match) => match[1]);
@@ -44,8 +52,15 @@ export function findCheckedSchemas(names, testTexts) {
   return checked;
 }
 
-export function evaluateContractVerification({ schemas, checked, gaps }) {
+export function evaluateContractVerification({ schemas, checked, gaps, ceiling = GAP_CEILING }) {
   const findings = [];
+  if (gaps.length > ceiling) {
+    findings.push({
+      location: GAPS_FILE,
+      message: `${gaps.length} gaps are listed, over the ceiling of ${ceiling}. A new response schema gets its `
+        + 'contract-verification case, not a gap entry.',
+    });
+  }
   const listed = new Set(gaps.map((gap) => gap.schema));
   const exported = new Set(schemas.map((schema) => schema.name));
 

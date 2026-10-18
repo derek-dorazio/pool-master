@@ -5,7 +5,8 @@
  * Every entry is an endpoint that shipped before the check existed. The list only shrinks: add a
  * contract-verification case (or `expectMatchesSchema` in a journey that already holds the
  * response) and delete the entry. The scanner fails if a listed schema is checked now, or if an
- * entry names no exported schema, so the list cannot drift from the tests.
+ * entry names no exported schema, so the list cannot drift from the tests. Deleting an entry also
+ * lowers `GAP_CEILING` in the scanner by one; the scanner fails a list longer than the ceiling.
  *
  * A new endpoint never goes on this list; `rules/testing-rules.md` §4 *Contract Verification
  * Gate* says its contract case lands with it.
