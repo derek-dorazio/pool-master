@@ -1,0 +1,1591 @@
+Source: https://en.wikipedia.org/wiki/2025_NBA_play-in_tournament
+Final URL: https://en.wikipedia.org/wiki/2025_NBA_play-in_tournament
+HTTP 200
+Fetched: 2026-10-18T04:19:41.211Z
+
+2024–25 NBA season - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Transactions
+Toggle Transactions subsection
+1.1
+Retirements
+1.2
+Draft
+1.3
+Free agency
+1.3.1
+Notable moves
+1.3.2
+Re-signings
+1.4
+Notable trades
+1.5
+Coaching changes
+1.5.1
+Off-season
+1.5.2
+In-season
+2
+Preseason
+Toggle Preseason subsection
+2.1
+Domestic neutral site games
+2.2
+International games
+2.3
+Non-NBA opponents
+3
+Regular season
+Toggle Regular season subsection
+3.1
+International games
+3.2
+Emirates NBA Cup
+3.3
+Standings
+3.3.1
+By conference
+3.4
+Postponed games due to the January 2025 Southern California wildfires
+3.5
+Postponed games due to other reasons
+4
+Play-in tournament
+Toggle Play-in tournament subsection
+4.1
+Eastern Conference
+4.2
+Western Conference
+5
+Playoffs
+Toggle Playoffs subsection
+5.1
+Bracket
+6
+Statistics
+Toggle Statistics subsection
+6.1
+Individual statistic leaders
+6.2
+Individual game highs
+6.3
+Team statistic leaders
+7
+Awards
+Toggle Awards subsection
+7.1
+Yearly awards
+7.2
+Players of the Week
+7.3
+Players of the Month
+7.4
+Defensive Players of the Month
+7.5
+Rookies of the Month
+7.6
+Coaches of the Month
+8
+Arena changes
+9
+Uniform and logo changes
+10
+Media
+Toggle Media subsection
+10.1
+National
+10.1.1
+Linear television
+10.1.2
+Streaming
+10.2
+Local
+10.2.1
+Diamond Sports Group bankruptcy
+10.3
+Personnel
+11
+Attendances
+12
+Notable occurrences
+13
+References
+Toggle the table of contents
+2024–25 NBA season
+18 languages
+العربية
+Deutsch
+Español
+Français
+עברית
+Magyar
+Italiano
+日本語
+한국어
+Lietuvių
+Nederlands
+Português
+Română
+Русский
+Српски / srpski
+Türkçe
+Українська
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikimedia Commons
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+(Redirected from 2025 NBA play-in tournament )
+79th NBA season
+([[2024 NBA Cup|NBA Cup]])\n* April 15–18, 2025<br />(Play-in tournament)\n* April 19 – May 31, 2025 ([[2025 NBA playoffs|Playoffs]])\n* June 5–22, 2025 ([[2025 NBA Finals|Finals]])\n}}"},"no_of_games":{"wt":"82 per team"},"no_of_teams":{"wt":"30"},"attendance":{"wt":""},"TV":{"wt":"[[NBA on ESPN|ESPN]]/[[NBA on ABC|ABC]], [[NBA on TNT|TNT]], [[NBA TV]]"},"streaming":{"wt":"[[ESPN+]]/[[Disney+]], [[Max (streaming service)|Max]]"},"draft":{"wt":"Draft"},"draft_link":{"wt":"2024 NBA draft"},"top_pick":{"wt":"[[Stephon Castle]]"},"top_pick_link":{"wt":"List of first overall NBA draft picks"},"picked_by":{"wt":"[[2024–25 Atlanta Hawks season|Atlanta Hawks]]"},"season":{"wt":"Regular season"},"top_seed":{"wt":"[[2024–25 Oklahoma City Thunder season|Oklahoma City Thunder]]"},"MVP":{"wt":"[[Shai Gilgeous-Alexander]] ([[2024–25 Oklahoma City Thunder season|Oklahoma City]])"},"MVP_link":{"wt":"NBA Most Valuable Player Award"},"top_scorer_link":{"wt":"List of NBA annual scoring leaders"},"top_scorer":{"wt":"Shai Gilgeous-Alexander (Oklahoma City)"},"season2":{"wt":"[[2024 NBA Cup|NBA Cup]]"},"season_champ2_name":{"wt":"Champions"},"season_champs2":{"wt":"[[2024–25 Milwaukee Bucks season|Milwaukee Bucks]]"},"second_place2":{"wt":"[[2024–25 Oklahoma City Thunder season|Oklahoma City Thunder]]"},"playoffs":{"wt":"Playoffs"},"playoffs_link":{"wt":"2025 NBA playoffs"},"conf1":{"wt":"Eastern"},"conf1_link":{"wt":"Eastern Conference (NBA)"},"conf1_champ":{"wt":"[[2024–25 Indiana Pacers season|Indiana Pacers]]"},"conf1_runner-up":{"wt":"[[2024–25 New York Knicks season|New York Knicks]]"},"conf2":{"wt":"Western"},"conf2_link":{"wt":"Western Conference (NBA)"},"conf2_champ":{"wt":"[[2024–25 Oklahoma City Thunder season|Oklahoma City Thunder]]"},"conf2_runner-up":{"wt":"[[2024–25 Minnesota Timberwolves season|Minnesota Timberwolves]]"},"finals":{"wt":"Finals"},"finals_link":{"wt":"2025 NBA Finals"},"finals_champ":{"wt":"[[2024–25 Oklahoma City Thunder season|Oklahoma City Thunder]]"},"finals_runner-up":{"wt":"[[2024–25 Indiana Pacers season|Indiana Pacers]]"},"finals_MVP":{"wt":"[[Shai Gilgeous-Alexander]] ([[2024–25 Oklahoma City Thunder season|Oklahoma City]])"},"finals_MVP_link":{"wt":"NBA Finals Most Valuable Player Award"},"seasonslist":{"wt":"List of NBA seasons"},"seasonslistnames":{"wt":"NBA"},"prevseason_link":{"wt":"2023–24 NBA season"},"prevseason_year":{"wt":"2023–24"},"nextseason_link":{"wt":"2025–26 NBA season"},"nextseason_year":{"wt":"2025–26"}},"i":0}}]}'>Sports season
+2024–25 NBA season
+League National Basketball Association
+Sport Basketball
+Duration
+October 22, 2024 – April 13, 2025
+November 12 – December 17, 2024
+( NBA Cup )
+April 15–18, 2025
+(Play-in tournament)
+April 19 – May 31, 2025 ( Playoffs )
+June 5–22, 2025 ( Finals )
+Games 82 per team
+Teams 30
+TV partner(s) ESPN / ABC , TNT , NBA TV
+Streaming partner(s) ESPN+ / Disney+ , Max
+Draft
+Top draft pick Stephon Castle
+Picked by Atlanta Hawks
+Regular season
+Top seed Oklahoma City Thunder
+Season MVP Shai Gilgeous-Alexander ( Oklahoma City )
+Top scorer Shai Gilgeous-Alexander (Oklahoma City)
+NBA Cup
+Champions Milwaukee Bucks
+Runners-up Oklahoma City Thunder
+Playoffs
+Eastern champions Indiana Pacers
+Eastern runners-up New York Knicks
+Western champions Oklahoma City Thunder
+Western runners-up Minnesota Timberwolves
+Finals
+Champions Oklahoma City Thunder
+Runners-up Indiana Pacers
+Finals MVP Shai Gilgeous-Alexander ( Oklahoma City )
+NBA seasons
+← 2023–24
+2025–26 →
+The 2024–25 NBA season was the 79th season of the National Basketball Association (NBA). The regular season began on October 22, 2024, and ended on April 13, 2025. [ 1 ] The NBA held an in-season tournament for the second consecutive year, now called the Emirates NBA Cup , [ 2 ] with the Milwaukee Bucks winning it against the Oklahoma City Thunder . The 2025 NBA All-Star Game was played on February 16, 2025, at Chase Center in San Francisco . [ 3 ] The play-in tournament was played from April 15 to 18, 2025, followed by the playoffs the next day, and concluded with the finals on June 22, 2025, when the Thunder defeated the Indiana Pacers in seven games . Shai Gilgeous-Alexander was named the Finals MVP. This was the first game 7 in the finals since 2016 , and the 20th overall.
+Transactions
+[ edit ]
+Main article: List of 2024–25 NBA season transactions
+Retirements
+[ edit ]
+On July 2, 2024, Kemba Walker announced his retirement from professional basketball. [ 4 ] He joined the Hornets as a player enhancement coach the next day. [ 4 ] [ 5 ]
+On August 1, 2024, Gordon Hayward retired from professional basketball. [ 6 ] [ 7 ]
+On August 15, 2024, Joe Harris retired from professional basketball. [ 8 ]
+On September 26, 2024, Derrick Rose retired from professional basketball. He played for six different teams in his 16-year career, and was named the NBA Most Valuable Player (MVP) in 2011 with the Chicago Bulls . [ 9 ]
+On September 29, 2024, AJ Griffin announced his retirement from professional basketball to pursue a career in ministry . [ 10 ]
+On October 2, 2024, Ish Smith was hired as a pro scout for the Washington Wizards , thus ending his playing career. Smith played for a record 13 NBA franchises in his 14 years in the NBA, and won an NBA championship in 2023 with the Denver Nuggets . [ 11 ]
+On October 10, 2024, Danny Green retired from professional basketball. Green played with six different teams in his 14-year career, and is one of the four players to win NBA championships with three different teams. [ 12 ]
+On October 29, 2024, Rudy Gay announced his retirement from professional basketball. [ 13 ] [ 14 ]
+Draft
+[ edit ]
+The first round of the 2024 NBA draft took place on June 26, 2024, at Barclays Center in Brooklyn , New York. The second round took place the next day at ESPN's Seaport District Studios in Manhattan . [ 15 ] [ 16 ]
+The Atlanta Hawks take French teen Zaccharie Risacher as the #1 overall pick.
+Free agency
+[ edit ]
+Free agency negotiations began on June 30, 2024, at 6 p.m. ET. Players were officially signed after the July moratorium on July 6 at 12 p.m. ET.
+Notable moves
+[ edit ]
+Paul George signed a four-year, $212 million max contract with the Philadelphia 76ers .
+Isaiah Hartenstein signed a three-year, $87 million contract with the Oklahoma City Thunder .
+Klay Thompson was acquired by the Dallas Mavericks from the Golden State Warriors on a three-year, $50 million contract in a sign-and-trade after he entered free agency.
+Former NBA MVP Russell Westbrook signed a two-year, $6.8 million contract with the Denver Nuggets .
+Re-signings
+[ edit ]
+Jayson Tatum agrees to 5-year max extension with the Celtics.
+Jalen Green agrees to 3-year extension with the Rockets.
+Pascal Siakam returns on 4-year deal with the Pacers.
+James Harden returns on 2-year deal with the Clippers.
+LeBron James returns on 2-year deal with the Lakers.
+Bam Adebayo signs 3-year extension with the Heat.
+Jalen Brunson agrees to 4-year extension with the Knicks.
+Franz Wagner agrees to 5-year extension with the Magic.
+Joel Embiid agrees to 3-year extension with the 76ers.
+Scottie Barnes agrees to 5-year extension with the Raptors.
+Lauri Markkanen agrees to 5-year extension with the Jazz.
+Stephen Curry agrees to 1-year extension with the Warriors.
+Notable trades
+[ edit ]
+Chicago Bulls acquire Josh Giddey from the Oklahoma City Thunder in exchange for Alex Caruso .
+New York Knicks acquire Karl-Anthony Towns in 3-team trade. Julius Randle and Donte DiVincenzo join the Minnesota Timberwolves .
+DeMar DeRozan joins the Sacramento Kings after trade by Chicago Bulls for Chris Duarte . Harrison Barnes was sent to the San Antonio Spurs as part of the 3-team trade.
+Los Angeles Lakers acquire Luka Dončić , Maxi Kleber and Markieff Morris in 3-team trade. Anthony Davis and Max Christie join the Dallas Mavericks and Jalen Hood-Schifino joins the Utah Jazz . Hood-Schifino was released by the team and signed with the Philadelphia 76ers . (Further information: Luka Dončić–Anthony Davis trade )
+The Sacramento Kings traded De'Aaron Fox and Jordan McLaughlin to the San Antonio Spurs , which moved Zach LaVine and Sidy Cissoko to Sacramento. The Bulls received Zach Collins , Tre Jones from San Antonio, and Kevin Huerter from Sacramento.
+The Milwaukee Bucks traded Khris Middleton to the Washington Wizards for Kyle Kuzma .
+The Golden State Warriors acquired Jimmy Butler from the Miami Heat in exchange for Kyle Anderson and Andrew Wiggins in 5-team trade. Miami also got Davion Mitchell from the Toronto Raptors , Dennis Schröder and Lindy Waters III move from Golden State to the Detroit Pistons , Toronto acquire P. J. Tucker from the Utah Jazz , and Utah gets Josh Richardson from Miami. KJ Martin is also sent from Detroit to Utah as part of the 5-team trade after the Pistons had previously acquired him from the Philadelphia 76ers earlier that day.
+The Toronto Raptors acquired Brandon Ingram from the New Orleans Pelicans in a 3-player deal involving Bruce Brown and Kelly Olynyk .
+The Washington Wizards acquired Marcus Smart , Colby Jones , Alex Len , and a 2025 first-round pick from the Grizzlies.
+The Cleveland Cavaliers acquired forward De'Andre Hunter from the Atlanta Hawks . In exchange, Atlanta received Caris LeVert , Georges Niang , three second-round picks (2027, 2029, 2031), and two pick swaps.
+The Atlanta Hawks traded veteran guard Bogdan Bogdanović to the LA Clippers in exchange for guards Terance Mann and Bones Hyland .
+Coaching changes
+[ edit ]
+Coaching changes
+Team 2023–24 season 2024–25 season
+Off-season
+Brooklyn Nets Kevin Ollie (interim) Jordi Fernández
+Charlotte Hornets Steve Clifford Charles Lee
+Cleveland Cavaliers J. B. Bickerstaff Kenny Atkinson
+Detroit Pistons Monty Williams J. B. Bickerstaff
+Los Angeles Lakers Darvin Ham JJ Redick
+Phoenix Suns Frank Vogel Mike Budenholzer
+Washington Wizards Brian Keefe (interim) Brian Keefe
+In-season
+Sacramento Kings Mike Brown Doug Christie (interim)
+Memphis Grizzlies Taylor Jenkins Tuomas Iisalo (interim)
+Denver Nuggets Michael Malone David Adelman (interim)
+San Antonio Spurs Gregg Popovich Mitch Johnson (interim)
+Off-season
+[ edit ]
+On April 3, 2024, the Charlotte Hornets announced that Steve Clifford would step down as head coach at the end of the 2023–24 season and move into a front-office advisory role. [ 17 ]
+On April 22, 2024, the Brooklyn Nets hired Jordi Fernández as their new head coach. [ 18 ]
+On May 3, 2024, the Los Angeles Lakers fired their head coach Darvin Ham after two seasons with the team. [ 19 ]
+On May 9, 2024, the Charlotte Hornets hired Charles Lee as their new head coach. [ 20 ]
+On May 9, 2024, the Phoenix Suns fired their head coach Frank Vogel after only one season with the team. [ 21 ]
+On May 11, 2024, the Phoenix Suns hired Mike Budenholzer as their new head coach. [ 22 ]
+On May 23, 2024, the Cleveland Cavaliers fired their head coach J. B. Bickerstaff after five seasons with the team. [ 23 ]
+On May 29, 2024, the Washington Wizards hired Brian Keefe as their full-time head coach. [ 24 ]
+On June 19, 2024, the Detroit Pistons fired their head coach Monty Williams after one season of coaching the team. [ 25 ]
+On June 24, 2024, the Los Angeles Lakers hired JJ Redick as their new head coach. [ 26 ]
+On June 28, 2024, the Cleveland Cavaliers hired Kenny Atkinson as their new head coach. [ 27 ]
+On July 3, 2024, the Detroit Pistons hired J. B. Bickerstaff as their new head coach. [ 28 ]
+In-season
+[ edit ]
+On November 2, 2024, Gregg Popovich suffered a mild stroke. Mitch Johnson was named the interim head coach. [ 29 ]
+On December 27, 2024, the Sacramento Kings fired their head coach Mike Brown . Doug Christie was named the interim head coach. [ 30 ]
+On March 28, 2025, the Memphis Grizzlies fired their head coach Taylor Jenkins after six seasons with the team. [ 31 ] Tuomas Iisalo was named the interim head coach. [ 32 ]
+On April 8, 2025, the Denver Nuggets fired their head coach Michael Malone after 10 seasons with the team. David Adelman was named the interim head coach. [ 33 ]
+Preseason
+[ edit ]
+In addition to regular preseason games hosted at NBA teams' own arenas, the NBA often hosts neutral site preseason games (either in domestic non-NBA markets or foreign markets) or against non-NBA teams. Listed below are only those neutral site or preseason games.
+Domestic neutral site games
+[ edit ]
+Date
+Teams
+Arena
+Location
+Reference
+Winner
+October 4
+Minnesota Timberwolves vs. Los Angeles Lakers
+Acrisure Arena
+Palm Desert, California
+[ 34 ]
+Minnesota Timberwolves
+October 5
+Los Angeles Clippers vs. Golden State Warriors
+Stan Sheriff Center
+Honolulu, Hawaii
+[ 35 ]
+Golden State Warriors
+October 6
+Phoenix Suns vs. Los Angeles Lakers
+Acrisure Arena
+Palm Desert, California
+[ 34 ]
+Phoenix Suns
+Washington Wizards vs. Toronto Raptors
+Bell Centre
+Montreal, Quebec
+[ 36 ]
+Toronto Raptors
+October 8
+Brooklyn Nets vs. Los Angeles Clippers
+Frontwave Arena
+Oceanside, California
+[ 37 ]
+Los Angeles Clippers
+Phoenix Suns vs. Detroit Pistons
+Breslin Center
+East Lansing, Michigan
+[ 38 ]
+Phoenix Suns
+October 11
+Philadelphia 76ers vs. Minnesota Timberwolves
+Wells Fargo Arena
+Des Moines, Iowa
+[ 39 ]
+Minnesota Timberwolves
+Portland Trail Blazers vs. Los Angeles Clippers
+Climate Pledge Arena
+Seattle, Washington
+[ 40 ]
+Los Angeles Clippers
+October 15
+Golden State Warriors vs. Los Angeles Lakers
+T-Mobile Arena
+Paradise, Nevada
+[ 34 ]
+Golden State Warriors
+International games
+[ edit ]
+Main article: NBA Global Games
+Date
+Teams
+Arena
+Location
+Reference
+Winner
+October 4
+Boston Celtics vs. Denver Nuggets
+Etihad Arena
+Abu Dhabi, United Arab Emirates
+[ 41 ]
+Boston Celtics
+October 6
+Denver Nuggets vs. Boston Celtics
+Boston Celtics
+Non-NBA opponents
+[ edit ]
+See also: NBLxNBA
+Date
+Teams
+Arena
+Location
+Reference
+Winner
+October 4
+New Zealand Breakers @ Utah Jazz
+Delta Center
+Salt Lake City, Utah
+[ 42 ]
+Utah Jazz
+October 7
+New Zealand Breakers @ Philadelphia 76ers
+Wells Fargo Center
+Philadelphia, Pennsylvania
+[ 43 ]
+Philadelphia 76ers
+October 10
+New Zealand Breakers @ Oklahoma City Thunder
+BOK Center
+Tulsa, Oklahoma
+[ 44 ]
+Oklahoma City Thunder
+October 16
+Ratiopharm Ulm @ Portland Trail Blazers
+Moda Center
+Portland, Oregon
+[ 45 ]
+Portland Trail Blazers
+Regular season
+[ edit ]
+The majority of the regular season was released on August 15, with those group play games counting as part of the in-season tournament, now branded as the NBA Cup , announced two days earlier on August 13. The two games that were dependent on the results of the in-season tournament, along with the knockout round schedule, were announced at the conclusion of group play ( see details below ). [ 1 ] [ 46 ]
+The Spurs played two alternate-site games at the Moody Center at the University of Texas in Austin, Texas in February, when the San Antonio Stock Show and Rodeo took over Frost Bank Center.
+International games
+[ edit ]
+Main article: NBA Global Games
+Date
+Teams
+Arena
+Location
+Reference
+Winner
+NBA Mexico City Game 2024
+November 2
+Miami Heat vs Washington Wizards
+Mexico City Arena
+Mexico City, Mexico
+[ 47 ]
+Miami Heat
+NBA Paris Games 2025
+January 23
+Indiana Pacers vs San Antonio Spurs
+Accor Arena
+Paris, France
+[ 48 ]
+San Antonio Spurs
+January 25
+San Antonio Spurs vs Indiana Pacers
+Indiana Pacers
+Emirates NBA Cup
+[ edit ]
+Main article: 2024 NBA Cup
+The NBA Cup , formerly the In-season tournament, returned for the 2024–25 season, with the same structure: [ 49 ] [ 50 ] [ 46 ]
+All games except the championship final counting towards the regular-season standings.
+Six intraconference pools of five (three pools per conference).
+Tuesdays and Fridays Between November 12 and December 3 featured group games against each of the other teams in their pool (two at home and two on the road). These games still count as regular season games.
+The winners of each pool (three teams per conference) and two wild-card teams (one team per conference) advanced to a single-elimination tournament.
+The semifinals and championship game were again played in Las Vegas.
+Players for the tournament champion each received $514,971.
+To compensate, the NBA's regular season scheduling formula was modified so only 80 games for each team were initially announced during the offseason. The first two rounds of the in-season tournament counted as regular-season games 81 and 82. The championship game was an extra 83rd game that did not count toward the regular season. Teams that did not qualify for the in-season tournament knockout round, or were eliminated in the quarterfinals, were scheduled additional games against other teams that were eliminated in the same conference (if possible) and round to reach 82 games.
+T-Mobile Arena in Paradise, Nevada hosted the semi-finals and championship game for the second consecutive season. [ 51 ]
+Standings
+[ edit ]
+Eastern Conference
+Atlantic Division W L PCT GB Home Road Div GP
+y – Boston Celtics 61 21 .744 – 28 ‍ – ‍ 13 33 ‍ – ‍ 8 14 ‍ – ‍ 2 82
+x – New York Knicks 51 31 .622 10.0 27 ‍ – ‍ 14 24 ‍ – ‍ 17 12 ‍ – ‍ 4 82
+Toronto Raptors 30 52 .366 31.0 18 ‍ – ‍ 23 12 ‍ – ‍ 29 8 ‍ – ‍ 8 82
+Brooklyn Nets 26 56 .317 35.0 12 ‍ – ‍ 29 14 ‍ – ‍ 27 3 ‍ – ‍ 13 82
+Philadelphia 76ers 24 58 .293 37.0 12 ‍ – ‍ 29 12 ‍ – ‍ 29 3 ‍ – ‍ 13 82
+Central Division W L PCT GB Home Road Div GP
+c – Cleveland Cavaliers 64 18 .780 – 34 ‍ – ‍ 7 30 ‍ – ‍ 11 12 ‍ – ‍ 4 82
+x – Indiana Pacers 50 32 .610 14.0 29 ‍ – ‍ 12 21 ‍ – ‍ 20 10 ‍ – ‍ 6 82
+x – Milwaukee Bucks 48 34 .585 16.0 28 ‍ – ‍ 14 20 ‍ – ‍ 20 9 ‍ – ‍ 7 82
+x – Detroit Pistons 44 38 .537 20.0 22 ‍ – ‍ 19 22 ‍ – ‍ 19 5 ‍ – ‍ 11 82
+pi – Chicago Bulls 39 43 .476 25.0 18 ‍ – ‍ 23 21 ‍ – ‍ 20 4 ‍ – ‍ 12 82
+Southeast Division W L PCT GB Home Road Div GP
+y – Orlando Magic 41 41 .500 – 22 ‍ – ‍ 19 19 ‍ – ‍ 22 12 ‍ – ‍ 4 82
+pi – Atlanta Hawks 40 42 .488 1.0 21 ‍ – ‍ 19 19 ‍ – ‍ 23 10 ‍ – ‍ 6 82
+x – Miami Heat 37 45 .451 4.0 19 ‍ – ‍ 22 18 ‍ – ‍ 23 10 ‍ – ‍ 6 82
+Charlotte Hornets 19 63 .232 22.0 12 ‍ – ‍ 29 7 ‍ – ‍ 34 1 ‍ – ‍ 15 82
+Washington Wizards 18 64 .220 23.0 8 ‍ – ‍ 33 10 ‍ – ‍ 31 7 ‍ – ‍ 9 82
+Western Conference
+Northwest Division W L PCT GB Home Road Div GP
+z – Oklahoma City Thunder 68 14 .829 – 36 ‍ – ‍ 6 32 ‍ – ‍ 8 12 ‍ – ‍ 4 82
+x – Denver Nuggets 50 32 .610 18.0 26 ‍ – ‍ 15 24 ‍ – ‍ 17 8 ‍ – ‍ 8 82
+x – Minnesota Timberwolves 49 33 .598 19.0 25 ‍ – ‍ 16 24 ‍ – ‍ 17 11 ‍ – ‍ 5 82
+Portland Trail Blazers 36 46 .439 32.0 22 ‍ – ‍ 19 14 ‍ – ‍ 27 6 ‍ – ‍ 10 82
+Utah Jazz 17 65 .207 51.0 10 ‍ – ‍ 31 7 ‍ – ‍ 34 3 ‍ – ‍ 13 82
+Pacific Division W L PCT GB Home Road Div GP
+y – Los Angeles Lakers 50 32 .610 – 31 ‍ – ‍ 10 19 ‍ – ‍ 22 12 ‍ – ‍ 4 82
+x – Los Angeles Clippers 50 32 .610 – 30 ‍ – ‍ 11 20 ‍ – ‍ 21 9 ‍ – ‍ 7 82
+x – Golden State Warriors 48 34 .585 2.0 24 ‍ – ‍ 17 24 ‍ – ‍ 17 5 ‍ – ‍ 11 82
+pi – Sacramento Kings 40 42 .488 10.0 20 ‍ – ‍ 21 20 ‍ – ‍ 21 5 ‍ – ‍ 11 82
+Phoenix Suns 36 46 .439 14.0 24 ‍ – ‍ 17 12 ‍ – ‍ 29 9 ‍ – ‍ 7 82
+Southwest Division W L PCT GB Home Road Div GP
+y – Houston Rockets 52 30 .634 – 29 ‍ – ‍ 12 23 ‍ – ‍ 18 13 ‍ – ‍ 3 82
+x – Memphis Grizzlies 48 34 .585 4.0 26 ‍ – ‍ 15 22 ‍ – ‍ 19 11 ‍ – ‍ 5 82
+pi – Dallas Mavericks 39 43 .476 13.0 22 ‍ – ‍ 18 17 ‍ – ‍ 25 8 ‍ – ‍ 8 82
+San Antonio Spurs 34 48 .415 18.0 20 ‍ – ‍ 21 14 ‍ – ‍ 27 5 ‍ – ‍ 11 82
+New Orleans Pelicans 21 61 .256 31.0 14 ‍ – ‍ 27 7 ‍ – ‍ 34 3 ‍ – ‍ 13 82
+By conference
+[ edit ]
+Eastern Conference
+# Team W L PCT GB GP
+1 c – Cleveland Cavaliers * 64 18 .780 – 82
+2 y – Boston Celtics * 61 21 .744 3.0 82
+3 x – New York Knicks 51 31 .622 13.0 82
+4 x – Indiana Pacers 50 32 .610 14.0 82
+5 x – Milwaukee Bucks 48 34 .585 16.0 82
+6 x – Detroit Pistons 44 38 .537 20.0 82
+7 y – Orlando Magic * 41 41 .500 23.0 82
+8 pi – Atlanta Hawks 40 42 .488 24.0 82
+9 pi – Chicago Bulls 39 43 .476 25.0 82
+10 x – Miami Heat 37 45 .451 27.0 82
+11 Toronto Raptors 30 52 .366 34.0 82
+12 Brooklyn Nets 26 56 .317 38.0 82
+13 Philadelphia 76ers 24 58 .293 40.0 82
+14 Charlotte Hornets 19 63 .232 45.0 82
+15 Washington Wizards 18 64 .220 46.0 82
+Western Conference
+# Team W L PCT GB GP
+1 z – Oklahoma City Thunder * 68 14 .829 – 82
+2 y – Houston Rockets * 52 30 .634 16.0 82
+3 y – Los Angeles Lakers * 50 32 .610 18.0 82
+4 x – Denver Nuggets 50 32 .610 18.0 82
+5 x – Los Angeles Clippers 50 32 .610 18.0 82
+6 x – Minnesota Timberwolves 49 33 .598 19.0 82
+7 x – Golden State Warriors 48 34 .585 20.0 82
+8 x – Memphis Grizzlies 48 34 .585 20.0 82
+9 pi – Sacramento Kings 40 42 .488 28.0 82
+10 pi – Dallas Mavericks 39 43 .476 29.0 82
+11 Phoenix Suns 36 46 .439 32.0 82
+12 Portland Trail Blazers 36 46 .439 32.0 82
+13 San Antonio Spurs 34 48 .415 34.0 82
+14 New Orleans Pelicans 21 61 .256 47.0 82
+15 Utah Jazz 17 65 .207 51.0 82
+Notes
+z – Clinched home court advantage for the entire playoffs
+c – Clinched home court advantage for the conference playoffs
+y – Clinched division title
+pi – Clinched play-in tournament spot (locked into a play-in spot but not able to clinch a playoff spot directly)
+x – Clinched playoff spot
+* – Division leader
+Postponed games due to the January 2025 Southern California wildfires
+[ edit ]
+January 9: Lakers vs. Hornets [ 52 ]
+January 11: Lakers vs. Spurs and Clippers vs. Hornets [ 53 ]
+Postponed games due to other reasons
+[ edit ]
+January 11: Hawks vs. Rockets due to a winter storm in Atlanta [ 54 ]
+January 22: Pelicans vs. Bucks due to a Gulf Coast blizzard [ 55 ]
+Play-in tournament
+[ edit ]
+See also: NBA play-in tournament
+The top six seeds in each conference advanced to the main rounds of the 2025 NBA playoffs , while the next four seeds participated in a Page playoff system tournament from April 15–18, 2025. In each conference: The 7th-place team hosted the 8th-place team in the double-chance round needing to win one game to advance, with the winner clinching the 7th seed in the playoffs. The 9th-place team hosted the 10th-place team in the elimination round requiring two wins to advance, with the loser being eliminated from the contention. The loser in the double-chance round hosted the elimination-round game-winner, with the winner clinching the 8th seed and the loser being eliminated. [ 56 ]
+Eastern Conference
+[ edit ]
+\n''Italic'' Team with home-court advantage<br />\n''*'' Division winner"}},"i":0}}]}">
+Play-in games No. 8 seed game Final seeds
+7 Orlando * 120 7 Orlando* No. 7 seed
+8 Atlanta 95 10 Miami No. 8 seed
+8 Atlanta 114
+10 Miami 123 ( OT )
+9 Chicago 90
+10 Miami 109
+Bold Game winner
+Italic Team with home-court advantage
+* Division winner
+Western Conference
+[ edit ]
+\n''Italic'' Team with home-court advantage"}},"i":0}}]}">
+Play-in games No. 8 seed game Final seeds
+7 Golden State 121 7 Golden State No. 7 seed
+8 Memphis 116 8 Memphis No. 8 seed
+8 Memphis 120
+10 Dallas 106
+9 Sacramento 106
+10 Dallas 120
+Bold Game winner
+Italic Team with home-court advantage
+Playoffs
+[ edit ]
+Main article: 2025 NBA playoffs
+The playoffs began on April 19, 2025.
+Bracket
+[ edit ]
+First round
+Conference semifinals
+Conference finals
+NBA Finals
+E1
+Cleveland *
+4
+E8
+Miami
+0
+E1
+Cleveland *
+1
+E4
+Indiana
+4
+E4
+Indiana
+4
+E5
+Milwaukee
+1
+E4
+Indiana
+4
+Eastern Conference
+E3
+New York
+2
+E3
+New York
+4
+E6
+Detroit
+2
+E3
+New York
+4
+E2
+Boston *
+2
+E2
+Boston *
+4
+E7
+Orlando *
+1
+E4
+Indiana
+3
+W1
+Oklahoma City *
+4
+W1
+Oklahoma City *
+4
+W8
+Memphis
+0
+W1
+Oklahoma City *
+4
+W4
+Denver
+3
+W4
+Denver
+4
+W5
+LA Clippers
+3
+W1
+Oklahoma City *
+4
+Western Conference
+W6
+Minnesota
+1
+W3
+LA Lakers *
+1
+W6
+Minnesota
+4
+W6
+Minnesota
+4
+W7
+Golden State
+1
+W2
+Houston *
+3
+W7
+Golden State
+4
+Bold Series winner
+Italic Team with home-court advantage
+* Division winner
+Statistics
+[ edit ]
+Individual statistic leaders
+[ edit ]
+Category Player Team(s) Statistic
+Points per game Shai Gilgeous-Alexander Oklahoma City Thunder 32.7
+Rebounds per game Domantas Sabonis Sacramento Kings 13.9
+Assists per game Trae Young Atlanta Hawks 11.6
+Steals per game Dyson Daniels Atlanta Hawks 3.0
+Blocks per game Victor Wembanyama San Antonio Spurs 3.8
+Turnovers per game Trae Young Atlanta Hawks 4.7
+Fouls per game Jaren Jackson Jr.
+Karl-Anthony Towns Memphis Grizzlies
+New York Knicks 3.5
+Minutes per game Josh Hart New York Knicks 37.6
+FG% Jarrett Allen Cleveland Cavaliers 70.6
+FT% Stephen Curry Golden State Warriors 93.3
+3P% Seth Curry Charlotte Hornets 45.6
+Efficiency per game Nikola Jokić Denver Nuggets 42.4
+Double-doubles Domantas Sabonis Sacramento Kings 61
+Triple-doubles Nikola Jokić Denver Nuggets 34
+Individual game highs
+[ edit ]
+Category Player Team Statistic
+Points Nikola Jokić Denver Nuggets 61
+Rebounds Domantas Sabonis Sacramento Kings 28
+Assists Trae Young Atlanta Hawks 22
+Nikola Jokić Denver Nuggets
+Steals Kelly Oubre Jr. Philadelphia 76ers 8
+Dyson Daniels Atlanta Hawks
+Josh Giddey Chicago Bulls
+Blocks Victor Wembanyama San Antonio Spurs 10
+Three-pointers Stephen Curry Golden State Warriors 12 (2 times)
+Team statistic leaders
+[ edit ]
+Category Team Statistic
+Points per game Cleveland Cavaliers 121.9
+Rebounds per game Houston Rockets 48.5
+Assists per game Denver Nuggets 31.0
+Steals per game Oklahoma City Thunder 10.3
+Blocks per game Orlando Magic 6.0
+Turnovers per game Utah Jazz 17.2
+Fouls per game Toronto Raptors 21.2
+FG% Denver Nuggets 50.6
+FT% Oklahoma City Thunder 81.9
+3P% Milwaukee Bucks 38.7
++/− Oklahoma City Thunder +12.9
+Awards
+[ edit ]
+Yearly awards
+[ edit ]
+2024–25 NBA awards
+Award Recipient(s) Finalists [ 57 ]
+Most Valuable Player Shai Gilgeous-Alexander (Oklahoma City Thunder) [ 58 ] Giannis Antetokounmpo (Milwaukee Bucks)
+Nikola Jokić (Denver Nuggets)
+Defensive Player of the Year Evan Mobley (Cleveland Cavaliers) [ 59 ] Dyson Daniels (Atlanta Hawks)
+Draymond Green (Golden State Warriors)
+Rookie of the Year Stephon Castle (San Antonio Spurs) [ 60 ] Zaccharie Risacher (Atlanta Hawks)
+Jaylen Wells (Memphis Grizzlies)
+Sixth Man of the Year Payton Pritchard (Boston Celtics) [ 61 ] Malik Beasley (Detroit Pistons)
+Ty Jerome (Cleveland Cavaliers)
+Most Improved Player Dyson Daniels (Atlanta Hawks) [ 62 ] Cade Cunningham (Detroit Pistons)
+Ivica Zubac (Los Angeles Clippers)
+Clutch Player of the Year Jalen Brunson (New York Knicks) [ 63 ] Anthony Edwards (Minnesota Timberwolves)
+Nikola Jokić (Denver Nuggets)
+Coach of the Year Kenny Atkinson (Cleveland Cavaliers) [ 64 ] J. B. Bickerstaff (Detroit Pistons)
+Ime Udoka (Houston Rockets)
+Executive of the Year Sam Presti (Oklahoma City Thunder) [ 65 ]
+NBA Sportsmanship Award Jrue Holiday (Boston Celtics) [ 66 ]
+Twyman–Stokes Teammate of the Year Award Stephen Curry (Golden State Warriors) [ 67 ]
+Community Assist Award
+Kareem Abdul-Jabbar Social Justice Champion Award Jrue Holiday (Boston Celtics) [ 68 ] Bam Adebayo (Miami Heat)
+Harrison Barnes (San Antonio Spurs)
+Chris Boucher (Toronto Raptors)
+CJ McCollum (New Orleans Pelicans)
+NBA Hustle Award Draymond Green (Golden State Warriors) [ 69 ]
+{{cite web|title=Shai Gilgeous-Alexander, Nikola Jokić, Giannis Antetokounmpo anchor 2024-25 Kia All-NBA Team|url=https://www.nba.com/news/2024-25-all-nba-teams-announced|website=NBA.com|access-date=May 23, 2025|date=May 23, 2025}}</ref>\n** F [[Giannis Antetokounmpo]], [[Milwaukee Bucks]]\n** F [[Jayson Tatum]], [[Boston Celtics]]\n** C [[Nikola Jokić]], [[Denver Nuggets]]\n** G [[Shai Gilgeous-Alexander]], [[Oklahoma City Thunder]]\n** G [[Donovan Mitchell]], [[Cleveland Cavaliers]]\n",{"template":{"target":{"wt":"col-break","href":"./Template:Col-break"},"params":{"width":{"wt":"33%"}},"i":2}},"\n*'''All-NBA Second Team''':\n** F [[LeBron James]], [[Los Angeles Lakers]]\n** F [[Evan Mobley]], Cleveland Cavaliers\n** G [[Jalen Brunson]], [[New York Knicks]]\n** G [[Stephen Curry]], [[Golden State Warriors]]\n** G [[Anthony Edwards (basketball)|Anthony Edwards]], [[Minnesota Timberwolves]]\n",{"template":{"target":{"wt":"col-break","href":"./Template:Col-break"},"params":{"width":{"wt":"33%"}},"i":3}},"\n*'''All-NBA Third Team''':\n** F [[Karl-Anthony Towns]], [[New York Knicks]]\n** F [[Jalen Williams]], Oklahoma City Thunder\n** G [[Cade Cunningham]], [[Detroit Pistons]]\n** G [[Tyrese Haliburton]], [[Indiana Pacers]]\n** G [[James Harden]], [[Los Angeles Clippers]]\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":4}}]}'>
+All-NBA First Team : [ 70 ]
+F Giannis Antetokounmpo , Milwaukee Bucks
+F Jayson Tatum , Boston Celtics
+C Nikola Jokić , Denver Nuggets
+G Shai Gilgeous-Alexander , Oklahoma City Thunder
+G Donovan Mitchell , Cleveland Cavaliers
+All-NBA Second Team :
+F LeBron James , Los Angeles Lakers
+F Evan Mobley , Cleveland Cavaliers
+G Jalen Brunson , New York Knicks
+G Stephen Curry , Golden State Warriors
+G Anthony Edwards , Minnesota Timberwolves
+All-NBA Third Team :
+F Karl-Anthony Towns , New York Knicks
+F Jalen Williams , Oklahoma City Thunder
+G Cade Cunningham , Detroit Pistons
+G Tyrese Haliburton , Indiana Pacers
+G James Harden , Los Angeles Clippers
+{{cite web|title=Evan Mobley, Dyson Daniels headline 2024-25 Kia NBA All-Defensive teams|url=https://www.nba.com/news/2024-25-all-defensive-teams-announced|website=NBA.com|access-date=May 22, 2025|date=May 22, 2025}}</ref>\n** F [[Draymond Green]], [[Golden State Warriors]]\n** F [[Amen Thompson]], [[Houston Rockets]]\n** C [[Evan Mobley]], [[Cleveland Cavaliers]]\n** G [[Dyson Daniels]], [[Atlanta Hawks]]\n** G [[Luguentz Dort]], [[Oklahoma City Thunder]]\n",{"template":{"target":{"wt":"col-break","href":"./Template:Col-break"},"params":{"width":{"wt":"33%"}},"i":2}},"\n*'''NBA All-Defensive Second Team''':\n** F [[Toumani Camara]], [[Portland Trail Blazers]]\n** F [[Jaren Jackson Jr.]], [[Memphis Grizzlies]]\n** F [[Jalen Williams]], [[Oklahoma City Thunder]]\n** C [[Rudy Gobert]], [[Minnesota Timberwolves]]\n** C [[Ivica Zubac]], [[Los Angeles Clippers]]\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":3}}]}'>
+NBA All-Defensive First Team : [ 71 ]
+F Draymond Green , Golden State Warriors
+F Amen Thompson , Houston Rockets
+C Evan Mobley , Cleveland Cavaliers
+G Dyson Daniels , Atlanta Hawks
+G Luguentz Dort , Oklahoma City Thunder
+NBA All-Defensive Second Team :
+F Toumani Camara , Portland Trail Blazers
+F Jaren Jackson Jr. , Memphis Grizzlies
+F Jalen Williams , Oklahoma City Thunder
+C Rudy Gobert , Minnesota Timberwolves
+C Ivica Zubac , Los Angeles Clippers
+{{cite web|title=Stephon Castle, Zaccharie Risacher headline NBA All-Rookie First Team|url=https://www.nba.com/news/2024-25-all-rookie-teams-announced|website=NBA.com|access-date=May 20, 2025|date=May 20, 2025}}</ref>\n** [[Stephon Castle]], [[San Antonio Spurs]] \n** [[Zaccharie Risacher]], [[Atlanta Hawks]]\n** [[Jaylen Wells]], [[Memphis Grizzlies]]\n** [[Zach Edey]], Memphis Grizzlies\n** [[Alex Sarr]], [[Washington Wizards]]\n",{"template":{"target":{"wt":"col-break","href":"./Template:Col-break"},"params":{"width":{"wt":"33%"}},"i":2}},"\n*'''NBA All-Rookie Second Team''':\n** [[Matas Buzelis]], [[Chicago Bulls]]\n** [[Bub Carrington]], Washington Wizards\n** [[Donovan Clingan]], [[Portland Trail Blazers]]\n** [[Kel'el Ware]], [[Miami Heat]]\n** [[Yves Missi]], [[New Orleans Pelicans]]\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":3}}]}'>
+NBA All-Rookie First Team : [ 72 ]
+Stephon Castle , San Antonio Spurs
+Zaccharie Risacher , Atlanta Hawks
+Jaylen Wells , Memphis Grizzlies
+Zach Edey , Memphis Grizzlies
+Alex Sarr , Washington Wizards
+NBA All-Rookie Second Team :
+Matas Buzelis , Chicago Bulls
+Bub Carrington , Washington Wizards
+Donovan Clingan , Portland Trail Blazers
+Kel'el Ware , Miami Heat
+Yves Missi , New Orleans Pelicans
+Players of the Week
+[ edit ]
+The following players were named the Eastern and Western Conference Players of the Week.
+Week
+Eastern Conference
+Western Conference
+Ref
+October 22–27
+Jayson Tatum ( Boston Celtics ) (1/2)
+Anthony Davis ( Los Angeles Lakers ) (1/1)
+[ 73 ]
+October 28 – November 3
+Donovan Mitchell ( Cleveland Cavaliers ) (1/2)
+Devin Booker ( Phoenix Suns ) (1/1)
+[ 74 ]
+November 4–10
+Darius Garland (Cleveland Cavaliers) (1/2)
+Nikola Jokić ( Denver Nuggets ) (1/3)
+[ 75 ]
+November 11–17
+Franz Wagner ( Orlando Magic ) (1/1)
+De'Aaron Fox ( Sacramento Kings ) (1/1)
+[ 76 ]
+November 18–24
+Giannis Antetokounmpo ( Milwaukee Bucks ) (1/4)
+Harrison Barnes ( San Antonio Spurs ) (1/1)
+[ 77 ]
+November 25 – December 1
+Jalen Brunson ( New York Knicks ) (1/2)
+Alperen Şengün ( Houston Rockets ) (1/1)
+[ 78 ]
+December 2–8
+Tyler Herro ( Miami Heat ) (1/1)
+Luka Dončić ( Dallas Mavericks ) (1/1)
+[ 79 ]
+December 16–22
+Cade Cunningham ( Detroit Pistons ) (1/1)
+Victor Wembanyama (San Antonio Spurs) (1/1)
+[ 80 ]
+December 23–29
+Tyrese Maxey ( Philadelphia 76ers ) (1/1)
+Shai Gilgeous-Alexander ( Oklahoma City Thunder ) (1/2)
+[ 81 ]
+December 30 – January 5
+Jayson Tatum (Boston Celtics) (2/2)
+Nikola Jokić (Denver Nuggets) (2/3)
+[ 82 ]
+January 6–12
+Darius Garland (Cleveland Cavaliers) (2/2)
+Domantas Sabonis (Sacramento Kings) (1/1)
+[ 83 ]
+January 13–19
+Giannis Antetokounmpo (Milwaukee Bucks) (2/4)
+Jalen Green (Houston Rockets) (1/2)
+[ 84 ]
+January 20–26
+Scottie Barnes ( Toronto Raptors ) (1/1)
+Jaren Jackson Jr. ( Memphis Grizzlies ) (1/1)
+[ 85 ]
+January 27 – February 2
+Donovan Mitchell (Cleveland Cavaliers) (2/2)
+LeBron James (Los Angeles Lakers) (1/1)
+[ 86 ]
+February 3–9
+Trae Young ( Atlanta Hawks ) (1/2)
+Nikola Jokić (Denver Nuggets) (3/3)
+[ 87 ]
+February 24 – March 2
+Jalen Brunson (New York Knicks) (2/2)
+Zach LaVine (Sacramento Kings) (1/1)
+[ 88 ]
+March 3–9
+Trae Young (Atlanta Hawks) (2/2)
+Shai Gilgeous-Alexander (Oklahoma City Thunder) (2/2)
+[ 89 ]
+March 10–16
+Coby White ( Chicago Bulls ) (1/2)
+Anthony Edwards ( Minnesota Timberwolves ) (1/1)
+[ 90 ]
+March 17–23
+Coby White (Chicago Bulls) (2/2)
+Kevin Durant (Phoenix Suns) (1/1)
+[ 91 ]
+March 24–30
+Paolo Banchero (Orlando Magic) (1/1)
+Jalen Green (Houston Rockets) (2/2)
+[ 92 ]
+March 31 – April 6
+Giannis Antetokounmpo (Milwaukee Bucks) (3/4)
+Kawhi Leonard ( Los Angeles Clippers ) (1/1)
+[ 93 ]
+April 7–13
+Giannis Antetokounmpo (Milwaukee Bucks) (4/4)
+James Harden (Los Angeles Clippers) (1/1)
+[ 94 ]
+Players of the Month
+[ edit ]
+The following players were named the Eastern and Western Conference Players of the Month.
+Month
+Eastern Conference
+Western Conference
+Ref
+October/November
+Jayson Tatum ( Boston Celtics ) (1/1)
+Shai Gilgeous-Alexander ( Oklahoma City Thunder ) (1/3)
+[ 95 ]
+December
+Karl-Anthony Towns ( New York Knicks ) (1/1)
+Shai Gilgeous-Alexander (Oklahoma City Thunder) (2/3)
+[ 96 ]
+January
+Giannis Antetokounmpo ( Milwaukee Bucks ) (1/1)
+Nikola Jokić ( Denver Nuggets ) (1/1)
+[ 97 ]
+February
+Donovan Mitchell ( Cleveland Cavaliers ) (1/1)
+LeBron James ( Los Angeles Lakers ) (1/1)
+[ 98 ]
+March
+Coby White ( Chicago Bulls ) (1/1)
+Shai Gilgeous-Alexander (Oklahoma City Thunder) (3/3)
+[ 99 ]
+Defensive Players of the Month
+[ edit ]
+The following players were named the Eastern and Western Conference Defensive Players of the Month.
+Month
+Eastern Conference
+Western Conference
+Ref
+October/November
+Dyson Daniels ( Atlanta Hawks ) (1/2)
+Victor Wembanyama ( San Antonio Spurs ) (1/1)
+[ 95 ]
+December
+Evan Mobley ( Cleveland Cavaliers ) (1/2)
+Jaren Jackson Jr. ( Memphis Grizzlies ) (1/1)
+[ 96 ]
+January
+Andrew Nembhard ( Indiana Pacers ) (1/1)
+Amen Thompson ( Houston Rockets ) (1/1)
+[ 97 ]
+February
+Evan Mobley (Cleveland Cavaliers) (2/2)
+Toumani Camara ( Portland Trail Blazers ) (1/1)
+[ 98 ]
+March
+Dyson Daniels (Atlanta Hawks) (2/2)
+Draymond Green ( Golden State Warriors ) (1/1)
+[ 99 ]
+Rookies of the Month
+[ edit ]
+The following players were named the Eastern and Western Conference Rookies of the Month .
+Month
+Eastern Conference
+Western Conference
+Ref
+October/November
+Jared McCain ( Philadelphia 76ers ) (1/1)
+Jaylen Wells ( Memphis Grizzlies ) (1/1)
+[ 95 ]
+December
+Alex Sarr ( Washington Wizards ) (1/1)
+Yves Missi ( New Orleans Pelicans ) (1/1)
+[ 96 ]
+January
+Kel'el Ware ( Miami Heat ) (1/1)
+Stephon Castle ( San Antonio Spurs ) (1/2)
+[ 97 ]
+February
+Zaccharie Risacher ( Atlanta Hawks ) (1/2)
+Isaiah Collier ( Utah Jazz ) (1/1)
+[ 98 ]
+March
+Zaccharie Risacher (Atlanta Hawks) (2/2)
+Stephon Castle (San Antonio Spurs) (2/2)
+[ 99 ]
+Coaches of the Month
+[ edit ]
+The following coaches were named the Eastern and Western Conference Coaches of the Month.
+Month
+Eastern Conference
+Western Conference
+Ref
+October/November
+Kenny Atkinson ( Cleveland Cavaliers ) (1/2)
+Ime Udoka ( Houston Rockets ) (1/2)
+[ 95 ]
+December
+Kenny Atkinson (Cleveland Cavaliers) (2/2)
+Mark Daigneault ( Oklahoma City Thunder ) (1/3)
+[ 96 ]
+January
+Rick Carlisle ( Indiana Pacers ) (1/1)
+Ime Udoka (Houston Rockets) (2/2)
+[ 97 ]
+February
+J. B. Bickerstaff ( Detroit Pistons ) (1/1)
+Mark Daigneault (Oklahoma City Thunder) (2/3)
+[ 98 ]
+March
+Joe Mazzulla ( Boston Celtics ) (1/1)
+Mark Daigneault (Oklahoma City Thunder) (3/3)
+[ 99 ]
+Arena changes
+[ edit ]
+The Los Angeles Clippers have moved to the new Intuit Dome in Inglewood, California . [ 100 ] The team played at the Crypto.com Arena for the past 25 years in Downtown Los Angeles, California, since the 1999–2000 NBA season . As a result, for the first time since the 1998–99 NBA season , every team will have their own home venue.
+Rocket Mortgage FieldHouse, the home of the Cleveland Cavaliers , was renamed Rocket Arena on February 18, 2025, as part of the company's rebranding. [ 101 ]
+Footprint Center, the home of the Phoenix Suns , was temporarily renamed PHX Arena on February 18, 2025, after the Suns announced that they were seeking a new naming rights partner. [ 102 ]
+Uniform and logo changes
+[ edit ]
+The Brooklyn Nets promoted their secondary logo to their primary and introduced a new secondary logo. [ 103 ]
+The Los Angeles Clippers unveiled a new logo and uniforms to coincide with their move to Intuit Dome . The team's new logo features a stylized clipper ship with basketball seams on its hull, surrounded by points of a compass and a navy blue "C" in a white circle. The new uniforms are modern versions of the script uniforms previously worn between 1987 and 2015. The white uniform features a "Clippers" modernized script wordmark in navy blue along with red numbers, the navy blue uniform features the "Clippers" script in red along with white numbers, and the alternative red uniform features a "Los Angeles" script wordmark in navy blue along with white numbers. [ 104 ]
+The Golden State Warriors unveiled a new secondary logo and "Statement" uniform. [ 105 ]
+The Toronto Raptors unveiled a logo to commemorate their 30th anniversary. [ 106 ]
+The Memphis Grizzlies unveiled a logo and classic uniforms to commemorate their 30th anniversary. [ 107 ]
+The Utah Jazz began a two-season long transition to a modernized version of their 1996–2004 uniforms, with new "City" and "Statement" uniforms debuting this season, and new "Association" and "Icon Edition" uniforms debuting next season. [ 108 ]
+The Washington Wizards have a new "Statement" uniform, with the phrase "The District of Columbia" on the front of the jersey. [ 109 ]
+Media
+[ edit ]
+National
+[ edit ]
+Linear television
+[ edit ]
+This was the ninth and final season of a nine-year deal with the ESPN family of networks , TNT Sports , and NBA TV , before new 11-year deals with ESPN/ ABC , NBC/Peacock and Amazon Prime Video begin in 2025–26 . TNT , in its final year of NBA coverage, has aired live NBA games since 1989. [ 110 ] [ 111 ] The NBA rejected TNT Sports' matching rights offer for Amazon's package, claiming TNT was unable to fully match the terms of Amazon's all-streaming contract. TNT then filed a lawsuit against the league in a Manhattan New York state court, seeking to delay the new media deals from taking effect and to rule that TNT's offer matched Amazon's deal. [ 112 ] In November, the two parties agreed to a settlement, with TNT acquiring live game rights in selected international territories, and entering into a separate sublicensing agreement with The Walt Disney Company (parent company of ESPN and ABC) to broadcast TNT's Inside the NBA studio on ESPN/ABC in 2025–26. [ 113 ] [ 114 ] TNT Sports later announced in June 2025 that it would no longer operate NBA's digital properties, including NBA TV and the NBA.com website, effective October 1. [ 115 ]
+TNT generally aired games on Tuesday nights during most of the regular season, Thursday nights during opening week and after the NBA Cup, and a Monday Doubleheader on March 31; simulcasts or alternative broadcasts of selected TNT's games were on TruTV . [ 116 ] [ 117 ] ESPN continued to air games on Wednesday and Friday nights, with a limited selection of games on other days as the schedule allowed. ABC aired NBA Saturday Primetime games on eight Saturdays between December and March (including a tripleheader on January 25), and NBA Sunday Showcase games on five Sunday afternoons (including three doubleheaders) in February and March. [ 118 ] NBA TV televised games when the other national broadcasters were not airing games; most of NBA TV's games simulcast local coverage (subject to blackout restrictions in the local markets of the teams playing), but select games were produced by NBA TV as part of its NBA Center Court package of games. [ 119 ]
+During the NBA Cup, TNT aired the group stage as part of its Tuesday night coverage, along with three quarterfinals and one semifinal. ESPN then aired group stage matches as part of its Friday night coverage, along with one quarterfinal. [ 120 ] And ABC aired one semifinal and the final of the NBA Cup in primetime. [ 121 ]
+Of the five Christmas games that were scheduled, only the middle three games were originally planned to be simulcast on ESPN and ABC, with the first and last contests only on ESPN. [ 118 ] However, in October 2024, it was announced that all five games would be ABC/ESPN simulcasts like in 2022. [ 122 ] ESPN2 also aired an alternate broadcast of the first Christmas game featuring a live animated version of the game featuring Mickey Mouse universe characters. [ 123 ]
+Of the four Martin Luther King Jr. Day games that were scheduled, NBA TV had the first and last contests, and TNT broadcast the two middle games. [ 124 ]
+On February 5, ESPN announced that it had flexed Luka Dončić 's expected LA Lakers debut on February 8 (the previous night's Utah vs Phoenix game was flexed out of national television due to this), [ 125 ] but after he did not play due to injury the network then flexed the Lakers' next game on February 10 (it was later announced that the Sacramento vs LA Clippers game on March 9 was flexed out due to this). [ 126 ] [ 127 ]
+TNT had exclusive coverage of NBA All-Star Weekend , except for the Celebrity Game which aired on ESPN. [ 116 ] [ 118 ]
+On the final day of the regular season, Sunday, April 13, two games with playoff implications were flexed into ESPN's afternoon doubleheader. [ 118 ]
+Streaming
+[ edit ]
+ESPN+ began streaming ABC's games this season, including the network's two NBA Cup games, [ 121 ] NBA Saturday Primetime , [ 128 ] and NBA Sunday Showcase . [ 129 ] Both ESPN+ and Disney+ streamed the Mickey Mouse-themed alternate Christmas broadcast, the traditional broadcasts of all five Christmas games., [ 123 ] Luka Dončić 's LA Lakers debut on February 10, the NBA All-Star Celebrity Game and a Saturday Primetime game on March 8. [ 126 ] [ 130 ] [ 131 ]
+This was the second and final season that the streaming service Max have live access to TNT's games. [ 116 ] Meanwhile, NBA League Pass continued to offer out-of-market games, live access to NBA TV, and on-demand replays of every game. [ 119 ]
+Local
+[ edit ]
+The Chicago Bulls, the NHL 's Chicago Blackhawks , MLB 's Chicago White Sox , and Standard Media launched the Chicago Sports Network prior to the start of this season, replacing NBC Sports Chicago as their regional broadcaster. [ 132 ] [ 133 ]
+The Portland Trail Blazers and Root Sports mutually agreed to end their television agreement prior to the season. [ 134 ] On September 23, 2024, the Trail Blazers announced that they had signed a multi-year agreement with Sinclair Broadcast Group to be their new broadcaster. Under the deal, KATU and KUNP were named as the flagship stations, the group of over-the-air stations carrying games across the team's broadcast territory was branded as the Rip City Television Network , and games stream locally on a new direct-to-consumer streaming service named BlazerVision . [ 135 ]
+Altitude Sports and Entertainment , the television home of the Denver Nuggets, reached an agreement with Tegna Inc. to simulcast 20 games on KTVD in Denver. Select games are being simulcast on KUSA . [ 136 ]
+This is the first season that the Gotham Sports App, owned by a joint venture between MSG Networks and YES Network , became the exclusive streaming home of the Knicks and Nets. The app will not change the television rights for these teams. [ 137 ]
+Diamond Sports Group bankruptcy
+[ edit ]
+Further information: Diamond Sports Group § Bankruptcy (2023–25)
+Diamond Sports Group , the parent company of the regional sports network chain FanDuel Sports Network (formerly Bally Sports), has been under Chapter 11 bankruptcy protection since March 2023. As part of the bankruptcy, on August 23, 2024, Diamond Sports signed a long-term agreement with thirteen of the NBA teams that it holds rights to, committing to broadcast their games through at least the 2024–25 season, but with a 30 to 40 percent reduction in their rights fees. Despite being a long-term deal, if Diamond Sports is unable to get a bankruptcy plan approved by the court, the agreement will expire following the end of the season. [ 138 ] [ 139 ]
+Diamond also terminated its contracts with the Dallas Mavericks and New Orleans Pelicans , [ 138 ] [ 139 ] and both teams would sign with over-the-air broadcasters. The Mavericks signed a multi-year agreement with Tegna Inc. as their broadcaster, with KFAA (formerly KMPX) and WFAA as flagship stations. [ 140 ] [ 141 ] Meanwhile, the Pelicans announced a new agreement with Gray Television , under which games will be broadcast by the new Gulf Coast Sports & Entertainment Network , with WVUE-DT in New Orleans as flagship. [ 142 ]
+On October 21, Bally Sports rebranded as FanDuel Sports Network , after Diamond ended its sponsorship agreements with Bally's Corporation and entered into a new agreement with online gambling company FanDuel Group . [ 143 ] [ 144 ]
+Along with airing on FanDuel Sports Network, the Bucks, Cavaliers, Grizzlies, Hawks, Hornets, Pacers, Pistons, Thunder and Timberwolves also announced agreements to simulcast five games on local over-the-air networks . The Bucks will air games on Weigel Broadcasting -owned WMLW-TV (in English) and WYTU-LD (in Spanish). [ 145 ] The Cavaliers will air games on Gray Media -owned Rock Entertainment Sports Network and WUAB . [ 146 ] The Grizzlies will air games on Gray Media -owned WMC-TV , WSMV-TV and WBXX-TV . [ 147 ] The Hawks will air games on Gray Media owned- WPCH-TV and Peachtree Sports Network . [ 148 ] The Hornets will air games on Cox Media Group -owned WSOC-TV and WAXN-TV , Gray Media -owned WIS-TV , WCSC-TV , WMBF -TV, WHNS , WITN-DT2 and WECT-DT2 , and Capitol Broadcasting Company -owned WRAZ-DT2 . [ 149 ] [ 150 ] The Pacers will air games on Tegna Inc. -owned WTHR . [ 151 ] The Pistons will air games on E. W. Scripps Company -owned WMYD . [ 152 ] The Thunder will air games on Griffin Media -owned KWTV-DT or KSBI (in Oklahoma City) and KOTV-DT or KQCW-DT (in Tulsa). [ 153 ] The Timberwolves will air games on Tegna Inc. owned KARE . [ 154 ]
+On January 2, 2025, Diamond emerged from Chapter 11 bankruptcy and rebranded themselves as the Main Street Sports Group . [ 155 ]
+Personnel
+[ edit ]
+ESPN analyst JJ Redick left the network to became head coach of the Los Angeles Lakers. He was initially replaced by a cast of rotating analysts joining Mike Breen and Doris Burke on the network's lead announce team. [ 156 ] On February 24, ESPN announced that Richard Jefferson will remain with Breen and Burke for the rest of the season. [ 157 ]
+ESPN analyst Hubie Brown announced his retirement at the end of the season. Brown has called games for ESPN since 2004 and previously called games for USA Network , CBS and TNT. [ 158 ] He called his last game on February 9, 2025, during the 76ers–Bucks game. [ 159 ]
+The Boston Celtics promoted backup TV play-by-play announcer Drew Carter to full time this season following the retirement of Mike Gorman . Carter was hired by the team soon after Gorman announced his retirement prior to the start of 2023–24 ; Gorman primarily called Celtics home games during his final season while Carter primarily called away games. [ 160 ]
+The San Antonio Spurs hired Jacob Tobey to be their new TV play-by-play announcer this season following the retirement of Bill Land. Tobey previously held play-by-play roles with Fox Sports and the Pac-12 Network . [ 161 ]
+The Philadelphia 76ers home game on March 3, as well as the Boston Celtics home game on March 5, was called by Mike Tirico , in preparation for his new role as the lead play-by-play announcer on NBC next season. These games marked the first time Tirico called NBA games since the 2015–16 season , while at ESPN. [ 162 ]
+Attendances
+[ edit ]
+The average attendance was 18,147. [ 163 ] The 2023–24 NBA teams by average home attendance:
+https://www.espn.com/nba/attendance/_/year/2025/sort/homeTotal</ref>\n"},"3":{"wt":"-\n"},"4":{"wt":" style{{=}}\"text-align:center;\""},"5":{"wt":" _row_count "},"6":{"wt":""},"7":{"wt":" [[Chicago Bulls]] "},"8":{"wt":""},"9":{"wt":" 825,659 "},"10":{"wt":""},"11":{"wt":" 41 "},"12":{"wt":""},"13":{"wt":" 20,138\n"},"14":{"wt":"-\n"},"15":{"wt":" style{{=}}\"text-align:center;\""},"16":{"wt":" _row_count "},"17":{"wt":""},"18":{"wt":" [[Dallas Mavericks]] "},"19":{"wt":""},"20":{"wt":" 803,174 "},"21":{"wt":""},"22":{"wt":" 40 "},"23":{"wt":""},"24":{"wt":" 20,079\n"},"25":{"wt":"-\n"},"26":{"wt":" style{{=}}\"text-align:center;\""},"27":{"wt":" _row_count "},"28":{"wt":""},"29":{"wt":" [[Philadelphia 76ers]] "},"30":{"wt":""},"31":{"wt":" 813,621 "},"32":{"wt":""},"33":{"wt":" 41 "},"34":{"wt":""},"35":{"wt":" 19,846\n"},"36":{"wt":"-\n"},"37":{"wt":" style{{=}}\"text-align:center;\""},"38":{"wt":" _row_count "},"39":{"wt":""},"40":{"wt":" [[New York Knicks]] "},"41":{"wt":""},"42":{"wt":" 811,794 "},"43":{"wt":""},"44":{"wt":" 41 "},"45":{"wt":""},"46":{"wt":" 19,799\n"},"47":{"wt":"-\n"},"48":{"wt":" style{{=}}\"text-align:center;\""},"49":{"wt":" _row_count "},"50":{"wt":""},"51":{"wt":" [[Denver Nuggets]] "},"52":{"wt":""},"53":{"wt":" 811,211 "},"54":{"wt":""},"55":{"wt":" 41 "},"56":{"wt":""},"57":{"wt":" 19,783\n"},"58":{"wt":"-\n"},"59":{"wt":" style{{=}}\"text-align:center;\""},"60":{"wt":" _row_count "},"61":{"wt":""},"62":{"wt":" [[Miami Heat]] "},"63":{"wt":""},"64":{"wt":" 808,337 "},"65":{"wt":""},"66":{"wt":" 41 "},"67":{"wt":""},"68":{"wt":" 19,715\n"},"69":{"wt":"-\n"},"70":{"wt":" style{{=}}\"text-align:center;\""},"71":{"wt":" _row_count "},"72":{"wt":""},"73":{"wt":" [[Cleveland Cavaliers]] "},"74":{"wt":""},"75":{"wt":" 796,712 "},"76":{"wt":""},"77":{"wt":" 41 "},"78":{"wt":""},"79":{"wt":" 19,433\n"},"80":{"wt":"-\n"},"81":{"wt":" style{{=}}\"text-align:center;\""},"82":{"wt":" _row_count "},"83":{"wt":""},"84":{"wt":" [[Boston Celtics]] "},"85":{"wt":""},"86":{"wt":" 785,396 "},"87":{"wt":""},"88":{"wt":" 41 "},"89":{"wt":""},"90":{"wt":" 19,158\n"},"91":{"wt":"-\n"},"92":{"wt":" style{{=}}\"text-align:center;\""},"93":{"wt":" _row_count "},"94":{"wt":""},"95":{"wt":" [[Detroit Pistons]] "},"96":{"wt":""},"97":{"wt":" 781,929 "},"98":{"wt":""},"99":{"wt":" 41 "},"100":{"wt":""},"101":{"wt":" 19,071\n"},"102":{"wt":"-\n"},"103":{"wt":" style{{=}}\"text-align:center;\""},"104":{"wt":" _row_count "},"105":{"wt":""},"106":{"wt":" [[Minnesota Timberwolves]] "},"107":{"wt":""},"108":{"wt":" 772,249 "},"109":{"wt":""},"110":{"wt":" 41 "},"111":{"wt":""},"112":{"wt":" 18,833\n"},"113":{"wt":"-\n"},"114":{"wt":" style{{=}}\"text-align:center;\""},"115":{"wt":" _row_count "},"116":{"wt":""},"117":{"wt":" [[Toronto Raptors]] "},"118":{"wt":""},"119":{"wt":" 768,573 "},"120":{"wt":""},"121":{"wt":" 41 "},"122":{"wt":""},"123":{"wt":" 18,744\n"},"124":{"wt":"-\n"},"125":{"wt":" style{{=}}\"text-align:center;\""},"126":{"wt":" _row_count "},"127":{"wt":""},"128":{"wt":" [[Los Angeles Lakers]] "},"129":{"wt":""},"130":{"wt":" 767,626 "},"131":{"wt":""},"132":{"wt":" 41 "},"133":{"wt":""},"134":{"wt":" 18,724\n"},"135":{"wt":"-\n"},"136":{"wt":" style{{=}}\"text-align:center;\""},"137":{"wt":" _row_count "},"138":{"wt":""},"139":{"wt":" [[Orlando Magic]] "},"140":{"wt":""},"141":{"wt":" 762,121 "},"142":{"wt":""},"143":{"wt":" 41 "},"144":{"wt":""},"145":{"wt":" 18,587\n"},"146":{"wt":"-\n"},"147":{"wt":" style{{=}}\"text-align:center;\""},"148":{"wt":" _row_count "},"149":{"wt":""},"150":{"wt":" [[Utah Jazz]] "},"151":{"wt":""},"152":{"wt":" 745,175 "},"153":{"wt":""},"154":{"wt":" 41 "},"155":{"wt":""},"156":{"wt":" 18,174\n"},"157":{"wt":"-\n"},"158":{"wt":" style{{=}}\"text-align:center;\""},"159":{"wt":" _row_count "},"160":{"wt":""},"161":{"wt":" [[Golden State Warriors]] "},"162":{"wt":""},"163":{"wt":" 740,624 "},"164":{"wt":""},"165":{"wt":" 41 "},"166":{"wt":""},"167":{"wt":" 18,061\n"},"168":{"wt":"-\n"},"169":{"wt":" style{{=}}\"text-align:center;\""},"170":{"wt":" _row_count "},"171":{"wt":""},"172":{"wt":" [[Oklahoma City Thunder]] "},"173":{"wt":""},"174":{"wt":" 754,832 "},"175":{"wt":""},"176":{"wt":" 42 "},"177":{"wt":""},"178":{"wt":" 17,972\n"},"179":{"wt":"-\n"},"180":{"wt":" style{{=}}\"text-align:center;\""},"181":{"wt":" _row_count "},"182":{"wt":""},"183":{"wt":" [[San Antonio Spurs]] "},"184":{"wt":""},"185":{"wt":" 731,474 "},"186":{"wt":""},"187":{"wt":" 41 "},"188":{"wt":""},"189":{"wt":" 17,837\n"},"190":{"wt":"-\n"},"191":{"wt":" style{{=}}\"text-align:center;\""},"192":{"wt":" _row_count "},"193":{"wt":""},"194":{"wt":" [[Portland Trail Blazers]] "},"195":{"wt":""},"196":{"wt":" 719,369 "},"197":{"wt":""},"198":{"wt":" 41 "},"199":{"wt":""},"200":{"wt":" 17,542\n"},"201":{"wt":"-\n"},"202":{"wt":" style{{=}}\"text-align:center;\""},"203":{"wt":" _row_count "},"204":{"wt":""},"205":{"wt":" [[Houston Rockets]] "},"206":{"wt":""},"207":{"wt":" 716,853 "},"208":{"wt":""},"209":{"wt":" 41 "},"210":{"wt":""},"211":{"wt":" 17,482\n"},"212":{"wt":"-\n"},"213":{"wt":" style{{=}}\"text-align:center;\""},"214":{"wt":" _row_count "},"215":{"wt":""},"216":{"wt":" [[Milwaukee Bucks]] "},"217":{"wt":""},"218":{"wt":" 732,014 "},"219":{"wt":""},"220":{"wt":" 42 "},"221":{"wt":""},"222":{"wt":" 17,429\n"},"223":{"wt":"-\n"},"224":{"wt":" style{{=}}\"text-align:center;\""},"225":{"wt":" _row_count "},"226":{"wt":""},"227":{"wt":" [[Brooklyn Nets]] "},"228":{"wt":""},"229":{"wt":" 713,304 "},"230":{"wt":""},"231":{"wt":" 41 "},"232":{"wt":""},"233":{"wt":" 17,395\n"},"234":{"wt":"-\n"},"235":{"wt":" style{{=}}\"text-align:center;\""},"236":{"wt":" _row_count "},"237":{"wt":""},"238":{"wt":" [[Charlotte Hornets]] "},"239":{"wt":""},"240":{"wt":" 703,935 "},"241":{"wt":""},"242":{"wt":" 41 "},"243":{"wt":""},"244":{"wt":" 17,169\n"},"245":{"wt":"-\n"},"246":{"wt":" style{{=}}\"text-align:center;\""},"247":{"wt":" _row_count "},"248":{"wt":""},"249":{"wt":" [[Phoenix Suns]] "},"250":{"wt":""},"251":{"wt":" 699,911 "},"252":{"wt":""},"253":{"wt":" 41 "},"254":{"wt":""},"255":{"wt":" 17,072\n"},"256":{"wt":"-\n"},"257":{"wt":" style{{=}}\"text-align:center;\""},"258":{"wt":" _row_count "},"259":{"wt":""},"260":{"wt":" [[New Orleans Pelicans]] "},"261":{"wt":""},"262":{"wt":" 689,400 "},"263":{"wt":""},"264":{"wt":" 41 "},"265":{"wt":""},"266":{"wt":" 16,815\n"},"267":{"wt":"-\n"},"268":{"wt":" style{{=}}\"text-align:center;\""},"269":{"wt":" _row_count "},"270":{"wt":""},"271":{"wt":" [[Indiana Pacers]] "},"272":{"wt":""},"273":{"wt":" 685,434 "},"274":{"wt":""},"275":{"wt":" 41 "},"276":{"wt":""},"277":{"wt":" 16,718\n"},"278":{"wt":"-\n"},"279":{"wt":" style{{=}}\"text-align:center;\""},"280":{"wt":" _row_count "},"281":{"wt":""},"282":{"wt":" [[Memphis Grizzlies]] "},"283":{"wt":""},"284":{"wt":" 683,067 "},"285":{"wt":""},"286":{"wt":" 41 "},"287":{"wt":""},"288":{"wt":" 16,660\n"},"289":{"wt":"-\n"},"290":{"wt":" style{{=}}\"text-align:center;\""},"291":{"wt":" _row_count "},"292":{"wt":""},"293":{"wt":" [[Sacramento Kings]] "},"294":{"wt":""},"295":{"wt":" 679,565 "},"296":{"wt":""},"297":{"wt":" 41 "},"298":{"wt":""},"299":{"wt":" 16,575\n"},"300":{"wt":"-\n"},"301":{"wt":" style{{=}}\"text-align:center;\""},"302":{"wt":" _row_count "},"303":{"wt":""},"304":{"wt":" [[Los Angeles Clippers]] "},"305":{"wt":""},"306":{"wt":" 679,220 "},"307":{"wt":""},"308":{"wt":" 41 "},"309":{"wt":""},"310":{"wt":" 16,568\n"},"311":{"wt":"-\n"},"312":{"wt":" style{{=}}\"text-align:center;\""},"313":{"wt":" _row_count "},"314":{"wt":""},"315":{"wt":" [[Atlanta Hawks]] "},"316":{"wt":""},"317":{"wt":" 657,613 "},"318":{"wt":""},"319":{"wt":" 40 "},"320":{"wt":""},"321":{"wt":" 16,440\n"},"322":{"wt":"-\n"},"323":{"wt":" style{{=}}\"text-align:center;\""},"324":{"wt":" _row_count "},"325":{"wt":""},"326":{"wt":" [[Washington Wizards]] "},"327":{"wt":""},"328":{"wt":" 663,691 "},"329":{"wt":""},"330":{"wt":" 41 "},"331":{"wt":""},"332":{"wt":" 16,191\n"},"333":{"wt":"-\n"},"334":{"wt":"} "}},"i":0}}]}'>
+# NBA team Total attendance Home games Average attendance [ 164 ]
+1 Chicago Bulls 825,659 41 20,138
+2 Dallas Mavericks 803,174 40 20,079
+3 Philadelphia 76ers 813,621 41 19,846
+4 New York Knicks 811,794 41 19,799
+5 Denver Nuggets 811,211 41 19,783
+6 Miami Heat 808,337 41 19,715
+7 Cleveland Cavaliers 796,712 41 19,433
+8 Boston Celtics 785,396 41 19,158
+9 Detroit Pistons 781,929 41 19,071
+10 Minnesota Timberwolves 772,249 41 18,833
+11 Toronto Raptors 768,573 41 18,744
+12 Los Angeles Lakers 767,626 41 18,724
+13 Orlando Magic 762,121 41 18,587
+14 Utah Jazz 745,175 41 18,174
+15 Golden State Warriors 740,624 41 18,061
+16 Oklahoma City Thunder 754,832 42 17,972
+17 San Antonio Spurs 731,474 41 17,837
+18 Portland Trail Blazers 719,369 41 17,542
+19 Houston Rockets 716,853 41 17,482
+20 Milwaukee Bucks 732,014 42 17,429
+21 Brooklyn Nets 713,304 41 17,395
+22 Charlotte Hornets 703,935 41 17,169
+23 Phoenix Suns 699,911 41 17,072
+24 New Orleans Pelicans 689,400 41 16,815
+25 Indiana Pacers 685,434 41 16,718
+26 Memphis Grizzlies 683,067 41 16,660
+27 Sacramento Kings 679,565 41 16,575
+28 Los Angeles Clippers 679,220 41 16,568
+29 Atlanta Hawks 657,613 40 16,440
+30 Washington Wizards 663,691 41 16,191
+Notable occurrences
+[ edit ]
+On June 27, 2024, Bronny James was selected 55th overall in the 2nd round of the 2024 NBA draft by the Los Angeles Lakers . Being the son of current Lakers player LeBron James , they marked the first father-son duo to play together in league history. [ 165 ]
+They would officially make their regular season debut together on October 22, 2024, in a win against the Minnesota Timberwolves . [ 166 ]
+On July 1, 2024, Jayson Tatum signed a five-year, $314 million contract extension with the Boston Celtics , the largest in league history. [ 167 ]
+The NBA cut the average back-to-back regular season games per team by 23 percent to help curb "load management", when teams rest more than one healthy star player on any night. Teams no longer play four games in five nights, eight games in 12 nights, nor play on the day before or after "high-profile" nationally televised games. [ 168 ]
+For the third consecutive season, the league did not schedule regular season games on Election Day in the United States , which fell on November 5 in 2024 . [ 1 ]
+On October 22, 2024, the Boston Celtics tied the record for the most three-pointers made in a single game with 29 in a win over the New York Knicks . [ 169 ]
+On October 22, 2024, LeBron James passed Kobe Bryant for the most field goals missed in NBA history. [ 170 ]
+On October 25, 2024, the Golden State Warriors became the first team in NBA history to open their season with two wins by at least 35 points. [ 171 ]
+On October 25, 2024, LeBron James became the first to record a triple-double in his 22nd season. [ 172 ]
+On October 26, 2024, LeBron James became the oldest player, aged 39 years, 301 days, to lead both teams in points, rebounds, and assists in a game. [ 173 ]
+On October 28, 2024, Kevin Durant became the 8th player to score 29,000 points. [ 174 ]
+On October 31, 2024, Victor Wembanyama became the 3rd player with multiple five-by-fives . [ 175 ]
+On November 6, 2024, Kenny Atkinson set the record for the most wins to start a coach's first season with a new team with 9, with the Cleveland Cavaliers ' win over the New Orleans Pelicans . [ 176 ] The record was extended to 15 on November 17, 2024, with a victory over the Charlotte Hornets .
+On November 8, 2024, the Cleveland Cavaliers became the first team in NBA history to win their first ten games while scoring at least 110 points in each game. [ 177 ]
+On November 9, 2024, Victor Wembanyama became the first player in NBA history to have multiple games with at least 20 points, 5 three-pointers, 15 rebounds, and 5 blocks. [ 178 ]
+On November 13, 2024, LeBron James became the oldest player, aged 39 years, 319 days, to record three consecutive triple-doubles. [ 179 ]
+On November 13, 2024, Chris Paul became the third player to record 12,000 assists. [ 180 ]
+On November 17, 2024, James Harden passed Ray Allen for 2nd on the league's all-time three-pointers made list. [ 181 ]
+On November 19, 2024, the Boston Celtics ended the Cleveland Cavaliers ' 15-game winning streak with a 120–117 victory. The 2024–25 Cavaliers tied the 1948–49 Washington Capitols and the 1993–94 Houston Rockets for having the second-longest winning streak to start a season. [ 182 ]
+On November 19, 2024, Dalton Knecht tied the league record for the most three-pointers by a rookie in a single game, with nine. [ 183 ]
+On November 29, 2024, Zach LaVine passed Kirk Hinrich to become the all-time leader in three-pointers made in Bulls franchise history. [ 184 ]
+On December 1, 2024, James Harden became the second player to reach 3,000 three-pointers. [ 185 ]
+On December 5, 2024, Nikola Jokić passed Magic Johnson for third place in career triple-doubles . [ 186 ]
+On December 8, 2024, Chris Paul passed Jason Kidd for second place in career assists . [ 187 ]
+On December 13, 2024, both the Phoenix Suns and Utah Jazz broke the record for the most three-pointers made in a non-overtime game, as well as tied the record for the most three-pointers made in single game with 44 made three-pointers between the two teams (22 made by both squads) in Phoenix's 134–126 win over Utah. [ 188 ]
+On December 13, 2024, both the Charlotte Hornets and Chicago Bulls broke the record for the most three-pointers missed in a game between two teams with 75 total missed three-pointers by both squads (38 missed attempted by the Hornets, 37 missed attempts by the Bulls) in Chicago's 109–95 win over Charlotte. [ 189 ] [ 190 ] Coincidentally, the two teams would tie the record two weeks later on December 30, with Chicago missing 42 total three-point field goal attempts and Charlotte missing 33 three-point field goal shots this time around in the Bulls' 117–108 overtime win over the Hornets. [ 191 ]
+On December 15, 2024, the Dallas Mavericks and Golden State Warriors broke the record for most three-pointers made by both teams in a game with 48 (27 by the Warriors and 21 by the Mavericks) in Dallas' 143–133 win over Golden State. [ 192 ]
+On December 19, 2024, LeBron James passed Kareem Abdul-Jabbar for the most regular-season minutes played in NBA history. [ 193 ]
+On December 31, 2024, LeBron James became the first player in NBA history to play in the league both as a teenager and during his forties . [ 194 ]
+On January 3, 2025, LeBron James passed Michael Jordan for the most 30-point games in NBA history, with his 563rd game. [ 195 ]
+On January 8, 2025, the Cleveland Cavaliers , entering with a 10-game winning streak, played the visiting Oklahoma City Thunder , who had a longer streak of 15 games. This marked the first time a team with a 10-game winning streak and a team with a 15-game winning streak played each other. [ 196 ] The Cavaliers won the game 129–122, marking the Thunder's only loss to the Eastern Conference this season; the Thunder eventually finished 29–1 against Eastern Conference teams. [ 197 ]
+On January 10, 2025, Nikola Jokić and Russell Westbrook became the first teammates to have triple-doubles in the same game multiple times in the same season. [ 198 ]
+On February 1, 2025, LeBron James became the first player to have multiple triple-doubles at the age of 40. [ 199 ]
+On February 2nd, 2025, Luka Dončić was traded to the Los Angeles Lakers in a deal that most notably sent Anthony Davis to the Dallas Mavericks.
+On February 3, 2025, Devin Booker surpassed Walter Davis to become the all-time leading scorer in Suns franchise history. [ 200 ]
+On February 6, 2025, LeBron James became the oldest player, aged 40 years, 38 days, to score 40 points in a game with a 42-point performance against the Golden State Warriors. [ 201 ]
+On February 11, 2025, Kevin Durant became the eighth player to score 30,000 points. [ 202 ]
+On February 25, 2025, Luka Dončić recorded a triple-double in a win against his previous team, the Dallas Mavericks , becoming the 4th player to have a triple-double in the first game against their old team and one of three (LeBron James and Russell Westbrook) players to have a triple-double against all 30 NBA teams. [ 203 ]
+On March 3, 2025, LeBron James became the fourth player to record 1,000 regular season wins with a 108–102 victory over the Los Angeles Clippers . [ 204 ]
+On March 4, 2025, LeBron James became the first player with 50,000 combined points in the regular season and playoffs. [ 205 ]
+On March 5, 2025, Payton Pritchard and Derrick White became the first teammates to each make 9 or more three-pointers in the same game. [ 206 ]
+On March 7, 2025, Nikola Jokić became the first player with at least 30 points, 20 rebounds, and 20 assists in a game. [ 207 ]
+On March 8, 2025, Stephen Curry became the 26th player to score 25,000 points. [ 208 ]
+On March 13, 2025, Stephen Curry became the first player to make 4,000 career three-pointers. [ 209 ]
+On March 19, 2025, Sandro Mamukelashvili became the first player in NBA history to score 34 points while playing less than 20 minutes. [ 210 ]
+On March 20, 2025, DeMar DeRozan became the 27th player to score 25,000 points. [ 211 ]
+On March 23, 2025, Dyson Daniels became the youngest player with 200 or more steals in a season. He also became the first player since Chris Paul in 2008–09 to reach that mark. [ 212 ]
+On March 28, 2025, the Detroit Pistons secured their first winning season since 2016. [ 213 ] They also became the second team in NBA history to triple their win total from the previous season, joining the 2012–13 Charlotte Bobcats , and the first to do so from the previous full season. [ 214 ]
+On March 31, 2025, in a game against the Charlotte Hornets, the Utah Jazz , who previously hadn't lost 60 or more games in franchise history, suffered their 60th loss of the season, making them the last remaining team in league history to lose at least 60 games in a season.
+On March 31, 2025, a brawl broke out between the Detroit Pistons and Minnesota Timberwolves , with five players and two coaches ejected. The five players were issued suspensions. [ 215 ]
+On April 1, 2025, Nikola Jokić put up a triple-double of 61 points, 10 rebounds, and 10 assists, the highest-scoring triple-double in NBA history. [ 216 ]
+On April 2, 2025, the Oklahoma City Thunder defeated the Detroit Pistons 119–103 for their 29th win against the Eastern Conference this season. With the win, they are 29–1 against teams from the Eastern Conference, the best in league history. [ 197 ]
+On April 4, 2025, the Boston Celtics set the record for most three-pointers in a season with their 1,364th three-pointer by Payton Pritchard in a game against the Phoenix Suns . The previous record was held by the 2022–23 Golden State Warriors . [ 217 ]
+On April 8, 2025, the Oklahoma City Thunder set the record for most double-digit wins in a season with 51, surpassing the previous mark of 50 set by the 1971–72 Los Angeles Lakers . [ 218 ]
+On April 9, 2025, LeBron James passed Kareem Abdul-Jabbar for 2nd on the league's regular season games played list , with 1,561. [ 219 ]
+On April 11, 2025, Nikola Jokić became the third player in NBA history to average a triple-double in a season, joining Oscar Robertson and Russell Westbrook [ 220 ]
+On April 13, 2025, Chris Paul became the first player to start all 82 games for his team in his 20th season or later. [ 221 ]
+The Oklahoma City Thunder set the record for highest scoring differential in a season, with +12.9. The previous record of +12.3 was set by the 1971–72 Los Angeles Lakers. [ 222 ]
+Jarrett Allen became the first player to shoot 70% from the field and 70% from the free throw line in a season. [ 223 ]
+References
+[ edit ]
+1 2 3 "NBA unveils schedule for 2024-25 season" . National Basketball Association . August 15, 2024 . Retrieved August 16, 2024 .
+↑ Herbert, James (February 8, 2024). "NBA In-Season Tournament renamed 'NBA Cup' with Emirates as a sponsor" . CBS Sports . Archived from the original on February 8, 2024 . Retrieved February 8, 2024 .
+↑ Mehra, Rakesh (October 31, 2023). "Warriors Win Hosting Rights To 2025 NBA All-Star Weekend First Bay Area Team In 23 Years To Host The Game" . Pinkvilla.com . Archived from the original on November 4, 2023 . Retrieved October 31, 2023 .
+1 2 "Kemba Walker retires after 12 NBA seasons, four All-Star appearances and joins Hornets coaching staff" . CBSSports.com . July 3, 2024 . Retrieved August 3, 2024 .
+↑ "Kemba Walker Details Decision to Retire, Join Hornets' Staff" . Charlotte Hornets On SI . July 31, 2024 . Retrieved August 3, 2024 .
+↑ Hayward, Gordon [@gordonhayward] (August 1, 2024). "Thank you 🙏🏻" ( Tweet ) . Retrieved August 1, 2024 – via X (formerly Twitter) .
+↑ Gauruder, Dana (August 1, 2024). "Gordon Hayward Announces Retirement" . HoopsRumors.com . Retrieved August 1, 2024 .
+↑ "NBA sharpshooter Joe Harris Retires after 10 year career playing with Nets and Pistons" . CBSSports.com . August 15, 2024 . Retrieved August 16, 2024 .
+↑ "Derrick Rose, former Bulls MVP, retires from NBA after 16 seasons with 6 teams" . The New York Times . September 26, 2024 . Retrieved September 26, 2024 .
+↑ "Former NBA first-round pick A.J. Griffin explains why he 'gave up basketball to follow Jesus' " . CBSSports.com . September 29, 2024 . Retrieved September 29, 2024 .
+↑ Callihan, Schuyler (October 3, 2024). "Former Hornets guard Ish Smith joins division rival's front office" . SI.com . Retrieved October 3, 2024 .
+↑ Charania, Shams (October 10, 2024). "Danny Green retires from NBA, won titles with 3 different teams" . ESPN . Retrieved October 10, 2024 .
+↑ Gay, Rudy (October 29, 2024). "If You Followed My Career, I'd Love For You to Read This" . The Players Tribune . Retrieved November 6, 2024 .
+↑ "Rudy Gay announces retirement after 17 seasons" . NBA.com . October 30, 2024.
+↑ Mendoza, Jordan (January 31, 2024). "2024 NBA Draft expands to two-day format: second round will be held day after first round" . USA Today . Archived from the original on February 1, 2024 . Retrieved February 1, 2024 .
+↑ Wojnarowski, Adrian (January 31, 2024). "NBA expands 2024 draft into two-day event on June 26–27" . ESPN . Archived from the original on January 31, 2024 . Retrieved February 1, 2024 .
+↑ "Steve Clifford To Step Down As Hornets Head Coach After The Season" . NBA.com . April 3, 2024 . Retrieved April 3, 2024 .
+↑ "Brooklyn Nets Name Jordi Fernández Head Coach" . NBA.com . April 22, 2024 . Retrieved April 22, 2024 .
+↑ "Lakers Part Ways with Head Coach Darvin Ham" . NBA.com . May 3, 2024 . Retrieved May 3, 2024 .
+↑ "Charlotte Hornets Name Charles Lee Head Coach" . NBA.com . May 9, 2024 . Retrieved May 9, 2024 .
+↑ "Suns part ways with coach Frank Vogel" . NBA.com . May 9, 2024 . Retrieved May 9, 2024 .
+↑ "Suns Name Two-time NBA Coach of the Year and Arizona Native Mike Budenholzer Head Coach" . NBA.com . May 11, 2024 . Retrieved May 11, 2024 .
+↑ "Cavaliers Dismiss J.B. Bickerstaff as Head Coach" . NBA.com . May 23, 2024 . Retrieved May 23, 2024 .
+↑ "Wizards Name Brian Keefe Head Coach" . NBA.com . May 29, 2024 . Retrieved May 29, 2024 .
+↑ "Detroit Pistons to Make Coaching Change" . NBA.com . June 19, 2024 . Retrieved June 19, 2024 .
+↑ "Los Angeles Lakers Announce JJ Redick as Head Coach" . NBA.com . June 24, 2024 . Retrieved June 24, 2024 .
+↑ "Cavs Hire Kenny Atkinson as Head Coach" . NBA.com . June 28, 2024 . Retrieved June 28, 2024 .
+↑ "Detroit Pistons Announce J.B. Bickerstaff as Head Coach" . NBA.com . July 3, 2024 . Retrieved July 3, 2024 .
+↑ "MSpurs' Gregg Popovich expected 'to make a full recovery' after suffering mild stroke" . November 13, 2024 . Retrieved June 6, 2026 .
+↑ "Mike Brown Relieved as Kings Head Coach" . NBA.com . December 27, 2024 . Retrieved December 27, 2024 .
+↑ "Memphis Grizzlies part ways with head coach Taylor Jenkins" . NBA.com . March 28, 2025 . Retrieved March 28, 2025 .
+↑ Wimbish, Jasmyn (March 28, 2025). "Grizzlies fire head coach Taylor Jenkins as Memphis holds No. 5 seed in Western Conference" . CBS Sports . Retrieved March 28, 2025 .
+↑ Brooks, Matt (April 8, 2025). "DENVER NUGGETS RELIEVE HEAD COACH MICHAEL MALONE OF DUTIES; WILL NOT EXTEND CALVIN BOOTH" . NBA.com . Retrieved April 8, 2025 .
+1 2 3 "Los Angeles Lakers Announce Three Games for 2024-25 Preseason Schedule Presented by Delta Air Lines" . NBA.com . May 17, 2024 . Retrieved May 17, 2024 .
+↑ "Hawaii paying NBA's Los Angeles Clippers $750,000 to hold training camp, play game in Honolulu" . Kitv.com . September 5, 2024 . Retrieved September 11, 2024 .
+↑ "Raptors Announce Details for 2024 Canada Series Game" . July 18, 2024. Archived from the original on July 18, 2024 . Retrieved July 18, 2024 .
+↑ "Brooklyn Nets to open pre-season in San Diego October 8 vs. Los Angeles Clippers" . July 26, 2024.
+↑ "Detroit Pistons and Phoenix Suns to Square Off at Breslin Center on the Campus of Michigan State University in Preseason Game on OCTOBER 8" . NBA.com . September 4, 2024.
+↑ Stanton, Matt (March 30, 2024). "Timberwolves to Host 2024-25 Preseason Game at Wells Fargo Arena, Home of NBA G League affiliate, Iowa Wolves" . NBA.com . Retrieved March 30, 2024 .
+↑ Daniels, Chris (July 15, 2024). "NBA's Rain City Showcase returns to Climate Pledge Arena for 3rd year in a row" . komonews.com . Retrieved July 15, 2024 .
+↑ "Celtics, Nuggets to play 2 preseason games in NBA Abu Dhabi Games 2024" . NBA.com . March 19, 2024 . Retrieved March 19, 2024 .
+↑ "Breakers take fight to Jazz in NBLxNBA" . National Basketball League . October 5, 2024.
+↑ "PJC puts up 26 for Breakers v 76ers" . National Basketball League . October 8, 2024.
+↑ "OKC Thunder Announce Preseason Game in Tulsa Against New Zealand Breakers" . July 9, 2024.
+↑ Fentress, Aaron (October 16, 2024). "Trail Blazers come away with win over Ratiopharm Ulm" . The Oregonian .
+1 2 "Group Play schedule unveiled for Emirates NBA Cup 2024" . NBA.com . Retrieved August 13, 2024 .
+↑ "Heat, Wizards to play in NBA Mexico City Game 2024" . NBA.com . June 14, 2024 . Retrieved June 15, 2024 .
+↑ "Spurs, Pacers to square off in NBA Paris Games 2025" . NBA.com . April 29, 2024 . Retrieved April 29, 2024 .
+↑ Rohrbach, Ben (April 7, 2023). "NBA Fact or Fiction: Is the in-season tournament a good idea?" . Yahoo! . Archived from the original on May 18, 2023 . Retrieved April 28, 2023 .
+↑ Quinn, Sam (April 9, 2023). "NBA in-season tournament: How the league reportedly plans to structure its new spectacle" . CBS Sports . Archived from the original on June 21, 2023 . Retrieved April 28, 2023 .
+↑ "Emirates NBA Cup: Everything you need to know" . NBA.com . Retrieved August 13, 2024 .
+↑ "NBA postpones Hornets vs. Lakers game set for Jan. 9" . NBA. January 9, 2025 . Retrieved January 9, 2025 .
+↑ "NBA postpones Spurs-Lakers, Hornets-Clips in L.A. due to fires" . ESPN. January 10, 2025 . Retrieved January 10, 2025 .
+↑ "Rockets-Hawks postponed after Atlanta struck by snow, ice" . ESPN. January 11, 2025 . Retrieved January 11, 2025 .
+↑ "Bucks-Pelicans matchup in New Orleans postponed" . NBA. January 22, 2025 . Retrieved January 22, 2025 .
+↑ Reynolds, Tim (July 12, 2022). "NBA adopts Play-In Tournament on full-time basis" . Las Vegas: Warner Bros. Discovery Sports. Associated Press . Retrieved July 28, 2022 .
+↑ "2024-25 NBA Awards: Finalists announced for top honors" . NBA.com . April 20, 2025 . Retrieved April 20, 2025 .
+↑ "Oklahoma City's Shai Gilgeous-Alexander named 2024-25 Kia NBA MVP" . NBA.com . May 21, 2025 . Retrieved May 21, 2025 .
+↑ "Cavaliers' Evan Mobley named 2024-25 Kia NBA Defensive Player of the Year" . NBA.com . April 24, 2025 . Retrieved April 24, 2025 .
+↑ "Spurs' Stephon Castle named 2024-25 Kia NBA Rookie of the Year Award winner" . NBA.com . April 29, 2025 . Retrieved April 29, 2025 .
+↑ "Boston's Payton Pritchard named 2024-25 Kia NBA Sixth Man of the Year Award winner" . NBA.com . April 22, 2025 . Retrieved April 23, 2025 .
+↑ "Hawks' Dyson Daniels named 2024-25 Kia NBA Most Improved Player" . NBA.com . April 30, 2025 . Retrieved April 30, 2025 .
+↑ "Knicks' Jalen Brunson named 2024-25 Kia NBA Clutch Player of the Year Award winner" . NBA.com . April 23, 2025 . Retrieved April 23, 2025 .
+↑ "Kenny Atkinson named 2024-25 NBA Coach of the Year" . NBA.com . May 5, 2025 . Retrieved May 5, 2025 .
+↑ "Thunder's Sam Presti named NBA Basketball Executive of the Year" . NBA.com . May 6, 2025 . Retrieved May 6, 2025 .
+↑ "Jrue Holiday wins 2024-25 NBA Sportsmanship Award" . NBA.com . May 1, 2025 . Retrieved May 1, 2025 .
+↑ "Warriors' Stephen Curry named 2024-25 Twyman-Stokes Teammate of the Year" . NBA.com . April 28, 2025 . Retrieved April 28, 2025 .
+↑ "Jrue Holiday named 2024-25 NBA Social Justice Champion and will receive the Kareem Abdul-Jabbar Trophy" . NBA.com . May 7, 2025 . Retrieved May 7, 2025 .
+↑ Martin, Brian (April 25, 2025). "Warriors' Draymond Green wins 2024-25 NBA Hustle Award" . NBA.com . Retrieved April 26, 2025 .
+↑ "Shai Gilgeous-Alexander, Nikola Jokić, Giannis Antetokounmpo anchor 2024-25 Kia All-NBA Team" . NBA.com . May 23, 2025 . Retrieved May 23, 2025 .
+↑ "Evan Mobley, Dyson Daniels headline 2024-25 Kia NBA All-Defensive teams" . NBA.com . May 22, 2025 . Retrieved May 22, 2025 .
+↑ "Stephon Castle, Zaccharie Risacher headline NBA All-Rookie First Team" . NBA.com . May 20, 2025 . Retrieved May 20, 2025 .
+↑ "Anthony Davis, Jayson Tatum named NBA Players of the Week" . NBA.com . October 28, 2024 . Retrieved October 29, 2024 .
+↑ "Devin Booker, Donovan Mitchell named NBA Players of the Week" . NBA.com . November 4, 2024 . Retrieved November 4, 2024 .
+↑ "Nikola Jokić, Darius Garland named NBA Players of the Week" . NBA.com . November 11, 2024 . Retrieved November 11, 2024 .
+↑ "De'Aaron Fox, Franz Wagner named NBA Players of the Week" . NBA.com . November 18, 2024 . Retrieved November 18, 2024 .
+↑ "Giannis Antetokounmpo, Harrison Barnes named NBA Players of the Week" . NBA.com . November 25, 2024 . Retrieved November 25, 2024 .
+↑ "Jalen Brunson, Alperen Sengun named NBA Players of the Week" . NBA.com . December 2, 2024 . Retrieved December 2, 2024 .
+↑ "Luka Dončić, Tyler Herro named NBA Players of the Week" . NBA.com . December 9, 2024 . Retrieved December 9, 2024 .
+↑ "Victor Wembanyama, Cade Cunningham named NBA Players of the Week" . NBA.com . December 23, 2024 . Retrieved December 23, 2024 .
+↑ "Shai Gilgeous-Alexander, Tyrese Maxey named NBA Players of the Week" . NBA.com . December 30, 2024 . Retrieved December 30, 2024 .
+↑ "Nikola Jokić, Jayson Tatum named NBA Players of the Week" . NBA.com . January 6, 2025 . Retrieved January 6, 2025 .
+↑ "Domantas Sabonis, Darius Garland named NBA Players of the Week" . NBA.com . January 13, 2025 . Retrieved January 15, 2025 .
+↑ "Giannis Antetokounmpo, Jalen Green named NBA Players of the Week" . NBA.com . January 20, 2025 . Retrieved January 22, 2025 .
+↑ "Jaren Jackson Jr., Scottie Barnes named NBA Players of the Week" . NBA.com . January 27, 2025 . Retrieved January 27, 2025 .
+↑ "LeBron James, Donovan Mitchell named NBA Players of the Week" . NBA.com . February 3, 2025 . Retrieved February 3, 2025 .
+↑ "Nikola Jokić, Trae Young named NBA Players of the Week" . NBA.com . February 10, 2025 . Retrieved February 10, 2025 .
+↑ "Zach LaVine, Jalen Brunson named NBA Players of the Week" . NBA.com . March 3, 2025 . Retrieved March 3, 2025 .
+↑ "Shai Gilgeous-Alexander, Trae Young named NBA Players of the Week" . NBA.com . March 10, 2025 . Retrieved March 10, 2025 .
+↑ "Anthony Edwards, Coby White named NBA Players of the Week" . NBA.com . March 17, 2025 . Retrieved March 17, 2025 .
+↑ "Kevin Durant, Coby White named NBA Players of the Week" . NBA.com . March 24, 2025 . Retrieved March 24, 2025 .
+↑ "Jalen Green, Paolo Banchero named NBA Players of the Week" . NBA.com . March 31, 2025 . Retrieved March 31, 2025 .
+↑ "Kawhi Leonard, Giannis Antetokounmpo named NBA Players of the Week" . NBA.com . April 7, 2025 . Retrieved April 7, 2025 .
+↑ "James Harden, Giannis Antetokounmpo named NBA Players of the Week" . NBA.com . April 14, 2025 . Retrieved April 14, 2025 .
+1 2 3 4 "Monthly NBA awards: Jayson Tatum, Victor Wembanyama win honors for Oct. and Nov" . NBA.com . December 3, 2024 . Retrieved December 3, 2024 .
+1 2 3 4 "Monthly NBA awards: Shai Gilgeous-Alexander, Karl-Anthony Towns win honors for December" . NBA.com . January 2, 2025 . Retrieved January 2, 2025 .
+1 2 3 4 "Monthly NBA awards: Giannis Antetokounmpo, Nikola Jokić win honors for January" . NBA.com . February 4, 2025 . Retrieved February 4, 2025 .
+1 2 3 4 "Monthly NBA Awards: Donovan Mitchell, Evan Mobley win honors for Feb" . NBA.com . March 4, 2025 . Retrieved March 4, 2025 .
+1 2 3 4 "Monthly NBA Awards: Zaccharie Risacher, Dyson Daniels win honors for March" . NBA.com . April 1, 2025 . Retrieved April 1, 2025 .
+↑ Tine, Jacey (August 15, 2024). "Printable 2024-25 NBA Schedule; TV Broadcasts, Matchups, PDF Format - Sports Brackets" . Sports Brackets . NBA . Retrieved October 6, 2024 .
+↑ "Rocket Mortgage FieldHouse is Now "Rocket Arena" " . www.nba.com .
+↑ "Suns seeking new arena naming partner; Footprint Center to be temporarily called PHX Arena" . KSAZ-TV . February 18, 2025 . Retrieved February 18, 2025 .
+↑ "Brooklyn Nets Subtly Update Logos, Introduce New Secondary Mark For 2024-25 Season" . sportslogos.net . July 7, 2024.
+↑ "Clippers unveil new uniforms, court and logo for next season" . NBA.com . February 26, 2024 . Retrieved May 22, 2024 .
+↑ "Warriors unveil new Statement Edition uniform and secondary logo" . NBA.com . June 27, 2024.
+↑ "Toronto Raptors unveil 30th anniversary logo for the 2024-25 season" . NBA . July 30, 2024 . Retrieved August 5, 2024 .
+↑ "Grizzlies pay homage to Vancouver era with Classic Edition uniforms" . NBA . September 20, 2024 . Retrieved September 20, 2024 .
+↑ "Jazz unveil new-look uniforms for next 2 seasons" . NBA.com . June 5, 2024.
+↑ "Wizards unveil new Statement Edition uniform for 2024-25" . NBA.com . June 21, 2024.
+↑ "NBA's exclusive TV rights negotiating window with ESPN, Warner expected to pass without a deal" . CNBC . April 18, 2024. Archived from the original on April 20, 2024.
+↑ Lewis, Jon (July 24, 2024). "NBA announces rights deals with Disney, Comcast, Amazon" . Sports Media Watch . Retrieved July 24, 2024 .
+↑ Reedy, Joe (July 26, 2024). "Warner Bros. Discovery sues NBA for not accepting its matching offer" . Associated Press . Archived from the original on August 8, 2024.
+↑ Flint, Joe (November 17, 2024). "Warner Bros. Discovery, NBA Settle Legal Battle Over TV Rights" . The Wall Street Journal .
+↑ Marchand, Andrew; West, Jenna (November 17, 2024). " 'Inside the NBA' to continue on ABC and ESPN as part of TNT-NBA settlement: Sources" . The Athletic . The New York Times . Retrieved November 17, 2024 .
+↑ Steinberg, Brian (June 27, 2025). "Warner's TNT Sports Will Stop Producing Content for NBA's Cable Network" . Variety . Retrieved August 10, 2025 .
+1 2 3 "TNT Sports to Tip Off 2024-25 NBA Regular Season with NBA Champion Boston Celtics with Jayson Tatum, Jaylen Brown & Jrue Holiday Hosting New York Knicks with Jalen Brunson, Mikal Bridges & Julius Randle, Tuesday, Oct. 22" . Warner Bros. Discovery (Press release). August 15, 2024 . Retrieved August 16, 2024 .
+↑ Lewis, Jon (March 7, 2024). "WBD to launch nightly sports block on truTV" . Sports Media Watch . Retrieved April 6, 2024 .
+1 2 3 4 Rajan, Ronce (August 15, 2024). "Bang! ESPN & ABC's 2024-25 NBA Regular Season Broadcast Schedule" . ESPN Press Room (Press release) . Retrieved August 16, 2024 .
+1 2 "NBA TV to Televise 107 Games During 2024-25 Regular Season with Multiple Appearances by NBA Champion Celtics, Mavericks, Knicks, Warriors, Bucks, Lakers, 76ers, Suns, Heat, Timberwolves, Nuggets & Thunder" . Warner Bros. Discovery (Press release). August 15, 2024 . Retrieved August 16, 2024 .
+↑ "Group Play schedule unveiled for Emirates NBA Cup 2024" . NBA.com . September 4, 2024 . Retrieved October 22, 2024 .
+1 2 Hddleston, Ben (November 22, 2024). "News: TNF Flex, NBA Cup, Kelce, F1" . Sports Media Watch . Retrieved November 22, 2024 .
+↑ Lewis, Jon (October 21, 2024). "ABC to again simulcast all five NBA Christmas Day games" . Sports Media Watch . Retrieved October 22, 2024 .
+1 2 "Disney, ESPN to stream NBA alt-cast 'Dunk the Halls' for Spurs-Knicks on Christmas Day" . NBA.com . November 20, 2024.
+↑ "NBA on MLK Day 2024: Schedule of games, how to watch" . NBA.com . January 15, 2024.
+↑ Rajan, Ronce (February 5, 2025). "ESPN NBA Schedule Update: Los Angeles Lakers Host Indiana Pacers on February 8 in Luka Dončić's Expected Lakers Debut" . ESPN Press Room (Press release) . Retrieved February 8, 2025 .
+1 2 Rajan, Ronce (February 9, 2025). "ESPN NBA Schedule Update: New-Look Los Angeles Lakers Host Utah Jazz on February 10 in Luka Dončić's Expected Lakers Debut" . ESPN Press Room (Press release) . Retrieved February 9, 2025 .
+↑ Rajan, Ronce (February 26, 2025). "ESPN NBA Schedule Update: Oklahoma City Thunder vs. Memphis Grizzlies Added on March 5; Cleveland Cavaliers vs. Milwaukee Bucks Added on March 9" . ESPN Press Room U.S . Retrieved February 27, 2025 .
+↑ Rajan, Ronce (January 21, 2025). "Tenth Season of NBA Saturday Primetime on ABC Presented by Wingstop Starts January 25 with Blockbuster Tripleheader" . ESPN Press Room (Press release) . Retrieved January 21, 2025 .
+↑ Rajan, Ronce (February 4, 2025). "ESPN NBA Full Court Press: Hubie Brown's Final NBA Broadcast Tips Off Sunday Showcase on ABC" . ESPN Press Room (Press release) . Retrieved February 4, 2025 .
+↑ Rajan, Ronce (February 13, 2025). "ESPN NBA Full Court Press: 2025 Ruffles® NBA All-Star Celebrity Game To Air on ESPN, ESPN + and Disney + this Friday" . ESPN Press Room U.S . Retrieved February 15, 2025 .
+↑ "Disney Scheduled NBA Games" . nba.com . Retrieved March 3, 2025 .
+↑ "Blackhawks, Bulls, White Sox partnering with media group for new broadcast home" . The Athletic . May 4, 2024.
+↑ Libit, Daniel (June 3, 2024). "Sox, Bulls and Blackhawks to Launch Chicago Sports Network" . Sportico . Retrieved June 3, 2024 .
+↑ Friend, Tom (August 14, 2024). "Trail Blazers move away from RSN model with Root Sports not airing 2024-25 season games" . Sports Business Journal . Retrieved August 14, 2024 .
+↑ "Portland Trail Blazers Announce Future Of Trail Blazers Broadcasting" . NBA.com . September 23, 2024.
+↑ "Altitude Sports Announces New Ways to Watch Nuggets and Avalanche Games" . Altitude Sports . September 26, 2024 . Retrieved September 26, 2024 .
+↑ Feldman, Jacob (August 28, 2024). "MSG, YES Launch Combo Streaming App for New York-Area Sports" . Sportico . Retrieved August 28, 2024 .
+1 2 Kaplan, Daniel (August 23, 2024). "Bally Sports RSNs reach new agreements with NHL, NBA for 2024-2025 seasons" . Awful Announcing . Retrieved August 23, 2024 .
+1 2 Crupi, Anthony; McCann, Michael (August 23, 2024). "Diamond Sports Group Reaches Deals With NBA, NHL" . Sportico . Retrieved August 23, 2024 .
+↑ "Dallas Mavericks, WFAA sign multi-year deal to broadcast games over-the-air for free" . wfaa.com . September 6, 2024 . Retrieved September 6, 2024 .
+↑ "Mavericks announce new TV partnership, games to be available locally for free" . Dallas News . September 6, 2024 . Retrieved September 6, 2024 .
+↑ Dachman, Jason (September 18, 2024). "New Orleans Pelicans Ink OTA-TV Distribution Deal With Gray Media; Raycom Sports To Produce All Games" . Sports Video Group . Retrieved October 24, 2024 .
+↑ Drellich, Evan (October 18, 2024). "Miami Marlins to return to Diamond Sports as MLB rips network's FanDuel naming-rights process" . The New York Times . ISSN 0362-4331 . Retrieved October 19, 2024 .
+↑ Axelrod, Ben (October 18, 2024). "Diamond Sports Group to retain Miami Marlins' TV rights" . Awful Announcing . Retrieved October 19, 2024 .
+↑ Winslow, George (November 1, 2024). "Weigel's WMLW to Air Milwaukee Bucks Games" . TV Tech . Retrieved November 8, 2024 .
+↑ "Cleveland Cavaliers to Simulcast Five Upcoming Games on Rock Entertainment Sports Network and Over-the-Air on WUAB Channel 43" . Cleveland Cavaliers . January 21, 2025 . Retrieved January 24, 2024 .
+↑ "Memphis Grizzlies and Gray Media to broadcast five games in Memphis, Nashville and Knoxville" . Memphis Grizzlies . February 27, 2025 . Retrieved February 27, 2025 .
+↑ "Atlanta Hawks Partner with Gray's Peachtree TV to Simulcast Five Games Free, Over the Air" . Atlanta Hawks . November 8, 2024 . Retrieved January 14, 2025 .
+↑ "Charlotte Hornets Partner With Gray Media To Simulcast Five Games On Free, Over-The-Air Television Across Select Cities In The Carolinas" . Charlotte Hornets . January 22, 2025 . Retrieved January 24, 2025 .
+↑ "Charlotte Hornets Partner With WSOC-TV Channel 9 & TV 64 To Simulcast Five Games On Free, Over-The-Air Television" . Charlotte Hornets . January 14, 2025 . Retrieved January 14, 2025 .
+↑ "Pacers Sports & Entertainment Partners with WTHR to Air Select Pacers Games" . Indiana Pacers . January 6, 2025 . Retrieved January 6, 2025 .
+↑ "Detroit Pistons Partnering With Scripps Sports, TV-20 Detroit to Broadcast Five Games Over the Air in 2025" . Detroit Pistons . January 2, 2025 . Retrieved January 2, 2025 .
+↑ "Thunder Announces 2024-25 Broadcast Schedule" . Oklahoma City Thunder . October 18, 2024 . Retrieved November 8, 2024 .
+↑ Stanton, Matt (December 11, 2024). "Minnesota Timberwolves Return to Free Over-The-Air Television on KARE 11" . NBA . Retrieved December 11, 2024 .
+↑ Lewis, Jon (January 2, 2025). "Diamond Sports Group exits bankruptcy, rebrands" . Sports Media Watch . Retrieved January 2, 2025 .
+↑ Rajan, Ronce (October 10, 2024). "Bang! ESPN's NBA Commentators & Reporters for 2024-25 Season" . ESPN Press Room (Press release) . Retrieved November 28, 2024 .
+↑ Rajan, Ronce (February 24, 2025). "NBA on ESPN: Richard Jefferson Joins Mike Breen and Doris Burke to Form 2025 NBA Finals Broadcast Booth with Lisa Salters Reporting" . ESPN Press Room (Press release) . Retrieved February 24, 2025 .
+↑ "ESPN's Hubie Brown, 91, retiring after calling one more game in legendary career" . New York Post . November 21, 2024 . Retrieved November 28, 2024 .
+↑ "Legendary Hubie Brown to Call Final NBA Game February 9 on ABC" (Press release). ESPN . December 17, 2024 . Retrieved December 18, 2024 .
+↑ "Behind the succession plan for legendary broadcaster Mike Gorman's retirement" . New York Post . April 12, 2024 . Retrieved November 28, 2024 .
+↑ "San Antonio Spurs Announce Jacob Tobey as New TV Play-By-Play Announcer" . nba.com/spurs . October 3, 2024 . Retrieved November 28, 2024 .
+↑ "Mike Tirico to Call Two NBA Games This Week on NBC Sports Regional Networks" (Press release). Stamford, Connecticut: NBC Sports . March 3, 2025.
+↑ https://www.thescore.com/nba/news/3268109
+↑ https://www.espn.com/nba/attendance/_/year/2025/sort/homeTotal
+↑ "LeBron and Bronny James lead list of top NBA father-son duos" . ESPN.com . June 27, 2024 . Retrieved July 15, 2024 .
+↑ Quinn, Sam (October 22, 2024). "Lakers' LeBron and Bronny James make history as first father-son duo to play together in NBA game" . CBS Sports . Retrieved October 22, 2024 .
+↑ "Sources: Celtics' Jayson Tatum agrees to 5-year, $314M deal" . ESPN.com . July 1, 2024 . Retrieved July 1, 2024 .
+↑ Salao, Colin (August 16, 2024). "NBA Schedule Tweaks Focus on Load Management" . Front Office Sports . Retrieved August 18, 2024 .
+↑ Golen, Jimmy (October 22, 2024). "Celtics tie NBA record with 29 3-pointers in win over Knicks" . NBA.com . Retrieved October 29, 2024 .
+↑ Quinn, Sam (October 22, 2024). "LeBron James breaks Kobe Bryant's record for most missed shots in NBA history" . CBS Sports . Retrieved October 22, 2024 .
+↑ Botkin, Brad (October 26, 2024). "Warriors make NBA history with two blowout victories to begin season, and the way they've done it is notable" . CBS Sports . Archived from the original on January 28, 2025 . Retrieved January 28, 2025 .
+↑ Kirschenbaum, Alex (October 25, 2024). "Lakers' LeBron James Becomes First Player in NBA History to Record Insane State Line" . Sports Illustrated . Retrieved October 29, 2024 . [ dead link ]
+↑ Herring, Chris; Williams, Matt (November 7, 2024). "What the numbers say about LeBron James' quest to play 82 games" . ESPN.com . Retrieved November 7, 2024 .
+↑ Brandt, David (October 28, 2024). "Kevin Durant becomes 8th player in NBA history to score 29,000 career points" . NBA.com . Retrieved October 29, 2024 .
+↑ "Victor Wembanyama has second 5x5 game in Spurs' win vs. Jazz" . ESPN.com . October 31, 2024 . Retrieved October 31, 2024 .
+↑ "Cavaliers top Pelicans, celebrate franchise's first 9-0 start" . ESPN.com . November 7, 2024 . Retrieved November 7, 2024 .
+↑ "Cavaliers stay hot, blow out Warriors to reach 10-0" . ESPN.com . November 9, 2024 . Retrieved November 9, 2024 .
+↑ "Victor Wembanyama makes more NBA history with eye-popping stat line" . NBA.com . November 10, 2024 . Retrieved November 10, 2024 .
+↑ McMenamin, Dave (November 14, 2024). "LeBron lifts Lakers past Grizzlies with 30-point triple-double" . ESPN.com . Retrieved November 14, 2024 .
+↑ Kasabian, Paul (November 16, 2024). "Chris Paul Joins Stockton, Kidd as Only Players in NBA History with 12K Assists" . Bleacher Report . Archived from the original on November 17, 2024 . Retrieved January 28, 2025 .
+↑ Youngmisuk, Ohm (November 18, 2024). "Harden gets to second place on NBA all-time 3-pointers list" . ESPN.com . Retrieved November 18, 2024 .
+↑ Quinn, Sam (November 19, 2024). "Celtics vs. Cavaliers score: Cavs handed first loss as Jayson Tatum leads reigning NBA champs to statement win" . CBS Sports . Retrieved November 20, 2024 .
+↑ Woike, Dan (November 19, 2024). "Red-hot Dalton Knecht scores 37 points as Lakers win sixth in a row" . Los Angeles Times . Retrieved November 20, 2024 .
+↑ "Zach LaVine Makes Chicago Bulls History vs Boston Celtics" . Sports Illustrated . November 29, 2024. Archived from the original on December 19, 2024 . Retrieved November 30, 2024 .
+↑ Harris, Beth (December 1, 2024). "Harden joins Curry as the only NBA players to reach 3,000 3-pointers" . Associated Press News . Retrieved December 6, 2024 .
+↑ Botkin, Brad (December 6, 2024). "Nikola Jokic passes Magic Johnson on career triple-doubles list, but those aren't his most impressive numbers" . CBS Sports . Retrieved December 6, 2024 .
+↑ "Chris Paul passes Jason Kidd for second in NBA career assists" . espn.com . December 8, 2024.
+↑ "Bombs away: Suns and Jazz tie NBA record for 3s in game in Phoenix win" .
+↑ @TheDunkCentral (December 14, 2024). "The Hornets and Bulls combined for 75 MISSED three-pointers last night, the most ever in Regulation NBA history, per @NateDuncanNBA" ( Tweet ) . Retrieved October 9, 2025 – via X (formerly Twitter) .
+↑ "NBA Teams Combine for Putrid 75 Missed 3-Pointers in Record-Setting Performance" . December 15, 2024.
+↑ "Bulls, Hornets tie their own dubious record for missed three-pointers" . December 30, 2024.
+↑ Youngmisuk, Ohm (December 16, 2024). "Mavs, Warriors combine for record 48 3s with Klay Thompson back in Bay" . espn.com .
+↑ "Lakers star LeBron James breaks NBA record for career minutes" . nba.com . December 19, 2024.
+↑ Bhattacharya, Ishaan (December 31, 2024). "LeBron James Makes History By Playing In NBA Games As A Teenager And At 40 Years Old" . yardbarker.com . Retrieved January 1, 2025 .
+↑ McMenamin, Dave (January 4, 2025). "LeBron James breaks Michael Jordan's record for 30-point games" . espn.com . Retrieved January 4, 2025 .
+↑ "Thunder-Cavs showdown a historic collison of winning streaks" . NBA.com . Associated Press . January 8, 2025 . Retrieved May 30, 2025 .
+1 2 Mussatto, Joe (April 2, 2025). "OKC Thunder's domination of NBA's Eastern Conference is complete: By the numbers" . The Oklahoman . Retrieved May 29, 2025 .
+↑ "Nikola Jokic, Russell Westbrook have triple-doubles in same game again" . espn.com . January 11, 2025 . Retrieved January 11, 2025 .
+↑ Maloney, Jack (February 1, 2025). "Lakers' LeBron James has triple-double at Madison Square Garden in big win over Knicks" . cbssports.com . Retrieved February 1, 2025 .
+↑ Maloney, Jack (February 3, 2025). "Devin Booker overtakes Walter Davis, becomes Suns franchise leader in points" . NBA.com . Retrieved February 3, 2025 .
+↑ McMenamin, Dave (February 6, 2025). "Lakers' LeBron James passes Jordan as oldest to score 40" . ESPN.com . Retrieved February 7, 2025 .
+↑ "Kevin Durant becomes eighth in NBA history to score 30,000" . ESPN.com . February 12, 2025 . Retrieved February 12, 2025 .
+↑ "NBA players with triple-doubles against every team faced" . ESPN.com . February 25, 2025 . Retrieved February 26, 2025 .
+↑ "Starting 5, March 3: 50 in 60 for Cleveland, LeBron joins 1K win club & what's trending in NBA" . NBA.com . March 3, 2025 . Retrieved March 4, 2025 .
+↑ McMenamin, Dave (March 4, 2025). "LeBron James first with 50K points in regular season, playoffs" . ESPN.com . Retrieved March 5, 2025 .
+↑ Hightower, Kyle (March 5, 2025). "Payton Pritchard, Derrick White become 1st Boston duo to score 40+ in same game" . NBA.com . Retrieved March 6, 2025 .
+↑ "Nikola Jokić becomes 1st player in NBA history to post at least 30 points, 20 rebounds, 20 assists" . NBA.com . March 8, 2025 . Retrieved March 8, 2025 .
+↑ "Warriors star Stephen Curry reaches 25,000 career points" . NBA.com . March 8, 2025 . Retrieved March 21, 2025 .
+↑ "Warriors star Stephen Curry makes history with 4,000th career 3-pointer" . NBA.com . March 14, 2025 . Retrieved March 14, 2025 .
+↑ "Spurs center Sandro Mamukelashvili makes NBA history with 34 points in 19 minutes" . NBA.com . March 19, 2025 . Retrieved March 20, 2025 .
+↑ "With patented mid-range jumper, DeMar DeRozan joins 25,000-point club" . NBA.com . March 20, 2025 . Retrieved March 21, 2025 .
+↑ Wells, Jed (March 23, 2025). "Dyson Daniels hits yet another defensive milestone" . The Sporting News . Retrieved March 23, 2025 .
+↑ Hogg, Dave (March 28, 2025). "Pistons beat East-leading Cavaliers 133-122 and lock down 1st winning season since 2016" . Associated Press . Retrieved April 4, 2025 .
+↑ Botkin, Brad (March 28, 2025). "Pistons make NBA history by tripling win total from previous season, and they could be a playoff problem" . CBS Sports . Retrieved April 4, 2025 .
+↑ "Five Suspended After Pistons-Timberwolves Brawl" . Reuters . April 1, 2025 . Retrieved April 1, 2025 .
+↑ "Timberwolves weather Nikola Jokic's 61-point triple-double in 2OT" . ESPN . April 2, 2025 . Retrieved April 2, 2025 .
+↑ "Celtics pass Warriors for most 3-pointers in an NBA season" . ESPN . April 4, 2025 . Retrieved April 4, 2025 .
+↑ "Thunder break incredible 50-year-old record set by Lakers" . The Sporting News . April 8, 2025 . Retrieved April 9, 2025 .
+↑ "Luka Doncic scores 45 points in Dallas return as Lakers clinch playoff spot with 112-97 win" . ESPN . Associated Press . April 9, 2025 . Retrieved April 10, 2025 .
+↑ "Nuggets' Nikola Jokic wraps up triple-double average for season" . ESPN . April 11, 2025 . Retrieved April 12, 2025 .
+↑ "Spurs' Chris Paul, in 20th season, makes history with 82 starts" . ESPN . April 13, 2025 . Retrieved April 13, 2025 .
+↑ "Thunder smash NBA record for scoring differential in a season" . NBA.com . April 14, 2025 . Retrieved April 14, 2025 .
+↑ Moeglin, Anthony (April 15, 2025). "Cavaliers Center Jarrett Allen Made NBA History This Season" . SI.com . Retrieved April 21, 2025 .
+v
+t
+e
+NBA seasons
+1940s
+1946–47
+1947–48
+1948–49
+1950s
+1949–50
+1950–51
+1951–52
+1952–53
+1953–54
+1954–55
+1955–56
+1956–57
+1957–58
+1958–59
+1960s
+1959–60
+1960–61
+1961–62
+1962–63
+1963–64
+1964–65
+1965–66
+1966–67
+1967–68
+1968–69
+1970s
+1969–70
+1970–71
+1971–72
+1972–73
+1973–74
+1974–75
+1975–76
+1976–77
+1977–78
+1978–79
+1980s
+1979–80
+1980–81
+1981–82
+1982–83
+1983–84
+1984–85
+1985–86
+1986–87
+1987–88
+1988–89
+1990s
+1989–90
+1990–91
+1991–92
+1992–93
+1993–94
+1994–95
+1995–96
+1996–97
+1997–98
+1998–99
+2000s
+1999–2000
+2000–01
+2001–02
+2002–03
+2003–04
+2004–05
+2005–06
+2006–07
+2007–08
+2008–09
+2010s
+2009–10
+2010–11
+2011–12
+2012–13
+2013–14
+2014–15
+2015–16
+2016–17
+2017–18
+2018–19
+2020s
+2019–20
+2020–21
+2021–22
+2022–23
+2023–24
+2024–25
+2025–26
+2026–27
+v
+t
+e
+2024–25 NBA season by team
+Draft
+Summer League
+NBA Cup
+Championship game
+All-Star Game
+Play-in Tournament
+Playoffs
+Finals
+Transactions
+G League
+Eastern
+Atlantic
+Boston
+Brooklyn
+New York
+Philadelphia
+Toronto
+Central
+Chicago
+Cleveland
+Detroit
+Indiana
+Milwaukee
+Southeast
+Atlanta
+Charlotte
+Miami
+Orlando
+Washington
+Western
+Northwest
+Denver
+Minnesota
+Oklahoma City
+Portland
+Utah
+Pacific
+Golden State
+L.A. Clippers
+L.A. Lakers
+Phoenix
+Sacramento
+Southwest
+Dallas
+Houston
+Memphis
+New Orleans
+San Antonio
+Portals : Sports
+Basketball
+Retrieved from " https://en.wikipedia.org/w/index.php?title=2024–25_NBA_season&oldid=1380495549#Play-in_tournament "
+Categories : 2024–25 NBA season
+2024–25 in American basketball by league
+2024–25 in Canadian basketball
+Hidden categories: Articles with short description
+Short description is different from Wikidata
+Use American English from February 2024
+All Wikipedia articles written in American English
+Use mdy dates from February 2024
+All articles with dead external links
+Articles with dead external links from October 2026
+This page was last edited on 16 October 2026, at 02:04 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+2024–25 NBA season
+18 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"2024\u201325 NBA season","url":"https:\/\/en.wikipedia.org\/wiki\/2024%E2%80%9325_NBA_season#Play-in_tournament","sameAs":"http:\/\/www.wikidata.org\/entity\/Q124842484","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q124842484","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2024-02-11T03:55:48Z","dateModified":"2026-10-16T02:04:06Z","headline":"2024\u20132025 edition of the National Basketball Association season"}

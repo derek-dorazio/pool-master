@@ -1,0 +1,6 @@
+Source: https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250419-20250623&seasontype=3&limit=500
+Final URL: https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250419-20250623&seasontype=3&limit=500
+HTTP 400
+Fetched: 2026-10-18T04:19:40.215Z
+
+{"code":400,"message":"Failed to get events endpoint."}

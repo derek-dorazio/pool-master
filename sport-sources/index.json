@@ -1,0 +1,47 @@
+{
+  "fetchedAt": "2026-10-18T04:19:41.336Z",
+  "results": [
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250419-20250623&seasontype=3&limit=500",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 400,
+      "file": "01-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250415-20250418&limit=100",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 400,
+      "file": "02-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250914-20251012&seasontype=3&limit=200",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 400,
+      "file": "03-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025_NBA_playoffs",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025_NBA_play-in_tournament",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025_WNBA_playoffs",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-en.wikipedia.org.txt"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+Source: https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250914-20251012&seasontype=3&limit=200
+Final URL: https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250914-20251012&seasontype=3&limit=200
+HTTP 400
+Fetched: 2026-10-18T04:19:40.637Z
+
+{"code":400,"message":"Failed to get events endpoint."}
