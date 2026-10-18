@@ -6034,6 +6034,8 @@ export interface components {
              * @enum {string}
              */
             bracketAdvancement: "FIXED" | "RESEED_BY_SEED";
+            /** @description What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request. */
+            roundNames: string[];
             /** @description Participants currently affiliated with the sport league. */
             affiliationCount: number;
             /** @description Events on record for the sport league, across every series and year. */
@@ -6086,6 +6088,8 @@ export interface components {
                  * @enum {string}
                  */
                 bracketAdvancement: "FIXED" | "RESEED_BY_SEED";
+                /** @description What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request. */
+                roundNames: string[];
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -6129,6 +6133,8 @@ export interface components {
                  * @enum {string}
                  */
                 bracketAdvancement: "FIXED" | "RESEED_BY_SEED";
+                /** @description What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request. */
+                roundNames: string[];
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */

@@ -703,6 +703,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     currentEventYear: row.currentEventYear,
     isActive: row.isActive,
     bracketAdvancement: row.bracketAdvancement,
+    roundNames: row.roundNames,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

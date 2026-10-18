@@ -4766,6 +4766,10 @@ export type SportLeagueDto = {
      */
     bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
     /**
+     * What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request.
+     */
+    roundNames: Array<string>;
+    /**
      * Participants currently affiliated with the sport league.
      */
     affiliationCount: number;
@@ -4834,6 +4838,10 @@ export type SportLeagueListResponse = {
          */
         bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
         /**
+         * What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request.
+         */
+        roundNames: Array<string>;
+        /**
          * Participants currently affiliated with the sport league.
          */
         affiliationCount: number;
@@ -4888,6 +4896,10 @@ export type SportLeagueResponse = {
          * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
          */
         bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
+        /**
+         * What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request.
+         */
+        roundNames: Array<string>;
         /**
          * Participants currently affiliated with the sport league.
          */

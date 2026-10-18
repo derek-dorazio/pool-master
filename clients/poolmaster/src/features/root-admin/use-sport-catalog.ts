@@ -1,4 +1,4 @@
-import { findSportRow, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import { eventRoundLabel, findSportRow, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getParticipant, listEvents, listParticipants, listSportLeagues, listSports } from '@/lib/api';
 import type { ParticipantDto, SportEventDto, SportLeagueDto } from '@/lib/api';
@@ -24,6 +24,17 @@ export function useSportLeaguesQuery(sport: Sport) {
     },
     retry: false,
   });
+}
+
+/**
+ * How an event's rounds are labelled (#706): by its sport league's round names where the league
+ * has them (the NBA's "Conference Finals"), otherwise by the sport's. It reads the sport's
+ * leagues, which the Manage screens already hold; until they load, rounds take the sport's names.
+ */
+export function useEventRoundLabel(event: Pick<SportEventDto, 'sport' | 'sportLeagueId'>): (roundNumber: number, roundCount: number) => string {
+  const leaguesQuery = useSportLeaguesQuery(event.sport);
+  const roundNames = leaguesQuery.data?.find((league) => league.id === event.sportLeagueId)?.roundNames ?? [];
+  return (roundNumber, roundCount) => eventRoundLabel(event.sport, roundNames, roundNumber, roundCount);
 }
 
 /** One golf tour's tournaments, every event year, earliest start first. */

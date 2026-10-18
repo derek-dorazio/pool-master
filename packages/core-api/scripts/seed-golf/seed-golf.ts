@@ -20,7 +20,8 @@
  *
  * A test seed (`testData: true`) adds the made-up parts: its dates move forward by whole
  * weeks so the first event starts at least a week after the run, and each event that is
- * still a draft gets odds, tiers, prices and stored scores and is released for contests. A
+ * still a draft gets odds, tiers, prices and stored scores and is released for contests (a
+ * bracket's play-in places then take their winners before its results go in). A
  * draft that an earlier run stopped part-way through is finished the same way. A real file
  * never releases an event, writes odds, tiers, prices or scores, or deletes anything.
  *
@@ -72,6 +73,7 @@ import {
   recordEventMatchResult,
   releaseEvent,
   removeEventParticipant,
+  setEventPlayInWinner,
   setEventRoundMatchups,
   updateEvent,
   updateEventBracketMatch,
@@ -786,6 +788,7 @@ class Loader {
     await must(autoAssignEventPrices({ client, path, body: await defaultPricing(client) }), `Assign prices for ${event.name}`);
     if (sportPlaysBracket(this.sport)) {
       await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      await fillPlayInPlacesFor(client, eventId, event, participantIds);
       await enterBracketResultsFor(client, eventId, event);
       return;
     }
@@ -800,6 +803,23 @@ class Loader {
       }
     }
     await must(releaseEvent({ client, path }), `Release ${event.name}`);
+  }
+}
+
+/**
+ * A bracket test seed's play-in winners, set on the released event before any result: each place
+ * the file gives a winner (the NBA play-in's 7 and 8 seeds) then names that team, keeping its seed,
+ * tier, price and bracket side, as an admin's "Set winner" does.
+ */
+async function fillPlayInPlacesFor(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>): Promise<void> {
+  const places = event.field.filter((entry) => entry.playInWinner !== undefined);
+  if (places.length === 0) return;
+  const { participants: rows } = await must(listEventParticipants({ client, path: { eventId } }), `Read the field of ${event.name}`);
+  for (const place of places) {
+    const placeId = found(participantIds.get(place.player) ?? undefined, `${event.name}: the participant id for ${place.player}`);
+    const winnerId = found(participantIds.get(place.playInWinner ?? '') ?? undefined, `${event.name}: the participant id for ${place.playInWinner ?? ''}`);
+    const row = found(rows.find((candidate) => candidate.participantId === placeId), `${event.name}: the field row of ${place.player}`);
+    await must(setEventPlayInWinner({ client, path: { eventId, sportEventParticipantId: row.id }, body: { participantId: winnerId } }), `Set the winner of ${place.player} in ${event.name}`);
   }
 }
 

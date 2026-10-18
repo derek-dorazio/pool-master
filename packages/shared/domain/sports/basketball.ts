@@ -10,8 +10,11 @@ const OPENING_ROUND_NAMES = ['First Round', 'Second Round', 'Third Round'] as co
 /**
  * Basketball (#698, plans/knockout-and-pickem-design.md §3.5): teams playing a knockout bracket,
  * scored by the head-to-head family from the bracket's matches. The NCAA Division I men's and
- * women's tournaments are its sport leagues; the NBA and WNBA playoffs join as further leagues
- * with data only, a series being one match whose scores are games won.
+ * women's tournaments are its sport leagues, and the NBA and WNBA playoffs are two more (#706): a
+ * series is one match, its scores the games each side won, and those leagues name their own
+ * rounds (`SportLeague.roundNames`, read through `eventRoundLabel`), so the names below are
+ * March Madness's. The NBA play-in fills the 7 and 8 seeds through play-in places, as the First
+ * Four does.
  *
  * The March Madness field is 64 bracket places in six rounds: the First Four play-in winners
  * fill their places through one combined field member each, not through play-in matches. Four

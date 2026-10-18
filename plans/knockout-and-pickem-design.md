@@ -649,7 +649,9 @@ with the NFL (college football later). *Rationale:* it follows Derek's auto raci
 The NBA and WNBA playoffs play each round as a series (best of seven; the WNBA's first round is
 best of three). In a bracket a series is one `SportEventMatch`: its winner advances, and
 `homeScore`/`awayScore` hold games won (4-2). No new table or column is needed; a per-game
-record inside a series is out of scope until a pool scores individual games.
+record inside a series is out of scope until a pool scores individual games. *Built in #706:* the leagues' rounds needed their own names (the NBA's four rounds
+are not March Madness's last four, and the NFL and College Football Playoff both have four), so a
+sport league carries `roundNames`, shown in place of the sport's.
 
 **Q3.12 The word "team" means two things on screen.** A squad is called "team" on screen
 (`rules/poolmaster-webapp-rules.md` §1), and a March Madness participant is also a "team"

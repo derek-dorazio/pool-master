@@ -321,6 +321,35 @@ describe('sport data bracket', () => {
     ]);
   });
 
+  it('reads a play-in place\'s winner in a test seed: a team of the league not in the field', () => {
+    const file = bracketTestSeed();
+    file.sportLeagues[0].events[0].field[3] = { ...(file.sportLeagues[0].events[0].field[3] as object), playInWinner: 'ncaa-xavier' };
+    (file.sportLeagues[0] as unknown as { players: unknown[] }).players.push({ key: 'ncaa-xavier', name: 'Xavier', countryCode: 'US', ranking: 1 });
+
+    const event = parseSportDataFile(file, { allowTestData: true }).sportLeagues[0].events[0];
+
+    expect(event.field.map((entry) => entry.playInWinner ?? null)).toEqual([null, null, null, 'ncaa-xavier']);
+  });
+
+  it('refuses a play-in winner in a real file, on a place that is not a play-in place, or naming a team outside the league or already in the field', () => {
+    const real = bracketFile();
+    real.sportLeagues[0].events[0].field[3] = { ...(real.sportLeagues[0].events[0].field[3] as object), playInWinner: 'ncaa-duke' };
+    expect(problemsOf(real)).toEqual([
+      'NCAA Men, Tournament: ncaa-texas-xavier\'s play-in winner ncaa-duke is already in the field.',
+      'NCAA Men, Tournament: ncaa-texas-xavier carries playInWinner, which only test data may.',
+    ]);
+
+    const seed = bracketTestSeed();
+    const field = seed.sportLeagues[0].events[0].field;
+    field[0] = { ...(field[0] as object), playInWinner: 'ncaa-houston' };
+    field[3] = { ...(field[3] as object), playInWinner: 'ncaa-gonzaga' };
+    expect(problemsOf(seed, true)).toEqual([
+      'NCAA Men, Tournament: ncaa-duke names a play-in winner, but is not a play-in place.',
+      'NCAA Men, Tournament: ncaa-duke\'s play-in winner ncaa-houston is already in the field.',
+      'NCAA Men, Tournament: ncaa-texas-xavier\'s play-in winner ncaa-gonzaga is not in NCAA Men\'s players.',
+    ]);
+  });
+
   it('refuses match results in a real file', () => {
     const file = bracketFile();
     file.sportLeagues[0].events[0].matches[0].result = { winner: 'AWAY', homeScore: 60, awayScore: 64 };

@@ -10384,6 +10384,13 @@
             ],
             "description": "How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket."
           },
+          "roundNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request."
+          },
           "affiliationCount": {
             "type": "integer",
             "description": "Participants currently affiliated with the sport league."
@@ -10411,6 +10418,7 @@
           "currentEventYear",
           "isActive",
           "bracketAdvancement",
+          "roundNames",
           "affiliationCount",
           "sportEventCount",
           "createdAt",
@@ -10491,6 +10499,13 @@
                   ],
                   "description": "How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket."
                 },
+                "roundNames": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request."
+                },
                 "affiliationCount": {
                   "type": "integer",
                   "description": "Participants currently affiliated with the sport league."
@@ -10518,6 +10533,7 @@
                 "currentEventYear",
                 "isActive",
                 "bracketAdvancement",
+                "roundNames",
                 "affiliationCount",
                 "sportEventCount",
                 "createdAt",
@@ -10581,6 +10597,13 @@
                 ],
                 "description": "How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket."
               },
+              "roundNames": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request."
+              },
               "affiliationCount": {
                 "type": "integer",
                 "description": "Participants currently affiliated with the sport league."
@@ -10608,6 +10631,7 @@
               "currentEventYear",
               "isActive",
               "bracketAdvancement",
+              "roundNames",
               "affiliationCount",
               "sportEventCount",
               "createdAt",
