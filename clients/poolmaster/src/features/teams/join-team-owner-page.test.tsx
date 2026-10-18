@@ -403,7 +403,7 @@ describe('JoinTeamOwnerPage', () => {
     it('shows a signed-out visitor no registration form when the invitation cannot be loaded, only the way to sign in', async () => {
       signedOut();
       getTeamOwnerInvitationPreviewMock.mockResolvedValue({
-        error: { error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Team-owner invitation not found' } },
+        error: { error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Co-owner invitation not found' } },
       });
 
       renderJoinTeamOwnerPage();
@@ -446,7 +446,7 @@ describe('JoinTeamOwnerPage', () => {
     it('tells a signed-in visitor the invitation could not be loaded and offers no join button', async () => {
       signedIn();
       getTeamOwnerInvitationPreviewMock.mockResolvedValue({
-        error: { error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Team-owner invitation not found' } },
+        error: { error: { code: 'SQUAD_OWNER_INVITATION_NOT_FOUND', message: 'Co-owner invitation not found' } },
       });
 
       renderJoinTeamOwnerPage();

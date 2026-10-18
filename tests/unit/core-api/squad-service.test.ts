@@ -98,7 +98,7 @@ describe('SquadService', () => {
         id: 'squad-1',
         leagueId: 'league-1',
         createdBy: 'user-1',
-        name: "Derek Dorazio's Team",
+        name: "Derek Dorazio",
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
         isActive: true,
         createdAt: new Date('2026-04-07T00:00:00Z'),
@@ -108,7 +108,7 @@ describe('SquadService', () => {
         id: 'squad-1',
         leagueId: 'league-1',
         createdBy: 'user-1',
-        name: "Derek Dorazio's Team",
+        name: "Derek Dorazio",
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
         isActive: true,
         createdAt: new Date('2026-04-07T00:00:00Z'),
@@ -157,9 +157,9 @@ describe('SquadService', () => {
 
     const result = await service.createSquad('league-1', 'user-1', {});
 
-    expect(squadRepo.create).toHaveBeenCalledWith(expect.objectContaining({ name: "Derek Dorazio's Team" }));
+    expect(squadRepo.create).toHaveBeenCalledWith(expect.objectContaining({ name: "Derek Dorazio" }));
     expect(squadMembershipRepo.create).toHaveBeenCalled();
-    expect(result.name).toBe("Derek Dorazio's Team");
+    expect(result.name).toBe("Derek Dorazio");
     expect(result.iconKey).toBe(TeamIconKey.CAPTAIN_SMILE_FIELD);
     expect(result.memberCount).toBe(1);
   });
@@ -325,7 +325,7 @@ describe('SquadService', () => {
 
     await expect(service.removeOwner('league-1', 'squad-1', 'user-1', 'user-1')).rejects.toThrow(
       new SquadOperationError(
-        'This team only has one active owner. Inactivate the team instead.',
+        'The only active owner cannot be removed. Inactivate instead.',
         'SQUAD_OWNER_REMOVE_REQUIRES_MULTIPLE_OWNERS',
       ),
     );
@@ -566,14 +566,14 @@ describe('SquadService', () => {
 
     it('disambiguates a colliding DEFAULT name rather than blocking the create', async () => {
       // Two members of one league who share a name would otherwise both want
-      // "Derek Dorazio's Team". The second must still get a squad.
+      // "Derek Dorazio". The second must still get a squad.
       const findByLeagueAndName = jest.fn()
-        .mockResolvedValueOnce(buildSquadRow({ id: 'squad-other', name: "Derek Dorazio's Team" }))
+        .mockResolvedValueOnce(buildSquadRow({ id: 'squad-other', name: "Derek Dorazio" }))
         .mockResolvedValueOnce(null);
       const squadRepo = createSquadRepo({
         findByLeagueAndName,
-        create: jest.fn().mockResolvedValue(buildSquadRow({ name: "Derek Dorazio's Team 2" })),
-        findById: jest.fn().mockResolvedValue(buildSquadRow({ name: "Derek Dorazio's Team 2" })),
+        create: jest.fn().mockResolvedValue(buildSquadRow({ name: "Derek Dorazio 2" })),
+        findById: jest.fn().mockResolvedValue(buildSquadRow({ name: "Derek Dorazio 2" })),
       });
       const squadMembershipRepo = createSquadMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(null),
@@ -606,10 +606,10 @@ describe('SquadService', () => {
 
       await service.createSquad('league-1', 'user-1', {});
 
-      expect(findByLeagueAndName).toHaveBeenNthCalledWith(1, 'league-1', "Derek Dorazio's Team");
-      expect(findByLeagueAndName).toHaveBeenNthCalledWith(2, 'league-1', "Derek Dorazio's Team 2");
+      expect(findByLeagueAndName).toHaveBeenNthCalledWith(1, 'league-1', "Derek Dorazio");
+      expect(findByLeagueAndName).toHaveBeenNthCalledWith(2, 'league-1', "Derek Dorazio 2");
       expect(squadRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "Derek Dorazio's Team 2" }),
+        expect.objectContaining({ name: "Derek Dorazio 2" }),
       );
     });
 

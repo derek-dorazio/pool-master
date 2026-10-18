@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { listContestConfigTemplates, updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import { LayoutTemplate } from 'lucide-react';
-import { getSportDefinition } from '@poolmaster/shared/domain';
+import { SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
 import {
   AsyncPage,
   Button,
@@ -19,11 +19,13 @@ import {
 import {
   cloneContestTemplate,
   getTemplateSize,
+  isRosterTemplateConfiguration,
   templateSizeFields,
   toPositiveNumber,
   type ContestConfigTemplate,
   updateTemplateRules,
 } from './content-configuration-utils';
+import { describePickEmMode } from '@/features/contests/contest-rules';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -124,7 +126,9 @@ export function RootAdminContentConfigurationDetailPage() {
 
   // The size field and the tiers note name the template's sport's participants and events.
   const vocabulary = draft ? getSportDefinition(draft.sport).vocabulary : null;
-  const sizeField = draft && vocabulary ? templateSizeFields(vocabulary)[draft.configuration.selectionType] : null;
+  // A roster template edits its size and scores that count; a pick'em template has neither.
+  const rosterConfiguration = draft && isRosterTemplateConfiguration(draft.configuration) ? draft.configuration : null;
+  const sizeField = rosterConfiguration && vocabulary ? templateSizeFields(vocabulary)[rosterConfiguration.selectionType] : null;
 
   return (
     <AsyncPage
@@ -138,7 +142,7 @@ export function RootAdminContentConfigurationDetailPage() {
       state={pageState}
       testId="root-admin-content-configuration-detail-page"
     >
-      {draft && vocabulary && sizeField ? (
+      {draft && vocabulary ? (
         <>
           <IdentityHeading
             icon={<LayoutTemplate aria-hidden size={22} />}
@@ -239,33 +243,39 @@ export function RootAdminContentConfigurationDetailPage() {
                 </label>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <FormField helperText={sizeField.helperText} label={sizeField.label}>
-                  <Input
-                    data-testid={sizeField.testId}
-                    onChange={(event) => updateDraft((current) =>
-                      updateTemplateRules(current, {
-                        [sizeField.key]: toPositiveNumber(event.target.value),
-                      }))}
-                    type="number"
-                    value={getTemplateSize(draft.configuration)}
-                  />
-                </FormField>
-                <FormField label="Scores that count">
-                  <Input
-                    data-testid="root-admin-content-config-counted-scores"
-                    onChange={(event) => updateDraft((current) =>
-                      updateTemplateRules(current, {
-                        countedScores: toPositiveNumber(event.target.value),
-                      }))}
-                    type="number"
-                    value={draft.configuration.countedScores}
-                  />
-                </FormField>
-                <p className="md:col-span-2 text-sm text-muted-foreground">
-                  {`Tiers, prices and ${vocabulary.participant.one} assignments are set per ${vocabulary.event.one}, not per template — see the ${vocabulary.event.one}'s Tiers page.`}
+              {rosterConfiguration && sizeField ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <FormField helperText={sizeField.helperText} label={sizeField.label}>
+                    <Input
+                      data-testid={sizeField.testId}
+                      onChange={(event) => updateDraft((current) =>
+                        updateTemplateRules(current, {
+                          [sizeField.key]: toPositiveNumber(event.target.value),
+                        }))}
+                      type="number"
+                      value={getTemplateSize(rosterConfiguration)}
+                    />
+                  </FormField>
+                  <FormField label="Scores that count">
+                    <Input
+                      data-testid="root-admin-content-config-counted-scores"
+                      onChange={(event) => updateDraft((current) =>
+                        updateTemplateRules(current, {
+                          countedScores: toPositiveNumber(event.target.value),
+                        }))}
+                      type="number"
+                      value={rosterConfiguration.countedScores}
+                    />
+                  </FormField>
+                  <p className="md:col-span-2 text-sm text-muted-foreground">
+                    {`Tiers, prices and ${vocabulary.participant.one} assignments are set per ${vocabulary.event.one}, not per template — see the ${vocabulary.event.one}'s Tiers page.`}
+                  </p>
+                </div>
+              ) : draft.configuration.selectionType === SelectionType.PICK_EM ? (
+                <p className="mt-4 text-sm text-muted-foreground" data-testid="root-admin-content-config-pick-em-rules">
+                  {describePickEmMode(draft.configuration.mode)}
                 </p>
-              </div>
+              ) : null}
           </FormEditorSection>
         </>
       ) : null}

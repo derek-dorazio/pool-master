@@ -34,7 +34,7 @@ export async function ensureDefaultSquadForLeagueMember(
         data: { leagueId: input.leagueId, userId: input.userId, squadId: existingMembership.squadId },
       }, 'Active squad membership points to missing squad');
       throw new DefaultSquadProvisioningError(
-        'Active team membership points to a missing team',
+        'Active squad membership points to a missing squad',
         'SQUAD_MEMBERSHIP_ORPHANED',
       );
     }
@@ -53,7 +53,7 @@ export async function ensureDefaultSquadForLeagueMember(
       data: { leagueId: input.leagueId, userId: input.userId },
     }, 'Cannot provision default squad without owner name');
     throw new DefaultSquadProvisioningError(
-      'Unable to resolve the team owner name',
+      'Unable to resolve the member name',
       'SQUAD_OWNER_RESOLUTION_FAILED',
     );
   }
@@ -81,7 +81,7 @@ export async function ensureDefaultSquadForLeagueMember(
         data: { leagueId: input.leagueId, userId: input.userId, squadId: existingSquad.id },
       }, 'Failed to reload reactivated squad');
       throw new DefaultSquadProvisioningError(
-        'Unable to reload the reactivated team',
+        'Unable to reload the reactivated squad',
         'SQUAD_RELOAD_FAILED',
       );
     }

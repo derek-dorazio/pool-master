@@ -1,5 +1,6 @@
 import {
   BUDGET_ROSTER_SIZE_MAX,
+  PickEmMode,
   RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
   SelectionType,
   getDefaultCountedScores,
@@ -20,6 +21,7 @@ export type EditableSelectionType = ContestConfigurationRequest['selectionType']
 export type ContestRulesValues = {
   countedScores: string;
   maxEntriesPerTeam: string;
+  pickEmMode: PickEmMode;
   picksPerEntry: string;
   picksPerTier: string;
   rosterSize: string;
@@ -98,6 +100,11 @@ function parseRandomDrawRules(values: ContestRulesValues, participant: SportNoun
   return withEntryLimit(values, { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry, countedScores });
 }
 
+/** The pick'em rules (#716): only the mode, straight up or confidence. */
+function parsePickEmRules(values: ContestRulesValues): RulesResult {
+  return withEntryLimit(values, { selectionType: SelectionType.PICK_EM, mode: values.pickEmMode });
+}
+
 /**
  * The configuration the rules fields describe for a format, or the first thing wrong with them
  * in the words the form shows.
@@ -115,6 +122,8 @@ export function parseContestRules(
       return parseBudgetRules(values, participant);
     case SelectionType.RANDOM_DRAW:
       return parseRandomDrawRules(values, participant);
+    case SelectionType.PICK_EM:
+      return parsePickEmRules(values);
   }
 }
 
@@ -135,23 +144,25 @@ export function toContestRulesValues(
   const rules: ContestRulesValues = {
     countedScores: current.countedScores,
     maxEntriesPerTeam: current.maxEntriesPerTeam,
+    pickEmMode: current.pickEmMode,
     picksPerEntry: current.picksPerEntry,
     picksPerTier: current.picksPerTier,
     rosterSize: current.rosterSize,
     unlimitedEntries: current.unlimitedEntries,
   };
   const entryLimit = {
-    countedScores: String(configuration.countedScores),
     maxEntriesPerTeam: configuration.maxEntriesPerSquad == null ? '1' : String(configuration.maxEntriesPerSquad),
     unlimitedEntries: configuration.maxEntriesPerSquad == null,
   };
   switch (configuration.selectionType) {
     case SelectionType.TIERED:
-      return { ...rules, ...entryLimit, picksPerTier: String(configuration.picksPerTier) };
+      return { ...rules, ...entryLimit, countedScores: String(configuration.countedScores), picksPerTier: String(configuration.picksPerTier) };
     case SelectionType.BUDGET_PICK:
-      return { ...rules, ...entryLimit, rosterSize: String(configuration.rosterSize) };
+      return { ...rules, ...entryLimit, countedScores: String(configuration.countedScores), rosterSize: String(configuration.rosterSize) };
     case SelectionType.RANDOM_DRAW:
-      return { ...rules, ...entryLimit, picksPerEntry: String(configuration.picksPerEntry) };
+      return { ...rules, ...entryLimit, countedScores: String(configuration.countedScores), picksPerEntry: String(configuration.picksPerEntry) };
+    case SelectionType.PICK_EM:
+      return { ...rules, ...entryLimit, pickEmMode: configuration.mode };
   }
 }
 
@@ -159,6 +170,7 @@ export function toContestRulesValues(
 export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
   countedScores: '4',
   maxEntriesPerTeam: '1',
+  pickEmMode: PickEmMode.STRAIGHT_UP,
   picksPerEntry: '4',
   picksPerTier: '1',
   rosterSize: '6',

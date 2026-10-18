@@ -75,7 +75,7 @@ export function squadsModule(fastify: FastifyInstance): void {
       tags: ['Squads'],
       summary: 'List squads in a league',
       description:
-        'Returns the squads associated with the current league for team management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.',
+        'Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.',
       operationId: 'listLeagueSquads',
       response: {
         200: schemaRef('SquadListResponse'),
@@ -133,7 +133,7 @@ export function squadsModule(fastify: FastifyInstance): void {
       tags: ['Squads'],
       summary: 'Update squad details',
       description:
-        'Updates mutable squad fields such as naming and presentation detail for an active team owner, league commissioner, or root admin.',
+        'Updates mutable squad fields such as naming and presentation detail for an active squad owner, league commissioner, or root admin.',
       operationId: 'updateLeagueSquad',
       body: schemaRef('UpdateSquadRequest'),
       response: {
@@ -151,9 +151,9 @@ export function squadsModule(fastify: FastifyInstance): void {
     ...commissioner,
     schema: {
       tags: ['Squads'],
-      summary: 'Inactivate a team',
+      summary: 'Inactivate a squad',
       description:
-        'Inactivates the target team, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the team\'s owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).\n\n**League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners\' league memberships, so it is league administration rather than team management.',
+        'Inactivates the target squad, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the squad\'s owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original squad (#218).\n\n**League commissioners and root admins only (#219).** Squad owners may invite and remove co-owners on their own squad, but ending a squad also ends its owners\' league memberships, so it is league administration rather than squad management.',
       operationId: 'inactivateLeagueSquad',
       response: {
         200: schemaRef('SquadResponse'),
@@ -170,9 +170,9 @@ export function squadsModule(fastify: FastifyInstance): void {
     onRequest: requireRootAdmin,
     schema: {
       tags: ['Squads'],
-      summary: 'Permanently delete an inactive team',
+      summary: 'Permanently delete an inactive squad',
       description:
-        'Permanently deletes an inactive team and cascades related team-owned data. This route is root-admin only and exists to support QA cleanup flows from Team Home.',
+        'Permanently deletes an inactive squad and cascades related squad-owned data. This route is root-admin only and exists to support QA cleanup flows from the web app.',
       operationId: 'deleteLeagueSquad',
       response: {
         200: schemaRef('SuccessResponse'),
@@ -189,9 +189,9 @@ export function squadsModule(fastify: FastifyInstance): void {
     ...squadMember,
     schema: {
       tags: ['Squads'],
-      summary: 'Add or reactivate a team owner',
+      summary: 'Add or reactivate a squad owner',
       description:
-        'Adds an owner to the team or reactivates an existing inactive owner membership for an active team owner, league commissioner, or root admin.',
+        'Adds an owner to the squad or reactivates an existing inactive owner membership for an active squad owner, league commissioner, or root admin.',
       operationId: 'addSquadOwner',
       body: schemaRef('AddSquadMemberRequest'),
       response: {
@@ -209,9 +209,9 @@ export function squadsModule(fastify: FastifyInstance): void {
     ...squadMember,
     schema: {
       tags: ['Squads'],
-      summary: 'Remove a team owner',
+      summary: 'Remove a squad owner',
       description:
-        'Removes the owner relationship between the target user and team. The backend blocks removal of the final active owner and requires team inactivation instead.',
+        'Removes the owner relationship between the target user and squad. The backend blocks removal of the final active owner and requires squad inactivation instead.',
       operationId: 'removeSquadOwner',
       response: {
         200: schemaRef('SquadMembershipResponse'),
@@ -228,9 +228,9 @@ export function squadsModule(fastify: FastifyInstance): void {
     ...leagueMember,
     schema: {
       tags: ['Squads'],
-      summary: 'List team-owner invitations for a league',
+      summary: 'List co-owner invitations for a league',
       description:
-        'Returns pending and historical team-owner invitations visible to the current commissioner, active team owner, or root admin.',
+        'Returns pending and historical co-owner invitations visible to the current commissioner, active squad owner, or root admin.',
       operationId: 'listSquadOwnerInvitations',
       response: {
         200: schemaRef('TeamOwnerInvitationListResponse'),
@@ -249,7 +249,7 @@ export function squadsModule(fastify: FastifyInstance): void {
       tags: ['Squads'],
       summary: 'Invite a co-owner by email',
       description:
-        'Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active team owners, league commissioners, and root admins may start this flow.',
+        'Starts the co-owner invite flow for a squad. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active squad owners, league commissioners, and root admins may start this flow.',
       operationId: 'createSquadOwnerInvitation',
       body: schemaRef('CreateSquadOwnerInvitationRequest'),
       response: {
@@ -267,9 +267,9 @@ export function squadsModule(fastify: FastifyInstance): void {
     ...squadMember,
     schema: {
       tags: ['Squads'],
-      summary: 'Replace an active team owner',
+      summary: 'Replace an active squad owner',
       description:
-        'Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league\'s last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A team owner may replace a co-owner; a league commissioner or root admin may also replace a team\'s only owner, and the team stays active for the replacement.',
+        'Guided replacement flow that removes the selected current owner (ending their squad and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league\'s last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A squad owner may replace a co-owner; a league commissioner or root admin may also replace a squad\'s only owner, and the squad stays active for the replacement.',
       operationId: 'replaceSquadOwner',
       body: schemaRef('ReplaceSquadOwnerRequest'),
       response: {
@@ -287,9 +287,9 @@ export function squadsModule(fastify: FastifyInstance): void {
     ...leagueMember,
     schema: {
       tags: ['Squads'],
-      summary: 'Revoke a pending team-owner invitation',
+      summary: 'Revoke a pending co-owner invitation',
       description:
-        'Revokes a pending co-owner invitation so it can no longer be accepted. Active team owners, league commissioners, and root admins may revoke invitations in their allowed scope.',
+        'Revokes a pending co-owner invitation so it can no longer be accepted. Active squad owners, league commissioners, and root admins may revoke invitations in their allowed scope.',
       operationId: 'revokeSquadOwnerInvitation',
       response: {
         200: schemaRef('TeamOwnerInvitationResponse'),

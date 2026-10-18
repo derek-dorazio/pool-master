@@ -77,12 +77,13 @@ export type PoolType = (typeof PoolType)[keyof typeof PoolType];
 // --- Contest Structure ---
 
 /**
- * Pool format applied to a contest. ROSTER is the only built format: an entry picks a lineup
- * of participants from the event's field. Bracket, pick'em and survivor formats arrive with the
- * code that builds them (#605).
+ * Pool format applied to a contest: how its entries pick and are scored. ROSTER: an entry picks
+ * a lineup of participants from the event's field, scored by the sport's family. PREDICTION
+ * (#716): an entry picks the winner of each game of an event, scored against the games' results.
  */
 export const ContestFormat = {
   ROSTER: 'ROSTER',
+  PREDICTION: 'PREDICTION',
 } as const;
 export type ContestFormat = (typeof ContestFormat)[keyof typeof ContestFormat];
 
@@ -181,8 +182,21 @@ export const SelectionType = {
   TIERED: 'TIERED',
   BUDGET_PICK: 'BUDGET_PICK',
   RANDOM_DRAW: 'RANDOM_DRAW',
+  /** Pick the winner of every game of each week (#716): a PREDICTION contest. */
+  PICK_EM: 'PICK_EM',
 } as const;
 export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
+
+/**
+ * How a pick'em contest is played (#716). STRAIGHT_UP: pick the winner of every game.
+ * CONFIDENCE: also rank the week's picks, giving each game a value from 1 to the number of
+ * games, each used once; the most confident pick carries the highest.
+ */
+export const PickEmMode = {
+  STRAIGHT_UP: 'STRAIGHT_UP',
+  CONFIDENCE: 'CONFIDENCE',
+} as const;
+export type PickEmMode = (typeof PickEmMode)[keyof typeof PickEmMode];
 
 // --- Selection ---
 

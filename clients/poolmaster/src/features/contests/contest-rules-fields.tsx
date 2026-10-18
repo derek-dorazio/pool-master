@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
-import { RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, type SportNoun } from '@poolmaster/shared/domain';
-import { Checkbox, FormField, formatDollars, Input } from '@/features/shared/ui';
+import { PickEmMode, RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, type SportNoun } from '@poolmaster/shared/domain';
+import { Checkbox, FormField, formatDollars, Input, SegmentedControl } from '@/features/shared/ui';
+import { describePickEmMode, formatPickEmModeName } from './contest-rules';
 import { defaultCountedScoresFor, perEntryLabel, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
 function TieredRulesInputs({
@@ -150,6 +151,37 @@ function RandomDrawRulesInputs({
   );
 }
 
+const PICK_EM_MODES = Object.values(PickEmMode);
+
+/** The pick'em input (#716): straight up, or ranked by confidence. Nothing else to set. */
+function PickEmRulesInputs({
+  onChange,
+  values,
+}: {
+  onChange: (next: Partial<ContestRulesValues>) => void;
+  values: ContestRulesValues;
+}) {
+  return (
+    <FormField helperText={describePickEmMode(values.pickEmMode)} label="Mode">
+      <SegmentedControl
+        aria-label="Mode"
+        onChange={(value) => {
+          const pickEmMode = PICK_EM_MODES.find((mode) => mode === value);
+          if (pickEmMode) {
+            onChange({ pickEmMode });
+          }
+        }}
+        options={PICK_EM_MODES.map((mode) => ({
+          label: formatPickEmModeName(mode),
+          testId: `contest-pick-em-mode-${mode}`,
+          value: mode,
+        }))}
+        value={values.pickEmMode}
+      />
+    </FormField>
+  );
+}
+
 type RulesInputsProps = {
   onChange: (next: Partial<ContestRulesValues>) => void;
   participant: SportNoun;
@@ -169,12 +201,16 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
   [SelectionType.RANDOM_DRAW]: ({ onChange, participant, values }: RulesInputsProps) => (
     <RandomDrawRulesInputs onChange={onChange} participant={participant} values={values} />
   ),
+  [SelectionType.PICK_EM]: ({ onChange, values }: RulesInputsProps) => (
+    <PickEmRulesInputs onChange={onChange} values={values} />
+  ),
 };
 
 /**
  * The rules inputs for a contest's format: picks per tier and scores that count for a tiered
  * contest, golfers per entry and scores that count under the event's salary cap for a budget
- * one, golfers dealt per entry and scores that count for a random draw, then entries per member with No limit. Create and Edit contest both use it, so a new format
+ * one, golfers dealt per entry and scores that count for a random draw, the mode for a pick'em
+ * contest, then entries per member with No limit. Create and Edit contest both use it, so a new format
  * adds its fields here once.
  */
 export function ContestRulesFields({

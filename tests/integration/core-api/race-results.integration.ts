@@ -235,7 +235,7 @@ describe('horse racing contest — read and settled from the finishing order', (
     const { prisma, suffix, event, owner, contest, winners, scratch } = await seedContest();
     await createRaceResultService(prisma).applyResults(event.id, officialOrder(suffix));
 
-    await expect(createContestSettlementService(prisma).settleCompletedSportEvent(event.id))
+    await expect(createContestSettlementService(prisma).settleFinishedSportEvent(event.id))
       .resolves.toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
 
     const standings = await prisma.contestEntryStanding.findMany({

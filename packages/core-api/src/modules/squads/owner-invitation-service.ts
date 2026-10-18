@@ -103,7 +103,7 @@ export class SquadOwnerInvitationService {
     );
     if (duplicate) {
       throw new SquadOwnerInvitationOperationError(
-        'A pending team-owner invitation already exists for this email in the league',
+        'A pending co-owner invitation already exists for this email in the league',
         'SQUAD_OWNER_INVITATION_DUPLICATE',
       );
     }
@@ -151,7 +151,7 @@ export class SquadOwnerInvitationService {
 
     if (input.actorUserId === input.targetUserId) {
       throw new SquadOwnerInvitationOperationError(
-        'You cannot replace yourself as a team owner',
+        'You cannot replace yourself as an owner',
         'SQUAD_OWNER_REPLACE_SELF_FORBIDDEN',
       );
     }
@@ -162,7 +162,7 @@ export class SquadOwnerInvitationService {
     );
     if (!targetMembership || targetMembership.status !== SquadMembershipStatus.ACTIVE) {
       throw new SquadOwnerInvitationNotFoundError(
-        `Active team owner not found for user ${input.targetUserId}`,
+        `Active owner not found for user ${input.targetUserId}`,
       );
     }
 
@@ -172,14 +172,14 @@ export class SquadOwnerInvitationService {
     const activeOwners = await this.squadMembershipRepo.findBySquad(input.squadId);
     if (activeOwners.length < 2 && !actorRunsLeague) {
       throw new SquadOwnerInvitationOperationError(
-        'Replace owner requires at least two active owners on the team',
+        'Replacing an owner needs at least two active owners',
         'SQUAD_OWNER_REPLACE_REQUIRES_MULTIPLE_OWNERS',
       );
     }
 
     if (!context.isRootAdmin && !context.isCommissioner && context.actorSquadMembership?.userId !== input.actorUserId) {
       throw new SquadOwnerInvitationOperationError(
-        'Only an active owner on the team can replace another owner',
+        'Only an active co-owner can replace another owner',
         'SQUAD_OWNER_REPLACE_FORBIDDEN',
       );
     }
@@ -190,7 +190,7 @@ export class SquadOwnerInvitationService {
     );
     if (duplicate) {
       throw new SquadOwnerInvitationOperationError(
-        'A pending team-owner invitation already exists for this email in the league',
+        'A pending co-owner invitation already exists for this email in the league',
         'SQUAD_OWNER_INVITATION_DUPLICATE',
       );
     }
@@ -251,7 +251,7 @@ export class SquadOwnerInvitationService {
   ): Promise<TeamOwnerInvitationDto> {
     const invitation = await this.invitationRepo.findById(invitationId);
     if (!invitation || invitation.leagueId !== leagueId) {
-      throw new SquadOwnerInvitationNotFoundError(`Team-owner invitation not found: ${invitationId}`);
+      throw new SquadOwnerInvitationNotFoundError(`Co-owner invitation not found: ${invitationId}`);
     }
     await this.requireActorCanManageSquad(
       leagueId,
@@ -261,7 +261,7 @@ export class SquadOwnerInvitationService {
     );
     if (invitation.status !== SharedSquadOwnerInvitationStatus.PENDING) {
       throw new SquadOwnerInvitationOperationError(
-        'Only pending team-owner invitations can be revoked',
+        'Only pending co-owner invitations can be revoked',
         'SQUAD_OWNER_INVITATION_NOT_PENDING',
       );
     }
@@ -274,13 +274,13 @@ export class SquadOwnerInvitationService {
   async getInvitationPreview(inviteCode: string): Promise<TeamOwnerInvitationPreviewResponse['invitation']> {
     const invitation = await this.invitationRepo.findByCode(inviteCode);
     if (!invitation) {
-      throw new SquadOwnerInvitationNotFoundError(`Team-owner invitation not found: ${inviteCode}`);
+      throw new SquadOwnerInvitationNotFoundError(`Co-owner invitation not found: ${inviteCode}`);
     }
     const squad = await this.squadRepo.findById(invitation.squadId);
     const league = await this.prisma.league.findUnique({ where: { id: invitation.leagueId } });
     if (!squad || !league) {
       throw new SquadOwnerInvitationOperationError(
-        'Team-owner invitation target is no longer available',
+        'This invitation is no longer available',
         'SQUAD_OWNER_INVITATION_TARGET_MISSING',
       );
     }
@@ -341,7 +341,7 @@ export class SquadOwnerInvitationService {
   private async requirePendingInvitation(inviteCode: string): Promise<SquadOwnerInvitation> {
     const invitation = await this.invitationRepo.findByCode(inviteCode);
     if (!invitation) {
-      throw new SquadOwnerInvitationNotFoundError(`Team-owner invitation not found: ${inviteCode}`);
+      throw new SquadOwnerInvitationNotFoundError(`Co-owner invitation not found: ${inviteCode}`);
     }
     if (invitation.status !== SharedSquadOwnerInvitationStatus.PENDING) {
       throw new SquadOwnerInvitationOperationError(
@@ -362,7 +362,7 @@ export class SquadOwnerInvitationService {
     await this.requireActiveSquad(
       invitation.leagueId,
       invitation.squadId,
-      'This team is no longer active, so its invitation cannot be accepted.',
+      'This invitation is no longer active, so it cannot be accepted.',
     );
     return invitation;
   }
@@ -412,7 +412,7 @@ export class SquadOwnerInvitationService {
     const membership = await this.membershipRepo.findByLeagueAndUser(leagueId, userId);
     if (!membership || membership.status !== LeagueMembershipStatus.ACTIVE) {
       throw new SquadOwnerInvitationOperationError(
-        'You must be an active league member to manage team owners',
+        'You must be an active league member to manage co-owners',
         'LEAGUE_MEMBERSHIP_REQUIRED',
       );
     }
@@ -442,7 +442,7 @@ export class SquadOwnerInvitationService {
       : await this.squadMembershipRepo.findByLeagueAndUser(leagueId, actorUserId);
     if (!isCommissioner && (!actorSquadMembership || actorSquadMembership.status !== SquadMembershipStatus.ACTIVE)) {
       throw new SquadOwnerInvitationOperationError(
-        'You must be an active team owner to manage co-owners',
+        'You must be an active owner to manage co-owners',
         'SQUAD_OWNER_REQUIRED',
       );
     }
@@ -465,7 +465,7 @@ export class SquadOwnerInvitationService {
     }
     if (context.actorSquadMembership?.squadId !== squadId) {
       throw new SquadOwnerInvitationOperationError(
-        'You may only manage co-owners for your own team',
+        'You may only manage your own co-owners',
         'SQUAD_OWNER_SCOPE_FORBIDDEN',
       );
     }
@@ -477,7 +477,7 @@ export class SquadOwnerInvitationService {
     const league = await this.prisma.league.findUnique({ where: { id: leagueId } });
     if (league && !league.isActive) {
       throw new SquadOwnerInvitationOperationError(
-        'This league is inactive. Reactivate it before inviting or adding team owners.',
+        'This league is inactive. Reactivate it before inviting or adding co-owners.',
         'LEAGUE_INACTIVE',
       );
     }
@@ -486,11 +486,11 @@ export class SquadOwnerInvitationService {
   private async requireActiveSquad(
     leagueId: string,
     squadId: string,
-    inactiveMessage = 'Team-owner invites require an active team',
+    inactiveMessage = 'Co-owner invites need an active membership in the league',
   ) {
     const squad = await this.squadRepo.findById(squadId);
     if (!squad || squad.leagueId !== leagueId) {
-      throw new SquadOwnerInvitationNotFoundError(`Team not found: ${squadId}`);
+      throw new SquadOwnerInvitationNotFoundError(`Squad not found: ${squadId}`);
     }
     if (!squad.isActive) {
       throw new SquadOwnerInvitationOperationError(
@@ -552,7 +552,7 @@ export class SquadOwnerInvitationService {
     if (squadMembership) {
       if (squadMembership.status === SquadMembershipStatus.ACTIVE && squadMembership.squadId !== squadId) {
         throw new SquadOwnerInvitationOperationError(
-          'That user already belongs to another team in this league',
+          'That user is already a member of this league',
           'SQUAD_OWNER_INVITATION_SQUAD_CONFLICT',
         );
       }
@@ -587,7 +587,7 @@ export class SquadOwnerInvitationService {
     const squad = await this.squadRepo.findById(invitation.squadId);
     if (!squad) {
       throw new SquadOwnerInvitationOperationError(
-        'Invitation target team no longer exists',
+        'This invitation is no longer available',
         'SQUAD_OWNER_INVITATION_TARGET_MISSING',
       );
     }

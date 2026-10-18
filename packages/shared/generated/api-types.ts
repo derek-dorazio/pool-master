@@ -716,7 +716,7 @@ export interface paths {
         };
         /**
          * List squads in a league
-         * @description Returns the squads associated with the current league for team management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
+         * @description Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
          */
         get: operations["listLeagueSquads"];
         put?: never;
@@ -746,15 +746,15 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Permanently delete an inactive team
-         * @description Permanently deletes an inactive team and cascades related team-owned data. This route is root-admin only and exists to support QA cleanup flows from Team Home.
+         * Permanently delete an inactive squad
+         * @description Permanently deletes an inactive squad and cascades related squad-owned data. This route is root-admin only and exists to support QA cleanup flows from the web app.
          */
         delete: operations["deleteLeagueSquad"];
         options?: never;
         head?: never;
         /**
          * Update squad details
-         * @description Updates mutable squad fields such as naming and presentation detail for an active team owner, league commissioner, or root admin.
+         * @description Updates mutable squad fields such as naming and presentation detail for an active squad owner, league commissioner, or root admin.
          */
         patch: operations["updateLeagueSquad"];
         trace?: never;
@@ -769,10 +769,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Inactivate a team
-         * @description Inactivates the target team, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the team's owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).
+         * Inactivate a squad
+         * @description Inactivates the target squad, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the squad's owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original squad (#218).
          *
-         *     **League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners' league memberships, so it is league administration rather than team management.
+         *     **League commissioners and root admins only (#219).** Squad owners may invite and remove co-owners on their own squad, but ending a squad also ends its owners' league memberships, so it is league administration rather than squad management.
          */
         post: operations["inactivateLeagueSquad"];
         delete?: never;
@@ -791,8 +791,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Add or reactivate a team owner
-         * @description Adds an owner to the team or reactivates an existing inactive owner membership for an active team owner, league commissioner, or root admin.
+         * Add or reactivate a squad owner
+         * @description Adds an owner to the squad or reactivates an existing inactive owner membership for an active squad owner, league commissioner, or root admin.
          */
         post: operations["addSquadOwner"];
         delete?: never;
@@ -812,8 +812,8 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Remove a team owner
-         * @description Removes the owner relationship between the target user and team. The backend blocks removal of the final active owner and requires team inactivation instead.
+         * Remove a squad owner
+         * @description Removes the owner relationship between the target user and squad. The backend blocks removal of the final active owner and requires squad inactivation instead.
          */
         delete: operations["removeSquadOwner"];
         options?: never;
@@ -829,8 +829,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List team-owner invitations for a league
-         * @description Returns pending and historical team-owner invitations visible to the current commissioner, active team owner, or root admin.
+         * List co-owner invitations for a league
+         * @description Returns pending and historical co-owner invitations visible to the current commissioner, active squad owner, or root admin.
          */
         get: operations["listSquadOwnerInvitations"];
         put?: never;
@@ -852,7 +852,7 @@ export interface paths {
         put?: never;
         /**
          * Invite a co-owner by email
-         * @description Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active team owners, league commissioners, and root admins may start this flow.
+         * @description Starts the co-owner invite flow for a squad. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active squad owners, league commissioners, and root admins may start this flow.
          */
         post: operations["createSquadOwnerInvitation"];
         delete?: never;
@@ -871,8 +871,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Replace an active team owner
-         * @description Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A team owner may replace a co-owner; a league commissioner or root admin may also replace a team's only owner, and the team stays active for the replacement.
+         * Replace an active squad owner
+         * @description Guided replacement flow that removes the selected current owner (ending their squad and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A squad owner may replace a co-owner; a league commissioner or root admin may also replace a squad's only owner, and the squad stays active for the replacement.
          */
         post: operations["replaceSquadOwner"];
         delete?: never;
@@ -892,8 +892,8 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Revoke a pending team-owner invitation
-         * @description Revokes a pending co-owner invitation so it can no longer be accepted. Active team owners, league commissioners, and root admins may revoke invitations in their allowed scope.
+         * Revoke a pending co-owner invitation
+         * @description Revokes a pending co-owner invitation so it can no longer be accepted. Active squad owners, league commissioners, and root admins may revoke invitations in their allowed scope.
          */
         delete: operations["revokeSquadOwnerInvitation"];
         options?: never;
@@ -949,8 +949,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Preview a team-owner invitation by invite code
-         * @description Returns the minimal league and team identity needed to render the public team-owner invitation flow before or after authentication.
+         * Preview a co-owner invitation by invite code
+         * @description Returns the minimal league and squad identity needed to render the public co-owner invitation flow before or after authentication.
          */
         get: operations["getTeamOwnerInvitationPreview"];
         put?: never;
@@ -971,8 +971,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Accept a team-owner invitation using an invite code
-         * @description Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a team that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
+         * Accept a co-owner invitation using an invite code
+         * @description Accepts a co-owner invitation for the authenticated user and provisions league membership plus squad ownership on the target squad. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a squad that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
          */
         post: operations["acceptTeamOwnerInvitation"];
         delete?: never;
@@ -991,12 +991,12 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Register a new account against a team-owner invitation and accept it
-         * @description Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited team — registration, league membership and team ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their team.
+         * Register a new account against a co-owner invitation and accept it
+         * @description Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited squad — registration, league membership and squad ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their squad.
          *
          *     Unauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.
          *
-         *     The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a team that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
+         *     The account is created with the address the invitation was sent to; the request carries no email. A co-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a squad that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
          */
         post: operations["registerWithTeamOwnerInvitation"];
         delete?: never;
@@ -1176,7 +1176,7 @@ export interface paths {
         head?: never;
         /**
          * Update a contest entry
-         * @description Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
+         * @description Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no squad.
          */
         patch: operations["updateContestEntry"];
         trace?: never;
@@ -1212,12 +1212,12 @@ export interface paths {
         put?: never;
         /**
          * Create the current user contest entry
-         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
+         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad.
          */
         post: operations["enterContest"];
         /**
          * Delete the current user contest entry
-         * @description Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
+         * @description Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad.
          */
         delete: operations["leaveContest"];
         options?: never;
@@ -2448,7 +2448,7 @@ export interface paths {
         };
         /**
          * Get current selection state for a contest
-         * @description Returns the current selection-room state for one event of the contest (#713): `sportEventId`, else its next event that has not started, else its last; 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. It includes the event's field, its picks, and each entry's status in it. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry's spend against the salary cap. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. Until the event's picks are revealed (the contest is live and the event has started, or a random draw has dealt) the pick history carries only the caller's own entries, and entryId selects another team's entry only once they are; otherwise it falls back to the caller's own. 409 CONTEST_EVENT_REQUIRED for a contest that covers no event.
+         * @description Returns the current selection-room state for one event of the contest (#713): `sportEventId`, else its next event that has not started, else its last; 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. It includes the event's field, its picks, and each entry's status in it. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry's spend against the salary cap. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. Until the event's picks are revealed (the contest is live and the event has started, or a random draw has dealt) the pick history carries only the caller's own entries, and entryId selects another squad's entry only once they are; otherwise it falls back to the caller's own. 409 CONTEST_EVENT_REQUIRED for a contest that covers no event.
          */
         get: operations["getSelectionState"];
         put?: never;
@@ -2490,9 +2490,73 @@ export interface paths {
         put?: never;
         /**
          * Submit a contest entry's picks for one event
-         * @description Submits the caller's entry for one event of its contest (#713: "submit week 6", "submit your Masters picks") once that event's lineup is complete, and returns the refreshed selection state for that event. Each event of an entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted event changes nothing. A later pick change that leaves the lineup short or over the cap sends that event back to DRAFT. An event is submitted only while the contest is OPEN or ACTIVE and that event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. Only a member of the entry's team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
+         * @description Submits the caller's entry for one event of its contest (#713: "submit week 6", "submit your Masters picks") once that event's lineup is complete, and returns the refreshed selection state for that event. Each event of an entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted event changes nothing. A later pick change that leaves the lineup short or over the cap sends that event back to DRAFT. An event is submitted only while the contest is OPEN or ACTIVE and that event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. Only a member of the entry's squad may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
          */
         post: operations["submitContestEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a prediction contest entry's game picks for one event
+         * @description Returns one event's games, in game-number order and without cancelled games, with the entry's pick on each (#716). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. The entry's own squad sees every pick; anyone else sees a pick only once its game is revealed, at that game's kickoff once the contest is live. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
+         */
+        get: operations["getGamePicks"];
+        /**
+         * Save game picks
+         * @description Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, and replaces the entry's pick on that game. Only a member of the entry's squad may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team not playing the game; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
+         */
+        put: operations["saveGamePicks"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks/{sportEventMatchId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Clear a game pick
+         * @description Removes the caller's pick on one game and returns the event's games with the entry's picks (#716). Clearing a game with no pick changes nothing. Before the event's first kickoff, clearing a pick of a submitted week sends it back to DRAFT. Refused as saving is, and with 409 PREDICTION_CLEAR_AFTER_FIRST_KICKOFF once the first game has started: a submitted week then stays submitted, and a pick on a game still to start can be changed to the other team but not cleared. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
+         */
+        delete: operations["clearGamePick"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit an entry's game picks for one event
+         * @description Submits the caller's entry for one event ("submit week 6") and returns the event's games with the entry's picks (#716). Only a submitted event counts. Every game must be picked: 409 PREDICTION_WEEK_INCOMPLETE otherwise. In a confidence pool the values must be 1 to the game count, each used once: 409 PREDICTION_CONFIDENCE_INVALID otherwise. Submitting a submitted event changes nothing. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE and the event's first game has not started. Only a member of the entry's team may submit: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
+         */
+        post: operations["submitGamePicks"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4654,6 +4718,50 @@ export interface components {
                     };
                 };
             };
+        } | {
+            /** @enum {string} */
+            selectionType: "PICK_EM";
+            /**
+             * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+             * @enum {string}
+             */
+            mode: "STRAIGHT_UP" | "CONFIDENCE";
+            /** @description Maximum entries a Team may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                config: Record<string, never>;
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
+            };
         };
         /** @description One inherited event tier and its participant assignments. */
         EffectiveTierDto: {
@@ -4777,6 +4885,20 @@ export interface components {
                 contestId: string;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "PICK_EM";
+                /**
+                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                 * @enum {string}
+                 */
+                mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Contest-configuration identifier. */
+                id: string;
+                /** @description Contest that owns the configuration. */
+                contestId: string;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
             };
             /**
              * Format: date-time
@@ -4819,12 +4941,12 @@ export interface components {
              * @description Contest type that may use the template.
              * @enum {string}
              */
-            contestFormat: "ROSTER";
+            contestFormat: "ROSTER" | "PREDICTION";
             /**
              * @description How an entry picks in a contest created from this template.
              * @enum {string}
              */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM";
             /** @description Stable machine key for the template. */
             templateKey: string;
             /** @description Commissioner-facing template label. */
@@ -4969,6 +5091,50 @@ export interface components {
                         };
                     };
                 };
+            } | {
+                /** @enum {string} */
+                selectionType: "PICK_EM";
+                /**
+                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                 * @enum {string}
+                 */
+                mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
             };
         };
         /** @description Managed-contest detail response. */
@@ -5050,6 +5216,20 @@ export interface components {
                     contestId: string;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "PICK_EM";
+                    /**
+                     * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                     * @enum {string}
+                     */
+                    mode: "STRAIGHT_UP" | "CONFIDENCE";
+                    /** @description Contest-configuration identifier. */
+                    id: string;
+                    /** @description Contest that owns the configuration. */
+                    contestId: string;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
                 };
                 /**
                  * Format: date-time
@@ -5086,7 +5266,7 @@ export interface components {
              * @description Only templates for this contest format.
              * @enum {string}
              */
-            contestFormat?: "ROSTER";
+            contestFormat?: "ROSTER" | "PREDICTION";
             /** @description Templates for this event type, plus the ones that apply to any event type. */
             eventType?: string;
             /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
@@ -5116,12 +5296,12 @@ export interface components {
                  * @description Contest type that may use the template.
                  * @enum {string}
                  */
-                contestFormat: "ROSTER";
+                contestFormat: "ROSTER" | "PREDICTION";
                 /**
                  * @description How an entry picks in a contest created from this template.
                  * @enum {string}
                  */
-                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM";
                 /** @description Stable machine key for the template. */
                 templateKey: string;
                 /** @description Commissioner-facing template label. */
@@ -5230,6 +5410,50 @@ export interface components {
                     picksPerEntry: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "PICK_EM";
+                    /**
+                     * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                     * @enum {string}
+                     */
+                    mode: "STRAIGHT_UP" | "CONFIDENCE";
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -5411,6 +5635,50 @@ export interface components {
                         };
                     };
                 };
+            } | {
+                /** @enum {string} */
+                selectionType: "PICK_EM";
+                /**
+                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                 * @enum {string}
+                 */
+                mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
             };
         };
         /** @description A single contest configuration template. */
@@ -5438,12 +5706,12 @@ export interface components {
                  * @description Contest type that may use the template.
                  * @enum {string}
                  */
-                contestFormat: "ROSTER";
+                contestFormat: "ROSTER" | "PREDICTION";
                 /**
                  * @description How an entry picks in a contest created from this template.
                  * @enum {string}
                  */
-                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM";
                 /** @description Stable machine key for the template. */
                 templateKey: string;
                 /** @description Commissioner-facing template label. */
@@ -5552,6 +5820,50 @@ export interface components {
                     picksPerEntry: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "PICK_EM";
+                    /**
+                     * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                     * @enum {string}
+                     */
+                    mode: "STRAIGHT_UP" | "CONFIDENCE";
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -8169,15 +8481,15 @@ export interface components {
             /** @description The events the contest covers (#713): one for a golf or race contest, several for a majors pool or a season. All from one sport league, each released, with its field loaded and not yet started. The contest keeps them in start-date order, whatever order they are sent in. */
             sportEventIds: string[];
             /**
-             * @description First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
+             * @description ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). It must be the format the selection type plays (PICK_EM is PREDICTION, every other type ROSTER) and one the event's tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise.
              * @enum {string}
              */
-            contestFormat: "ROSTER";
+            contestFormat: "ROSTER" | "PREDICTION";
             /**
              * @description How an entry picks: the selection types with typed rules. It must match the template's selection type when a template is named, and the configuration's.
              * @enum {string}
              */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM";
             /**
              * Format: uuid
              * @description Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.
@@ -8313,6 +8625,50 @@ export interface components {
                         };
                     };
                 };
+            } | {
+                /** @enum {string} */
+                selectionType: "PICK_EM";
+                /**
+                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                 * @enum {string}
+                 */
+                mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
             };
         };
         /** @description Patch payload for updating editable contest metadata. */
@@ -8395,9 +8751,9 @@ export interface components {
             /** @enum {string} */
             status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
             /** @enum {string} */
-            contestFormat: "ROSTER";
+            contestFormat: "ROSTER" | "PREDICTION";
             /** @enum {string} */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM";
             leagueId: string;
             /** @description The events the contest covers, in sequence order (#713). One for a golf or race contest. */
             sportEvents: {
@@ -8503,7 +8859,7 @@ export interface components {
              * @description Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.
              * @enum {string}
              */
-            contestFormat: "ROSTER";
+            contestFormat: "ROSTER" | "PREDICTION";
             /** @description Unused: no built contest format sets it, so it is always null. Removal is tracked in #632. */
             period: number | null;
             /** @description Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632. */
@@ -8995,9 +9351,9 @@ export interface components {
                 /** @enum {string} */
                 status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
                 /** @enum {string} */
-                contestFormat: "ROSTER";
+                contestFormat: "ROSTER" | "PREDICTION";
                 /** @enum {string} */
-                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM";
                 leagueId: string;
                 /** @description The events the contest covers, in sequence order (#713). One for a golf or race contest. */
                 sportEvents: {
@@ -9045,9 +9401,9 @@ export interface components {
                 /** @enum {string} */
                 status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
                 /** @enum {string} */
-                contestFormat: "ROSTER";
+                contestFormat: "ROSTER" | "PREDICTION";
                 /** @enum {string} */
-                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM";
                 leagueId: string;
                 /** @description The events the contest covers, in sequence order (#713). One for a golf or race contest. */
                 sportEvents: {
@@ -9332,7 +9688,7 @@ export interface components {
             /** @description Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started. */
             acceptsPicks: boolean;
             /** @enum {string} */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM";
             /**
              * Format: date-time
              * @description When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
@@ -9434,7 +9790,7 @@ export interface components {
             /** @description Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started. */
             acceptsPicks: boolean;
             /** @enum {string} */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM";
             /**
              * Format: date-time
              * @description When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
@@ -9526,6 +9882,103 @@ export interface components {
                 /** @description What the cheapest available golfers not on the entry would cost to fill its open places; null when the field cannot fill them. For a warning only, never a block. */
                 cheapestFill: number | null;
             } | null;
+        };
+        /** @description Request payload for saving an entry's picks on one event's games. */
+        SaveGamePicksRequest: {
+            /** @description The picks to save, one per game. Each replaces the entry's pick on that game; the entry's other picks are kept. Saved together or not at all, so two confidence values can be swapped in one request. */
+            picks: {
+                /**
+                 * Format: uuid
+                 * @description The game picked: one of the event's games.
+                 */
+                sportEventMatchId: string;
+                /**
+                 * Format: uuid
+                 * @description The team picked to win: the field row of one of the game's two teams.
+                 */
+                sportEventParticipantId: string;
+                /** @description A confidence pool's value for this pick, 1 to the week's number of games. Omitted or null in a straight-up pool, and until the entry gives one. A value may repeat until the week is submitted. */
+                confidence?: number | null;
+            }[];
+        };
+        /** @description A prediction contest entry's picks on one event's games. */
+        GamePicksResponse: {
+            /** Format: uuid */
+            contestId: string;
+            /** Format: uuid */
+            entryId: string;
+            entryName: string;
+            /** Format: uuid */
+            sportEventId: string;
+            /** @enum {string} */
+            mode: "STRAIGHT_UP" | "CONFIDENCE";
+            /**
+             * @description The entry's status for this event: DRAFT while picking, SUBMITTED once every game is picked and submitted. Only a submitted event counts.
+             * @enum {string}
+             */
+            status: "DRAFT" | "SUBMITTED";
+            /** Format: date-time */
+            submittedAt: string | null;
+            /** @description Whether the caller is on the entry's team, and so sees every pick on it. */
+            ownEntry: boolean;
+            /** @description Whether the caller can submit the event now: their own draft entry, every game picked with valid confidence values, before the first game starts. */
+            canSubmit: boolean;
+            /** @description How many of the games have a pick. Counted on the caller's own entry; on another team's, only revealed games are counted. */
+            pickedCount: number;
+            gameCount: number;
+            /** @description The event's games in game-number order. Cancelled games are left out: they are not picked. */
+            games: {
+                /** Format: uuid */
+                sportEventMatchId: string;
+                matchNumber: number;
+                roundNumber: number;
+                /**
+                 * Format: date-time
+                 * @description When the game starts: its scheduled time, else its event's start. Its pick locks then.
+                 */
+                kickoff: string;
+                /** @enum {string} */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                isNeutralSite: boolean;
+                /** @description Null until the team is decided. */
+                home: {
+                    /**
+                     * Format: uuid
+                     * @description The team's field row in the event: what a pick names.
+                     */
+                    sportEventParticipantId: string;
+                    /** Format: uuid */
+                    participantId: string;
+                    name: string;
+                } | null;
+                /** @description Null until the team is decided. */
+                away: {
+                    /**
+                     * Format: uuid
+                     * @description The team's field row in the event: what a pick names.
+                     */
+                    sportEventParticipantId: string;
+                    /** Format: uuid */
+                    participantId: string;
+                    name: string;
+                } | null;
+                /** @description Whether the game's pick can no longer change: it has kicked off, or the contest no longer takes picks. */
+                locked: boolean;
+                /** @description Whether picks on this game are shown to the whole league: from its kickoff once the contest is live. */
+                revealed: boolean;
+                /** @description The entry's pick on the game. Null when it has none, and on another team's entry until the game is revealed. */
+                pick: {
+                    /**
+                     * Format: uuid
+                     * @description The team picked to win.
+                     */
+                    sportEventParticipantId: string;
+                    /** @description The pick's confidence value; null in a straight-up pool or until given. */
+                    confidence: number | null;
+                    /** Format: date-time */
+                    pickedAt: string;
+                } | null;
+            }[];
         };
         /**
          * @description A system email template.
@@ -16235,7 +16688,7 @@ export interface operations {
                 /** @description Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league. */
                 sportLeagueId?: string;
                 /** @description Only templates for this contest format. */
-                contestFormat?: "ROSTER";
+                contestFormat?: "ROSTER" | "PREDICTION";
                 /** @description Templates for this event type, plus the ones that apply to any event type. */
                 eventType?: string;
                 /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
@@ -20659,6 +21112,287 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SelectionStateResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getGamePicks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+                entryId: string;
+                sportEventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A prediction contest entry's picks on one event's games. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GamePicksResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    saveGamePicks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+                entryId: string;
+                sportEventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveGamePicksRequest"];
+            };
+        };
+        responses: {
+            /** @description A prediction contest entry's picks on one event's games. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GamePicksResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    clearGamePick: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+                entryId: string;
+                sportEventId: string;
+                sportEventMatchId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A prediction contest entry's picks on one event's games. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GamePicksResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    submitGamePicks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+                entryId: string;
+                sportEventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A prediction contest entry's picks on one event's games. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GamePicksResponse"];
                 };
             };
             /** @description Standard API error envelope. */

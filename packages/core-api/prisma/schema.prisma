@@ -318,6 +318,7 @@ enum RaceResultStatus {
 /// once anticipated it was removed as dead scaffolding — plans/124 §4.11).
 enum PrismaContestFormat {
   ROSTER
+  PREDICTION
 }
 
 // #186: the lifecycle and discriminator columns below were free text until each
@@ -335,6 +336,7 @@ enum PrismaSelectionType {
   TIERED
   BUDGET_PICK
   RANDOM_DRAW
+  PICK_EM
 }
 
 enum PrismaPrizePayoutType {
@@ -875,6 +877,7 @@ model ContestEntry {
 
   picks          ContestEntryPick[]
   events         ContestEntryEvent[]
+  predictions    ContestEntryMatchPrediction[]
   standing       ContestEntryStanding?
   eventStandings ContestEntryEventStanding[]
 
@@ -900,6 +903,30 @@ model ContestEntryEvent {
   @@unique([contestEntryId, sportEventId])
   @@index([sportEventId])
   @@map("contest_entry_events")
+}
+
+/// A prediction contest entry's pick of one game (#716): the team it says wins, and in a
+/// confidence pool how sure it is (1 to the week's number of games, each once by submit). One
+/// per entry per game. Database checks: `confidence` is at least 1. That the team plays in the
+/// game and the game is still open is the prediction service's check.
+model ContestEntryMatchPrediction {
+  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestEntryId          String   @map("contest_entry_id") @db.Uuid
+  sportEventMatchId       String   @map("sport_event_match_id") @db.Uuid
+  sportEventParticipantId String   @map("sport_event_participant_id") @db.Uuid
+  confidence              Int?
+  pickedAt                DateTime @map("picked_at") @db.Timestamptz
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contestEntry          ContestEntry          @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
+  sportEventMatch       SportEventMatch       @relation(fields: [sportEventMatchId], references: [id], onDelete: Restrict)
+  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id], onDelete: Restrict)
+
+  @@unique([contestEntryId, sportEventMatchId])
+  @@index([sportEventMatchId])
+  @@index([sportEventParticipantId])
+  @@map("contest_entry_match_predictions")
 }
 
 /// A contest entry's standing, frozen when its contest settles — cross-sport.
@@ -1110,6 +1137,7 @@ model SportEventParticipant {
   raceResult  SportEventParticipantRaceResult?
   homeMatches SportEventMatch[]                @relation("SportEventMatchHome")
   awayMatches SportEventMatch[]                @relation("SportEventMatchAway")
+  predictions ContestEntryMatchPrediction[]
 
   @@unique([sportEventId, participantId])
   @@index([sportEventId])
@@ -1167,12 +1195,13 @@ model SportEventMatch {
   createdAt                   DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                   DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEvent      SportEvent             @relation(fields: [sportEventId], references: [id])
-  sportEventRound SportEventRound        @relation(fields: [sportEventRoundId], references: [id])
-  home            SportEventParticipant? @relation("SportEventMatchHome", fields: [homeSportEventParticipantId], references: [id], onDelete: Restrict)
-  away            SportEventParticipant? @relation("SportEventMatchAway", fields: [awaySportEventParticipantId], references: [id], onDelete: Restrict)
-  advancesTo      SportEventMatch?       @relation("SportEventMatchAdvancesTo", fields: [advancesToMatchId], references: [id], onDelete: NoAction)
-  fedBy           SportEventMatch[]      @relation("SportEventMatchAdvancesTo")
+  sportEvent      SportEvent                    @relation(fields: [sportEventId], references: [id])
+  sportEventRound SportEventRound               @relation(fields: [sportEventRoundId], references: [id])
+  home            SportEventParticipant?        @relation("SportEventMatchHome", fields: [homeSportEventParticipantId], references: [id], onDelete: Restrict)
+  away            SportEventParticipant?        @relation("SportEventMatchAway", fields: [awaySportEventParticipantId], references: [id], onDelete: Restrict)
+  advancesTo      SportEventMatch?              @relation("SportEventMatchAdvancesTo", fields: [advancesToMatchId], references: [id], onDelete: NoAction)
+  fedBy           SportEventMatch[]             @relation("SportEventMatchAdvancesTo")
+  predictions     ContestEntryMatchPrediction[]
 
   @@unique([sportEventId, matchNumber])
   // Two matches cannot feed the same side of the next one.

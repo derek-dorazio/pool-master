@@ -355,7 +355,7 @@ export function requireMemberOfSquad(
         reply,
         403,
         'SQUAD_OWNER_REQUIRED',
-        'You must be an active team owner to perform this action',
+        'Only an active owner can do this',
       );
       return;
     }
@@ -398,7 +398,7 @@ export function requireOwnSquad(
         reply,
         403,
         'SQUAD_MEMBERSHIP_REQUIRED',
-        'You must have an active team in this league to perform this action',
+        'You must be an active member of this league to do this',
       );
       return;
     }
@@ -412,7 +412,7 @@ export function requireOwnSquad(
           status: squadMembership.status,
         },
       }, 'Rejected own-squad action for a caller whose team membership has ended');
-      await sendError(reply, 403, 'SQUAD_MEMBERSHIP_INACTIVE', 'Your membership of this team has ended');
+      await sendError(reply, 403, 'SQUAD_MEMBERSHIP_INACTIVE', 'Your membership in this league has ended');
       return;
     }
     logger.debug({

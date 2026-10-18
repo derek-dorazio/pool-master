@@ -132,7 +132,7 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
     )));
     listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
       buildLeagueSquad({
-        name: "Derek Dorazio's Team",
+        name: "Derek Dorazio",
         createdAt: '2026-04-16T00:00:00.000Z',
         updatedAt: '2026-04-16T00:00:00.000Z',
         members: [
@@ -238,7 +238,7 @@ describe('Joining a league from an invite link', () => {
 
   function viewersNewTeam(overrides: Parameters<typeof buildLeagueSquad>[0] = {}) {
     return buildLeagueSquad({
-      name: "Derek Dorazio's Team",
+      name: "Derek Dorazio",
       iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
       members: [buildLeagueSquadMember()],
       ...overrides,
@@ -302,7 +302,7 @@ describe('Joining a league from an invite link', () => {
 
     renderJoinLeaguePage();
 
-    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Your name in this league' })).toHaveValue("Derek Dorazio's Team"));
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Your name in this league' })).toHaveValue("Derek Dorazio"));
     fireEvent.click(screen.getByRole('button', { name: 'Join league' }));
 
     expect(await screen.findByTestId('league-destination')).toBeInTheDocument();

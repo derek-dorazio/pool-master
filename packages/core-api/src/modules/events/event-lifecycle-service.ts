@@ -39,8 +39,8 @@ import {
 } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
-export interface CompletedSportEventSettlement {
-  settleCompletedSportEvent(
+export interface FinishedSportEventSettlement {
+  settleFinishedSportEvent(
     sportEventId: string,
     input?: { completedAt?: Date },
   ): Promise<unknown>;
@@ -107,7 +107,7 @@ export class EventLifecycleService {
     private readonly logger?: FastifyBaseLogger,
     private readonly mailDelivery?: MailDeliveryProvider,
     private readonly appBaseUrl = 'http://localhost:5173',
-    private readonly contestSettlement?: CompletedSportEventSettlement,
+    private readonly contestSettlement?: FinishedSportEventSettlement,
   ) {}
 
   async applySportEventStatusTransition(
@@ -146,8 +146,10 @@ export class EventLifecycleService {
     if (input.toStatus === SportEventStatus.IN_PROGRESS) {
       await this.activateContestsForStartedEvent(updated);
     }
-    if (input.toStatus === SportEventStatus.COMPLETED) {
-      await this.settleContestsForCompletedEvent(updated);
+    // A cancelled event settles its contests too (#743): it counts for nothing, so it must not
+    // hold a contest open.
+    if (input.toStatus === SportEventStatus.COMPLETED || input.toStatus === SportEventStatus.CANCELLED) {
+      await this.settleContestsForFinishedEvent(updated);
     }
 
     return {
@@ -157,15 +159,18 @@ export class EventLifecycleService {
     };
   }
 
-  private async settleContestsForCompletedEvent(
+  private async settleContestsForFinishedEvent(
     sportEvent: SportEvent,
   ): Promise<void> {
     if (!this.contestSettlement) {
       return;
     }
 
-    await this.contestSettlement.settleCompletedSportEvent(sportEvent.id, {
-      completedAt: sportEvent.endDate ?? sportEvent.startDate,
+    // A cancelled event has no end date of its own, and its start may still be ahead, so its
+    // contests settle at the cancellation.
+    const cancelledAt = sportEvent.status === SportEventStatus.CANCELLED ? new Date() : undefined;
+    await this.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
+      completedAt: sportEvent.endDate ?? cancelledAt ?? sportEvent.startDate,
     });
   }
 

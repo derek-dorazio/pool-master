@@ -29,7 +29,9 @@ League ─→ Contest ─→ ContestSportEvent[] ─→ SportEvent        └─
              └─→ ContestEntry ←── Squad
                     (entryNumber: a squad may hold several)
                     ├─→ ContestEntryEvent[]  (DRAFT | SUBMITTED, one per contest event)
-                    └─→ ContestEntryPick[] ─→ SportEventParticipant
+                    ├─→ ContestEntryPick[] ─→ SportEventParticipant          (ROSTER contests)
+                    └─→ ContestEntryMatchPrediction[] ─→ SportEventMatch     (PREDICTION contests)
+                          (the team picked to win: a SportEventParticipant)
 ```
 
 Two readings of this chain have both been held at once, so it is worth stating plainly:
@@ -47,6 +49,11 @@ Two readings of this chain have both been held at once, so it is worth stating p
   leagues, can run on the same event; they share its field, scores and tiers.
 - **Draft and submitted are per entry per event** (`ContestEntryEvent`). An entry submits each
   event's picks on its own; a pick belongs to an event through the field row it points at.
+- **A contest's format says what an entry picks** (#716). A `ROSTER` contest's entries pick a
+  lineup of field members (`ContestEntryPick`); a `PREDICTION` contest's entries pick the winner
+  of each game of an event (`ContestEntryMatchPrediction`), naming the team, never "home" or
+  "away". The selection type decides the format: `PICK_EM` is `PREDICTION`, every other type
+  `ROSTER`.
 
 The tenant/global split is access rule A11 in `docs/DOMAIN-OPERATIONS.md`.
 
@@ -96,6 +103,7 @@ Shown By Its Name*.
 | `ContestEntry` | entry | One lineup a squad submits to one contest. A squad may hold several (`entryNumber`) | The squad itself |
 | `ContestEntryEvent` | entry status (submitted, not submitted) | An entry's draft/submitted status for one event of its contest | The entry itself |
 | `ContestEntryPick` | pick, lineup | One field member chosen on one entry. The entry's picks for an event are its lineup for that event | A `SportEventParticipant`, which it points at |
+| `ContestEntryMatchPrediction` | game pick, pick | A prediction contest entry's pick of one game's winner, with a confidence value in a confidence pool | A `ContestEntryPick`, a roster contest's lineup pick |
 | `ContestEntryEventStanding` | event result | An entry's result in one event, frozen when that event settles | `ContestEntryStanding`, the contest total |
 | `ContestEntryStanding` | standings, final result | An entry's contest total (the sum of its event results), frozen when the contest settles | `SportEventParticipantStanding`, the golfer's position in the event |
 
@@ -203,7 +211,8 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 | **open a contest** | Commissioner moves it `DRAFT` → `OPEN`. Members can now see and enter it; its name and settings are locked with no undo |
 | **enter a contest**, **create an entry** | A squad owner creates a `ContestEntry`, `DRAFT` for every event of the contest, numbered after the squad's highest entry in that contest. Only while the contest is `OPEN` and its first event has not started: nobody joins a contest already being played |
 | **make picks**, **pick a golfer** | Add, swap or remove `ContestEntryPick`s on an entry in the selection room. Tiered: the configuration says how many picks come from each event tier; budget pick: the roster size caps the picks |
-| **submit an entry** | Submits one event's picks: that event's `ContestEntryEvent` goes `DRAFT` → `SUBMITTED`, refused unless the lineup is complete. Only submitted events count on the leaderboard and in settlement. A later change that leaves the lineup short sends that event back to `DRAFT`; an event left unsubmitted at its start simply scores nothing |
+| **pick a game**, **make game picks** | In a pick'em contest, save the team an entry says wins each game of an event (`ContestEntryMatchPrediction`), and in a confidence pool a value from 1 to the event's number of games. Each pick saves on its own while the week is a draft; a value may repeat until submit. Each game's pick locks at that game's kickoff and is revealed to the league then (`areMatchPicksOpen`, `areMatchPicksRevealed`). After the event's first kickoff a submitted week stays submitted: a pick on a game still to start can be swapped to the other team, but not cleared |
+| **submit an entry** | Submits one event's picks: that event's `ContestEntryEvent` goes `DRAFT` → `SUBMITTED`, refused unless the lineup is complete. Only submitted events count on the leaderboard and in settlement. A later change that leaves the lineup short sends that event back to `DRAFT`; an event left unsubmitted at its start simply scores nothing. In a pick'em contest the week is submitted once every game is picked (with confidence values 1 to the game count, each once), and a week still in draft at its first kickoff can no longer be picked or submitted |
 | **lock a contest**, **entries close** | There is no lock action. Entries are created, renamed or left only while the contest is `OPEN` and its first event has not started (`areContestEntriesOpen`). An event's picks change while the contest is `OPEN` or `ACTIVE` and that event's scheduled start has not passed (`areEventPicksOpen`). Settings locked earlier, when the contest opened |
 | **start**, **go live** | The contest's first event moves to `IN_PROGRESS` (by the lifecycle scheduler from the round schedule, or by an admin) and the `OPEN` contest becomes `ACTIVE`. **Picks are revealed** event by event: an event's picks are visible to the league once that event starts; before it each team sees only its own |
 | **score a round**, **scores come in** | A `SportEventParticipantRound` and its golf row are written, by the provider sync for a linked event or by an admin's correction, and the event standings are recomputed. Scoring stops at the event's scheduled round count; playoff holes are not a round |
@@ -220,4 +229,7 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
   pays it.
 - **A contest cannot be cancelled, and an entry cannot be made inactive.** A contest is
   `DRAFT`, `OPEN`, `ACTIVE` or `COMPLETED`; an entry is `DRAFT` or `SUBMITTED`.
+- **A cancelled event counts for nothing.** It is settled with no result for anyone, adds
+  nothing to any total, and never holds its contest open: a contest settles once each of its
+  events is completed or cancelled.
 - **A league has no join policy.** Every join is through an invitation.

@@ -10,10 +10,14 @@ import {
   eventRoundLabel,
   getSportDefinition,
   getValidContestFormatsForTournamentFormat,
+  isContestFormatValidForTournamentFormat,
+  contestFormatForSelectionType,
+  isPredictionSelectionType,
   sportAllowsSelectionType,
   sportPlaysBracket,
 } from '@poolmaster/shared/domain';
 import { getSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
+import { getPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/registry';
 
 // The registry conformance suite (#602): every sport definition is checked here, so a sport
 // added to the registry gets these checks without anyone writing them.
@@ -29,7 +33,19 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
   it('allows only selection types that have an engine, each listed once', () => {
     expect(new Set(definition.selectionTypes).size).toBe(definition.selectionTypes.length);
     for (const selectionType of definition.selectionTypes) {
-      expect(getSelectionEngine(selectionType).selectionType).toBe(selectionType);
+      const engine = isPredictionSelectionType(selectionType)
+        ? getPredictionEngine(selectionType)
+        : getSelectionEngine(selectionType);
+      expect(engine.selectionType).toBe(selectionType);
+    }
+  });
+
+  it('allows only selection types whose contest format its tournament format admits', () => {
+    for (const selectionType of definition.selectionTypes) {
+      expect(isContestFormatValidForTournamentFormat(
+        definition.tournamentFormat,
+        contestFormatForSelectionType(selectionType),
+      )).toBe(true);
     }
   });
 
@@ -236,7 +252,12 @@ describe('basketball', () => {
   it('gives a new tournament six rounds and the four seed lines as four tiers of 16', () => {
     expect(basketball.defaultRounds).toBe(6);
     expect(basketball.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 16 });
-    expect(basketball.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
+  });
+
+  it('offers the three roster selection types and pick\'em', () => {
+    expect(basketball.selectionTypes).toEqual([
+      SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM,
+    ]);
   });
 
   it('labels a six-round bracket First Round through National Championship', () => {
