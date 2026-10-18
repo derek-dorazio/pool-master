@@ -118,13 +118,13 @@ describe('sport data file envelope', () => {
     ]);
   });
 
-  it('refuses a test seed of a sport other than golf, whose made-up results are stroke rounds', () => {
+  it('refuses a test seed of a sport with neither stroke rounds nor a bracket to make results up for', () => {
     const file = horseRacingFile();
     file.testData = true;
     file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
 
     expect(problemsOf(file, true)).toContain(
-      'scope.sport HORSE_RACING cannot have a test seed: its made-up results are stroke rounds, so only golf has one. Use a real file or a test slate.',
+      'scope.sport HORSE_RACING cannot have a test seed: a test seed\'s results are golf\'s stroke rounds or a bracket\'s match results. Use a real file or a test slate.',
     );
   });
 
@@ -194,8 +194,15 @@ describe('sport data file envelope', () => {
 
 describe('sport data bracket', () => {
   // A four-team basketball bracket: two semifinals whose winners meet in the final.
-  interface BracketMatch { home: string | null; away: string | null; advancesTo: { matchNumber: number; side: string } | null; regionLabel?: string }
+  interface BracketMatch {
+    home: string | null;
+    away: string | null;
+    advancesTo: { matchNumber: number; side: string } | null;
+    regionLabel?: string;
+    result?: { winner: string; homeScore: number; awayScore: number };
+  }
   interface BracketFile {
+    testData: boolean;
     scope: { contents: string[] };
     sportLeagues: Array<{ bracketAdvancement?: string; events: Array<{ field: unknown[]; matches: BracketMatch[] }> }>;
   }
@@ -279,6 +286,75 @@ describe('sport data bracket', () => {
     withoutField.sportLeagues[0].events[0].field = [];
     withoutField.sportLeagues[0].events[0].matches = [];
     expect(problemsOf(withoutField)).toEqual(['scope.contents has BRACKET without FIELDS: a bracket names field places, so the file carries the field.']);
+  });
+
+  /** The bracket as a test seed: made-up odds on every team and a result on every match. */
+  function bracketTestSeed(): BracketFile {
+    const file = bracketFile();
+    file.testData = true;
+    file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'BRACKET', 'RESULTS'];
+    const event = file.sportLeagues[0].events[0];
+    event.field = event.field.map((entry, index) => ({ ...(entry as object), oddsToWin: 3 + index }));
+    for (const match of event.matches) match.result = { winner: 'HOME', homeScore: 70, awayScore: 61 };
+    return file;
+  }
+
+  it('reads a bracket test seed: made-up odds on the field and a result on each match', () => {
+    const event = parseSportDataFile(bracketTestSeed(), { allowTestData: true }).sportLeagues[0].events[0];
+
+    expect(event.field.map((entry) => entry.oddsToWin)).toEqual([3, 4, 5, 6]);
+    expect(event.matches?.map((match) => match.result?.winner)).toEqual(['HOME', 'HOME', 'HOME']);
+  });
+
+  it('refuses a bracket test seed without odds, with golf\'s stroke rounds, or without its bracket', () => {
+    const file = bracketTestSeed();
+    const field = file.sportLeagues[0].events[0].field as Array<{ oddsToWin?: number; rounds?: number[] }>;
+    delete field[0].oddsToWin;
+    field[1].rounds = [70];
+    file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
+
+    expect(problemsOf(file, true)).toEqual([
+      'A bracket sport\'s test seed needs BRACKET: its results are the bracket\'s match results.',
+      'NCAA Men, Tournament: has a bracket, but the scope\'s contents leave out BRACKET.',
+      'NCAA Men, Tournament: ncaa-duke needs oddsToWin in test data.',
+      'NCAA Men, Tournament: ncaa-vermont carries rounds, which only a golf test seed has.',
+    ]);
+  });
+
+  it('reads a play-in place\'s winner in a test seed: a team of the league not in the field', () => {
+    const file = bracketTestSeed();
+    file.sportLeagues[0].events[0].field[3] = { ...(file.sportLeagues[0].events[0].field[3] as object), playInWinner: 'ncaa-xavier' };
+    (file.sportLeagues[0] as unknown as { players: unknown[] }).players.push({ key: 'ncaa-xavier', name: 'Xavier', countryCode: 'US', ranking: 1 });
+
+    const event = parseSportDataFile(file, { allowTestData: true }).sportLeagues[0].events[0];
+
+    expect(event.field.map((entry) => entry.playInWinner ?? null)).toEqual([null, null, null, 'ncaa-xavier']);
+  });
+
+  it('refuses a play-in winner in a real file, on a place that is not a play-in place, or naming a team outside the league or already in the field', () => {
+    const real = bracketFile();
+    real.sportLeagues[0].events[0].field[3] = { ...(real.sportLeagues[0].events[0].field[3] as object), playInWinner: 'ncaa-duke' };
+    expect(problemsOf(real)).toEqual([
+      'NCAA Men, Tournament: ncaa-texas-xavier\'s play-in winner ncaa-duke is already in the field.',
+      'NCAA Men, Tournament: ncaa-texas-xavier carries playInWinner, which only test data may.',
+    ]);
+
+    const seed = bracketTestSeed();
+    const field = seed.sportLeagues[0].events[0].field;
+    field[0] = { ...(field[0] as object), playInWinner: 'ncaa-houston' };
+    field[3] = { ...(field[3] as object), playInWinner: 'ncaa-gonzaga' };
+    expect(problemsOf(seed, true)).toEqual([
+      'NCAA Men, Tournament: ncaa-duke names a play-in winner, but is not a play-in place.',
+      'NCAA Men, Tournament: ncaa-duke\'s play-in winner ncaa-houston is already in the field.',
+      'NCAA Men, Tournament: ncaa-texas-xavier\'s play-in winner ncaa-gonzaga is not in NCAA Men\'s players.',
+    ]);
+  });
+
+  it('refuses match results in a real file', () => {
+    const file = bracketFile();
+    file.sportLeagues[0].events[0].matches[0].result = { winner: 'AWAY', homeScore: 60, awayScore: 64 };
+
+    expect(problemsOf(file)).toEqual(['NCAA Men, Tournament: carries match results, which only test data may.']);
   });
 
   it('reads a league that reseeds: first-round games that link nowhere, each match in its region', () => {

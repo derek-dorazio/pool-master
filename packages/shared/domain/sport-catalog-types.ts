@@ -22,6 +22,16 @@ export interface SportLeague extends DomainEntity {
   isActive: boolean;
   /** How its bracket winners reach their next match; read only for a sport played as a bracket. */
   bracketAdvancement: BracketAdvancement;
+  /**
+   * What it calls its bracket's rounds, first to final ("First Round" ... "NBA Finals"); empty
+   * when the sport's names fit (#706). Reference data, set where the league is seeded.
+   */
+  roundNames: readonly string[];
+  /**
+   * How many tiers a new event of the league starts with; null takes the sport's default (#707:
+   * the College Football Playoff's six). Reference data, set where the league is seeded.
+   */
+  tierCount: number | null;
 }
 
 /**

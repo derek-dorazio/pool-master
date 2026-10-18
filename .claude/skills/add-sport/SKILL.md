@@ -44,7 +44,10 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
 1. **Scoring family.** Does an existing family already score this sport?
    - Stroke play: lowest total wins (golf).
    - Head to head: a bracket of matches, points per round won plus an optional seed upset
-     bonus (basketball; tennis and NFL playoffs next). Its matches are `SportEventMatch` rows in the event core, not family tables.
+     bonus (basketball, American football; tennis next). A league whose rounds the sport's names
+     do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's), and a league whose field the
+     sport's default tiers do not fit sets its own tier count (`SportLeague.tierCount`: the
+     College Football Playoff's six). Its matches are `SportEventMatch` rows in the event core, not family tables.
    - Finish position: points by place (horse racing, auto racing, cycling).
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.
@@ -136,6 +139,10 @@ In order:
     source checked by one fetch, its first season's schedule file, and a test slate per sport
     league in `test-slates/` so contests can be tried before a real field is out. The fetch
     and load workflows themselves are shared by every sport and need no change.
+    A bracket sport differs on two of the three. Its field and pairings exist only once the
+    bracket is set (the NFL's at the end of the regular season), so there is no schedule file
+    to write ahead of it; and a slate fills a field but no bracket. Its test data is a test
+    seed of the last real bracket, played out (the `load-sport-data` skill, *Test slates*).
 
 ## Step 3 — reflect
 
@@ -196,6 +203,12 @@ down: a lesson that was true mid-series may not be by the end.
   `sportId`). Find a sport's leagues by listing with `?sport=`, not by filtering the DTOs.
 - **Applying race results with POST.** The finishing-order apply is a `PUT` (it replaces the
   rows it names); only its preview is a `POST`. Tests and helpers that guess the verb fail.
+- **Web tests that list every sport.** The Manage menu and its layout test name each sport
+  in registry order, so a new sport fails two web unit tests until they list it. Expected, not
+  a defect: add the sport's name to both.
+- **Dating a test seed from a fixed day in a functional test.** Release refuses an event that
+  has started by the server's clock, which a test cannot set, so a test seed moved forward from
+  a fixed `now` stops releasing once real time passes it. Load a seed with today as `now`.
 - **Adding catalog values "for later".** Add a sport, scoring definition or enum value only
   with the code that uses it. Unused values are dead code and get deleted.
 - **Hiding missing results with defaults.** An unscored participant is unranked, never a

@@ -5,6 +5,7 @@ import {
   golferRoundScore,
   seedDateOffsetDays,
   shiftedEventDates,
+  shiftedMatchTimes,
 } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import { parseSportDataFile, SportDataContent, TEST_SEED_CONTENTS, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 
@@ -208,6 +209,124 @@ describe('running-2027.json', () => {
       ['Chicago Marathon', '2027-10-10', '2027-10-10', 1, null],
     ]);
     expect(eventRows(file, 1)).toEqual(eventRows(file, 0));
+  });
+});
+
+describe('american-football-2026-nfl-playoffs-test.json', () => {
+  const file = readDataFile('american-football-2026-nfl-playoffs-test.json', true);
+  const [nfl] = file.sportLeagues;
+  const [playoffs] = nfl.events;
+  const matches = playoffs.matches ?? [];
+
+  it('is a test seed of one NFL playoffs bracket that reseeds, with fourteen teams seeded 1 to 7 in each conference', () => {
+    expect(file.scope).toEqual({
+      sport: Sport.AMERICAN_FOOTBALL,
+      season: 2026,
+      sportLeagues: ['NFL'],
+      contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS],
+    });
+    expect(nfl.bracketAdvancement).toBe('RESEED_BY_SEED');
+    expect([playoffs.rounds, playoffs.startDate, playoffs.endDate]).toEqual([4, '2026-01-10', '2026-02-08']);
+    expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]);
+  });
+
+  it('plays the 2025 season as it went: six Wild Card games, the 1 seeds on a bye, and the Seahawks beating the Patriots 29-13', () => {
+    expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
+    // The Divisional and conference rounds are both placed by the reseed, so the games before them link nowhere.
+    expect(matches.filter((match) => match.roundNumber <= 2).every((match) => match.advancesTo === null)).toBe(true);
+    expect(matches.filter((match) => match.roundNumber === 3).map((match) => [match.home, match.away, match.advancesTo?.matchNumber])).toEqual([
+      [null, null, 13], [null, null, 13],
+    ]);
+    expect(matches.filter((match) => match.roundNumber === 2).map((match) => [match.home, match.away])).toEqual([
+      ['nfl-denver-broncos', null], [null, null], ['nfl-seattle-seahawks', null], [null, null],
+    ]);
+    expect(matches.every((match) => match.result !== undefined)).toBe(true);
+    expect(matches[12]).toMatchObject({ isNeutralSite: true, result: { winner: 'AWAY', homeScore: 13, awayScore: 29 } });
+  });
+});
+
+describe('basketball-2025-nba-playoffs-test.json', () => {
+  const file = readDataFile('basketball-2025-nba-playoffs-test.json', true);
+  const [nba] = file.sportLeagues;
+  const [playoffs] = nba.events;
+  const matches = playoffs.matches ?? [];
+
+  it('is a test seed of one fixed four-round NBA playoffs bracket of 16 places, seeded 1 to 8 in each conference', () => {
+    expect(file.scope).toEqual({
+      sport: Sport.BASKETBALL,
+      season: 2025,
+      sportLeagues: ['NBA'],
+      contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS],
+    });
+    expect(nba.bracketAdvancement).toBeUndefined();
+    expect([playoffs.rounds, playoffs.startDate, playoffs.endDate]).toEqual([4, '2025-04-19', '2025-06-22']);
+    expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8]);
+  });
+
+  it('fills the 7 and 8 seeds through play-in places, each naming the team that won it and is not otherwise in the field', () => {
+    expect(playoffs.field.filter((entry) => entry.isPlayInPlace).map((entry) => [entry.player, entry.seed, entry.playInWinner])).toEqual([
+      ['nba-west-7-seed-play-in', 7, 'nba-golden-state-warriors'],
+      ['nba-east-7-seed-play-in', 7, 'nba-orlando-magic'],
+      ['nba-west-8-seed-play-in', 8, 'nba-memphis-grizzlies'],
+      ['nba-east-8-seed-play-in', 8, 'nba-miami-heat'],
+    ]);
+  });
+
+  it('plays each series as one game scored in games won, Oklahoma City beating Indiana 4-3 in the Finals', () => {
+    expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
+    expect(matches.every((match) => match.result !== undefined && Math.max(match.result.homeScore, match.result.awayScore) === 4)).toBe(true);
+    expect(matches.filter((match) => match.roundNumber < 4).every((match) => match.regionLabel === 'East' || match.regionLabel === 'West')).toBe(true);
+    expect(matches[14]).toMatchObject({ advancesTo: null, isNeutralSite: false, result: { winner: 'HOME', homeScore: 4, awayScore: 3 } });
+  });
+});
+
+describe('basketball-2025-wnba-playoffs-test.json', () => {
+  const file = readDataFile('basketball-2025-wnba-playoffs-test.json', true);
+  const [playoffs] = file.sportLeagues[0].events;
+  const matches = playoffs.matches ?? [];
+
+  it('is a test seed of one fixed three-round WNBA bracket of eight teams seeded 1 to 8, Las Vegas sweeping Phoenix 4-0 in the Finals', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.BASKETBALL, 2025, ['WNBA']]);
+    expect([playoffs.rounds, playoffs.startDate, playoffs.endDate]).toEqual([3, '2025-09-14', '2025-10-10']);
+    expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    // Best of three, then best of five, then best of seven.
+    expect(matches.map((match) => [match.roundNumber, Math.max(match.result?.homeScore ?? 0, match.result?.awayScore ?? 0)])).toEqual([
+      [1, 2], [1, 2], [1, 2], [1, 2], [2, 3], [2, 3], [3, 4],
+    ]);
+    expect(matches[6]).toMatchObject({ home: null, away: null, result: { winner: 'HOME', homeScore: 4, awayScore: 0 } });
+  });
+});
+
+describe('american-football-2025-cfp-test.json', () => {
+  const file = readDataFile('american-football-2025-cfp-test.json', true);
+  const [playoff] = file.sportLeagues[0].events;
+  const matches = playoff.matches ?? [];
+
+  it('is a test seed of one fixed four-round College Football Playoff of 12 teams seeded 1 to 12, Indiana beating Miami 27-21 in the National Championship', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.AMERICAN_FOOTBALL, 2025, ['College Football Playoff']]);
+    expect([playoff.rounds, playoff.startDate, playoff.endDate]).toEqual([4, '2025-12-19', '2026-01-19']);
+    expect(playoff.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(file.sportLeagues[0].bracketAdvancement).toBe('FIXED');
+    expect(matches[10]).toMatchObject({ roundNumber: 4, home: null, away: null, advancesTo: null, result: { winner: 'HOME', homeScore: 27, awayScore: 21 } });
+  });
+
+  it('plays the first round at the higher seed\'s campus and every later game at a neutral site, with the top four seeds placed straight into the quarterfinals', () => {
+    expect(matches.map((match) => [match.roundNumber, match.isNeutralSite])).toEqual([
+      [1, false], [1, false], [1, false], [1, false], [2, true], [2, true], [2, true], [2, true], [3, true], [3, true], [4, true],
+    ]);
+    const seedOf = new Map(playoff.field.map((entry) => [entry.player, entry.seed]));
+    expect(matches.filter((match) => match.roundNumber === 2).map((match) => [seedOf.get(match.home ?? ''), match.away])).toEqual([[1, null], [4, null], [3, null], [2, null]]);
+  });
+});
+
+describe('test seed match times', () => {
+  it('move by the same whole days as the event dates, and stay put when the offset is zero', () => {
+    const file = readDataFile('american-football-2026-nfl-playoffs-test.json', true);
+    const shifted = shiftedMatchTimes(file, 280);
+
+    expect(shifted.sportLeagues[0].events[0].matches?.[0].scheduledAt).toBe('2026-10-19T01:15:00.000Z');
+    expect(file.sportLeagues[0].events[0].matches?.[0].scheduledAt).toBe('2026-01-12T01:15:00Z');
+    expect(shiftedMatchTimes(file, 0)).toBe(file);
   });
 });
 

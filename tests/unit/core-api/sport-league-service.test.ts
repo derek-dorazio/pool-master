@@ -23,6 +23,8 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     name: 'PGA Tour',
     matchKeyword: 'PGA',
     bracketAdvancement: BracketAdvancement.FIXED,
+    roundNames: [],
+    tierCount: null,
     currentEventYear: null,
     isActive: true,
     createdAt: new Date('2026-01-01'),

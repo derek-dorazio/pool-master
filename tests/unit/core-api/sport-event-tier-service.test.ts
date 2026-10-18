@@ -41,11 +41,22 @@ describe('SportEventTierService — tiers', () => {
   it('creates the sport\'s default tiers once (six for golf), and leaves an event that has tiers alone', async () => {
     const { store, event, service } = setup();
 
-    await service.ensureDefaultTiers(event.id, Sport.GOLF);
-    const again = await service.ensureDefaultTiers(event.id, Sport.GOLF);
+    await service.ensureDefaultTiers(event.id, Sport.GOLF, null);
+    const again = await service.ensureDefaultTiers(event.id, Sport.GOLF, null);
 
     expect(again.map((tier) => tier.tierKey)).toEqual(['tier-1', 'tier-2', 'tier-3', 'tier-4', 'tier-5', 'tier-6']);
     expect(store.tierRows).toHaveLength(6);
+  });
+
+  it('starts an event with its sport league\'s tier count where the league sets one, and spreads 12 playoff teams two to a tier over its six', async () => {
+    const { store, service } = setup();
+    const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AMERICAN_FOOTBALL });
+
+    await service.ensureDefaultTiers(playoff.id, Sport.AMERICAN_FOOTBALL, 6);
+    addFieldByOdds(store, playoff.id, 12);
+    const groups = await service.autoAssignTiers({ sportEventId: playoff.id, source: TierSource.ODDS });
+
+    expect(groups.map((group) => group.participants.length)).toEqual([2, 2, 2, 2, 2, 2]);
   });
 
   it('refuses a replacement that would strand placed participants unless they are sent somewhere', async () => {
@@ -131,7 +142,7 @@ describe('SportEventTierService — assignment', () => {
   ])('auto-assigns a $sport event\'s default tiers when no size is sent: $what', async ({ sport, fieldSize, expected }) => {
     const { store, service } = setup();
     const event = store.addEvent({ status: SportEventStatus.DRAFT, sport });
-    await service.ensureDefaultTiers(event.id, sport);
+    await service.ensureDefaultTiers(event.id, sport, null);
     addFieldByOdds(store, event.id, fieldSize);
 
     const groups = await service.autoAssignTiers({ sportEventId: event.id, source: TierSource.ODDS });

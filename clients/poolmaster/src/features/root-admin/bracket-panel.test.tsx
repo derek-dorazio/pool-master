@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportEventResultsPage } from './root-admin-sport-event-results-page';
-import { fieldEntryFixture, participantFixture, sportEventFixture } from './sport-test-fixtures';
+import { fieldEntryFixture, participantFixture, sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
 
 // MSW hands path parameters over as strings, so a match number reads '1'.
 // #698, #700: a basketball tournament's results page shows its bracket round by round, chosen by
@@ -24,6 +24,7 @@ const {
   setEventPlayInWinnerMock,
   listSportsMock,
   listParticipantsMock,
+  listSportLeaguesMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -46,6 +47,7 @@ const {
     setEventPlayInWinnerMock: vi.fn(),
     listSportsMock: vi.fn(),
     listParticipantsMock: vi.fn(),
+    listSportLeaguesMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -61,6 +63,7 @@ bindApiMocks({
   setEventPlayInWinner: setEventPlayInWinnerMock,
   listSports: listSportsMock,
   listParticipants: listParticipantsMock,
+  listSportLeagues: listSportLeaguesMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -102,8 +105,11 @@ function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto,
   };
 }
 
-function seed(matches: SportEventMatchDto[], options: { event?: SportEventDto; field?: SportEventParticipantDto[] } = {}) {
+function seed(matches: SportEventMatchDto[], options: { event?: SportEventDto; field?: SportEventParticipantDto[]; roundNames?: string[] } = {}) {
   getEventMock.mockResolvedValue({ data: { event: options.event ?? tournament } });
+  listSportLeaguesMock.mockResolvedValue({
+    data: { sportLeagues: [sportLeagueFixture({ id: tournament.sportLeagueId, name: 'NCAA Division I Men', roundNames: options.roundNames ?? [] })] },
+  });
   listEventParticipantsMock.mockResolvedValue({ data: { participants: options.field ?? [duke, vermont, houston, texas] } });
   getEventBracketMock.mockResolvedValue({ data: { matches } });
 }
@@ -155,6 +161,18 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
     expect(within(final).getByRole('heading')).toHaveTextContent('National Championship');
     expect(screen.getByTestId('root-admin-bracket-pairing-3')).toHaveTextContent('Winner of game 1 vs Winner of game 2');
     expect(within(screen.getByTestId('root-admin-bracket-match-3')).getByText('To be announced')).toBeInTheDocument();
+  });
+
+  it('names each round by the sport league\'s own round names when it has them, the NBA\'s last two for a two-round bracket', async () => {
+    seed([
+      match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', advancesToMatchId: 'm-3', advancesToSide: 'HOME' }),
+      match({ id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4', advancesToMatchId: 'm-3', advancesToSide: 'AWAY' }),
+      match({ id: 'm-3', matchNumber: 3, roundNumber: 2 }),
+    ], { roundNames: ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'] });
+    renderPage();
+
+    await waitFor(() => expect(within(screen.getByTestId('root-admin-bracket-round-1')).getByRole('heading')).toHaveTextContent('Conference Finals'));
+    expect(within(screen.getByTestId('root-admin-bracket-round-2')).getByRole('heading')).toHaveTextContent('NBA Finals');
   });
 
   it('records the tapped team as a game\'s winner, with no scores, and reloads the bracket', async () => {

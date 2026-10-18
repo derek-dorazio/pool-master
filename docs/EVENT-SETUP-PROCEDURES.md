@@ -112,7 +112,9 @@ event starts with six tiers. Auto-assign fills them in ranking order, ten golfer
 and the last tier takes everyone left. The mock's 80 golfers therefore come out as
 10/10/10/10/10/30. If you add or delete tiers first, auto-assign instead spreads the field
 evenly over them from the top, larger tiers first: the same 80 golfers on five tiers come out
-16/16/16/16/16. A tier-pick contest's configuration is checked against this tier count.
+16/16/16/16/16. A sport league can start its events on its own tier count instead of the
+sport's (the College Football Playoff: six tiers, so its 12 teams come out two to a tier). A
+tier-pick contest's configuration is checked against this tier count.
 
 ## 6. Release it for contests
 
@@ -209,11 +211,25 @@ on the Bracket tab:
   game has a result. Each play-in place takes its winner once, from the sport's active teams
   not already in the tournament.
 
+The NBA and WNBA playoffs are basketball tournaments too, in their own sport leagues. A series
+is one game of the bracket: choose the team that won the series, with the games each side won
+as the score (4-2). The NBA's 7 and 8 seeds in each conference are play-in places until the
+play-in tournament is played, as the First Four's are. Those leagues' rounds show their own
+names (Conference Finals, NBA Finals), not March Madness's.
+
+The College Football Playoff is a fixed bracket in its own American football sport league: 12
+teams, the top four seeds placed straight into the quarterfinals (a bye scores nothing), the
+first round at the higher seed's campus and every later game at a bowl site. Its rounds show its
+own names (Quarterfinals, National Championship), not the NFL's. The 2026-27 playoff keeps 12
+teams; a larger field would change its round count and need presets to match.
+
 **Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
-`RESEED_BY_SEED`) loads its first-round games with no next game, and the next round with only
-its byes named. Release lets that round wait. Once every first-round game has a result, ask the
-server for the reseed (`proposeEventRoundMatchups`): in each conference the best seed left hosts
-the worst. Set it, or a pairing of your own that keeps each team in its conference and each bye
+`RESEED_BY_SEED`) loads each round that is placed by seed with no next game in the round
+before it, and names only its byes. The NFL's Wild Card and Divisional games both link nowhere,
+so the Divisional round and the conference championships are each placed by seed; the
+conference winners link to the Super Bowl. Release lets those rounds wait. Once every game of
+the round before has a result, ask the server for the reseed (`proposeEventRoundMatchups`): in
+each conference the best seed left hosts the worst. Set it, or a pairing of your own that keeps each team in its conference and each bye
 in place, with `setEventRoundMatchups`, before the round starts. A first-round result corrected
 after that moves the team it placed, until that team has played. The Bracket tab does not have a
 reseed button yet, so the two calls go through the API.
@@ -280,8 +296,8 @@ event or writes odds, tiers, prices or scores; those stay admin actions here.
 without it an event starts at noon UTC on its start date. An event of a sport whose finishing
 order an admin enters (every racing sport) is created with automatic lifecycle off, and one
 already on the site has it turned off, so it never completes, and settles, before its result
-is in. A test seed is golf's only, because
-its made-up results are stroke rounds; any sport may have a test slate.
+is in. A test seed is golf's or a bracket sport's, because its made-up results are stroke
+rounds or match results; any sport may have a test slate.
 
 **The file says what it is.** Each file starts with an envelope: `schemaVersion`, a `scope`
 (sport from the sport registry, season, sport leagues, and `contents` from `SCHEDULE`,
@@ -344,3 +360,66 @@ is treated as the seed's, so reset QA first for a clean set.
 
 The data file is `packages/core-api/scripts/seed-golf/golf-2026.json`, rebuilt by
 `npm run seed:golf:build` from the mock provider's tour files (same answer every time).
+
+## Seeded NFL playoffs
+
+`american-football-2026-nfl-playoffs-test.json` is a test seed of a bracket: the NFL playoffs of
+the 2025 season (played January and February 2026) as they went, for trying knockout contests
+and the reseed. Seeds, pairings, kickoffs and scores are real; the odds are made up. Load it
+with `mode` `apply` like any file. It loads into the `NFL` sport league, which the migrations
+create with its reseed rule. Because its envelope says `testData`:
+
+- **Dates moved forward by whole weeks**, the kickoffs with them, so the Wild Card weekend
+  starts at least a week after the run.
+- **Released** with automatic lifecycle off, its 14 teams tiered by odds (seven tiers of two)
+  and priced.
+- **Every result already entered**, round by round through the bracket's own calls: the Wild
+  Card games, the Divisional round placed by the server's reseed (each 1 seed hosts the lowest
+  seed left in its conference), the conference championships placed by a second reseed (the
+  better seed left hosts), and Super Bowl LX, which the Seattle Seahawks win 29-13 over the New
+  England Patriots.
+
+To test a contest end to end, create and open it and submit entries, then on the event's
+Workflow card *Move to In Progress* and *Move to Completed*, as for the golf seed above.
+Running it again skips everything.
+
+## Seeded College Football Playoff
+
+`american-football-2025-cfp-test.json` is a test seed of the 2025-26 College Football Playoff
+(played December 2025 and January 2026) as it went. Seeds, pairings, kickoffs and scores are
+real; rankings are the final CFP rankings; the odds are made up. It loads into the `College
+Football Playoff` sport league, which the migrations create with its round names (First Round,
+Quarterfinals, Semifinals, National Championship) and six tiers. Load it with `mode` `apply`
+like any file. Because its envelope says `testData`:
+
+- **Dates moved forward by whole weeks**, the kickoffs with them, so the first round starts at
+  least a week after the run.
+- **Released** with automatic lifecycle off, its 12 teams tiered by odds (six tiers of two) and
+  priced.
+- **Every result already entered**, round by round. Indiana, the 1 seed, comes in on a bye and
+  beats Miami, the 10 seed, 27-21 in the National Championship.
+
+Test a contest on it as for the NFL seed above. Running it again skips everything.
+
+## Seeded NBA and WNBA playoffs
+
+`basketball-2025-nba-playoffs-test.json` and `basketball-2025-wnba-playoffs-test.json` are test
+seeds of the 2025 NBA and WNBA playoffs as they went, one file each. A series is one game of the
+bracket: its winner moves on, and its scores are the games each side won (4-2). Seeds, pairings,
+Game 1 tip-offs and series results are real; the odds are made up. They load into the `NBA` and
+`WNBA` sport leagues, which the migrations create with their round names (First Round,
+Conference Semifinals, Conference Finals, NBA Finals; First Round, Semifinals, WNBA Finals).
+Load each with `mode` `apply` like any file. Because their envelopes say `testData`:
+
+- **Dates moved forward by whole weeks**, the tip-offs with them, so the first round starts at
+  least a week after the run.
+- **Released** with automatic lifecycle off, the field tiered by odds (four tiers) and priced.
+- **The NBA's play-in places filled**: each conference's 7 and 8 seeds are play-in places
+  ("West 8 seed (play-in)"), and after release each takes the team that won it (Golden State
+  and Orlando the 7 seeds, Memphis and Miami the 8 seeds), keeping its seed, tier and price, as
+  *Set winner* does. A field entry's `playInWinner` names that team; test data only.
+- **Every series result already entered**, round by round. The Oklahoma City Thunder beat the
+  Indiana Pacers 4-3 in the NBA Finals; the Las Vegas Aces beat the Phoenix Mercury 4-0 in the
+  WNBA Finals.
+
+Test a contest on either as for the NFL seed above. Running a file again skips everything.

@@ -13,7 +13,9 @@ import {
   setEventPlayInWinner,
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
-import { BracketAdvancement, findSportRow, MatchSide, Sport } from '@poolmaster/shared/domain';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { BracketAdvancement, findSportRow, MatchSide, MatchStatus, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { seedDateOffsetDays, shiftedEventDates } from '../../packages/core-api/scripts/seed-golf/seed-golf-data';
@@ -96,6 +98,7 @@ beforeAll(async () => {
   await db.sport.upsert({ where: { sport: Sport.GOLF }, create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' }, update: {} });
   await db.sport.upsert({ where: { sport: Sport.HORSE_RACING }, create: { sport: Sport.HORSE_RACING, participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' }, update: {} });
   await db.sport.upsert({ where: { sport: Sport.BASKETBALL }, create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'KNOCKOUT_BRACKET' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.AMERICAN_FOOTBALL }, create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'KNOCKOUT_BRACKET' }, update: {} });
   admin = await buildRegisteredUser({ displayName: 'Load Admin' });
   await promoteToRootAdmin(admin);
 });
@@ -624,6 +627,61 @@ describe('Loading a real basketball bracket through the admin API', () => {
       detail: `SCHEDULED, so the field is locked with its bracket: 1 withdrawn (${teamName('Vermont')})`,
     });
     expect((await fieldOf(eventId)).get(teamName('Vermont'))).toMatchObject({ isActive: true });
+  });
+});
+
+describe('Loading the NFL playoffs test seed through the admin API', () => {
+  // The checked-in file, its names and keys tagged with this run so the suite cleans up after it.
+  const prefix = `${RUN}-nfl`;
+  const league = `NFL ${prefix}`;
+  const playoffs = `${prefix} NFL Playoffs`;
+  const getClient = () => Promise.resolve(admin.client);
+  // Release refuses an event that has started by the server's clock, so the seed is dated from today.
+  const now = new Date();
+  const tagged = (key: string | null) => (key === null ? null : `${prefix}-${key}`);
+  function nflSeed(): SportDataFile {
+    const file = parsed(JSON.parse(readFileSync(join(__dirname, '../../packages/core-api/scripts/seed-golf/american-football-2026-nfl-playoffs-test.json'), 'utf8')) as SportDataFile);
+    file.scope.sportLeagues = [league];
+    const [nfl] = file.sportLeagues;
+    nfl.name = league;
+    for (const player of nfl.players) player.key = expectDefined(tagged(player.key));
+    for (const event of nfl.events) {
+      event.name = playoffs;
+      for (const entry of event.field) entry.player = expectDefined(tagged(entry.player));
+      for (const match of event.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
+    }
+    return file;
+  }
+
+  it('releases the playoffs with reseeded Divisional and conference rounds and every result entered, the Seahawks winning the Super Bowl, then skips on a second run', async () => {
+    const applied = await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY });
+    expect(counts(applied)).toEqual({ 'SPORT_LEAGUE ADD': 1, 'PLAYER ADD': 14, 'EVENT ADD': 1, 'FIELD ADD': 1, 'BRACKET ADD': 1 });
+
+    const stored = expectDefined(await leagueNamed(league, Sport.AMERICAN_FOOTBALL));
+    expect(stored.bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
+    const event = expectDefined((await eventsOf(stored.id, 2026)).find((row) => row.name === playoffs));
+    const nameOf = new Map([...(await fieldOf(event.id)).entries()].map(([name, row]) => [row.id, name]));
+    const { matches } = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data);
+    const byNumber = new Map(matches.map((match) => [match.matchNumber, match]));
+    const sides = (matchNumber: number) => {
+      const match = expectDefined(byNumber.get(matchNumber));
+      return [match.homeSportEventParticipantId, match.awaySportEventParticipantId].map((id) => (id === null ? null : nameOf.get(id)));
+    };
+
+    expect(matches.every((match) => match.status === MatchStatus.COMPLETED)).toBe(true);
+    // Each conference's 1 seed meets its lowest seed left, as the 2025 season's Divisional round did.
+    expect([7, 8, 9, 10].map(sides)).toEqual([
+      ['Denver Broncos', 'Buffalo Bills'],
+      ['New England Patriots', 'Houston Texans'],
+      ['Seattle Seahawks', 'San Francisco 49ers'],
+      ['Chicago Bears', 'Los Angeles Rams'],
+    ]);
+    // A second reseed places the conference championships: the better seed left hosts.
+    expect([11, 12].map(sides)).toEqual([['Denver Broncos', 'New England Patriots'], ['Seattle Seahawks', 'Los Angeles Rams']]);
+    expect(sides(13)).toEqual(['New England Patriots', 'Seattle Seahawks']);
+    expect(byNumber.get(13)).toMatchObject({ winnerSide: MatchSide.AWAY, homeScore: 13, awayScore: 29, isNeutralSite: true });
+
+    expect(changes(await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY }))).toEqual([]);
   });
 });
 

@@ -1,0 +1,384 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "AMERICAN_FOOTBALL",
+    "season": 2025,
+    "sportLeagues": [
+      "College Football Playoff"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-18",
+    "gatheredBy": "load-sport-data, the 2025-26 College Football Playoff as played: seeds, pairings, kickoffs and scores from the ESPN scoreboard, cross-checked against Wikipedia. Rankings are the final CFP rankings. The National Championship at Hard Rock Stadium (Miami's own stadium) is marked neutral, with Indiana the designated home team as the higher seed. Odds to win are made up.",
+    "sources": [
+      {
+        "name": "ESPN college football scoreboard, CFP games",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?seasontype=3&groups=80&limit=100&dates=20251219"
+      },
+      {
+        "name": "2025-26 College Football Playoff (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025%E2%80%9326_College_Football_Playoff"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "College Football Playoff",
+      "bracketAdvancement": "FIXED",
+      "players": [
+        {
+          "key": "cfp-indiana-hoosiers",
+          "name": "Indiana Hoosiers",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "cfp-ohio-state-buckeyes",
+          "name": "Ohio State Buckeyes",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "cfp-georgia-bulldogs",
+          "name": "Georgia Bulldogs",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "cfp-texas-tech-red-raiders",
+          "name": "Texas Tech Red Raiders",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "cfp-oregon-ducks",
+          "name": "Oregon Ducks",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "cfp-ole-miss-rebels",
+          "name": "Ole Miss Rebels",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "cfp-texas-am-aggies",
+          "name": "Texas A&M Aggies",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "cfp-oklahoma-sooners",
+          "name": "Oklahoma Sooners",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "cfp-alabama-crimson-tide",
+          "name": "Alabama Crimson Tide",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "cfp-miami-hurricanes",
+          "name": "Miami Hurricanes",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "cfp-tulane-green-wave",
+          "name": "Tulane Green Wave",
+          "countryCode": "US",
+          "ranking": 20
+        },
+        {
+          "key": "cfp-james-madison-dukes",
+          "name": "James Madison Dukes",
+          "countryCode": "US",
+          "ranking": 24
+        }
+      ],
+      "events": [
+        {
+          "key": "cfp-2025-26",
+          "name": "College Football Playoff",
+          "startDate": "2025-12-19",
+          "endDate": "2026-01-19",
+          "venue": null,
+          "location": "United States",
+          "rounds": 4,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "cfp-indiana-hoosiers",
+              "ranking": 1,
+              "seed": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "cfp-ohio-state-buckeyes",
+              "ranking": 2,
+              "seed": 2,
+              "oddsToWin": 3.0
+            },
+            {
+              "player": "cfp-georgia-bulldogs",
+              "ranking": 3,
+              "seed": 3,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "cfp-texas-tech-red-raiders",
+              "ranking": 4,
+              "seed": 4,
+              "oddsToWin": 9.0
+            },
+            {
+              "player": "cfp-oregon-ducks",
+              "ranking": 5,
+              "seed": 5,
+              "oddsToWin": 7.0
+            },
+            {
+              "player": "cfp-ole-miss-rebels",
+              "ranking": 6,
+              "seed": 6,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "cfp-texas-am-aggies",
+              "ranking": 7,
+              "seed": 7,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "cfp-oklahoma-sooners",
+              "ranking": 8,
+              "seed": 8,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "cfp-alabama-crimson-tide",
+              "ranking": 9,
+              "seed": 9,
+              "oddsToWin": 15.0
+            },
+            {
+              "player": "cfp-miami-hurricanes",
+              "ranking": 10,
+              "seed": 10,
+              "oddsToWin": 25.0
+            },
+            {
+              "player": "cfp-tulane-green-wave",
+              "ranking": 20,
+              "seed": 11,
+              "oddsToWin": 150.0
+            },
+            {
+              "player": "cfp-james-madison-dukes",
+              "ranking": 24,
+              "seed": 12,
+              "oddsToWin": 200.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "cfp-oklahoma-sooners",
+              "away": "cfp-alabama-crimson-tide",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T01:00:00Z",
+              "advancesTo": {
+                "matchNumber": 5,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 24,
+                "awayScore": 34
+              }
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "cfp-oregon-ducks",
+              "away": "cfp-james-madison-dukes",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-21T00:30:00Z",
+              "advancesTo": {
+                "matchNumber": 6,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 51,
+                "awayScore": 34
+              }
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "cfp-ole-miss-rebels",
+              "away": "cfp-tulane-green-wave",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T20:30:00Z",
+              "advancesTo": {
+                "matchNumber": 7,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 41,
+                "awayScore": 10
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "cfp-texas-am-aggies",
+              "away": "cfp-miami-hurricanes",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T17:00:00Z",
+              "advancesTo": {
+                "matchNumber": 8,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 10
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 2,
+              "home": "cfp-indiana-hoosiers",
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-01-01T21:00:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 38,
+                "awayScore": 3
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 2,
+              "home": "cfp-texas-tech-red-raiders",
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-01-01T17:00:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 23
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 2,
+              "home": "cfp-georgia-bulldogs",
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-01-02T01:00:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 34,
+                "awayScore": 39
+              }
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 2,
+              "home": "cfp-ohio-state-buckeyes",
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-01-01T00:30:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 14,
+                "awayScore": 24
+              }
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-01-10T00:30:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 56,
+                "awayScore": 22
+              }
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-01-09T00:30:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 27,
+                "awayScore": 31
+              }
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-01-20T00:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 27,
+                "awayScore": 21
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

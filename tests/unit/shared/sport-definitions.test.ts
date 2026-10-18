@@ -7,6 +7,7 @@ import {
   type SportDefinition,
   TournamentFormat,
   getDefaultTournamentFormatForSport,
+  eventRoundLabel,
   getSportDefinition,
   getValidContestFormatsForTournamentFormat,
   sportAllowsSelectionType,
@@ -261,10 +262,59 @@ describe('basketball', () => {
   });
 });
 
+describe('American football', () => {
+  const americanFootball = getSportDefinition(Sport.AMERICAN_FOOTBALL);
+
+  it('is a team sport played as a knockout bracket, scored head to head by knockout round points', () => {
+    expect(americanFootball.name).toBe('American football');
+    expect(americanFootball.participantType).toBe('TEAM');
+    expect(americanFootball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
+    expect(americanFootball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
+    expect(sportPlaysBracket(Sport.AMERICAN_FOOTBALL)).toBe(true);
+  });
+
+  it('gives new playoffs four rounds and seven tiers of two, one for each pair of the 14 teams', () => {
+    expect(americanFootball.defaultRounds).toBe(4);
+    expect(americanFootball.defaultTierLayout).toEqual({ tierCount: 7, tierSize: 2 });
+  });
+
+  it('labels a four-round bracket Wild Card through Super Bowl, and a stored round past the count Round N', () => {
+    expect([1, 2, 3, 4].map((roundNumber) => americanFootball.roundLabel(roundNumber, 4))).toEqual([
+      'Wild Card', 'Divisional', 'Conference Championship', 'Super Bowl',
+    ]);
+    expect(americanFootball.roundLabel(5, 4)).toBe('Round 5');
+  });
+
+  it('calls the event the playoffs and the moment entries close the first kickoff', () => {
+    expect(americanFootball.vocabulary.event).toEqual({ one: 'playoffs', many: 'playoffs' });
+    expect(americanFootball.vocabulary.eventStart).toBe('first kickoff');
+  });
+});
+
 describe('sportPlaysBracket', () => {
   it('is true only for a sport whose tournament format is a knockout bracket', () => {
     for (const definition of definitions) {
       expect(sportPlaysBracket(definition.sport)).toBe(definition.tournamentFormat === TournamentFormat.KNOCKOUT_BRACKET);
     }
+  });
+});
+
+describe('round labels from a sport league\'s own round names', () => {
+  const nba = ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'];
+
+  it('names each round of an NBA bracket by the league\'s names, not March Madness\'s', () => {
+    expect([1, 2, 3, 4].map((roundNumber) => eventRoundLabel(Sport.BASKETBALL, nba, roundNumber, 4))).toEqual(nba);
+  });
+
+  it('lines the league\'s names up with the final, so a shorter bracket keeps the last ones and a longer one takes the sport\'s for its first rounds', () => {
+    expect([1, 2, 3].map((roundNumber) => eventRoundLabel(Sport.BASKETBALL, nba, roundNumber, 3))).toEqual(['Conference Semifinals', 'Conference Finals', 'NBA Finals']);
+    expect([1, 2, 3, 4, 5].map((roundNumber) => eventRoundLabel(Sport.BASKETBALL, nba, roundNumber, 5))).toEqual(['First Round', 'First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals']);
+  });
+
+  it('uses the sport\'s names for a league that names none, and for a stored round past the count', () => {
+    expect([1, 2, 3, 4, 5, 6].map((roundNumber) => eventRoundLabel(Sport.BASKETBALL, [], roundNumber, 6))).toEqual([
+      'First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship',
+    ]);
+    expect(eventRoundLabel(Sport.BASKETBALL, nba, 5, 4)).toBe(getSportDefinition(Sport.BASKETBALL).roundLabel(5, 4));
   });
 });

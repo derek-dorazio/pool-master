@@ -3,7 +3,7 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { updateEventRounds } from '@/lib/api';
-import type { SportEventRoundDto } from '@/lib/api';
+import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 import {
   AsyncPage,
   FormField,
@@ -20,6 +20,7 @@ import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportEventPath, capitalize } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 import { useSportEventRoundsQuery, useSportEventQuery } from './use-sport-event';
+import { useEventRoundLabel } from './use-sport-catalog';
 
 const roundsFormSchema = z.object({
   rounds: z
@@ -53,18 +54,20 @@ function toDefaults(rounds: readonly SportEventRoundDto[]): RoundsFormValues {
  * `defaultValues` seed from them without mirroring the query into state.
  */
 function SportEventScheduleForm({
-  eventId,
+  sportEvent,
   rounds,
 }: {
-  eventId: string;
+  sportEvent: SportEventDto;
   rounds: readonly SportEventRoundDto[];
 }) {
+  const eventId = sportEvent.id;
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-schedule-page',
   });
   const navigate = useNavigate();
   const { sport, definition } = useManagedSport();
   const { event, round } = definition.vocabulary;
+  const roundLabel = useEventRoundLabel(sportEvent);
   const homePath = buildSportEventPath(sport, eventId);
 
   const form = useForm<RoundsFormValues>({
@@ -123,7 +126,7 @@ function SportEventScheduleForm({
         <div className="grid gap-3 sm:grid-cols-2" key={field.id}>
           <FormField
             error={form.formState.errors.rounds?.[index]?.scheduledDate?.message}
-            label={`${definition.roundLabel(field.roundNumber, fields.length)} date`}
+            label={`${roundLabel(field.roundNumber, fields.length)} date`}
           >
             <Input
               data-testid={`root-admin-sport-event-round-${field.roundNumber}-date`}
@@ -131,7 +134,7 @@ function SportEventScheduleForm({
               {...form.register(`rounds.${index}.scheduledDate`)}
             />
           </FormField>
-          <FormField label={`${definition.roundLabel(field.roundNumber, fields.length)} end`}>
+          <FormField label={`${roundLabel(field.roundNumber, fields.length)} end`}>
             <Input
               data-testid={`root-admin-sport-event-round-${field.roundNumber}-end`}
               type="datetime-local"
@@ -171,8 +174,8 @@ export function RootAdminSportEventSchedulePage() {
       }
       emptyBody={`This ${event.one} has no ${round.many} to schedule yet.`}
     >
-      {roundsQuery.data ? (
-        <SportEventScheduleForm eventId={eventId} rounds={roundsQuery.data} />
+      {roundsQuery.data && tournamentQuery.data ? (
+        <SportEventScheduleForm rounds={roundsQuery.data} sportEvent={tournamentQuery.data} />
       ) : null}
     </AsyncPage>
   );

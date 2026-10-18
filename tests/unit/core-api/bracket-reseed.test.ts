@@ -134,6 +134,38 @@ describe('proposeRoundMatchups', () => {
   });
 });
 
+describe('an NFL bracket whose conference championships are reseeded too', () => {
+  // The Divisional games link nowhere, so the best seed left hosts each conference championship.
+  const unlinkedDivisional = (): SportEventMatch[] => nflPlayoff().map((match) => (match.roundNumber === 2
+    ? { ...match, advancesToMatchId: null, advancesToSide: null }
+    : match));
+
+  it('names both the Divisional round and the conference championships as reseeded', () => {
+    expect([...reseededRounds(unlinkedDivisional())].sort((left, right) => left - right)).toEqual([2, 3]);
+  });
+
+  it('gives the 2 seed the home side over the 4 seed once the 4 seed knocks out the 1 seed', () => {
+    // Every home team wins on Wild Card weekend. Divisional: the AFC 4 seed beats the 1 and the 2
+    // beats the 3; in the NFC the 1 and 2 seeds win.
+    const bracket = unlinkedDivisional().map((match) => {
+      const placed: Partial<Record<number, [string, string, MatchSide]>> = {
+        7: ['AFC-1', 'AFC-4', MatchSide.AWAY],
+        8: ['AFC-2', 'AFC-3', MatchSide.HOME],
+        9: ['NFC-1', 'NFC-7', MatchSide.HOME],
+        10: ['NFC-2', 'NFC-3', MatchSide.HOME],
+      };
+      const row = placed[match.matchNumber];
+      if (row) return { ...match, homeSportEventParticipantId: row[0], awaySportEventParticipantId: row[1], status: MatchStatus.COMPLETED, winnerSide: row[2] };
+      return match.roundNumber === 1 ? { ...match, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME } : match;
+    });
+
+    expect(proposeRoundMatchups(bracket, 3, seedOf)).toEqual({
+      matchups: [pair(11, 'AFC-2', 'AFC-4'), pair(12, 'NFC-1', 'NFC-2')],
+      problems: [],
+    });
+  });
+});
+
 describe('findRoundMatchupProblems', () => {
   const bracket = afterWildCard(UPSET_WEEKEND);
   const proposal = proposeRoundMatchups(bracket, 2, seedOf).matchups;

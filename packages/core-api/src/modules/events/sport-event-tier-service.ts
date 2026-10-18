@@ -94,16 +94,17 @@ export class SportEventTierService {
   }
 
   /**
-   * The sport's default tiers for a new event (golf: six), when it has none. A default, fully
+   * The default tiers for a new event, when it has none: the sport league's tier count where it
+   * sets one (the College Football Playoff: six), else the sport's (golf: six). A default, fully
    * editable afterwards; the tier count is however many rows exist, not a stored parameter
    * (plans/124 §4.5a).
    */
-  async ensureDefaultTiers(sportEventId: string, sport: Sport): Promise<SportEventTier[]> {
+  async ensureDefaultTiers(sportEventId: string, sport: Sport, leagueTierCount: number | null): Promise<SportEventTier[]> {
     const existing = await this.deps.tiers.findBySportEvent(sportEventId);
     if (existing.length > 0) {
       return existing;
     }
-    const { tierCount } = getSportDefinition(sport).defaultTierLayout;
+    const tierCount = leagueTierCount ?? getSportDefinition(sport).defaultTierLayout.tierCount;
     await this.deps.tiers.createMany(sportEventId, Array.from({ length: tierCount }, (_, index) => ({
       tierKey: `tier-${index + 1}`,
       label: `Tier ${index + 1}`,
