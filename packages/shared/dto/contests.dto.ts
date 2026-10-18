@@ -53,7 +53,7 @@ export type UpdateContestRequest = z.infer<typeof UpdateContestRequestSchema>;
 
 export const UpdateContestEntryRequestSchema = z.object({
   name: z.string().trim().min(1).max(100).optional().describe('Unique entry name shown anywhere the team entry is listed.'),
-  tiebreakerValue: z.number().int().nullable().optional().describe('Optional tiebreaker prediction saved on the contest entry.'),
+  tiebreakerValue: z.number().int().nullable().optional().describe('Optional tiebreaker prediction saved on the contest entry. Refused with 400 CONTEST_FORMAT_MISMATCH on a prediction contest, whose tiebreaker is saved with its game picks (#721).'),
 }).refine((value) => value.name !== undefined || value.tiebreakerValue !== undefined, {
   message: 'At least one contest entry field must be provided.',
 }).describe('Request payload for updating a contest entry while the contest is still joinable.');

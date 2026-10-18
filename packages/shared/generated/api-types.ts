@@ -8955,7 +8955,7 @@ export interface components {
         UpdateContestEntryRequest: {
             /** @description Unique entry name shown anywhere the team entry is listed. */
             name?: string;
-            /** @description Optional tiebreaker prediction saved on the contest entry. */
+            /** @description Optional tiebreaker prediction saved on the contest entry. Refused with 400 CONTEST_FORMAT_MISMATCH on a prediction contest, whose tiebreaker is saved with its game picks (#721). */
             tiebreakerValue?: number | null;
         };
         /** @description One event a contest covers, enough to name, order and pick it without reading the event (#713). */
@@ -16491,7 +16491,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. */
+            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. */
             422: {
                 headers: {
                     [name: string]: unknown;
