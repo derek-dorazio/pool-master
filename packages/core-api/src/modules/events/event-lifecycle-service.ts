@@ -146,8 +146,10 @@ export class EventLifecycleService {
     if (input.toStatus === SportEventStatus.IN_PROGRESS) {
       await this.activateContestsForStartedEvent(updated);
     }
-    if (input.toStatus === SportEventStatus.COMPLETED) {
-      await this.settleContestsForCompletedEvent(updated);
+    // A cancelled event settles its contests too (#743): it counts for nothing, so it must not
+    // hold a contest open.
+    if (input.toStatus === SportEventStatus.COMPLETED || input.toStatus === SportEventStatus.CANCELLED) {
+      await this.settleContestsForFinishedEvent(updated);
     }
 
     return {
@@ -157,7 +159,7 @@ export class EventLifecycleService {
     };
   }
 
-  private async settleContestsForCompletedEvent(
+  private async settleContestsForFinishedEvent(
     sportEvent: SportEvent,
   ): Promise<void> {
     if (!this.contestSettlement) {
