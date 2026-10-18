@@ -195,8 +195,10 @@ Final standings are built from the scores PoolMaster has already received.
 ## Basketball tournaments
 
 A basketball tournament is a knockout bracket, resulted by hand on its **Bracket** tab. Its
-field is built on the Field tab and its games are loaded through `loadEventBracket`
-([`DOMAIN-OPERATIONS.md`](DOMAIN-OPERATIONS.md), *SportEventMatch*). Then on the Bracket tab:
+field and games usually come from a sport data file (*Loading sport data* below, *Brackets*);
+otherwise the field is built on the Field tab and the games are loaded through
+`loadEventBracket` ([`DOMAIN-OPERATIONS.md`](DOMAIN-OPERATIONS.md), *SportEventMatch*). Then
+on the Bracket tab:
 
 - **Before release**, *Edit pairing* changes a game's two teams. Only teams no other game holds
   are offered, so to swap two teams, empty one side first. A side an earlier game's winner fills
@@ -222,7 +224,7 @@ in through the same admin API as these screens, and no migration, deploy or rese
   npm run seed:golf -- --file golf-2026.json --mode apply --allow-test-data`.
 
 **Dry run first.** `dry-run` (the default) reads the site and lists, per sport league,
-player, event and field, what applying would add, update, skip, or leave as a conflict. It
+player, event, field and bracket, what applying would add, update, skip, or leave as a conflict. It
 writes nothing. The workflow's summary shows the list with the file's scope and sources.
 `apply` writes it.
 
@@ -242,6 +244,21 @@ writes nothing. The workflow's summary shows the list with the file's scope and 
 An event whose `field` is empty has no field in this file yet, so its stored field is left
 alone. A withdrawn player the file lists again is reinstated.
 
+**Brackets.** A file of a sport played as a bracket, with `BRACKET` in its `contents`, may
+give each event its `matches`: each match's number, round, its two sides as player keys from
+the event's field (`null` where an earlier match's winner fills the side), whether it is on a
+neutral site, its `scheduledAt` once announced, and `advancesTo` (the match and side its winner
+moves on to; `null` for the final). A field entry may give its bracket `seed` (1-16 in each
+March Madness region) where the seed is not its place in the field, and `isPlayInPlace` for a
+First Four pairing. The run refuses a bracket the bracket endpoint would refuse, before any
+write.
+
+- **Before release**, a bracket that differs anywhere is loaded whole again, after the field.
+  A match time the file leaves out keeps the one on the site.
+- **After release** the field, seeds, play-in places and pairings are locked, so only a
+  match's time and site are changed. A field that differs is listed as a conflict. A play-in
+  place an admin has filled with its winner is found by its bracket place and left alone.
+
 Running the same file again lists everything as a skip. A real data file never releases an
 event or writes odds, tiers, prices or scores; those stay admin actions here.
 
@@ -256,7 +273,7 @@ its made-up results are stroke rounds; any sport may have a test slate.
 
 **The file says what it is.** Each file starts with an envelope: `schemaVersion`, a `scope`
 (sport from the sport registry, season, sport leagues, and `contents` from `SCHEDULE`,
-`PLAYERS`, `FIELDS`, `RESULTS`), a `testData` flag and its `provenance`. A run refuses the
+`PLAYERS`, `FIELDS`, `BRACKET`, `RESULTS`), a `testData` flag and its `provenance`. A run refuses the
 whole file before writing if anything strays outside the scope: an event outside the
 season, a league the scope does not name, made-up odds or scores in a real file, or test
 data on a target that does not take it. The filename is for people and is never read.

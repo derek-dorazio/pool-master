@@ -178,17 +178,123 @@ describe('sport data file envelope', () => {
     ]);
   });
 
-  it('refuses test data on a target that does not take it, and test data without every kind of contents', () => {
+  it('refuses test data on a target that does not take it, and test data without a test seed\'s contents', () => {
     const testFile = edited((file) => {
       file.testData = true;
       file.sportLeagues[0].events[0].field[0] = { player: 'pga-a', ranking: 1, oddsToWin: 5, rounds: [70, 71, 72, 73] };
     });
 
     expect(problemsOf(testFile, false)).toEqual([
-      'testData needs every kind of contents (a test seed), or just PLAYERS and FIELDS (a test slate); missing RESULTS.',
+      'testData needs SCHEDULE, PLAYERS, FIELDS, RESULTS (a test seed), or just PLAYERS and FIELDS (a test slate); missing RESULTS.',
       'testData is true, and this target does not take test data.',
     ]);
-    expect(problemsOf(testFile, true)).toEqual(['testData needs every kind of contents (a test seed), or just PLAYERS and FIELDS (a test slate); missing RESULTS.']);
+    expect(problemsOf(testFile, true)).toEqual(['testData needs SCHEDULE, PLAYERS, FIELDS, RESULTS (a test seed), or just PLAYERS and FIELDS (a test slate); missing RESULTS.']);
+  });
+});
+
+describe('sport data bracket', () => {
+  // A four-team basketball bracket: two semifinals whose winners meet in the final.
+  interface BracketMatch { home: string | null; away: string | null; advancesTo: { matchNumber: number; side: string } | null }
+  interface BracketFile {
+    scope: { contents: string[] };
+    sportLeagues: Array<{ events: Array<{ field: unknown[]; matches: BracketMatch[] }> }>;
+  }
+
+  function bracketFile(): BracketFile {
+    const team = (key: string, name: string) => ({ key, name, countryCode: 'US', ranking: 1 });
+    const file = {
+      schemaVersion: 1,
+      scope: { sport: 'BASKETBALL', season: 2027, sportLeagues: ['NCAA Men'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'BRACKET'] },
+      testData: false,
+      provenance: { gatheredAt: '2027-03-14', gatheredBy: 'load-sport-data skill', sources: [{ name: 'NCAA bracket', url: 'https://www.ncaa.com/brackets' }] },
+      sportLeagues: [{
+        name: 'NCAA Men',
+        players: [team('ncaa-duke', 'Duke'), team('ncaa-vermont', 'Vermont'), team('ncaa-houston', 'Houston'), team('ncaa-texas-xavier', 'Texas / Xavier')],
+        events: [{
+          key: 'final-four',
+          name: 'Tournament',
+          startDate: '2027-03-18',
+          endDate: '2027-04-05',
+          venue: null,
+          location: null,
+          rounds: 2,
+          roundsPar: null,
+          field: [
+            { player: 'ncaa-duke', seed: 1 },
+            { player: 'ncaa-vermont', seed: 16 },
+            { player: 'ncaa-houston', seed: 1 },
+            { player: 'ncaa-texas-xavier', seed: 16, isPlayInPlace: true },
+          ],
+          matches: [
+            { matchNumber: 1, roundNumber: 1, home: 'ncaa-duke', away: 'ncaa-vermont', isNeutralSite: true, scheduledAt: '2027-03-20T12:15:00-04:00', advancesTo: { matchNumber: 3, side: 'HOME' } },
+            { matchNumber: 2, roundNumber: 1, home: 'ncaa-houston', away: 'ncaa-texas-xavier', isNeutralSite: true, advancesTo: { matchNumber: 3, side: 'AWAY' } },
+            { matchNumber: 3, roundNumber: 2, home: null, away: null, isNeutralSite: true, advancesTo: null },
+          ],
+        }],
+      }],
+    };
+    return file as BracketFile;
+  }
+
+  it('reads a basketball file whose events carry a bracket, region seeds and a play-in place', () => {
+    const file = parseSportDataFile(bracketFile(), { allowTestData: false });
+    const event = file.sportLeagues[0].events[0];
+
+    expect(event.matches?.map((match) => [match.matchNumber, match.home, match.away, match.advancesTo?.matchNumber ?? null])).toEqual([
+      [1, 'ncaa-duke', 'ncaa-vermont', 3],
+      [2, 'ncaa-houston', 'ncaa-texas-xavier', 3],
+      [3, null, null, null],
+    ]);
+    expect(event.field.map((entry) => [entry.seed, entry.isPlayInPlace ?? false])).toEqual([[1, false], [16, false], [1, false], [16, true]]);
+  });
+
+  it('refuses a bracket whose shape the bracket endpoint would refuse, naming each problem with the event', () => {
+    const file = bracketFile();
+    const matches = file.sportLeagues[0].events[0].matches;
+    matches[1].away = 'ncaa-duke';
+    matches[2].advancesTo = { matchNumber: 1, side: 'HOME' };
+
+    expect(problemsOf(file)).toEqual([
+      'NCAA Men, Tournament: bracket: match 2 away names the same field row as match 1 home.',
+      'NCAA Men, Tournament: bracket: match 3 advances to match 1, which is not in a later round.',
+      'NCAA Men, Tournament: bracket: match 1 home names a team, but match 3\'s winner fills it.',
+      'NCAA Men, Tournament: bracket: a bracket has one final, the one match whose winner advances nowhere, but this one has 0.',
+    ]);
+  });
+
+  it('refuses a side naming a team that is not in the event\'s field', () => {
+    const file = bracketFile();
+    file.sportLeagues[0].events[0].matches[0].away = 'ncaa-gonzaga';
+
+    expect(problemsOf(file)).toEqual(['NCAA Men, Tournament: bracket: match 1 away names ncaa-gonzaga, which is not on the event\'s field.']);
+  });
+
+  it('refuses a bracket the scope\'s contents leave out, and BRACKET without FIELDS', () => {
+    const withoutBracket = bracketFile();
+    withoutBracket.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS'];
+    expect(problemsOf(withoutBracket)).toEqual(['NCAA Men, Tournament: has a bracket, but the scope\'s contents leave out BRACKET.']);
+
+    const withoutField = bracketFile();
+    withoutField.scope.contents = ['SCHEDULE', 'BRACKET'];
+    withoutField.sportLeagues[0].events[0].field = [];
+    withoutField.sportLeagues[0].events[0].matches = [];
+    expect(problemsOf(withoutField)).toEqual(['scope.contents has BRACKET without FIELDS: a bracket names field places, so the file carries the field.']);
+  });
+
+  it('refuses a bracket, a seed or a play-in place for a sport not played as a bracket', () => {
+    const golf = edited((file) => {
+      file.scope.contents.push('BRACKET');
+      file.sportLeagues[0].events[0].field[0] = { player: 'pga-a', seed: 1, isPlayInPlace: true };
+      (file.sportLeagues[0].events[0] as { matches?: unknown[] }).matches = [
+        { matchNumber: 1, roundNumber: 1, home: 'pga-a', away: null, isNeutralSite: true, advancesTo: null },
+      ];
+    });
+
+    expect(problemsOf(golf)).toEqual([
+      'scope.contents has BRACKET, but a golf event is not played as a bracket.',
+      'PGA TOUR, The RSM Classic: has a bracket, which only a sport played as a bracket has.',
+      'PGA TOUR, The RSM Classic: marks a seed or a play-in place, which only a sport played as a bracket has.',
+    ]);
   });
 });
 

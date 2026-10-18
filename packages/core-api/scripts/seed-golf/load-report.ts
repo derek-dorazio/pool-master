@@ -1,6 +1,6 @@
 /**
  * What a sport data load did, or in a dry run would do: one row per sport league, player,
- * event and event field, and the markdown the workflow summary shows. No I/O.
+ * event, event field and bracket, and the markdown the workflow summary shows. No I/O.
  */
 
 import { isTestSlate, type SportDataFile } from './sport-data-file';
@@ -18,6 +18,8 @@ export const LoadSubject = {
   EVENT: 'EVENT',
   /** One row per event: its field as a whole. */
   FIELD: 'FIELD',
+  /** One row per event: its bracket as a whole. */
+  BRACKET: 'BRACKET',
 } as const;
 export type LoadSubject = (typeof LoadSubject)[keyof typeof LoadSubject];
 
@@ -45,6 +47,7 @@ const SUBJECT_LABEL: Record<LoadSubject, string> = {
   PLAYER: 'Player',
   EVENT: 'Event',
   FIELD: 'Field',
+  BRACKET: 'Bracket',
 };
 
 const ACTION_ORDER: readonly LoadAction[] = [LoadAction.ADD, LoadAction.UPDATE, LoadAction.SKIP, LoadAction.CONFLICT];

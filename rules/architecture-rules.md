@@ -525,8 +525,9 @@ code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`
   Made-up data is allowed only when the envelope says `testData`, and only on local and QA.
 - It is re-entrant by comparing and filling in: what is missing is added, what differs is
   updated while the event has not started, a dropped field entry is withdrawn, and nothing is
-  deleted. A league ranking someone already has is kept, and a started event is reported, not
-  changed. A dry run reports the same without writing.
+  deleted. What release locks (a bracket event's field and pairings) is reported, not
+  changed. A league ranking someone already has is kept, and a started event is reported,
+  not changed. A dry run reports the same without writing.
 - A test seed's dates are moved relative to the day it runs, so what it creates is usable
   then. No automated test may depend on seeded rows; tests build their own.
 
