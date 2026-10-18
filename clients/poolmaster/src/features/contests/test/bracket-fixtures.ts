@@ -141,6 +141,7 @@ export function bracketLeaderboardFixture(overrides: Partial<BracketLeaderboardR
   return {
     contestId: 'contest-1',
     sportEventId: 'event-1',
+    eventCancelled: false,
     gameCount: 7,
     finalTotalPoints: null,
     entries: [

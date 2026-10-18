@@ -22,6 +22,7 @@ export interface BracketLeaderboardEntryRow {
 export interface BracketLeaderboardModel {
   contestId: string;
   sportEventId: string;
+  eventCancelled: boolean;
   gameCount: number;
   finalTotalPoints: number | null;
   entries: BracketLeaderboardEntryRow[];
@@ -31,6 +32,7 @@ export function toBracketLeaderboardResponse(model: BracketLeaderboardModel): Br
   return {
     contestId: model.contestId,
     sportEventId: model.sportEventId,
+    eventCancelled: model.eventCancelled,
     gameCount: model.gameCount,
     finalTotalPoints: model.finalTotalPoints,
     entries: model.entries.map((entry) => ({ ...entry })),

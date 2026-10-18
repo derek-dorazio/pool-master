@@ -584,7 +584,7 @@ export class ContestService {
     }
     let standings: Awaited<ReturnType<typeof loadBracketStandings>>;
     try {
-      standings = await loadBracketStandings(this.deps, contestId, event.id);
+      standings = await loadBracketStandings(this.deps, contestId, event);
     } catch (error) {
       if (!(error instanceof BracketScoringUnavailableError)) throw error;
       this.logger.error({ contestId, reason: error.reason }, 'bracket leaderboard refused: the contest cannot be scored');
@@ -607,6 +607,7 @@ export class ContestService {
         displayPosition: settled?.displayPosition ?? standing.displayPosition,
         points: settled?.totalScore ?? standing.score.points,
         maxPossiblePoints: settled?.totalScore ?? standing.score.maxPossiblePoints,
+        // Not frozen at settlement: a result corrected after it can move this count, never the place or points.
         correctPickCount: standing.score.correctPickCount,
         tiebreakerValue: standing.entry.tiebreakerValue ?? null,
       };
@@ -614,6 +615,7 @@ export class ContestService {
     return {
       contestId,
       sportEventId: event.id,
+      eventCancelled: standings.eventCancelled,
       gameCount: standings.gameCount,
       finalTotalPoints: standings.finalTotalPoints,
       entries,

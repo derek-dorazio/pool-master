@@ -5,7 +5,7 @@ import type {
   ContestRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { ContestFormat, ContestStatus, SelectionType, SportEventStatus, type Contest } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, SelectionType, SportEventStatus, type Contest, type SportEvent } from '@poolmaster/shared/domain';
 import {
   BracketScoringUnavailableError,
   loadBracketStandings,
@@ -116,7 +116,7 @@ export class ContestSettlementService {
     let contestsSettled = 0;
     for (const contest of contests) {
       if (contest.selectionType === SelectionType.BRACKET) {
-        const settled = await this.settleBracketContest(contest, sportEventId, completedAt, cancelled);
+        const settled = await this.settleBracketContest(contest, sportEvent, completedAt);
         if (settled) {
           contestsSettled++;
           standingsUpserted += settled.standingsUpserted;
@@ -232,11 +232,11 @@ export class ContestSettlementService {
    */
   private async settleBracketContest(
     contest: Contest,
-    sportEventId: string,
+    sportEvent: SportEvent,
     completedAt: Date,
-    cancelled: boolean,
   ): Promise<{ standingsUpserted: number; completed: boolean } | null> {
-    if (cancelled) {
+    const sportEventId = sportEvent.id;
+    if (sportEvent.status === SportEventStatus.CANCELLED) {
       const completed = await this.deps.contests.transitionStatus(contest.id, {
         from: SETTLEABLE,
         to: ContestStatus.COMPLETED,
@@ -247,7 +247,7 @@ export class ContestSettlementService {
     }
     let standings: Awaited<ReturnType<typeof loadBracketStandings>>;
     try {
-      standings = await loadBracketStandings(this.deps, contest.id, sportEventId);
+      standings = await loadBracketStandings(this.deps, contest.id, sportEvent);
     } catch (error) {
       if (!(error instanceof BracketScoringUnavailableError)) throw error;
       this.logger.error({ contestId: contest.id, sportEventId, reason: error.reason }, 'Skipped bracket contest settlement because it cannot be scored');

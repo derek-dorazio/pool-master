@@ -133,7 +133,7 @@ describe('loadBracketStandings', () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK);
 
-    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent.id);
+    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent);
 
     // Alice and Bob: 4 correct firsts, 2 + 2 + 4 still possible. Cara: T8 busted, T4, T2 and T2 still in.
     expect(rows(standings)).toEqual([
@@ -148,7 +148,7 @@ describe('loadBracketStandings', () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
 
-    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent.id);
+    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent);
 
     // Cara's T4 lost game 5, so her final pick of T2 (worth 4) is all she has left to play for.
     expect(rows(standings)).toEqual([
@@ -162,7 +162,7 @@ describe('loadBracketStandings', () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK, FINAL_T1_70_66);
 
-    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent.id);
+    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent);
 
     // The final totals 136: Alice's 140 is 4 away, Bob's 120 is 16 away.
     expect(rows(standings)).toEqual([
@@ -294,7 +294,7 @@ describe('ContestService.getBracketLeaderboard', () => {
 
     const leaderboard = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
 
-    expect(leaderboard).toMatchObject({ contestId: context.contest.id, sportEventId: context.sportEvent.id, gameCount: 7, finalTotalPoints: null });
+    expect(leaderboard).toMatchObject({ contestId: context.contest.id, sportEventId: context.sportEvent.id, eventCancelled: false, gameCount: 7, finalTotalPoints: null });
     expect(leaderboard.entries.map((row) => [row.entryName, row.displayPosition, row.points, row.maxPossiblePoints, row.correctPickCount, row.tiebreakerValue])).toEqual([
       ['Alice', 'T1', 8, 12, 6, 140],
       ['Bob', 'T1', 8, 12, 6, 120],
@@ -327,7 +327,7 @@ describe('ContestService.getBracketLeaderboard', () => {
 
     const leaderboard = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
 
-    expect(leaderboard).toMatchObject({ gameCount: 0, finalTotalPoints: null });
+    expect(leaderboard).toMatchObject({ eventCancelled: true, gameCount: 0, finalTotalPoints: null });
     expect(leaderboard.entries.map((row) => [row.entryName, row.points, row.maxPossiblePoints, row.correctPickCount])).toEqual([
       ['Alice', 0, 0, 0],
       ['Bob', 0, 0, 0],

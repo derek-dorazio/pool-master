@@ -169,7 +169,9 @@ export function BracketLeaderboard({ contest, leagueCode: hintedLeagueCode }: { 
               {`The final scored ${board.finalTotalPoints} total points: tiebreakers are measured against it.`}
             </p>
           ) : null}
-          {contest.status === ContestStatus.COMPLETED ? (
+          {board.eventCancelled ? (
+            <p data-testid="bracket-leaderboard-cancelled-note">This event was cancelled, so no bracket scores any points.</p>
+          ) : contest.status === ContestStatus.COMPLETED ? (
             <p data-testid="contest-leaderboard-settled-note">Final result: these standings are frozen at settlement.</p>
           ) : null}
         </div>

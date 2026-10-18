@@ -103,7 +103,8 @@ export type BracketLeaderboardEntryDto = z.infer<typeof BracketLeaderboardEntryD
 export const BracketLeaderboardResponseSchema = z.object({
   contestId: z.string().uuid(),
   sportEventId: z.string().uuid(),
-  gameCount: z.number().int().describe('The bracket\'s games: an entry picks each one.'),
+  eventCancelled: z.boolean().describe('The event was cancelled: it counts for nothing, so every entry stands unscored and no game counts.'),
+  gameCount: z.number().int().describe('The bracket\'s games: an entry picks each one. None when the event was cancelled.'),
   finalTotalPoints: z.number().int().nullable().describe('The final\'s combined score, both teams together, once it is played: what the tiebreakers are measured against.'),
   entries: z.array(BracketLeaderboardEntryDtoSchema).describe('The entries that submitted their bracket, best first. An entry still in draft when the event started is left out.'),
 }).describe('A bracket contest\'s leaderboard.');

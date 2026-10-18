@@ -10161,7 +10161,11 @@ export type BracketLeaderboardResponse = {
     contestId: string;
     sportEventId: string;
     /**
-     * The bracket's games: an entry picks each one.
+     * The event was cancelled: it counts for nothing, so every entry stands unscored and no game counts.
+     */
+    eventCancelled: boolean;
+    /**
+     * The bracket's games: an entry picks each one. None when the event was cancelled.
      */
     gameCount: number;
     /**

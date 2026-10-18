@@ -22605,9 +22605,13 @@
             "type": "string",
             "format": "uuid"
           },
+          "eventCancelled": {
+            "type": "boolean",
+            "description": "The event was cancelled: it counts for nothing, so every entry stands unscored and no game counts."
+          },
           "gameCount": {
             "type": "integer",
-            "description": "The bracket's games: an entry picks each one."
+            "description": "The bracket's games: an entry picks each one. None when the event was cancelled."
           },
           "finalTotalPoints": {
             "type": [
@@ -22687,6 +22691,7 @@
         "required": [
           "contestId",
           "sportEventId",
+          "eventCancelled",
           "gameCount",
           "finalTotalPoints",
           "entries"

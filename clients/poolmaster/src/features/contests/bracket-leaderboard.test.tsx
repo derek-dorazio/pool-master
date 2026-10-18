@@ -135,6 +135,16 @@ describe('Bracket contest leaderboard', () => {
     expect(await screen.findByTestId('bracket-leaderboard-final-total')).toHaveTextContent('The final scored 138 total points');
   });
 
+  it('says a cancelled event scores nothing in place of the frozen-standings note once the contest is Final', async () => {
+    primeMocks();
+    getContestMock.mockResolvedValue({ data: { contest: bracketContestFixture({ status: 'COMPLETED' }) } });
+    getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture({ eventCancelled: true, gameCount: 0 }) });
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('bracket-leaderboard-cancelled-note')).toHaveTextContent('This event was cancelled, so no bracket scores any points.');
+    expect(screen.queryByTestId('contest-leaderboard-settled-note')).not.toBeInTheDocument();
+  });
+
   it('shows the picks-not-revealed state when the server refuses the board before the event starts', async () => {
     primeMocks();
     getContestMock.mockResolvedValue({ data: { contest: bracketContestFixture({ status: 'OPEN' }) } });

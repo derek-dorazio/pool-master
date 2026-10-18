@@ -10181,7 +10181,9 @@ export interface components {
             contestId: string;
             /** Format: uuid */
             sportEventId: string;
-            /** @description The bracket's games: an entry picks each one. */
+            /** @description The event was cancelled: it counts for nothing, so every entry stands unscored and no game counts. */
+            eventCancelled: boolean;
+            /** @description The bracket's games: an entry picks each one. None when the event was cancelled. */
             gameCount: number;
             /** @description The final's combined score, both teams together, once it is played: what the tiebreakers are measured against. */
             finalTotalPoints: number | null;
