@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { runStep, withTimeout } from './check-openapi-fresh.mjs';
+import { errorMessage, runStep, withTimeout } from './check-openapi-fresh.mjs';
 
 // On 2026-10-18 the hey-api generator printed "Done!" and then never exited, twice. The job
 // sat in api:check until its 10-minute limit with nothing in the log to say which step hung.
@@ -31,5 +31,13 @@ describe('check-openapi-fresh step limits', () => {
 
   it('passes through the value of a step that finishes in time', async () => {
     assert.equal(await withTimeout(Promise.resolve('generated'), 1000, 'generation'), 'generated');
+  });
+
+  it('reports the cause of a hey-api generation failure, not its empty wrapper message', () => {
+    const wrapped = Object.assign(new Error(''), {
+      originalError: { error: new Error('Unexpected token in openapi.json'), jobIndex: 0 },
+    });
+    assert.equal(errorMessage(wrapped), 'Unexpected token in openapi.json');
+    assert.equal(errorMessage(new Error('plain failure')), 'plain failure');
   });
 });

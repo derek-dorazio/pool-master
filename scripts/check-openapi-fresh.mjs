@@ -38,6 +38,12 @@ export function runStep(command, args, { env = {}, timeoutMs = STEP_TIMEOUT_MS }
   }
 }
 
+// hey-api rejects with a JobError whose own message is empty; the cause is on originalError.error.
+export function errorMessage(error) {
+  const cause = error?.originalError?.error ?? error;
+  return cause instanceof Error ? cause.message : String(cause);
+}
+
 export function withTimeout(promise, timeoutMs, label) {
   let timer;
   const limit = new Promise((_, reject) => {
@@ -163,7 +169,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   try {
     await main();
   } catch (error) {
-    console.error(error instanceof Error ? error.message : error);
+    console.error(errorMessage(error));
     process.exitCode = 1;
   }
   // Exit explicitly: a handle left open by the generator must not hold the job open.
