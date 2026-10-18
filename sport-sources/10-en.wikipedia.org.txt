@@ -1,0 +1,2719 @@
+Source: https://en.wikipedia.org/wiki/College_Football_Playoff
+Final URL: https://en.wikipedia.org/wiki/College_Football_Playoff
+HTTP 200
+Fetched: 2026-10-18T06:00:18.717Z
+
+College Football Playoff - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Format
+Toggle Format subsection
+1.1
+4-team playoff (2014–2023)
+1.2
+12-team playoff (2024–present)
+2
+Venues
+Toggle Venues subsection
+2.1
+On-campus games
+2.2
+New Year's Six
+2.3
+Championship game
+3
+Selection process
+Toggle Selection process subsection
+3.1
+Selection Committee
+3.1.1
+Past members
+3.2
+Voting procedure
+4
+History
+Toggle History subsection
+4.1
+Background
+4.2
+Establishment
+4.3
+Expansion
+5
+Impact on scheduling
+6
+Games
+7
+Appearances
+Toggle Appearances subsection
+7.1
+Selections by year
+7.2
+Appearances by team
+7.2.1
+Summary table
+7.2.2
+Detail
+7.3
+Teams records by playoff round
+7.4
+Appearances by conference
+8
+Broadcasting
+Toggle Broadcasting subsection
+8.1
+2013–2024
+8.2
+2025–2032
+8.3
+Ratings
+9
+Revenue
+10
+Leadership
+Toggle Leadership subsection
+10.1
+Board of Managers
+10.2
+Athletics Directors Advisory Group
+11
+Criticism
+Toggle Criticism subsection
+11.1
+Team selection
+11.1.1
+2023 exclusion of Florida State
+11.1.2
+2025 Miami–Notre Dame controversy
+11.2
+Selection committee
+11.3
+Scheduling
+11.3.1
+New Year's Eve games
+11.3.2
+Saturday first-round games
+12
+See also
+13
+References
+14
+External links
+Toggle the table of contents
+College Football Playoff
+8 languages
+Čeština
+Español
+Français
+Italiano
+日本語
+Polski
+Português
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikimedia Commons
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+Playoff tournament in American college football
+([[1869 college football season|1869]]–[[1935 college football season|1935]])\n* [[College football national championships in NCAA Division I FBS|National polls]]<br>([[1936 college football season|1936]]–[[1991 NCAA Division I-A football season|1991]])\n* [[Bowl Coalition]]<br>([[1992 NCAA Division I-A football season|1992]]–[[1994 NCAA Division I-A football season|1994]])\n* [[Bowl Alliance]]<br>([[1995 NCAA Division I-A football season|1995]]–[[1997 NCAA Division I-A football season|1997]])\n* [[Bowl Championship Series]]<br>([[1998 NCAA Division I-A football season|1998]]–[[2013 NCAA Division I FBS football season|2013]])\n}}"},"succeeded_by":{"wt":""},"type":{"wt":"playoff"},"number_type":{"wt":"teams"},"number":{"wt":"12"},"trophy":{"wt":"[[College Football Playoff National Championship Trophy]]"},"television":{"wt":"[[ESPN College Football|ESPN]] (2014–present)<br>[[College Football on ABC|ABC]] (2024–present)<br>[[College Football on TNT Sports|TNT/TBS/TruTV]] (2024–present; sublicensing agreement with ESPN)"},"most_apps":{"wt":"[[Alabama Crimson Tide football|Alabama]] (9)"},"most_wins":{"wt":"Alabama (10)"},"most_champs":{"wt":"Alabama (3)"},"conf_most_apps":{"wt":"[[Southeastern Conference|SEC]] (10)"},"conf_most_wins":{"wt":"SEC (14)"},"conf_most_champs":{"wt":"SEC (6)"},"last_game":{"wt":"[[2026 College Football Playoff National Championship]]"},"current_champion":{"wt":"[[2025 Indiana Hoosiers football team|Indiana]] (1st title)"},"director":{"wt":"[[Richard M. Clark]]"},"website":{"wt":"{{URL|https://collegefootballplayoff.com/|collegefootballplayoff.com}}"}},"i":0}}]}'> College Football Playoff
+Most recent season:
+2025–26 College Football Playoff
+In operation 2014 –present
+Preceded by
+Various contemporary and retroactive selectors
+( 1869 – 1935 )
+National polls
+( 1936 – 1991 )
+Bowl Coalition
+( 1992 – 1994 )
+Bowl Alliance
+( 1995 – 1997 )
+Bowl Championship Series
+( 1998 – 2013 )
+Number of teams 12
+Championship trophy College Football Playoff National Championship Trophy
+Television partner(s) ESPN (2014–present)
+ABC (2024–present)
+TNT/TBS/TruTV (2024–present; sublicensing agreement with ESPN)
+Most playoff appearances Alabama (9)
+Most playoff wins Alabama (10)
+Most playoff championships Alabama (3)
+Conference with most appearances SEC (10)
+Conference with most game wins SEC (14)
+Conference with most championships SEC (6)
+Last championship game 2026 College Football Playoff National Championship
+Current champion Indiana (1st title)
+Executive director Richard M. Clark
+Website collegefootballplayoff.com
+The College Football Playoff ( CFP ) is an annual single-elimination tournament held to determine a national champion for the National Collegiate Athletic Association (NCAA) Division I Football Bowl Subdivision (FBS), the highest level of college football competition in the United States. It culminates in the College Football Playoff National Championship game. [ 1 ] [ 2 ] The inaugural tournament was held at the end of the 2014 NCAA Division I FBS football season under a four-team format. [ 3 ] The CFP Board of Managers voted in 2023 to expand the playoff to 12 teams beginning in 2024, an arrangement that will last at least through the end of the 2026 season. After 2026, additional expansion to a 14-team playoff or larger may take place at that time. [ 4 ] [ 5 ]
+As the NCAA does not organize or award an official national championship for FBS football (instead merely recognizing the decisions made by any of a number of independent major championship selectors ), the CFP's inception in 2014 marked the first time a major national championship selector in college football was able to determine their champion by using a bracket competition . [ 6 ] [ 7 ] A 13-member committee has selected and seeded the teams to take part in the CFP. [ 8 ] This system differs from the use of polls or computer rankings that had previously been used to select the participants for the Bowl Championship Series (BCS), the title system used in FBS from 1998 to 2013. The CFP format used from 2014 to 2023 was a four-team single-elimination tournament, with participants determined and seeded by the selection committee.
+The current 12-team CFP format features, for the first time, a first round of playoffs separated from bowl games. The first round consists of seeds 5 through 12 playing one another at the home stadium of the better seeded teams, or another venue of their choice. Then, the quarter-final and semi-final games consist of the New Year's Six bowl games, with a national championship game after that. [ 9 ] [ 10 ]
+From 2014 through 2023, the two semifinal games rotated among the six New Year's Day bowl games: the Cotton Bowl , Fiesta Bowl , Orange Bowl , Peach Bowl , Rose Bowl , and Sugar Bowl . [ 11 ] In addition to the teams selected for the playoff, from 2014 to 2023 the final CFP rankings were used in determining the participants for the four New Year's Six bowls that were not hosting the semifinals that year. Under the original four-team format, the two semifinal games were played on the same day; since the expansion of the CFP in 2024, they are played on back-to-back days. The College Football Playoff National Championship game is then played on the first Monday that is six or more days after the Semifinals. [ 12 ] The venue of the championship game is then selected based on bids submitted by cities, similar to the NCAA Final Four .
+The winner of the Championship Game is awarded the College Football Playoff National Championship Trophy , which was commissioned to avoid connections with the previous championship systems and their associated trophies. This included the AFCA "crystal football" trophy , which had been presented to the national champion since the 1990s due to the AFCA being contractually obligated to name the BCS champion as the Coaches Poll champion. [ 13 ]
+While the BCS brand was retired, BCS Properties, LLC still exists and owns all CFP trademarks. [ 14 ] The CFP is separately administered by CFP Administration, LLC, which consists of representatives from each of the FBS conferences and the University of Notre Dame . [ 15 ]
+Format
+[ edit ]
+4-team playoff (2014–2023)
+[ edit ]
+From its formation in 2014 to the end of the 2023 season , the College Football Playoff used a four-team knockout bracket to determine the national champion. Six bowl games —the Rose Bowl , Sugar Bowl , Orange Bowl , Cotton Bowl , Fiesta Bowl , and Peach Bowl – rotated as hosts for the semifinals. [ 16 ] The rotation was set on a three-year cycle with the following pairings: Rose/Sugar, Orange/Cotton, and Fiesta/Peach. The two semifinal bowls and the other four top-tier bowls were marketed as the New Year's Six . [ 17 ] From 2014 to 2025, per contract, the Rose and Sugar Bowls were always on New Year's Day . Originally three games were held on New Year's Eve with the other three on New Year's Day. However, disappointing TV ratings in the first rotation led to games originally planned for New Year's Eve be moved to as early as December 27 in some years. [ 2 ] The selection committee seeded the top four teams, and also assigned teams to the at-large bowls (Cotton, Fiesta, and Peach) in years when they did not host semifinals. [ 18 ]
+The four-team format pitted the No. 1-ranked team against No. 4 and No. 2 against No. 3. The seeding determined the semifinal bowl game assigned to each matchup; the No. 1 seed chose its bowl game to prevent it from playing in a "road" environment. There were no limits on the number of teams per conference, a change from Bowl Championship Series (BCS) rules. [ 2 ] However, some non-semifinal bowl selections maintained their conference tie-ins, similarly to the BCS's automatic qualifier berths. [ 19 ]
+12-team playoff (2024–present)
+[ edit ]
+The CFP expanded to a 12-team format for the 2024 through 2027 seasons . [ 20 ] [ 21 ]
+Features of the expanded playoff include: [ 22 ]
+Guaranteed bids for the top five conference champions in the CFP rankings; no conference has an automatic bid, a conference must have a minimum of eight members for its champion to be eligible for a guaranteed bid.
+Starting in 2026, this was altered to guarantee each champion of a Power Four conference ( ACC , Big Ten , Big 12 , and SEC ) a bid, along with one Group of Six team. Every Power Four conference champion is guaranteed a bid, regardless of their ranking in comparison to Group of Six conference champions. [ 23 ] The Group of Six representative will be the highest-ranked team from that cohort, and does not have to be a conference champion. [ 24 ]
+At-large bids for the seven highest-ranked remaining teams, which could include additional conference champions.
+Starting in 2026, if independent Notre Dame is ranked in the top 12, it is guaranteed an at-large bid. [ 25 ] Notre Dame had a similar guarantee with the BCS if ranked in the top eight. [ 26 ]
+For the 2024 season, the four highest-ranked conference champions received first-round byes. This was changed for the 2025 season, with the four highest-ranked teams overall now receiving first-round byes, regardless of conference champion status. [ 27 ]
+The remaining teams play each other in the first round at the home fields of the better seeds or an alternate venue of their choosing; match-ups are 5–12, 6–11, 7–10, and 8–9.
+The quarterfinals and semifinals are hosted by the New Year's Six bowl games ( Rose , Sugar , Orange , Cotton , Peach , and Fiesta ) with the semifinal games being determined on the same rotation as in the previous format, except the Rose Bowl, which will remain on New Years Day annually and will always be a quarterfinal game. [ 28 ]
+The championship game continues to be held at a separately determined neutral site.
+The playoff bracket is not reseeded at any time.
+First round games occur on the third weekend of December, quarterfinal games on or around New Year's Day , semifinal games at least one week later, and the championship game on the first Monday of at least six days after the semifinals.
+Venues
+[ edit ]
+On-campus games
+[ edit ]
+The teams seeded 5–12 will play first-round games hosted by the better seed, either at their home stadium or another venue of their choosing. [ 22 ]
+New Year's Six
+[ edit ]
+Main article: New Year's Six
+The semifinal and quarterfinal rounds of the playoff are hosted by the New Year's Six : the Rose Bowl , Sugar Bowl , Orange Bowl , Cotton Bowl , Peach Bowl , and Fiesta Bowl . These games are played annually on or around New Year's Day and represent six of the oldest and most prestigious college football bowl games .
+During the four-team playoff era, the bowls rotated on a three-year cycle. Two of the six bowls served as the CFP semifinals for any given year with the following pairings: Rose/Sugar, Orange/Cotton, and Fiesta/Peach. The year's four off-cycle bowls hosted bowl games outside of the CFP tournament bracket.
+In the 12-team playoff format, four of the six bowls host quarterfinal games on or around New Year's Day (which are determined in the above pairings on a three-year cycle). The winners advance to play in the semifinals, held in the two remaining bowls one week later. The bowls will again cycle on a rotating basis. [ 22 ]
+Championship game
+[ edit ]
+Main article: College Football Playoff National Championship
+Cities around the country bid to host each year's championship game . The playoff group's leaders make a selection from those proposals, in a similar fashion to other large sporting events, such as the NCAA Final Four . Officials say the championship game will be held in a different city each year, and that bids must propose host stadiums with a capacity of at least 65,000 spectators. [ 29 ] Under the system, cities cannot host both a semifinal game and the title game in the same year.
+In practice, since the inaugural CFP national championship game, every title game up to and including the 2029 season has been played (or is scheduled to be played) in a stadium that hosts at least one National Football League team and has been played indoors or in a warm-weather city.
+Selection process
+[ edit ]
+Selection Committee
+[ edit ]
+The College Football Playoff Selection Committee consists of 13 members who generally serve three-year terms, although some initial 2013 selections served two- and four-year terms "to achieve a rotation" of members. [ 30 ] [ 31 ]
+The 2025–26 CFP selection committee members are: [ 32 ]
+Member
+Position
+Conference affiliation
+Term start
+Chris Ault
+Retired Nevada athletic director and football coach
+At-large
+2023–24
+Troy Dannen
+Nebraska athletic director
+Big Ten
+2025–26
+Mark Dantonio
+Former head coach of Cincinnati and Michigan State
+Big Ten
+2025–26
+Mark Harlan [ a ]
+Utah athletic director
+Big 12
+2025–26
+Jeff Long [ b ]
+Former Arkansas , Kansas , Pittsburgh athletic director
+SEC
+2025–26
+Mack Rhoades [ c ] [ d ]
+Baylor athletic director
+Big 12
+2023–24
+Mike Riley
+Former head coach of Oregon State and Nebraska
+At-large
+2024–25
+David Sayler
+Miami (Ohio) athletic director
+MAC
+2023–24
+Wesley Walls
+Former player for Ole Miss
+At-large
+2025–26
+Carla Williams
+Virginia athletic director
+ACC
+2024–25
+Hunter Yurachek [ e ]
+Arkansas athletic director
+SEC
+2024–25
+↑ Replaced Mack Rhoades after week 2, who stepped down for personal reasons.
+↑ Appointed to the Committee for a one-year term to replace Steve Wieberg, who stepped down for personal reasons.
+↑ Chair for 2025–26 prior to stepping down
+↑ Stepped down due to personal reasons after week two rankings
+↑ Chair for 2025–26 after week 2
+The committee members include one current athletic director from each of the four major conferences— ACC , Big Ten , Big 12 , and SEC —also known as the Power conferences . [ 33 ] [ 34 ] Other members are former coaches, players, athletic directors, and administrators, plus a retired member of the media. The goal was for the panel to consist proportionally of current "Power Five" athletic directors, former coaches, and a third group of other voters, [ 33 ] excluding current conference commissioners, coaches, and media members. [ 35 ] During the selection process, organizers said they wanted the committee to be geographically balanced. [ 36 ] Conference commissioners submitted lists totaling more than 100 names from which to select the final committee members. [ 37 ] [ 38 ]
+Past members
+[ edit ]
+Member Position Conference affiliation [ a ] Season(s)
+Barry Alvarez Wisconsin athletic director and former head coach Big Ten 2014–16
+Gary Barta Iowa athletic director Big Ten 2019–22
+Frank Beamer Former Virginia Tech head coach ACC [ b ] 2017–20
+Paola Boivin Former Arizona Republic reporter, then-current Arizona State faculty member N/A 2018–22
+Jeff Bower Former Southern Miss head coach N/A 2016–19
+Lloyd Carr Former Michigan coach Big Ten — {{cite news|url=http://www.sportingnews.com/ncaa-football/news/lloyd-carr-resigns-from-cfp-selection-committee/1bunf4u2wuxt917zgkjhhahbg3|title=Lloyd Carr resigns from CFP for health reasons|publisher=Sportingnews.com}}</ref>"}},"i":0}}]}'> [ c ]
+Joe Castiglione Oklahoma athletic director Big 12 2018–21
+Charlie Cobb Georgia State athletic director; former NC State center Sun Belt 2021–22
+Chris Del Conte Texas athletic director Big 12 — [ d ]
+Herb Deromedi Former Central Michigan head coach N/A 2016–19
+Chet Gladchuk
+U.S. Naval Academy athletic director
+American
+2022–24
+Michael C. Gould Former Air Force Academy superintendent N/A 2014–15
+Jim Grobe
+Former football coach at Wake Forest , Baylor , and Ohio
+ACC
+2022–25
+Pat Haden Former USC athletic director; former USC quarterback Pac-12 2014 {{cite news|url=https://www.espn.com/college-football/story/_/id/14010323/usc-athletic-director-pat-haden-stepping-college-football-playoff-selection-committee |title=Haden Steps Down |work=ESPN.com |date=October 30, 2015 |access-date=November 11, 2015}}</ref>"}},"i":0}}]}'> [ e ]
+Ken Hatfield Former Rice , Air Force , Arkansas and Clemson head coach N/A 2018–21
+Kirby Hocutt Texas Tech athletic director; former Kansas State linebacker Big 12 2015–18
+Christopher B. Howard Robert Morris University President; former Air Force running back N/A 2017–20
+Tom Jernstedt Former NCAA executive vice president; former Oregon quarterback N/A 2014–18
+Bobby Johnson Former Vanderbilt head coach; former Clemson player N/A 2015–19
+Oliver Luck Former West Virginia athletic director Big 12 2014 {{cite news|url=https://www.espn.com/college-sports/story/_/id/12041034/ad-oliver-luck-leaving-west-virginia-mountaineers-become-executive-vice-president-regulatory-affairs-ncaa |title=Oliver Luck joins NCAA |work=ESPN.com |date=December 17, 2014 |access-date=December 17, 2014}}</ref>"}},"i":0}}]}'> [ f ]
+Jeff Long Former Arkansas athletic director SEC 2014–18
+Ronnie Lott Former USC defensive back N/A 2018–21
+Archie Manning Former NFL and Ole Miss quarterback N/A — <ref>[http://www.collegefootballplayoff.com/press-releases/hancock-announces-membership-changes-to-cfp-selection-committee Hancock Announces Membership Changes to CFP Selection Committee] {{webarchive|url=https://web.archive.org/web/20150329224606/http://www.collegefootballplayoff.com/press-releases/hancock-announces-membership-changes-to-cfp-selection-committee |date=March 29, 2015 }}, Collegefootballplayoff.com, March 27, 2015</ref>"}},"i":0}}]}'> [ g ]
+Warde Manuel
+Michigan athletic director
+Big Ten
+2022–25
+Randall McDaniel
+Former NFL player and Arizona State All-American
+N/A
+2024–25
+Terry Mohajir Arkansas State athletic director Sun Belt 2019–21 {{cite news|url=https://www.espn.com/college-sports/story/_/id/30863681/arkansas-state-terry-mohajir-agrees-become-athletic-director-ucf-sources-say |title=Terry Mohajir leaves Arkansas State to become athletic director at UCF |first=Chris |last=Low |website=ESPN.com |date=February 9, 2021 |accessdate=February 9, 2021}}</ref> He was removed from the committee and replaced by Charlie Cobb for the final year of his term in order to maintain the Sun Belt Conference's committee position."}},"i":0}}]}'> [ h ]
+Rob Mullens Oregon athletic director Pac-12 2017–20
+Ray Odierno Former Army Chief of Staff N/A 2019–20 [ 45 ]
+Tom Osborne Former Nebraska coach and athletic director Big Ten / Big 12 2014–15
+Gary Pinkel
+Former head coach of Toledo and Missouri
+Big 12 / SEC
+2024–25
+Dan Radakovich Clemson athletic director ACC 2014–18
+Condoleezza Rice Former United States Secretary of State N/A 2014–16
+Will Shields
+Former NFL player and Nebraska All-American
+N/A
+2021–24
+Gene Smith Ohio State athletic director Big Ten 2017–19
+Todd Stansbury Georgia Tech athletic director ACC 2018–21
+Scott Stricklin Florida athletic director SEC 2018–21
+Mike Tranghese Former Big East commissioner American 2014–15
+Rod West [ 46 ] Former Notre Dame linebacker, former president of the Allstate Sugar Bowl N/A 2021–22
+Kelly Whiteside
+Former college football reporter for Newsday , Sports Illustrated , and USA Today
+N/A
+2022–25
+Steve Wieberg Former USA Today reporter N/A 2014–18
+Tyrone Willingham Former Stanford , Notre Dame and Washington head coach N/A 2014–18
+↑ Current or former, athletic department administration only, during committee term.
+↑ Beamer is listed as being affiliated with the ACC because he was employed by Virginia Tech in a non-coaching role during his CFP committee tenure.
+↑ Left the committee in 2016 before the season started for health reasons. Committee stayed at 12 members rather than replacing him. [ 39 ]
+↑ Del Conte was named as the Big 12 representative in February 2021, but never participated in any voting. He was removed in August 2021, shortly after Texas announced its impending departure for the SEC, with Kansas State AD Gene Taylor replacing him.
+↑ Stepped down October 30, 2015, citing health reasons and instability at USC. Did not participate in 2015 season committee. [ 40 ]
+↑ Left the committee in 2015, before his term expired, after resigning as West Virginia athletic director to work for the NCAA as executive vice president of regulatory affairs. [ 41 ]
+↑ Took a leave of absence for health reasons in October 2014 and stepped down in March 2015. Never participated in any committee voting. [ 42 ] [ 43 ]
+↑ Mohajir's term had been scheduled to end in 2022, but he left Arkansas State after the 2020 season to become the new athletic director at UCF . [ 44 ] He was removed from the committee and replaced by Charlie Cobb for the final year of his term in order to maintain the Sun Belt Conference's committee position.
+The selection of Condoleezza Rice , a former U.S. Secretary of State and Stanford University provost , was met with some backlash within the sport and the media. Critics questioned her qualifications, citing gender and lack of football experience. [ 47 ] [ 48 ]
+Voting procedure
+[ edit ]
+The committee releases its top 25 rankings weekly on Tuesdays in the second half of the regular season. [ 49 ] [ 50 ] During the season, the committee meets and releases rankings six or seven times, depending on the length of the season (the number of games is consistent, but the number of weeks those games are played over can vary from year to year). [ 42 ] The group, which meets at the Gaylord Texan hotel in Grapevine, Texas , [ 51 ] reportedly meets in person up to 10 total times a year. [ 38 ]
+A team's strength of schedule is one of the most pertinent considerations for the committee in making its selections. [ 52 ] Other factors that the committee weighs are conference championships, team records, and head-to-head results, [ 12 ] plus other points such as injuries and weather. [ 53 ] Unlike the BCS system, the AP Poll , Coaches' Poll , and the Harris Poll , computer rankings are not used to make the selections. [ 8 ] [ 33 ] Advanced statistics and metrics are expected to be submitted to the committee, though like other analytics, they have no formal role in the decision. [ 54 ] Committee members are not required to attend games. [ 51 ]
+Long said the panel considered less frequent rankings, but ultimately decided on a weekly release. "That's what the fans have become accustomed to, and we felt it would leave a void in college football without a ranking for several weeks," he said. Long also noted: "Early on there was some talk that we would go into a room at the end of the season and come out with a top four, but that didn't last long." [ 55 ] In analyzing this change in thinking, Stewart Mandel of Sports Illustrated commented: "The whole point of the selection committee was to replace the simplistic horse-race nature of Top 25 polls – where teams only move up if someone above them loses – with a more deliberative evaluation method. Now the playoff folks are going to try to do both." [ 56 ] Addressing the "pecking order" nature of traditional polls, George Schrodeder of USA Today wrote that "if it actually works as intended, we could see volatile swings" from week to week, with lower-ranked teams moving ahead of higher-ranked teams without either team losing (a rarity in traditional polls). Both Long and Bill Hancock, the CFP executive director, say they expect that to happen. [ 57 ]
+The committee's voting method uses multiple ballots, similar to the NCAA basketball tournament selection process and the entire process is facilitated through custom software developed by Code Authority in Frisco, Texas. [ 58 ] From a large initial pool of teams, the group takes numerous votes on successive tiers of teams, considering six at a time and coming to a consensus on how they should be ranked, then repeating the process with the next tier of teams. Discussion and debate happens at each voting step. All votes are by secret ballot, and committee members do not make their ballots public. [ 55 ] Each week's ranking process begins anew, with no weight given to the previous week's selections. [ 57 ] In this fashion, the committee selects the teams to compete for the national championship.
+Committee members who are currently employed or financially compensated by a school, or have family members who have a current financial relationship (which includes football players), are not allowed to vote for that school. During deliberations about a team's selection, members with such a conflict of interest cannot be present, but can answer factual questions about the institution. [ 55 ] All committee members have past ties to certain NCAA institutions, [ 51 ] but the committee decided to ignore those ties in the recusal requirements. "We just boiled it down to where we felt this group was fit to its high integrity and would differentiate from those past relationships," Long said. [ 55 ] Some football writers, like Dennis Dodd and Mark Schlabach , have said the recusal arrangement isn't transparent or objective, suggesting that members' alma maters and former coaching jobs should be considered disqualifying conflicts of interest. [ 59 ] [ 60 ]
+History
+[ edit ]
+Background
+[ edit ]
+Main article: College football national championships in NCAA Division I FBS
+College football is arguably the oldest organized sport in the United States. It is substantially older than its professional counterpart, the NFL, and its earliest game, in 1869, was occurring at almost the same time professional baseball was getting started. The game developed into a popular sport with its own unique "post-season" of bowl games by the end of the first four decades of the 20th century, the time around which the NCAA began to develop and oversee post-season tournaments in other sports.
+The NCAA did eventually come to oversee much of college football. For example, in 1957, the NCAA organized college football into University and College divisions, with larger programs in the University Division, smaller ones in the College Division. In 1973, the NCAA created Division I out of the University Division, and Divisions II and III out of the College Division for smaller programs with scholarships (Div II) and without scholarships (Div III). In 1978, Division I was sub-divided into I-A (largest programs) and I-AA, which would later be renamed FBS (I-A) and FCS (I-AA) respectively. As the smaller divisions and FCS subdivision were created, the NCAA organized post-season playoffs for them.
+However, FBS programs resisted making any changes to how its post-season was organized. This was because of the popularity and profitability of bowl games, which had become major TV events in the decades following World War II. Bowl games, which for many years were only exhibition games, became so popular and important within college football that, starting in 1965, the AP (sportswriters) Poll waited until after the bowl games were completed to declare its national champion. The other major poll, UPI (Coaches) began doing so in 1974.
+This evolution led the FBS annual "national champion" open to considerable debate and controversy. At times in the past, particularly during the polling era from 1936 to 1997, the term " mythical national championship " was frequently used, and larger programs have often unilaterally declared themselves national champions. [ 61 ] [ 62 ] [ 63 ] [ 64 ] [ 65 ]
+While the NCAA has never officially endorsed a championship team, it has documented the choices of some selectors in its official NCAA Football Bowl Subdivision Records publication. [ 66 ] [ 67 ] In addition, various analysts have independently published their own choices for each season. These opinions can often diverge with others as well as individual schools' claims to national titles, which may or may not correlate to the selections published elsewhere. Among the most widely recognized national champion selectors has been the Associated Press (AP), which has conducted the AP Poll of sportswriters since the 1936 season. [ 68 ] ( see also : List of AP Poll national champions ). [ 69 ] The AP's main competition, United Press International (UPI), created the first Coaches Poll in 1950. ( see also : List of Coaches' Poll national champions ). [ 69 ] The two polls have picked different final national poll leaders at the end of 11 different seasons since then; [ 70 ] this situation is referred to as a "split" national championship . [ 71 ]
+As the years passed, public pressure for a playoff grew, especially following seasons in which there were split national championships in the polls. By the 1990s, the sport underwent several changes that led to a playoff. The 1992 SEC Championship Game was an enormous risk that paid off well for the Southeastern Conference (SEC) that year and in future years and gave a glimpse at what post-season football might look like. [ 72 ] Other conferences would follow suit over the next decade. FBS schools also began making changes to bowl games themselves in the 1990s to increase the likelihood of having the top two ranked teams play each other. However, existing bowl tie-ins with conferences made arrangements such as the Bowl Coalition ( 1992 – 1994 ) [ 73 ] and then Bowl Alliance ( 1995 – 1997 ) [ 74 ] clumsy and incomplete at best. By 1997, public pressure from fans, coaches, and commentators for a true playoff of some kind had grown too great to ignore. [ 75 ] [ 76 ] [ 77 ] [ 78 ]
+The Bowl Championship Series in 1998 succeeded in finally bringing all major conferences and bowl games into the fold for a combined BCS National Championship Game rotated amongst the four largest, most profitable bowl games – Fiesta, Orange, Rose, and Sugar. [ 68 ] BCS rankings originally incorporated the two major polls as well as a number of computer ranking systems to determine the two best teams at the end of the season. [ 79 ] Although the BCS era did regularly produce compelling matchups, the winnowing selection of the top two teams resulted in many BCS controversies , most notably 2003's split national championship caused by the BCS rankings leaving USC , No. 1 in both major polls, out of the Sugar Bowl . [ 80 ] This controversy ultimately led to the AP Poll withdrawing from the BCS, and additional fine-tuning of the BCS formula. After that, the controversies lessened, but the BCS approach itself had lost the confidence of many within the college football world, and ultimately the pressure for more change led to the development of the College Football Playoff.
+Establishment
+[ edit ]
+In 2014, the College Football Playoff made its debut, facilitating a multi-game single-elimination tournament for the first time in college football history. Four teams are seeded by a 13-member selection committee rather than by existing polls or mathematical rankings. [ 30 ] [ 81 ] The Cotton and Peach bowls were also brought into the fold. The two semifinal games became rotated among these New Year's Six bowl games, set on a three-year cycle with the following pairings: Rose/Sugar, Orange/Cotton, and Fiesta/Peach. [ 17 ] The College Football Playoff National Championship is then played a week later at a separately determined neutral site. [ 16 ]
+Expansion
+[ edit ]
+From the beginning of the CFP, many within college football wanted a playoff larger than four teams. The four team playoff seems to have been arrived at through a combination of concerns such as keeping the regular season meaningful, balancing academic schedules, and fear of eroding public support for bowl games. [ 82 ]
+Several years of the 4-team playoff led to growing calls for expansion. In June 2021, the CFP announced that it would begin studying an expansion to a 12-team playoff. The CFP stated that the starting time of any new format would only be determined after it had been approved. [ 83 ]
+On February 18, 2022, the CFP rejected the playoff proposal that had seemed to have already won approval, largely through resistance of the Atlantic Coast Conference. This pushed implementation of any changes to the playoff pool to no sooner than the 2026 season. [ 84 ] However, that decision was reversed on September 2, 2022, following the announcement by USC and UCLA that they were leaving the Pac-12 for the Big Ten. The "alliance" between the ACC, Pac-12, and Big Ten dissolved, and along with it resistance to playoff expansion. The CFP Board of Managers unanimously voted to expand the playoffs to 12 teams, with the earliest possible change happening in the 2024 season. [ 85 ]
+Conferences and bowls negotiated early expansion for several months during the fall of 2022. A potential sticking point was the Rose Bowl, which desired to keep its traditional 5:00 p.m. ET/2:00 p.m. PT kickoff on New Year's Day or January 2, even during years it will host the semifinals instead of the quarterfinals. The problem was resolved when the commissioners gave the Rose Bowl an ultimatum to accept no special treatment or be excluded from the new playoffs, with the bowl agreeing to forgo its demands. [ 20 ] By the end of 2022, a new 12-team format was approved to be implemented for the 2024 season. [ 20 ] Originally, the expanded playoff was to include the top six ranked conference champions and six at-large bids, though it was later changed to five conference champions and seven at-large bids after the 2021–2024 NCAA conference realignment resulted in the Pac-12 Conference dropping to two members. [ 86 ]
+After the expansion to 12 teams, talks soon began to expand the playoff further. In February 2026, ESPN's Pete Thamel reported that the Big Ten had developed a plan to expand to 24 teams, which would be made up of 23 at-large bids and one bid guaranteed to a Group of Six team. Under the Big Ten's plan, the playoff would expand to 16 teams for the 2027 and 2028 seasons, then permanently move to 24 teams in 2029. The expansion plan would also involve the elimination of conference championship games. The plan was met with opposition, as the SEC instead pushed a 16-team playoff under a "5+11" model (five conference champions and 11 at-large bids). Other opposition was due to concerns over the impact of expansion on the "primetime" window that the Army–Navy Game holds on the second Saturday in December, as no other FBS games are traditionally played on that day. [ 87 ] In October 2026, Thamel reported that the CFP was nearing a deal to expand to 24 teams for the 2027 season, which will include the four power conference champions, the highest-ranked Group of Six conference champion, and 19 at-large bids. [ 88 ]
+Impact on scheduling
+[ edit ]
+{{cite web|title=The playoff's SOS problem|author=Brad Edwards|work=[[ESPN]].com|url=https://www.espn.com/college-football/story?id=10157208|date=December 18, 2013|access-date=April 25, 2014}}</ref>"},"width":{"wt":"33%"}},"i":0}}]}'>
+"Strength of schedule will become such an important factor ... that if you want to be under consideration, you need to have a more meaningful schedule than perhaps you've had in previous years."
+—   Tom Jernstedt , selection committee member [ 89 ]
+Due to the increased emphasis on strength of schedule, teams have considered playing more challenging opponents during the non-conference portion of their schedules. Some teams have traditionally played three or four "weak" non-conference opponents, but wins against such low-level competition are unlikely to impress the committee. For teams on the cusp of making the playoff four, "I think one of the first things the committee will look at is strength of schedule," said selector Oliver Luck . [ 90 ]
+Teams in the Big Ten, Big 12 and Pac-12 play nine conference games on their twelve-game schedules and thus only have flexibility in choosing their opponents for the three non-league games. Some programs are opting to increase their schedule strength by scheduling high-profile matchups at neutral sites and on weeknights, garnering primetime TV exclusivity. [ 91 ] [ 92 ]
+In response to the new playoff system, the Southeastern Conference considered increasing its conference schedule from eight to nine games, with Alabama coach Nick Saban a vocal proponent. [ 93 ] According to Jon Solomon of the Birmingham News , "The prevailing opinion among SEC athletics directors: The SEC is difficult enough that there's no need for a ninth game." [ 94 ] Some in the conference, like Mississippi State athletic director Scott Stricklin , expressed the opinion that a nine-game SEC schedule would result in more teams with two losses. Commissioner Michael Slive and Vanderbilt AD David Williams, among others, supported a stronger out-of-league schedule, which would likely impress the committee. [ 94 ] [ 95 ] In April 2014, the league voted to mandate that all SEC teams must play a Power Five foe (ACC, Big Ten, Big 12, Pac-12, or independent Notre Dame) in its non-conference slate beginning in 2016. Slive noted this rule "gives us the added strength-of-schedule we were seeking". [ 93 ] In 2014, the first year of the College Football Playoff, one team (Georgia) played two opponents from the Power Five, nine of the 14 teams played one Power Five conference opponent and three lower-level opponents (including one FCS school), and four teams did not face a Power Five foe. [ 91 ] In the spring of 2015, the SEC decided to count games played against FBS independent BYU and Army toward its Power Five requirement.
+The ACC, whose teams also play eight conference games (plus Notre Dame at least once every three years), also considered moving to a nine-game conference schedule. However, the league opted to stay with the eight-plus-Notre Dame model, stipulating instead that teams would have to play one Power Five school in their non-league slates beginning in 2017, which would include the Notre Dame game or other ACC schools, [ 96 ] as will games against another FBS independent, BYU . [ 97 ] Despite the push to increase schedule strength, some ACC coaches preferred the scheduling flexibility available with fewer permanent fixtures on a team's slate. [ 98 ] Opinion was split among league athletic directors on moving to a nine-game schedule prior to the vote. [ 99 ] An SEC expansion to a nine-game schedule would limit the ACC's opportunities to play Power Five non-conference opponents. [ 100 ]
+Games
+[ edit ]
+Main article: List of College Football Playoff games
+Appearances
+[ edit ]
+For the list of College Football Playoff National Champions, see College Football Playoff National Championship .
+Selections by year
+[ edit ]
+During the ten seasons of the 4-team era of the College Football Playoff (2014–2023), 32 of the 40 selected teams were conference champions from one of the power conferences . Three 1-loss power conference teams were selected without playing in their conference championship game, and three others were selected after losing their respective conference championship games. One undefeated independent team was selected during this era, as well as one undefeated conference champion from a Group of Five conference. No teams with two or more losses were ever selected by the committee to compete in the 4-team playoff. [ 101 ] [ 102 ] [ 103 ] [ 104 ] [ 105 ] [ 106 ] [ 107 ] [ 108 ]
+Season Playoff
+Format Selected Not selected
+Power conference
+champions Other power conference
+teams Group of Five
+conference champions Power conference
+champions One-loss power conference
+teams Ranked Group of Five
+conference champions
+2014 2014–15
+4-team 1 Alabama (12–1)
+2 Oregon (12–1)
+3 Florida State (13–0)
+4 Ohio State (12–1) 5 Baylor (11–1)
+6 TCU (11–1) 20 Boise State (11–2)
+2015 2015–16 1 Clemson (13–0)
+2 Alabama (12–1)
+3 Michigan State (12–1)
+4 Oklahoma (11–1) 6 Stanford (11–2) 5 Iowa (12–1)
+7 Ohio State (11–1) 18 Houston (12–1)
+2016 2016–17 1 Alabama (13–0)
+2 Clemson (12–1)
+4 Washington (12–1) 3 Ohio State (11–1) 5 Penn State (11–2)
+7 Oklahoma (10–2) 15 Western Michigan (13–0)
+24 Temple (10–3)
+2017 2017–18 1 Clemson (12–1)
+2 Oklahoma (12–1)
+3 Georgia (12–1) 4 Alabama (11–1) 5 Ohio State (11–2)
+8 USC (11–2) 6 Wisconsin (12–1) 12 UCF (12–0)
+2018 2018–19 1 Alabama (13–0)
+2 Clemson (13–0)
+4 Oklahoma (12–1) 3 Notre Dame (12–0) 6 Ohio State (12–1)
+9 Washington (10–3) 8 UCF (12–0)
+21 Fresno State (11–2)
+2019 2019–20 1 LSU (13–0)
+2 Ohio State (13–0)
+3 Clemson (13–0)
+4 Oklahoma (12–1) 6 Oregon (11–2) 17 Memphis (12–1)
+19 Boise State (12–1)
+20 Appalachian State (12–1)
+2020 2020–21 1 Alabama (11–0)
+2 Clemson (10–1)
+3 Ohio State (6–0) 4 Notre Dame (10–1) 6 Oklahoma (8–2)
+25 Oregon (4–2) 11 Indiana (6–1)
+5 Texas A&M (8–1) 8 Cincinnati (9–0)
+12 Coastal Carolina (11–0)
+19 Louisiana (9–1)
+22 San Jose State (7–0)
+2021 2021–22 1 Alabama (12–1)
+2 Michigan (12–1) 3 Georgia (12–1) 4 Cincinnati (13–0) 7 Baylor (11–2)
+11 Utah (10–3)
+12 Pittsburgh (11–2) 5 Notre Dame (11–1) 23 Louisiana (12–1)
+2022 2022–23 1 Georgia (13–0)
+2 Michigan (13–0) 3 TCU (12–1)
+4 Ohio State (11–1) 7 Clemson (11–2)
+8 Utah (10–3)
+9 Kansas State (10–3) 16 Tulane (11–2)
+24 Troy (11–2)
+25 UTSA (11–2)
+2023 2023–24
+1 Michigan (13–0)
+2 Washington (13–0)
+3 Texas (12–1)
+4 Alabama (12–1)
+5 Florida State (13–0)
+6 Georgia (12–1)
+7 Ohio State (11–1)
+23 Liberty (13–0)
+24 SMU (11–2)
+2024 2024–25
+12-team
+1 Oregon (13–0)
+2 Georgia (11–2)
+12 Arizona State (11–2)
+16 Clemson (10–3)
+3 Texas (11–2)
+4 Penn State (11–2)
+5 Notre Dame (11–1)
+6 Ohio State (10–2)
+7 Tennessee (10–2)
+8 Indiana (11–1)
+10 SMU (11–2)
+9 Boise State (12–1)
+22 Army (11–1)
+2025
+2025–26
+1 Indiana (13–0)
+3 Georgia (12–1)
+4 Texas Tech (12–1)
+2 Ohio State (12–1)
+5 Oregon (11–1)
+6 Ole Miss (11–1)
+7 Texas A&M (11–1)
+8 Oklahoma (10–2)
+9 Alabama (10–3)
+10 Miami (10–2)
+20 Tulane (11–2)
+24 James Madison (12–1)
+Duke (8–5)
+Appearances by team
+[ edit ]
+Summary table
+[ edit ]
+CH National champion
+RU Lost in CFP National Championship
+SF Lost in CFP semifinals
+QF Lost in CFP quarterfinals (2024–present)
+12 Lost in CFP first round (2024–present)
+Next to each team's result is their seed.
+School
+Conference
+( as of 2026 )
+#
+QF
+SF
+CG
+CH
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+Alabama
+SEC 9 9 8 6 3 ¹SF ²CH ¹RU ⁴CH ¹RU ¹CH ¹RU ⁴SF ⁹QF
+Clemson
+ACC 7 6 6 4 2 ¹RU ²CH ¹SF ²CH ³RU ²SF ¹²12
+Ohio State
+Big Ten 7 7 6 3 2 ⁴CH ³SF ²SF ³RU ⁴SF ⁸CH ²QF
+Georgia
+SEC 5 5 3 3 2 ³RU ³CH ¹CH ²QF ³QF
+Michigan
+Big Ten 3 3 3 1 1 ²SF ²SF ¹CH
+Indiana
+Big Ten 2 1 1 1 1 ¹⁰12 ¹CH
+LSU
+SEC 1 1 1 1 1 ¹CH
+Notre Dame
+Independent 3 3 3 1 - ³SF ⁴SF ⁷RU
+Oregon
+Big Ten 3 3 2 1 - ²RU ¹QF ⁵SF
+Washington
+Big Ten 2 2 2 1 - ⁴SF ²RU
+TCU
+Big 12 1 1 1 1 - ³RU
+Miami (FL)
+ACC 1 1 1 1 - ¹⁰RU
+Oklahoma
+SEC 5 4 4 - - ⁴SF ²SF ⁴SF ⁴SF ⁸12
+Texas
+SEC 2 2 2 - - ³SF ⁵SF
+Florida State
+ACC 1 1 1 - - ³SF
+Michigan State
+Big Ten 1 1 1 - - ³SF
+Cincinnati
+Big 12 1 1 1 - - ⁴SF
+Penn State
+Big Ten 1 1 1 - - ⁶SF
+Ole Miss
+SEC 1 1 1 - - ⁶SF
+Boise State
+Pac-12 1 1 - - - ³QF
+Arizona State
+Big 12 1 1 - - - ⁴QF
+Texas Tech
+Big 12 1 1 - - - ⁴QF
+Tennessee
+SEC 1 - - - - ⁹12
+SMU
+ACC 1 - - - - ¹¹12
+Texas A&M
+SEC 1 - - - - ⁷12
+Tulane
+American 1 - - - - ¹¹12
+James Madison
+SBC 1 - - - - ¹²12
+Alabama</b>"}'>
+Alabama
+Clemson</b>"}'>
+Clemson
+<b id=\"mwBvw\">Georgia</b></span>"}'>
+Georgia
+Indiana</b>"}'>
+Indiana
+LSU</b>"}'>
+LSU
+Michigan</b>"}'>
+Michigan
+Ohio State</b>"}'>
+Ohio State
+Teams that have won the CFP National Championship
+3, 2, 1
+Detail
+[ edit ]
+Key
+Won CFP National Championship
+School
+Conference</span>"}]]}'>Conf.
+Appearances</span>"}]]}'>Apps.
+Championships</span>"}]]}'>Champs.
+Wins</span>"}]]}'>W
+Losses</span>"}]]}'>L
+Win percentage</span>"}]]}'>%
+Season
+Seed
+Results
+First round
+Quarterfinals
+Semifinals
+Nat'l Champ.
+Alabama
+SEC
+9
+3
+10
+6
+.625
+2014
+1
+— N/a
+— N/a
+L Sugar
+— N/a
+2015
+2
+— N/a
+— N/a
+W Cotton
+W Nat'l Champ.
+2016
+1
+— N/a
+— N/a
+W Peach
+L Nat'l Champ.
+2017
+4
+— N/a
+— N/a
+W Sugar
+W Nat'l Champ.
+2018
+1
+— N/a
+— N/a
+W Orange
+L Nat'l Champ.
+2020
+1
+— N/a
+— N/a
+W Rose
+W Nat'l Champ.
+2021
+1
+— N/a
+— N/a
+W Cotton
+L Nat'l Champ.
+2023
+4
+— N/a
+— N/a
+L Rose
+— N/a
+2025
+9
+W On-campus
+L Rose
+— N/a
+— N/a
+Ohio State
+Big Ten
+7
+2
+7
+5
+.583
+2014
+4
+— N/a
+— N/a
+W Sugar
+W Nat'l Champ.
+2016
+3
+— N/a
+— N/a
+L Fiesta
+— N/a
+2019
+2
+— N/a
+— N/a
+L Fiesta
+— N/a
+2020
+3
+— N/a
+— N/a
+W Sugar
+L Nat'l Champ.
+2022
+4
+— N/a
+— N/a
+L Peach
+— N/a
+2024
+8
+W On-campus
+W Rose
+W Cotton
+W Nat'l Champ.
+2025
+2
+Bye
+L Cotton
+— N/a
+— N/a
+Clemson
+ACC
+7
+2
+6
+5
+.545
+2015
+1
+— N/a
+— N/a
+W Orange
+L Nat'l Champ.
+2016
+2
+— N/a
+— N/a
+W Fiesta
+W Nat'l Champ.
+2017
+1
+— N/a
+— N/a
+L Sugar
+— N/a
+2018
+2
+— N/a
+— N/a
+W Cotton
+W Nat'l Champ.
+2019
+3
+— N/a
+— N/a
+W Fiesta
+L Nat'l Champ.
+2020
+2
+— N/a
+— N/a
+L Sugar
+— N/a
+2024
+12
+L On-campus
+— N/a
+— N/a
+— N/a
+Georgia
+SEC
+5
+2
+5
+3
+.625
+2017
+3
+— N/a
+— N/a
+W Rose
+L Nat'l Champ.
+2021
+3
+— N/a
+— N/a
+W Orange
+W Nat'l Champ.
+2022
+1
+— N/a
+— N/a
+W Peach
+W Nat'l Champ.
+2024
+2
+Bye
+L Sugar
+— N/a
+— N/a
+2025
+3
+Bye
+L Sugar
+— N/a
+— N/a
+Oklahoma
+Big 12
+5
+0
+0
+5
+.000
+2015
+4
+— N/a
+— N/a
+L Orange
+— N/a
+2017
+2
+— N/a
+— N/a
+L Rose
+— N/a
+2018
+4
+— N/a
+— N/a
+L Orange
+— N/a
+2019
+4
+— N/a
+— N/a
+L Peach
+— N/a
+SEC
+2025
+8
+L On-campus
+— N/a
+— N/a
+— N/a
+Oregon
+Pac-12
+3
+0
+3
+3
+.500
+2014
+2
+— N/a
+— N/a
+W Rose
+L Nat'l Champ.
+Big Ten
+2024
+1
+Bye
+L Rose
+— N/a
+— N/a
+2025
+5
+W On-campus
+W Orange
+L Peach
+— N/a
+Notre Dame
+Independent
+3
+0
+3
+3
+.500
+2018
+3
+— N/a
+— N/a
+L Cotton
+— N/a
+2020
+4
+— N/a
+— N/a
+L Rose
+— N/a
+2024
+7
+W On-campus
+W Sugar
+W Orange
+L Nat'l Champ.
+Michigan
+Big Ten
+3
+1
+2
+2
+.500
+2021
+2
+— N/a
+— N/a
+L Orange
+— N/a
+2022
+2
+— N/a
+— N/a
+L Fiesta
+— N/a
+2023
+1
+— N/a
+— N/a
+W Rose
+W Nat'l Champ.
+Indiana
+Big Ten
+2
+1
+3
+1
+.750
+2024
+10
+L On-campus
+— N/a
+— N/a
+— N/a
+2025
+1
+Bye
+W Rose
+W Peach
+W Nat'l Champ.
+Texas
+Big 12
+2
+0
+2
+2
+.500
+2023
+3
+— N/a
+— N/a
+L Sugar
+— N/a
+SEC
+2024
+5
+W On-campus
+W Peach
+L Cotton
+— N/a
+Washington
+Pac-12
+2
+0
+1
+2
+.333
+2016
+4
+— N/a
+— N/a
+L Peach
+— N/a
+2023
+2
+— N/a
+— N/a
+W Sugar
+L Nat'l Champ.
+LSU
+SEC
+1
+1
+2
+0
+1.000
+2019
+1
+— N/a
+— N/a
+W Peach
+W Nat'l Champ.
+Miami (FL)
+ACC
+1
+0
+3
+1
+.750
+2025
+10
+W On-campus
+W Cotton
+W Fiesta
+L Nat'l Champ
+Penn State
+Big Ten
+1
+0
+2
+1
+.667
+2024
+6
+W On-campus
+W Fiesta
+L Orange
+— N/a
+Ole Miss
+SEC
+1
+0
+2
+1
+.667
+2025
+6
+W On-campus
+W Sugar
+L Fiesta
+— N/a
+TCU
+Big 12
+1
+0
+1
+1
+.500
+2022
+3
+— N/a
+— N/a
+W Fiesta
+L Nat'l Champ.
+Florida State
+ACC
+1
+0
+0
+1
+.000
+2014
+3
+— N/a
+— N/a
+L Rose
+— N/a
+Michigan State
+Big Ten
+1
+0
+0
+1
+.000
+2015
+3
+— N/a
+— N/a
+L Cotton
+— N/a
+Cincinnati
+AAC
+1
+0
+0
+1
+.000
+2021
+4
+— N/a
+— N/a
+L Cotton
+— N/a
+Boise State
+MW
+1
+0
+0
+1
+.000
+2024
+3
+Bye
+L Fiesta
+— N/a
+— N/a
+Arizona State
+Big 12
+1
+0
+0
+1
+.000
+2024
+4
+Bye
+L Peach
+— N/a
+— N/a
+Tennessee
+SEC
+1
+0
+0
+1
+.000
+2024
+9
+L On-campus
+— N/a
+— N/a
+— N/a
+SMU
+ACC
+1
+0
+0
+1
+.000
+2024
+11
+L On-campus
+— N/a
+— N/a
+— N/a
+Texas Tech
+Big 12
+1
+0
+0
+1
+.000
+2025
+4
+Bye
+L Orange
+— N/a
+— N/a
+Texas A&M
+SEC
+1
+0
+0
+1
+.000
+2025
+7
+L On-campus
+— N/a
+— N/a
+— N/a
+Tulane
+American
+1
+0
+0
+1
+.000
+2025
+11
+L On-campus
+— N/a
+— N/a
+— N/a
+James Madison
+SBC
+1
+0
+0
+1
+.000
+2025
+12
+L On-campus
+— N/a
+— N/a
+— N/a
+Teams records by playoff round
+[ edit ]
+Team First Round Quarterfinals Semifinals Championship Overall Appearances
+Won Total Won Total Won Total Won Total Won Total Total
+Alabama 1 1 0 1 6 8 3 6 10 16 9
+Ohio State 1 1 1 2 3 6 2 3 7 12 7
+Clemson 0 1 0 0 4 6 2 4 6 11 7
+Georgia 0 0 0 2 3 3 2 3 5 8 5
+Oklahoma 0 1 0 0 0 4 0 0 0 5 5
+Michigan 0 0 0 0 1 3 1 1 2 4 3
+Notre Dame 1 1 1 1 1 3 0 1 3 6 3
+Oregon 1 1 1 2 1 2 0 1 3 6 3
+Indiana 0 1 1 1 1 1 1 1 3 1 2
+Washington 0 0 0 0 1 2 0 1 1 3 2
+Texas 1 1 1 1 0 2 0 0 2 4 2
+LSU 0 0 0 0 1 1 1 1 2 2 1
+Miami (FL) 1 1 1 1 1 1 0 1 3 4 1
+TCU 0 0 0 0 1 1 0 1 1 2 1
+Penn State 1 1 1 1 0 1 0 0 2 3 1
+Ole Miss 1 1 1 1 0 1 0 0 2 3 1
+Cincinnati 0 0 0 0 0 1 0 0 0 1 1
+Florida State 0 0 0 0 0 1 0 0 0 1 1
+Michigan State 0 0 0 0 0 1 0 0 0 1 1
+Arizona State 0 0 0 1 0 0 0 0 0 1 1
+Boise State 0 0 0 1 0 0 0 0 0 1 1
+Texas Tech 0 0 0 1 0 0 0 0 0 1 1
+James Madison 0 1 0 0 0 0 0 0 0 1 1
+SMU 0 1 0 0 0 0 0 0 0 1 1
+Tennessee 0 1 0 0 0 0 0 0 0 1 1
+Texas A&M 0 1 0 0 0 0 0 0 0 1 1
+Tulane 0 1 0 0 0 0 0 0 0 1 1
+Totals 8 16 8 16 24 48 12 24 52 104 64
+Appearances by conference
+[ edit ]
+Appearances reflect conference affiliations at the time each game was played. For example, Oregon played in 2014 as a member of the Pac-12, and in 2024 as a member of the Big Ten. Notre Dame, an independent school, played the 2020 season as a member of the ACC.
+Conference</span>"}]]}'>Conf.
+Total appearances</span>"}]]}'>Apps.
+Total championships</span>"}]]}'>Champs.
+Total games played</span>"}]]}'>G
+Total wins</span>"}]]}'>W
+Total losses</span>"}]]}'>L
+Overall win percentage</span>"}]]}'>%
+Season
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+SEC
+20
+6
+35 21 14 .600
+0–1
+2–0
+1–1
+3–1
+1–1
+2–0
+2–0
+3–1
+2–0
+0–1
+2–3
+3–5
+Big Ten
+16
+4
+28 16 12 .571
+2–0
+0–1
+0–1
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+0–1
+1–1
+0–1
+0–2
+2–0
+6–3
+5–2
+ACC
+10
+2
+18 9 9 .500
+0–1
+1–1
+2–0
+0–1
+2–0
+1–1
+0–2
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+0–2
+3–1
+Big 12
+8
+0
+9 1 8 .111
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+0–1
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+0–1
+0–1
+0–1
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+1–1
+0–1
+0–1
+0–1
+Pac-12
+3
+0
+5 2 3 .400
+1–1
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+0–1
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+1–1
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+American
+2
+0
+2 0 2 .000
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+0–1
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+0–1
+MW
+1
+0
+1 0 1 .000
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+0–1
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+SBC
+1
+0
+1 0 1 .000
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+0–1
+Independents
+2
+0
+5 3 2 .600
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+0–1
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+3–1
+",{"template":{"target":{"wt":"N/A","href":"./Template:N/A"},"params":{},"i":0}}]}'> — N/a
+Broadcasting
+[ edit ]
+2013–2024
+[ edit ]
+In 2013, the television broadcast rights to all six CFP bowls and the National Championship were acquired by ESPN through the 2025–26 season. [ 109 ] [ 110 ] ESPN then reached 12-year agreements to retain rights to the Rose Bowl, Orange Bowl, and Sugar Bowl following the dissolution of the Bowl Championship Series. [ 111 ] In November of that year, ESPN reached a 12-year deal to broadcast the remaining three bowls, the championship game, as well as shoulder programming such as ranking shows. As a whole, the contract is valued at around $470 million per year, or nearly $5.7 billion for the life of the contract.
+2025–2032
+[ edit ]
+On March 19, 2024, ESPN reached a six-year extension, valued at $1.3 billion per year, [ 112 ] adding the four new first-round playoff games to their existing rights to the New Year's Six bowls and the National Championship Game. [ 113 ] [ 114 ] ESPN was also given the right to sublicense a select number of games; in May 2024, TNT Sports signed a five-year sublicensing agreement to broadcast two first-round games per year (including during the two years of the amended contract), and two quarterfinal and one semifinal games per year when the new contract begins (beginning in the 2026–27 season). [ 114 ] [ 115 ] [ 116 ] Since 2024–25, the other two first-round playoff games were simulcast on ABC . [ 117 ] [ 118 ] In addition, when the new contract begins in 2026–27, ESPN will also simulcast the National Championship Game on ABC (marking a return of the game to broadcast television for the first time since 2010 ), and has the option to simulcast any additional games from the quarterfinal and semifinal rounds, in addition to the first round games that are not sublicensed on TNT Sports (it is expected that at least one game per round will be simulcast on ABC). [ 119 ]
+Ratings
+[ edit ]
+The inaugural College Football Playoff games in January 2015 generated larger ratings than previous BCS games. The 2015 College Football Playoff National Championship had an 18.9 Nielsen rating [ 120 ] and was watched by approximately 33.4 million people, the largest broadcast audience of all time on American cable television (non- broadcast ), according to AdWeek . That was a 31 percent audience increase over the previous year's championship game and a 22 percent increase over the BCS title game's best rating on cable (a 16.1 rating in 2011 ). [ 121 ] The semifinal games, the 2015 Rose Bowl and 2015 Sugar Bowl , saw 28.16 million and 28.27 million viewers, respectively. [ 122 ] According to ESPN, these games also set (and briefly held) all-time records for cable TV viewership. [ 123 ] [ 124 ]
+In 2015, the ratings for the two semifinal games were down from the prior season's equivalents, with the Orange Bowl reaching a 9.7 rating (in comparison to 15.5 for the 2015 Rose Bowl) and the Cotton Bowl reaching a 9.9 rating (in comparison to a 15.3 rating for the 2015 Sugar Bowl). On the online WatchESPN streaming service, excluding 2014 FIFA World Cup games, the Cotton Bowl and the Orange Bowl drew the second and third-largest streaming audiences in the service's history, behind the 2015 national championship. The ratings drops were attributed to the New Year's Eve time slot, as fewer people were at home to watch the game. [ 125 ] The decline in ratings was a factor in changes for the scheduling of future CFP semi-final games. [ 126 ]
+Revenue
+[ edit ]
+In 2012, ESPN reportedly agreed to pay about $7.3 billion over 12 years for broadcasting rights to all seven games, an average of about $608 million per year. That includes $215 million per year which was already committed to the Rose, Sugar and Orange bowls, [ 127 ] plus $470–475 million annually for the rest of the package. [ 128 ] By comparison, the most recent contract with the BCS and the Rose Bowl had paid approximately $155 million per year for five games. [ 129 ]
+The average revenue to the new system over 12 years is to be about $500 million per year. After $125–150 million in expenses, the Power Five conferences split about 71.5 percent of the remaining money, for an approximate average payout of $250 million a year ($50 million per league) over the life of the contract. The "Group of Five" conferences split 27 percent, about $90 million a year ($18 million per league). Notre Dame receives around one percent, about $3.5-4 million, and other FBS independents get about 0.5 percent of the deal. [ 130 ] [ 131 ]
+Extra revenue goes to conferences in contracts with the Rose, Sugar, and Orange bowls, which split revenue 50/50 between their participating leagues. [ 130 ] In non-semifinal years, the Rose Bowl's TV revenue would be divided between the Big Ten and Pac-12 conferences; likewise, the Sugar Bowl and Orange Bowl revenue to its participant conferences. When those bowls are semifinal games, the money is distributed by the playoff system to all FBS conferences. [ 127 ] ESPN has paid about $80 million a year each for the Rose and Sugar bowls over 12 years. The Orange Bowl deal is worth $55 million per year. [ 132 ] For example, in a non-semifinal year, the Big Ten could receive about $90 million (half of its $80 million Rose Bowl deal plus about $50 million from the playoff system). [ 130 ]
+Conferences receive an additional $6 million each year for each team it places in the semifinals and $4 million for a team in one of the three at-large bowls; Notre Dame receives the same amount in either scenario. No additional money is awarded for reaching the championship game. [ 130 ]
+The Power Five conferences and the "Group of Five" have not decided on their respective revenue-sharing formulas, though the SEC initially receives more revenue than the other four Power Five conferences due to its BCS success. [ 130 ] [ 131 ] Reports say the money is to be divided based on several criteria such as "on-field success, teams' expenses, marketplace factors and academic performance of student-athletes". [ 133 ] The playoff system awards academic performance bonuses of $300,000 per school for meeting the NCAA's Academic Progress Rate standard of 930. [ 130 ] In a hypothetical 14-team conference, $4.2 million ($300,000 x 14) would be allocated to that league, and if only 12 of the 14 members meet the APR standard, then each of the 12 schools would receive $350,000 ($4.2 million / 12), [ 131 ] penalizing schools that fall below the threshold. [ 134 ]
+Leadership
+[ edit ]
+Bill Hancock served as Executive Director of the CFP from its creation in 2014 until his retirement in 2024
+BCS Properties, LLC holds all properties related to the College Football Playoff. [ 135 ] Previous BCS commissioner Bill Hancock is the executive director of the playoff organization, [ 136 ] with former SEC Assistant Commissioner for Championships Byron Hatch as COO . [ 137 ] Like the BCS, the playoff system's management committee [ 138 ] consists of the conference commissioners from the 10 FBS conferences [ 139 ] and Notre Dame's athletic director. [ 37 ] The playoff system's headquarters is in Irving, Texas . [ 136 ]
+Board of Managers
+[ edit ]
+According to the CFP website, the system's operations are controlled by the Board of Managers, which consists of presidents and chancellors of the playoff group's member universities. The eleven members have sole authority to develop, review and approve annual budgets, policies and operating guidelines. The group also selects the company's officers. [ 140 ]
+Eric Barron – President, Penn State (Big Ten)
+Rodney Bennett – President, Southern Miss (C-USA)
+Joe Castro – Chancellor, California State University ; former president, Fresno State (Mountain West)
+Gordon Gee – President, West Virginia (Big 12)
+Jack Hawkins – Chancellor, Troy (Sun Belt)
+Rev. John I. Jenkins – President, Notre Dame (Independent)
+Mark Keenum – President, Mississippi State (SEC)
+Kirk Schulz – President, Washington State (Pac-12)
+John Thrasher – President, Florida State (ACC)
+Satish Tripathi – President, Buffalo (MAC)
+R. Gerald Turner – President, SMU (The American)
+Athletics Directors Advisory Group
+[ edit ]
+According to the CFP website, the Athletics Directors Advisory Group is appointed by the management committee to "offer counsel" on the operations of the system. As an advisory board, it has no authority in the management of the CFP. [ 140 ]
+Gary Barta , Iowa (Big Ten)
+Tom Bowen , Memphis (The American)
+Tom Burman , Wyoming (Mountain West)
+Joe Castiglione , Oklahoma (SEC)
+Jeremy Foley , Florida (SEC)
+Dan Guerrero , UCLA (Big 10)
+Chris Massaro, Middle Tennessee (C-USA)
+Terry Mohajir , UCF (Big 12)
+Mike O'Brien, Toledo (MAC)
+Stan Wilcox, Florida State (ACC)
+Criticism
+[ edit ]
+Although being generally well received, [ 10 ] the College Football Playoff has been criticized much like its predecessor, the Bowl Championship Series , which had several controversies . [ 141 ]
+Team selection
+[ edit ]
+During the four-team playoff era, at least one Power Five champion was left out of the playoffs every season. However, not all teams selected in the four-team playoff were conference winners:
+In 2016 , Ohio State (11–1) – who did not qualify for the Big Ten Championship Game – was selected by the committee. Both the Big Ten champions Penn State (11–2) and Big 12 champions Oklahoma (10–2) had worse records; Penn State had advanced to the conference championship game over Ohio State by virtue of a close victory earlier in the season ; Oklahoma lost at home to Ohio State early in the season;
+In 2017 , Alabama (11–1) – who did not qualify for the SEC Championship Game due to a final-week loss against SEC runner-up Auburn – was selected ahead of the Big Ten's Ohio State (11–2) and Pac-12 's USC (11–2);
+In 2021 , Georgia (12–1) lost the SEC Championship Game to Alabama (12–1) but was selected over three Power Five conference champions who had multiple losses; the AAC 's Cincinnati (13–0) was the first Group of Five team to be selected to the playoff.
+In 2022 , TCU (12–1) was selected for the playoff despite losing the Big 12 Championship Game to Kansas State (10–3) in overtime. Ohio State (11–1)—who did not play in the Big Ten Championship Game due to a loss to eventual Big Ten champion Michigan —was also selected, ahead of the ACC's Clemson (11–2) and Pac-12's Utah (10–3).
+Some analysts have discussed whether the committee should have selected conference champions only. [ 142 ] [ 143 ]
+Another critique centered around a perceived bias against smaller conferences such as the Big 12 which used to not stage a conference championship game, but reintroduced one for the 2017 season. The American Athletic Conference addressed this issue by enlisting Navy to its ranks for 2015, bringing its membership to 12 teams, which allowed it to stage a conference championship game under then-current NCAA rules. [ 144 ] Since the 2016 season, FBS conferences have been allowed to stage football championship games even if they do not have 12 members. [ 145 ]
+There are opinions [ by whom? ] labeling the CFP system "just as" or "even more polarizing" than the BCS or the old wire-service poll system. [ 146 ] [ 147 ] [ 148 ] [ 149 ] However, most in sports media [ who? ] believe the College Football Playoff Committee got the right foursome for the 2017–18 playoff, for example, for advancing Alabama, a one-loss team excluded from its conference championship on a tiebreaker, instead of Ohio State, a two-loss conference champion. [ 150 ] [ 151 ] [ 152 ]
+In 2019, Urban Meyer , head coach of the national champion 2014 Ohio State Buckeyes football team , said that he intentionally ran up the score against Wisconsin in the Big Ten Championship Game to help his team be chosen for the playoff. Criticizing the subjectivity of the selection process, Meyer said that he left the starting lineup in the game despite Ohio State being ahead 45–0 in the third quarter—not resting the starters and risking their health, and poor sportsmanship—because "I don't think the 'eye test' and 'people think' is going to get enough to bump TCU and Baylor ". He continued, "I had a job to do, and that was to get Ohio State in the playoff. Do I think that's right? That's wrong", proposing a selection system based on defined criteria. [ 153 ]
+Late in the 2020 season , which was heavily impacted by the COVID-19 pandemic , Sports Illustrated writer Pat Forde was strongly critical of the CFP committee for what he considered unfair treatment of teams outside the Power Five; he noted that the Big 12's Iowa State , at 8–2, were ranked No. 7, one spot ahead of the top Group of Five team, the AAC's then-unbeaten Cincinnati , and twelve spots ahead of the Sun Belt's Louisiana , a team who had beaten Iowa State by 17 points and whose only loss to that point had been in a conference game against unbeaten Coastal Carolina . [ 154 ] Michael Aresco , commissioner of Cincinnati's American Athletic Conference , had equally pointed criticism, accusing the committee of "undermining its credibility with rankings that defy logic and common sense and fairness," and said that he would much prefer the computer-calculated BCS rankings system." [ 155 ] No Group of Five team was ranked in the CFP top four until Cincinnati was fourth in the rankings released on November 23, 2021. [ 156 ]
+2023 exclusion of Florida State
+[ edit ]
+The 2023 season saw the tightest playoff race in history, with eight teams in plausible contention before the conference championship weekend. The eventual selection of the one-loss conference champions Alabama (SEC) and Texas (Big 12) was controversial as both teams were selected ahead of unbeaten ACC champion Florida State ; prior to 2023, no undefeated Power Five champion had failed to be selected for the playoff. ACC commissioner Jim Phillips called the decision "unfathomable" due to the significance the committee had previously afforded to undefeated conference champions, and Seminoles coach Mike Norvell said he was "disgusted and infuriated" at the decision. [ 157 ] CFP committee chair Boo Corrigan cited the late-season injury of Florida State's quarterback Jordan Travis as a reason to rank both Alabama and Texas over Florida State. [ 158 ]
+2025 Miami–Notre Dame controversy
+[ edit ]
+The 2025 season (the second under the 12-team playoff format) saw considerable controversy regarding the final at-large playoff spot. Entering conference championship weekend, the December 2 committee rankings placed Notre Dame at No. 10 and Miami at No. 12, with both teams sharing an identical 10–2 record. The ranking of Notre Dame above Miami was criticized, as Miami had defeated Notre Dame in Week 1 of that season, 27–24. Further controversy ensued when, at the official December 7 reveal of the CFP bracket, Miami was ranked ahead of Notre Dame to claim the final at-large bid despite both teams being idle since the December 2 rankings reveal (Miami failed to qualify for the ACC Championship Game , and Notre Dame is independent ). Following the December 7 selection reveal, committee chair Hunter Yurachek explained that because BYU (ranked No. 11 in the December 2 rankings) had lost the Big 12 Championship Game that weekend, it warranted them to switch ranks with Miami. Then, when comparing Miami directly under Notre Dame in the rankings, the decision was made to switch the teams' ranks due to Miami's head-to-head advantage over Notre Dame. [ 159 ]
+Further controversy ensued when compared to the ranking of Alabama . In both the November 18 and 25 rankings, Notre Dame and Alabama had been ranked No. 9 and No. 10, respectively. In the December 2 rankings, the two teams switched ranks despite both having won the weekend prior and having an identical 10–2 record. Notre Dame head coach Marcus Freeman publicly voiced displeasure about the ranking switch. [ 160 ] Alabama went on to qualify for the SEC Championship Game , where they lost to No. 3 Georgia , 28–7. Despite this, Alabama remained at No. 9 in the December 7 rankings and secured the second-to-last at-large bid in the playoff. This was criticized when compared to BYU, who similarly lost their conference championship game and subsequently dropped one spot in the rankings to fall below Miami, who was idle. However, Hunter Yurachek explained that Alabama's highly-ranked strength of schedule and prior win over Georgia in the regular season allowed them to be able to remain in the playoff picture. [ 159 ]
+Selection committee
+[ edit ]
+The qualifications of selection committee members have also been scrutinized. As an outsider to the sports world, Condoleezza Rice 's selection was the focus of some criticism. Former Clemson head coach Tommy Bowden expressed the opinion that the committee's members should be "people who played the game and preferably coached the game". [ 161 ] Former Auburn head coach Pat Dye said, "All she knows about football is what somebody told her...or what she read in a book, or what she saw on television. To understand football, you've got to play with your hand in the dirt". Former Big East commissioner Mike Tranghese also gained membership on the selection committee despite having never played football in college. [ 162 ] Former sportswriter Steve Weiberg and retired U.S. Air Force General Michael Gould are other committee members without significant football playing, coaching, or administrative experience.
+Scheduling
+[ edit ]
+New Year's Eve games
+[ edit ]
+The semifinal games for the 2015 season were scheduled for December 31; they were expected to have lower television viewership because the date is not a federal holiday , and because the second game faced heavy competition for television viewers in primetime from New Year's Eve specials (such as New Year's Rockin' Eve , which is aired by ESPN's sister broadcast network ABC ). Under television contracts with ESPN that predate the College Football Playoff, both the Rose and Sugar Bowl games are guaranteed exclusive TV time slots on January 1 (or January 2 if New Year's Day falls on a Sunday), regardless of whether they are hosting a semifinal game. [ 163 ] In an interview with CBS Sports, CFP commissioner Bill Hancock suggested this scheduling issue would "change the paradigm of what New Year's Eve is all about," opining that "if you're hosting a New Year's Eve party, you better have a bunch of televisions around". [ 164 ] Although ESPN proposed moving the Thursday, December 31, 2015, semifinal games to Saturday, January 2, 2016, the idea was rejected. [ 165 ] The semifinal games' ratings were ultimately down significantly from those of the previous season. [ 125 ]
+In an effort to reduce the impact of their New Year's Eve scheduling, the 2016 semifinal games, which fell on a Saturday, had earlier kickoff times, at 3:00 p.m. and 7:00 p.m. ET respectively. The 2016 Orange Bowl was played in primetime on December 30, 2016, rather than in an early afternoon window on New Year's Eve. Hancock considered the earlier start times to be a compromise to reduce the games' intrusion into New Year's Eve festivities, but reiterated that there were no plans to move the semi-final games from New Year's Eve outside of years where they are hosted by the Rose Bowl and Sugar Bowl. [ 166 ] [ 167 ]
+On July 28, 2016, however, Hancock reversed this stance and announced revisions to the scheduling for future College Football Playoff semi-final games. The games were rescheduled so that they will not necessarily be played on New Year's Eve yearly: outside of years when they are hosted by the Rose and Sugar Bowls (where they retain their traditional New Year's Day scheduling), they will now be scheduled primarily on the last Saturday or federally observed holiday of the year. In some years, this date will land on New Year's Eve. In 2021, the games were played on Friday, December 31, because the day was observed as a holiday. [ 126 ] [ 168 ] Viewership of the 2018 semi-finals were down by 25% over the previous semi-finals, which were played on New Year's Day. [ 169 ]
+Saturday first-round games
+[ edit ]
+During the first season of the 12-team format, three of the first-round games were scheduled on Saturday, December 21, 2024, when the National Football League (NFL) traditionally holds late December Saturday games. As part of the NFL's antitrust exemption under the Sports Broadcasting Act of 1961 , the league is only restricted from playing Saturday games from the second Saturday in September to the second Saturday in December to avoid competing with college football's regular season. With no such antitrust restriction in place to avoid conflicting with college football's postseason, NFL officials met with CFP officials and conference commissioners to suggest that they hold weeknight doubleheaders instead. Rejecting the NFL's suggestion, a CFP tripleheader was scheduled anyway, with the first two games going head-to-head with an NFL doubleheader. [ 170 ] [ 171 ] The NFL games, which aired on network TV, drew a larger audience over the CFP games, which aired on cable. [ 172 ]
+See also
+[ edit ]
+College football portal
+List of college bowl games
+References
+[ edit ]
+{{cite web |url=https://www.ncaa.com/news/football/article/2023-12-03/how-12-team-college-football-playoff-will-work-teams-schedule-bids |title=How the 12-team College Football Playoff will work: Teams, schedule, bids |last=Ellison |first=Maya |date=December 3, 2023 |website=NCAA.com |publisher=[[National Collegiate Athletic Association]] |access-date=January 11, 2024}}</ref>"}},"i":0}}]}'> ↑ "Overview" . CollegeFootballPlayoff.com . September 30, 2016 . Retrieved March 9, 2021 .
+1 2 3 Wolken, Dan (April 25, 2013). "Questions and answers for the College Football Playoff" . USA Today . Retrieved April 25, 2013 .
+↑ McMurphy, Brett (April 24, 2013). "Football playoff has name and site" . ESPN.com . Retrieved April 24, 2013 .
+↑ "Here's What The 12-team College Football Playoff Will Look Like" . NBCSportschicago.com . May 2, 2023 . Retrieved July 10, 2024 .
+↑ Hawkins, Stephen (February 22, 2024). "With 12-team playoff set, CFP already discussing possibly more teams for 2026 and beyond" . AP News . Retrieved November 27, 2024 .
+↑ C.N. (January 14, 2015). "The business of college football: Undisputed champs in a disputed sport" . The Economist . Retrieved September 6, 2015 .
+↑ Dodd, Dennis (June 24, 2014). "Fringe benefit of College Football Playoff? No more mythical titles" . CBS Sports . Archived from the original on June 25, 2014 . Retrieved September 6, 2015 .
+1 2 Whitley, David (February 8, 2013). "College football playoff selection committee members will need witness protection" . AOL.SportingNews.com. Archived from the original on February 13, 2013 . Retrieved April 25, 2013 .
+↑ Tim Layden (November 29, 2004). "The BCS Mess" . Sports Illustrated . Archived from the original on January 14, 2014 . Retrieved January 13, 2013 .
+1 2 Pete Thamel (December 31, 2006). "After Much Debate, College Football's Postseason Future Is Still Cloudy" . The New York Times . Retrieved January 13, 2014 .
+↑ Cooper, Ryan (December 4, 2016). "College football bowls: New Year's Six matchups announced" . National Collegiate Athletic Association . Retrieved December 18, 2016 .
+1 2 Heather Dinch (June 27, 2012). "Playoff plan to run through 2025" . ESPN.com . Retrieved August 10, 2013 .
+↑ Dennis Dodd (July 23, 2013). "New College Football Playoff will reportedly feature a new trophy" . CBSSports.com . Retrieved July 30, 2013 .
+↑ "Internet of Trademarks owned by BCS Properties, LLC - Justia Trademarks" . trademarks.justia.com . Retrieved July 26, 2024 .
+↑ "Frequently Asked Questions about the CFP" . Retrieved October 27, 2024 . The College Football Playoff is administered by the FBS conferences and the University of Notre Dame which are members of CFP Administration.
+1 2 Tim Tucker (April 18, 2014). "Chick-fil-A Bowl will restore 'Peach' to its name" . The Atlanta Journal-Constitution . Archived from the original on January 31, 2016 . Retrieved April 20, 2014 .
+1 2 "},"newspaper":{"wt":"[[The Dallas Morning News]]"},"date":{"wt":"July 22, 2013"},"access-date":{"wt":"July 26, 2013"},"url":{"wt":"http://www.dallasnews.com/sports/college-sports/headlines/20130722-sources-new-year-s-six-likely-the-working-title-for-college-football-playoff-s-six-bowl-games.ece"},"archive-date":{"wt":"November 19, 2015"},"archive-url":{"wt":"https://web.archive.org/web/20151119055900/http://www.dallasnews.com/sports/college-sports/headlines/20130722-sources-new-year-s-six-likely-the-working-title-for-college-football-playoff-s-six-bowl-games.ece"},"url-status":{"wt":"dead"}},"i":0}}]}'/> "Sources: 'New Year's Six' likely the working title for College Football Playoff's six bowl games" . The Dallas Morning News . July 22, 2013. Archived from the original on November 19, 2015 . Retrieved July 26, 2013 .
+↑ "College Football Playoff Releases Details of Selection Committee Procedure" . College Football Playoff. May 1, 2014. Archived from the original on May 21, 2014 . Retrieved May 6, 2014 .
+↑ The Playoff factsheet , , College Football Playoff, January 2014
+1 2 3 "Source: Rose Bowl allows for 12-team CFP in '24" . ESPN.com . December 1, 2022 . Retrieved December 1, 2022 .
+↑ "With 12 Team Playoff Set, CFP Already Discussing Probably Adding More Teams for 2026 and Beyond" . apnews.com . February 21, 2024 . Retrieved July 10, 2024 .
+1 2 3 Ellison, Maya (December 3, 2023). "How the 12-team College Football Playoff will work: Teams, schedule, bids" . NCAA.com . National Collegiate Athletic Association . Retrieved January 11, 2024 .
+↑ Dinich, Heather (January 23, 2026). "College Football Playoff to remain a 12-team field next season" . ESPN . Retrieved January 23, 2026 .
+↑ Vannini, Chris (January 27, 2026). "Quietly, the College Football Playoff's Group of 6 rep no longer needs to be a conference champ" . The Athletic . The New York Times . Retrieved January 31, 2026 . ...in another change from the previous 12-team format, the spot guaranteed to a Group of 6 conference team is not required to go to a league champion, a CFP official told The Athletic this week.
+↑ Polacek, Scott (December 7, 2025). "How Notre Dame Would Be Impacted by CFP Bracket Rule Change in 2026 CFB Season" . Bleacher Report .
+↑ Mandel, Stewart (August 18, 2010). "Would BYU be Notre Dame as a football independent ... or Navy?" . Time Inc. Archived from the original on September 21, 2010 . Retrieved March 31, 2011 .
+↑ Dellenger, Ross (May 22, 2025). "College Football Playoff moving to straight seeding for 2025-26 postseason, but what does future hold?" . Yahoo Sports . Retrieved May 22, 2025 .
+↑ Lewis, Jon (February 4, 2026). "News: MWC media rights, CFP schedule, Nielsen and more" . Sports Media Watch . Retrieved February 4, 2026 .
+↑ Jerry Hinnen (August 7, 2013). "CFB playoff opens bidding for 2016, '17 championship games" . CBSSports.com . Retrieved August 9, 2013 .
+1 2 "College Football Playoff Announces Selection Committee" . College Football Playoff official website. October 14, 2013. Archived from the original on October 18, 2013.
+↑ Frequently Asked Questions and Answers About the College Football Playoff Selection Committee Archived January 26, 2014, at the Wayback Machine , College Football Playoff, January 21, 2014
+↑ 2023 "College Football Playoff Selection Committee" College Football Playoff 15 December 2023
+1 2 3 Matt Hayes (July 17, 2013). "College Football Playoff selection committee to include current ADs" . SportingNews.com. Archived from the original on July 21, 2013 . Retrieved July 24, 2013 .
+↑ Schroeder, Dave (July 16, 2014). "Power Five's College Football Playoff revenues will double what BCS paid" . USA Today . Archived from the original on December 9, 2014 . Retrieved November 3, 2017 .
+↑ Brett McMurphy (May 29, 2013). "Parameters for selectors in place" . ESPN.com . Retrieved August 10, 2013 .
+↑ "Phil Fulmer eyes selection committee" . August 9, 2013 . Retrieved August 9, 2013 .
+1 2 Pat Forde (June 18, 2013). "College Football Playoff brass one step closer to establishing selection committee" . Yahoo Sports . Retrieved July 30, 2013 .
+1 2 George Schroeder (September 25, 2013). "Playoff selection committee to be set by season's end" . USA Today . Retrieved September 26, 2013 .
+↑ "Lloyd Carr resigns from CFP for health reasons" . Sportingnews.com.
+↑ "Haden Steps Down" . ESPN.com . October 30, 2015 . Retrieved November 11, 2015 .
+↑ "Oliver Luck joins NCAA" . ESPN.com . December 17, 2014 . Retrieved December 17, 2014 .
+1 2 Heather Dinich (January 9, 2015). "Bill Hancock, Archie Manning talk playoff" . ESPN.com . Retrieved January 24, 2015 .
+↑ Hancock Announces Membership Changes to CFP Selection Committee Archived March 29, 2015, at the Wayback Machine , Collegefootballplayoff.com, March 27, 2015
+↑ Low, Chris (February 9, 2021). "Terry Mohajir leaves Arkansas State to become athletic director at UCF" . ESPN.com . Retrieved February 9, 2021 .
+↑ "Ex-N. Dame player West joining CFP committee" . ESPN.com . June 16, 2021 . Retrieved November 29, 2021 .
+↑ "West Named to College Football Playoff Selection Committee" . College Football Playoff . Retrieved November 29, 2021 .
+↑ Stewart Mandel (October 16, 2013). "Condoleezza Rice discusses her role on the selection committee" . Sports Illustrated . Archived from the original on October 19, 2013 . Retrieved March 12, 2014 .
+↑ Chuck Carlton (October 15, 2013). "How controversial Condoleezza Rice pick will affect Dallas' national championship game" . The Dallas Morning News . Retrieved March 12, 2014 .
+↑ Brett McMurphy (April 29, 2014). "CFP to release rankings on Tuesdays" . ESPN.com . Retrieved April 30, 2014 .
+↑ Parks, James (October 5, 2021). "How the CFB Playoff chooses the Top 4 teams" . College Football HQ . Archived from the original on October 11, 2021 . Retrieved October 11, 2021 .
+1 2 3 George Schroeder (April 3, 2014). "College Football Playoff committee discusses recusals" . USA Today . Retrieved April 25, 2014 .
+↑ Stewart Mandel (March 10, 2014). "How could a mid-major qualify for the College Football Playoff?" . Sports Illustrated . Archived from the original on March 11, 2014 . Retrieved March 12, 2014 .
+↑ Jon Solomon (July 17, 2013). "Report: College Football Playoff committee will use current athletics directors" . AL.com . Retrieved August 11, 2013 .
+↑ Tom Van Riper (March 1, 2014). "College Football's Playoff Problem" . Forbes .com . Retrieved April 25, 2014 .
+1 2 3 4 "Playoff committee sets parameters" . ESPN.com . Associated Press. May 1, 2014 . Retrieved May 7, 2014 .
+↑ Stewart Mandel (April 30, 2014). "College Football Playoff to release polls ... but why?" . SI.com . Retrieved May 20, 2014 . {{ cite web }} : CS1 maint: deprecated archival service ( link )
+1 2 George Schroeder (May 1, 2014). "Playoff decided on field, but questioned everywhere else" . USA Today . Retrieved May 20, 2014 .
+↑ Jenni Carlson (December 2, 2015). "How an Oklahoma software developer wound up in the middle of college football's biggest decision" . newsok.com. Archived from the original on May 13, 2016 . Retrieved October 11, 2017 .
+↑ Mark Schlabach (May 1, 2014). "How to say 'I recuse myself'?" . ESPN.com . Retrieved May 20, 2014 .
+↑ Dennis Dodd (April 30, 2014). "Flimsy recusal policy puts bull's-eye on playoff selection committee" . CBSSports.com . Retrieved May 20, 2014 .
+↑ "Syracuse and Cornell Still Top Gridders" . The Reading Eagle . Reading, Pennsylvania. November 12, 1923. p. 12. Archived from the original on November 17, 2015 . Retrieved May 5, 2015 .
+↑ Viehman, Harold H., ed. (1939). The 1939 Owl . Pittsburgh: University of Pittsburgh. p. 276. Archived from the original on April 4, 2012 . Retrieved May 5, 2015 .
+↑ Dodd, Dennis (December 22, 2004). "Subtracting AP poll leaves BCS again scrambling for legitimacy" . CBS Sports . Archived from the original on March 8, 2013 . Retrieved May 5, 2015 .
+↑ Peterson, Bill (November 5, 2008). "UC Football in the Hunt for a Big East Crown and BCS Bid" . Citybeat.com. Archived from the original on June 9, 2015 . Retrieved May 5, 2015 .
+↑ Hooper, Matt (October 10, 2009). Noel, Tex (ed.). "How many national titles can Alabama really lay claim to? Better yet, why is there more than one answer? (republished with permission from the Birmingham Weekly)" (PDF) . The College Football Historian . 2 (9). Intercollegiate Football Researchers Association. ISSN 2326-3628 . Archived (PDF) from the original on September 24, 2015 . Retrieved May 5, 2015 .
+↑ "National Champion Major Selections (1896 to Present)". 2022 NCAA Football Bowl Subdivision Records (PDF) . Indianapolis: The National Collegiate Athletic Association. July 2022. pp. 112– 114 . Retrieved January 4, 2023 . The criteria for being included in this historical list of poll selectors is that the poll be national in scope, either through distribution in newspaper, television, radio and/or computer online. The list includes both former selectors, who were instrumental in the sport of college football, and selectors who were among the Bowl Championship Series (BCS) selectors.
+↑ "Final National Poll Leaders". 2022 NCAA Football Bowl Subdivision Records (PDF) . Indianapolis: The National Collegiate Athletic Association. July 2022. pp. 114– 119 . Retrieved January 4, 2023 .
+1 2 Walsh, Christopher J. (2007). Who's #1?: 100-Plus Years of Controversial National Champions in College Football . Taylor Trade Publications. pp. 13– 16, 148– 149. ISBN 9781461734765 . Archived from the original on November 26, 2015 . Retrieved May 5, 2015 .
+1 2 2023 NCAA Football Bowl Subdivision Records (PDF) . National Collegiate Athletic Association . 2023. Archived from the original on August 26, 2023 . Retrieved August 26, 2023 .
+↑ Dubow, Josh (January 3, 2004). "Split national championships nothing new to college football — 11 times since 1950" . The Modesto Bee . Associated Press . Retrieved March 4, 2023 . List of the 11 split national titles since 1950: 1954, 1957, 1965, 1970, 1973, 1974, 1978, 1990, 1991, 1997, 2003
+↑ Shapiro, Leonard (January 3, 1992). "Miami, Washington Earn Split Decision for No. 1" . The Washington Post . Retrieved August 15, 2022 . The triumphant Miami and Washington teams exulted on separate coasts yesterday, each celebrating the outcome of at least one major poll that proclaimed it the national college football champion for 1991.
+↑ Low, Chris (August 18, 2022). "How the 1992 SEC Championship Game Altered the College Football Landscape Forever" .
+↑ Fachet, Robert (January 24, 1992). "Bowl Deal Set with Coalition" . The Washington Post . Retrieved August 10, 2022 . ...under an agreement hammered out yesterday by the College Football Bowl Coalition that also provides enhanced opportunity for a national championship game.
+↑ Murray, Ken (September 1, 1995). " 'ALLIANCE' AIMS HIGH No. 1 vs. 2 is goal of new bowl setup, but Rose is prickly" . The Baltimore Sun . Archived from the original on July 2, 2021 . Retrieved August 11, 2022 . Briefly, the Bowl Coalition has been replaced by the Bowl Alliance, which will spread five conference champions (ACC, Big East, Big Eight, Southeastern, Southwest) plus Notre Dame around three different bowls. The championship game between the Nos. 1 and 2 alliance teams will be rotated among the Fiesta (this year), Sugar (1996) and Orange (1997) bowls. Unlike the coalition, the alliance has eliminated conference tie-ins to its respective bowls.
+↑ Barbati, Carl; Cannizzaro, Mark (January 3, 1988). "Should there be college Super Bowl?" . The Courier–News . Bridgewater, New Jersey . Retrieved October 24, 2022 . Only luck ensures one of the many current bowl games gets the No. 1 and No. 2 teams to play each other.
+↑ Jenkins, Dan (December 22, 1969). "Knute Rockne Would Have Agreed, Ara" . Sports Illustrated . Vol. 31, no. 26. Chicago. pp. 26– 31. Archived from the original on June 21, 2021 . Retrieved February 27, 2023 .
+↑ Written at New York. "Paterno Advocates Playoff System" . Lancaster New Era . Lancaster, Pennsylvania. Associated Press. January 5, 1978 . Retrieved March 8, 2023 .
+↑ Written at New York. "Paterno: Playoffs should decide who's No. 1" . The Sentinel . Carlisle, Pennsylvania. Associated Press. December 5, 1985 . Retrieved March 8, 2023 .
+↑ Billingsley, Richard (October 21, 2001). "The road to the BCS has been a long one" . ESPN College Football . Archived from the original on September 12, 2015 . Retrieved May 7, 2015 .
+↑ Schlabach, Mark (December 22, 2004). "AP Opts Out Of Formula For BCS" . The Washington Post . Retrieved August 26, 2022 .
+↑ Kilgore, Adam (September 1, 2015). "College football rankings provide problems and little else in playoff era" . The Washington Post . Retrieved March 2, 2023 .
+↑ "Poll: Why Do The College Football Playoffs Only Have 4 Teams?" . npr.org . December 7, 2014 . Retrieved July 14, 2024 .
+↑ "12-Team Playoff Proposed By College Football Playoff Working Group" (Press release). College Football Playoff. June 10, 2021 . Retrieved June 23, 2021 .
+↑ "CFP to remain at 4 teams through 2025 season" . ESPN.com . February 18, 2022 . Retrieved February 18, 2022 .
+↑ "Sources: The CFP Board of Managers has decided on a 12-team College Football Playoff during today's meeting" . Twitter.com . September 2, 2022 . Retrieved September 2, 2022 .
+↑ "Sources: CFP set to present 5+7 model to board" . ESPN.com . November 11, 2023 . Retrieved November 24, 2023 .
+↑ Thamel, Pete (February 13, 2026). "Big Ten details 24-team CFP plan with no league title games" . ESPN . Retrieved October 16, 2026 .
+↑ Thamel, Pete; Dinich, Heather (October 15, 2026). "Sources: College Football Playoff nearing deal for 24-team format in '27" . ESPN . Retrieved October 16, 2026 .
+↑ Brad Edwards (December 18, 2013). "The playoff's SOS problem" . ESPN .com . Retrieved April 25, 2014 .
+↑ Stephen J. Nesbitt (March 10, 2014). "Lure of big game alters NCAA football" . Pittsburgh Post-Gazette . Retrieved April 25, 2014 .
+1 2 Ross Dellinger (April 6, 2014). "How Verge Ausberry, LSU approach modern-day football schedules" . The Advocate. Archived from the original on April 26, 2014 . Retrieved April 25, 2014 .
+↑ Kevin Scarbinsky (February 3, 2014). "Doesn't Auburn know Thursday nights are where top-10 teams go to die?" . AL.com . Retrieved April 25, 2014 .
+1 2 "SEC sticking with 8-game league football schedule" . Associated Press. April 27, 2014 . Retrieved April 28, 2014 .
+1 2 Jon Solomon (March 7, 2014). "Majority of SEC ADs favor 8 league football games, but presidents will help as decision nears" . AL.com . Retrieved April 25, 2014 .
+↑ Dennis Dodd (March 3, 2014). "Will the playoff selection committee influence conference scheduling?" . CBSSports.com . Retrieved April 25, 2014 .
+↑ Andrea Adelson and Brett McMurphy (May 14, 2014). "Vote: ACC games as nonconference" . ESPN.com . Retrieved May 20, 2014 .
+↑ McMurphy, Brett (January 29, 2015). "ACC: BYU to count as Power 5 team" . ESPN.com . Retrieved February 3, 2015 .
+↑ Heather Dinich (February 6, 2014). "ACC coaches to discuss 9-game schedule" . ESPN.com . Retrieved April 28, 2014 .
+↑ Heather Dinich (April 29, 2014). "ACC schedule not set; vote looms?" . ESPN.com . Retrieved April 30, 2014 .
+↑ Jeremy Fowler (April 27, 2014). "ACC watching SEC's 8- vs. 9-game scheduling decision closely" . CBSSports.com . Retrieved April 28, 2014 .
+↑ "College Football Playoff - Rankings" . Side Arm Sports . Retrieved April 19, 2022 .
+↑ "College Football Playoff - Rankings" . Side Arm Sports . Retrieved April 19, 2022 .
+↑ "College Football Playoff - Rankings" . Side Arm Sports . Retrieved April 19, 2022 .
+↑ "College Football Playoff - Rankings" . Side Arm Sports . Retrieved April 19, 2022 .
+↑ "College Football Playoff - Rankings" . Side Arm Sports . Retrieved April 19, 2022 .
+↑ "College Football Playoff - Rankings" . Side Arm Sports . Retrieved April 19, 2022 .
+↑ "College Football Playoff - Rankings" . Side Arm Sports . Retrieved April 19, 2022 .
+↑ "College Football Playoff - Rankings" . Side Arm Sports . Retrieved April 19, 2022 .
+↑ "ESPN to televise college football playoff in 12-year deal" . ESPN . April 24, 2013 . Retrieved April 26, 2013 .
+↑ Lewis, Jon (February 13, 2024). "Report: ESPN reaches deal to keep CFP through 2032" . Sports Media Watch . Retrieved February 14, 2024 .
+↑ "ESPN Reaches 12-Year College Football Agreement With Orange Bowl" . Bloomberg Businessweek . Archived from the original on January 7, 2013 . Retrieved November 16, 2012 .
+↑ "CFP, ESPN agree to $7.8B deal through '31-32" . ESPN.com . March 19, 2024 . Retrieved March 23, 2024 .
+↑ "ESPN Strikes Deal for College Football Playoff" . The Wall Street Journal . Retrieved January 9, 2016 .
+1 2 Jeyarajah, Shehan (May 22, 2024). "College Football Playoff to feature select games on TNT Sports in sublicense deal with ESPN through 2028" . CBS Sports . Retrieved May 22, 2024 .
+↑ Brooks, Amanda (May 22, 2024). "TNT Sports to Present College Football Playoff Games Through Sublicense with ESPN" . ESPN Press Room U.S . Retrieved January 2, 2025 .
+↑ Lewis, Jon (December 15, 2025). "TNT Sports officially getting a CFP semifinal starting next year" . Sports Media Watch . Retrieved December 15, 2025 .
+↑ Lewis, Jon (June 5, 2024). "ABC to simulcast pair of first round CFP games this season" . Sports Media Watch . Retrieved June 7, 2024 .
+↑ Brooks, Amanda (November 4, 2025). "Times and Broadcast Information Announced for 2025 College Football Playoff First-Round Games" . ESPN Press Room U.S . Retrieved November 26, 2025 .
+↑ Brooks, Amanda (March 19, 2024). "ESPN and the College Football Playoff Extend Exclusive Media Rights Agreement Through 2031-32 Season" . ESPN Press Room U.S . Retrieved March 23, 2024 .
+↑ "College Football Playoff final sets ratings record for ESPN, cable TV" . Los Angeles Times . January 13, 2015 . Retrieved January 17, 2015 .
+↑ Chicago Tribune (January 13, 2015). "New college football playoff draws larger TV audience for title game" . chicagotribune.com . Retrieved January 15, 2015 .
+↑ "Win for ESPN, but Title Game Is the Real Test" . The New York Times . January 2, 2015 . Retrieved January 17, 2015 .
+↑ Derek Volner (January 13, 2015). "College Football Playoff National Championship on ESPN Delivers Largest Audience in Cable History; ESPN Streaming Record for non-World Cup Programming" . ESPN Media Zone . Retrieved January 17, 2015 .
+↑ Bill Chappell (January 13, 2015). "College Football Championship Sets A New Cable Ratings Record" . NPR . Retrieved January 17, 2015 .
+1 2 "College Football Playoff TV ratings drop with New Year's Eve time slots" . Sports Illustrated . January 2016 . Retrieved January 1, 2016 .
+1 2 "College Football Playoff tweaks dates in upcoming seasons" . ESPN.com . July 28, 2016 . Retrieved July 28, 2016 .
+1 2 John Ourand and Michael Smith (November 9, 2012). "ESPN homes in on 12-year BCS package" . Sports Business Daily . Retrieved July 24, 2013 .
+↑ Jerry Hinnen (November 21, 2012). "ESPN reaches 12-year deal to air college football playoffs" . CBSSports.com . Retrieved August 11, 2013 .
+↑ Chrise Smith (April 27, 2012). "A BCS Playoff TV Contract Will Be Worth More Than $1 Billion" . Forbes . Retrieved September 18, 2017 .
+1 2 3 4 5 6 George Schroeder (December 12, 2012). "College football playoff revenue distribution set" . USA Today . Retrieved April 26, 2014 .
+1 2 3 Brett McMurphy (December 11, 2012). "Big earnings for power conferences" . ESPN.com . Retrieved April 26, 2014 .
+↑ Michael Smith & John Ourand (October 15, 2012). "ESPN focuses on BCS, Big East media rights" . Sports Business Daily . Retrieved August 11, 2013 .
+↑ Mark Schlabach (June 26, 2012). "Playoff approved, questions remain" . ESPN.com . Retrieved August 10, 2013 .
+↑ Ralph D. Russo (November 12, 2012). "College football playoff to have 6 games, not 7" . Associated Press. Archived from the original on April 16, 2014 . Retrieved August 10, 2013 .
+↑ Kercheval, Ben (April 23, 2013). "College football's new playoff will be called… 'College Football Playoff' " .
+1 2 Vahe Gregorian (July 1, 2013). "As College Football Playoff nears, Bill Hancock readies for change" . Kansas City Star . Retrieved July 24, 2013 .
+↑ "College Football Playoff Names Byron Hatch Chief Operating Officer" . College Football Playoff . Retrieved January 2, 2023 .
+↑ Stewart Mandel (June 20, 2013). "College Football Playoff crazy to forgo committee 'dry run' in 2013" . SI.com. Archived from the original on June 25, 2013 . Retrieved July 30, 2013 .
+↑ Stewart Mandel (April 23, 2013). "Flawed BCS replaced with better, if imperfect College Football Playoff" . SI.com . Retrieved July 30, 2013 . {{ cite news }} : CS1 maint: deprecated archival service ( link )
+1 2 "Governance" . College Football Playoff. Archived from the original on July 8, 2015 . Retrieved July 7, 2015 .
+↑ "Lessons of 2011 may still apply to College Football Playoff process" . USA TODAY . October 10, 2015 . Retrieved December 10, 2015 .
+↑ Will the Alabama Outrage Spur More Changes to College Football's Format? - Andy Staples, Sports Illustrated, December 3, 2017
+↑ College Football Playoff: Alabama Is In, Ohio State Is Out - Marc Tracy , Los Angeles Times, December 3, 2017
+↑ Jon Wilner (December 7, 2014). "College football: Controversy reigns, as ever, over playoff selections" . The Mercury News . Retrieved December 10, 2015 .
+↑ "College football: FBS conferences with fewer than 12 members now able to hold championship game" (Press release). NCAA. January 13, 2016 . Retrieved January 19, 2016 .
+↑ "8 teams the College Football Playoff committee got totally wrong - FOX Sports" . Archived from the original on November 22, 2016 . Retrieved November 22, 2016 .
+↑ "Is College Football Playoff Committee Losing Its Legitimacy?" . November 7, 2016. Archived from the original on November 22, 2016 . Retrieved November 22, 2016 .
+↑ "The College Football Playoff has become more controversial than the BCS" . Los Angeles Daily News . December 7, 2014 . Retrieved December 10, 2015 .
+↑ "Joel Klatt: The College Football Playoff Committee is a joke - THE HERD - FOX Sports" .
+↑ "Column: 'Bama in, Buckeyes out? CFP selection committee got it right - Chicago Tribune" . Chicago Tribune . December 3, 2017.
+↑ "Why the selection committee got it right - ESPN.com" . December 3, 2017.
+↑ "College Football Playoff selection committee got it right with Alabama - Washington Post" . The Washington Post .
+↑ FOX College Football [@CFBONFOX] (October 20, 2019). " "When I hear someone say, 'look test' or 'I think,' that's not fair." @CoachUrbanMeyer addresses the CFP's selection criteria and breaks down how he would change the system" ( Tweet ) – via Twitter .
+↑ Forde, Pat (December 9, 2020). "The Selection Committee Makes It Clear: There's Never Room for a Non–Power 5 Team in the Playoff" . Sports Illustrated . Retrieved December 10, 2020 .
+↑ Schlabach, Mark (December 16, 2020). "AAC commissioner says 'deck is stacked' against Group of 5 college football teams" . ESPN.com . Retrieved December 16, 2020 .
+↑ Schlabach, Mark (November 23, 2021). "Unbeaten Cincinnati joins Georgia, Ohio State and Alabama in CFP's coveted top four as Oregon slips" . ESPN.com . Retrieved November 24, 2021 .
+↑ Winborne, Jeffery (December 3, 2023). " 'It's unfathomable': ACC Commissioner, Florida State head coach dismayed by Seminoles' playoff exclusion" . www.wbrc.com . Retrieved December 3, 2023 .
+↑ "College Football Playoff picked Alabama over Florida State for final spot. Why?" . USA TODAY . Retrieved December 3, 2023 .
+1 2 Sigler, Jordan (December 7, 2025). "Notre Dame's CFP Snub for Alabama, Miami Explained by Committee" . Newsweek .
+↑ Adelson, Andrea (December 3, 2025). "Freeman 'upset' by ND's CFP drop behind Bama" . ESPN.com . Retrieved December 26, 2025 .
+↑ Kevin Trahan (October 27, 2014). "Tommy Bowden does not think Condoleezza Rice should be on the College Football Playoff committee" . SBNation.com . Vox Media . Retrieved December 10, 2015 .
+↑ Cork Gaines (October 8, 2013). "People Don't Want Condoleezza Rice On College Football's Playoff Selection Committee - Business Insider" . Business Insider . Retrieved December 10, 2015 .
+↑ "College Football Playoff drops ball with 2015 New Year's Eve semis" . SI.com . January 12, 2015 . Retrieved January 17, 2015 .
+↑ Tony Barnhart (January 6, 2014). "Before BCS ends, the whens, wheres, whys of College Football Playoff" . CBSSports.com . Retrieved January 17, 2015 .
+↑ Richard Deitsch (July 2, 2015). "A daunting task: Can the CFP, ESPN change old New Year's Eve habits?" . SI.com . Retrieved July 6, 2015 .
+↑ "Orange Bowl game is shifted to prime time on Dec. 30" . Miami Herald . Retrieved March 9, 2016 .
+↑ "The 2017 College Football Playoff will still be on New Year's Eve, but it'll start earlier" . SB Nation . March 7, 2016 . Retrieved March 9, 2016 .
+↑ "College Football Playoff semis will only be on Saturdays or holidays" . SI.com . July 28, 2016 . Retrieved July 28, 2016 .
+↑ "College Football Playoff semifinal ratings down 25 percent year-over-year" . Awful Announcing . December 31, 2018 . Retrieved January 5, 2019 .
+↑ "NFL vs. CFP: How Football's Epic Saturday Slate Turned From Collaboration to Competition" . SI.com . December 20, 2024.
+↑ Wolken, Dan (December 18, 2024). "College Football Playoff faces NFL in ratings war that won't end well" . USA TODAY . Retrieved June 28, 2025 .
+↑ "Saturday NFL draws larger audience than college games for rollout of 12-team playoff" . Associated Press . December 25, 2024.
+External links
+[ edit ]
+Wikimedia Commons has media related to College Football Playoff .
+Official website
+v
+t
+e
+College Football Playoff
+Overview
+College Football Playoff National Championship
+Games
+4-team
+playoff
+2014–15 ( Rose
+Sugar
+National Championship )
+2015–16 ( Orange
+Cotton
+National Championship )
+2016–17 ( Peach
+Fiesta
+National Championship )
+2017–18 ( Rose
+Sugar
+National Championship )
+2018–19 ( Orange
+Cotton
+National Championship )
+2019–20 ( Peach
+Fiesta
+National Championship )
+2020–21 ( Rose
+Sugar
+National Championship )
+2021–22 ( Orange
+Cotton
+National Championship )
+2022–23 ( Peach
+Fiesta
+National Championship )
+2023–24 ( Rose
+Sugar
+National Championship )
+12-team
+playoff
+2024–25 ( Fiesta
+Peach
+Rose
+Sugar
+Orange
+Cotton
+National Championship )
+2025–26 ( Cotton
+Orange
+Rose
+Sugar
+Fiesta
+Peach
+National Championship )
+Other
+List of College Football Playoff games
+CFP National Championship Trophy
+NCAA Division I FBS champions
+Mythical national championship
+New Year's Six
+Power Four conferences
+Executive directors ( Bill Hancock
+Richard M. Clark )
+Links to related articles
+v
+t
+e
+Systems used to determine college football national championships
+NCAA Division I-A/FBS
+Various contemporary and retroactive selectors (1869–1935)
+National polls (1936–1991)
+Bowl Coalition (1992–1994)
+Bowl Alliance (1995–1997)
+BCS National Championship Game (1998–2013)
+College Football Playoff National Championship (2014–present)
+NCAA Division I-AA/FCS
+NCAA Division I Football Championship (1978–present)
+NCAA Division II
+NCAA Division II football championship (1973–present)
+NCAA Division III
+NCAA Division III football championship (1973–present)
+NAIA
+NAIA football national championship (1956–present)
+NAIA Division II football national championship (1970–1996)
+NJCAA
+NJCAA National Football Championship (1956–present)
+Additional systems
+Black college football national championship (1920–present)
+UPI small college football rankings (1958–1974)
+AP small college football rankings (1960–1974)
+NCCAA Victory Bowl (1997–2022)
+v
+t
+e
+NCAA Division I FBS bowl games
+College Football Playoff
+Championship Game
+Cotton
+Fiesta
+Orange
+Peach
+Rose
+Sugar
+Other bowl games
+68 Ventures
+Alamo
+Arizona
+Armed Forces
+Birmingham
+Boca Raton
+Cactus
+Citrus
+Cure
+Duke's Mayo
+Famous Idaho Potato
+Fenway
+First Responder
+Frisco
+Gasparilla
+Gator
+Hawaii
+Holiday
+Independence
+Las Vegas
+Liberty
+Military
+Music City
+Myrtle Beach
+New Mexico
+New Orleans
+Pinstripe
+Poinsettia
+Pop-Tarts
+Puerto Rico
+ReliaQuest
+Salute to Veterans
+Sun
+Texas
+Xbox
+All-Star games
+The American Bowl
+East–West Shrine Bowl
+Hula Bowl
+Senior Bowl
+Tropical Bowl
+v
+t
+e
+Rose Bowl Game
+History & conference tie-ins
+History
+Rose Bowl (stadium)
+College Football Playoff
+New Year's Six
+Broadcasters
+Big Ten Conference
+Pac-12 Conference
+Games
+1902
+1903–1915
+1916
+1917
+1918
+1919
+1920
+1921
+1922
+1923
+1924
+1925
+1926
+1927
+1928
+1929
+1930
+1931
+1932
+1933
+1934
+1935
+1936
+1937
+1938
+1939
+1940
+1941
+1942 DUR
+1943
+1944
+1945
+1946
+1947
+1948
+1949
+1950
+1951
+1952
+1953
+1954
+1955
+1956
+1957
+1958
+1959
+1960
+1961
+1962
+1963
+1964
+1965
+1966
+1967
+1968
+1969
+1970
+1971
+1972
+1973
+1974
+1975
+1976
+1977
+1978
+1979
+1980
+1981
+1982
+1983
+1984
+1985
+1986
+1987
+1988
+1989
+1990
+1991
+1992
+1993
+1994
+1995
+1996
+1997
+1998
+1999
+2000
+2001
+2002 BCS
+2003
+2004
+2005
+2006 BCS
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015 CFS
+2016
+2017
+2018 CFS
+2019
+2020
+2021 CFS, DAL
+2022
+2023
+2024 CFS
+2025 CFQ
+2026 CFQ
+2027 CFQ
+Notes
+The 1942 game was held at Duke Stadium in Durham, North Carolina , due to fears of a Japanese attack after Pearl Harbor.
+The 2021 game was moved to AT&T Stadium in Arlington, Texas , due to the COVID-19 pandemic in California .
+BCS denotes Bowl Championship Series Championship Game
+DAL denotes the game was played in Arlington, Texas .
+DUR denotes the game was played in Durham, North Carolina .
+CFS denotes College Football Playoff Semifinal Game
+CFQ denotes College Football Playoff Quarterfinal Game
+v
+t
+e
+Sugar Bowl
+History & conference tie-ins
+History
+Tulane Stadium
+Georgia Dome
+Caesars Superdome
+College Football Playoff
+New Year's Six
+Southeastern Conference
+Big 12 Conference
+Games
+1935
+1936
+1937
+1938
+1939
+1940
+1941
+1942
+1943
+1944
+1945
+1946
+1947
+1948
+1949
+1950
+1951
+1952
+1953
+1954
+1955
+1956
+1957
+1958
+1959
+1960
+1961
+1962
+1963
+1964
+1965
+1966
+1967
+1968
+1969
+1970
+1971
+1972 (Jan)
+1972 (Dec)
+1973
+1974
+1975
+1977
+1978
+1979
+1980
+1981
+1982
+1983
+1984
+1985
+1986
+1987
+1988
+1989
+1990
+1991
+1992
+1993
+1994
+1995 (Jan)
+1995 (Dec)
+1997
+1998
+1999
+2000
+2001
+2002
+2003
+2004
+2005
+2006
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022 (Jan)
+2022 (Dec)
+2024
+2025
+2026
+Notes
+The 2006 game took place in Atlanta, Georgia due to Hurricane Katrina .
+The game was also the national title game for either the Bowl Coalition , Bowl Alliance , or Bowl Championship Series in 1993, 1997, 2000, and 2004.
+There was a Sugar Bowl in January and December in 1972, 1995 and 2022.
+The game was a College Football Playoff semifinal in its 2015, 2018, 2021, and 2024 editions.
+v
+t
+e
+Orange Bowl
+History & conference tie-ins
+History
+Miami Orange Bowl
+Hard Rock Stadium
+College Football Playoff
+New Year's Six
+Broadcasters
+Atlantic Coast Conference
+Big Ten Conference
+Southeastern Conference
+Notre Dame
+Games
+1935
+1936
+1937
+1938
+1939
+1940
+1941
+1942
+1943
+1944
+1945
+1946
+1947
+1948
+1949
+1950
+1951
+1952
+1953
+1954
+1955
+1956
+1957
+1958
+1959
+1960
+1961
+1962
+1963
+1964
+1965
+1966
+1967
+1968
+1969
+1970
+1971
+1972
+1973
+1974
+1975
+1976
+1977
+1978
+1979
+1980
+1981
+1982
+1983
+1984
+1985
+1986
+1987
+1988
+1989
+1990
+1991
+1992
+1993
+1994 #
+1995 #
+1996 (January)
+1996 (December)
+1998 #
+1999
+2000
+2001 #
+2002
+2003
+2004
+2005 #
+2006
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014 (January)
+2014 (December)
+2015 †
+2016
+2017
+2018 †
+2019
+2021 (January)
+2021 (December) †
+2022
+2023
+2025 †
+2026
+# denotes BC , BA , or BCS national championship game
+† denotes College Football Playoff semifinal
+v
+t
+e
+Cotton Bowl Classic
+History & conference tie-ins
+History
+Cotton Bowl
+AT&T Stadium
+College Football Playoff
+New Year's Six
+Group of Five
+Games
+1937
+1938
+1939
+1940
+1941
+1942
+1943
+1944
+1945
+1946
+1947
+1948
+1949
+1950
+1951
+1952
+1953
+1954
+1955
+1956
+1957
+1958
+1959
+1960
+1961
+1962
+1963
+1964
+1965
+1966 (January)
+1966 (December)
+1968
+1969
+1970
+1971
+1972
+1973
+1974
+1975
+1976
+1977
+1978
+1979
+1980
+1981
+1982
+1983
+1984
+1985
+1986
+1987
+1988
+1989
+1990
+1991
+1992
+1993
+1994
+1995
+1996
+1997
+1998
+1999
+2000
+2001
+2002
+2003
+2004
+2005
+2006
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015 (January)
+2015 (December)
+2017 (January)
+2017 (December)
+2018
+2019
+2020
+2021
+2023 (January)
+2023 (December)
+2025 (January)
+2025 (December)
+There was a Cotton Bowl Classic in January and December in 1966, 2015, 2017, 2023, 2025.
+The 2015 (December), 2018, 2021, and 2025 (January) editions were College Football Playoff semifinals.
+v
+t
+e
+Peach Bowl
+Known as the Chick-fil-A Bowl from 2006–2013
+History
+History
+Bobby Dodd Stadium
+Atlanta–Fulton County Stadium
+Georgia Dome
+Mercedes-Benz Stadium
+College Football Playoff
+New Year's Six
+Games
+1968
+1969
+1970
+1971
+1972
+1973
+1974
+1975
+1976
+1977
+1978
+1979
+1981 (January)
+1981 (December)
+1982
+1983
+1984
+1985
+1986
+1988 (January)
+1988 (December)
+1989
+1990
+1992
+1993 (January)
+1993 (December)
+1995 (January)
+1995 (December)
+1996
+1998 (January)
+1998 (December)
+1999
+2000
+2001
+2002
+2004 (January)
+2004 (December)
+2005
+2006
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2018 (January)
+2018 (December)
+2019
+2021 (January)
+2021 (December)
+2022
+2023
+2025
+2026
+v
+t
+e
+Fiesta Bowl
+History & conference tie-ins
+History
+Mountain America Stadium
+State Farm Stadium
+College Football Playoff
+New Year's Six
+Group of Five
+Games
+1971
+1972
+1973
+1974
+1975
+1976
+1977
+1978
+1979
+1980
+1982
+1983
+1984
+1985
+1986
+1987
+1988
+1989
+1990
+1991
+1992
+1993
+1994
+1995
+1996
+1997 (January)
+1997 (December)
+1999
+2000
+2001
+2002
+2003
+2004
+2005
+2006
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014 (January)
+2014 (December)
+2016 (January)
+2016 (December)
+2017
+2019 (January)
+2019 (December)
+2021
+2022 (January)
+2022 (December)
+2024 (January)
+2024 (December)
+2026 (January)
+Notes
+The game was also the national title game for either the Bowl Coalition , Bowl Alliance , or Bowl Championship Series in 1996, 1999, and 2003.
+There was a Fiesta Bowl in January and December in 1997, 2014, 2016, 2019, 2022, and 2024. This will next occur in 2026.
+Bold indicates College Football Playoff semifinals.
+v
+t
+e
+New Year's Eve and New Year's Day
+Events
+America's Party
+First Night
+Hogmanay
+New Year's Eve in London
+Russian New Year celebration
+Objects dropped on New Year's Eve
+Peach Drop
+Pelican Drop
+Réveillon de Copacabana
+Sydney New Year's Eve
+Taipei New Year's Eve Party
+The Possum Drop
+Times Square Ball
+Twelve Grapes
+Vienna New Year's Concert
+Millennium celebrations
+Sports
+New Year's Six bowl games
+Rose
+Orange
+Sugar
+Fiesta
+Cotton
+Peach
+Other college football games
+Citrus Bowl
+Gator Bowl
+ReliaQuest Bowl
+Tour de Ski
+JFA Emperor's Cup Final
+Four Hills Tournament
+NHL Winter Classic
+Spengler Cup Final
+IIHF World Junior Championship
+Team Canada New Year's Eve Game
+Saint Silvester Road Race
+New Year Sprint
+Nos Galan road race
+Parades
+Tournament of Roses Parade
+London's New Year's Day Parade
+Florida Citrus Parade
+Mummers Parade
+Television
+United States
+New Year's Rockin' Eve
+New Year's Eve Live: Nashville's Big Bash
+Fox New Year's Eve specials
+NBC New Year's Eve specials
+CNN New Year's Eve Live
+¡Feliz!
+MTV New Year's Eve specials
+Happy New Year, America
+Red Bull New Year No Limits
+Rudolph's Shiny New Year
+Happy New Year, Charlie Brown!
+First Night 2013 with Jamie Kennedy
+Sesame Street Stays Up Late!
+Snoopy Presents: For Auld Lang Syne
+United Kingdom
+BBC New Year's Eve specials
+BBC Scotland's Hogmanay
+The Big Fat Quiz of the Year
+Chewin' the Fat
+Jools' Annual Hootenanny
+Live into 85
+Only an Excuse?
+Scotch and Wry
+STV Hogmanay specials
+The White Heather Club
+International
+2000 Today
+Canada
+US
+Ireland
+Hello 2021
+Elsewhere
+Áramótaskaupið
+Bye Bye
+Dinner for One
+Kōhaku Uta Gassen
+Little Blue Light
+MBC Gayo Daejejeon
+Silvesterstadl
+Sylvesterpunsch
+Willkommen 20xx
+Music
+" Auld Lang Syne "
+" Auld Lang Syne (The New Year's Anthem) "
+Chorale preludes for New Year's (Bach)
+Church cantatas for New Year's
+" Happy New Year "
+" It's Just Another New Year's Eve "
+" Levy-Dew "
+" New Year's Day "
+" What Are You Doing New Year's Eve? "
+" What's Another Year "
+Related
+New Year films
+Gregorian calendar
+Baby New Year
+Father Time
+Feast of the Circumcision of Christ
+First-foot
+Calennig
+Hogmanay
+Christmas and holiday season
+Junkanoo
+Leap second
+Guy Lombardo
+New Year's resolution
+New Year tree
+Saint Sylvester's Day
+Solemnity of Mary, Mother of God
+Vasilopita
+Watchnight service
+Messages
+New Year address by the President of Russia
+Prime Minister's New Year Message
+v
+t
+e
+College football
+NCAA
+Competitions
+Division I
+FBS
+National championship
+Playoff
+Playoff National Championship
+BCS National Championship Game
+Bowl games
+List
+Bids
+Coalition
+Alliance
+Championship Series
+Records
+Independent (college sports)
+FBS independent schools
+Rivalries
+Most-played
+FCS
+Championship
+Playoff appearances
+Independent schools
+Division II
+Championship ( Appearances )
+Division III
+Championship ( Appearances )
+Other
+Black college championship
+Seasons
+Division I-A (FBS)
+Division I-AA (FCS)
+Division II
+Division III
+Programs
+Div I (FBS)
+Div I (FCS)
+Div II
+Div III
+Conferences 1
+CAA
+Missouri Valley
+Pioneer
+Stadiums
+FBS
+FCS
+Records
+Overview
+Teams by wins
+Win-loss records (FBS)
+Win-loss records (FCS)
+Win-loss records (DII)
+Win-loss records (DIII)
+Related
+Heisman Trophy
+Winners
+Curse
+Non-football programs
+Retired numbers
+Teams alignment history
+NAIA
+Competitions
+National Championship
+Conferences
+Independent schools
+Mid-States
+Other topics
+Programs
+Seasons
+NJCAA
+Competitions
+National Championship
+Conferences
+Northeast
+Southwest Junior
+3C2A
+SCFA
+NCCAA
+Victory Bowl
+Games
+First games by state
+Games outside the U.S. ( Union Jack Classic )
+Historically significant games
+Nicknamed games
+Media
+Radio
+Television
+Playoff debate
+Related articles
+AP rankings
+Black college classics
+Junior college programs
+Defunct conferences
+Defunct teams
+Game of the Century
+Hall of Fame
+Institutions with club football teams
+Seasons (list)
+UPI rankings
+American football in the United States
+Non-U.S. football
+Canada
+Ireland
+Japan
+Mexico
+South Korea
+UK
+1 Note: Football-only conferences are listed
+Category
+Commons
+Retrieved from " https://en.wikipedia.org/w/index.php?title=College_Football_Playoff&oldid=1380815102 "
+Categories : College Football Playoff
+2014 establishments in the United States
+Annual college sporting events in the United States
+Recurring sporting events established in 2014
+Hidden categories: Articles with short description
+Short description is different from Wikidata
+Use American English from October 2019
+All Wikipedia articles written in American English
+Use mdy dates from January 2019
+Webarchive template wayback links
+Articles with hCards
+CS1 maint: deprecated archival service
+CS1: unfit URL
+CS1 location test
+Articles with specifically marked weasel-worded phrases from December 2023
+All articles with specifically marked weasel-worded phrases
+Commons category link from Wikidata
+This page was last edited on 18 October 2026, at 02:19 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+College Football Playoff
+8 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"College Football Playoff","url":"https:\/\/en.wikipedia.org\/wiki\/College_Football_Playoff","sameAs":"http:\/\/www.wikidata.org\/entity\/Q6952928","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q6952928","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2013-02-10T23:39:15Z","dateModified":"2026-10-18T02:19:47Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/commons\/1\/18\/Logo_of_college_football_playoff.svg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"postseason tournament for the highest level of American college football"}
