@@ -298,7 +298,7 @@ order an admin enters (every racing sport) is created with automatic lifecycle o
 already on the site has it turned off, so it never completes, and settles, before its result
 is in. A test seed carries the results its sport is scored on: golf's made-up stroke rounds, a
 bracket's match results, or a race's real finishing order (each runner's `raceResult`, entered
-after release as the official result; [`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md)
+just before release as the official result; [`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md)
 *Seeded 2026 races*). Any sport may also have a test slate.
 
 **The file says what it is.** Each file starts with an envelope: `schemaVersion`, a `scope`

@@ -137,7 +137,7 @@ four seeds in the quarterfinals).
 
 A racing sport's test seed is its last season's races as played: each field entry carries
 made-up `oddsToWin` and its real `raceResult` (status, finishing place, grid or post position,
-jockey), which the load enters after release as the official result. List a race's field in
+jockey), which the load enters just before release as the official result. List a race's field in
 grid or post order; a dead heat repeats a place and skips the next. A league's every race the
 sources have results for is worth loading: each is a separate event to try a contest on. `docs/EVENT-SETUP-PROCEDURES.md` *Seeded NFL playoffs*,
 *Seeded College Football Playoff* and *Seeded NBA and WNBA playoffs* say what a load of one does.

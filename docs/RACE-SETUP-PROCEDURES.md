@@ -281,7 +281,8 @@ own event (a Derby-day undercard race is a separate race).
 
 To try racing contests without setting up a race, load a test seed of the 2026 season as run.
 Four files in `packages/core-api/scripts/seed-golf/` hold every league's 2026 races with their
-real fields and finishing orders:
+real finishing orders. The motor races, horse races and Tour de France carry the whole field;
+Milano-Sanremo, both Giros and the marathons carry only their leading ten finishers:
 
 | File | Sport leagues and races |
 |---|---|
@@ -295,7 +296,8 @@ Load one with `mode` `apply` like any file. Because its envelope says `testData`
 - **Dates moved forward by whole weeks**, post times with them, so the first race starts at
   least a week after the run.
 - **Each race released**, with automatic lifecycle off, its field tiered by made-up odds and
-  priced.
+  priced. The finishing order goes in just before release, so a run that stops between the two
+  leaves a draft that the next run finishes.
 - **The official finishing order already entered**: every runner's place (or did not finish,
   did not start), grid or post position, and jockey, as *The finishing order* in step 7 would.
 

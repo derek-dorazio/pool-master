@@ -795,8 +795,9 @@ class Loader {
       return;
     }
     if (this.resultsEnteredByHand) {
-      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      // Results before release, so a run that dies between them leaves a draft the rerun finishes.
       await enterRaceResultsFor(client, eventId, event, participantIds);
+      await must(releaseEvent({ client, path }), `Release ${event.name}`);
       return;
     }
     for (let roundNumber = 1; roundNumber <= event.rounds; roundNumber += 1) {
