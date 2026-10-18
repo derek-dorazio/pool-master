@@ -423,3 +423,22 @@ Load each with `mode` `apply` like any file. Because their envelopes say `testDa
   WNBA Finals.
 
 Test a contest on either as for the NFL seed above. Running a file again skips everything.
+
+## Seeded March Madness
+
+`basketball-2026-ncaa-tournaments-test.json` is a test seed of the 2026 NCAA Division I men's and
+women's tournaments as they went, one event each in the `NCAA Division I Men` and `NCAA Division I
+Women` sport leagues that the migrations create. Each is six rounds of 63 games over 64 places,
+seeded 1 to 16 in four regions (East, South, West and Midwest for the men; Fort Worth 1 and 3 and
+Sacramento 2 and 4 for the women). Seeds, pairings, tip-offs and scores are real; the odds are made
+up by seed. Load it with `mode` `apply` like any file. Because its envelope says `testData`:
+
+- **Dates moved forward by whole weeks**, the tip-offs with them, so the First Four starts at
+  least a week after the run.
+- **Released** with automatic lifecycle off, the field tiered by odds and priced.
+- **The First Four places filled**: each First Four pairing is a play-in place ("UMBC / Howard"),
+  and after release each takes the team that won it, keeping its seed, tier and price.
+- **Every game's result already entered**, round by round. Michigan beat UConn 69-63 for the
+  men's title; UCLA beat South Carolina 79-51 for the women's.
+
+Test a contest on either as for the NFL seed above. Running the file again skips everything.
