@@ -1,0 +1,1951 @@
+Source: https://en.wikipedia.org/w/index.php?title=2026_Indianapolis_500&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Indianapolis_500&action=raw
+HTTP 200
+Fetched: 2026-10-18T12:44:18.946Z
+
+{{Short description|110th running of the Indianapolis 500}}
+{{Use American English|date=May 2026}}
+{{Use mdy dates|date=May 2026}}
+{{Infobox Indy500
+| race_name = 110th Indianapolis 500
+| race_logo = 2026 Indianapolis 500 logo.svg
+| date = May 24, 2026
+| sanction = [[IndyCar]]
+| season = [[2026 IndyCar Series]]
+| pole = {{flagicon|ESP}} [[Álex Palou]]
+| pole_speed = {{convert|232.248|mph|kph|abbr=on}}
+| leader = {{flagicon|ESP}} [[Álex Palou]] (59)
+| fast_lap = {{flagicon|USA}} [[Conor Daly]] (225.126 mph)
+| winner = {{flagicon|SWE}} [[Felix Rosenqvist]]
+| team = [[Meyer Shank Racing]]
+| time = 3:05:09.6471
+| mph = {{convert|162.021|mph|kph|abbr=on}}
+| chiefmechanic = Kyle Gibson {{cite web|url=https://racer.com/2026/05/25/how-rosenqvist-s-crew-chief-kyle-gibson-went-from-new-guy-to-number-one|title=How Rosenqvist's crew chief Kyle Gibson went from new guy to number one|website=Racer.com|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Marshall|last=Pruett|date=May 25, 2026|access-date=May 27, 2026}} {{Dead link|date=October 2026 |bot=InternetArchiveBot }}
+| attendance =
+| rookie = {{flagicon|DEU}} [[Mick Schumacher]]
+| pace_car = [[Chevrolet Corvette (C8)#ZR1X|Chevrolet Corvette ZR1X]]
+| pace_driver = [[Curt Cignetti]] {{cite web|url=https://www.indystar.com/story/sports/motor/indy-500/2026/03/17/indy-500-pace-car-to-be-diven-by-indiana-football-coach-curt-cignetti/89195998007/|title=Indiana football coach Curt Cignetti to drive Indy 500 pace car|first=Zion|last=Brown|date=March 17, 2026|accessdate=March 17, 2026|website=indystar.com|publisher=[[The Indianapolis Star]]|archive-date=March 19, 2026|archive-url=https://web.archive.org/web/20260319111902/https://www.indystar.com/story/sports/motor/indy-500/2026/03/17/indy-500-pace-car-to-be-diven-by-indiana-football-coach-curt-cignetti/89195998007/|url-status=live}}
+| anthem = [[Jordin Sparks]] {{cite web|url=https://www.indystar.com/story/entertainment/indy-500/2026/05/14/jordin-sparks-will-perform-the-national-anthem-at-the-indy-500/90076237007/|title=Jordin Sparks will perform the national anthem at the Indy 500|first=Domenica|last=Bongiovanni|website=[[Indianapolis Star]]|date=May 14, 2026|accessdate=May 14, 2026|archive-date=May 15, 2026|archive-url=https://web.archive.org/web/20260515021330/https://www.indystar.com/story/entertainment/indy-500/2026/05/14/jordin-sparks-will-perform-the-national-anthem-at-the-indy-500/90076237007/|url-status=live}}
+| back_home = [[Jim Cornelison]]
+| two_seater = [[Jimmie Johnson]] {{small|(driver)}}
+[[Alec Pierce]] {{small|(passenger)}}
+| honorary_start = [[Brendan Fraser]] {{cite web|url=https://www.indianapolismotorspeedway.com/news-multimedia/news/2026/05/15/05-15-500-starter-fraser-ims|title=Academy Award-Winning Actor Brendan Fraser Named Indy 500 Honorary Starter|date=May 15, 2025|accessdate=May 15, 2026|website=Indianpolis Motor Speedway|archive-date=May 16, 2026|archive-url=https://web.archive.org/web/20260516165411/https://www.indianapolismotorspeedway.com/news-multimedia/news/2026/05/15/05-15-500-starter-fraser-ims|url-status=live}}
+| starter = Aaron Likens
+| start_engines = [[Roger Penske]]
+| network = [[Fox Sports (United States)|Fox]] {{Cite web|url=https://www.hollywoodreporter.com/tv/tv-news/fox-2025-indy-500-rights-deal-indycar-1235921864/|title=Fox Gets Indianapolis 500 Rights in Deal With IndyCar|first=Alex|last=Weprin|date=June 13, 2024|website=Hollywood Reporter|access-date=July 14, 2024|archive-date=July 14, 2024|archive-url=https://web.archive.org/web/20240714020004/https://www.hollywoodreporter.com/tv/tv-news/fox-2025-indy-500-rights-deal-indycar-1235921864/|url-status=live}}
+| announcers = [[Will Buxton]], [[James Hinchcliffe]], [[Townsend Bell]]
+| rating = 6.6 million {{cite web|url=https://racer.com/2026/05/28/110th-indy-500-nets-an-average-of-6-6-million-viewers|title=110th Indy 500 nets an average of 6.6 million viewers|first=Marshall|last=Pruett|date=May 28, 2026|accessdate=May 28, 2026|website=Racer}} {{Dead link|date=October 2026 |bot=InternetArchiveBot }}
+| previous = [[2025 Indianapolis 500|2025]]
+| next = [[2027 Indianapolis 500|2027]]
+}}
+The '''2026 Indianapolis 500''' (branded as the '''110th Running of the Indianapolis 500 presented by Gainbridge''' for sponsorship reasons) was an [[IndyCar Series]] race that took place on May 24, 2026, at the [[Indianapolis Motor Speedway]] in [[Speedway, Indiana]]. {{Cite web |title=2026 Indianapolis 500 Schedule |url=https://www.roadtrips.com/auto-racing-packages/indy-500/schedule/ |access-date=2025-08-19 |website=Roadtrips |language=en-US |archive-date=August 15, 2025 |archive-url=https://web.archive.org/web/20250815193530/https://www.roadtrips.com/auto-racing-packages/indy-500/schedule/ |url-status=live }} {{cite news|title=INDYCAR Announces 17-Race 2026 NTT INDYCAR SERIES Schedule|url=https://www.indycar.com/news/2025/09/09-16-2026-sked|publisher=IndyCar|date=September 16, 2025|access-date=September 16, 2025|archive-date=September 16, 2025|archive-url=https://web.archive.org/web/20250916211714/https://www.indycar.com/news/2025/09/09-16-2026-sked|url-status=live}} The race was the seventh round of the [[2026 IndyCar Series|NTT IndyCar Series]] season. The [[Indianapolis 500 traditions#Month of May|month of May]] activities formally began with the [[2026 Sonsio Grand Prix|Sonsio Grand Prix]] on the [[Oval track racing#Combined road course|combined road course]] on May 9. The race was televised on [[IndyCar Series on Fox|Fox]]. This was the first "500" since the [[Fox Corporation]] acquired a one-third stake in [[IndyCar]] and Indianapolis Motor Speedway parent company [[Penske Corporation|Penske Entertainment]] in August 2025. {{Cite web |last=Goldsmith |first=Jill |date=July 31, 2025 |title=Fox Acquires One-Third Stake In Penske Entertainment, Owner Of Indycar Series |url=https://deadline.com/2025/07/fox-penske-entertainment-indycar-indianapolis-motor-speedway-1236475246/ |access-date=August 11, 2025 |website=Deadline |language=en-US |archive-date=August 2, 2025 |archive-url=https://web.archive.org/web/20250802221717/https://deadline.com/2025/07/fox-penske-entertainment-indycar-indianapolis-motor-speedway-1236475246/ |url-status=live }} {{Cite web |last=Brittle |first=Cian |date=August 5, 2025 |title=Why did Fox invest in IndyCar and what happens next? |url=https://www.blackbookmotorsport.com/features/fox-indycar-penske-investment-marketing-analysis/ |access-date=August 11, 2025 |website=BlackBook Motorsport |language=en-GB}}
+Practice began on May 12, and Time Trials were scheduled for May 16–17. The first day of qualifying, however, was rained out. Carb Day, the traditional final day of practice took place on May 22. The annual [[Pit Stop Challenge]], however, was halted and cancelled due to rain. A full-field open test was held April 28–29, which included rookie orientation. [[Álex Palou]] was the [[2025 Indianapolis 500|defending winner]], and three-time defending [[IndyCar Series]] champion. Palou qualified for the [[List of Indianapolis 500 pole-sitters|pole position]], his second career Indy pole. {{Cite web |last=Kelly |first=Paul |date=18 May 2026 |title=Reigning Winner Alex Palou Beats Heat To Earn Second Indy 500 Pole |url=https://www.indianapolismotorspeedway.com/news-multimedia/news/2026/05/18/05-17-500-quals-ims |access-date=25 May 2026 |website=Indianapolis Motor Speedway |archive-date=May 26, 2026 |archive-url=https://web.archive.org/web/20260526012056/https://www.indianapolismotorspeedway.com/news-multimedia/news/2026/05/18/05-17-500-quals-ims |url-status=live }} The Carb Day practice event on Friday, May 22 honored the late [[NASCAR]] driver [[Kyle Busch]] – a two-time winner of the [[Brickyard 400]] – who died from complications with [[pneumonia]] on Thursday, May 21. {{Cite web|title=Kyle Busch remembered by IndyCar drivers at Indy 500 Carb Day practice|url=https://www.indystar.com/story/sports/motor/indy-500/2026/05/23/kyle-busch-death-nascar-driver-remembered-at-indy-500-carb-day-practice/90231631007/|last1=Newell|first1=Nat|last2=Brown|first2=Zion|date=May 23, 2026|website=IndyStar}} [[Dale Coyne Racing]] further honored Busch by decorating [[Romain Grosjean]]'s No. 18 car with the same number font Busch used throughout his NASCAR career. {{Cite web|title=Dale Coyne Racing will honor Kyle Busch during Indy 500 with No. 18 car|url=https://usatoday.com/story/sports/motor/indycar/2026/05/23/kyle-busch-honored-indy-500-18-car-dale-coyne-racing/90238495007/|last=Ackert|first=Kristie|date=May 24, 2026|website=USA Today}} {{Cite web|title=Romain Grosjean's No. 18 Car Will Have Kyle Busch's Font At The INDY 500|url=https://www.foxsports.com/stories/motor/romain-grosjeans-no-18-car-will-have-kyle-buschs-font-indy-500|date=May 24, 2026|website=Fox Sports|access-date=May 24, 2026|archive-date=May 25, 2026|archive-url=https://web.archive.org/web/20260525021527/https://www.foxsports.com/stories/motor/romain-grosjeans-no-18-car-will-have-kyle-buschs-font-indy-500|url-status=live}} Later that evening, Busch was also remembered at the [[2026 Coca-Cola 600|Coca-Cola 600]]. {{Cite web|title=2-time NASCAR champion Kyle Busch receives tributes at Coca-Cola 600 and Indianapolis 500|url=https://apnews.com/article/kurt-busch-tributes-indianapolis-500-cocacola-600-60bc7d1bbccae4b88f3b4a6a9f8e98d9|last1=Reed|first1=Steve|last2=Marot|first2=Michael|date=May 24, 2026|website=Associated Press|access-date=May 24, 2026|archive-date=May 25, 2026|archive-url=https://web.archive.org/web/20260525011921/https://apnews.com/article/kurt-busch-tributes-indianapolis-500-cocacola-600-60bc7d1bbccae4b88f3b4a6a9f8e98d9|url-status=live}}
+[[Felix Rosenqvist]] of [[Meyer Shank Racing]] started 4th and ran in the top ten nearly all day. Executing an alternate fuel strategy, he took the lead for the first time on lap 154 (of 200). Two late-race cautions set up a one-lap shootout to the finish. With the green and white flag waving for the final lap, [[David Malukas]] of [[Team Penske]] grabbed the lead from [[Marcus Armstrong]], with Rosenqvist third. Rosenqvist and Armstrong raced side-by-side for nearly the entire final lap, while Malukas pulled out to a small lead. Coming out of turn four, Felix Rosenqvist made a strong run and beat David Malukas to the finish line by 0.0233 seconds, the closest margin of victory in Indy 500 history. It was Rosenqvist's first Indy 500 victory, and the second for [[Meyer Shank Racing]] ([[2021 Indianapolis 500|2021]], 2026). {{Cite web|title=Felix Rosenqvist wins 110th Running of Indianapolis 500 in thrilling fashion|url=https://www.wishtv.com/sports/indy-500/felix-rosenqvist-wins-110th-running-of-indianapolis-500/|last=Huiras|first=Charles|date=May 24, 2026|website=WISH-TV|access-date=May 24, 2026|archive-date=May 25, 2026|archive-url=https://web.archive.org/web/20260525042706/https://www.wishtv.com/sports/indy-500/felix-rosenqvist-wins-110th-running-of-indianapolis-500/|url-status=live}}
+Several race records were broken, including 70 lead changes, the most in Indy history. The previous record was 68, set in [[2013 Indianapolis 500|2013]]. The previous closest finish came in [[1992 Indianapolis 500|1992]] when [[Al Unser Jr.]] beat [[Scott Goodyear]] by 0.043 seconds. [[Álex Palou]] and [[Scott Dixon]] traded the lead a record-breaking 26 times. The previous record of lead changes between the same two drivers was 18, between [[James Hinchcliffe]] and [[Ryan Hunter-Reay]] ([[2016 Indianapolis 500|2016]]). [[Santino Ferrucci]] also completed the full 500-mile distance for a record-breaking eighth consecutive year. 2026 marked the fifth time in Indy 500 history that the lap leader on the final lap ([[David Malukas]]) failed to win. [[Felix Rosenqvist]] became the first 34-year-old to win an Indy 500 since [[Helio Castroneves]] did so in [[2009 Indianapolis 500|2009]]. {{Cite web|title=110th Indianapolis 500 Post-Race Historical Notes|url=https://www.indycar.com/news/2026/05/05-24-500-notes|date=May 24, 2026|website=Indycar.com}}
+For the third year in a row, a driver attempted to complete "[[Double Duty]]", as [[Katherine Legge]] attempted to compete in both the Indianapolis 500 and Coca-Cola 600 on the same day. {{cite web|url=https://www.motorsport.com/nascar-cup/news/katherine-legge-announces-surprise-indy-500-coke-600-double-attempt-for-2026/10820332/|title=Katherine Legge secures last-minute deal to attempt Indy 500/Coke 600 Double next week|first=Nick|last=DeGroot|date=May 13, 2026|accessdate=May 13, 2026|website=Motorsport}} After a crash attempting to avoid a spinning [[Ryan Hunter-Reay]] on Lap 18, Legge reached Charlotte and raced the Coca-Cola 600, finishing the latter 12 laps behind the winner and in 31st place, last among cars still in the race. {{Cite web |date=2026-05-25 |title=Katherine Legge calls Double attempt a "calamity of errors" after tough Coke 600 |first=Nick |last=DeGroot |url=https://www.motorsport.com/nascar-cup/news/katherine-legge-calls-double-attempt-a-calamity-of-errors-after-coke-600/10824071/ |access-date=2026-05-25 |website=Motorsport |language=en}}
+==Race background==
+{{main|Indianapolis 500|Indianapolis Motor Speedway}}
+[[File:2018Indy500Start.jpg|thumb|Turn one at the Indianapolis Motor Speedway (''pictured in 2018'').]]
+The [[Indianapolis 500]], commonly called the Indy 500, is held at the [[Indianapolis Motor Speedway]], a {{convert|2.5|mi|2|adj=mid}} paved [[Oval track racing|oval]]. First held in [[1911 Indianapolis 500|1911]], it is currently a points-paying race of the [[2025 IndyCar Series|NTT IndyCar Series]]. The event is contested by [[American open-wheel car racing|"Indy cars"]], a [[Formula racing|formula]] of professional-level, single-seat, open [[cockpit]], [[Open-wheel car|open-wheel]], purpose-built race cars. The race is the most prestigious event of the [[IndyCar Series|IndyCar]] calendar, and one of the oldest and [[Triple Crown of Motorsport|most important]] automobile races in the world. {{cite web |last= |date=August 3, 2018 |title=USA Today Readers Name Indianapolis 500 As World's Best Motorsports Race In Poll |url=https://www.indianapolismotorspeedway.com/news-multimedia/news/2018/08/03/usa-today-readers-name-indy-500-worlds-best-motorsports-race-2018 |url-status=live |website=Indianapolis Motor Speedway |access-date=August 19, 2025 |archive-date=May 12, 2021 |archive-url=https://web.archive.org/web/20210512120042/https://www.indianapolismotorspeedway.com/news-multimedia/news/2018/08/03/usa-today-readers-name-indy-500-worlds-best-motorsports-race-2018 }} The race [[Indianapolis 500 traditions|traditionally]] has a field of 33 cars. {{Cite web |last=Martin |first=Bruce |date=6 May 2022 |title=How The Indianapolis 500 Got Its 33rd Entrant |url=https://www.forbes.com/sites/brucemartin/2022/05/06/how-the-indianapolis-500-got-its-33rd-entrant/ |access-date=27 May 2026 |website=[[Forbes]]}}
+===Track improvements===
+According to Indianapolis Motor Speedway president [[Doug Boles]], track maintenance crews have been investigating bumps in Turn 2 since [[2019 Indianapolis 500|2019]]. During track evaluations prior to the [[2025 Indianapolis 500|2025 race]], the Turn 2 bump in question was considerably higher than in the past. The pavement was pressed in an attempt to reduce the severity. In July 2025, during the [[2025 Brickyard 400|Brickyard 400]], the severity of the bumps in Turn 2 were reported by drivers and crew chiefs during the track walk and all sessions. {{cite web|url=https://fox59.com/news/indy-500-sports/historic-bricks-unearthed-at-the-indianapolis-motor-speedway/|title=Historic bricks unearthed at the Indianapolis Motor Speedway|website=WXIN|publisher=NewsNation|date=September 23, 2025|access-date=October 20, 2025|last=Adams|first=Matt|archive-date=October 30, 2025|archive-url=https://web.archive.org/web/20251030193808/https://fox59.com/news/indy-500-sports/historic-bricks-unearthed-at-the-indianapolis-motor-speedway/|url-status=live}}
+On September 23, 2025, construction crews excavated the section of track in question. It was determined that bricks originally installed in 1909 (that had been paved over by asphalt in 1937) had expanded and split due to moisture, which raised the pavement. The damaged bricks were removed and a new base was applied. The section of the track was repaved, followed by diamond grinding to blend the new section with the adjacent asphalt. The track was allowed to cure for four weeks before the late October Speedway tests for Firestone. {{cite web |last1=Smith |first1=Eric |title=IMS testing Track News Test Patterns: Smooth Sailing at IMS with Track Patch, Tires, More |url=https://www.indycar.com/news/2025/10/10-21-ims-oval-testpatterns |website=IndyCar |publisher=Penske Entertainment |access-date=2025-10-21 |ref=Oct25Tests |archive-date=October 22, 2025 |archive-url=https://web.archive.org/web/20251022030607/https://www.indycar.com/news/2025/10/10-21-ims-oval-testpatterns |url-status=live }}
+===Rule changes===
+*A new entity, titled IndyCar Officiating, Inc. has been created, tasked with governing over the [[IndyCar Series]] and [[Indy NXT]]. It includes a three-person Independent Officiating Board (IOB) consisting of: [[Ray Evernham]], Raj Nair ([[Ford Motor Company|Ford]]), and Ronan Morgan ([[Fédération Internationale de l'Automobile|FIA]]). {{cite web|url=https://racer.com/2025/12/11/penske-entertainment-establishes-formal-independent-officiating-board-for-indycar|title=Penske Entertainment establishes formal Independent Officiating Board for IndyCar|website=Racer|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Marshall|last=Pruett|date=December 11, 2025|access-date=December 11, 2025|archive-date=December 11, 2025|archive-url=https://web.archive.org/web/20251211160604/https://racer.com/2025/12/11/penske-entertainment-establishes-formal-independent-officiating-board-for-indycar|url-status=live}} [[Scot Elkins]] will serve as Managing Director of Officiating. {{cite web|url=https://racer.com/2026/04/21/elkins-named-indycar-s-managing-director-of-officiating|title=Elkins named IndyCar's managing director of officiating|website=Racer|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Marshall|last=Pruett|date=April 21, 2026|access-date=April 21, 2026}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} The move separates race control and technical inspection from Penske Entertainment, which owns [[IndyCar|INDYCAR]] and the Indianapolis Motor Speedway, in an effort to eliminate perceived conflicts of interest. In [[2025 Indianapolis 500|2025]], [[Team Penske]] was penalized for technical infractions during Indy 500 qualifying, resulting in two cars being moved to the back of the grid, monetary fines, and points deductions. {{cite web|url=https://www.indycar.com/news/2025/05/05-19-penske-penalties|title=INDYCAR Update on Team Penske Technical Violations|date=May 19, 2025|accessdate=May 19, 2025|website=IndyCar|publisher=Brickyard Trademarks, LLC.|archive-date=May 19, 2025|archive-url=https://web.archive.org/web/20250519151014/https://www.indycar.com/news/2025/05/05-19-penske-penalties|url-status=live}} {{cite web|url=https://www.motorsport.com/indycar/news/indycar-president-qualifying-scandal-devastating-roger-penske/10724537/|title=IndyCar president says qualifying scandal is "devastating" to Roger Penske|date=May 19, 2025|accessdate=May 19, 2025|first=Nick|last=DeGroot|website=Motorsport|publisher=Motorsport Network, LLC|archive-date=May 19, 2025|archive-url=https://web.archive.org/web/20250519194517/https://www.motorsport.com/indycar/news/indycar-president-qualifying-scandal-devastating-roger-penske/10724537/|url-status=live}} {{Cite news |last=Brown |first=Nathan |date=2025-05-19 |title=Josef Newgarden's 2024 Indy 500-winning car has same modified attenuator Penske failed tech with |url=https://www.indystar.com/story/sports/motor/indy-500/2025/05/19/josef-newgarden-modified-attenuator-2024-indy-500-win-violation-penalty/83726281007/ |access-date=2025-05-20 |work=IndyStar}} The controversy led to the dismissal of team president [[Tim Cindric]], {{cite web|url=https://www.motorsport.com/indycar/news/tim-cindric-executives-ousted-by-penske-indycar-rules-breach/10724946/|title=Tim Cindric, two other executives ousted by Penske in rules breach fallout|first=Nick|last=DeGroot|date=May 21, 2025|accessdate=May 21, 2025|website=Motorsport|publisher=Motorsport Network, LLC.|archive-date=May 21, 2025|archive-url=https://web.archive.org/web/20250521181345/https://www.motorsport.com/indycar/news/tim-cindric-executives-ousted-by-penske-indycar-rules-breach/10724946/|url-status=live}} and widespread calls for officiating reform. In January 2026, Team Penske revealed that Cindric had returned to the team as a strategist. {{Cite web|title=Tim Cindric Back With Team Penske as Scott McLaughlin's Strategist|url=http://www.indycar.com/news/2026/01/01-29-cindric-penske|website=IndyCar|access-date=2026-01-30|language=en|date=January 29, 2026}}
+*Tire ramp flaps were mandatory on all cars. The flaps were designed to deploy in a spin and/or during rearward movement in order to reduce the likelihood of lift, preventing the car from becoming airborne. {{cite web|url=https://racer.com/2026/02/23/indycar-unveils-regulatory-technical-updates-ahead-of-2026-season|title=IndyCar unveils regulatory, technical updates ahead of 2026 season|website=Racer|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Marshall|last=Pruett|date=February 23, 2026|access-date=February 24, 2026}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} The flaps are similar in concept to the [[roof flap]]s introduced in [[NASCAR]] in [[1994 NASCAR Winston Cup Series|1994]].
+*Each entry was permitted 31 sets of tires for the entirety of the event, plus 5 additional sets for use during the Open Test. {{cite news|title=2026 NTT IndyCar Series Official Rulebook|url=https://epaddock.indycar.com/docs/default-source/rules-regulations-and-policies/2026-indycar-rulebook.pdf|quote=Section 15.2.1|publisher=[[IndyCar|IndyCar.com]]|access-date=April 28, 2025}} This is down from 32 sets and 8 sets, respectively in 2025. {{cite news|title=2025 NTT IndyCar Series Official Rulebook|url=https://epaddock.indycar.com/docs/default-source/rules-regulations-and-policies/indycar-rulebook.pdf|quote=Section 15.2.1|publisher=[[IndyCar|IndyCar.com]]|access-date=April 17, 2025|archive-date=April 14, 2025|archive-url=https://web.archive.org/web/20250414003655/https://epaddock.indycar.com/docs/default-source/rules-regulations-and-policies/indycar-rulebook.pdf|url-status=live}} During the Rookie Orientation Program/Refresher Tests session, drivers taking rookie tests receive three additional sets, and drivers taking refresher tests receive two additional sets, for use during that session only.
+*A modified qualifying format was announced on May 11, due to a lack of entries to necessitate the Last Chance Qualifying session that had been featured in previous years. During Saturday qualifying, those qualifying positions 1–15 would advance to Sunday qualifying sessions, while positions 16–33 would be locked in to their positions. During Sunday qualifying, the drivers qualified positions 10–15 on Saturday would participate in a "Final 15" session, in which the fastest three cars advance to the Top 12 session later in the day, while positions 13–15 would be locked in to their spots. The remaining session would proceed as in previous years; the fastest six cars in the Top 12 session moved on to the Fast Six, while positions 7–12 were locked. The Fast Six session would then determine starting positions 1–6. {{cite web|url=https://racer.com/2026/05/11/indycar-tweaks-indy-500-qualifying-format|title=IndyCar tweaks Indy 500 qualifying format|first=Marshall|last=Pruett|date=May 11, 2026|accessdate=May 11, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+*During the final 60 minutes of practice each day, drivers were permitted to practice entering the pit area off of turn four. This simulates the method of entering the pits used on race day. At all other times, drivers were still required to enter the pits at the warm-up lane in turn three – with exceptions only for emergency service. Previously, pitting off of turn four (during practice) was only allowed during Post-Qualifying Practice (Monday) and on Carb Day.
+===Sponsorship===
+Online financial services company Gainbridge signed an initial four-year deal for [[Naming rights|presenting sponsorship]] of the Indianapolis 500 from 2019 to 2022. {{Cite web|url=https://www.espn.com/racing/indycar/story/_/id/25893895|title=Gainbridge becomes new sponsor for Indy 500|date=January 31, 2019|website=ESPN|language=en|access-date=June 14, 2019|archive-date=February 12, 2019|archive-url=https://web.archive.org/web/20190212153646/http://www.espn.com/racing/indycar/story/_/id/25893895|url-status=live}} A multi-year extension was signed in 2022. {{cite news|title=Gainbridge extends presenting sponsorship of Indianapolis 500 in multiyear agreement|url=https://www.indianapolismotorspeedway.com/news-multimedia/news/2022/05/25/0525-Gainbridge|website=Indianapolis Motor Speedway|date=May 25, 2022|access-date=March 13, 2023|archive-date=March 13, 2023|archive-url=https://web.archive.org/web/20230313140804/https://www.indianapolismotorspeedway.com/news-multimedia/news/2022/05/25/0525-Gainbridge|url-status=live}} {{cite news |last1=Freyer |first1=Jenna |title=Gainbridge extends deal as presenting sponsor of Indy 500 |url=https://www.wfyi.org/news/articles/gainbridge-extends-deal-as-presenting-sponsor-of-indy-500 |access-date=January 20, 2023 |work=WFYI |date=May 26, 2022 |archive-url=https://web.archive.org/web/20221204061140/https://www.wfyi.org/news/articles/gainbridge-extends-deal-as-presenting-sponsor-of-indy-500 |archive-date=December 4, 2022 |language=en-us}} On November 6, 2025, Gainbridge signed another multi-year contract extension. Terms of the deal were undisclosed. {{cite web|url=https://apnews.com/article/indy-500-gainbridge-indycar-a3556c96c0f63810f78f64f8c7925182|title=Gainbridge extends sponsorship of the Indianapolis 500 in multi-year deal|website=AP|date=November 6, 2025|access-date=November 18, 2025|archive-date=November 16, 2025|archive-url=https://web.archive.org/web/20251116143749/https://apnews.com/article/indy-500-gainbridge-indycar-a3556c96c0f63810f78f64f8c7925182|url-status=live}}
+===2026 IndyCar Series===
+{{Main|2026 IndyCar Series}}
+The 2026 Indianapolis 500 was the seventh race of the [[2026 IndyCar Series|2026 NTT IndyCar Series season]]. {{cite web|url=https://www.foxsports.com/motor/indycar/schedule|access-date=February 20, 2026|website=Fox Sports|title=NTT IndyCar Series Schedule|archive-date=February 11, 2026|archive-url=https://web.archive.org/web/20260211154019/https://www.foxsports.com/motor/indycar/schedule|url-status=live}} Four different drivers won the first six races of the season. [[Álex Palou]] won the season opener at [[2026 Firestone Grand Prix of St. Petersburg|St. Petersburg]]. [[Josef Newgarden]] won at [[2026 Good Ranchers 250|Phoenix]], and [[Kyle Kirkwood]] won at [[2026 Java House Grand Prix of Arlington|Arlington]]. Palou won for the second and third time this season at [[2026 Children's of Alabama Indy Grand Prix|Alabama]] and [[2026 Acura Grand Prix of Long Beach|Long Beach]]. The [[2026 Sonsio Grand Prix|Sonsio Grand Prix]] on the Indianapolis Motor Speedway road course was won by [[Christian Lundgaard]]. It was the final race before the "500". Palou held a 27-point margin over Kirkwood in the championship points standings going into the Indianapolis 500 - the fourth year in a row Palou has led the points standings going into the "500". {{Cite web |date=26 May 2026 |title=NTT IndyCar Series Page |url=https://www.racing-reference.info/indycar-series/ |access-date=26 May 2026 |website=racing-reference.info |archive-date=May 26, 2026 |archive-url=https://web.archive.org/web/20260526145915/https://www.racing-reference.info/indycar-series/ |url-status=live }}
+====Points standings (top 5) entering Indianapolis 500====
+{| class="wikitable" style="font-size: 85%; text-align:center"
+! Pos
+! Driver
+! Pts
+|-
+! 1
+| align="left" | {{flagicon|ESP}} [[Álex Palou]]
+! 237
+|-
+! 2
+| align="left"| {{flagicon|USA}} [[Kyle Kirkwood]]
+! 210
+|-
+! 3
+|align="left"| {{flagicon|USA}} [[David Malukas]]
+! 185
+|-
+! 4
+|align="left"| {{flagicon|DNK}} [[Christian Lundgaard]]
+! 182
+|-
+! 5
+|align="left"| {{flagicon|USA}} [[Josef Newgarden]]
+! 162
+|}
+==Race schedule==
+{|
+| valign="top" |
+{| style="text-align:center; font-size:95%" class="wikitable"
+|-
+!colspan=7|Race schedule — April/May 2026
+|-
+! scope="col" width="90" |Sun
+! scope="col" width="90" |Mon
+! scope="col" width="90" |Tue
+! scope="col" width="90" |Wed
+! scope="col" width="90" |Thu
+! scope="col" width="90" |Fri
+! scope="col" width="90" |Sat
+|-
+|26
+|27
+|style="background:#DFFFDF;" |28
+[[Indianapolis 500 traditions#Opening Day|Open test]]
+|style="background:#DFFFDF;" |29
+Open test
+|30
+|1
+|2
+[[500 Festival Mini-Marathon|Mini-Marathon]]
+|-
+|3
+|4
+|5
+|6
+|7
+|style="background:#CFCFFF;" |8
+[[Grand Prix of Indianapolis|Sonsio G.P.]]
+|style="background:#DFDFDF;"|9
+[[Grand Prix of Indianapolis|Sonsio G.P.]]
+|-
+|10
+|11
+|style="background:#DFFFDF;" |12
+[[Indianapolis 500 traditions#Practice|Practice]]
+|style="background:#DFFFDF;" |13
+Practice
+|style="background:#DFFFDF;" |14
+Practice
+|style="background:#DFFFDF;" |15
+[[Indianapolis 500 traditions#Fast Friday|Fast Friday]]
+|style="background:#FFCFCF;" |16
+[[Indianapolis 500 traditions#Pole Day|Time Trials]]
+|-
+|style="background:#CFCFFF;" |17
+[[Indianapolis 500 traditions#Bump Day|Time Trials]]
+|style="background:#DFFFDF;" |18
+[[Indianapolis 500 traditions#Post-qualifying practice|Practice]]
+|19
+|20
+|21
+|style="background:#DFFFDF;" |22
+[[Indianapolis 500 traditions#Carb Day|Carb Day]]
+|23
+[[Indianapolis 500 traditions#500 Festival Parade|Parade]]
+|-
+|style="background:#DFDFDF; |24
+Indianapolis 500
+|25
+Memorial Day
+|26
+|27
+|28
+|29
+|30
+|-
+| colspan="7" style="text-align: center;" | '''Source:''' {{Cite web |title=2026 Indianapolis 500 Event Schedule |url=https://www.indianapolismotorspeedway.com/events/indy500/event-info/schedule/sunday-may-24-indianapolis-500-2026 |publisher=Indianapolis Motor Speedway |access-date=February 25, 2026 |archive-date=January 17, 2026 |archive-url=https://web.archive.org/web/20260117042554/https://www.indianapolismotorspeedway.com/events/indy500/event-info/schedule/sunday-may-24-indianapolis-500-2026 |url-status=live }}
+|}
+| valign="top" |
+{|
+|
+{| style="margin-right:0; font-size:85%; text-align:center;" class="wikitable"
+! Color
+! Notes
+|- style="background:#DFFFDF;"
+| Green
+| Practice
+|- style="background:#CFCFFF;"
+| Blue
+| Time trials
+|- style="background:#DFDFDF;"
+| Silver
+| Race day
+|- style="background:#FFCFCF;"
+| Red
+| Rained out *
+|-
+| Blank
+| No track activity
+|}
+* Includes days where track
+activity was significantly limited due to rain
+|}
+|}
+==Entry list==
+{{further|2026 IndyCar Series#Confirmed entries}}
+[[File:Alex Palou at 2024 Chevrolet Detroit Grand Prix.jpg|thumb|upright|Four-time IndyCar Series champion [[Álex Palou]] (''pictured in 2024'') entered as the [[2025 Indianapolis 500|defending]] Indy 500 winner.]]
+[[File:Helio Castroneves Borg-Warner Trophy Unveil 2022 (51916198093).jpg|thumb|upright|Four-time Indy 500 winner [[Hélio Castroneves]] (''pictured in 2022'') had the most previous starts in the field with 25.]]
+All entries utilized a [[One-design racing#Motorsport|spec]] [[Dallara DW12]] chassis with the [[Dallara DW12#IR–18 Universal Aero Kit (UAK-18) (2018–2027)|UAK-18]] universal aero kit and the 2020-adopted aeroscreen. [[Honda Indy V6|Honda]] ([[Honda Racing Corporation USA|HRC US]]) and [[Chevrolet Indy V6|Chevrolet]] ([[Ilmor]]) are the engine providers. [[Firestone Tire and Rubber Company|Firestone]] was the exclusive tire supplier. This was the second year of [[Hybrid electric vehicle|hybrid]] [[Kinetic energy recovery system|energy recovery system]] powertrains at Indianapolis. {{cite web |last=Pruett |first=Marshall |date=May 14, 2024 |title=IndyCar confirms hybrid debut for Mid-Ohio |url=https://racer.com/2024/05/14/indycar-confirms-hybrid-debut-for-mid-ohio/ |access-date=May 14, 2024 |website=Racer |archive-date=May 18, 2024 |archive-url=https://web.archive.org/web/20240518220539/https://racer.com/2024/05/14/indycar-confirms-hybrid-debut-for-mid-ohio/ |url-status=live }}
+The official entry list was released on May 11, with 33 confirmed entries. {{cite news|url=https://www.indycar.com/news/2026/05/05-11-500-entrylist-ic|title=Nine Past Winners, Five Series Champs Starting '500' Preparation|publisher=IndyCar.com|date=May 11, 2026|access-date=May 19, 2026|work=IndyCar|archive-date=May 12, 2026|archive-url=https://web.archive.org/web/20260512022252/https://www.indycar.com/news/2026/05/05-11-500-entrylist-ic|url-status=live}} The list included 25 full-time IndyCar Series entries, {{cite news|url=https://www.indycar.com/news/2026/01/01-06-nics-scene-setter|title=All Eyes on 2026: An INDYCAR SERIES Season Loaded With Intrigue|publisher=|first=Curt|last=Cavin|date=January 6, 2026|access-date=January 6, 2026|work=IndyCar|archive-date=January 6, 2026|archive-url=https://web.archive.org/web/20260106212609/https://www.indycar.com/news/2026/01/01-06-nics-scene-setter|url-status=live}} and eight one-off or "Indy-only" entries. {{cite web|url=https://racer.com/2026/04/20/indy-500-entry-list-gets-to-32-with-abel|title=Indy 500 entry list gets to 32 with Abel|first=Emily|last=Maxwell|date=April 20, 2026|accessdate=April 20, 2026|website=Racer|publisher=Racer Media & Marketing, Inc.}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} {{cite web|url=https://racer.com/2026/03/17/meyer-shank-confirms-castroneves-return-for-indy-500|title=Meyer Shank confirms Castroneves return for Indy 500|website=Racer.com|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Marshall|last=Pruett|date=March 17, 2026|access-date=March 17, 2026}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} {{cite web|url=https://racer.com/2026/04/26/arrow-mclaren-legacy-motor-club-join-indy-500-forces-on-hunter-reay-entry|title=Arrow McLaren, Legacy Motor Club join Indy 500 forces on Hunter-Reay entry|first=Marshall|last=Pruett|date=April 26, 2026|accessdate=April 26, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} {{cite web|url=https://www.indycar.com/news/2026/04/04-27-legge-500-hmd-foyt|title=Katherine Legge To Race in Indy 500 with HMD, Foyt Partnership|first=|last=|date=April 27, 2026|accessdate=April 27, 2026|website=IndyCar|archive-date=April 29, 2026|archive-url=https://web.archive.org/web/20260429100107/https://www.indycar.com/news/2026/04/04-27-legge-500-hmd-foyt|url-status=live}} {{cite news|title=Jack Harvey Back at Indy in 2026 with Dreyer & Reinbold, INVST|url=https://www.indycar.com/news/2025/09/09-24-harvey-drr-2026-indy|date=September 24, 2026|access-date=March 12, 2026|work=IndyCar|archive-date=February 13, 2026|archive-url=https://web.archive.org/web/20260213222415/https://www.indycar.com/news/2025/09/09-24-harvey-drr-2026-indy|url-status=live}} {{cite news|title=Conor Daly To Drive for Dreyer & Reinbold in Indy 500|url=https://www.indycar.com/news/2026/03/03-11-daly-drr-500|date=March 11, 2026|access-date=March 12, 2026|work=IndyCar|archive-date=May 9, 2026|archive-url=https://web.archive.org/web/20260509212122/https://www.indycar.com/news/2026/03/03-11-daly-drr-500|url-status=live}} {{cite web|url=https://racer.com/2026/03/17/sato-returning-to-indy-with-rll|title=Sato returning to Indy with RLL|first=Marshall|last=Pruett|date=March 17, 2026|accessdate=March 17, 2026|website=racer.com|publisher=Racer Media & Marketing, Inc.}}{{Dead link|date=May 2026 |bot=InternetArchiveBot }}
+[[Andretti Global]] was planning to run a fourth car, in an "Indy-only" entry, with the #98. [[Colton Herta]], who is competing full-time in [[FIA Formula 2 Championship|Formula 2]] in [[2026 Formula 2 Championship|2026]], was the likely driver. The original Formula 2 calendar had no races scheduled for May, which would have allowed Herta to compete at Indy. {{Cite web|last=Fryer|first=Jenna|title=Why Colton Herta is leaving IndyCar for junior series F2|url=https://apnews.com/article/indycar-colton-herta-adretti-f2-f1-12351e1f9dd9250eefa271f5d707452d|access-date=January 22, 2026|website=The Associated Press|language=en-US}} However, due to the [[2026 Iran war|Iran war]], which resulted in the cancellation of two races in [[Bahrain]] and [[Saudi Arabia]], the Formula 2 schedule was revised with the addition of races in [[Miami]] and [[Canada]], the latter of which was scheduled for the same day as the 500. {{Cite web|date=14 March 2026|title=Bahrain and Saudi Arabian GPs will not take place in April|url=https://www.formula1.com/en/latest/article/bahrain-and-saudi-arabian-grands-prix-will-not-take-place-in-april.1hnqllVG85RSt8pbFc5Ivx|access-date=14 March 2026|website=Formula One|archive-date=April 1, 2026|archive-url=https://web.archive.org/web/20260401073938/https://www.formula1.com/en/latest/article/bahrain-and-saudi-arabian-grands-prix-will-not-take-place-in-april.1hnqllVG85RSt8pbFc5Ivx|url-status=live}} {{cite web|title=Miami and Montreal to host FIA Formula 2 Championship Rounds in 2026|url=https://www.fiaformula2.com/Latest/piQa16CR1LT7Ks5rIkqAM/miami-and-montreal-to-host-fia-formula-2-championship-rounds-in-2026|publisher=FIA Formula 2 Championship|access-date=9 April 2026|archive-date=April 28, 2026|archive-url=https://web.archive.org/web/20260428064715/https://www.fiaformula2.com/Latest/piQa16CR1LT7Ks5rIkqAM/miami-and-montreal-to-host-fia-formula-2-championship-rounds-in-2026|url-status=live}} Herta was therefore no longer available due to the scheduling conflict, and Andretti Global thus elected to not run the car. {{cite web|url=https://racer.com/2026/04/09/f2-championship-rounds-set-for-miami-and-canadian-gp-weekends|title=Herta faces Indy 500 clash as F2 adds Miami, Montreal|website=Racer.com|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Chris|last=Medland|date=April 9, 2026|access-date=April 9, 2026}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+[[PREMA Racing]] had two Chevrolet engine leases for the 2026 IndyCar Series season, but was undergoing an ownership shake-up which left the team in limbo regarding competing in any of the 2026 events. {{Cite web|last=Pruett|first=Marshall|title=PREMA undergoes ownership shake-up; clock ticking on search for new backers|url=https://racer.com/2026/01/14/prema-ownership-shake-up-sets-clock-ticking-on-search-for-new-backers|access-date=January 14, 2026|website=Racer|language=en-US}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} On April 10, it was announced PREMA would not enter at Indianapolis. As a result, their two engines were released to other teams. {{Cite web |last=Pruett |first=Marshall |date=10 April 2026 |title=No Indy entry, but PREMA still hopeful of IndyCar return later in 2026 |url=https://racer.com/2026/04/10/no-indy-entry-but-prema-still-hopeful-of-indycar-return-later-in-2026 |access-date=25 May 2026 |website=Racer }}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+This was the first time since [[2022 Indianapolis 500|2022]] that no bumping took place. [[Devlin DeFrancesco]], who raced full-time for [[Rahal Letterman Lanigan Racing|RLL]] in 2025, and [[Stefan Wilson]], who last competed in 2023, were two drivers who aggressively pursued rides before the last entry was filled by Legge. {{cite web|url=https://racer.com/2026/02/28/first-look-at-how-the-2026-indy-500-field-is-shaping-up|title=First look at how the 2026 Indy 500 field is shaping up|website=Racer|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Marshall|last=Pruett|date=February 28, 2026|access-date=March 2, 2026}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+{| class="wikitable sortable" style="font-size: 85%;"
+|-
+!align=center | {{abbr|No.|Car Number}} !! class="unsortable" | Driver !! Team !! Engine !! Sponsor !! class="unsortable" |{{abbr|Ref.|Reference}}
+|-
+|align="center"| 2 || {{flagicon|USA}} [[Josef Newgarden]] {{Color box|gold|W|border=silver}} || [[Team Penske]] || [[Chevrolet Indy V6|Chevrolet]] || [[Shell USA|Shell]] || {{Cite web|last=Brown|first=Nathan|title=Days after 2nd Indy 500 win, Josef Newgarden, Team Penske announce multi-year contract extension|url=https://www.indystar.com/story/sports/motor/2024/06/01/indycar-josef-newgarden-team-penske-multi-year-contract-extension/73938899007/|access-date=June 14, 2024|website=The Indianapolis Star|language=en-US|archive-date=June 14, 2024|archive-url=https://web.archive.org/web/20240614070359/https://www.indystar.com/story/sports/motor/2024/06/01/indycar-josef-newgarden-team-penske-multi-year-contract-extension/73938899007/|url-status=live}}
+|-
+|align="center"| 3 || {{flagicon|NZL}} [[Scott McLaughlin]] || [[Team Penske]] || [[Chevrolet Indy V6|Chevrolet]] || [[Pennzoil]] || {{cite web|url=https://racer.com/2024/08/02/indycar-silly-season-update-august-2/4/|title=IndyCar silly season update, August 2|last=Pruett|first=Marshall|website=Racer|date=August 2, 2024|accessdate=August 15, 2024|archive-date=August 15, 2024|archive-url=https://web.archive.org/web/20240815171559/https://racer.com/2024/08/02/indycar-silly-season-update-august-2/4/|url-status=live}}
+|-
+|align="center"| 4 || {{flagicon|BRA}} [[Caio Collet]] {{Color box|orange|R|border=silver}} || [[A.J. Foyt Racing]] || [[Chevrolet Indy V6|Chevrolet]] ||Combitrans Amazonia|| {{Cite web|last=Horner|first=Scott|date=November 6, 2025|title=Rookie joins A.J. Foyt Racing's 2026 IndyCar Series lineup to replace David Malukas|url=https://www.indystar.com/story/sports/motor/2025/11/06/indycar-news-caio-collet-signs-with-a-j-foyt-racing-silly-season-rumors/87123308007/|access-date=November 6, 2025|website=Indianapolis Star|language=en-US|archive-date=November 7, 2025|archive-url=https://web.archive.org/web/20251107120716/https://www.indystar.com/story/sports/motor/2025/11/06/indycar-news-caio-collet-signs-with-a-j-foyt-racing-silly-season-rumors/87123308007/|url-status=live}}
+|-
+|align="center"| 5 || {{flagicon|MEX}} [[Pato O'Ward]] || [[Arrow McLaren]] || [[Chevrolet Indy V6|Chevrolet]] || [[Arrow Electronics]] || {{cite web|date=May 27, 2022|title=O'Ward signs contract extension with AMSP|url=https://racer.com/2022/05/27/oward-signs-contract-extension-with-amsp/|access-date=August 3, 2022|work=Racer|archive-date=August 4, 2022|archive-url=https://web.archive.org/web/20220804170112/https://racer.com/2022/05/27/oward-signs-contract-extension-with-amsp/|url-status=live|last=Pruett|first=Marshall}}
+|-
+|align="center"| 6 || {{flagicon|USA}} [[Nolan Siegel]] || [[Arrow McLaren]] || [[Chevrolet Indy V6|Chevrolet]] || [[NTT Data]] || {{Cite web|title=Arrow McLaren signs Nolan Siegel to multiyear contract, set to race Laguna Seca onward|url=https://www.mclaren.com/racing/indycar/2024/arrow-mclaren-signs-nolan-siegel-to-multiyear-contract-set-to-race-laguna-seca-onward/|access-date=June 18, 2024|website=McLaren Racing|language=en-GB|archive-date=June 18, 2024|archive-url=https://web.archive.org/web/20240618190455/https://www.mclaren.com/racing/indycar/2024/arrow-mclaren-signs-nolan-siegel-to-multiyear-contract-set-to-race-laguna-seca-onward/|url-status=live|date=June 18, 2024}}
+|-
+|align="center" style="background:NavajoWhite"| 06 || {{flagicon|BRA}} [[Hélio Castroneves]] {{Color box|gold|W|border=silver}} || [[Meyer Shank Racing]] with [[Curb Agajanian Performance Group|Curb-Agajanian]] || [[Honda Indy V6|Honda]]|| [[Cleveland-Cliffs]] || {{Cite news|url=https://frontstretch.com/2025/05/25/helio-castroneves-plans-to-return-for-another-indy-500-i-will-ill-make-it-happen/|title=Helio Castroneves Plans To Return for Another Indy 500: 'I Will. I'll Make It Happen'|last=Rutherford|first=Kevin|work=Frontstretch|date=May 25, 2025|access-date=August 14, 2025|archive-date=July 23, 2025|archive-url=https://web.archive.org/web/20250723213422/https://frontstretch.com/2025/05/25/helio-castroneves-plans-to-return-for-another-indy-500-i-will-ill-make-it-happen/|url-status=live}}
+|-
+|align="center"| 7 || {{flagicon|DEN}} [[Christian Lundgaard]] || [[Arrow McLaren]] || [[Chevrolet Indy V6|Chevrolet]] || [[Velo (nicotine pouches)|VELO]] || {{cite news|url=https://apnews.com/article/mclaren-indycar-rossi-lundgaard-7deb3fe93fcbda9a6180eed39c286e25|title=Arrow McLaren to replace Rossi with Lundgaard in yet another driver lineup change for IndyCar team|website=[[Associated Press|AP News]]|last=Fryer|first=Jenna|date=July 2, 2024|access-date=July 2, 2024|archive-date=July 2, 2024|archive-url=https://web.archive.org/web/20240702172330/https://apnews.com/article/mclaren-indycar-rossi-lundgaard-7deb3fe93fcbda9a6180eed39c286e25|url-status=live}}
+|-
+|align="center"| 8 || {{flagicon|CAY}} [[Kyffin Simpson]] || [[Chip Ganassi Racing]] || [[Honda Indy V6|Honda]]|| [[Sunoco]]|| {{Cite web |date=October 30, 2024 |title=Chip Ganassi Racing finalizes its 2025 lineups for IndyCar and Indy NXT programs |url=https://www.motorsport.com/indycar/news/chip-ganassi-racing-2025-driver-lineup/10668454/ |access-date=October 30, 2024 |website=Motorsport |language=en |archive-date=November 6, 2024 |archive-url=https://web.archive.org/web/20241106160159/https://www.motorsport.com/indycar/news/chip-ganassi-racing-2025-driver-lineup/10668454/ |url-status=live |last=Barnes|first=Joey}}
+|-
+|align="center"| 9 || {{flagicon|NZL}} [[Scott Dixon]] {{Color box|gold|W|border=silver}} || [[Chip Ganassi Racing]] || [[Honda Indy V6|Honda]]|| [[PNC Financial Services|PNC Bank]] || {{cite web |last1=Barnes |first1=Joey |title=Ganassi's take on the charters: IndyCar "benefitting" from Penske's NASCAR experience |url=https://www.motorsport.com/indycar/news/ganassi-on-charters-indycar-benefitting-from-penskes-nascar-experience/10655493/ |website=Motorsport |access-date=September 19, 2024|date=September 18, 2024}}
+|-
+|align="center"| 10 || {{flagicon|ESP}} [[Álex Palou]] {{Color box|Gold|W|border=silver}} || [[Chip Ganassi Racing]] || [[Honda Indy V6|Honda]]|| [[DHL]] || {{Cite web|date=February 28, 2024|title=Seven things we learned as McLaren escalates Palou claim to $30m|url=https://www.the-race.com/indycar/mclaren-alex-palou-legal-case-latest-pato-oward-pay-rise/|access-date=June 14, 2024|website=The Race|language=en|archive-date=June 14, 2024|archive-url=https://web.archive.org/web/20240614070425/https://www.the-race.com/indycar/mclaren-alex-palou-legal-case-latest-pato-oward-pay-rise/|url-status=live|last=Benyon|first=Jack}}
+|-
+|align="center" style="background:NavajoWhite"| 11 || {{flagicon|GBR}} [[Katherine Legge]] || [[HMD Motorsports]] with [[A. J. Foyt Racing|A.J. Foyt Enterprises]] || [[Chevrolet Indy V6|Chevrolet]]|| [[E.l.f.|e.l.f. Cosmetics]]||
+|-
+|align="center"| 12 || {{flagicon|USA}} [[David Malukas]] || [[Team Penske]] || [[Chevrolet Indy V6|Chevrolet]] || [[Verizon]]|| {{cite news|title=David Malukas To Drive for Team Penske Beginning in 2026|url=https://www.indycar.com/news/2025/09/09-18-malukas-penske|access-date=September 18, 2025|work=IndyCar|archive-date=September 18, 2025|archive-url=https://web.archive.org/web/20250918145552/https://www.indycar.com/news/2025/09/09-18-malukas-penske|url-status=live}} {{Cite web |date=January 27, 2026 |title=Penske Pulls Cover From David Malukas' No. 12 Verizon Chevrolet |url=http://www.indycar.com/news/2026/01/01-27-malukas-2026-livery |access-date=2026-02-20 |website=IndyCar |language=en |archive-date=February 13, 2026 |archive-url=https://web.archive.org/web/20260213194108/https://www.indycar.com/news/2026/01/01-27-malukas-2026-livery |url-status=live }}
+|-
+|align="center"| 14 || {{flagicon|USA}} [[Santino Ferrucci]] || [[A. J. Foyt Racing]] || [[Chevrolet Indy V6|Chevrolet]] || [[ABC Supply|Homes For Our Troops]] || {{Cite news|title=Ferrucci To Stay with AJ Foyt Racing in 2025|url=https://www.indycar.com/news/2024/09/09-12-ferrucci-foyt-2025|date=September 12, 2024|access-date=September 12, 2024|work=IndyCar|archive-date=September 12, 2024|archive-url=https://web.archive.org/web/20240912201447/https://www.indycar.com/news/2024/09/09-12-ferrucci-foyt-2025|url-status=live}} {{Cite web |last=Horner |first=Scott |date=November 11, 2025 |title=A.J. Foyt Racing expands military connection to Santino Ferrucci's No. 14 car in 2026 IndyCar Series season |url=https://www.indystar.com/story/sports/motor/2025/11/11/indycar-news-a-j-foyt-racing-brings-military-sponsor-to-santino-ferrucci-car-home-for-our-troops/87210733007/ |access-date=2026-02-20 |website=The Indianapolis Star |language=en-US |archive-date=January 1, 2026 |archive-url=https://web.archive.org/web/20260101124755/https://www.indystar.com/story/sports/motor/2025/11/11/indycar-news-a-j-foyt-racing-brings-military-sponsor-to-santino-ferrucci-car-home-for-our-troops/87210733007/ |url-status=live }}
+|-
+|align="center"| 15 || {{flagicon|USA}} [[Graham Rahal]] || [[Rahal Letterman Lanigan Racing]] || [[Honda Indy V6|Honda]]|| [[United Rentals]] || {{cite web|url=https://www.autosport.com/indycar/news/graham-rahal-signs-multi-year-deal-to-remain-with-rahal-letterman-lanigan/10546092/|title=Rahal signs multi-year deal to remain with Rahal Letterman Lanigan|last=Barnes|first=Joey|work=[[Autosport]]|access-date=November 13, 2023|date=November 13, 2023|archive-date=December 2, 2023|archive-url=https://web.archive.org/web/20231202162410/http://www.autosport.com/indycar/news/graham-rahal-signs-multi-year-deal-to-remain-with-rahal-letterman-lanigan/10546092/|url-status=live}}
+|-
+|align="center"| 18 || {{flagicon|FRA}} [[Romain Grosjean]] || [[Dale Coyne Racing]] || [[Honda Indy V6|Honda]]|| OnlyBulls and [[Bitcoin]] MAX || {{cite web|url=https://racer.com/2026/02/12/grosjean-completes-full-time-2026-indycar-field-with-return-to-dale-coyne-racing|title=Grosjean completes full-time 2026 IndyCar field with return to Dale Coyne Racing|last=Pruett|first=Marshall|website=Racer|date=February 13, 2026|access-date=February 20, 2026}}{{Dead link|date=May 2026 |bot=InternetArchiveBot }}
+|-
+|align="center"| 19 || {{flagicon|NOR}} [[Dennis Hauger]] {{Color box|orange|R|border=silver}} || [[Dale Coyne Racing]] || [[Honda Indy V6|Honda]]|| [[Nammo]]|| {{cite web|last1=Pockrass|first1=Bob|date=September 24, 2025|title=One & Done: Indy NXT Champ Dennis Hauger Ready for Jump to INDYCAR|url=https://www.foxsports.com/stories/motor/one-done-indy-nxt-champ-dennis-hauger-ready-jump-indycar|access-date=September 24, 2025|website=Fox Sports|archive-date=September 25, 2025|archive-url=https://web.archive.org/web/20250925131400/https://www.foxsports.com/stories/motor/one-done-indy-nxt-champ-dennis-hauger-ready-jump-indycar|url-status=live}}
+|-
+|align="center"| 20 || {{flagicon|USA}} [[Alexander Rossi]] {{Color box|gold|W|border=silver}} || [[Ed Carpenter Racing|ECR]] || [[Chevrolet Indy V6|Chevrolet]] || Java House|| {{cite web |last1=Brown |first1=Nathan |last2=Newell |first2=Nat |title=Alexander Rossi joins Ed Carpenter Racing; Carpenter only doing Indy 500 |url=https://www.usatoday.com/story/sports/motor/2024/09/25/indycar-alexander-rossi-joins-ed-carpenter-racing/75359685007/ |website=USA TODAY |access-date=September 25, 2024 |quote=Rossi and Rasmussen were signed to multiple-year deals, according to the news release, though no details were provided. |date=September 25, 2024 |archive-date=September 25, 2024 |archive-url=https://web.archive.org/web/20240925161956/https://www.usatoday.com/story/sports/motor/2024/09/25/indycar-alexander-rossi-joins-ed-carpenter-racing/75359685007/ |url-status=live }}
+|-
+|align="center"| 21 || {{flagicon|DEN}} [[Christian Rasmussen (racing driver)|Christian Rasmussen]] || [[Ed Carpenter Racing|ECR]] || [[Chevrolet Indy V6|Chevrolet]] || [[Splenda]] ||
+|-
+| align="center" style="background:NavajoWhite"| 23 || {{flagicon|USA}} [[Conor Daly]] || [[Dreyer & Reinbold Racing]]|| [[Chevrolet Indy V6|Chevrolet]] || [[Kingspan]] || {{Cite news|date=March 11, 2026|title=Conor Daly, DRR To Compete in Indy 500 with New Partner Kingspan|url=https://www.indycar.com/news/2026/03/03-11-daly-drr-500|access-date=March 11, 2026|work=IndyCar|language=en|archive-date=May 9, 2026|archive-url=https://web.archive.org/web/20260509212122/https://www.indycar.com/news/2026/03/03-11-daly-drr-500|url-status=live}}
+|-
+|align="center" style="background:NavajoWhite"| 24 || {{flagicon|GBR}} [[Jack Harvey (racing driver)|Jack Harvey]] || [[Dreyer & Reinbold Racing]]|| [[Chevrolet Indy V6|Chevrolet]] || INVST || {{Cite news|date=September 24, 2025|title=Jack Harvey Back at Indy in 2026 with Dreyer & Reinbold, INVST|url=https://www.indycar.com/news/2025/09/09-24-harvey-drr-2026-indy|access-date=September 24, 2025|work=IndyCar|language=en|archive-date=September 24, 2025|archive-url=https://web.archive.org/web/20250924194317/https://www.indycar.com/news/2025/09/09-24-harvey-drr-2026-indy|url-status=live}}
+|-
+|align="center"| 26 || {{flagicon|AUS}} [[Will Power]] {{Color box|gold|W|border=silver}} || [[Andretti Global]] || [[Honda Indy V6|Honda]]|| [[TWG Global|TWG AI]]|| {{Cite news|last=Richey|first=Lynzy|date=September 3, 2025|title=Andretti Global Signs INDYCAR Veteran Will Power to 2026 Driver Lineup|url=https://andrettiglobal.com/news/2025/09/andretti-global-signs-indycar-veteran-will-power-to-2026-driver-lineup/|access-date=September 3, 2025|work=Andretti Global|language=en-US|archive-date=September 3, 2025|archive-url=https://web.archive.org/web/20250903190752/https://andrettiglobal.com/news/2025/09/andretti-global-signs-indycar-veteran-will-power-to-2026-driver-lineup/|url-status=live}} {{Cite web |date=February 2, 2026 |title=Andretti Global Unveils Will Power's First Livery With Team |url=http://www.indycar.com/news/2026/02/02-02-power-livery |access-date=2026-02-20 |website=IndyCar |language=en}}
+|-
+|align="center"| 27 || {{flagicon|USA}} [[Kyle Kirkwood]] || [[Andretti Global]] || [[Honda Indy V6|Honda]]|| [[Sam's Club]] || {{cite web|last1=Pruett|first1=Marshall|title=Kirkwood extends deal with Andretti|url=https://racer.com/2023/09/26/kirkwood-extends-deal-with-andretti/|website=Racer|access-date=September 26, 2023|date=September 26, 2023|archive-date=January 4, 2024|archive-url=https://web.archive.org/web/20240104124225/https://racer.com/2023/09/26/kirkwood-extends-deal-with-andretti/|url-status=live}}
+|-
+|align="center"| 28 || {{flagicon|SWE}} [[Marcus Ericsson]] {{Color box|gold|W|border=silver}} || [[Andretti Global]] || [[Honda Indy V6|Honda]]|| Phoenix Investors || {{Cite web|last=Benyon|first=Jack|date=August 23, 2023|title=Ericsson to leave Ganassi for IndyCar rival Andretti|url=https://the-race.com/indycar/ericsson-andretti-2024-announcement-ganassi/|access-date=August 23, 2023|website=The Race|archive-date=August 28, 2023|archive-url=https://web.archive.org/web/20230828194747/https://the-race.com/indycar/ericsson-andretti-2024-announcement-ganassi/|url-status=live}}
+|-
+|align="center" style="background:NavajoWhite"| 31 || {{flagicon|USA}} [[Ryan Hunter-Reay]] {{Color box|gold|W|border=silver}} || [[Arrow McLaren]] with [[Legacy Motor Club]] || [[Chevrolet Indy V6|Chevrolet]] || [[PrizePicks]] || {{Cite web|last=Pruett|first=Marshall|date=November 13, 2025|title=Hunter-Reay joins Arrow McLaren for 2026 Indy 500|url=https://racer.com/2025/11/12/hunter-reay-joins-arrow-mclaren-for-2026-indy-500|access-date=November 13, 2025|website=Racer|language=en|archive-date=November 13, 2025|archive-url=https://web.archive.org/web/20251113154930/https://racer.com/2025/11/12/hunter-reay-joins-arrow-mclaren-for-2026-indy-500|url-status=dead}}
+|-
+|align="center" style="background:NavajoWhite"| 33 || {{flagicon|USA}} [[Ed Carpenter (racing driver)|Ed Carpenter]] || [[Ed Carpenter Racing|ECR]] || [[Chevrolet Indy V6|Chevrolet]] || [[SlimFast]]|| {{cite web|url=https://www.indystar.com/story/sports/motor/indy-500/2026/01/20/ed-carpenter-will-race-in-2026-indy-500/88272613007|title=Ed Carpenter to return for 23rd straight Indy 500|first=Zion|last=Brown|date=January 20, 2026|accessdate=January 20, 2026|website=IndyStar|publisher=[[The Indianapolis Star]]|archive-date=January 21, 2026|archive-url=https://web.archive.org/web/20260121065951/https://www.indystar.com/story/sports/motor/indy-500/2026/01/20/ed-carpenter-will-race-in-2026-indy-500/88272613007/|url-status=live}}
+|-
+|align="center"| 45 || {{flagicon|GBR}} [[Louis Foster]] || [[Rahal Letterman Lanigan Racing]] || [[Honda Indy V6|Honda]]|| Droplight || {{Cite web |date=October 9, 2024 |title=Indy NXT champion Foster signs multi-year deal with Rahal Letterman Lanigan Racing |url=https://www.motorsport.com/indycar/news/indy-nxt-champion-foster-signs-multi-year-deal-with-rahal-letterman-lanigan-racing/10661677/ |access-date=October 9, 2024 |website=Motorsport |language=en |last=Barnes |first=Joey |archive-date=October 9, 2024 |archive-url=https://web.archive.org/web/20241009140508/https://www.motorsport.com/indycar/news/indy-nxt-champion-foster-signs-multi-year-deal-with-rahal-letterman-lanigan-racing/10661677/ |url-status=live }} {{Cite web |date=October 27, 2025 |title=Droplight Return As Primary Sponsor To Foster |url=https://paddockeye.ie/droplight-return-as-primary-sponsor-to-foster/ |access-date=February 9, 2026 |website=Paddock Eye |language=en-US |archive-date=October 27, 2025 |archive-url=https://web.archive.org/web/20251027165450/https://paddockeye.ie/droplight-return-as-primary-sponsor-to-foster/ |url-status=live }}
+|-
+|align="center"| 47 || {{flagicon|GER}} [[Mick Schumacher]] {{Color box|orange|R|border=silver}} || [[Rahal Letterman Lanigan Racing]] || [[Honda Indy V6|Honda]]|| [[Würth]] || {{Cite web|date=November 24, 2025|title=Formula One Veteran Mick Schumacher Joins Rahal Letterman Lanigan Racing For 2026 Indycar Season|url=https://rahal.com/formula-one-veteran-mick-schumacher-joins-rahal-letterman-lanigan-racing-for-2026-indycar-season/|access-date=November 24, 2025|website=Rahal Letterman Lanigan|language=en-US|archive-date=November 24, 2025|archive-url=https://web.archive.org/web/20251124145350/https://rahal.com/formula-one-veteran-mick-schumacher-joins-rahal-letterman-lanigan-racing-for-2026-indycar-season/|url-status=live}}
+|-
+|align="center" style="background:NavajoWhite"| 51 || {{flagicon|USA}} [[Jacob Abel (racing driver)|Jacob Abel]] {{Color box|orange|R|border=silver}} || [[Abel Motorsports]] || [[Chevrolet Indy V6|Chevrolet]] || [[Texas Roadhouse]] ||
+|-
+|align="center"| 60 || {{flagicon|SWE}} [[Felix Rosenqvist]] || [[Meyer Shank Racing]] with [[Curb Agajanian Performance Group|Curb-Agajanian]]|| [[Honda Indy V6|Honda]]|| [[SiriusXM]] / [[Morgan Wallen]] || {{Cite web|url=https://racer.com/2023/09/05/rosenqvist-signs-multiyear-indycar-deal-with-meyer-shank-racing/|title=Rosenqvist signs multiyear IndyCar deal with Meyer Shank Racing|last=Pruett|first=Marshall|website=Racer|date=September 5, 2023|access-date=January 14, 2025|archive-date=September 30, 2023|archive-url=https://web.archive.org/web/20230930184534/https://racer.com/2023/09/05/rosenqvist-signs-multiyear-indycar-deal-with-meyer-shank-racing/|url-status=live}}
+|-
+|align="center"| 66 || {{flagicon|NZL}} [[Marcus Armstrong]] || [[Meyer Shank Racing]] with [[Curb Agajanian Performance Group|Curb-Agajanian]] || [[Honda Indy V6|Honda]]{{ref|ref1|1}} || [[Acura]] || {{cite web|url=https://www.indystar.com/story/sports/motor/2024/09/19/indycar-meyer-shank-racing-adds-marcus-armstrong-to-2025-driver-lineup/75289231007/|title=Meyer Shank Racing adds Marcus Armstrong to 2025 IndyCar driver lineup|last=Newell|first=Nat|website=IndyStar|date=September 19, 2024|access-date=January 14, 2025|archive-date=April 10, 2025|archive-url=https://web.archive.org/web/20250410001351/https://www.indystar.com/story/sports/motor/2024/09/19/indycar-meyer-shank-racing-adds-marcus-armstrong-to-2025-driver-lineup/75289231007/|url-status=live}}
+|-
+|align="center" style="background:NavajoWhite"| 75 || {{flagicon|JPN}} [[Takuma Sato]] {{Color box|gold|W|border=silver}} || [[Rahal Letterman Lanigan Racing]] || [[Honda Indy V6|Honda]] || [[Amada (company)|Amada]] ||
+|-
+|align="center"| 76 || {{flagicon|NLD}} [[Rinus VeeKay]] || [[Juncos Hollinger Racing]] with [[Dreyer & Reinbold Racing]] || [[Chevrolet Indy V6|Chevrolet]] || [[Wedbush]] || {{Cite news|date=October 14, 2025|title=Rinus VeeKay Signs With Juncos Hollinger Racing for 2026 Season|url=https://www.indycar.com/news/2025/10/10-14-veekay-jhr-2026|access-date=October 14, 2025|work=IndyCar|language=en|archive-date=October 14, 2025|archive-url=https://web.archive.org/web/20251014141255/https://www.indycar.com/news/2025/10/10-14-veekay-jhr-2026|url-status=live}} {{cite web|url=https://racer.com/2026/04/27/juncos-hollinger-dreyer-reinbold-annouce-co-entry-and-technical-partnership-for-veekay-at-indy-500|title=Juncos Hollinger, Dreyer & Reinbold announce co-entry and technical partnership for VeeKay at Indy 500|first=Mark|last=Glendenning|date=April 27, 2026|accessdate=April 27, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+|-
+|align="center"| 77 || {{flagicon|USA}} [[Sting Ray Robb]] || [[Juncos Hollinger Racing]] || [[Chevrolet Indy V6|Chevrolet]] || Good Heart Animal Health Center || {{cite web |last1=Newell |first1=Nat |title=Sting Ray Robb signed by Juncos Hollinger Racing IndyCar team |url=https://www.indystar.com/story/sports/motor/2024/11/20/sting-ray-robb-signs-with-juncos-hollinger-racing-indycar-team/76455138007/ |website=The Indianapolis Star |access-date=November 21, 2024 |archive-date=November 21, 2024 |archive-url=https://web.archive.org/web/20241121005551/https://www.indystar.com/story/sports/motor/2024/11/20/sting-ray-robb-signs-with-juncos-hollinger-racing-indycar-team/76455138007/ |url-status=live }}
+|-
+|}
+*{{Color box|NavajoWhite|border=silver}} Denotes a one-off or "Indy-only" entry.
+*{{Color box|gold|W|border=silver}} Former Indianapolis 500 winner
+*{{Color box|orange|R|border=silver}} Indianapolis 500 rookie
+*{{ref|ref1|1}} Marcus Armstrong's No. 66 entry featured [[Acura]] badging in place of normal Honda branding. The entry still used the same engine as all other Honda entries. {{cite web|url=https://racer.com/2026/04/22/honda-to-apply-more-acura-branding-with-msr-in-indycar|title=Honda to apply more Acura branding with MSR in IndyCar|date=April 22, 2026|accessdate=April 22, 2026|first=Marshall|last=Pruett|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+==Testing and Rookie Orientation==
+[[File:Mick Schumacher 2024 WEC Fuji.jpg|thumb|upright|[[Mick Schumacher]] is one of four rookies entered. His father [[Michael Schumacher]] won the [[United States Grand Prix|U.S. Grand Prix]] at Indy five times.]]
+Rookie rules for the Indianapolis 500 included the mandate that a driver pass a supervised high-speed oval test before he/she is allowed to participate in the official Rookie Orientation Program (ROP) at the Indianapolis Motor Speedway. {{cite news|title=2024 NTT IndyCar Series Official Rulebook|url=https://epaddock.indycar.com/docs/default-source/rules-regulations-and-policies/indycar-rulebook.pdf|publisher=IndyCar|access-date=March 12, 2024|work=Section 4.3.2.7|archive-date=March 12, 2024|archive-url=https://web.archive.org/web/20240312195958/https://epaddock.indycar.com/docs/default-source/rules-regulations-and-policies/indycar-rulebook.pdf|url-status=live}} Approved venues for the initial high-speed oval track test included [[Texas Motor Speedway]], [[Homestead–Miami Speedway]], and a few other select venues. {{cite news|title=2024 NTT IndyCar Series Official Rulebook|url=https://epaddock.indycar.com/docs/default-source/rules-regulations-and-policies/indycar-rulebook.pdf|publisher=IndyCar|access-date=March 12, 2024|work=Section 6.8.1|archive-date=March 12, 2024|archive-url=https://web.archive.org/web/20240312195958/https://epaddock.indycar.com/docs/default-source/rules-regulations-and-policies/indycar-rulebook.pdf|url-status=live}}
+The Rookie Orientation Program at Indianapolis consisted of three phases. For phase 1, each driver was required to complete ten laps between {{convert|205|–|210|mph|km/h|abbr=on}}, while demonstrating satisfactory car control, proper racing line, and safe interaction with other cars on the circuit. The laps did not have to be consecutive. Phase 2 was fifteen laps between {{convert|210|–|215|mph|km/h|abbr=on}}, and phase 3 was fifteen laps over {{convert|215|mph|km/h|abbr=on}}. Veteran drivers that had not competed in an IndyCar oval race since the [[2025 Indianapolis 500|previous year's]] Indy 500 were required to take a refresher test. The refresher test consisted of phase 2 and phase 3 of the aforementioned rookie test. {{cite news|title=Larson to turn first IndyCar Series laps Thursday at IMS|url=https://www.indycar.com/news/2023/10/10-09-rop-hybrid-test-preview|publisher=|date=October 9, 2023|access-date=October 12, 2023|archive-date=October 14, 2023|archive-url=https://web.archive.org/web/20231014053307/https://www.indycar.com/News/2023/10/10-09-ROP-Hybrid-Test-Preview|url-status=live|work=IndyCar}}
+===Testing – October 2025===
+On October 20–21, 2025, the Speedway organized private testing. [[Álex Palou]] ([[Chip Ganassi Racing|Ganassi]]) and [[Pato O'Ward]] ([[Arrow McLaren]]) participated in tire tests for [[Firestone Tire and Rubber Company|Firestone]], including evaluating the newly repaved section of track to remove bumps in turn 2. A new tire compound was developed in order to address weight balance issues stemming from the hybrid system first used at the Speedway in 2025. [[Alexander Rossi]] ([[Ed Carpenter Racing|ECR]]) and [[Takuma Sato]] ([[Rahal Letterman Lanigan Racing|RLLR]]) tested [[brake]] and [[Shock absorber|damper]] components for speedway-specific braking systems (used at Indianapolis and [[IndyCar Series at Nashville Superspeedway|Nashville]]). {{cite web|url=https://racer.com/2025/10/21/o-ward-happy-after-productive-indycar-tire-test-at-ims|title=O'Ward, Palou encouraged after productive IndyCar tire test at IMS|website=Racer|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Marshall|last=Pruett|date=October 21, 2025|access-date=October 21, 2025}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+===Rookie oval tests===
+The series hosted a high-speed oval rookie evaluation test at [[Nashville Superspeedway]] on November 6, 2025. Two drivers participated: [[Dennis Hauger]] ([[Dale Coyne Racing|Coyne]]) and [[Caio Collet]] ([[A. J. Foyt Racing|Foyt]]). No incidents were reported. Both drivers completed their evaluations and were approved to take the Rookie Orientation Program at the April Open Test at Indianapolis. {{cite news|url=https://www.indycar.com/news/2026/02/02-05-schumacher-oval-test|title=Test Patterns: Scott Dixon, Alexander Rossi Never Tire of Phoenix|first=Paul|last=Kelly|work=IndyCar|date=November 7, 2025|access-date=February 20, 2026|archive-date=February 6, 2026|archive-url=https://web.archive.org/web/20260206021449/https://www.indycar.com/news/2026/02/02-05-schumacher-oval-test|url-status=live}}
+[[Rahal Letterman Lanigan Racing]] conducted a private oval evaluation test for rookie driver [[Mick Schumacher]] at [[Homestead–Miami Speedway]] on February 4, 2026. Schumacher, guided by driver coach [[Ryan Briscoe]], took his first laps on an oval, completing 97 laps without incident. He posted a top lap of 194 mph. {{cite web|url=https://racer.com/2026/02/04/-it-was-a-great-day-schumacher-competes-first-oval-laps-at-miami-homestead-test|title='It was a great day': Schumacher competes first oval laps at Homestead test|website=Racer|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Marshall|last=Pruett|date=February 4, 2026|access-date=February 20, 2026}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} {{cite news|url=https://www.indycar.com/news/2026/02/02-05-schumacher-oval-test|title=Mick Schumacher Gets Hang of Oval Laps in First Test|first=Curt|last=Cavin|work=IndyCar|date=February 5, 2026|access-date=February 20, 2026|archive-date=February 6, 2026|archive-url=https://web.archive.org/web/20260206021449/https://www.indycar.com/news/2026/02/02-05-schumacher-oval-test|url-status=live}}
+===Open Test Day 1 — Tuesday April 28===
+[[File:Conor daly (52703152591) (cropped).jpg|thumb|right|upright|[[Conor Daly]] (''pictured in 2023'') was fastest on Day 1 of the Open Test.]]
+The first day of open testing was scheduled for April 28. {{cite web|url=https://racer.com/2025/12/09/indycar-s-2026-testing-calendar-taking-shape|title=IndyCar's 2026 testing calendar taking shape|website=Racer|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Marshall|last=Pruett|date=December 9, 2025|access-date=January 12, 2026|archive-date=December 12, 2025|archive-url=https://web.archive.org/web/20251212173518/https://racer.com/2025/12/09/indycar-s-2026-testing-calendar-taking-shape|url-status=live}} After a five-minute period for install laps, the track was first made available for veterans from 10:05 a.m. to 12 p.m. Rookie Orientation and Refresher Tests took place from 12 p.m. to 2 p.m. The track was then open to all cars from 2 p.m. to 6 p.m. {{cite web|url=https://www.indianapolismotorspeedway.com/events/indy500/event-info/open-test|title=Open Test April 28–29|website=Indianapolis Motor Speedway|access-date=April 15, 2025|archive-date=April 19, 2025|archive-url=https://web.archive.org/web/20250419110259/https://www.indianapolismotorspeedway.com/events/indy500/event-info/open-test|url-status=live}}
+*'''Weather''': {{convert|64|°F|0}}; Mostly cloudy early, fair late
+*'''Summary''': The first veteran session began as scheduled at 10:05 a.m. A total of 24 drivers turned laps during the session, with [[Josef Newgarden]] running fastest at {{convert|223.415|mph|kph|abbr=on}}. {{cite web|url=https://racer.com/2026/04/28/newgarden-sets-the-pace-in-ims-open-test-morning-session|title=Newgarden sets the pace in IMS Open Test morning session|first=Marshall|last=Pruett|date=April 28, 2026|accessdate=April 28, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} One minor incident occurred during the session, when [[Romain Grosjean]] collided with a bird, bringing out a caution for debris, and causing some clean up of his car to be needed. {{cite web|url=https://racer.com/2026/04/28/daly-leads-the-way-on-first-day-of-ims-open-test|title=Daly leads the way on first day of IMS Open Test|first=Marshall|last=Pruett|date=April 28, 2026|accessdate=April 28, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+:The Rookie Orientation and Refresher Test session began immediately following the veteran's test, with nine drivers scheduled to participate. [[Jack Harvey (racing driver)|Jack Harvey]], [[Ed Carpenter (racing driver)|Ed Carpenter]], [[Ryan Hunter-Reay]], and [[Hélio Castroneves]] completed their veteran refresher tests, while [[Caio Collet]], [[Jacob Abel (racing driver)|Jacob Abel]], and [[Mick Schumacher]] completed all three phases of their rookie tests. [[Dennis Hauger]] completed phases 1 and 2 of his rookie test, and was given permission to complete the final phase during the full-field session later in the afternoon. {{cite web|url=https://racer.com/2026/04/28/harvey-tops-rookie-refresher-session-at-ims-open-test|title=Harvey tops Rookie/Refresher session at IMS Open Test|first=Marshall|last=Pruett|date=April 28, 2026|accessdate=April 28, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} [[Katherine Legge]], the final driver required to complete a refresher test, experienced clutch problems and was unable to complete any laps at speed. As a result, she was not permitted to participate in the full-field session. {{cite web|url=https://racer.com/2026/04/28/technical-glitches-sideline-legge-from-ims-open-test-until-wednesday|title=Technical glitches sideline Legge from IMS Open Test until Wednesday|first=Marshall|last=Pruett|date=April 28, 2026|accessdate=April 28, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+:The full-field test session began at 2:00 p.m., with the track open until 6:00 p.m. [[Conor Daly]] set the fastest speed of the day, running a lap at {{convert|225.394|mph|kph|abbr=on}} late in the day. His teammate [[Jack Harvey (racing driver)|Jack Harvey]] ran the fastest "no-tow" lap — a lap without the assistance of [[Drafting (aerodynamics)|aerodynamic drafting]] — at {{convert|220.318|mph|kph|abbr=on}}. Only one incident was reported. At 5:34 p.m., [[Christian Rasmussen (racing driver)|Christian Rasmussen]] came to a stop on track at the exit of turn 2 with a loose right-rear wheel. The car was undamaged, but needed to be towed off of the race track. {{cite web|url=https://www.motorsport.com/indycar/news/conor-daly-paces-day-1-of-indy-500-open-test/10816252/|title=Conor Daly paces Day 1 of Indy 500 Open Test|first=Joey|last=Barnes|date=April 28, 2026|accessdate=April 28, 2026|website=Motorsport}}
+{| class="wikitable" style="font-size:95%;"
+|-
+|+ Top speeds
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Best Single Lap Speed (mph)}} !! {{abbr|Speed (km/h)|Best Single Lap Speed (km/h)}}
+|-
+| style="text-align:center;"|'''1'''
+| style="text-align:center;"| 23
+| {{flagicon|USA}} [[Conor Daly]]
+| [[Dreyer & Reinbold Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|225.394|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''2'''
+| style="text-align:center;"| 06
+| {{flagicon|BRA}} [[Hélio Castroneves]]
+| [[Meyer Shank Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|225.200|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''3'''
+| style="text-align:center;"| 75
+| {{flagicon|JPN}} [[Takuma Sato]]
+| [[Rahal Letterman Lanigan Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|224.800|mph|disp=tablecen}}
+|-
+!colspan=7| Source {{Cite web|url=https://www.indycar.com/-/media/Files/2026/NICS/00-TESTS/IMS-OT/indycar-results-pcomb-p2.pdf|title=Official Report}}
+|}
+===Open Test Day 2 — Wednesday April 29===
+[[File:Caio Collet, interview.jpg|thumb|right|upright|[[Caio Collet]] (''pictured in 2020'') was fastest on Day 2 of the Open Test.]]
+The morning session was originally scheduled for 10 a.m. to 12 p.m. and the afternoon session was scheduled for 1 p.m. to 5 p.m. An additional special session from 12 p.m. to 1 p.m. was announced the previous evening for [[Katherine Legge]] to complete her refresher test. {{cite web|url=https://www.indycar.com/news/2026/04/04-28-open-test-day1-report|title=Conor Daly Leads Experienced Group Atop Day 1 of Indy Open Test|first=Paul|last=Kelly|date=April 28, 2026|accessdate=April 28, 2026|website=Indycar}} However, overnight rain delayed the start of testing by one hour and fifteen minutes. The scheduled was revised, shifting the early session to 11:15 a.m. to 1:15 p.m. Legge's ROP session was moved to 1:15 p.m., and the afternoon session was changed to 2:15 p.m. to 5 p.m.
+*'''Weather''': {{convert|63|°F|0}}; cloudy to mostly cloudy
+*'''Summary''': Day two of testing began at 11:15 a.m. after track drying from overnight rain was completed. Rookie driver [[Caio Collet]] was fastest during the morning session, running a lap at {{convert|226.381|mph|kph|abbr=on}}. {{cite web|url=https://racer.com/2026/04/29/collet-tops-second-day-morning-session-at-indy-open-test|title=Collet tops second day morning session at Indy Open Test|first=Marshall|last=Pruett|date=April 29, 2026|accessdate=April 29, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} This lap would be the fastest of the day, as it was not matched during the afternoon session. [[Jack Harvey (racing driver)|Jack Harvey]] turned the fastest "no-tow" lap for the second day in a row during the morning session, running a lap at {{convert|221.112|mph|kph|abbr=on}}. {{Cite web |last=Pruett |first=Marshall |date=28 April 2026 |title=Daly leads the way on first day of IMS Open Test |url=https://racer.com/2026/04/28/daly-leads-the-way-on-first-day-of-ims-open-test |access-date=27 May 2026 |website=racer.com }}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+:From 1:15 p.m. to 2:15 p.m., the track was made available for Katherine Legge to complete her veteran refresher test. Legge successfully completed the refresher test, and was cleared to take part in further testing. {{YouTube|T_IwJooX7qQ|"Day 2 Highlights | 2026 Indianapolis 500 Open Test"|time=55}}
+:From 2:15 p.m. until 5:00 p.m. the track was open to all drivers. [[Josef Newgarden]] was fastest in the afternoon session, turning a lap at {{convert|225.617|mph|kph|abbr=on}}. One significant incident occurred at 3:27 p.m. Jack Harvey suffered a major engine failure in turn four. The car billowed large amounts of smoke and briefly caught fire before Harvey brought the car to a stop in the pit lane. {{cite web|url=https://racer.com/2026/04/29/newgarden-fastest-as-indy-open-test-comes-to-a-close|title=Newgarden fastest as Indy Open Test comes to a close|first=Marshall|last=Pruett|date=April 29, 2026|accessdate=April 29, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} Earlier, at 2:58 p.m., a brief yellow came out after a [[fox]] ran across the track in turn one, and was narrowly missed by [[Takuma Sato]]. {{Cite web |date=29 April 2026 |title=Takuma Sato avoids collision with a fox and posts 4th-fastest lap during Indy 500 testing |url=https://apnews.com/article/indianapolis-500-testing-7174a6c30a5878501ab1865f1f8abbca |access-date=25 May 2026 |website=[[Associated Press]]}}
+{| class="wikitable" style="font-size:95%;"
+|-
+|+ Top speeds
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Best Single Lap Speed (mph)}} !! {{abbr|Speed (km/h)|Best Single Lap Speed (km/h)}}
+|-
+| style="text-align:center;"|'''1'''
+| style="text-align:center;"| 4
+| {{flagicon|BRA}} [[Caio Collet]] {{Color box|orange|R|border=silver}}
+| [[A. J. Foyt Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|226.381|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''2'''
+| style="text-align:center;"| 2
+| {{flagicon|USA}} [[Josef Newgarden]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|226.223|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''3'''
+| style="text-align:center;"| 10
+| {{flagicon|ESP}} [[Álex Palou]]
+| [[Chip Ganassi Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|225.272|mph|disp=tablecen}}
+|-
+!colspan=7| Source {{Cite web|url=https://cdn-cs-images.racer.com/v3/assets/blte77f57883ea46be1/blt1cbe8ecd58b7ed02/69f27d81709daf2c462ab411/indycar-results-pcomb-p4.pdf|title=Indianapolis 500 OPEN TEST, Indianapolis Motor Speedway}}
+|}
+==Practice==
+===Opening Day — Tuesday May 12===
+*'''Weather''': {{convert|77|°F|0}}, Fair
+*'''Summary''': The opening day of practice began at 12:00 p.m., with the track open until 6:00 p.m. Despite having handling issues early in the day, [[Álex Palou]] turned the fastest lap late in the session with a speed at {{convert|225.937|mph|kph|abbr=on}}. [[Kyle Kirkwood]] turned the fastest "no-tow" lap with a speed of {{convert|222.062|mph|kph|abbr=on}}. Palou came into the pits suddenly at 4:13 p.m. complaining of a problem in the right-rear. The car was wheeled back to the garage area where the crew partially tore it down to determine what was wrong. After short consultation, the car was wheeled back out, and Palou set his aforementioned fast lap. One notable mechanical failure occurred for [[Ed Carpenter (racing driver)|Ed Carpenter]], whose engine failed during his installation lap early in the session. The engine was changed, and Carpenter participated in running in the later part of practice. {{cite web|url=https://racer.com/2026/05/12/palou-take-top-spot-on-opening-day-of-indy-500-practice|title=Palou takes the top spot on opening day of Indy 500 practice|first=Marshall|last=Pruett|date=May 12, 2026|accessdate=May 12, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+:There were no major incidents during the session. However, there were two yellows for track inspection due to cut tires. [[Hélio Castroneves]] and [[Graham Rahal]] both suffered punctures, but both were able to return to the pits without incident. After an engine issue, Scott McLaughlin's team was preparing to install a new engine in time for Wednesday's practice session.
+{| class="wikitable" style="font-size:95%;"
+|-
+|+ Top speeds
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Best Single Lap Speed (mph)}} !! {{abbr|Speed (km/h)|Best Single Lap Speed (km/h)}}
+|-
+| style="text-align:center;"|'''1'''
+| style="text-align:center;"| 10
+| {{flagicon|ESP}} [[Álex Palou]]
+| [[Chip Ganassi Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|225.937|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''2'''
+| style="text-align:center;"| 66
+| {{flagicon|NZL}} [[Marcus Armstrong]]
+| [[Meyer Shank Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|225.895|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''3'''
+| style="text-align:center;"| 23
+| {{flagicon|USA}} [[Conor Daly]]
+| [[Dreyer & Reinbold Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|225.838|mph|disp=tablecen}}
+|-
+!colspan=7| [http://www.imscdn.com/INDYCAR/Documents/5526/6847/indycar-results-p1.pdf Official Report]
+|}
+===Practice — Wednesday May 13===
+*'''Weather''': {{convert|66|°F|0}}, Mostly cloudy
+*'''Summary''': The track was once again open from 12:00 p.m. to 6:00 p.m. for Wednesday practice. The day saw significantly cooler temperatures and windier conditions than opening practice. [[Conor Daly]] ran the fastest lap of the day at {{convert|228.080|mph|kph|abbr=on}}. [[Pato O'Ward]] turned the fastest "no-tow" lap at {{convert|221.409|mph|kph|abbr=on}}. There were no major incidents reported. {{cite web|url=https://www.motorsport.com/indycar/news/indy-500-day-2-practice-results-conor-daly-tops-the-charts-at-228mph/10820537/|title=Indy 500 Day 2 practice results: Conor Daly tops the charts at 228mph |first=Joey|last=Barnes|date=May 13, 2026|accessdate=May 13, 2026|website=Motorsport.com}} Two engine changes were reported on during the day. [[Scott McLaughlin]]'s team changed the engine on his car overnight between Tuesday and Wednesday, while at the end of the day [[Alexander Rossi]]'s team were reported to have started changing the engine on his car. {{cite web|url=https://racer.com/2026/05/13/ecr-penske-teams-both-make-early-chevy-engine-changes-in-indy-500-practice|title=ECR, Penske teams both make early Chevy engine changes in Indy 500 practice|first=Marshall|last=Pruett|date=May 13, 2026|accessdate=May 13, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} These, combined with [[Ed Carpenter (racing driver)|Ed Carpenter]]'s engine failure the previous day, marked three Chevrolet engines needing to be changed in the first two days of practice. {{Cite web |last=Marot |first=Michael |date=15 May 2026 |title=3 engine changes during Indianapolis 500 practice have sent Chevrolet and teams in search of answers |url=https://www.wthr.com/article/sports/motor/indianapolis-500/3-engine-changes-during-indianapolis-500-practice-send-chevrolet-teams-in-search-of-answers/531-98601dd8-f992-4c8b-9c62-33f785a5f403 |access-date=27 May 2026 |website=wthr.com}}
+{| class="wikitable" style="font-size:95%;"
+|-
+|+ Top speeds
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Best Single Lap Speed (mph)}} !! {{abbr|Speed (km/h)|Best Single Lap Speed (km/h)}}
+|-
+| style="text-align:center;"|'''1'''
+| style="text-align:center;"| 23
+| {{flagicon|USA}} [[Conor Daly]]
+| [[Dreyer & Reinbold Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|228.080|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''2'''
+| style="text-align:center;"| 10
+| {{flagicon|ESP}} [[Álex Palou]]
+| [[Chip Ganassi Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|228.026|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''3'''
+| style="text-align:center;"| 12
+| {{flagicon|USA}} [[David Malukas]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|227.139|mph|disp=tablecen}}
+|-
+!colspan=7| [http://www.imscdn.com/INDYCAR/Documents/5526/6844/indycar-results-p2.pdf Official Report]
+|}
+===Practice — Thursday May 14===
+*'''Weather''': {{convert|65|°F|0}}, Fair
+*'''Summary''': Thursday practice ran from 12:00 p.m. to 6:00 p.m. With qualifying approaching, several teams began attempting qualifying simulations, despite cars not yet being permitted to have qualifying boost levels. [[Pato O'Ward]] turned the fastest lap of the day, running at {{convert|227.308|mph|kph|abbr=on}}. The fastest "no-tow" lap came from [[Takuma Sato]], who ran a lap at {{convert|223.828|mph|kph|abbr=on}} without aerodynamic drafting. There were no major incidents reported. {{cite web|url=https://racer.com/2026/05/14/o-ward-finds-his-touch-on-third-day-of-indianapolis-500-practice|title=O'Ward finds his touch on third day of Indianapolis 500 practice|first=Marshall|last=Pruett|date=May 14, 2026|accessdate=May 14, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} There was a total of 1,469 laps logged by the 33 cars, the lowest day-total thus far for the week. {{Cite web |last=Kelly |first=Paul |date=14 May 2026 |title=Pato O'Ward Eager for 'Fast Friday' Boost After Leading Indy Practice |url=https://www.indycar.com/news/2026/05/05-14-practice-day3-ic |access-date=27 May 2026 |website=Indycar}}
+{| class="wikitable" style="font-size:95%;"
+|-
+|+ Top speeds
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Best Single Lap Speed (mph)}} !! {{abbr|Speed (km/h)|Best Single Lap Speed (km/h)}}
+|-
+| style="text-align:center;"|'''1'''
+| style="text-align:center;"| 5
+| {{flagicon|MEX}} [[Pato O'Ward]]
+| [[Arrow McLaren]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|227.308|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''2'''
+| style="text-align:center;"| 06
+| {{flagicon|BRA}} [[Hélio Castroneves]]
+| [[Meyer Shank Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|226.977|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''3'''
+| style="text-align:center;"| 66
+| {{flagicon|NZL}} [[Marcus Armstrong]]
+| [[Meyer Shank Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|226.841|mph|disp=tablecen}}
+|-
+!colspan=7| [http://www.imscdn.com/INDYCAR/Documents/5526/6843/indycar-results-p3.pdf Official Report]
+|}
+===Fast Friday Practice — Friday May 15===
+*'''Weather''': {{convert|68|°F|0}}, Morning rain, then cloudy in the afternoon turning to fair in late afternoon
+*'''Summary''': Practice was originally scheduled for 12 p.m. to 6 p.m. However, morning rain delayed the start until 2:00 p.m. Due to the delay, the session was extended by one hour to 7:00 p.m. For Fast Friday practice, teams were permitted to increase turbocharger boost pressures to qualifying levels – {{convert|1500|mbar|inHg|1|abbr=on}}. With the increased boost levels, teams focused on simulated qualification running. [[Felix Rosenqvist]] ran the fastest lap of the day, with a lap at {{convert|233.372|mph|kph|abbr=on}}. Rosenqvist also had the fastest four-lap run – a simulation of a four-lap qualifying run – with an average speed of {{convert|232.828|mph|kph|abbr=on}}. [[Scott McLaughlin]] turned the fastest "no-tow" lap of the session at {{convert|232.674|mph|kph|abbr=on}}, which was also the third fastest lap overall of the day. {{cite web|url=https://www.motorsport.com/indycar/news/felix-rosenqvist-smashes-233mph-barrier-as-indy-500-speeds-surge-on-fast-friday/10821130/|title=Felix Rosenqvist smashes 233mph barrier as Indy 500 speeds surge on Fast Friday|first=Joey|last=Barnes|date=May 15, 2025|accessdate=May 15, 2026|website=Motorsport}} There were no major incidents reported. Another Chevrolet engine failure was reported, as [[Santino Ferrucci]] experienced a failure with 55 minutes left in the session. {{cite web|url=https://racer.com/2026/05/15/chevrolet-s-indianapolis-engine-woes-continue-with-ferrucci-failure|title=Chevrolet's Indianapolis engine woes continue with Ferrucci failure|first=Marshall|last=Pruett|date=May 15, 2026|accessdate=May 15, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+:After the session, the random draw to determine qualifying order was held in the Pagoda area. [[Scott Dixon]] drew the first spot in line. {{Cite web |last=Chapman |first=Simon |date=16 May 2026 |title=Dixon's son draws him top spot for Indy 500 qualifying |url=https://speedcafe.com/indycar-news-2026-indy-500-qualifying-order-indianapolis-dixon-mclaughlin-power-armstrong-results/ |access-date=25 May 2026 |website=[[Speedcafe]] |archive-date=May 25, 2026 |archive-url=https://web.archive.org/web/20260525223659/https://speedcafe.com/indycar-news-2026-indy-500-qualifying-order-indianapolis-dixon-mclaughlin-power-armstrong-results/ |url-status=live }}
+{| class="wikitable" style="font-size:95%;"
+|-
+|+ Top speeds
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Best Single Lap Speed (mph)}} !! {{abbr|Speed (km/h)|Best Single Lap Speed (km/h)}}
+|-
+| style="text-align:center;"|'''1'''
+| style="text-align:center;"| 60
+| {{flagicon|SWE}} [[Felix Rosenqvist]]
+| [[Meyer Shank Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|233.372|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''2'''
+| style="text-align:center;"| 20
+| {{flagicon|USA}} [[Alexander Rossi]]
+| [[Ed Carpenter Racing|ECR]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|232.932|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''3'''
+| style="text-align:center;"| 3
+| {{flagicon|NZL}} [[Scott McLaughlin]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|232.674|mph|disp=tablecen}}
+|-
+!colspan=7| [http://www.imscdn.com/INDYCAR/Documents/5526/6848/indycar-results-p4.pdf Official Report]
+|}
+==Time Trials==
+===Saturday, May 16===
+*'''Weather''': {{convert|69|°F|0}}, Scattered thunderstorms
+*'''Summary''': Persistent rain throughout the day prevented any track running on the scheduled first day of qualification. All qualifications were shifted to Sunday, and the scheduled "Fast 15" session was discarded in the revised condensed schedule. {{cite web|url=https://www.motorsport.com/indycar/news/indy-500-qualifying-postponed-to-sunday-with-another-tweak-to-the-format/10821443/|title=Indy 500 qualifying postponed to Sunday with condensed format |first=Nick|last=DeGroot|date=May 16, 2026|accessdate=May 16, 2026|website=motorsport.com}}
+===Sunday, May 17===
+*'''Weather''': {{convert|83|°F|0}}, Fair
+*'''Summary''': With the first day of qualification rained out, a revised schedule was announced for Sunday, with the scheduled "Top 15" session discarded. During the first session, which began at 12 p.m., all entries were given one guaranteed attempt. The cars qualifying in positions 1–12 in the first session advanced to the Top 12 session later in the day, while those in positions 13–33 were locked in to their positions. At 4 p.m., the Top 12 session was held, where the top six qualifiers advanced to the final Fast Six qualifying, while positions 7–12 were locked in to their positions. At 6:00 p.m., the Top Six session started, which determined the top six starting positions.
+====Pre-qualifying practice====
+A one-hour practice session was held before qualifying, beginning at 9:30 a.m. Only 14 entries turned laps during the session. One minor incident occurred when [[Takuma Sato]] drifted high in turn 3 and brushed the outside wall. The incident brought out a caution period, but Sato's car was not significantly damaged. [[Christian Rasmussen (racing driver)|Christian Rasmussen]] was the fastest in the session, turning a lap at {{convert|232.255|mph|kph|abbr=on}}. {{cite web|url=https://racer.com/2026/05/17/rasmussen-tops-practice-ahead-of-qualifying-at-indy|title=Rasmussen tops practice ahead of qualifying at Indy|first=Marshall|last=Pruett|date=May 17, 2026|accessdate=May 17, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+====Full field qualifying====
+Full field qualifying began at noon. [[Felix Rosenqvist]] was the fastest in the session, running a four-lap average at {{convert|232.599|mph|kph}}. Rosenqvist was the only qualifier whose run was above {{convert|232|mph|kph|abbr=on}}. [[Caio Collet]] was the fastest rookie qualifier at {{convert|231.419|mph|kph|abbr=on}}, good enough for seventh fastest in the session. Collet was the only rookie to advance to the Top 12 session. Also advancing to the Top 12 session were [[David Malukas]], [[Conor Daly]], [[Scott McLaughlin]], [[Rinus VeeKay]], [[Alexander Rossi]], [[Scott Dixon]], [[Pato O'Ward]], [[Santino Ferrucci]], [[Álex Palou]], and [[Kyffin Simpson]]. {{cite web|url=https://www.indycar.com/news/2026/05/05-17-quals-updates|title=Felix Rosenqvist Rockets to Top After First Round of Indy Qualifying|date=May 17, 2026|accessdate=May 17, 2026|website=Indycar}}
+{| class="wikitable" style="font-size:95%;"
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Four-Lap Average Speed (mph)}} !! {{abbr|Speed (km/h)|Four-Lap Average Speed (km/h)}}
+|-
+! colspan=7 | Top 12
+|-
+! 1
+| align="center"| 60
+| {{flagicon|SWE}} [[Felix Rosenqvist]]
+| [[Meyer Shank Racing]] w/ [[Curb Agajanian Performance Group|Curb-Agajanian]]
+| [[Honda Indy V6|Honda]]
+| {{convert|232.599|mph|disp=tablecen}}
+|-
+! 2
+| align="center"| 12
+| {{flagicon|USA}} [[David Malukas]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.813|mph|disp=tablecen}}
+|-
+! 3
+| align="center"| 23
+| {{flagicon|USA}} [[Conor Daly]]
+| [[Dreyer & Reinbold Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.744|mph|disp=tablecen}}
+|-
+! 4
+| align="center"| 3
+| {{flagicon|NZL}} [[Scott McLaughlin]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.623|mph|disp=tablecen}}
+|-
+! 5
+| align="center"| 76
+| {{flagicon|NLD}} [[Rinus VeeKay]]
+| [[Juncos Hollinger Racing]] w/ [[Dreyer & Reinbold Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.591|mph|disp=tablecen}}
+|-
+! 6
+| align="center"| 20
+| {{flagicon|USA}} [[Alexander Rossi]] {{Color box|Gold|W|border=silver}}
+| [[Ed Carpenter Racing|ECR]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.580|mph|disp=tablecen}}
+|-
+! 7
+| align="center"| 4
+| {{flagicon|BRA}} [[Caio Collet]] {{Color box|orange|R|border=silver}}
+| [[A. J. Foyt Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.419|mph|disp=tablecen}}{{ref|ref1|1}}
+|-
+! 8
+| align="center"| 9
+| {{flagicon|NZL}} [[Scott Dixon]] {{Color box|Gold|W|border=silver}}
+| [[Chip Ganassi Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|231.411|mph|disp=tablecen}}
+|-
+! 9
+| align="center"| 5
+| {{flagicon|MEX}} [[Pato O'Ward]]
+| [[Arrow McLaren]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.248|mph|disp=tablecen}}
+|-
+! 10
+| align="center"| 14
+| {{flagicon|USA}} [[Santino Ferrucci]]
+| [[A. J. Foyt Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.224|mph|disp=tablecen}}
+|-
+! 11
+| align="center"| 10
+| {{flagicon|ESP}} [[Álex Palou]] {{Color box|Gold|W|border=silver}}
+| [[Chip Ganassi Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|231.155|mph|disp=tablecen}}
+|-
+! 12
+| align="center"| 8
+| {{flagicon|CAY}} [[Kyffin Simpson]]
+| [[Chip Ganassi Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|231.095|mph|disp=tablecen}}
+|-
+! colspan=7 | Positions 13–33
+|-
+! 13
+| align="center"| 75
+| {{flagicon|JPN}} [[Takuma Sato]] {{Color box|Gold|W|border=silver}}
+| [[Rahal Letterman Lanigan Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|230.995|mph|disp=tablecen}}
+|-
+! 14
+| align="center"| 33
+| {{flagicon|USA}} [[Ed Carpenter (racing driver)|Ed Carpenter]]
+| [[Ed Carpenter Racing|ECR]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.829|mph|disp=tablecen}}
+|-
+! 15
+| align="center"| 06
+| {{flagicon|BRA}} [[Hélio Castroneves]] {{Color box|Gold|W|border=silver}}
+| [[Meyer Shank Racing]] w/ [[Curb Agajanian Performance Group|Curb-Agajanian]]
+| [[Honda Indy V6|Honda]]
+| {{convert|230.811|mph|disp=tablecen}}
+|-
+|-
+! 16
+| align="center"| 21
+| {{flagicon|DEN}} [[Christian Rasmussen (racing driver)|Christian Rasmussen]]
+| [[Ed Carpenter Racing|ECR]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.705|mph|disp=tablecen}}
+|-
+! 17
+| align="center"| 66
+| {{flagicon|NZL}} [[Marcus Armstrong]]
+| [[Meyer Shank Racing]] w/ [[Curb Agajanian Performance Group|Curb-Agajanian]]
+| [[Honda Indy V6|Honda]]
+| {{convert|230.701|mph|disp=tablecen}}
+|-
+! 18
+| align="center"| 28
+| {{flagicon|SWE}} [[Marcus Ericsson]] {{Color box|Gold|W|border=silver}}
+| [[Andretti Global]]
+| [[Honda Indy V6|Honda]]
+| {{convert|230.667|mph|disp=tablecen}}
+|-
+! 19
+| align="center"| 7
+| {{flagicon|DEN}} [[Christian Lundgaard]]
+| [[Arrow McLaren]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.661|mph|disp=tablecen}}
+|-
+! 20
+| align="center"| 26
+| {{flagicon|AUS}} [[Will Power]] {{Color box|Gold|W|border=silver}}
+| [[Andretti Global]]
+| [[Honda Indy V6|Honda]]
+| {{convert|230.279|mph|disp=tablecen}}
+|-
+! 21
+| align="center"| 6
+| {{flagicon|USA}} [[Nolan Siegel]]
+| [[Arrow McLaren]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.213|mph|disp=tablecen}}
+|-
+! 22
+| align="center"| 45
+| {{flagicon|GBR}} [[Louis Foster]]
+| [[Rahal Letterman Lanigan Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|230.212|mph|disp=tablecen}}
+|-
+! 23
+| align="center"| 31
+| {{flagicon|USA}} [[Ryan Hunter-Reay]] {{Color box|Gold|W|border=silver}}
+| [[Arrow McLaren]] w/ [[Legacy Motor Club]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.202|mph|disp=tablecen}}
+|-
+! 24
+| align="center"| 2
+| {{flagicon|USA}} [[Josef Newgarden]] {{Color box|Gold|W|border=silver}}
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.165|mph|disp=tablecen}}
+|-
+! 25
+| align="center"| 18
+| {{flagicon|FRA}} [[Romain Grosjean]]
+| [[Dale Coyne Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|229.791|mph|disp=tablecen}}
+|-
+! 26
+| align="center"| 27
+| {{flagicon|USA}} [[Kyle Kirkwood]]
+| [[Andretti Global]]
+| [[Honda Indy V6|Honda]]
+| {{convert|229.607|mph|disp=tablecen}}
+|-
+! 27
+| align="center"| 11
+| {{flagicon|GBR}} [[Katherine Legge]]
+| [[HMD Motorsports]] w/ [[A. J. Foyt Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|229.456|mph|disp=tablecen}}
+|-
+! 28
+| align="center"| 47
+| {{flagicon|DEU}} [[Mick Schumacher]] {{Color box|orange|R|border=silver}}
+| [[Rahal Letterman Lanigan Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|229.450|mph|disp=tablecen}}
+|-
+! 29
+| align="center"| 24
+| {{flagicon|GBR}} [[Jack Harvey (racing driver)|Jack Harvey]]
+| [[Dreyer & Reinbold Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|229.207|mph|disp=tablecen}}{{ref|ref1|1}}
+|-
+! 30
+| align="center"| 15
+| {{flagicon|USA}} [[Graham Rahal]]
+| [[Rahal Letterman Lanigan Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|229.017|mph|disp=tablecen}}
+|-
+! 31
+| align="center"| 19
+| {{flagicon|NOR}} [[Dennis Hauger]] {{Color box|orange|R|border=silver}}
+| [[Dale Coyne Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|228.982|mph|disp=tablecen}}
+|-
+! 32
+| align="center"| 51
+| {{flagicon|USA}} [[Jacob Abel (racing driver)|Jacob Abel]] {{Color box|orange|R|border=silver}}
+| [[Abel Motorsports]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|228.169|mph|disp=tablecen}}
+|-
+! 33
+| align="center"| 77
+| {{flagicon|USA}} [[Sting Ray Robb]]
+| [[Juncos Hollinger Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|226.572|mph|disp=tablecen}}
+|-
+! colspan=7| [http://www.imscdn.com/INDYCAR/Documents/5526/6840/indycar-results-quals-day1.pdf Official Report]
+|}
+*{{ref|ref1|1}} The times set by Caio Collet and Jack Harvey were later disallowed due to technical infringements on both cars.
+====Top 12 qualifying====
+*'''Summary''': The Top 12 session began just before 4:30 p.m. Drivers qualified in reverse order of how they had qualified in the previous full field session. [[Felix Rosenqvist]] was fastest in the Top 12 session at {{convert|232.065|mph|kph|abbr=on}}. [[Álex Palou]] greatly improved from his first run, and was second fastest in the Top 12 session. [[David Malukas]], [[Santino Ferrucci]], [[Pato O'Ward]], and [[Alexander Rossi]] concluded the top six, with all advancing to the final Fast Six session. {{cite web|url=https://www.motorsport.com/indycar/news/alex-palou-delivers-crushing-final-run-to-claim-indy-500-pole-at-indianapolis/10821792/|title=Alex Palou delivers crushing final run to claim Indy 500 pole, Rossi second |first=Joey|last=Barnes|date=May 17, 2026|accessdate=May 17, 2026|website=motorsport.com}}
+{| class="wikitable" style="font-size:95%;"
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Four-Lap Average Speed (mph)}} !! {{abbr|Speed (km/h)|Four-Lap Average Speed (km/h)}}
+|-
+! colspan=7 | Fast Six qualifiers
+|-
+! 1
+| align="center"| 60
+| {{flagicon|SWE}} [[Felix Rosenqvist]]
+| [[Meyer Shank Racing]] w/ [[Curb Agajanian Performance Group|Curb-Agajanian]]
+| [[Honda Indy V6|Honda]]
+| {{convert|232.065|mph|disp=tablecen}}
+|-
+! 2
+| align="center"| 10
+| {{flagicon|ESP}} [[Álex Palou]] {{Color box|Gold|W|border=silver}}
+| [[Chip Ganassi Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|231.665|mph|disp=tablecen}}
+|-
+! 3
+| align="center"| 12
+| {{flagicon|USA}} [[David Malukas]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.486|mph|disp=tablecen}}
+|-
+! 4
+| align="center"| 14
+| {{flagicon|USA}} [[Santino Ferrucci]]
+| [[A. J. Foyt Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.098|mph|disp=tablecen}}
+|-
+! 5
+| align="center"| 5
+| {{flagicon|MEX}} [[Pato O'Ward]]
+| [[Arrow McLaren]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.088|mph|disp=tablecen}}
+|-
+! 6
+| align="center"| 20
+| {{flagicon|USA}} [[Alexander Rossi]] {{Color box|Gold|W|border=silver}}
+| [[Ed Carpenter Racing|ECR]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.005|mph|disp=tablecen}}
+|-
+! colspan=7 | Positions 7–12
+|-
+! 7
+| align="center"| 8
+| {{flagicon|CAY}} [[Kyffin Simpson]]
+| [[Chip Ganassi Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|230.883|mph|disp=tablecen}}
+|-
+! 8
+| align="center"| 23
+| {{flagicon|USA}} [[Conor Daly]]
+| [[Dreyer & Reinbold Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.712|mph|disp=tablecen}}
+|-
+! 9
+| align="center"| 3
+| {{flagicon|NZL}} [[Scott McLaughlin]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.577|mph|disp=tablecen}}
+|-
+! 10
+| align="center"| 4
+| {{flagicon|BRA}} [[Caio Collet]] {{Color box|orange|R|border=silver}}
+| [[A. J. Foyt Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.539|mph|disp=tablecen}}{{ref|ref1|1}}
+|-
+! 11
+| align="center"| 9
+| {{flagicon|NZL}} [[Scott Dixon]] {{Color box|Gold|W|border=silver}}
+| [[Chip Ganassi Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|230.347|mph|disp=tablecen}}
+|-
+! 12
+| align="center"| 76
+| {{flagicon|NLD}} [[Rinus VeeKay]]
+| [[Juncos Hollinger Racing]] w/ [[Dreyer & Reinbold Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|229.585|mph|disp=tablecen}}
+|-
+! colspan=7| [http://www.imscdn.com/INDYCAR/Documents/5526/6838/indycar-results-quals-poleday-top12.pdf Official Report]
+|}
+*{{ref|ref1|1}} The time set by Caio Collet was later disallowed due to a technical infringement on his car.
+====Fast Six Qualifying====
+*'''Summary''': The Fast Six session began at 6:00 p.m. Drivers qualified in reverse order of their results from the Top 12 session. [[Álex Palou]] qualified on pole position with a four-lap average of {{convert|232.248|mph|kph|abbr=on}}. It was Palou's second pole qualification at the Indianapolis 500. [[Alexander Rossi]] qualified second, securing his first front-row start since 2017, while [[David Malukas]] earned his first front row start with the third fastest time. Despite being fastest in both of the first two session, [[Felix Rosenqvist]] was unable to find the speed to challenge for pole, and was only fourth fastest.
+{| class="wikitable" style="font-size:95%;"
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Four-Lap Average Speed (mph)}} !! {{abbr|Speed (km/h)|Four-Lap Average Speed (km/h)}}
+|-
+! colspan=7 | Positions 1–6
+|-
+! 1
+| align="center"| 10
+| {{flagicon|ESP}} [[Álex Palou]] {{Color box|Gold|W|border=silver}}
+| [[Chip Ganassi Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|232.248|mph|disp=tablecen}}
+|-
+! 2
+| align="center"| 20
+| {{flagicon|USA}} [[Alexander Rossi]] {{Color box|Gold|W|border=silver}}
+| [[Ed Carpenter Racing|ECR]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.990|mph|disp=tablecen}}
+|-
+! 3
+| align="center"| 12
+| {{flagicon|USA}} [[David Malukas]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|231.877|mph|disp=tablecen}}
+|-
+! 4
+| align="center"| 60
+| {{flagicon|SWE}} [[Felix Rosenqvist]]
+| [[Meyer Shank Racing]] w/ [[Curb Agajanian Performance Group|Curb-Agajanian]]
+| [[Honda Indy V6|Honda]]
+| {{convert|231.375|mph|disp=tablecen}}
+|-
+! 5
+| align="center"| 14
+| {{flagicon|USA}} [[Santino Ferrucci]]
+| [[A. J. Foyt Racing]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.846|mph|disp=tablecen}}
+|-
+! 6
+| align="center"| 5
+| {{flagicon|MEX}} [[Pato O'Ward]]
+| [[Arrow McLaren]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|230.442|mph|disp=tablecen}}
+|-
+! colspan=7| [http://www.imscdn.com/INDYCAR/Documents/5526/6836/indycar-results-quals-poleday-fast6.pdf Official Report]
+|}
+===Post-qualifying penalties===
+Hours after qualifying ended, Indycar announced that the cars of [[Caio Collet]] and [[Jack Harvey (racing driver)|Jack Harvey]] had failed technical inspection due to using unapproved hardware for the Dallara-supplied energy management system. Both entries had their qualifying times disallowed, and were moved to the rear of the starting grid. {{cite web|url=https://www.motorsport.com/indycar/news/indycar-disallows-qualifying-times-of-collet-and-harvey-after-inspection-failures/10821809/|title=IndyCar penalizes Collet and Harvey after Indy 500 inspection failures|first=Nick|last=DeGroot|date=May 17, 2026|accessdate=May 17, 2026|website=Motorsport|archive-date=May 19, 2026|archive-url=https://web.archive.org/web/20260519022414/https://www.motorsport.com/indycar/news/indycar-disallows-qualifying-times-of-collet-and-harvey-after-inspection-failures/10821809/|url-status=live}}
+==Post-qualifying practice==
+===Post-qualifying practice — Monday May 18===
+*'''Weather''': {{convert|81|°F|0}}; Mostly cloudy turning to thunderstorms late
+*'''Summary''': A two-hour session was scheduled from 1 p.m. to 3 p.m. At 1:29 p.m., the first major incident of the month occurred. [[Alexander Rossi]] lost control and spun in turn two, and made heavy contact with the outside wall. [[Pato O'Ward]] spun in avoidance, but collided with Rossi's car. Behind them, [[Romain Grosjean]] lost control of his car while trying to slow for the incident, and also impacted the wall. All three drivers climbed from their cars under their own power, but Rossi was held for extended evaluation at the infield care center and was later transported to [[Indiana University Health Methodist Hospital|IU Methodist Hospital]] for further evaluation. {{cite web|url=https://racer.com/2026/05/18/rossi-crashes-hard-in-indy-500-practice-o-ward-and-grosjean-also-involved|title=Rossi crashes hard in Indy 500 practice; O'Ward and Grosjean also involved|first=Marshall|last=Pruett|date=May 18, 2026|accessdate=May 18, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} Rossi was released later that night with finger and ankle injuries. He was not immediately cleared to drive again, but still intended to drive on Carb Day and race day. {{cite web|url=https://www.motorsport.com/indycar/news/alexander-rossi-indy-500-crash-update-minor-injuries-finger-ankle/10822083/|title=Alexander Rossi suffered minor injuries to finger and ankle, still aims to race Indy 500 |first=Joey|last=Barnes|date=May 18, 2026|accessdate=May 18, 2026|website=Motorsport.com}} After cleanup, the session was resumed, but ultimately ended at 2:06 p.m. due to thunderstorms. [[Josef Newgarden]] was fastest in the session, running a lap at {{convert|226.198|mph|kph|abbr=on}}. {{cite web|url=https://racer.com/2026/05/18/newgarden-tops-shortened-indy-500-monday-practice|title=Newgarden tops shortened Indy 500 Monday practice|first=Marshall|last=Pruett|date=May 18, 2026|accessdate=May 18, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+{| class="wikitable" style="font-size:95%;"
+|-
+|+ Top practice speeds
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Best Single Lap Speed (mph)}} !! {{abbr|Speed (km/h)|Best Single Lap Speed (km/h)}}
+|-
+| style="text-align:center;"|'''1'''
+| style="text-align:center;" | 2
+| {{flagicon|USA}} [[Josef Newgarden]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|226.198|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''2'''
+| style="text-align:center;" | 75
+| {{flagicon|JPN}} [[Takuma Sato]]
+| [[Rahal Letterman Lanigan Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|225.723|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''3'''
+| style="text-align:center;" | 19
+| {{flagicon|NOR}} [[Dennis Hauger]] {{Color box|orange|R|border=silver}}
+| [[Dale Coyne Racing]]
+| [[Honda Indy V6|Honda]]
+| {{convert|225.554|mph|disp=tablecen}}
+|-
+!colspan=7| [http://www.imscdn.com/INDYCAR/Documents/5526/6841/indycar-results-p7.pdf Official Report]
+|}
+===Carb Day practice – Friday May 22===
+*'''Weather''': {{convert|67|°F|0}} Cloudy, light rain
+*'''Summary''': The two-hour final practice session was scheduled for 11 a.m. to 1 p.m. All 33 cars participated, including [[Alexander Rossi]], who was cleared to drive after his crash on Monday. The field completed 2,169 laps without incident. Josef Newgarden, turned the fastest lap, while [[Scott Dixon]] completed the most laps (96). Despite rain in the forecast, the entire two-hour session was run to completion. Only one yellow occurred, when [[Marcus Ericsson]] was slow on the course with a loose rear wheel. Ericsson's car was wheeled back to the garage area, but he was able to return to the track later in the session. {{Cite web |last=Kelly |first=Paul |date=22 May 2026 |title=Josef Newgarden Paces Final '500' Practice on Miller Lite Carb Day |url=https://www.indycar.com/news/2026/05/05-22-carbday-practice-ic |access-date=26 May 2026 |website=Indycar |archive-date=May 26, 2026 |archive-url=https://web.archive.org/web/20260526150339/https://www.indycar.com/news/2026/05/05-22-carbday-practice-ic |url-status=live }}
+{| class="wikitable" style="font-size:95%;"
+|-
+|+ Top practice speeds
+|-
+! {{abbr|Pos|Position}} !! {{abbr|No.|Car Number}} !! Driver !! Team !! Engine !! {{abbr|Speed (mph)|Best Single Lap Speed (mph)}} !! {{abbr|Speed (km/h)|Best Single Lap Speed (km/h)}}
+|-
+| style="text-align:center;"|'''1'''
+| style="text-align:center;" | 2
+| {{flagicon|USA}} [[Josef Newgarden]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|228.342|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''2'''
+| style="text-align:center;" | 21
+| {{flagicon|DEN}} [[Christian Rasmussen (racing driver)|Christian Rasmussen]]
+| [[Ed Carpenter Racing|ECR]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|227.474|mph|disp=tablecen}}
+|-
+| style="text-align:center;"|'''3'''
+| style="text-align:center;" | 12
+| {{flagicon|USA}} [[David Malukas]]
+| [[Team Penske]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| {{convert|226.565|mph|disp=tablecen}}
+|-
+!colspan=7| [http://www.imscdn.com/INDYCAR/Documents/5526/6849/indycar-results-pf.pdf Official Report]
+|}
+==Carb Day events==
+===Wienie 500===
+The second annual Wienie 500 was held as part of Carb Day festivities. Six [[Oscar Mayer]] [[Wienermobile]]s, each representing a different regional [[hot dog]] [[Hot dog variations|variation]], took part in a two-lap, 5-mile race from a standing start. For the 2026 event, [[Sonoran hot dog|Sonoran Dog]] was replaced by [[Corn dog|Corn Dog]]. {{Cite news |last=Goldstein |first=Steven Louis |date=May 22, 2026 |title=What is the Wienie 500? A guide to watching the hot dog race at Indianapolis Motor Speedway |url=https://www.nytimes.com/athletic/7295585/2026/05/22/oscar-mayer-wienie-race-indy-500-how-to-watch/ |access-date=May 23, 2026 |work=[[The New York Times]] |department=[[The Athletic]] |issn=0362-4331}} [[Andy Richter]] served as the "Commander in Beef" and gave the command to start engines. {{Cite news |last=Adams |first=Matt |date=May 20, 2026 |title=Andy Richter named 'Commander in Beef' of Wienie 500 |url=https://fox59.com/news/indy-500-sports/andy-richter-named-commander-in-beef-of-wienie-500/ |access-date=May 23, 2026 |work=[[WXIN]] }}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+The #01 Chicago Dog took the lead at the start and led into turn one. As the field exited turn two and started down the backstretch, Chicago Dog threw a hard block on the #05 Seattle Dog, forcing it to the inside apron. The #03 Slaw Dog took the lead going into turn three, and led the first lap. Down the backstretch on lap 2, Chili Dog, Chicago Dog, and New York Dog went three-wide. The #02 New York Dog emerged as the leader. Down the frontstretch, Chili Dog attempted a slingshot pass on the outside, but came up short. New York Dog held on to win by about {{frac|3|4}} length. {{cite web|url=https://www.indystar.com/story/sports/motor/indy-500/2026/05/22/wienie-500-won-by-new-york-dog-on-carb-day-at-ims/90217122007/?gnt-cfr=1&gca-cat=p&gca-uir=true&gca-epti=z115529p003850l001650c003850e1145xxv115529d--67--b--67--&gca-ft=164&gca-ds=sophi|title=Boos rain down as New York Dog wins second Wienie 500 during Carb Day|first=Jessica|last=Garcete|date=May 22, 2026|accessdate=May 26, 2026|website=[[Indianapolis Star]]}}
+{|class="wikitable" style="font-size:95%;"
+|-
+! Finish !! Grid !! {{abbr|No.|Car Number}} !! Team !! Region !! Laps
+|-
+!1
+|align=center| 5
+|align=center| 02
+| [[Hot dog variations#New York|New York Dog]] (red)
+| [[Northeastern United States|East]]
+|align=center| 2
+|-
+!2
+|align=center| 4
+|align=center| 06
+| [[Chili dog|Chili Dog]] (brown)
+| [[West South Central states|South]]
+|align=center| 2
+|-
+!3
+|align=center| 1
+|align=center| 03
+| [[Coleslaw|Slaw Dog]] (purple)
+| [[Southeastern United States|Southeast]]
+|align=center| 2
+|-
+!4
+|align=center| 2
+|align=center| 01
+| [[Chicago-style hot dog|Chicago Dog]] (yellow)
+| [[Midwestern United States|Midwest]]
+|align=center| 2
+|-
+!5
+|align=center| 3
+|align=center| 05
+| [[Seattle-style hot dog|Seattle Dog]] (blue)
+| [[Northwestern United States|Northwest]]
+|align=center| 2
+|-
+!6
+|align=center| 6
+|align=center| 04
+| [[Corn dog|Corn Dog]] (tan)
+| [[United States|Nationwide]]
+|align=center| 2
+|}
+===Pit Stop Challenge===
+The 47th annual [[Pit Stop Challenge]] was scheduled for Friday May 22, after the completion of Carb Day practice. For 2026, the event once again picked up sponsorship from [[Oscar Mayer]] and was officially the "Oscar Mayer $150,000 Pit Stop Challenge" for sponsorship reasons. The bracket was expanded back to 16 participants (with no byes), up from 14 the previous two years. The eligibility for participation in the event was as follows: {{cite web|url=https://racer.com/2026/06/02/the-racer-mailbag-june-3/2|title=The RACER Mailbag, June 3|website=Racer.com|publisher=[[Racer (magazine)|Racer Media & Marketing, Inc.]]|first=Marshall|last=Pruett|date=June 3, 2026|access-date=June 3, 2026}} {{Dead link|date=October 2026 |bot=InternetArchiveBot }}
+*Best average finish of the top five in each race's pit stop performance ([[2025 Indianapolis 500]] through the [[2026 Sonsio Grand Prix]]).
+*Each full-time team is permitted to enter their highest-ranked entrant.
+*Indy-only teams.
+*Full-time teams may be invited to enter their next highest-ranked entrant.
+The final round was scheduled to be a best-of-three series, for a $50,000 first prize. After five of the first-round matchups were completed, a light rain began to fall. The competition was halted to wait out the shower, but the rain began to fall harder, and the event was cancelled; it was the first Pit Stop Challenge to be cancelled due to rain since [[2008 Indianapolis 500|2008]]. {{cite web|url=https://racer.com/2026/05/22/rain-brings-early-end-to-indy-500-pit-stop-challenge|title=Rain brings early end to Indy 500 Pit Stop Challenge|first=David|last=Malsher-Lopez|date=May 22, 2026|accessdate=May 26, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+{{4RoundBracket-Byes
+| RD1=Round 1
+| RD2=Quarterfinals
+| RD3=Semifinals
+| RD4=Finals ''(best of 3)''
+| legs=1/1/1/3
+| aggregate=y
+| seeds=y
+| RD1-seed01=10
+| RD1-team01=[[Álex Palou]]
+''([[Chip Ganassi Racing]])''
+| RD1-score01=16.450
+| RD1-seed02='''31'''
+| RD1-team02='''[[Ryan Hunter-Reay]]'''
+''([[Arrow McLaren]])''
+| RD1-score02='''12.9893'''
+| RD1-seed03=9
+| RD1-team03=[[Scott Dixon]]
+''([[Chip Ganassi Racing]])''
+| RD1-score03=
+| RD1-seed04='''2'''
+| RD1-team04='''[[Josef Newgarden]]'''
+''([[Team Penske]])''
+| RD1-score04=
+| RD1-seed05='''28'''
+| RD1-team05='''[[Marcus Ericsson]]'''
+''([[Andretti Global]])''
+| RD1-score05='''13.1943'''
+| RD1-seed06=12
+| RD1-team06=[[David Malukas]]
+''([[Team Penske]])''
+| RD1-score06=14.2027
+| RD1-seed07='''76'''
+| RD1-team07='''[[Rinus VeeKay]]'''
+''([[Juncos Hollinger Racing|Juncos Hollinger]])''
+| RD1-score07=12.3747
+| RD1-seed08=18
+| RD1-team08=[[Romain Grosjean]]
+''([[Dale Coyne Racing]])''
+| RD1-score08=14.0550
+| RD1-seed09='''5'''
+| RD1-team09='''[[Pato O'Ward]]'''
+''([[Arrow McLaren]])''
+| RD1-score09='''13.296'''
+| RD1-seed10=26
+| RD1-team10=[[Will Power]]
+''([[Andretti Global]])''
+| RD1-score10=24.274
+| RD1-seed11=19
+| RD1-team11=[[Dennis Hauger]]
+''([[Dale Coyne Racing]])''
+| RD1-score11=
+| RD1-seed12=47
+| RD1-team12=[[Mick Schumacher]]
+''[[Rahal Letterman Lanigan Racing|Rahal Letterman]])''
+| RD1-score12=
+| RD1-seed13=15
+| RD1-team13=[[Graham Rahal]]
+''[[Rahal Letterman Lanigan Racing|Rahal Letterman]])''
+| RD1-score13=
+| RD1-seed14=45
+| RD1-team14=[[Louis Foster]]
+''[[Rahal Letterman Lanigan Racing|Rahal Letterman]])''
+| RD1-score14=
+| RD1-seed15=21
+| RD1-team15='''[[Christian Rasmussen (racing driver)|Christian Rasmussen]]'''
+''([[Ed Carpenter Racing|ERC]])''
+| RD1-score15=
+| RD1-seed16=7
+| RD1-team16=[[Christian Lundgaard]]
+''([[Arrow McLaren]])''
+| RD1-score16=
+| RD2-seed01=31
+| RD2-team01=[[Ryan Hunter-Reay]]
+''([[Arrow McLaren]])''
+| RD2-score01=
+| RD2-seed02=2
+| RD2-team02=[[Josef Newgarden]]
+''([[Team Penske]])''
+| RD2-score02=
+| RD2-seed03=28
+| RD2-team03=[[Marcus Ericsson]]
+''([[Andretti Global]])''
+| RD2-score03=
+| RD2-seed04=76
+| RD2-team04=[[Rinus VeeKay]]
+''([[Juncos Hollinger Racing|Juncos Hollinger]])''
+| RD2-score04=
+| RD2-seed05=5
+| RD2-team05=[[Pato O'Ward]]
+''([[Arrow McLaren]])''
+| RD2-score05=
+| RD2-seed06=
+| RD2-team06=
+| RD2-score06=
+| RD2-seed07=
+| RD2-team07=
+| RD2-score07=
+| RD2-seed08=
+| RD2-team08=
+| RD2-score08=
+| RD3-seed01=
+| RD3-team01=
+| RD3-score01=
+| RD3-seed02=
+| RD3-team02=
+| RD3-score02=
+| RD3-seed03=
+| RD3-team03=
+| RD3-score03=
+| RD3-seed04=
+| RD3-team04=
+| RD3-score04=
+| RD4-seed01=
+| RD4-team01=
+| RD4-score01-1=
+| RD4-score01-2=
+| RD4-score01-3=
+| RD4-score01-agg=
+| RD4-seed02=
+| RD4-team02=
+| RD4-score02-1=
+| RD4-score02-2=
+| RD4-score02-3=
+| RD4-score02-agg=
+}}
+*Source: {{cite web|url=https://www.indianapolismotorspeedway.com/events/indy500/event-info/pit-stop-challenge|title=Oscar Mayer $150,000 Pit Stop Challenge Bracket|publisher=IndianapolisMotorSpeedway.com|access-date=May 28, 2026}}
+== Starting grid ==
+{| class="wikitable" style="font-size: 90%;"
+!Row
+!colspan=2 width="195"|Inside
+!colspan=2 width="195"|Middle
+!colspan=2 width="195"|Outside
+|-
+|-
+! 1
+|align="center" width="20"| '''10'''
+| {{flagicon|ESP}} [[Álex Palou]] {{Color box|Gold|W|border=silver}}
+|align="center" width="20"| '''20'''
+| {{flagicon|USA}} [[Alexander Rossi]] {{Color box|Gold|W|border=silver}}
+|align="center" width="20"| '''12'''
+| {{flagicon|USA}} [[David Malukas]]
+|-
+! 2
+|align="center" width="20"| '''60'''
+| {{flagicon|SWE}} [[Felix Rosenqvist]]
+|align="center" width="20"| '''14'''
+| {{flagicon|USA}} [[Santino Ferrucci]]
+|align="center" width="20"| '''5'''
+| {{flagicon|MEX}} [[Pato O'Ward]]
+|-
+! 3
+|align="center" width="20"| '''8'''
+| {{flagicon|CAY}} [[Kyffin Simpson]]
+|align="center" width="20"| '''23'''
+| {{flagicon|USA}} [[Conor Daly]]
+|align="center" width="20"| '''3'''
+| {{flagicon|NZL}} [[Scott McLaughlin]]
+|-
+! 4
+|align="center" width="20"| '''9'''
+| {{flagicon|NZL}} [[Scott Dixon]] {{Color box|Gold|W|border=silver}}
+|align="center" width="20"| '''76'''
+| {{flagicon|NLD}} [[Rinus VeeKay]]
+|align="center" width="20"| '''75'''
+| {{flagicon|JPN}} [[Takuma Sato]] {{Color box|Gold|W|border=silver}}
+|-
+! 5
+|align="center" width="20"| '''33'''
+| {{flagicon|USA}} [[Ed Carpenter (racing driver)|Ed Carpenter]]
+|align="center" width="20"| '''06'''
+| {{flagicon|BRA}} [[Hélio Castroneves]] {{Color box|Gold|W|border=silver}}
+|align="center" width="20"| '''21'''
+| {{flagicon|DEN}} [[Christian Rasmussen (racing driver)|Christian Rasmussen]]
+|-
+! 6
+|align="center" width="20"| '''66'''
+| {{flagicon|NZL}} [[Marcus Armstrong]]
+|align="center" width="20"| '''28'''
+| {{flagicon|SWE}} [[Marcus Ericsson]] {{Color box|Gold|W|border=silver}}
+|align="center" width="20"| '''7'''
+| {{flagicon|DEN}} [[Christian Lundgaard]]
+|-
+! 7
+|align="center" width="20"| '''26'''
+| {{flagicon|AUS}} [[Will Power]] {{Color box|Gold|W|border=silver}}
+|align="center" width="20"| '''6'''
+| {{flagicon|USA}} [[Nolan Siegel]]
+|align="center" width="20"| '''45'''
+| {{flagicon|GBR}} [[Louis Foster]]
+|-
+! 8
+|align="center" width="20"| '''31'''
+| {{flagicon|USA}} [[Ryan Hunter-Reay]] {{Color box|Gold|W|border=silver}}
+|align="center" width="20"| '''2'''
+| {{flagicon|USA}} [[Josef Newgarden]] {{Color box|Gold|W|border=silver}}
+|align="center" width="20"| '''18'''
+| {{flagicon|FRA}} [[Romain Grosjean]]
+|-
+! 9
+|align="center" width="20"| '''27'''
+| {{flagicon|USA}} [[Kyle Kirkwood]]
+|align="center" width="20"|'''11'''
+| {{flagicon|GBR}} [[Katherine Legge]]
+|align="center" width="20"| '''47'''
+| {{flagicon|DEU}} [[Mick Schumacher]] {{Color box|orange|R|border=silver}}
+|-
+! 10
+|align="center" width="20"| '''15'''
+| {{flagicon|USA}} [[Graham Rahal]]
+|align="center" width="20"| '''19'''
+| {{flagicon|NOR}} [[Dennis Hauger]] {{Color box|orange|R|border=silver}}
+|align="center" width="20"| '''51'''
+| {{flagicon|USA}} [[Jacob Abel (racing driver)|Jacob Abel]] {{Color box|orange|R|border=silver}}
+|-
+! 11
+|align="center" width="20"| '''77'''
+| {{flagicon|USA}} [[Sting Ray Robb]]
+|style="background:NavajoWhite" align="center" width="20"| '''4'''
+|style="background:NavajoWhite" | {{flagicon|BRA}} [[Caio Collet]] {{Color box|orange|R|border=silver}}
+|style="background:NavajoWhite" align="center" width="20"| '''24'''
+|style="background:NavajoWhite" | {{flagicon|GBR}} [[Jack Harvey (racing driver)|Jack Harvey]]
+|}
+{{legend|NavajoWhite|[[Caio Collet]] (10th) and [[Jack Harvey (racing driver)|Jack Harvey]] (29th) were moved to the rear of the grid due to technical infractions found during post-qualifying inspection.}}
+{{legend|orange|text=R|Indianapolis 500 rookie|border=solid 1px darkgray}}
+{{legend|gold|text=W|Indianapolis 500 winner|border=solid 1px darkgray}}
+==Race report==
+*Weather {{convert|72|°F|0}}, Cloudy with occasional light rain.
+===First half===
+At the start of the race, [[Alexander Rossi]] moved in to the lead ahead of pole sitter [[Álex Palou]]. The two then exchanged the lead between themselves for the opening several laps. {{cite web|url=https://www.motorsport.com/indycar/news/felix-rosenqvist-wins-2026-indy-500-in-closest-ever-finish/10823901/|title=Felix Rosenqvist wins 2026 Indy 500 in closest-ever finish |first=Joey|last=Barnes|date=May 24, 2026|accessdate=May 24, 2026|website=Motorsport.com}} At lap 18, the Fox broadcast did a silent lap for Kyle Busch, but it was interrupted by the first caution of the race when [[Ryan Hunter-Reay]] spun in turn two and made contact with the wall. [[Katherine Legge]] also spun to try to avoid Hunter-Reay and impacted the inside wall on the backstraight. {{cite web|url=https://racer.com/2026/05/24/hunter-reay-legge-first-out-at-indy-after-early-incident|title=Hunter-Reay, Legge first out at Indy after early incident|first=Marshall|last=Pruett|date=May 24, 2026|accessdate=May 24, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} During the yellow, most of the field made their first pit stops. Palou emerged first of those that pitted, while Rossi suffered a slow pitstop and dropped farther down in the running order. [[Rinus VeeKay]], [[Romain Grosjean]], and [[Caio Collet]] did not pit, and moved to the lead of the race. Racing resumed at lap 26, with Grosjean moving to the lead of the race. Behind them, [[Ed Carpenter (racing driver)|Ed Carpenter]] lost control of his car in turn one after being three-wide with [[Takuma Sato]], resulting in him impacting the outside wall and bringing out the race's second caution period.
+Racing resumed at lap 31, with Collet briefly taking the lead before those that had not stopped at the first caution needed to pit. Palou moved back in to the lead, and began to cycle with [[Conor Daly]]. At the next round of stops, [[Felix Rosenqvist]] moved in to second place, while Palou held the lead. A few laps later, [[Scott Dixon]] passed Rosenqvist for second, and Palou and Dixon began to exchange the lead between each other, working as teammates to try to hold the lead. At lap 92, the third caution of the race came as [[Will Power]] suffered a mechanical failure and spun on the pit lane exit lane on the fluid left by the car. Power did not make contact with any walls, but was out of the race. {{cite web|url=https://speedcafe.com/indycar-news-2026-indy-500-will-power-andretti-global-issue-gearbox-failure-video-comments-reaction-details/|title='Blew up': Sudden failure ends Will Power's Indy 500|first=Simon|last=Chapman|date=May 25, 2026|accessdate=May 25, 2026|website=Speedcafe|archive-date=May 25, 2026|archive-url=https://web.archive.org/web/20260525032051/https://speedcafe.com/indycar-news-2026-indy-500-will-power-andretti-global-issue-gearbox-failure-video-comments-reaction-details/|url-status=live}} At the same time as the caution came, [[Alexander Rossi]] came to a stop on pit lane with the car briefly catching fire. Rossi was also out of the race. The entire field made pit stops during the caution period, with Dixon emerging in the lead ahead of Palou and [[Josef Newgarden]], while [[David Malukas]] was fourth. The caution period was extended due to small amounts of rain at the north end of the track. At lap 105, the [[List of red-flagged IndyCar Series races|race was briefly stopped]] to allow the rain to pass.
+===Second half===
+Once the rain passed, the race resumed under yellow. The green flag was shown again at lap 110, with Palou and Malukas jumping ahead of Dixon at the restart. [[Conor Daly]] moved up to third position, while Palou and Malukas exchanged the lead ahead. At lap 116, the caution came out again for a brief rain shower, but no race stoppage was needed. Racing resumed at lap 124, but almost immediately the caution was needed again, as [[Josef Newgarden]] spun in turn four and heavily impacted the outside wall. {{cite web|url=https://racer.com/2026/05/24/newgarden-s-indy-500-charge-ends-with-restart-crash|title=Newgarden's Indy 500 charge ends with restart crash|first=Marshall|last=Pruett|date=May 24, 2026|accessdate=May 24, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }} During this caution, several drivers elected to pit, most notably [[Felix Rosenqvist]], [[Pato O'Ward]], and [[Marcus Armstrong]], which put them on an alternate strategy to the other leaders.
+Racing resumed at lap 132, with the leaders going four-wide in to turn one passing Malukas. Conor Daly emerged as the leader, with [[Scott McLaughlin]] and Palou behind. Both McLaughlin and Palou passed Daly later and began to exchange the lead, but at lap 147 Malukas moved his way back in to the lead. Soon after, all leaders pitted, which moved Rosenqvist and O'Ward on the alternate strategy to the lead. O'Ward and Rosenqvist pitted with 36 and 34 laps to go respectively, handing the lead back to the battling Malukas and Palou, but eliminating their final pit stops while Malukas and Palou would still need to pit. Beginning at lap 175, the leading cars of the primary strategy pitted, giving the lead initially to O'Ward, but on lap 185 Rosenqvist moved in to the lead and began pulling away, while Malukas and Palou remained over 16 seconds behind after their final stops. {{cite web|url=https://racer.com/2026/05/24/rosenqvist-storms-through-last-lap-shootout-to-claim-indy-500-glory|title=Rosenqvist storms through last-lap shootout to claim Indianapolis 500 glory|first=David|last=Malsher-Lopez|date=May 24, 2026|accessdate=May 24, 2026|website=Racer}}{{Dead link|date=August 2026 |bot=InternetArchiveBot }}
+====Finish====
+[[File:Rosenqvist passes Malukas at 2026 Indy 500.jpg|thumb|[[Felix Rosenqvist]] (no. 60) passing [[David Malukas]] on the final straightaway to take victory.]]
+On lap 192, the sixth caution of the race came as [[Caio Collet]] collided with the outside wall in turn two. IndyCar officials chose to stop the race to allow Collet's car to be removed and attempt to ensure a green-flag finish. After clearing Collet's car, the race resumed under caution. On lap 196, the green flag came out again, with [[Marcus Armstrong]], who had been running third on the same strategy as Rosenqvist, moving in to the lead, while [[David Malukas]] moved in the second ahead of Rosenqvist. Behind them, [[Mick Schumacher]] drifted wide in turn one and brushed the outside wall, bringing out the race's seventh and final caution. Schumacher's car was not severely damaged and he continued driving, allowing IndyCar to clear the track quickly and have a one-lap shootout to finish. The green and white came out on lap 200, with Malukas jumping to the lead, while Rosenqvist ran around the outside of Armstrong. Rosenqvist and Armstrong remained side-by-side through the whole lap until turn four, when Rosenqvist moved ahead. Despite having been side-by-side, Rosenqvist was still able to generate a run on Malukas, and in a photo-finish Rosenqvist pushed ahead to take victory. The final margin of victory was 0.0233 seconds, setting a new record for closest finish in Indianapolis 500, surpassing the old mark of 0.043 seconds that had been set in [[1992 Indianapolis 500|1992]]. {{cite web|url=https://www.indycar.com/news/2026/05/05-24-500-race-lead|title=Felix Rosenqvist Wins Epic in Closest-Ever Indianapolis 500 Finish|first=Paul|last=Kelley|date=May 24, 2026|accessdate=May 24, 2026|website=IndyCar|ref=}} The race also saw 70 lead changes, setting a new record for most lead-changes in a single running of the race. For winning, Rosenqvist earned $4.34 million from a record purse of $30,906,400. {{cite web|url=https://www.indycar.com/news/2026/05/05-25-500-purse|title='500' Purse Soars to New Record, Increases by More than 50 Percent|date=May 25, 2026|accessdate=May 25, 2026|website=IndyCar|archive-date=May 25, 2026|archive-url=https://web.archive.org/web/20260525220422/https://www.indycar.com/news/2026/05/05-25-500-purse|url-status=live}} Mick Schumacher was voted [[Indianapolis 500 Rookie of the Year|Rookie of the Year]] for his performance in the race.
+====Post-race penalties====
+During post race technical inspection, the car of [[Álex Palou]] was found to have violated rules regarding maximum height for wing end plates. The team maintained their finishing position in the race, but were penalized five points in both the driver's and owner's championship and also given a $10,000 fine. {{cite web|url=https://www.motorsport.com/indycar/news/indycar-penalizes-alex-palou-and-ganassi-after-indy-500-inspection-failure/10824041/|title=IndyCar penalizes Alex Palou and Ganassi after Indy 500 inspection failure |first=Joey|last=Barnes|date=May 24, 2026|accessdate=May 25, 2026|website=Motorsport.com}}
+==Box score==
+[[File:Felix Rosenqvist Indie500.jpg|thumb|Felix Rosenqvist at the [[Empire State Building]] following his victory]]
+{| class="wikitable"
+!Finish
+!{{abbr|No.|Car Number}}
+!Driver
+!Team
+!Chassis
+!Engine
+!Laps
+!Status
+!Pit
+Stops
+!Grid
+!{{abbr|Pts.|Points}}{{ref|race5|1}}
+|-
+! 1
+| align=center|60
+| {{flagicon|SWE}} [[Felix Rosenqvist]]
+| [[Meyer Shank Racing]] with [[Curb Agajanian Performance Group|Curb-Agajanian]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|200
+| 3:05:09.6471
+| align=center|6
+| align=center|4
+| align=center|60
+|-
+! 2
+| align=center|12
+| {{flagicon|USA}} [[David Malukas]]
+| [[Team Penske]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|200
+| +0.0233
+| align=center|6
+| align=center|3
+| align=center|51
+|-
+! 3
+| align=center|3
+| {{flagicon|NZL}} [[Scott McLaughlin]]
+| [[Team Penske]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|200
+| +0.4205
+| align=center|6
+| align=center|9
+| align=center|40
+|-
+! 4
+| align=center|5
+| {{flagicon|MEX}} [[Pato O'Ward]]
+| [[Arrow McLaren]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|200
+| +0.4271
+| align=center|6
+| align=center|6
+| align=center|40
+|-
+! 5
+| align=center|66
+| {{flagicon|NZL}} [[Marcus Armstrong]]
+| [[Meyer Shank Racing]] with [[Curb Agajanian Performance Group|Curb-Agajanian]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|200
+| +0.4360
+| align=center|6
+| align=center|16
+| align=center|31
+|-
+! 6
+| align=center|76
+| {{flagicon|NED}} [[Rinus VeeKay]]
+| [[Juncos Hollinger Racing]] with [[Dreyer & Reinbold Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|200
+| +1.0760
+| align=center|6
+| align=center|11
+| align=center|31
+|-
+! 7
+| align=center|10
+| {{flagicon|ESP}} [[Álex Palou]] {{Color box|Gold|W|border=silver}}
+| [[Chip Ganassi Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|200
+| +1.0946
+| align=center|6
+| align=center|1
+| align=center|36
+|-
+! 8
+| align=center|14
+| {{flagicon|USA}} [[Santino Ferrucci]]
+| [[A.J. Foyt Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|200
+| +1.5751
+| align=center|6
+| align=center|5
+| align=center|32
+|-
+! 9
+| align=center|18
+| {{flagicon|FRA}} [[Romain Grosjean]]
+| [[Dale Coyne Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|200
+| +2.0730
+| align=center|8
+| align=center|24
+| align=center|23
+|-
+! 10
+| align=center|75
+| {{flagicon|JPN}} [[Takuma Sato]] {{Color box|Gold|W|border=silver}}
+| [[Rahal Letterman Lanigan Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|200
+| +2.4507
+| align=center|6
+| align=center|12
+| align=center|20
+|-
+! 11
+| align=center|6
+| {{flagicon|USA}} [[Nolan Siegel]]
+| [[Arrow McLaren]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|200
+| +2.6776
+| align=center|6
+| align=center|20
+| align=center|19
+|-
+! 12
+| align=center|23
+| {{flagicon|USA}} [[Conor Daly]]
+| [[Dreyer & Reinbold Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|200
+| +2.7237
+| align=center|6
+| align=center|8
+| align=center|24
+|-
+! 13
+| align=center|28
+| {{flagicon|SWE}} [[Marcus Ericsson]] {{Color box|Gold|W|border=silver}}
+| [[Andretti Global]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|200
+| +3.3215
+| align=center|6
+| align=center|17
+| align=center|17
+|-
+! 14
+| align=center|8
+| {{flagicon|CAY}} [[Kyffin Simpson]]
+| [[Chip Ganassi Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|200
+| +3.8061
+| align=center|6
+| align=center|7
+| align=center|23
+|-
+! 15
+| align=center|9
+| {{flagicon|NZL}} [[Scott Dixon]] {{Color box|Gold|W|border=silver}}
+| [[Chip Ganassi Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|200
+| +3.8431
+| align=center|6
+| align=center|10
+| align=center|19
+|-
+! 16
+| align=center|27
+| {{flagicon|USA}} [[Kyle Kirkwood]]
+| [[Andretti Global]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|200
+| +5.2271
+| align=center|6
+| align=center|25
+| align=center|14
+|-
+! 17
+| align=center|7
+| {{flagicon|DNK}} [[Christian Lundgaard]]
+| [[Arrow McLaren]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|200
+| +6.3017
+| align=center|7
+| align=center|18
+| align=center|13
+|-
+! 18
+| align=center|47
+| {{flagicon|GER}} [[Mick Schumacher]] {{Color box|orange|R|border=silver}}
+| [[Rahal Letterman Lanigan Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|200
+| +14.9305
+| align=center|8
+| align=center|27
+| align=center|12
+|-
+! 19
+| align=center|19
+| {{flagicon|NOR}} [[Dennis Hauger]] {{Color box|orange|R|border=silver}}
+| [[Dale Coyne Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|199
+| -1 Lap
+| align=center|6
+| align=center|29
+| align=center|11
+|-
+! 20
+| align=center|15
+| {{flagicon|USA}} [[Graham Rahal]]
+| [[Rahal Letterman Lanigan Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|199
+| -1 Lap
+| align=center|8
+| align=center|28
+| align=center|10
+|-
+! 21
+| align=center|45
+| {{flagicon|BRI}} [[Louis Foster]]
+| [[Rahal Letterman Lanigan Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|199
+| -1 Lap
+| align=center|6
+| align=center|21
+| align=center|9
+|-
+! 22
+| align=center|24
+| {{flagicon|BRI}} [[Jack Harvey (racing driver)|Jack Harvey]]
+| [[Dreyer & Reinbold Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|199
+| -1 Lap
+| align=center|10
+| align=center|33
+| align=center|8
+|-
+! 23
+| align=center|77
+| {{flagicon|USA}} [[Sting Ray Robb]]
+| [[Juncos Hollinger Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|199
+| -1 Lap
+| align=center|8
+| align=center|31
+| align=center|7
+|-
+! 24
+| align=center|51
+| {{flagicon|USA}} [[Jacob Abel (racing driver)|Jacob Abel]] {{Color box|orange|R|border=silver}}
+| [[Abel Motorsports]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|198
+| -2 Laps
+| align=center|9
+| align=center|30
+| align=center|6
+|-
+! 25
+| align=center|06
+| {{flagicon|BRA}} [[Hélio Castroneves]] {{Color box|Gold|W|border=silver}}
+| [[Meyer Shank Racing]] with [[Curb Agajanian Performance Group|Curb-Agajanian]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|194
+| Mechanical
+| align=center|6
+| align=center|14
+| align=center|5
+|-
+! 26
+| align=center|4
+| {{flagicon|BRA}} [[Caio Collet]] {{Color box|orange|R|border=silver}}
+| [[A.J. Foyt Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|191
+| Contact
+| align=center|5
+| align=center|32
+| align=center|6
+|-
+! 27
+| align=center|21
+| {{flagicon|DNK}} [[Christian Rasmussen (racing driver)|Christian Rasmussen]]
+| [[Ed Carpenter Racing|ECR]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|144
+| Mechanical
+| align=center|6
+| align=center|15
+| align=center|6
+|-
+! 28
+| align=center|2
+| {{flagicon|USA}} [[Josef Newgarden]] {{Color box|Gold|W|border=silver}}
+| [[Team Penske]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|124
+| Contact
+| align=center|3
+| align=center|23
+| align=center|5
+|-
+! 29
+| align=center|26
+| {{flagicon|AUS}} [[Will Power]] {{Color box|Gold|W|border=silver}}
+| [[Andretti Global]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Honda Indy V6|Honda]]
+| align=center|91
+| Mechanical
+| align=center|2
+| align=center|19
+| align=center|5
+|-
+! 30
+| align=center|20
+| {{flagicon|USA}} [[Alexander Rossi]] {{Color box|Gold|W|border=silver}}
+| [[Ed Carpenter Racing|ECR]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|91
+| Mechanical
+| align=center|3
+| align=center|2
+| align=center|17
+|-
+! 31
+| align=center|33
+| {{flagicon|USA}} [[Ed Carpenter (racing driver)|Ed Carpenter]]
+| [[Ed Carpenter Racing|ECR]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|26
+| Contact
+| align=center|1
+| align=center|13
+| align=center|5
+|-
+! 32
+| align=center|31
+| {{flagicon|USA}} [[Ryan Hunter-Reay]] {{Color box|Gold|W|border=silver}}
+| [[Arrow McLaren]] with [[Legacy Motor Club]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|17
+| Contact
+| align=center|0
+| align=center|22
+| align=center|5
+|-
+! 33
+| align=center|11
+| {{flagicon|GBR}} [[Katherine Legge]]
+| [[HMD Motorsports]] with [[A. J. Foyt Racing]]
+| [[Dallara DW12|Dallara UAK18]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| align=center|17
+| Contact
+| align=center|0
+| align=center|26
+| align=center|5
+|-
+! colspan=11| [http://www.imscdn.com/INDYCAR/Documents/5526/6743/indycar-race-results.pdf Box Score]
+|}
+'''{{Color box|gold|W|border=silver}}''' Former Indianapolis 500 winner
+'''{{Color box|orange|R|border=silver}}''' Indianapolis 500 Rookie
+All entrants utilized [[Firestone Tire and Rubber Company|Firestone]] tires.
+*{{ref|race5|1}} Points include qualification points from [[#Time Trials|time trials]], 1 point for leading a lap, and 2 points for most laps led.
+===Race statistics===
+{{col-begin}}
+{{col-break}}
+{| class="wikitable mw-collapsible mw-collapsed"
+!colspan=2|Lap Leaders
+|-
+! Laps
+! Leader
+|-
+| 1 || [[Alexander Rossi]]
+|-
+| 2–4 || [[Álex Palou]]
+|-
+| 5 || Alexander Rossi
+|-
+| 6 || Álex Palou
+|-
+| 7 || Alexander Rossi
+|-
+| 8 || Álex Palou
+|-
+| 9 || Alexander Rossi
+|-
+| 10–11 || Álex Palou
+|-
+| 12 || Alexander Rossi
+|-
+| 13–16 || Álex Palou
+|-
+| 17 || Alexander Rossi
+|-
+| 18–19 || Álex Palou
+|-
+| 20–25 || [[Rinus VeeKay]]
+|-
+| 26 || [[Romain Grosjean]]
+|-
+| 27–28 || Rinus VeeKay
+|-
+| 29–30 || Romain Grosjean
+|-
+| 31–39 || [[Caio Collet]]
+|-
+| 40 || [[Conor Daly]]
+|-
+| 41–61 || Álex Palou
+|-
+| 62 || [[Scott Dixon]]
+|-
+| 63–65 || [[Christian Rasmussen (racing driver)|Christian Rasmussen]]
+|-
+| 66–68 || Álex Palou
+|-
+| 69 || Scott Dixon
+|-
+| 70–71 || Álex Palou
+|-
+| 72 || Scott Dixon
+|-
+| 73 || Álex Palou
+|-
+| 74 || Scott Dixon
+|-
+| 75 || Álex Palou
+|-
+| 76 || Scott Dixon
+|-
+| 77 || Álex Palou
+|-
+| 78 || Scott Dixon
+|-
+| 79 || Álex Palou
+|-
+| 80 || Scott Dixon
+|-
+| 81 || Álex Palou
+|-
+| 82 || Scott Dixon
+|-
+| 83 || Álex Palou
+|-
+| 84 || Scott Dixon
+|-
+| 85 || Álex Palou
+|-
+| 86 || Scott Dixon
+|-
+| 87 || Álex Palou
+|-
+| 88 || Scott Dixon
+|-
+| 89 || Álex Palou
+|-
+| 90 || Scott Dixon
+|-
+| 91 || Álex Palou
+|-
+| 92–109 || Scott Dixon
+|-
+| 110 || [[David Malukas]]
+|-
+| 111 || Álex Palou
+|-
+| 112 || David Malukas
+|-
+| 113 || Álex Palou
+|-
+| 114–131 || David Malukas
+|-
+| 132–133 || Conor Daly
+|-
+| 134 || [[Scott McLaughlin]]
+|-
+| 135 || Álex Palou
+|-
+| 136 || Scott McLaughlin
+|-
+| 137 || Conor Daly
+|-
+| 138–139 || Scott McLaughlin
+|-
+| 140 || Álex Palou
+|-
+| 141 || Scott McLaughin
+|-
+| 142–145 || Álex Palou
+|-
+| 146 || David Malukas
+|-
+| 147 || Álex Palou
+|-
+| 148–149 || Scott Dixon
+|-
+| 150–153 || [[Kyffin Simpson]]
+|-
+| 154–166 || [[Felix Rosenqvist]]
+|-
+| 167–174 || David Malukas
+|-
+| 175 || Álex Palou
+|-
+| 176–184 || [[Pato O'Ward]]
+|-
+| 185–195 || Felix Rosenqvist
+|-
+| 196–198 || [[Marcus Armstrong]]
+|-
+| 199 || David Malukas
+|-
+| 200 || Felix Rosenqvist
+|-
+!colspan=2| [http://www.imscdn.com/INDYCAR/Documents/5526/6743/indycar-race-results.pdf Box Score]
+|}
+{{col-break}}
+{| class="wikitable"
+!colspan=2|Total laps led
+|-
+! Driver
+! Laps
+|-
+| [[Álex Palou]] || 59
+|-
+| [[Scott Dixon]] || 32
+|-
+| [[David Malukas]] || 30
+|-
+| [[Felix Rosenqvist]] || 25
+|-
+| [[Pato O'Ward]] || 9
+|-
+| [[Caio Collet]] || 9
+|-
+| [[Rinus VeeKay]] || 8
+|-
+| [[Alexander Rossi]] || 6
+|-
+| [[Scott McLaughlin]] || 5
+|-
+| [[Conor Daly]] || 4
+|-
+| [[Kyffin Simpson]] || 4
+|-
+| [[Marcus Armstrong]] || 3
+|-
+| [[Romain Grosjean]] || 3
+|-
+| [[Christian Rasmussen (racing driver)|Christian Rasmussen]] || 3
+|-
+! colspan=2| [http://www.imscdn.com/INDYCAR/Documents/5526/6743/indycar-race-results.pdf Box Score]
+|}
+{{col-break}}
+{| class="wikitable"
+|-
+!colspan=2|Cautions: 7 for 51 laps
+|-
+!Laps
+!Reason
+|-
+| 18–25 || [[Ryan Hunter-Reay|Hunter-Reay]] and [[Katherine Legge|Legge]] crash in turn 2
+|-
+| 27–30 || [[Ed Carpenter (racing driver)|Carpenter]] crash in turn 1
+|-
+| 92–108 || [[Will Power|Power]] spin in turn 1; Conditions (rain)
+Red flag on lap 105 (8:45)
+|-
+| 116–124 || Conditions (Rain)
+|-
+| 125–131 || [[Josef Newgarden|Newgarden]] crash in turn 4
+|-
+| 192–195 || [[Caio Collet|Collet]] crash in turn 2
+Red flag on lap 193 (9:30)
+|-
+| 197–198 || [[Mick Schumacher|Schumacher]] brushing the turn 2 wall
+|-
+! colspan=2| [http://www.imscdn.com/INDYCAR/Documents/5526/6743/indycar-race-results.pdf Box Score]
+|}
+{{col-end}}
+==Broadcasting==
+===Television===
+The race was [[List of Indianapolis 500 broadcasters|televised]] live by [[IndyCar Series on Fox|Fox]] in the second year of a multi-year contract. On February 18, 2026, Fox announced their primary broadcast team for the IndyCar season, with [[Will Buxton]] serving as lead commentator and driver analysts [[James Hinchcliffe]] and [[Townsend Bell]] each returning from 2025. {{cite news|date=February 18, 2026|title=FOX Sports Opens 2026 NTT INDYCAR SERIES Season With Three Consecutive Weekends of Racing on FOX|url=https://www.foxsports.com/stories/presspass/fox-sports-opens-2026-ntt-indycar-series-season-three-consecutive-weekends-racing-fox|access-date=February 20, 2026|work=Fox Sports|archive-date=March 7, 2026|archive-url=https://web.archive.org/web/20260307233116/https://www.foxsports.com/stories/presspass/fox-sports-opens-2026-ntt-indycar-series-season-three-consecutive-weekends-racing-fox|url-status=live}}
+On May 13, 2026, Indianapolis Motor Speedway president Doug Boles announced that due to an sellout of grandstand tickets, the traditional [[Blackout (broadcasting)|blackout]] in the Indianapolis media market would be lifted. Therefore, local Fox affiliate [[WXIN]] carried the live telecast; this was the sixth time the blackout had been lifted since live flag-to-flag coverage began in [[1986 Indianapolis 500|1986]]. {{Cite web |last=Brown |first=Zion |date=May 13, 2026 |title=Indy 500 grandstands sell out again, local TV blackout lifted for 2026 |url=https://sports.yahoo.com/articles/indy-500-grandstands-sell-again-123035706.html |access-date=May 14, 2026 |website=Yahoo Sports |publisher=Indianapolis Star |language=en-US}}
+On May 28, Fox announced that the race broadcast drew an average audience of 6.6 million viewers, with a peak of 8.349 million viewers between 4 p.m. and 4:15 p.m.
+{| class="wikitable" style="font-size: 95%;"
+|-
+!colspan=3|[[IndyCar Series on Fox|Fox]]
+|-
+!Booth announcers!!Pre/Post-race!![[Sideline reporter|Pit reporters]]
+|-
+|'''[[Play-by-play|Announcer]]:''' [[Will Buxton]]
+'''[[Color commentator|Color]]:''' [[Townsend Bell]]
+'''[[Color commentator|Color]]:''' [[James Hinchcliffe]]
+'''Live in-car reports''': [[Jack Harvey (racing driver)|Jack Harvey]]
+|'''Host:''' [[Chris Myers]]
+'''[[Sports analyst|Analyst]]:''' [[Tony Stewart]]
+'''[[Sports analyst|Analyst]]:''' [[Danica Patrick]]
+'''Features:''' [[Tom Rinaldi]]
+|Georgia Henneberry
+Kevin Lee
+[[Jamie Little]]
+|}
+===Radio===
+The race was broadcast by the [[Indianapolis Motor Speedway Radio Network]]. The chief announcer was Mark Jaynes in his eleventh year as chief announcer, and 31st year overall with the network. [[Zach Veach]] served as the driver expert, replacing regular analyst [[Davey Hamilton]], who served as the strategist for [[Jack Harvey (racing driver)|Jack Harvey]]'s entry for [[Dreyer & Reinbold Racing]]. Mentioned on IndyCar Radio broadcast of the [[2026 Sonsio Grand Prix|Sonsio Grand Prix]] Gone was Chris Denari who retired after last years race and taking his place in turn 4 was Ryan Myrehn.
+{| class="wikitable" style="font-size: 95%;"
+|-
+!colspan=3|[[Indianapolis Motor Speedway Radio Network|IMS Radio Network]]
+|-
+!Booth Announcers!!Turn Reporters!![[Sideline reporter|Pit/garage reporters]]
+|-
+| '''[[Play-by-play|Chief Announcer]]:''' Mark Jaynes
+'''Driver analyst:''' [[Zach Veach]] (Carb Day, Race)
+'''Driver analyst:''' [[Callum Ilott]] (Time Trials)
+|'''Turn 1:''' Nick Yeoman
+'''Turn 2:''' Michael Young
+'''Turn 3:''' Jake Query
+'''Turn 4:''' Ryan Myrehn
+|Alex Wollf
+Rob Blackman
+Jonathan Grace '''{{Color box|orange|R|border=silver}}'''
+Rich Nye
+|}
+==References==
+{{reflist}}
+==External links==
+*[https://www.indianapolismotorspeedway.com/events/indy500 Indianapolis Motor Speedway – Official site]
+*[https://www.indycar.com NTT IndyCar Series – Official site]
+*[https://www.wunderground.com/weather/us/in/speedway/39.80,-86.27 Weather Underground - Speedway, Indiana]
+{{IndyCar Series race report
+|Name_of_race = [[Indianapolis 500]]
+|Year_of_race = 2026
+|Previous_race_in_season = [[2026 Sonsio Grand Prix]]
+|Next_race_in_season = [[2026 Chevrolet Detroit Grand Prix]]
+|Previous_year's_race = [[2025 Indianapolis 500]]
+|Next_year's_race = [[2027 Indianapolis 500]]
+}}
+{{2026 IndyCar Series}}
+{{Indy 500}}
+{{IndyCar Series on Fox}}
+[[Category:Indianapolis 500 races]]
+[[Category:2026 in IndyCar|Indianapolis 500]]
+[[Category:2026 in sports in Indiana|Indianapolis 500]]
+[[Category:2026 in American motorsport|Indianapolis 500]]
+[[Category:May 2026 sports events in the United States|Indianapolis 500]]
+[[Category:2026 in Indianapolis|Indianapolis 500]]

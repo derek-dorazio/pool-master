@@ -1,0 +1,145 @@
+{
+  "fetchedAt": "2026-10-18T12:44:19.770Z",
+  "results": [
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_men%27s_basketball_tournament&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_women%27s_basketball_tournament&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260317-20260407&groups=100&limit=300",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 400,
+      "file": "03-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260318-20260406&groups=100&limit=300",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 400,
+      "file": "04-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://api.jolpi.ca/ergast/f1/2026/results.json?limit=100&offset=0",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-api.jolpi.ca.txt"
+    },
+    {
+      "url": "https://api.jolpi.ca/ergast/f1/2026/results.json?limit=100&offset=100",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-api.jolpi.ca.txt"
+    },
+    {
+      "url": "https://api.jolpi.ca/ergast/f1/2026/results.json?limit=100&offset=200",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-api.jolpi.ca.txt"
+    },
+    {
+      "url": "https://api.jolpi.ca/ergast/f1/2026/results.json?limit=100&offset=300",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "08-api.jolpi.ca.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Daytona_500&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "09-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Coca-Cola_600&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "10-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Brickyard_400&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "11-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Indianapolis_500&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "12-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_IndyCar_Series&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "13-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Pegasus_World_Cup&action=raw",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 404,
+      "file": "14-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Kentucky_Derby&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "15-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Preakness_Stakes&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "16-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Belmont_Stakes&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "17-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Tour_de_France&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "18-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Giro_d%27Italia&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "19-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Milan%E2%80%93San_Remo&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "20-en.wikipedia.org.txt"
+    }
+  ]
+}

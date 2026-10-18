@@ -1,0 +1,1550 @@
+Source: https://en.wikipedia.org/w/index.php?title=2026_Tour_de_France&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Tour_de_France&action=raw
+HTTP 200
+Fetched: 2026-10-18T12:44:19.587Z
+
+{{Short description|Cycling race}}
+{{For|the women's race|2026 Tour de France Femmes}}
+{{Use dmy dates|date=July 2026}}
+{{Infobox cycling race report
+| name = 2026 Tour de France
+| series = [[2026 UCI World Tour]]
+| race_no =26
+| season_no =36
+| image = Route of the 2026 Tour de France.png
+| image_size = 360 px
+| image_caption =
+| image_alt =
+| date = 4–26 July 2026
+| stages = 21
+| distance = 3245{{efn-ua|name=S9}}{{efn-ua|name=S21}}
+| unit = km
+| time = 73h 56' 26"
+| first = [[Tadej Pogačar]]
+| first_nat = SLO
+| first_team = {{UCI team code|UEX|2026}}
+| first_color = yellow
+| second = [[Remco Evenepoel]]
+| second_nat = BEL
+| second_team = {{UCI team code|RBH|2026}}
+| third = [[Isaac del Toro]]
+| third_nat = MEX
+| third_team = {{UCI team code|UEX|2026}}
+| points = [[Mads Pedersen]]
+| points_nat = DEN
+| points_team = {{UCI team code|LTK men|2026}}
+| points_color = dark green
+| mountains = [[Richard Carapaz]]
+| mountains_nat = ECU
+| mountains_team = {{UCI team code|EFE|2026}}
+| mountains_color = polkadot
+| youth = [[Isaac del Toro]]
+| youth_nat = MEX
+| youth_team = {{UCI team code|UEX|2026}}
+| youth_color = white
+| team_nat = GER
+| team = {{UCI team code|LTK men|2026}}
+| team_color = yellow number
+| combativity = [[Richard Carapaz]]
+| combativity_nat = ECU
+| combativity_team = {{UCI team code|EFE|2026}}
+| combativity_color = beige number
+| previous = [[2025 Tour de France|2025]]
+| next = ''[[2027 Tour de France|2027]]''
+}}
+The '''2026 Tour de France''' was the 113th edition of the [[Tour de France]]. The race began with a stage in [[Barcelona]], Spain, on 4 July, and finished with the final stage at the [[Champs-Élysées]], [[Paris]], on 26 July.
+[[Tadej Pogačar]] of {{UCI team code|UAD men|2026}} won the [[General classification in the Tour de France|general classification]] for the fifth time, and the third year running. His attack on stage 6, at the [[Col du Tourmalet]] in the [[Pyrenees]], established a lead over his main rival [[Jonas Vingegaard]] of {{UCI team code|TVL men|2026}}. Pogačar extended his lead with victories on three mountain stages: stage 10 in the [[Massif Central]], stage 14 in [[Vosges]], and stage 19 to [[Alpe d'Huez]] in the [[French Alps]]. Pogačar's final margin of victory was almost six and a half minutes. It was the fastest race on record, with Pogačar having an average speed of {{Convert|43.227|km/h|mph}} over the three weeks of racing.
+Second place overall went to [[Remco Evenepoel]] of {{UCI team code|RBH|2026}}, after Vingegaard withdrew from the race following a crash on stage 15. Evenepoel took his first mountain stage victory at [[Plateau de Solaison]] on stage 15 and then won the [[individual time trial]] to [[Thonon-les-Bains]] in stage 16. Third place went to [[Isaac del Toro]], a Tour debutant. On stage 20, Pogačar assisted his teammate Del Toro, to ensure that Del Toro held off fellow Tour debutant [[Paul Seixas]] of {{UCI team code|DCT|2026}} for third place overall and the [[Young rider classification in the Tour de France|young rider classification]] as the best rider under the age of 26.
+The race was affected by a [[2026 European heatwaves|heatwave]], with two stages shortened and rules relaxed to allow for riders to stay hydrated. {{Cite web |last=Root |first=Tik |date=27 July 2026 |title=The year climate change came for the Tour de France |url=https://www.motherjones.com/environment/2026/07/the-year-climate-change-came-for-the-tour-de-france/ |access-date=27 July 2026 |website=Mother Jones |language=en-US}} Prior to stage 15, both Pogačar and Vingegaard were woken in the middle of the night to take [[Doping in cycling|doping tests]], which generated substantial debate. {{Cite web |date=19 July 2026 |title=Tour de France 2026: Stage 15 winner Remco Evenepoel criticises "inhuman" middle-of-the night doping tests |url=https://www.bbc.co.uk/sport/cycling/articles/c0jl84wp50wo |access-date=26 July 2026 |website=BBC Sport |language=en-GB}}
+The [[Points classification in the Tour de France|points classification]] was won by [[Mads Pedersen]] of {{UCI team code|LTK men|2026}}. Pedersen won only one stage ([[2026 Tour de France, Stage 1 to Stage 11#Stage 4|stage 4]]), but consistently placed highly in the intermediate sprints and secured points in other sprint finishes. The [[Mountains classification in the Tour de France|mountains classification]] went to [[Richard Carapaz]] of {{UCI team code|EFE|2025}}, who won two mountain stages in the French Alps in the last week. Carapaz also won the award for the race's most combative rider. The [[Team classification in the Tour de France|teams classification]] was won by {{UCI team code|LTK men|2026|nolink=y}}.
+== Teams ==
+{{Main|List of teams and cyclists in the 2026 Tour de France}}
+Twenty-three teams took part in the race. All 18 [[UCI WorldTeam]]s were automatically invited. They were joined by five [[UCI ProSeries|UCI ProTeams]]: the three highest ranked UCI ProTeams in 2025 ({{UCI team code|TUD|2026}}, {{UCI team code|Q36|2026}} and {{UCI team code|COF men|2025}}), along with two teams ({{UCI team code|TEN|2026}} and {{UCI team code|CJR|2026}}) selected by [[Amaury Sport Organisation]] (ASO), the organisers of the Tour. {{Cite web|title=Tour de France 2026 teams and wildcards unveiled, with Spanish team picked for debut over popular Unibet Rose Rockets|url=https://www.cyclingnews.com/pro-cycling/teams-riders/tour-de-france-2026-teams-and-wildcards-unveiled-with-spanish-team-picked-for-debut-over-popular-unibet-rose-rockets/|website=Cyclingnews|date=30 January 2026|access-date=30 January 2026|language=en|first=James|last=Moultrie}} The teams were announced on 30 January 2026. {{UCI team code|URR|2026}} had expected to be invited, however Caja Rural-Seguros RGA was chosen instead – which Tour de France director [[Christian Prudhomme]] explained was due to Caja Rural-Seguros RGA's performances in 2025, which included finishing fourth in the team classification at the [[2025 Vuelta a España]]. {{Cite web|title="They don't claim to be French at all" – Tour de France director Prudhomme explains Unibet Rose Rockets snub and Caja Rural selection|url=https://cyclinguptodate.com/cycling/they-dont-claim-to-be-french-at-all-tour-de-france-director-prudhomme-explains-unibet-rose-rockets-snub-and-caja-rural-selection|website=CyclingUpToDate.com|date=30 January 2026|access-date=30 January 2026|language=en|last=Silva|first=Rúben}}
+;UCI WorldTeams
+{{div col|colwidth=20em|style=margin-right:20%;}}
+* {{UCI team code|APT|2026}}
+* {{UCI team code|DCT|2026}}
+* {{UCI team code|EFE|2026}}
+* {{UCI team code|GFC|2026}}
+* {{UCI team code|LTK men|2026}}
+* {{UCI team code|LOI|2026}}
+* {{UCI team code|MOV men|2026}}
+* {{UCI team code|NCI|2026b}}
+* {{UCI team code|NSN|2026}}
+* {{UCI team code|RBH|2026}}
+* {{UCI team code|SOQ|2026}}
+* {{UCI team code|TBV|2026}}
+* {{UCI team code|JAY men|2026}}
+* {{UCI team code|TPP men|2026}}
+* {{UCI team code|UEX|2026}}
+* {{UCI team code|UXM men|2026}}
+* {{UCI team code|TVL men|2026}}
+* {{UCI team code|XAT|2026}}
+{{div col end}}
+;UCI ProTeams
+{{div col|colwidth=20em|style=margin-right:20%;}}
+* {{UCI team code|CJR|2026}}
+* {{UCI team code|COF men|2025}}
+* {{UCI team code|PQT|2026}}
+* {{UCI team code|TEN|2026}}
+* {{UCI team code|TUD|2026}}
+{{div col end}}
+A total of 184 riders from 27 nationalities participated in the race, with Belgium having the largest contingent (31 riders). {{Cite web |title=Number of competitors per country competing in Tour de France 2026. |url=https://www.procyclingstats.com/race/tour-de-france/2026/startlist/competitors-per-country |access-date=3 July 2026 |website=Procyclingstats}}
+== Route and stages==
+[[File:Alpe_d'Huez,_France_(7957045090).jpg|thumb|[[2026 Tour de France, Stage 12 to Stage 21|Stage 19]] finished at the top of [[Alpe d'Huez]]; the climb is {{convert|13.8|km|1|abbr=on}} long, an average gradient of 7.9% and features 21 [[hairpin turns]]. ]]
+In February 2025, race organisers ASO announced that [[Barcelona]] in [[Spain]] would host the ''[[List of Tour de France Grands Départs|Grand Départ]]'' (first stage). {{cite news|url=https://www.lequipe.fr/Cyclisme-sur-route/Actualites/Un-contre-la-montre-par-equipes-et-une-etape-vallonnee-a-barcelone-pour-lancer-le-tour-de-france-2026/1542674|title=Un contre-la-montre par équipes et une étape vallonnée à Barcelone pour lancer le Tour de France 2026|trans-title=Team time trial and hilly stage in Barcelona to kick off 2026 Tour de France|language=fr|publisher=L'Équipe|date=25 February 2025|access-date=26 February 2025}} This was the third time the ''Grand Départ'' was held in [[Spain]], after [[San Sebastián]] in 1992 and [[Bilbao]] in 2023. {{Cite web |title=Grand Départ Barcelona 2026 – Tour de France – Tourism of Barcelona |url=https://www.barcelonaturisme.com/wv3/en/agenda/20589/grand-depart-barcelona-2026-tour-de-france.html |access-date=10 April 2026 |website=www.barcelonaturisme.com |language=en}} The first two stages finished on the [[Montjuïc]] hill above Barcelona, next to the [[Estadi Olímpic Lluís Companys]] used for the [[1992 Summer Olympics]]. {{Cite web |last=Weislo |first=Laura |date=25 February 2025 |title=2026 Tour de France to start with team time trial in Barcelona |url=https://www.cyclingnews.com/news/2026-tour-de-france-to-start-with-team-time-trial-in-barcelona/ |access-date=27 February 2025 |website=cyclingnews.com |language=en}} Following protests against the [[Gaza war]] that disrupted the [[2025 Vuelta a España]], the [[City Council of Barcelona]] expressed a desire to host the ''Grand Départ'' without the [[Israel–Premier Tech]] team, with protestors threatening to disrupt the Tour if they took part. {{Cite web |last=González |first=Marco |date=16 September 2025 |title=Barcelona no quiere al Israel en la salida del Tour de Francia 2026 |trans-title=Barcelona doesn't want Israel at the start of the 2026 Tour de France |url=https://as.com/ciclismo/tour_francia/barcelona-veta-al-israel-para-la-salida-del-tour-2026-n/ |access-date=18 September 2025 |website=[[Diario AS]] |language=es}} {{Cite news |last=Whittle |first=Jeremy |date=12 September 2025 |title=Vuelta protesters threaten to disrupt start of next year’s Tour de France |url=https://observer.co.uk/news/sport/article/vuelta-protesters-threaten-to-disrupt-start-of-next-years-tour-de-france |access-date=18 September 2025 |newspaper=[[The Observer]]|language=en}} The Israel–Premier Tech team subsequently rebranded as NSN Cycling Team for the [[2026 in men's road cycling|2026 season]], and rode under a Swiss license. {{cite web |last=Moultrie |first=James |date=20 November 2025 |title=Israel-Premier Tech rebrand as NSN Cycling Team for 2026 season, will race under Swiss licence |url=https://www.cyclingnews.com/pro-cycling/teams-riders/israel-premier-tech-rebrand-as-nsn-cycling-team-for-2026-season-will-race-under-swiss-licence/ |url-status= |archive-url= |archive-date= |access-date=20 November 2025 |website=[[Cyclingnews.com]]}}
+The full route was announced on 23 October 2025 by [[Christian Prudhomme]], who described it as having a [[crescendo]] towards the finish. {{Cite news |last=Whittle |first=Jeremy |date=23 October 2025 |title=Tour de France unveils 2026 route with double Alpe d’Huez for men and Ventoux debut for women |url=https://www.theguardian.com/sport/2025/oct/23/tour-de-france-femme-2026-route-cycling |access-date=23 October 2025 |work=The Guardian |language=en-GB |issn=0261-3077}} {{Cite web |last=Farrand |first=Stephen |date=23 October 2025 |title='It's a Tour in crescendo' – 2026 Tour de France designed to limit early Tadej Pogačar dominance |url=https://www.cyclingnews.com/news/its-a-tour-in-crescendo-2026-tour-de-france-designed-to-limit-early-tadej-pogacar-dominance/ |access-date=24 October 2025 |website=Cyclingnews |language=en}} There were five summit finishes, including [[Plateau de Solaison]] for the first time and two finishes at Alpe d'Huez. The race featured only {{convert|26|km|abbr=on}} of [[individual time trial]], with a team time trial starting the Tour for the first time since [[1971 Tour de France|1971]]. The [[team time trial]] returned to the Tour for the first time since [[2019 Tour de France|2019]], and used new rules previously introduced at the [[2023 Paris–Nice]]. In this format, each rider is given an individual finish time, rather than all riders who finish together getting the same time. This format encourages tactical choices by general classification contenders – whether to ride with the rest of their team to save energy, or ride solo to achieve a better time.
+[[Cyclist (magazine)|''Cyclist'']] described the route as "ripe for breakaways" {{Cite web |last=Davidson |first=Robyn |date=24 October 2025 |title=Tour de France 2026 route analysis: Is it anti-dominance or delaying the inevitable? |url=https://www.cyclist.co.uk/in-depth/tour-de-france-2026-route-analysis |access-date=17 December 2025 |website=Cyclist |language=en}} and [[Rouleur (magazine)|''Rouleur'']] considered that it would suit Pogačar, because "the Slovenian superstar can do everything". {{Cite web |title=2026 Tour de France promises suspense until the end – but there are few obstacles for Tadej Pogačar |url=https://www.rouleur.cc/blogs/the-rouleur-journal/2026-tour-de-france-promises-suspense-until-the-end-but-there-are-few-obstacles-for-tadej-pogacar |access-date=17 December 2025 |website=Rouleur |language=en |archive-url=https://web.archive.org/web/20251027133652/https://www.rouleur.cc/blogs/the-rouleur-journal/2026-tour-de-france-promises-suspense-until-the-end-but-there-are-few-obstacles-for-tadej-pogacar |archive-date=27 October 2025 |url-status=dead}} [[Ned Boulting]] criticised the route, writing in ''[[Cycling Weekly]]'' that "there's no cobblestones, no obvious crosswind stages, and no gravel. [...] They have denuded this year [which] feels a little bit disappointing". {{Cite web |last=Shrubsall |first=James |date=23 October 2025 |title='Remco Evenepoel will be rightfully disappointed': Ned Boulting's take on the route of the Tour de France 2026 |url=https://www.cyclingweekly.com/racing/remco-evenepoel-will-be-rightfully-disappointed-ned-boultings-take-on-the-route-of-the-tour-de-france-2026 |access-date=17 December 2025 |website=Cycling Weekly |language=en}} ''[[Cyclingnews.com|Cycling News]]'' predicted that the pivotal stages would be stage 6 to [[Gavarnie-Gèdre]] (the first high mountain stage of the race in the [[Pyrenees]]), stage 14 to [[Le Markstein]] in the [[Vosges]], the stage 16 individual time trial and the mountainous stages 19 & 20 to Alpe d'Huez in the [[French Alps]]. They described stage 20 as the [[queen stage]], owing to its three [[Hors catégorie|''hors catégorie'']] climbs. {{Cite web |date=24 October 2025 |title=The key stages of the 2026 Tour de France |url=https://www.cyclingnews.com/features/tour-de-france-2026-route-analysis-stages-where-the-race-can-be-won-or-lost/ |access-date=10 July 2026 |website=Cyclingnews |language=en}} {{Cite web |last=Lamoureux|first=Lyne|last2=|first2=|last3=|date=8 June 2026|title=Tour de France 2026 stage 20 preview|url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-2026-stage-20-preview/|access-date=5 July 2026|website=Cyclingnews|language=en|quote=Stage 20 may be the ultimate queen stage in Tour history}}
+{{Table alignment}}
+{| class="wikitable sortable col2right col4center"
+|+Stage characteristics {{Cite web |date=23 October 2025 |title=Tour de France 2026 Press kit |url=https://storage-aso.lequipe.fr/ASO/cycling_tdf/tdf2026-dossier-de-presse.pdf |access-date=23 October 2025 |website=Tour de France |publisher=ASO |language=en}}
+! scope="col" |Stage
+! scope="col" |Date
+! scope="col" |Course
+! scope="col" |Distance
+! colspan="2" scope="col" |Type
+! scope="col" | Winner
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 1|1]]
+| 4 July
+| [[Barcelona]] (Spain)
+| {{convert|19.6|km|abbr=on}}
+| [[File:Team Time Trial Stage.svg|20px|alt=|link=]]
+| [[Team time trial]]
+| {{flagicon|NLD}} {{UCI team code|TVL men|2026}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 2|2]]
+| 5 July
+| [[Tarragona]] (Spain) to Barcelona (Spain)
+| {{convert|168.5|km|abbr=on}}
+| [[File:Hillystage.svg|link=|alt=|20x20px]]
+| Hilly stage
+| {{Flag athlete|[[Isaac del Toro]]|MEX}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 3|3]]
+| 6 July
+| [[Granollers]] (Spain) to [[Les Angles, Pyrénées-Orientales|Les Angles]]
+| {{convert|195.9|km|abbr=on}}
+| [[File:Mountainstage.svg|link=|alt=|20x20px]]
+| Mountain stage
+| {{Flag athlete|[[Tadej Pogačar]]|SLO}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 4|4]]
+| 7 July
+| [[Carcassonne]] to [[Foix]]
+| {{convert|181.9|km|abbr=on}}
+| [[File:Hillystage.svg|link=|alt=|20x20px]]
+| Hilly stage
+| {{Flag athlete|[[Mads Pedersen]]|DEN}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 5|5]]
+| 8 July
+| [[Lannemezan]] to [[Pau, Pyrénées-Atlantiques|Pau]]
+| {{convert|158.3|km|abbr=on}}
+| [[File:Plainstage.svg|link=|alt=|20x20px]]
+| Flat stage
+| {{Flag athlete|[[Olav Kooij]]|NED}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 6|6]]
+| 9 July
+| Pau to [[Gavarnie-Gèdre]]
+| {{convert|186.2|km|abbr=on}}
+| [[File:Mountainstage.svg|link=|alt=|20x20px]]
+| Mountain stage
+| {{Flag athlete|[[Tadej Pogačar]]|SLO}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 7|7]]
+| 10 July
+| [[Hagetmau]] to [[Bordeaux]]
+| {{convert|175.1|km|abbr=on}}
+| [[File:Plainstage.svg|link=|alt=|20x20px]]
+| Flat stage
+| {{Flagathlete|[[Tim Merlier]]|BEL}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 8|8]]
+| 11 July
+| [[Périgueux]] to [[Bergerac, Dordogne|Bergerac]]
+| {{convert|180.4|km|abbr=on}}
+| [[File:Plainstage.svg|link=|alt=|20x20px]]
+| Flat stage
+| {{Flagathlete|[[Tim Merlier]]|BEL}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 9|9]]
+| 12 July
+| [[Malemort]] to [[Ussel, Corrèze|Ussel]]
+| {{convert|154.6|km|abbr=on}}{{efn-ua|name=S9|The ninth stage was originally scheduled to be contested over {{convert|185.5|km|abbr=on}} but due to a red [[2026 European heatwaves#France|heatwave]] warning issued for the [[Corrèze]] department, {{cite news|url=https://www.franceinfo.fr/environnement/meteo/bulletins-meteo/meteo-france-place-37-departements-en-vigilance-rouge-canicule-a-partir-de-dimanche-midi-46-en-vigilance-orange_8104178.html|title=Météo-France place 37 départements en vigilance rouge canicule à partir de dimanche midi, 46 en vigilance orange|language=French|trans-title=Météo-France has placed 37 departments on red alert for extreme heat starting Sunday at noon, and 46 on orange alert.|website=[[France Info]]|agency=[[Agence France-Presse]]|date=11 July 2026|accessdate=11 July 2026}} the stage was shortened by {{convert|30.9|km|abbr=on}}; neither start or finish location was altered. {{cite news|url=https://www.tourismecorreze.com/fr/tour_de_france_2026_une_etape_100_correze.html|title=Tour de France 2026 : une étape 100 % Corrèze|language=French|trans-title=Tour de France 2026: a 100% Corrèze stage|website=Tourisme Corrèze|accessdate=12 July 2026}} }}
+| [[File:Hillystage.svg|link=|alt=|20x20px]]
+| Hilly stage
+| {{Flagathlete|[[Mathieu van der Poel]]|NED}}
+|-
+! scope="row" |
+| 13 July
+| [[Cantal]]
+| colspan="5" |Rest day
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 10|10]]
+| 14 July
+| [[Aurillac]] to [[Le Lioran]]
+| {{convert|166.6|km|abbr=on}}
+| [[File:Mountainstage.svg|link=|alt=|20x20px]]
+| Mountain stage
+| {{Flag athlete|[[Tadej Pogačar]]|SLO}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 1 to Stage 11#Stage 11|11]]
+| 15 July
+| [[Vichy]] to [[Nevers]]
+| {{convert|161.3|km|abbr=on}}
+| [[File:Plainstage.svg|link=|alt=|20x20px]]
+| Flat stage
+| {{Flag athlete|[[Søren Wærenskjold]]|NOR}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 12 to Stage 21#Stage 12|12]]
+| 16 July
+| [[Circuit de Nevers Magny-Cours]] to [[Chalon-sur-Saône]]
+| {{convert|179.1|km|abbr=on}}
+| [[File:Plainstage.svg|link=|alt=|20x20px]]
+| Flat stage
+| {{Flagathlete|[[Tim Merlier]]|BEL}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 12 to Stage 21#Stage 13|13]]
+| 17 July
+| [[Dole, Jura|Dole]] to [[Belfort]]
+| {{convert|205.8|km|abbr=on}}
+| [[File:Hillystage.svg|link=|alt=|20x20px]]
+| Hilly stage
+| {{Flagathlete|[[Mauro Schmid]]|SUI}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 12 to Stage 21#Stage 14|14]]
+| 18 July
+| [[Mulhouse]] to [[Le Markstein]]
+| {{convert|155.3|km|abbr=on}}
+| [[File:Mountainstage.svg|link=|alt=|20x20px]]
+| Mountain stage
+| {{Flag athlete|[[Tadej Pogačar]]|SLO}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 12 to Stage 21#Stage 15|15]]
+| 19 July
+| [[Champagnole]] to [[Col de Solaison|Plateau de Solaison]]
+| {{convert|183.9|km|abbr=on}}
+| [[File:Mountainstage.svg|link=|alt=|20x20px]]
+| Mountain stage
+| {{Flag athlete|[[Remco Evenepoel]]|BEL}}
+|-
+! scope="row" |
+| 20 July
+| [[Haute-Savoie]]
+| colspan="5" |Rest day
+|-
+! scope="row" |[[2026 Tour de France, Stage 12 to Stage 21#Stage 16|16]]
+| 21 July
+| [[Évian-les-Bains]] to [[Thonon-les-Bains]]
+| {{convert|26.1|km|abbr=on}}
+| [[File:Time_Trial.svg|link=|alt=|20x20px]]
+| [[Individual time trial]]
+| {{Flag athlete|[[Remco Evenepoel]]|BEL}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 12 to Stage 21#Stage 17|17]]
+| 22 July
+| [[Chambéry]] to [[Voiron]]
+| {{convert|174.7|km|abbr=on}}
+| [[File:Plainstage.svg|link=|alt=|20x20px]]
+| Flat stage
+| {{Flag athlete|[[Jasper Philipsen]]|BEL}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 12 to Stage 21#Stage 18|18]]
+| 23 July
+| Voiron to [[Orcières-Merlette]]
+| {{convert|185.2|km|abbr=on}}
+| [[File:Mountainstage.svg|link=|alt=|20x20px]]
+| Mountain stage
+| {{Flag athlete|[[Richard Carapaz]]|ECU}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 12 to Stage 21#Stage 19|19]]
+| 24 July
+| [[Gap, Hautes-Alpes|Gap]] to [[Alpe d'Huez]]
+| {{convert|127.9|km|abbr=on}}
+| [[File:Mountainstage.svg|link=|alt=|20x20px]]
+| Mountain stage
+|{{Flag athlete|[[Tadej Pogačar]]|SLO}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 12 to Stage 21#Stage 20|20]]
+| 25 July
+| [[Le Bourg-d'Oisans]] to Alpe d'Huez
+| {{convert|170.9|km|abbr=on}}
+| [[File:Mountainstage.svg|link=|alt=|20x20px]]
+| Mountain stage
+| {{Flagathlete|[[Richard Carapaz]]|ECU}}
+|-
+! scope="row" |[[2026 Tour de France, Stage 12 to Stage 21#Stage 21|21]]
+| 26 July
+| [[Paris]] to Paris ([[Champs-Élysées stage in the Tour de France|Champs-Élysées]])
+| {{convert|88.7|km|abbr=on}}{{efn-ua|name=S21|The twenty-first stage was originally scheduled to start in [[Thoiry, Yvelines|Thoiry]] and be contested over {{convert|132.5|km|abbr=on}}, {{cite web|url=https://www.letour.fr/en/stage-21|title=Stage 21|work=[[Tour de France]]|publisher=[[Amaury Sport Organisation]]|accessdate=25 July 2026|archiveurl=https://web.archive.org/web/20260724055122/https://www.letour.fr/en/stage-21|archivedate=24 July 2026}} but due to a redeployment of security staff to the [[Gironde]] department following [[2026 France wildfires|wildfires]], the stage was shortened by {{convert|43.8|km|abbr=on}}. All pre-stage activities were held in Thoiry, before a bus transfer to [[Paris]], with the stage commencing on the [[Champs-Élysées]]. {{cite news|url=https://www.letour.fr/en/news/2026/change-to-the-route-of-the-final-stage-1/1355402|title=Change to the route of the final stage|accessdate=25 July 2026|date=25 July 2026|work=[[Tour de France]]|publisher=[[Amaury Sport Organisation]]}} Two additional laps of the Champs-Élysées circuit were added, prior to the three circuits including the climb of [[Montmartre]]. {{cite news|first=Patrick|last=Fletcher|url=https://www.cyclingnews.com/pro-cycling/racing/final-stage-of-2026-tour-de-france-shortened-due-to-exceptional-circumstances-caused-by-wildfires/|title=Final stage of 2026 Tour de France shortened due to exceptional circumstances caused by wildfires|accessdate=25 July 2026|date=25 July 2026|work=[[Cyclingnews.com]]|publisher=[[Future plc]]}} }}
+| [[File:Plainstage.svg|link=|alt=|20x20px]]
+| Flat stage
+| {{Flagathlete|[[Mathieu van der Poel]]|NED}}
+|- class=sortbottom
+! colspan="3" |Total
+| style="text-align:center" | {{convert|3245|km|abbr=on}}{{efn-ua|name=S9}}{{efn-ua|name=S21}}
+| colspan="3" |
+|}
+{{notelist-ua}}
+== Pre-race favourites ==
+{{multiple image
+| width = 150
+| image1 = 2022_Tour_of_Slovenia_(Stage_3,_Tadej_Pogačar_celebrating_victory_on_Celje_Castle_v2).jpg
+| alt1 =
+| image2 = Jonas Vingegaard, 2023 Paris-Nice (52929456925) (square cropped).jpg
+| alt2 =
+| footer = [[Tadej Pogačar]] (left) and [[Jonas Vingegaard]] (right) were considered favourites for the [[General classification in the Tour de France|general classification]] (GC).
+}}
+Prior to the race, [[Tadej Pogačar]] and [[Jonas Vingegaard]] were widely considered to be the major contenders for the overall [[General classification in the Tour de France|general classification]] (GC), with the pair having won the [[Pogačar–Vingegaard rivalry|last six editions]] of the Tour between them. Leading up to the race, defending champion Pogačar won the [[2026 Tour de Suisse|Tour de Suisse]], and Vingegaard won the [[2026 Giro d'Italia|Giro d'Italia]]. Other riders considered contenders in the {{abbr|GC|general classification}} included [[Remco Evenepoel]], [[Florian Lipowitz]], [[Paul Seixas]] and [[Isaac del Toro]]. {{Cite web |last=Magnus |first=Emma |date=2 July 2026 |title=Tour de France 2026 preview: the contenders, sprinters and stage-hunters to watch |url=https://www.rouleur.cc/racing/tour-de-france-2026-preview-the-contenders-sprinters-and-stage-hunters-to-watch |access-date=2 July 2026 |website=[[Rouleur (magazine)|Rouleur]] |language=en |archive-url=https://web.archive.org/web/20260706145816/https://www.rouleur.cc/racing/tour-de-france-2026-preview-the-contenders-sprinters-and-stage-hunters-to-watch |archive-date=6 July 2026 |url-status=dead}} {{Cite web |last=Cash |first=Dane |date=29 June 2026 |title=Preview: Who can topple Tadej Pogačar at the 2026 Tour de France? |url=https://escapecollective.com/preview-who-can-topple-tadej-pogacar-at-the-2026-tour-de-france/ |access-date=2 July 2026 |website=Escape Collective |language=en}} {{Cite web |last=Strickson |first=Will |date=2 July 2026 |title=Cyclist’s Tour de France 2026 predictions |url=https://www.cyclist.co.uk/in-depth/cyclist-tour-de-france-2026-predictions |access-date=2 July 2026 |website=Cyclist |language=en}}
+Top competitors for the green jersey of the [[Points classification in the Tour de France|points classification]] were expected to be former winners [[Jasper Philipsen]] and [[Biniam Girmay]], as well as [[Tim Merlier]] and [[Olav Kooij]]. Isaac del Toro and Paul Seixas were considered favourites for the white jersey of the [[Young rider classification in the Tour de France|young rider classification]].
+== Race overview ==
+{{main|2026 Tour de France, Stage 1 to Stage 11|2026 Tour de France, Stage 12 to Stage 21}}
+=== ''Grand'' ''Départ'' and first week in the Pyrenees ===
+[[File:Tim_Merlier_on_the_podium_at_the_presentation_ceremony_for_Stage_5_of_the_2026_Tour_de_France.jpg|thumb|300x300px|[[Tim Merlier]] ({{UCI team code|SOQ|2026|nolink=}}) won stages [[2026 Tour de France, Stage 1 to Stage 11#Stage 7|7, 8 and 12]] in [[sprint finish]]es.]]
+The first stage was a [[team time trial]] in [[Barcelona]], Spain – with the finish atop the [[Montjuïc]] hill above the city. {{Cite book |title=2026 Tour de France Roadbook|publisher=Amaury Sport Organisation|pages=|date=2026}} It used a new format where the time for each team would be determined by the first rider across the finish line – but each rider would receive their own time for the general classification. {{Cite web |url=https://www.domestiquecycling.com/en/news/2026-tour-de-france-team-time-trial-explained-stage-1-format-and-rules/|title=time trial explained|access-date=3 July 2026|work=domestiquecycling}} {{UCI team code|TVL men|2026}} won the stage, with [[Jonas Vingegaard]] attacking the final climb to take the [[yellow jersey]] in the {{abbr|GC|general classification}}. {{UCI team code|NCI|2026b}} was second fastest, 8 seconds behind, despite [[Kévin Vauquelin]] having a puncture. {{UCI team code|UEX|2026}} was third, 12 seconds behind {{UCI team code|TVL men|2026|nolink=y}}. {{Cite web |last=Weislo|first=Laura|last2=|first2=|date=4 July 2026|title=Tour de France: Visma-Lease a Bike sweep to stage 1 team time trial victory in Barcelona|url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-jonas-vingegaard-takes-the-races-first-yellow-jersey-as-he-delivers-visma-lease-a-bike-to-stage-1-team-time-trial-victory/|access-date=6 July 2026|website=Cyclingnews|language=en}} {{Cite news |last=Whittle|first=Jeremy|date=4 July 2026|title=Tour de France 2026: Jonas Vingegaard in yellow after Barcelona team time trial|url=https://www.theguardian.com/sport/2026/jul/04/tour-de-france-2026-jonas-vingegaard-barcelona-team-time-trial-cycling|access-date=6 July 2026|work=The Guardian|language=en-GB|issn=0261-3077}} The second stage remained in Spain, finishing with three laps of a hilly circuit on the Montjuïc hill above Barcelona. On the circuit, the peloton gradually reduced in size due to a fast pace set by {{UCI team code|UEX|2026|nolink=y}}. In the uphill sprint to the finish, [[Tadej Pogačar]] ({{UCI team code|UEX|2026|nolink=y}}) ensured that his teammate [[Isaac del Toro]] took the stage victory. [[Remco Evenepoel]] ({{UCI team code|RBH|2026}}) finished third ahead of Vingegaard, whose lead in the {{abbr|GC|general classification}} was cut to 6 seconds. {{Cite web |last=Ostanek |first=Dani |date=5 July 2026 |title=Tour de France: Isaac del Toro, Tadej Pogačar power to UAE Team Emirates 1–2 on stage 2 |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-isaac-del-toro-tadej-pogacar-power-to-uae-team-emirates-1-2-on-stage-2/ |access-date=6 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=5 July 2026 |title=Tour de France 2026: third stage to go ahead without spectators; Del Toro wins stage two |url=https://www.theguardian.com/sport/2026/jul/05/tour-de-france-2026-isaac-del-toro-tadej-pogacar-cycling-remco-evenepoel-jonas-vingegaard |access-date=6 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}}
+Stage 3 took riders northwards into [[France]] and the [[Pyrenees]], with spectators discouraged from attending the race owing to [[2026 France wildfires|wildfires in the region]]. Pogačar attacked on the final climb into [[Les Angles, Pyrénées-Orientales|Les Angles]], crossing the line 2 seconds ahead of Vingegaard to take the yellow jersey. {{Cite web |last=Fotheringham |first=Alasdair |date=6 July 2026 |title=Tour de France: Tadej Pogačar blasts away from Jonas Vingegaard on final section of Les Angles ascent for stage 3 victory and yellow jersey |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-stage-3-tadej-pogacar-blasts-away-from-jonas-vingegaard-on-final-section-of-les-angles-ascent-for-victory-and-bonus-seconds/ |access-date=10 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=6 July 2026 |title=Pogacar rises above wildfire restrictions to take yellow jersey in deserted Les Angles |url=https://www.theguardian.com/sport/2026/jul/06/pogacar-rises-above-wildfire-restrictions-to-take-yellow-jersey-in-deserted-les-angles |access-date=10 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}} Stage 4 to [[Foix]] was held in temperatures of around {{convert|40|C|F|abbr=on}}. [[Mads Pedersen]] ({{UCI team code|LTK men|2026|nolink=}}) won the stage in a sprint finish from a large breakaway, which gave breakaway member [[Torstein Træen]] ({{UCI team code|UXM men|2026}}) the yellow jersey. Pogačar predicted that Træen would hold the jersey for several stages, given the nearly 8 minute margin between him and other {{abbr|GC|general classification}} contenders. {{Cite web |last=Moultrie|first=James|date=7 July 2026|title='When we started, I had a full headache' – Tadej Pogačar lets Tour de France yellow jersey go to the breakaway after uncomfortably hot stage 4|url=https://www.cyclingnews.com/pro-cycling/teams-riders/when-we-started-i-had-a-full-headache-tadej-pogacar-lets-tour-de-france-yellow-jersey-go-to-the-breakaway-after-uncomfortably-hot-stage-4/|access-date=10 July 2026|website=Cyclingnews|language=en|quote=Pogačar is expecting Træen to be able to keep the jersey for some time, with such a big lead likely even allowing the Norwegian to hold onto it after the first big mountain day on stage 6}} {{Cite news |last=Whittle|first=Jeremy|date=7 July 2026|title=‘Grateful’ Træen takes yellow jersey after Pedersen wins stage four amid 40C heat|url=https://www.theguardian.com/sport/2026/jul/07/cancer-survivor-torstein-treen-yellow-jersey-pedersen-wins-stage-four-tour-de-france-cycling|access-date=10 July 2026|work=The Guardian|language=en-GB|issn=0261-3077}} Stage 5 to [[Pau, Pyrénées-Atlantiques|Pau]] was won by [[Olav Kooij]] ({{UCI team code|DCT|2026|nolink=}}) in a sprint finish ahead of [[Max Kanter]] ({{UCI team code|XAT|2026|nolink=}}) and [[Tim Merlier]] ({{UCI team code|SOQ|2026|nolink=}}), with Pedersen finishing 7th to extend his lead in the points classification. {{Cite web |last=Ostanek |first=Dani |last2= |first2= |date=8 July 2026 |title=Tour de France: Olav Kooij shines in debut with victory on stage 5 in Pau |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-olav-kooij-shines-in-debut-with-victory-on-stage-5-in-pau/ |access-date=10 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=8 July 2026 |title=Olav Kooij claims Tour de France stage five with Tourmalet test looming large |url=https://www.theguardian.com/sport/2026/jul/08/olav-kooij-claims-tour-de-france-stage-five-with-tourmalet-test-looming-large |access-date=10 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}}
+Stage 6 was the first high mountain stage of the Tour, with five climbs in the Pyrenees, including the ''[[hors catégorie]]'' climb of [[Col du Tourmalet]] (17.1 km at an average gradient of 7.3%, with the summit at an elevation of {{convert|2115|m|ft|abbr=on}}). On the Tourmalet, {{UCI team code|UEX|2026|nolink=y}} set a fast pace, with Træen in the yellow jersey falling behind the main group with {{convert|11|km|abbr=on}} to go. With {{convert|5|km|abbr=on}} to the summit, del Toro attacked with Pogačar following. Vingegaard immediately began a solo chase, as the pace was too fast for Evenepoel, [[Paul Seixas]] ({{UCI team code|DCT|2026|nolink=y}}), and [[Florian Lipowitz]] ({{UCI team code|RBH|2026|nolink=y}}) to maintain. Pogačar made a solo breakaway with {{convert|43|km|abbr=on}} remaining, reaching the Tourmalet summit alone. Pogačar descended at pace, and pushed on to the uphill finish at [[Gavarnie-Gèdre]]. He won the stage by 2 minutes 38 seconds, ahead of a solo chase by Vingegaard. Other {{abbr|GC|general classification}} contenders including del Toro, Evenepoel, Seixas and Lipowitz finished a further 45 seconds behind. Pogačar took the yellow jersey of the {{abbr|GC|general classification}}, with a lead of 2 minutes 42 seconds over Vingegaard, with del Toro (the new leader of the young rider classification) a further 45 seconds behind. Træen crashed on the descent from the Tourmalet, but continued after receiving medical attention; he finished around 30 minutes behind Pogačar. After the finish, {{UCI team code|UXM men|2026|nolink=y}} stated that Træen had a "concussion and multiple rib fractures" and was dropping out of the race. {{Cite web |last=Giuliani |first=Simone |last2= |first2= |date=9 July 2026 |title=Torstein Træen out of Tour de France due to injuries from Col du Tourmalet crash |url=https://www.cyclingnews.com/pro-cycling/teams-riders/not-the-ending-we-wanted-for-this-yellow-adventure-torstein-traeen-out-of-tour-de-france-due-to-injuries-from-tourmalet-crash/ |access-date=10 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=9 July 2026 |title=Tadej Pogacar demolishes Tour de France rivals on the Tourmalet to take ominous lead |url=https://www.theguardian.com/sport/2026/jul/09/pogacar-vingegaard-col-du-tourmalet-lead-tour-de-france-stage-six |access-date=10 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}}
+The next two stages to [[Bordeaux]] and [[Bergerac, Dordogne|Bergerac]] were won in sprint finishes by Merlier, with Pedersen maintaining his lead in the points classification. {{Cite web |last=Fletcher |first=Patrick |date=10 July 2026 |title=Tour de France: Tim Merlier banishes bunch in Bordeaux for stage 7 sprint victory |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-tim-merlier-banishes-bunch-in-bordeaux-for-stage-7-sprint-victory/ |access-date=11 July 2026 |website=Cyclingnews |language=en}} Stage 9 in the [[Massif Central]] was shortened due to a red warning of [[2026 European heatwaves#France|an ongoing heatwave]] in the [[Corrèze]] department. It was won by [[Mathieu van der Poel]] ({{UCI team code|APT|2026|nolink=}}) from a breakaway. {{Cite web |last=Price|first=Matilda|last2=|first2=|last3=|first3=|date=12 July 2026|title=Tour de France: Massive turn of power nets Mathieu van der Poel stage 9 breakaway victory just ahead of bunch sprint|url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-massive-turn-of-power-nets-mathieu-van-der-poel-stage-9-breakaway-victory-just-ahead-of-bunch-sprint/|access-date=13 July 2026|website=Cyclingnews|language=en}} {{Cite news |last=Whittle|first=Jeremy|date=12 July 2026|title=Tadej Pogacar urges radical overhaul of Tour de France amid stifling heatwave|url=https://www.theguardian.com/sport/2026/jul/12/tadej-pogacar-tour-de-france-2026-heatwave-calendar-ninth-stage-mathieu-van-der-poel-cycling|access-date=13 July 2026|work=The Guardian|language=en-GB|issn=0261-3077}}
+=== Week two in the Massif Central, Vosges and Alps ===
+[[File:2026-07-17_17-31-27_TDF-Belfort.jpg|thumb|[[Mauro Schmid]] and [[Harold Tejada]] approaching the finish line in [[Belfort]] on [[2026 Tour de France, Stage 12 to Stage 21#Stage 13|stage 13]]]]
+After a rest day, the race continued in the Massif Central on [[Bastille Day]]. Pogačar attacked from the peloton on the first-category climb of [[Col du Perthus (Massif Central)|Col du Pertus]] (4.4 km at an average gradient of 8.5%) with around {{convert|15|km|abbr=on}} to the finish line. Overtaking [[Richard Carapaz]] ({{UCI team code|EFE|2026|nolink=y}}) prior to the summit, Pogačar rode to the finish line at [[Le Lioran]] to win his third stage of the Tour, extending his lead in the {{abbr|GC|general classification}} to over 3½ minutes. In the {{abbr|GC|general classification}} group behind, Evenepoel sprinted towards the line, finishing 32 seconds behind Pogačar and gaining a handful of seconds that moved him into third overall, ahead of [[Juan Ayuso]] ({{UCI team code|LTK men|2026|nolink=}}) who took the white jersey of the young rider classification. {{Cite web |last=Ostanek |first=Dani |date=14 July 2026 |title=Tour de France: Tadej Pogačar shreds the field in the Massif Central to extend GC lead and claim stage 10 |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-tadej-pogacar-shreds-challengers-with-solo-climbing-charge-on-stage-10-and-adds-more-time-to-his-advantage-with-victory/ |access-date=24 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=14 July 2026 |title=‘I have haters’: Pogacar brushes off boos after solo burst extends Tour de France lead |url=https://www.theguardian.com/sport/2026/jul/14/joy-for-tadej-pogacar-on-bastille-day-as-solo-burst-extends-tour-de-france-lead |access-date=24 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}}
+The next two stages to [[Nevers]] and [[Chalon-sur-Saône]] were won by sprinters. [[Søren Wærenskjold]] ({{UCI team code|UXM men|2026|nolink=y}}) won stage 11, which he completed in the fastest average speed in the history of the Tour, {{Convert|50.9|km/h|mph}}. {{Cite web |last=Price |first=Matilda |date=15 July 2026 |title=Søren Wærenskjold holds off Olav Kooij to win Tour de France stage 11 |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-soren-waerenskjold-goes-from-distance-to-hold-off-olav-kooij-and-jasper-philipsen-for-victory-in-furiously-fast-stage-11/ |access-date=24 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=15 July 2026 |title=Wærenskjold wins fastest ever Tour de France stage in frenzied sprint to Nevers |url=https://www.theguardian.com/sport/2026/jul/15/soren-waerenskjold-wins-fastest-ever-tour-de-france-stage-nevers-cycling |access-date=24 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}} Merlier won stage 12, with a large crash occurring behind him. Pedersen extended his lead in the green jersey of the points classification. {{Cite news |last=Whittle |first=Jeremy |date=16 July 2026 |title=Tim Merlier surges to Tour de France 2026 hat-trick on stage 12 but crash hits sprinters |url=https://www.theguardian.com/sport/2026/jul/16/tim-merlier-tour-de-france-2026-hat-trick-stage-12-crash-hits-sprinters-cycling |access-date=24 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}} {{Cite web |last=Ostanek |first=Dani |date=16 July 2026 |title=Tour de France: Tim Merlier wins sprint skirmish on stage 12 ahead of major pileup |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-tim-merlier-wins-sprint-skirmish-on-stage-12-ahead-of-major-pileup/ |access-date=24 July 2026 |website=Cyclingnews |language=en}}
+Heading into the [[Vosges]] mountains, stage 13 was won by [[Mauro Schmid]] ({{UCI team code|JAY men|2026|nolink=}}) from a breakaway. [[Tom Pidcock]] ({{UCI team code|PQT|2026|nolink=}}) was also in the breakaway, advancing him to fourth overall in the GC. {{Cite news |last=Whittle |first=Jeremy |date=17 July 2026 |title=Tom Pidcock surges up standings while Mauro Schmid wins Tour de France stage 13 |url=https://www.theguardian.com/sport/2026/jul/17/tom-pidcock-surges-up-standings-while-mauro-schmid-wins-tour-de-france-stage-13 |access-date=24 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}} {{Cite web |date=17 July 2026 |title=Mauro Schmid outduels Harold Tejada on stage 13 at Tour de France |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-mauro-schmid-outduels-harold-tejada-in-two-rider-matchup-at-the-line-on-stage-13/ |access-date=24 July 2026 |website=Cyclingnews |language=en}} Stage 14 remained in the Vosges, with Pogačar attacking from the group of {{abbr|GC|general classification}} contenders with around {{convert|7|km|abbr=on}} remaining. Vingegaard and Seixas worked together to minimise the gap to Pogačar – eventually finishing around 40 seconds behind. Pogačar's {{abbr|GC|general classification}} lead increased to 4½ minutes, with Vingegaard in second place and Evenepoel in third. The other {{abbr|GC|general classification}} contenders – Seixas, Ayuso, Lipowitz and del Toro – were all within 30 seconds of each other. {{Cite web |last=Rogers |first=Owen |date=18 July 2026 |title=Tour de France: Tadej Pogačar’s late attack on Col du Haag nabs solo stage 14 win as Isaac del Toro outsprints Paul Seixas and Jonas Vingegaard to take second |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-tadej-pogacars-late-attack-on-col-du-haag-nabs-solo-stage-14-win-as-isaac-del-toro-outsprints-paul-seixas-and-jonas-vingegaard-to-take-second/ |access-date=26 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=18 July 2026 |title=Pogacar attacks ⁠on steepest climb to clinch fourth ⁠Tour de France stage win |url=https://www.theguardian.com/sport/2026/jul/18/pogacar-attacks-on-steepest-climb-to-clinch-another-tour-de-france-stage-win |access-date=27 July 2026 |work=The Guardian}}
+Prior to the start of stage 15, the [[International Testing Agency]] woke Vingegaard around 2am and Pogačar around 5am, to administer [[Doping in cycling|drugs tests]] on them. These tests took place outside of normal testing hours, and had been authorised by a Paris prosecutor. {{Cite news |last=Whittle |first=Jeremy |date=20 July 2026 |title=Vingegaard’s and Pogacar’s night-time doping tests authorised by Paris judge |url=https://www.theguardian.com/sport/2026/jul/20/tadej-pogacar-jonas-vingegaard-night-time-doping-tests-authorised-paris-judge-tour-de-france-cycling |access-date=26 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}} Reacting to the tests, Vingegaard stated that "It's good that they test, but when it's affecting performance and your sleep, I don't think it's so good." Evenepoel criticised the tests, stating that it was disrespectful and "something we [...] should not accept as athletes". {{Cite news |last=Whittle |first=Jeremy |date=19 July 2026 |title=Vingegaard crashes out of Tour de France after ‘inhuman’ 2am doping control |url=https://www.theguardian.com/sport/2026/jul/19/jonas-vingegaard-crashes-out-tour-de-france-remco-evenepoel-wins-stage-15 |access-date=27 July 2026 |work=The Guardian}} Pogačar later remarked that Vingegaard's 2am drug test would have "ruined his deep sleep and then completely ruined the night", but "if this is necessary to still prove that we are riding clean, then I totally accept it".
+Stage 15 took the race into the [[Savoy Prealps|Savoyard Alps]], with a finish at [[Plateau de Solaison]]. With about {{convert|24|km|mi|abbr=on}} remaining in the stage, Vingeegaard crashed after hitting the kerb while exiting a roundabout. He broke his collarbone and dropped out of the race. {{cite web|url=https://www.cyclingweekly.com/racing/tour-de-france/luckily-its-only-a-broken-collarbone-jonas-vingegaard-on-crashing-out-of-tour-de-france|title='Luckily, it's only a broken collarbone' – Jonas Vingegaard on crashing out of Tour de France|first=Adam|last=Becket|date=20 July 2026|accessdate=20 July 2026|website=cyclingweekly.com|publisher=[[Cycling Weekly]]}} {{Cite web |last=Rogers |first=Owen |date=19 July 2026 |title=Jonas Vingegaard crashes out of Tour de France – Dane suffers broken collarbone and will undergo surgery |url=https://www.cyclingnews.com/pro-cycling/teams-riders/jonas-vingegaard-crashes-out-of-tour-de-france/ |access-date=27 July 2026 |website=Cyclingnews |language=en}} Merlier also dropped out during this stage, due to the challenging terrain. {{Cite web |last=Rogers |first=Owen |date=19 July 2026 |title=Three time stage winner Tim Merlier abandons the Tour de France on mountainous stage 15 |url=https://www.cyclingnews.com/pro-cycling/teams-riders/three-time-stage-winner-tim-merlier-abandons-the-tour-de-france-on-mountainous-stage-15/ |access-date=27 July 2026 |website=Cyclingnews |language=en}} On the climb to the finish at Plateau de Solaison, Pogačar led from Del Toro and Evenepoel, as Seixas and Lipowitz lost time behind. In a sprint to the finish, Evenepoel finished ahead of Pogačar, winning his first mountain stage at the Tour. {{Cite web |last=Rogers |first=Owen |date=19 July 2026 |title=Tour de France: Remco Evenepoel outwits Tadej Pogačar to win stage 15 as Jonas Vingegaard crashes out |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-remco-evenepoel-outwits-tadej-pogacar-to-win-stage-15-as-jonas-vingegaard-crashes-out/ |access-date=27 July 2026 |website=Cyclingnews |language=en}} Pogačar speculated that Vingegaard's crash might have been due to lack of sleep following the drugs test.
+=== Week three in the Alps ===
+[[File:17e étape Tour de France 2026 - Maillots blanc et jaune au départ.JPG|thumb|{{UCI team code|UEX|2026|nolink=}} teammates [[Isaac del Toro]] (in the white jersey) and [[Tadej Pogačar]] (in the yellow jersey) prior to the start of [[2026 Tour de France, Stage 12 to Stage 21#Stage 17|stage 17]] in [[Chambéry]]]]
+After the second rest day, the third week of the race began with a {{convert|26.1|km|abbr=on}} [[individual time trial]] to [[Thonon-les-Bains]]. Evenepoel set the fastest time, winning a Tour time trial stage for the third time in his career. Pogačar was second, 28 seconds slower, which reduced his GC lead to 4½ minutes. Third on the stage was [[Mattias Skjelmose]] ({{UCI team code|LTK men|2026|nolink=y}}), over a minute slower than Evenepoel. Seixas was faster than del Toro, cutting the gap between them for third in the {{abbr|GC|general classification}} to around 20 seconds. Lipowitz crashed on the descent, breaking his collarbone, causing him to drop out of the race. Ayuso therefore moved into fifth in the {{abbr|GC|general classification}}. {{Cite news |last=Whittle |first=Jeremy |date=21 July 2026 |title=Evenepoel pips Pogacar again as Tour de France night-time doping test row deepens |url=https://www.theguardian.com/sport/2026/jul/21/remco-evenepoel-tadej-pogacar-tour-de-france-nightime-doping-test-row-cycling |access-date=27 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}} {{Cite web |last=Price |first=Matilda |date=21 July 2026 |title=Tour de France: Time trial world champion Remco Evenepoel destroys race against the clock and takes back-to-back wins on stage 16 |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-time-trial-world-champion-remco-evenepoel-destroys-race-against-the-clock-and-takes-back-to-back-wins-on-stage-16/ |access-date=27 July 2026 |website=Cyclingnews |language=en}}
+Stage 17 to [[Voiron]] was the last flat stage before three mountain stages in the Alps. Pedersen caught up with a large breakaway, then won the intermediate sprint at {{convert|28|km|abbr=on}}. Multiple attacks ensued, with a reduced group of sprinters approaching the finish. In the sprint finish, Philipsen used van der Poel to propel him to the stage victory, with Pedersen finishing in eighth place. Pedersen's lead in the points classification was cut to seven points, with few points still available before the Tour reached Paris. {{Cite web |last=Weislo |first=Laura |date=22 July 2026 |title=Tour de France: Jasper Philipsen wins explosive sprint finish on stage 17 as points classification battle tightens |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-jasper-philipsen-wins-explosive-sprint-finish-on-stage-17-as-points-classification-battle-tightens/ |access-date=28 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=22 July 2026 |title=Anti-doping chiefs reject claims of Paul Seixas favouritism as Tour rivals cry foul |url=https://www.theguardian.com/sport/2026/jul/22/anti-doping-chiefs-reject-seixas-favouritism-claim-as-tour-de-france-rivals-cry-foul-cycling |access-date=28 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}}
+Stage 18 gradually climbed to a summit finish at [[Orcières-Merlette]] at an elevation of {{convert|1825|m|ft|abbr=on}}. A large breakaway contained strong climbers and Pedersen, who took maximum points at the intermediate sprint, extending his lead to thirty-two points. On the climbs, the breakaway group slowly eroded as [[Valentin Paret-Peintre]] ({{UCI team code|QST|2026|nolink=y}}) tried to gain points in the mountains classification. In the final climb, Carapaz broke away from the remaining four riders with {{convert|3.5|km|abbr=on}} to go, then took the stage win and the lead in the mountains classification. All the remaining {{abbr|GC|general classification}} contenders finished close together. {{UCI team code|UEX|2026|nolink=y}} were suffering from illness, which caused Pogačar's teammate [[Brandon McNulty]] to drop out of the race. {{Cite web |last=Ostinek |first=Dani |date=23 July 2026 |title=Tour de France: Richard Carapaz flies solo across the final kilometres to land stunning mountaintop victory on stage 18 |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-richard-carapaz-flies-solo-across-the-final-kilometres-to-land-stunning-mountaintop-victory-on-stage-18/ |access-date=28 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=23 July 2026 |title=Tour de France worries emerge for Tadej Pogacar after illness sweeps through team |url=https://www.theguardian.com/sport/2026/jul/23/tour-de-france-stage-18-report-tadej-pogacar-team-illness-richard-carapaz |access-date=28 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}}
+Stage 19 to [[Alpe d'Huez]] was won by Pogačar, who attacked with {{convert|12|km|abbr=on}} to go on the climb. {{Cite web |last=Ostanek |first=Dani |last2= |first2= |date=24 July 2026 |title=Tour de France: Tadej Pogačar flies to victory atop l'Alpe d'Huez on stage 19 |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-tadej-pogacar-flies-to-victory-atop-lalpe-dhuez-on-stage-19/ |access-date=28 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=24 July 2026 |title=Pogacar conquers Alpe d’Huez in record climb to win stage 19 and extend Tour de France lead |url=https://www.theguardian.com/sport/2026/jul/24/pogacar-wins-stage-19-alpe-d-huez-extends-tour-de-france-lead |access-date=28 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}} He finished in a record time for the Alpe d'Huez, beating Marco Pantani's time set in 1995. {{Cite web |last=Farrand|first=Stephen|date=24 July 2026|title=Tadej Pogačar smashes 30-year-old Alpe d'Huez climbing record set by Marco Pantani|url=https://www.cyclingnews.com/pro-cycling/teams-riders/tadej-pogacar-beats-nearly-30-year-old-alpe-dhuez-climbing-record-set-by-marco-pantani/|access-date=27 July 2026|website=Cyclingnews|language=en}}
+Stage 20 was the final mountain stage of the race and predicted to be the [[queen stage]]. It contained four climbs, three of them [[hors catégorie|''hors catégorie'']]. [[Sepp Kuss]] ({{UCI team code|TVL men|2026|nolink=y}}) was leading the stage after a breakaway, but he crashed twice in the final {{convert|8|km|abbr=on}}. Carapaz inherited the lead and won the stage, extending his lead in the mountains classification. Pogačar rode as a [[domestique]] for del Toro, helping the latter to secure third place in the {{abbr|GC|general classification}} and the lead in the young rider classification. Pedersen gained more points at the intermediate sprint, giving him an unassailable lead in the points classification. {{Cite web |last=Moultrie |first=James |date=25 July 2026 |title=Tour de France: Richard Carapaz wins breakaway epic on brutal stage 20 to Alpe d'Huez after late disaster by Sepp Kuss |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-richard-carapaz-dominates-alpe-dhuez-with-second-win-in-as-many-days-after-late-disaster-by-sepp-kuss/ |access-date=28 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=25 July 2026 |title=Pogacar set for Tour de France glory in shortened finale as Carapaz wins stage 20 |url=https://www.theguardian.com/sport/2026/jul/25/tadej-pogacar-tour-de-france-ricardo-carapaz-wildfires-cycling |access-date=28 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}}
+[[File:Étape_21_Tour_France_2026_Rue_Saint_Éleuthère_-_Paris_XVIII_(FR75)_-_2026-07-26_-_3.jpg|thumb|[[Mads Pedersen]], [[Tadej Pogačar]] and eventual stage winner [[Mathieu van der Poel]] on the [[Montmartre]] climb on [[2026 Tour de France, Stage 12 to Stage 21#Stage 21|stage 21]]]]
+The final stage of the race was in [[Paris]], with the traditional [[Champs-Élysées stage in the Tour de France|final stage to the Champs-Élysées]]. The stage used the [[Montmartre]] circuit, previously used at the [[2024 Summer Olympics|Paris 2024 Summer Olympics]] and the [[2025 Tour de France]], modified to provide {{convert|11|km|abbr=on}} between the final ascent of Montmartre to the finish line on the Champs-Élysées. It was therefore predicted that sprinters would have a greater chance of contending for the stage win. {{Cite web |last=Lamoureux|first=Lyne|last2=|first2=|last3=|date=8 June 2026|title=Tour de France 2026 stage 21 preview|url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-2026-stage-21-preview/|access-date=5 July 2026|website=Cyclingnews|language=en}} The stage was shortened by {{convert|43.8|km|abbr=on}} due to redeployment of security staff to tackle [[2026 France wildfires|ongoing wildfires]] in [[Gironde]]. The {{abbr|GC|general classification}} was neutralized after the first Montmartre circuit, ensuring that crashes or other incidents would not impact the final {{abbr|GC|general classification}} standings. {{Cite web |last=Fletcher |first=Patrick |last2=Tyson |first2=Jackie Tadej |date=26 July 2026 |title=GC times to be taken before Montmartre climbs on Tour de France final stage for second year in a row due to safety concerns |url=https://www.cyclingnews.com/pro-cycling/racing/gc-times-to-be-taken-before-montmartre-climbs-on-tour-de-france-final-stage-for-second-year-in-a-row-due-to-safety-concerns/ |access-date=28 July 2026 |website=Cyclingnews |language=en}} {{Cite news |date=25 July 2026 |title=Tour de France final stage to be shortened due to wildfires |url=https://www.lemonde.fr/en/sports/article/2026/07/25/tour-de-france-final-stage-to-be-shortened-due-to-wildfires_6755829_9.html |access-date=28 July 2026 |work=Le Monde |language=fr |issn=1950-6244}}
+Pogačar attacked on the Montmartre climbs, attempting a breakaway with Evenepoel, van der Poel and Pedersen with one lap to go, but the group was caught by the peloton. On the final lap, Pogačar and van der Poel attacked again on the climb, but could only build a lead of 10 seconds ahead of the chasing peloton of sprinters. The pair worked together to maintain the gap on the descent and race to the line. The gap had narrowed to 5 seconds as they passed the [[Flamme rouge|''flamme rouge'']] with {{convert|1|km|abbr=on}} to go. On the final straight of the [[Champs-Élysées]], Pogačar was overtaken by van der Poel in a final push for the line. {{UCI team code|APT|2026|nolink=y}} led out Philipsen and {{UCI team code|LTK men|2026|nolink=y}} led out Pedersen, however van der Poel hung on to win the stage in a [[photo finish]], ahead of Philipsen and Pedersen. Pogačar finished in the chasing bunch of sprinters, sealing his fifth Tour victory. Carapaz, Pedersen and del Toro also finished the stage safely, winning their categories. {{Cite web |last=Moultrie |first=James |last2= |first2= |date=26 July 2026 |title=Tour de France: Tadej Pogačar equals record with fifth yellow jersey as Mathieu van der Poel wins thrilling stage 21 |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-tadej-pogacar-equals-record-with-fifth-yellow-jersey-as-mathieu-van-der-poel-wins-stage-21/ |access-date=28 July 2026 |website=Cyclingnews |language=en}} {{Cite news |last=Whittle |first=Jeremy |date=26 July 2026 |title=Relentless Tadej Pogacar wins fifth Tour de France to equal record |url=https://www.theguardian.com/sport/2026/jul/26/relentless-tadej-pogacar-wins-fifth-tour-de-france-to-equal-record |access-date=28 July 2026 |work=The Guardian |language=en-GB |issn=0261-3077}}
+=== Results ===
+In the [[General classification in the Tour de France|general classification]], Pogačar won the Tour for the fifth time. Only Pogačar, [[Jacques Anquetil]], [[Eddy Merckx]], [[Bernard Hinault]] and [[Miguel Induráin]] have five Tour victories. {{Cite news |last=Warwick |first=Matt |date=26 July 2026 |title=Pogacar wins fifth Tour as Van der Poel takes stage |url=https://www.bbc.co.uk/sport/cycling/articles/c07r8d4d2z5o |access-date=26 July 2026 |work=BBC News}} Pogačar's average speed of {{Convert|43.227|km/h|mph}} over the three weeks of racing was the fastest in the history of the Tour. {{Cite web |last=Giuliani |first=Simone |date=27 July 2026 |title=Tadej Pogačar's winning time sees 2026 Tour de France set new record for fastest-ever edition |url=https://www.cyclingnews.com/pro-cycling/racing/tadej-pogacars-winning-time-sees-2026-tour-de-france-set-new-record-for-fastest-ever-edition/ |access-date=27 July 2026 |website=Cycling News}} Evenepoel finished in second place, 6 minutes 26 seconds behind. Del Toro was third, 9 minutes 42 seconds behind Pogačar.
+The [[Points classification in the Tour de France|points classification]] was won by Pedersen with 559 points, ahead of Philipsen and Girmay. Carapaz won the mountains classification, ahead of Pogačar and Paret-Peintre. Carapaz also won the award for the [[Combativity award in the Tour de France|most combative rider]]. The [[Young rider classification in the Tour de France|young rider classification]] was won by del Toro. The [[Team classification in the Tour de France|teams classification]] was won by {{UCI team code|LTK men|2026|nolink=y}}.
+Of the 184 riders who started the race, 158 reached the finish in Paris. [[Cees Bol]] was the ''[[lanterne rouge]]'' in last place overall on {{abbr|GC|general classification}}, with an overall time around 6 hours and 20 minutes behind Pogačar. {{Cite web |date=4 July 2026 |title=Tour de France GC standings – No changes to top 10 as Tadej Pogačar puts on a show in Paris and confirms fifth title |url=https://www.cyclingnews.com/pro-cycling/racing/tour-de-france-gc-standings-2026/ |access-date=28 July 2026 |website=Cyclingnews |language=en}}
+For the third time overall and for the first time since [[1999 Tour de France|1999]], French riders recorded no stage victories. {{Cite web |date=26 July 2026 |title=Who Won Stage 21 Of The Tour de France 2026? See The Full TDF Results Here |url=https://www.flobikes.com/articles/16092293-tour-de-france-2026-stage-21-results-heres-who-won |access-date=30 July 2026 |website=flobikes.com |language=en}}
+== Classification leadership ==
+{| class="wikitable" style="text-align: center; font-size:smaller;"
+|+Classification leadership by stage
+|-
+! scope="col" style="width:1%;" | Stage
+! scope="col" style="width:14%;" | Winner
+! scope="col" style="width:14%;" | [[General classification in the Tour de France|General classification]]
+{{cjersey|yellow|size=25px}}
+! scope="col" style="width:14%;" | [[Points classification in the Tour de France|Points classification]]
+{{cjersey|dark green|size=25px}}
+! scope="col" style="width:14%;" | [[Mountains classification in the Tour de France|Mountains classification]]
+{{cjersey|polkadot|size=25px}}
+! scope="col" style="width:14%;" | [[Young rider classification in the Tour de France|Young rider classification]]
+{{cjersey|white|size=25px}}
+! scope="col" style="width:14%;" | [[Team classification in the Tour de France|Team classification]]
+{{cjersey|yellow number|size=25px}}
+! scope="col" style="width:14%;" | [[Combativity award in the Tour de France|Combativity award]]
+[[File:Jersey beige number.svg|25px]]
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 1|1]]
+| {{UCI team code|TVL men|2026}}
+| style="background:#FFEB64;" rowspan=2| [[Jonas Vingegaard]]
+| style="background:#008000;" | {{font colour|white|Egan Bernal|link=Egan Bernal}}{{efn|name=TTT|Although there were no points awarded towards the points or mountains classification during the [[team time trial]], the first green jersey was awarded to the fastest rider over its first {{convert|5.1|km|abbr=off}}, {{cite web|url=https://storage-aso.lequipe.fr/ASO/cycling_tdf/tdf26-reglement.pdf|title=Règlement / Rules and regulations|format=[[PDF]]|work=[[Tour de France]]|publisher=[[Amaury Sport Organisation]]|accessdate=4 July 2026|page=27}} {{cite web|url=https://prod.server.tissottiming.com/file/000319020D010101FFFFFFFFFFFFFF05|title=Classement par points 1|format=[[PDF]]|language=French|trans-title=Points classification 1|website=[[Tissot]] Timing|date=4 July 2026|accessdate=4 July 2026}} and the first polka dot jersey was awarded to the fastest rider over its final {{convert|3.7|km|abbr=off}}. {{cite web|url=https://prod.server.tissottiming.com/file/000319020D010101FFFFFFFFFFFFFF06|title=Classement du meilleur grimpeur 1|format=[[PDF]]|language=French|trans-title=King of the Mountains classification 1|website=[[Tissot]] Timing|date=4 July 2026|accessdate=4 July 2026}} }}
+| style="background:#FFA8A4;" | [[Tadej Pogačar]]{{efn|name=TTT}}
+| style="background:#F8F9FA;" | [[Juan Ayuso]]
+| style="background:#FFCD5F;" | {{UCI team code|NCI|2026b}}{{efn|Although {{UCI team code|TVL men|2026}} won the [[team time trial]], the first teams classification standings were based on each team's fastest three riders. }}
+| ''no award''
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 2|2]]
+| [[Isaac del Toro]]
+| style="background:#008000;" | {{font colour|white|Isaac del Toro|link=Isaac del Toro}}
+| style="background:#FFA8A4;" | [[Alex Molenaar]]
+| style="background:#F8F9FA;" rowspan=2| [[Isaac del Toro]]{{efn|On stage 3, [[Juan Ayuso]], who was second in the young rider classification, wore the white jersey, because first placed [[Isaac del Toro]] wore the green jersey as the leader of the points classification.}}
+| style="background:#FFCD5F;" rowspan=2| {{UCI team code|UEX|2026}}
+| style="background:#F5F5DC;" | [[Felix Engelhardt]]
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 3|3]]
+| [[Tadej Pogačar]]
+| style="background:#FFEB64;" | [[Tadej Pogačar]]
+| style="background:#008000;" | {{font colour|white|Tadej Pogačar|link=Tadej Pogačar}}{{efn|On stage 4, [[Jonas Vingegaard]], who was second in the points classification, wore the green jersey, because first placed [[Tadej Pogačar]] wore the yellow jersey as the leader of the general classification.}}
+| rowspan="3" style="background:#FFA8A4;" | [[Alex Baudin]]
+| style="background:#F5F5DC;" | [[Alex Baudin]]
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 4|4]]
+| [[Mads Pedersen]]
+| style="background:#FFEB64;" rowspan=2| [[Torstein Træen]]
+| style="background:#008000;" rowspan=18| {{font colour|white|Mads Pedersen|link=Mads Pedersen}}
+| style="background:#F8F9FA;" rowspan=2| [[Mathias Vacek]]
+| style="background:#FFCD5F;" rowspan=18| {{UCI team code|LTK men|2026}}
+| style="background:#F5F5DC;" | [[Pablo Castrillo]]
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 5|5]]
+| [[Olav Kooij]]
+| style="background:#F5F5DC;" | [[Baptiste Veistroffer]]
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 6|6]]
+| [[Tadej Pogačar]]
+| rowspan="16" style="background:#FFEB64;" | [[Tadej Pogačar]]
+| style="background:#FFA8A4;" rowspan=13| [[Tadej Pogačar]]{{efn|On stages 7–14, [[Jonas Vingegaard]], who was second in the mountain classification, wore the polka jersey, because first placed [[Tadej Pogačar]] wore the yellow jersey as the leader of the general classification.}}{{efn|On stages 15–19, [[Valentin Paret-Peintre]], who was second in the mountain classification, wore the polka jersey, because first placed [[Tadej Pogačar]] wore the yellow jersey as the leader of the general classification.}}
+| style="background:#F8F9FA;" rowspan=4| [[Isaac del Toro]]
+| style="background:#F5F5DC;" | [[Tadej Pogačar]]
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 7|7]]
+| [[Tim Merlier]]
+| style="background:#F5F5DC;" | [[Baptiste Veistroffer]]
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 8|8]]
+| [[Tim Merlier]]
+| style="background:#F5F5DC;" | [[Liam Slock]]
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 9|9]]
+| [[Mathieu van der Poel]]
+| style="background:#F5F5DC;" | [[Mathieu van der Poel]]
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 10|10]]
+| [[Tadej Pogačar]]
+| style="background:#F8F9FA;" rowspan=4| [[Juan Ayuso]]
+| style="background:#F5F5DC;" | [[Richard Carapaz]]
+|-
+! [[2026 Tour de France, Stage 1 to Stage 11#Stage 11|11]]
+| [[Søren Wærenskjold]]
+| style="background:#F5F5DC;" | [[Anthon Charmig]]
+|-
+! [[2026 Tour de France, Stage 12 to Stage 21#Stage 12|12]]
+| [[Tim Merlier]]
+| style="background:#F5F5DC;" | [[Baptiste Veistroffer]]
+|-
+! [[2026 Tour de France, Stage 12 to Stage 21#Stage 13|13]]
+| [[Mauro Schmid]]
+| style="background:#F5F5DC;" | [[Tom Pidcock]]
+|-
+! [[2026 Tour de France, Stage 12 to Stage 21#Stage 14|14]]
+| [[Tadej Pogačar]]
+| style="background:#F8F9FA;" | [[Paul Seixas]]
+| style="background:#F5F5DC;" | [[Richard Carapaz]]
+|-
+! [[2026 Tour de France, Stage 12 to Stage 21#Stage 15|15]]
+| [[Remco Evenepoel]]
+| style="background:#F8F9FA;" rowspan=7| [[Isaac del Toro]]
+| style="background:#F5F5DC;" | [[Quinn Simmons]]
+|-
+! [[2026 Tour de France, Stage 12 to Stage 21#Stage 16|16]]
+| [[Remco Evenepoel]]
+| ''no award''
+|-
+! [[2026 Tour de France, Stage 12 to Stage 21#Stage 17|17]]
+| [[Jasper Philipsen]]
+| style="background:#F5F5DC;" | [[Mads Pedersen]]
+|-
+! [[2026 Tour de France, Stage 12 to Stage 21#Stage 18|18]]
+| [[Richard Carapaz]]
+| style="background:#F5F5DC;" | [[Richard Carapaz]]
+|-
+! [[2026 Tour de France, Stage 12 to Stage 21#Stage 19|19]]
+| [[Tadej Pogačar]]
+| style="background:#FFA8A4;" rowspan=3| [[Richard Carapaz]]
+| style="background:#F5F5DC;" | [[Richard Carapaz]]
+|-
+! [[2026 Tour de France, Stage 12 to Stage 21#Stage 20|20]]
+| [[Richard Carapaz]]
+| style="background:#F5F5DC;" | [[Sepp Kuss]]
+|-
+! [[2026 Tour de France, Stage 12 to Stage 21#Stage 21|21]]
+|[[Mathieu van der Poel]]
+| ''no award''
+|-
+! colspan="2" | Final
+| style="background:#FFDB00;" | [[Tadej Pogačar]]
+! style="background:#006400;" | {{font colour|white|Mads Pedersen|link=Mads Pedersen}}
+! style="background:#FF3E33;" | [[Richard Carapaz]]
+! style="background:white;" | [[Isaac del Toro]]
+! style="background:#FFB927;" | {{UCI team code|LTK men|2026}}
+! style="background:#D1BEA8;" | [[Richard Carapaz]]
+|}
+{{notelist}}
+==Classification standings==
+[[File:2026-07-17 17-39-10 TDF-Belfort (cropped).jpg|thumb|[[Tadej Pogačar]], winner of the [[General classification in the Tour de France|general classification]] wearing the yellow jersey]]
+{| class="wikitable noresize"
+|-
+! colspan="4" | Legend
+|-
+| {{cjersey|yellow}}
+| Denotes the winner of the [[General classification in the Tour de France|general classification]]
+| {{cjersey|polkadot}}
+| Denotes the winner of the [[Mountains classification in the Tour de France|mountains classification]]
+|-
+| {{cjersey|dark green}}
+| Denotes the winner of the [[Points classification in the Tour de France|points classification]]
+| {{cjersey|white}}
+| Denotes the winner of the [[Young rider classification in the Tour de France|young rider classification]]
+|-
+| {{cjersey|yellow number}}
+| Denotes the winner of the [[Team classification in the Tour de France|team classification]]
+| [[File:Jersey beige number.svg|20px]]
+| Denotes the winner of the [[Combativity award in the Tour de France|combativity award]]
+|}
+===General classification===
+{| class="wikitable col-1right" style="width:50em;margin-bottom:0;"
+|+ Final general classification (1–10) {{cite web |url=https://www.letour.fr/en/rankings |title=Official classifications of Tour de France 2026 |work=[[Tour de France]] |access-date=26 July 2026 }} {{cite web|url=https://www.tissottiming.com/2026/tdf/stage-21/rankings|title=Tour de France Rankings Tissot Timing|work=Tissot Timing|access-date=26 July 2026}}
+|-
+! scope="col" | Rank
+! scope="col" | Rider
+! scope="col" | Team
+! scope="col" | Time
+|-
+! scope="row" | 1
+| {{Flag athlete|[[Tadej Pogačar]]|SLO}} {{cjersey|yellow}}
+| {{UCI team code|UEX|2026}}
+| 73h 56' 26"
+|-
+! scope="row" | 2
+| {{Flag athlete|[[Remco Evenepoel]]|BEL}}
+| {{UCI team code|RBH|2026}}
+| + 6' 26"
+|-
+! scope="row" | 3
+| {{Flag athlete|[[Isaac del Toro]]|MEX}} {{cjersey|white}}
+| {{UCI team code|UEX|2026}}
+| + 9' 42"
+|-
+! scope="row" | 4
+| {{Flag athlete|[[Paul Seixas]]|FRA}}
+| {{UCI team code|DCT|2026}}
+| + 11' 56"
+|-
+! scope="row" | 5
+| {{Flag athlete|[[Lenny Martinez (cyclist)|Lenny Martinez]]|FRA}}
+| {{UCI team code|TBV|2026}}
+| + 13' 02"
+|-
+! scope="row" | 6
+| {{Flag athlete|[[Mattias Skjelmose]]|DEN}}{{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| + 14' 59"
+|-
+! scope="row" | 7
+| {{Flag athlete|[[Juan Ayuso]]|ESP}}{{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| + 17' 48"
+|-
+! scope="row" | 8
+| {{Flag athlete|[[Richard Carapaz]]|ECU}} {{cjersey|polkadot}}[[File:Jersey beige number.svg|20px]]
+| {{UCI team code|EFE|2026}}
+| + 20' 00"
+|-
+! scope="row" | 9
+| {{Flag athlete|[[Tom Pidcock]]|GBR}}
+| {{UCI team code|PQT|2026}}
+| + 29' 28"
+|-
+! scope="row" | 10
+| {{Flag athlete|[[Jordan Jegat]]|FRA}}
+| {{UCI team code|TEN|2026}}
+| + 33' 21"
+|-
+|}
+{| class="collapsible collapsed wikitable col-1right" style="width:50em;margin-top:-1px;"
+|-
+! scope="col" colspan="4" | Final general classification (11–158)
+|-
+! scope="col" | Rank
+! scope="col" | Rider
+! scope="col" | Team
+! scope="col" | Time
+|-
+! scope="row" | 11
+| {{Flag athlete|[[Yannis Voisard]]|SUI}}
+| {{UCI team code|TUD|2026}}
+| + 38' 02"
+|-
+! scope="row"| 12
+| {{Flag athlete|[[Tobias Halland Johannessen]]|NOR}}
+| {{UCI team code|UXM men|2026}}
+| + 56' 37"
+|-
+! scope="row"| 13
+| {{Flag athlete|[[Sepp Kuss]]|USA}}
+| {{UCI team code|TVL men|2026}}
+| + 1h 02' 23"
+|-
+! scope="row"| 14
+| {{Flag athlete|[[Davide Piganzoli]]|ITA}}
+| {{UCI team code|TVL men|2026}}
+| + 1h 03' 43"
+|-
+! scope="row"| 15
+| {{Flag athlete|[[Jai Hindley]]|AUS}}
+| {{UCI team code|RBH|2026}}
+| + 1h 23' 28"
+|-
+! scope="row"| 16
+| {{Flag athlete|[[Nicolas Prodhomme]]|FRA}}
+| {{UCI team code|DCT|2026}}
+| + 1h 25' 01"
+|-
+! scope="row"| 17
+| {{Flag athlete|[[Tiesj Benoot]]|BEL}}
+| {{UCI team code|DCT|2026}}
+| + 1h 32' 56"
+|-
+! scope="row"| 18
+| {{Flag athlete|[[Quinn Simmons]]|USA}} {{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| + 1h 35' 28"
+|-
+! scope="row"| 19
+| {{Flag athlete|[[Sean Quinn (cyclist)|Sean Quinn]]|USA}}
+| {{UCI team code|EFE|2026}}
+| + 1h 47' 05"
+|-
+! scope="row"| 20
+| {{Flag athlete|[[Egan Bernal]]|COL}}
+| {{UCI team code|NCI|2026b}}
+| + 1h 47' 58"
+|-
+! scope="row"| 21
+| {{Flag athlete|[[Adam Yates]]|GBR}}
+| {{UCI team code|UEX|2026}}
+| + 1h 51' 59"
+|-
+! scope="row"| 22
+| {{Flag athlete|[[Thymen Arensman]]|NED}}
+| {{UCI team code|NCI|2026b}}
+| + 2h 02' 42"
+|-
+! scope="row"| 23
+| {{Flag athlete|[[Carlos Verona]]|ESP}} {{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| + 2h 05' 22"
+|-
+! scope="row"| 24
+| {{Flag athlete|[[Matthew Riccitello]]|USA}}
+| {{UCI team code|DCT|2026}}
+| + 2h 11' 09"
+|-
+! scope="row"| 25
+| {{Flag athlete|[[Derek Gee-West]]|CAN}} {{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| + 2h 12' 59"
+|-
+! scope="row"| 26
+| {{Flag athlete|[[Harold Tejada]]|COL}}
+| {{UCI team code|XAT|2026}}
+| + 2h 19' 47"
+|-
+! scope="row"| 27
+| {{Flag athlete|[[Maxim Van Gils]]|BEL}}
+| {{UCI team code|RBH|2026}}
+| + 2h 24' 09"
+|-
+! scope="row"| 28
+| {{Flag athlete|[[Ben O'Connor (cyclist)|Ben O'Connor]]|AUS}}
+| {{UCI team code|JAY men|2026}}
+| + 2h 31' 38"
+|-
+! scope="row"| 29
+| {{Flag athlete|[[Pablo Castrillo]]|ESP}}
+| {{UCI team code|MOV men|2026}}
+| + 2h 31' 43"
+|-
+! scope="row"| 30
+| {{Flag athlete|[[Matteo Jorgenson]]|USA}}
+| {{UCI team code|TVL men|2026}}
+| + 2h 33' 29"
+|-
+! scope="row"| 31
+| {{Flag athlete|[[Guillaume Martin]]|FRA}}
+| {{UCI team code|GFC|2026}}
+| + 2h 34' 15"
+|-
+! scope="row"| 32
+| {{Flag athlete|[[Felix Großschartner]]|AUT}}
+| {{UCI team code|UEX|2026}}
+| + 2h 43' 22"
+|-
+! scope="row"| 33
+| {{Flag athlete|[[Mattia Cattaneo]]|ITA}}
+| {{UCI team code|RBH|2026}}
+| + 2h 51' 19"
+|-
+! scope="row"| 34
+| {{Flag athlete|[[Raúl García Pierna]]|ESP}}
+| {{UCI team code|MOV men|2026}}
+| + 2h 52' 32"
+|-
+! scope="row"| 35
+| {{Flag athlete|[[Mauro Schmid]]|SUI}}
+| {{UCI team code|JAY men|2026}}
+| + 2h 53' 29"
+|-
+! scope="row"| 36
+| {{Flag athlete|[[Kévin Vauquelin]]|FRA}}
+| {{UCI team code|NCI|2026b}}
+| + 3h 01' 17"
+|-
+! scope="row"| 37
+| {{flagathlete|[[Antonio Tiberi]]|ITA}}
+| {{UCI team code|TBV|2026}}
+| + 3h 03' 52"
+|-
+! scope="row"| 38
+| {{Flag athlete|[[Sergio Higuita]]|COL}}
+| {{UCI team code|XAT|2026}}
+| + 3h 04' 35"
+|-
+! scope="row"| 39
+| {{Flag athlete|[[Quinten Hermans]]|BEL}}
+| {{UCI team code|PQT|2026}}
+| + 3h 05' 23"
+|-
+! scope="row"| 40
+| {{Flag athlete|[[Clément Braz Afonso]]|FRA}}
+| {{UCI team code|GFC|2026}}
+| + 3h 06' 23"
+|-
+! scope="row"| 41
+| {{Flag athlete|[[Lennert Van Eetvelt]]|BEL}}
+| {{UCI team code|LOI|2026}}
+| + 3h 08' 22"
+|-
+! scope="row"| 42
+| {{Flag athlete|[[Aurélien Paret-Peintre]]|FRA}}
+| {{UCI team code|DCT|2026}}
+| + 3h 08' 28"
+|-
+! scope="row"| 43
+| {{Flag athlete|[[Tobias Foss]]|NOR}}
+| {{UCI team code|NCI|2026b}}
+| + 3h 08' 29"
+|-
+! scope="row"| 44
+| {{Flag athlete|[[Valentin Paret-Peintre]]|FRA}}
+| {{UCI team code|SOQ|2026}}
+| + 3h 09' 21"
+|-
+! scope="row"| 45
+| {{Flag athlete|[[Ion Izagirre]]|ESP}}
+| {{UCI team code|COF men|2026}}
+| + 3h 10' 13"
+|-
+! scope="row"| 46
+| {{Flag athlete|[[Alex Baudin]]|FRA}}
+| {{UCI team code|EFE|2026}}
+| + 3h 11' 41"
+|-
+! scope="row"| 47
+| {{Flag athlete|[[Abel Balderstone]]|ESP}}
+| {{UCI team code|CJR|2026}}
+| + 3h 24' 26"
+|-
+! scope="row"| 48
+| {{Flag athlete|[[Marc Hirschi]]|SUI}}
+| {{UCI team code|TUD|2026}}
+| + 3h 29' 59"
+|-
+! scope="row"| 49
+| {{Flag athlete|[[Mathias Vacek]]|CZE}} {{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| + 3h 34' 36"
+|-
+! scope="row"| 50
+| {{Flag athlete|[[Nicolas Breuillard]]|FRA}}
+| {{UCI team code|TEN|2026}}
+| + 3h 34' 36"
+|-
+! scope="row"| 51
+| {{Flag athlete|[[Joris Delbove]]|FRA}}
+| {{UCI team code|TEN|2026}}
+| + 3h 37' 06"
+|-
+! scope="row"| 52
+| {{Flag athlete|[[Michael Matthews (cyclist)|Michael Matthews]]|AUS}}
+| {{UCI team code|JAY men|2026}}
+| + 3h 37' 35"
+|-
+! scope="row"| 53
+| {{Flag athlete|[[Michael Valgren]]|DEN}}
+| {{UCI team code|EFE|2026}}
+| + 3h 39' 09"
+|-
+! scope="row"| 54
+| {{Flag athlete|[[Javier Romo]]|ESP}}
+| {{UCI team code|MOV men|2026}}
+| + 3h 41' 49"
+|-
+! scope="row"| 55
+| {{Flag athlete|[[Damiano Caruso]]|ITA}}
+| {{UCI team code|TBV|2026}}
+| + 3h 46' 43"
+|-
+! scope="row"| 56
+| {{Flag athlete|[[Xandro Meurisse]]|BEL}}
+| {{UCI team code|PQT|2026}}
+| + 3h 49' 13"
+|-
+! scope="row"| 57
+| {{Flag athlete|[[Romain Grégoire]]|FRA}}
+| {{UCI team code|GFC|2026}}
+| + 3h 50' 00"
+|-
+! scope="row"| 58
+| {{Flag athlete|[[Quentin Pacher]]|FRA}}
+| {{UCI team code|GFC|2026}}
+| + 3h 50' 29"
+|-
+! scope="row"| 59
+| {{Flag athlete|[[Ben Healy (cyclist)|Ben Healy]]|IRL}}
+| {{UCI team code|EFE|2026}}
+| + 3h 51' 03"
+|-
+! scope="row"| 60
+| {{Flag athlete|[[Anders Skaarseth]]|NOR}}
+| {{UCI team code|UXM men|2026}}
+| + 4h 03' 07"
+|-
+! scope="row"| 61
+| {{Flag athlete|[[Alexandre Delettre]]|FRA}}
+| {{UCI team code|TEN|2026}}
+| + 4h 03' 16"
+|-
+! scope="row"| 62
+| {{Flag athlete|[[Bruno Armirail]]|FRA}}
+| {{UCI team code|TVL men|2026}}
+| + 4h 03' 26"
+|-
+! scope="row"| 63
+| {{Flag athlete|[[Michael Storer]]|AUS}}
+| {{UCI team code|TUD|2026}}
+| + 4h 11' 37"
+|-
+! scope="row"| 64
+| {{Flag athlete|[[Anders Halland Johannessen]]|NOR}}
+| {{UCI team code|UXM men|2026}}
+| + 4h 14' 42"
+|-
+! scope="row"| 65
+| {{Flag athlete|[[Nelson Oliveira (cyclist)|Nelson Oliveira]]|POR}}
+| {{UCI team code|MOV men|2026}}
+| + 4h 17' 56"
+|-
+! scope="row"| 66
+| {{Flag athlete|[[Vlad Van Mechelen]]|BEL}}
+| {{UCI team code|TBV|2026}}
+| + 4h 18' 07"
+|-
+! scope="row"| 67
+| {{Flag athlete|[[Louis Vervaeke]]|BEL}}
+| {{UCI team code|SOQ|2026}}
+| + 4h 18' 38"
+|-
+! scope="row"| 68
+| {{Flag athlete|[[George Bennett (cyclist)|George Bennett]]|NZL}}
+| {{UCI team code|NSN|2026}}
+| + 4h 18' 42"
+|-
+! scope="row"| 69
+| {{Flag athlete|[[Clément Russo]]|FRA}}
+| {{UCI team code|GFC|2026}}
+| + 4h 20' 25"
+|-
+! scope="row"| 70
+| {{Flag athlete|[[Felix Engelhardt]]|GER}}
+| {{UCI team code|JAY men|2026}}
+| + 4h 22' 31"
+|-
+! scope="row"| 71
+| {{Flag athlete|[[Jasper Stuyven]]|BEL}}
+| {{UCI team code|SOQ|2026}}
+| + 4h 22' 49"
+|-
+! scope="row"| 72
+| {{Flag athlete|[[Nils Politt]]|GER}}
+| {{UCI team code|UEX|2026}}
+| + 4h 23' 30"
+|-
+! scope="row"| 73
+| {{Flag athlete|[[Rick Pluimers]]|NED}}
+| {{UCI team code|TUD|2026}}
+| + 4h 24' 31"
+|-
+! scope="row"| 74
+| {{Flag athlete|[[Tim Wellens]]|BEL}}
+| {{UCI team code|UEX|2026}}
+| + 4h 25' 28"
+|-
+! scope="row"| 75
+| {{Flag athlete|[[Mathieu van der Poel]]|NED}}
+| {{UCI team code|APT|2026}}
+| + 4h 26' 28"
+|-
+! scope="row"| 76
+| {{Flag athlete|[[Mathis Le Berre]]|FRA}}
+| {{UCI team code|TEN|2026}}
+| + 4h 26' 49"
+|-
+! scope="row"| 77
+| {{Flag athlete|[[Jonas Abrahamsen]]|NOR}}
+| {{UCI team code|UXM men|2026}}
+| + 4h 30' 23"
+|-
+! scope="row"| 78
+| {{Flag athlete|[[Marco Frigo]]|ITA}}
+| {{UCI team code|NSN|2026}}
+| + 4h 32' 04"
+|-
+! scope="row"| 79
+| {{Flag athlete|[[Ewen Costiou]]|FRA}}
+| {{UCI team code|GFC|2026}}
+| + 4h 32' 23"
+|-
+! scope="row"| 80
+| {{Flag athlete|[[Mads Pedersen]]|DEN}} {{cjersey|dark green}}{{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| + 4h 33' 05"
+|-
+! scope="row"| 81
+| {{Flag athlete|[[Brent Van Moer]]|BEL}}
+| {{UCI team code|PQT|2026}}
+| + 4h 33' 14"
+|-
+! scope="row"| 82
+| {{Flag athlete|[[Victor Campenaerts]]|BEL}}
+| {{UCI team code|TVL men|2026}}
+| + 4h 34' 17"
+|-
+! scope="row"| 83
+| {{Flag athlete|[[Jan Tratnik]]|SLO}}
+| {{UCI team code|RBH|2026}}
+| + 4h 34' 24"
+|-
+! scope="row"| 84
+| {{Flag athlete|[[Kasper Asgreen]]|DEN}}
+| {{UCI team code|EFE|2026}}
+| + 4h 35' 37"
+|-
+! scope="row"| 85
+| {{Flag athlete|[[Alex Aranburu]]|ESP}}
+| {{UCI team code|COF men|2026}}
+| + 4h 37' 55"
+|-
+! scope="row"| 86
+| {{Flag athlete|[[Mattéo Vercher]]|FRA}}
+| {{UCI team code|TEN|2026}}
+| + 4h 38' 44"
+|-
+! scope="row"| 87
+| {{Flag athlete|[[Warren Barguil]]|FRA}}
+| {{UCI team code|TPP men|2026}}
+| + 4h 40' 03"
+|-
+! scope="row"| 88
+| {{Flag athlete|[[Damien Howson]]|AUS}}
+| {{UCI team code|PQT|2026}}
+| + 4h 41' 38"
+|-
+! scope="row"| 89
+| {{Flag athlete|[[Sebastian Berwick]]|AUS}}
+| {{UCI team code|CJR|2026}}
+| + 4h 44' 04"
+|-
+! scope="row"| 90
+| {{Flag athlete|[[Georg Zimmermann]]|GER}}
+| {{UCI team code|LOI|2026}}
+| + 4h 44' 21"
+|-
+! scope="row"| 91
+| {{Flag athlete|[[Luke Plapp]]|AUS}}
+| {{UCI team code|JAY men|2026}}
+| + 4h 44' 30"
+|-
+! scope="row"| 92
+| {{Flag athlete|[[Matej Mohorič]]|SLO}}
+| {{UCI team code|TBV|2026}}
+| + 4h 44' 30"
+|-
+! scope="row"| 93
+| {{Flag athlete|[[Lorenzo Germani]]|ITA}}
+| {{UCI team code|GFC|2026}}
+| + 4h 48' 18"
+|-
+! scope="row"| 94
+| {{Flag athlete|[[Toms Skujiņš]]|LAT}} {{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| + 4h 49' 39"
+|-
+! scope="row"| 95
+| {{Flag athlete|[[Nico Denz]]|GER}}
+| {{UCI team code|RBH|2026}}
+| + 4h 52' 16"
+|-
+! scope="row"| 96
+| {{Flag athlete|[[Emiel Verstrynge]]|BEL}}
+| {{UCI team code|APT|2026}}
+| + 4h 57' 11"
+|-
+! scope="row"| 97
+| {{Flag athlete|[[Magnus Cort]]|DEN}}
+| {{UCI team code|UXM men|2026}}
+| + 4h 57' 57"
+|-
+! scope="row"| 98
+| {{Flag athlete|[[Nicolas Vinokurov]]|KAZ}}
+| {{UCI team code|XAT|2026}}
+| + 5h 01' 12"
+|-
+! scope="row"| 99
+| {{Flag athlete|[[Xabier Azparren]]|ESP}}
+| {{UCI team code|PQT|2026}}
+| + 5h 02' 54"
+|-
+! scope="row"| 100
+| {{Flag athlete|[[Simone Velasco]]|ITA}}
+| {{UCI team code|XAT|2026}}
+| + 5h 04' 15"
+|-
+! scope="row"| 101
+| {{Flag athlete|[[Jefferson Alveiro Cepeda]]|ECU}}
+| {{UCI team code|MOV men|2026}}
+| + 5h 04' 42"
+|-
+! scope="row"| 102
+| {{Flag athlete|[[Frank van den Broek]]|NED}}
+| {{UCI team code|TPP men|2026}}
+| + 5h 07' 36"
+|-
+! scope="row"| 103
+| {{Flag athlete|[[Per Strand Hagenes]]|NOR}}
+| {{UCI team code|TVL men|2026}}
+| + 5h 07' 45"
+|-
+! scope="row"| 104
+| {{Flag athlete|[[Michel Hessmann]]|GER}}
+| {{UCI team code|MOV men|2026}}
+| + 5h 11' 28"
+|-
+! scope="row"| 105
+| {{Flag athlete|[[Robert Stannard (cyclist)|Robert Stannard]]|AUS}}
+| {{UCI team code|TBV|2026}}
+| + 5h 13' 12"
+|-
+! scope="row"| 106
+| {{Flag athlete|[[Max Walker (cyclist)|Max Walker]]|GBR}}
+| {{UCI team code|EFE|2026}}
+| + 5h 13' 19"
+|-
+! scope="row"| 107
+| {{Flag athlete|[[Luke Durbridge]]|AUS}}
+| {{UCI team code|JAY men|2026}}
+| + 5h 13' 26"
+|-
+! scope="row"| 108
+| {{Flag athlete|[[Anthony Turgis]]|FRA}}
+| {{UCI team code|TEN|2026}}
+| + 5h 14' 55"
+|-
+! scope="row"| 109
+| {{Flag athlete|[[Thibault Guernalec]]|FRA}}
+| {{UCI team code|TEN|2026}}
+| + 5h 15' 27"
+|-
+! scope="row"| 110
+| {{Flag athlete|[[Michał Kwiatkowski]]|POL}}
+| {{UCI team code|NCI|2026b}}
+| + 5h 15' 39"
+|-
+! scope="row"| 111
+| {{Flag athlete|[[Tim van Dijke]]|NED}}
+| {{UCI team code|RBH|2026}}
+| + 5h 16' 43"
+|-
+! scope="row"| 112
+| {{Flag athlete|[[Jakub Otruba]]|CZE}}
+| {{UCI team code|CJR|2026}}
+| + 5h 17' 23"
+|-
+! scope="row"| 113
+| {{Flag athlete|[[Georg Steinhauser]]|GER}}
+| {{UCI team code|EFE|2026}}
+| + 5h 19' 39"
+|-
+! scope="row"| 114
+| {{Flag athlete|[[Edward Planckaert]]|BEL}}
+| {{UCI team code|APT|2026}}
+| + 5h 24' 18"
+|-
+! scope="row"| 115
+| {{Flag athlete|[[Jonas Rickaert]]|BEL}}
+| {{UCI team code|APT|2026}}
+| + 5h 24' 39"
+|-
+! scope="row"| 116
+| {{Flag athlete|[[Florian Vermeersch]]|BEL}}
+| {{UCI team code|UEX|2026}}
+| + 5h 26' 49"
+|-
+! scope="row"| 117
+| {{Flag athlete|[[Benjamin Thomas (cyclist)|Benjamin Thomas]]|FRA}}
+| {{UCI team code|COF men|2026}}
+| + 5h 27' 05"
+|-
+! scope="row"| 118
+| {{Flag athlete|[[Robbe Dhondt]]|BEL}}
+| {{UCI team code|TPP men|2026}}
+| + 5h 27' 16"
+|-
+! scope="row"| 119
+| {{Flag athlete|[[Hugo Page]]|FRA}}
+| {{UCI team code|COF men|2026}}
+| + 5h 27' 56"
+|-
+! scope="row"| 120
+| {{Flag athlete|[[Josh Tarling]]|GBR}}
+| {{UCI team code|NCI|2026b}}
+| + 5h 28' 28"
+|-
+! scope="row"| 121
+| {{Flag athlete|[[Aaron Gate]]|NZL}}
+| {{UCI team code|XAT|2026}}
+| + 5h 28' 56"
+|-
+! scope="row"| 122
+| {{Flag athlete|[[Alex Kirsch]]|LUX}}
+| {{UCI team code|COF men|2026}}
+| + 5h 30' 05"
+|-
+! scope="row"| 123
+| {{Flag athlete|[[Filippo Ganna]]|ITA}}
+| {{UCI team code|NCI|2026b}}
+| + 5h 31' 00"
+|-
+! scope="row"| 124
+| {{Flag athlete|[[Mike Teunissen]]|NED}}
+| {{UCI team code|XAT|2026}}
+| + 5h 31' 58"
+|-
+! scope="row"| 125
+| {{Flag athlete|[[Julian Alaphilippe]]|FRA}}
+| {{UCI team code|TUD|2026}}
+| + 5h 33' 07"
+|-
+! scope="row"| 126
+| {{Flag athlete|[[Stefano Oldani]]|ITA}}
+| {{UCI team code|CJR|2026}}
+| + 5h 33' 34"
+|-
+! scope="row"| 127
+| {{Flag athlete|[[Fred Wright (cyclist)|Fred Wright]]|GBR}}
+| {{UCI team code|PQT|2026}}
+| + 5h 36' 21"
+|-
+! scope="row"| 128
+| {{Flag athlete|[[Liam Slock]]|BEL}}
+| {{UCI team code|LOI|2026}}
+| + 5h 36' 40"
+|-
+! scope="row"| 129
+| {{Flag athlete|[[Joel Nicolau]]|ESP}}
+| {{UCI team code|CJR|2026}}
+| + 5h 37' 07"
+|-
+! scope="row"| 130
+| {{Flag athlete|[[Daan Hoole]]|NED}}
+| {{UCI team code|DCT|2026}}
+| + 5h 38' 04"
+|-
+! scope="row"| 131
+| {{Flag athlete|[[Dylan van Baarle]]|NED}}
+| {{UCI team code|SOQ|2026}}
+| + 5h 38' 53"
+|-
+! scope="row"| 132
+| {{Flag athlete|[[Huub Artz]]|NED}}
+| {{UCI team code|LOI|2026}}
+| + 5h 42' 34"
+|-
+! scope="row"| 133
+| {{Flag athlete|[[Tim Marsman]]|NED}}
+| {{UCI team code|APT|2026}}
+| + 5h 43' 11"
+|-
+! scope="row"| 134
+| {{Flag athlete|[[Krists Neilands]]|LAT}}
+| {{UCI team code|NSN|2026}}
+| + 5h 43' 58"
+|-
+! scope="row"| 135
+| {{Flag athlete|[[Jasper Philipsen]]|BEL}}
+| {{UCI team code|APT|2026}}
+| + 5h 44' 35"
+|-
+! scope="row"| 136
+| {{Flag athlete|[[Dorian Godon]]|FRA}}
+| {{UCI team code|NCI|2026b}}
+| + 5h 46' 54"
+|-
+! scope="row"| 137
+| {{Flag athlete|[[Silvan Dillier]]|SUI}}
+| {{UCI team code|APT|2026}}
+| + 5h 48' 36"
+|-
+! scope="row"| 138
+| {{Flag athlete|[[Søren Wærenskjold]]|NOR}}
+| {{UCI team code|UXM men|2026}}
+| + 5h 48' 38"
+|-
+! scope="row"| 139
+| {{Flag athlete|[[Niklas Märkl]]|GER}}
+| {{UCI team code|TPP men|2026}}
+| + 5h 51' 31"
+|-
+! scope="row"| 140
+| {{Flag athlete|[[Pavel Bittner]]|CZE}}
+| {{UCI team code|TPP men|2026}}
+| + 5h 51' 51"
+|-
+! scope="row"| 141
+| {{Flag athlete|[[Biniam Girmay]]|ERI}}
+| {{UCI team code|NSN|2026}}
+| + 5h 54' 20"
+|-
+! scope="row"| 142
+| {{Flag athlete|[[Max Kanter]]|GER}}
+| {{UCI team code|XAT|2026}}
+| + 5h 55' 29"
+|-
+! scope="row"| 143
+| {{Flag athlete|[[Pascal Eenkhoorn]]|NED}}
+| {{UCI team code|SOQ|2026}}
+| + 5h 57' 18"
+|-
+! scope="row"| 144
+| {{Flag athlete|[[Jenthe Biermans]]|BEL}}
+| {{UCI team code|COF men|2026}}
+| + 6h 01' 44"
+|-
+! scope="row"| 145
+| {{Flag athlete|[[John Degenkolb]]|GER}}
+| {{UCI team code|TPP men|2026}}
+| + 6h 01' 44"
+|-
+! scope="row"| 146
+| {{Flag athlete|[[Baptiste Veistroffer]]|FRA}}
+| {{UCI team code|LOI|2026}}
+| + 6h 02' 14"
+|-
+! scope="row"| 147
+| {{Flag athlete|[[Marco Haller (cyclist)|Marco Haller]]|AUT}}
+| {{UCI team code|TUD|2026}}
+| + 6h 02' 20"
+|-
+! scope="row"| 148
+| {{Flag athlete|[[Milan Fretin]]|BEL}}
+| {{UCI team code|COF men|2026}}
+| + 6h 06' 10"
+|-
+! scope="row"| 149
+| {{Flag athlete|[[Olav Kooij]]|NED}}
+| {{UCI team code|DCT|2026}}
+| + 6h 09' 18"
+|-
+! scope="row"| 150
+| {{Flag athlete|[[Jake Stewart (cyclist)|Jake Stewart]]|GBR}}
+| {{UCI team code|NSN|2026}}
+| + 6h 10' 47"
+|-
+! scope="row"| 151
+| {{Flag athlete|[[Lewis Askey]]|GBR}}
+| {{UCI team code|NSN|2026}}
+| + 6h 10' 48"
+|-
+! scope="row"| 152
+| {{Flag athlete|[[Davide Ballerini]]|ITA}}
+| {{UCI team code|XAT|2026}}
+| + 6h 11' 22"
+|-
+! scope="row"| 153
+| {{Flag athlete|[[Piet Allegaert]]|BEL}}
+| {{UCI team code|COF men|2026}}
+| + 6h 12' 22"
+|-
+! scope="row"| 154
+| {{Flag athlete|[[Phil Bauhaus]]|GER}}
+| {{UCI team code|TBV|2026}}
+| + 6h 13' 49"
+|-
+! scope="row"| 155
+| {{Flag athlete|[[Kamil Gradek]]|POL}}
+| {{UCI team code|TBV|2026}}
+| + 6h 16' 12"
+|-
+! scope="row"| 156
+| {{Flag athlete|[[Julius van den Berg]]|NED}}
+| {{UCI team code|TPP men|2026}}
+| + 6h 17' 26"
+|-
+! scope="row"| 157
+| {{Flag athlete|[[Matis Louvel]]|FRA}}
+| {{UCI team code|NSN|2026}}
+| + 6h 17' 36"
+|-
+! scope="row"| [[Lanterne rouge|158]]
+| {{Flag athlete|[[Cees Bol]]|NED}}
+| {{UCI team code|DCT|2026}}
+| + 6h 22' 08"
+|-
+|}
+{{columns-start}}
+===Points classification===
+{| class="wikitable col-1right" style="margin-bottom:0;"
+|+ Final points classification (1–10)
+|-
+! scope="col" | Rank
+! scope="col" | Rider
+! scope="col" | Team
+! scope="col" | Points
+|-
+! scope="row" | 1
+| {{Flag athlete|[[Mads Pedersen]]|DEN}} {{cjersey|dark green}}{{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| 559
+|-
+! scope="row" | 2
+| {{Flag athlete|[[Jasper Philipsen]]|BEL}}
+| {{UCI team code|APT|2026}}
+| 475
+|-
+! scope="row" | 3
+| {{Flag athlete|[[Biniam Girmay]]|ERI}}
+| {{UCI team code|NSN|2026}}
+| 367
+|-
+! scope="row" | 4
+| {{Flag athlete|[[Max Kanter]]|GER}}
+| {{UCI team code|XAT|2026}}
+| 289
+|-
+! scope="row" | 5
+| {{Flag athlete|[[Olav Kooij]]|NED}}
+| {{UCI team code|DCT|2026}}
+| 246
+|-
+! scope="row" | 6
+| {{Flag athlete|[[Tadej Pogačar]]|SLO}} {{cjersey|yellow}}
+| {{UCI team code|UEX|2026}}
+| 198
+|-
+! scope="row" | 7
+| {{Flag athlete|[[Søren Wærenskjold]]|NOR}}
+| {{UCI team code|UXM men|2026}}
+| 159
+|-
+! scope="row" | 8
+| {{Flag athlete|[[Remco Evenepoel]]|BEL}}
+| {{UCI team code|RBH|2026}}
+| 157
+|-
+! scope="row" | 9
+| {{Flag athlete|[[Isaac del Toro]]|MEX}} {{cjersey|white}}
+| {{UCI team code|UEX|2026}}
+| 143
+|-
+! scope="row" | 10
+| {{Flag athlete|[[Anthony Turgis]]|FRA}}
+| {{UCI team code|TEN|2026}}
+| 139
+|-
+|}
+{{column}}
+===Mountains classification===
+{| class="wikitable col-1right" style="margin-bottom:0;"
+|+ Final mountains classification (1–10)
+|-
+! scope="col" | Rank
+! scope="col" | Rider
+! scope="col" | Team
+! scope="col" | Points
+|-
+! scope="row" | 1
+| {{Flag athlete|[[Richard Carapaz]]|ECU}} {{cjersey|polkadot}}[[File:Jersey beige number.svg|20px]]
+| {{UCI team code|EFE|2026}}
+| 156
+|-
+! scope="row" | 2
+| {{Flag athlete|[[Tadej Pogačar]]|SLO}} {{cjersey|yellow}}
+| {{UCI team code|UEX|2026}}
+| 100
+|-
+! scope="row" | 3
+| {{Flag athlete|[[Valentin Paret-Peintre]]|FRA}}
+| {{UCI team code|SOQ|2026}}
+| 99
+|-
+! scope="row" | 4
+| {{Flag athlete|[[Sepp Kuss]]|USA}}
+| {{UCI team code|TVL men|2026}}
+| 55
+|-
+! scope="row" | 5
+| {{Flag athlete|[[Remco Evenepoel]]|BEL}}
+| {{UCI team code|RBH|2026}}
+| 50
+|-
+! scope="row" | 6
+| {{Flag athlete|[[Lenny Martinez (cyclist)|Lenny Martinez]]|FRA}}
+| {{UCI team code|TBV|2026}}
+| 41
+|-
+! scope="row" | 7
+| {{Flag athlete|[[Isaac del Toro]]|MEX}} {{cjersey|white}}
+| {{UCI team code|UEX|2026}}
+| 40
+|-
+! scope="row" | 8
+| {{Flag athlete|[[Paul Seixas]]|FRA}}
+| {{UCI team code|DCT|2026}}
+| 36
+|-
+! scope="row" | 9
+| {{Flag athlete|[[Tobias Halland Johannessen]]|NOR}}
+| {{UCI team code|UXM men|2026}}
+| 29
+|-
+! scope="row" | 10
+| {{Flag athlete|[[Jai Hindley]]|AUS}}
+| {{UCI team code|RBH|2026}}
+| 28
+|-
+|}
+{{columns-end}}
+{{columns-start}}
+===Young rider classification===
+{| class="wikitable col-1right" style="margin-bottom:0;"
+|+ Final young rider classification (1–10)
+|-
+! scope="col" | Rank
+! scope="col" | Rider
+! scope="col" | Team
+! scope="col" | Time
+|-
+! scope="row" | 1
+| {{Flag athlete|[[Isaac del Toro]]|MEX}} {{cjersey|white}}
+| {{UCI team code|UEX|2026}}
+| 74h 06' 08"
+|-
+! scope="row" | 2
+| {{Flag athlete|[[Paul Seixas]]|FRA}}
+| {{UCI team code|DCT|2026}}
+| + 2' 14"
+|-
+! scope="row" | 3
+| {{Flag athlete|[[Lenny Martinez (cyclist)|Lenny Martinez]]|FRA}}
+| {{UCI team code|TBV|2026}}
+| + 3' 20"
+|-
+! scope="row" | 4
+| {{Flag athlete|[[Juan Ayuso]]|ESP}} {{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| + 8' 06"
+|-
+! scope="row" | 5
+| {{Flag athlete|[[Davide Piganzoli]]|ITA}}
+| {{UCI team code|TVL men|2026}}
+| + 54' 01"
+|-
+! scope="row" | 6
+| {{Flag athlete|[[Quinn Simmons]]|USA}} {{cjersey|yellow number}}
+| {{UCI team code|LTK men|2026}}
+| + 1h 25' 46"
+|-
+! scope="row" | 7
+| {{Flag athlete|[[Matthew Riccitello]]|USA}}
+| {{UCI team code|DCT|2026}}
+| + 2h 01' 27"
+|-
+! scope="row" | 8
+| {{Flag athlete|[[Pablo Castrillo]]|ESP}}
+| {{UCI team code|MOV men|2026}}
+| + 2h 22' 01"
+|-
+! scope="row" | 9
+| {{Flag athlete|[[Raúl García Pierna]]|ESP}}
+| {{UCI team code|MOV men|2026}}
+| + 2h 42' 50"
+|-
+! scope="row" | 10
+| {{Flag athlete|[[Kévin Vauquelin]]|FRA}}
+| {{UCI team code|NCI|2026b}}
+| + 2h 51' 35"
+|-
+|}
+{{column}}
+===Team classification===
+{| class="wikitable col-1right"
+|+ Final team classification (1–10)
+|-
+! scope="col" | Rank
+! scope="col" | Team
+! scope="col" | Time
+|-
+! scope="row" | 1
+| {{flagicon|GER}} {{UCI team code|LTK men|2026}} {{cjersey|yellow number}}
+| 224h 57' 43"
+|-
+! scope="row" | 2
+| {{flagicon|UAE}} {{UCI team code|UEX|2026}}
+| + 36' 57"
+|-
+! scope="row" | 3
+| {{flagicon|GER}} {{UCI team code|RBH|2026}}
+| + 1h 06' 22"
+|-
+! scope="row" | 4
+| {{flagicon|FRA}} {{UCI team code|DCT|2026}}
+| + 1h 47' 44"
+|-
+! scope="row" | 5
+| {{flagicon|NED}} {{UCI team code|TVL men|2026}}
+| + 2h 18' 03"
+|-
+! scope="row" | 6
+| {{flagicon|USA}} {{UCI team code|EFE|2026}}
+| + 3h 38' 20"
+|-
+! scope="row" | 7
+| {{flagicon|GBR}} {{UCI team code|NCI|2026b}}
+| + 4h 49' 54"
+|-
+! scope="row" | 8
+| {{flagicon|BHR}} {{UCI team code|TBV|2026}}
+| + 5h 38' 20"
+|-
+! scope="row" | 9
+| {{flagicon|FRA}} {{UCI team code|TEN|2026}}
+| + 5h 48' 37"
+|-
+! scope="row" | 10
+| {{flagicon|SUI}} {{UCI team code|PQT|2026}}
+| + 5h 49' 14"
+|-
+|}
+{{columns-end}}
+== Broadcasting ==
+As with previous editions, live television coverage was provided by [[France Télévisions]] in conjunction with the [[European Broadcasting Union]]. {{Cite web |title=Sponsors, broadcasters, providers – Tour de France 2025 |url=https://www.letour.fr/en/partners |access-date=3 July 2026 |website=www.letour.fr |language=en}} {{Cite web |last=McLean |first=Heather |date=2 July 2026 |title=Tour de France 2026: Inside TNT Sports' exclusive production of the men's race and the Tour de Femmes |url=https://www.svgeurope.org/blog/headlines/tour-de-france-2026-inside-tnt-sports-exclusive-production-of-the-mens-race-and-the-tour-de-femmes/ |access-date=3 July 2026 |website=SVG Europe}} In the [[United States]], coverage of the race was shown on [[Peacock (streaming service)|Peacock]] and [[NBCSN]], with select coverage on [[NBC]]. {{Cite web |date=30 June 2026 |title=NBC Sports' Live coverage of every stage of the 113th Tour de France begins this Saturday, July 4, at 10 A.M. ET on Peacock and NBCSN |url=https://www.nbcsports.com/pressbox/press-releases/nbc-sports-live-coverage-of-every-stage-of-the-113th-tour-de-france-begins-this-saturday-july-4-at-10-a-m-et-on-peacock-nbcsn |access-date=3 July 2026 |website=NBC Sports |language=en-US}}
+==References==
+{{Reflist}}
+==External links==
+* {{official website|http://www.letour.fr/en/}}
+{{Commons|Tour de France 2026}}
+{{Tour de France}}
+{{Cycling stage recaps|2026 Tour de France|1|11|12|21}}
+{{Tour de France general classification winners}}
+{{2026 UCI World Tour}}
+{{DEFAULTSORT:Tour de France, 2026}}
+[[Category:Tour de France by year|2026]]
+[[Category:2026 in Spanish road cycling]]
+[[Category:July 2026 sports events in France]]
+[[Category:2026 in Spanish men's sport]]
+[[Category:2026 Tour de France]]
+[[Category:2026 in Spanish sport by month]]

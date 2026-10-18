@@ -1,0 +1,950 @@
+Source: https://en.wikipedia.org/w/index.php?title=2026_Daytona_500&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Daytona_500&action=raw
+HTTP 200
+Fetched: 2026-10-18T12:44:18.639Z
+
+{{short description|68th Running of the Daytona 500, held at Daytona International Speedway}}
+{{Infobox Daytona 500
+| Type = NASCS
+| Race_No = 1
+| Season_No = 36
+| Year = 2026
+| Details ref = {{cite web |title=2026 schedule |url=https://www.jayski.com/nascar-cup-series/2026-nascar-cup-series-schedule/|website=Jayski.com|publisher=[[Jayski's Silly Season Site]] |accessdate=October 25, 2025}} {{cite web |title=Daytona International Speedway |url=http://www.nascar.com/en_us/nascar-tracks/daytona-international-speedway.html |website=NASCAR.com |publisher=NASCAR Media Group, LLC. |accessdate=January 2, 2025 |archive-date=July 4, 2015 |archive-url=https://web.archive.org/web/20150704230431/http://www.nascar.com/en_us/nascar-tracks/daytona-international-speedway.html |url-status=dead }} {{cite web |url=https://www.nascar.com/news-media/2025/08/20/nascar-releases-2026-schedule-adding-chicagoland-and-shifting-all-star-to-dover |title=NASCAR releases 2026 schedule, adding Chicagoland and shifting All-Star to Dover |website=[[NASCAR]] |date=August 20, 2025 |access-date=August 20, 2025 }} {{cite web|title=Entry List|url=https://www.jayski.com/wp-content/uploads/sites/31/2026/2/11/12601_ENTNUM-1.pdf|website=Jayski.com|publisher=[[Jayski's Silly Season Site]]|access-date=February 9, 2025|date=February 9, 2025}} {{cite web|title=Duel 1 at Daytona Results|url=https://www.racing-reference.info/race-results/2026_Duel_at_Daytona_1/Q/|publisher=Racing-Reference|access-date=February 12, 2026|date=February 12, 2026}} {{cite web|title=Duel 2 at Daytona Results|url=https://www.racing-reference.info/race-results/2026_Duel_at_Daytona_2/Q/|publisher=Racing-Reference|access-date=February 12, 2026|date=February 12, 2026}} {{cite web|title=Daytona 500 Results|url=https://www.racing-reference.info/race-results/2026_Daytona_500/W/|publisher=Racing-Reference|access-date=February 15, 2026|date=February 15, 2026}} {{cite web|title=Points standings|url=https://www.jayski.com/wp-content/uploads/sites/31/2026/2/15/12601_UNOFFDRIVPTS.pdf|website=Jayski.com|publisher=[[Jayski's Silly Season Site]]|access-date=February 15, 2026|date=February 15, 2026}}
+| Image = [[File:2026 Daytona 500 logo.png|180px|]]
+| Caption = 2026 Daytona 500 logo
+| Fulldate = {{Start date|2026|02|15}}
+| Location = [[Daytona International Speedway]] in [[Daytona Beach, Florida]]
+| Course_mi = 2.5
+| Course_km = 4
+| Distance_laps = 200
+| Distance_mi = 500
+| Distance_km = 800
+| Weather = Partly Cloudy with a temperature around {{convert|81|F}}; wind out of the west at {{convert|20|mph}}.
+| Avg = {{convert|147.107|mph|km/h}}
+| Pole_Driver = [[Kyle Busch]]
+| Pole_Team = [[Richard Childress Racing]]
+| Pole_Time = 49.006
+| Duel1 = [[Joey Logano]]
+| One_Team = [[Team Penske]]
+| Duel2 = [[Chase Elliott]]
+| Two_Team = [[Hendrick Motorsports]]
+| Most_Driver = [[Bubba Wallace]]
+| Most_Team = [[23XI Racing]]
+| Most_laps = 40
+| Fast_Driver = [[Carson Hocevar]]
+| Fast_Team = [[Spire Motorsports]]
+| Fast_Time = 45.584
+| Car = 45
+| First_Driver = [[Tyler Reddick]]
+| First_Team = [[23XI Racing]]
+| Network = [[NASCAR on Fox|FOX]]
+| Announcers = [[Mike Joy]], [[Clint Bowyer]], and [[Kevin Harvick]]
+| Ratings = 7.489 million
+| Radio = [[Motor Racing Network|MRN]]
+| Booth_Ann = Alex Hayden, [[Mike Bagley]], and [[Todd Gordon]]
+| Turn_Ann = [[Dave Moody (sportscaster)|Dave Moody]] (1 & 2), Kyle Rickey (Backstretch), and Tim Catalfamo (3 & 4)
+}}
+The '''2026 Daytona 500''' was a [[NASCAR Cup Series]] race and the 68th running of the [[Daytona 500|event]]. It was held on Sunday, February 15, 2026, at [[Daytona International Speedway]] in [[Daytona Beach, Florida]]. It was the first race of the [[2026 NASCAR Cup Series]] season. The race was [[Kyle Busch]]'s final Daytona 500 as well as his final cup series pole before his death on May 21, 2026. {{Cite web |last=Albert |first=Zack |date=2026-05-21 |title=Kyle Busch, two-time NASCAR Cup Series champion, dies at age 41 |url=https://www.nascar.com/news-media/2026/05/21/kyle-busch-two-time-nascar-cup-series-champion-dies-at-age-41/ |access-date=2026-05-22 |website=Official Site Of NASCAR |language=en-US}}
+The race saw 65 lead changes, with a total of 26 different leaders (out of a 41-car field) being a Daytona 500 record. {{Cite web |last=Allen |first=Zach |title=How 2026 Daytona 500, won by Tyler Reddick, set record for lap leaders |url=https://www.indystar.com/story/sports/nascar/2026/02/15/daytona-500-record-tyler-reddick-lead-changes/88696191007/ |access-date=February 15, 2026 |website=The Indianapolis Star |language=en-US}} [[23XI Racing]]'s [[Tyler Reddick]] avoided multiple accidents on the final lap and passed [[Chase Elliott]] just before the start/finish line to claim both his and the team's first Daytona 500 victory, as well as the ninth win of his Cup Series career and his first since the [[2024 Straight Talk Wireless 400]] at [[Homestead–Miami Speedway|Homestead]]. [[Ricky Stenhouse Jr.]] finished 2nd, and [[Joey Logano]] finished 3rd. Elliott and [[Brad Keselowski]] rounded out the top five, and [[Zane Smith]], [[Chris Buescher]], [[Riley Herbst]], [[Josh Berry]], and [[Bubba Wallace]] rounded out the top ten.
+==Report==
+===Background===
+[[File:Daytona International Speedway 2024.svg|left|thumb|The layout of the [[Daytona International Speedway]].]]
+[[Daytona International Speedway]] is one of three [[superspeedway]]s to hold [[NASCAR]] races, the other two being [[Atlanta Motor Speedway]] and [[Talladega Superspeedway]]. {{cite web|title=NASCAR Race Tracks|url=http://www.nascar.com/races/tracks/|access-date=August 13, 2010|work=NASCAR|publisher=NASCAR Media Group|archive-url= https://web.archive.org/web/20100811053515/http://www.nascar.com/races/tracks/| archive-date=August 11, 2010}} The standard track at Daytona International Speedway is a four-turn superspeedway that is {{convert|2.5|mi|km}} long. {{cite web|title=NASCAR Tracks — The Daytona International Speedway|url=http://www.speedway-guide.com/Daytona-International-Speedway.html|publisher=Speedway Guide|access-date=August 15, 2010| archive-url= https://web.archive.org/web/20100830050250/http://www.speedway-guide.com/Daytona-International-Speedway.html| archive-date=August 30, 2010}} The track's turns are banked at 31 [[Degree (angle)|degrees]], while the [[Straight (racing)|front stretch]], the location of the finish line, is banked at 18 degrees.
+In 2026, the Daytona 500 will be held on its traditional [[Presidents' Day]] weekend. However, Daytona announced on October 22, 2025, that the 2027 Daytona 500 would be a week later, held on February 21, 2027, to avoid a conflict with the [[Super Bowl]]. {{ cite web |url=https://www.daytonainternationalspeedway.com/2025/10/22/daytona-international-speedway-announces-2027-daytona-500-date |title=Daytona International Speedway Announces 2027 DAYTONA 500 Date | website=[[Daytona International Speedway]] |date=October 22, 2025 |access-date=October 26, 2025 }}
+For the second consecutive year, 41 cars will be in the Daytona 500, [[Jimmie Johnson]] is guaranteed a spot with the [[NASCAR rules and regulations#Open Exemption Provisional|Open Exemption Provisional]] (OEP). {{Cite web |last=Srigley |first=Joseph |date=January 7, 2026 |title=Jimmie Johnson Secures Place in 2026 DAYTONA 500 with Open Exemption Provisional |url=https://tobychristie.com/nascar/jimmie-johnson-secures-place-in-2026-daytona-500-with-open-exemption-provisional/ |access-date=January 7, 2026 |website=TobyChristie.com |language=en-US}}
+====Entry list====
+* '''(R)''' denotes rookie driver.
+* '''(W)''' denotes former winner.
+* '''(i)''' denotes driver who is ineligible for series driver points.
+{| class="wikitable" style="font-size:95%"
+|-
+! {{Tooltip|No.|Car number}}
+! Driver
+! Team
+! Manufacturer
+|-
+| 1 || [[Ross Chastain]] || [[Trackhouse Racing]] || [[Chevrolet]]
+|-
+| 2 || [[Austin Cindric]] '''(W)''' || [[Team Penske]] || [[Ford Motor Company|Ford]]
+|-
+| 3 || [[Austin Dillon]] '''(W)''' || [[Richard Childress Racing]] || [[Chevrolet]]
+|-
+| 4 || [[Noah Gragson]] || [[Front Row Motorsports]] || [[Ford Motor Company|Ford]]
+|-
+| 5 || [[Kyle Larson]] || [[Hendrick Motorsports]] || [[Chevrolet]]
+|-
+| 6 || [[Brad Keselowski]] || [[RFK Racing]] || [[Ford Motor Company|Ford]]
+|-
+| 7 || [[Daniel Suárez]] || [[Spire Motorsports]] || [[Chevrolet]]
+|-
+| 8 || [[Kyle Busch]] || [[Richard Childress Racing]] || [[Chevrolet]]
+|-
+| 9 || [[Chase Elliott]] || [[Hendrick Motorsports]] || [[Chevrolet]]
+|-
+| 10 || [[Ty Dillon]] || [[Kaulig Racing]] || [[Chevrolet]]
+|-
+| 11 || [[Denny Hamlin]] '''(W)''' || [[Joe Gibbs Racing]] || [[Toyota]]
+|-
+| 12 || [[Ryan Blaney]] || [[Team Penske]] || [[Ford Motor Company|Ford]]
+|-
+| 16 || [[A. J. Allmendinger]] || [[Kaulig Racing]] || [[Chevrolet]]
+|-
+| 17 || [[Chris Buescher]] || [[RFK Racing]] || [[Ford Motor Company|Ford]]
+|-
+| 19 || [[Chase Briscoe]] || [[Joe Gibbs Racing]] || [[Toyota]]
+|-
+| 20 || [[Christopher Bell (racing driver)|Christopher Bell]] || [[Joe Gibbs Racing]] || [[Toyota]]
+|-
+| 21 || [[Josh Berry]] || [[Wood Brothers Racing]] || [[Ford Motor Company|Ford]]
+|-
+| 22 || [[Joey Logano]] '''(W)''' || [[Team Penske]] || [[Ford Motor Company|Ford]]
+|-
+| 23 || [[Bubba Wallace]] || [[23XI Racing]] || [[Toyota]]
+|-
+| 24 || [[William Byron (racing driver)|William Byron]] '''(W)''' || [[Hendrick Motorsports]] || [[Chevrolet]]
+|-
+| 34 || [[Todd Gilliland]] || [[Front Row Motorsports]] || [[Ford Motor Company|Ford]]
+|-
+| 35 || [[Riley Herbst]] || [[23XI Racing]] || [[Toyota]]
+|-
+| 36 || [[Chandler Smith]] '''(i)''' || [[Front Row Motorsports]] || [[Ford Motor Company|Ford]]
+|-
+| 38 || [[Zane Smith]] || [[Front Row Motorsports]] || [[Ford Motor Company|Ford]]
+|-
+| 40 || [[Justin Allgaier]] '''(i)''' || [[JR Motorsports]] || [[Chevrolet]]
+|-
+| 41 || [[Cole Custer]] || [[Haas Factory Team]] || [[Chevrolet]]
+|-
+| 42 || [[John Hunter Nemechek]] || [[Legacy Motor Club]] || [[Toyota]]
+|-
+| 43 || [[Erik Jones]] || [[Legacy Motor Club]] || [[Toyota]]
+|-
+| 44 || [[J. J. Yeley]] '''(i)''' || [[NY Racing Team]] || [[Chevrolet]]
+|-
+| 45 || [[Tyler Reddick]] || [[23XI Racing]] || [[Toyota]]
+|-
+| 47 || [[Ricky Stenhouse Jr.]] '''(W)''' || [[Hyak Motorsports]] || [[Chevrolet]]
+|-
+| 48 || [[Alex Bowman]] || [[Hendrick Motorsports]] || [[Chevrolet]]
+|-
+| 51 || [[Cody Ware]] || [[Rick Ware Racing]] || [[Chevrolet]]
+|-
+| 54 || [[Ty Gibbs]] || [[Joe Gibbs Racing]] || [[Toyota]]
+|-
+| 60 || [[Ryan Preece]] || [[RFK Racing]] || [[Ford Motor Company|Ford]]
+|-
+| 62 || [[Anthony Alfredo]] '''(i)''' || [[Beard Motorsports]] || [[Chevrolet]]
+|-
+| 66 || [[Casey Mears]] || [[Garage 66]] || [[Ford Motor Company|Ford]]
+|-
+| 67 || [[Corey Heim]] '''(i)''' || [[23XI Racing]] || [[Toyota]]
+|-
+| 71 || [[Michael McDowell (racing driver)|Michael McDowell]] '''(W)''' || [[Spire Motorsports]] || [[Chevrolet]]
+|-
+| 77 || [[Carson Hocevar]] || [[Spire Motorsports]] || [[Chevrolet]]
+|-
+| 78 || [[B. J. McLeod]] || [[Live Fast Motorsports]] || [[Chevrolet]]
+|-
+| 84 || [[Jimmie Johnson]] '''(W)''' || [[Legacy Motor Club]] || [[Toyota]]
+|-
+| 88 || [[Connor Zilisch]] '''(R)''' || [[Trackhouse Racing]] || [[Chevrolet]]
+|-
+| 97 || [[Shane van Gisbergen]] || [[Trackhouse Racing]] || [[Chevrolet]]
+|-
+| 99 || [[Corey LaJoie]] || [[RFK Racing]] || [[Ford Motor Company|Ford]]
+|-
+! colspan="5" |[https://www.jayski.com/wp-content/uploads/sites/31/2026/2/11/12601_ENTNUM-1.pdf Official entry list]
+|}
+==First practice==
+[[Austin Cindric]] was the fastest in the first practice session with a time of 48.025 seconds and a speed of {{Convert|187.402|mph|km/h|abbr=on}}.
+{| class="wikitable" style="font-size:95%"
+|-
+! Pos
+! {{Tooltip|No.|Car number}}
+! Driver
+! Team
+! Manufacturer
+! Time
+! {{Tooltip|Speed|MPH}}
+|-
+! 1
+| 2 || [[Austin Cindric]] || [[Team Penske]] || [[Ford Motor Company|Ford]] || 48.025 || 187.402
+|-
+! 2
+| 1 || [[Ross Chastain]] || [[Trackhouse Racing]] || [[Chevrolet]] || 48.146 || 186.931
+|-
+! 3
+| 99 || [[Corey LaJoie]] || [[RFK Racing]] || [[Ford Motor Company|Ford]] || 48.253 || 186.517
+|-
+!colspan="7"|[https://www.jayski.com/wp-content/uploads/sites/31/2026/2/11/12601_PRAC1.pdf Official first practice results]
+|}
+==Qualifying==
+[[Kyle Busch]] scored the pole for the race with a time of 49.006 and a speed of {{Convert|183.651|mph|km/h|abbr=on}}. {{cite web|last=DeGroot|first=Nick|title=Kyle Busch and RCR win pole position for the 2026 Daytona 500|url=https://www.motorsport.com/nascar-cup/news/kyle-busch-daytona-500-pole-rcr/10796889/|website=[[Motorsport.com]]|publisher=[[Motorsport Network]]|access-date=February 11, 2026|location=[[Daytona Beach, Florida]]|date=February 15, 2026}} [[Noah Gragson]] had his time disallowed for using his hand to deflect air and attempting to gain an advantage. {{Cite web |date=February 7, 2026 |title=Drivers can no longer put hands out window during qualifying |url=https://www.jayski.com/2026/02/07/drivers-can-no-longer-put-hands-out-window-during-qualifying/ |access-date=February 7, 2026 |website=[[Jayski's Silly Season Site]] |language=en-US}}
+===Qualifying results===
+{| class="wikitable" style="font-size:95%"
+|-
+! Pos
+! {{Tooltip|No.|Car number}}
+! Driver
+! Team
+! Manufacturer
+! {{Tooltip|R1|Best time in Round 1}}
+! {{Tooltip|R2|Best time in Round 2}}
+|-
+! 1
+| 8 || [[Kyle Busch]] || [[Richard Childress Racing]] || Chevrolet || '''48.933''' || '''49.006'''
+|-
+! 2
+| 19 || [[Chase Briscoe]] || [[Joe Gibbs Racing]] || Toyota || 49.034 || 49.022
+|-
+! 3
+| 60 || [[Ryan Preece]] || [[RFK Racing]] || Ford || 49.081 || 49.061
+|-
+! 4
+| 11 || [[Denny Hamlin]] || [[Joe Gibbs Racing]] || Toyota || 49.105 || 49.100
+|-
+! 5
+| 67 || [[Corey Heim]] '''(i)''' || [[23XI Racing]] || Toyota || 49.138 || 49.147
+|-
+! 6
+| 48 || [[Alex Bowman]] || [[Hendrick Motorsports]] || Chevrolet || 49.117 || 49.152
+|-
+! 7
+| 5 || [[Kyle Larson]] || [[Hendrick Motorsports]] || Chevrolet || 49.121 || 49.158
+|-
+! 8
+| 17 || [[Chris Buescher]] || [[RFK Racing]] || Ford || 49.168 || 49.184
+|-
+! 9
+| 9 || [[Chase Elliott]] || [[Hendrick Motorsports]] || Chevrolet || 49.170 || 49.220
+|-
+! 10
+| 22 || [[Joey Logano]] || [[Team Penske]] || Ford || 49.172 || 49.275
+|-
+! 11
+| 54 || [[Ty Gibbs]] || [[Joe Gibbs Racing]] || Toyota || 49.184 || —
+|-
+! 12
+| 3 || [[Austin Dillon]] || [[Richard Childress Racing]] || Chevrolet || 49.185 || —
+|-
+! 13
+| 20 || [[Christopher Bell (racing driver)|Christopher Bell]] || [[Joe Gibbs Racing]] || Toyota || 49.197 || —
+|-
+! 14
+| 40 || [[Justin Allgaier]] '''(i)''' || [[JR Motorsports]] || Chevrolet || 49.201 || —
+|-
+! 15
+| 99 || [[Corey LaJoie]] || [[RFK Racing]] || Ford || 49.205 || —
+|-
+! 16
+| 42 || [[John Hunter Nemechek]] || [[Legacy Motor Club]] || Toyota || 49.214 || —
+|-
+! 17
+| 2 || [[Austin Cindric]] || [[Team Penske]] || Ford || 49.248 || —
+|-
+! 18
+| 6 || [[Brad Keselowski]] || [[RFK Racing]] || Ford || 49.252 || —
+|-
+! 19
+| 38 || [[Zane Smith]] || [[Front Row Motorsports]] || Ford || 49.266 || —
+|-
+! 20
+| 12 || [[Ryan Blaney]] || [[Team Penske]] || Ford || 49.269 || —
+|-
+! 21
+| 71 || [[Michael McDowell (racing driver)|Michael McDowell]] || [[Spire Motorsports]] || Chevrolet || 49.280 || —
+|-
+! 22
+| 24 || [[William Byron (racing driver)|William Byron]] || [[Hendrick Motorsports]] || Chevrolet || 49.282 || —
+|-
+! 23
+| 88 || [[Connor Zilisch]] '''(R)''' || [[Trackhouse Racing]] || Chevrolet || 49.291 || —
+|-
+! 24
+| 41 || [[Cole Custer]] || [[Haas Factory Team]] || Chevrolet || 49.322 || —
+|-
+! 25
+| 43 || [[Erik Jones]] || [[Legacy Motor Club]] || Toyota || 49.332 || —
+|-
+! 26
+| 51 || [[Cody Ware]] || [[Rick Ware Racing]] || Chevrolet || 49.350 || —
+|-
+! 27
+| 21 || [[Josh Berry]] || [[Wood Brothers Racing]] || Ford || 49.354 || —
+|-
+! 28
+| 84 || [[Jimmie Johnson]] || [[Legacy Motor Club]] || Toyota || 49.366 || —
+|-
+! 29
+| 77 || [[Carson Hocevar]] || [[Spire Motorsports]] || Chevrolet || 49.427 || —
+|-
+! 30
+| 23 || [[Bubba Wallace]] || [[23XI Racing]] || Toyota || 49.432 || —
+|-
+! 31
+| 35 || [[Riley Herbst]] || [[23XI Racing]] || Toyota || 49.452 || —
+|-
+! 32
+| 16 || [[A. J. Allmendinger]] || [[Kaulig Racing]] || Chevrolet || 49.460 || —
+|-
+! 33
+| 34 || [[Todd Gilliland]] || [[Front Row Motorsports]] || Ford || 49.460 || —
+|-
+! 34
+| 1 || [[Ross Chastain]] || [[Trackhouse Racing]] || Chevrolet || 49.483 || —
+|-
+! 35
+| 62 || [[Anthony Alfredo]] '''(i)''' || [[Beard Motorsports]] || Chevrolet || 49.485 || —
+|-
+! 36
+| 10 || [[Ty Dillon]] || [[Kaulig Racing]] || Chevrolet || 49.497 || —
+|-
+! 37
+| 97 || [[Shane van Gisbergen]] || [[Trackhouse Racing]] || Chevrolet || 49.527 || —
+|-
+! 38
+| 47 || [[Ricky Stenhouse Jr.]] || [[Hyak Motorsports]] || Chevrolet || 49.529 || —
+|-
+! 39
+| 7 || [[Daniel Suárez]] || [[Spire Motorsports]] || Chevrolet || 49.552 || —
+|-
+! 40
+| 45 || [[Tyler Reddick]] || [[23XI Racing]] || Toyota || 49.609 || —
+|-
+! 41
+| 36 || [[Chandler Smith]] '''(i)''' || [[Front Row Motorsports]] || Ford || 49.758 || —
+|-
+! 42
+| 78 || [[B. J. McLeod]] || [[Live Fast Motorsports]] || Chevrolet || 50.011 || —
+|-
+! 43
+| 66 || [[Casey Mears]] || [[MBM Motorsports|Garage 66]] || Ford || 50.233 || —
+|-
+! 44
+| 44 || [[J. J. Yeley]] '''(i)''' || [[NY Racing Team]] || Chevrolet || 50.482 || —
+|-
+! 45
+| 4 || [[Noah Gragson]] || [[Front Row Motorsports]] || Ford || 0.000 || —
+|-
+! colspan="7"|[https://www.jayski.com/wp-content/uploads/sites/31/2026/2/11/12601_QUALRES.pdf Official qualifying results]
+|}
+==The Duel at Daytona==
+{{See also|2026 The Duel at Daytona}}
+[[The Duel at Daytona|The Duels at Daytona]] are a pair of NASCAR Cup Series races held in conjunction with the Daytona 500 annually in February at Daytona International Speedway. They consist of two races 60 laps and 150 miles (240 km) in length, which serve as heat races that set the lineup for the Daytona 500. Both races sets the lineup for positions 3–32. The first race sets the lineup for cars that qualified in odd–numbered positions on pole qualifying day. The second race sets the lineup for cars that qualified in even–numbered positions. Positions 33–36 are filled by the four drivers that posted the fastest lap in pole qualifying that didn't lock in a position in the Duel's. Positions 37–40 are set by the four cars highest in the 2019 owner's points that didn't lock in a position in the Duels and weren't among the cars that posted the four fastest timed laps in pole qualifying.
+===Duel 1===
+====Duel 1 results====
+{| class="wikitable" style="font-size:98%
+|-
+! Pos
+! Grid
+! {{Tooltip|No|Car Number}}
+! Driver
+! Team
+! Manufacturer
+! Laps
+! Points
+|-
+|1 || 6 || 22 || Joey Logano || Team Penske || Ford || 63 || 10
+|-
+|2 || 11 || 12 || Ryan Blaney || Team Penske || Ford || 63 || 9
+|-
+|3 || 7 || 3 || Austin Dillon || Richard Childress Racing || Chevrolet || 63 || 8
+|-
+|4 || 10 || 6 || Brad Keselowski || RFK Racing || Ford || 63 || 7
+|-
+|5 || 9 || 42 || John Hunter Nemechek || Legacy Motor Club || Toyota || 63 || 6
+|-
+|6 || 19 || 97 || Shane van Gisbergen || Trackhouse Racing || Chevrolet || 63 || 5
+|-
+|7 || 20 || 7 || Daniel Suárez || Spire Motorsports || Chevrolet || 63 || 4
+|-
+|8 || 22 || 66 || Casey Mears || Garage 66 || Ford || 63 || 3
+|-
+|9 || 2 || 60 || Ryan Preece || RFK Racing || Ford || 63 || 2
+|-
+|10 || 4 || 48 || Alex Bowman || Hendrick Motorsports || Chevrolet || 63 || 1
+|-
+|11 || 13 || 41 || Cole Custer || Haas Factory Team || Chevrolet || 63 || 0
+|-
+|12 || 23 || 4 || Noah Gragson || Front Row Motorsports || Ford || 63 || 0
+|-
+|13 || 16 || 23 || Bubba Wallace || 23XI Racing || Toyota || 63 || 0
+|-
+|14 || 3 || 67 || Corey Heim '''(i)''' || 23XI Racing || Toyota || 63 || 0
+|-
+|15 || 15 || 84 || Jimmie Johnson || Legacy Motor Club || Toyota || 63 || 0
+|-
+|16 || 21 || 36 || Chandler Smith '''(i)''' || Front Row Motorsports || Ford || 63 || 0
+|-
+|17 || 14 || 51 || Cody Ware || Rick Ware Racing || Chevrolet || 63 || 0
+|-
+|18 || 1 || 8 || Kyle Busch || Richard Childress Racing || Chevrolet || 63 || 0
+|-
+|19 || 8 || 99 || Corey LaJoie || RFK Racing || Ford || 62 || 0
+|-
+|20 || 17 || 16 || A. J. Allmendinger || Kaulig Racing || Chevrolet || 62 || 0
+|-
+|21 || 18 || 1 || Ross Chastain || Trackhouse Racing || Chevrolet || 62 || 0
+|-
+|22 || 12 || 24 || William Byron || Hendrick Motorsports || Chevrolet || 55 || 0
+|-
+|23 || 5 || 17 || Chris Buescher || RFK Racing || Ford || 55 || 0
+|-
+!colspan="8"|[https://www.jayski.com/wp-content/uploads/sites/31/2026/2/12/126S2_UNOFFRES.pdf Official race results]
+|}
+===Duel 2===
+====Duel 2 results====
+{| class="wikitable" style="font-size:98%
+|-
+! Pos
+! Grid
+! {{Tooltip|No|Car Number}}
+! Driver
+! Team
+! Manufacturer
+! Laps
+! Points
+|-
+|1 || 4 || 9 || Chase Elliott || Hendrick Motorsports || Chevrolet || 60 || 10
+|-
+|2 || 14 || 77 || Carson Hocevar || Spire Motorsports || Chevrolet || 60 || 9
+|-
+|3 || 3 || 5 || Kyle Larson || Hendrick Motorsports || Chevrolet || 60 || 8
+|-
+|4 || 10 || 71 || Michael McDowell || Spire Motorsports || Chevrolet || 60 || 7
+|-
+|5 || 6 || 20 || Christopher Bell || Joe Gibbs Racing || Toyota || 60 || 6
+|-
+|6 || 13 || 21 || Josh Berry || Wood Brothers Racing || Ford || 60 || 5
+|-
+|7 || 19 || 47 || Ricky Stenhouse Jr. || Hyak Motorsports || Chevrolet || 60 || 4
+|-
+|8 || 16 || 34 || Todd Gilliland || Front Row Motorsports || Ford || 60 || 3
+|-
+|9 || 5 || 54 || Ty Gibbs || Joe Gibbs Racing || Toyota || 60 || 2
+|-
+|10 || 2 || 11 || Denny Hamlin || Joe Gibbs Racing || Toyota || 60 || 1
+|-
+|11 || 12 || 43 || Erik Jones || Legacy Motor Club || Toyota || 60 || 0
+|-
+|12 || 20 || 45 || Tyler Reddick || Legacy Motor Club || Toyota || 60 || 0
+|-
+|13 || 15 || 35 || Riley Herbst || 23XI Racing || Toyota || 60 || 0
+|-
+|14 || 9 || 38 || Zane Smith || Front Row Motorsports || Ford || 60 || 0
+|-
+|15 || 11 || 88 || Connor Zilisch '''(R)''' || Trackhouse Racing || Chevrolet || 60 || 0
+|-
+|16 || 18 || 10 || Ty Dillon || Kaulig Racing || Chevrolet || 60 || 0
+|-
+|17 || 8 || 2 || Austin Cindric || Team Penske || Ford || 60 || 0
+|-
+|18 || 21 || 78 || B. J. McLeod || Live Fast Motorsports || Chevrolet || 60 || 0
+|-
+|19 || 1 || 19 || Chase Briscoe || Joe Gibbs Racing || Toyota || 60 || 0
+|-
+|20 || 7 || 40 || Justin Allgaier '''(i)''' || JR Motorsports || Chevrolet || 60 || 0
+|-
+|21 || 22 || 44 || J. J. Yeley '''(i)''' || NY Racing Team || Chevrolet || 57 || 0
+|-
+|DSQ || 17 || 62 || Anthony Alfredo '''(i)''' || Beard Motorsports || Chevrolet || 60 || 0
+|-
+!colspan="8"|[https://www.jayski.com/wp-content/uploads/sites/31/2026/2/13/126S3_UNOFFRES-1.pdf Official race results]
+|}
+===Starting lineup===
+{| class="wikitable" style="font-size:95%"
+|-
+! scope="col" | {{Abbr|Pos|Position}}
+! scope="col" | {{Abbr|No.|Car number}}
+! scope="col" | Driver
+! scope="col" | Team
+! scope="col" | Manufacturer
+! scope="col" | Notes
+|-
+|1 || 8 || Kyle Busch || Richard Childress Racing || Chevrolet || Fastest in pole qualifying
+|-
+|2 || 19 || Chase Briscoe || Joe Gibbs Racing || Toyota || Second in pole qualifying
+|-
+|3 || 22 || Joey Logano || Team Penske || Ford || Duel 1 Winner
+|-
+|4 || 9 || Chase Elliott || Hendrick Motorsports || Chevrolet || Duel 2 Winner
+|-
+|5 || 12 || Ryan Blaney || Team Penske || Ford || Second in Duel 1
+|-
+|6 || 77 || Carson Hocevar || Spire Motorsports || Chevrolet || Second in Duel 2
+|-
+|7 || 3 || Austin Dillon || Richard Childress Racing || Chevrolet || Third in Duel 1
+|-
+|8 || 5 || Kyle Larson || Hendrick Motorsports || Chevrolet || Third in Duel 2
+|-
+|9 || 6 || Brad Keselowski || RFK Racing || Ford || Fourth in Duel 1
+|-
+|10 || 71 || Michael McDowell || Spire Motorsports || Chevrolet || Fourth in Duel 2
+|-
+|11 || 42 || John Hunter Nemechek || Legacy Motor Club || Toyota || Fifth in Duel 1
+|-
+|12 || 20 || Christopher Bell || Joe Gibbs Racing || Toyota || Fifth in Duel 2
+|-
+|13 || 97 || Shane van Gisbergen || Trackhouse Racing || Chevrolet || Sixth in Duel 1
+|-
+|14 || 21 || Josh Berry || Wood Brothers Racing || Ford || Sixth in Duel 2
+|-
+|15 || 7 || Daniel Suárez || Spire Motorsports || Chevrolet || Seventh in Duel 1
+|-
+|16 || 47 || Ricky Stenhouse Jr. || Hyak Motorsports || Chevrolet || Seventh in Duel 2
+|-
+|17 || 66 || Casey Mears || Garage 66 || Ford || Eighth in Duel 1
+|-
+|18 || 34 || Todd Gilliland || Front Row Motorsports || Ford || Eighth in Duel 2
+|-
+|19 || 60 || Ryan Preece || RFK Racing || Ford || Ninth in Duel 1
+|-
+|20 || 54 || Ty Gibbs || Joe Gibbs Racing || Toyota || Ninth in Duel 2
+|-
+|21 || 48 || Alex Bowman || Hendrick Motorsports || Chevrolet || Tenth in Duel 1
+|-
+|22 || 11 || Denny Hamlin || Joe Gibbs Racing || Toyota || Tenth in Duel 2
+|-
+|23 || 41 || Cole Custer || Haas Factory Team || Chevrolet || Eleventh in Duel 1
+|-
+|24 || 43 || Erik Jones || Legacy Motor Club || Toyota || Eleventh in Duel 2
+|-
+|25 || 4 || Noah Gragson || Front Row Motorsports || Ford || Twelfth in Duel 1
+|-
+|26 || 45 || Tyler Reddick || 23XI Racing || Toyota || Twelfth in Duel 2
+|-
+|27 || 23 || Bubba Wallace || 23XI Racing || Toyota || Thirteenth in Duel 1
+|-
+|28 || 35 || Riley Herbst || 23XI Racing || Toyota || Thirteenth in Duel 2
+|-
+|29 || 67 || Corey Heim '''(i)''' || 23XI Racing || Toyota || Fourteenth in Duel 1
+|-
+|30 || 38 || Zane Smith || Front Row Motorsports || Ford || Fourteenth in Duel 2
+|-
+|31 || 84 || Jimmie Johnson || Legacy Motor Club || Toyota || Fifteenth in Duel 1
+|-
+|32 || 88 || Connor Zilisch '''(R)''' || Trackhouse Racing || Chevrolet || Fifteenth in Duel 2
+|-
+|33 || 51 || Cody Ware || Rick Ware Racing || Chevrolet || Seventeenth in Duel 1
+|-
+|34 || 10 || Ty Dillon || Kaulig Racing || Chevrolet || Sixteenth in Duel 2
+|-
+|35 || 16 || A. J. Allmendinger || Kaulig Racing || Chevrolet || 20th in Duel 1
+|-
+|36 || 2 || Austin Cindric || Team Penske || Ford || Seventeenth in Duel 2
+|-
+|37 || 1 || Ross Chastain || Trackhouse Racing || Chevrolet || 21st in Duel 1
+|-
+|38 || 78 || B. J. McLeod || Live Fast Motorsports || Chevrolet || Nineteenth in Duel 2 {{cite web |url=https://www.jayski.com/2026/02/13/mears-races-in-mcleod-awarded-final-daytona-500-berth-after-inspection |title=Mears Races In, McLeod Awarded Final Daytona 500 Berth After Inspection |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media |date=February 12, 2026 |access-date=February 13, 2026}}
+|-
+|39 || 24 || William Byron || Hendrick Motorsports || Chevrolet || 22nd in Duel 1
+|-
+|40 || 40 || Justin Allgaier '''(i)''' || JR Motorsports || Chevrolet || 20th in Duel 2
+|-
+|41 || 17 || Chris Buescher || RFK Racing || Ford || 23rd in Duel 1
+|-
+!colspan="6"|Did not qualify
+|-
+|42 || 36 || Chandler Smith '''(i)''' || Front Row Motorsports || Ford ||
+|-
+|43 || 99 || Corey LaJoie || RFK Racing || Ford ||
+|-
+|44 || 44 || J. J. Yeley '''(i)''' || NY Racing Team || Chevrolet ||
+|-
+|45 || 62 || Anthony Alfredo '''(i)''' || Beard Motorsports || Chevrolet || Disallowed after post-race inspection
+|-
+!colspan="6"|[https://www.jayski.com/wp-content/uploads/sites/31/2026/2/13/12601_STARTROW.pdf Official starting lineup]
+|}
+==Practice (post-Duels)==
+===Second practice===
+[[Austin Dillon]] was the fastest in the second practice session with a time of 46.006 seconds and a speed of {{Convert|195.627|mph|km/h|abbr=on}}.
+{| class="wikitable" style="font-size:95%"
+|-
+! Pos
+! {{Tooltip|No.|Car number}}
+! Driver
+! Team
+! Manufacturer
+! Time
+! {{Tooltip|Speed|MPH}}
+|-
+! 1
+| 3 || [[Austin Dillon]] || [[Richard Childress Racing]] || [[Chevrolet]] || 46.006 || 195.627
+|-
+! 2
+| 48 || [[Alex Bowman]] || [[Hendrick Motorsports]] || [[Chevrolet]] || 46.049 || 195.452
+|-
+! 3
+| 40 || [[Justin Allgaier]] '''(i)''' || [[JR Motorsports]] || [[Chevrolet]] || 46.137 || 195.071
+|-
+!colspan="7"|[https://www.jayski.com/wp-content/uploads/sites/31/2026/2/13/12601_PRAC2.pdf Official second practice results]
+|}
+===Final practice===
+[[Ryan Preece]] was the fastest in the final practice session with a time of 46.676 seconds and a speed of {{Convert|192.819|mph|km/h|abbr=on}}.
+{| class="wikitable" style="font-size:95%"
+|-
+! Pos
+! {{Tooltip|No.|Car number}}
+! Driver
+! Team
+! Manufacturer
+! Time
+! {{Tooltip|Speed|MPH}}
+|-
+! 1
+| 60 || [[Ryan Preece]] || rowspan=3 | [[RFK Racing]] || rowspan=3 | [[Ford Motor Company|Ford]] || 46.676 || 192.819
+|-
+! 2
+| 17 || [[Chris Buescher]] || 46.684 || 192.786
+|-
+! 3
+| 6 || [[Brad Keselowski]] || 46.733 || 192.583
+|-
+!colspan="7"|[https://www.jayski.com/wp-content/uploads/sites/31/2026/2/14/12601_PRACFINAL.pdf Official final practice results]
+|}
+==Race==
+===Race results===
+====Stage Results====
+'''Stage One'''
+''Laps:'' 65
+{| class="wikitable" style="font-size:98%
+|-
+! Pos
+! {{Tooltip|No|Car Number}}
+! Driver
+! Team
+! Manufacturer
+! Points
+|-
+|1 || 38 || Zane Smith || Front Row Motorsports || Ford || 10
+|-
+|2 || 2 || Austin Cindric || Team Penske || Ford || 9
+|-
+|3 || 12 || Ryan Blaney || Team Penske || Ford || 8
+|-
+|4 || 77 || Carson Hocevar || Spire Motorsports || Chevrolet || 7
+|-
+|5 || 7 || Daniel Suárez || Spire Motorsports || Chevrolet || 6
+|-
+|6 || 17 || Chris Buescher || RFK Racing || Ford || 5
+|-
+|7 || 71 || Michael McDowell || Spire Motorsports || Chevrolet || 4
+|-
+|8 || 60 || Ryan Preece || RFK Racing || Ford || 3
+|-
+|9 || 48 || Alex Bowman || Hendrick Motorsports || Chevrolet || 2
+|-
+|10 || 4 || Noah Gragson || Front Row Motorsports || Ford || 1
+|-
+|}
+'''Stage Two'''
+''Laps:'' 65
+{| class="wikitable" style="font-size:98%
+|-
+! Pos
+! {{Tooltip|No|Car Number}}
+! Driver
+! Team
+! Manufacturer
+! Points
+|-
+|1 || 23 || Bubba Wallace || 23XI Racing || Toyota || 10
+|-
+|2 || 12 || Ryan Blaney || Team Penske || Ford || 9
+|-
+|3 || 42 || John Hunter Nemechek || Legacy Motor Club || Toyota || 8
+|-
+|4 || 8 || Kyle Busch || Richard Childress Racing || Chevrolet || 7
+|-
+|5 || 35 || Riley Herbst || 23XI Racing || Toyota || 6
+|-
+|6 || 67 || Corey Heim '''(i)''' || 23XI Racing || Toyota || 0
+|-
+|7 || 17 || Chris Buescher || RFK Racing || Ford || 4
+|-
+|8 || 45 || Tyler Reddick || 23XI Racing || Toyota || 3
+|-
+|9 || 22 || Joey Logano || Team Penske || Ford || 2
+|-
+|10 || 7 || Daniel Suárez || Spire Motorsports || Chevrolet || 1
+|-
+|}
+===Final Stage results===
+'''Stage Three'''
+''Laps:'' 70
+{| class="wikitable" style="font-size:98%
+|-
+! Pos
+! Grid
+! {{Tooltip|No|Car Number}}
+! Driver
+! Team
+! Manufacturer
+! Laps
+! Points
+|-
+|1 || 26 || 45 || Tyler Reddick || 23XI Racing || Toyota || 200 || 58
+|-
+|2 || 16 || 47 || Ricky Stenhouse Jr. || Hyak Motorsports || Chevrolet || 200 || 35
+|-
+|3 || 3 || 22 || Joey Logano || Team Penske || Ford || 200 || 36
+|-
+|4 || 4 || 9 || Chase Elliott || Hendrick Motorsports || Chevrolet || 200 || 33
+|-
+|5 || 9 || 6 || Brad Keselowski || RFK Racing || Ford || 200 || 32
+|-
+|6 || 30 || 38 || Zane Smith || Front Row Motorsports || Ford || 200 || 41
+|-
+|7 || 41 || 17 || Chris Buescher || RFK Racing || Ford || 200 || 39
+|-
+|8 || 28 || 35 || Riley Herbst || 23XI Racing || Toyota || 200 || 35
+|-
+|9 || 14 || 21 || Josh Berry || Wood Brothers Racing || Ford || 200 || 28
+|-
+|10 || 27 || 23 || Bubba Wallace || 23XI Racing || Toyota || 200 || 37
+|-
+|11 || 25 || 4 || Noah Gragson || Front Row Motorsports || Ford || 200 || 27
+|-
+|12 || 39 || 24 || William Byron || Hendrick Motorsports || Chevrolet || 200 || 25
+|-
+|13 || 15 || 7 || Daniel Suárez || Spire Motorsports || Chevrolet || 200 || 31
+|-
+|14 || 34 || 10 || Ty Dillon || Kaulig Racing || Chevrolet || 200 || 23
+|-
+|15 || 1 || 8 || Kyle Busch || Richard Childress Racing || Chevrolet || 200 || 29
+|-
+|16 || 8 || 5 || Kyle Larson || Hendrick Motorsports || Chevrolet || 200 || 21
+|-
+|17 || 33 || 51 || Cody Ware || Rick Ware Racing || Chevrolet || 200 || 20
+|-
+|18 || 6 || 77 || Carson Hocevar || Spire Motorsports || Chevrolet || 200 || 27
+|-
+|19 || 35 || 16 || A. J. Allmendinger || Kaulig Racing || Chevrolet || 200 || 18
+|-
+|20 || 37 || 1 || Ross Chastain || Trackhouse Racing || Chevrolet || 200 || 17
+|-
+|21 || 24 || 43 || Erik Jones || Legacy Motor Club || Toyota || 200 || 16
+|-
+|22 || 10 || 71 || Michael McDowell || Spire Motorsports || Chevrolet || 200 || 19
+|-
+|23 || 20 || 54 || Ty Gibbs || Joe Gibbs Racing || Toyota || 200 || 14
+|-
+|24 || 23 || 41 || Cole Custer || Haas Factory Team || Chevrolet || 200 || 13
+|-
+|25 || 19 || 60 || Ryan Preece || RFK Racing || Ford || 200 || 15
+|-
+|26 || 11 || 42 || John Hunter Nemechek || Legacy Motor Club || Toyota || 199 || 19
+|-
+|27 || 5 || 12 || Ryan Blaney || Team Penske || Ford || 199 || 27
+|-
+|28 || 29 || 67 || Corey Heim '''(i)''' || 23XI Racing || Toyota || 199 || 0
+|-
+|29 || 31 || 84 || Jimmie Johnson || Legacy Motor Club || Toyota || 199 || 0
+|-
+|30 || 13 || 97 || Shane van Gisbergen || Trackhouse Racing || Chevrolet || 199 || 8
+|-
+|31 || 22 || 11 || Denny Hamlin || Joe Gibbs Racing || Toyota || 198 || 7
+|-
+|32 || 17 || 66 || Casey Mears || Garage 66 || Ford || 195 || 6
+|-
+|33 || 32 || 88 || Connor Zilisch '''(R)''' || Trackhouse Racing || Chevrolet || 195 || 5
+|-
+|34 || 36 || 2 || Austin Cindric || Team Penske || Ford || 193 || 13
+|-
+|35 || 12 || 20 || Christopher Bell || Joe Gibbs Racing || Toyota || 191 || 3
+|-
+|36 || 2 || 19 || Chase Briscoe || Joe Gibbs Racing || Toyota || 188 || 2
+|-
+|37 || 7 || 3 || Austin Dillon || Richard Childress Racing || Chevrolet || 137 || 1
+|-
+|38 || 40 || 40 || Justin Allgaier '''(i)''' || JR Motorsports || Chevrolet || 123 || 0
+|-
+|39 || 18 || 34 || Todd Gilliland || Front Row Motorsports || Ford || 123 || 1
+|-
+|40 || 21 || 48 || Alex Bowman || Hendrick Motorsports || Chevrolet || 123 || 3
+|-
+|41 || 38 || 78 || B. J. McLeod || Live Fast Motorsports || Chevrolet || 4 || 1
+|-
+!colspan="8"|[https://www.jayski.com/wp-content/uploads/sites/31/2026/2/15/12601_UNOFFRES.pdf Official race results]
+|}
+===Race statistics===
+* Lead changes: 66 among 26 different drivers
+* Cautions/Laps: 5 for 32
+* Red flags: 0
+* Time of race: 3 hours, 23 minutes and 56 seconds
+* Average speed: {{convert|147.107|mph|km/h}}
+==Media==
+===Television===
+{{See also|NASCAR on television and radio#Beyond the United States}}
+Since [[2001 Daytona 500|2001]]—with the exception of [[2002 Daytona 500|2002]], [[2004 Daytona 500|2004]] and [[2006 Daytona 500|2006]]—the [[Daytona 500]] has been carried by [[Fox NASCAR|Fox]] in the United States. The booth crew consisted of longtime NASCAR lap-by-lap announcer [[Mike Joy]], [[Clint Bowyer]], and [[2007 Daytona 500|2007 Daytona 500 winner]] [[Kevin Harvick]]. [[Jamie Little]], [[Regan Smith (racing driver)|Regan Smith]], and Josh Sims handled pit road for the television side. 1992 and 1998 Daytona 500 winning crew chief [[Larry McReynolds]] provided insight on-site during the race. {{cite web|title=FULL THROTTLE TO HISTORY: FOX SPORTS RACES INTO RECORD BOOKS WITH UNPARALLELED 23RD DAYTONA 500 BROADCAST ON FOX|url=https://www.foxsports.com/presspass/blog/2026/02/02/full-throttle-to-history-fox-sports-races-into-record-books-with-unparalleled-23rd-daytona-500-broadcast-on-fox/|work=Fox Sports|access-date=February 2, 2026|date=February 2, 2026}}
+{| class="wikitable" style="font-size: 95%"
+|-
+!colspan="3"|[[Fox NASCAR|Fox]] [[List of Daytona 500 broadcasters|Television]]
+|-
+!Booth announcers!!Pit reporters!!In-race analyst
+|-
+| '''Lap-by-lap:''' [[Mike Joy]]
+'''Color-commentator:''' [[Clint Bowyer]]
+'''Color-commentator:''' [[Kevin Harvick]] || [[Jamie Little]]
+[[Regan Smith (racing driver)|Regan Smith]]
+Josh Sims || [[Larry McReynolds]]
+|}
+===Radio===
+The race was broadcast on radio by the [[Motor Racing Network]] who have covered the Daytona 500 since [[1970 Daytona 500|1970]]—and simulcast on [[Sirius XM NASCAR Radio]]. The booth crew consisted of Alex Hayden, [[Mike Bagley]], and former championship crew chief [[Todd Gordon]]. Longtime turn announcer [[Dave Moody (sportscaster)|Dave Moody]] was the lead turn announcer, calling the race from atop the [[Sunoco LP|Sunoco]] tower outside the exit of turn 2 when the field races through turns 1 and 2. Kyle Rickey worked the backstretch for the race from a spotter's stand on the inside of the track & Tim Catalfamo called the race when the field races through turns 3 and 4 from the Sunoco tower outside the exit of turn 4. On pit road, MRN was operated by Lead MRN Pit Reporter Steve Post, Chris Wilner, and PRN Radio's Brad Gillie.
+{| class="wikitable" style="font-size: 95%"
+|-
+!colspan="3"|[[Motor Racing Network|MRN]] [[List of Daytona 500 broadcasters|Radio]]
+|-
+!Booth announcers!!Turn announcers!!Pit reporters
+|-
+| '''Lead announcer:''' Alex Hayden
+'''Announcer:''' [[Mike Bagley]]
+'''Announcer:''' [[Todd Gordon]] || '''Turns 1 & 2:''' [[Dave Moody (sportscaster)|Dave Moody]]
+'''Backstretch:''' Kyle Rickey
+'''Turns 3 & 4:''' Tim Catalfamo || Steve Post
+Chris Wilner
+Brad Gillie
+|}
+==Standings after the race==
+{{col-start}}
+{{col-2}}
+;Drivers' Championship standings
+{| class="wikitable" style="font-size: 95%;"
+|-
+!
+! Pos
+! Driver
+! Points
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 1
+| [[Tyler Reddick]]
+| style="text-align:center;"| 58
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 2
+| [[Joey Logano]]
+| style="text-align:center;"| 46 (–12)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 3
+| [[Chase Elliott]]
+| style="text-align:center;"| 43 (–15)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 4
+| [[Zane Smith]]
+| style="text-align:center;"| 41 (–17)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 5
+| [[Ricky Stenhouse Jr.]]
+| style="text-align:center;"| 39 (–19)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 6
+| [[Brad Keselowski]]
+| style="text-align:center;"| 39 (–19)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 7
+| [[Chris Buescher]]
+| style="text-align:center;"| 39 (–19)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 8
+| [[Bubba Wallace]]
+| style="text-align:center;"| 37 (–21)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 9
+| [[Ryan Blaney]]
+| style="text-align:center;"| 36 (–22)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 10
+| [[Riley Herbst]]
+| style="text-align:center;"| 35 (–23)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 11
+| [[Daniel Suárez]]
+| style="text-align:center;"| 35 (–23)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 12
+| [[Carson Hocevar]]
+| style="text-align:center;"| 35 (–23)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 13
+| [[Josh Berry]]
+| style="text-align:center;"| 33 (–25)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 14
+| [[Kyle Busch]]
+| style="text-align:center;"| 29 (–29)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 15
+| [[Kyle Larson]]
+| style="text-align:center;"| 29 (–29)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 16
+| [[Noah Gragson]]
+| style="text-align:center;"| 27 (–31)
+|- class="sortbottom"
+!colspan="9"|[https://www.jayski.com/wp-content/uploads/sites/31/2026/2/15/12601_UNOFFDRIVPTS.pdf Official driver's standings]
+|}
+{{col-2}}
+;Manufacturers' Championship standings
+{| class="wikitable" style="font-size: 95%;"
+|-
+!
+! Pos
+! Manufacturer
+! Points
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 1
+| [[Toyota]]
+| style="text-align:center;"| 55
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 2
+| [[Chevrolet]]
+| style="text-align:center;"| 35 (–20)
+|-
+|align="left"| [[File:1rightarrow.png|10px]]
+| style="text-align:center;"| 3
+| [[Ford Motor Company|Ford]]
+| style="text-align:center;"| 34 (–21)
+|- class="sortbottom"
+|}
+* '''Note''': Only the first 16 positions are included for the driver standings.
+{{col-end}}
+==See also==
+*[[2026 United Rentals 300]] ([[2026 NASCAR O'Reilly Auto Parts Series|O'Reilly Auto Parts Series]])
+*[[2026 Fresh From Florida 250]] ([[2026 NASCAR Craftsman Truck Series|Craftsman Truck Series]])
+*[[2026 General Tire 200]] ([[2026 ARCA Menards Series|ARCA Menards Series]])
+==References==
+{{Reflist|30em}}
+{{NASCAR next race
+| Series = NASCAR Cup Series
+| Monsteryear = 2026
+| Previous_race = [[2025 NASCAR Cup Series Championship Race]] (points)
+[[2026 America 250 Florida Duel at Daytona]] (exhibition)
+| Next_race = [[2026 Autotrader 400]]
+}}
+{{Navboxes|list=
+{{NASCAR on Fox}}
+{{Daytona 500}}
+{{2026 NASCAR Cup}}
+}}
+{{DEFAULTSORT:Daytona 500, 2026}}
+[[Category:2026 NASCAR Cup Series|Daytona 500]]
+[[Category:2026 in sports in Florida|Daytona 500]]
+[[Category:February 2026 sports events in the United States|Daytona 500]]
+[[Category:NASCAR races at Daytona International Speedway]]

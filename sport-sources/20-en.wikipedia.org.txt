@@ -1,0 +1,102 @@
+Source: https://en.wikipedia.org/w/index.php?title=2026_Milan%E2%80%93San_Remo&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Milan%E2%80%93San_Remo&action=raw
+HTTP 200
+Fetched: 2026-10-18T12:44:19.770Z
+
+{{short description|Italian one-day cycling race}}
+{{For|the women's race|2026 Milan–San Remo Women}}
+{{use dmy dates|date=March 2026}}
+{{Infobox cycling race report
+| name = 2026 Milan–San Remo
+| series = [[2026 UCI World Tour]]
+| race_no = 8
+| season_no = 35
+| date = 21 March 2026
+| stages = 1
+| distance = 298
+| unit = km
+| time = 6h 35' 49"
+| first = [[Tadej Pogačar]]
+| first_nat = SLO
+| first_team = {{UCI team code|UAD men|2026}}
+| second = [[Tom Pidcock]]
+| second_nat = GBR
+| second_team = {{UCI team code|PQT|2026}}
+| third = [[Wout van Aert]]
+| third_nat = BEL
+| third_team = {{UCI team code|TVL|2026}}
+| previous = [[2025 Milan–San Remo|2025]]
+| next = [[2027 Milan–San Remo|2027]]
+| image = Milan–San_Remo-2026_poster.jpg
+| image_caption = Official event poster
+}}
+The '''2026 Milan–San Remo''' was a [[road bicycle racing|road cycling]] one-day race that took place on 21 March in north-western Italy. It was the 117th edition of the [[Milan–San Remo]] [[Classic cycle races|cycling classic]].
+[[File:MilanoSanremo26.jpg|thumb|[[Tadej Pogačar]], [[Tom Pidcock]] and [[Mathieu van der Poel]] on the [[Cipressa]] climb]]
+The race was won by [[Tadej Pogačar]] of {{UCI team code|UAD men|2026}} in a sprint finish against of [[Tom Pidcock]] of {{UCI team code|PQT|2026}}, after Pogačar attacked on the [[Cipressa]] climb for the second year in succession. Third place went to [[Wout van Aert]] of {{UCI team code|TVL|2026}}, the best of the chasing peloton behind.
+Pogačar's win was his fourth different [[Cycling monument|Monument]] victory and was his first victory in the race after four consecutive top-five finishes. The victory marked Pogačar's eleventh in a Monument, tying [[Roger De Vlaeminck]]'s tally for the second-most Monument wins.
+==Teams==
+All eighteen [[UCI WorldTeam]]s and seven [[UCI ProSeries|UCI ProTeams]] participated in the race. {{cite web|title=2026 Milan–San Remo Startlist|url=https://www.procyclingstats.com/race/milano-sanremo/2026/startlist|website=procyclingstats.com|access-date=18 March 2026}}
+'''UCI WorldTeams'''
+{{div col|colwidth=20em|style=margin-right:20%;}}
+* {{UCI team code|ADC|2026}}
+* {{UCI team code|DAT|2026}}
+* {{UCI team code|EFE|2026}}
+* {{UCI team code|FDJ|2026}}
+* {{UCI team code|IGD|2026a}}
+* {{UCI team code|LTK men|2026}}
+* {{UCI team code|LTD|2026}}
+* {{UCI team code|MOV men|2026}}
+* {{UCI team code|NSN|2026}}
+* {{UCI team code|RBH|2026}}
+* {{UCI team code|SOQ|2026}}
+* {{UCI team code|TBV|2026}}
+* {{UCI team code|JAY men|2026}}
+* {{UCI team code|TPP men|2026}}
+* {{UCI team code|TVL|2026}}
+* {{UCI team code|UAD men|2026}}
+* {{UCI team code|UXM men|2026}}
+* {{UCI team code|XAT|2026}}
+{{div col end}}
+'''UCI ProTeams'''
+{{div col|colwidth=20em|style=margin-right:20%;}}
+* {{UCI team code|BCS|2026}}
+* {{UCI team code|COF men|2026}}
+* {{UCI team code|PQT|2026}}
+* {{UCI team code|TNN|2026}}
+* {{UCI team code|PTK|2026}}
+* {{UCI team code|TUD|2026}}
+* {{UCI team code|URR|2026}}
+{{div col end}}
+==Race==
+The route of the 117th edition of Milan–San Remo was similar to recent years edition, with a start in [[Pavia]], just outside [[Milan]]. {{Cite web |last=Weislo |first=Laura |date=2026-03-04 |title=Milan-San Remo 2026 route |url=https://www.cyclingnews.com/pro-cycling/racing/milan-san-remo-2026-route/ |access-date=2026-03-24 |website=Cyclingnews |language=en}} The route leading to [[Sanremo|San Remo]] remained largely intact, featuring iconic landmarks such as the [[Passo del Turchino]], the three Capi, the [[Cipressa]], and the pivotal [[Poggio di San Remo|Poggio]]. The overall race distance was {{Convert|298|km|mi}}.
+Like most recent editions, the race came to life on the lead-up to the penultimate climb of [[Cipressa]]. With {{convert|32.5|km|abbr=on}} left, a crash brought down several riders, including [[Tadej Pogačar]] ({{UCI team code|UAD men|2026}}) and [[Wout van Aert]] ({{UCI team code|TVL|2026}}) while the reigning winner, [[Mathieu van der Poel]] ({{UCI team code|ADC|2026}}), was also involved. Pogačar made it back to the peloton at the foot of the Cipressa before being brought to the front by his teammate [[Brandon McNulty]], who began to set a furious pace. {{cite web|url=https://www.cyclingnews.com/pro-cycling/racing/milan-san-remo-tadej-pogacar-strikes-in-closing-metres-to-hold-off-tom-pidcock-in-electrifying-two-rider-finish-and-earns-masterful-victory/|title=Milan-San Remo: Tadej Pogačar strikes in closing metres to hold off Tom Pidcock in electrifying two-rider finish and earns masterful victory|first=Dani|last=Ostanek|work=Cycling News|date=21 March 2026|access-date=21 March 2026}} {{cite web|url=https://www.cyclingweekly.com/racing/tadej-pogacar-outsprints-tom-pidcock-to-win-milan-san-remo-after-late-crash|title='I thought it was all over' – Tadej Pogačar outsprints Tom Pidcock to win Milan-San Remo after late crash|first=Joseph|last=Lycett|work=Cycling Weekly|date=21 March 2026|access-date=21 March 2026}}
+Following a leadout by teammate [[Isaac Del Toro]], Pogačar made his move with {{convert|24|km|abbr=on}} to go and {{convert|2.5|km|abbr=on}} from the top of the Cipressa, bringing [[Tom Pidcock]] ({{UCI team code|PQT|2026}}) and van der Poel with him. The trio worked together to keep the peloton at bay before reaching the foot of the [[Poggio di San Remo|Poggio]] with an advantage of 10 seconds. On the climb, Pogačar successfully dropped van der Poel with his first attack. He attacked a few more times to shake off Pidcock but to no avail, with the duo reaching the top of the Poggio with a lead of around 20 seconds.
+On the Via Roma, Pogačar started his sprint with {{convert|200|m|abbr=on}} left, managing to hold off Pidcock by half a wheel to win the race. Just four seconds behind them, van Aert, who attacked the peloton at the bottom of the Poggio descent, barely held off the peloton to take third place.
+Interviewed after the race, Pogačar stated that he thought the crash meant that his chance of victory "was all over". {{Cite web |last=Lycett |first=Joseph |date=2026-03-21 |title='I thought it was all over' – Tadej Pogačar outsprints Tom Pidcock to win Milan-San Remo after late crash |url=https://www.cyclingweekly.com/racing/tadej-pogacar-outsprints-tom-pidcock-to-win-milan-san-remo-after-late-crash |access-date=2026-03-24 |website=Cycling Weekly |language=en}} Pogačar complimented Pidcock, stating he is "punchy [and] a really fast guy", noting that he was "a bit afraid when [Pidcock] let me go first" in the final sprint. Pidcock stated that "winning by such close margins, [but] also losing by such close margins, is what makes the times when you win better". {{Cite web |last=Moultrie |first=James |date=2026-03-23 |title=Tom Pidcock suggests Milan-San Remo victory would have been 'a bit of a fluke' as he makes quick switch to GC mode for Volta a Catalunya |url=https://www.cyclingnews.com/pro-cycling/teams-riders/tom-pidcock-suggests-milan-san-remo-victory-would-have-been-a-bit-of-a-fluke-as-he-makes-quick-switch-to-gc-mode-for-volta-a-catalunya/ |access-date=2026-03-24 |website=Cyclingnews |language=en}}
+Following the race, {{UCI team code|UAD men|2026|nolink=y}} mechanics revealed that Pogačar had won the race on a bike with a cracked frame and a rubbing brake, following his crash earlier in the race. {{Cite web |last=Shrubsall |first=James |date=2026-03-24 |title=Tadej Pogačar won Milan-San Remo on a cracked frame with a rubbing disc brake |url=https://www.cyclingweekly.com/racing/tadej-pogacar-won-milan-san-remo-on-a-cracked-frame-with-a-rubbing-disc-brake |access-date=2026-03-24 |website=Cycling Weekly |language=en}}
+==Result==
+{{cyclingresult start|title=Result (1–10) {{cite web|last=Ostanek|first=Dani|title=Milan-San Remo: Tadej Pogačar strikes in closing metres to hold off Tom Pidcock in electrifying two-rider finish and earns masterful victory|url=https://www.cyclingnews.com/pro-cycling/racing/milan-san-remo-tadej-pogacar-strikes-in-closing-metres-to-hold-off-tom-pidcock-in-electrifying-two-rider-finish-and-earns-masterful-victory/|website=cyclingnews.com|access-date=22 March 2026|date=21 March 2026}} }}
+{{cyclingresult|1|[[Tadej Pogačar]]|SLO|{{UCI team code|UAD men|2026}}|6h 35' 49"}}
+{{cyclingresult|2|[[Tom Pidcock]]|GBR|{{UCI team code|PQT|2026}}|+ 0"}}
+{{cyclingresult|3|[[Wout van Aert]]|BEL|{{UCI team code|TVL|2026}}|+ 4"}}
+{{cyclingresult|4|[[Mads Pedersen]]|DEN|{{UCI team code|LTK men|2026}}|+ 4"}}
+{{cyclingresult|5|[[Corbin Strong]]|NZL|{{UCI team code|NSN|2026}}|+ 4"}}
+{{cyclingresult|6|[[Andrea Vendrame]]|ITA|{{UCI team code|JAY men|2026}}|+ 4"}}
+{{cyclingresult|7|[[Jasper Stuyven]]|BEL|{{UCI team code|SOQ|2026}}|+ 4"}}
+{{cyclingresult|8|[[Mathieu van der Poel]]|NED|{{UCI team code|ADC|2026}}|+ 4"}}
+{{cyclingresult|9|[[Matteo Trentin]]|ITA|{{UCI team code|TUD|2026}}|+ 4"}}
+{{cyclingresult|10|[[Edoardo Zambanini]]|ITA|{{UCI team code|TBV|2026}}|+ 4"}}
+{{cyclingresult end}}
+== References ==
+{{reflist}}
+== External links ==
+* {{Official website|http://www.milanosanremo.it/en/}}
+{{2026 UCI World Tour}}
+{{Milan–San Remo}}
+{{Milan–San Remo winners}}
+[[Category:Milan–San Remo]]
+[[Category:21st century in Lombardy]]
+[[Category:21st century in Liguria]]
+[[Category:2026 UCI World Tour|Milan-San Remo]]
+[[Category:2026 in Italian sport|Milan-San Remo]]
+[[Category:March 2026 sports events in Italy|Milan-San Remo]]

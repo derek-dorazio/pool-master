@@ -1,0 +1,197 @@
+Source: https://en.wikipedia.org/w/index.php?title=2026_Belmont_Stakes&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Belmont_Stakes&action=raw
+HTTP 200
+Fetched: 2026-10-18T12:44:19.480Z
+
+{{Short description|American horse race}}
+{{Use mdy dates|date=June 2026}}
+{{infobox horse race
+| name = 158th Belmont Stakes
+| class = [[Graded stakes race|Grade I stakes race]]
+| horse race = [[Belmont Stakes]]
+| image = File:2026_Belmont_Logo.jpg
+| location = [[Saratoga Race Course]]
+[[Saratoga Springs, New York]], US
+| date = {{start date|2026|6|6}}
+| distance = {{convert|1+1/4|mi|furlong m|0|abbr=on}}
+| winning horse = [[Golden Tempo]]
+| winning time = 2:03.49
+| final odds = 6.00
+| winning jockey = [[José Ortiz (jockey)|José Ortiz]]
+| winning trainer = [[Cherie DeVaux]]
+| winning owner = [[Phipps Stable]] (Daisy Phipps Pulito) & [[St. Elias Stable]] (Vincent Viola)
+| conditions = Fast
+| surface = Dirt
+| attendance = 46,128
+| previous = [[2025 Belmont Stakes|2025]]
+| next = 2027
+}}
+The '''2026 Belmont Stakes''' was the 158th running of the [[Belmont Stakes]] and took place on June 6, 2026, at [[Saratoga Race Course]]. The post time for the 2026 “Run for the Carnations” was at 7:01 p.m. [[Eastern time zone|ET]], 3 minutes earlier due to impending weather.
+This was the third time in as many years that the last leg of the [[Triple Crown of Thoroughbred Racing (United States)|Triple Crown]] would take place at Saratoga due to ongoing construction at the race's usual home of [[Belmont Park]]. {{cite web|url=https://www.amny.com/sports/belmont-stakes-saratoga-final-time-2026/|title=Belmont Stakes to return to Saratoga for final time in 2026|website=[[AMNY]]|last=Page|first=Matthew|date=June 13, 2025|accessdate=June 20, 2025}}
+The winner was [[Golden Tempo]] who was also the winner of the [[2026 Kentucky Derby]]. Winning trainer [[Cherie DeVaux]] became the second woman to train a Belmont winner, after [[Jena Antonucci]] in [[2023 Belmont Stakes | 2023]].
+==Background==
+New York Governor [[Kathy Hochul]] announced that the 2026 Belmont Stakes would be the third and final time Saratoga Race Course in [[Saratoga Springs, New York]], would host the race. Due to Saratoga's smaller main track, the race was run at {{convert|1+1/4|mi|furlong m|0|abbr=on}}, shorter than the usual {{convert|1+1/2|mi|furlong m|0|abbr=on}}. Belmont Park is scheduled to reopen in the fall of 2026.
+The most recent time a Belmont Stakes was held elsewhere was from 1963 to 1967 at [[Aqueduct Race Track]] in [[Ozone Park, Queens]], the last time Belmont Park was under construction. Associated Press. [https://www.espn.com/horse-racing/story/_/id/39054850/renovations-move-belmont-stakes-saratoga-2024 "Renovations will move Belmont Stakes to Saratoga in 2024"]. [[ESPN]]. December 6, 2023. Retrieved on December 6, 2023.
+TV broadcast was won by [[Fox Sports]], which was also show on [[Fox_Sports#United_States|Fox Sports 1]] and FS2. Streaming coverage was free on [[Fubo]]. FS2 early coverage began at 10:30 a.m. [[Eastern time zone|ET]] and the main channel Fox coverage began at 3 p.m. [[Eastern time zone|ET]].
+The race itself was set to start at 7:04 p.m., also known as 'post time', but started at 7:01 p.m. due to impending weather.
+== Entries ==
+A field of 9 was drawn on June 1st. Kentucky Derby winner [[Golden Tempo]] drew post no. 9 and was given a morning line of 9-2. [[Renegade (horse)|Renegade]] was installed as the favorite with 2-1 morning line odds. {{cite web|url=https://www.timesunion.com/saratogatrack/article/2026-belmont-stakes-post-position-draw-live-odds-22281182.php|title=Renegade, Chief Wallabee, Kentucky Derby winner Golden Tempo lead 2026 Belmont Stakes field|date=June 6, 2026|accessdate=June 6, 2026|website=[[Times Union (Albany, New York)|Times Union]]}}
+== Results ==
+{| class="wikitable sortable"
+|-
+!scope="col" |Finish
+!scope="col" |Program
+Number
+!scope="col" |Horse
+!scope="col" |Jockey
+!scope="col" |Trainer
+!scope="col" |Morning
+Line Odds
+!scope="col" |Final Odds
+!scope="col" |[[Glossary of North American horse racing#M|Margin]]
+([[Horse length|Lengths]])
+!scope="col" |Winnings
+|-
+|1
+|9
+|[[Golden Tempo]]
+|[[José Ortiz (jockey)|José Ortiz]]
+|[[Cherie DeVaux]]
+|9-2
+|6.00
+|
+| $1,200,000
+|-
+|2
+|7
+|[[Commandment (horse)|Commandment]]
+|[[John R. Velazquez]]
+|[[Brad H. Cox]]
+|6-1
+|6.04
+| {{frac|1|1|4}}
+| $360,000
+|-
+|3
+|4
+|[[Renegade (horse)|Renegade]]
+|[[Irad Ortiz Jr.]]
+|[[Todd A. Pletcher]]
+|2-1
+|1.75
+| {{frac|5|1|4}}
+| $200,000
+|-
+|4
+|3
+|Chief Wallabee
+|[[Junior Alvarado]]
+|[[William I. Mott]]
+|3-1
+|5.03
+| {{frac|8|1|2}}
+| $100,000
+|-
+|5
+|8
+|Emerging Market
+|[[Flavien Prat]]
+|[[Chad C. Brown]]
+|6-1
+|5.89
+| 9
+| $60,000
+|-
+|6
+|6
+|Growth Equity
+|[[Manuel Franco (jockey)|Manuel Franco]]
+|[[Chad C. Brown]]
+|12-1
+|13.85
+|{{frac|9|1|4}}
+| $40,000
+|-
+|7
+|1
+|Vitruvian Man
+|Antonio Fresu
+|[[Doug O'Neill]]
+|30-1
+|24.20
+| 11
+| $20,000
+|-
+|8
+|5
+|Ottinho
+|[[Dylan Davis]]
+|[[Chad C. Brown]]
+|20-1
+|21.28
+| 17
+| $20,000
+|-
+|9
+|2
+|Powershift
+|[[Luis Saez]]
+|[[Todd A. Pletcher]]
+|12-1
+|11.44
+| {{frac|23|3|4}}
+|
+|-
+|}
+[[Going (horse racing)#USA|Track condition]]: Fast
+'''Times:''' {{frac|1|4}} mile – 23.96; {{frac|1|2}} mile – 48.29; {{frac|3|4}} mile – 1:12.38; mile – 1:37.56; final – 2:03.49.
+Splits for each quarter-mile: (23.96) (24.33) (24.09) (25.18) (25.93) {{cite web|url=https://www.equibase.com/static/chart/pdf/SAR060626USA13.pdf|title=Saratoga June 6 2026 Race 13 - Belmont Stakes Presented by NYRA Bets|accessdate=June 6, 2026|website=Equibase}}
+==Payout==
+{| class="wikitable"
+|-
+!Pgm
+!Horse
+!Win
+!Place
+!Show
+|-
+|9
+|Golden Tempo
+|$14.00
+|$7.32
+|$3.88
+|-
+|7
+|Commandment
+|
+|$7.02
+|$4.08
+|-
+|4
+|Renegade
+|
+|
+|$2.52
+|}
+*$1.00 Exacta (9-7) $55.67
+*$0.50 Trifecta (9-7-4) $51.32
+*$0.10 Superfecta (9-7-4-3) $23.79
+Sources:
+==References==
+{{reflist}}
+==External links==
+*{{official website|https://www.belmontstakes.com}}
+{{s-start}}
+{{s-bef|before=[[2026 Preakness Stakes]]}}
+{{s-ttl|title=[[Triple Crown of Thoroughbred Racing (United States)|Triple Crown]]}}
+{{s-aft|after=[[2027 Kentucky Derby]]}}
+{{s-end}}
+{{Belmont Stakes}}
+{{Thoroughbred Racing on Fox Sports}}
+[[Category:Belmont Stakes races]]
+[[Category:2026 in horse racing|Belmont Stakes]]
+[[Category:2026 in American sports|Belmont Stakes]]
+[[Category:2026 in sports in New York (state)|Belmont Stakes]]
+[[Category:June 2026 sports events in the United States|Belmont Stakes]]
+[[Category:Saratoga Race Course]]
+{{Horseracing-race-stub}}

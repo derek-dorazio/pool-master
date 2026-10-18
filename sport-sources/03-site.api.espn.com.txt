@@ -1,0 +1,6 @@
+Source: https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260317-20260407&groups=100&limit=300
+Final URL: https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260317-20260407&groups=100&limit=300
+HTTP 400
+Fetched: 2026-10-18T12:44:15.113Z
+
+{"code":400,"message":"Failed to get events endpoint."}

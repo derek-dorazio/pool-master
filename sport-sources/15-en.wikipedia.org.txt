@@ -1,0 +1,370 @@
+Source: https://en.wikipedia.org/w/index.php?title=2026_Kentucky_Derby&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Kentucky_Derby&action=raw
+HTTP 200
+Fetched: 2026-10-18T12:44:19.272Z
+
+{{Short description|152nd running of the Kentucky Derby}}
+{{Use mdy dates|date=May 2026}}
+{{Infobox horse race
+| surface = Dirt
+| name = 152nd Kentucky Derby
+| horse race = [[Kentucky Derby]]
+| image =
+| caption =
+| class = [[Graded stakes race|Grade I stakes race]]
+| location = [[Churchill Downs]]
+[[Louisville, Kentucky]], United States
+| date = {{start date|2026|5|2}}
+| distance = {{convert|1+1/4|mi|furlong m|0|abbr=on}}
+| winning horse = [[Golden Tempo]]
+| winning time = 2:02.27
+| winning jockey = [[José Ortiz (jockey)|José Ortiz]]
+| winning trainer = [[Cherie DeVaux]]
+| winning owner = [[Phipps Stable]] (Daisy Phipps Pulito) & [[St. Elias Stable]] (Vincent Viola)
+| conditions = Fast
+| attendance = 150,000
+| final odds = 23-1
+| previous = [[2025 Kentucky Derby|2025]]
+| next = [[2027 Kentucky Derby|2027]]
+}}
+The '''2026 Kentucky Derby''' (branded as the '''152nd Running of the Kentucky Derby presented by [[Woodford Reserve]]''' for sponsorship reasons) was the 152nd running of the [[Kentucky Derby]]. It took place on May 2, 2026, at [[Churchill Downs]] in [[Louisville, Kentucky]]. {{Cite web |date=March 24, 2026 |title=2026 Kentucky Derby horses, odds, futures, preview, date: Expert who hit 12 Derby-Oaks Doubles reveals picks |url=https://www.cbssports.com/general/news/2026-kentucky-derby-horses-odds-futures-preview-date-expert-who-hit-12-derby-oaks-doubles-reveals-picks/ |access-date=March 24, 2026 |website=CBSSports.com |language=en}} [[Golden Tempo]] won the race with time 2:02.27. As a result, Golden Tempo trainer [[Cherie DeVaux]] became the first woman trainer to win the Derby. {{cite news|url=https://www.app.com/story/sports/horses/2026/05/02/cherie-devaux-with-golden-tempo-first-woman-trainer-to-win-kentucky-derby/89912796007/|title=Who is Cherie Devaux? Her horse Golden Tempo just won an historic Kentucky Derby|first=Bob|last=Jordan|publisher=Asbury Park Press|date=May 2, 2026|accessdate=May 2, 2026}}
+== Qualification and entries ==
+{{Main|2026 Road to the Kentucky Derby}}The 2026 Road to the Kentucky Derby was a series of races through which horses qualified for the Derby. The field for the Derby was limited to 20 horses, with up to four 'also eligibles' in case of a late withdrawal from the field. There were three separate paths for horses to take to qualify for the Derby: the main Road consisting of races in North America, the Japan Road consisting of four races in Japan, and the Euro/MidEast road consisting of ten races in England, Ireland, United Arab Emirates and France. The top five finishers in the specified races received points, with higher points awarded in the major prep races in March and April. Earnings in non-restricted stakes races acted as a tie breaker. {{cite web|url=https://www.kentuckyderby.com/wp-content/uploads/sites/2/2026/04/20260423-Road-to-Kentucky-Derby-Leaderboard.pdf |accessdate=April 23, 2026 |date=April 23, 2026 |title=Road to the Kentucky Derby 152 |website=www.kentuckyderby.com }}
+The field was drawn on April 25. A full field of 20 horses was selected, in addition to four also-eligible (AE) entries, three of whom drew into the race after three horses in the main field scratched the week prior to the race. {{Cite news |last=Drummond |first=Cameron |date=May 2, 2026 |title= These are the post positions for the 2026 Kentucky Derby and Kentucky Oaks |url=https://www.kentucky.com/sports/horses/kentucky-derby/article315533425.html |access-date=May 4, 2026 |newspaper=[[Lexington Herald-Leader]]}}
+== Results ==
+At the initial load in, Great White, expected to start at the 21 post, became startled, reared, and fell backwards, throwing off his jockey Alex Achard and landing on his back. Neither Great White nor Achard appeared injured, but veterinarians scratched Great White from the race out of caution. {{cite web|url=https://www.usatoday.com/story/sports/horses/triple/derby/2026/05/02/great-white-scratch-buck-flip-kentucky-derby-2026/89912840007/|title=Great White scratched from Kentucky Derby after bucking rider, flipping|first=Kristie|last=Ackert|date=May 2, 2026|accessdate=May 2, 2026|website=USA Today|archive-date=May 3, 2026|archive-url=https://web.archive.org/web/20260503030151/https://www.usatoday.com/story/sports/horses/triple/derby/2026/05/02/great-white-scratch-buck-flip-kentucky-derby-2026/89912840007/|url-status=live}}
+All of the previously loaded horses were pulled back out of the starting gate to warm up and then reloaded after a pause to have Great White escorted off the track. At the start, Six Speed took the early lead, with [[So Happy (horse)|So Happy]] and Danon Bourbon following. Four horses, including [[Golden Tempo]] and Albus, hung well behind the rest of the field entering the first turn. [[Renegade (horse)|Renegade]] was also one of the last runners in the early stages, having been bumped several times at the start by horses on his outside. Six Speed continued to hold the lead through the far turn, when Danon Bourbon moved ahead to take the lead at the mile mark. As the field reached the stretch, the horses that had been held back began to charge forward. Ocelli briefly took the lead before Renegade and Golden Tempo moved ahead of him. Golden Tempo and Renegade then battled for the rest of the race, with Golden Tempo prevailing by a neck. His victory made his trainer [[Cherie DeVaux]] the first woman trainer to win the Kentucky Derby and only the second woman trainer to win any of the American Triple Crown races, after [[Jena Antonucci]] in the [[2023 Belmont Stakes]]. It was also a first Kentucky Derby victory for jockey [[José Ortiz (jockey)|José Ortiz]], barely beating his brother [[Irad Ortiz, Jr. | Irad]] who was riding Renegade. {{cite web|url=https://www.bloodhorse.com/horse-racing/articles/291637/history-in-the-making-golden-tempo-upsets-derby-field|title=History in the Making: Golden Tempo Upsets Derby Field|first=Byron|last=King|date=May 2, 2026|accessdate=May 2, 2026|website=Bloodhorse|archive-date=May 19, 2026|archive-url=https://web.archive.org/web/20260519094429/https://www.bloodhorse.com/horse-racing/articles/291637/history-in-the-making-golden-tempo-upsets-derby-field|url-status=live}} {{cite web|url=https://www.churchilldowns.com/horses/news/churchill-downs-stakes-recap-and-trainer-quotes-kentucky-derby-152/|title=Churchill Downs Stakes Recap and Trainer Quotes: Kentucky Derby 152|date=May 2, 2026|accessdate=May 2, 2026|website=Churchill Downs}} {{cite web|url=https://www.cbssports.com/general/news/2026-kentucky-derby-live-updates-race-time-results-odds-horses-highlights/live/|title=2026 Kentucky Derby results: Golden Tempo makes history under first female trainer to win Run for the Roses|first1=Robby|last1=Kalland|first2=Gene|last2=Menez|date=May 2, 2026|accessdate=May 2, 2026|website=CBS Sports|archive-date=May 7, 2026|archive-url=https://web.archive.org/web/20260507110913/https://www.cbssports.com/general/news/2026-kentucky-derby-live-updates-race-time-results-odds-horses-highlights/live/|url-status=live}}
+{| class="wikitable sortable" border="1"
+!Finish
+! scope="col" | Program
+number
+!scope="col" | Horse
+!scope="col" | Qualifying
+points
+!scope="col" | Trainer
+!scope="col" | Jockey
+!scope="col" | Morning
+line odds
+!scope="col" | Final odds
+! scope="col" class=unsortable| [[Glossary of North American horse racing#M|Margin]]
+([[Horse length|lengths]])
+!scope="col" | Winnings
+|-
+|1
+|19
+|[[Golden Tempo]]
+|60
+|[[Cherie DeVaux]]
+|[[José Ortiz (jockey)|José Ortiz]]
+|30–1
+|23.12
+|
+|$3,100,000
+|-
+|2
+|1
+|[[Renegade (horse)|Renegade]]
+|125
+|[[Todd Pletcher]]
+|[[Irad Ortiz Jr.]]
+|4–1
+|5.65
+|Neck
+|$1,000,000
+|-
+|3
+|22
+|Ocelli
+|25
+|Whit Beckman
+|[[Tyler Gaffalione]]{{efn|On Thursday, April 30, trainer Whit Beckman announced that Tyler Gaffalione, who was originally named aboard Fulleffort, would replace Joe Ramos as jockey of Ocelli. {{cite web|url=https://www.drf.com/news/gaffalione-picks-kentucky-derby-oaks-mounts|title=Gaffalione picks up Kentucky Derby, Oaks mounts|date=April 30, 2026|last=Grening|first=David|publisher=Daily Racing Form|access-date=May 1, 2026|archive-date=May 2, 2026|archive-url=https://web.archive.org/web/20260502231753/https://www.drf.com/news/gaffalione-picks-kentucky-derby-oaks-mounts|url-status=live}} }}
+|50–1
+|70.50
+|1
+|$500,000
+|-
+|4
+|12
+|Chief Wallabee
+|50
+|[[William I. Mott|Bill Mott]]
+|[[Junior Alvarado]]
+|8–1
+|7.31
+|3
+|$250,000
+|-
+|5
+|7
+|Danon Bourbon
+|Japan
+|[[Manabu Ikezoe]]
+|Atsuya Nishimura
+|20–1
+|12.66
+|3
+|$150,000
+|-
+|6
+|11
+|Incredibolt
+|60
+|Riley Mott
+|Jaime Torres
+|20–1
+|23.70
+|4
+|
+|-
+|7
+|6
+|[[Commandment (horse)|Commandment]]
+|150
+|[[Brad H. Cox|Brad Cox]]
+|[[Luis Saez]]
+|6–1
+|6.18
+|{{frac|5|1|4}}
+|
+|-
+|8
+|10
+|Wonder Dean
+| E/ME
+|Daisuke Takayanagi
+|[[Ryusei Sakai]]
+|30–1
+|26.77
+|{{frac|7|1|4}}
+|
+|-
+|9
+|8
+|[[So Happy (horse)|So Happy]]
+|115
+|Mark Glatt
+|[[Mike E. Smith|Mike Smith]]
+|15–1
+|5.90
+|{{frac|7|1|2}}
+|
+|-
+|10
+|15
+|Emerging Market
+|100
+|[[Chad Brown (horse trainer)|Chad Brown]]
+|[[Flavien Prat]]
+|15–1
+|8.78
+|{{frac|7|3|4}}
+|
+|-
+|11
+|18
+|[[Further Ado]]
+|135
+|[[Brad H. Cox|Brad Cox]]
+|[[John R. Velazquez|John Velazquez]]
+|6–1
+|5.05
+|{{frac|7|3|4}}
+|
+|-
+|12
+|14
+|Potente
+|100
+|[[Bob Baffert]]
+|Juan Hernandez
+|20–1
+|17.89
+|{{frac|8|1|4}}
+|
+|-
+|13
+|17
+|Six Speed
+|E/ME
+|Bhupat Seemar
+|[[Brian Hernandez Jr.]]
+|50–1
+|38.70
+|{{frac|17|1|4}}
+|
+|-
+|14
+|23
+|Robusta
+|25
+|[[Doug O'Neill]]
+|Cristian Torres{{efn|On Friday, May 1, trainer [[Doug O'Neill]] announced that Cristian Torres, who was originally named aboard Right to Party, would replace Emisael Jaramillo as jockey of Robusta. }}
+|50–1
+|70.01
+|{{frac|17|1|2}}
+|
+|-
+|15
+|2
+|Albus
+|100
+|Riley Mott
+|[[Manuel Franco (jockey)|Manny Franco]]
+|30–1
+|48.67
+|{{frac|20|1|4}}
+|
+|-
+|16
+|3
+|Intrepido
+|38
+|[[Jeff Mullins (horse trainer)|Jeff Mullins]]
+|Hector Berrios
+|50–1
+|52.85
+|{{frac|33|1|2}}
+|
+|-
+|17
+|4
+|Litmus Test
+|34
+|[[Bob Baffert]]
+|[[Martin Garcia (jockey)|Martin Garcia]]
+|30–1
+|27.75
+|{{frac|37|1|2}}
+|
+|-
+|18
+|16
+|Pavlovian
+|70
+|[[Doug O'Neill]]
+|Edwin Maldonado
+|30–1
+|50.52
+|{{frac|48|1|2}}
+|
+|-bgcolor=lightgrey
+|
+|5 - Scr{{efn|Right to Party was scratched immediately before the deadline on Friday, May 1, after regulatory veterinarians concluded that there may have been clinical signs disposing him to injury should he have run in the Derby. {{cite web |last1=Nevills |first1=Joe |last2=Paulick |first2=Ray |title='They Didn't Like The Way He Jogged': Right To Party Scratched From Kentucky Derby
+|url=https://paulickreport.com/news/triple-crown/they-didnt-like-the-way-he-jogged-right-to-party-scratched-from-kentucky-derby |website=paulickreport.com |publisher=Paulick Report |access-date=May 1, 2026 |date=May 1, 2026}} }}
+| Right to Party
+| 65
+| [[Kenneth McPeek|Kenny McPeek]]
+| Christopher Elliott
+| 30–1
+|
+|
+|
+|- bgcolor="lightgrey"
+|
+|9 - Scr{{efn|The Puma was scratched on the morning of the Derby because of swelling in his leg due to a skin infection. {{cite web |last1=Schoenfield |first1=Joy |last2=Schoenfield |first2=Joy |title=The Puma scratched from 152nd Kentucky Derby due to swelling in his leg |url=https://www.nbcsports.com/horse-racing/news/the-puma-scratched-from-152nd-kentucky-derby-due-to-swelling-in-his-leg |website=NBC Sports |access-date=May 2, 2026 |date=May 2, 2026 |archive-date=May 2, 2026 |archive-url=https://web.archive.org/web/20260502231225/https://www.nbcsports.com/horse-racing/news/the-puma-scratched-from-152nd-kentucky-derby-due-to-swelling-in-his-leg |url-status=live }} }}
+| The Puma
+| 106
+| Gustavo Delgado
+| [[Javier Castellano]]
+| 10–1
+|
+|
+|
+|- bgcolor="lightgrey"
+|
+|13 - Scr{{efn|Silent Tactic was scratched from the event on Wednesday, April 29, after developing a bruised foot. {{cite web |last1=Hall |first1=Gregory A. |title=Silent Tactic Scratched From KY Derby With Bruised Foot His defection allows Great White to draw into the field from the also-eligible list. |url=https://www.bloodhorse.com/horse-racing/articles/291527/silent-tactic-scratched-from-ky-derby-with-bruised-foot |website=BloodHorse.com |access-date=April 29, 2026 |date=April 29, 2026 |archive-date=April 30, 2026 |archive-url=https://web.archive.org/web/20260430095351/https://www.bloodhorse.com/horse-racing/articles/291527/silent-tactic-scratched-from-ky-derby-with-bruised-foot |url-status=live }} }}
+| Silent Tactic
+| 100
+| [[Mark E. Casse|Mark Casse]]
+| Cristian Torres
+| 20–1
+|
+|
+|
+|- bgcolor="lightgrey"
+|
+|20 - Scr{{efn|Fulleffort was scratched on Thursday, April 30, two days before the event after returning from a workout and "off" in his left hind leg. X-rays revealed a small bone chip. {{cite web |last1=Holton |first1=Brooks |last2=Frakes |first2=Jason |title=Fulleffort scratches from 2026 Kentucky Derby field, Ocelli enters |url=https://www.courier-journal.com/story/sports/horses/kentucky-derby/2026/04/30/kentucky-derby-horses-list-updates-scratches-fulleffort-out-ocelli-pedigree-trainer-whit-beckman/89666607007/ |website=courier-journal.com |publisher=The Courier-Journal |access-date=April 30, 2026 |date=April 30, 2026}} }}
+| Fulleffort
+| 110
+| [[Brad H. Cox|Brad Cox]]
+| [[Tyler Gaffalione]]
+| 20–1
+|
+|
+|
+|- bgcolor="lightgrey"
+|
+|21 - Scr{{efn|Scratched at the gate after falling over and throwing off his jockey. {{Cite web |last=Maloney |first=Renee |date=May 3, 2026 |title= Great White, fifth horse scratched from the Kentucky Derby; cleared by veterinarians after fall |url=https://www.wlky.com/article/great-while-scratched-kentucky-derby/71193739 |access-date=May 4, 2026 |website=WLKY}} }}
+|Great White
+|30
+|John Eniss
+|Alex Achard
+|50–1
+|
+|
+|
+|- bgcolor="lightgrey"
+|
+| 24 AE
+| Corona de Oro
+| 6
+| [[Dallas Stewart]]
+| [[Brian Hernandez Jr.]]
+| 50–1
+|
+|
+|
+|}
+[[Going (horse racing)#USA|Track condition]]: Fast
+'''Times:''' {{frac|1|4}} mile – 22.68; {{frac|1|2}} mile – 46.44; {{frac|3|4}} mile – 1:10.90; mile – 1:36.45; final – 2:02.27.
+Splits for each quarter-mile: (23.76) (24.46) (25.55) (25.82) (25.82)
+''Note:''
+{{notelist}}
+''Source:'' Equibase chart {{cite web|url=https://www.equibase.com/static/chart/pdf/CD050226USA12.pdf|title=2026 Kentucky Derby presented by Woodford Reserve (Gr. 1)|date=May 2, 2026|accessdate=May 2, 2026|publisher=Equibase|archive-date=May 3, 2026|archive-url=https://web.archive.org/web/20260503100957/https://www.equibase.com/static/chart/pdf/CD050226USA12.pdf|url-status=live}}
+=== Payouts ===
+The table below provides the Kentucky Derby payout schedule for a $2 stake.
+{| class="wikitable" style="text-align: center;"
+|-
+! Program number
+! Horse name
+! width="40px" | Win
+! width="40px" | Place
+! width="40px" | Show
+|-
+| 19
+| style="text-align: left;" | [[Golden Tempo]]
+| $48.24
+| $19.14
+| $11.90
+|-
+| 1
+| style="text-align: left;" | [[Renegade (horse)|Renegade]]
+|
+| $7.14
+| $5.46
+|-
+| 22
+| style="text-align: left;" | Ocelli
+|
+|
+| $36.34
+|}
+*$2 [[Parimutuel betting|Exacta]] (19–1): $278.86
+*$0.50 [[Trifecta]] (19–1–22): $5,625.39
+*$1 [[Superfecta]] (19–1–22–12): $94,489.95
+*$1 Super High Five (19–1–22–12–7): $1,777,720 {{Cite news |title=Kentucky Derby 2026 complete order of finish and payouts at Churchill Downs |url=https://www.kentucky.com/sports/horses/kentucky-derby/article315614074.html |access-date=May 3, 2026 |newspaper=[[Lexington Herald-Leader]]}}
+== References ==
+{{Reflist}}
+{{s-start}}
+{{s-bef|before=[[2025 Belmont Stakes]]}}
+{{s-ttl|title=[[Triple Crown of Thoroughbred Racing (United States)|Triple Crown]]}}
+{{s-aft|after=[[2026 Preakness Stakes]]}}
+{{s-end}}
+{{Kentucky Derby}}
+{{DEFAULTSORT:Kentucky Derby, 2026}}
+[[Category:2026 in horse racing]]
+[[Category:2026 in sports in Kentucky|Derby]]
+[[Category:2026 in American sports]]
+[[Category:Kentucky Derby races|2026]]
+[[Category:May 2026 sports events in the United States]]
+[[Category:2026 in Louisville, Kentucky]]

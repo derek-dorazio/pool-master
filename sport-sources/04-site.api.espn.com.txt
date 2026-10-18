@@ -1,0 +1,6 @@
+Source: https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260318-20260406&groups=100&limit=300
+Final URL: https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260318-20260406&groups=100&limit=300
+HTTP 400
+Fetched: 2026-10-18T12:44:15.167Z
+
+{"code":400,"message":"Failed to get events endpoint."}

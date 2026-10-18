@@ -1,0 +1,2341 @@
+Source: https://en.wikipedia.org/w/index.php?title=2026_IndyCar_Series&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_IndyCar_Series&action=raw
+HTTP 200
+Fetched: 2026-10-18T12:44:19.091Z
+
+{{short description|American auto racing season}}
+{{Use mdy dates|date=September 2026}}
+{{Use American English|date=September 2026}}
+{{American Championship Car season
+| series = IndyCar
+| year = 2026
+| series_logo =
+| series_name = [[Nippon Telegraph and Telephone|NTT]] IndyCar Series
+| races = 18
+| start_date = March 1
+| end_date = September 6
+| season_champ = {{flagicon|ESP}} [[Álex Palou]]
+| manufacturer_champ = {{flagicon|JPN}} [[Honda Indy V6|Honda]]
+| rookie_of_year = {{flagicon|NOR}} [[Dennis Hauger]]
+| indy_winner = {{flagicon|SWE}} [[Felix Rosenqvist]]
+| oval_champ = {{flagicon|USA}} [[David Malukas]]
+| road_champ = {{flagicon|ESP}} [[Álex Palou]]
+| most_popular =
+| previous = [[2025 IndyCar Series|2025]]
+| next = [[2027 IndyCar Series|2027]]
+}}
+{{multiple image
+| align = right
+| direction = horizontal
+| total_width = 300
+| image1 = Alex Palou at 2024 Chevrolet Detroit Grand Prix.jpg
+| image2 = Kyle kirkwood (52261679565) (cropped).jpg
+| footer = [[Álex Palou]] (left) won his fifth championship in six seasons. [[Kyle Kirkwood]] (right) finished in second place by 86 points.
+}}
+The '''2026 NTT IndyCar Series''' was the 115th official championship season of [[American open-wheel car racing|American open-wheel racing]] and the 31st season under [[IndyCar Series]] sanction. Its showcase event was the [[2026 Indianapolis 500|110th Running of the Indianapolis 500]]. The series also raced in [[Washington Street Circuit|Washington, D.C.]] for the [[Freedom 250 Grand Prix]].
+[[Álex Palou]], who entered the season as defending Indianapolis 500 winner and champion, earned his fourth consecutive title, and fifth IndyCar title overall with [[Chip Ganassi Racing]], with one race to spare. This put Palou third on the all-time list behind [[A. J. Foyt]] (7) and teammate [[Scott Dixon]] (6). [[Felix Rosenqvist]] won his first Indianapolis 500 for [[Meyer Shank Racing]], beating [[David Malukas]] in the closest [[photo finish]] in the event's history, while [[Honda in motorsport|Honda]] won its twelfth Manufacturers' Cup, the second in a row.
+==Background and series news==
+*On September 12, 2024, IndyCar announced that the [[Firestone Tire and Rubber Company]] had signed an extension to remain as the series' sole tire supplier until at least the 2030 season. {{cite web |date=September 12, 2024 |title=Firestone extends long Term as exclusive tire supplier |url=https://www.indycar.com/news/2024/09/09-12-firestone-nics |access-date=September 12, 2024 |website=IndyCar}}
+*On July 31, 2025, Fox Sports parent company [[Fox Corporation]] announced that it had acquired a one-third stake in IndyCar parent company Penske Entertainment. As part of the acquisition, Fox Sports' TV contract was extended to 2030. {{Cite web |last=Goldsmith |first=Jill |date=July 31, 2025 |title=Fox Acquires One-Third Stake In Penske Entertainment, Owner Of Indycar Series |url=https://deadline.com/2025/07/fox-penske-entertainment-indycar-indianapolis-motor-speedway-1236475246/ |access-date=August 11, 2025 |website=Deadline |language=en-US}} {{Cite web |last=Brittle |first=Cian |date=August 5, 2025 |title=Why did Fox invest in IndyCar and what happens next? |url=https://www.blackbookmotorsport.com/features/fox-indycar-penske-investment-marketing-analysis/ |access-date=August 11, 2025 |website=BlackBook Motorsport |language=en-GB |archive-date=August 5, 2025 |archive-url=https://web.archive.org/web/20250805163812/https://www.blackbookmotorsport.com/features/fox-indycar-penske-investment-marketing-analysis/ |url-status=live }}
+*On December 11, 2025, IndyCar announced a new three-person independent officiating board, named IndyCar Officiating Inc. Two members – [[Ray Evernham]] and Raj Nair – were voted on to the panel by IndyCar team owners, while the third member – Ronan Morgan – was appointed by the [[Fédération Internationale de l'Automobile|FIA]]. {{cite web|url=https://www.motorsport.com/indycar/news/indycar-to-introduce-independent-officiating-system/10784178/|title=IndyCar to introduce independent officiating system|first=Joey|last=Barnes|date=December 11, 2025|accessdate=December 11, 2025|website=Motorsport|publisher=Motorsport Network, LLC}} [[Scot Elkins]] was later announced as the managing director of officiating. {{Cite web|last=Brown|first=Zion|date=April 21, 2026|title=IndyCar names Scot Elkins to lead officiating as May approaches|url=https://www.indystar.com/story/sports/motor/2026/04/21/scot-elkins-to-lead-indycar-officiating-as-may-approaches/89714701007/|access-date=May 9, 2026|website=[[The Indianapolis Star]]|archive-date=April 22, 2026|archive-url=https://web.archive.org/web/20260422112530/https://www.indystar.com/story/sports/motor/2026/04/21/scot-elkins-to-lead-indycar-officiating-as-may-approaches/89714701007/|url-status=live}}
+*On February 12, 2026, it was announced [[Chevrolet]] and [[Honda Racing Corporation USA|Honda]] had signed a multi-year contract extension which would keep them in the series when it switches to 2.4-liter twin-turbo hybrid V6 engines in 2028. Each manufacturer was announced to receive a single charter entry as part of the agreement. {{cite web|url=https://racer.com/2026/02/12/chevy-and-honda-confirm-indycar-contract-extensions|title=Chevy and Honda confirm IndyCar contract extensions|last=Pruett|first=Marshall|website=Racer|date=February 12, 2026|accessdate=February 13, 2026}}{{Dead link|date=May 2026 |bot=InternetArchiveBot }}
+*On April 28, 2026, IndyCar announced a new rule that non-chartered entries would not be permitted to race outside the Indianapolis 500 beginning with the 2027 season. {{cite web|url=https://racer.com/2026/04/28/indycar-finalize-rule-limiting-non-charter-entries-to-indy-500-only-after-2026|title=IndyCar finalizes rule restricting non-charter entries to Indy 500 only after 2026|first=Marshall|last=Pruett|date=April 28, 2026|accessdate=April 29, 2026|website=Racer}} {{Dead link|date=October 2026 |bot=InternetArchiveBot }}
+==Confirmed entries==
+The following teams, entries, and drivers competed in the 2026 NTT IndyCar Series season. {{Cite web |title=2026 Indycar Teams & Drivers LISTS |url=https://www.indymotorspeedway.com/26_IRL_team.html#500 |access-date=December 11, 2025 |website=Indy Speedway |archive-date=December 14, 2025 |archive-url=https://web.archive.org/web/20251214082202/https://indymotorspeedway.com/26_IRL_team.html#500 |url-status=live }} All teams used a [[Dallara DW12]] chassis with [[Dallara DW12#IR–18 Universal Aero Kit (UAK-18) (2018–2026)|2018 universal aero kit]] and [[Firestone Tire and Rubber Company#Motorsports|Firestone]] tires.
+{|
+|
+{| class="wikitable sortable" style="font-size: 85%;"
+|-
+!Team
+!Engine
+!No.
+!Driver(s)
+!Round(s)
+!Ref(s)
+|-
+| [[Abel Motorsports]]
+| [[Chevrolet Indy V6|Chevrolet]]
+| style="text-align:center" |51
+| {{flagicon|USA}} [[Jacob Abel (racing driver)|Jacob Abel]]
+| 7
+| {{cite web|url=https://racer.com/2026/04/20/indy-500-entry-list-gets-to-32-with-abel|title=Indy 500 entry list gets to 32 with Abel|first=Emily|last=Maxwell|date=April 20, 2026|accessdate=April 20, 2026|website=Racer|publisher=Racer Media & Marketing, Inc.}} {{Dead link|date=October 2026 |bot=InternetArchiveBot }}
+|-
+| rowspan="2" | [[A. J. Foyt Racing|A. J. Foyt Enterprises]]{{refn|group=N|name=FoytPenske|Technical partnership with [[Team Penske]].}}
+| rowspan="3" | [[Chevrolet Indy V6|Chevrolet]]
+| style="text-align:center" | 4
+| {{flagicon|BRA}} [[Caio Collet]] {{Color box|orange|'''R'''|border=orange}}
+| All
+| {{Cite web|last=Horner|first=Scott|date=November 6, 2025|title=Rookie joins A.J. Foyt Racing's 2026 IndyCar Series lineup to replace David Malukas|url=https://www.indystar.com/story/sports/motor/2025/11/06/indycar-news-caio-collet-signs-with-a-j-foyt-racing-silly-season-rumors/87123308007/|access-date=November 6, 2025|website=Indianapolis Star|language=en-US|archive-date=November 7, 2025|archive-url=https://web.archive.org/web/20251107120716/https://www.indystar.com/story/sports/motor/2025/11/06/indycar-news-caio-collet-signs-with-a-j-foyt-racing-silly-season-rumors/87123308007/|url-status=live}}
+|-
+| style="text-align:center" | 14
+| {{flagicon|USA}} [[Santino Ferrucci]]
+| All
+| {{Cite news|title=Ferrucci To Stay with AJ Foyt Racing in 2025|url=https://www.indycar.com/news/2024/09/09-12-ferrucci-foyt-2025|date=September 12, 2024|access-date=September 12, 2024|work=IndyCar}}
+|-
+| [[HMD Motorsports]] with [[A. J. Foyt Racing]]{{refn|group=N|name=FoytPenske}}
+| style="text-align:center" | 11
+| {{flagicon|GBR}} [[Katherine Legge]]
+| 7
+| {{Cite web |date=April 27, 2026 |title=Katherine Legge To Race in Indy 500 with HMD, Foyt Partnership |url=https://www.indycar.com/news/2026/04/04-27-legge-500-hmd-foyt |access-date=April 27, 2026 |website=IndyCar |language=en |archive-date=April 29, 2026 |archive-url=https://web.archive.org/web/20260429100107/https://www.indycar.com/news/2026/04/04-27-legge-500-hmd-foyt |url-status=live }}
+|-
+| rowspan="3" | [[Andretti Global]]
+| rowspan="3" | [[Honda Indy V6|Honda]]
+| style="text-align:center" | 26
+| {{flagicon|AUS}} [[Will Power]]
+| All
+| {{Cite news|last=Richey|first=Lynzy|date=September 3, 2025|title=Andretti Global Signs IndyCar Veteran Will Power to 2026 Driver Lineup|url=https://andrettiglobal.com/news/2025/09/andretti-global-signs-indycar-veteran-will-power-to-2026-driver-lineup/|access-date=September 3, 2025|work=Andretti Global|language=en-US|archive-date=September 3, 2025|archive-url=https://web.archive.org/web/20250903190752/https://andrettiglobal.com/news/2025/09/andretti-global-signs-indycar-veteran-will-power-to-2026-driver-lineup/|url-status=live}}
+|-
+| style="text-align:center" | 27
+| {{flagicon|USA}} [[Kyle Kirkwood]]{{refn|group=N|name=Curb-Agajanian|with [[Curb Agajanian Performance Group|Curb-Agajanian]]}}
+| All
+| {{cite news|last1=Pruett|first1=Marshall|date=September 26, 2023|title=Kirkwood extends deal with Andretti|url=https://racer.com/2023/09/26/kirkwood-extends-deal-with-andretti/|access-date=September 26, 2023|work=Racer|archive-date=January 4, 2024|archive-url=https://web.archive.org/web/20240104124225/https://racer.com/2023/09/26/kirkwood-extends-deal-with-andretti/|url-status=dead}}
+|-
+| style="text-align:center" | 28
+| {{flagicon|SWE}} [[Marcus Ericsson]]
+| All
+| {{Cite news|last=Benyon|first=Jack|date=August 23, 2023|title=Ericsson to leave Ganassi for IndyCar rival Andretti|url=https://the-race.com/indycar/ericsson-andretti-2024-announcement-ganassi/|access-date=August 23, 2023|work=The Race|archive-date=August 28, 2023|archive-url=https://web.archive.org/web/20230828194747/https://the-race.com/indycar/ericsson-andretti-2024-announcement-ganassi/|url-status=live}}
+|-
+| rowspan="4" | [[Arrow McLaren]]
+| rowspan="4" | [[Chevrolet Indy V6|Chevrolet]]
+| style="text-align:center" | 5
+| {{flagicon|MEX}} [[Pato O'Ward]]
+| All
+| {{cite news|last=Pruett|first=Marshall|date=May 27, 2022|title=O'Ward signs contract extension with AMSP|url=https://racer.com/2022/05/27/oward-signs-contract-extension-with-amsp/|access-date=August 3, 2022|work=Racer|archive-date=August 4, 2022|archive-url=https://web.archive.org/web/20220804170112/https://racer.com/2022/05/27/oward-signs-contract-extension-with-amsp/|url-status=dead}}
+|-
+| style="text-align:center" | 6
+| {{flagicon|USA}} [[Nolan Siegel]]
+| All
+| {{Cite news|title=Arrow McLaren signs Nolan Siegel to multiyear contract, set to race Laguna Seca onward|url=https://www.mclaren.com/racing/indycar/2024/arrow-mclaren-signs-nolan-siegel-to-multiyear-contract-set-to-race-laguna-seca-onward/|date=June 18, 2024|access-date=June 18, 2024|work=McLaren|language=en-GB|archive-date=June 18, 2024|archive-url=https://web.archive.org/web/20240618190455/https://www.mclaren.com/racing/indycar/2024/arrow-mclaren-signs-nolan-siegel-to-multiyear-contract-set-to-race-laguna-seca-onward/|url-status=live}}
+|-
+| style="text-align:center" | 7
+| {{flagicon|DNK}} [[Christian Lundgaard]]
+| All
+| {{cite news|url=https://apnews.com/article/mclaren-indycar-rossi-lundgaard-7deb3fe93fcbda9a6180eed39c286e25|title=Arrow McLaren to replace Rossi with Lundgaard in yet another driver lineup change for IndyCar team|work=[[Associated Press|AP News]]|last=Fryer|first=Jenna|date=July 2, 2024|access-date=July 2, 2024|archive-date=July 2, 2024|archive-url=https://web.archive.org/web/20240702172330/https://apnews.com/article/mclaren-indycar-rossi-lundgaard-7deb3fe93fcbda9a6180eed39c286e25|url-status=live}}
+|-
+| style="text-align: center;" | 31
+|nowrap| {{flagicon|USA}} [[Ryan Hunter-Reay]]{{refn|group=N|name=Legacy|with [[Legacy Motor Club]]}}
+| 7
+| {{Cite web|last=Pruett|first=Marshall|date=November 13, 2025|title=Hunter-Reay joins Arrow McLaren for 2026 Indy 500|url=https://racer.com/2025/11/12/hunter-reay-joins-arrow-mclaren-for-2026-indy-500|access-date=November 13, 2025|website=Racer|language=en|archive-date=November 13, 2025|archive-url=https://web.archive.org/web/20251113154930/https://racer.com/2025/11/12/hunter-reay-joins-arrow-mclaren-for-2026-indy-500|url-status=dead}}
+|-
+| rowspan="3" | [[Chip Ganassi Racing]]
+| rowspan="3" | [[Honda Indy V6|Honda]]
+| style="text-align:center" | 8
+| {{flagicon|CYM}} [[Kyffin Simpson]]
+| All
+| {{Cite news|last=Barnes|first=Joey|date=October 30, 2024|title=Chip Ganassi Racing finalizes its 2025 lineups for IndyCar and Indy NXT programs|url=https://www.motorsport.com/indycar/news/chip-ganassi-racing-2025-driver-lineup/10668454/|access-date=October 30, 2024|website=Motorsport|language=en|archive-date=November 6, 2024|archive-url=https://web.archive.org/web/20241106160159/https://www.motorsport.com/indycar/news/chip-ganassi-racing-2025-driver-lineup/10668454/|url-status=live}}
+|-
+| style="text-align:center" | 9
+| {{flagicon|NZL}} [[Scott Dixon]]
+| All
+| {{cite news|last1=Barnes|first1=Joey|date=September 18, 2024|title=Ganassi's take on the charters: IndyCar "benefitting" from Penske's NASCAR experience|url=https://www.motorsport.com/indycar/news/ganassi-on-charters-indycar-benefitting-from-penskes-nascar-experience/10655493/|access-date=September 19, 2024|website=Motorsport|archive-date=September 19, 2024|archive-url=https://web.archive.org/web/20240919042629/https://www.motorsport.com/indycar/news/ganassi-on-charters-indycar-benefitting-from-penskes-nascar-experience/10655493/|url-status=live}}
+|-
+| style="text-align:center" | 10
+| {{flagicon|ESP}} [[Álex Palou]]
+| All
+| {{Cite news|last=Benyon|first=Jack|date=February 28, 2024|title=Seven things we learned as McLaren escalates Palou claim to $30m|url=https://www.the-race.com/indycar/mclaren-alex-palou-legal-case-latest-pato-oward-pay-rise/|access-date=June 14, 2024|work=The Race|language=en|archive-date=June 14, 2024|archive-url=https://web.archive.org/web/20240614070425/https://www.the-race.com/indycar/mclaren-alex-palou-legal-case-latest-pato-oward-pay-rise/|url-status=live}}
+|-
+| rowspan="2" | [[Dale Coyne Racing]]{{refn|group=N|Technical partnership with [[Andretti Global]].}}
+| rowspan="2" | [[Honda Indy V6|Honda]]
+| style="text-align:center" | 18
+| {{flagicon|FRA}} [[Romain Grosjean]]
+| All
+| {{Cite web|title=Romain Grosjean Returning To Dale Coyne Racing This Season|url=http://www.indycar.com/news/2026/02/02-13-coyne-grosjean|access-date=February 13, 2026|website=IndyCar|language=en|archive-date=February 15, 2026|archive-url=https://web.archive.org/web/20260215112919/https://www.indycar.com/news/2026/02/02-13-coyne-grosjean|url-status=live}}
+|-
+| style="text-align:center" | 19
+| {{flagicon|NOR}} [[Dennis Hauger]] {{Color box|yellow|RY|border=silver}}
+| All
+| {{cite web|last1=Pockrass|first1=Bob|date=September 24, 2025|title=One & Done: Indy NXT Champ Dennis Hauger Ready for Jump to IndyCar|url=https://www.foxsports.com/stories/motor/one-done-indy-nxt-champ-dennis-hauger-ready-jump-indycar|access-date=September 24, 2025|website=Fox Sports}}
+|-
+| rowspan="2" | [[Dreyer & Reinbold Racing]]
+| rowspan="2" | [[Chevrolet Indy V6|Chevrolet]]
+| style="text-align:center" | 23
+| {{flagicon|USA}} [[Conor Daly]]
+| 7
+| {{Cite web |date=March 11, 2026 |title=Conor Daly, DRR To Compete in Indy 500 with New Partner Kingspan |url=http://www.indycar.com/news/2026/03/03-11-daly-drr-500 |access-date=2026-03-11 |website=IndyCar |language=en |archive-date=May 9, 2026 |archive-url=https://web.archive.org/web/20260509212122/https://www.indycar.com/news/2026/03/03-11-daly-drr-500 |url-status=live }}
+|-
+| style="text-align:center" | 24
+| {{flagicon|GBR}} [[Jack Harvey (racing driver)|Jack Harvey]]
+| 7
+| {{Cite news|date=September 24, 2025|title=Jack Harvey Back at Indy in 2026 with Dreyer & Reinbold, INVST|url=https://www.indycar.com/news/2025/09/09-24-harvey-drr-2026-indy|access-date=September 24, 2025|work=IndyCar|language=en}}
+|-
+| rowspan="3" | [[Ed Carpenter Racing]] {{cite web|url=https://www.indycar.com/-/media/Files/2026/NICS/00-TESTS/IMS-OT/indycar-entrylist-IMSOT.pdf|title=IndyCar Entry List Indianapolis 500 Open Test|website=indycar.com|publisher=[[IndyCar]]|date=April 27, 2026|access-date=April 27, 2026}}
+| rowspan="3" | [[Chevrolet Indy V6|Chevrolet]]
+| style="text-align:center" | 20
+| {{flagicon|USA}} [[Alexander Rossi]]
+| All
+| {{cite news|last1=Brown|first1=Nathan|last2=Newell|first2=Nat|date=September 25, 2024|title=Alexander Rossi joins Ed Carpenter Racing; Carpenter only doing Indy 500|url=https://www.usatoday.com/story/sports/motor/2024/09/25/indycar-alexander-rossi-joins-ed-carpenter-racing/75359685007/|access-date=September 25, 2024|work=Indianapolis Star|publisher=}}
+|-
+| style="text-align:center" | 21
+| {{flagicon|DNK}} [[Christian Rasmussen (racing driver)|Christian Rasmussen]]
+| All
+|
+|-
+| style="text-align:center" | 33
+| {{flagicon|USA}} [[Ed Carpenter (racing driver)|Ed Carpenter]]
+| 7
+| {{cite web|url=https://www.indystar.com/story/sports/motor/indy-500/2026/01/20/ed-carpenter-will-race-in-2026-indy-500/88272613007|title=Ed Carpenter to return for 23rd straight Indy 500|first=Zion|last=Brown|date=January 20, 2026|accessdate=January 20, 2026|website=IndyStar|publisher=[[The Indianapolis Star]]|archive-date=January 21, 2026|archive-url=https://web.archive.org/web/20260121065951/https://www.indystar.com/story/sports/motor/indy-500/2026/01/20/ed-carpenter-will-race-in-2026-indy-500/88272613007/|url-status=live}}
+|-
+| rowspan="2" | [[Juncos Hollinger Racing]]
+| rowspan="2" | [[Chevrolet Indy V6|Chevrolet]]
+| style="text-align:center" | 76
+| {{flagicon|NLD}} [[Rinus VeeKay]]{{refn|group=N|with [[Dreyer & Reinbold Racing]] for Indianapolis 500 only}}
+| All
+| {{Cite news|date=October 14, 2025|title=Rinus VeeKay Signs With Juncos Hollinger Racing for 2026 Season|url=https://www.indycar.com/news/2025/10/10-14-veekay-jhr-2026|access-date=October 14, 2025|work=IndyCar|language=en|archive-date=October 14, 2025|archive-url=https://web.archive.org/web/20251014141255/https://www.indycar.com/news/2025/10/10-14-veekay-jhr-2026|url-status=live}}
+|-
+| style="text-align:center" | 77
+| {{flagicon|USA}} [[Sting Ray Robb]]
+| All
+| {{Cite news|date=December 2, 2025|title=JHR Confirms Return of Sting Ray Robb|url=https://www.indycar.com/news/2025/12/12-02-srr-jhr|access-date=December 2, 2025|work=IndyCar|language=en|archive-date=December 2, 2025|archive-url=https://web.archive.org/web/20251202153242/https://www.indycar.com/news/2025/12/12-02-srr-jhr|url-status=live}}
+|-
+| rowspan="3" nowrap| [[Meyer Shank Racing]]{{refn|group=N|Technical partnership with [[Chip Ganassi Racing]].}}
+with [[Curb Agajanian Performance Group|Curb-Agajanian]]
+| rowspan="3" | [[Honda Indy V6|Honda]]
+| style="text-align:center" | 06
+| {{flagicon|BRA}} [[Hélio Castroneves]]
+| 7
+| {{Cite news|url=https://frontstretch.com/2025/05/25/helio-castroneves-plans-to-return-for-another-indy-500-i-will-ill-make-it-happen/|title=Helio Castroneves Plans To Return for Another Indy 500: 'I Will. I'll Make It Happen'|last=Rutherford|first=Kevin|work=Frontstretch|date=May 25, 2025|access-date=August 14, 2025|archive-date=July 23, 2025|archive-url=https://web.archive.org/web/20250723213422/https://frontstretch.com/2025/05/25/helio-castroneves-plans-to-return-for-another-indy-500-i-will-ill-make-it-happen/|url-status=live}}
+|-
+| style="text-align:center" | 60
+| {{flagicon|SWE}} [[Felix Rosenqvist]]
+| All
+| {{Cite news|url=https://racer.com/2023/09/05/rosenqvist-signs-multiyear-indycar-deal-with-meyer-shank-racing/|title=Rosenqvist signs multiyear IndyCar deal with Meyer Shank Racing|last=Pruett|first=Marshall|work=Racer|date=September 5, 2023|access-date=September 5, 2025|archive-date=September 30, 2023|archive-url=https://web.archive.org/web/20230930184534/https://racer.com/2023/09/05/rosenqvist-signs-multiyear-indycar-deal-with-meyer-shank-racing/|url-status=dead}}
+|-
+| style="text-align:center" | 66
+| {{flagicon|NZL}} [[Marcus Armstrong]]
+| All
+| {{Cite news|last=Dejewski|first=Kevin|date=August 18, 2025|title=MSR extends Marcus Armstrong contract for 2026 IndyCar season|url=https://www.motorsportweek.com/2025/08/18/msr-extends-marcus-armstrong-contract-for-2026-indycar-season/|access-date=August 18, 2025|work=Motorsport Week|language=en-GB|archive-date=August 26, 2025|archive-url=https://web.archive.org/web/20250826231549/https://www.motorsportweek.com/2025/08/18/msr-extends-marcus-armstrong-contract-for-2026-indycar-season/|url-status=live}}
+|-
+| rowspan="4" | [[Rahal Letterman Lanigan Racing]]
+| rowspan="4" | [[Honda Indy V6|Honda]]
+| style="text-align:center" | 15
+| {{flagicon|USA}} [[Graham Rahal]]
+| All
+| {{cite news|url=https://www.autosport.com/indycar/news/graham-rahal-signs-multi-year-deal-to-remain-with-rahal-letterman-lanigan/10546092/|title=Rahal signs multi-year deal to remain with Rahal Letterman Lanigan|last=Barnes|first=Joey|work=[[Autosport]]|access-date=November 13, 2023|date=November 13, 2023|archive-date=December 2, 2023|archive-url=https://web.archive.org/web/20231202162410/http://www.autosport.com/indycar/news/graham-rahal-signs-multi-year-deal-to-remain-with-rahal-letterman-lanigan/10546092/|url-status=live}}
+|-
+| style="text-align:center" | 45
+| {{flagicon|GBR}} [[Louis Foster]]
+| All
+| {{Cite news |last=Barnes |first=Joey |date=October 9, 2024 |title=Indy NXT champion Foster signs multi-year deal with Rahal Letterman Lanigan Racing |url=https://www.motorsport.com/indycar/news/indy-nxt-champion-foster-signs-multi-year-deal-with-rahal-letterman-lanigan-racing/10661677/ |access-date=October 9, 2024 |work=Motorsport |language=en}}
+|-
+| style="text-align:center" | 47
+| {{flagicon|DEU}} [[Mick Schumacher]] {{Color box|orange|'''R'''|border=orange}}
+| All
+| {{Cite web|date=November 24, 2025|title=Formula One Veteran Mick Schumacher Joins Rahal Letterman Lanigan Racing For 2026 Indycar Season|url=https://rahal.com/formula-one-veteran-mick-schumacher-joins-rahal-letterman-lanigan-racing-for-2026-indycar-season/|access-date=November 24, 2025|website=Rahal Letterman Lanigan|language=en-US|archive-date=November 24, 2025|archive-url=https://web.archive.org/web/20251124145350/https://rahal.com/formula-one-veteran-mick-schumacher-joins-rahal-letterman-lanigan-racing-for-2026-indycar-season/|url-status=live}}
+|-
+| style="text-align:center" | 75
+| {{flagicon|JPN}} [[Takuma Sato]]
+| 7
+| {{cite web|url=https://racer.com/2026/03/17/sato-returning-to-indy-with-rll|title=Sato returning to Indy with RLL|first=Marshall|last=Pruett|date=March 17, 2026|accessdate=March 17, 2026|website=Racer|publisher=Racer Media & Marketing, Inc.}}{{Dead link|date=May 2026 |bot=InternetArchiveBot }}
+|-
+| rowspan="3" | [[Team Penske]]
+| rowspan="3" | [[Chevrolet Indy V6|Chevrolet]]
+| style="text-align:center" | 2
+| {{flagicon|USA}} [[Josef Newgarden]]
+| All
+| {{Cite news|last=Brown|first=Nathan|date=June 1, 2024|title=Days after 2nd Indy 500 win, Josef Newgarden, Team Penske announce multi-year contract extension|url=https://www.indystar.com/story/sports/motor/2024/06/01/indycar-josef-newgarden-team-penske-multi-year-contract-extension/73938899007/|access-date=June 14, 2024|work=Indianapolis Star|language=en-US|archive-date=June 14, 2024|archive-url=https://web.archive.org/web/20240614070359/https://www.indystar.com/story/sports/motor/2024/06/01/indycar-josef-newgarden-team-penske-multi-year-contract-extension/73938899007/|url-status=live}}
+|-
+| style="text-align:center" | 3
+| {{Flagicon|NZL}} [[Scott McLaughlin]]
+| All
+| {{cite news|last=Pruett|first=Marshall|date=August 2, 2024|title=IndyCar silly season update, August 2|url=https://racer.com/2024/08/02/indycar-silly-season-update-august-2|access-date=August 15, 2024|work=Racer|archive-date=August 11, 2024|archive-url=https://web.archive.org/web/20240811160758/https://racer.com/2024/08/02/indycar-silly-season-update-august-2/|url-status=dead}}
+|-
+| style="text-align:center" | 12
+| {{flagicon|USA}} [[David Malukas]]
+| All
+| {{cite news|title=David Malukas To Drive for Team Penske Beginning in 2026|url=https://www.indycar.com/news/2025/09/09-18-malukas-penske|access-date=September 18, 2025|work=IndyCar|archive-date=September 18, 2025|archive-url=https://web.archive.org/web/20250918145552/https://www.indycar.com/news/2025/09/09-18-malukas-penske|url-status=live}}
+|}
+|valign="top"|
+{| class="wikitable" style="font-size: 85%;"
+!Icon
+!Status
+|-
+|align=center| {{Color box|orange|'''R'''|border=orange}}
+|Eligible for Rookie of the Year
+|-
+|align=center| {{Color box|yellow|'''RY'''|border=yellow}}
+|Rookie of the Year
+|}
+|}
+===Driver changes===
+====Preseason====
+* On September 2, 2025, [[Team Penske]] confirmed reports that [[Will Power]] would depart the team, having driven for the team since the [[2009 IndyCar Series|2009 season]]. {{cite news |last1=Pruett |first1=Marshall |date=September 2, 2025 |title=Penske announces Power departure |url=https://racer.com/2025/09/02/penske-announces-power-departure |access-date=September 2, 2025 |work=Racer |publisher= |archive-date=September 2, 2025 |archive-url=https://web.archive.org/web/20250902152631/https://racer.com/2025/09/02/penske-announces-power-departure |url-status=dead }}
+*On September 2, [[Rinus VeeKay]] confirmed that he would not return to [[Dale Coyne Racing]] in 2026. {{Cite news|last=Pruett|first=Marshall|date=September 2, 2025|title=VeeKay departs Dale Coyne Racing|url=https://racer.com/2025/09/02/veekay-departs-dale-coyne-racing|access-date=September 2, 2025|work=Racer|language=en|archive-date=September 2, 2025|archive-url=https://web.archive.org/web/20250902212433/https://racer.com/2025/09/02/veekay-departs-dale-coyne-racing|url-status=dead}}
+* On September 3, the [[Cadillac in Formula One|Cadillac Formula 1 Team]] announced that [[Colton Herta]] had been signed as the team's test driver for 2026, taking him out of IndyCar after seven seasons driving for [[Andretti Global]]. {{cite news|date=September 3, 2025|title=IndyCar star Colton Herta signed to Cadillac as test driver|url=https://www.formula1.com/en/latest/article/indycar-star-colton-herta-signed-to-cadillac-as-test-driver.3dfdX0jtWLU7Vl16IK3cac|access-date=September 3, 2025|work=Formula One|publisher=|archive-date=December 20, 2025|archive-url=https://web.archive.org/web/20251220124001/https://www.formula1.com/en/latest/article/indycar-star-colton-herta-signed-to-cadillac-as-test-driver.3dfdX0jtWLU7Vl16IK3cac|url-status=live}} {{cite news|date=September 3, 2025|title=Colton Herta Moving to F1 as Cadillac Test Driver in 2026|url=https://www.indycar.com/news/2025/09/09-03-herta-caddy-f1|access-date=September 3, 2025|work=IndyCar|publisher=|archive-date=September 3, 2025|archive-url=https://web.archive.org/web/20250903160554/https://www.indycar.com/news/2025/09/09-03-herta-caddy-f1|url-status=live}}
+*On September 3, Andretti Global confirmed reports that Will Power would join the team, driving the No. 26 entry vacated by Herta.
+* On September 18, Team Penske announced that [[David Malukas]] would join the team on a multi-year deal beginning in 2026, driving the No. 12 entry vacated by Power.
+* On September 23, Dale Coyne Racing confirmed reports that [[2025 Indy NXT]] champion [[Dennis Hauger]] would join the team for the 2026 season.
+* On October 14, [[Juncos Hollinger Racing]] announced that Rinus VeeKay would join the team for 2026, serving as the team's lead driver.
+* On October 29, [[Marco Andretti]] announced his retirement from motor racing and the Indianapolis 500. {{Cite web|last=Horner|first=Scott|title=Marco Andretti, grandson of Mario Andretti, announces retirement from Indianapolis 500, IndyCar racing|url=https://www.indystar.com/story/sports/motor/indy-500/2025/10/29/marco-andretti-announces-retirement-from-indianapolis-500-indycar-racing/86965127007/|access-date=October 29, 2025|website=The Indianapolis Star|language=en-US}}
+* On November 6, [[A. J. Foyt Enterprises]] announced it had signed 2025 Indy NXT runner-up [[Caio Collet]] for the 2026 season, replacing Malukas in the No. 4 car.
+* On November 13, [[Arrow McLaren]] announced that [[Ryan Hunter-Reay]] would join the team for the [[2026 Indianapolis 500]]. On April 26, Arrow McLaren announced that Hunter-Reay's entry would be fielded in partnership with [[Legacy Motor Club]]. {{cite web|url=https://racer.com/2026/04/26/arrow-mclaren-legacy-motor-club-join-indy-500-forces-on-hunter-reay-entry|title=Arrow McLaren, Legacy Motor Club join Indy 500 forces on Hunter-Reay entry|first=Marshall|last=Pruett|date=April 26, 2026|accessdate=April 26, 2026|website=Racer}} {{Dead link|date=October 2026 |bot=InternetArchiveBot }}
+* On November 24, [[Rahal Letterman Lanigan Racing]] announced that [[FIA World Endurance Championship|World Endurance Championship]] and ex-[[Formula One]] driver [[Mick Schumacher]] would pilot the No. 47 car, replacing the No. 30 car driven by [[Devlin DeFrancesco]].
+* On February 13, 2026, [[Dale Coyne Racing]] announced that [[Romain Grosjean]] would be returning to the IndyCar Series after competing in the [[2025 IMSA SportsCar Championship|IMSA WeatherTech SportsCar Championship the previous year]].
+====Midseason====
+* On April 27, 2026, [[A. J. Foyt Racing]] confirmed that [[Katherine Legge]] would race in the [[2026 Indianapolis 500]], driving the No. 11 car in partnership with [[HMD Motorsports]]. {{Cite web |date=April 27, 2026 |title=Katherine Legge To Race in Indy 500 with HMD, Foyt Partnership |url=https://www.indycar.com/news/2026/04/04-27-legge-500-hmd-foyt |access-date=April 27, 2026 |website=IndyCar |language=en}}
+===Team changes===
+* On September 23, 2025, with the confirmation of Hauger, [[Dale Coyne Racing]] announced that it had formed a technical alliance with [[Andretti Global]] for the 2026 season.
+* On January 29, 2026, [[Team Penske]] revealed that [[Tim Cindric]] would return to the team as the strategist for [[Scott McLaughlin]], having been released from his role as the team's IndyCar president in May 2025 following penalties during qualifying for the [[2025 Indianapolis 500|Indianapolis 500]]. {{Cite web|title=Tim Cindric Back With Team Penske as Scott McLaughlin's Strategist|url=http://www.indycar.com/news/2026/01/01-29-cindric-penske|website=IndyCar|access-date=January 30, 2026|language=en|date=January 29, 2026|archive-date=January 30, 2026|archive-url=https://web.archive.org/web/20260130011324/https://www.indycar.com/news/2026/01/01-29-cindric-penske|url-status=live}}
+* During the off-season, [[Ed Carpenter Racing]] shifted away from its former denomination and started to be publicly known by the acronym ECR, in light of further changes in its ownership structure involving Ted Gelov, who had become a co-owner in 2025. {{Cite web |last=Pruett |first=Marshall |date=2026-02-23 |title=The changes you need to know about going into the new IndyCar season |url=https://racer.com/2026/02/23/the-changes-you-need-to-know-about-going-into-the-new-indycar-season |access-date=2026-02-28 |website=[[Racer (magazine)|Racer]] }}{{Dead link|date=May 2026 |bot=InternetArchiveBot }}
+* On February 25, 2026, it was confirmed via IndyCar's entry list and grid space allocations that [[PREMA Racing]] would miss at least the opening round at St. Petersburg, amidst reports of the founding Rosin family departing the organization and other financial challenges. {{cite web |last1=Dejewski |first1=Kevin |title=PREMA confirmed to miss opening IndyCar round |url=https://www.motorsportweek.com/2026/02/25/prema-confirmed-to-miss-opening-indycar-round/ |website=Motorsport Week |access-date=26 February 2026 |date=25 February 2026}} The team would not enter any of the 2026 events.
+*On April 20, 2026, [[Abel Motorsports]] confirmed that they would return to the series with an entry in the [[2026 Indianapolis 500|Indianapolis 500]]. The team had last competed in the IndyCar Series in 2023. [[Jacob Abel (racing driver)|Jacob Abel]] was the driver for the team.
+==Schedule==
+The schedule was released on September 16, 2025. {{cite news |title=IndyCar Announces 17-Race 2026 NTT IndyCar Series Schedule |url=https://www.indycar.com/news/2025/09/09-16-2026-sked |access-date=September 16, 2025 |work=IndyCar |language=en |archive-date=September 16, 2025 |archive-url=https://web.archive.org/web/20250916211714/https://www.indycar.com/news/2025/09/09-16-2026-sked |url-status=live }} Start times were released on December 18, with all races being broadcast on [[IndyCar Series on Fox|Fox]]. {{Cite web |title=Fox Sports, IndyCar Unveil 2026 Race Broadcast Start Times |url=http://www.indycar.com/news/2025/12/12-18-2026-nics-tv-times |access-date=January 21, 2026 |website=IndyCar |language=en |archive-date=January 18, 2026 |archive-url=https://web.archive.org/web/20260118143309/https://www.indycar.com/news/2025/12/12-18-2026-nics-tv-times |url-status=live }} The [[Freedom 250 Grand Prix|Freedom 250]] was then added on January 30, 2026. {{cite news |title=Freedom 250 Grand Prix of Washington, D.C. Coming in August |url=https://www.indycar.com/news/2026/01/01-30-freedom250gp |access-date=January 30, 2026 |work=IndyCar |language=en |archive-date=January 30, 2026 |archive-url=https://web.archive.org/web/20260130181123/https://www.indycar.com/news/2026/01/01-30-freedom250gp |url-status=live }}
+{| class="wikitable" style="font-size: 85%;"
+! Icon
+! Legend
+|-
+|style="text-align:center"| {{Color box|white|O|border=silver}}
+| Oval/Speedway
+|-
+|style="text-align:center"| {{Color box|lightblue|R|border=silver}}
+| Road course
+|-
+|style="text-align:center"| {{Color box|peachpuff|S|border=silver}}
+| Street circuit
+|}
+{| class="wikitable" style="font-size: 85%"
+!Rd.
+!Date
+!Race name
+!Track
+!Location
+!Time (ET)
+|-
+!1
+|March 1
+|[[2026 Firestone Grand Prix of St. Petersburg|Firestone Grand Prix of St. Petersburg]]
+| {{color box|peachpuff|S|border=silver}} [[St. Petersburg Street Circuit|Streets of St. Petersburg]]
+| [[St. Petersburg, Florida]]
+|12:00 p.m.
+|-
+!2
+|March 7
+|[[2026 Good Ranchers 250|Good Ranchers 250]]
+|{{color box|white|O|border=silver}} [[Phoenix Raceway]]
+|[[Avondale, Arizona]]
+|3:00 p.m.
+|-
+!3
+|March 15
+|[[2026 Java House Grand Prix of Arlington|Java House Grand Prix of Arlington]]
+| {{color box|peachpuff|S|border=silver}} [[Arlington Street Circuit|Streets of Arlington]]
+| [[Arlington, Texas]]
+|12:30 p.m.
+|-
+!4
+|March 29
+|[[2026 Children's of Alabama Indy Grand Prix|Children's of Alabama Indy Grand Prix]]
+|{{Color box|lightblue|R|border=silver}} [[Barber Motorsports Park]]
+|[[Birmingham, Alabama]]
+|1:00 p.m.
+|-
+!5
+|April 19
+|[[2026 Acura Grand Prix of Long Beach|Acura Grand Prix of Long Beach]]
+|{{color box|peachpuff|S|border=silver}} [[Long Beach Street Circuit|Streets of Long Beach]]
+|[[Long Beach, California]]
+|5:30 p.m.
+|-
+!6
+|May 9
+|[[2026 Sonsio Grand Prix|Sonsio Grand Prix]]
+| {{Color box|lightblue|R|border=silver}} [[Indianapolis Motor Speedway|Indianapolis Motor Speedway Road Course]]
+| rowspan="2" | [[Speedway, Indiana]]
+|4:30 p.m.
+|-
+!7
+|May 24
+|[[2026 Indianapolis 500|110th Running of the Indianapolis 500]]
+| {{Color box|white|O|border=silver}} [[Indianapolis Motor Speedway]]
+|10:00 a.m.
+|-
+!8
+|May 31
+|[[Detroit Grand Prix (IndyCar)|Chevrolet Detroit Grand Prix]]
+|{{color box|peachpuff|S|border=silver}} [[Detroit Street Circuit|Streets of Detroit]]
+|[[Detroit|Detroit, Michigan]]
+|12:30 p.m.
+|-
+!9
+|June 7
+|[[Bommarito Automotive Group 500]]
+|{{color box|white|O|border=silver}} [[World Wide Technology Raceway]]
+|[[Madison, Illinois]]
+|9:00 p.m.
+|-
+!10
+|June 21
+|[[Grand Prix of Road America|XPEL Grand Prix at Road America]]
+|{{color box|lightblue|R|border=silver}} [[Road America]]
+|[[Elkhart Lake, Wisconsin]]
+|2:00 p.m.
+|-
+!11
+|July 5
+|[[Indy 200 at Mid-Ohio|Honda Indy 200 at Mid-Ohio]]
+|{{color box|lightblue|R|border=silver}} [[Mid-Ohio Sports Car Course]]
+|[[Lexington, Ohio]]
+|12:30 p.m.
+|-
+!12
+|July 20{{refn|The race was originally scheduled on Sunday, July 19 at 5:30 p.m., before being postponed to Monday, July 20 at 3:00 p.m. due to excessive rainfall. {{Cite web |title=Nashville Race Rescheduled for 3 P.M. ET Monday Due to Rain|url=https://www.indycar.com/news/2026/07/07-19-nashville-rain- |access-date=July 19, 2026 |website=IndyCar}} The race was also shortened from 300 laps to 225 due to extreme heat conditions. {{Cite web |title=Nashville Race Distance Reduced to 225 Laps Due to Record Heat Forecast|url=https://www.indycar.com/news/2026/07/07-19-nashville-lapcount |access-date=July 19, 2026 |website=IndyCar}} |group=N}}
+|[[IndyCar Series at Nashville Superspeedway|Borchetta Bourbon Music City Grand Prix]]
+|{{color box|white|O|border=silver}} [[Nashville Superspeedway]]
+|[[Lebanon, Tennessee]]
+|3:00 p.m.
+|-
+!13
+|August 9
+|[[Grand Prix of Portland|OnlyBulls Grand Prix of Portland]]
+|{{color box|lightblue|R|border=silver}} [[Portland International Raceway]]
+|[[Portland, Oregon]]
+|4:00 p.m.
+|-
+!14
+|August 16
+|[[IndyCar Series at Markham Centre|Ontario Honda Dealers Indy at Markham]]
+|{{color box|peachpuff|S|border=silver}} [[Markham Street Circuit|Streets of Markham]]
+|[[Markham, Ontario]]
+|12:00 p.m.
+|-
+!15
+|August 23
+|[[Freedom 250 Grand Prix|Freedom 250 Grand Prix of Washington, D.C.]]
+|{{colorbox|peachpuff|S|border=silver}} [[Washington Street Circuit|Streets of Washington]]
+|[[Washington, D.C.]]
+|11:30 a.m.
+|-
+!16
+|August 29–30
+|[[IndyCar Series at the Milwaukee Mile|Snap-on Makers and Fixers 250]]
+| rowspan="2" |{{color box|white|O|border=silver}} [[Milwaukee Mile]]
+| rowspan="2" |[[West Allis, Wisconsin]]
+|2:30 p.m.
+|-
+!17
+|August 30
+|[[IndyCar Series at the Milwaukee Mile|Snap-on Milwaukee Mile 250]]
+|1:00 p.m.
+|-
+!18
+|September 6
+|[[IndyCar Monterey Grand Prix|Mission Foods Grand Prix of Monterey]]
+|{{color box|lightblue|R|border=silver}} [[Laguna Seca|WeatherTech Raceway Laguna Seca]]
+|[[Monterey, California]]
+|2:30 p.m.
+|}
+===Schedule changes===
+* IndyCar returned to [[Phoenix Raceway]] after an eight-year absence, marking the championship's first race in Arizona since 2018. {{Cite web |last=Pruett |first=Marshall |title=Phoenix, Mexico and a relocated Toronto all poised to feature on IndyCar's 2026 schedule |url=https://racer.com/2025/08/27/phoenix-mexico-and-a-relocated-toronto-among-the-potential-surprises-on-the-2026-indycar-schedule |access-date=August 28, 2025 |website=Racer |language=en |archive-date=August 28, 2025 |archive-url=https://web.archive.org/web/20250828023657/https://racer.com/2025/08/27/phoenix-mexico-and-a-relocated-toronto-among-the-potential-surprises-on-the-2026-indycar-schedule |url-status=dead }} {{Cite web |last=Brown |first=Nathan |date=August 27, 2025 |title=IndyCar to pair with NASCAR, Barber date set, sources say. What we know on next year's schedule |url=https://www.indystar.com/story/sports/motor/2025/08/27/indycar-2026-schedule-nascar-phoenix-barber-toronto-mexico-city/85855317007/ |access-date=September 2, 2025 |website=Indianapolis Star |language=en-US}}
+* The [[Grand Prix of Arlington]] debuted in March, held at a new [[street circuit]] around the streets of [[Arlington, Texas]]. This marked the championship's return to Texas for the first time since 2023. {{Cite web |date=October 10, 2024 |title=Unique Partnership Presents IndyCar Grand Prix of Arlington |url=http://www.indycar.com/news/2024/10/10-07-arlingtongp |access-date=August 14, 2025 |website=IndyCar |language=en |archive-date=July 24, 2025 |archive-url=https://web.archive.org/web/20250724130741/https://www.indycar.com/news/2024/10/10-07-arlingtongp |url-status=live }}
+* The [[Indy Grand Prix of Alabama|Grand Prix of Alabama]] moved from early May to late March. {{Cite web |last=Cornelison |first=Justin |date=August 26, 2025 |title=Porsche announces 2026 one-make racing and track day calendars |url=https://www.porschesprint.com/porsche-announces-2026-one-make-racing-and-track-day-calendars/ |access-date=August 26, 2025 |website=Porsche Sprint Challenge |language=en-US |archive-date=August 27, 2025 |archive-url=https://web.archive.org/web/20250827134017/https://www.porschesprint.com/porsche-announces-2026-one-make-racing-and-track-day-calendars/ |url-status=live }}
+* After having hosted the season finale since 2024, the [[IndyCar Series at Nashville Superspeedway|Music City Grand Prix]] originally moved to July 19 but was rescheduled to July 20 due to excessive rainfall. It became round twelve of the season. The event was also scheduled to become a night race, also having its race length extended from 225 laps to 300 laps but due to extreme heat conditions, it was brought back down to 225 laps.
+* The race at [[Gateway Motorsports Park|World Wide Technology Raceway]] also became a night race.
+* The [[Grand Prix of Toronto|Ontario Honda Dealers Indy]] race moved from [[Exhibition Place]], where it has been held ever since 1986, except for 2008, 2020, and 2021, to a temporary street circuit in [[Markham, Ontario]] under a five-year deal. {{Cite web |date=September 3, 2025 |title=Ontario Honda Dealers Indy Moves to City of Markham under a Multi-Year Agreement |url=https://www.hondaindy.com/news/744-ontario-honda-dealers-indy-moves-to-city-of-markham-under-a-multi-year-agreement |access-date=September 3, 2025 |website=Green Savoree Toronto |language=en-CA}}
+* The [[Milwaukee Mile]] race weekend became a double-header event, as it had been when it returned to the schedule in 2024.
+* The [[IndyCar Monterey Grand Prix|Grand Prix of Monterey]] returned as the season finale, as it had been in 2019, 2022, and 2023. The race moved from late July to September 6.
+* [[The Thermal Club IndyCar Grand Prix]] did not return in 2026 after two years on the calendar. {{Cite web |last=Pockrass |first=Bob |date=July 23, 2025 |title=Questions Linger For 2026 IndyCar Schedule: Which Tracks Should Be Added? |url=https://www.foxsports.com/stories/motor/questions-linger-2026-indycar-schedule-which-tracks-should-added |access-date=August 21, 2025 |website=Fox Sports |language=en-US |archive-date=August 28, 2025 |archive-url=https://web.archive.org/web/20250828151328/https://www.foxsports.com/stories/motor/questions-linger-2026-indycar-schedule-which-tracks-should-added |url-status=live }}
+* [[Iowa Speedway]] was also dropped from the calendar after four years on the IndyCar schedule.
+* The [[Freedom 250 Grand Prix|Freedom 250]], a race held on the [[Washington Street Circuit|streets of Washington, D.C.]], debuted in August following its addition to the IndyCar schedule in January. {{cite news |last1=Kapur |first1=Sahil |title=Trump orders up IndyCar race on the streets of Washington for 'America250 Grand Prix' |url=https://www.nbcnews.com/sports/auto-racing/trump-orders-indycar-race-streets-washington-america250-grand-prix-rcna256705 |access-date=January 30, 2026 |work=NBC News |date=January 30, 2026 |language=en}}
+===Sponsorship changes===
+* On November 20, Java House was announced as the title sponsor for the inaugural [[Grand Prix of Arlington]]. {{Cite web |date=November 20, 2025 |title=Java House Becomes Title Sponsor of Grand Prix of Arlington |url=http://www.indycar.com/news/2025/11/11-20-gpa-javahouse |access-date=November 20, 2025 |website=IndyCar |language=en |archive-date=November 20, 2025 |archive-url=https://web.archive.org/web/20251120153330/https://www.indycar.com/news/2025/11/11-20-gpa-javahouse |url-status=live }}
+* On December 3, Good Ranchers was unveiled as the title sponsor for IndyCar's return to [[Phoenix Raceway]]. {{Cite web |title=Phoenix Raceway Announces Good Ranchers 250 |url=http://www.indycar.com/news/2025/12/12-03-phoenix-goodranchers |access-date=December 3, 2025 |website=IndyCar |language=en |archive-date=December 3, 2025 |archive-url=https://web.archive.org/web/20251203172918/https://www.indycar.com/news/2025/12/12-03-phoenix-goodranchers |url-status=live }}
+* OnlyBulls was announced as the title sponsor for the [[Grand Prix of Portland]]. {{Cite web|url=https://www.indycar.com/news/2026/05/05-06-onlybulls-portland|title=OnlyBulls To Serve as Title Sponsor of Portland Race|website=Indycar.com|date=May 6, 2026|accessdate=August 29, 2026}}
+* [[Mission Foods]] was announced the sponsor for the [[IndyCar Monterey Grand Prix]]. {{Cite web|url=https://www.indycar.com/news/2026/08/08-28-mission-laguna-seca|title=Mission Foods To Sponsor Season Finale at Laguna Seca|website=Indycar.com|date=August 28, 2026|accessdate=August 29, 2026}}
+== Results ==
+{| class="wikitable" style="font-size: 85%; white-space: nowrap;"
+! rowspan="2" |Rd.
+! rowspan="2" |Race
+! rowspan="2" |Pole position
+! rowspan="2" |Fastest lap
+! rowspan="2" |Most laps led
+! colspan="3" |Race winner
+! rowspan="2" |Report
+|-
+!Driver
+!Team
+!Engine
+|-
+!1
+| [[Grand Prix of St. Petersburg|St. Petersburg]]
+|{{flagicon|NZL}} [[Scott McLaughlin]]
+|{{flagicon|USA}} [[Kyle Kirkwood]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|[[Chip Ganassi Racing]]
+|[[Honda Indy V6|Honda]]
+|[[2026 Firestone Grand Prix of St. Petersburg|Report]]
+|-
+!2
+|[[IndyCar Series at Phoenix Raceway|Phoenix]]
+|{{flagicon|USA}} [[David Malukas]]
+|{{flagicon|AUS}} [[Will Power]]
+|{{flagicon|USA}} [[David Malukas]]
+|{{flagicon|USA}} [[Josef Newgarden]]
+|[[Team Penske]]
+|[[Chevrolet Indy V6|Chevrolet]]
+|[[2026 Good Ranchers 250|Report]]
+|-
+!3
+|[[Grand Prix of Arlington|Arlington]]
+|{{flagicon|SWE}} [[Marcus Ericsson]]
+|{{flagicon|NZL}} [[Scott Dixon]]
+|{{flagicon|USA}} [[Kyle Kirkwood]]{{refn|group=N|[[Kyle Kirkwood]], [[Álex Palou]] and [[Will Power]] tied for most laps led at Arlington. Kirkwood received the bonus points for most laps led by virtue of being the highest-placed finisher, based on IndyCar rule 7.3.6.2.}}
+|{{flagicon|USA}} [[Kyle Kirkwood]]
+|[[Andretti Global]]
+|[[Honda Indy V6|Honda]]
+|[[2026 Java House Grand Prix of Arlington|Report]]
+|-
+!4
+|[[Indy Grand Prix of Alabama|Barber]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|DEN}} [[Christian Lundgaard]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|[[Chip Ganassi Racing]]
+|[[Honda Indy V6|Honda]]
+|[[2026 Children's of Alabama Indy Grand Prix|Report]]
+|-
+!5
+|[[Grand Prix of Long Beach|Long Beach]]
+|{{flagicon|SWE}} [[Felix Rosenqvist]]
+|{{flagicon|USA}} [[Josef Newgarden]]
+|{{flagicon|SWE}} [[Felix Rosenqvist]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|[[Chip Ganassi Racing]]
+|[[Honda Indy V6|Honda]]
+|[[2026 Acura Grand Prix of Long Beach|Report]]
+|-
+!6
+|[[Grand Prix of Indianapolis|IMS GP]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|USA}} [[David Malukas]]
+|{{flagicon|DEN}} [[Christian Lundgaard]]
+|[[Arrow McLaren]]
+|[[Chevrolet Indy V6|Chevrolet]]
+|[[2026 Sonsio Grand Prix|Report]]
+|-
+!7
+|[[Indianapolis 500]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|USA}} [[Conor Daly]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|SWE}} [[Felix Rosenqvist]]
+|[[Meyer Shank Racing]]
+|[[Honda Indy V6|Honda]]
+|[[2026 Indianapolis 500|Report]]
+|-
+!8
+|[[Detroit Grand Prix (IndyCar)|Detroit]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|[[Chip Ganassi Racing]]
+|[[Honda Indy V6|Honda]]
+|[[2026 Chevrolet Detroit Grand Prix|Report]]
+|-
+!9
+|[[Bommarito Automotive Group 500|Gateway]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|USA}} [[Josef Newgarden]]
+|{{flagicon|SWE}} [[Marcus Ericsson]]
+|{{flagicon|USA}} [[Josef Newgarden]]
+|[[Team Penske]]
+|[[Chevrolet Indy V6|Chevrolet]]
+|[[2026 Bommarito Automotive Group 500|Report]]
+|-
+!10
+|[[Grand Prix of Road America|Road America]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|DEN}} [[Christian Lundgaard]]
+|{{flagicon|SWE}} [[Felix Rosenqvist]]
+|{{flagicon|DEN}} [[Christian Lundgaard]]
+|[[Arrow McLaren]]
+|[[Chevrolet Indy V6|Chevrolet]]
+|[[2026 XPEL Grand Prix at Road America|Report]]
+|-
+!11
+|[[Indy 200 at Mid-Ohio|Mid-Ohio]]
+|{{flagicon|DEN}} [[Christian Lundgaard]]
+|{{flagicon|USA}} [[Josef Newgarden]]
+|{{flagicon|MEX}} [[Pato O'Ward]]
+|{{flagicon|MEX}} [[Pato O'Ward]]
+|[[Arrow McLaren]]
+|[[Chevrolet Indy V6|Chevrolet]]
+|[[2026 Honda Indy 200|Report]]
+|-
+!12
+|[[IndyCar Series at Nashville Superspeedway|Nashville]]
+|{{flagicon|USA}} [[Kyle Kirkwood]]
+|{{flagicon|NZL}} [[Scott McLaughlin]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|[[Chip Ganassi Racing]]
+|[[Honda Indy V6|Honda]]
+|[[2026 Borchetta Bourbon Music City Grand Prix|Report]]
+|-
+!13
+|[[Grand Prix of Portland|Portland]]
+|{{flagicon|SWE}} [[Felix Rosenqvist]]
+|{{flagicon|SWE}} [[Marcus Ericsson]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|[[Chip Ganassi Racing]]
+|[[Honda Indy V6|Honda]]
+|[[2026 OnlyBulls Grand Prix of Portland|Report]]
+|-
+!14
+|[[IndyCar Series at Markham Centre|Markham]]
+|{{flagicon|GBR}} [[Louis Foster]]
+|{{flagicon|SWE}} [[Marcus Ericsson]]
+|{{flagicon|GBR}} [[Louis Foster]]
+|{{flagicon|SWE}} [[Marcus Ericsson]]
+|[[Andretti Global]]
+|[[Honda Indy V6|Honda]]
+|[[2026 Ontario Honda Dealers Indy Markham|Report]]
+|-
+!15
+|[[Freedom 250 Grand Prix|Washington, D.C.]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|AUS}} [[Will Power]]
+|{{flagicon|USA}} [[Kyle Kirkwood]]
+|{{flagicon|USA}} [[Kyle Kirkwood]]
+|[[Andretti Global]]
+|[[Honda Indy V6|Honda]]
+|[[Freedom 250 Grand Prix|Report]]
+|-
+!16
+|[[IndyCar Series at the Milwaukee Mile|Milwaukee 1]]
+|{{flagicon|NZL}} [[Scott McLaughlin]]{{refn|group=N|[[Scott McLaughlin]], [[Álex Palou]] and [[David Malukas]], the fastest three qualifiers, were assessed 9-place grid penalties for unapproved engine changes. [[Pato O'Ward]], who qualified 4th, was the highest-placed driver not to have a penalty, and thus started the race from pole position. McLaughlin earned the pole award and the pole-winner's championship point.}}
+|{{flagicon|MEX}} [[Pato O'Ward]]
+|{{flagicon|MEX}} [[Pato O'Ward]]
+|{{flagicon|MEX}} [[Pato O'Ward]]
+|[[Arrow McLaren]]
+|[[Chevrolet Indy V6|Chevrolet]]
+|rowspan="2"|[[2026 Snap-on IndyCar Weekend|Report]]
+|-
+!17
+|[[IndyCar Series at the Milwaukee Mile|Milwaukee 2]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|ESP}} [[Álex Palou]]
+|{{flagicon|MEX}} [[Pato O'Ward]]
+|[[Arrow McLaren]]
+|[[Chevrolet Indy V6|Chevrolet]]
+|-
+!18
+|[[IndyCar Monterey Grand Prix|Monterey]]
+|{{flagicon|NZL}} [[Scott McLaughlin]]
+|{{flagicon|NED}} [[Rinus VeeKay]]
+|{{flagicon|NZL}} [[Scott McLaughlin]]
+|{{flagicon|NZL}} [[Scott McLaughlin]]
+|[[Team Penske]]
+|[[Chevrolet Indy V6|Chevrolet]]
+|[[2026 Mission Grand Prix of Monterey|Report]]
+|}
+== Season report ==
+=== Opening rounds ===
+The 2026 IndyCar season started like the year before, with a pole position for [[Team Penske]]'s [[Scott McLaughlin]] at the [[Grand Prix of St. Petersburg|Firestone Grand Prix of St. Petersburg]]. {{Cite web |last=Kelly |first=Paul |date=2026-02-28 |title=Scott McLaughlin Starts Penske Rebound With St. Pete Pole |url=http://www.indycar.com/news/2026/02/02-28-nics-quals-stpete |access-date=2026-03-09 |website=[[IndyCar Series]] |language=en |archive-date=March 1, 2026 |archive-url=https://web.archive.org/web/20260301164026/https://www.indycar.com/news/2026/02/02-28-nics-quals-stpete |url-status=live }} He led [[Andretti Global|Andretti]]'s [[Marcus Ericsson]] throughout the first stint of the race, handling an early restart after a three-car collision caused by [[Juncos Hollinger Racing]]'s [[Sting Ray Robb]] on the opening lap. McLaughlin pitted on lap 35, with Ericsson following a lap later. [[Chip Ganassi Racing]]'s defending champion [[Álex Palou]] crucially elected to stay out two laps longer to attempt an overcut. That strategy worked and it led to Palou taking the net race lead after his stop on lap 38, before cycling back to the front on lap 42. The only threat to his victory from that point on came through the final stint, where Palou ran hard tires while the others behind ran the quicker soft tires, but Palou consistently pulled away throughout the final part to win the race by almost 13 seconds. Andretti's [[Kyle Kirkwood]] looked set to take second before both McLaughlin and [[Arrow McLaren|McLaren]]'s [[Christian Lundgaard]] overtook him on lap 94. {{Cite web |last=Kelly |first=Paul |date=2026-03-01 |title=Champ Alex Palou Opens with Dominant March to St. Pete Win |url=http://www.indycar.com/news/2026/03/03-01-nics-race-stpete |access-date=2026-03-09 |website=[[IndyCar Series]] |language=en}} {{Cite web |last=Barnes |first=Joey |date=2026-03-02 |title=IndyCar St. Petersburg: Palou dominates opener from McLaughlin |url=https://www.motorsport.com/indycar/news/alex-palou-wins-season-opener-with-largest-ever-margin-of-victory-in-indycar-grand-prix-of-st-peter/10801443/ |access-date=2026-03-09 |website=[[Autosport]] |language=en |archive-date=March 6, 2026 |archive-url=https://web.archive.org/web/20260306202533/https://www.motorsport.com/indycar/news/alex-palou-wins-season-opener-with-largest-ever-margin-of-victory-in-indycar-grand-prix-of-st-peter/10801443/ |url-status=live }}
+The [[2026 Good Ranchers 250|Good Ranchers 250]] marked IndyCar's return to [[2026 Good Ranchers 250|Phoenix]] for the first time since [[2018 IndyCar Series|2018]]. [[Team Penske]]'s [[David Malukas]] earned his first career pole position after beating teammate [[Josef Newgarden]] in qualifying. {{Cite web |last=Dejewski |first=Kevin |date=2026-03-06 |title=IndyCar Phoenix – Qualifying Results |url=https://www.motorsportweek.com/2026/03/06/indycar-phoenix-qualifying-results/ |access-date=2026-03-16 |website=Motorsport Week |language=en-GB}} He controlled the opening part of the race, which saw an early caution on lap ten. On the restart, JHR's [[Rinus VeeKay]] made contact with Palou while attempting to pass him, sending the points leader into the wall and out of the race. Malukas held first place until the first pit cycle, where McLaren's [[Pato O'Ward]] took over in front. [[Ed Carpenter Racing|ECR]]'s [[Christian Rasmussen (racing driver)|Christian Rasmussen]] rose up the order during the next stint, and a timely second caution allowed him to dispatch then-leader Kirkwood with fresher tires. Andretti's [[Will Power]] attacked Rasmussen for the lead and the pair made contact, causing a puncture for Power and a third caution. Newgarden was among the drivers electing to pit and quickly moved from tenth to the lead. He took the win and the points lead ahead of Kirkwood and Malukas, while Rasmussen dropped to fourteenth with a damaged car. {{cite web |url=https://www.indycar.com/news/2026/03/03-07-nics-race-phoenix |title=Josef Newgarden Hunts Down Victory, Takes Series Lead at Phoenix |date=March 7, 2026 |access-date=March 12, 2026 |website=[[IndyCar]] |archive-date=March 26, 2026 |archive-url=https://web.archive.org/web/20260326201318/https://www.indycar.com/news/2026/03/03-07-nics-race-phoenix |url-status=live }} {{Cite web |last=Barnes |first=Joey |date=2026-03-08 |title=Josef Newgarden earns thrilling IndyCar win at Phoenix |url=https://www.motorsport.com/indycar/news/josef-newgarden-earns-thrilling-indycar-win-at-phoenix/10803205/ |access-date=2026-03-16 |website=[[motorsport.com]] |language=en}}
+The [[Grand Prix of Arlington|Java House Grand Prix of Arlington]] brought a new track as well as a new top-six single-lap shootout qualifying format, in which Ericsson took his first career pole position. {{Cite web |last=Kelly |first=Paul |date=2026-03-14 |title=Marcus Ericsson Romps To First Career Pole at Arlington |url=http://www.indycar.com/news/2026/03/03-14-nics-arlington-qualifying |access-date=2026-03-27 |website=[[IndyCar Series]] |language=en |archive-date=March 19, 2026 |archive-url=https://web.archive.org/web/20260319075710/https://www.indycar.com/news/2026/03/03-14-nics-arlington-qualifying |url-status=live }} Palou qualified second, with the pair leading the field until they both pitted on lap 16. An error by Ericsson's pit crew saw him fall behind Palou, with O'Ward and Kirkwood slotting in behind. Lap 27 saw both Andretti cars make their second stops, with Palou and O'Ward following a lap later before Kirkwood got past Ericsson for a net second place. The pit stops promoted Power to the front, albeit on a less favorable two-stop strategy that saw him extend his second soft-tire stint until lap 45. By that point, Palou had nullified the gap to him and took over at the front. The top two took their final pit stop on lap 49, and Kirkwood, the fastest man on track at that point, reeled in Palou to claim first place with 16 laps to go. The race ended under caution after a multi-car collision, handing Kirkwood the win and with it the championship lead as Power rounded out the podium. {{Cite web |last=Barnes |first=Joey |date=2026-03-16 |title=Kyle Kirkwood beats Palou to win Arlington GP and take IndyCar points lead |url=https://www.motorsport.com/indycar/news/kyle-kirkwood-beats-palou-to-win-arlington-gp-and-take-indycar-points-lead/10805666/ |access-date=2026-03-27 |website=[[Motorsport.com|Motorsport]] |language=en}} {{Cite web |date=2026-03-15 |title=IndyCar at Arlington Results: Kyle Kirkwood Outlasts Alex Palou |url=https://www.foxsports.com/stories/motor/indycar-arlington-results-kirkwood-palou-cowboys |access-date=2026-03-27 |website=[[Fox Sports]] |language=en-US}}
+Round four, the [[2026 Children's of Alabama Indy Grand Prix|Children's of Alabama Indy Grand Prix]], saw Palou take pole position in qualifying ahead of Malukas and [[Rahal Letterman Lanigan Racing|RLL]]'s [[Graham Rahal]]. {{Cite web |last=Horner |first=Scott |last2=Brown |first2=Zion |title=IndyCar starting grid at Alabama: pole position, qualifying results, start time |url=https://www.indystar.com/story/sports/motor/2026/03/28/indycar-2026-starting-lineup-qualifying-results-start-time-leaderboard-barber-birmingham-alabama/89329622007/ |access-date=April 9, 2026 |website=[[The Indianapolis Star]] |language=en-US|date=March 28, 2026}} The top three remained static after the start until Rahal took second place on lap 17. Malukas pitted two laps later, with Rahal following suit and Palou holding out on hard tires on until lap 27. Lundgaard, who also started on hard tires, rose from tenth to third in his first stint. Palou took his second pitstop on lap 45, seven seconds ahead of Rahal, who stopped one lap later. Lundgaard pitted on lap 50, overcutting Rahal to move into second place. Lundgaard cut Palou's advantage to 3.4 seconds during the penultimate stint, until the Spaniard stopped for the final time on lap 64. Lundgaard stayed out longer again and looked set to challenge Palou through an overcut, but a slow 17-second stop saw him rejoin behind Rahal. Palou, now leading comfortably, took victory to cut the championship gap to two points. Lundgaard was able to repass Rahal, who held on to third to take his first podium since August 2023. {{Cite web |last=Barnes |first=Joey |date=2026-03-29 |title=Alex Palou dominates again with 13-second IndyCar win, closes on points lead |url=https://www.motorsport.com/indycar/news/alex-palou-earns-dominant-indycar-win-at-barber/10809616/ |access-date=2026-04-09 |website=[[motorsport.com]]}} {{Cite web |last=Kelly |first=Paul |date=2026-03-29 |title=Alex Palou Dominates To Win in Another Barber Beatdown |url=http://www.indycar.com/news/2026/03/03-29-nics-barber-race |access-date=2026-04-09 |website=[[IndyCar Series]] |language=en |archive-date=April 16, 2026 |archive-url=https://web.archive.org/web/20260416153318/https://www.indycar.com/news/2026/03/03-29-nics-barber-race |url-status=live }}
+[[Meyer Shank Racing|MSR]]'s [[Felix Rosenqvist]] secured pole position in qualifying for the [[2026 Acura Grand Prix of Long Beach|Acura Grand Prix of Long Beach]], besting O'Ward by just 0.04 seconds. {{Cite web |last=Barnes |first=Joey |date=2026-04-19 |title=2026 IndyCar Long Beach starting lineup: Rosenqvist beats O'Ward to pole |url=https://www.motorsport.com/indycar/news/felix-rosenqvist-beats-pato-oward-to-long-beach-indycar-pole/10813748/ |access-date=2026-04-24 |website=[[motorsport.com]] |language=en}} Palou started third and immediately passed O'Ward for second place on lap 2. Rosenqvist controlled the pace for the first 31 laps until the leaders made their first tandem pit stops. Rosenqvist maintained his lead over Palou as they both transitioned to the alternate tires. He managed to build a three-second lead during this second stint, before a piece of debris triggered the event's only caution period on lap 57. The field pitted on lap 59, leading to a direct duel between the top two drivers' pit crews. Palou's stop took 7.3 seconds, while Rosenqvist was stationary for 8.4 seconds, leading to him losing the lead as CGR's [[Scott Dixon]] took third place. After the lap 61 restart, Palou quickly began gapping the field, while Dixon had to work hard defending from Kirkwood. Palou claimed his maiden victory at Long Beach to also move back into the championship lead, 17 points ahead of fourth-place finisher Kirkwood. {{Cite web |last=DeGroot |first=Nick |date=2026-04-20 |title=Official race results: IndyCar 2026 Grand Prix of Long Beach |url=https://www.motorsport.com/indycar/news/official-race-results-indycar-2026-grand-prix-of-long-beach/10813944/ |access-date=2026-04-24 |website=[[motorsport.com]] |language=en}} {{Cite web |last=Kelly |first=Paul |date=2026-04-19 |title=Quick Pit Work, Pace Help Alex Palou Run Away to Win at Long Beach |url=http://www.indycar.com/news/2026/04/04-19-nics-longbeach-race |access-date=2026-04-24 |website=[[IndyCar Series]] |language=en |archive-date=April 20, 2026 |archive-url=https://web.archive.org/web/20260420202718/https://www.indycar.com/news/2026/04/04-19-nics-longbeach-race |url-status=live }}
+Palou earned his third consecutive pole position for the [[2026 Sonsio Grand Prix|Sonsio Grand Prix]] after leading every session of the event. {{Cite web |title=Alex Palou Cruises to Third Straight Sonsio Grand Prix Pole |url=https://www.foxsports.com/articles/motor/alex-palou-cruises-to-third-straight-sonsio-grand-prix-pole |date=May 9, 2026 |access-date=May 22, 2026 |website=Fox Sports |language=en-US |archive-date=May 22, 2026 |archive-url=https://web.archive.org/web/20260522131513/https://www.foxsports.com/articles/motor/alex-palou-cruises-to-third-straight-sonsio-grand-prix-pole |url-status=live }} The race began with a multi-car collision in turn 1 that collected Dixon, O'Ward, Rosenqvist and [[A. J. Foyt Racing|A. J. Foyt]]'s [[Caio Collet]]. Palou and Kirkwood formed the top two during the early stages, until lap 21, when ECR's [[Alexander Rossi]] stopped on the front straight with a mechanical failure. Only a local yellow was initially thrown to allow most of the field to pit, a decision that led to criticism and a change in procedures post-race. {{Cite web |date=2026-05-12 |title=Delayed full-course caution flag prompts IndyCar rule change |url=https://www.espn.com/racing/story/_/id/48750842/delayed-full-course-caution-flag-prompts-indycar-rule-change |access-date=2026-05-22 |website=[[ESPN]]}} Palou and Kirkwood stayed out and therefore dropped back when they pitted under the belated full-course yellow. Malukas inherited the lead and held it until lap 68, when Lundgaard made a decisive pass through turns 5 and 6 to claim first place. He maintained the lead to claim his second career victory and end a 47-race winless drought as Malukas took a career-best second place and Rahal completed the podium in third. Palou recovered to fifth to extend his championship lead over Kirkwood to 27 points. {{Cite web |last=Horner |first=Scott |last2=Brown |first2=Zion |title=Indianapolis grand prix complete results: Christian Lundgaard surprises himself with win |url=https://www.indystar.com/story/sports/motor/2026/05/09/indycar-race-live-leaderboard-today-at-indianapolis-motor-speedway-sonsio-grand-prix-fox-alex-palou/90009884007/ |date=May 9, 2026 |access-date=May 22, 2026 |website=[[The Indianapolis Star]] |language=en-US |archive-date=May 11, 2026 |archive-url=https://web.archive.org/web/20260511071249/https://www.indystar.com/story/sports/motor/2026/05/09/indycar-race-live-leaderboard-today-at-indianapolis-motor-speedway-sonsio-grand-prix-fox-alex-palou/90009884007/ |url-status=live }}
+=== Mid-season rounds ===
+Pole position for the [[2026 Indianapolis 500|110th Running of the Indianapolis 500]] went to Palou once again, ahead of Rossi and Malukas. {{Cite web |last=Nichol |first=Jake |date=2026-05-24 |title=Adjusted full starting grid for 2026 Indy 500 after disqualifications |url=https://racingnews365.com/adjusted-full-starting-grid-for-2026-indy-500-after-disqualifications |access-date=2026-05-29 |website=RacingNews365 |language=en}} Palou and Dixon controlled the early stages, trading the lead to manage fuel consumption. Rain arrived at the speedway around the halfway point, forcing a red flag on lap 105. Upon the resumption, a distinct strategy split developed; Malukas and Palou opted for a late pit stop to run at full power, while Rosenqvist and O'Ward attempted to reach the finish by conserving fuel. The tactical battle was neutralized on lap 192 when a crash for Collet caused a red flag for cleanup. Rosenqvist led the subsequent restart, but was overtaken by teammate [[Marcus Armstrong]] before a final caution on lap 197 set up a one-lap shootout. Malukas took the lead into turn 1, with Rosenqvist and Armstrong side by side behind him until turn 4, where Rosenqvist slingshotted past Malukas to win by 0.0233 seconds, the closest margin in race history. Palou, seventh, grew his lead to 32 points despite being docked five points for a technical infringement. {{Cite web |last=Marot |first=Michael |date=2026-05-24 |title=Late pass sends Felix Rosenqvist past David Malukas for the closest Indianapolis 500 win in history |url=https://apnews.com/article/indianapolis-500-indycar-palou-f462b60e9f742f38ed61ea83e1040a3b |access-date=2026-05-29 |website=[[Associated Press]] |language=en}} {{Cite web |last=Kelly |first=Paul |date=2026-05-24 |title=Felix Rosenqvist Wins Epic in Closest-Ever Indianapolis 500 Finish |url=http://www.indycar.com/news/2026/05/05-24-500-race-lead |access-date=2026-05-29 |website=IndyCar.com |language=en}}
+Qualifying for the [[Detroit Grand Prix (IndyCar)|Chevrolet Detroit Grand Prix]] saw Palou continue his one-lap dominance as he claimed another pole position. {{Cite web |last=Kelly |first=Paul |date=2026-05-30 |title=Alex Palou Extends Pole Streak to Three With Top Spot at Detroit |url=http://www.indycar.com/news/2026/05/05-30-nics-detroit-quals |access-date=2026-06-06 |website=[[IndyCar Series]] |language=en}} At the green flag, Palou maintained his lead while McLaughlin overtook Power for second place. He returned to second following an early caution, before taking the lead on lap 17. He lost out to McLaughlin and Lundgaard when his tires faded on lap 35, before the frontrunners pitted and Palou returned to the front through an undercut. Palou's team then opted for a green-flag pit stop on lap 63, a move which would prove crucial when a caution was triggered three laps later, forcing Kirkwood, who had inherited the lead, to pit under yellow. That promoted Palou back into the lead and Rossi to second, before the latter had to take a drive-through penalty. Three more cautions punctured the final part of the race. Kirkwood pressured Palou at each restart, but was unable to find a way past. Palou maintained control to secure his fourth victory of the season, growing his championship lead over Kirkwood to 62 points. {{Cite web |last=Brown |first=Zion |last2=Horner |first2=Scott |date=2026-05-31 |title=Chevrolet Grand Prix of Detroit leaderboard, results: Alex Palou gets fourth win of season |url=https://www.indystar.com/story/sports/motor/2026/05/31/indycar-race-live-leaderboard-today-detroit-grand-prix-updates-crash-chevrolet-fox/90341596007/ |access-date=2026-06-06 |website=[[The Indianapolis Star]] |language=en-US}} {{Cite web |last=Clarke |first=Andrew |date=2026-06-01 |title=Palou survives Detroit chaos to extend championship lead |url=https://autoaction.com.au/2026/06/01/palou-wins-indycar-detroit-grand-prix-2026 |access-date=2026-06-06 |website=AutoAction}}
+The [[Bommarito Automotive Group 500]] brought another pole position for Palou, who set a speed over a mile an hour faster than the rest of the field. {{Cite web |last=Fair |first=Asher |date=2026-06-06 |title=Gateway qualifying updates, full St. Louis IndyCar starting lineup |url=https://beyondtheflag.com/gateway-qualifying-updates-full-st-louis-indycar-starting-lineup-01kr2tk1fbsm |access-date=2026-06-17 |website=Beyond the Flag |language=en-US}} He led the opening 30 laps, before Ericsson, who had started 12th, surged through the field to take the lead on lap 47. Two red-flag periods totaling 52 minutes due to rain punctured the race on laps 137 and 200. Following the second red flag, the race's primary contenders were split by strategy as Dixon and Palou attempted to save fuel to make one less stop. That gamble backfired; Dixon was forced to pit for emergency service while the pits were closed and Palou ran out of fuel right as he entered the pit lane and dropped down the order. On the final restart, Newgarden and Rasmussen engaged in a multi-lap duel, trading the lead four times before Newgarden secured the top spot on lap 221. Ericsson then moved past Rasmussen, but was not able to challenge for the lead in the final laps. With Palou finishing 17th, Kirkwood in sixth was able to trim Palou's championship lead to 49 points. {{Cite web |last=Kelly |first=Paul |date=2026-06-08 |title=Josef Newgarden Continues Short Oval Reign With WWTR Win |url=http://www.indycar.com/news/2026/06/06-07-nics-wwtr-race |access-date=2026-06-17 |website=[[IndyCar Series]] |language=en}} {{Cite web |last=Barnes |first=Joey |date=2026-06-08 |title=Josef Newgarden denies Marcus Ericsson and wins at WWT Raceway |url=https://www.motorsport.com/indycar/news/josef-newgarden-denies-marcus-ericsson-and-wins-at-wwt-raceway/10828234/ |access-date=2026-06-17 |website=[[motorsport.com]] |language=en}}
+Palou continued his pole position streak at the [[Grand Prix of Road America|XPEL Grand Prix at Road America]], becoming only the fifth driver in series history to take five consecutive P1 starts. {{Cite web |last=Kelly |first=Paul |date=2026-06-20 |title=2026 Pole Streak Reaches Five for Alex Palou at Road America |url=http://www.indycar.com/news/2026/06/06-20-nics-quals-ra |access-date=2026-07-03 |website=[[IndyCar Series]] |language=en}} Malukas and Armstrong lined up behind him, before the latter immediately took second place at the start of the race. Palou held his lead and controlled the opening part of the race, briefly ceding the lead to Rosenqvist at the halfway point. A pitlane speeding penalty for Palou on lap 29 and a caution one lap later saw Armstrong emerge as the new leader ahead of Malukas and Rossi. Behind them, Lundgaard, who had dropped to last after lap-one contact with Dixon, climbed up the order on fresh tyres. He passed Malukas for second on lap 49 and closed on Armstrong, who was denied a maiden victory when his engine expired while leading on lap 52. That handed the lead to Lundgaard, who defended a late restart before completing his last-to-first run to take victory ahead of Malukas and Power. Palou recovered to fifth, now 60 points ahead of new second-placed driver Malukas. {{Cite web |last=Pruett |first=Marshall |title=Lundgaard shakes off adversity to win at Road America |date=2026-06-21 |url=https://racer.com/2026/06/21/lundgaard-shakes-off-adversity-to-win-at-road-america |access-date=2026-07-03 |website=Racer}} {{Cite web |last=Vankin |first=Jonathan |date=2026-06-21 |title=XPEL Grand Prix at Road America: Christian Lundgaard Wins 2nd 2026 Road Course |url=https://heavy.com/sports/indycar/xpel-grand-prix-palou-road-america/ |access-date=2026-07-03 |website=HEAVY |language=en-US}}
+Lundgaard was the driver to end Palou's qualifying streak by taking pole position for the [[Indy 200 at Mid-Ohio|Honda Indy 200 at Mid-Ohio]] ahead of teammate O'Ward. {{Cite web |last=Cavin |first=Curt |date=2026-07-04 |title=Christian Lundgaard's Statement Leads Arrow McLaren Sweep at Mid-Ohio |url=http://www.indycar.com/news/2026/07/07-04-nics-quals |access-date=2026-07-12 |website=[[IndyCar Series]] |language=en}} At the start of the 90-lap race, Lundgaard maintained his lead, while the field remained orderly through the opening stages. The McLaren pair remained at the front throughout the race, except for when they pitted, with Lundgaard keeping ahead of O'Ward until lap 42. There, Lundgaard drifted wide exiting turn 2, allowing O'Ward to pull alongside. Despite the two cars touching twice at the exit of turn 4, O'Ward utilized the preferred line into turn 5 to seize the lead. The race proceeded entirely caution-free, with O'Ward extending his stint before the final pit cycle to maintain his advantage. The Mexican was therefore able to claim his first win of the season and the tenth of his career, finishing 0.987 seconds ahead of Lundgaard to secure Arrow McLaren's first-ever 1-2 finish. Kirkwood finished third, allowing him to retake second in the standings, 56 points behind Palou, who finished the race in fifth. {{Cite web |last=Cavin |first=Curt |date=2026-07-05 |title=Pato O'Ward Outduels Christian Lundgaard for Arrow McLaren's First 1-2 Finish |url=http://www.indycar.com/news/2026/07/07-05-mo-race |access-date=2026-07-12 |website=[[IndyCar Series]] |language=en}} {{Cite web |last=Barnes |first=Joey |date=2026-07-06 |title=Pato O’Ward turns Arrow McLaren duel into IndyCar Mid-Ohio win |url=https://www.motorsport.com/indycar/news/pato-oward-turns-arrow-mclaren-duel-into-indycar-mid-ohio-win/10836743/ |access-date=2026-07-12 |website=[[motorsport.com]] |language=en}}
+Up next was the season's fourth oval race, the [[IndyCar Series at Nashville Superspeedway|Borchetta Bourbon Music City Grand Prix]], where Kirkwood claimed pole position ahead of Newgarden. {{Cite web |last=Kelly |first=Paul |date=2026-07-18 |title=Latest NTT INDYCAR SERIES News and Results {{!}} Official Site of INDYCAR |url=http://www.indycar.com/news |access-date=2026-07-26 |website=[[IndyCar Series]] |language=en}} The race, shortened for heat forecasts and then postponed to Monday due to rain, saw Kirkwood initially hold his lead, before the lead group pitted under caution on lap 19. McLaughlin overtook the leader on pit road and cycled back to the front on lap 61. A second caution fell on lap 122 for a collision between Dixon and Rossi; Palou pitted just before the yellow and inherited the lead once the front-runners made their delayed stops, moving ahead for good by lap 131. On their final stops, Newgarden, Rosenqvist and Malukas took on the soft alternate tire, while Palou stayed on the harder primary compound. A caution with 31 laps to go brought Newgarden and Malukas onto Palou's back, but he was able to keep both behind despite his harder tires. Palou's fifth win of the season saw him extend his championship lead to 83 points, with Malukas taking third to reclaim second in the standings. {{Cite web |last=Barnes |first=Joey |date=2026-07-21 |title=Alex Palou beats three Penske drivers to win IndyCar race at Nashville |url=https://www.motorsport.com/indycar/news/alex-palou-beats-three-penske-drivers-to-win-indycar-race-at-nashville/10840604/ |access-date=2026-07-26 |website=[[motorsport.com]] |language=en}} {{Cite web |last=Oreovicz |first=John |date=2026-07-21 |title=Palou still unstoppable as Nashville win edges him closer to fifth IndyCar title |url=https://www.autosport.com/indycar/news/palou-on-course-for-indycar-title-but-will-anybody-stage-late-challenge/10840757/ |access-date=2026-07-26 |website=[[autosport.com]] |language=en}}
+=== Closing rounds ===
+The [[Grand Prix of Portland|OnlyBulls Grand Prix of Portland]] kicked off a five-race run over four consecutive weekends with Rosenqvist securing pole position ahead of Palou. {{Cite web |last=Kelly |first=Paul |date=2026-08-09 |title=Steady Progress Helps Grateful Felix Rosenqvist Win Portland Pole |url=http://www.indycar.com/news/2026/08/08-08-nics-portland-quals |access-date=2026-08-14 |website=[[IndyCar Series]] |language=en}} At the start of the race, the field successfully navigated the opening chicane without major incident, and Rosenqvist maintained the lead for the first 30 laps. During the first round of pit stops, Palou stayed out longer than Rosenqvist and utilized an overcut strategy to overtake the Swede. Newgarden, who had pitted during an early caution, assumed the lead until he stopped on lap 37. That handed Palou the lead, and he used clean air to build a six-second lead. The next pit cycle began on lap 56, with Palou taking on hard tires and Rosenqvist electing to use soft tires. That tire advantage saw Rosenqvist close up to the leader, but he was unable to make a move before both made their final stops. During the following final stint, Rosenqvist came under threat from Power, who had fresh soft tires, but the top three remained static as Palou's sixth win of the year saw him amass a 110-point lead. {{Cite web |last= |first= |date=2026-08-09 |title=Alex Palou wins at Portland to inch closer to fifth IndyCar title |url=https://motorsport.tech/motorsport/indycar/alex-palou-wins-at-portland-to-inch-closer-to-fifth-indycar-title |access-date=2026-08-14 |website=Motorsport Technology |language=en-US}} {{Cite web |last=Barnes |first=Joey |date=2026-08-10 |title=Alex Palou dominates in Portland to extend IndyCar championship lead |url=https://www.motorsport.com/indycar/news/alex-palou-dominates-portland-to-extend-indycar-championship-lead/10845365/ |access-date=2026-08-14 |website=[[motorsport.com]] |language=en}}
+Unfinished track construction saw track action for the newly established [[IndyCar Series at Markham Centre|Ontario Honda Dealers Indy at Markham]] delayed to Saturday. RLL's [[Louis Foster]] took the track's inaugural pole position in qualifying {{Cite web |last=Cavin |first=Curt |date=2026-08-08 |title=Louis Foster's Track Record Earns Markham's First Pole |url=http://www.indycar.com/news/2026/08/08-15-markham-quals |access-date=2026-08-21 |website=[[IndyCar Series]] |language=en}} and led Lundgaard until a caution on lap 14 prompted the Dane to pit. Foster followed suit during a second caution on lap 33 and began working his way back up the order until he crashed and retired attempting to pass Ericsson for third on lap 43. [[Dale Coyne Racing|DCR]]'s [[Romain Grosjean]], who had assumed the lead, was then able to pit under caution when Kirkwood suffered an identical crash on lap 53. That handed the lead to Ericsson, who built a 13-second gap before making his final stop on lap 69. Grosjean, now back in front, fended off Palou before Ericsson and Power closed in on the top two. After contact with Power and a pass on Palou, Ericsson overtook Grosjean for the lead with five laps remaining to secure his first victory for Andretti. Power was able to get past Palou for third as the Spaniard extended his championship lead to 142 points. {{Cite web |last=Barnes |first=Joey |date=2026-08-16 |title=Ericsson denies Grosjean with late charge to Markham IndyCar victory |url=https://www.motorsport.com/indycar/news/marcus-ericsson-denies-romain-grosjean-with-late-charge-to-markham-indycar-victory/10846735/ |access-date=2026-08-21 |website=[[motorsport.com]] |language=en}} {{Cite web |last=Balsa |first=Daniel |date=2026-08-16 |title=Ericsson surges late to defeat Grosjean and claim chaotic IndyCar Markham GP victory |url=https://grandepremio.com/en/indy/marcus-ericsson-surges-late-to-defeat-grosjean-and-claim-chaotic-indycar-markham-gp-victory/ |access-date=2026-08-21 |website=Grande Premio |language=en}}
+Palou claimed pole position by over half a second for the special one-off [[Freedom 250 Grand Prix|Freedom 250 Grand Prix of Washington, D.C.]], {{Cite web |last=Barnes |first=Joey |date=2026-08-22 |title=IndyCar Freedom 250 starting lineup: Alex Palou claims pole in Washington D.C. |url=https://www.motorsport.com/indycar/news/indycar-freedom-250-starting-lineup-alex-palou-claims-pole-in-washington-dc/10848443/ |access-date=2026-08-28 |website=[[motorsport.com]] |language=en}} but lost his lead right after the start when Kirkwood overtook him into turn 3. Kirkwood led Palou until a multi-car collision on lap 36 allowed both to pit under caution. When exiting his pit stall, Palou hit equipment of the adjacent box and incurred a drive-through penalty. Rahal assumed the lead after electing not to stop under caution and held off the field on the restart before another collision ensued. The next restart happened on lap 50, after which Kirkwood quickly overtook those who stayed out to resume his lead. Palou suffered a loose wheel on his next pitstop, dropping a lap down, before he eventually spun and crashed on lap 123. The following restart saw McLaughlin attempt a move on Kirkwood that ended with McLaughlin crashing out. Kirkwood controlled the final restart, gapping Lundgaard and Power to secure his second victory of the season and cut Palou's championship lead to 91 points with three races left. {{Cite web |date=2026-08-23 |title=Kyle Kirkwood wins IndyCar Freedom 250 on streets of D.C. |url=https://www.espn.com/racing/story/_/id/49704862/kyle-kirkwood-wins-indycar-freedom-250-streets-dc |access-date=2026-08-28 |website=[[ESPN]]}} {{Cite web |last=Barnes |first=Joey |date=2026-08-24 |title=IndyCar Freedom 250: Kirkwood wins, Palou falters in Washington D.C. |url=https://www.motorsport.com/indycar/news/indycar-freedom-250-race-report/10848780/ |access-date=2026-08-28 |website=[[motorsport.com]] |language=en}}
+Rain delays across the Milwaukee weekend meant the first race run to completion was actually round 17, the [[IndyCar Series at the Milwaukee Mile|Snap-on Milwaukee Mile 250]]. Palou started that race from pole position, {{Cite web |last=Balsa |first=Daniel |date=2026-08-29 |title=O'Ward and Palou claim poles for Milwaukee IndyCar doubleheader |url=https://grandepremio.com/en/indy/pato-oward-alex-palou-claim-poles-for-milwaukee-indycar-doubleheader/ |access-date=2026-09-03 |website=Grande Premio EN |language=en}} and controlled the opening stint, briefly giving up the lead to Newgarden before retaking it on lap 46. During the second stint, VeeKay then rose into contention and took the lead on lap 100, before Palou once again moved back in front on lap 125. The pivotal moment came on lap 142 when Newgarden spun and hit the wall. The ensuing caution saw most of the field take on new tires, while McLaughlin elected to stay out. He kept a top-four position until his final stop on lap 192, but was beaten on pit road by O'Ward, who stopped on the same lap. Power and Lundgaard, the top two yet to pit, came in on lap 193, with a slow stop for Lundgaard and a speeding penalty for Power eliminating both from contention. O'Ward held off McLaughlin to win, with Kirkwood in sixth just able to keep the championship open as he sat 97 points behind Palou. {{Cite web |last=Kelly |first=Paul |date=2026-08-30 |title=Pato O’Ward Drives to Milwaukee Win; Alex Palou Zeroes In on Another Title |url=http://www.indycar.com/news/2026/08/08-30-nics-milwaukee-race1 |access-date=2026-09-03 |website= [[IndyCar Series] |language=en}} {{Cite web |last=Horner |first=Scott |last2=Brown |first2=Zion |title=IndyCar race today on the Milwaukee Mile: Pato O'Ward wins race in Milwaukee and leads the other |url=https://www.indystar.com/story/sports/motor/2026/08/30/indycar-race-milwaukee-today-schedule-leaderboard-timeline-live-updates/91536095007/ |access-date=2026-09-03 |website=[[The Indianapolis Star]] |language=en-US}}
+The [[IndyCar Series at the Milwaukee Mile|Snap-on Makers and Fixers 250]] was split into two parts, as rain forced organizers to halt the race after 90 laps before it was continued after the other Milwaukee race was already run. {{Cite web |last=Pruett |first=Marshall |date=2026-08-30 |title=Milwaukee IndyCar Race 1 postponed again to 6pm ET |url=https://racer.com/2026/08/30/milwaukee-indycar-race-postponed-again-to-6pm-local-time |access-date=2026-09-04 |website=Racer}} Polesitter O'Ward, who took that spot after penalties for McLaughlin, Malukas and Palou, also led the resumption after battling Newgarden and Rosenqvist through the first 90 laps. The Mexican stopped on lap 118, with others pitting among the same time, while Malukas extended his stint to lap 142. That allowed him to stay out when a caution came out on lap 151, and he cycled to the front. He gapped O'Ward, before the pair took their final stops on laps 194 and 195. Two cautions then erased Malukas' advantage, and O'Ward retook the lead on lap 226. Malukas pressured him throughout the final laps as VeeKay took the final podium spot off McLaughlin on lap 247. O'Ward held on to become the first driver to take two wins in a single day since [[Rick Mears]] in 1981, while a risk-averse drive to tenth place saw Palou claim his fifth championship title. {{Cite web |last=Kelly |first=Paul |date=2026-08-30 |title=Pato O'Ward Sweeps Milwaukee; Alex Palou Clinches Fifth Series Title |url=https://www.indycar.com/news/2026/08/08-30-nics-milwaukee-race2 |access-date=2026-09-04 |website=[[IndyCar Series]] |language=en}} {{Cite web |last=Barnes |first=Joey |date=2026-08-31 |title=Pato O’Ward sweeps Milwaukee IndyCar races as Alex Palou clinches fifth title |url=https://www.motorsport.com/indycar/news/indycar-milwaukee-race-1-results-pato-oward-wins-alex-palou-2026-champion-after-rain-de/10850881/ |access-date=2026-09-04 |website=[[motorsport.com]] |language=en}}
+Pole position for the season-ending [[IndyCar Monterey Grand Prix|Mission Foods Grand Prix of Monterey]] went to McLaughlin ahead of Palou and Rosenqvist. {{Cite web |last=Duforest |first=Michaël |date=2026-09-06 |title=Laguna Seca - Qualifying: Scott McLaughlin secures the final pole position of the year |url=https://www.autohebdof1.com/news/car/indicar/laguna-seca-qualifiers-scott-mclaughlin-takes-last-pole-of-the-year.html |access-date=2026-10-13 |website=AutoHebdo |language=en}} He held the lead through an early caution period, while Kirkwood took third on the restart. Palou was the first frontrunner to take his pitstop on lap 19, with McLaughlin and Kirkwood following on lap 21. That first round of stops produced no change in the top three, but Palou elected to stay on soft tires as the lead pair switched to hard tires. McLaughlin and Kirkwood were able to extend their second stint up until lap 44, while Palou had to take an extra stop, erasing him from contention. The top two then pitted for the final time on lap 71, with Kirkwood switching back to soft tires and closing up to the leader. He did not attack him, leaving McLaughin to end the season with his eighth career IndyCar win and his first since September 2024. Not risiking a battle with McLaughlin and taking second meant Kirkwood sealed the runner-up spot in the championship as Rossi took third, his first podium since June 2024. {{Cite web |last=Balsa |first=Daniel |date=2026-09-06 |title=McLaughlin dominates Laguna Seca to win IndyCar Monterey finale |url=https://grandepremio.com/en/indy/mclaughlin-dominates-laguna-seca-to-win-indycar-monterey-finale/ |access-date=2026-10-13 |website=GRANDE PRÊMIO |language=en}} {{Cite web |last=Kelly |first=Paul |date=2026-09-06 |title=Scott McLaughlin Ends Drought With Dominant Laguna Seca Win |url=http://www.indycar.com/news/2026/09/09-06-nics-laguna-race |access-date=2026-10-13 |website=[[IndyCar Series]] |language=en}}
+==Points standings==
+{{further|List of American Championship car racing points scoring systems}}
+* Ties were broken by number of wins, followed by number of 2nds, 3rds, etc.; then by finishing position in the previous race; then by random draw.{{sfn|''Rulebook''|2024|loc=Rule 12.4.1.}}
+{| class="wikitable" style="font-size: 85%; text-align:center"
+!Position
+! style="background-color:#FFFFBF" | 1st
+! style="background-color:#DFDFDF" | 2nd
+! style="background-color:#FFDF9F" | 3rd
+! style="background-color:#DFFFDF" | 4th
+! style="background-color:#DFFFDF" | 5th
+! style="background-color:#CFEAFF" | 6th
+! style="background-color:#CFEAFF" | 7th
+! style="background-color:#CFEAFF" | 8th
+! style="background-color:#CFEAFF" | 9th
+! style="background-color:#CFEAFF" | 10th
+! style="background-color:#CFCFFF" | 11th
+! style="background-color:#CFCFFF" | 12th
+! style="background-color:#CFCFFF" | 13th
+! style="background-color:#CFCFFF" | 14th
+! style="background-color:#CFCFFF" | 15th
+! style="background-color:#CFCFFF" | 16th
+! style="background-color:#CFCFFF" | 17th
+! style="background-color:#CFCFFF" | 18th
+! style="background-color:#CFCFFF" | 19th
+! style="background-color:#CFCFFF" | 20th
+! style="background-color:#CFCFFF" | 21st
+! style="background-color:#CFCFFF" | 22nd
+! style="background-color:#CFCFFF" | 23rd
+! style="background-color:#CFCFFF" | 24th
+! style="background-color:#CFCFFF" | 25th+
+|-
+!Points
+| style="background-color:#FFFFBF" |50
+| style="background-color:#DFDFDF" |40
+| style="background-color:#FFDF9F" |35
+| style="background-color:#DFFFDF" |32
+| style="background-color:#DFFFDF" |30
+| style="background-color:#CFEAFF" |28
+| style="background-color:#CFEAFF" |26
+| style="background-color:#CFEAFF" |24
+| style="background-color:#CFEAFF" |22
+| style="background-color:#CFEAFF" |20
+| style="background-color:#CFCFFF" |19
+| style="background-color:#CFCFFF" |18
+| style="background-color:#CFCFFF" |17
+| style="background-color:#CFCFFF" |16
+| style="background-color:#CFCFFF" |15
+| style="background-color:#CFCFFF" |14
+| style="background-color:#CFCFFF" |13
+| style="background-color:#CFCFFF" |12
+| style="background-color:#CFCFFF" |11
+| style="background-color:#CFCFFF" |10
+| style="background-color:#CFCFFF" |9
+| style="background-color:#CFCFFF" |8
+| style="background-color:#CFCFFF" |7
+| style="background-color:#CFCFFF" |6
+| style="background-color:#CFCFFF" |5
+|}
+===Driver standings===
+* At all races except the Indy 500, the pole position qualifier earned 1 point (unless qualifying is not held).{{sfn|''Rulebook''|2024|loc=Rule 12.6.3.1.}} The twelve Indy 500 qualifiers who qualified for the fast 12 session received points based on the results of that session, descending from 12 points for first place.{{sfn|''Rulebook''|2024|loc=Rule 12.6.4.}}
+* Drivers who led at least one race lap were awarded 1 point.{{sfn|''Rulebook''|2024|loc=Rule 12.6.2.}} The driver who led the most laps during a race scored an additional 2 points.{{sfn|''Rulebook''|2024|loc=Rule 12.6.2.}}
+* Each entrant-initiated engine change-out performed, prior to the engine having reached its distance mandate, resulted in a loss of ten championship points.{{sfn|''Rulebook''|2024|loc=Rule 16.6.2.2.}}
+{|
+| vstyle="text-align:top" |
+{| class="wikitable" style="font-size: 85%; text-align:center"
+!Pos
+!Driver
+![[2026 Firestone Grand Prix of St. Petersburg|STP]]
+![[2026 Good Ranchers 250|PHX]]
+![[2026 Java House Grand Prix of Arlington|ARL]]
+![[2026 Children's of Alabama Indy Grand Prix|BAR]]
+![[2026 Acura Grand Prix of Long Beach|LBH]]
+![[2026 Sonsio Grand Prix|IGP]]
+![[2026 Indianapolis 500|INDY]]
+![[2026 Chevrolet Detroit Grand Prix|DET]]
+![[2026 Bommarito Automotive Group 500|GTW]]
+![[2026 XPEL Grand Prix at Road America|ROA]]
+![[2026 Honda Indy 200|MOH]]
+![[2026 Borchetta Bourbon Music City Grand Prix|NSS]]
+![[2026 OnlyBulls Grand Prix of Portland|POR]]
+![[2026 Ontario Honda Dealers Indy Markham|MRK]]
+![[Freedom 250 Grand Prix|D.C.]]
+! colspan="2" |[[2026 Snap-on IndyCar Weekend|MIL]]
+![[2026 Mission Grand Prix of Monterey|LAG]]
+!Pts
+|-
+! 1
+| align="left" |{{flagicon|ESP}} [[Álex Palou]]
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#EFCFFF;" | 24
+| style="background:#DFDFDF;" | 2 L
+| style="background:#FFFFBF;" | '''1''' L *
+| style="background:#FFFFBF;" | 1 L
+| style="background:#DFFFDF;" | '''''5''''' L
+| style="background:#CFEAFF;" | '''7''' 1L *
+| style="background:#FFFFBF;" | '''''1''''' L *
+| style="background:#CFCFFF;" | '''17''' L
+| style="background:#DFFFDF;" | '''5''' L
+| style="background:#DFFFDF;" | 5
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#DFFFDF;" | 4
+| style="background:#CFCFFF;" | '''20'''
+| style="background:#CFEAFF;" | 10
+| style="background:#DFFFDF;" | '''''5''''' L *
+| style="background:#CFEAFF;" | 8
+! {{tooltip|631|Penalized 5 points at the Indianapolis 500 for front wing height infringement}}
+|-
+! 2
+| align="left" |{{flagicon|USA}} [[Kyle Kirkwood]]
+| style="background:#DFFFDF;" | ''4''
+| style="background:#DFDFDF;" | 2 L
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#DFFFDF;" | 5
+| style="background:#DFFFDF;" | 4
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 16
+| style="background:#DFDFDF;" | 2 L
+| style="background:#CFEAFF;" | 6
+| style="background:#CFEAFF;" | 10
+| style="background:#FFDF9F;" | 3
+| style="background:#CFEAFF;" | '''10''' L
+| style="background:#DFFFDF;" | 5
+| style="background:#EFCFFF;" | 21
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#CFCFFF;" | 15
+| style="background:#CFEAFF;" | 6
+| style="background:#DFDFDF;" | 2
+! 545
+|-
+! 3
+| align="left" |{{flagicon|DNK}} [[Christian Lundgaard]]
+| style="background:#FFDF9F;" | 3 L
+| style="background:#CFCFFF;" | 13 L
+| style="background:#CFEAFF;" | 7
+| style="background:#DFDFDF;" | ''2'' L
+| style="background:#CFCFFF;" | 20
+| style="background:#FFFFBF;" | 1 L
+| style="background:#CFCFFF;" | 17
+| style="background:#DFFFDF;" | 5 L
+| style="background:#CFEAFF;" | 10
+| style="background:#FFFFBF;" | ''1'' L
+| style="background:#DFDFDF;" | '''2''' L
+| style="background:#CFCFFF;" | 16
+| style="background:#CFEAFF;" | 9
+| style="background:#CFEAFF;" | 6
+| style="background:#DFDFDF;" | 2
+| style="background:#CFEAFF;" | 6 L
+| style="background:#FFDF9F;" | 3
+| style="background:#CFEAFF;" | 6
+! 535
+|-
+! 4
+| align="left" |{{flagicon|MEX}} [[Pato O'Ward]]
+| style="background:#DFFFDF;" | 5
+| style="background:#DFFFDF;" | 4 L
+| style="background:#DFFFDF;" | 5
+| style="background:#CFCFFF;" | 17
+| style="background:#DFFFDF;" | 5
+| style="background:#CFCFFF;" | 18
+| style="background:#DFFFDF;" | 4 6L
+| style="background:#DFFFDF;" | 4
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 12
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#CFEAFF;" | 7
+| style="background:#CFCFFF;" | 11
+| style="background:#DFFFDF;" | 5
+| style="background:#CFCFFF;" | 16
+| style="background:#FFFFBF;" | ''1'' L *
+| style="background:#FFFFBF;" | 1 L
+| style="background:#CFCFFF;" | 11
+! 522
+|-
+! 5
+| align="left" |{{flagicon|USA}} [[David Malukas]]
+| style="background:#CFCFFF;" | 13
+| style="background:#FFDF9F;" | '''3''' L *
+| style="background:#CFEAFF;" | 6
+| style="background:#DFFFDF;" | 4
+| style="background:#CFEAFF;" | 7
+| style="background:#DFDFDF;" | 2 L *
+| style="background:#DFDFDF;" | 2 3L
+| style="background:#CFCFFF;" | 18
+| style="background:#CFEAFF;" | 7
+| style="background:#DFDFDF;" | 2
+| style="background:#CFEAFF;" | 8
+| style="background:#FFDF9F;" | 3 L
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 17
+| style="background:#EFCFFF;" | 24
+| style="background:#DFDFDF;" | 2 L
+| style="background:#DFFFDF;" | 4
+| style="background:#DFFFDF;" | 5
+! 514
+|-
+! 6
+| align="left" |{{flagicon|NZL}} [[Scott McLaughlin]]
+| style="background:#DFDFDF;" | '''2''' L
+| style="background:#CFEAFF;" | 8
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 16
+| style="background:#CFEAFF;" | 6
+| style="background:#CFCFFF;" | 16
+| style="background:#FFDF9F;" | 3 9L
+| style="background:#CFCFFF;" | 19
+| style="background:#DFFFDF;" | 5
+| style="background:#CFEAFF;" | 7
+| style="background:#CFCFFF;" | 16
+| style="background:#DFFFDF;" | ''4'' L
+| style="background:#CFEAFF;" | 7
+| style="background:#CFEAFF;" | 8
+| style="background:#EFCFFF;" | 22 L
+| style="background:#DFFFDF;" | '''4'''
+| style="background:#DFDFDF;" | 2 L
+| style="background:#FFFFBF;" | '''1''' L *
+! 483
+|-
+! 7
+| align="left" |{{flagicon|SWE}} [[Marcus Ericsson]]
+| style="background:#CFEAFF;" | 6 L
+| style="background:#CFCFFF;" | 17 L
+| style="background:#DFFFDF;" | '''4''' L
+| style="background:#CFEAFF;" | 9
+| style="background:#EFCFFF;" | 25
+| style="background:#EFCFFF;" | 22
+| style="background:#CFCFFF;" | 13
+| style="background:#CFEAFF;" | 8
+| style="background:#DFDFDF;" | 2 L *
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 21
+| style="background:#CFEAFF;" | 6
+| style="background:#CFEAFF;" | ''6''
+| style="background:#FFFFBF;" | ''1'' L
+| style="background:#DFFFDF;" | 4
+| style="background:#CFEAFF;" | 8
+| style="background:#CFEAFF;" | 9
+| style="background:#CFEAFF;" | 9
+! 429
+|-
+! 8
+| align="left" |{{flagicon|USA}} [[Josef Newgarden]]
+| style="background:#CFEAFF;" | 7 L
+| style="background:#FFFFBF;" | 1 L
+| style="background:#CFCFFF;" | 15
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | ''14'' L
+| style="background:#DFFFDF;" | 4
+| style="background:#EFCFFF;" | 28
+| style="background:#CFEAFF;" | 10
+| style="background:#FFFFBF;" | ''1'' L
+| style="background:#CFCFFF;" | 22 L
+| style="background:#CFEAFF;" | ''9'' L
+| style="background:#DFDFDF;" | 2
+| style="background:#CFEAFF;" | 8 L
+| style="background:#CFCFFF;" | 13
+| style="background:#CFEAFF;" | 8
+| style="background:#CFEAFF;" | 7
+| style="background:#EFCFFF;" | 25 L
+| style="background:#CFCFFF;" | 15
+! 423
+|-
+! 9
+| align="left" |{{flagicon|SWE}} [[Felix Rosenqvist]]
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 19 L
+| style="background:#CFCFFF;" | 13
+| style="background:#DFDFDF;" | '''2''' L *
+| style="background:#EFCFFF;" | 23
+| style="background:#FFFFBF;" | 1 4L
+| style="background:#CFEAFF;" | 6 L
+| style="background:#CFCFFF;" | 14
+| style="background:#CFEAFF;" | 8 L *
+| style="background:#CFCFFF;" | 13
+| style="background:#DFFFDF;" | 5 L
+| style="background:#DFDFDF;" | '''2''' L
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 17 L
+| style="background:#CFCFFF;" | 20
+| style="background:#DFFFDF;" | 4 L
+! 412
+|-
+! 10
+| align="left" |{{flagicon|NED}} [[Rinus VeeKay]]
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 15
+| style="background:#CFEAFF;" | 6 11L
+| style="background:#CFCFFF;" | 12
+| style="background:#DFFFDF;" | 4
+| style="background:#CFCFFF;" | 18
+| style="background:#DFFFDF;" | 4
+| style="background:#CFCFFF;" | 12
+| style="background:#DFFFDF;" | 4
+| style="background:#CFEAFF;" | 7
+| style="background:#EFCFFF;" | 23
+| style="background:#FFDF9F;" | 3
+| style="background:#CFEAFF;" | 7 L
+| style="background:#CFCFFF;" | ''16''
+! 378
+|-
+! 11
+| align="left" |{{flagicon|AUS}} [[Will Power]]
+| style="background:#EFCFFF;" | 22
+| style="background:#CFCFFF;" | ''16'' L
+| style="background:#FFDF9F;" | 3 L
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 19 L
+| style="background:#CFCFFF;" | 13 L
+| style="background:#EFCFFF;" | 29
+| style="background:#EFCFFF;" | 22 L
+| style="background:#CFEAFF;" | 8
+| style="background:#FFDF9F;" | 3
+| style="background:#CFEAFF;" | 6 L
+| style="background:#CFCFFF;" | 20 L
+| style="background:#FFDF9F;" | 3 L
+| style="background:#FFDF9F;" | 3 L
+| style="background:#FFDF9F;" | ''3'' L
+| style="background:#EFCFFF;" | 25 L
+| style="background:#CFCFFF;" | 14 L
+| style="background:#CFCFFF;" | 13
+! 368
+|-
+! 12
+| align="left" |{{flagicon|NZL}} [[Scott Dixon]]
+| style="background:#EFCFFF;" | 23 L
+| style="background:#CFEAFF;" | 7 L
+| style="background:#CFEAFF;" | ''8''
+| style="background:#CFEAFF;" | 7
+| style="background:#FFDF9F;" | 3
+| style="background:#CFEAFF;" | 6
+| style="background:#CFCFFF;" | 15 10L
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 12 L
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 18
+| style="background:#CFEAFF;" | 7
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 15 L
+| style="background:#CFCFFF;" | 17
+! 331
+|-
+! 13
+| align="left" |{{flagicon|CYM}} [[Kyffin Simpson]]
+| style="background:#CFCFFF;" | 15
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 20
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 14 7L
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 21
+| style="background:#DFFFDF;" | 4
+| style="background:#CFCFFF;" | 15
+| style="background:#CFEAFF;" | 9
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 14
+| style="background:#DFFFDF;" | 5
+| style="background:#CFCFFF;" | 16
+| style="background:#CFCFFF;" | 19
+| style="background:#CFEAFF;" | 10
+! 327
+|-
+! 14
+| align="left" |{{flagicon|NZL}} [[Marcus Armstrong]]
+| style="background:#CFCFFF;" | 11
+| style="background:#DFFFDF;" | 5 L
+| style="background:#CFEAFF;" | 10
+| style="background:#CFEAFF;" | 6
+| style="background:#CFCFFF;" | 24
+| style="background:#CFCFFF;" | 11
+| style="background:#DFFFDF;" | 5 L
+| style="background:#CFCFFF;" | 11 L
+| style="background:#CFEAFF;" | 9
+| style="background:#EFCFFF;" | 24 L
+| style="background:#CFCFFF;" | 14
+| style="background:#EFCFFF;" | 24
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 16
+| style="background:#CFCFFF;" | 17
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 16
+| style="background:#CFEAFF;" | 7 L
+! 320
+|-
+! 15
+| align="left" |{{flagicon|USA}} [[Alexander Rossi]]
+| style="background:#CFCFFF;" | 16
+| style="background:#CFEAFF;" | 6
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 11
+| style="background:#CFEAFF;" | 9
+| style="background:#EFCFFF;" | 25
+| style="background:#EFCFFF;" | 30 2L
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 18
+| style="background:#CFEAFF;" | 6
+| style="background:#CFCFFF;" | 20
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 19
+| style="background:#EFCFFF;" | 20
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 11
+| style="background:#FFDF9F;" | 3 L
+! 307
+|-
+! 16
+| align="left" |{{flagicon|USA}} [[Graham Rahal]]
+| style="background:#CFCFFF;" | 18
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 18
+| style="background:#FFDF9F;" | 3 L
+| style="background:#CFEAFF;" | 8
+| style="background:#FFDF9F;" | 3
+| style="background:#CFCFFF;" | 20
+| style="background:#FFDF9F;" | 3
+| style="background:#EFCFFF;" | 23
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 12
+| style="background:#EFCFFF;" | 19
+| style="background:#CFCFFF;" | 23
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 13 L
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 19
+! 302
+|-
+! 17
+| align="left" |{{flagicon|USA}} [[Santino Ferrucci]]
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 17
+| style="background:#CFEAFF;" | 8
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 14
+| style="background:#CFEAFF;" | 8 5
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 13
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 21
+| style="background:#CFEAFF;" | 10
+| style="background:#EFCFFF;" | 21
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 12
+! 280
+|-
+! 18
+| align="left" |{{flagicon|GBR}} [[Louis Foster]]
+| style="background:#CFCFFF;" | 14 L
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 25
+| style="background:#CFCFFF;" | 16
+| style="background:#CFEAFF;" | 7
+| style="background:#CFCFFF;" | 21
+| style="background:#CFEAFF;" | 7
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 17 L
+| style="background:#CFCFFF;" | 15
+| style="background:#EFCFFF;" | '''22''' L *
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 11
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 14
+! 267
+|-
+! 19
+| align="left" |{{flagicon|FRA}} [[Romain Grosjean]]
+| style="background:#CFEAFF;" | 8
+| style="background:#EFCFFF;" | 25
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 15
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 21
+| style="background:#CFEAFF;" | 9 L
+| style="background:#EFCFFF;" | 20
+| style="background:#CFCFFF;" | 15
+| style="background:#CFCFFF;" | 15
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 17
+| style="background:#DFDFDF;" | 2 L
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 19 L
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 18
+! 259
+|-
+! 20
+| align="left" |{{flagicon|USA}} [[Nolan Siegel]]
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 20
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 12
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 15
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 21
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 12 L
+| style="background:#CFEAFF;" | 6
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 24
+! 259
+|-
+! 21
+| align="left" |{{flagicon|DNK}} [[Christian Rasmussen (racing driver)|Christian Rasmussen]]
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 14 L
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 15
+| style="background:#EFCFFF;" | 24
+| style="background:#EFCFFF;" | 27 L
+| style="background:#EFCFFF;" | 25
+| style="background:#FFDF9F;" | 3 L
+| style="background:#EFCFFF;" | 25
+| style="background:#CFEAFF;" | 7
+| style="background:#EFCFFF;" | 22
+| style="background:#CFCFFF;" | 24
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 14
+| style="background:#DFFFDF;" | 5 L
+| style="background:#CFEAFF;" | 8 L
+| style="background:#CFCFFF;" | 21
+! 245
+|-
+! 22
+| align="left" |{{flagicon|NOR}} [[Dennis Hauger]] {{Color box|yellow|RY|border=silver}}
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 15 L
+| style="background:#CFCFFF;" | 16
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 11
+| style="background:#CFEAFF;" | 8
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 13
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 25
+| style="background:#EFCFFF;" | 21
+| style="background:#CFCFFF;" | 13
+| style="background:#EFCFFF;" | 15
+| style="background:#CFCFFF;" | 15
+| style="background:#CFCFFF;" | 21 L
+| style="background:#CFCFFF;" | 21
+| style="background:#EFCFFF;" | 25
+! 228
+|-
+! 23
+| align="left" nowrap="" |{{flagicon|GER}} [[Mick Schumacher]] {{Color box|orange|R|border=orange}}
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 24
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 16
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 24
+| style="background:#CFEAFF;" | 8
+| style="background:#CFCFFF;" | 16
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 22
+! 213
+|-
+! 24
+| align="left" |{{flagicon|BRA}} [[Caio Collet]] {{Color box|orange|R|border=orange}}
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 19
+| style="background:#EFCFFF;" | 26 L
+| style="background:#CFCFFF;" | 16
+| style="background:#EFCFFF;" | 22 L
+| style="background:#CFCFFF;" | 16
+| style="background:#CFCFFF;" | 11
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 20
+| style="background:#EFCFFF;" | 19
+| style="background:#CFEAFF;" | 9
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 20
+! 203
+|-
+! 25
+| align="left" |{{flagicon|USA}} [[Sting Ray Robb]]
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 15
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 11
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 23
+! 182
+|-
+! 26
+| align="left" |{{flagicon|USA}} [[Conor Daly]]
+|
+|
+|
+|
+|
+|
+| style="background:#CFCFFF;" | ''12'' 8L
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+! 24
+|-
+! 27
+| align="left" |{{flagicon|JPN}} [[Takuma Sato]]
+|
+|
+|
+|
+|
+|
+| style="background:#CFEAFF;" | 10
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+! 20
+|-
+! 28
+| align="left" |{{flagicon|GBR}} [[Jack Harvey (racing driver)|Jack Harvey]]
+|
+|
+|
+|
+|
+|
+| style="background:#CFCFFF;" | 22
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+! 8
+|-
+! 29
+| align="left" |{{flagicon|USA}} [[Jacob Abel (racing driver)|Jacob Abel]]
+|
+|
+|
+|
+|
+|
+| style="background:#CFCFFF;" | 24
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+! 6
+|-
+! 30
+| align="left" |{{flagicon|BRA}} [[Hélio Castroneves]]
+|
+|
+|
+|
+|
+|
+| style="background:#EFCFFF;" | 25
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+! 5
+|-
+! 31
+| align="left" |{{flagicon|USA}} [[Ed Carpenter (racing driver)|Ed Carpenter]]
+|
+|
+|
+|
+|
+|
+| style="background:#EFCFFF;" | 31
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+! 5
+|-
+! 32
+| align="left" |{{flagicon|USA}} [[Ryan Hunter-Reay]]
+|
+|
+|
+|
+|
+|
+| style="background:#EFCFFF;" | 32
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+! 5
+|-
+! 33
+| align="left" |{{flagicon|GBR}} [[Katherine Legge]]
+|
+|
+|
+|
+|
+|
+| style="background:#EFCFFF;" | 33
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+! 5
+|-
+!Pos
+! align="left" |Driver
+![[2026 Firestone Grand Prix of St. Petersburg|STP]]
+![[2026 Good Ranchers 250|PHX]]
+![[2026 Java House Grand Prix of Arlington|ARL]]
+![[2026 Children's of Alabama Indy Grand Prix|BAR]]
+![[2026 Acura Grand Prix of Long Beach|LBH]]
+![[2026 Sonsio Grand Prix|IGP]]
+![[2026 Indianapolis 500|INDY]]
+![[2026 Chevrolet Detroit Grand Prix|DET]]
+![[2026 Bommarito Automotive Group 500|GTW]]
+![[2026 XPEL Grand Prix at Road America|ROA]]
+![[2026 Honda Indy 200|MOH]]
+![[2026 Borchetta Bourbon Music City Grand Prix|NSS]]
+![[2026 OnlyBulls Grand Prix of Portland|POR]]
+![[2026 Ontario Honda Dealers Indy Markham|MRK]]
+![[Freedom 250 Grand Prix|D.C.]]
+! colspan="2" |[[2026 Snap-on IndyCar Weekend|MIL]]
+![[2026 Mission Grand Prix of Monterey|LAG]]
+!Pts
+|-
+|}
+| style="vertical-align:top" |
+{| class="wikitable" style="font-size:85%; text-align:center; width: 18em"
+!Color
+!Result
+|- style="background:#FFFFBF"
+|Gold
+|Winner
+|- style="background:#DFDFDF"
+|Silver
+|2nd-place finish
+|- style="background:#FFDF9F"
+|Bronze
+|3rd-place finish
+|- style="background:#DFFFDF"
+|Green
+|Top 5 finish
+|- style="background:#CFEAFF"
+|Light Blue
+|Top 10 finish
+|- style="background:#CFCFFF"
+|Dark Blue
+|Other flagged position
+|- style="background:#EFCFFF"
+|Purple
+|Did not finish (DNF)
+|- style="background:#FFCFCF"
+|Red
+|Did not qualify (DNQ)
+|- style="background:#DFC484"
+|Brown
+|Withdrew (Wth)
+|- style="background:#000000; color:white"
+|Black
+|Disqualified (DSQ)
+|- style="background:#FFFFFF"
+| rowspan="2" |White
+|Did Not Start (DNS)
+|- style="background:#FFFFFF"
+|Race abandoned (C)
+|-
+|Blank
+|Did not participate
+|}
+{| class="wikitable" style="font-size:85%; text-align:center; width: 18em"
+| colspan="2" style="text-align:center; background:#F2F2F2" |'''In-line notation'''
+|-
+| style="text-align:center; background:#F2F2F2" |'''Bold'''
+| style="text-align:center; background:#F2F2F2" |[[Pole position]]
+(1 point; except Indy)
+|-
+| style="text-align:center; background:#F2F2F2" |''Italics''
+| style="text-align:center; background:#F2F2F2" |Ran fastest race lap
+|-
+| style="text-align:center; background:#F2F2F2" | L
+| style="text-align:center; background:#F2F2F2" |Led race lap
+(1 point)
+|-
+| style="text-align:center; background:#F2F2F2" | *
+| style="text-align:center; background:#F2F2F2" |Led most race laps
+(2 points)
+|-
+| style="text-align:center; background:#F2F2F2" | 1–12
+| style="text-align:center; background:#F2F2F2" |Indy 500 "Fast Twelve"
+bonus points
+|-
+| style="text-align:center; background:#F2F2F2" | c
+| style="text-align:center; background:#F2F2F2" |Qualifying canceled
+(no bonus point)
+|-
+| style="text-align:center; background:#F2F2F2" |{{Color box|yellow|RY|border=silver}}
+| style="text-align:center; background:#F2F2F2" |Rookie of the Year
+|-
+| style="text-align:center; background:#F2F2F2" |{{Color box|orange|R|border=silver}}
+| style="text-align:center; background:#F2F2F2" |Rookie
+|}
+|}
+===Entrant standings===
+{|
+| vstyle="text-align:top" |
+{| class="wikitable" style="font-size: 85%; text-align:center"
+!Pos
+!Driver
+![[2026 Firestone Grand Prix of St. Petersburg|STP]]
+![[2026 Good Ranchers 250|PHX]]
+![[2026 Java House Grand Prix of Arlington|ARL]]
+![[2026 Children's of Alabama Indy Grand Prix|BAR]]
+![[2026 Acura Grand Prix of Long Beach|LBH]]
+![[2026 Sonsio Grand Prix|IGP]]
+![[2026 Indianapolis 500|INDY]]
+![[2026 Chevrolet Detroit Grand Prix|DET]]
+![[2026 Bommarito Automotive Group 500|GTW]]
+![[2026 XPEL Grand Prix at Road America|ROA]]
+![[2026 Honda Indy 200|MOH]]
+![[2026 Borchetta Bourbon Music City Grand Prix|NSS]]
+![[2026 OnlyBulls Grand Prix of Portland|POR]]
+![[2026 Ontario Honda Dealers Indy Markham|MRK]]
+![[Freedom 250 Grand Prix|D.C.]]
+! colspan="2" |[[2026 Snap-on IndyCar Weekend|MIL]]
+![[2026 Mission Grand Prix of Monterey|LAG]]
+!Pts
+|-
+! 1
+| align="left" nowrap="" |#10 [[Chip Ganassi Racing]]
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#EFCFFF;" | 24
+| style="background:#DFDFDF;" | 2 L
+| style="background:#FFFFBF;" | '''1''' L *
+| style="background:#FFFFBF;" | 1 L
+| style="background:#DFFFDF;" | '''''5''''' L
+| style="background:#CFEAFF;" | '''7''' 1L *
+| style="background:#FFFFBF;" | '''''1''''' L *
+| style="background:#CFCFFF;" | '''17''' L
+| style="background:#DFFFDF;" | '''5''' L
+| style="background:#DFFFDF;" | 5
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#DFFFDF;" | 4
+| style="background:#CFCFFF;" | '''20'''
+| style="background:#CFEAFF;" | 10
+| style="background:#DFFFDF;" | '''''5''''' L *
+| style="background:#CFEAFF;" | 8
+! {{tooltip|631|Penalized 5 points at the Indianapolis 500 for front wing height infringement}}
+|-
+! 2
+| align="left" nowrap="" |#27 [[Andretti Global]]
+| style="background:#DFFFDF;" | ''4''
+| style="background:#DFDFDF;" | 2 L
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#DFFFDF;" | 5
+| style="background:#DFFFDF;" | 4
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 16
+| style="background:#DFDFDF;" | 2 L
+| style="background:#CFEAFF;" | 6
+| style="background:#CFEAFF;" | 10
+| style="background:#FFDF9F;" | 3
+| style="background:#CFEAFF;" | '''10''' L
+| style="background:#DFFFDF;" | 5
+| style="background:#EFCFFF;" | 21
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#CFCFFF;" | 15
+| style="background:#CFEAFF;" | 6
+| style="background:#DFDFDF;" | 2
+! 545
+|-
+! 3
+| align="left" nowrap="" |#7 [[Arrow McLaren]]
+| style="background:#FFDF9F;" | 3 L
+| style="background:#CFCFFF;" | 13 L
+| style="background:#CFEAFF;" | 7
+| style="background:#DFDFDF;" | ''2'' L
+| style="background:#CFCFFF;" | 20
+| style="background:#FFFFBF;" | 1 L
+| style="background:#CFCFFF;" | 17
+| style="background:#DFFFDF;" | 5 L
+| style="background:#CFEAFF;" | 10
+| style="background:#FFFFBF;" | ''1'' L
+| style="background:#DFDFDF;" | '''2''' L
+| style="background:#CFCFFF;" | 16
+| style="background:#CFEAFF;" | 9
+| style="background:#CFEAFF;" | 6
+| style="background:#DFDFDF;" | 2
+| style="background:#FFDF9F;" | 3
+| style="background:#CFEAFF;" | 6 L
+| style="background:#CFEAFF;" | 6
+! 535
+|-
+! 4
+| align="left" nowrap="" |#5 [[Arrow McLaren]]
+| style="background:#DFFFDF;" | 5
+| style="background:#DFFFDF;" | 4 L
+| style="background:#DFFFDF;" | 5
+| style="background:#CFCFFF;" | 17
+| style="background:#DFFFDF;" | 5
+| style="background:#CFCFFF;" | 18
+| style="background:#DFFFDF;" | 4 6L
+| style="background:#DFFFDF;" | 4
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 12
+| style="background:#FFFFBF;" | 1 L *
+| style="background:#CFEAFF;" | 7
+| style="background:#CFCFFF;" | 11
+| style="background:#DFFFDF;" | 5
+| style="background:#CFCFFF;" | 16
+| style="background:#FFFFBF;" | ''1'' L *
+| style="background:#FFFFBF;" | 1 L
+| style="background:#CFCFFF;" | 11
+! 522
+|-
+! 5
+| align="left" nowrap="" |#12 [[Team Penske]]
+| style="background:#CFCFFF;" | 13
+| style="background:#FFDF9F;" | '''3''' L *
+| style="background:#CFEAFF;" | 6
+| style="background:#DFFFDF;" | 4
+| style="background:#CFEAFF;" | 7
+| style="background:#DFDFDF;" | 2 L *
+| style="background:#DFDFDF;" | 2 3L
+| style="background:#CFCFFF;" | 18
+| style="background:#CFEAFF;" | 7
+| style="background:#DFDFDF;" | 2
+| style="background:#CFEAFF;" | 8
+| style="background:#FFDF9F;" | 3 L
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 17
+| style="background:#EFCFFF;" | 24
+| style="background:#DFDFDF;" | 2 L
+| style="background:#DFFFDF;" | 4
+| style="background:#DFFFDF;" | 5
+! 514
+|-
+! 6
+| align="left" nowrap="" |#3 [[Team Penske]]
+| style="background:#DFDFDF;" | '''2''' L
+| style="background:#CFEAFF;" | 8
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 16
+| style="background:#CFEAFF;" | 6
+| style="background:#CFCFFF;" | 16
+| style="background:#FFDF9F;" | 3 9L
+| style="background:#CFCFFF;" | 19
+| style="background:#DFFFDF;" | 5
+| style="background:#CFEAFF;" | 7
+| style="background:#CFCFFF;" | 16
+| style="background:#DFFFDF;" | ''4'' L
+| style="background:#CFEAFF;" | 7
+| style="background:#CFEAFF;" | 8
+| style="background:#EFCFFF;" | 22 L
+| style="background:#DFFFDF;" | '''4'''
+| style="background:#DFDFDF;" | 2 L
+| style="background:#FFFFBF;" | '''1''' L *
+! 483
+|-
+! 7
+| align="left" nowrap="" |#28 [[Andretti Global]]
+| style="background:#CFEAFF;" | 6 L
+| style="background:#CFCFFF;" | 17 L
+| style="background:#DFFFDF;" | '''4''' L
+| style="background:#CFEAFF;" | 9
+| style="background:#EFCFFF;" | 25
+| style="background:#EFCFFF;" | 22
+| style="background:#CFCFFF;" | 13
+| style="background:#CFEAFF;" | 8
+| style="background:#DFDFDF;" | 2 L *
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 21
+| style="background:#CFEAFF;" | 6
+| style="background:#CFEAFF;" | ''6''
+| style="background:#FFFFBF;" | ''1'' L
+| style="background:#DFFFDF;" | 4
+| style="background:#CFEAFF;" | 8
+| style="background:#CFEAFF;" | 9
+| style="background:#CFEAFF;" | 9
+! 429
+|-
+! 8
+| align="left" nowrap="" |#2 [[Team Penske]]
+| style="background:#CFEAFF;" | 7 L
+| style="background:#FFFFBF;" | 1 L
+| style="background:#CFCFFF;" | 15
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | ''14'' L
+| style="background:#DFFFDF;" | 4
+| style="background:#EFCFFF;" | 28
+| style="background:#CFEAFF;" | 10
+| style="background:#FFFFBF;" | ''1'' L
+| style="background:#CFCFFF;" | 22 L
+| style="background:#CFEAFF;" | ''9'' L
+| style="background:#DFDFDF;" | 2
+| style="background:#CFEAFF;" | 8 L
+| style="background:#CFCFFF;" | 13
+| style="background:#CFEAFF;" | 8
+| style="background:#CFEAFF;" | 7
+| style="background:#EFCFFF;" | 25 L
+| style="background:#CFCFFF;" | 15
+! 423
+|-
+! 9
+| align="left" nowrap="" |#60 [[Meyer Shank Racing]]
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 19 L
+| style="background:#CFCFFF;" | 13
+| style="background:#DFDFDF;" | '''2''' L *
+| style="background:#EFCFFF;" | 23
+| style="background:#FFFFBF;" | 1 4L
+| style="background:#CFEAFF;" | 6 L
+| style="background:#CFCFFF;" | 14
+| style="background:#CFEAFF;" | 8 L *
+| style="background:#CFCFFF;" | 13
+| style="background:#DFFFDF;" | 5 L
+| style="background:#DFDFDF;" | '''2''' L
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 17 L
+| style="background:#CFCFFF;" | 20
+| style="background:#DFFFDF;" | 4 L
+! 412
+|-
+! 10
+| align="left" nowrap="" |#76 [[Juncos Hollinger Racing]]
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 15
+| style="background:#CFEAFF;" | 6 11L
+| style="background:#CFCFFF;" | 12
+| style="background:#DFFFDF;" | 4
+| style="background:#CFCFFF;" | 18
+| style="background:#DFFFDF;" | 4
+| style="background:#CFCFFF;" | 12
+| style="background:#DFFFDF;" | 4
+| style="background:#CFEAFF;" | 7
+| style="background:#EFCFFF;" | 23
+| style="background:#FFDF9F;" | 3
+| style="background:#CFEAFF;" | 7 L
+| style="background:#CFCFFF;" | 16
+! 378
+|-
+! 11
+| align="left" nowrap="" |#26 [[Andretti Global]]
+| style="background:#EFCFFF;" | 22
+| style="background:#CFCFFF;" | ''16'' L
+| style="background:#FFDF9F;" | 3 L
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 19 L
+| style="background:#CFCFFF;" | 13 L
+| style="background:#EFCFFF;" | 29
+| style="background:#EFCFFF;" | 22 L
+| style="background:#CFEAFF;" | 8
+| style="background:#FFDF9F;" | 3
+| style="background:#CFEAFF;" | 6 L
+| style="background:#CFCFFF;" | 20 L
+| style="background:#FFDF9F;" | 3 L
+| style="background:#FFDF9F;" | 3 L
+| style="background:#FFDF9F;" | ''3'' L
+| style="background:#EFCFFF;" | 25 L
+| style="background:#CFCFFF;" | 14 L
+| style="background:#CFCFFF;" | 13
+! 368
+|-
+! 12
+| align="left" nowrap="" |#9 [[Chip Ganassi Racing]]
+| style="background:#EFCFFF;" | 23 L
+| style="background:#CFEAFF;" | 7 L
+| style="background:#CFEAFF;" | ''8''
+| style="background:#CFEAFF;" | 7
+| style="background:#FFDF9F;" | 3
+| style="background:#CFEAFF;" | 6
+| style="background:#CFCFFF;" | 15 10L
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 12 L
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 18
+| style="background:#CFEAFF;" | 7
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 15 L
+| style="background:#CFCFFF;" | 17
+! 331
+|-
+! 13
+| align="left" nowrap="" |#8 [[Chip Ganassi Racing]]
+| style="background:#CFCFFF;" | 15
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 20
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 14 7L
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 21
+| style="background:#DFFFDF;" | 4
+| style="background:#CFCFFF;" | 15
+| style="background:#CFEAFF;" | 9
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 14
+| style="background:#DFFFDF;" | 5
+| style="background:#CFCFFF;" | 16
+| style="background:#CFCFFF;" | 19
+| style="background:#CFEAFF;" | 10
+! 327
+|-
+! 14
+| align="left" nowrap="" |#66 [[Meyer Shank Racing]]
+| style="background:#CFCFFF;" | 11
+| style="background:#DFFFDF;" | 5 L
+| style="background:#CFEAFF;" | 10
+| style="background:#CFEAFF;" | 6
+| style="background:#CFCFFF;" | 24
+| style="background:#CFCFFF;" | 11
+| style="background:#DFFFDF;" | 5 L
+| style="background:#CFCFFF;" | 11 L
+| style="background:#CFEAFF;" | 9
+| style="background:#EFCFFF;" | 24 L
+| style="background:#CFCFFF;" | 14
+| style="background:#EFCFFF;" | 24
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 16
+| style="background:#CFCFFF;" | 17
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 16
+| style="background:#CFEAFF;" | 7 L
+! 320
+|-
+! 15
+| align="left" nowrap="" |#20 [[Ed Carpenter Racing|ECR]]
+| style="background:#CFCFFF;" | 16
+| style="background:#CFEAFF;" | 6
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 11
+| style="background:#CFEAFF;" | 9
+| style="background:#EFCFFF;" | 25
+| style="background:#EFCFFF;" | 30 2L
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 18
+| style="background:#CFEAFF;" | 6
+| style="background:#CFCFFF;" | 20
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 19
+| style="background:#EFCFFF;" | 20
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 11
+| style="background:#FFDF9F;" | 3 L
+! 307
+|-
+! 16
+| align="left" nowrap="" |#15 [[Rahal Letterman Lanigan Racing]]
+| style="background:#CFCFFF;" | 18
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 18
+| style="background:#FFDF9F;" | 3 L
+| style="background:#CFEAFF;" | 8
+| style="background:#FFDF9F;" | 3
+| style="background:#CFCFFF;" | 20
+| style="background:#FFDF9F;" | 3
+| style="background:#EFCFFF;" | 23
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 12
+| style="background:#EFCFFF;" | 19
+| style="background:#CFCFFF;" | 23
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 13 L
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 19
+! 302
+|-
+! 17
+| align="left" nowrap="" |{{nowrap|#14 [[A. J. Foyt Racing|A.J. Foyt Enterprises]]}}
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 17
+| style="background:#CFEAFF;" | 8
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 14
+| style="background:#CFEAFF;" | 8 5
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 13
+| style="background:#CFEAFF;" | 9
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 21
+| style="background:#CFEAFF;" | 10
+| style="background:#EFCFFF;" | 21
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 12
+! 280
+|-
+! 18
+| align="left" nowrap="" |#45 [[Rahal Letterman Lanigan Racing]]
+| style="background:#CFCFFF;" | 14 L
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 25
+| style="background:#CFCFFF;" | 16
+| style="background:#CFEAFF;" | 7
+| style="background:#CFCFFF;" | 21
+| style="background:#CFEAFF;" | 7
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 17 L
+| style="background:#CFCFFF;" | 15
+| style="background:#EFCFFF;" | '''22''' L *
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 11
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 14
+! 267
+|-
+! 19
+| align="left" nowrap="" |#18 [[Dale Coyne Racing]]
+| style="background:#CFEAFF;" | 8
+| style="background:#EFCFFF;" | 25
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 15
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 21
+| style="background:#CFEAFF;" | 9 L
+| style="background:#EFCFFF;" | 20
+| style="background:#CFCFFF;" | 15
+| style="background:#CFCFFF;" | 15
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 17
+| style="background:#DFDFDF;" | 2 L
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 19 L
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 18
+! 259
+|-
+! 20
+| align="left" nowrap="" |#6 [[Arrow McLaren]]
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 20
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 12
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 15
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 21
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 12 L
+| style="background:#CFEAFF;" | 6
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 24
+! 259
+|-
+! 21
+| align="left" nowrap="" |{{nowrap|#21 [[Ed Carpenter Racing|ECR]]}}
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 14 L
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 15
+| style="background:#EFCFFF;" | 24
+| style="background:#EFCFFF;" | 27 L
+| style="background:#EFCFFF;" | 25
+| style="background:#FFDF9F;" | 3 L
+| style="background:#EFCFFF;" | 25
+| style="background:#CFEAFF;" | 7
+| style="background:#EFCFFF;" | 22
+| style="background:#CFCFFF;" | 24
+| style="background:#EFCFFF;" | 23
+| style="background:#CFCFFF;" | 14
+| style="background:#DFFFDF;" | 5 L
+| style="background:#CFEAFF;" | 8 L
+| style="background:#CFCFFF;" | 21
+! 245
+|-
+! 22
+| align="left" nowrap="" |#19 [[Dale Coyne Racing]]
+| style="background:#CFEAFF;" | 10
+| style="background:#CFCFFF;" | 15 L
+| style="background:#CFCFFF;" | 16
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 11
+| style="background:#CFEAFF;" | 8
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 13
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 25
+| style="background:#EFCFFF;" | 21
+| style="background:#CFCFFF;" | 13
+| style="background:#EFCFFF;" | 15
+| style="background:#CFCFFF;" | 15
+| style="background:#CFCFFF;" | 21 L
+| style="background:#CFCFFF;" | 21
+| style="background:#EFCFFF;" | 25
+! 228
+|-
+! colspan="21" style="font-size: 80%;" | {{tooltip|''Leaders' Circle cutoff''|The top 22 chartered entries earn Leaders' Circle contracts for next season.}}
+|-
+! 23
+| align="left" nowrap="" |#47 [[Rahal Letterman Lanigan Racing]]
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 24
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 20
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 16
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 24
+| style="background:#CFEAFF;" | 8
+| style="background:#CFCFFF;" | 16
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 11
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 13
+| style="background:#CFCFFF;" | 22
+! 213
+|-
+! 24
+| align="left" nowrap="" |#4 [[A. J. Foyt Racing|A.J. Foyt Enterprises]]
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 12
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 19
+| style="background:#EFCFFF;" | 26 L
+| style="background:#CFCFFF;" | 16
+| style="background:#EFCFFF;" | 22 L
+| style="background:#CFCFFF;" | 16
+| style="background:#CFCFFF;" | 11
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 20
+| style="background:#EFCFFF;" | 19
+| style="background:#CFEAFF;" | 9
+| style="background:#EFCFFF;" | 24
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 20
+! 203
+|-
+! 25
+| align="left" nowrap="" |#77 [[Juncos Hollinger Racing]]
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 21
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 17
+| style="background:#CFCFFF;" | 23
+| style="background:#CFCFFF;" | 14
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 19
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 15
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 11
+| style="background:#EFCFFF;" | 25
+| style="background:#CFCFFF;" | 22
+| style="background:#CFCFFF;" | 18
+| style="background:#CFCFFF;" | 23
+! 182
+|-
+!Pos
+! align="left" |Driver
+![[2026 Firestone Grand Prix of St. Petersburg|STP]]
+![[2026 Good Ranchers 250|PHX]]
+![[2026 Java House Grand Prix of Arlington|ARL]]
+![[2026 Children's of Alabama Indy Grand Prix|BAR]]
+![[2026 Acura Grand Prix of Long Beach|LBH]]
+![[2026 Sonsio Grand Prix|IGP]]
+![[2026 Indianapolis 500|INDY]]
+![[2026 Chevrolet Detroit Grand Prix|DET]]
+![[2026 Bommarito Automotive Group 500|GTW]]
+![[2026 XPEL Grand Prix at Road America|ROA]]
+![[2026 Honda Indy 200|MOH]]
+![[2026 Borchetta Bourbon Music City Grand Prix|NSS]]
+![[2026 OnlyBulls Grand Prix of Portland|POR]]
+![[2026 Ontario Honda Dealers Indy Markham|MRK]]
+![[Freedom 250 Grand Prix|D.C.]]
+! colspan="2" |[[2026 Snap-on IndyCar Weekend|MIL]]
+![[2026 Mission Grand Prix of Monterey|LAG]]
+!Pts
+|-
+|}
+|}
+===Engine manufacturer standings===
+The top-two finishing full-season eligible entrants for a manufacturer in each race scored points toward the engine manufacturer's championship. Points scored were the same as the driver's championship except for bonus points – a race win was worth five bonus points for a manufacturer, while a pole position was worth one bonus point (except at the Indianapolis 500). A full-season entry was eligible to score manufacturer points until it exceeded the maximum number of allowed engines per entry.
+For Indianapolis 500 qualifying, the manufacturer that ran the fastest speed on Saturday received one bonus point; while the manufacturer that qualified on pole position received two bonus points.
+{|
+| vstyle="text-align:top" |
+{| class="wikitable" style="font-size: 85%; text-align:center"
+!Pos
+!Manufacturer
+![[2026 Firestone Grand Prix of St. Petersburg|STP]]
+![[2026 Good Ranchers 250|PHX]]
+![[2026 Java House Grand Prix of Arlington|ARL]]
+![[2026 Children's of Alabama Indy Grand Prix|BAR]]
+![[2026 Acura Grand Prix of Long Beach|LBH]]
+![[2026 Sonsio Grand Prix|IGP]]
+![[2026 Indianapolis 500|INDY]]
+![[2026 Chevrolet Detroit Grand Prix|DET]]
+![[2026 Bommarito Automotive Group 500|GTW]]
+![[2026 XPEL Grand Prix at Road America|ROA]]
+![[2026 Honda Indy 200|MOH]]
+![[2026 Borchetta Bourbon Music City Grand Prix|NSS]]
+![[2026 OnlyBulls Grand Prix of Portland|POR]]
+![[2026 Ontario Honda Dealers Indy Markham|MRK]]
+![[Freedom 250 Grand Prix|D.C.]]
+! colspan="2" |[[2026 Snap-on IndyCar Weekend|MIL]]
+![[2026 Mission Grand Prix of Monterey|LAG]]
+!Pts
+|-
+! rowspan="3"| 1
+| rowspan="3" align="left"| {{flagicon|JPN}} [[Honda Indy V6|Honda]]
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Álex Palou's 1st-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Kyle Kirkwood's 2nd-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Kyle Kirkwood's 1st-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Álex Palou's 1st-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Álex Palou's 1st-place finish}}
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by Graham Rahal's 3rd-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Felix Rosenqvist's 1st-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Álex Palou's 1st-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Marcus Ericsson's 2nd-place finish}}
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by Will Power's 3rd-place finish}}
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by Kyle Kirkwood's 3rd-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Álex Palou's 1st-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Álex Palou's 1st-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Marcus Ericsson's 1st-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Kyffin Simpson's 5th-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Louis Foster's 11th-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Louis Foster's 10th-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Felix Rosenqvist's 4th-place finish}}
+! rowspan="3"|1571
+|-
+| style="background-color:#DFFFDF" | {{tooltip|4|Scored by Kyle Kirkwood's 4th-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|5|Scored by Marcus Armstrong's 5th-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Álex Palou's 2nd-place finish}}
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by Graham Rahal's 3rd-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Felix Rosenqvist's 2nd-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|5|Scored by Álex Palou's 5th-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|5|Scored by Marcus Armstrong's 5th-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Kyle Kirkwood's 2nd-place finish}}
+| style="background-color:#CFEAFF" | {{tooltip|6|Scored by Kyle Kirkwood's 6th-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|4|Scored by Kyffin Simpson's 4th-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|5|Scored by Álex Palou's 5th-place finish}}
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by Felix Rosenqvist's 5th-place finish — 3rd-place finisher David Malukas and 4th-place finisher Scott McLaughlin were ineligible}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Felix Rosenqvist's 2nd-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Romain Grosjean's 2nd-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Scott Dixon's 7th-place finish}}
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by Kyffin Simpson's 16th-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Scott Dixon's 15th-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Kyffin Simpson's 10th-place finish}}
+|-
+| 87 W
+| 70
+| 96 PW
+| 91 PW
+| 96 PW
+| 66 P
+| {{tooltip|138 PW |includes 50-point durability bonus for the #60 car's engine reach the mileage threshold}}
+| 96 PW
+| 69 P
+| 68 P
+| 65
+| 91 PW
+| 96 PW
+| 96 PW
+| 91 P
+| 75
+| 90
+| 90
+|-
+! rowspan="3"| 2
+| rowspan="3" align="left"| {{flagicon|USA}} [[Chevrolet Indy V6|Chevrolet]]
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Scott McLaughlin's 2nd-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Josef Newgarden's 1st-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|5|Scored by Pato O'Ward's 5th-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Christian Lundgaard's 2nd-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|5|Scored by Pato O'Ward's 5th-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Christian Lundgaard's 1st-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by David Malukas' 2nd-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|4|Scored by Pato O'Ward's 4th-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Josef Newgarden's 1st-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Christian Lundgaard's 1st-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Pato O'Ward's 1st-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Josef Newgarden's 2nd-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|4|Scored by Rinus VeeKay's 4th-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|4|Scored by Rinus VeeKay's 7th-place finish — 3rd-place finisher Will Power, 5th-place finisher Pato O'Ward, and 6th-place finisher Christian Lundgaard were ineligible}}
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by Josef Newgarden's 8th-place finish}}
+| style="background-color:#FFFFBF" | {{tooltip|1|Scored by Josef Newgarden's 7th-place finish}}
+| style="background-color:#EFCFFF" | {{tooltip|8|Scored by Josef Newgarden's 25th-place DNF}}
+| style="background-color:#DFFFDF" | {{tooltip|4|Scored by Josef Newgarden's 15th-place finish}}
+! rowspan="3"|1216
+|-
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by Christian Lundgaard's 3rd-place finish}}
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by David Malukas' 3rd-place finish}}
+| style="background-color:#CFEAFF" | {{tooltip|6|Scored by David Malukas' 6th-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|4|Scored by David Malukas' 4th-place finish}}
+| style="background-color:#CFEAFF" | {{tooltip|6|Scored by Scott McLaughlin's 6th-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by David Malukas' 2nd-place finish}}
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by Scott McLaughlin's 3rd-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|5|Scored by Christian Lundgaard's 5th-place finish}}
+| style="background-color:#FFDF9F" | {{tooltip|3|Scored by Christian Rasmussen's 3rd-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by David Malukas' 2nd-place finish}}
+| style="background-color:#DFDFDF" | {{tooltip|2|Scored by Christian Lundgaard's 2nd-place finish}}
+| style="background-color:#DFFFDF" | {{tooltip|5|Scored by Pato O'Ward's 7th-place finish — 3rd-place finisher David Malukas and 4th-place finisher Scott McLaughlin were ineligible}}
+| style="background-color:#CFEAFF" | {{tooltip|7|Scored by Josef Newgarden's 8th-place finish — 7th-place finisher Scott McLaughlin was ineligible}}
+| style="background-color:#CFEAFF" | {{tooltip|6|Scored by Nolan Siegel's 12th-place finish — 3rd-place finisher Will Power, 5th-place finisher Pato O'Ward, 6th-place finisher Christian Lundgaard, 8th-place finisher Scott McLaughlin, 10th-place finisher Santino Ferrucci, and 11th-place finisher Sting Ray Robb were ineligible}}
+| style="background-color:#EFCFFF" | {{tooltip|11|Scored by Rinus Veekay's 23rd-place DNF}}
+|
+|
+|
+|-
+| 76 P
+| 91 PW
+| 58
+| 72
+| 58
+| 95 W
+| 75
+| 62
+| 90 W
+| 95 W
+| 96 PW
+| 70
+| 58
+| 60
+| 54
+| 50
+| 24
+| 32
+|}
+|}
+P –Pole position winner, W –Race winner
+== See also ==
+*[[2026 Indy NXT]]
+*[[2026 USF Pro 2000 Championship]]
+*[[2026 USF2000 Championship]]
+*[[2026 USF Juniors]]
+== Notes ==
+{{reflist|group=N}}
+== References ==
+{{reflist}}
+===Sources===
+{{Refbegin}}
+* {{cite book|title=NTT IndyCar Series Official Rulebook|url=https://epaddock.indycar.com/docs/default-source/rules-regulations-and-policies/indycar-rulebook.pdf?sfvrsn=ebce9e41_2
+|format=[[PDF]]|archive-url=https://web.archive.org/web/20240306165823/https://epaddock.indycar.com/docs/default-source/rules-regulations-and-policies/indycar-rulebook.pdf?sfvrsn=ebce9e41_2|publisher=[[IndyCar Series]], Brickyard Trademarks, Inc.|date=March 5, 2024|access-date=March 6, 2024|archive-date=March 6, 2024|ref={{harvid|''Rulebook''|2024}}}}
+{{Refend}}
+==External links==
+* {{official website|https://www.indycar.com}}
+{{2026 IndyCar Series}}
+{{American Championship Car seasons}}
+{{IndyCar Series seasons}}
+{{Road to Indy}}
+[[Category:IndyCar Series seasons]]
+[[Category:2026 in IndyCar| ]]
+[[Category:2026 in formula racing|IndyCar Series]]
+[[Category:2026 in motorsport|IndyCar Series]]
