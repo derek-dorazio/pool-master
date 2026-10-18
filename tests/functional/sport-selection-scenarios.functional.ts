@@ -295,23 +295,32 @@ describe('SDK Functional: one journey per sport and selection type', () => {
       // --- Both teams enter; each picks its lineup, or the commissioner draws them --------------
       const entrants = [commissioner, member];
       const entryIds: string[] = [];
+      const lineups = new Map<string, string[]>();
+      let drawnRosterSize: number | undefined;
       for (const entrant of entrants) {
         entryIds.push(expectDefined((await enterContest({ client: entrant.client, path: { contestId } })).data).entry.id);
       }
       if (selectionType === SelectionType.RANDOM_DRAW) {
         const drawn = expectMatchesSchema(SelectionStateResponseSchema, (await runContestDraw({ client: commissioner.client, path: { contestId } })).data);
         expect(drawn.entries.map((entry) => entry.status)).toEqual(['SUBMITTED', 'SUBMITTED']);
+        drawnRosterSize = drawn.rosterSize;
       } else {
         for (const [index, entrant] of entrants.entries()) {
           const entryId = entryIds[index];
           const room = expectMatchesSchema(SelectionStateResponseSchema, (await getSelectionState({ client: entrant.client, path: { contestId }, query: { entryId } })).data);
-          for (const participantId of lineupFor(room, index === 0 ? 'FIRST' : 'SECOND')) {
+          const lineup = lineupFor(room, index === 0 ? 'FIRST' : 'SECOND');
+          lineups.set(entryId, lineup);
+          for (const participantId of lineup) {
             const pick = await submitContestSelection({ client: entrant.client, path: { contestId }, body: { entryId, participantId } });
             expect([pick.response.status, pick.error]).toEqual([200, undefined]);
           }
           const submitted = await submitContestEntry({ client: entrant.client, path: { contestId, entryId, sportEventId: event.id } });
           expect([submitted.response.status, submitted.error]).toEqual([200, undefined]);
         }
+      }
+
+      if (selectionType === SelectionType.BUDGET_PICK) {
+        expect([...lineups.values()][1].slice().sort()).not.toEqual([...lineups.values()][0].slice().sort());
       }
 
       // --- The event plays out and settles the contest ------------------------------------------
@@ -324,6 +333,10 @@ describe('SDK Functional: one journey per sport and selection type', () => {
       expect(board.sport).toBe(sport);
       expect(board.entries.map((entry) => entry.entryId).sort()).toEqual([...entryIds].sort());
       for (const entry of board.entries) {
+        // The board shows exactly the lineup the entry submitted, or a full drawn roster.
+        const picked = entry.picks.map((pick) => pick.sportEventParticipantId).sort();
+        if (drawnRosterSize === undefined) expect(picked).toEqual(expectDefined(lineups.get(entry.entryId), entry.entryId).slice().sort());
+        else expect(new Set(picked).size).toBe(drawnRosterSize);
         expect(entry.picks.some((pick) => scoreOf(pick) !== null)).toBe(true);
         expect(entry.totalScore).toBe(expectedTotal(entry, board.countingRule.count, direction));
         expect(entry.picks.filter((pick) => pick.isCounting)).toHaveLength(Math.min(board.countingRule.count, entry.scoredPickCount));
