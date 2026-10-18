@@ -8,11 +8,12 @@ const ROUND_NAMES_FROM_FINAL = ['Super Bowl', 'Conference Championship', 'Divisi
 /**
  * American football (#702, plans/knockout-and-pickem-design.md §3.5): teams playing a knockout
  * bracket, scored by the head-to-head family from the bracket's matches. The NFL is its sport
- * league, and reseeds after Wild Card weekend (BracketAdvancement.RESEED_BY_SEED, #722).
+ * league, and reseeds after Wild Card weekend and again after the Divisional round
+ * (BracketAdvancement.RESEED_BY_SEED, #722), so the best seed left always hosts.
  *
  * The NFL playoffs are 14 teams in four rounds, seven seeds in each conference with the 1 seed on
- * a bye; a bye scores nothing. Seven tiers of two are the seed lines (both 1 seeds, both 2 seeds
- * and so on), in the field's ranking order.
+ * a bye; a bye scores nothing. The field falls into seven tiers of two, assigned like any sport's
+ * from odds or ranking.
  */
 export const americanFootballSportDefinition: SportDefinition = {
   sport: Sport.AMERICAN_FOOTBALL,

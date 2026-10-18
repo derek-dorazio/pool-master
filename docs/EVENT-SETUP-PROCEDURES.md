@@ -210,10 +210,12 @@ on the Bracket tab:
   not already in the tournament.
 
 **Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
-`RESEED_BY_SEED`) loads its first-round games with no next game, and the next round with only
-its byes named. Release lets that round wait. Once every first-round game has a result, ask the
-server for the reseed (`proposeEventRoundMatchups`): in each conference the best seed left hosts
-the worst. Set it, or a pairing of your own that keeps each team in its conference and each bye
+`RESEED_BY_SEED`) loads each round that is placed by seed with no next game in the round
+before it, and names only its byes. The NFL's Wild Card and Divisional games both link nowhere,
+so the Divisional round and the conference championships are each placed by seed; the
+conference winners link to the Super Bowl. Release lets those rounds wait. Once every game of
+the round before has a result, ask the server for the reseed (`proposeEventRoundMatchups`): in
+each conference the best seed left hosts the worst. Set it, or a pairing of your own that keeps each team in its conference and each bye
 in place, with `setEventRoundMatchups`, before the round starts. A first-round result corrected
 after that moves the team it placed, until that team has played. The Bracket tab does not have a
 reseed button yet, so the two calls go through the API.
@@ -359,8 +361,9 @@ create with its reseed rule. Because its envelope says `testData`:
   and priced.
 - **Every result already entered**, round by round through the bracket's own calls: the Wild
   Card games, the Divisional round placed by the server's reseed (each 1 seed hosts the lowest
-  seed left in its conference), the conference championships and Super Bowl LX, which the
-  Seattle Seahawks win 29-13 over the New England Patriots.
+  seed left in its conference), the conference championships placed by a second reseed (the
+  better seed left hosts), and Super Bowl LX, which the Seattle Seahawks win 29-13 over the New
+  England Patriots.
 
 To test a contest end to end, create and open it and submit entries, then on the event's
 Workflow card *Move to In Progress* and *Move to Completed*, as for the golf seed above.

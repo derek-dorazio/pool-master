@@ -20,7 +20,7 @@ ON CONFLICT ("sport_id", "name") DO NOTHING;
 -- The NFL playoffs' contest templates, scored by knockout round points: Doubling (1, 2, 4 and 8
 -- points for a win in the Wild Card, Divisional, Conference Championship and Super Bowl rounds),
 -- with and without the seed-difference upset bonus, for each selection type the sport has. The
--- tiered one picks a team from each of the seven seed lines and is the league's default. Contest
+-- tiered one picks a team from each of the seven tiers and is the league's default. Contest
 -- creation refuses a preset for an event with another round count.
 INSERT INTO "contest_config_templates" (
   "id",
@@ -59,8 +59,8 @@ FROM (VALUES
   (
     'TIERED',
     'tiered-doubling',
-    'Pick 1 team from each seed line, Doubling',
-    'Pick one team from each of the seven seed lines. A win scores 1 point on Wild Card weekend, 2 in the Divisional round, 4 in the Conference Championship and 8 in the Super Bowl; a bye scores nothing.',
+    'Pick 1 team from each tier, Doubling',
+    'Pick one team from each of the seven tiers. A win scores 1 point on Wild Card weekend, 2 in the Divisional round, 4 in the Conference Championship and 8 in the Super Bowl; a bye scores nothing.',
     1,
     TRUE,
     '{ "selectionType": "TIERED", "picksPerTier": 1, "countedScores": 7, "maxEntriesPerSquad": 1, "scoring": { "participantScoringDefinitionId": "KNOCKOUT_ROUND_POINTS", "config": { "roundValues": [1, 2, 4, 8], "upsetBonus": { "rule": "NONE" } } } }'
@@ -68,8 +68,8 @@ FROM (VALUES
   (
     'TIERED',
     'tiered-doubling-upset-bonus',
-    'Pick 1 team from each seed line, Doubling + upset bonus',
-    'Pick one team from each of the seven seed lines. A win scores 1 point on Wild Card weekend, 2 in the Divisional round, 4 in the Conference Championship and 8 in the Super Bowl; a bye scores nothing, and a win over a better seed adds the seed difference.',
+    'Pick 1 team from each tier, Doubling + upset bonus',
+    'Pick one team from each of the seven tiers. A win scores 1 point on Wild Card weekend, 2 in the Divisional round, 4 in the Conference Championship and 8 in the Super Bowl; a bye scores nothing, and a win over a better seed adds the seed difference.',
     2,
     FALSE,
     '{ "selectionType": "TIERED", "picksPerTier": 1, "countedScores": 7, "maxEntriesPerSquad": 1, "scoring": { "participantScoringDefinitionId": "KNOCKOUT_ROUND_POINTS", "config": { "roundValues": [1, 2, 4, 8], "upsetBonus": { "rule": "SEED_DIFFERENCE", "multiplier": 1 } } } }'

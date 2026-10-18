@@ -325,10 +325,7 @@
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2026-01-17T21:30:00Z",
-              "advancesTo": {
-                "matchNumber": 11,
-                "side": "HOME"
-              },
+              "advancesTo": null,
               "regionLabel": "AFC",
               "result": {
                 "winner": "HOME",
@@ -343,10 +340,7 @@
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2026-01-18T20:00:00Z",
-              "advancesTo": {
-                "matchNumber": 11,
-                "side": "AWAY"
-              },
+              "advancesTo": null,
               "regionLabel": "AFC",
               "result": {
                 "winner": "HOME",
@@ -361,10 +355,7 @@
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2026-01-18T01:00:00Z",
-              "advancesTo": {
-                "matchNumber": 12,
-                "side": "HOME"
-              },
+              "advancesTo": null,
               "regionLabel": "NFC",
               "result": {
                 "winner": "HOME",
@@ -379,10 +370,7 @@
               "away": null,
               "isNeutralSite": false,
               "scheduledAt": "2026-01-18T23:30:00Z",
-              "advancesTo": {
-                "matchNumber": 12,
-                "side": "AWAY"
-              },
+              "advancesTo": null,
               "regionLabel": "NFC",
               "result": {
                 "winner": "AWAY",

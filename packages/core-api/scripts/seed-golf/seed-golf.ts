@@ -806,7 +806,9 @@ class Loader {
 /**
  * A bracket test seed's results, entered on the released event round by round. A round placed by
  * reseeding (its sides wait on no link) takes the server's proposed pairing first, the rule a
- * real reseed follows; each match's result then names the side as the match stands.
+ * real reseed follows; each match's result then names the side as the match stands. Which rounds
+ * reseed is the server's rule (reseededRounds in bracket-reseed.ts), read here from the file's
+ * links; keep the two alike.
  */
 async function enterBracketResultsFor(client: Client, eventId: string, event: SportDataEvent): Promise<void> {
   const matches = event.matches ?? [];

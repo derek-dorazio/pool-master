@@ -650,7 +650,7 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
     return file;
   }
 
-  it('releases the playoffs with a reseeded Divisional round and every result entered, the Seahawks winning the Super Bowl, then skips on a second run', async () => {
+  it('releases the playoffs with reseeded Divisional and conference rounds and every result entered, the Seahawks winning the Super Bowl, then skips on a second run', async () => {
     const applied = await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY });
     expect(counts(applied)).toEqual({ 'SPORT_LEAGUE ADD': 1, 'PLAYER ADD': 14, 'EVENT ADD': 1, 'FIELD ADD': 1, 'BRACKET ADD': 1 });
 
@@ -673,6 +673,8 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
       ['Seattle Seahawks', 'San Francisco 49ers'],
       ['Chicago Bears', 'Los Angeles Rams'],
     ]);
+    // A second reseed places the conference championships: the better seed left hosts.
+    expect([11, 12].map(sides)).toEqual([['Denver Broncos', 'New England Patriots'], ['Seattle Seahawks', 'Los Angeles Rams']]);
     expect(sides(13)).toEqual(['New England Patriots', 'Seattle Seahawks']);
     expect(byNumber.get(13)).toMatchObject({ winnerSide: MatchSide.AWAY, homeScore: 13, awayScore: 29, isNeutralSite: true });
 

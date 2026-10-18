@@ -232,7 +232,11 @@ describe('american-football-2026-nfl-playoffs-test.json', () => {
 
   it('plays the 2025 season as it went: six Wild Card games, the 1 seeds on a bye, and the Seahawks beating the Patriots 29-13', () => {
     expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
-    expect(matches.filter((match) => match.roundNumber === 1).every((match) => match.advancesTo === null)).toBe(true);
+    // The Divisional and conference rounds are both placed by the reseed, so the games before them link nowhere.
+    expect(matches.filter((match) => match.roundNumber <= 2).every((match) => match.advancesTo === null)).toBe(true);
+    expect(matches.filter((match) => match.roundNumber === 3).map((match) => [match.home, match.away, match.advancesTo?.matchNumber])).toEqual([
+      [null, null, 13], [null, null, 13],
+    ]);
     expect(matches.filter((match) => match.roundNumber === 2).map((match) => [match.home, match.away])).toEqual([
       ['nfl-denver-broncos', null], [null, null], ['nfl-seattle-seahawks', null], [null, null],
     ]);
