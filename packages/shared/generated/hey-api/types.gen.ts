@@ -2795,6 +2795,63 @@ export type ContestConfigurationRequest = {
             };
         };
     };
+} | {
+    selectionType: 'PICK_EM';
+    /**
+     * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+     */
+    mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+    /**
+     * Maximum entries a Team may create. Null means unlimited.
+     */
+    maxEntriesPerSquad?: number | null;
+    /**
+     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     */
+    scoring?: {
+        participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        config: {
+            [key: string]: never;
+        };
+    } | {
+        participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+        /**
+         * Finish-position points settings: the contest's points table and its "did not finish" value.
+         */
+        config: {
+            /**
+             * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+             */
+            pointsTable: Array<number>;
+            /**
+             * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+             */
+            didNotFinishPoints: number;
+        };
+    } | {
+        participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS';
+        /**
+         * Knockout round-points settings: the value of a win in each round and the upset bonus.
+         */
+        config: {
+            /**
+             * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+             */
+            roundValues: Array<number>;
+            /**
+             * The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed.
+             */
+            upsetBonus: {
+                rule: 'SEED_DIFFERENCE';
+                /**
+                 * What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus.
+                 */
+                multiplier: number;
+            } | {
+                rule: 'NONE';
+            };
+        };
+    };
 };
 
 /**
@@ -3021,6 +3078,24 @@ export type ContestManagementDetailDto = {
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
+    } | {
+        selectionType: 'PICK_EM';
+        /**
+         * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+         */
+        mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+        /**
+         * Contest-configuration identifier.
+         */
+        id: string;
+        /**
+         * Contest that owns the configuration.
+         */
+        contestId: string;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
     };
     /**
      * When the contest was created.
@@ -3063,11 +3138,11 @@ export type ContestConfigTemplateDto = {
     /**
      * Contest type that may use the template.
      */
-    contestFormat: 'ROSTER';
+    contestFormat: 'ROSTER' | 'PREDICTION';
     /**
      * How an entry picks in a contest created from this template.
      */
-    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
     /**
      * Stable machine key for the template.
      */
@@ -3282,6 +3357,63 @@ export type ContestConfigTemplateDto = {
                 };
             };
         };
+    } | {
+        selectionType: 'PICK_EM';
+        /**
+         * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+         */
+        mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        } | {
+            participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS';
+            /**
+             * Knockout round-points settings: the value of a win in each round and the upset bonus.
+             */
+            config: {
+                /**
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 */
+                roundValues: Array<number>;
+                /**
+                 * The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed.
+                 */
+                upsetBonus: {
+                    rule: 'SEED_DIFFERENCE';
+                    /**
+                     * What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus.
+                     */
+                    multiplier: number;
+                } | {
+                    rule: 'NONE';
+                };
+            };
+        };
     };
 };
 
@@ -3426,6 +3558,24 @@ export type ContestManagementResponse = {
              * Maximum entries a Team may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
+        } | {
+            selectionType: 'PICK_EM';
+            /**
+             * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+             */
+            mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+            /**
+             * Contest-configuration identifier.
+             */
+            id: string;
+            /**
+             * Contest that owns the configuration.
+             */
+            contestId: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
         };
         /**
          * When the contest was created.
@@ -3461,7 +3611,7 @@ export type ListContestConfigTemplatesQuery = {
     /**
      * Only templates for this contest format.
      */
-    contestFormat?: 'ROSTER';
+    contestFormat?: 'ROSTER' | 'PREDICTION';
     /**
      * Templates for this event type, plus the ones that apply to any event type.
      */
@@ -3496,11 +3646,11 @@ export type ContestConfigTemplateListResponse = {
         /**
          * Contest type that may use the template.
          */
-        contestFormat: 'ROSTER';
+        contestFormat: 'ROSTER' | 'PREDICTION';
         /**
          * How an entry picks in a contest created from this template.
          */
-        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
         /**
          * Stable machine key for the template.
          */
@@ -3664,6 +3814,63 @@ export type ContestConfigTemplateListResponse = {
              * How many golfer scores count toward the entry total, best first. At most the roster size.
              */
             countedScores: number;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+            /**
+             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             */
+            scoring?: {
+                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
+            } | {
+                participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+                /**
+                 * Finish-position points settings: the contest's points table and its "did not finish" value.
+                 */
+                config: {
+                    /**
+                     * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                     */
+                    pointsTable: Array<number>;
+                    /**
+                     * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                     */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS';
+                /**
+                 * Knockout round-points settings: the value of a win in each round and the upset bonus.
+                 */
+                config: {
+                    /**
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     */
+                    roundValues: Array<number>;
+                    /**
+                     * The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed.
+                     */
+                    upsetBonus: {
+                        rule: 'SEED_DIFFERENCE';
+                        /**
+                         * What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus.
+                         */
+                        multiplier: number;
+                    } | {
+                        rule: 'NONE';
+                    };
+                };
+            };
+        } | {
+            selectionType: 'PICK_EM';
+            /**
+             * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+             */
+            mode: 'STRAIGHT_UP' | 'CONFIDENCE';
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -3929,6 +4136,63 @@ export type UpdateContestConfigTemplateRequest = {
                 };
             };
         };
+    } | {
+        selectionType: 'PICK_EM';
+        /**
+         * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+         */
+        mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        } | {
+            participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS';
+            /**
+             * Knockout round-points settings: the value of a win in each round and the upset bonus.
+             */
+            config: {
+                /**
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 */
+                roundValues: Array<number>;
+                /**
+                 * The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed.
+                 */
+                upsetBonus: {
+                    rule: 'SEED_DIFFERENCE';
+                    /**
+                     * What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus.
+                     */
+                    multiplier: number;
+                } | {
+                    rule: 'NONE';
+                };
+            };
+        };
     };
 };
 
@@ -3959,11 +4223,11 @@ export type ContestConfigTemplateResponse = {
         /**
          * Contest type that may use the template.
          */
-        contestFormat: 'ROSTER';
+        contestFormat: 'ROSTER' | 'PREDICTION';
         /**
          * How an entry picks in a contest created from this template.
          */
-        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
         /**
          * Stable machine key for the template.
          */
@@ -4127,6 +4391,63 @@ export type ContestConfigTemplateResponse = {
              * How many golfer scores count toward the entry total, best first. At most the roster size.
              */
             countedScores: number;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number | null;
+            /**
+             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             */
+            scoring?: {
+                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
+            } | {
+                participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+                /**
+                 * Finish-position points settings: the contest's points table and its "did not finish" value.
+                 */
+                config: {
+                    /**
+                     * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                     */
+                    pointsTable: Array<number>;
+                    /**
+                     * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                     */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS';
+                /**
+                 * Knockout round-points settings: the value of a win in each round and the upset bonus.
+                 */
+                config: {
+                    /**
+                     * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                     */
+                    roundValues: Array<number>;
+                    /**
+                     * The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed.
+                     */
+                    upsetBonus: {
+                        rule: 'SEED_DIFFERENCE';
+                        /**
+                         * What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus.
+                         */
+                        multiplier: number;
+                    } | {
+                        rule: 'NONE';
+                    };
+                };
+            };
+        } | {
+            selectionType: 'PICK_EM';
+            /**
+             * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+             */
+            mode: 'STRAIGHT_UP' | 'CONFIDENCE';
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -7548,13 +7869,13 @@ export type CreateContestRequest = {
      */
     sportEventIds: Array<string>;
     /**
-     * First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
+     * ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). It must be the format the selection type plays (PICK_EM is PREDICTION, every other type ROSTER) and one the event's tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise.
      */
-    contestFormat: 'ROSTER';
+    contestFormat: 'ROSTER' | 'PREDICTION';
     /**
      * How an entry picks: the selection types with typed rules. It must match the template's selection type when a template is named, and the configuration's.
      */
-    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
     /**
      * Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.
      */
@@ -7745,6 +8066,63 @@ export type CreateContestRequest = {
                 };
             };
         };
+    } | {
+        selectionType: 'PICK_EM';
+        /**
+         * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+         */
+        mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+        /**
+         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         */
+        scoring?: {
+            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            config: {
+                [key: string]: never;
+            };
+        } | {
+            participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
+            /**
+             * Finish-position points settings: the contest's points table and its "did not finish" value.
+             */
+            config: {
+                /**
+                 * Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1].
+                 */
+                pointsTable: Array<number>;
+                /**
+                 * What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0.
+                 */
+                didNotFinishPoints: number;
+            };
+        } | {
+            participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS';
+            /**
+             * Knockout round-points settings: the value of a win in each round and the upset bonus.
+             */
+            config: {
+                /**
+                 * Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32].
+                 */
+                roundValues: Array<number>;
+                /**
+                 * The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed.
+                 */
+                upsetBonus: {
+                    rule: 'SEED_DIFFERENCE';
+                    /**
+                     * What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus.
+                     */
+                    multiplier: number;
+                } | {
+                    rule: 'NONE';
+                };
+            };
+        };
     };
 };
 
@@ -7864,8 +8242,8 @@ export type ContestDto = {
     id: string;
     name: string;
     status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
-    contestFormat: 'ROSTER';
-    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+    contestFormat: 'ROSTER' | 'PREDICTION';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
     leagueId: string;
     /**
      * The events the contest covers, in sequence order (#713). One for a golf or race contest.
@@ -7991,7 +8369,7 @@ export type ContestEntryPickDto = {
     /**
      * Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.
      */
-    contestFormat: 'ROSTER';
+    contestFormat: 'ROSTER' | 'PREDICTION';
     /**
      * Unused: no built contest format sets it, so it is always null. Removal is tracked in #632.
      */
@@ -8726,8 +9104,8 @@ export type ContestResponse = {
         id: string;
         name: string;
         status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
-        contestFormat: 'ROSTER';
-        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+        contestFormat: 'ROSTER' | 'PREDICTION';
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
         leagueId: string;
         /**
          * The events the contest covers, in sequence order (#713). One for a golf or race contest.
@@ -8778,8 +9156,8 @@ export type ContestListResponse = {
         id: string;
         name: string;
         status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
-        contestFormat: 'ROSTER';
-        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+        contestFormat: 'ROSTER' | 'PREDICTION';
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
         leagueId: string;
         /**
          * The events the contest covers, in sequence order (#713). One for a golf or race contest.
@@ -9155,7 +9533,7 @@ export type SelectionStateResponse = {
      * Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started.
      */
     acceptsPicks: boolean;
-    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
     /**
      * When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
      */
@@ -9286,7 +9664,7 @@ export type SelectionPickResponse = {
      * Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started.
      */
     acceptsPicks: boolean;
-    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM';
     /**
      * When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
      */
@@ -9401,6 +9779,116 @@ export type SelectionPickResponse = {
          */
         cheapestFill: number | null;
     } | null;
+};
+
+/**
+ * Request payload for saving an entry's picks on one event's games.
+ */
+export type SaveGamePicksRequest = {
+    /**
+     * The picks to save, one per game. Each replaces the entry's pick on that game; the entry's other picks are kept. Saved together or not at all, so two confidence values can be swapped in one request.
+     */
+    picks: Array<{
+        /**
+         * The game picked: one of the event's games.
+         */
+        sportEventMatchId: string;
+        /**
+         * The team picked to win: the field row of one of the game's two teams.
+         */
+        sportEventParticipantId: string;
+        /**
+         * A confidence pool's value for this pick, 1 to the week's number of games. Omitted or null in a straight-up pool, and until the entry gives one. A value may repeat until the week is submitted.
+         */
+        confidence?: number | null;
+    }>;
+};
+
+/**
+ * A prediction contest entry's picks on one event's games.
+ */
+export type GamePicksResponse = {
+    contestId: string;
+    entryId: string;
+    entryName: string;
+    sportEventId: string;
+    mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+    /**
+     * The entry's status for this event: DRAFT while picking, SUBMITTED once every game is picked and submitted. Only a submitted event counts.
+     */
+    status: 'DRAFT' | 'SUBMITTED';
+    submittedAt: string | null;
+    /**
+     * Whether the caller is on the entry's team, and so sees every pick on it.
+     */
+    ownEntry: boolean;
+    /**
+     * Whether the caller can submit the event now: their own draft entry, every game picked with valid confidence values, before the first game starts.
+     */
+    canSubmit: boolean;
+    /**
+     * How many of the games have a pick. Counted on the caller's own entry; on another team's, only revealed games are counted.
+     */
+    pickedCount: number;
+    gameCount: number;
+    /**
+     * The event's games in game-number order. Cancelled games are left out: they are not picked.
+     */
+    games: Array<{
+        sportEventMatchId: string;
+        matchNumber: number;
+        roundNumber: number;
+        /**
+         * When the game starts: its scheduled time, else its event's start. Its pick locks then.
+         */
+        kickoff: string;
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        isNeutralSite: boolean;
+        /**
+         * Null until the team is decided.
+         */
+        home: {
+            /**
+             * The team's field row in the event: what a pick names.
+             */
+            sportEventParticipantId: string;
+            participantId: string;
+            name: string;
+        } | null;
+        /**
+         * Null until the team is decided.
+         */
+        away: {
+            /**
+             * The team's field row in the event: what a pick names.
+             */
+            sportEventParticipantId: string;
+            participantId: string;
+            name: string;
+        } | null;
+        /**
+         * Whether the game's pick can no longer change: it has kicked off, or the contest no longer takes picks.
+         */
+        locked: boolean;
+        /**
+         * Whether picks on this game are shown to the whole league: from its kickoff once the contest is live.
+         */
+        revealed: boolean;
+        /**
+         * The entry's pick on the game. Null when it has none, and on another team's entry until the game is revealed.
+         */
+        pick: {
+            /**
+             * The team picked to win.
+             */
+            sportEventParticipantId: string;
+            /**
+             * The pick's confidence value; null in a straight-up pool or until given.
+             */
+            confidence: number | null;
+            pickedAt: string;
+        } | null;
+    }>;
 };
 
 /**
@@ -16243,7 +16731,7 @@ export type ListContestConfigTemplatesData = {
         /**
          * Only templates for this contest format.
          */
-        contestFormat?: 'ROSTER';
+        contestFormat?: 'ROSTER' | 'PREDICTION';
         /**
          * Templates for this event type, plus the ones that apply to any event type.
          */
@@ -19266,6 +19754,187 @@ export type SubmitContestEntryResponses = {
 };
 
 export type SubmitContestEntryResponse = SubmitContestEntryResponses[keyof SubmitContestEntryResponses];
+
+export type GetGamePicksData = {
+    body?: never;
+    path: {
+        contestId: string;
+        entryId: string;
+        sportEventId: string;
+    };
+    query?: never;
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks';
+};
+
+export type GetGamePicksErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type GetGamePicksError = GetGamePicksErrors[keyof GetGamePicksErrors];
+
+export type GetGamePicksResponses = {
+    /**
+     * A prediction contest entry's picks on one event's games.
+     */
+    200: GamePicksResponse;
+};
+
+export type GetGamePicksResponse = GetGamePicksResponses[keyof GetGamePicksResponses];
+
+export type SaveGamePicksData = {
+    body: SaveGamePicksRequest;
+    path: {
+        contestId: string;
+        entryId: string;
+        sportEventId: string;
+    };
+    query?: never;
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks';
+};
+
+export type SaveGamePicksErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type SaveGamePicksError = SaveGamePicksErrors[keyof SaveGamePicksErrors];
+
+export type SaveGamePicksResponses = {
+    /**
+     * A prediction contest entry's picks on one event's games.
+     */
+    200: GamePicksResponse;
+};
+
+export type SaveGamePicksResponse = SaveGamePicksResponses[keyof SaveGamePicksResponses];
+
+export type ClearGamePickData = {
+    body?: never;
+    path: {
+        contestId: string;
+        entryId: string;
+        sportEventId: string;
+        sportEventMatchId: string;
+    };
+    query?: never;
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks/{sportEventMatchId}';
+};
+
+export type ClearGamePickErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type ClearGamePickError = ClearGamePickErrors[keyof ClearGamePickErrors];
+
+export type ClearGamePickResponses = {
+    /**
+     * A prediction contest entry's picks on one event's games.
+     */
+    200: GamePicksResponse;
+};
+
+export type ClearGamePickResponse = ClearGamePickResponses[keyof ClearGamePickResponses];
+
+export type SubmitGamePicksData = {
+    body?: never;
+    path: {
+        contestId: string;
+        entryId: string;
+        sportEventId: string;
+    };
+    query?: never;
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks/submit';
+};
+
+export type SubmitGamePicksErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type SubmitGamePicksError = SubmitGamePicksErrors[keyof SubmitGamePicksErrors];
+
+export type SubmitGamePicksResponses = {
+    /**
+     * A prediction contest entry's picks on one event's games.
+     */
+    200: GamePicksResponse;
+};
+
+export type SubmitGamePicksResponse = SubmitGamePicksResponses[keyof SubmitGamePicksResponses];
 
 export type RunContestDrawData = {
     body?: never;

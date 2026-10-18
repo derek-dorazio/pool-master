@@ -273,6 +273,20 @@ export interface ContestEntryPick extends DomainEntity {
   pickedAt: Date;
 }
 
+/**
+ * A prediction contest entry's pick of one game (#716): the team it says wins, and in a
+ * confidence pool the value it gives that pick. One per entry per game.
+ */
+export interface ContestEntryMatchPrediction extends DomainEntity {
+  contestEntryId: string;
+  sportEventMatchId: string;
+  /** The field row of the team picked to win. */
+  sportEventParticipantId: string;
+  /** Null in a straight-up pool, and in a confidence pool until the entry gives one. */
+  confidence: number | null;
+  pickedAt: Date;
+}
+
 // --- Payout Configuration ---
 
 export interface PayoutConfig {

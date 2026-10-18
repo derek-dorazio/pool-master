@@ -37,6 +37,7 @@ import {
   SelectionType,
   LeagueMembershipStatus,
   contestEntryEventStatus,
+  isPredictionSelectionType,
   type ContestEntry,
   type Participant,
 } from '@poolmaster/shared/domain';
@@ -179,7 +180,7 @@ export class SelectionService {
       throw selectionErrors.contestNotFound(input.contestId);
     }
 
-    const engine = getSelectionEngine(context.contest.selectionType);
+    const engine = getSelectionEngine(context.selectionType);
 
     return this.buildRoomView({
       context,
@@ -214,7 +215,7 @@ export class SelectionService {
     );
     if (!ownsRequestedEntry) throw selectionErrors.entryAccessDenied();
 
-    const engine = getSelectionEngine(context.contest.selectionType);
+    const engine = getSelectionEngine(context.selectionType);
 
     // Placing, swapping and unselecting alike: once the contest leaves OPEN its picks are
     // revealed to the league, so a change after that would be made with the others in view;
@@ -338,7 +339,7 @@ export class SelectionService {
     );
     if (!ownsEntry) throw selectionErrors.entryAccessDenied();
 
-    const engine = getSelectionEngine(context.contest.selectionType);
+    const engine = getSelectionEngine(context.selectionType);
 
     if (!context.acceptsPicks) {
       this.deps.logger?.warn(
@@ -411,7 +412,7 @@ export class SelectionService {
     if (!context.acceptsPicks) throw selectionErrors.drawEventStarted(contestId);
     if (context.entries.length === 0) throw selectionErrors.drawNoEntries(contestId);
 
-    const engine = getSelectionEngine(contest.selectionType);
+    const engine = getSelectionEngine(context.selectionType);
     const picksPerEntry = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
     if (picksPerEntry <= 0) throw selectionErrors.selectionConfigInvalid(contestId);
 
@@ -548,6 +549,10 @@ export class SelectionService {
   ): Promise<SelectionContext> {
     const contest = await this.deps.contests.findById(contestId);
     if (!contest) throw selectionErrors.contestNotFound(contestId);
+    const { selectionType } = contest;
+    if (isPredictionSelectionType(selectionType)) {
+      throw selectionErrors.contestTakesGamePicks(contestId);
+    }
 
     const now = this.now();
     const eventsById = new Map(
@@ -580,6 +585,7 @@ export class SelectionService {
 
     return {
       contest,
+      selectionType,
       sportEvent,
       configuration,
       entries,

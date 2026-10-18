@@ -6,6 +6,7 @@
 
 import type {
   Contest,
+  RosterSelectionType,
   ContestConfiguration,
   ContestEntry,
   ContestEntryStatus,
@@ -58,6 +59,8 @@ export interface ParticipantValuation {
  */
 export interface SelectionContext {
   contest: Contest;
+  /** The contest's selection type: the room serves roster contests only (#716). */
+  selectionType: RosterSelectionType;
   /**
    * The contest event the operation is about (#713): its field, tiers and prices are the ones
    * below, and only its picks count. A contest of one event always has that one.

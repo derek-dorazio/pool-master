@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SelectionType } from './enums';
+import { PickEmMode, SelectionType } from './enums';
 import { BUDGET_SALARY_CAP_MAX } from './budget-pricing';
 import { ContestScoringSettingsSchema } from './contest-scoring';
 
@@ -15,7 +15,10 @@ import { ContestScoringSettingsSchema } from './contest-scoring';
  * - **Random draw:** nobody picks. The commissioner's draw deals each entry `picksPerEntry`
  *   members of the field at random (#601).
  *
- * In each, the best `countedScores` golfer scores count toward the entry's total.
+ * - **Pick'em:** a prediction contest (#716). The entry picks the winner of every game of each
+ *   of the contest's events; `mode` says whether it also ranks them by confidence.
+ *
+ * In each roster type, the best `countedScores` golfer scores count toward the entry's total.
  */
 
 /** The most golfers a budget roster may hold. */
@@ -51,11 +54,19 @@ export const RandomDrawContestRulesSchema = z.object({
 }).describe("Random-draw rules: the commissioner's draw deals every entry the same number of the field at random.");
 export type RandomDrawContestRules = z.infer<typeof RandomDrawContestRulesSchema>;
 
+export const PickEmContestRulesSchema = z.object({
+  selectionType: z.literal(SelectionType.PICK_EM),
+  mode: z.nativeEnum(PickEmMode)
+    .describe('STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.'),
+}).describe("Pick'em rules: pick the winner of every game of each event.");
+export type PickEmContestRules = z.infer<typeof PickEmContestRulesSchema>;
+
 /** The rules a commissioner chooses, and a template presets. */
 export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
   TieredContestRulesSchema,
   BudgetContestRulesSchema,
   RandomDrawContestRulesSchema,
+  PickEmContestRulesSchema,
 ]);
 export type ContestRules = z.infer<typeof ContestRulesSchema>;
 
@@ -70,6 +81,7 @@ export const ContestSelectionConfigSchema = z.discriminatedUnion('selectionType'
   TieredContestRulesSchema,
   BudgetContestConfigSchema,
   RandomDrawContestRulesSchema,
+  PickEmContestRulesSchema,
 ]);
 export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema>;
 
@@ -90,6 +102,7 @@ export const ContestRulesWithEntryLimitSchema = z.discriminatedUnion('selectionT
   TieredContestRulesSchema.extend(withEntryLimit),
   BudgetContestRulesSchema.extend(withEntryLimit),
   RandomDrawContestRulesSchema.extend(withEntryLimit),
+  PickEmContestRulesSchema.extend(withEntryLimit),
 ]);
 export type ContestRulesWithEntryLimit = z.infer<typeof ContestRulesWithEntryLimitSchema>;
 

@@ -35,6 +35,22 @@ export const selectionErrors = {
   contestHasNoEvent: (contestId: string) =>
     new SelectionError(`Contest ${contestId} covers no sport event yet`, 'CONTEST_EVENT_REQUIRED', 409),
 
+  /** The selection room picks a lineup; a pick'em contest's entries pick games instead (#716). */
+  contestTakesGamePicks: (contestId: string) =>
+    new SelectionError(
+      `Contest ${contestId} is a prediction contest; its entries pick the winners of games, not a lineup`,
+      'CONTEST_FORMAT_MISMATCH',
+      409,
+    ),
+
+  /** Game picks are a prediction contest's; a roster contest's entries pick a lineup (#716). */
+  contestTakesRosterPicks: (contestId: string) =>
+    new SelectionError(
+      `Contest ${contestId} is a roster contest; its entries pick a lineup, not the winners of games`,
+      'CONTEST_FORMAT_MISMATCH',
+      409,
+    ),
+
   entryNotFound: (entryId: string, contestId: string) =>
     new SelectionError(
       `Entry ${entryId} was not found for contest ${contestId}`,
@@ -225,6 +241,74 @@ export const selectionErrors = {
     new SelectionError(
       `Contest ${contestId}'s entries changed while it was being drawn; nothing was dealt, so run the draw again`,
       'CONTEST_DRAW_ENTRIES_CHANGED',
+      409,
+    ),
+
+  /** Only the entry's own squad, and members of its league, see its game picks (#716). */
+  entryViewDenied: () =>
+    new SelectionError(
+      'You can only view the entries of a league you belong to',
+      'ENTRY_ACCESS_DENIED',
+      403,
+    ),
+
+  /** A pick names one of the event's games (#716). */
+  gameNotFound: (sportEventMatchId: string, sportEventId: string) =>
+    new SelectionError(
+      `Game ${sportEventMatchId} is not one of event ${sportEventId}'s games`,
+      'PREDICTION_GAME_NOT_FOUND',
+      404,
+    ),
+
+  /** A pick names one of the two teams playing the game, so a game with a side still to be decided takes none. */
+  teamNotInGame: (sportEventParticipantId: string, sportEventMatchId: string) =>
+    new SelectionError(
+      `SportEventParticipant ${sportEventParticipantId} is not playing in game ${sportEventMatchId}`,
+      'PREDICTION_TEAM_NOT_IN_GAME',
+      400,
+    ),
+
+  /** Each game's pick locks at its kickoff (#716). */
+  gameStarted: (sportEventMatchId: string) =>
+    new SelectionError(
+      `Game ${sportEventMatchId} has started; its pick can no longer be changed`,
+      'PREDICTION_GAME_STARTED',
+      409,
+    ),
+
+  /** A week of games is picked while the contest takes picks (#716). */
+  weekLocked: (contestId: string, status: string) =>
+    new SelectionError(
+      `Contest ${contestId} is ${status}; game picks can only be changed while it takes picks`,
+      'CONTEST_ENTRY_LOCKED',
+      409,
+    ),
+
+  /** A week still in draft at its first kickoff doesn't count, so it can no longer be picked or submitted (#716). */
+  weekNotSubmittedInTime: (entryId: string, sportEventId: string) =>
+    new SelectionError(
+      `Entry ${entryId} did not submit event ${sportEventId}'s picks before its first game started, so they can no longer be changed or submitted`,
+      'CONTEST_ENTRY_LOCKED',
+      409,
+    ),
+
+  /** A confidence value is 1 to the week's game count, and only a confidence pool takes one (#716). */
+  confidenceInvalid: (detail: string) =>
+    new SelectionError(detail, 'PREDICTION_CONFIDENCE_INVALID', 409),
+
+  /** A week is submitted only once every game is picked (#716). */
+  weekIncomplete: (entryId: string, pickedCount: number, gameCount: number) =>
+    new SelectionError(
+      `Entry ${entryId} cannot be submitted until every game is picked: it has ${pickedCount} of ${gameCount}`,
+      'PREDICTION_WEEK_INCOMPLETE',
+      409,
+    ),
+
+  /** After the first kickoff a submitted week stays submitted: a pick can be swapped, not cleared (#716). */
+  clearAfterFirstKickoff: (sportEventMatchId: string) =>
+    new SelectionError(
+      `The week's first game has started; the pick on game ${sportEventMatchId} can be changed to the other team but not cleared`,
+      'PREDICTION_CLEAR_AFTER_FIRST_KICKOFF',
       409,
     ),
 } as const;

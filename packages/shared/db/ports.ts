@@ -8,6 +8,7 @@
 import type {
   Contest,
   ContestEntry,
+  ContestEntryMatchPrediction,
   ContestEntryStatus,
   League,
   LeagueInvitation,
@@ -310,7 +311,7 @@ export interface ContestRepository {
   /**
    * Sets the events the contest covers to `sportEventIds`, in that order (#713). In one
    * transaction under the contest row lock: each entry gets a DRAFT status row for every added
-   * event, and loses its status row and its picks on every removed one.
+   * event, and loses its status row and its picks (roster and game picks) on every removed one.
    */
   replaceSportEvents(id: string, sportEventIds: readonly string[]): Promise<void>;
   /**
@@ -380,5 +381,30 @@ export interface ContestEntryRepository {
    */
   setEventStatus(id: string, sportEventId: string, status: ContestEntryStatus, at: Date): Promise<ContestEntry>;
   delete(id: string): Promise<ContestEntryDeleteResult>;
+}
+
+/** One game's pick as it is saved (#716): replaces the entry's pick on that game, if any. */
+export interface ContestEntryMatchPredictionWrite {
+  sportEventMatchId: string;
+  sportEventParticipantId: string;
+  confidence: number | null;
+}
+
+/** A change to an entry's picks for one event's games, written all or none. */
+export interface ContestEntryMatchPredictionSave {
+  contestEntryId: string;
+  sportEventId: string;
+  saves: readonly ContestEntryMatchPredictionWrite[];
+  /** Games whose pick is removed. */
+  clearedMatchIds: readonly string[];
+  /** The entry's status for the event after the change, when it changes; stamped as `setEventStatus` does. */
+  eventStatus: ContestEntryStatus | null;
+  at: Date;
+}
+
+export interface ContestEntryMatchPredictionRepository {
+  /** The entry's picks on the event's games. */
+  findByEntryAndEvent(contestEntryId: string, sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
+  save(change: ContestEntryMatchPredictionSave): Promise<void>;
 }
 
