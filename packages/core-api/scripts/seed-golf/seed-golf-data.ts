@@ -30,6 +30,21 @@ export function shiftedEventDates(event: Pick<SportDataEvent, 'startDate' | 'end
   return { startDate: shift(start), endDate: shift(end) };
 }
 
+/** The file with every match time moved by the offset (the file itself for real data). */
+export function shiftedMatchTimes(file: SportDataFile, offsetDays: number): SportDataFile {
+  if (offsetDays === 0) return file;
+  const shift = (scheduledAt: string) => new Date(Date.parse(scheduledAt) + offsetDays * DAY_MS).toISOString();
+  return {
+    ...file,
+    sportLeagues: file.sportLeagues.map((league) => ({
+      ...league,
+      events: league.events.map((event) => (event.matches
+        ? { ...event, matches: event.matches.map((match) => (match.scheduledAt === undefined ? match : { ...match, scheduledAt: shift(match.scheduledAt) })) }
+        : event)),
+    })),
+  };
+}
+
 type RoundStatus = 'COMPLETED' | 'MISSED_CUT' | 'DNF';
 
 /** One golfer's round as the score upload takes it, or null when they did not play it. */

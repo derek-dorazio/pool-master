@@ -5,6 +5,7 @@ import {
   golferRoundScore,
   seedDateOffsetDays,
   shiftedEventDates,
+  shiftedMatchTimes,
 } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import { parseSportDataFile, SportDataContent, TEST_SEED_CONTENTS, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 
@@ -208,6 +209,46 @@ describe('running-2027.json', () => {
       ['Chicago Marathon', '2027-10-10', '2027-10-10', 1, null],
     ]);
     expect(eventRows(file, 1)).toEqual(eventRows(file, 0));
+  });
+});
+
+describe('american-football-2026-nfl-playoffs-test.json', () => {
+  const file = readDataFile('american-football-2026-nfl-playoffs-test.json', true);
+  const [nfl] = file.sportLeagues;
+  const [playoffs] = nfl.events;
+  const matches = playoffs.matches ?? [];
+
+  it('is a test seed of one NFL playoffs bracket that reseeds, with fourteen teams seeded 1 to 7 in each conference', () => {
+    expect(file.scope).toEqual({
+      sport: Sport.AMERICAN_FOOTBALL,
+      season: 2026,
+      sportLeagues: ['NFL'],
+      contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS],
+    });
+    expect(nfl.bracketAdvancement).toBe('RESEED_BY_SEED');
+    expect([playoffs.rounds, playoffs.startDate, playoffs.endDate]).toEqual([4, '2026-01-10', '2026-02-08']);
+    expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]);
+  });
+
+  it('plays the 2025 season as it went: six Wild Card games, the 1 seeds on a bye, and the Seahawks beating the Patriots 29-13', () => {
+    expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
+    expect(matches.filter((match) => match.roundNumber === 1).every((match) => match.advancesTo === null)).toBe(true);
+    expect(matches.filter((match) => match.roundNumber === 2).map((match) => [match.home, match.away])).toEqual([
+      ['nfl-denver-broncos', null], [null, null], ['nfl-seattle-seahawks', null], [null, null],
+    ]);
+    expect(matches.every((match) => match.result !== undefined)).toBe(true);
+    expect(matches[12]).toMatchObject({ isNeutralSite: true, result: { winner: 'AWAY', homeScore: 13, awayScore: 29 } });
+  });
+});
+
+describe('test seed match times', () => {
+  it('move by the same whole days as the event dates, and stay put when the offset is zero', () => {
+    const file = readDataFile('american-football-2026-nfl-playoffs-test.json', true);
+    const shifted = shiftedMatchTimes(file, 280);
+
+    expect(shifted.sportLeagues[0].events[0].matches?.[0].scheduledAt).toBe('2026-10-19T01:15:00.000Z');
+    expect(file.sportLeagues[0].events[0].matches?.[0].scheduledAt).toBe('2026-01-12T01:15:00Z');
+    expect(shiftedMatchTimes(file, 0)).toBe(file);
   });
 });
 

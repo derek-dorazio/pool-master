@@ -9,7 +9,8 @@
  * Every sport in the registry loads a real schedule and fields in the one event shape below:
  * name, dates, venue, location and rounds, plus par for a stroke-play sport (golf) and an
  * optional start time for a sport whose cutoff is a set moment (a race's post time). A test
- * seed is golf's alone, because its made-up results are stroke rounds.
+ * seed is golf's or a bracket sport's, because its made-up results are stroke rounds or match
+ * results; a bracket sport's seed is a played bracket, entered after release round by round.
  *
  * A sport that plays a bracket (basketball) may also carry each event's bracket: its matches,
  * where each winner moves on to, and the field places that stand for a play-in pairing. The
@@ -93,6 +94,16 @@ const MatchSchema = z.object({
   advancesTo: z.object({ matchNumber: z.number().int().min(1), side: z.nativeEnum(MatchSide) }).strict().nullable(),
   /** The region or conference the match is played in ("AFC", "East"); left out for none. */
   regionLabel: z.string().min(1).max(40).optional(),
+  /**
+   * Test data only (RESULTS): the match's result, entered after release in round order. `winner`
+   * is the side as the match stands when its result goes in: in a reseeded round, the side the
+   * server's reseed placed the team on.
+   */
+  result: z.object({
+    winner: z.nativeEnum(MatchSide),
+    homeScore: z.number().int().min(0),
+    awayScore: z.number().int().min(0),
+  }).strict().optional(),
 }).strict();
 
 const EventSchema = z.object({
@@ -173,7 +184,10 @@ const TEST_ONLY_FIELD_KEYS = ['oddsToWin', 'rounds', 'finish', 'withdrawnThru'] 
 
 const TEST_SLATE_CONTENTS: readonly SportDataContent[] = [SportDataContent.PLAYERS, SportDataContent.FIELDS];
 
-/** What a test seed holds: a golf season with made-up results, which plays no bracket. */
+/**
+ * What every test seed holds. A golf seed's results are made-up stroke rounds; a bracket sport's
+ * seed adds BRACKET, and its results are each match's.
+ */
 export const TEST_SEED_CONTENTS: readonly SportDataContent[] = [
   SportDataContent.SCHEDULE,
   SportDataContent.PLAYERS,
@@ -219,6 +233,7 @@ function bracketProblems(league: SportDataLeague, event: SportDataEvent, matches
       isNeutralSite: match.isNeutralSite,
       scheduledDate: null,
       advancesTo: match.advancesTo,
+      regionLabel: match.regionLabel ?? null,
     })),
     {
       roundNumbers: new Set(Array.from({ length: event.rounds }, (_, index) => index + 1)),
@@ -267,23 +282,28 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
     }
     for (const entry of event.field) {
       if (!playerKeys.has(entry.player)) problems.push(`${where}: ${entry.player} is not in ${league.name}'s players.`);
-      if (file.testData) {
+      if (file.testData && !playsBracket) {
         if (entry.oddsToWin === undefined || entry.rounds === undefined) {
           problems.push(`${where}: ${entry.player} needs oddsToWin and rounds in test data.`);
         }
+      } else if (file.testData) {
+        if (entry.oddsToWin === undefined) problems.push(`${where}: ${entry.player} needs oddsToWin in test data.`);
+        const golfOnly = (['rounds', 'finish', 'withdrawnThru'] as const).filter((key) => entry[key] !== undefined);
+        if (golfOnly.length > 0) problems.push(`${where}: ${entry.player} carries ${golfOnly.join(', ')}, which only a golf test seed has.`);
       } else {
         const madeUp = TEST_ONLY_FIELD_KEYS.filter((key) => entry[key] !== undefined);
         if (madeUp.length > 0) problems.push(`${where}: ${entry.player} carries ${madeUp.join(', ')}, which only test data may.`);
       }
     }
     if (!file.testData && event.winner !== undefined) problems.push(`${where}: carries a winner, which only test data may.`);
-    if (file.testData && event.roundsPar === null) problems.push(`${where}: needs roundsPar in test data, to score its rounds.`);
+    if (file.testData && !playsBracket && event.roundsPar === null) problems.push(`${where}: needs roundsPar in test data, to score its rounds.`);
+    if (!file.testData && matches.some((match) => match.result !== undefined)) problems.push(`${where}: carries match results, which only test data may.`);
   }
 }
 
 /**
  * Reads a parsed JSON file as sport data, or throws SportDataFileError listing every problem:
- * an unknown schema version, a sport outside the registry, a test seed of a sport other than golf, data outside
+ * an unknown schema version, a sport outside the registry, a test seed of a sport with neither stroke rounds nor a bracket, data outside
  * the envelope's scope, made-up data in a real file, or test data where it is not allowed.
  */
 export function parseSportDataFile(json: unknown, options: ParseSportDataFileOptions): SportDataFile {
@@ -303,11 +323,11 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
     problems.push(`scope.sport ${sport} is not a sport in the sport registry.`);
   }
   const strokePlay = isSport(sport) && getSportDefinition(sport).scoringFamily === ScoringFamily.STROKE_PLAY;
-  if (isSport(sport) && file.testData && !slate && !strokePlay) {
-    problems.push(`scope.sport ${sport} cannot have a test seed: its made-up results are stroke rounds, so only golf has one. Use a real file or a test slate.`);
+  const playsBracket = isSport(sport) && sportPlaysBracket(sport);
+  if (isSport(sport) && file.testData && !slate && !strokePlay && !playsBracket) {
+    problems.push(`scope.sport ${sport} cannot have a test seed: a test seed's results are golf's stroke rounds or a bracket's match results. Use a real file or a test slate.`);
   }
 
-  const playsBracket = isSport(sport) && sportPlaysBracket(sport);
   const contents = new Set(file.scope.contents);
   if (contents.has(SportDataContent.FIELDS) && !contents.has(SportDataContent.PLAYERS)) {
     problems.push('scope.contents has FIELDS without PLAYERS: a field names its players, so the file carries them.');
@@ -329,6 +349,9 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
     const missing = TEST_SEED_CONTENTS.filter((content) => !contents.has(content));
     if (!slate && missing.length > 0) {
       problems.push(`testData needs ${TEST_SEED_CONTENTS.join(', ')} (a test seed), or just PLAYERS and FIELDS (a test slate); missing ${missing.join(', ')}.`);
+    }
+    if (!slate && playsBracket && !contents.has(SportDataContent.BRACKET)) {
+      problems.push('A bracket sport\'s test seed needs BRACKET: its results are the bracket\'s match results.');
     }
     if (!options.allowTestData) problems.push('testData is true, and this target does not take test data.');
   } else if (contents.has(SportDataContent.RESULTS)) {

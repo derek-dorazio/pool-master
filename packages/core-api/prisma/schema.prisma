@@ -263,6 +263,7 @@ enum PrismaSport {
   CYCLING
   RUNNING
   BASKETBALL
+  AMERICAN_FOOTBALL
 }
 
 /// Tournament structural format — drives which contest types are valid

@@ -280,8 +280,8 @@ event or writes odds, tiers, prices or scores; those stay admin actions here.
 without it an event starts at noon UTC on its start date. An event of a sport whose finishing
 order an admin enters (every racing sport) is created with automatic lifecycle off, and one
 already on the site has it turned off, so it never completes, and settles, before its result
-is in. A test seed is golf's only, because
-its made-up results are stroke rounds; any sport may have a test slate.
+is in. A test seed is golf's or a bracket sport's, because its made-up results are stroke
+rounds or match results; any sport may have a test slate.
 
 **The file says what it is.** Each file starts with an envelope: `schemaVersion`, a `scope`
 (sport from the sport registry, season, sport leagues, and `contents` from `SCHEDULE`,
@@ -344,3 +344,25 @@ is treated as the seed's, so reset QA first for a clean set.
 
 The data file is `packages/core-api/scripts/seed-golf/golf-2026.json`, rebuilt by
 `npm run seed:golf:build` from the mock provider's tour files (same answer every time).
+
+## Seeded NFL playoffs
+
+`american-football-2026-nfl-playoffs-test.json` is a test seed of a bracket: the NFL playoffs of
+the 2025 season (played January and February 2026) as they went, for trying knockout contests
+and the reseed. Seeds, pairings, kickoffs and scores are real; the odds are made up. Load it
+with `mode` `apply` like any file. It loads into the `NFL` sport league, which the migrations
+create with its reseed rule. Because its envelope says `testData`:
+
+- **Dates moved forward by whole weeks**, the kickoffs with them, so the Wild Card weekend
+  starts at least a week after the run.
+- **Released** with automatic lifecycle off, its 14 teams tiered by odds (seven tiers of two)
+  and priced.
+- **Every result already entered**, round by round through the bracket's own calls: the Wild
+  Card games, the Divisional round placed by the server's reseed (each 1 seed hosts the lowest
+  seed left in its conference), the conference championships and Super Bowl LX, which the
+  Seattle Seahawks win 29-13 over the New England Patriots.
+
+To test a contest end to end, create and open it and submit entries, then on the event's
+Workflow card *Move to In Progress* and *Move to Completed*, as for the golf seed above.
+Running it again skips everything.
+

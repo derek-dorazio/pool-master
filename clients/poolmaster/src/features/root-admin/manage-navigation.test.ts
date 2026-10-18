@@ -51,6 +51,7 @@ describe('Manage menu and breadcrumbs per sport', () => {
       ['Cycling', false],
       ['Running', false],
       ['Basketball', false],
+      ['American football', false],
     ]);
   });
 
