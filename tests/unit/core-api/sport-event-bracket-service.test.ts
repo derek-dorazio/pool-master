@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { MatchSide, MatchStatus, ParticipantStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { BracketAdvancement, MatchSide, MatchStatus, ParticipantStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
   SportEventBracketService,
@@ -312,5 +312,101 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
 
     await expect(service.fillPlayInSlot(event.id, slot.id, xavier.id))
       .rejects.toMatchObject({ code: 'PLAY_IN_SLOT_ALREADY_PLAYED', statusCode: 409 });
+  });
+});
+
+describe('SportEventBracketService round matchups (reseeded bracket)', () => {
+  /**
+   * A released bracket whose league reseeds: two unlinked semifinals, so the final's sides wait to
+   * be placed by seed. `reseeds: false` switches the league to a fixed bracket after the load, as
+   * an admin can; `release: false` leaves the event a draft.
+   */
+  async function reseededSetup({ reseeds = true, release = true, bracket }: { reseeds?: boolean; release?: boolean; bracket?: (context: ReturnType<typeof setup>) => BracketMatchInput[] } = {}) {
+    const context = setup();
+    const sportLeagues = context.store.sportLeagueRepo();
+    await sportLeagues.update(context.event.sportLeagueId, { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
+    const unlinked = bracketOf(context).map((match) => ({ ...match, advancesTo: null }));
+    await context.service.loadBracket(context.event.id, bracket ? bracket(context) : unlinked);
+    if (!reseeds) await sportLeagues.update(context.event.sportLeagueId, { bracketAdvancement: BracketAdvancement.FIXED });
+    if (release) context.event.status = SportEventStatus.SCHEDULED;
+    return context;
+  }
+
+  /** Every match of the round won by its home side. */
+  function finishRound(context: ReturnType<typeof setup>, roundNumber: number): void {
+    for (const match of context.store.matchRows.filter((row) => row.roundNumber === roundNumber)) {
+      Object.assign(match, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
+    }
+  }
+
+  it('proposes the best seed left hosting the worst once the round before is finished, and places it', async () => {
+    const context = await reseededSetup();
+    finishRound(context, 1);
+
+    const proposal = await context.service.proposeRoundMatchups(context.event.id, 2);
+    expect(proposal).toEqual([{ matchNumber: 3, homeSportEventParticipantId: context.duke.id, awaySportEventParticipantId: context.houston.id }]);
+
+    const bracket = await context.service.setRoundMatchups(context.event.id, 2, proposal);
+    expect(expectDefined(bracket.find((match) => match.matchNumber === 3))).toMatchObject({
+      homeSportEventParticipantId: context.duke.id,
+      awaySportEventParticipantId: context.houston.id,
+    });
+  });
+
+  it('refuses (422 BRACKET_NOT_RESEEDED) both proposing and setting a round when the league\'s bracket does not reseed', async () => {
+    const context = await reseededSetup({ reseeds: false });
+    finishRound(context, 1);
+
+    await expect(context.service.proposeRoundMatchups(context.event.id, 2)).rejects.toMatchObject({ code: 'BRACKET_NOT_RESEEDED', statusCode: 422 });
+    await expect(context.service.setRoundMatchups(context.event.id, 2, []))
+      .rejects.toMatchObject({ code: 'BRACKET_NOT_RESEEDED', statusCode: 422 });
+  });
+
+  it('refuses (409 SPORT_EVENT_NOT_RELEASED) a draft event, whose pairings are set through the bracket itself', async () => {
+    const context = await reseededSetup({ release: false });
+
+    await expect(context.service.proposeRoundMatchups(context.event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED', statusCode: 409 });
+    await expect(context.service.setRoundMatchups(context.event.id, 2, []))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED', statusCode: 409 });
+  });
+
+  it('refuses (422 BRACKET_NOT_RESEEDED) a round whose sides are filled by the links of the round before', async () => {
+    const context = await reseededSetup({ bracket: bracketOf });
+    finishRound(context, 1);
+
+    await expect(context.service.proposeRoundMatchups(context.event.id, 2)).rejects.toMatchObject({ code: 'BRACKET_NOT_RESEEDED', statusCode: 422 });
+  });
+
+  it('refuses (409 BRACKET_ROUND_NOT_FINISHED) while a match of the round before has no result', async () => {
+    const context = await reseededSetup();
+
+    await expect(context.service.proposeRoundMatchups(context.event.id, 2)).rejects.toMatchObject({ code: 'BRACKET_ROUND_NOT_FINISHED', statusCode: 409 });
+  });
+
+  it('refuses (422 BRACKET_INVALID) a proposal when more teams are left than the round has places', async () => {
+    // Houston and Texas are byes into the final, so the semifinal's winner makes three teams for
+    // its two places.
+    const context = await reseededSetup({
+      bracket: (ids) => [
+        { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: ids.duke.id, awaySportEventParticipantId: ids.vermont.id, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+        { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: ids.houston.id, awaySportEventParticipantId: ids.texas.id, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+      ],
+    });
+    finishRound(context, 1);
+
+    await expect(context.service.proposeRoundMatchups(context.event.id, 2)).rejects.toMatchObject({ code: 'BRACKET_INVALID', statusCode: 422 });
+  });
+
+  it('refuses (422 BRACKET_INVALID) setting a team that is not left in the round, and leaves the round unplaced', async () => {
+    const context = await reseededSetup();
+    finishRound(context, 1);
+
+    await expect(context.service.setRoundMatchups(context.event.id, 2, [
+      { matchNumber: 3, homeSportEventParticipantId: context.duke.id, awaySportEventParticipantId: context.vermont.id },
+    ])).rejects.toMatchObject({ code: 'BRACKET_INVALID', statusCode: 422 });
+    expect(expectDefined(context.store.matchRows.find((match) => match.matchNumber === 3))).toMatchObject({
+      homeSportEventParticipantId: null,
+      awaySportEventParticipantId: null,
+    });
   });
 });

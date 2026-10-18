@@ -30,8 +30,8 @@ export const CONTEST_CONFIGURATION_REQUIRED = 'CONTEST_CONFIGURATION_REQUIRED';
 export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100).describe('Contest name shown to commissioners and members.'),
   sportEventIds: z.array(z.string().uuid()).min(1).describe('The events the contest covers (#713): one for a golf or race contest, several for a majors pool or a season. All from one sport league, each released, with its field loaded and not yet started. The contest keeps them in start-date order, whatever order they are sent in.'),
-  contestFormat: z.literal(ContestFormat.ROSTER).describe(
-    'First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.',
+  contestFormat: z.nativeEnum(ContestFormat).describe(
+    'ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). It must be the format the selection type plays (PICK_EM is PREDICTION, every other type ROSTER) and one the event\'s tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise.',
   ),
   selectionType: z.nativeEnum(SelectionType).describe(
     'How an entry picks: the selection types with typed rules. It must match the template\'s selection type when a template is named, and the configuration\'s.',

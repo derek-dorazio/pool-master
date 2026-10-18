@@ -5,7 +5,7 @@ import type {
   ContestRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus, SportEventStatus, type Contest } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, SportEventStatus, type Contest } from '@poolmaster/shared/domain';
 import {
   buildContestEntryStanding,
   rankContestEntryStandings,
@@ -100,6 +100,12 @@ export class ContestSettlementService {
     let contestsCompleted = 0;
     let contestsSettled = 0;
     for (const contest of contests) {
+      if (contest.contestFormat === ContestFormat.PREDICTION) {
+        // Game picks are scored against the games' results, which settlement does not do yet
+        // (#717); the contest stays ACTIVE with its picks kept until it can.
+        this.logger.info({ contestId: contest.id, sportEventId }, 'Left a prediction contest unsettled: game picks are not scored yet');
+        continue;
+      }
       const configuration = await loadContestScoringConfiguration(this.deps, contest.id);
       const countingRule = resolveContestCountingRule(configuration);
       if (!countingRule) {

@@ -13,12 +13,16 @@
 
 import type { FastifyRequest } from 'fastify';
 import type {
+  GamePicksResponse,
+  SaveGamePicksRequest,
   SelectionPickResponse,
   SelectionStateQuery,
   SelectionStateResponse,
   SubmitPickRequest,
 } from '@poolmaster/shared/dto';
+import { toGamePickWrites, toGamePicksResponse } from '../../mappers/game-picks.mapper';
 import { toSelectionStateResponse } from '../../mappers/selections.mapper';
+import type { PredictionService } from './prediction-service';
 import type { SelectionService } from './service';
 
 type ContestParams = { contestId: string };
@@ -26,6 +30,10 @@ type SelectionStateRequest = FastifyRequest<{ Params: ContestParams; Querystring
 type SubmitSelectionRequest = FastifyRequest<{ Params: ContestParams; Body: SubmitPickRequest }>;
 type SubmitEntryRequest = FastifyRequest<{ Params: ContestParams & { entryId: string; sportEventId: string } }>;
 type RunDrawRequest = FastifyRequest<{ Params: ContestParams }>;
+type EntryEventParams = ContestParams & { entryId: string; sportEventId: string };
+type GamePicksRequest = FastifyRequest<{ Params: EntryEventParams }>;
+type SaveGamePicksHttpRequest = FastifyRequest<{ Params: EntryEventParams; Body: SaveGamePicksRequest }>;
+type ClearGamePickRequest = FastifyRequest<{ Params: EntryEventParams & { sportEventMatchId: string } }>;
 
 /**
  * Function-typed properties rather than method shorthand: the route passes each of these to
@@ -37,9 +45,13 @@ export interface SelectionHandlers {
   submitContestSelection: (request: SubmitSelectionRequest) => Promise<SelectionPickResponse>;
   submitContestEntry: (request: SubmitEntryRequest) => Promise<SelectionStateResponse>;
   runContestDraw: (request: RunDrawRequest) => Promise<SelectionStateResponse>;
+  getGamePicks: (request: GamePicksRequest) => Promise<GamePicksResponse>;
+  saveGamePicks: (request: SaveGamePicksHttpRequest) => Promise<GamePicksResponse>;
+  clearGamePick: (request: ClearGamePickRequest) => Promise<GamePicksResponse>;
+  submitGamePicks: (request: GamePicksRequest) => Promise<GamePicksResponse>;
 }
 
-export function createSelectionHandlers(service: SelectionService): SelectionHandlers {
+export function createSelectionHandlers(service: SelectionService, predictions: PredictionService): SelectionHandlers {
   async function getSelectionState(request: SelectionStateRequest): Promise<SelectionStateResponse> {
     const view = await service.getSelectionState({
       contestId: request.params.contestId,
@@ -90,5 +102,48 @@ export function createSelectionHandlers(service: SelectionService): SelectionHan
     return toSelectionStateResponse(view);
   }
 
-  return { getSelectionState, submitContestSelection, submitContestEntry, runContestDraw };
+  /** The entry and event a game-pick request names, and who is asking (#716). */
+  function gamePicksInput(request: GamePicksRequest) {
+    return {
+      contestId: request.params.contestId,
+      entryId: request.params.entryId,
+      sportEventId: request.params.sportEventId,
+      actorUserId: request.authUser?.userId,
+    };
+  }
+
+  async function getGamePicks(request: GamePicksRequest): Promise<GamePicksResponse> {
+    return toGamePicksResponse(await predictions.getGamePicks(gamePicksInput(request)));
+  }
+
+  async function saveGamePicks(request: SaveGamePicksHttpRequest): Promise<GamePicksResponse> {
+    const view = await predictions.saveGamePicks({
+      ...gamePicksInput(request),
+      picks: toGamePickWrites(request.body),
+    });
+    return toGamePicksResponse(view);
+  }
+
+  async function clearGamePick(request: ClearGamePickRequest): Promise<GamePicksResponse> {
+    const view = await predictions.clearGamePick({
+      ...gamePicksInput(request),
+      sportEventMatchId: request.params.sportEventMatchId,
+    });
+    return toGamePicksResponse(view);
+  }
+
+  async function submitGamePicks(request: GamePicksRequest): Promise<GamePicksResponse> {
+    return toGamePicksResponse(await predictions.submitGamePicks(gamePicksInput(request)));
+  }
+
+  return {
+    getSelectionState,
+    submitContestSelection,
+    submitContestEntry,
+    runContestDraw,
+    getGamePicks,
+    saveGamePicks,
+    clearGamePick,
+    submitGamePicks,
+  };
 }

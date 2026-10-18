@@ -14,7 +14,7 @@
  * The union below is the behaviour, and the handler acts on each kind.
  */
 
-import type { ContestConfiguration, SelectionType } from '@poolmaster/shared/domain';
+import type { ContestConfiguration, RosterSelectionType } from '@poolmaster/shared/domain';
 import type { FieldGroup, LineupIssue, LineupSummary, SelectionTierConfig, SelectionParticipant } from '../types';
 import { LineupIssueKind } from '../types';
 
@@ -104,7 +104,7 @@ export interface LineupInput {
 }
 
 export interface SelectionEngine {
-  readonly selectionType: SelectionType;
+  readonly selectionType: RosterSelectionType;
 
   /** How many picks a full roster holds. 0 means the contest cannot take picks. */
   rosterSize(input: {

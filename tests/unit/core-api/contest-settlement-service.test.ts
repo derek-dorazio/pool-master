@@ -76,7 +76,10 @@ function entry(id: string, entryNumber: number, submitted: readonly string[]): C
  * A two-major contest: entry A leads the Masters (-6 against -1) and entry B wins the PGA (-8
  * against +2), so B wins the contest on the sum (-9 against -4). One counted golfer per event.
  */
-function world() {
+function world({
+  configJson = { selectionType: 'TIERED', picksPerTier: 1, countedScores: 1 } as Record<string, unknown>,
+  scoringRules = [parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {})],
+}: { configJson?: Record<string, unknown>; scoringRules?: ReturnType<typeof parseContestScoringSettings>[] } = {}) {
   const events = new Map<string, SportEvent>([
     [MASTERS, { id: MASTERS, sport: 'GOLF', status: SportEventStatus.SCHEDULED, startDate: new Date('2026-04-09T12:00:00.000Z') } as SportEvent],
     [PGA, { id: PGA, sport: 'GOLF', status: SportEventStatus.SCHEDULED, startDate: new Date('2026-05-14T12:00:00.000Z') } as SportEvent],
@@ -115,21 +118,21 @@ function world() {
         id: 'config-majors',
         contestId: 'majors',
         selectionType: 'TIERED',
-        configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 1 },
+        configJson,
         createdAt: T,
         updatedAt: T,
       }),
     }),
     scoringRules: fakeParticipantContestScoringRuleRepo({
-      findByContestConfiguration: jest.fn().mockResolvedValue([{
-        id: 'rule-1',
+      findByContestConfiguration: jest.fn().mockResolvedValue(scoringRules.map((scoring, index) => ({
+        id: `rule-${index + 1}`,
         contestConfigurationId: 'config-majors',
-        sortOrder: 1,
+        sortOrder: index + 1,
         active: true,
-        scoring: parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {}),
+        scoring,
         createdAt: T,
         updatedAt: T,
-      }]),
+      }))),
     }),
     entries: fakeContestEntryRepo({
       findByContestWithSquad: mockFn<ContestEntryRepository['findByContestWithSquad']>(async (_contestId, options) =>
@@ -245,5 +248,25 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
     expect(eventRows(w.eventStandings, MASTERS)).toEqual([['entry-a', -6, 1]]);
     expect(w.standings.map((row) => [row.contestEntryId, row.totalScore, row.position]))
       .toEqual([['entry-b', -8, 1], ['entry-a', -4, 2]]);
+  });
+});
+
+describe('ContestSettlementService — a contest it cannot score', () => {
+  // Settling under a guessed rule would pay the wrong entries, so each case skips the contest:
+  // no standings, and the contest stays live to be settled again once its configuration is fixed.
+  it.each([
+    ['no counting rule (countedScores missing)', { configJson: { selectionType: 'TIERED', picksPerTier: 1 } }],
+    ['no participant scoring rule', { scoringRules: [] }],
+    ['a scoring rule whose settings are invalid for its definition', { scoringRules: [parseContestScoringSettings('KNOCKOUT_ROUND_POINTS', { roundValues: 'not a table' })] }],
+  ])('skips a contest with %s: no event or contest standings are written and it stays ACTIVE', async (_case, options) => {
+    const subject = world(options);
+    subject.complete(MASTERS);
+    subject.complete(PGA);
+
+    const summary = await subject.service.settleCompletedSportEvent(PGA);
+
+    expect(summary).toEqual({ sportEventId: PGA, contestsSettled: 0, contestsCompleted: 0, standingsUpserted: 0 });
+    expect([subject.eventStandings, subject.standings]).toEqual([[], []]);
+    expect(subject.contest().status).toBe(ContestStatus.ACTIVE);
   });
 });

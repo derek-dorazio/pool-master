@@ -1,4 +1,4 @@
-import { SelectionType, toCents } from '@poolmaster/shared/domain';
+import { SelectionType, isPredictionSelectionType, toCents, type RosterSelectionType } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
 import { formatDollars } from '@/features/shared/ui';
 import type { SelectionGroup } from './contest-entry-selection';
@@ -111,7 +111,8 @@ function respend(summary: BudgetLineupSummary, group: SelectionGroup): BudgetLin
   };
 }
 
-export const LINEUP_RULES: Record<SelectionType, LineupRules> = {
+/** Each roster type's lineup rules. A prediction contest has no lineup: its entries pick games. */
+export const LINEUP_RULES: Record<RosterSelectionType, LineupRules> = {
   [SelectionType.TIERED]: {
     applySelection: (selectionState, participantId, entryId) => {
       const pickedAtById = buildPickedAtById(selectionState, entryId);
@@ -140,6 +141,14 @@ export const LINEUP_RULES: Record<SelectionType, LineupRules> = {
     submitBlockedReason: () => 'Picks in this contest are dealt by the commissioner’s draw, so there is nothing to submit.',
   },
 };
+
+/**
+ * The lineup rules for a contest's selection type, or null for a prediction type, whose entries
+ * pick the winners of games rather than a lineup from the field.
+ */
+export function lineupRulesFor(selectionType: SelectionType): LineupRules | null {
+  return isPredictionSelectionType(selectionType) ? null : LINEUP_RULES[selectionType];
+}
 
 /**
  * Copy for the pick and submit refusals the entry page can meet. The codes are the contract;

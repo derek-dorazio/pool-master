@@ -37,7 +37,7 @@ import {
   buildPickedAtById,
   CONTEST_ENTRY_CODE_MESSAGES,
   getNextSelectedParticipantIds,
-  LINEUP_RULES,
+  lineupRulesFor,
 } from './contest-entry-lineup';
 import {
   areContestEntriesOpen,
@@ -418,10 +418,11 @@ export function ContestEntryPage() {
       await queryClient.cancelQueries({ queryKey: selectionStateQueryKey });
       const previousSelectionState = queryClient.getQueryData<SelectionState>(selectionStateQueryKey);
 
-      if (previousSelectionState) {
+      const lineupRules = previousSelectionState ? lineupRulesFor(previousSelectionState.selectionType) : null;
+      if (previousSelectionState && lineupRules) {
         queryClient.setQueryData<SelectionState>(
           selectionStateQueryKey,
-          LINEUP_RULES[previousSelectionState.selectionType].applySelection(previousSelectionState, participantId, entryId),
+          lineupRules.applySelection(previousSelectionState, participantId, entryId),
         );
       }
 
@@ -578,7 +579,7 @@ export function ContestEntryPage() {
   const lineupSummary = picksHidden ? null : selectionState.lineupSummary ?? null;
   const submitBlockedReason = picksHidden
     ? null
-    : LINEUP_RULES[contest.selectionType].submitBlockedReason(selectionState);
+    : lineupRulesFor(contest.selectionType)?.submitBlockedReason(selectionState) ?? null;
   const finalSubmitDisabled =
     !isMyEntry
     || !isEditable

@@ -119,6 +119,9 @@ export class PrismaContestRepository implements ContestRepository {
         await tx.contestEntryPick.deleteMany({
           where: { entry: { contestId: id }, sportEventParticipant: { sportEventId: { in: removed } } },
         });
+        await tx.contestEntryMatchPrediction.deleteMany({
+          where: { contestEntry: { contestId: id }, sportEventMatch: { sportEventId: { in: removed } } },
+        });
         await tx.contestEntryEvent.deleteMany({
           where: { contestEntry: { contestId: id }, sportEventId: { in: removed } },
         });

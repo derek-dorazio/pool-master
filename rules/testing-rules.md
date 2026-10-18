@@ -570,6 +570,17 @@ it('GET /api/v1/<resource> matches <Resource>ResponseSchema', async () => {
 
 Do not defer contract verification to a "testing cleanup slice." It is part of the slice that changes the contract.
 
+A functional SDK journey that already holds the live response is a clearly equivalent suite: check
+it there with `expectMatchesSchema(<Resource>ResponseSchema, res.data)` from
+`tests/support/expect-matches-schema.ts` rather than rebuilding a bracket or a played event in a
+contract-verification file. The hey-api SDK does not validate responses, so a journey that reads
+`res.data` without this check proves nothing about the contract.
+
+`npm run rules:check` (`rules:check:contract-verification`) fails when an exported
+`*ResponseSchema` is checked nowhere in `tests/`. The endpoints that shipped before that check are
+listed in `scripts/contract-verification-gaps.mjs`; that list only shrinks, and a new schema never
+goes on it.
+
 ### Shared DTO Reuse Rule
 
 When a route reuses an existing shared DTO on a new API surface, contract

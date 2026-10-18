@@ -417,22 +417,41 @@ describe('Contest management integration', () => {
   });
 
   // #245 — a selection type with no typed configuration yet is refused at the schema.
-  it('refuses a selection type other than TIERED or BUDGET_PICK with 400', async () => {
+  it('refuses a selection type that is not one of the enum\'s values with 400', async () => {
     const createRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.contests(leagueId),
       headers: ownerHeaders,
       payload: {
-        name: 'Pick Em Create',
+        name: 'Survivor Create',
         sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
-        selectionType: 'PICK_EM',
+        selectionType: 'SURVIVOR',
         configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
       },
     });
 
     expect(createRes.statusCode).toBe(400);
     expect(ErrorEnvelopeSchema.safeParse(createRes.json()).success).toBe(true);
+  });
+
+  it('refuses PICK_EM sent as a ROSTER contest with 422 CONTEST_FORMAT_NOT_ALLOWED, creating nothing', async () => {
+    const createRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: 'Pick Em As Roster',
+        sportEventIds: [sportEventId],
+        contestFormat: 'ROSTER',
+        selectionType: 'PICK_EM',
+        configuration: { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP' },
+      },
+    });
+
+    expect(createRes.statusCode).toBe(422);
+    expect(ErrorEnvelopeSchema.parse(createRes.json()).error.code).toBe('CONTEST_FORMAT_NOT_ALLOWED');
+    await expect(getPrisma().contest.count({ where: { leagueId, name: 'Pick Em As Roster' } })).resolves.toBe(0);
   });
 
   it('refuses a budget contest whose rules are tiered with 422 CONTEST_RULES_SELECTION_TYPE_MISMATCH', async () => {
