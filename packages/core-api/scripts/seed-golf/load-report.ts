@@ -1,6 +1,7 @@
 /**
  * What a sport data load did, or in a dry run would do: one row per sport league, player,
- * event, event field and bracket, and the markdown the workflow summary shows. No I/O.
+ * event, event field and bracket (and, with test participants, per test player, league,
+ * membership, contest and entry), and the markdown the workflow summary shows. No I/O.
  */
 
 import { isTestSlate, type SportDataFile } from './sport-data-file';
@@ -20,6 +21,15 @@ export const LoadSubject = {
   FIELD: 'FIELD',
   /** One row per event: its bracket as a whole. */
   BRACKET: 'BRACKET',
+  /** A test player's sign-up (test participants only, as are the rows below). */
+  TEST_PLAYER: 'TEST_PLAYER',
+  /** A sport league's test pool: the league the test players play in. */
+  TEST_LEAGUE: 'TEST_LEAGUE',
+  /** One test player's membership of one test pool, with their squad. */
+  TEST_MEMBER: 'TEST_MEMBER',
+  CONTEST: 'CONTEST',
+  /** One test player's entry in one contest. */
+  ENTRY: 'ENTRY',
 } as const;
 export type LoadSubject = (typeof LoadSubject)[keyof typeof LoadSubject];
 
@@ -48,7 +58,17 @@ const SUBJECT_LABEL: Record<LoadSubject, string> = {
   EVENT: 'Event',
   FIELD: 'Field',
   BRACKET: 'Bracket',
+  TEST_PLAYER: 'Test player',
+  TEST_LEAGUE: 'Test league',
+  TEST_MEMBER: 'League member',
+  CONTEST: 'Contest',
+  ENTRY: 'Entry',
 };
+
+/** Shown only in a run that loads test participants; every other run leaves them out. */
+const TEST_PARTICIPANT_SUBJECTS: ReadonlySet<LoadSubject> = new Set([
+  LoadSubject.TEST_PLAYER, LoadSubject.TEST_LEAGUE, LoadSubject.TEST_MEMBER, LoadSubject.CONTEST, LoadSubject.ENTRY,
+]);
 
 const ACTION_ORDER: readonly LoadAction[] = [LoadAction.ADD, LoadAction.UPDATE, LoadAction.SKIP, LoadAction.CONFLICT];
 
@@ -72,6 +92,7 @@ export function formatLoadReport(file: SportDataFile, mode: LoadMode, rows: read
     `|---|${ACTION_ORDER.map(() => '---:').join('|')}|`,
   ];
   for (const subject of Object.values(LoadSubject)) {
+    if (TEST_PARTICIPANT_SUBJECTS.has(subject) && !rows.some((row) => row.subject === subject)) continue;
     const counts = ACTION_ORDER.map((action) => rows.filter((row) => row.subject === subject && row.action === action).length);
     lines.push(`| ${SUBJECT_LABEL[subject]} | ${counts.join(' | ')} |`);
   }
