@@ -16,6 +16,7 @@ import {
 import { BracketAdvancement, findSportRow, MatchSide, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
+import { seedDateOffsetDays, shiftedEventDates } from '../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import {
   parseSportDataFile,
   SportDataContent,
@@ -166,7 +167,7 @@ describe('Loading a golf test seed through the admin API', () => {
   };
   const getClient = () => Promise.resolve(admin.client);
 
-  it('reports every addition in a dry run without writing, then releases each tournament a week ahead with its field, tiers and stored final scores', async () => {
+  it('reports every addition in a dry run without writing, then releases each tournament at least a week after today with its field, tiers and stored final scores', async () => {
     const dryRun = await loadSportData(parsed(seed), { getClient, now: NOW, mode: LoadMode.DRY_RUN });
     expect(counts(dryRun)).toEqual({ 'SPORT_LEAGUE ADD': 1, 'PLAYER ADD': 12, 'EVENT ADD': 2, 'FIELD ADD': 2 });
     expect(await leagueNamed(tour)).toBeUndefined();
@@ -178,9 +179,9 @@ describe('Loading a golf test seed through the admin API', () => {
     expect(league.matchKeyword).toBe(tour);
     const events = await eventsOf(league.id, 2026);
     const opener = expectDefined(events.find((event) => event.name === `${prefix} Opener`));
-    // Released for contests, a whole number of weeks on from 2026-01-15 and at least a week after NOW.
+    // Released for contests, a whole number of weeks on from 2026-01-15 and at least a week after today.
     expect(events.map((event) => event.status)).toEqual(['SCHEDULED', 'SCHEDULED']);
-    expect(opener.startDate).toBe('2026-10-22T12:00:00.000Z');
+    expect(opener.startDate).toBe(shiftedEventDates(seed.sportLeagues[0].events[0], seedDateOffsetDays(seed, new Date())).startDate);
     expect(opener.autoLifecycleEnabled).toBe(false);
 
     const field = await fieldOf(opener.id);
