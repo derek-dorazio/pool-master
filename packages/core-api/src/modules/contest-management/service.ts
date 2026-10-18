@@ -26,6 +26,8 @@ import {
   CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH,
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_EVENT_ALREADY_STARTED,
+  CONTEST_EVENT_GAME_UNDECIDED,
+  CONTEST_EVENT_HAS_NO_GAMES,
   CONTEST_NOT_DRAFT,
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
@@ -57,6 +59,7 @@ import {
   getSportDefinition,
   sportAllowsSelectionType,
   getTieredRosterSize,
+  contestFormatForSelectionType,
   isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
@@ -90,6 +93,10 @@ export interface ContestCreateSportEventReader {
   ): Promise<ContestCreateSportEventState | null>;
   /** The prices of the event's active golfers, in whole dollars; unpriced golfers are left out. */
   findActiveFieldPrices(sportEventId: string): Promise<number[]>;
+  /** How many games the event has to pick, cancelled games left out (#716). */
+  countGames(sportEventId: string): Promise<number>;
+  /** How many of those games still have a team to be decided. */
+  countUndecidedGames(sportEventId: string): Promise<number>;
 }
 
 function createNoopLogger(): LifecycleLogger {
@@ -156,6 +163,8 @@ export class ContestManagementService {
         sportEvent.tournamentFormat,
         input.contestFormat,
       )
+      // A selection type plays one contest format (#716): pick'em is a prediction contest.
+      || contestFormatForSelectionType(input.selectionType) !== input.contestFormat
     ) {
       this.logger.warn({
         sportEventId: sportEvent.id,
@@ -164,7 +173,7 @@ export class ContestManagementService {
         contestFormat: input.contestFormat,
       }, 'contest management create contest rejected for invalid sport contest format');
       throw new ContestManagementError(
-        'Selected sporting event does not support that contest format.',
+        `Selected sporting event does not support a ${input.contestFormat} contest picked by ${input.selectionType}.`,
         'CONTEST_FORMAT_NOT_ALLOWED',
       );
     }
@@ -672,7 +681,41 @@ export class ContestManagementService {
           },
           scoring,
         };
+      case SelectionType.PICK_EM:
+        // A pick'em entry picks the winner of each game, so every event must have games (#716).
+        for (const each of sportEvents) {
+          await this.assertEventHasGames(each.id);
+          await this.assertEventGamesDecided(each.id);
+        }
+        return {
+          configJson: { selectionType: rules.selectionType, mode: rules.mode },
+          scoring,
+        };
     }
+  }
+
+  private async assertEventHasGames(sportEventId: string): Promise<void> {
+    if (await this.sportEventReader.countGames(sportEventId) > 0) {
+      return;
+    }
+    this.logger.warn({ sportEventId }, 'contest management rules refused a pick\'em event with no games');
+    throw new ContestManagementError(
+      'A pick\'em contest\'s events must each have games to pick.',
+      CONTEST_EVENT_HAS_NO_GAMES,
+    );
+  }
+
+  /** A pick names one of a game's two teams, so a week with a team still to be decided could never be submitted. */
+  private async assertEventGamesDecided(sportEventId: string): Promise<void> {
+    const undecided = await this.sportEventReader.countUndecidedGames(sportEventId);
+    if (undecided === 0) {
+      return;
+    }
+    this.logger.warn({ sportEventId, undecided }, 'contest management rules refused a pick\'em event with an undecided game');
+    throw new ContestManagementError(
+      'A pick\'em contest\'s events must have both teams of every game decided.',
+      CONTEST_EVENT_GAME_UNDECIDED,
+    );
   }
 
   /**

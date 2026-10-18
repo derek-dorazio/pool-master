@@ -31,6 +31,18 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
     route: 'POST /api/v1/selections/:contestId/entries/:entryId/events/:sportEventId/submit',
     reason: 'Authorizes on the entry, as the pick route does: SelectionService.submitEntry requires an ACTIVE squad membership on the squad that owns that entry of this contest (ENTRY_ACCESS_DENIED).',
   },
+  {
+    route: 'PUT /api/v1/selections/:contestId/entries/:entryId/events/:sportEventId/game-picks',
+    reason: 'Authorizes on the entry: PredictionService.saveGamePicks requires an ACTIVE squad membership on the squad that owns that entry of this contest (ENTRY_ACCESS_DENIED).',
+  },
+  {
+    route: 'DELETE /api/v1/selections/:contestId/entries/:entryId/events/:sportEventId/game-picks/:sportEventMatchId',
+    reason: 'Authorizes on the entry: PredictionService.clearGamePick requires an ACTIVE squad membership on the squad that owns that entry of this contest (ENTRY_ACCESS_DENIED).',
+  },
+  {
+    route: 'POST /api/v1/selections/:contestId/entries/:entryId/events/:sportEventId/game-picks/submit',
+    reason: 'Authorizes on the entry: PredictionService.submitGamePicks requires an ACTIVE squad membership on the squad that owns that entry of this contest (ENTRY_ACCESS_DENIED).',
+  },
 
   // --- Leagues ---
   {

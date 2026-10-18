@@ -1,5 +1,5 @@
 /**
- * Builds `SelectionService` from its Prisma adapters (#324) — the module's composition root, the
+ * Builds `SelectionService` (#324) and `PredictionService` (#716) from their Prisma adapters — the module's composition root, the
  * one place that knows both a port and its implementation.
  */
 
@@ -7,11 +7,13 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   PrismaContestConfigurationRepository,
+  PrismaContestEntryMatchPredictionRepository,
   PrismaContestEntryPickRepository,
   PrismaContestEntryRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
   PrismaParticipantRepository,
+  PrismaSportEventMatchRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
   PrismaSquadMembershipRepository,
@@ -20,6 +22,7 @@ import { ContestEntryPickService } from '../contest-entry-picks';
 import { createContestService } from '../contests/wiring';
 import type { MailDeliveryProvider } from '../email';
 import { createSportEventTierService } from '../events/wiring';
+import { PredictionService } from './prediction-service';
 import { SelectionService } from './service';
 
 export function createSelectionService(
@@ -42,6 +45,21 @@ export function createSelectionService(
     tiers: createSportEventTierService(prisma, logger),
     sportEvents: new PrismaSportEventRepository(prisma),
     entryReceipts: createContestService(prisma, logger, options),
+    logger,
+  });
+}
+
+export function createPredictionService(prisma: PrismaClient, logger: FastifyBaseLogger): PredictionService {
+  return new PredictionService({
+    contests: new PrismaContestRepository(prisma),
+    configurations: new PrismaContestConfigurationRepository(prisma),
+    entries: new PrismaContestEntryRepository(prisma),
+    squadMemberships: new PrismaSquadMembershipRepository(prisma),
+    sportEvents: new PrismaSportEventRepository(prisma),
+    matches: new PrismaSportEventMatchRepository(prisma),
+    field: new PrismaSportEventParticipantRepository(prisma),
+    participants: new PrismaParticipantRepository(prisma),
+    predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
     logger,
   });
 }

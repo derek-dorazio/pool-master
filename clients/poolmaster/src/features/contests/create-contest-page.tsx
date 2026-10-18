@@ -10,8 +10,10 @@ import type { CreateContestRequest } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
   ParticipantScoringDefinitionIdSchema,
+  PickEmMode,
   SelectionType,
   SUPPORTED_SPORTS,
+  contestFormatForSelectionType,
   getSportDefinition,
   sportAllowsSelectionType,
   UpsetBonusRule,
@@ -28,6 +30,7 @@ import {
   buildLeagueAdminContestsPath,
 } from '@/features/leagues/league-routing';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
+import { hasWebEntryScreen, type WebEnterableSelectionType } from './contest-entry-screens';
 import {
   Alert,
   ChoiceCard,
@@ -63,38 +66,43 @@ import {
 
 const CUSTOM_PRESET = 'custom';
 
-/** The ways of picking the create contract accepts; it widens as new formats are built. */
-type CreatableSelectionType = CreateContestRequest['selectionType'];
+/**
+ * The ways of picking Create contest can offer: the ones the create contract accepts whose
+ * entries have a screen to pick on here.
+ */
+type CreatableSelectionType = Extract<CreateContestRequest['selectionType'], WebEnterableSelectionType>;
 
 /**
- * The ways of picking Create contest offers, one card each, with its own rules fields. A sport
- * offers the ones its definition lists; each card says what it means in the sport's words.
+ * The ways of picking Create contest offers, one card each, with its own rules fields. A `Record`
+ * over the creatable types, so a type that gains an entry screen must gain a card. Each card says
+ * what it means in the sport's words.
  */
-const FORMAT_CHOICES: Array<{ describe: (participant: SportNoun) => string; icon: LucideIcon; selectionType: CreatableSelectionType }> = [
-  {
-    selectionType: SelectionType.TIERED,
+const FORMAT_CHOICES: Record<CreatableSelectionType, { describe: (participant: SportNoun) => string; icon: LucideIcon }> = {
+  [SelectionType.TIERED]: {
     icon: ListOrdered,
     describe: ({ many }) => `Pick ${many} from each of the event's tiers, so the favorites are spread across every entry.`,
   },
-  {
-    selectionType: SelectionType.BUDGET_PICK,
+  [SelectionType.BUDGET_PICK]: {
     icon: Wallet,
     describe: ({ one }) => `Every ${one} has a price. Pick a roster whose prices fit under the salary cap.`,
   },
-  {
-    selectionType: SelectionType.RANDOM_DRAW,
+  [SelectionType.RANDOM_DRAW]: {
     icon: Shuffle,
     describe: ({ many }) => `A sweepstake: nobody picks. Once entries are in, you run the draw and each entry is dealt ${many} at random.`,
   },
-];
+};
 
-/** The formats a sport's contests may use, in the order Create contest offers them. */
+/**
+ * The formats a sport's contests may use, in its definition's order: those whose entries have a
+ * screen to pick on here.
+ */
 function formatChoicesFor(sport: SportDefinition) {
-  return FORMAT_CHOICES.filter((choice) => sportAllowsSelectionType(sport, choice.selectionType));
+  return sport.selectionTypes
+    .filter(hasWebEntryScreen)
+    .map((selectionType) => ({ selectionType, ...FORMAT_CHOICES[selectionType] }));
 }
 
-
-const creatableSelectionTypes = FORMAT_CHOICES.map((choice) => choice.selectionType) as [
+const creatableSelectionTypes = Object.values(SelectionType).filter(hasWebEntryScreen) as [
   CreatableSelectionType,
   ...CreatableSelectionType[],
 ];
@@ -104,6 +112,7 @@ const createContestFormSchema = z.object({
   countedScores: z.string(),
   didNotFinishPoints: z.string(),
   maxEntriesPerTeam: z.string(),
+  pickEmMode: z.nativeEnum(PickEmMode),
   picksPerEntry: z.string(),
   picksPerTier: z.string(),
   pointsTable: z.string(),
@@ -138,7 +147,7 @@ function defaultPresetOf<Preset extends Pick<ContestConfigTemplateDto, 'isDefaul
  */
 function leagueDefaultFormatOf(templates: ContestConfigTemplateDto[]): CreatableSelectionType | null {
   const leagueDefault = templates.find((template) => template.isDefault && template.sportLeagueId !== null);
-  return FORMAT_CHOICES.find((choice) => choice.selectionType === leagueDefault?.selectionType)?.selectionType ?? null;
+  return leagueDefault && hasWebEntryScreen(leagueDefault.selectionType) ? leagueDefault.selectionType : null;
 }
 
 function sortEventsBySoonest(events: SportEventDto[]) {
@@ -397,7 +406,7 @@ export function CreateContestPage() {
         name: submitted.contestName.trim(),
         // A contest starts on one event; the commissioner adds more from its Events page (#713).
         sportEventIds: [event.id],
-        contestFormat: ContestFormat.ROSTER,
+        contestFormat: contestFormatForSelectionType(submitted.selectionType),
         selectionType: submitted.selectionType,
         ...(submitted.selectedTemplateId ? { templateId: submitted.selectedTemplateId } : {}),
         // A definition that takes settings sends them; one that takes none leaves the template's
