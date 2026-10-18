@@ -218,14 +218,17 @@ function createSportEventReader(overrides?: Partial<{
   salaryCap: number | null;
   activeFieldPrices: number[];
   gameCount: number;
+  undecidedGameCount: number;
 }>): {
   findById: jest.Mock;
   findActiveFieldPrices: jest.Mock;
   countGames: jest.Mock;
+  countUndecidedGames: jest.Mock;
 } {
   return {
     findActiveFieldPrices: jest.fn().mockResolvedValue(overrides?.activeFieldPrices ?? []),
     countGames: jest.fn().mockResolvedValue(overrides?.gameCount ?? 0),
+    countUndecidedGames: jest.fn().mockResolvedValue(overrides?.undecidedGameCount ?? 0),
     findById: jest.fn().mockResolvedValue({
       id: '11111111-1111-1111-1111-111111111111',
       status: overrides?.status ?? SportEventStatus.SCHEDULED,
@@ -1616,6 +1619,7 @@ describe('ContestManagementService — a contest of several events', () => {
       findById: jest.fn().mockImplementation(async (id: string) => byId.get(id) ?? null),
       findActiveFieldPrices: jest.fn().mockResolvedValue([10, 10, 10]),
       countGames: jest.fn().mockResolvedValue(0),
+      countUndecidedGames: jest.fn().mockResolvedValue(0),
     };
   }
 
@@ -1836,7 +1840,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     ...overrides,
   });
 
-  function pickEmService(options: { gameCount: number; sport?: Sport; tournamentFormat?: TournamentFormat }) {
+  function pickEmService(options: { gameCount: number; undecidedGameCount?: number; sport?: Sport; tournamentFormat?: TournamentFormat }) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const reader = createSportEventReader({
@@ -1844,6 +1848,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
       tournamentFormat: options.tournamentFormat ?? TournamentFormat.KNOCKOUT_BRACKET,
       rounds: 4,
       gameCount: options.gameCount,
+      undecidedGameCount: options.undecidedGameCount,
     });
     const service = new ContestManagementService(
       contestCoreRepo,
@@ -1877,6 +1882,14 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
 
     await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest()))
       .rejects.toMatchObject({ code: CONTEST_EVENT_HAS_NO_GAMES, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a pick\'em contest on an event with a game whose team is still undecided with 422 CONTEST_EVENT_GAME_UNDECIDED, writing nothing', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 3, undecidedGameCount: 1 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest()))
+      .rejects.toMatchObject({ code: 'CONTEST_EVENT_GAME_UNDECIDED', statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 

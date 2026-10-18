@@ -570,6 +570,18 @@ describe('PredictionService — after the week\'s first kickoff', () => {
     expect(context.storedPicks()).toContainEqual(['game-2', context.games.sunday.homeSportEventParticipantId, 2]);
   });
 
+  it('refuses a change that leaves a submitted week with a game unpicked with 409 PREDICTION_WEEK_INCOMPLETE, not a confidence error', async () => {
+    const context = await kickedOff();
+    // The cancelled game is played after all, so the submitted week now has a game without a pick.
+    context.week.matches.set(context.games.cancelled.id, { ...context.games.cancelled, status: MatchStatus.SCHEDULED });
+
+    await expectRefused(
+      context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, 2, 'away')] }),
+      'PREDICTION_WEEK_INCOMPLETE', 409,
+    );
+    expect(context.weekStatus()).toBe(ContestEntryStatus.SUBMITTED);
+  });
+
   it('refuses any change to a week left in draft at the first kickoff with 409 CONTEST_ENTRY_LOCKED', async () => {
     const context = setup();
     await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, 1)] });
