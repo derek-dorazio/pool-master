@@ -298,7 +298,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(createContestMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
     expect(submittedBody()).toEqual({
       name: 'Masters Tournament Pick 6',
-      sportEventId: 'event-1',
+      sportEventIds: ['event-1'],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       templateId: '11111111-1111-4111-8111-111111111111',
@@ -656,7 +656,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toEqual({
       name: 'Masters Tournament Budget Pick 5',
-      sportEventId: 'event-1',
+      sportEventIds: ['event-1'],
       contestFormat: 'ROSTER',
       selectionType: 'BUDGET_PICK',
       configuration: { selectionType: 'BUDGET_PICK', rosterSize: 5, countedScores: 4, maxEntriesPerSquad: 1 },
@@ -754,7 +754,7 @@ describe('Commissioner tools › Contests › Create contest › Random draw for
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toEqual({
       name: 'Masters Tournament Sweepstake',
-      sportEventId: 'event-1',
+      sportEventIds: ['event-1'],
       contestFormat: 'ROSTER',
       selectionType: 'RANDOM_DRAW',
       templateId: '77777777-7777-4777-8777-777777777777',
@@ -865,7 +865,7 @@ describe('Commissioner tools › Contests › Create contest for a horse race', 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toEqual({
       name: 'Kentucky Derby Pick 3',
-      sportEventId: 'race-1',
+      sportEventIds: ['race-1'],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       configuration: {
@@ -994,7 +994,7 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toMatchObject({
-      sportEventId: 'f1-race-1',
+      sportEventIds: ['f1-race-1'],
       selectionType: 'BUDGET_PICK',
       templateId: '62500000-0000-4000-8000-000000000011',
     });

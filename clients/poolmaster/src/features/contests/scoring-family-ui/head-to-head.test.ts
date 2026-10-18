@@ -68,12 +68,12 @@ function bracketLeaderboard(picks: ScoredContestEntryPickDto[]): ContestLeaderbo
     entryNumber: 1,
     squadId: 'squad-1',
     squadName: 'Squad',
-    status: 'SUBMITTED',
     position: 1,
     displayPosition: '1',
     countingPickLimit: 4,
     scoredPickCount: picks.length,
     totalScore: 6,
+    events: [{ sportEventId: 'event-1', totalScore: 6, position: 1, displayPosition: '1' }],
     picks,
   };
   return {

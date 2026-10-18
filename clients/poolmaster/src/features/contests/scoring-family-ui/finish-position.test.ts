@@ -78,12 +78,12 @@ const entry: ContestEntryStandingDto = {
   entryNumber: 1,
   squadId: 'squad-1',
   squadName: 'Squad',
-  status: 'SUBMITTED',
   position: 1,
   displayPosition: '1',
   countingPickLimit: 3,
   scoredPickCount: 1,
   totalScore: 8,
+  events: [{ sportEventId: 'event-1', totalScore: 8, position: 1, displayPosition: '1' }],
   picks: [pick],
 };
 

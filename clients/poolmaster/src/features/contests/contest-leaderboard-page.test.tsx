@@ -178,6 +178,13 @@ function contestResponse(status: ContestStatusFixture) {
         sport: 'GOLF',
         entryCount: 1,
         endsAt: '2026-04-14T23:00:00.000Z',
+        sportEvents: [{
+          sportEventId: 'event-1',
+          sequence: 1,
+          name: 'The Masters',
+          startDate: '2026-04-09T12:00:00.000Z',
+          status: status === 'OPEN' ? 'SCHEDULED' : status === 'ACTIVE' ? 'IN_PROGRESS' : 'COMPLETED',
+        }],
       },
     },
   };
@@ -215,12 +222,12 @@ function leaderboardResponse(entryTotalScore = -5) {
         entryNumber: 1,
         squadId: 'squad-1',
         squadName: 'Birdie Hunters',
-        status: 'ACTIVE',
         position: 1,
         displayPosition: 'T1',
         countingPickLimit: 1,
         scoredPickCount: 2,
         totalScore: entryTotalScore,
+        events: [{ sportEventId: 'event-1', totalScore: entryTotalScore, position: 1, displayPosition: 'T1' }],
         picks: [
           {
             pickId: 'pick-1',
@@ -930,5 +937,66 @@ describe('ContestLeaderboardPage', () => {
     const entry = await screen.findByTestId('contest-leaderboard-entry-entry-1');
     expect(entry).toHaveTextContent('This entry has no scored picks yet.');
     expect(entry).toHaveTextContent('0 scored');
+  });
+});
+
+describe('ContestLeaderboardPage — a contest of two events', () => {
+  const MASTERS = { sportEventId: 'event-1', sequence: 1, name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z', status: 'COMPLETED' };
+  const PGA = { sportEventId: 'event-2', sequence: 2, name: 'PGA Championship', startDate: '2026-05-14T12:00:00.000Z', status: 'IN_PROGRESS' };
+
+  function primeTwoEventMocks() {
+    const base = leaderboardResponse(-3).data;
+    primeMocks({
+      leaderboard: {
+        ...base,
+        sportEventId: 'event-2',
+        entries: [{
+          ...base.entries[0],
+          events: [
+            { sportEventId: 'event-1', totalScore: -5, position: 1, displayPosition: 'T1' },
+            { sportEventId: 'event-2', totalScore: 2, position: 3, displayPosition: '3' },
+          ],
+        }],
+      },
+    });
+    const contest = contestResponse('ACTIVE');
+    getContestMock.mockResolvedValue({
+      data: { contest: { ...contest.data.contest, sportEvents: [MASTERS, PGA] } },
+    });
+  }
+
+  it('shows each entry\'s place and score in every event it played, by event name, under its contest total', async () => {
+    primeTwoEventMocks();
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-events-entry-1')).toHaveTextContent(
+      'The Masters: T1, -5 · PGA Championship: 3, +2',
+    );
+    expect(screen.getByTestId('contest-leaderboard-total-entry-1')).toHaveTextContent('-3');
+  });
+
+  it('shows no per-event line for a contest of one event', async () => {
+    primeMocks();
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-total-entry-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-events-entry-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-event-switcher')).not.toBeInTheDocument();
+  });
+
+  it('reads the other event\'s picks when the event switcher moves to it, asking for that event by id', async () => {
+    primeTwoEventMocks();
+
+    renderLeaderboard();
+
+    const switcher = await screen.findByTestId('contest-leaderboard-event-switcher');
+    expect(switcher).toHaveValue('event-2');
+    fireEvent.change(switcher, { target: { value: 'event-1' } });
+
+    await waitFor(() => expect(getContestLeaderboardMock).toHaveBeenCalledWith(expect.objectContaining({
+      query: { sportEventId: 'event-1' },
+    })));
   });
 });
