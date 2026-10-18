@@ -515,7 +515,7 @@ function WaitingInvites({
   return (
     <section className="space-y-3" data-testid="league-waiting-invites">
       <SettingsSectionHeader
-        description="Accepted invites leave this list; the new team shows on Teams."
+        description="Accepted invites leave this list; the new member shows on Members."
         title="Waiting on an answer"
       />
       {isLoading ? (

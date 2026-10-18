@@ -81,7 +81,7 @@ afterEach(() => {
   }
 });
 
-describe('Teams directory', () => {
+describe('Members directory', () => {
   it('shows a loading state while the teams load', async () => {
     primeMemberViewer();
     listLeagueSquadsMock.mockReturnValue(new Promise(() => undefined));
@@ -91,25 +91,25 @@ describe('Teams directory', () => {
     expect(await screen.findByTestId('teams-page-teams-loading')).toHaveAttribute('role', 'status');
   });
 
-  it('says the teams could not be loaded when the list fails', async () => {
+  it('says the members could not be loaded when the list fails', async () => {
     primeMemberViewer();
     listLeagueSquadsMock.mockRejectedValue(new Error('Teams unavailable'));
 
     renderTeamsPage();
 
-    expect(await screen.findByTestId('teams-page-teams-error')).toHaveTextContent("We couldn't load teams for this league.");
+    expect(await screen.findByTestId('teams-page-teams-error')).toHaveTextContent("We couldn't load this league's members.");
   });
 
-  it('says no teams exist yet when the league has none', async () => {
+  it('says no one has joined yet when the league has no squads', async () => {
     primeMemberViewer();
     listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([])));
 
     renderTeamsPage();
 
-    expect(await screen.findByTestId('teams-table')).toHaveTextContent('No teams exist for this league yet.');
+    expect(await screen.findByTestId('teams-table')).toHaveTextContent('No one has joined this league yet.');
   });
 
-  it('lists every team with a link to its team page, its active owners by name and the date it joined, marking inactive teams', async () => {
+  it('titles the page Members and lists every squad by name with a link to its page, its active owners by name and the date it joined, marking inactive ones', async () => {
     primeMemberViewer();
     listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
       buildLeagueSquad({
@@ -125,6 +125,7 @@ describe('Teams directory', () => {
     renderTeamsPage();
 
     const first = within(await screen.findByTestId('league-team-team-1'));
+    expect(screen.getByRole('heading', { name: 'Members' })).toBeInTheDocument();
     expect(first.getByTestId('league-team-home-link-team-1')).toHaveAttribute('href', '/league/BIGDAWGS/teams/team-1');
     expect(first.getByText('Casey Commissioner, Riley Cowner')).toBeInTheDocument();
     expect(first.queryByText(/Former/)).not.toBeInTheDocument();
@@ -137,7 +138,7 @@ describe('Teams directory', () => {
     expect(second.getByText('No owners')).toBeInTheDocument();
   });
 
-  it('finds a team by an owner\'s name and offers no team actions to a member', async () => {
+  it('finds a member by an owner\'s name and offers no management actions to a member', async () => {
     primeMemberViewer();
     listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
       buildLeagueSquad(),
@@ -146,7 +147,7 @@ describe('Teams directory', () => {
 
     renderTeamsPage();
 
-    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find a team or owner' }), {
+    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find a member or owner' }), {
       target: { value: 'morgan' },
     });
 
@@ -154,10 +155,10 @@ describe('Teams directory', () => {
     expect(screen.queryByTestId('league-team-team-1')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Manage' })).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a team or owner' }), {
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a member or owner' }), {
       target: { value: 'nobody' },
     });
-    expect(await screen.findByText('No team or owner matches that search.')).toBeInTheDocument();
+    expect(await screen.findByText('No members match that search.')).toBeInTheDocument();
   });
 
   it('shows the league load failure and logs it when the league cannot be loaded', async () => {

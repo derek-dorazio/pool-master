@@ -11,34 +11,46 @@ import {
   buildCurrentUser,
   buildLeague,
   buildLeagueMembership,
+  buildLeagueSquad,
+  buildLeagueSquadMember,
   getLeagueByCodeData,
 } from './test/fixtures';
 
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
+const listLeagueSquadsMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
 bindApiMocks({
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
+  listLeagueSquads: listLeagueSquadsMock,
   refreshToken: refreshTokenMock,
 });
 
 function renderMenu({
+  hasSquad = true,
   isRootAdmin = false,
   leagueRole = 'MEMBER',
   path = '/league/BIGDAWGS',
+  squads = [buildLeagueSquad({ id: 'team-1', name: "Derek's Great Golf Guys" })],
 }: {
+  hasSquad?: boolean;
   isRootAdmin?: boolean;
   leagueRole?: 'COMMISSIONER' | 'MEMBER';
   path?: string;
+  squads?: ReturnType<typeof buildLeagueSquad>[];
 } = {}) {
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser({ isRootAdmin }) }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
     buildLeague(),
-    { membership: buildLeagueMembership({ role: leagueRole }) },
+    {
+      membership: buildLeagueMembership({ role: leagueRole }),
+      squadMembership: hasSquad ? buildLeagueSquadMember({ squadId: 'team-1' }) : null,
+    },
   )));
+  listLeagueSquadsMock.mockResolvedValue(apiSuccess({ squads }));
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
@@ -55,17 +67,37 @@ describe('LeagueMenuBar', () => {
   afterEach(() => {
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
+    listLeagueSquadsMock.mockReset();
     refreshTokenMock.mockReset();
   });
 
-  it('gives members Home, Contests, My team and Teams', async () => {
+  it('gives members Home, Contests, their own squad by its name, and Members', async () => {
     renderMenu();
 
     const menu = within(await screen.findByRole('navigation', { name: 'League' }));
     expect(menu.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/league/BIGDAWGS');
     expect(menu.getByRole('link', { name: 'Contests' })).toHaveAttribute('href', '/league/BIGDAWGS/contests');
-    expect(menu.getByRole('link', { name: 'My team' })).toHaveAttribute('href', '/league/BIGDAWGS/team');
-    expect(menu.getByRole('link', { name: 'Teams' })).toHaveAttribute('href', '/league/BIGDAWGS/teams');
+    expect(await menu.findByRole('link', { name: "Derek's Great Golf Guys" })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+    expect(menu.getByRole('link', { name: 'Members' })).toHaveAttribute('href', '/league/BIGDAWGS/teams');
+    expect(menu.queryByRole('link', { name: /team/i })).not.toBeInTheDocument();
+  });
+
+  it('labels the viewer\'s own entry "Yours" when the viewer has no squad in the league', async () => {
+    renderMenu({ hasSquad: false });
+
+    const menu = within(await screen.findByRole('navigation', { name: 'League' }));
+    await vi.waitFor(() => expect(listLeagueSquadsMock).toHaveBeenCalled());
+    expect(menu.getByTestId('league-menu-my-team')).toHaveTextContent('Yours');
+    expect(menu.queryByRole('link', { name: "Derek's Great Golf Guys" })).not.toBeInTheDocument();
+  });
+
+  it('labels the viewer\'s own entry "Yours" while their squad\'s name is still loading', async () => {
+    renderMenu();
+    listLeagueSquadsMock.mockReturnValue(new Promise(() => undefined));
+
+    const menu = within(await screen.findByRole('navigation', { name: 'League' }));
+    await vi.waitFor(() => expect(listLeagueSquadsMock).toHaveBeenCalled());
+    expect(menu.getByTestId('league-menu-my-team')).toHaveTextContent('Yours');
   });
 
   it('never shows a member the Commissioner tools button', async () => {
@@ -105,11 +137,20 @@ describe('buildLeagueMenuItems', () => {
     expect(activeLabel('/league/BIGDAWGS/contests/contest-1/leaderboard')).toEqual(['Contests']);
   });
 
-  it('marks My team on the team history page it links to', () => {
-    expect(activeLabel('/league/BIGDAWGS/history')).toEqual(['My team']);
+  it('marks the viewer\'s own entry on the history page it links to', () => {
+    expect(activeLabel('/league/BIGDAWGS/history')).toEqual(['Yours']);
   });
 
-  it('marks Teams, not My team, on another team\'s page', () => {
-    expect(activeLabel('/league/BIGDAWGS/teams/team-2')).toEqual(['Teams']);
+  it('marks Members, not the viewer\'s own entry, on another squad\'s page', () => {
+    expect(activeLabel('/league/BIGDAWGS/teams/team-2')).toEqual(['Members']);
+  });
+
+  it('labels the viewer\'s own entry with their squad\'s name when one is given, and "Yours" otherwise', () => {
+    const labelOf = (name?: string | null) => buildLeagueMenuItems('BIGDAWGS', '/league/BIGDAWGS', name)
+      .find((item) => item.testId === 'league-menu-my-team')?.label;
+
+    expect(labelOf("Derek's Great Golf Guys")).toBe("Derek's Great Golf Guys");
+    expect(labelOf(null)).toBe('Yours');
+    expect(labelOf()).toBe('Yours');
   });
 });

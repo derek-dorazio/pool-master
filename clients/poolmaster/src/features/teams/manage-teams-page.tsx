@@ -70,7 +70,7 @@ export function ManageTeamsPage() {
     () => [
       {
         id: 'team',
-        header: 'Team',
+        header: 'Name',
         accessorFn: (row) => row.team.name,
         cell: ({ row }) => <TeamNameCell leagueCode={leagueCode} team={row.original.team} />,
       },
@@ -117,18 +117,18 @@ export function ManageTeamsPage() {
             Invite members
           </LinkButton>
         )}
-        description="Every team in the league. Manage a team to change its name, icon or owners."
-        title="Teams and owners"
+        description="Every member of the league and the name they play under. Choose Manage to change a name, icon or owners."
+        title="Members and owners"
       />
 
       {teamsQuery.isLoading ? (
-        <LoadingState body="Loading teams..." testId="admin-teams-loading" />
+        <LoadingState body="Loading members..." testId="admin-teams-loading" />
       ) : teamsQuery.isError ? (
-        <ErrorState body="We couldn't load teams for this league." title="Teams unavailable" />
+        <ErrorState body="We couldn't load this league's members." title="Members unavailable" />
       ) : (
         <div className="grid gap-3">
           <SegmentedControl
-            aria-label="Teams to show"
+            aria-label="Members to show"
             onChange={(value) => {
               if (isTeamFilter(value)) {
                 setFilter(value);
@@ -140,11 +140,11 @@ export function ManageTeamsPage() {
           <DataGrid
             columns={columns}
             data={visibleRows}
-            emptyMessage={rows.length ? 'No team matches.' : 'No teams exist for this league yet.'}
+            emptyMessage={rows.length ? 'No members match.' : 'No one has joined this league yet.'}
             getRowId={(row) => row.team.id}
             pageSize={TEAMS_PER_PAGE}
             rowTestId={(row) => `admin-team-${row.team.id}`}
-            search={{ label: 'Find a team or owner', testId: 'admin-teams-search' }}
+            search={{ label: 'Find a member or owner', testId: 'admin-teams-search' }}
             showColumnFilters={false}
             tableTestId="admin-teams-table"
           />

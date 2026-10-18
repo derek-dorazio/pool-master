@@ -53,18 +53,18 @@ export function ManageTeamPage() {
     return null;
   }
   if (teamsQuery.isLoading) {
-    return <LoadingState body="Loading team..." testId="manage-team-loading" />;
+    return <LoadingState body="Loading this member..." testId="manage-team-loading" />;
   }
   if (teamsQuery.isError) {
-    return <ErrorState body="We couldn't load this league's teams." title="Team unavailable" />;
+    return <ErrorState body="We couldn't load this league's members." title="Member unavailable" />;
   }
   if (!team) {
     return (
       <EmptyState
-        action={<LinkButton to={teamsPath} variant="secondary">All teams</LinkButton>}
-        body="It may have been deleted."
+        action={<LinkButton to={teamsPath} variant="secondary">All members</LinkButton>}
+        body="They may have left or been removed."
         testId="manage-team-not-found"
-        title="This team isn't in this league"
+        title="This member isn't in this league"
       />
     );
   }
@@ -85,11 +85,11 @@ export function ManageTeamPage() {
 
       {isInactiveLeague ? (
         <Alert data-testid="manage-team-league-inactive" tone="warning">
-          This league is inactive, so its teams are read-only.
+          This league is inactive, so this page is read-only.
         </Alert>
       ) : isInactiveTeam ? (
         <Alert data-testid="manage-team-inactive" tone="warning">
-          This team is inactive. Inviting a former owner back restores it.
+          {team.name} is inactive. Inviting a former owner back restores it.
         </Alert>
       ) : null}
 
@@ -106,7 +106,7 @@ export function ManageTeamPage() {
           </LinkButton>
         )}
         testId="manage-team-general"
-        title="Team"
+        title="Name and icon"
       >
         <SettingsRow label="Name" value={team.name} />
         <SettingsRow label="Icon" value={iconLabel} />
@@ -135,13 +135,13 @@ export function ManageTeamPage() {
                 onClick={() => setActiveDialog('delete')}
                 variant="danger"
               >
-                Delete team
+                Delete {team.name}
               </Button>
             )}
             description={viewer.isRootAdmin
-              ? 'Removes this inactive team for good.'
-              : 'Only a root admin can delete a team.'}
-            title="Delete team"
+              ? `Removes ${team.name} for good.`
+              : `Only a root admin can delete ${team.name}.`}
+            title={`Delete ${team.name}`}
           />
         ) : (
           <DangerZoneAction
@@ -152,11 +152,11 @@ export function ManageTeamPage() {
                 onClick={() => setActiveDialog('inactivate')}
                 variant="danger"
               >
-                Inactivate team
+                Inactivate {team.name}
               </Button>
             )}
             description="Its owners leave the league. Their accounts and other leagues are untouched."
-            title="Inactivate team"
+            title={`Inactivate ${team.name}`}
           />
         )}
       </DangerZone>

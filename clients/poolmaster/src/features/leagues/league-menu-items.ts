@@ -8,10 +8,16 @@ import {
 } from './league-routing';
 
 /**
- * The member pages' menu for one league: Home, Contests, My team, Teams. Each item is active
- * on its own page and on the pages under it, so a contest's leaderboard keeps Contests lit.
+ * The member pages' menu for one league: Home, Contests, the viewer's own squad, Members. Each
+ * item is active on its own page and on the pages under it, so a contest's leaderboard keeps
+ * Contests lit. The viewer's squad is shown by its name; until that name is known, or when the
+ * viewer has no squad in the league, the entry reads "Yours".
  */
-export function buildLeagueMenuItems(leagueCode: string, pathname: string): NavMenuItem[] {
+export function buildLeagueMenuItems(
+  leagueCode: string,
+  pathname: string,
+  mySquadName?: string | null,
+): NavMenuItem[] {
   const homePath = buildLeaguePath(leagueCode);
   const contestsPath = buildLeagueContestsPath(leagueCode);
   const myTeamPath = buildLeagueTeamPath(leagueCode);
@@ -23,10 +29,10 @@ export function buildLeagueMenuItems(leagueCode: string, pathname: string): NavM
     { isActive: isUnder(contestsPath), label: 'Contests', testId: 'league-menu-contests', to: contestsPath },
     {
       isActive: isUnder(myTeamPath) || isUnder(buildLeagueHistoryPath(leagueCode)),
-      label: 'My team',
+      label: mySquadName || 'Yours',
       testId: 'league-menu-my-team',
       to: myTeamPath,
     },
-    { isActive: isUnder(teamsPath), label: 'Teams', testId: 'league-menu-teams', to: teamsPath },
+    { isActive: isUnder(teamsPath), label: 'Members', testId: 'league-menu-teams', to: teamsPath },
   ];
 }
