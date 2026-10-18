@@ -277,6 +277,32 @@ The circuit and the horses already exist, so a later race only needs its line in
 file and its field file (or, by hand, starts at step 3). Each race is its
 own event (a Derby-day undercard race is a separate race).
 
+## Seeded 2026 races
+
+To try racing contests without setting up a race, load a test seed of the 2026 season as run.
+Four files in `packages/core-api/scripts/seed-golf/` hold every league's 2026 races with their
+real fields and finishing orders:
+
+| File | Sport leagues and races |
+|---|---|
+| `auto-racing-2026-test.json` | Formula 1 (17 Grands Prix, Australia to Singapore), NASCAR Cup Series (32 points races, the Daytona 500 to Charlotte in October), IndyCar (all 18 races, the Indianapolis 500 among them) |
+| `horse-racing-2026-test.json` | US Thoroughbred: the Kentucky Derby, Preakness Stakes and Belmont Stakes, with jockeys and post positions; the Derby's scratched horses did not start |
+| `cycling-2026-test.json` | UCI WorldTour: Milano-Sanremo, the Giro d'Italia and the Tour de France; UCI Women's WorldTour: the Giro d'Italia Women |
+| `running-2026-test.json` | World Marathon Majors men and women: Tokyo, Boston, London, Sydney, Berlin and Chicago |
+
+Load one with `mode` `apply` like any file. Because its envelope says `testData`:
+
+- **Dates moved forward by whole weeks**, post times with them, so the first race starts at
+  least a week after the run.
+- **Each race released**, with automatic lifecycle off, its field tiered by made-up odds and
+  priced.
+- **The official finishing order already entered**: every runner's place (or did not finish,
+  did not start), grid or post position, and jockey, as *The finishing order* in step 7 would.
+
+Then create a contest on a race, enter it, and move the race through *In Progress* and
+*Completed* from its Manage page: it settles on the finishing order already there. Running the
+file again skips everything.
+
 ## Auto racing
 
 Car racing (NASCAR Cup Series, IndyCar, Formula 1) runs through the same steps under

@@ -9,9 +9,9 @@
  * Every sport in the registry loads a real schedule and fields in the one event shape below:
  * name, dates, venue, location and rounds, plus par for a stroke-play sport (golf) and an
  * optional start time for a sport whose cutoff is a set moment (a race's post time). A test
- * seed is golf's or a bracket sport's, because its made-up results are stroke rounds or match
- * results; a bracket sport's seed is a played bracket, entered after release round by round,
- * each play-in place first taking its winner.
+ * seed carries results of the kind its sport is scored by: golf's made-up stroke rounds, a
+ * played bracket's match results (entered after release round by round, each play-in place
+ * first taking its winner), or a race's real finishing order (entered after release).
  *
  * A sport that plays a bracket (basketball) may also carry each event's bracket: its matches,
  * where each winner moves on to, and the field places that stand for a play-in pairing. The
@@ -25,8 +25,9 @@
  */
 
 import { z } from 'zod';
-import { BracketAdvancement, getSportDefinition, MatchSide, ScoringFamily, type Sport, sportPlaysBracket, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { BracketAdvancement, getSportDefinition, MatchSide, RaceResultStatus, ScoringFamily, type Sport, sportPlaysBracket, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import { findBracketProblems } from '../../src/modules/events/sport-event-bracket-service';
+import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
 /** The one envelope version this loader reads; any other is refused rather than misread. */
 export const SPORT_DATA_SCHEMA_VERSION = 1;
@@ -81,6 +82,18 @@ const FieldEntrySchema = z.object({
   finish: z.enum(['MC', 'WD']).optional(),
   /** Holes a withdrawn golfer finished in their last round. */
   withdrawnThru: z.number().int().min(1).max(17).optional(),
+  /**
+   * A race's result for this runner, entered after release as the admin's official finishing
+   * order: a place for a finisher (a dead heat repeats it), none for any other status.
+   */
+  raceResult: z.object({
+    status: z.nativeEnum(RaceResultStatus),
+    finishPosition: z.number().int().min(1).nullable(),
+    /** Post position or grid slot. */
+    startPosition: z.number().int().min(1).nullable().optional(),
+    /** The jockey, for a horse. */
+    riderName: z.string().min(1).nullable().optional(),
+  }).strict().optional(),
 }).strict();
 
 const MatchSchema = z.object({
@@ -186,13 +199,14 @@ export interface ParseSportDataFileOptions {
   allowTestData: boolean;
 }
 
-const TEST_ONLY_FIELD_KEYS = ['oddsToWin', 'playInWinner', 'rounds', 'finish', 'withdrawnThru'] as const;
+const TEST_ONLY_FIELD_KEYS = ['oddsToWin', 'playInWinner', 'rounds', 'finish', 'withdrawnThru', 'raceResult'] as const;
+const GOLF_ONLY_FIELD_KEYS = ['rounds', 'finish', 'withdrawnThru'] as const;
 
 const TEST_SLATE_CONTENTS: readonly SportDataContent[] = [SportDataContent.PLAYERS, SportDataContent.FIELDS];
 
 /**
  * What every test seed holds. A golf seed's results are made-up stroke rounds; a bracket sport's
- * seed adds BRACKET, and its results are each match's.
+ * seed adds BRACKET, and its results are each match's; a race's results are its finishing order.
  */
 export const TEST_SEED_CONTENTS: readonly SportDataContent[] = [
   SportDataContent.SCHEDULE,
@@ -249,7 +263,24 @@ function bracketProblems(league: SportDataLeague, event: SportDataEvent, matches
   );
 }
 
-function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar: boolean, playsBracket: boolean, problems: string[]): void {
+/** How a test seed's results are carried, by what the sport is scored on. */
+const SeedResults = {
+  /** Golf: made-up strokes per round on each field entry. */
+  STROKE_ROUNDS: 'STROKE_ROUNDS',
+  /** A bracket: each match's result. */
+  MATCH_RESULTS: 'MATCH_RESULTS',
+  /** A race: each field entry's raceResult. */
+  FINISHING_ORDER: 'FINISHING_ORDER',
+} as const;
+type SeedResults = (typeof SeedResults)[keyof typeof SeedResults];
+
+const SEED_RESULTS: Readonly<Record<ScoringFamily, SeedResults>> = {
+  [ScoringFamily.STROKE_PLAY]: SeedResults.STROKE_ROUNDS,
+  [ScoringFamily.HEAD_TO_HEAD]: SeedResults.MATCH_RESULTS,
+  [ScoringFamily.FINISH_POSITION]: SeedResults.FINISHING_ORDER,
+};
+
+function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar: boolean, playsBracket: boolean, results: SeedResults, problems: string[]): void {
   const contents = new Set(file.scope.contents);
   for (const key of duplicates(league.players.map((player) => player.key))) {
     problems.push(`${league.name}: player key ${key} appears more than once.`);
@@ -294,28 +325,42 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
         if (!playerKeys.has(entry.playInWinner)) problems.push(`${where}: ${entry.player}'s play-in winner ${entry.playInWinner} is not in ${league.name}'s players.`);
         if (fieldKeys.has(entry.playInWinner)) problems.push(`${where}: ${entry.player}'s play-in winner ${entry.playInWinner} is already in the field.`);
       }
-      if (file.testData && !playsBracket) {
+      if (file.testData && results === SeedResults.STROKE_ROUNDS) {
         if (entry.oddsToWin === undefined || entry.rounds === undefined) {
           problems.push(`${where}: ${entry.player} needs oddsToWin and rounds in test data.`);
         }
+        if (entry.raceResult !== undefined) problems.push(`${where}: ${entry.player} carries raceResult, which only a race's test seed has.`);
       } else if (file.testData) {
         if (entry.oddsToWin === undefined) problems.push(`${where}: ${entry.player} needs oddsToWin in test data.`);
-        const golfOnly = (['rounds', 'finish', 'withdrawnThru'] as const).filter((key) => entry[key] !== undefined);
+        const golfOnly = GOLF_ONLY_FIELD_KEYS.filter((key) => entry[key] !== undefined);
         if (golfOnly.length > 0) problems.push(`${where}: ${entry.player} carries ${golfOnly.join(', ')}, which only a golf test seed has.`);
+        if (results === SeedResults.FINISHING_ORDER && entry.raceResult === undefined) problems.push(`${where}: ${entry.player} needs raceResult in test data.`);
+        if (results === SeedResults.MATCH_RESULTS && entry.raceResult !== undefined) problems.push(`${where}: ${entry.player} carries raceResult, which only a race's test seed has.`);
+        const result = entry.raceResult;
+        if (result !== undefined && (result.status === RaceResultStatus.FINISHED) !== (result.finishPosition !== null)) {
+          problems.push(`${where}: ${entry.player} has a finishing place only if it finished, and needs one if it did.`);
+        }
       } else {
         const madeUp = TEST_ONLY_FIELD_KEYS.filter((key) => entry[key] !== undefined);
         if (madeUp.length > 0) problems.push(`${where}: ${entry.player} carries ${madeUp.join(', ')}, which only test data may.`);
       }
     }
     if (!file.testData && event.winner !== undefined) problems.push(`${where}: carries a winner, which only test data may.`);
-    if (file.testData && !playsBracket && event.roundsPar === null) problems.push(`${where}: needs roundsPar in test data, to score its rounds.`);
+    if (file.testData && results === SeedResults.STROKE_ROUNDS && event.roundsPar === null) problems.push(`${where}: needs roundsPar in test data, to score its rounds.`);
+    if (file.testData && results === SeedResults.FINISHING_ORDER) {
+      const places = event.field.flatMap((entry) => {
+        const place = entry.raceResult?.finishPosition;
+        return place === undefined || place === null ? [] : [place];
+      });
+      if (!placesFormFinishingOrder(places)) problems.push(`${where}: the finishing places do not run 1, 2, 3 ... (a dead heat repeats a place and skips the next).`);
+    }
     if (!file.testData && matches.some((match) => match.result !== undefined)) problems.push(`${where}: carries match results, which only test data may.`);
   }
 }
 
 /**
  * Reads a parsed JSON file as sport data, or throws SportDataFileError listing every problem:
- * an unknown schema version, a sport outside the registry, a test seed of a sport with neither stroke rounds nor a bracket, data outside
+ * an unknown schema version, a sport outside the registry, data outside
  * the envelope's scope, made-up data in a real file, or test data where it is not allowed.
  */
 export function parseSportDataFile(json: unknown, options: ParseSportDataFileOptions): SportDataFile {
@@ -336,9 +381,6 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
   }
   const strokePlay = isSport(sport) && getSportDefinition(sport).scoringFamily === ScoringFamily.STROKE_PLAY;
   const playsBracket = isSport(sport) && sportPlaysBracket(sport);
-  if (isSport(sport) && file.testData && !slate && !strokePlay && !playsBracket) {
-    problems.push(`scope.sport ${sport} cannot have a test seed: a test seed's results are golf's stroke rounds or a bracket's match results. Use a real file or a test slate.`);
-  }
 
   const contents = new Set(file.scope.contents);
   if (contents.has(SportDataContent.FIELDS) && !contents.has(SportDataContent.PLAYERS)) {
@@ -382,7 +424,9 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
     problems.push(`Sport league ${name} appears more than once.`);
   }
   // An unknown sport is already refused; its par is not worth a second problem.
-  for (const league of file.sportLeagues) checkLeague(league, file, strokePlay || !isSport(sport), playsBracket || !isSport(sport), problems);
+  // An unknown sport's entries are read as a bracket's, which asks least of them.
+  const results = isSport(sport) ? SEED_RESULTS[getSportDefinition(sport).scoringFamily] : SeedResults.MATCH_RESULTS;
+  for (const league of file.sportLeagues) checkLeague(league, file, strokePlay || !isSport(sport), playsBracket || !isSport(sport), results, problems);
 
   if (problems.length > 0 || !isSport(sport)) throw new SportDataFileError(problems);
   return { ...file, scope: { ...file.scope, sport } };

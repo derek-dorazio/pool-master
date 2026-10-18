@@ -61,6 +61,36 @@ function horseRacingFile(): HorseRacingFile {
   return file as HorseRacingFile;
 }
 
+interface RaceTestSeed {
+  testData: boolean;
+  scope: { contents: string[] };
+  sportLeagues: Array<{
+    players: Array<{ key: string; name: string; countryCode: string; ranking: number }>;
+    events: Array<{ field: Array<{ player: string; oddsToWin?: number; rounds?: number[]; raceResult?: Record<string, unknown> }> }>;
+  }>;
+}
+
+/** A played race as a test seed: four runners, two sharing second in a dead heat, one not finishing. */
+function raceTestSeed(): RaceTestSeed {
+  const file = horseRacingFile() as unknown as RaceTestSeed;
+  file.testData = true;
+  file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
+  const runners = ['a', 'b', 'c', 'd'];
+  file.sportLeagues[0].players = runners.map((runner, index) => ({ key: `race-${runner}`, name: `Horse ${runner.toUpperCase()}`, countryCode: 'US', ranking: index + 1 }));
+  const places = [2, 1, 2, null];
+  file.sportLeagues[0].events[0].field = runners.map((runner, index) => ({
+    player: `race-${runner}`,
+    oddsToWin: index + 2,
+    raceResult: {
+      status: places[index] === null ? 'DID_NOT_FINISH' : 'FINISHED',
+      finishPosition: places[index],
+      startPosition: index + 1,
+      riderName: `Jockey ${runner.toUpperCase()}`,
+    },
+  }));
+  return file;
+}
+
 function problemsOf(json: unknown, allowTestData = false): readonly string[] {
   try {
     parseSportDataFile(json, { allowTestData });
@@ -118,14 +148,46 @@ describe('sport data file envelope', () => {
     ]);
   });
 
-  it('refuses a test seed of a sport with neither stroke rounds nor a bracket to make results up for', () => {
-    const file = horseRacingFile();
-    file.testData = true;
-    file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
+  it('reads a race test seed whose runners carry the real finishing order, a dead heat sharing a place', () => {
+    const file = parseSportDataFile(raceTestSeed(), { allowTestData: true });
 
-    expect(problemsOf(file, true)).toContain(
-      'scope.sport HORSE_RACING cannot have a test seed: a test seed\'s results are golf\'s stroke rounds or a bracket\'s match results. Use a real file or a test slate.',
-    );
+    expect(file.sportLeagues[0].events[0].field.map((entry) => entry.raceResult)).toEqual([
+      { status: 'FINISHED', finishPosition: 2, startPosition: 1, riderName: 'Jockey A' },
+      { status: 'FINISHED', finishPosition: 1, startPosition: 2, riderName: 'Jockey B' },
+      { status: 'FINISHED', finishPosition: 2, startPosition: 3, riderName: 'Jockey C' },
+      { status: 'DID_NOT_FINISH', finishPosition: null, startPosition: 4, riderName: 'Jockey D' },
+    ]);
+  });
+
+  it('refuses a race test seed with a runner missing its result, a place on a runner that did not finish, or places that skip', () => {
+    const file = raceTestSeed();
+    const [first, second, third, fourth] = file.sportLeagues[0].events[0].field;
+    delete first.raceResult;
+    third.raceResult = { status: 'FINISHED', finishPosition: 4 };
+    fourth.raceResult = { status: 'DID_NOT_FINISH', finishPosition: 3 };
+    second.rounds = [70];
+
+    expect(problemsOf(file, true)).toEqual([
+      'US Thoroughbred, Pegasus World Cup: race-a needs raceResult in test data.',
+      'US Thoroughbred, Pegasus World Cup: race-b carries rounds, which only a golf test seed has.',
+      'US Thoroughbred, Pegasus World Cup: race-d has a finishing place only if it finished, and needs one if it did.',
+      'US Thoroughbred, Pegasus World Cup: the finishing places do not run 1, 2, 3 ... (a dead heat repeats a place and skips the next).',
+    ]);
+  });
+
+  it('refuses a race result on a golf test seed and in a real file', () => {
+    const golf = edited((file) => {
+      file.testData = true;
+      file.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'];
+      Object.assign(file.sportLeagues[0].events[0].field[0], { oddsToWin: 5, rounds: [70, 70, 70, 70], raceResult: { status: 'FINISHED', finishPosition: 1 } });
+    });
+    const real = horseRacingFile() as unknown as RaceTestSeed;
+    real.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS'];
+    real.sportLeagues[0].players = [{ key: 'race-a', name: 'Horse A', countryCode: 'US', ranking: 1 }];
+    real.sportLeagues[0].events[0].field = [{ player: 'race-a', raceResult: { status: 'FINISHED', finishPosition: 1 } }];
+
+    expect(problemsOf(golf, true)).toEqual(['PGA TOUR, The RSM Classic: pga-a carries raceResult, which only a race\'s test seed has.']);
+    expect(problemsOf(real)).toEqual(['US Thoroughbred, Pegasus World Cup: race-a carries raceResult, which only test data may.']);
   });
 
   it('refuses a contents value outside the closed list and a key the shape does not have', () => {

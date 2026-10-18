@@ -21,7 +21,8 @@
  * A test seed (`testData: true`) adds the made-up parts: its dates move forward by whole
  * weeks so the first event starts at least a week after the run, and each event that is
  * still a draft gets odds, tiers, prices and stored scores and is released for contests (a
- * bracket's play-in places then take their winners before its results go in). A
+ * bracket's play-in places then take their winners before its results go in; a race's finishing
+ * order goes in after release, as the admin's official result). A
  * draft that an earlier run stopped part-way through is finished the same way. A real file
  * never releases an event, writes odds, tiers, prices or scores, or deletes anything.
  *
@@ -54,6 +55,7 @@ import type {
 import {
   addEventParticipants,
   applyEventGolfRoundScores,
+  applyEventRaceResults,
   applyParticipantLeagueAffiliationUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
@@ -781,7 +783,7 @@ class Loader {
     }
   }
 
-  /** The made-up parts of a test seed: tiers by odds, default prices, stored scores, release. */
+  /** The made-up parts of a test seed: tiers by odds, default prices, stored scores or results, release. */
   private async finishTestEvent(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>): Promise<void> {
     const path = { eventId };
     await must(autoAssignEventTiers({ client, path, body: { source: 'ODDS' } }), `Assign tiers for ${event.name}`);
@@ -790,6 +792,11 @@ class Loader {
       await must(releaseEvent({ client, path }), `Release ${event.name}`);
       await fillPlayInPlacesFor(client, eventId, event, participantIds);
       await enterBracketResultsFor(client, eventId, event);
+      return;
+    }
+    if (this.resultsEnteredByHand) {
+      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      await enterRaceResultsFor(client, eventId, event, participantIds);
       return;
     }
     for (let roundNumber = 1; roundNumber <= event.rounds; roundNumber += 1) {
@@ -804,6 +811,18 @@ class Loader {
     }
     await must(releaseEvent({ client, path }), `Release ${event.name}`);
   }
+}
+
+/** A race test seed's finishing order, entered on the released event as one official result. */
+async function enterRaceResultsFor(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>): Promise<void> {
+  const rows = event.field.flatMap(({ player, raceResult }) => (raceResult === undefined ? [] : [{
+    participantId: found(participantIds.get(player) ?? undefined, `${event.name}: the participant id for ${player}`),
+    resultStatus: raceResult.status,
+    finishPosition: raceResult.finishPosition,
+    startPosition: raceResult.startPosition ?? null,
+    riderName: raceResult.riderName ?? null,
+  }]));
+  await must(applyEventRaceResults({ client, path: { eventId }, body: { isOfficial: true, rows } }), `Enter the finishing order of ${event.name}`);
 }
 
 /**

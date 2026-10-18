@@ -1,0 +1,820 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "HORSE_RACING",
+    "season": 2026,
+    "sportLeagues": [
+      "US Thoroughbred"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-18",
+    "gatheredBy": "load-sport-data, the 2026 Triple Crown races as played: each horse's post position, jockey and finishing place from its race's Wikipedia page (one source; no second source was reachable). Horses that did not start are listed as such. Every horse is marked US-bred, as the pages do not say. Rankings are each horse's average finish across these races; odds to win are made up from them.",
+    "sources": [
+      {
+        "name": "2026 Kentucky Derby (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Kentucky_Derby"
+      },
+      {
+        "name": "2026 Preakness Stakes (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Preakness_Stakes"
+      },
+      {
+        "name": "2026 Belmont Stakes (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Belmont_Stakes"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "US Thoroughbred",
+      "players": [
+        {
+          "key": "us-thoroughbred-napoleon-solo",
+          "name": "Napoleon Solo",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "us-thoroughbred-golden-tempo",
+          "name": "Golden Tempo",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "us-thoroughbred-iron-honor",
+          "name": "Iron Honor",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "us-thoroughbred-ocelli",
+          "name": "Ocelli",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "us-thoroughbred-renegade",
+          "name": "Renegade",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "us-thoroughbred-danon-bourbon",
+          "name": "Danon Bourbon",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "us-thoroughbred-chip-honcho",
+          "name": "Chip Honcho",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "us-thoroughbred-commandment",
+          "name": "Commandment",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "us-thoroughbred-incredibolt",
+          "name": "Incredibolt",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "us-thoroughbred-chief-wallabee",
+          "name": "Chief Wallabee",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "us-thoroughbred-wonder-dean",
+          "name": "Wonder Dean",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "us-thoroughbred-so-happy",
+          "name": "So Happy",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "us-thoroughbred-bull-by-the-horns",
+          "name": "Bull by the Horns",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "us-thoroughbred-further-ado",
+          "name": "Further Ado",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "us-thoroughbred-emerging-market",
+          "name": "Emerging Market",
+          "countryCode": "US",
+          "ranking": 15
+        },
+        {
+          "key": "us-thoroughbred-potente",
+          "name": "Potente",
+          "countryCode": "US",
+          "ranking": 16
+        },
+        {
+          "key": "us-thoroughbred-the-hell-we-did",
+          "name": "The Hell We Did",
+          "countryCode": "US",
+          "ranking": 17
+        },
+        {
+          "key": "us-thoroughbred-six-speed",
+          "name": "Six Speed",
+          "countryCode": "US",
+          "ranking": 18
+        },
+        {
+          "key": "us-thoroughbred-robusta",
+          "name": "Robusta",
+          "countryCode": "US",
+          "ranking": 19
+        },
+        {
+          "key": "us-thoroughbred-albus",
+          "name": "Albus",
+          "countryCode": "US",
+          "ranking": 20
+        },
+        {
+          "key": "us-thoroughbred-growth-equity",
+          "name": "Growth Equity",
+          "countryCode": "US",
+          "ranking": 21
+        },
+        {
+          "key": "us-thoroughbred-intrepido",
+          "name": "Intrepido",
+          "countryCode": "US",
+          "ranking": 22
+        },
+        {
+          "key": "us-thoroughbred-litmus-test",
+          "name": "Litmus Test",
+          "countryCode": "US",
+          "ranking": 23
+        },
+        {
+          "key": "us-thoroughbred-taj-mahal",
+          "name": "Taj Mahal",
+          "countryCode": "US",
+          "ranking": 24
+        },
+        {
+          "key": "us-thoroughbred-pavlovian",
+          "name": "Pavlovian",
+          "countryCode": "US",
+          "ranking": 25
+        },
+        {
+          "key": "us-thoroughbred-vitruvian-man",
+          "name": "Vitruvian Man",
+          "countryCode": "US",
+          "ranking": 26
+        },
+        {
+          "key": "us-thoroughbred-great-white",
+          "name": "Great White",
+          "countryCode": "US",
+          "ranking": 27
+        },
+        {
+          "key": "us-thoroughbred-talkin",
+          "name": "Talkin",
+          "countryCode": "US",
+          "ranking": 28
+        },
+        {
+          "key": "us-thoroughbred-ottinho",
+          "name": "Ottinho",
+          "countryCode": "US",
+          "ranking": 29
+        },
+        {
+          "key": "us-thoroughbred-corona-de-oro",
+          "name": "Corona de Oro",
+          "countryCode": "US",
+          "ranking": 30
+        },
+        {
+          "key": "us-thoroughbred-crupper",
+          "name": "Crupper",
+          "countryCode": "US",
+          "ranking": 31
+        },
+        {
+          "key": "us-thoroughbred-powershift",
+          "name": "Powershift",
+          "countryCode": "US",
+          "ranking": 32
+        },
+        {
+          "key": "us-thoroughbred-pretty-boy-miah",
+          "name": "Pretty Boy Miah",
+          "countryCode": "US",
+          "ranking": 33
+        },
+        {
+          "key": "us-thoroughbred-fulleffort",
+          "name": "Fulleffort",
+          "countryCode": "US",
+          "ranking": 34
+        },
+        {
+          "key": "us-thoroughbred-right-to-party",
+          "name": "Right to Party",
+          "countryCode": "US",
+          "ranking": 35
+        },
+        {
+          "key": "us-thoroughbred-silent-tactic",
+          "name": "Silent Tactic",
+          "countryCode": "US",
+          "ranking": 36
+        },
+        {
+          "key": "us-thoroughbred-the-puma",
+          "name": "The Puma",
+          "countryCode": "US",
+          "ranking": 37
+        }
+      ],
+      "events": [
+        {
+          "key": "kentucky-derby",
+          "name": "Kentucky Derby",
+          "startDate": "2026-05-02",
+          "endDate": "2026-05-02",
+          "venue": "Churchill Downs",
+          "location": "Louisville, Kentucky",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "us-thoroughbred-renegade",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2,
+                "startPosition": 1,
+                "riderName": "Irad Ortiz Jr."
+              }
+            },
+            {
+              "player": "us-thoroughbred-albus",
+              "ranking": 15,
+              "oddsToWin": 170.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 15,
+                "startPosition": 2,
+                "riderName": "Manuel Franco"
+              }
+            },
+            {
+              "player": "us-thoroughbred-intrepido",
+              "ranking": 16,
+              "oddsToWin": 193.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 16,
+                "startPosition": 3,
+                "riderName": "Hector Berrios"
+              }
+            },
+            {
+              "player": "us-thoroughbred-litmus-test",
+              "ranking": 17,
+              "oddsToWin": 218.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 17,
+                "startPosition": 4,
+                "riderName": "Martin Garcia"
+              }
+            },
+            {
+              "player": "us-thoroughbred-right-to-party",
+              "ranking": 22,
+              "oddsToWin": 364.5,
+              "raceResult": {
+                "status": "DID_NOT_START",
+                "finishPosition": null,
+                "startPosition": 5,
+                "riderName": "Christopher Elliott"
+              }
+            },
+            {
+              "player": "us-thoroughbred-commandment",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7,
+                "startPosition": 6,
+                "riderName": "Luis Saez"
+              }
+            },
+            {
+              "player": "us-thoroughbred-danon-bourbon",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5,
+                "startPosition": 7,
+                "riderName": "Atsuya Nishimura"
+              }
+            },
+            {
+              "player": "us-thoroughbred-so-happy",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9,
+                "startPosition": 8,
+                "riderName": "Mike Smith"
+              }
+            },
+            {
+              "player": "us-thoroughbred-the-puma",
+              "ranking": 24,
+              "oddsToWin": 433.5,
+              "raceResult": {
+                "status": "DID_NOT_START",
+                "finishPosition": null,
+                "startPosition": 9,
+                "riderName": "Javier Castellano"
+              }
+            },
+            {
+              "player": "us-thoroughbred-wonder-dean",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8,
+                "startPosition": 10,
+                "riderName": "Ryusei Sakai"
+              }
+            },
+            {
+              "player": "us-thoroughbred-incredibolt",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6,
+                "startPosition": 11,
+                "riderName": "Jaime Torres"
+              }
+            },
+            {
+              "player": "us-thoroughbred-chief-wallabee",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4,
+                "startPosition": 12,
+                "riderName": "Junior Alvarado"
+              }
+            },
+            {
+              "player": "us-thoroughbred-silent-tactic",
+              "ranking": 23,
+              "oddsToWin": 398.2,
+              "raceResult": {
+                "status": "DID_NOT_START",
+                "finishPosition": null,
+                "startPosition": 13,
+                "riderName": "Cristian Torres"
+              }
+            },
+            {
+              "player": "us-thoroughbred-potente",
+              "ranking": 12,
+              "oddsToWin": 109.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 12,
+                "startPosition": 14,
+                "riderName": "Juan Hernandez"
+              }
+            },
+            {
+              "player": "us-thoroughbred-emerging-market",
+              "ranking": 11,
+              "oddsToWin": 92.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10,
+                "startPosition": 15,
+                "riderName": "Flavien Prat"
+              }
+            },
+            {
+              "player": "us-thoroughbred-pavlovian",
+              "ranking": 18,
+              "oddsToWin": 244.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 18,
+                "startPosition": 16,
+                "riderName": "Edwin Maldonado"
+              }
+            },
+            {
+              "player": "us-thoroughbred-six-speed",
+              "ranking": 13,
+              "oddsToWin": 128.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 13,
+                "startPosition": 17,
+                "riderName": "Brian Hernandez Jr."
+              }
+            },
+            {
+              "player": "us-thoroughbred-further-ado",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 11,
+                "startPosition": 18,
+                "riderName": "John Velazquez"
+              }
+            },
+            {
+              "player": "us-thoroughbred-golden-tempo",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1,
+                "startPosition": 19,
+                "riderName": "José Ortiz"
+              }
+            },
+            {
+              "player": "us-thoroughbred-fulleffort",
+              "ranking": 21,
+              "oddsToWin": 332.2,
+              "raceResult": {
+                "status": "DID_NOT_START",
+                "finishPosition": null,
+                "startPosition": 20,
+                "riderName": "Tyler Gaffalione"
+              }
+            },
+            {
+              "player": "us-thoroughbred-great-white",
+              "ranking": 19,
+              "oddsToWin": 272.2,
+              "raceResult": {
+                "status": "DID_NOT_START",
+                "finishPosition": null,
+                "startPosition": 21,
+                "riderName": "Alex Achard"
+              }
+            },
+            {
+              "player": "us-thoroughbred-ocelli",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3,
+                "startPosition": 22,
+                "riderName": "Tyler Gaffalione"
+              }
+            },
+            {
+              "player": "us-thoroughbred-robusta",
+              "ranking": 14,
+              "oddsToWin": 148.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 14,
+                "startPosition": 23,
+                "riderName": "Cristian Torres"
+              }
+            },
+            {
+              "player": "us-thoroughbred-corona-de-oro",
+              "ranking": 20,
+              "oddsToWin": 301.5,
+              "raceResult": {
+                "status": "DID_NOT_START",
+                "finishPosition": null,
+                "startPosition": 24,
+                "riderName": "Brian Hernandez Jr."
+              }
+            }
+          ]
+        },
+        {
+          "key": "preakness-stakes",
+          "name": "Preakness Stakes",
+          "startDate": "2026-05-16",
+          "endDate": "2026-05-16",
+          "venue": "Laurel Park",
+          "location": "Laurel, Maryland",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "us-thoroughbred-taj-mahal",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10,
+                "startPosition": 1,
+                "riderName": "Sheldon Russell"
+              }
+            },
+            {
+              "player": "us-thoroughbred-ocelli",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4,
+                "startPosition": 2,
+                "riderName": "Tyler Gaffalione"
+              }
+            },
+            {
+              "player": "us-thoroughbred-crupper",
+              "ranking": 13,
+              "oddsToWin": 128.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 13,
+                "startPosition": 3,
+                "riderName": "Junior Alvarado"
+              }
+            },
+            {
+              "player": "us-thoroughbred-robusta",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9,
+                "startPosition": 4,
+                "riderName": "Rafael Bejarano"
+              }
+            },
+            {
+              "player": "us-thoroughbred-talkin",
+              "ranking": 11,
+              "oddsToWin": 92.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 12,
+                "startPosition": 5,
+                "riderName": "Irad Ortiz Jr."
+              }
+            },
+            {
+              "player": "us-thoroughbred-chip-honcho",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3,
+                "startPosition": 6,
+                "riderName": "José Ortiz"
+              }
+            },
+            {
+              "player": "us-thoroughbred-the-hell-we-did",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7,
+                "startPosition": 7,
+                "riderName": "Luis Saez"
+              }
+            },
+            {
+              "player": "us-thoroughbred-bull-by-the-horns",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6,
+                "startPosition": 8,
+                "riderName": "Micah Husbands"
+              }
+            },
+            {
+              "player": "us-thoroughbred-iron-honor",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2,
+                "startPosition": 9,
+                "riderName": "Flavien Prat"
+              }
+            },
+            {
+              "player": "us-thoroughbred-napoleon-solo",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1,
+                "startPosition": 10,
+                "riderName": "Paco Lopez"
+              }
+            },
+            {
+              "player": "us-thoroughbred-corona-de-oro",
+              "ranking": 12,
+              "oddsToWin": 109.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 11,
+                "startPosition": 11,
+                "riderName": "John Velazquez"
+              }
+            },
+            {
+              "player": "us-thoroughbred-incredibolt",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5,
+                "startPosition": 12,
+                "riderName": "Jaime Torres"
+              }
+            },
+            {
+              "player": "us-thoroughbred-great-white",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8,
+                "startPosition": 13,
+                "riderName": "Alex Achard"
+              }
+            },
+            {
+              "player": "us-thoroughbred-pretty-boy-miah",
+              "ranking": 14,
+              "oddsToWin": 148.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 14,
+                "startPosition": 14,
+                "riderName": "Ricardo Santana Jr."
+              }
+            }
+          ]
+        },
+        {
+          "key": "belmont-stakes",
+          "name": "Belmont Stakes",
+          "startDate": "2026-06-06",
+          "endDate": "2026-06-06",
+          "startsAt": "2026-06-06T19:01:00-04:00",
+          "venue": "Saratoga Race Course",
+          "location": "Saratoga Springs, New York",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "us-thoroughbred-vitruvian-man",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7,
+                "startPosition": 1,
+                "riderName": "Antonio Fresu"
+              }
+            },
+            {
+              "player": "us-thoroughbred-powershift",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9,
+                "startPosition": 2,
+                "riderName": "Luis Saez"
+              }
+            },
+            {
+              "player": "us-thoroughbred-chief-wallabee",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4,
+                "startPosition": 3,
+                "riderName": "Junior Alvarado"
+              }
+            },
+            {
+              "player": "us-thoroughbred-renegade",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3,
+                "startPosition": 4,
+                "riderName": "Irad Ortiz Jr."
+              }
+            },
+            {
+              "player": "us-thoroughbred-ottinho",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8,
+                "startPosition": 5,
+                "riderName": "Dylan Davis"
+              }
+            },
+            {
+              "player": "us-thoroughbred-growth-equity",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6,
+                "startPosition": 6,
+                "riderName": "Manuel Franco"
+              }
+            },
+            {
+              "player": "us-thoroughbred-commandment",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2,
+                "startPosition": 7,
+                "riderName": "John Velazquez"
+              }
+            },
+            {
+              "player": "us-thoroughbred-emerging-market",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5,
+                "startPosition": 8,
+                "riderName": "Flavien Prat"
+              }
+            },
+            {
+              "player": "us-thoroughbred-golden-tempo",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1,
+                "startPosition": 9,
+                "riderName": "José Ortiz"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

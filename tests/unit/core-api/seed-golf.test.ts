@@ -8,6 +8,7 @@ import {
   shiftedMatchTimes,
 } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import { parseSportDataFile, SportDataContent, TEST_SEED_CONTENTS, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
+import { expectDefined } from '../../support/expect-defined';
 
 function seedWithStarts(...startDates: string[]): Pick<SportDataFile, 'sportLeagues'> {
   return {
@@ -353,6 +354,28 @@ describe('basketball-2026-ncaa-tournaments-test.json', () => {
   it('ends with Michigan beating UConn 69-63 for the men\'s title and UCLA beating South Carolina 79-51 for the women\'s', () => {
     expect(men.matches?.[62]).toMatchObject({ roundNumber: 6, advancesTo: null, result: { winner: 'AWAY', homeScore: 63, awayScore: 69 } });
     expect(women.matches?.[62]).toMatchObject({ roundNumber: 6, advancesTo: null, result: { winner: 'AWAY', homeScore: 51, awayScore: 79 } });
+  });
+});
+
+describe('2026 racing test seeds', () => {
+  it.each([
+    ['auto-racing-2026-test.json', Sport.AUTO_RACING, [['Formula 1', 17, 'Max Verstappen'], ['NASCAR Cup Series', 32, 'Chase Briscoe'], ['IndyCar', 18, 'Scott McLaughlin']]],
+    ['horse-racing-2026-test.json', Sport.HORSE_RACING, [['US Thoroughbred', 3, 'Golden Tempo']]],
+    ['cycling-2026-test.json', Sport.CYCLING, [['UCI WorldTour', 3, 'Tadej Pogačar'], ["UCI Women's WorldTour", 1, 'Demi Vollering']]],
+    ['running-2026-test.json', Sport.RUNNING, [['World Marathon Majors (men)', 6, 'Amos Kipruto'], ['World Marathon Majors (women)', 6, 'Hawi Feysa']]],
+  ] as const)('%s holds each sport league\'s 2026 races as run, every runner with a result and the last race won by its real winner', (fileName, sport, leagues) => {
+    const file = readDataFile(fileName, true);
+
+    expect([file.scope.sport, file.scope.season, file.scope.contents]).toEqual([sport, 2026, TEST_SEED_CONTENTS]);
+    expect(file.sportLeagues.map((league) => league.name)).toEqual(leagues.map(([name]) => name));
+    file.sportLeagues.forEach((league, index) => {
+      const [, races, lastWinner] = leagues[index];
+      const nameOf = new Map(league.players.map((player) => [player.key, player.name]));
+      expect(league.events).toHaveLength(races);
+      expect(league.events.every((event) => event.rounds === 1 && event.field.every((entry) => entry.raceResult !== undefined && entry.oddsToWin !== undefined))).toBe(true);
+      const winner = expectDefined(league.events[races - 1].field.find((entry) => entry.raceResult?.finishPosition === 1));
+      expect(nameOf.get(winner.player)).toBe(lastWinner);
+    });
   });
 });
 
