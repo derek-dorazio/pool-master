@@ -6,7 +6,7 @@ import {
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
-import { WRITE_TIMEOUT_MS, isCall, submitAndRead } from './helpers/browser-writes';
+import { WRITE_TIMEOUT_MS, isCall, readCsrfToken, submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
 
@@ -1502,14 +1502,4 @@ async function putContestConfigurationUnchanged(
   );
   const body = (await response.json()) as { error?: { code?: string } };
   return { status: response.status(), errorCode: body.error?.code ?? null };
-}
-
-/** The CSRF token the session issued, which a state-changing request has to echo in a header. */
-async function readCsrfToken(page: Page): Promise<string> {
-  const cookies = await page.context().cookies();
-  const csrf = cookies.find((cookie) => cookie.name === 'poolmaster_csrf');
-  if (!csrf) {
-    throw new Error('the session carries no poolmaster_csrf cookie, so no write can be signed');
-  }
-  return csrf.value;
 }

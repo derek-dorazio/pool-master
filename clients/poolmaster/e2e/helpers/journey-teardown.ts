@@ -29,8 +29,11 @@ export type JourneyUser = {
   lastName: string;
 };
 
-/** The sports a journey builds its catalog in: the golden journey's golf, the racing journey's horse racing. */
-export type JourneySport = 'GOLF' | 'HORSE_RACING';
+/**
+ * The sports a journey builds its catalog in: the golden journey's golf, the racing journey's
+ * horse racing and the knockout journey's basketball.
+ */
+export type JourneySport = 'GOLF' | 'HORSE_RACING' | 'BASKETBALL';
 
 /**
  * Every name one attempt of a journey can create, all derived from its run id. The tour, players
@@ -43,6 +46,8 @@ export type JourneyRun = {
   tourName: string;
   playerNamePrefix: string;
   tournamentName: string;
+  /** Further tournaments on the same tour, such as the golden journey's multi-event contest's. */
+  moreTournamentNames?: readonly string[];
   commissioner: JourneyUser;
   member: JourneyUser;
   leagueName: string;
@@ -69,7 +74,9 @@ export async function removeJourneyRun(
   // The commissioner owns the league and the member's squad lives in it, and the contest in it
   // references the tournament: the league goes first.
   await attempt(log, `league ${run.leagueCode}`, () => removeLeague(api, headers, run.leagueCode, log));
-  await attempt(log, `tournament "${run.tournamentName}"`, () => removeTournament(api, headers, run, log));
+  for (const tournamentName of [run.tournamentName, ...(run.moreTournamentNames ?? [])]) {
+    await attempt(log, `tournament "${tournamentName}"`, () => removeTournament(api, headers, tournamentName, log));
+  }
   const tourId = await findTourId(api, headers, run).catch((error: unknown) => {
     log(`could not look up tour "${run.tourName}": ${error instanceof Error ? error.message : String(error)}`);
     return null;
@@ -113,22 +120,22 @@ export async function removeLeague(api: APIRequestContext, headers: AuthHeaders,
     : `league ${leagueCode} STILL PRESENT after delete (re-read ${reread.status()})`);
 }
 
-async function removeTournament(api: APIRequestContext, headers: AuthHeaders, run: JourneyRun, log: Log) {
+async function removeTournament(api: APIRequestContext, headers: AuthHeaders, tournamentName: string, log: Log) {
   const list = await expectOk(
-    api.get('/api/v1/events', { headers, params: { q: run.tournamentName } }),
+    api.get('/api/v1/events', { headers, params: { q: tournamentName } }),
     'list tournaments',
   );
   const { events } = (await list.json()) as { events: { id: string; name: string }[] };
-  const event = events.find((candidate) => candidate.name === run.tournamentName);
+  const event = events.find((candidate) => candidate.name === tournamentName);
   if (!event) {
-    log(`tournament "${run.tournamentName}" was never created; nothing to remove`);
+    log(`tournament "${tournamentName}" was never created; nothing to remove`);
     return;
   }
   await expectOk(api.delete(`/api/v1/events/${event.id}`, { headers }), 'delete tournament');
   const reread = await api.get(`/api/v1/events/${event.id}`, { headers });
   log(reread.status() === 404
-    ? `tournament "${run.tournamentName}" removed with its field, rounds, scores and tiers (re-read 404)`
-    : `tournament "${run.tournamentName}" STILL PRESENT after delete (re-read ${reread.status()})`);
+    ? `tournament "${tournamentName}" removed with its field, rounds, scores and tiers (re-read 404)`
+    : `tournament "${tournamentName}" STILL PRESENT after delete (re-read ${reread.status()})`);
 }
 
 async function findTourId(api: APIRequestContext, headers: AuthHeaders, run: JourneyRun): Promise<string | null> {
