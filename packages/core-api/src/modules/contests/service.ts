@@ -377,7 +377,8 @@ export class ContestService {
       {
         name: row.squadName,
       },
-      visiblePicks.map(toContestEntryParticipantRow),
+      // Another squad's entry lists no picks at all (rather than none) until an event is revealed.
+      isOwner || picksRevealed ? visiblePicks.map(toContestEntryParticipantRow) : null,
     );
 
     return { entry, picksRevealed };
@@ -397,6 +398,13 @@ export class ContestService {
     const context = await this.getEntryContext(contestId, requesterUserId, 'read');
     const { contest } = context;
     const now = this.now();
+    // No event's picks are revealed while the contest takes entries, unless a draw dealt them.
+    if (contest.drawnAt === undefined && (contest.status === ContestStatus.DRAFT || contest.status === ContestStatus.OPEN)) {
+      throw new ContestOperationError(
+        'The leaderboard is not available until contest picks are revealed.',
+        'CONTEST_LEADERBOARD_PICKS_HIDDEN',
+      );
+    }
     const events = await this.findContestEvents(contest);
     if (events.length === 0) {
       throw new ContestOperationError(
@@ -481,11 +489,19 @@ export class ContestService {
     const shownRows = new Map(shown.rows.map((row) => [row.entryId, row]));
 
     let totals = rankContestTotals([...entriesById.values()], eventScores, direction);
-    // A settled contest answers from its frozen totals (#246); a live one sums its events.
+    // A settled contest answers from its frozen totals and the counting rule it settled under
+    // (#246); a live one sums its events under the live configuration.
+    let shownCountingRule = countingRule;
+    const frozenCountingPickLimits = new Map<string, number>();
     if (contest.status === ContestStatus.COMPLETED) {
       const standings = await this.deps.standings.findByContest(contestId);
-      if (standings.length > 0) {
+      const firstStanding = standings.at(0);
+      if (firstStanding) {
         totals = applySettledContestTotals(totals, standings.map(toSettledStanding));
+        shownCountingRule = { type: 'BEST_N', count: firstStanding.countingPickLimit };
+        for (const standing of standings) {
+          frozenCountingPickLimits.set(standing.contestEntryId, standing.countingPickLimit);
+        }
       } else {
         this.logger.warn({ contestId }, 'completed contest has no settled standings; leaderboard computed live');
       }
@@ -503,7 +519,7 @@ export class ContestService {
         score: total.score,
         position: total.position,
         displayPosition: total.displayPosition,
-        countingPickLimit: shownRow?.countingPickLimit ?? countingRule.count,
+        countingPickLimit: frozenCountingPickLimits.get(total.entryId) ?? shownRow?.countingPickLimit ?? shownCountingRule.count,
         scoredPickCount: shownRow?.scoredPickCount ?? 0,
         picks: shownRow?.picks ?? [],
         events: revealed.flatMap((event) =>
@@ -517,7 +533,7 @@ export class ContestService {
       sportEventId: shownEvent.id,
       sport: shownEvent.sport,
       scoringDefinitionId,
-      countingRule,
+      countingRule: shownCountingRule,
       participants: shown.field,
       entries: leaderboardEntries,
       asOf: shown.asOf,
@@ -982,7 +998,8 @@ export class ContestService {
         picksCount: pickCountByEntry.get(row.id) ?? 0,
       },
       { name: row.squadName },
-      participantsByEntry.get(row.id) ?? [],
+      // Another squad's entry lists no picks at all (rather than none) until an event is revealed.
+      ownEntryIds.has(row.id) || options.revealedEventIds.size > 0 ? (participantsByEntry.get(row.id) ?? []) : null,
     ));
   }
 

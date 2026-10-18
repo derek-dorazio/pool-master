@@ -560,7 +560,7 @@ export class SelectionService {
     }
     const sportEvent = requested ?? currentContestEvent(contestEvents, now);
     if (!sportEvent) {
-      throw new Error(`Contest ${contestId} covers no sport event`);
+      throw selectionErrors.contestHasNoEvent(contestId);
     }
 
     const sportEventId = sportEvent.id;

@@ -19162,6 +19162,10 @@ export type GetSelectionStateErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
 };
 
 export type GetSelectionStateError = GetSelectionStateErrors[keyof GetSelectionStateErrors];

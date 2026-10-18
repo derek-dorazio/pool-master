@@ -65,13 +65,13 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
       tags: ['Selections'],
       summary: 'Get current selection state for a contest',
       description:
-        'Returns the current selection-room state for one event of the contest (#713): `sportEventId`, else its next event that has not started, else its last; 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. It includes the event\'s field, its picks, and each entry\'s status in it. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry\'s spend against the salary cap. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league\'s commissioners and root admins. Until the event\'s picks are revealed (the contest is live and the event has started, or a random draw has dealt) the pick history carries only the caller\'s own entries, and entryId selects another team\'s entry only once they are; otherwise it falls back to the caller\'s own.',
+        'Returns the current selection-room state for one event of the contest (#713): `sportEventId`, else its next event that has not started, else its last; 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. It includes the event\'s field, its picks, and each entry\'s status in it. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry\'s spend against the salary cap. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league\'s commissioners and root admins. Until the event\'s picks are revealed (the contest is live and the event has started, or a random draw has dealt) the pick history carries only the caller\'s own entries, and entryId selects another team\'s entry only once they are; otherwise it falls back to the caller\'s own. 409 CONTEST_EVENT_REQUIRED for a contest that covers no event.',
       operationId: 'getSelectionState',
       params: contestIdParams,
       querystring: schemaRef('SelectionStateQuery'),
       response: {
         200: schemaRef('SelectionStateResponse'),
-        ...selectionErrorResponses(401, 403, 404),
+        ...selectionErrorResponses(401, 403, 404, 409),
       },
     },
     preHandler: requireContestLeagueMember,
