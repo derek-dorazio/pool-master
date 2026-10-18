@@ -9,17 +9,20 @@ export function TeamFormFields({
   disabled,
   form,
   idPrefix,
+  isViewerOwn,
 }: {
   disabled: boolean;
   form: UseFormReturn<TeamFormValues>;
   /** Prefixes the field ids and test ids, e.g. `edit-team`. */
   idPrefix: string;
+  /** Whether the viewer is naming their own squad ("Your name") or a commissioner someone else's. */
+  isViewerOwn: boolean;
 }) {
   const iconKey = form.watch('iconKey');
 
   return (
     <>
-      <FormField error={form.formState.errors.name?.message} id={`${idPrefix}-name`} label="Team name">
+      <FormField error={form.formState.errors.name?.message} id={`${idPrefix}-name`} label={isViewerOwn ? 'Your name in this league' : 'Name in this league'}>
         <Input
           data-testid={`${idPrefix}-name`}
           disabled={disabled}
@@ -31,9 +34,9 @@ export function TeamFormFields({
       </FormField>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-foreground">Icon</legend>
+        <legend className="text-sm font-medium text-foreground">{isViewerOwn ? 'Your icon' : 'Icon'}</legend>
         <IconPalette
-          aria-label="Team icon"
+          aria-label={isViewerOwn ? 'Your icon' : 'Icon'}
           disabled={disabled}
           onSelect={(key) => form.setValue('iconKey', key, { shouldDirty: true })}
           optionTestIdPrefix="team-icon"

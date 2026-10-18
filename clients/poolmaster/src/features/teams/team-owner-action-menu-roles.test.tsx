@@ -129,7 +129,7 @@ describe('TeamOwnerActionMenu by viewer role', () => {
     expect(reopened.queryByText('Cannot demote the last commissioner.')).not.toBeInTheDocument();
   });
 
-  it('removes an owner from a team that has another owner, warning it also removes them from the league', async () => {
+  it('removes an owner from a squad that has another owner, warning it also removes them from the league', async () => {
     mockApi.removeSquadOwner.mockResolvedValue(apiSuccess({
       membership: buildLeagueSquadMember({ userId: 'user-2' }),
     }));
@@ -137,8 +137,8 @@ describe('TeamOwnerActionMenu by viewer role', () => {
 
     await chooseAction('Remove owner');
     const dialog = within(screen.getByRole('dialog', { name: 'Remove owner' }));
-    expect(dialog.getByText(/removes them from the team and from the league/)).toBeInTheDocument();
-    fireEvent.click(dialog.getByRole('button', { name: 'Remove from team and league' }));
+    expect(dialog.getByText(/removes them as an owner and from the league/)).toBeInTheDocument();
+    fireEvent.click(dialog.getByRole('button', { name: 'Remove as co-owner and from the league' }));
 
     await waitFor(() => expect(mockApi.removeSquadOwner).toHaveBeenCalledWith({
       path: { id: 'league-1', squadId: 'team-1', userId: 'user-2' },
@@ -154,24 +154,24 @@ describe('TeamOwnerActionMenu by viewer role', () => {
 
     await chooseAction('Remove owner');
     const dialog = within(screen.getByRole('dialog', { name: 'Remove owner' }));
-    fireEvent.click(dialog.getByRole('button', { name: 'Remove from team and league' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Remove as co-owner and from the league' }));
 
     expect(await dialog.findByText('That owner could not be removed.')).toBeInTheDocument();
   });
 
-  it('does not remove a team\'s only owner directly, and sends a commissioner to Manage team to inactivate the team', async () => {
+  it('does not remove a squad\'s only owner directly, and sends a commissioner to the Manage page to inactivate it', async () => {
     renderMenu({ activeOwnerCount: 1, canManageLeagueRole: true });
 
     await chooseAction('Remove owner');
     const dialog = within(screen.getByRole('dialog', { name: 'Remove owner' }));
 
-    expect(dialog.getByText(/inactivate the team in its Danger zone/)).toBeInTheDocument();
+    expect(dialog.getByText(/Use Inactivate in the Danger zone on the Manage page/)).toBeInTheDocument();
     expect(dialog.queryByText(/Team Home/)).not.toBeInTheDocument();
-    expect(dialog.getByRole('link', { name: 'Open Manage team' })).toHaveAttribute(
+    expect(dialog.getByRole('link', { name: 'Open the Manage page' })).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/admin/teams/team-1',
     );
-    expect(dialog.queryByRole('button', { name: 'Remove from team and league' })).not.toBeInTheDocument();
+    expect(dialog.queryByRole('button', { name: 'Remove as co-owner and from the league' })).not.toBeInTheDocument();
     expect(mockApi.removeSquadOwner).not.toHaveBeenCalled();
   });
 

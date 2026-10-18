@@ -24,13 +24,13 @@ import { registerFreshUser } from './helpers/user-session';
  * league and users through the API in `afterAll`, whatever the outcome.
  *
  * Where each action lives, as found by running it:
- * - rename and icon: My team › Edit team (`/league/:code/team/edit`), saved together;
- * - co-owner invitation: the Owners section of My team;
+ * - rename and icon: the viewer's own menu entry (their squad's name) › Edit (`/league/:code/team/edit`), saved together;
+ * - co-owner invitation: the Owners section of the viewer's own page;
  * - invitations: Commissioner tools › Invites (`/league/:code/admin/invites`);
- * - inactivate: Commissioner tools › Teams › Manage team (`/league/:code/admin/teams/:id`).
+ * - inactivate: Commissioner tools › Members › Manage (`/league/:code/admin/teams/:id`).
  *   Only a commissioner or root admin may inactivate (#219);
  * - delete: root admin only, and only once the squad is inactive. The server answers a
- *   commissioner with 403, so the root admin deletes it from Commissioner tools › Manage team.
+ *   commissioner with 403, so the root admin deletes it from Commissioner tools › Members › Manage.
  */
 
 const RENAMED_ICON_KEY = 'HELMET_BOLT_MIDNIGHT';
@@ -168,7 +168,7 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
       squadId = mine?.id ?? '';
     });
 
-    await test.step('the owner renames the squad and changes its icon in one save, and the new name shows on My team and the Teams directory', async () => {
+    await test.step('the owner renames the squad and changes its icon in one save, and the new name shows on their own page and in the Members directory', async () => {
       await owner.goto(`/league/${run.leagueCode}/team`);
       await expect(owner.getByTestId('my-team-identity')).toContainText(run.squadName);
       await owner.getByTestId('my-team-edit').click();

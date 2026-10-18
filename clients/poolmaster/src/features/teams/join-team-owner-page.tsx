@@ -232,13 +232,13 @@ export function JoinTeamOwnerPage() {
 
   const redirectMessage = useMemo(() => {
     if (!inviteCode) {
-      return 'This team invitation link is missing a code.';
+      return 'This co-owner invitation link is missing a code.';
     }
 
     if (!isAuthenticated) {
       // #217 — no longer a dead end. The registration form below completes the join in one step;
       // this line only sets the heading's tone.
-      return 'Create your account to join this team, or sign in if you already have one.';
+      return 'Create your account to join as a co-owner, or sign in if you already have one.';
     }
 
     return null;
@@ -252,7 +252,7 @@ export function JoinTeamOwnerPage() {
   if (redirectMessage) {
     return (
       <PublicInviteJoinPage
-        title={invitationQuery.data ? `Join ${invitationQuery.data.team.name}` : 'Join team'}
+        title={invitationQuery.data ? `Join ${invitationQuery.data.team.name} as a co-owner` : 'Join as a co-owner'}
       >
         <p className="mt-3 text-sm text-muted-foreground">{unusableInvitationMessage ?? redirectMessage}</p>
         {invitationQuery.data ? (
@@ -261,7 +261,7 @@ export function JoinTeamOwnerPage() {
               inviteCode={invitationQuery.data.inviteCode}
               leagueName={invitationQuery.data.league.name}
               message={`This invitation adds you as a co-owner of ${invitationQuery.data.team.name}. Create your account below to join straight away, or sign in if you already have one.`}
-              title="Team co-owner invite"
+              title="Co-owner invite"
             />
             <div className="rounded-[1.5rem] border border-border bg-background p-5">
               <div className="flex items-center gap-4">
@@ -271,7 +271,7 @@ export function JoinTeamOwnerPage() {
                   </div>
                 ) : null}
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground">Target team</h3>
+                  <h3 className="text-sm font-semibold text-foreground">What you&apos;re joining</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
                     You&apos;ll join <span className="font-medium text-foreground">{invitationQuery.data.team.name}</span> as a co-owner inside{' '}
                     <span className="font-medium text-foreground">{invitationQuery.data.league.name}</span>.
@@ -296,7 +296,7 @@ export function JoinTeamOwnerPage() {
               <h3 className="text-sm font-semibold text-foreground">Create your account</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Your account uses the email this invitation was sent to, so there is nothing to
-                confirm — you&apos;ll land on your team.
+                confirm — you&apos;ll land straight in the league.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -336,7 +336,7 @@ export function JoinTeamOwnerPage() {
                     SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS:
                       'An account already exists for the email this invitation was sent to. Sign in to accept it.',
                     SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED:
-                      'This invitation has already been accepted. Sign in to reach your team.',
+                      'This invitation has already been accepted. Sign in to reach the league.',
                   },
                 })}
               </p>
@@ -346,7 +346,7 @@ export function JoinTeamOwnerPage() {
               disabled={registerMutation.isPending}
               type="submit"
             >
-              {registerMutation.isPending ? 'Creating your account...' : 'Create account and join team'}
+              {registerMutation.isPending ? 'Creating your account...' : 'Create account and join'}
             </Button>
           </form>
         ) : null}
@@ -371,19 +371,19 @@ export function JoinTeamOwnerPage() {
     <PublicInviteJoinPage
       context={(
         <Chip>
-          Team invitation
+          Co-owner invitation
         </Chip>
       )}
       testId="team-owner-invite-page"
-      title={invitationQuery.data ? `Join ${invitationQuery.data.team.name}` : 'Accept your team invite'}
+      title={invitationQuery.data ? `Join ${invitationQuery.data.team.name} as a co-owner` : 'Accept your co-owner invite'}
     >
       <p className="mt-2 text-sm text-muted-foreground">
-        This invitation adds you to an existing team as a co-owner.
+        This invitation makes you a co-owner alongside the people already playing under this name.
       </p>
 
       <div className="mt-6 rounded-[1.5rem] border border-border bg-background p-5 text-sm text-muted-foreground">
         {invitationQuery.isLoading ? 'Loading invitation...' : null}
-        {invitationQuery.isError ? 'We could not load this team invitation.' : null}
+        {invitationQuery.isError ? 'We could not load this co-owner invitation.' : null}
         {invitationQuery.data ? (
           <div className="space-y-5">
             <InvitationContextCard
@@ -399,7 +399,7 @@ export function JoinTeamOwnerPage() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs uppercase text-muted-foreground">
-                    Team
+                    You&apos;ll co-own
                   </div>
                   <div className="truncate text-base font-semibold text-foreground">
                     {invitationQuery.data.team.name}
@@ -414,8 +414,8 @@ export function JoinTeamOwnerPage() {
         ) : null}
         {unusableInvitationMessage ? <p className="mt-4">{unusableInvitationMessage}</p> : null}
         {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
-        {acceptMutation.isError ? <p>{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this team invitation. Please try again.' })}</p> : null}
-        {acceptMutation.isSuccess ? <p>Invitation accepted. Redirecting you to your team...</p> : null}
+        {acceptMutation.isError ? <p>{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this co-owner invitation. Please try again.' })}</p> : null}
+        {acceptMutation.isSuccess ? <p>Invitation accepted. Taking you to the league...</p> : null}
       </div>
 
       {invitationQuery.data && !unusableInvitationMessage ? (

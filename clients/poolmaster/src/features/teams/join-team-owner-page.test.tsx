@@ -92,7 +92,7 @@ describe('JoinTeamOwnerPage', () => {
   // #217 — was "sends unauthenticated users back through sign-in and registration". That bounce
   // was a dead end: `acceptTeamOwnerInvitation` needs a session, so an invited stranger had no way
   // through. The page registers them inline now.
-  it('offers an unauthenticated invitee the registration form rather than sending them away', async () => {
+  it('offers an unauthenticated invitee the registration form, headed with the squad they will co-own, rather than sending them away', async () => {
     getCurrentUserMock.mockRejectedValue(new Error('Not authenticated'));
     refreshTokenMock.mockResolvedValue({ data: null });
     getTeamOwnerInvitationPreviewMock.mockResolvedValue({
@@ -118,6 +118,7 @@ describe('JoinTeamOwnerPage', () => {
     renderJoinTeamOwnerPage();
 
     expect(await screen.findByTestId('team-invite-register-form')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Join Beer Bellies as a co-owner' })).toBeInTheDocument();
     expect(screen.getByTestId('team-invite-register-submit')).toBeVisible();
     // Signing in stays available for somebody who already has an account; what is gone is the
     // "create an account and come back" round trip.
@@ -408,7 +409,7 @@ describe('JoinTeamOwnerPage', () => {
       renderJoinTeamOwnerPage();
 
       expect(await screen.findByTestId('team-invite-sign-in')).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'Join team' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Join as a co-owner' })).toBeInTheDocument();
       expect(screen.queryByTestId('team-invite-register-form')).not.toBeInTheDocument();
     });
 
@@ -450,7 +451,7 @@ describe('JoinTeamOwnerPage', () => {
 
       renderJoinTeamOwnerPage();
 
-      expect(await screen.findByText('We could not load this team invitation.')).toBeInTheDocument();
+      expect(await screen.findByText('We could not load this co-owner invitation.')).toBeInTheDocument();
       expect(screen.queryByTestId('team-invite-accept')).not.toBeInTheDocument();
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'teamInvite.preview.failed' }),
@@ -522,16 +523,16 @@ describe('Joining a team as a co-owner from an invite link', () => {
     renderJoinTeamOwnerPage();
 
     expect(await screen.findByText('This invitation has expired. Ask the commissioner for a new one.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Create account and join team' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create account and join' })).not.toBeInTheDocument();
   });
 
-  it('says the team invitation could not be loaded and offers no join button when the preview fails', async () => {
+  it('says the co-owner invitation could not be loaded and offers no join button when the preview fails', async () => {
     signIn();
     getTeamOwnerInvitationPreviewMock.mockResolvedValue({ error: { error: { code: 'NOT_FOUND', message: 'Not found.' } }, status: 404 });
 
     renderJoinTeamOwnerPage();
 
-    expect(await screen.findByText('We could not load this team invitation.')).toBeInTheDocument();
+    expect(await screen.findByText('We could not load this co-owner invitation.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Join as co-owner' })).not.toBeInTheDocument();
   });
 
@@ -541,7 +542,7 @@ describe('Joining a team as a co-owner from an invite link', () => {
 
     renderJoinTeamOwnerPage();
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Create account and join team' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Create account and join' }));
 
     await waitFor(() => expect(screen.getByRole('textbox', { name: 'First name' })).toHaveAttribute('aria-invalid', 'true'));
     expect(screen.getByRole('textbox', { name: 'Username' })).toHaveAttribute('aria-invalid', 'true');
@@ -561,7 +562,7 @@ describe('Joining a team as a co-owner from an invite link', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Last name' }), { target: { value: ' Rivers ' } });
     fireEvent.change(screen.getByRole('textbox', { name: 'Username' }), { target: { value: '  JRivers ' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'correct-horse-battery-1' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create account and join team' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create account and join' }));
 
     expect(await screen.findByText(
       'An account already exists for the email this invitation was sent to. Sign in to accept it.',

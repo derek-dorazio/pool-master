@@ -352,14 +352,14 @@ export function AuthHomePage() {
                 ? `You're almost inside ${inviteContext.league.name}.`
                 : teamInviteContext
                   ? `You're almost inside ${teamInviteContext.league.name}.`
-                  : "Run your league, manage your team, and keep every pool night organized."}
+                  : "Run your league, make your picks, and keep every pool night organized."}
             </h2>
             <p className="max-w-xl text-base text-muted-foreground">
               {inviteContext
                 ? "Sign in to join with your existing account, or create a new account to accept the invitation."
                 : teamInviteContext
                   ? `Sign in to join ${teamInviteContext.team.name} as a co-owner, or create a new account to accept the invitation.`
-                  : "Prime Time Commissioner gives commissioners one place to create leagues, invite members, manage teams, and run contests."}
+                  : "Prime Time Commissioner gives commissioners one place to create leagues, invite members, and run contests."}
             </p>
           </div>
           {inviteContext ? (
@@ -376,7 +376,7 @@ export function AuthHomePage() {
               inviteCode={teamInviteContext.inviteCode}
               leagueName={teamInviteContext.league.name}
               message={`This invitation adds you as a co-owner of ${teamInviteContext.team.name}. After you sign in or create your account, you can review the invitation and accept it.`}
-              title="Team co-owner invite"
+              title="Co-owner invite"
             />
           ) : (
             <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
@@ -385,8 +385,8 @@ export function AuthHomePage() {
                 and invite their members.
               </Tile>
               <Tile padding="sm" radius="md" variant="subtle">
-                Members join by invitation and manage their own team in the
-                league.
+                Members join by invitation, choose the name they play under,
+                and enter contests.
               </Tile>
             </div>
           )}
@@ -556,7 +556,7 @@ export function AuthHomePage() {
             {inviteContext
               ? "After you create your account, you'll come back to this invitation to join the league."
               : teamInviteContext
-                ? "After you create your account, you'll come back to this invitation to join the team."
+                ? `After you create your account, you'll come back to this invitation to join ${teamInviteContext.team.name} as a co-owner.`
                 : "After you create your account, you can set up your first league."}
           </p>
           <Link

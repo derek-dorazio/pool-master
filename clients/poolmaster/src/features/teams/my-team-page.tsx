@@ -47,7 +47,7 @@ export function MyTeamPage() {
     );
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading your team...' });
+  const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading...' });
   if (leagueContext.state === 'blocked' || !league) {
     return leagueContext.element;
   }
@@ -55,14 +55,14 @@ export function MyTeamPage() {
   // Until the teams load, "no team" is unknown, not true: offering Create team here would invite
   // a viewer who already has a team to create a second one.
   if (teamsQuery.isLoading) {
-    return <LoadingState body="Loading your team..." testId="my-team-loading" />;
+    return <LoadingState body="Loading..." testId="my-team-loading" />;
   }
   if (teamsQuery.isError) {
     return (
       <ErrorState
         body={extractErrorMessage(teamsQuery.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}
         testId="my-team-error"
-        title="Your team is unavailable"
+        title="This page is unavailable"
       />
     );
   }
@@ -74,17 +74,17 @@ export function MyTeamPage() {
       <section className="space-y-6" data-testid="my-team-page">
         {viewer.isMember && isInactiveLeague ? (
           <Alert data-testid="my-team-league-inactive" tone="warning">
-            This league is inactive, so you can&apos;t create a team.
+            This league is inactive, so you can&apos;t choose your name in it.
           </Alert>
         ) : null}
         {viewer.isMember ? (
           <CreateTeamForm isInactiveLeague={isInactiveLeague} leagueCode={leagueCode} leagueId={leagueId} />
         ) : (
           <EmptyState
-            action={<LinkButton to={buildLeagueTeamsPath(leagueCode)} variant="secondary">See every team</LinkButton>}
-            body="Only league members have a team."
+            action={<LinkButton to={buildLeagueTeamsPath(leagueCode)} variant="secondary">See every member</LinkButton>}
+            body="Only league members play under a name here."
             testId="my-team-none"
-            title="You don't have a team in this league"
+            title="You aren't playing in this league"
           />
         )}
       </section>
@@ -108,7 +108,7 @@ export function MyTeamPage() {
             to={buildLeagueTeamEditPath(leagueCode)}
             variant="secondary"
           >
-            Edit team
+            Edit
           </LinkButton>
           <LinkButton
             data-testid="my-team-history-link"
@@ -123,7 +123,7 @@ export function MyTeamPage() {
 
       {isInactiveLeague ? (
         <Alert data-testid="my-team-league-inactive" tone="warning">
-          This league is inactive, so your team is read-only.
+          This league is inactive, so this page is read-only.
         </Alert>
       ) : null}
 

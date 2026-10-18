@@ -39,12 +39,12 @@ export function MyTeamLifecycleDialogs({
   return (
     <>
       <ConfirmDialog
-        confirmLabel="Inactivate team"
+        confirmLabel="Inactivate"
         confirmTestId="my-team-confirm-inactivate"
         description={
           selectedTeam
-            ? `${selectedTeam.name} will become inactive and its active owners will be removed from this league. Their accounts stay active, and inviting them back restores this team.`
-            : 'This team will become inactive.'
+            ? `${selectedTeam.name} will become inactive and its active owners will be removed from this league. Their accounts stay active, and inviting them back restores it.`
+            : 'Its active owners will be removed from this league.'
         }
         isPending={inactivateTeamMutation.isPending}
         onCancel={() => {
@@ -68,17 +68,17 @@ export function MyTeamLifecycleDialogs({
         open={activeDialog === 'inactivate'}
         pendingLabel="Inactivating..."
         testId="my-team-inactivate-dialog"
-        title="Inactivate team"
+        title={selectedTeam ? `Inactivate ${selectedTeam.name}` : 'Inactivate'}
         tone="danger"
       />
 
       <ConfirmDialog
-        confirmLabel="Delete team"
+        confirmLabel="Delete"
         confirmTestId="my-team-confirm-delete"
         description={
           selectedTeam
-            ? `${selectedTeam.name} will be permanently deleted. This is only available after the team is inactive.`
-            : 'This inactive team will be permanently deleted.'
+            ? `${selectedTeam.name} will be permanently deleted. This is only available once it is inactive.`
+            : 'This will be permanently deleted.'
         }
         isPending={deleteTeamMutation.isPending}
         onCancel={() => {
@@ -102,7 +102,7 @@ export function MyTeamLifecycleDialogs({
         open={activeDialog === 'delete'}
         pendingLabel="Deleting..."
         testId="my-team-delete-dialog"
-        title="Delete team"
+        title={selectedTeam ? `Delete ${selectedTeam.name}` : 'Delete'}
         tone="danger"
       />
     </>

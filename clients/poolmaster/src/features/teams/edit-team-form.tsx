@@ -15,10 +15,13 @@ import { teamFormSchema, type TeamFormValues } from './team-form-schema';
  * (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
  */
 export function EditTeamForm({
+  isViewerOwn,
   leagueId,
   returnTo,
   team,
 }: {
+  /** Whether the viewer is editing their own squad, which the field labels speak to. */
+  isViewerOwn: boolean;
   leagueId: string;
   /** Where Cancel and a successful Save go. */
   returnTo: string;
@@ -50,19 +53,19 @@ export function EditTeamForm({
   return (
     <FormPage
       cancelTo={returnTo}
-      description="The name and icon every member sees for this team."
+      description="The name and icon every member of the league sees."
       errorMessage={saveMutation.isError
-        ? extractErrorMessage(saveMutation.error, { fallback: 'We could not save the team.' })
+        ? extractErrorMessage(saveMutation.error, { fallback: 'We could not save the name and icon.' })
         : null}
       isPending={saveMutation.isPending}
       onSubmit={(event) => void form.handleSubmit((values) => saveMutation.mutate(values))(event)}
       pendingLabel="Saving..."
-      submitLabel="Save team"
+      submitLabel="Save"
       submitTestId="edit-team-save"
       testId="edit-team-page"
-      title="Edit team"
+      title="Edit name and icon"
     >
-      <TeamFormFields disabled={saveMutation.isPending} form={form} idPrefix="edit-team" />
+      <TeamFormFields disabled={saveMutation.isPending} form={form} idPrefix="edit-team" isViewerOwn={isViewerOwn} />
     </FormPage>
   );
 }

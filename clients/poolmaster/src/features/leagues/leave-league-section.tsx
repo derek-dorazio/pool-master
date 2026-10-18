@@ -77,7 +77,7 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
           )}
           description={isInactive
             ? 'You cannot leave while the league is inactive.'
-            : "You'll lose access to this league and your team's contest history."}
+            : "You'll lose access to this league and your contest history in it."}
           title="Leave league"
         />
       </DangerZone>

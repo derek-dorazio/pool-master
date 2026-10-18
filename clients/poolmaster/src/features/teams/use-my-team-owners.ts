@@ -40,7 +40,7 @@ export function useMyTeamOwners({
     mutationFn: async (email: string) => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
-        throw new Error('A team must exist before inviting a co-owner.');
+        throw new Error('Choose your name in this league before inviting a co-owner.');
       }
 
       const response = await createSquadOwnerInvitation({
@@ -65,7 +65,7 @@ export function useMyTeamOwners({
     mutationFn: async ({ userId, email }: { userId: string; email: string }) => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
-        throw new Error('A team must exist before replacing an owner.');
+        throw new Error('Choose your name in this league before replacing an owner.');
       }
 
       const response = await replaceSquadOwner({
