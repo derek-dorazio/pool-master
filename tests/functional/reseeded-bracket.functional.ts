@@ -19,6 +19,7 @@ import {
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
 import { BracketAdvancement, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, findSportRow } from '@poolmaster/shared/domain';
+import { SportEventBracketResponseSchema, SportEventRoundMatchupsResponseSchema } from '@poolmaster/shared/dto';
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
   cleanupFunctionalData,
@@ -28,6 +29,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
+import { expectMatchesSchema } from '../support/expect-matches-schema';
 
 // A reseeded bracket end to end over HTTP (#722), shaped like one NFL conference: seven seeds, the
 // 1 seed on a bye, Wild Card games that link nowhere, a Divisional round the admin places by seed,
@@ -164,7 +166,7 @@ describe('SDK Functional: Reseeded bracket', () => {
     expect([sidesOf(expectDefined(weekend.data).matches, 4), sidesOf(expectDefined(weekend.data).matches, 5)]).toEqual([[1, null], [null, null]]);
 
     // --- The reseed: the 1 hosts the 7, the 3 hosts the 5 ----------------------------------------
-    const proposal = expectDefined((await proposeEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 } })).data).matches;
+    const proposal = expectMatchesSchema(SportEventRoundMatchupsResponseSchema, (await proposeEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 } })).data).matches;
     expect(proposal.map((matchup) => [matchup.matchNumber, seedOf(matchup.homeSportEventParticipantId), seedOf(matchup.awaySportEventParticipantId)])).toEqual([
       [4, 1, 7],
       [5, 3, 5],
@@ -181,7 +183,8 @@ describe('SDK Functional: Reseeded bracket', () => {
       { status: 422, code: 'BRACKET_INVALID' },
     );
     const placed = await setEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 }, body: { matches: proposal } });
-    expect([sidesOf(expectDefined(placed.data).matches, 4), sidesOf(expectDefined(placed.data).matches, 5)]).toEqual([[1, 7], [3, 5]]);
+    const placedMatches = expectMatchesSchema(SportEventBracketResponseSchema, placed.data).matches;
+    expect([sidesOf(placedMatches, 4), sidesOf(placedMatches, 5)]).toEqual([[1, 7], [3, 5]]);
 
     // The 6 had won after all: it takes the 3's place.
     const corrected = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 10, awayScore: 13 } });

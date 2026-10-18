@@ -30,12 +30,14 @@ module.exports = {
   ],
   coverageThreshold: {
     global: {
-      // About 3 points under the lower of the two measurements of this suite (#298): Babel, here,
-      // 71.3 / 63.75 / 65.45 / 71.07; V8, in the merged report, 67.95 / 83.04 / 79.03 / 67.95.
-      statements: 65,
-      branches: 60.5,
-      functions: 62,
-      lines: 65,
+      // About 3 points under the lower of the two measurements of this suite, re-measured on
+      // 2026-10-18 (#747): Babel, here, 74.63 / 68.84 / 68.42 / 74.36; V8, as
+      // run-backend-coverage.mjs runs it, 70.69 / 85.52 / 79.87 / 70.69. Raise it as coverage
+      // grows; never lower it to pass.
+      statements: 67.5,
+      branches: 65.5,
+      functions: 65.5,
+      lines: 67.5,
     },
   },
 };
