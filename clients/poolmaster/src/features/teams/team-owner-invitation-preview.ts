@@ -13,7 +13,7 @@ export async function fetchTeamOwnerInvitationPreview(
 ): Promise<TeamOwnerInvitationPreview> {
   const response = await getTeamOwnerInvitationPreview({ path: { inviteCode } });
   if (!response.data?.invitation) {
-    throwApiError(response.error, 'Team-owner invitation preview is missing data.');
+    throwApiError(response.error, 'Invitation preview is missing data.');
   }
 
   return response.data.invitation;

@@ -175,7 +175,7 @@ describe('Team use cases', () => {
 
       const squad = await service.createSquad(league.id, newcomer.id, { name: '   ' });
 
-      expect(squad.name).toBe("Nia New's Team");
+      expect(squad.name).toBe("Nia New");
       expect(squad.iconKey).toBe(TeamIconKey.CAPTAIN_SMILE_FIELD);
     });
 

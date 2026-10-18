@@ -44,7 +44,7 @@ describe('pool-master-98i system email templates', () => {
       userName: 'Derek Dorazio',
       leagueName: 'Mathworks',
       contestName: 'Masters Pick 6',
-      teamName: "Derek Dorazio's Team",
+      teamName: "Derek Dorazio",
       entryName: 'Entry 1',
       entryUrl: 'https://app.primetimecommissioner.com/entries/entry-1',
       submittedAt: '2026-04-04T15:30:00.000Z',
@@ -74,7 +74,7 @@ describe('pool-master-98i system email templates', () => {
       startedAt: '2026-04-05T14:00:00.000Z',
       entryCount: 2,
       entries: [
-        { entryName: 'Entry 1', teamName: "Derek Dorazio's Team" },
+        { entryName: 'Entry 1', teamName: "Derek Dorazio" },
         { entryName: 'Entry 2', teamName: 'Member Team' },
       ],
     });

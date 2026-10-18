@@ -87,7 +87,7 @@ function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRep
       id,
       leagueId: 'league-1',
       createdBy: 'user-1',
-      name: "User One's Team",
+      name: "User One",
       iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
       isActive: true,
       createdAt: new Date(),
@@ -138,7 +138,7 @@ function createMockProvisioningPrisma() {
   return {
     squadMembership: {
       findFirst: jest.fn().mockResolvedValue({
-        squad: { name: "User One's Team" },
+        squad: { name: "User One" },
       }),
     },
   };
@@ -591,7 +591,7 @@ describe('InvitationService', () => {
       }));
       const sentMessage = mailDelivery.send.mock.calls[0][0];
       expect(sentMessage.text).toContain('League code: MATHWORKS');
-      expect(sentMessage.text).toContain("Team: User One's Team");
+      expect(sentMessage.text).toContain("Playing as: User One");
       expect(sentMessage.text).toContain('Open league: https://app.primetimecommissioner.com/league/MATHWORKS');
       expect(sentMessage.html).toContain('Prime Time Commissioner');
     });
@@ -686,7 +686,7 @@ describe('InvitationService', () => {
           id: 'existing-squad-id',
           leagueId: 'league-1',
           createdBy: 'returning-user',
-          name: "Returning User's Team",
+          name: "Returning User",
           isActive: true,
           iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
           createdAt: new Date(),

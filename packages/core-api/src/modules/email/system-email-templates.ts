@@ -154,14 +154,14 @@ function renderLeagueJoinSuccessEmail(
     detailList([
       ['League', data.leagueName],
       ['League code', data.leagueCode],
-      ...(data.teamName ? ([['Team', data.teamName]] as Array<[string, string]>) : []),
+      ...(data.teamName ? ([['Playing as', data.teamName]] as Array<[string, string]>) : []),
     ]),
     button('Open league', data.leagueHomeUrl),
   ].join('');
   const textLines = [
     `${data.userName}, your account is registered and you joined ${data.leagueName}.`,
     `League code: ${data.leagueCode}`,
-    ...(data.teamName ? [`Team: ${data.teamName}`] : []),
+    ...(data.teamName ? [`Playing as: ${data.teamName}`] : []),
     `Open league: ${data.leagueHomeUrl}`,
   ];
 
@@ -193,7 +193,7 @@ function renderContestEntryCompletedEmail(
     ),
     detailList([
       ['League', data.leagueName],
-      ['Team', data.teamName],
+      ['Playing as', data.teamName],
       ['Entry', data.entryName],
       ...(submittedLine ? ([['Submitted', submittedLine]] as Array<[string, string]>) : []),
       ...(data.tiebreaker ? ([['Tiebreaker', data.tiebreaker]] as Array<[string, string]>) : []),
@@ -205,7 +205,7 @@ function renderContestEntryCompletedEmail(
   const textLines = [
     `${data.userName}, your ${data.entryName} entry was submitted for ${data.contestName}.`,
     `League: ${data.leagueName}`,
-    `Team: ${data.teamName}`,
+    `Playing as: ${data.teamName}`,
     ...(submittedLine ? [`Submitted: ${submittedLine}`] : []),
     ...(data.tiebreaker ? [`Tiebreaker: ${data.tiebreaker}`] : []),
     'Selections:',

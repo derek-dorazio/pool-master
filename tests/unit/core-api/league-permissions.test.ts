@@ -413,13 +413,13 @@ describe('requireMemberOfSquad (#292)', () => {
   it('refuses a league member who does not own the squad with 403 SQUAD_OWNER_REQUIRED', async () => {
     const { reply } = await runSquadGate({ squadMembershipStatus: null });
     expect(reply.statusCode).toBe(403);
-    expectReplyError(reply, 'SQUAD_OWNER_REQUIRED', 'You must be an active team owner to perform this action');
+    expectReplyError(reply, 'SQUAD_OWNER_REQUIRED', 'Only an active owner can do this');
   });
 
   it('refuses a former owner whose squad membership is inactive with 403', async () => {
     const { reply } = await runSquadGate({ squadMembershipStatus: SquadMembershipStatus.INACTIVE });
     expect(reply.statusCode).toBe(403);
-    expectReplyError(reply, 'SQUAD_OWNER_REQUIRED', 'You must be an active team owner to perform this action');
+    expectReplyError(reply, 'SQUAD_OWNER_REQUIRED', 'Only an active owner can do this');
   });
 
   it('refuses an owner whose league membership is inactive with 403, before reading the squad membership', async () => {
@@ -578,14 +578,14 @@ describe('requireOwnSquad', () => {
     expectReplyError(
       reply,
       'SQUAD_MEMBERSHIP_REQUIRED',
-      'You must have an active team in this league to perform this action',
+      'You must be an active member of this league to do this',
     );
   });
 
   it('refuses a member whose team membership has ended with 403 SQUAD_MEMBERSHIP_INACTIVE', async () => {
     const { reply } = await runOwnSquadGate({ squadMembershipStatus: SquadMembershipStatus.INACTIVE });
     expect(reply.statusCode).toBe(403);
-    expectReplyError(reply, 'SQUAD_MEMBERSHIP_INACTIVE', 'Your membership of this team has ended');
+    expectReplyError(reply, 'SQUAD_MEMBERSHIP_INACTIVE', 'Your membership in this league has ended');
   });
 
   it('gives a commissioner with no team no bypass: the squad is the caller\'s own', async () => {
@@ -597,7 +597,7 @@ describe('requireOwnSquad', () => {
     expectReplyError(
       reply,
       'SQUAD_MEMBERSHIP_REQUIRED',
-      'You must have an active team in this league to perform this action',
+      'You must be an active member of this league to do this',
     );
   });
 
