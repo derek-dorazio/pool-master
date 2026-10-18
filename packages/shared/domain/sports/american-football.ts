@@ -14,6 +14,11 @@ const ROUND_NAMES_FROM_FINAL = ['Super Bowl', 'Conference Championship', 'Divisi
  * The NFL playoffs are 14 teams in four rounds, seven seeds in each conference with the 1 seed on
  * a bye; a bye scores nothing. The field falls into seven tiers of two, assigned like any sport's
  * from odds or ranking.
+ *
+ * The College Football Playoff is a second sport league (#707): a fixed bracket of 12 teams in
+ * four rounds, the top four seeds on byes into the quarterfinals. It names its own rounds and
+ * starts its events on six tiers of two (`SportLeague.roundNames`, `SportLeague.tierCount`), so
+ * the names and tier layout below are the NFL's.
  */
 export const americanFootballSportDefinition: SportDefinition = {
   sport: Sport.AMERICAN_FOOTBALL,

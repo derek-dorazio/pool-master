@@ -609,6 +609,10 @@ model SportLeague {
   /// Conference Semifinals, Conference Finals, NBA Finals). Empty: the sport's names are used.
   /// Reference data, set by the migration that seeds the league.
   roundNames       String[] @default([]) @map("round_names")
+  /// How many tiers a new event of the sport league starts with (#707: the College Football
+  /// Playoff's 12 teams in six tiers of two). Null: the sport's default tier count. Reference
+  /// data, set by the migration that seeds the league.
+  tierCount        Int?     @map("tier_count")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

@@ -704,6 +704,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     isActive: row.isActive,
     bracketAdvancement: row.bracketAdvancement,
     roundNames: row.roundNames,
+    tierCount: row.tierCount,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

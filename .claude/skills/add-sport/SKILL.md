@@ -45,7 +45,9 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
    - Stroke play: lowest total wins (golf).
    - Head to head: a bracket of matches, points per round won plus an optional seed upset
      bonus (basketball, American football; tennis next). A league whose rounds the sport's names
-     do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's). Its matches are `SportEventMatch` rows in the event core, not family tables.
+     do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's), and a league whose field the
+     sport's default tiers do not fit sets its own tier count (`SportLeague.tierCount`: the
+     College Football Playoff's six). Its matches are `SportEventMatch` rows in the event core, not family tables.
    - Finish position: points by place (horse racing, auto racing, cycling).
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.

@@ -27,6 +27,11 @@ export interface SportLeague extends DomainEntity {
    * when the sport's names fit (#706). Reference data, set where the league is seeded.
    */
   roundNames: readonly string[];
+  /**
+   * How many tiers a new event of the league starts with; null takes the sport's default (#707:
+   * the College Football Playoff's six). Reference data, set where the league is seeded.
+   */
+  tierCount: number | null;
 }
 
 /**

@@ -387,7 +387,7 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
 describe('The seeded NFL league and its knockout templates', () => {
   it('seeds the NFL, which reseeds, with a Doubling and a Doubling + upset bonus template per selection type on round values 1, 2, 4, 8, the tiered Doubling one the default', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AMERICAN_FOOTBALL },
+      where: { sport: Sport.AMERICAN_FOOTBALL, templateKey: { startsWith: 'nfl-' } },
       include: { sportLeague: true },
       orderBy: [{ templateKey: 'asc' }],
     });
@@ -558,6 +558,51 @@ describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
         },
       });
       if (rules.selectionType === SelectionType.BUDGET_PICK) expect(rules.rosterSize).toBe(rosterSize);
+    }
+  });
+});
+
+// The College Football Playoff (#707): an American football sport league, data only, with its own
+// round names, its own six tiers and knockout presets for its four rounds.
+describe('The seeded College Football Playoff league and its knockout templates', () => {
+  it('seeds the College Football Playoff as a fixed bracket that names its own rounds and starts its events on six tiers, read back through the sport league repository', async () => {
+    const football = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.AMERICAN_FOOTBALL } });
+    const sportLeagues = new PrismaSportLeagueRepository(getPrisma());
+
+    const [cfp, nfl] = await Promise.all([
+      sportLeagues.findBySportAndName(football.id, 'College Football Playoff'),
+      sportLeagues.findBySportAndName(football.id, 'NFL'),
+    ]);
+
+    expect([cfp?.bracketAdvancement, cfp?.roundNames, cfp?.tierCount]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship'], 6]);
+    // The NFL keeps the sport's round names and its seven tiers.
+    expect([nfl?.roundNames, nfl?.tierCount]).toEqual([[], null]);
+  });
+
+  it('gives the College Football Playoff a Doubling and a Doubling + upset bonus template per selection type on round values 1, 2, 4, 8, the tiered Doubling one the default, picking one team from each of six tiers', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.AMERICAN_FOOTBALL, sportLeague: { name: 'College Football Playoff' } },
+      orderBy: [{ templateKey: 'asc' }],
+    });
+
+    expect(templates.map((template) => [template.templateKey, template.selectionType, template.isDefault])).toEqual([
+      ['cfp-budget-doubling', SelectionType.BUDGET_PICK, false],
+      ['cfp-budget-doubling-upset-bonus', SelectionType.BUDGET_PICK, false],
+      ['cfp-random-draw-doubling', SelectionType.RANDOM_DRAW, false],
+      ['cfp-random-draw-doubling-upset-bonus', SelectionType.RANDOM_DRAW, false],
+      ['cfp-tiered-doubling', SelectionType.TIERED, true],
+      ['cfp-tiered-doubling-upset-bonus', SelectionType.TIERED, false],
+    ]);
+    for (const template of templates) {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      expect(rules.scoring).toEqual({
+        participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+        config: {
+          roundValues: [1, 2, 4, 8],
+          upsetBonus: template.templateKey.endsWith('-upset-bonus') ? { rule: 'SEED_DIFFERENCE', multiplier: 1 } : { rule: 'NONE' },
+        },
+      });
+      if (rules.selectionType === SelectionType.TIERED) expect(rules.countedScores).toBe(6);
     }
   });
 });

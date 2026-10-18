@@ -161,7 +161,7 @@ export class SportEventService {
       autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
     });
     await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: input.startDate });
-    await this.deps.tiers.ensureDefaultTiers(event.id, event.sport);
+    await this.deps.tiers.ensureDefaultTiers(event.id, event.sport, sportLeague.tierCount);
 
     this.deps.logger?.info(
       { sportEventId: event.id, sportLeagueId: sportLeague.id, eventSeriesId: eventSeries.id, eventYear: input.eventYear, rounds },
@@ -218,7 +218,7 @@ export class SportEventService {
     } else {
       await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: providerEvent.startDate });
     }
-    await this.deps.tiers.ensureDefaultTiers(event.id, event.sport);
+    await this.deps.tiers.ensureDefaultTiers(event.id, event.sport, sportLeague.tierCount);
 
     this.deps.logger?.info(
       { sportEventId: event.id, sportLeagueId: sportLeague.id, eventYear: input.eventYear, providerId: input.providerId, externalId: input.externalId, rounds },
