@@ -157,7 +157,7 @@ export function OtherContestsCard({
                   <div className="truncate font-semibold text-foreground">{contest.name}</div>
                   <div className="text-xs text-muted-foreground">
                     {!hasTeam
-                      ? 'Create your team to enter'
+                      ? 'Choose your name in this league to enter'
                       : entriesState !== 'ready'
                         ? ENTRY_STATE_NOTE[entriesState]
                         : hasEntry ? 'You have an entry' : 'You haven’t entered'}
@@ -256,12 +256,12 @@ export function YourTeamCard({
 
   return (
     <HomeCard
-      footer={{ label: team ? 'Go to My team' : 'Create your team', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
+      footer={{ label: team ? `Go to ${team.name}` : 'Choose your name', testId: 'league-home-my-team', to: buildLeagueTeamPath(leagueCode) }}
       testId="league-home-your-team"
-      title="Your team"
+      title="Yours"
     >
       {isLoading ? (
-        <p className="px-4 py-4 text-sm text-muted-foreground" role="status">Loading your team...</p>
+        <p className="px-4 py-4 text-sm text-muted-foreground" role="status">Loading...</p>
       ) : team ? (
         <div className="flex items-center gap-3 px-4 py-4">
           <IconAvatar className={getTeamIconOption(team.iconKey).themeClass} size="sm">
@@ -273,7 +273,7 @@ export function YourTeamCard({
           </div>
         </div>
       ) : (
-        <p className="px-4 py-4 text-sm text-muted-foreground">You don&apos;t have a team in this league yet.</p>
+        <p className="px-4 py-4 text-sm text-muted-foreground">You haven&apos;t chosen your name in this league yet.</p>
       )}
     </HomeCard>
   );

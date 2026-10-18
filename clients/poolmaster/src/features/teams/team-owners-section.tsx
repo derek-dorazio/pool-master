@@ -46,7 +46,7 @@ export function TeamOwnersSection({
           title="Owner invitations are temporarily unavailable"
           tone="warning"
         >
-          Active owners are still shown below, but this team&apos;s pending owner invitations
+          Active owners are still shown below, but pending owner invitations for {team.name}
           could not be loaded right now.
         </Alert>
       ) : null}

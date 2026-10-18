@@ -147,13 +147,13 @@ export function MyTeamHistoryPage() {
           className="text-sm font-medium text-primary transition hover:opacity-80"
           to={teamPath}
         >
-          Back to My Team
+          {myTeam ? `Back to ${myTeam.name}` : 'Back'}
         </Link>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
           My Contest History
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          View completed contests and previous results for your team.
+          View completed contests and your previous results.
         </p>
       </Tile>
 
@@ -162,7 +162,7 @@ export function MyTeamHistoryPage() {
           <div>
             <h2 className="text-xl font-semibold text-foreground">Historical entries</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Completed contests stay visible here, but only with this team&apos;s
+              Completed contests stay visible here, but only with your
               entries.
             </p>
           </div>
@@ -187,14 +187,14 @@ export function MyTeamHistoryPage() {
             />
           ) : !myTeam ? (
             <EmptyState
-              action={<LinkButton to={teamPath} variant="secondary">Open My Team</LinkButton>}
-              body="Create your team first and contest history will appear here."
+              action={<LinkButton to={teamPath} variant="secondary">Choose your name</LinkButton>}
+              body="Choose your name in this league first and contest history will appear here."
               testId="my-team-history-no-team"
-              title="No team yet"
+              title="Not playing in this league yet"
             />
           ) : historicalContestCards.length === 0 ? (
             <EmptyState
-              body="This team does not have any historical contest entries yet."
+              body="You don't have any completed contest entries yet."
               testId="my-team-history-empty"
               title="No contest history yet"
             />

@@ -57,24 +57,24 @@ describe('useMyTeamOwners', () => {
     revokeSquadOwnerInvitationMock.mockReset();
   });
 
-  it('refuses to invite a co-owner before a team exists, without calling the server', async () => {
+  it('refuses to invite a co-owner before the viewer has a squad, without calling the server', async () => {
     const { result } = renderOwners(null);
 
     await act(async () => {
       await expect(result.current.createOwnerInvitationMutation.mutateAsync('friend@example.com')).rejects.toThrow(
-        'A team must exist before inviting a co-owner.',
+        'Choose your name in this league before inviting a co-owner.',
       );
     });
     expect(createSquadOwnerInvitationMock).not.toHaveBeenCalled();
   });
 
-  it('refuses to replace an owner before a team exists, without calling the server', async () => {
+  it('refuses to replace an owner before the viewer has a squad, without calling the server', async () => {
     const { result } = renderOwners(null);
 
     await act(async () => {
       await expect(
         result.current.replaceOwnerMutation.mutateAsync({ userId: 'user-2', email: 'new@example.com' }),
-      ).rejects.toThrow('A team must exist before replacing an owner.');
+      ).rejects.toThrow('Choose your name in this league before replacing an owner.');
     });
     expect(replaceSquadOwnerMock).not.toHaveBeenCalled();
   });

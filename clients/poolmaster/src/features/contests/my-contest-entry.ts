@@ -24,7 +24,7 @@ export function describeMyEntry(
 ) {
   const contestPath = buildLeagueContestPath(leagueCode, contest.id);
   if (!hasTeam) {
-    return { label: 'View contest', note: 'Create your team to enter.', to: contestPath };
+    return { label: 'View contest', note: 'Choose your name in this league to enter.', to: contestPath };
   }
   // Until the entries are known, offering to make picks could start a second entry.
   if (entriesState !== 'ready') {

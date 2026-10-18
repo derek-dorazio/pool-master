@@ -1,0 +1,4077 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "BASKETBALL",
+    "season": 2026,
+    "sportLeagues": [
+      "NCAA Division I Men",
+      "NCAA Division I Women"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-18",
+    "gatheredBy": "load-sport-data, the 2026 NCAA Division I men's and women's tournaments as played: regions, seeds, pairings and every game's score from Wikipedia's tournament pages, cross-checked game by game against the ESPN tournament scoreboards, which agree on every pairing, seed, region and winner. Two women's scores differ by a point or two and the file takes ESPN's (North Carolina 82-51 Western Illinois, where Wikipedia has 83-51; Duke 69-46 Baylor, where Wikipedia has 69-48). Tip-offs (scheduledAt) are ESPN's. Each First Four game is a play-in place named for its pairing, whose winner is its playInWinner. Women's first and second round games at a top-16 seed's arena are marked home only where the host is on the bracket's home side; the other 13 are marked neutral. Ranking is seed line, then region. Odds to win are made up by seed.",
+    "sources": [
+      {
+        "name": "2026 NCAA Division I men's basketball tournament (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_NCAA_Division_I_men%27s_basketball_tournament"
+      },
+      {
+        "name": "2026 NCAA Division I women's basketball tournament (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_NCAA_Division_I_women%27s_basketball_tournament"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260317",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260317&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260318",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260318&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260319",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260319&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260320",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260320&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260321",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260321&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260322",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260322&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260326",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260326&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260327",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260327&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260328",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260328&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260329",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260329&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260404",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260404&groups=100"
+      },
+      {
+        "name": "ESPN mens college basketball scoreboard, 20260406",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260406&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260318",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260318&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260319",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260319&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260320",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260320&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260321",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260321&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260322",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260322&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260323",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260323&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260327",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260327&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260328",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260328&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260329",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260329&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260330",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260330&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260403",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260403&groups=100"
+      },
+      {
+        "name": "ESPN womens college basketball scoreboard, 20260405",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260405&groups=100"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "NCAA Division I Men",
+      "players": [
+        {
+          "key": "ncaam-duke-blue-devils",
+          "name": "Duke Blue Devils",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "ncaam-florida-gators",
+          "name": "Florida Gators",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "ncaam-arizona-wildcats",
+          "name": "Arizona Wildcats",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "ncaam-michigan-wolverines",
+          "name": "Michigan Wolverines",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "ncaam-uconn-huskies",
+          "name": "UConn Huskies",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "ncaam-houston-cougars",
+          "name": "Houston Cougars",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "ncaam-purdue-boilermakers",
+          "name": "Purdue Boilermakers",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "ncaam-iowa-state-cyclones",
+          "name": "Iowa State Cyclones",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "ncaam-michigan-state-spartans",
+          "name": "Michigan State Spartans",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "ncaam-illinois-fighting-illini",
+          "name": "Illinois Fighting Illini",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "ncaam-gonzaga-bulldogs",
+          "name": "Gonzaga Bulldogs",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "ncaam-virginia-cavaliers",
+          "name": "Virginia Cavaliers",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "ncaam-kansas-jayhawks",
+          "name": "Kansas Jayhawks",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "ncaam-nebraska-cornhuskers",
+          "name": "Nebraska Cornhuskers",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "ncaam-arkansas-razorbacks",
+          "name": "Arkansas Razorbacks",
+          "countryCode": "US",
+          "ranking": 15
+        },
+        {
+          "key": "ncaam-alabama-crimson-tide",
+          "name": "Alabama Crimson Tide",
+          "countryCode": "US",
+          "ranking": 16
+        },
+        {
+          "key": "ncaam-st-johns-red-storm",
+          "name": "St. John's Red Storm",
+          "countryCode": "US",
+          "ranking": 17
+        },
+        {
+          "key": "ncaam-vanderbilt-commodores",
+          "name": "Vanderbilt Commodores",
+          "countryCode": "US",
+          "ranking": 18
+        },
+        {
+          "key": "ncaam-wisconsin-badgers",
+          "name": "Wisconsin Badgers",
+          "countryCode": "US",
+          "ranking": 19
+        },
+        {
+          "key": "ncaam-texas-tech-red-raiders",
+          "name": "Texas Tech Red Raiders",
+          "countryCode": "US",
+          "ranking": 20
+        },
+        {
+          "key": "ncaam-louisville-cardinals",
+          "name": "Louisville Cardinals",
+          "countryCode": "US",
+          "ranking": 21
+        },
+        {
+          "key": "ncaam-north-carolina-tar-heels",
+          "name": "North Carolina Tar Heels",
+          "countryCode": "US",
+          "ranking": 22
+        },
+        {
+          "key": "ncaam-byu-cougars",
+          "name": "BYU Cougars",
+          "countryCode": "US",
+          "ranking": 23
+        },
+        {
+          "key": "ncaam-tennessee-volunteers",
+          "name": "Tennessee Volunteers",
+          "countryCode": "US",
+          "ranking": 24
+        },
+        {
+          "key": "ncaam-ucla-bruins",
+          "name": "UCLA Bruins",
+          "countryCode": "US",
+          "ranking": 25
+        },
+        {
+          "key": "ncaam-saint-marys-gaels",
+          "name": "Saint Mary's Gaels",
+          "countryCode": "US",
+          "ranking": 26
+        },
+        {
+          "key": "ncaam-miami-hurricanes",
+          "name": "Miami Hurricanes",
+          "countryCode": "US",
+          "ranking": 27
+        },
+        {
+          "key": "ncaam-kentucky-wildcats",
+          "name": "Kentucky Wildcats",
+          "countryCode": "US",
+          "ranking": 28
+        },
+        {
+          "key": "ncaam-ohio-state-buckeyes",
+          "name": "Ohio State Buckeyes",
+          "countryCode": "US",
+          "ranking": 29
+        },
+        {
+          "key": "ncaam-clemson-tigers",
+          "name": "Clemson Tigers",
+          "countryCode": "US",
+          "ranking": 30
+        },
+        {
+          "key": "ncaam-villanova-wildcats",
+          "name": "Villanova Wildcats",
+          "countryCode": "US",
+          "ranking": 31
+        },
+        {
+          "key": "ncaam-georgia-bulldogs",
+          "name": "Georgia Bulldogs",
+          "countryCode": "US",
+          "ranking": 32
+        },
+        {
+          "key": "ncaam-tcu-horned-frogs",
+          "name": "TCU Horned Frogs",
+          "countryCode": "US",
+          "ranking": 33
+        },
+        {
+          "key": "ncaam-iowa-hawkeyes",
+          "name": "Iowa Hawkeyes",
+          "countryCode": "US",
+          "ranking": 34
+        },
+        {
+          "key": "ncaam-utah-state-aggies",
+          "name": "Utah State Aggies",
+          "countryCode": "US",
+          "ranking": 35
+        },
+        {
+          "key": "ncaam-saint-louis-billikens",
+          "name": "Saint Louis Billikens",
+          "countryCode": "US",
+          "ranking": 36
+        },
+        {
+          "key": "ncaam-ucf-knights",
+          "name": "UCF Knights",
+          "countryCode": "US",
+          "ranking": 37
+        },
+        {
+          "key": "ncaam-texas-am-aggies",
+          "name": "Texas A&M Aggies",
+          "countryCode": "US",
+          "ranking": 38
+        },
+        {
+          "key": "ncaam-missouri-tigers",
+          "name": "Missouri Tigers",
+          "countryCode": "US",
+          "ranking": 39
+        },
+        {
+          "key": "ncaam-santa-clara-broncos",
+          "name": "Santa Clara Broncos",
+          "countryCode": "US",
+          "ranking": 40
+        },
+        {
+          "key": "ncaam-south-florida-bulls",
+          "name": "South Florida Bulls",
+          "countryCode": "US",
+          "ranking": 41
+        },
+        {
+          "key": "ncaam-vcu-rams",
+          "name": "VCU Rams",
+          "countryCode": "US",
+          "ranking": 42
+        },
+        {
+          "key": "ncaam-west-11-seed-play-in",
+          "name": "Texas / NC State",
+          "countryCode": "US",
+          "ranking": 43
+        },
+        {
+          "key": "ncaam-midwest-11-seed-play-in",
+          "name": "Miami (OH) / SMU",
+          "countryCode": "US",
+          "ranking": 44
+        },
+        {
+          "key": "ncaam-northern-iowa-panthers",
+          "name": "Northern Iowa Panthers",
+          "countryCode": "US",
+          "ranking": 45
+        },
+        {
+          "key": "ncaam-mcneese-cowboys",
+          "name": "McNeese Cowboys",
+          "countryCode": "US",
+          "ranking": 46
+        },
+        {
+          "key": "ncaam-high-point-panthers",
+          "name": "High Point Panthers",
+          "countryCode": "US",
+          "ranking": 47
+        },
+        {
+          "key": "ncaam-akron-zips",
+          "name": "Akron Zips",
+          "countryCode": "US",
+          "ranking": 48
+        },
+        {
+          "key": "ncaam-california-baptist-lancers",
+          "name": "California Baptist Lancers",
+          "countryCode": "US",
+          "ranking": 49
+        },
+        {
+          "key": "ncaam-troy-trojans",
+          "name": "Troy Trojans",
+          "countryCode": "US",
+          "ranking": 50
+        },
+        {
+          "key": "ncaam-hawaii-rainbow-warriors",
+          "name": "Hawai'i Rainbow Warriors",
+          "countryCode": "US",
+          "ranking": 51
+        },
+        {
+          "key": "ncaam-hofstra-pride",
+          "name": "Hofstra Pride",
+          "countryCode": "US",
+          "ranking": 52
+        },
+        {
+          "key": "ncaam-north-dakota-state-bison",
+          "name": "North Dakota State Bison",
+          "countryCode": "US",
+          "ranking": 53
+        },
+        {
+          "key": "ncaam-pennsylvania-quakers",
+          "name": "Pennsylvania Quakers",
+          "countryCode": "US",
+          "ranking": 54
+        },
+        {
+          "key": "ncaam-kennesaw-state-owls",
+          "name": "Kennesaw State Owls",
+          "countryCode": "US",
+          "ranking": 55
+        },
+        {
+          "key": "ncaam-wright-state-raiders",
+          "name": "Wright State Raiders",
+          "countryCode": "US",
+          "ranking": 56
+        },
+        {
+          "key": "ncaam-furman-paladins",
+          "name": "Furman Paladins",
+          "countryCode": "US",
+          "ranking": 57
+        },
+        {
+          "key": "ncaam-idaho-vandals",
+          "name": "Idaho Vandals",
+          "countryCode": "US",
+          "ranking": 58
+        },
+        {
+          "key": "ncaam-queens-university-royals",
+          "name": "Queens University Royals",
+          "countryCode": "US",
+          "ranking": 59
+        },
+        {
+          "key": "ncaam-tennessee-state-tigers",
+          "name": "Tennessee State Tigers",
+          "countryCode": "US",
+          "ranking": 60
+        },
+        {
+          "key": "ncaam-siena-saints",
+          "name": "Siena Saints",
+          "countryCode": "US",
+          "ranking": 61
+        },
+        {
+          "key": "ncaam-south-16-seed-play-in",
+          "name": "Prairie View A&M / Lehigh",
+          "countryCode": "US",
+          "ranking": 62
+        },
+        {
+          "key": "ncaam-long-island-university-sharks",
+          "name": "Long Island University Sharks",
+          "countryCode": "US",
+          "ranking": 63
+        },
+        {
+          "key": "ncaam-midwest-16-seed-play-in",
+          "name": "UMBC / Howard",
+          "countryCode": "US",
+          "ranking": 64
+        },
+        {
+          "key": "ncaam-howard-bison",
+          "name": "Howard Bison",
+          "countryCode": "US",
+          "ranking": 65
+        },
+        {
+          "key": "ncaam-lehigh-mountain-hawks",
+          "name": "Lehigh Mountain Hawks",
+          "countryCode": "US",
+          "ranking": 66
+        },
+        {
+          "key": "ncaam-miami-oh-redhawks",
+          "name": "Miami (OH) RedHawks",
+          "countryCode": "US",
+          "ranking": 67
+        },
+        {
+          "key": "ncaam-nc-state-wolfpack",
+          "name": "NC State Wolfpack",
+          "countryCode": "US",
+          "ranking": 68
+        },
+        {
+          "key": "ncaam-prairie-view-am-panthers",
+          "name": "Prairie View A&M Panthers",
+          "countryCode": "US",
+          "ranking": 69
+        },
+        {
+          "key": "ncaam-smu-mustangs",
+          "name": "SMU Mustangs",
+          "countryCode": "US",
+          "ranking": 70
+        },
+        {
+          "key": "ncaam-texas-longhorns",
+          "name": "Texas Longhorns",
+          "countryCode": "US",
+          "ranking": 71
+        },
+        {
+          "key": "ncaam-umbc-retrievers",
+          "name": "UMBC Retrievers",
+          "countryCode": "US",
+          "ranking": 72
+        }
+      ],
+      "events": [
+        {
+          "key": "ncaam-tournament-2026",
+          "name": "NCAA Men's Tournament",
+          "startDate": "2026-03-17",
+          "endDate": "2026-04-06",
+          "venue": null,
+          "location": "United States",
+          "rounds": 6,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "ncaam-duke-blue-devils",
+              "ranking": 1,
+              "seed": 1,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "ncaam-florida-gators",
+              "ranking": 2,
+              "seed": 1,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "ncaam-arizona-wildcats",
+              "ranking": 3,
+              "seed": 1,
+              "oddsToWin": 7.0
+            },
+            {
+              "player": "ncaam-michigan-wolverines",
+              "ranking": 4,
+              "seed": 1,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "ncaam-uconn-huskies",
+              "ranking": 5,
+              "seed": 2,
+              "oddsToWin": 10.0
+            },
+            {
+              "player": "ncaam-houston-cougars",
+              "ranking": 6,
+              "seed": 2,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "ncaam-purdue-boilermakers",
+              "ranking": 7,
+              "seed": 2,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "ncaam-iowa-state-cyclones",
+              "ranking": 8,
+              "seed": 2,
+              "oddsToWin": 13.0
+            },
+            {
+              "player": "ncaam-michigan-state-spartans",
+              "ranking": 9,
+              "seed": 3,
+              "oddsToWin": 18.0
+            },
+            {
+              "player": "ncaam-illinois-fighting-illini",
+              "ranking": 10,
+              "seed": 3,
+              "oddsToWin": 19.0
+            },
+            {
+              "player": "ncaam-gonzaga-bulldogs",
+              "ranking": 11,
+              "seed": 3,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "ncaam-virginia-cavaliers",
+              "ranking": 12,
+              "seed": 3,
+              "oddsToWin": 21.0
+            },
+            {
+              "player": "ncaam-kansas-jayhawks",
+              "ranking": 13,
+              "seed": 4,
+              "oddsToWin": 25.0
+            },
+            {
+              "player": "ncaam-nebraska-cornhuskers",
+              "ranking": 14,
+              "seed": 4,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "ncaam-arkansas-razorbacks",
+              "ranking": 15,
+              "seed": 4,
+              "oddsToWin": 27.0
+            },
+            {
+              "player": "ncaam-alabama-crimson-tide",
+              "ranking": 16,
+              "seed": 4,
+              "oddsToWin": 28.0
+            },
+            {
+              "player": "ncaam-st-johns-red-storm",
+              "ranking": 17,
+              "seed": 5,
+              "oddsToWin": 40.0
+            },
+            {
+              "player": "ncaam-vanderbilt-commodores",
+              "ranking": 18,
+              "seed": 5,
+              "oddsToWin": 41.0
+            },
+            {
+              "player": "ncaam-wisconsin-badgers",
+              "ranking": 19,
+              "seed": 5,
+              "oddsToWin": 42.0
+            },
+            {
+              "player": "ncaam-texas-tech-red-raiders",
+              "ranking": 20,
+              "seed": 5,
+              "oddsToWin": 43.0
+            },
+            {
+              "player": "ncaam-louisville-cardinals",
+              "ranking": 21,
+              "seed": 6,
+              "oddsToWin": 50.0
+            },
+            {
+              "player": "ncaam-north-carolina-tar-heels",
+              "ranking": 22,
+              "seed": 6,
+              "oddsToWin": 51.0
+            },
+            {
+              "player": "ncaam-byu-cougars",
+              "ranking": 23,
+              "seed": 6,
+              "oddsToWin": 52.0
+            },
+            {
+              "player": "ncaam-tennessee-volunteers",
+              "ranking": 24,
+              "seed": 6,
+              "oddsToWin": 53.0
+            },
+            {
+              "player": "ncaam-ucla-bruins",
+              "ranking": 25,
+              "seed": 7,
+              "oddsToWin": 60.0
+            },
+            {
+              "player": "ncaam-saint-marys-gaels",
+              "ranking": 26,
+              "seed": 7,
+              "oddsToWin": 61.0
+            },
+            {
+              "player": "ncaam-miami-hurricanes",
+              "ranking": 27,
+              "seed": 7,
+              "oddsToWin": 62.0
+            },
+            {
+              "player": "ncaam-kentucky-wildcats",
+              "ranking": 28,
+              "seed": 7,
+              "oddsToWin": 63.0
+            },
+            {
+              "player": "ncaam-ohio-state-buckeyes",
+              "ranking": 29,
+              "seed": 8,
+              "oddsToWin": 80.0
+            },
+            {
+              "player": "ncaam-clemson-tigers",
+              "ranking": 30,
+              "seed": 8,
+              "oddsToWin": 81.0
+            },
+            {
+              "player": "ncaam-villanova-wildcats",
+              "ranking": 31,
+              "seed": 8,
+              "oddsToWin": 82.0
+            },
+            {
+              "player": "ncaam-georgia-bulldogs",
+              "ranking": 32,
+              "seed": 8,
+              "oddsToWin": 83.0
+            },
+            {
+              "player": "ncaam-tcu-horned-frogs",
+              "ranking": 33,
+              "seed": 9,
+              "oddsToWin": 90.0
+            },
+            {
+              "player": "ncaam-iowa-hawkeyes",
+              "ranking": 34,
+              "seed": 9,
+              "oddsToWin": 91.0
+            },
+            {
+              "player": "ncaam-utah-state-aggies",
+              "ranking": 35,
+              "seed": 9,
+              "oddsToWin": 92.0
+            },
+            {
+              "player": "ncaam-saint-louis-billikens",
+              "ranking": 36,
+              "seed": 9,
+              "oddsToWin": 93.0
+            },
+            {
+              "player": "ncaam-ucf-knights",
+              "ranking": 37,
+              "seed": 10,
+              "oddsToWin": 100.0
+            },
+            {
+              "player": "ncaam-texas-am-aggies",
+              "ranking": 38,
+              "seed": 10,
+              "oddsToWin": 101.0
+            },
+            {
+              "player": "ncaam-missouri-tigers",
+              "ranking": 39,
+              "seed": 10,
+              "oddsToWin": 102.0
+            },
+            {
+              "player": "ncaam-santa-clara-broncos",
+              "ranking": 40,
+              "seed": 10,
+              "oddsToWin": 103.0
+            },
+            {
+              "player": "ncaam-south-florida-bulls",
+              "ranking": 41,
+              "seed": 11,
+              "oddsToWin": 120.0
+            },
+            {
+              "player": "ncaam-vcu-rams",
+              "ranking": 42,
+              "seed": 11,
+              "oddsToWin": 121.0
+            },
+            {
+              "player": "ncaam-west-11-seed-play-in",
+              "ranking": 43,
+              "seed": 11,
+              "isPlayInPlace": true,
+              "oddsToWin": 122.0,
+              "playInWinner": "ncaam-texas-longhorns"
+            },
+            {
+              "player": "ncaam-midwest-11-seed-play-in",
+              "ranking": 44,
+              "seed": 11,
+              "isPlayInPlace": true,
+              "oddsToWin": 123.0,
+              "playInWinner": "ncaam-miami-oh-redhawks"
+            },
+            {
+              "player": "ncaam-northern-iowa-panthers",
+              "ranking": 45,
+              "seed": 12,
+              "oddsToWin": 150.0
+            },
+            {
+              "player": "ncaam-mcneese-cowboys",
+              "ranking": 46,
+              "seed": 12,
+              "oddsToWin": 151.0
+            },
+            {
+              "player": "ncaam-high-point-panthers",
+              "ranking": 47,
+              "seed": 12,
+              "oddsToWin": 152.0
+            },
+            {
+              "player": "ncaam-akron-zips",
+              "ranking": 48,
+              "seed": 12,
+              "oddsToWin": 153.0
+            },
+            {
+              "player": "ncaam-california-baptist-lancers",
+              "ranking": 49,
+              "seed": 13,
+              "oddsToWin": 250.0
+            },
+            {
+              "player": "ncaam-troy-trojans",
+              "ranking": 50,
+              "seed": 13,
+              "oddsToWin": 251.0
+            },
+            {
+              "player": "ncaam-hawaii-rainbow-warriors",
+              "ranking": 51,
+              "seed": 13,
+              "oddsToWin": 252.0
+            },
+            {
+              "player": "ncaam-hofstra-pride",
+              "ranking": 52,
+              "seed": 13,
+              "oddsToWin": 253.0
+            },
+            {
+              "player": "ncaam-north-dakota-state-bison",
+              "ranking": 53,
+              "seed": 14,
+              "oddsToWin": 400.0
+            },
+            {
+              "player": "ncaam-pennsylvania-quakers",
+              "ranking": 54,
+              "seed": 14,
+              "oddsToWin": 401.0
+            },
+            {
+              "player": "ncaam-kennesaw-state-owls",
+              "ranking": 55,
+              "seed": 14,
+              "oddsToWin": 402.0
+            },
+            {
+              "player": "ncaam-wright-state-raiders",
+              "ranking": 56,
+              "seed": 14,
+              "oddsToWin": 403.0
+            },
+            {
+              "player": "ncaam-furman-paladins",
+              "ranking": 57,
+              "seed": 15,
+              "oddsToWin": 750.0
+            },
+            {
+              "player": "ncaam-idaho-vandals",
+              "ranking": 58,
+              "seed": 15,
+              "oddsToWin": 751.0
+            },
+            {
+              "player": "ncaam-queens-university-royals",
+              "ranking": 59,
+              "seed": 15,
+              "oddsToWin": 752.0
+            },
+            {
+              "player": "ncaam-tennessee-state-tigers",
+              "ranking": 60,
+              "seed": 15,
+              "oddsToWin": 753.0
+            },
+            {
+              "player": "ncaam-siena-saints",
+              "ranking": 61,
+              "seed": 16,
+              "oddsToWin": 1000.0
+            },
+            {
+              "player": "ncaam-south-16-seed-play-in",
+              "ranking": 62,
+              "seed": 16,
+              "isPlayInPlace": true,
+              "oddsToWin": 1001.0,
+              "playInWinner": "ncaam-prairie-view-am-panthers"
+            },
+            {
+              "player": "ncaam-long-island-university-sharks",
+              "ranking": 63,
+              "seed": 16,
+              "oddsToWin": 1002.0
+            },
+            {
+              "player": "ncaam-midwest-16-seed-play-in",
+              "ranking": 64,
+              "seed": 16,
+              "isPlayInPlace": true,
+              "oddsToWin": 1003.0,
+              "playInWinner": "ncaam-howard-bison"
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "ncaam-duke-blue-devils",
+              "away": "ncaam-siena-saints",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 33,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 71,
+                "awayScore": 65
+              }
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "ncaam-ohio-state-buckeyes",
+              "away": "ncaam-tcu-horned-frogs",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T16:15:00Z",
+              "advancesTo": {
+                "matchNumber": 33,
+                "side": "AWAY"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 64,
+                "awayScore": 66
+              }
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "ncaam-st-johns-red-storm",
+              "away": "ncaam-northern-iowa-panthers",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T23:25:00Z",
+              "advancesTo": {
+                "matchNumber": 34,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 79,
+                "awayScore": 53
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "ncaam-kansas-jayhawks",
+              "away": "ncaam-california-baptist-lancers",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T02:07:00Z",
+              "advancesTo": {
+                "matchNumber": 34,
+                "side": "AWAY"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 68,
+                "awayScore": 60
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "ncaam-louisville-cardinals",
+              "away": "ncaam-south-florida-bulls",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T17:30:00Z",
+              "advancesTo": {
+                "matchNumber": 35,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 83,
+                "awayScore": 79
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "ncaam-michigan-state-spartans",
+              "away": "ncaam-north-dakota-state-bison",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T20:27:00Z",
+              "advancesTo": {
+                "matchNumber": 35,
+                "side": "AWAY"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 92,
+                "awayScore": 67
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "ncaam-ucla-bruins",
+              "away": "ncaam-ucf-knights",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T23:31:00Z",
+              "advancesTo": {
+                "matchNumber": 36,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 75,
+                "awayScore": 71
+              }
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "ncaam-uconn-huskies",
+              "away": "ncaam-furman-paladins",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T02:31:00Z",
+              "advancesTo": {
+                "matchNumber": 36,
+                "side": "AWAY"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 82,
+                "awayScore": 71
+              }
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "ncaam-florida-gators",
+              "away": "ncaam-south-16-seed-play-in",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T01:25:00Z",
+              "advancesTo": {
+                "matchNumber": 37,
+                "side": "HOME"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 114,
+                "awayScore": 55
+              }
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "ncaam-clemson-tigers",
+              "away": "ncaam-iowa-hawkeyes",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T22:50:00Z",
+              "advancesTo": {
+                "matchNumber": 37,
+                "side": "AWAY"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 61,
+                "awayScore": 67
+              }
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "ncaam-vanderbilt-commodores",
+              "away": "ncaam-mcneese-cowboys",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T19:15:00Z",
+              "advancesTo": {
+                "matchNumber": 38,
+                "side": "HOME"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 78,
+                "awayScore": 68
+              }
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "ncaam-nebraska-cornhuskers",
+              "away": "ncaam-troy-trojans",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T16:40:00Z",
+              "advancesTo": {
+                "matchNumber": 38,
+                "side": "AWAY"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 76,
+                "awayScore": 47
+              }
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "ncaam-north-carolina-tar-heels",
+              "away": "ncaam-vcu-rams",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T22:50:00Z",
+              "advancesTo": {
+                "matchNumber": 39,
+                "side": "HOME"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 78,
+                "awayScore": 82
+              }
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "ncaam-illinois-fighting-illini",
+              "away": "ncaam-pennsylvania-quakers",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T01:55:00Z",
+              "advancesTo": {
+                "matchNumber": 39,
+                "side": "AWAY"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 105,
+                "awayScore": 70
+              }
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "ncaam-saint-marys-gaels",
+              "away": "ncaam-texas-am-aggies",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T23:35:00Z",
+              "advancesTo": {
+                "matchNumber": 40,
+                "side": "HOME"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 50,
+                "awayScore": 63
+              }
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "ncaam-houston-cougars",
+              "away": "ncaam-idaho-vandals",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T02:15:00Z",
+              "advancesTo": {
+                "matchNumber": 40,
+                "side": "AWAY"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 78,
+                "awayScore": 47
+              }
+            },
+            {
+              "matchNumber": 17,
+              "roundNumber": 1,
+              "home": "ncaam-arizona-wildcats",
+              "away": "ncaam-long-island-university-sharks",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T17:35:00Z",
+              "advancesTo": {
+                "matchNumber": 41,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 92,
+                "awayScore": 58
+              }
+            },
+            {
+              "matchNumber": 18,
+              "roundNumber": 1,
+              "home": "ncaam-villanova-wildcats",
+              "away": "ncaam-utah-state-aggies",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T20:10:00Z",
+              "advancesTo": {
+                "matchNumber": 41,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 76,
+                "awayScore": 86
+              }
+            },
+            {
+              "matchNumber": 19,
+              "roundNumber": 1,
+              "home": "ncaam-wisconsin-badgers",
+              "away": "ncaam-high-point-panthers",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T17:50:00Z",
+              "advancesTo": {
+                "matchNumber": 42,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 82,
+                "awayScore": 83
+              }
+            },
+            {
+              "matchNumber": 20,
+              "roundNumber": 1,
+              "home": "ncaam-arkansas-razorbacks",
+              "away": "ncaam-hawaii-rainbow-warriors",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T20:27:00Z",
+              "advancesTo": {
+                "matchNumber": 42,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 97,
+                "awayScore": 78
+              }
+            },
+            {
+              "matchNumber": 21,
+              "roundNumber": 1,
+              "home": "ncaam-byu-cougars",
+              "away": "ncaam-west-11-seed-play-in",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T23:35:00Z",
+              "advancesTo": {
+                "matchNumber": 43,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 71,
+                "awayScore": 79
+              }
+            },
+            {
+              "matchNumber": 22,
+              "roundNumber": 1,
+              "home": "ncaam-gonzaga-bulldogs",
+              "away": "ncaam-kennesaw-state-owls",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T02:24:00Z",
+              "advancesTo": {
+                "matchNumber": 43,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 73,
+                "awayScore": 64
+              }
+            },
+            {
+              "matchNumber": 23,
+              "roundNumber": 1,
+              "home": "ncaam-miami-hurricanes",
+              "away": "ncaam-missouri-tigers",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T02:07:00Z",
+              "advancesTo": {
+                "matchNumber": 44,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 80,
+                "awayScore": 66
+              }
+            },
+            {
+              "matchNumber": 24,
+              "roundNumber": 1,
+              "home": "ncaam-purdue-boilermakers",
+              "away": "ncaam-queens-university-royals",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T23:35:00Z",
+              "advancesTo": {
+                "matchNumber": 44,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 104,
+                "awayScore": 71
+              }
+            },
+            {
+              "matchNumber": 25,
+              "roundNumber": 1,
+              "home": "ncaam-michigan-wolverines",
+              "away": "ncaam-midwest-16-seed-play-in",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-19T23:30:00Z",
+              "advancesTo": {
+                "matchNumber": 45,
+                "side": "HOME"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 101,
+                "awayScore": 80
+              }
+            },
+            {
+              "matchNumber": 26,
+              "roundNumber": 1,
+              "home": "ncaam-georgia-bulldogs",
+              "away": "ncaam-saint-louis-billikens",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T02:10:00Z",
+              "advancesTo": {
+                "matchNumber": 45,
+                "side": "AWAY"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 77,
+                "awayScore": 102
+              }
+            },
+            {
+              "matchNumber": 27,
+              "roundNumber": 1,
+              "home": "ncaam-texas-tech-red-raiders",
+              "away": "ncaam-akron-zips",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T16:40:00Z",
+              "advancesTo": {
+                "matchNumber": 46,
+                "side": "HOME"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 91,
+                "awayScore": 71
+              }
+            },
+            {
+              "matchNumber": 28,
+              "roundNumber": 1,
+              "home": "ncaam-alabama-crimson-tide",
+              "away": "ncaam-hofstra-pride",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T19:15:00Z",
+              "advancesTo": {
+                "matchNumber": 46,
+                "side": "AWAY"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 90,
+                "awayScore": 70
+              }
+            },
+            {
+              "matchNumber": 29,
+              "roundNumber": 1,
+              "home": "ncaam-tennessee-volunteers",
+              "away": "ncaam-midwest-11-seed-play-in",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T20:25:00Z",
+              "advancesTo": {
+                "matchNumber": 47,
+                "side": "HOME"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 78,
+                "awayScore": 56
+              }
+            },
+            {
+              "matchNumber": 30,
+              "roundNumber": 1,
+              "home": "ncaam-virginia-cavaliers",
+              "away": "ncaam-wright-state-raiders",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T17:50:00Z",
+              "advancesTo": {
+                "matchNumber": 47,
+                "side": "AWAY"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 82,
+                "awayScore": 73
+              }
+            },
+            {
+              "matchNumber": 31,
+              "roundNumber": 1,
+              "home": "ncaam-kentucky-wildcats",
+              "away": "ncaam-santa-clara-broncos",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T16:15:00Z",
+              "advancesTo": {
+                "matchNumber": 48,
+                "side": "HOME"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 89,
+                "awayScore": 84
+              }
+            },
+            {
+              "matchNumber": 32,
+              "roundNumber": 1,
+              "home": "ncaam-iowa-state-cyclones",
+              "away": "ncaam-tennessee-state-tigers",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T19:07:00Z",
+              "advancesTo": {
+                "matchNumber": 48,
+                "side": "AWAY"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 108,
+                "awayScore": 74
+              }
+            },
+            {
+              "matchNumber": 33,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T21:25:00Z",
+              "advancesTo": {
+                "matchNumber": 49,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 81,
+                "awayScore": 58
+              }
+            },
+            {
+              "matchNumber": 34,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T21:15:00Z",
+              "advancesTo": {
+                "matchNumber": 49,
+                "side": "AWAY"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 67,
+                "awayScore": 65
+              }
+            },
+            {
+              "matchNumber": 35,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T18:45:00Z",
+              "advancesTo": {
+                "matchNumber": 50,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 69,
+                "awayScore": 77
+              }
+            },
+            {
+              "matchNumber": 36,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-23T01:10:00Z",
+              "advancesTo": {
+                "matchNumber": 50,
+                "side": "AWAY"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 57,
+                "awayScore": 73
+              }
+            },
+            {
+              "matchNumber": 37,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T23:10:00Z",
+              "advancesTo": {
+                "matchNumber": 51,
+                "side": "HOME"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 72,
+                "awayScore": 73
+              }
+            },
+            {
+              "matchNumber": 38,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T01:02:00Z",
+              "advancesTo": {
+                "matchNumber": 51,
+                "side": "AWAY"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 72,
+                "awayScore": 74
+              }
+            },
+            {
+              "matchNumber": 39,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T00:15:00Z",
+              "advancesTo": {
+                "matchNumber": 52,
+                "side": "HOME"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 55,
+                "awayScore": 76
+              }
+            },
+            {
+              "matchNumber": 40,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T22:10:00Z",
+              "advancesTo": {
+                "matchNumber": 52,
+                "side": "AWAY"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 57,
+                "awayScore": 88
+              }
+            },
+            {
+              "matchNumber": 41,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-23T00:11:00Z",
+              "advancesTo": {
+                "matchNumber": 53,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 78,
+                "awayScore": 66
+              }
+            },
+            {
+              "matchNumber": 42,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T01:45:00Z",
+              "advancesTo": {
+                "matchNumber": 53,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 88,
+                "awayScore": 94
+              }
+            },
+            {
+              "matchNumber": 43,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T23:10:00Z",
+              "advancesTo": {
+                "matchNumber": 54,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 74,
+                "awayScore": 68
+              }
+            },
+            {
+              "matchNumber": 44,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T16:10:00Z",
+              "advancesTo": {
+                "matchNumber": 54,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 69,
+                "awayScore": 79
+              }
+            },
+            {
+              "matchNumber": 45,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T16:10:00Z",
+              "advancesTo": {
+                "matchNumber": 55,
+                "side": "HOME"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 95,
+                "awayScore": 72
+              }
+            },
+            {
+              "matchNumber": 46,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-23T02:08:00Z",
+              "advancesTo": {
+                "matchNumber": 55,
+                "side": "AWAY"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 65,
+                "awayScore": 90
+              }
+            },
+            {
+              "matchNumber": 47,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T22:10:00Z",
+              "advancesTo": {
+                "matchNumber": 56,
+                "side": "HOME"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 79,
+                "awayScore": 72
+              }
+            },
+            {
+              "matchNumber": 48,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T18:45:00Z",
+              "advancesTo": {
+                "matchNumber": 56,
+                "side": "AWAY"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 63,
+                "awayScore": 82
+              }
+            },
+            {
+              "matchNumber": 49,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T23:10:00Z",
+              "advancesTo": {
+                "matchNumber": 57,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 80,
+                "awayScore": 75
+              }
+            },
+            {
+              "matchNumber": 50,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T01:55:00Z",
+              "advancesTo": {
+                "matchNumber": 57,
+                "side": "AWAY"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 63,
+                "awayScore": 67
+              }
+            },
+            {
+              "matchNumber": 51,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-26T23:30:00Z",
+              "advancesTo": {
+                "matchNumber": 58,
+                "side": "HOME"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 77,
+                "awayScore": 71
+              }
+            },
+            {
+              "matchNumber": 52,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T02:05:00Z",
+              "advancesTo": {
+                "matchNumber": 58,
+                "side": "AWAY"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 65,
+                "awayScore": 55
+              }
+            },
+            {
+              "matchNumber": 53,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T02:06:00Z",
+              "advancesTo": {
+                "matchNumber": 59,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 109,
+                "awayScore": 88
+              }
+            },
+            {
+              "matchNumber": 54,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-26T23:10:00Z",
+              "advancesTo": {
+                "matchNumber": 59,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 77,
+                "awayScore": 79
+              }
+            },
+            {
+              "matchNumber": 55,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T23:35:00Z",
+              "advancesTo": {
+                "matchNumber": 60,
+                "side": "HOME"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 90,
+                "awayScore": 77
+              }
+            },
+            {
+              "matchNumber": 56,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T02:35:00Z",
+              "advancesTo": {
+                "matchNumber": 60,
+                "side": "AWAY"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 76,
+                "awayScore": 62
+              }
+            },
+            {
+              "matchNumber": 57,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-29T21:05:00Z",
+              "advancesTo": {
+                "matchNumber": 61,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 72,
+                "awayScore": 73
+              }
+            },
+            {
+              "matchNumber": 58,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T22:09:00Z",
+              "advancesTo": {
+                "matchNumber": 61,
+                "side": "AWAY"
+              },
+              "regionLabel": "South",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 59,
+                "awayScore": 71
+              }
+            },
+            {
+              "matchNumber": 59,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-29T00:59:00Z",
+              "advancesTo": {
+                "matchNumber": 62,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 79,
+                "awayScore": 64
+              }
+            },
+            {
+              "matchNumber": 60,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-29T18:15:00Z",
+              "advancesTo": {
+                "matchNumber": 62,
+                "side": "AWAY"
+              },
+              "regionLabel": "Midwest",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 95,
+                "awayScore": 62
+              }
+            },
+            {
+              "matchNumber": 61,
+              "roundNumber": 5,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-04-04T22:09:00Z",
+              "advancesTo": {
+                "matchNumber": 63,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 71,
+                "awayScore": 62
+              }
+            },
+            {
+              "matchNumber": 62,
+              "roundNumber": 5,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-04-05T01:19:00Z",
+              "advancesTo": {
+                "matchNumber": 63,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 73,
+                "awayScore": 91
+              }
+            },
+            {
+              "matchNumber": 63,
+              "roundNumber": 6,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-04-07T00:50:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 63,
+                "awayScore": 69
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "NCAA Division I Women",
+      "players": [
+        {
+          "key": "ncaaw-uconn-huskies",
+          "name": "UConn Huskies",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "ncaaw-south-carolina-gamecocks",
+          "name": "South Carolina Gamecocks",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "ncaaw-ucla-bruins",
+          "name": "UCLA Bruins",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "ncaaw-texas-longhorns",
+          "name": "Texas Longhorns",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "ncaaw-vanderbilt-commodores",
+          "name": "Vanderbilt Commodores",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "ncaaw-iowa-hawkeyes",
+          "name": "Iowa Hawkeyes",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "ncaaw-lsu-tigers",
+          "name": "LSU Tigers",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "ncaaw-michigan-wolverines",
+          "name": "Michigan Wolverines",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "ncaaw-ohio-state-buckeyes",
+          "name": "Ohio State Buckeyes",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "ncaaw-tcu-horned-frogs",
+          "name": "TCU Horned Frogs",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "ncaaw-duke-blue-devils",
+          "name": "Duke Blue Devils",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "ncaaw-louisville-cardinals",
+          "name": "Louisville Cardinals",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "ncaaw-north-carolina-tar-heels",
+          "name": "North Carolina Tar Heels",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "ncaaw-oklahoma-sooners",
+          "name": "Oklahoma Sooners",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "ncaaw-minnesota-golden-gophers",
+          "name": "Minnesota Golden Gophers",
+          "countryCode": "US",
+          "ranking": 15
+        },
+        {
+          "key": "ncaaw-west-virginia-mountaineers",
+          "name": "West Virginia Mountaineers",
+          "countryCode": "US",
+          "ranking": 16
+        },
+        {
+          "key": "ncaaw-maryland-terrapins",
+          "name": "Maryland Terrapins",
+          "countryCode": "US",
+          "ranking": 17
+        },
+        {
+          "key": "ncaaw-michigan-state-spartans",
+          "name": "Michigan State Spartans",
+          "countryCode": "US",
+          "ranking": 18
+        },
+        {
+          "key": "ncaaw-ole-miss-rebels",
+          "name": "Ole Miss Rebels",
+          "countryCode": "US",
+          "ranking": 19
+        },
+        {
+          "key": "ncaaw-kentucky-wildcats",
+          "name": "Kentucky Wildcats",
+          "countryCode": "US",
+          "ranking": 20
+        },
+        {
+          "key": "ncaaw-notre-dame-fighting-irish",
+          "name": "Notre Dame Fighting Irish",
+          "countryCode": "US",
+          "ranking": 21
+        },
+        {
+          "key": "ncaaw-washington-huskies",
+          "name": "Washington Huskies",
+          "countryCode": "US",
+          "ranking": 22
+        },
+        {
+          "key": "ncaaw-baylor-bears",
+          "name": "Baylor Bears",
+          "countryCode": "US",
+          "ranking": 23
+        },
+        {
+          "key": "ncaaw-alabama-crimson-tide",
+          "name": "Alabama Crimson Tide",
+          "countryCode": "US",
+          "ranking": 24
+        },
+        {
+          "key": "ncaaw-illinois-fighting-illini",
+          "name": "Illinois Fighting Illini",
+          "countryCode": "US",
+          "ranking": 25
+        },
+        {
+          "key": "ncaaw-georgia-lady-bulldogs",
+          "name": "Georgia Lady Bulldogs",
+          "countryCode": "US",
+          "ranking": 26
+        },
+        {
+          "key": "ncaaw-texas-tech-lady-raiders",
+          "name": "Texas Tech Lady Raiders",
+          "countryCode": "US",
+          "ranking": 27
+        },
+        {
+          "key": "ncaaw-nc-state-wolfpack",
+          "name": "NC State Wolfpack",
+          "countryCode": "US",
+          "ranking": 28
+        },
+        {
+          "key": "ncaaw-iowa-state-cyclones",
+          "name": "Iowa State Cyclones",
+          "countryCode": "US",
+          "ranking": 29
+        },
+        {
+          "key": "ncaaw-clemson-tigers",
+          "name": "Clemson Tigers",
+          "countryCode": "US",
+          "ranking": 30
+        },
+        {
+          "key": "ncaaw-oklahoma-state-cowgirls",
+          "name": "Oklahoma State Cowgirls",
+          "countryCode": "US",
+          "ranking": 31
+        },
+        {
+          "key": "ncaaw-oregon-ducks",
+          "name": "Oregon Ducks",
+          "countryCode": "US",
+          "ranking": 32
+        },
+        {
+          "key": "ncaaw-syracuse-orange",
+          "name": "Syracuse Orange",
+          "countryCode": "US",
+          "ranking": 33
+        },
+        {
+          "key": "ncaaw-usc-trojans",
+          "name": "USC Trojans",
+          "countryCode": "US",
+          "ranking": 34
+        },
+        {
+          "key": "ncaaw-princeton-tigers",
+          "name": "Princeton Tigers",
+          "countryCode": "US",
+          "ranking": 35
+        },
+        {
+          "key": "ncaaw-virginia-tech-hokies",
+          "name": "Virginia Tech Hokies",
+          "countryCode": "US",
+          "ranking": 36
+        },
+        {
+          "key": "ncaaw-colorado-buffaloes",
+          "name": "Colorado Buffaloes",
+          "countryCode": "US",
+          "ranking": 37
+        },
+        {
+          "key": "ncaaw-sacramento-4-10-seed-play-in",
+          "name": "Virginia / Arizona State",
+          "countryCode": "US",
+          "ranking": 38
+        },
+        {
+          "key": "ncaaw-villanova-wildcats",
+          "name": "Villanova Wildcats",
+          "countryCode": "US",
+          "ranking": 39
+        },
+        {
+          "key": "ncaaw-tennessee-lady-volunteers",
+          "name": "Tennessee Lady Volunteers",
+          "countryCode": "US",
+          "ranking": 40
+        },
+        {
+          "key": "ncaaw-fairfield-stags",
+          "name": "Fairfield Stags",
+          "countryCode": "US",
+          "ranking": 41
+        },
+        {
+          "key": "ncaaw-south-dakota-state-jackrabbits",
+          "name": "South Dakota State Jackrabbits",
+          "countryCode": "US",
+          "ranking": 42
+        },
+        {
+          "key": "ncaaw-sacramento-2-11-seed-play-in",
+          "name": "Nebraska / Richmond",
+          "countryCode": "US",
+          "ranking": 43
+        },
+        {
+          "key": "ncaaw-rhode-island-rams",
+          "name": "Rhode Island Rams",
+          "countryCode": "US",
+          "ranking": 44
+        },
+        {
+          "key": "ncaaw-murray-state-racers",
+          "name": "Murray State Racers",
+          "countryCode": "US",
+          "ranking": 45
+        },
+        {
+          "key": "ncaaw-colorado-state-rams",
+          "name": "Colorado State Rams",
+          "countryCode": "US",
+          "ranking": 46
+        },
+        {
+          "key": "ncaaw-gonzaga-bulldogs",
+          "name": "Gonzaga Bulldogs",
+          "countryCode": "US",
+          "ranking": 47
+        },
+        {
+          "key": "ncaaw-james-madison-dukes",
+          "name": "James Madison Dukes",
+          "countryCode": "US",
+          "ranking": 48
+        },
+        {
+          "key": "ncaaw-western-illinois-leathernecks",
+          "name": "Western Illinois Leathernecks",
+          "countryCode": "US",
+          "ranking": 49
+        },
+        {
+          "key": "ncaaw-idaho-vandals",
+          "name": "Idaho Vandals",
+          "countryCode": "US",
+          "ranking": 50
+        },
+        {
+          "key": "ncaaw-green-bay-phoenix",
+          "name": "Green Bay Phoenix",
+          "countryCode": "US",
+          "ranking": 51
+        },
+        {
+          "key": "ncaaw-miami-oh-redhawks",
+          "name": "Miami (OH) RedHawks",
+          "countryCode": "US",
+          "ranking": 52
+        },
+        {
+          "key": "ncaaw-howard-bison",
+          "name": "Howard Bison",
+          "countryCode": "US",
+          "ranking": 53
+        },
+        {
+          "key": "ncaaw-uc-san-diego-tritons",
+          "name": "UC San Diego Tritons",
+          "countryCode": "US",
+          "ranking": 54
+        },
+        {
+          "key": "ncaaw-charleston-cougars",
+          "name": "Charleston Cougars",
+          "countryCode": "US",
+          "ranking": 55
+        },
+        {
+          "key": "ncaaw-vermont-catamounts",
+          "name": "Vermont Catamounts",
+          "countryCode": "US",
+          "ranking": 56
+        },
+        {
+          "key": "ncaaw-high-point-panthers",
+          "name": "High Point Panthers",
+          "countryCode": "US",
+          "ranking": 57
+        },
+        {
+          "key": "ncaaw-fairleigh-dickinson-knights",
+          "name": "Fairleigh Dickinson Knights",
+          "countryCode": "US",
+          "ranking": 58
+        },
+        {
+          "key": "ncaaw-jacksonville-dolphins",
+          "name": "Jacksonville Dolphins",
+          "countryCode": "US",
+          "ranking": 59
+        },
+        {
+          "key": "ncaaw-holy-cross-crusaders",
+          "name": "Holy Cross Crusaders",
+          "countryCode": "US",
+          "ranking": 60
+        },
+        {
+          "key": "ncaaw-utsa-roadrunners",
+          "name": "UTSA Roadrunners",
+          "countryCode": "US",
+          "ranking": 61
+        },
+        {
+          "key": "ncaaw-sacramento-4-16-seed-play-in",
+          "name": "Samford / Southern",
+          "countryCode": "US",
+          "ranking": 62
+        },
+        {
+          "key": "ncaaw-california-baptist-lancers",
+          "name": "California Baptist Lancers",
+          "countryCode": "US",
+          "ranking": 63
+        },
+        {
+          "key": "ncaaw-fort-worth-3-16-seed-play-in",
+          "name": "Missouri State / Stephen F. Austin",
+          "countryCode": "US",
+          "ranking": 64
+        },
+        {
+          "key": "ncaaw-arizona-state-sun-devils",
+          "name": "Arizona State Sun Devils",
+          "countryCode": "US",
+          "ranking": 65
+        },
+        {
+          "key": "ncaaw-missouri-state-lady-bears",
+          "name": "Missouri State Lady Bears",
+          "countryCode": "US",
+          "ranking": 66
+        },
+        {
+          "key": "ncaaw-nebraska-cornhuskers",
+          "name": "Nebraska Cornhuskers",
+          "countryCode": "US",
+          "ranking": 67
+        },
+        {
+          "key": "ncaaw-richmond-spiders",
+          "name": "Richmond Spiders",
+          "countryCode": "US",
+          "ranking": 68
+        },
+        {
+          "key": "ncaaw-samford-bulldogs",
+          "name": "Samford Bulldogs",
+          "countryCode": "US",
+          "ranking": 69
+        },
+        {
+          "key": "ncaaw-southern-jaguars",
+          "name": "Southern Jaguars",
+          "countryCode": "US",
+          "ranking": 70
+        },
+        {
+          "key": "ncaaw-stephen-f-austin-ladyjacks",
+          "name": "Stephen F. Austin Ladyjacks",
+          "countryCode": "US",
+          "ranking": 71
+        },
+        {
+          "key": "ncaaw-virginia-cavaliers",
+          "name": "Virginia Cavaliers",
+          "countryCode": "US",
+          "ranking": 72
+        }
+      ],
+      "events": [
+        {
+          "key": "ncaaw-tournament-2026",
+          "name": "NCAA Women's Tournament",
+          "startDate": "2026-03-18",
+          "endDate": "2026-04-05",
+          "venue": null,
+          "location": "United States",
+          "rounds": 6,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "ncaaw-uconn-huskies",
+              "ranking": 1,
+              "seed": 1,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "ncaaw-south-carolina-gamecocks",
+              "ranking": 2,
+              "seed": 1,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "ncaaw-ucla-bruins",
+              "ranking": 3,
+              "seed": 1,
+              "oddsToWin": 7.0
+            },
+            {
+              "player": "ncaaw-texas-longhorns",
+              "ranking": 4,
+              "seed": 1,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "ncaaw-vanderbilt-commodores",
+              "ranking": 5,
+              "seed": 2,
+              "oddsToWin": 10.0
+            },
+            {
+              "player": "ncaaw-iowa-hawkeyes",
+              "ranking": 6,
+              "seed": 2,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "ncaaw-lsu-tigers",
+              "ranking": 7,
+              "seed": 2,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "ncaaw-michigan-wolverines",
+              "ranking": 8,
+              "seed": 2,
+              "oddsToWin": 13.0
+            },
+            {
+              "player": "ncaaw-ohio-state-buckeyes",
+              "ranking": 9,
+              "seed": 3,
+              "oddsToWin": 18.0
+            },
+            {
+              "player": "ncaaw-tcu-horned-frogs",
+              "ranking": 10,
+              "seed": 3,
+              "oddsToWin": 19.0
+            },
+            {
+              "player": "ncaaw-duke-blue-devils",
+              "ranking": 11,
+              "seed": 3,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "ncaaw-louisville-cardinals",
+              "ranking": 12,
+              "seed": 3,
+              "oddsToWin": 21.0
+            },
+            {
+              "player": "ncaaw-north-carolina-tar-heels",
+              "ranking": 13,
+              "seed": 4,
+              "oddsToWin": 25.0
+            },
+            {
+              "player": "ncaaw-oklahoma-sooners",
+              "ranking": 14,
+              "seed": 4,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "ncaaw-minnesota-golden-gophers",
+              "ranking": 15,
+              "seed": 4,
+              "oddsToWin": 27.0
+            },
+            {
+              "player": "ncaaw-west-virginia-mountaineers",
+              "ranking": 16,
+              "seed": 4,
+              "oddsToWin": 28.0
+            },
+            {
+              "player": "ncaaw-maryland-terrapins",
+              "ranking": 17,
+              "seed": 5,
+              "oddsToWin": 40.0
+            },
+            {
+              "player": "ncaaw-michigan-state-spartans",
+              "ranking": 18,
+              "seed": 5,
+              "oddsToWin": 41.0
+            },
+            {
+              "player": "ncaaw-ole-miss-rebels",
+              "ranking": 19,
+              "seed": 5,
+              "oddsToWin": 42.0
+            },
+            {
+              "player": "ncaaw-kentucky-wildcats",
+              "ranking": 20,
+              "seed": 5,
+              "oddsToWin": 43.0
+            },
+            {
+              "player": "ncaaw-notre-dame-fighting-irish",
+              "ranking": 21,
+              "seed": 6,
+              "oddsToWin": 50.0
+            },
+            {
+              "player": "ncaaw-washington-huskies",
+              "ranking": 22,
+              "seed": 6,
+              "oddsToWin": 51.0
+            },
+            {
+              "player": "ncaaw-baylor-bears",
+              "ranking": 23,
+              "seed": 6,
+              "oddsToWin": 52.0
+            },
+            {
+              "player": "ncaaw-alabama-crimson-tide",
+              "ranking": 24,
+              "seed": 6,
+              "oddsToWin": 53.0
+            },
+            {
+              "player": "ncaaw-illinois-fighting-illini",
+              "ranking": 25,
+              "seed": 7,
+              "oddsToWin": 60.0
+            },
+            {
+              "player": "ncaaw-georgia-lady-bulldogs",
+              "ranking": 26,
+              "seed": 7,
+              "oddsToWin": 61.0
+            },
+            {
+              "player": "ncaaw-texas-tech-lady-raiders",
+              "ranking": 27,
+              "seed": 7,
+              "oddsToWin": 62.0
+            },
+            {
+              "player": "ncaaw-nc-state-wolfpack",
+              "ranking": 28,
+              "seed": 7,
+              "oddsToWin": 63.0
+            },
+            {
+              "player": "ncaaw-iowa-state-cyclones",
+              "ranking": 29,
+              "seed": 8,
+              "oddsToWin": 80.0
+            },
+            {
+              "player": "ncaaw-clemson-tigers",
+              "ranking": 30,
+              "seed": 8,
+              "oddsToWin": 81.0
+            },
+            {
+              "player": "ncaaw-oklahoma-state-cowgirls",
+              "ranking": 31,
+              "seed": 8,
+              "oddsToWin": 82.0
+            },
+            {
+              "player": "ncaaw-oregon-ducks",
+              "ranking": 32,
+              "seed": 8,
+              "oddsToWin": 83.0
+            },
+            {
+              "player": "ncaaw-syracuse-orange",
+              "ranking": 33,
+              "seed": 9,
+              "oddsToWin": 90.0
+            },
+            {
+              "player": "ncaaw-usc-trojans",
+              "ranking": 34,
+              "seed": 9,
+              "oddsToWin": 91.0
+            },
+            {
+              "player": "ncaaw-princeton-tigers",
+              "ranking": 35,
+              "seed": 9,
+              "oddsToWin": 92.0
+            },
+            {
+              "player": "ncaaw-virginia-tech-hokies",
+              "ranking": 36,
+              "seed": 9,
+              "oddsToWin": 93.0
+            },
+            {
+              "player": "ncaaw-colorado-buffaloes",
+              "ranking": 37,
+              "seed": 10,
+              "oddsToWin": 100.0
+            },
+            {
+              "player": "ncaaw-sacramento-4-10-seed-play-in",
+              "ranking": 38,
+              "seed": 10,
+              "isPlayInPlace": true,
+              "oddsToWin": 101.0,
+              "playInWinner": "ncaaw-virginia-cavaliers"
+            },
+            {
+              "player": "ncaaw-villanova-wildcats",
+              "ranking": 39,
+              "seed": 10,
+              "oddsToWin": 102.0
+            },
+            {
+              "player": "ncaaw-tennessee-lady-volunteers",
+              "ranking": 40,
+              "seed": 10,
+              "oddsToWin": 103.0
+            },
+            {
+              "player": "ncaaw-fairfield-stags",
+              "ranking": 41,
+              "seed": 11,
+              "oddsToWin": 120.0
+            },
+            {
+              "player": "ncaaw-south-dakota-state-jackrabbits",
+              "ranking": 42,
+              "seed": 11,
+              "oddsToWin": 121.0
+            },
+            {
+              "player": "ncaaw-sacramento-2-11-seed-play-in",
+              "ranking": 43,
+              "seed": 11,
+              "isPlayInPlace": true,
+              "oddsToWin": 122.0,
+              "playInWinner": "ncaaw-nebraska-cornhuskers"
+            },
+            {
+              "player": "ncaaw-rhode-island-rams",
+              "ranking": 44,
+              "seed": 11,
+              "oddsToWin": 123.0
+            },
+            {
+              "player": "ncaaw-murray-state-racers",
+              "ranking": 45,
+              "seed": 12,
+              "oddsToWin": 150.0
+            },
+            {
+              "player": "ncaaw-colorado-state-rams",
+              "ranking": 46,
+              "seed": 12,
+              "oddsToWin": 151.0
+            },
+            {
+              "player": "ncaaw-gonzaga-bulldogs",
+              "ranking": 47,
+              "seed": 12,
+              "oddsToWin": 152.0
+            },
+            {
+              "player": "ncaaw-james-madison-dukes",
+              "ranking": 48,
+              "seed": 12,
+              "oddsToWin": 153.0
+            },
+            {
+              "player": "ncaaw-western-illinois-leathernecks",
+              "ranking": 49,
+              "seed": 13,
+              "oddsToWin": 250.0
+            },
+            {
+              "player": "ncaaw-idaho-vandals",
+              "ranking": 50,
+              "seed": 13,
+              "oddsToWin": 251.0
+            },
+            {
+              "player": "ncaaw-green-bay-phoenix",
+              "ranking": 51,
+              "seed": 13,
+              "oddsToWin": 252.0
+            },
+            {
+              "player": "ncaaw-miami-oh-redhawks",
+              "ranking": 52,
+              "seed": 13,
+              "oddsToWin": 253.0
+            },
+            {
+              "player": "ncaaw-howard-bison",
+              "ranking": 53,
+              "seed": 14,
+              "oddsToWin": 400.0
+            },
+            {
+              "player": "ncaaw-uc-san-diego-tritons",
+              "ranking": 54,
+              "seed": 14,
+              "oddsToWin": 401.0
+            },
+            {
+              "player": "ncaaw-charleston-cougars",
+              "ranking": 55,
+              "seed": 14,
+              "oddsToWin": 402.0
+            },
+            {
+              "player": "ncaaw-vermont-catamounts",
+              "ranking": 56,
+              "seed": 14,
+              "oddsToWin": 403.0
+            },
+            {
+              "player": "ncaaw-high-point-panthers",
+              "ranking": 57,
+              "seed": 15,
+              "oddsToWin": 750.0
+            },
+            {
+              "player": "ncaaw-fairleigh-dickinson-knights",
+              "ranking": 58,
+              "seed": 15,
+              "oddsToWin": 751.0
+            },
+            {
+              "player": "ncaaw-jacksonville-dolphins",
+              "ranking": 59,
+              "seed": 15,
+              "oddsToWin": 752.0
+            },
+            {
+              "player": "ncaaw-holy-cross-crusaders",
+              "ranking": 60,
+              "seed": 15,
+              "oddsToWin": 753.0
+            },
+            {
+              "player": "ncaaw-utsa-roadrunners",
+              "ranking": 61,
+              "seed": 16,
+              "oddsToWin": 1000.0
+            },
+            {
+              "player": "ncaaw-sacramento-4-16-seed-play-in",
+              "ranking": 62,
+              "seed": 16,
+              "isPlayInPlace": true,
+              "oddsToWin": 1001.0,
+              "playInWinner": "ncaaw-southern-jaguars"
+            },
+            {
+              "player": "ncaaw-california-baptist-lancers",
+              "ranking": 63,
+              "seed": 16,
+              "oddsToWin": 1002.0
+            },
+            {
+              "player": "ncaaw-fort-worth-3-16-seed-play-in",
+              "ranking": 64,
+              "seed": 16,
+              "isPlayInPlace": true,
+              "oddsToWin": 1003.0,
+              "playInWinner": "ncaaw-missouri-state-lady-bears"
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "ncaaw-uconn-huskies",
+              "away": "ncaaw-utsa-roadrunners",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-21T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 33,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 90,
+                "awayScore": 52
+              }
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "ncaaw-iowa-state-cyclones",
+              "away": "ncaaw-syracuse-orange",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T21:30:00Z",
+              "advancesTo": {
+                "matchNumber": 33,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 63,
+                "awayScore": 72
+              }
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "ncaaw-maryland-terrapins",
+              "away": "ncaaw-murray-state-racers",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T19:07:00Z",
+              "advancesTo": {
+                "matchNumber": 34,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 99,
+                "awayScore": 67
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "ncaaw-north-carolina-tar-heels",
+              "away": "ncaaw-western-illinois-leathernecks",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-20T21:39:00Z",
+              "advancesTo": {
+                "matchNumber": 34,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 82,
+                "awayScore": 51
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "ncaaw-notre-dame-fighting-irish",
+              "away": "ncaaw-fairfield-stags",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T18:00:00Z",
+              "advancesTo": {
+                "matchNumber": 35,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 79,
+                "awayScore": 60
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "ncaaw-ohio-state-buckeyes",
+              "away": "ncaaw-howard-bison",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-21T15:30:00Z",
+              "advancesTo": {
+                "matchNumber": 35,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 75,
+                "awayScore": 54
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "ncaaw-illinois-fighting-illini",
+              "away": "ncaaw-colorado-buffaloes",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T01:30:00Z",
+              "advancesTo": {
+                "matchNumber": 36,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 66,
+                "awayScore": 57
+              }
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "ncaaw-vanderbilt-commodores",
+              "away": "ncaaw-high-point-panthers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-21T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 36,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 102,
+                "awayScore": 61
+              }
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "ncaaw-south-carolina-gamecocks",
+              "away": "ncaaw-sacramento-4-16-seed-play-in",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-21T17:00:00Z",
+              "advancesTo": {
+                "matchNumber": 37,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 103,
+                "awayScore": 34
+              }
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "ncaaw-clemson-tigers",
+              "away": "ncaaw-usc-trojans",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T19:30:00Z",
+              "advancesTo": {
+                "matchNumber": 37,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 67,
+                "awayScore": 71
+              }
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "ncaaw-michigan-state-spartans",
+              "away": "ncaaw-colorado-state-rams",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T23:30:00Z",
+              "advancesTo": {
+                "matchNumber": 38,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 65,
+                "awayScore": 62
+              }
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "ncaaw-oklahoma-sooners",
+              "away": "ncaaw-idaho-vandals",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-21T02:00:00Z",
+              "advancesTo": {
+                "matchNumber": 38,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 89,
+                "awayScore": 59
+              }
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "ncaaw-washington-huskies",
+              "away": "ncaaw-south-dakota-state-jackrabbits",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T18:30:00Z",
+              "advancesTo": {
+                "matchNumber": 39,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 72,
+                "awayScore": 54
+              }
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "ncaaw-tcu-horned-frogs",
+              "away": "ncaaw-uc-san-diego-tritons",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-20T16:00:00Z",
+              "advancesTo": {
+                "matchNumber": 39,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 86,
+                "awayScore": 40
+              }
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "ncaaw-georgia-lady-bulldogs",
+              "away": "ncaaw-sacramento-4-10-seed-play-in",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T17:30:00Z",
+              "advancesTo": {
+                "matchNumber": 40,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 73,
+                "awayScore": 82
+              }
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "ncaaw-iowa-hawkeyes",
+              "away": "ncaaw-fairleigh-dickinson-knights",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-21T20:27:00Z",
+              "advancesTo": {
+                "matchNumber": 40,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 58,
+                "awayScore": 48
+              }
+            },
+            {
+              "matchNumber": 17,
+              "roundNumber": 1,
+              "home": "ncaaw-ucla-bruins",
+              "away": "ncaaw-california-baptist-lancers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-22T02:00:00Z",
+              "advancesTo": {
+                "matchNumber": 41,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 96,
+                "awayScore": 43
+              }
+            },
+            {
+              "matchNumber": 18,
+              "roundNumber": 1,
+              "home": "ncaaw-oklahoma-state-cowgirls",
+              "away": "ncaaw-princeton-tigers",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T23:30:00Z",
+              "advancesTo": {
+                "matchNumber": 41,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 82,
+                "awayScore": 68
+              }
+            },
+            {
+              "matchNumber": 19,
+              "roundNumber": 1,
+              "home": "ncaaw-ole-miss-rebels",
+              "away": "ncaaw-gonzaga-bulldogs",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T19:30:00Z",
+              "advancesTo": {
+                "matchNumber": 42,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 81,
+                "awayScore": 66
+              }
+            },
+            {
+              "matchNumber": 20,
+              "roundNumber": 1,
+              "home": "ncaaw-minnesota-golden-gophers",
+              "away": "ncaaw-green-bay-phoenix",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-20T22:05:00Z",
+              "advancesTo": {
+                "matchNumber": 42,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 75,
+                "awayScore": 58
+              }
+            },
+            {
+              "matchNumber": 21,
+              "roundNumber": 1,
+              "home": "ncaaw-baylor-bears",
+              "away": "ncaaw-sacramento-2-11-seed-play-in",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T18:00:00Z",
+              "advancesTo": {
+                "matchNumber": 43,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 67,
+                "awayScore": 62
+              }
+            },
+            {
+              "matchNumber": 22,
+              "roundNumber": 1,
+              "home": "ncaaw-duke-blue-devils",
+              "away": "ncaaw-charleston-cougars",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-20T15:30:00Z",
+              "advancesTo": {
+                "matchNumber": 43,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 81,
+                "awayScore": 64
+              }
+            },
+            {
+              "matchNumber": 23,
+              "roundNumber": 1,
+              "home": "ncaaw-texas-tech-lady-raiders",
+              "away": "ncaaw-villanova-wildcats",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T00:30:00Z",
+              "advancesTo": {
+                "matchNumber": 44,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 57,
+                "awayScore": 52
+              }
+            },
+            {
+              "matchNumber": 24,
+              "roundNumber": 1,
+              "home": "ncaaw-lsu-tigers",
+              "away": "ncaaw-jacksonville-dolphins",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-20T22:07:00Z",
+              "advancesTo": {
+                "matchNumber": 44,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 116,
+                "awayScore": 58
+              }
+            },
+            {
+              "matchNumber": 25,
+              "roundNumber": 1,
+              "home": "ncaaw-texas-longhorns",
+              "away": "ncaaw-fort-worth-3-16-seed-play-in",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-20T20:07:00Z",
+              "advancesTo": {
+                "matchNumber": 45,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 87,
+                "awayScore": 45
+              }
+            },
+            {
+              "matchNumber": 26,
+              "roundNumber": 1,
+              "home": "ncaaw-oregon-ducks",
+              "away": "ncaaw-virginia-tech-hokies",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T17:30:00Z",
+              "advancesTo": {
+                "matchNumber": 45,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 70,
+                "awayScore": 60
+              }
+            },
+            {
+              "matchNumber": 27,
+              "roundNumber": 1,
+              "home": "ncaaw-kentucky-wildcats",
+              "away": "ncaaw-james-madison-dukes",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T18:30:00Z",
+              "advancesTo": {
+                "matchNumber": 46,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 71,
+                "awayScore": 56
+              }
+            },
+            {
+              "matchNumber": 28,
+              "roundNumber": 1,
+              "home": "ncaaw-west-virginia-mountaineers",
+              "away": "ncaaw-miami-oh-redhawks",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-21T21:00:00Z",
+              "advancesTo": {
+                "matchNumber": 46,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 82,
+                "awayScore": 54
+              }
+            },
+            {
+              "matchNumber": 29,
+              "roundNumber": 1,
+              "home": "ncaaw-alabama-crimson-tide",
+              "away": "ncaaw-rhode-island-rams",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T18:30:00Z",
+              "advancesTo": {
+                "matchNumber": 47,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 68,
+                "awayScore": 55
+              }
+            },
+            {
+              "matchNumber": 30,
+              "roundNumber": 1,
+              "home": "ncaaw-louisville-cardinals",
+              "away": "ncaaw-vermont-catamounts",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-21T16:00:00Z",
+              "advancesTo": {
+                "matchNumber": 47,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 72,
+                "awayScore": 52
+              }
+            },
+            {
+              "matchNumber": 31,
+              "roundNumber": 1,
+              "home": "ncaaw-nc-state-wolfpack",
+              "away": "ncaaw-tennessee-lady-volunteers",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-21T00:07:00Z",
+              "advancesTo": {
+                "matchNumber": 48,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 76,
+                "awayScore": 61
+              }
+            },
+            {
+              "matchNumber": 32,
+              "roundNumber": 1,
+              "home": "ncaaw-michigan-wolverines",
+              "away": "ncaaw-holy-cross-crusaders",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-20T21:30:00Z",
+              "advancesTo": {
+                "matchNumber": 48,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 83,
+                "awayScore": 48
+              }
+            },
+            {
+              "matchNumber": 33,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-23T22:00:00Z",
+              "advancesTo": {
+                "matchNumber": 49,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 98,
+                "awayScore": 45
+              }
+            },
+            {
+              "matchNumber": 34,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T16:00:00Z",
+              "advancesTo": {
+                "matchNumber": 49,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 66,
+                "awayScore": 74
+              }
+            },
+            {
+              "matchNumber": 35,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-23T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 50,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 83,
+                "awayScore": 73
+              }
+            },
+            {
+              "matchNumber": 36,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-23T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 50,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 57,
+                "awayScore": 75
+              }
+            },
+            {
+              "matchNumber": 37,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-24T00:00:00Z",
+              "advancesTo": {
+                "matchNumber": 51,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 101,
+                "awayScore": 61
+              }
+            },
+            {
+              "matchNumber": 38,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-23T00:00:00Z",
+              "advancesTo": {
+                "matchNumber": 51,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 71,
+                "awayScore": 77
+              }
+            },
+            {
+              "matchNumber": 39,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-23T02:00:00Z",
+              "advancesTo": {
+                "matchNumber": 52,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 59,
+                "awayScore": 62
+              }
+            },
+            {
+              "matchNumber": 40,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-23T18:00:00Z",
+              "advancesTo": {
+                "matchNumber": 52,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 83,
+                "awayScore": 75
+              }
+            },
+            {
+              "matchNumber": 41,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-24T02:00:00Z",
+              "advancesTo": {
+                "matchNumber": 53,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 87,
+                "awayScore": 68
+              }
+            },
+            {
+              "matchNumber": 42,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T18:07:00Z",
+              "advancesTo": {
+                "matchNumber": 53,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 63,
+                "awayScore": 65
+              }
+            },
+            {
+              "matchNumber": 43,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T20:07:00Z",
+              "advancesTo": {
+                "matchNumber": 54,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 46,
+                "awayScore": 69
+              }
+            },
+            {
+              "matchNumber": 44,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 54,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 47,
+                "awayScore": 101
+              }
+            },
+            {
+              "matchNumber": 45,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-22T22:00:00Z",
+              "advancesTo": {
+                "matchNumber": 55,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 100,
+                "awayScore": 58
+              }
+            },
+            {
+              "matchNumber": 46,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-23T21:00:00Z",
+              "advancesTo": {
+                "matchNumber": 55,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 74,
+                "awayScore": 73
+              }
+            },
+            {
+              "matchNumber": 47,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-23T16:00:00Z",
+              "advancesTo": {
+                "matchNumber": 56,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 68,
+                "awayScore": 69
+              }
+            },
+            {
+              "matchNumber": 48,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T17:00:00Z",
+              "advancesTo": {
+                "matchNumber": 56,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 63,
+                "awayScore": 92
+              }
+            },
+            {
+              "matchNumber": 49,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T21:15:00Z",
+              "advancesTo": {
+                "matchNumber": 57,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 63,
+                "awayScore": 42
+              }
+            },
+            {
+              "matchNumber": 50,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T18:30:00Z",
+              "advancesTo": {
+                "matchNumber": 57,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 67,
+                "awayScore": 64
+              }
+            },
+            {
+              "matchNumber": 51,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T21:00:00Z",
+              "advancesTo": {
+                "matchNumber": 58,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 94,
+                "awayScore": 68
+              }
+            },
+            {
+              "matchNumber": 52,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T23:30:00Z",
+              "advancesTo": {
+                "matchNumber": 58,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 79,
+                "awayScore": 69
+              }
+            },
+            {
+              "matchNumber": 53,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T23:30:00Z",
+              "advancesTo": {
+                "matchNumber": 59,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 80,
+                "awayScore": 56
+              }
+            },
+            {
+              "matchNumber": 54,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T02:12:00Z",
+              "advancesTo": {
+                "matchNumber": 59,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 87,
+                "awayScore": 85
+              }
+            },
+            {
+              "matchNumber": 55,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 60,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 76,
+                "awayScore": 54
+              }
+            },
+            {
+              "matchNumber": 56,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T16:30:00Z",
+              "advancesTo": {
+                "matchNumber": 60,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 52,
+                "awayScore": 71
+              }
+            },
+            {
+              "matchNumber": 57,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-29T17:00:00Z",
+              "advancesTo": {
+                "matchNumber": 61,
+                "side": "AWAY"
+              },
+              "regionLabel": "Fort Worth 1",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 70,
+                "awayScore": 52
+              }
+            },
+            {
+              "matchNumber": 58,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-31T01:20:00Z",
+              "advancesTo": {
+                "matchNumber": 61,
+                "side": "HOME"
+              },
+              "regionLabel": "Sacramento 4",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 78,
+                "awayScore": 52
+              }
+            },
+            {
+              "matchNumber": 59,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-29T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 62,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sacramento 2",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 70,
+                "awayScore": 58
+              }
+            },
+            {
+              "matchNumber": 60,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-30T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 62,
+                "side": "HOME"
+              },
+              "regionLabel": "Fort Worth 3",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 77,
+                "awayScore": 41
+              }
+            },
+            {
+              "matchNumber": 61,
+              "roundNumber": 5,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-04-03T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 63,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 62,
+                "awayScore": 48
+              }
+            },
+            {
+              "matchNumber": 62,
+              "roundNumber": 5,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-04-04T01:40:00Z",
+              "advancesTo": {
+                "matchNumber": 63,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 44,
+                "awayScore": 51
+              }
+            },
+            {
+              "matchNumber": 63,
+              "roundNumber": 6,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-04-05T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 51,
+                "awayScore": 79
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

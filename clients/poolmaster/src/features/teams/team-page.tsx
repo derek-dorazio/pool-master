@@ -33,7 +33,7 @@ export function TeamPage() {
   const teamsQuery = useLeagueSquadsQuery(leagueId);
   const { membersByUserId } = useLeagueMembersQuery(leagueId);
 
-  const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading team...' });
+  const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading this member...' });
   if (leagueContext.state === 'blocked' || !league) {
     return leagueContext.element;
   }
@@ -41,20 +41,20 @@ export function TeamPage() {
     return <Navigate replace to={buildLeagueTeamPath(leagueCode)} />;
   }
   if (teamsQuery.isLoading) {
-    return <LoadingState body="Loading team..." testId="team-page-loading" />;
+    return <LoadingState body="Loading this member..." testId="team-page-loading" />;
   }
   if (teamsQuery.isError) {
-    return <ErrorState body="We couldn't load this league's teams." testId="team-page-error" title="Team unavailable" />;
+    return <ErrorState body="We couldn't load this league's members." testId="team-page-error" title="Member unavailable" />;
   }
 
   const team = teamsQuery.data?.find((candidate) => candidate.id === teamId);
   if (!team) {
     return (
       <EmptyState
-        action={<LinkButton to={buildLeagueTeamsPath(leagueCode)} variant="secondary">All teams</LinkButton>}
-        body="It may have been deleted."
+        action={<LinkButton to={buildLeagueTeamsPath(leagueCode)} variant="secondary">All members</LinkButton>}
+        body="They may have left or been removed."
         testId="team-page-not-found"
-        title="This team isn't in this league"
+        title="This member isn't in this league"
       />
     );
   }
@@ -77,7 +77,7 @@ export function TeamPage() {
             to={buildLeagueAdminTeamPath(leagueCode, team.id)}
             variant="secondary"
           >
-            Manage team
+            Manage
           </LinkButton>
         ) : null}
       </div>
@@ -96,7 +96,7 @@ export function TeamPage() {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">This team has no owners.</p>
+          <p className="text-sm text-muted-foreground">{team.name} has no owners.</p>
         )}
       </section>
     </section>

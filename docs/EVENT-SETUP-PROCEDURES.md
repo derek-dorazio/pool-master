@@ -296,8 +296,10 @@ event or writes odds, tiers, prices or scores; those stay admin actions here.
 without it an event starts at noon UTC on its start date. An event of a sport whose finishing
 order an admin enters (every racing sport) is created with automatic lifecycle off, and one
 already on the site has it turned off, so it never completes, and settles, before its result
-is in. A test seed is golf's or a bracket sport's, because its made-up results are stroke
-rounds or match results; any sport may have a test slate.
+is in. A test seed carries the results its sport is scored on: golf's made-up stroke rounds, a
+bracket's match results, or a race's real finishing order (each runner's `raceResult`, entered
+just before release as the official result; [`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md)
+*Seeded 2026 races*). Any sport may also have a test slate.
 
 **The file says what it is.** Each file starts with an envelope: `schemaVersion`, a `scope`
 (sport from the sport registry, season, sport leagues, and `contents` from `SCHEDULE`,
@@ -423,3 +425,22 @@ Load each with `mode` `apply` like any file. Because their envelopes say `testDa
   WNBA Finals.
 
 Test a contest on either as for the NFL seed above. Running a file again skips everything.
+
+## Seeded March Madness
+
+`basketball-2026-ncaa-tournaments-test.json` is a test seed of the 2026 NCAA Division I men's and
+women's tournaments as they went, one event each in the `NCAA Division I Men` and `NCAA Division I
+Women` sport leagues that the migrations create. Each is six rounds of 63 games over 64 places,
+seeded 1 to 16 in four regions (East, South, West and Midwest for the men; Fort Worth 1 and 3 and
+Sacramento 2 and 4 for the women). Seeds, pairings, tip-offs and scores are real; the odds are made
+up by seed. Load it with `mode` `apply` like any file. Because its envelope says `testData`:
+
+- **Dates moved forward by whole weeks**, the tip-offs with them, so the First Four starts at
+  least a week after the run.
+- **Released** with automatic lifecycle off, the field tiered by odds and priced.
+- **The First Four places filled**: each First Four pairing is a play-in place ("UMBC / Howard"),
+  and after release each takes the team that won it, keeping its seed, tier and price.
+- **Every game's result already entered**, round by round. Michigan beat UConn 69-63 for the
+  men's title; UCLA beat South Carolina 79-51 for the women's.
+
+Test a contest on either as for the NFL seed above. Running the file again skips everything.

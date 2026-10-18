@@ -344,7 +344,7 @@ describe('League Home', () => {
     expect(getContestLeaderboardMock).not.toHaveBeenCalled();
   });
 
-  it('shows the member\'s team with its owners and a link to My team', async () => {
+  it('shows the member\'s squad by its name with its owners, linking to it by that name', async () => {
     primeMocks();
 
     renderLeagueHome();
@@ -352,17 +352,18 @@ describe('League Home', () => {
     const team = within(await screen.findByTestId('league-home-your-team'));
     expect(await team.findByText('Casey Crushers')).toBeInTheDocument();
     expect(team.getByText('Casey Commissioner')).toBeInTheDocument();
-    expect(team.getByRole('link', { name: /Go to My team/ })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+    expect(team.getByRole('link', { name: /Go to Casey Crushers/ })).toHaveAttribute('href', '/league/BIGDAWGS/team');
   });
 
-  it('asks a member with no team to create one, rather than offering picks', async () => {
+  it('asks a member with no squad to choose their name in this league, rather than offering picks', async () => {
     primeMocks({ hasTeam: false, contests: [contest('open-1', 'RBC Heritage Tiers', 'OPEN')] });
 
     renderLeagueHome();
 
-    expect(await within(await screen.findByTestId('league-home-your-team')).findByRole('link', { name: /Create your team/ })).toBeInTheDocument();
+    expect(await within(await screen.findByTestId('league-home-your-team')).findByRole('link', { name: /Choose your name/ })).toBeInTheDocument();
     const upNext = within(await screen.findByTestId('league-home-up-next'));
     expect(upNext.getByRole('link', { name: 'View contest' })).toBeInTheDocument();
+    expect(upNext.getByText(/Choose your name in this league to enter/)).toBeInTheDocument();
     expect(listContestEntriesMock).not.toHaveBeenCalled();
   });
 
@@ -410,14 +411,14 @@ describe('League Home', () => {
 describe('League Home after joining', () => {
   const joinedWithFailedTeamSetup = { pathname: '/league/BIGDAWGS', state: { teamSetupFailed: true } };
 
-  it('tells a member who just joined that their team name and icon did not save, pointing them to My team', async () => {
+  it('tells a member who just joined that the name and icon they chose did not save, linking to where they can set them', async () => {
     primeMocks();
 
     renderLeagueHome(joinedWithFailedTeamSetup);
 
     const notice = await screen.findByTestId('league-team-setup-failed');
-    expect(notice).toHaveTextContent("We couldn't save your team name and icon.");
-    expect(within(notice).getByRole('link', { name: 'My team' })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+    expect(notice).toHaveTextContent("we couldn't save the name and icon you chose.");
+    expect(within(notice).getByRole('link', { name: 'Set your name and icon' })).toHaveAttribute('href', '/league/BIGDAWGS/team');
   });
 
   it('shows the team-setup notice once, clearing it from history so Back or a reload does not bring it back', async () => {

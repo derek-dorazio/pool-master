@@ -1,0 +1,2852 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "CYCLING",
+    "season": 2026,
+    "sportLeagues": [
+      "UCI WorldTour",
+      "UCI Women's WorldTour"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-18",
+    "gatheredBy": "load-sport-data, 2026 races as played: each race's general classification or result from its Wikipedia page (one source; procyclingstats.com refused the fetch). The Tour de France lists all 158 finishers; the other races the top 10 their pages list. Rankings are each rider's average finish across these races; odds to win are made up from them.",
+    "sources": [
+      {
+        "name": "2026 Milan–San Remo (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Milan–San_Remo"
+      },
+      {
+        "name": "2026 Giro d'Italia (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Giro_d'Italia"
+      },
+      {
+        "name": "2026 Tour de France (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Tour_de_France"
+      },
+      {
+        "name": "2026 Giro d'Italia Women (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Giro_d'Italia_Women"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "UCI WorldTour",
+      "players": [
+        {
+          "key": "uci-worldtour-remco-evenepoel",
+          "name": "Remco Evenepoel",
+          "countryCode": "BE",
+          "ranking": 1
+        },
+        {
+          "key": "uci-worldtour-isaac-del-toro",
+          "name": "Isaac del Toro",
+          "countryCode": "MX",
+          "ranking": 2
+        },
+        {
+          "key": "uci-worldtour-paul-seixas",
+          "name": "Paul Seixas",
+          "countryCode": "FR",
+          "ranking": 3
+        },
+        {
+          "key": "uci-worldtour-lenny-martinez",
+          "name": "Lenny Martinez",
+          "countryCode": "FR",
+          "ranking": 4
+        },
+        {
+          "key": "uci-worldtour-mattias-skjelmose",
+          "name": "Mattias Skjelmose",
+          "countryCode": "DK",
+          "ranking": 5
+        },
+        {
+          "key": "uci-worldtour-juan-ayuso",
+          "name": "Juan Ayuso",
+          "countryCode": "ES",
+          "ranking": 6
+        },
+        {
+          "key": "uci-worldtour-richard-carapaz",
+          "name": "Richard Carapaz",
+          "countryCode": "EC",
+          "ranking": 7
+        },
+        {
+          "key": "uci-worldtour-tadej-pogacar",
+          "name": "Tadej Pogačar",
+          "countryCode": "SI",
+          "ranking": 8
+        },
+        {
+          "key": "uci-worldtour-jordan-jegat",
+          "name": "Jordan Jegat",
+          "countryCode": "FR",
+          "ranking": 9
+        },
+        {
+          "key": "uci-worldtour-yannis-voisard",
+          "name": "Yannis Voisard",
+          "countryCode": "CH",
+          "ranking": 10
+        },
+        {
+          "key": "uci-worldtour-tobias-halland-johannessen",
+          "name": "Tobias Halland Johannessen",
+          "countryCode": "NO",
+          "ranking": 11
+        },
+        {
+          "key": "uci-worldtour-sepp-kuss",
+          "name": "Sepp Kuss",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "uci-worldtour-jonas-vingegaard",
+          "name": "Jonas Vingegaard",
+          "countryCode": "DK",
+          "ranking": 13
+        },
+        {
+          "key": "uci-worldtour-nicolas-prodhomme",
+          "name": "Nicolas Prodhomme",
+          "countryCode": "FR",
+          "ranking": 14
+        },
+        {
+          "key": "uci-worldtour-tiesj-benoot",
+          "name": "Tiesj Benoot",
+          "countryCode": "BE",
+          "ranking": 15
+        },
+        {
+          "key": "uci-worldtour-quinn-simmons",
+          "name": "Quinn Simmons",
+          "countryCode": "US",
+          "ranking": 16
+        },
+        {
+          "key": "uci-worldtour-sean-quinn",
+          "name": "Sean Quinn",
+          "countryCode": "US",
+          "ranking": 17
+        },
+        {
+          "key": "uci-worldtour-tom-pidcock",
+          "name": "Tom Pidcock",
+          "countryCode": "GB",
+          "ranking": 18
+        },
+        {
+          "key": "uci-worldtour-adam-yates",
+          "name": "Adam Yates",
+          "countryCode": "GB",
+          "ranking": 19
+        },
+        {
+          "key": "uci-worldtour-carlos-verona",
+          "name": "Carlos Verona",
+          "countryCode": "ES",
+          "ranking": 20
+        },
+        {
+          "key": "uci-worldtour-matthew-riccitello",
+          "name": "Matthew Riccitello",
+          "countryCode": "US",
+          "ranking": 21
+        },
+        {
+          "key": "uci-worldtour-harold-tejada",
+          "name": "Harold Tejada",
+          "countryCode": "CO",
+          "ranking": 22
+        },
+        {
+          "key": "uci-worldtour-maxim-van-gils",
+          "name": "Maxim Van Gils",
+          "countryCode": "BE",
+          "ranking": 23
+        },
+        {
+          "key": "uci-worldtour-ben-o-connor",
+          "name": "Ben O'Connor",
+          "countryCode": "AU",
+          "ranking": 24
+        },
+        {
+          "key": "uci-worldtour-pablo-castrillo",
+          "name": "Pablo Castrillo",
+          "countryCode": "ES",
+          "ranking": 25
+        },
+        {
+          "key": "uci-worldtour-matteo-jorgenson",
+          "name": "Matteo Jorgenson",
+          "countryCode": "US",
+          "ranking": 26
+        },
+        {
+          "key": "uci-worldtour-guillaume-martin",
+          "name": "Guillaume Martin",
+          "countryCode": "FR",
+          "ranking": 27
+        },
+        {
+          "key": "uci-worldtour-jai-hindley",
+          "name": "Jai Hindley",
+          "countryCode": "AU",
+          "ranking": 28
+        },
+        {
+          "key": "uci-worldtour-felix-gall",
+          "name": "Felix Gall",
+          "countryCode": "AT",
+          "ranking": 29
+        },
+        {
+          "key": "uci-worldtour-felix-groschartner",
+          "name": "Felix Großschartner",
+          "countryCode": "AT",
+          "ranking": 30
+        },
+        {
+          "key": "uci-worldtour-mattia-cattaneo",
+          "name": "Mattia Cattaneo",
+          "countryCode": "IT",
+          "ranking": 31
+        },
+        {
+          "key": "uci-worldtour-raul-garcia-pierna",
+          "name": "Raúl García Pierna",
+          "countryCode": "ES",
+          "ranking": 32
+        },
+        {
+          "key": "uci-worldtour-mauro-schmid",
+          "name": "Mauro Schmid",
+          "countryCode": "CH",
+          "ranking": 33
+        },
+        {
+          "key": "uci-worldtour-kevin-vauquelin",
+          "name": "Kévin Vauquelin",
+          "countryCode": "FR",
+          "ranking": 34
+        },
+        {
+          "key": "uci-worldtour-antonio-tiberi",
+          "name": "Antonio Tiberi",
+          "countryCode": "IT",
+          "ranking": 35
+        },
+        {
+          "key": "uci-worldtour-sergio-higuita",
+          "name": "Sergio Higuita",
+          "countryCode": "CO",
+          "ranking": 36
+        },
+        {
+          "key": "uci-worldtour-quinten-hermans",
+          "name": "Quinten Hermans",
+          "countryCode": "BE",
+          "ranking": 37
+        },
+        {
+          "key": "uci-worldtour-clement-braz-afonso",
+          "name": "Clément Braz Afonso",
+          "countryCode": "FR",
+          "ranking": 38
+        },
+        {
+          "key": "uci-worldtour-lennert-van-eetvelt",
+          "name": "Lennert Van Eetvelt",
+          "countryCode": "BE",
+          "ranking": 39
+        },
+        {
+          "key": "uci-worldtour-aurelien-paret-peintre",
+          "name": "Aurélien Paret-Peintre",
+          "countryCode": "FR",
+          "ranking": 40
+        },
+        {
+          "key": "uci-worldtour-thymen-arensman",
+          "name": "Thymen Arensman",
+          "countryCode": "NL",
+          "ranking": 41
+        },
+        {
+          "key": "uci-worldtour-tobias-foss",
+          "name": "Tobias Foss",
+          "countryCode": "NO",
+          "ranking": 42
+        },
+        {
+          "key": "uci-worldtour-valentin-paret-peintre",
+          "name": "Valentin Paret-Peintre",
+          "countryCode": "FR",
+          "ranking": 43
+        },
+        {
+          "key": "uci-worldtour-ion-izagirre",
+          "name": "Ion Izagirre",
+          "countryCode": "ES",
+          "ranking": 44
+        },
+        {
+          "key": "uci-worldtour-alex-baudin",
+          "name": "Alex Baudin",
+          "countryCode": "FR",
+          "ranking": 45
+        },
+        {
+          "key": "uci-worldtour-abel-balderstone",
+          "name": "Abel Balderstone",
+          "countryCode": "ES",
+          "ranking": 46
+        },
+        {
+          "key": "uci-worldtour-wout-van-aert",
+          "name": "Wout van Aert",
+          "countryCode": "BE",
+          "ranking": 47
+        },
+        {
+          "key": "uci-worldtour-marc-hirschi",
+          "name": "Marc Hirschi",
+          "countryCode": "CH",
+          "ranking": 48
+        },
+        {
+          "key": "uci-worldtour-mathias-vacek",
+          "name": "Mathias Vacek",
+          "countryCode": "CZ",
+          "ranking": 49
+        },
+        {
+          "key": "uci-worldtour-nicolas-breuillard",
+          "name": "Nicolas Breuillard",
+          "countryCode": "FR",
+          "ranking": 50
+        },
+        {
+          "key": "uci-worldtour-joris-delbove",
+          "name": "Joris Delbove",
+          "countryCode": "FR",
+          "ranking": 51
+        },
+        {
+          "key": "uci-worldtour-derek-gee-west",
+          "name": "Derek Gee-West",
+          "countryCode": "CA",
+          "ranking": 52
+        },
+        {
+          "key": "uci-worldtour-michael-matthews",
+          "name": "Michael Matthews",
+          "countryCode": "AU",
+          "ranking": 53
+        },
+        {
+          "key": "uci-worldtour-michael-valgren",
+          "name": "Michael Valgren",
+          "countryCode": "DK",
+          "ranking": 54
+        },
+        {
+          "key": "uci-worldtour-javier-romo",
+          "name": "Javier Romo",
+          "countryCode": "ES",
+          "ranking": 55
+        },
+        {
+          "key": "uci-worldtour-xandro-meurisse",
+          "name": "Xandro Meurisse",
+          "countryCode": "BE",
+          "ranking": 56
+        },
+        {
+          "key": "uci-worldtour-romain-gregoire",
+          "name": "Romain Grégoire",
+          "countryCode": "FR",
+          "ranking": 57
+        },
+        {
+          "key": "uci-worldtour-quentin-pacher",
+          "name": "Quentin Pacher",
+          "countryCode": "FR",
+          "ranking": 58
+        },
+        {
+          "key": "uci-worldtour-ben-healy",
+          "name": "Ben Healy",
+          "countryCode": "IE",
+          "ranking": 59
+        },
+        {
+          "key": "uci-worldtour-anders-skaarseth",
+          "name": "Anders Skaarseth",
+          "countryCode": "NO",
+          "ranking": 60
+        },
+        {
+          "key": "uci-worldtour-alexandre-delettre",
+          "name": "Alexandre Delettre",
+          "countryCode": "FR",
+          "ranking": 61
+        },
+        {
+          "key": "uci-worldtour-bruno-armirail",
+          "name": "Bruno Armirail",
+          "countryCode": "FR",
+          "ranking": 62
+        },
+        {
+          "key": "uci-worldtour-anders-halland-johannessen",
+          "name": "Anders Halland Johannessen",
+          "countryCode": "NO",
+          "ranking": 63
+        },
+        {
+          "key": "uci-worldtour-nelson-oliveira",
+          "name": "Nelson Oliveira",
+          "countryCode": "PT",
+          "ranking": 64
+        },
+        {
+          "key": "uci-worldtour-vlad-van-mechelen",
+          "name": "Vlad Van Mechelen",
+          "countryCode": "BE",
+          "ranking": 65
+        },
+        {
+          "key": "uci-worldtour-louis-vervaeke",
+          "name": "Louis Vervaeke",
+          "countryCode": "BE",
+          "ranking": 66
+        },
+        {
+          "key": "uci-worldtour-george-bennett",
+          "name": "George Bennett",
+          "countryCode": "NZ",
+          "ranking": 67
+        },
+        {
+          "key": "uci-worldtour-clement-russo",
+          "name": "Clément Russo",
+          "countryCode": "FR",
+          "ranking": 68
+        },
+        {
+          "key": "uci-worldtour-felix-engelhardt",
+          "name": "Felix Engelhardt",
+          "countryCode": "DE",
+          "ranking": 69
+        },
+        {
+          "key": "uci-worldtour-davide-piganzoli",
+          "name": "Davide Piganzoli",
+          "countryCode": "IT",
+          "ranking": 70
+        },
+        {
+          "key": "uci-worldtour-mads-pedersen",
+          "name": "Mads Pedersen",
+          "countryCode": "DK",
+          "ranking": 71
+        },
+        {
+          "key": "uci-worldtour-nils-politt",
+          "name": "Nils Politt",
+          "countryCode": "DE",
+          "ranking": 72
+        },
+        {
+          "key": "uci-worldtour-rick-pluimers",
+          "name": "Rick Pluimers",
+          "countryCode": "NL",
+          "ranking": 73
+        },
+        {
+          "key": "uci-worldtour-tim-wellens",
+          "name": "Tim Wellens",
+          "countryCode": "BE",
+          "ranking": 74
+        },
+        {
+          "key": "uci-worldtour-mathis-le-berre",
+          "name": "Mathis Le Berre",
+          "countryCode": "FR",
+          "ranking": 75
+        },
+        {
+          "key": "uci-worldtour-jonas-abrahamsen",
+          "name": "Jonas Abrahamsen",
+          "countryCode": "NO",
+          "ranking": 76
+        },
+        {
+          "key": "uci-worldtour-marco-frigo",
+          "name": "Marco Frigo",
+          "countryCode": "IT",
+          "ranking": 77
+        },
+        {
+          "key": "uci-worldtour-corbin-strong",
+          "name": "Corbin Strong",
+          "countryCode": "NZ",
+          "ranking": 78
+        },
+        {
+          "key": "uci-worldtour-ewen-costiou",
+          "name": "Ewen Costiou",
+          "countryCode": "FR",
+          "ranking": 79
+        },
+        {
+          "key": "uci-worldtour-brent-van-moer",
+          "name": "Brent Van Moer",
+          "countryCode": "BE",
+          "ranking": 80
+        },
+        {
+          "key": "uci-worldtour-victor-campenaerts",
+          "name": "Victor Campenaerts",
+          "countryCode": "BE",
+          "ranking": 81
+        },
+        {
+          "key": "uci-worldtour-jan-tratnik",
+          "name": "Jan Tratnik",
+          "countryCode": "SI",
+          "ranking": 82
+        },
+        {
+          "key": "uci-worldtour-kasper-asgreen",
+          "name": "Kasper Asgreen",
+          "countryCode": "DK",
+          "ranking": 83
+        },
+        {
+          "key": "uci-worldtour-alex-aranburu",
+          "name": "Alex Aranburu",
+          "countryCode": "ES",
+          "ranking": 84
+        },
+        {
+          "key": "uci-worldtour-matteo-vercher",
+          "name": "Mattéo Vercher",
+          "countryCode": "FR",
+          "ranking": 85
+        },
+        {
+          "key": "uci-worldtour-michael-storer",
+          "name": "Michael Storer",
+          "countryCode": "AU",
+          "ranking": 86
+        },
+        {
+          "key": "uci-worldtour-warren-barguil",
+          "name": "Warren Barguil",
+          "countryCode": "FR",
+          "ranking": 87
+        },
+        {
+          "key": "uci-worldtour-damien-howson",
+          "name": "Damien Howson",
+          "countryCode": "AU",
+          "ranking": 88
+        },
+        {
+          "key": "uci-worldtour-egan-bernal",
+          "name": "Egan Bernal",
+          "countryCode": "CO",
+          "ranking": 89
+        },
+        {
+          "key": "uci-worldtour-sebastian-berwick",
+          "name": "Sebastian Berwick",
+          "countryCode": "AU",
+          "ranking": 90
+        },
+        {
+          "key": "uci-worldtour-georg-zimmermann",
+          "name": "Georg Zimmermann",
+          "countryCode": "DE",
+          "ranking": 91
+        },
+        {
+          "key": "uci-worldtour-jasper-stuyven",
+          "name": "Jasper Stuyven",
+          "countryCode": "BE",
+          "ranking": 92
+        },
+        {
+          "key": "uci-worldtour-luke-plapp",
+          "name": "Luke Plapp",
+          "countryCode": "AU",
+          "ranking": 93
+        },
+        {
+          "key": "uci-worldtour-matej-mohoric",
+          "name": "Matej Mohorič",
+          "countryCode": "SI",
+          "ranking": 94
+        },
+        {
+          "key": "uci-worldtour-lorenzo-germani",
+          "name": "Lorenzo Germani",
+          "countryCode": "IT",
+          "ranking": 95
+        },
+        {
+          "key": "uci-worldtour-toms-skujins",
+          "name": "Toms Skujiņš",
+          "countryCode": "LV",
+          "ranking": 96
+        },
+        {
+          "key": "uci-worldtour-afonso-eulalio",
+          "name": "Afonso Eulálio",
+          "countryCode": "PT",
+          "ranking": 97
+        },
+        {
+          "key": "uci-worldtour-andrea-vendrame",
+          "name": "Andrea Vendrame",
+          "countryCode": "IT",
+          "ranking": 98
+        },
+        {
+          "key": "uci-worldtour-nico-denz",
+          "name": "Nico Denz",
+          "countryCode": "DE",
+          "ranking": 99
+        },
+        {
+          "key": "uci-worldtour-emiel-verstrynge",
+          "name": "Emiel Verstrynge",
+          "countryCode": "BE",
+          "ranking": 100
+        },
+        {
+          "key": "uci-worldtour-magnus-cort",
+          "name": "Magnus Cort",
+          "countryCode": "DK",
+          "ranking": 101
+        },
+        {
+          "key": "uci-worldtour-nicolas-vinokurov",
+          "name": "Nicolas Vinokurov",
+          "countryCode": "KZ",
+          "ranking": 102
+        },
+        {
+          "key": "uci-worldtour-damiano-caruso",
+          "name": "Damiano Caruso",
+          "countryCode": "IT",
+          "ranking": 103
+        },
+        {
+          "key": "uci-worldtour-xabier-azparren",
+          "name": "Xabier Azparren",
+          "countryCode": "ES",
+          "ranking": 104
+        },
+        {
+          "key": "uci-worldtour-simone-velasco",
+          "name": "Simone Velasco",
+          "countryCode": "IT",
+          "ranking": 105
+        },
+        {
+          "key": "uci-worldtour-mathieu-van-der-poel",
+          "name": "Mathieu van der Poel",
+          "countryCode": "NL",
+          "ranking": 106
+        },
+        {
+          "key": "uci-worldtour-jefferson-alveiro-cepeda",
+          "name": "Jefferson Alveiro Cepeda",
+          "countryCode": "EC",
+          "ranking": 107
+        },
+        {
+          "key": "uci-worldtour-frank-van-den-broek",
+          "name": "Frank van den Broek",
+          "countryCode": "NL",
+          "ranking": 108
+        },
+        {
+          "key": "uci-worldtour-per-strand-hagenes",
+          "name": "Per Strand Hagenes",
+          "countryCode": "NO",
+          "ranking": 109
+        },
+        {
+          "key": "uci-worldtour-michel-hessmann",
+          "name": "Michel Hessmann",
+          "countryCode": "DE",
+          "ranking": 110
+        },
+        {
+          "key": "uci-worldtour-robert-stannard",
+          "name": "Robert Stannard",
+          "countryCode": "AU",
+          "ranking": 111
+        },
+        {
+          "key": "uci-worldtour-max-walker",
+          "name": "Max Walker",
+          "countryCode": "GB",
+          "ranking": 112
+        },
+        {
+          "key": "uci-worldtour-luke-durbridge",
+          "name": "Luke Durbridge",
+          "countryCode": "AU",
+          "ranking": 113
+        },
+        {
+          "key": "uci-worldtour-anthony-turgis",
+          "name": "Anthony Turgis",
+          "countryCode": "FR",
+          "ranking": 114
+        },
+        {
+          "key": "uci-worldtour-thibault-guernalec",
+          "name": "Thibault Guernalec",
+          "countryCode": "FR",
+          "ranking": 115
+        },
+        {
+          "key": "uci-worldtour-micha-kwiatkowski",
+          "name": "Michał Kwiatkowski",
+          "countryCode": "PL",
+          "ranking": 116
+        },
+        {
+          "key": "uci-worldtour-tim-van-dijke",
+          "name": "Tim van Dijke",
+          "countryCode": "NL",
+          "ranking": 117
+        },
+        {
+          "key": "uci-worldtour-jakub-otruba",
+          "name": "Jakub Otruba",
+          "countryCode": "CZ",
+          "ranking": 118
+        },
+        {
+          "key": "uci-worldtour-georg-steinhauser",
+          "name": "Georg Steinhauser",
+          "countryCode": "DE",
+          "ranking": 119
+        },
+        {
+          "key": "uci-worldtour-edward-planckaert",
+          "name": "Edward Planckaert",
+          "countryCode": "BE",
+          "ranking": 120
+        },
+        {
+          "key": "uci-worldtour-jonas-rickaert",
+          "name": "Jonas Rickaert",
+          "countryCode": "BE",
+          "ranking": 121
+        },
+        {
+          "key": "uci-worldtour-florian-vermeersch",
+          "name": "Florian Vermeersch",
+          "countryCode": "BE",
+          "ranking": 122
+        },
+        {
+          "key": "uci-worldtour-benjamin-thomas",
+          "name": "Benjamin Thomas",
+          "countryCode": "FR",
+          "ranking": 123
+        },
+        {
+          "key": "uci-worldtour-robbe-dhondt",
+          "name": "Robbe Dhondt",
+          "countryCode": "BE",
+          "ranking": 124
+        },
+        {
+          "key": "uci-worldtour-hugo-page",
+          "name": "Hugo Page",
+          "countryCode": "FR",
+          "ranking": 125
+        },
+        {
+          "key": "uci-worldtour-josh-tarling",
+          "name": "Josh Tarling",
+          "countryCode": "GB",
+          "ranking": 126
+        },
+        {
+          "key": "uci-worldtour-aaron-gate",
+          "name": "Aaron Gate",
+          "countryCode": "NZ",
+          "ranking": 127
+        },
+        {
+          "key": "uci-worldtour-alex-kirsch",
+          "name": "Alex Kirsch",
+          "countryCode": "LU",
+          "ranking": 128
+        },
+        {
+          "key": "uci-worldtour-filippo-ganna",
+          "name": "Filippo Ganna",
+          "countryCode": "IT",
+          "ranking": 129
+        },
+        {
+          "key": "uci-worldtour-mike-teunissen",
+          "name": "Mike Teunissen",
+          "countryCode": "NL",
+          "ranking": 130
+        },
+        {
+          "key": "uci-worldtour-julian-alaphilippe",
+          "name": "Julian Alaphilippe",
+          "countryCode": "FR",
+          "ranking": 131
+        },
+        {
+          "key": "uci-worldtour-stefano-oldani",
+          "name": "Stefano Oldani",
+          "countryCode": "IT",
+          "ranking": 132
+        },
+        {
+          "key": "uci-worldtour-fred-wright",
+          "name": "Fred Wright",
+          "countryCode": "GB",
+          "ranking": 133
+        },
+        {
+          "key": "uci-worldtour-liam-slock",
+          "name": "Liam Slock",
+          "countryCode": "BE",
+          "ranking": 134
+        },
+        {
+          "key": "uci-worldtour-joel-nicolau",
+          "name": "Joel Nicolau",
+          "countryCode": "ES",
+          "ranking": 135
+        },
+        {
+          "key": "uci-worldtour-daan-hoole",
+          "name": "Daan Hoole",
+          "countryCode": "NL",
+          "ranking": 136
+        },
+        {
+          "key": "uci-worldtour-dylan-van-baarle",
+          "name": "Dylan van Baarle",
+          "countryCode": "NL",
+          "ranking": 137
+        },
+        {
+          "key": "uci-worldtour-huub-artz",
+          "name": "Huub Artz",
+          "countryCode": "NL",
+          "ranking": 138
+        },
+        {
+          "key": "uci-worldtour-tim-marsman",
+          "name": "Tim Marsman",
+          "countryCode": "NL",
+          "ranking": 139
+        },
+        {
+          "key": "uci-worldtour-krists-neilands",
+          "name": "Krists Neilands",
+          "countryCode": "LV",
+          "ranking": 140
+        },
+        {
+          "key": "uci-worldtour-jasper-philipsen",
+          "name": "Jasper Philipsen",
+          "countryCode": "BE",
+          "ranking": 141
+        },
+        {
+          "key": "uci-worldtour-dorian-godon",
+          "name": "Dorian Godon",
+          "countryCode": "FR",
+          "ranking": 142
+        },
+        {
+          "key": "uci-worldtour-silvan-dillier",
+          "name": "Silvan Dillier",
+          "countryCode": "CH",
+          "ranking": 143
+        },
+        {
+          "key": "uci-worldtour-sren-wrenskjold",
+          "name": "Søren Wærenskjold",
+          "countryCode": "NO",
+          "ranking": 144
+        },
+        {
+          "key": "uci-worldtour-niklas-markl",
+          "name": "Niklas Märkl",
+          "countryCode": "DE",
+          "ranking": 145
+        },
+        {
+          "key": "uci-worldtour-pavel-bittner",
+          "name": "Pavel Bittner",
+          "countryCode": "CZ",
+          "ranking": 146
+        },
+        {
+          "key": "uci-worldtour-biniam-girmay",
+          "name": "Biniam Girmay",
+          "countryCode": "ER",
+          "ranking": 147
+        },
+        {
+          "key": "uci-worldtour-max-kanter",
+          "name": "Max Kanter",
+          "countryCode": "DE",
+          "ranking": 148
+        },
+        {
+          "key": "uci-worldtour-matteo-trentin",
+          "name": "Matteo Trentin",
+          "countryCode": "IT",
+          "ranking": 149
+        },
+        {
+          "key": "uci-worldtour-pascal-eenkhoorn",
+          "name": "Pascal Eenkhoorn",
+          "countryCode": "NL",
+          "ranking": 150
+        },
+        {
+          "key": "uci-worldtour-jenthe-biermans",
+          "name": "Jenthe Biermans",
+          "countryCode": "BE",
+          "ranking": 151
+        },
+        {
+          "key": "uci-worldtour-john-degenkolb",
+          "name": "John Degenkolb",
+          "countryCode": "DE",
+          "ranking": 152
+        },
+        {
+          "key": "uci-worldtour-baptiste-veistroffer",
+          "name": "Baptiste Veistroffer",
+          "countryCode": "FR",
+          "ranking": 153
+        },
+        {
+          "key": "uci-worldtour-marco-haller",
+          "name": "Marco Haller",
+          "countryCode": "AT",
+          "ranking": 154
+        },
+        {
+          "key": "uci-worldtour-milan-fretin",
+          "name": "Milan Fretin",
+          "countryCode": "BE",
+          "ranking": 155
+        },
+        {
+          "key": "uci-worldtour-olav-kooij",
+          "name": "Olav Kooij",
+          "countryCode": "NL",
+          "ranking": 156
+        },
+        {
+          "key": "uci-worldtour-jake-stewart",
+          "name": "Jake Stewart",
+          "countryCode": "GB",
+          "ranking": 157
+        },
+        {
+          "key": "uci-worldtour-lewis-askey",
+          "name": "Lewis Askey",
+          "countryCode": "GB",
+          "ranking": 158
+        },
+        {
+          "key": "uci-worldtour-davide-ballerini",
+          "name": "Davide Ballerini",
+          "countryCode": "IT",
+          "ranking": 159
+        },
+        {
+          "key": "uci-worldtour-piet-allegaert",
+          "name": "Piet Allegaert",
+          "countryCode": "BE",
+          "ranking": 160
+        },
+        {
+          "key": "uci-worldtour-phil-bauhaus",
+          "name": "Phil Bauhaus",
+          "countryCode": "DE",
+          "ranking": 161
+        },
+        {
+          "key": "uci-worldtour-kamil-gradek",
+          "name": "Kamil Gradek",
+          "countryCode": "PL",
+          "ranking": 162
+        },
+        {
+          "key": "uci-worldtour-julius-van-den-berg",
+          "name": "Julius van den Berg",
+          "countryCode": "NL",
+          "ranking": 163
+        },
+        {
+          "key": "uci-worldtour-matis-louvel",
+          "name": "Matis Louvel",
+          "countryCode": "FR",
+          "ranking": 164
+        },
+        {
+          "key": "uci-worldtour-cees-bol",
+          "name": "Cees Bol",
+          "countryCode": "NL",
+          "ranking": 165
+        },
+        {
+          "key": "uci-worldtour-edoardo-zambanini",
+          "name": "Edoardo Zambanini",
+          "countryCode": "IT",
+          "ranking": 166
+        }
+      ],
+      "events": [
+        {
+          "key": "milano-sanremo",
+          "name": "Milano-Sanremo",
+          "startDate": "2026-03-21",
+          "endDate": "2026-03-21",
+          "venue": null,
+          "location": "Sanremo, Italy",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "uci-worldtour-tadej-pogacar",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "uci-worldtour-tom-pidcock",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "uci-worldtour-wout-van-aert",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "uci-worldtour-mads-pedersen",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "uci-worldtour-corbin-strong",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "uci-worldtour-andrea-vendrame",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "uci-worldtour-jasper-stuyven",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "uci-worldtour-mathieu-van-der-poel",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "uci-worldtour-matteo-trentin",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "uci-worldtour-edoardo-zambanini",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "giro-d-italia",
+          "name": "Giro d'Italia",
+          "startDate": "2026-05-08",
+          "endDate": "2026-05-31",
+          "venue": null,
+          "location": null,
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "uci-worldtour-jonas-vingegaard",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "uci-worldtour-felix-gall",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "uci-worldtour-jai-hindley",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "uci-worldtour-thymen-arensman",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "uci-worldtour-derek-gee-west",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "uci-worldtour-afonso-eulalio",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "uci-worldtour-michael-storer",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "uci-worldtour-davide-piganzoli",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "uci-worldtour-damiano-caruso",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "uci-worldtour-egan-bernal",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "tour-de-france",
+          "name": "Tour de France",
+          "startDate": "2026-07-04",
+          "endDate": "2026-07-26",
+          "venue": null,
+          "location": null,
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "uci-worldtour-tadej-pogacar",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "uci-worldtour-remco-evenepoel",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "uci-worldtour-isaac-del-toro",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "uci-worldtour-paul-seixas",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "uci-worldtour-lenny-martinez",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "uci-worldtour-mattias-skjelmose",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "uci-worldtour-juan-ayuso",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "uci-worldtour-richard-carapaz",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "uci-worldtour-tom-pidcock",
+              "ranking": 17,
+              "oddsToWin": 218.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "uci-worldtour-jordan-jegat",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            },
+            {
+              "player": "uci-worldtour-yannis-voisard",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 11
+              }
+            },
+            {
+              "player": "uci-worldtour-tobias-halland-johannessen",
+              "ranking": 11,
+              "oddsToWin": 92.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 12
+              }
+            },
+            {
+              "player": "uci-worldtour-sepp-kuss",
+              "ranking": 12,
+              "oddsToWin": 109.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 13
+              }
+            },
+            {
+              "player": "uci-worldtour-davide-piganzoli",
+              "ranking": 67,
+              "oddsToWin": 3368.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 14
+              }
+            },
+            {
+              "player": "uci-worldtour-jai-hindley",
+              "ranking": 27,
+              "oddsToWin": 548.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 15
+              }
+            },
+            {
+              "player": "uci-worldtour-nicolas-prodhomme",
+              "ranking": 13,
+              "oddsToWin": 128.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 16
+              }
+            },
+            {
+              "player": "uci-worldtour-tiesj-benoot",
+              "ranking": 14,
+              "oddsToWin": 148.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 17
+              }
+            },
+            {
+              "player": "uci-worldtour-quinn-simmons",
+              "ranking": 15,
+              "oddsToWin": 170.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 18
+              }
+            },
+            {
+              "player": "uci-worldtour-sean-quinn",
+              "ranking": 16,
+              "oddsToWin": 193.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 19
+              }
+            },
+            {
+              "player": "uci-worldtour-egan-bernal",
+              "ranking": 85,
+              "oddsToWin": 5420.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 20
+              }
+            },
+            {
+              "player": "uci-worldtour-adam-yates",
+              "ranking": 18,
+              "oddsToWin": 244.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 21
+              }
+            },
+            {
+              "player": "uci-worldtour-thymen-arensman",
+              "ranking": 39,
+              "oddsToWin": 1142.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 22
+              }
+            },
+            {
+              "player": "uci-worldtour-carlos-verona",
+              "ranking": 19,
+              "oddsToWin": 272.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 23
+              }
+            },
+            {
+              "player": "uci-worldtour-matthew-riccitello",
+              "ranking": 20,
+              "oddsToWin": 301.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 24
+              }
+            },
+            {
+              "player": "uci-worldtour-derek-gee-west",
+              "ranking": 49,
+              "oddsToWin": 1802.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 25
+              }
+            },
+            {
+              "player": "uci-worldtour-harold-tejada",
+              "ranking": 21,
+              "oddsToWin": 332.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 26
+              }
+            },
+            {
+              "player": "uci-worldtour-maxim-van-gils",
+              "ranking": 22,
+              "oddsToWin": 364.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 27
+              }
+            },
+            {
+              "player": "uci-worldtour-ben-o-connor",
+              "ranking": 23,
+              "oddsToWin": 398.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 28
+              }
+            },
+            {
+              "player": "uci-worldtour-pablo-castrillo",
+              "ranking": 24,
+              "oddsToWin": 433.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 29
+              }
+            },
+            {
+              "player": "uci-worldtour-matteo-jorgenson",
+              "ranking": 25,
+              "oddsToWin": 470.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 30
+              }
+            },
+            {
+              "player": "uci-worldtour-guillaume-martin",
+              "ranking": 26,
+              "oddsToWin": 508.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 31
+              }
+            },
+            {
+              "player": "uci-worldtour-felix-groschartner",
+              "ranking": 28,
+              "oddsToWin": 589.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 32
+              }
+            },
+            {
+              "player": "uci-worldtour-mattia-cattaneo",
+              "ranking": 29,
+              "oddsToWin": 632.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 33
+              }
+            },
+            {
+              "player": "uci-worldtour-raul-garcia-pierna",
+              "ranking": 30,
+              "oddsToWin": 676.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 34
+              }
+            },
+            {
+              "player": "uci-worldtour-mauro-schmid",
+              "ranking": 31,
+              "oddsToWin": 722.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 35
+              }
+            },
+            {
+              "player": "uci-worldtour-kevin-vauquelin",
+              "ranking": 32,
+              "oddsToWin": 769.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 36
+              }
+            },
+            {
+              "player": "uci-worldtour-antonio-tiberi",
+              "ranking": 33,
+              "oddsToWin": 818.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 37
+              }
+            },
+            {
+              "player": "uci-worldtour-sergio-higuita",
+              "ranking": 34,
+              "oddsToWin": 868.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 38
+              }
+            },
+            {
+              "player": "uci-worldtour-quinten-hermans",
+              "ranking": 35,
+              "oddsToWin": 920.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 39
+              }
+            },
+            {
+              "player": "uci-worldtour-clement-braz-afonso",
+              "ranking": 36,
+              "oddsToWin": 973.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 40
+              }
+            },
+            {
+              "player": "uci-worldtour-lennert-van-eetvelt",
+              "ranking": 37,
+              "oddsToWin": 1028.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 41
+              }
+            },
+            {
+              "player": "uci-worldtour-aurelien-paret-peintre",
+              "ranking": 38,
+              "oddsToWin": 1084.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 42
+              }
+            },
+            {
+              "player": "uci-worldtour-tobias-foss",
+              "ranking": 40,
+              "oddsToWin": 1201.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 43
+              }
+            },
+            {
+              "player": "uci-worldtour-valentin-paret-peintre",
+              "ranking": 41,
+              "oddsToWin": 1262.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 44
+              }
+            },
+            {
+              "player": "uci-worldtour-ion-izagirre",
+              "ranking": 42,
+              "oddsToWin": 1324.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 45
+              }
+            },
+            {
+              "player": "uci-worldtour-alex-baudin",
+              "ranking": 43,
+              "oddsToWin": 1388.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 46
+              }
+            },
+            {
+              "player": "uci-worldtour-abel-balderstone",
+              "ranking": 44,
+              "oddsToWin": 1453.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 47
+              }
+            },
+            {
+              "player": "uci-worldtour-marc-hirschi",
+              "ranking": 45,
+              "oddsToWin": 1520.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 48
+              }
+            },
+            {
+              "player": "uci-worldtour-mathias-vacek",
+              "ranking": 46,
+              "oddsToWin": 1588.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 49
+              }
+            },
+            {
+              "player": "uci-worldtour-nicolas-breuillard",
+              "ranking": 47,
+              "oddsToWin": 1658.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 50
+              }
+            },
+            {
+              "player": "uci-worldtour-joris-delbove",
+              "ranking": 48,
+              "oddsToWin": 1729.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 51
+              }
+            },
+            {
+              "player": "uci-worldtour-michael-matthews",
+              "ranking": 50,
+              "oddsToWin": 1876.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 52
+              }
+            },
+            {
+              "player": "uci-worldtour-michael-valgren",
+              "ranking": 51,
+              "oddsToWin": 1952.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 53
+              }
+            },
+            {
+              "player": "uci-worldtour-javier-romo",
+              "ranking": 52,
+              "oddsToWin": 2029.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 54
+              }
+            },
+            {
+              "player": "uci-worldtour-damiano-caruso",
+              "ranking": 97,
+              "oddsToWin": 7058.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 55
+              }
+            },
+            {
+              "player": "uci-worldtour-xandro-meurisse",
+              "ranking": 53,
+              "oddsToWin": 2108.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 56
+              }
+            },
+            {
+              "player": "uci-worldtour-romain-gregoire",
+              "ranking": 54,
+              "oddsToWin": 2188.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 57
+              }
+            },
+            {
+              "player": "uci-worldtour-quentin-pacher",
+              "ranking": 55,
+              "oddsToWin": 2270.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 58
+              }
+            },
+            {
+              "player": "uci-worldtour-ben-healy",
+              "ranking": 56,
+              "oddsToWin": 2353.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 59
+              }
+            },
+            {
+              "player": "uci-worldtour-anders-skaarseth",
+              "ranking": 57,
+              "oddsToWin": 2438.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 60
+              }
+            },
+            {
+              "player": "uci-worldtour-alexandre-delettre",
+              "ranking": 58,
+              "oddsToWin": 2524.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 61
+              }
+            },
+            {
+              "player": "uci-worldtour-bruno-armirail",
+              "ranking": 59,
+              "oddsToWin": 2612.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 62
+              }
+            },
+            {
+              "player": "uci-worldtour-michael-storer",
+              "ranking": 82,
+              "oddsToWin": 5044.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 63
+              }
+            },
+            {
+              "player": "uci-worldtour-anders-halland-johannessen",
+              "ranking": 60,
+              "oddsToWin": 2701.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 64
+              }
+            },
+            {
+              "player": "uci-worldtour-nelson-oliveira",
+              "ranking": 61,
+              "oddsToWin": 2792.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 65
+              }
+            },
+            {
+              "player": "uci-worldtour-vlad-van-mechelen",
+              "ranking": 62,
+              "oddsToWin": 2884.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 66
+              }
+            },
+            {
+              "player": "uci-worldtour-louis-vervaeke",
+              "ranking": 63,
+              "oddsToWin": 2978.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 67
+              }
+            },
+            {
+              "player": "uci-worldtour-george-bennett",
+              "ranking": 64,
+              "oddsToWin": 3073.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 68
+              }
+            },
+            {
+              "player": "uci-worldtour-clement-russo",
+              "ranking": 65,
+              "oddsToWin": 3170.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 69
+              }
+            },
+            {
+              "player": "uci-worldtour-felix-engelhardt",
+              "ranking": 66,
+              "oddsToWin": 3268.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 70
+              }
+            },
+            {
+              "player": "uci-worldtour-jasper-stuyven",
+              "ranking": 88,
+              "oddsToWin": 5809.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 71
+              }
+            },
+            {
+              "player": "uci-worldtour-nils-politt",
+              "ranking": 69,
+              "oddsToWin": 3572.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 72
+              }
+            },
+            {
+              "player": "uci-worldtour-rick-pluimers",
+              "ranking": 70,
+              "oddsToWin": 3676.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 73
+              }
+            },
+            {
+              "player": "uci-worldtour-tim-wellens",
+              "ranking": 71,
+              "oddsToWin": 3782.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 74
+              }
+            },
+            {
+              "player": "uci-worldtour-mathieu-van-der-poel",
+              "ranking": 100,
+              "oddsToWin": 7501.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 75
+              }
+            },
+            {
+              "player": "uci-worldtour-mathis-le-berre",
+              "ranking": 72,
+              "oddsToWin": 3889.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 76
+              }
+            },
+            {
+              "player": "uci-worldtour-jonas-abrahamsen",
+              "ranking": 73,
+              "oddsToWin": 3998.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 77
+              }
+            },
+            {
+              "player": "uci-worldtour-marco-frigo",
+              "ranking": 74,
+              "oddsToWin": 4108.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 78
+              }
+            },
+            {
+              "player": "uci-worldtour-ewen-costiou",
+              "ranking": 75,
+              "oddsToWin": 4220.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 79
+              }
+            },
+            {
+              "player": "uci-worldtour-mads-pedersen",
+              "ranking": 68,
+              "oddsToWin": 3469.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 80
+              }
+            },
+            {
+              "player": "uci-worldtour-brent-van-moer",
+              "ranking": 76,
+              "oddsToWin": 4333.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 81
+              }
+            },
+            {
+              "player": "uci-worldtour-victor-campenaerts",
+              "ranking": 77,
+              "oddsToWin": 4448.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 82
+              }
+            },
+            {
+              "player": "uci-worldtour-jan-tratnik",
+              "ranking": 78,
+              "oddsToWin": 4564.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 83
+              }
+            },
+            {
+              "player": "uci-worldtour-kasper-asgreen",
+              "ranking": 79,
+              "oddsToWin": 4682.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 84
+              }
+            },
+            {
+              "player": "uci-worldtour-alex-aranburu",
+              "ranking": 80,
+              "oddsToWin": 4801.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 85
+              }
+            },
+            {
+              "player": "uci-worldtour-matteo-vercher",
+              "ranking": 81,
+              "oddsToWin": 4922.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 86
+              }
+            },
+            {
+              "player": "uci-worldtour-warren-barguil",
+              "ranking": 83,
+              "oddsToWin": 5168.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 87
+              }
+            },
+            {
+              "player": "uci-worldtour-damien-howson",
+              "ranking": 84,
+              "oddsToWin": 5293.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 88
+              }
+            },
+            {
+              "player": "uci-worldtour-sebastian-berwick",
+              "ranking": 86,
+              "oddsToWin": 5548.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 89
+              }
+            },
+            {
+              "player": "uci-worldtour-georg-zimmermann",
+              "ranking": 87,
+              "oddsToWin": 5678.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 90
+              }
+            },
+            {
+              "player": "uci-worldtour-luke-plapp",
+              "ranking": 89,
+              "oddsToWin": 5942.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 91
+              }
+            },
+            {
+              "player": "uci-worldtour-matej-mohoric",
+              "ranking": 90,
+              "oddsToWin": 6076.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 92
+              }
+            },
+            {
+              "player": "uci-worldtour-lorenzo-germani",
+              "ranking": 91,
+              "oddsToWin": 6212.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 93
+              }
+            },
+            {
+              "player": "uci-worldtour-toms-skujins",
+              "ranking": 92,
+              "oddsToWin": 6349.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 94
+              }
+            },
+            {
+              "player": "uci-worldtour-nico-denz",
+              "ranking": 93,
+              "oddsToWin": 6488.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 95
+              }
+            },
+            {
+              "player": "uci-worldtour-emiel-verstrynge",
+              "ranking": 94,
+              "oddsToWin": 6628.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 96
+              }
+            },
+            {
+              "player": "uci-worldtour-magnus-cort",
+              "ranking": 95,
+              "oddsToWin": 6770.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 97
+              }
+            },
+            {
+              "player": "uci-worldtour-nicolas-vinokurov",
+              "ranking": 96,
+              "oddsToWin": 6913.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 98
+              }
+            },
+            {
+              "player": "uci-worldtour-xabier-azparren",
+              "ranking": 98,
+              "oddsToWin": 7204.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 99
+              }
+            },
+            {
+              "player": "uci-worldtour-simone-velasco",
+              "ranking": 99,
+              "oddsToWin": 7352.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 100
+              }
+            },
+            {
+              "player": "uci-worldtour-jefferson-alveiro-cepeda",
+              "ranking": 101,
+              "oddsToWin": 7652.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 101
+              }
+            },
+            {
+              "player": "uci-worldtour-frank-van-den-broek",
+              "ranking": 102,
+              "oddsToWin": 7804.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 102
+              }
+            },
+            {
+              "player": "uci-worldtour-per-strand-hagenes",
+              "ranking": 103,
+              "oddsToWin": 7958.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 103
+              }
+            },
+            {
+              "player": "uci-worldtour-michel-hessmann",
+              "ranking": 104,
+              "oddsToWin": 8113.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 104
+              }
+            },
+            {
+              "player": "uci-worldtour-robert-stannard",
+              "ranking": 105,
+              "oddsToWin": 8270.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 105
+              }
+            },
+            {
+              "player": "uci-worldtour-max-walker",
+              "ranking": 106,
+              "oddsToWin": 8428.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 106
+              }
+            },
+            {
+              "player": "uci-worldtour-luke-durbridge",
+              "ranking": 107,
+              "oddsToWin": 8588.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 107
+              }
+            },
+            {
+              "player": "uci-worldtour-anthony-turgis",
+              "ranking": 108,
+              "oddsToWin": 8749.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 108
+              }
+            },
+            {
+              "player": "uci-worldtour-thibault-guernalec",
+              "ranking": 109,
+              "oddsToWin": 8912.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 109
+              }
+            },
+            {
+              "player": "uci-worldtour-micha-kwiatkowski",
+              "ranking": 110,
+              "oddsToWin": 9076.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 110
+              }
+            },
+            {
+              "player": "uci-worldtour-tim-van-dijke",
+              "ranking": 111,
+              "oddsToWin": 9242.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 111
+              }
+            },
+            {
+              "player": "uci-worldtour-jakub-otruba",
+              "ranking": 112,
+              "oddsToWin": 9409.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 112
+              }
+            },
+            {
+              "player": "uci-worldtour-georg-steinhauser",
+              "ranking": 113,
+              "oddsToWin": 9578.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 113
+              }
+            },
+            {
+              "player": "uci-worldtour-edward-planckaert",
+              "ranking": 114,
+              "oddsToWin": 9748.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 114
+              }
+            },
+            {
+              "player": "uci-worldtour-jonas-rickaert",
+              "ranking": 115,
+              "oddsToWin": 9920.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 115
+              }
+            },
+            {
+              "player": "uci-worldtour-florian-vermeersch",
+              "ranking": 116,
+              "oddsToWin": 10093.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 116
+              }
+            },
+            {
+              "player": "uci-worldtour-benjamin-thomas",
+              "ranking": 117,
+              "oddsToWin": 10268.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 117
+              }
+            },
+            {
+              "player": "uci-worldtour-robbe-dhondt",
+              "ranking": 118,
+              "oddsToWin": 10444.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 118
+              }
+            },
+            {
+              "player": "uci-worldtour-hugo-page",
+              "ranking": 119,
+              "oddsToWin": 10622.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 119
+              }
+            },
+            {
+              "player": "uci-worldtour-josh-tarling",
+              "ranking": 120,
+              "oddsToWin": 10801.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 120
+              }
+            },
+            {
+              "player": "uci-worldtour-aaron-gate",
+              "ranking": 121,
+              "oddsToWin": 10982.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 121
+              }
+            },
+            {
+              "player": "uci-worldtour-alex-kirsch",
+              "ranking": 122,
+              "oddsToWin": 11164.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 122
+              }
+            },
+            {
+              "player": "uci-worldtour-filippo-ganna",
+              "ranking": 123,
+              "oddsToWin": 11348.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 123
+              }
+            },
+            {
+              "player": "uci-worldtour-mike-teunissen",
+              "ranking": 124,
+              "oddsToWin": 11533.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 124
+              }
+            },
+            {
+              "player": "uci-worldtour-julian-alaphilippe",
+              "ranking": 125,
+              "oddsToWin": 11720.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 125
+              }
+            },
+            {
+              "player": "uci-worldtour-stefano-oldani",
+              "ranking": 126,
+              "oddsToWin": 11908.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 126
+              }
+            },
+            {
+              "player": "uci-worldtour-fred-wright",
+              "ranking": 127,
+              "oddsToWin": 12098.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 127
+              }
+            },
+            {
+              "player": "uci-worldtour-liam-slock",
+              "ranking": 128,
+              "oddsToWin": 12289.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 128
+              }
+            },
+            {
+              "player": "uci-worldtour-joel-nicolau",
+              "ranking": 129,
+              "oddsToWin": 12482.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 129
+              }
+            },
+            {
+              "player": "uci-worldtour-daan-hoole",
+              "ranking": 130,
+              "oddsToWin": 12676.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 130
+              }
+            },
+            {
+              "player": "uci-worldtour-dylan-van-baarle",
+              "ranking": 131,
+              "oddsToWin": 12872.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 131
+              }
+            },
+            {
+              "player": "uci-worldtour-huub-artz",
+              "ranking": 132,
+              "oddsToWin": 13069.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 132
+              }
+            },
+            {
+              "player": "uci-worldtour-tim-marsman",
+              "ranking": 133,
+              "oddsToWin": 13268.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 133
+              }
+            },
+            {
+              "player": "uci-worldtour-krists-neilands",
+              "ranking": 134,
+              "oddsToWin": 13468.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 134
+              }
+            },
+            {
+              "player": "uci-worldtour-jasper-philipsen",
+              "ranking": 135,
+              "oddsToWin": 13670.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 135
+              }
+            },
+            {
+              "player": "uci-worldtour-dorian-godon",
+              "ranking": 136,
+              "oddsToWin": 13873.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 136
+              }
+            },
+            {
+              "player": "uci-worldtour-silvan-dillier",
+              "ranking": 137,
+              "oddsToWin": 14078.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 137
+              }
+            },
+            {
+              "player": "uci-worldtour-sren-wrenskjold",
+              "ranking": 138,
+              "oddsToWin": 14284.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 138
+              }
+            },
+            {
+              "player": "uci-worldtour-niklas-markl",
+              "ranking": 139,
+              "oddsToWin": 14492.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 139
+              }
+            },
+            {
+              "player": "uci-worldtour-pavel-bittner",
+              "ranking": 140,
+              "oddsToWin": 14701.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 140
+              }
+            },
+            {
+              "player": "uci-worldtour-biniam-girmay",
+              "ranking": 141,
+              "oddsToWin": 14912.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 141
+              }
+            },
+            {
+              "player": "uci-worldtour-max-kanter",
+              "ranking": 142,
+              "oddsToWin": 15124.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 142
+              }
+            },
+            {
+              "player": "uci-worldtour-pascal-eenkhoorn",
+              "ranking": 143,
+              "oddsToWin": 15338.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 143
+              }
+            },
+            {
+              "player": "uci-worldtour-jenthe-biermans",
+              "ranking": 144,
+              "oddsToWin": 15553.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 144
+              }
+            },
+            {
+              "player": "uci-worldtour-john-degenkolb",
+              "ranking": 145,
+              "oddsToWin": 15770.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 145
+              }
+            },
+            {
+              "player": "uci-worldtour-baptiste-veistroffer",
+              "ranking": 146,
+              "oddsToWin": 15988.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 146
+              }
+            },
+            {
+              "player": "uci-worldtour-marco-haller",
+              "ranking": 147,
+              "oddsToWin": 16208.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 147
+              }
+            },
+            {
+              "player": "uci-worldtour-milan-fretin",
+              "ranking": 148,
+              "oddsToWin": 16429.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 148
+              }
+            },
+            {
+              "player": "uci-worldtour-olav-kooij",
+              "ranking": 149,
+              "oddsToWin": 16652.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 149
+              }
+            },
+            {
+              "player": "uci-worldtour-jake-stewart",
+              "ranking": 150,
+              "oddsToWin": 16876.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 150
+              }
+            },
+            {
+              "player": "uci-worldtour-lewis-askey",
+              "ranking": 151,
+              "oddsToWin": 17102.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 151
+              }
+            },
+            {
+              "player": "uci-worldtour-davide-ballerini",
+              "ranking": 152,
+              "oddsToWin": 17329.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 152
+              }
+            },
+            {
+              "player": "uci-worldtour-piet-allegaert",
+              "ranking": 153,
+              "oddsToWin": 17558.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 153
+              }
+            },
+            {
+              "player": "uci-worldtour-phil-bauhaus",
+              "ranking": 154,
+              "oddsToWin": 17788.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 154
+              }
+            },
+            {
+              "player": "uci-worldtour-kamil-gradek",
+              "ranking": 155,
+              "oddsToWin": 18020.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 155
+              }
+            },
+            {
+              "player": "uci-worldtour-julius-van-den-berg",
+              "ranking": 156,
+              "oddsToWin": 18253.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 156
+              }
+            },
+            {
+              "player": "uci-worldtour-matis-louvel",
+              "ranking": 157,
+              "oddsToWin": 18488.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 157
+              }
+            },
+            {
+              "player": "uci-worldtour-cees-bol",
+              "ranking": 158,
+              "oddsToWin": 18724.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 158
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "UCI Women's WorldTour",
+      "players": [
+        {
+          "key": "uci-women-s-worldtour-demi-vollering",
+          "name": "Demi Vollering",
+          "countryCode": "NL",
+          "ranking": 1
+        },
+        {
+          "key": "uci-women-s-worldtour-antonia-niedermaier",
+          "name": "Antonia Niedermaier",
+          "countryCode": "DE",
+          "ranking": 2
+        },
+        {
+          "key": "uci-women-s-worldtour-anna-van-der-breggen",
+          "name": "Anna van der Breggen",
+          "countryCode": "NL",
+          "ranking": 3
+        },
+        {
+          "key": "uci-women-s-worldtour-elisa-longo-borghini",
+          "name": "Elisa Longo Borghini",
+          "countryCode": "IT",
+          "ranking": 4
+        },
+        {
+          "key": "uci-women-s-worldtour-niamh-fisher-black",
+          "name": "Niamh Fisher-Black",
+          "countryCode": "NZ",
+          "ranking": 5
+        },
+        {
+          "key": "uci-women-s-worldtour-femke-de-vries",
+          "name": "Femke de Vries",
+          "countryCode": "NL",
+          "ranking": 6
+        },
+        {
+          "key": "uci-women-s-worldtour-isabella-holmgren",
+          "name": "Isabella Holmgren",
+          "countryCode": "CA",
+          "ranking": 7
+        },
+        {
+          "key": "uci-women-s-worldtour-urska-zigart",
+          "name": "Urška Žigart",
+          "countryCode": "SI",
+          "ranking": 8
+        },
+        {
+          "key": "uci-women-s-worldtour-valentina-cavallar",
+          "name": "Valentina Cavallar",
+          "countryCode": "AT",
+          "ranking": 9
+        },
+        {
+          "key": "uci-women-s-worldtour-lore-de-schepper",
+          "name": "Lore De Schepper",
+          "countryCode": "BE",
+          "ranking": 10
+        }
+      ],
+      "events": [
+        {
+          "key": "giro-d-italia-women",
+          "name": "Giro d'Italia Women",
+          "startDate": "2026-05-30",
+          "endDate": "2026-06-07",
+          "venue": null,
+          "location": null,
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "uci-women-s-worldtour-demi-vollering",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "uci-women-s-worldtour-antonia-niedermaier",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "uci-women-s-worldtour-anna-van-der-breggen",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "uci-women-s-worldtour-elisa-longo-borghini",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "uci-women-s-worldtour-niamh-fisher-black",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "uci-women-s-worldtour-femke-de-vries",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "uci-women-s-worldtour-isabella-holmgren",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "uci-women-s-worldtour-urska-zigart",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "uci-women-s-worldtour-valentina-cavallar",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "uci-women-s-worldtour-lore-de-schepper",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

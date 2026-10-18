@@ -128,7 +128,7 @@ describe('Commissioner tools › Teams', () => {
     expect(await screen.findByTestId('league-home-destination')).toBeInTheDocument();
   });
 
-  it('lists every team with a Manage link, marks the commissioner\'s team, and highlights Teams in the menu', async () => {
+  it('lists every member\'s squad with a Manage link, marks the commissioner\'s, and highlights Members in the menu', async () => {
     primeMocks();
 
     renderAdmin('/league/BIGDAWGS/admin/teams');
@@ -138,6 +138,7 @@ describe('Commissioner tools › Teams', () => {
     expect(await first.findByText('Commissioner')).toBeInTheDocument();
     expect(within(screen.getByTestId('admin-team-team-2')).queryByText('Commissioner')).not.toBeInTheDocument();
     expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('commissioner-tools-menu-teams')).toHaveTextContent('Members');
     expect(screen.getByTestId('admin-teams-invite')).toHaveAttribute('href', '/league/BIGDAWGS/admin/invites');
   });
 
@@ -203,13 +204,14 @@ describe('Commissioner tools › Manage team', () => {
     expect(within(screen.getByTestId('manage-team-owners')).getByText('Morgan Member')).toBeInTheDocument();
   });
 
-  it('inactivates the team only after the commissioner confirms', async () => {
+  it('inactivates the squad, named on its button, only after the commissioner confirms', async () => {
     primeMocks();
     inactivateLeagueSquadMock.mockResolvedValue(apiSuccess(updateLeagueSquadData({ ...memberTeam, isActive: false })));
 
     renderAdmin('/league/BIGDAWGS/admin/teams/team-2');
 
-    fireEvent.click(await screen.findByTestId('manage-team-inactivate'));
+    expect(await screen.findByTestId('manage-team-inactivate')).toHaveTextContent('Inactivate Second Team');
+    fireEvent.click(screen.getByTestId('manage-team-inactivate'));
     expect(inactivateLeagueSquadMock).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByTestId('my-team-confirm-inactivate'));
 
@@ -218,7 +220,7 @@ describe('Commissioner tools › Manage team', () => {
     ));
   });
 
-  it('keeps an inactive team read-only and leaves deleting it to a root admin', async () => {
+  it('keeps an inactive squad read-only and leaves deleting it to a root admin', async () => {
     primeMocks();
 
     renderAdmin('/league/BIGDAWGS/admin/teams/team-3');
@@ -227,7 +229,7 @@ describe('Commissioner tools › Manage team', () => {
     expect(screen.getByTestId('manage-team-edit')).toHaveAttribute('aria-disabled', 'true');
     expect(screen.queryByTestId('manage-team-inactivate')).not.toBeInTheDocument();
     expect(screen.getByTestId('manage-team-delete')).toBeDisabled();
-    expect(screen.getByTestId('manage-team-danger-zone')).toHaveTextContent('Only a root admin can delete a team.');
+    expect(screen.getByTestId('manage-team-danger-zone')).toHaveTextContent('Only a root admin can delete Retired Rockets.');
   });
 
   it('lets a root admin delete an inactive team and returns them to the team list', async () => {
@@ -245,14 +247,14 @@ describe('Commissioner tools › Manage team', () => {
     expect(await screen.findByTestId('admin-teams-page')).toBeInTheDocument();
   });
 
-  it('says the team is not in this league when it does not exist', async () => {
+  it('says the member is not in this league when their squad does not exist, linking back to all members', async () => {
     primeMocks();
 
     renderAdmin('/league/BIGDAWGS/admin/teams/missing-team');
 
     const notFound = await screen.findByTestId('manage-team-not-found');
-    expect(notFound).toHaveTextContent("This team isn't in this league");
-    expect(within(notFound).getByRole('link', { name: 'All teams' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/teams');
+    expect(notFound).toHaveTextContent("This member isn't in this league");
+    expect(within(notFound).getByRole('link', { name: 'All members' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/teams');
   });
 });
 
@@ -275,15 +277,15 @@ describe('Commissioner tools › Edit team', () => {
     }));
   });
 
-  it('refuses to save a blank team name', async () => {
+  it('refuses to save a blank name, labelling the field for a commissioner editing someone else\'s', async () => {
     primeMocks();
 
     renderAdmin('/league/BIGDAWGS/admin/teams/team-2/edit');
 
-    fireEvent.change(await screen.findByTestId('edit-team-name'), { target: { value: '   ' } });
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Name in this league' }), { target: { value: '   ' } });
     fireEvent.click(screen.getByTestId('edit-team-save'));
 
-    expect(await screen.findByText('Team name is required')).toBeInTheDocument();
+    expect(await screen.findByText('Name is required')).toBeInTheDocument();
     expect(updateLeagueSquadMock).not.toHaveBeenCalled();
   });
 

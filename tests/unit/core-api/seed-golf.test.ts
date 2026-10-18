@@ -8,6 +8,7 @@ import {
   shiftedMatchTimes,
 } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import { parseSportDataFile, SportDataContent, TEST_SEED_CONTENTS, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
+import { expectDefined } from '../../support/expect-defined';
 
 function seedWithStarts(...startDates: string[]): Pick<SportDataFile, 'sportLeagues'> {
   return {
@@ -316,6 +317,65 @@ describe('american-football-2025-cfp-test.json', () => {
     ]);
     const seedOf = new Map(playoff.field.map((entry) => [entry.player, entry.seed]));
     expect(matches.filter((match) => match.roundNumber === 2).map((match) => [seedOf.get(match.home ?? ''), match.away])).toEqual([[1, null], [4, null], [3, null], [2, null]]);
+  });
+});
+
+describe('basketball-2026-ncaa-tournaments-test.json', () => {
+  const file = readDataFile('basketball-2026-ncaa-tournaments-test.json', true);
+  const [men, women] = file.sportLeagues.map((league) => league.events[0]);
+
+  it('is a test seed of the 2026 men\'s and women\'s tournaments, each a six-round bracket of 64 places seeded 1 to 16 in four regions', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.BASKETBALL, 2026, ['NCAA Division I Men', 'NCAA Division I Women']]);
+    for (const tournament of [men, women]) {
+      const matches = tournament.matches ?? [];
+      expect(tournament.rounds).toBe(6);
+      expect(tournament.field).toHaveLength(64);
+      for (let seed = 1; seed <= 16; seed += 1) expect(tournament.field.filter((entry) => entry.seed === seed)).toHaveLength(4);
+      expect(matches.map((match) => match.roundNumber)).toEqual([1, 2, 3, 4, 5, 6].flatMap((round) => Array<number>(2 ** (6 - round)).fill(round)));
+      expect(matches.every((match) => match.result !== undefined)).toBe(true);
+      expect(matches.filter((match) => match.roundNumber >= 5).every((match) => match.regionLabel === undefined)).toBe(true);
+    }
+    expect(new Set(men.matches?.map((match) => match.regionLabel))).toEqual(new Set(['East', 'South', 'West', 'Midwest', undefined]));
+  });
+
+  it('fills each First Four place with the team that won it, never a team already in the field', () => {
+    expect(men.field.filter((entry) => entry.isPlayInPlace).map((entry) => [entry.seed, entry.playInWinner])).toEqual([
+      [11, 'ncaam-texas-longhorns'], [11, 'ncaam-miami-oh-redhawks'], [16, 'ncaam-prairie-view-am-panthers'], [16, 'ncaam-howard-bison'],
+    ]);
+    expect(women.field.filter((entry) => entry.isPlayInPlace).map((entry) => [entry.seed, entry.playInWinner])).toEqual([
+      [10, 'ncaaw-virginia-cavaliers'], [11, 'ncaaw-nebraska-cornhuskers'], [16, 'ncaaw-southern-jaguars'], [16, 'ncaaw-missouri-state-lady-bears'],
+    ]);
+    for (const tournament of [men, women]) {
+      const fieldKeys = new Set(tournament.field.map((entry) => entry.player));
+      expect(tournament.field.filter((entry) => entry.playInWinner !== undefined && fieldKeys.has(entry.playInWinner))).toEqual([]);
+    }
+  });
+
+  it('ends with Michigan beating UConn 69-63 for the men\'s title and UCLA beating South Carolina 79-51 for the women\'s', () => {
+    expect(men.matches?.[62]).toMatchObject({ roundNumber: 6, advancesTo: null, result: { winner: 'AWAY', homeScore: 63, awayScore: 69 } });
+    expect(women.matches?.[62]).toMatchObject({ roundNumber: 6, advancesTo: null, result: { winner: 'AWAY', homeScore: 51, awayScore: 79 } });
+  });
+});
+
+describe('2026 racing test seeds', () => {
+  it.each([
+    ['auto-racing-2026-test.json', Sport.AUTO_RACING, [['Formula 1', 17, 'Max Verstappen'], ['NASCAR Cup Series', 32, 'Chase Briscoe'], ['IndyCar', 18, 'Scott McLaughlin']]],
+    ['horse-racing-2026-test.json', Sport.HORSE_RACING, [['US Thoroughbred', 3, 'Golden Tempo']]],
+    ['cycling-2026-test.json', Sport.CYCLING, [['UCI WorldTour', 3, 'Tadej Pogačar'], ["UCI Women's WorldTour", 1, 'Demi Vollering']]],
+    ['running-2026-test.json', Sport.RUNNING, [['World Marathon Majors (men)', 6, 'Amos Kipruto'], ['World Marathon Majors (women)', 6, 'Hawi Feysa']]],
+  ] as const)('%s holds each sport league\'s 2026 races as run, every runner with a result and the last race won by its real winner', (fileName, sport, leagues) => {
+    const file = readDataFile(fileName, true);
+
+    expect([file.scope.sport, file.scope.season, file.scope.contents]).toEqual([sport, 2026, TEST_SEED_CONTENTS]);
+    expect(file.sportLeagues.map((league) => league.name)).toEqual(leagues.map(([name]) => name));
+    file.sportLeagues.forEach((league, index) => {
+      const [, races, lastWinner] = leagues[index];
+      const nameOf = new Map(league.players.map((player) => [player.key, player.name]));
+      expect(league.events).toHaveLength(races);
+      expect(league.events.every((event) => event.rounds === 1 && event.field.every((entry) => entry.raceResult !== undefined && entry.oddsToWin !== undefined))).toBe(true);
+      const winner = expectDefined(league.events[races - 1].field.find((entry) => entry.raceResult?.finishPosition === 1));
+      expect(nameOf.get(winner.player)).toBe(lastWinner);
+    });
   });
 });
 

@@ -137,7 +137,9 @@ In order:
     add it to the loader here rather than sending an admin to type it. Pipeline support for a
     sport is three things, all in this PR: its row in `docs/SPORT-DATA-SOURCES.md` with each
     source checked by one fetch, its first season's schedule file, and a test slate per sport
-    league in `test-slates/` so contests can be tried before a real field is out. The fetch
+    league in `test-slates/` so contests can be tried before a real field is out. Each sport
+    league also gets a test seed of its last season as played
+    (`rules/architecture-rules.md` §5 *Manual-testing seed data goes through the admin API*). The fetch
     and load workflows themselves are shared by every sport and need no change.
     A bracket sport differs on two of the three. Its field and pairings exist only once the
     bracket is set (the NFL's at the end of the regular season), so there is no schedule file

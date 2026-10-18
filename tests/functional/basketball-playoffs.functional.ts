@@ -63,33 +63,43 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-/** The test seed, its teams and event tagged with this run so they never meet another suite's. */
-function taggedSeed(fileName: string, eventName: string): SportDataFile {
+/** The test seed, its teams and events tagged with this run so they never meet another suite's. */
+function taggedSeed(fileName: string, eventName: (leagueName: string) => string): SportDataFile {
   const file = parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, fileName), 'utf8')) as unknown, { allowTestData: true });
   const tagged = (key: string | null) => (key === null ? null : `${RUN}-${key}`);
-  const [league] = file.sportLeagues;
-  const [playoffs] = league.events;
-  playoffs.name = eventName;
-  for (const player of league.players) player.key = expectDefined(tagged(player.key));
-  for (const entry of playoffs.field) {
-    entry.player = expectDefined(tagged(entry.player));
-    if (entry.playInWinner !== undefined) entry.playInWinner = expectDefined(tagged(entry.playInWinner));
+  for (const league of file.sportLeagues) {
+    const [playoffs] = league.events;
+    playoffs.name = eventName(league.name);
+    for (const player of league.players) player.key = expectDefined(tagged(player.key));
+    for (const entry of playoffs.field) {
+      entry.player = expectDefined(tagged(entry.player));
+      if (entry.playInWinner !== undefined) entry.playInWinner = expectDefined(tagged(entry.playInWinner));
+    }
+    for (const match of playoffs.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
   }
-  for (const match of playoffs.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
   return file;
 }
 
-/** Loads a seed dated from today (release refuses an event that has started), and finds its event. */
-async function loadPlayoffs(admin: RegisteredUserContext, file: SportDataFile) {
+/** Loads a seed dated from today (release refuses an event that has started). */
+async function loadSeed(admin: RegisteredUserContext, file: SportDataFile): Promise<void> {
   await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY });
-  const leagueName = file.sportLeagues[0].name;
+}
+
+/** One of a loaded seed's sport leagues and its event. */
+async function findPlayoffs(admin: RegisteredUserContext, file: SportDataFile, leagueIndex = 0) {
+  const leagueName = file.sportLeagues[leagueIndex].name;
   const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: admin.client, query: { sport: Sport.BASKETBALL } })).data).sportLeagues
     .find((league) => league.name === leagueName), leagueName);
-  const eventName = file.sportLeagues[0].events[0].name;
+  const eventName = file.sportLeagues[leagueIndex].events[0].name;
   const event = expectDefined(expectDefined((await listEvents({ client: admin.client, query: { sportLeagueId: sportLeague.id } })).data).events
     .find((row) => row.name === eventName), eventName);
   created.sportEventIds.add(event.id);
   return { sportLeague, event };
+}
+
+async function loadPlayoffs(admin: RegisteredUserContext, file: SportDataFile) {
+  await loadSeed(admin, file);
+  return findPlayoffs(admin, file);
 }
 
 describe('SDK Functional: NBA and WNBA playoffs', () => {
@@ -107,7 +117,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     await promoteToRootAdmin(admin);
     const a = admin.client;
 
-    const file = taggedSeed('basketball-2025-nba-playoffs-test.json', `NBA Playoffs ${RUN}`);
+    const file = taggedSeed('basketball-2025-nba-playoffs-test.json', () => `NBA Playoffs ${RUN}`);
     const { sportLeague: nba, event } = await loadPlayoffs(admin, file);
     expect(nba.roundNames).toEqual(['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals']);
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
@@ -181,7 +191,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     const admin = await buildRegisteredUser({ displayName: 'WNBA Director' });
     await promoteToRootAdmin(admin);
 
-    const { sportLeague: wnba, event } = await loadPlayoffs(admin, taggedSeed('basketball-2025-wnba-playoffs-test.json', `WNBA Playoffs ${RUN}`));
+    const { sportLeague: wnba, event } = await loadPlayoffs(admin, taggedSeed('basketball-2025-wnba-playoffs-test.json', () => `WNBA Playoffs ${RUN}`));
 
     expect(wnba.roundNames).toEqual(['First Round', 'Semifinals', 'WNBA Finals']);
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 3]);
@@ -192,5 +202,38 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     const winner = expectDefined(field.find((row) => row.id === winnerRowId));
     expect([winner.participant.name, final.homeScore, final.awayScore]).toEqual(['Las Vegas Aces', 4, 0]);
     expect(bracket.every((match) => match.status === 'COMPLETED')).toBe(true);
+  });
+
+  it('loads the played 2026 men\'s and women\'s March Madness, each First Four place taking its winner, with Michigan and UCLA the champions', async () => {
+    const admin = await buildRegisteredUser({ displayName: 'Tournament Director' });
+    await promoteToRootAdmin(admin);
+    const file = taggedSeed('basketball-2026-ncaa-tournaments-test.json', (leagueName) => `${leagueName} Tournament ${RUN}`);
+    await loadSeed(admin, file);
+
+    for (const [leagueIndex, champion, runnerUp, firstFourWinners] of [
+      [0, 'Michigan Wolverines', 'UConn Huskies', ['Howard Bison', 'Miami (OH) RedHawks', 'Prairie View A&M Panthers', 'Texas Longhorns']],
+      [1, 'UCLA Bruins', 'South Carolina Gamecocks', ['Missouri State Lady Bears', 'Nebraska Cornhuskers', 'Southern Jaguars', 'Virginia Cavaliers']],
+    ] as const) {
+      const { event } = await findPlayoffs(admin, file, leagueIndex);
+      expect([event.status, event.rounds]).toEqual(['SCHEDULED', 6]);
+      const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId: event.id } })).data).participants;
+      expect(field).toHaveLength(64);
+      expect(field.some((row) => row.isPlayInPlace)).toBe(false);
+      const names = new Set(field.map((row) => row.participant.name));
+      expect(firstFourWinners.filter((team) => names.has(team))).toEqual(firstFourWinners);
+
+      const bracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data).matches;
+      expect(bracket).toHaveLength(63);
+      expect(bracket.every((match) => match.status === 'COMPLETED')).toBe(true);
+      const final = expectDefined(bracket.find((match) => match.roundNumber === 6));
+      const nameOf = (rowId: string | null) => expectDefined(field.find((row) => row.id === rowId)).participant.name;
+      const [winnerRow, loserRow] = final.winnerSide === 'HOME'
+        ? [final.homeSportEventParticipantId, final.awaySportEventParticipantId]
+        : [final.awaySportEventParticipantId, final.homeSportEventParticipantId];
+      expect([nameOf(winnerRow), nameOf(loserRow)]).toEqual([champion, runnerUp]);
+    }
+
+    const again = await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.DRY_RUN });
+    expect(again.filter((row) => row.action !== LoadAction.SKIP)).toEqual([]);
   });
 });

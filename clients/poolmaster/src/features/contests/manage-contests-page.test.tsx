@@ -129,7 +129,7 @@ describe('ManageContestsPage', () => {
     expect(open.getByText('Open for entries')).toBeInTheDocument();
     expect(await open.findByText(/^Entries close/)).toBeInTheDocument();
     // Two of the league's three teams are active.
-    expect(await open.findByText('of 2 teams')).toBeInTheDocument();
+    expect(await open.findByText('of 2 members')).toBeInTheDocument();
     expect(open.getByRole('link', { name: 'Manage' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-2');
     expect(screen.queryByText(/TIERED|STROKE_PLAY/)).not.toBeInTheDocument();
   });

@@ -197,7 +197,7 @@ afterEach(() => {
 });
 
 describe('My team', () => {
-  it('shows the team with Edit team, Contest history, its owners and Leave league', async () => {
+  it('shows the viewer\'s squad by its name with Edit, Contest history, its owners and Leave league', async () => {
     primeTeam();
 
     renderTeamRoutes();
@@ -205,6 +205,7 @@ describe('My team', () => {
     const identity = await screen.findByTestId('my-team-identity');
     expect(identity).toHaveTextContent('Casey Crushers');
     expect(identity).toHaveTextContent('1 owner');
+    expect(screen.getByTestId('my-team-edit')).toHaveTextContent('Edit');
     expect(screen.getByTestId('my-team-edit')).toHaveAttribute('href', '/league/BIGDAWGS/team/edit');
     expect(screen.getByTestId('my-team-history-link')).toHaveAttribute('href', '/league/BIGDAWGS/history');
     expect(within(screen.getByTestId('my-team-owners')).getByText('Casey Commissioner')).toBeInTheDocument();
@@ -221,17 +222,17 @@ describe('My team', () => {
     expect(screen.getByRole('textbox', { name: 'Co-owner email' })).toBeDisabled();
   });
 
-  it('does not offer to create a team while the viewer\'s team is still loading', async () => {
+  it('does not offer the name-and-icon form while the viewer\'s squad is still loading', async () => {
     primeTeam();
     listLeagueSquadsMock.mockReturnValue(new Promise(() => undefined));
 
     renderTeamRoutes();
 
     expect(await screen.findByTestId('my-team-loading')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Create team' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('create-team-page')).not.toBeInTheDocument();
   });
 
-  it('shows an error instead of Create team when the team list fails to load', async () => {
+  it('shows an error instead of the name-and-icon form when the squad list fails to load', async () => {
     primeTeam();
     listLeagueSquadsMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL_ERROR', message: 'Teams are unavailable right now.' } },
@@ -241,7 +242,7 @@ describe('My team', () => {
     renderTeamRoutes();
 
     expect(await screen.findByTestId('my-team-error')).toHaveTextContent('Teams are unavailable right now.');
-    expect(screen.queryByRole('button', { name: 'Create team' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('create-team-page')).not.toBeInTheDocument();
   });
 
   it('shows the load-error copy with a way back to welcome when the league cannot be loaded', async () => {
@@ -339,7 +340,7 @@ describe('My team › My entries', () => {
 });
 
 describe('My team › Create team', () => {
-  it('creates the team with the name and icon the member chose, in one request, then shows it', async () => {
+  it('creates the member\'s squad with the name and icon they chose, in one request, then shows it', async () => {
     primeTeam({ role: 'COMMISSIONER', squadId: null, squads: [] });
     createLeagueSquadMock.mockImplementation(() => {
       // Once the team exists, the league context names it as the viewer's own.
@@ -349,11 +350,12 @@ describe('My team › Create team', () => {
 
     renderTeamRoutes();
 
-    const name = await screen.findByTestId('create-team-name');
+    expect(await screen.findByRole('heading', { name: 'Choose your name and icon' })).toBeInTheDocument();
+    const name = screen.getByRole('textbox', { name: 'Your name in this league' });
     expect(name).toHaveValue("Casey Commissioner's Team");
     fireEvent.change(name, { target: { value: 'Ocean Winkers' } });
     fireEvent.click(screen.getByTestId(`team-icon-${TeamIconKey.CAPTAIN_WINK_OCEAN}`));
-    fireEvent.click(screen.getByRole('button', { name: 'Create team' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(createLeagueSquadMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { id: 'league-1' },
@@ -362,7 +364,7 @@ describe('My team › Create team', () => {
     expect(await screen.findByTestId('my-team-identity')).toHaveTextContent('Ocean Winkers');
   });
 
-  it('shows the reason and keeps the typed name when creating the team fails', async () => {
+  it('shows the reason and keeps the typed name when saving the chosen name fails', async () => {
     primeTeam({ squadId: null, squads: [] });
     createLeagueSquadMock.mockResolvedValue({
       error: { error: { code: 'SQUAD_NAME_TAKEN', message: 'Team name is already taken.' } },
@@ -371,28 +373,28 @@ describe('My team › Create team', () => {
     renderTeamRoutes();
 
     fireEvent.change(await screen.findByTestId('create-team-name'), { target: { value: 'Derek Squad' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create team' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(await screen.findByText('Team name is already taken.')).toBeInTheDocument();
     expect(screen.getByTestId('create-team-name')).toHaveValue('Derek Squad');
   });
 
-  it('says why Create team is unavailable while the league is inactive', async () => {
+  it('says why the member cannot choose a name while the league is inactive', async () => {
     primeTeam({ league: { isActive: false }, squadId: null, squads: [] });
 
     renderTeamRoutes();
 
-    expect(await screen.findByTestId('my-team-league-inactive')).toHaveTextContent('you can\'t create a team');
+    expect(await screen.findByTestId('my-team-league-inactive')).toHaveTextContent('you can\'t choose your name in it');
     expect(screen.getByTestId('create-team-save')).toBeDisabled();
   });
 
-  it('tells a root admin who is not a member that they have no team here, with no Create team', async () => {
+  it('tells a root admin who is not a member that they are not playing in this league, with no name-and-icon form', async () => {
     primeTeam({ isMember: false, isRootAdmin: true, squadId: null });
 
     renderTeamRoutes();
 
-    expect(await screen.findByTestId('my-team-none')).toHaveTextContent("You don't have a team in this league");
-    expect(screen.queryByRole('button', { name: 'Create team' })).not.toBeInTheDocument();
+    expect(await screen.findByTestId('my-team-none')).toHaveTextContent("You aren't playing in this league");
+    expect(screen.queryByTestId('create-team-page')).not.toBeInTheDocument();
     expect(screen.queryByTestId('leave-league-section')).not.toBeInTheDocument();
   });
 });
@@ -582,7 +584,7 @@ describe('My team › Edit team', () => {
 });
 
 describe('Another team\'s page', () => {
-  it('shows a member the team and its owners read-only, with no Manage team', async () => {
+  it('shows a member another squad and its owners read-only, with no Manage link', async () => {
     primeTeam();
 
     renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
@@ -595,12 +597,13 @@ describe('Another team\'s page', () => {
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
-  it('gives a commissioner a Manage team link into Commissioner tools', async () => {
+  it('gives a commissioner a Manage link into Commissioner tools', async () => {
     primeTeam({ role: 'COMMISSIONER' });
 
     renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
 
     expect(await screen.findByTestId('team-page-manage')).toHaveAttribute('href', '/league/BIGDAWGS/admin/teams/team-2');
+    expect(screen.getByTestId('team-page-manage')).toHaveTextContent('Manage');
   });
 
   it('opens My team when the link is to the viewer\'s own team', async () => {
@@ -611,12 +614,12 @@ describe('Another team\'s page', () => {
     expect(await screen.findByTestId('my-team-identity')).toHaveTextContent('Casey Crushers');
   });
 
-  it('says the team is not in this league when it does not exist', async () => {
+  it('says the member is not in this league when their squad does not exist, linking back to all members', async () => {
     primeTeam();
 
     renderTeamRoutes('/league/BIGDAWGS/teams/missing-team');
 
     const notFound = await screen.findByTestId('team-page-not-found');
-    expect(within(notFound).getByRole('link', { name: 'All teams' })).toHaveAttribute('href', '/league/BIGDAWGS/teams');
+    expect(within(notFound).getByRole('link', { name: 'All members' })).toHaveAttribute('href', '/league/BIGDAWGS/teams');
   });
 });

@@ -530,6 +530,10 @@ code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`
   not changed. A dry run reports the same without writing.
 - A test seed's dates are moved relative to the day it runs, so what it creates is usable
   then. No automated test may depend on seeded rows; tests build their own.
+- **Every sport league has a test seed of its last season as played**: its real events, fields
+  and results (made-up odds aside), loaded through the same workflow, so every sport can be
+  tried by hand end to end. A future season's schedule and fields are an admin's routine work
+  with the same loader, not a ticket.
 
 ### There is deliberately no Prisma seed
 
