@@ -33,7 +33,8 @@ import { standardEventPricing } from '../support/budget-pricing';
 // contests on, a real file filled in by comparison, and a second run that changes nothing.
 
 const RUN = `load-${Date.now()}`;
-const NOW = new Date('2026-10-08T19:00:00Z');
+// The real clock: release refuses an event that has started by the server's own clock.
+const NOW = new Date();
 
 function provenance(): SportDataFile['provenance'] {
   return { gatheredAt: '2026-10-13', gatheredBy: 'functional test', sources: [{ name: 'Test source', url: 'https://example.com/schedule' }] };
@@ -181,7 +182,7 @@ describe('Loading a golf test seed through the admin API', () => {
     const opener = expectDefined(events.find((event) => event.name === `${prefix} Opener`));
     // Released for contests, a whole number of weeks on from 2026-01-15 and at least a week after today.
     expect(events.map((event) => event.status)).toEqual(['SCHEDULED', 'SCHEDULED']);
-    expect(opener.startDate).toBe(shiftedEventDates(seed.sportLeagues[0].events[0], seedDateOffsetDays(seed, new Date())).startDate);
+    expect(opener.startDate).toBe(shiftedEventDates(seed.sportLeagues[0].events[0], seedDateOffsetDays(seed, NOW)).startDate);
     expect(opener.autoLifecycleEnabled).toBe(false);
 
     const field = await fieldOf(opener.id);
@@ -214,10 +215,11 @@ describe('Loading a golf test seed through the admin API', () => {
     const league = expectDefined(await leagueNamed(tour));
     const finale = { ...seed.sportLeagues[0].events[1], key: 'third', name: `${prefix} Finale`, startDate: '2026-01-29', endDate: '2026-02-01' };
     const withFinale: SportDataFile = { ...seed, sportLeagues: [{ ...seed.sportLeagues[0], events: [...seed.sportLeagues[0].events, finale] }] };
+    const finaleStart = shiftedEventDates(finale, seedDateOffsetDays(withFinale, NOW)).startDate;
     // What a run that stopped straight after creating the event leaves behind.
     expectDefined((await createEvent({
       client: admin.client,
-      body: { sportLeagueId: league.id, eventYear: 2026, name: finale.name, startDate: '2026-11-05T12:00:00.000Z', rounds: 4, autoLifecycleEnabled: false },
+      body: { sportLeagueId: league.id, eventYear: 2026, name: finale.name, startDate: finaleStart, rounds: 4, autoLifecycleEnabled: false },
     })).data);
 
     const rows = await loadSportData(parsed(withFinale), { getClient, now: NOW, mode: LoadMode.APPLY });
@@ -227,7 +229,7 @@ describe('Loading a golf test seed through the admin API', () => {
       { sportLeague: tour, subject: LoadSubject.FIELD, action: LoadAction.UPDATE, name: finale.name, detail: expect.stringContaining('8 added') as unknown },
     ]);
     const stored = expectDefined((await eventsOf(league.id, 2026)).find((event) => event.name === finale.name));
-    expect(stored).toMatchObject({ status: 'SCHEDULED', startDate: '2026-11-05T12:00:00.000Z', roundsPar: 70 });
+    expect(stored).toMatchObject({ status: 'SCHEDULED', startDate: finaleStart, roundsPar: 70 });
     expect((await fieldOf(stored.id)).size).toBe(8);
   });
 });
