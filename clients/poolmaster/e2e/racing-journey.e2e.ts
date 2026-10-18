@@ -402,7 +402,7 @@ test('act 3: a new member joins by the link and submits one horse from each tier
       page,
       'contest-entry-submit',
       'POST',
-      `/api/v1/selections/${state.contestId}/entries/${state.entryId}/submit`,
+      `/api/v1/selections/${state.contestId}/entries/${state.entryId}/events/${state.raceId}/submit`,
     );
     await expect(page.getByTestId(`contest-board-entry-${state.entryId}`)).toBeVisible();
   });
