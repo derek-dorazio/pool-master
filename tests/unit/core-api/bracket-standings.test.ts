@@ -318,6 +318,22 @@ describe('ContestService.getBracketLeaderboard', () => {
       ['Cara', '3', 5, 5],
     ]);
   });
+
+  it('answers a bracket whose event was cancelled with every entry unscored, since a cancelled event counts for nothing', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK, FINAL_T1_70_66);
+    context.world.sportEvents.set(context.sportEvent.id, { ...expectDefined(context.world.sportEvents.get(context.sportEvent.id)), status: SportEventStatus.CANCELLED });
+    await context.settlement.settleFinishedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
+
+    const leaderboard = await context.contestService.getBracketLeaderboard(context.contest.id, context.viewer.id);
+
+    expect(leaderboard).toMatchObject({ gameCount: 0, finalTotalPoints: null });
+    expect(leaderboard.entries.map((row) => [row.entryName, row.points, row.maxPossiblePoints, row.correctPickCount])).toEqual([
+      ['Alice', 0, 0, 0],
+      ['Bob', 0, 0, 0],
+      ['Cara', 0, 0, 0],
+    ]);
+  });
 });
 
 describe('ContestService — roster reads and writes a prediction contest refuses', () => {
