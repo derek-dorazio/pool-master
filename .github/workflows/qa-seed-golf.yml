@@ -1,6 +1,6 @@
 # Load a sport data file into QA: a real schedule and fields gathered by the load-sport-data
 # skill, or a test seed for manual league and contest testing (the 2026 PGA TOUR and LPGA
-# Tour, or the played NFL playoffs bracket).
+# Tour, or a played playoff bracket: the NFL, the College Football Playoff, the NBA or WNBA).
 #
 # workflow_dispatch only: sport data never rides a migration or a deploy. It goes in through
 # QA's public admin API as the E2E root admin, the same way the Manage screens write it, so

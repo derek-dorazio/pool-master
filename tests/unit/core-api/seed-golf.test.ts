@@ -297,6 +297,28 @@ describe('basketball-2025-wnba-playoffs-test.json', () => {
   });
 });
 
+describe('american-football-2025-cfp-test.json', () => {
+  const file = readDataFile('american-football-2025-cfp-test.json', true);
+  const [playoff] = file.sportLeagues[0].events;
+  const matches = playoff.matches ?? [];
+
+  it('is a test seed of one fixed four-round College Football Playoff of 12 teams seeded 1 to 12, Indiana beating Miami 27-21 in the National Championship', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.AMERICAN_FOOTBALL, 2025, ['College Football Playoff']]);
+    expect([playoff.rounds, playoff.startDate, playoff.endDate]).toEqual([4, '2025-12-19', '2026-01-19']);
+    expect(playoff.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(file.sportLeagues[0].bracketAdvancement).toBe('FIXED');
+    expect(matches[10]).toMatchObject({ roundNumber: 4, home: null, away: null, advancesTo: null, result: { winner: 'HOME', homeScore: 27, awayScore: 21 } });
+  });
+
+  it('plays the first round at the higher seed\'s campus and every later game at a neutral site, with the top four seeds placed straight into the quarterfinals', () => {
+    expect(matches.map((match) => [match.roundNumber, match.isNeutralSite])).toEqual([
+      [1, false], [1, false], [1, false], [1, false], [2, true], [2, true], [2, true], [2, true], [3, true], [3, true], [4, true],
+    ]);
+    const seedOf = new Map(playoff.field.map((entry) => [entry.player, entry.seed]));
+    expect(matches.filter((match) => match.roundNumber === 2).map((match) => [seedOf.get(match.home ?? ''), match.away])).toEqual([[1, null], [4, null], [3, null], [2, null]]);
+  });
+});
+
 describe('test seed match times', () => {
   it('move by the same whole days as the event dates, and stay put when the offset is zero', () => {
     const file = readDataFile('american-football-2026-nfl-playoffs-test.json', true);

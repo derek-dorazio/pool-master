@@ -70,7 +70,7 @@ Shown By Its Name*.
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
 | `Sport` | sport | Golf, horse racing, auto racing, cycling, running, basketball and American football, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
-| `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA. A bracket league may name its own rounds (`roundNames`: the NBA's Conference Finals), shown in place of the sport's | `League`, the office pool |
+| `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA. A bracket league may name its own rounds (`roundNames`: the NBA's Conference Finals), shown in place of the sport's, and start its events on its own tier count (`tierCount`: the College Football Playoff's six) | `League`, the office pool |
 | `EventSeries` | (series) | A recurring named event, "The Masters", across all years | One year's edition, which is the `SportEvent` |
 | `SportEvent` | tournament, event | One edition of a series in one `eventYear`, with a start date, round count and status | `Contest`, which is the pool's game played on it |
 | `SportEventRound` | round | One scheduled round of an event (golf Round 1–4), with its own date | A participant's result in that round, `SportEventParticipantRound`; and a pick's `lineupSlot`, its position in the entry's lineup |
