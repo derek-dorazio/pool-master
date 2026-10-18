@@ -15,13 +15,13 @@ import { teamFormSchema, type TeamFormValues } from './team-form-schema';
  * (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
  */
 export function EditTeamForm({
-  isViewerOwn = true,
+  isViewerOwn,
   leagueId,
   returnTo,
   team,
 }: {
   /** Whether the viewer is editing their own squad, which the field labels speak to. */
-  isViewerOwn?: boolean;
+  isViewerOwn: boolean;
   leagueId: string;
   /** Where Cancel and a successful Save go. */
   returnTo: string;

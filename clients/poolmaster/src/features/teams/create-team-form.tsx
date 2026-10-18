@@ -69,6 +69,7 @@ export function CreateTeamForm({
         disabled={isInactiveLeague || createMutation.isPending}
         form={form}
         idPrefix="create-team"
+        isViewerOwn
       />
     </FormPage>
   );

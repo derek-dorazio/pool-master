@@ -27,5 +27,5 @@ export function MyTeamEditPage() {
     return <Navigate replace to={teamPath} />;
   }
 
-  return <EditTeamForm key={team.id} leagueId={league.id} returnTo={teamPath} team={team} />;
+  return <EditTeamForm isViewerOwn key={team.id} leagueId={league.id} returnTo={teamPath} team={team} />;
 }

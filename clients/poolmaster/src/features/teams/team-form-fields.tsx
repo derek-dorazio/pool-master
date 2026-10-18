@@ -9,14 +9,14 @@ export function TeamFormFields({
   disabled,
   form,
   idPrefix,
-  isViewerOwn = true,
+  isViewerOwn,
 }: {
   disabled: boolean;
   form: UseFormReturn<TeamFormValues>;
   /** Prefixes the field ids and test ids, e.g. `edit-team`. */
   idPrefix: string;
   /** Whether the viewer is naming their own squad ("Your name") or a commissioner someone else's. */
-  isViewerOwn?: boolean;
+  isViewerOwn: boolean;
 }) {
   const iconKey = form.watch('iconKey');
 
