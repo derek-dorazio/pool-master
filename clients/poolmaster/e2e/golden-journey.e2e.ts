@@ -1350,8 +1350,11 @@ test('act 7: a contest over two tournaments — the commissioner adds the second
       for (const pick of entry?.picks ?? []) {
         await expect(page.getByTestId(`contest-leaderboard-pick-${entryId}-${pick.pickId}`)).toBeVisible();
       }
-      await expect(page.getByTestId(`contest-leaderboard-events-${entryId}`)).toContainText(firstName);
-      await expect(page.getByTestId(`contest-leaderboard-events-${entryId}`)).toContainText(secondName);
+      // On the page too: the contest total, and each tournament's place and score.
+      await expect(page.getByTestId(`contest-leaderboard-total-${entryId}`)).toHaveText(`+${ACT_7_CONTEST_TOTAL}`);
+      await expect(page.getByTestId(`contest-leaderboard-events-${entryId}`)).toHaveText(
+        `${firstName}: 1, ${ACT_7_EVENT_TOTALS[0]} · ${secondName}: 1, +${ACT_7_EVENT_TOTALS[1]}`,
+      );
     }
     await logOut(page);
   });

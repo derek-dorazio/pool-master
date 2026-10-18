@@ -517,7 +517,7 @@ test('act 4: the root admin starts the playoffs and names each series\' winner o
     expect(pointsBySeed(read, state.fieldEntryIds)).toEqual(POINTS_AFTER_ROUND_1);
 
     await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);
-    await expect(page.getByTestId(`contest-leaderboard-total-${state.entryId}`)).toContainText(String(EXPECTED_TOTAL_AFTER_ROUND_1));
+    await expect(page.getByTestId(`contest-leaderboard-total-${state.entryId}`)).toHaveText(String(EXPECTED_TOTAL_AFTER_ROUND_1));
     // Every entry opens with its picks showing.
     await expect(page.getByTestId(`contest-leaderboard-entry-toggle-${state.entryId}`)).toHaveAttribute('aria-expanded', 'true');
     await expect(page.getByTestId('contest-leaderboard-upset-bonus-header')).toBeVisible();
@@ -556,7 +556,7 @@ test('act 4: the root admin starts the playoffs and names each series\' winner o
 
     await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}/leaderboard`);
     await expect(page.getByTestId('contest-leaderboard-settled-note')).toBeVisible();
-    await expect(page.getByTestId(`contest-leaderboard-total-${state.entryId}`)).toContainText(String(EXPECTED_TOTAL));
+    await expect(page.getByTestId(`contest-leaderboard-total-${state.entryId}`)).toHaveText(String(EXPECTED_TOTAL));
     // Every entry opens with its picks showing.
     await expect(page.getByTestId(`contest-leaderboard-entry-toggle-${state.entryId}`)).toHaveAttribute('aria-expanded', 'true');
     const aces = pickOf(read, state.fieldEntryIds, 2);
