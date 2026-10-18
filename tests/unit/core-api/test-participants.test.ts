@@ -12,7 +12,7 @@ function row(id: string, price: number, extra: Partial<Group['participants'][num
 
 function state(selectionType: SelectionStateResponse['selectionType'], groups: Group[], lineupSummary: SelectionStateResponse['lineupSummary'] = null): SelectionStateResponse {
   return {
-    contestId: 'c', contestName: 'Contest', selectionType, drawnAt: null, rosterSize: 0, status: 'PENDING', myEntryId: null,
+    contestId: 'c', contestName: 'Contest', sportEventId: 'e', acceptsPicks: true, selectionType, drawnAt: null, rosterSize: 0, status: 'PENDING', myEntryId: null,
     entries: [], pickHistories: [], availableParticipantIds: [], selectionGroups: groups, isComplete: false, lineupSummary,
   };
 }

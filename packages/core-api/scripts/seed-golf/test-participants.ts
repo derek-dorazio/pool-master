@@ -202,7 +202,7 @@ class ParticipantLoader {
     if (events.length === 0) this.log(`${sportLeagueName}: no upcoming released event to run a contest on.`);
     const contests = leagueId === null ? [] : (await must(listContests({ client, path: { id: leagueId } }), `List contests of ${name}`)).contests;
     for (const event of events) {
-      const contest: StoredContest | undefined = contests.find((candidate) => candidate.sportEventId === event.id);
+      const contest: StoredContest | undefined = contests.find((candidate) => candidate.sportEvents.some((contestEvent) => contestEvent.sportEventId === event.id));
       let contestId = contest?.id ?? null;
       const contestName = `${event.name} picks`;
       if (contest && contest.status !== ContestStatus.DRAFT) {
@@ -211,7 +211,7 @@ class ParticipantLoader {
         row(LoadSubject.CONTEST, contest ? LoadAction.UPDATE : LoadAction.ADD, contestName, contest ? 'opened' : 'created from the default template and opened');
         if (this.apply && leagueId !== null) contestId = await this.createAndOpen(client, leagueId, event, contestId, contestName);
       }
-      await this.loadEntries(sportLeagueName, leagueId, contestId, contestName);
+      await this.loadEntries(sportLeagueName, leagueId, contestId, event.id, contestName);
     }
   }
 
@@ -250,15 +250,15 @@ class ParticipantLoader {
       contestId = (await must(createContest({
         client,
         path: { id: leagueId },
-        body: { name: contestName, sportEventId: event.id, contestFormat: ContestFormat.ROSTER, selectionType: template.selectionType, templateId: template.id },
+        body: { name: contestName, sportEventIds: [event.id], contestFormat: ContestFormat.ROSTER, selectionType: template.selectionType, templateId: template.id },
       }), `Create ${contestName}`)).contest.id;
     }
     await must(openContest({ client, path: { id: leagueId, contestId } }), `Open ${contestName}`);
     return contestId;
   }
 
-  /** One submitted entry from each player's squad. */
-  private async loadEntries(sportLeagueName: string, leagueId: string | null, contestId: string | null, contestName: string): Promise<void> {
+  /** One entry from each player's squad, submitted for the contest's event. */
+  private async loadEntries(sportLeagueName: string, leagueId: string | null, contestId: string | null, sportEventId: string, contestName: string): Promise<void> {
     const client = await this.options.getClient();
     const squads = leagueId === null ? [] : (await must(listLeagueSquads({ client, path: { id: leagueId } }), `List squads of ${sportLeagueName}`)).squads;
     const entries = contestId === null ? [] : (await must(listContestEntries({ client, path: { contestId } }), `List entries of ${contestName}`)).entries;
@@ -267,7 +267,7 @@ class ParticipantLoader {
       const squad = squads.find((candidate) => candidate.isActive && candidate.members?.some((member) => member.userId === userId));
       const entry = squad ? entries.find((candidate) => candidate.squadId === squad.id) : undefined;
       const rowName = `${contestName}: ${playerName(player)}`;
-      if (entry?.status === ContestEntryStatus.SUBMITTED) {
+      if (entry?.events.find((entryEvent) => entryEvent.sportEventId === sportEventId)?.status === ContestEntryStatus.SUBMITTED) {
         this.report({ sportLeague: sportLeagueName, subject: LoadSubject.ENTRY, action: LoadAction.SKIP, name: rowName, detail: null });
         continue;
       }
@@ -275,11 +275,11 @@ class ParticipantLoader {
       if (!this.apply || contestId === null) continue;
       const playerClient = await this.playerClient(player);
       const entryId = entry?.id ?? (await must(enterContest({ client: playerClient, path: { contestId } }), `${playerName(player)} enters ${contestName}`)).entry.id;
-      const state = await must(getSelectionState({ client: playerClient, path: { contestId }, query: { entryId } }), `Read ${playerName(player)}'s picks in ${contestName}`);
+      const state = await must(getSelectionState({ client: playerClient, path: { contestId }, query: { entryId, sportEventId } }), `Read ${playerName(player)}'s picks in ${contestName}`);
       for (const participantId of choosePicks(state, index)) {
         await must(submitContestSelection({ client: playerClient, path: { contestId }, body: { entryId, participantId } }), `${playerName(player)} picks in ${contestName}`);
       }
-      await must(submitContestEntry({ client: playerClient, path: { contestId, entryId } }), `${playerName(player)} submits in ${contestName}`);
+      await must(submitContestEntry({ client: playerClient, path: { contestId, entryId, sportEventId } }), `${playerName(player)} submits in ${contestName}`);
     }
   }
 }

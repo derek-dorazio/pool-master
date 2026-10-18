@@ -113,7 +113,7 @@ describe('SDK Functional: test participants', () => {
     for (const contest of contests) {
       const { entries } = expectDefined((await listContestEntries({ client: a, path: { contestId: contest.id } })).data);
       expect(entries).toHaveLength(players.length);
-      expect(entries.every((entry) => entry.status === ContestEntryStatus.SUBMITTED && entry.picksCount > 0)).toBe(true);
+      expect(entries.every((entry) => entry.events.every((entryEvent) => entryEvent.status === ContestEntryStatus.SUBMITTED) && entry.picksCount > 0)).toBe(true);
     }
 
     const again = await loadTestParticipants(file, { ...options, mode: LoadMode.APPLY });
