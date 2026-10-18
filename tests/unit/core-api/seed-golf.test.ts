@@ -344,6 +344,10 @@ describe('basketball-2026-ncaa-tournaments-test.json', () => {
     expect(women.field.filter((entry) => entry.isPlayInPlace).map((entry) => [entry.seed, entry.playInWinner])).toEqual([
       [10, 'ncaaw-virginia-cavaliers'], [11, 'ncaaw-nebraska-cornhuskers'], [16, 'ncaaw-southern-jaguars'], [16, 'ncaaw-missouri-state-lady-bears'],
     ]);
+    for (const tournament of [men, women]) {
+      const fieldKeys = new Set(tournament.field.map((entry) => entry.player));
+      expect(tournament.field.filter((entry) => entry.playInWinner !== undefined && fieldKeys.has(entry.playInWinner))).toEqual([]);
+    }
   });
 
   it('ends with Michigan beating UConn 69-63 for the men\'s title and UCLA beating South Carolina 79-51 for the women\'s', () => {
