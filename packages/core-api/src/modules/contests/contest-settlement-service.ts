@@ -22,6 +22,7 @@ import {
   toParticipantScores,
   type ContestLeaderboardReadDeps,
 } from './contest-leaderboard-reads';
+import { FINISHED_EVENT_STATUSES } from './entry-window';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
@@ -47,13 +48,12 @@ const NOT_SETTLED: readonly ContestStatus[] = [ContestStatus.COMPLETED, ContestS
 /** Every status settlement may complete a contest from. */
 const SETTLEABLE = Object.values(ContestStatus).filter((status) => !NOT_SETTLED.includes(status));
 
-/**
- * The event statuses that end an event for its contests (#743). A CANCELLED event counts as
- * settled with no result for anyone: it writes no standings and adds nothing to any total, so a
- * contest whose events are each completed or cancelled settles on the completed ones. A contest
- * whose every event is cancelled completes with no standings.
+/*
+ * A CANCELLED event counts as settled with no result for anyone (#743): it writes no standings
+ * and adds nothing to any total, so a contest whose events are each completed or cancelled
+ * (`FINISHED_EVENT_STATUSES`) settles on the completed ones. A contest whose every event is
+ * cancelled completes with no standings.
  */
-const FINISHED_EVENT_STATUSES: readonly SportEventStatus[] = [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED];
 
 export interface ContestSettlementSummary {
   sportEventId: string;
@@ -78,7 +78,7 @@ export class ContestSettlementService {
   }
 
   /** Settles the contests of a finished event: one that completed, or one that was cancelled. */
-  async settleCompletedSportEvent(
+  async settleFinishedSportEvent(
     sportEventId: string,
     input?: { completedAt?: Date },
   ): Promise<ContestSettlementSummary> {

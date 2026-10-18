@@ -39,8 +39,8 @@ import {
 } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
-export interface CompletedSportEventSettlement {
-  settleCompletedSportEvent(
+export interface FinishedSportEventSettlement {
+  settleFinishedSportEvent(
     sportEventId: string,
     input?: { completedAt?: Date },
   ): Promise<unknown>;
@@ -107,7 +107,7 @@ export class EventLifecycleService {
     private readonly logger?: FastifyBaseLogger,
     private readonly mailDelivery?: MailDeliveryProvider,
     private readonly appBaseUrl = 'http://localhost:5173',
-    private readonly contestSettlement?: CompletedSportEventSettlement,
+    private readonly contestSettlement?: FinishedSportEventSettlement,
   ) {}
 
   async applySportEventStatusTransition(
@@ -166,8 +166,11 @@ export class EventLifecycleService {
       return;
     }
 
-    await this.contestSettlement.settleCompletedSportEvent(sportEvent.id, {
-      completedAt: sportEvent.endDate ?? sportEvent.startDate,
+    // A cancelled event has no end date of its own, and its start may still be ahead, so its
+    // contests settle at the cancellation.
+    const cancelledAt = sportEvent.status === SportEventStatus.CANCELLED ? new Date() : undefined;
+    await this.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
+      completedAt: sportEvent.endDate ?? cancelledAt ?? sportEvent.startDate,
     });
   }
 

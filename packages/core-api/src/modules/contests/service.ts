@@ -506,6 +506,9 @@ export class ContestService {
         for (const standing of standings) {
           frozenCountingPickLimits.set(standing.contestEntryId, standing.countingPickLimit);
         }
+      } else if (events.every((event) => event.status === SportEventStatus.CANCELLED)) {
+        // Every event was cancelled (#743): the contest completed with no standings by design.
+        this.logger.debug({ contestId }, 'completed contest had every event cancelled; leaderboard lists entries unscored');
       } else {
         this.logger.warn({ contestId }, 'completed contest has no settled standings; leaderboard computed live');
       }

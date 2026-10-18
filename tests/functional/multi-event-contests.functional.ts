@@ -240,7 +240,7 @@ async function buildTwoTournamentContest(tag: string) {
     displayPosition: entry.displayPosition,
     events: Object.fromEntries(entry.events.map((event) => [event.sportEventId, [event.totalScore, event.displayPosition]])),
   }]));
-  return { open, classic, contestId, member, commissionerEntryId, memberEntryId, playTournament, standingsOf };
+  return { a, open, classic, contestId, member, commissionerEntryId, memberEntryId, playTournament, standingsOf };
 }
 
 describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
@@ -309,5 +309,19 @@ describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
       [commissionerEntryId]: { totalScore: -3, displayPosition: '1', events: { [open.eventId]: [-3, '1'] } },
       [memberEntryId]: { totalScore: 0, displayPosition: '2', events: { [open.eventId]: [0, '2'] } },
     });
+  }, 60_000);
+
+  it('completes a contest whose every tournament is called off as Final with no standings, its leaderboard listing each entry unscored', async () => {
+    const { a, open, classic, contestId, member, commissionerEntryId, memberEntryId } = await buildTwoTournamentContest(' all cancelled');
+
+    for (const eventId of [open.eventId, classic.eventId]) {
+      expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'CANCELLED' } })).data?.event.status).toBe('CANCELLED');
+    }
+
+    expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
+    expect(await getFunctionalPrisma().contestEntryStanding.count({ where: { contestId } })).toBe(0);
+    const board = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
+    expect(Object.fromEntries(board.entries.map((entry) => [entry.entryId, [entry.totalScore, entry.displayPosition, entry.events]])))
+      .toEqual({ [commissionerEntryId]: [null, null, []], [memberEntryId]: [null, null, []] });
   }, 60_000);
 });
