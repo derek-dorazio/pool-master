@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ListOrdered, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
+import { ListOrdered, Network, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -89,6 +89,10 @@ const FORMAT_CHOICES: Record<CreatableSelectionType, { describe: (participant: S
   [SelectionType.RANDOM_DRAW]: {
     icon: Shuffle,
     describe: ({ many }) => `A sweepstake: nobody picks. Once entries are in, you run the draw and each entry is dealt ${many} at random.`,
+  },
+  [SelectionType.BRACKET]: {
+    icon: Network,
+    describe: () => 'Fill in the whole bracket before it starts: pick the winner of every game, all the way to the final.',
   },
 };
 
@@ -588,6 +592,7 @@ export function CreateContestPage() {
         {scoringSettingsUi.Fields ? (
           <scoringSettingsUi.Fields
             onChange={(next) => setFormValues({ ...next, selectedTemplateId: '' })}
+            selectionType={selectionType}
             values={values}
             vocabulary={sportDefinition.vocabulary}
           />

@@ -31,7 +31,7 @@ export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100).describe('Contest name shown to commissioners and members.'),
   sportEventIds: z.array(z.string().uuid()).min(1).describe('The events the contest covers (#713): one for a golf or race contest, several for a majors pool or a season. All from one sport league, each released, with its field loaded and not yet started. The contest keeps them in start-date order, whatever order they are sent in.'),
   contestFormat: z.nativeEnum(ContestFormat).describe(
-    'ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). It must be the format the selection type plays (PICK_EM is PREDICTION, every other type ROSTER) and one the event\'s tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise.',
+    'ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). It must be the format the selection type plays (PICK_EM and BRACKET are PREDICTION, every other type ROSTER) and one the event\'s tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise.',
   ),
   selectionType: z.nativeEnum(SelectionType).describe(
     'How an entry picks: the selection types with typed rules. It must match the template\'s selection type when a template is named, and the configuration\'s.',
@@ -53,7 +53,7 @@ export type UpdateContestRequest = z.infer<typeof UpdateContestRequestSchema>;
 
 export const UpdateContestEntryRequestSchema = z.object({
   name: z.string().trim().min(1).max(100).optional().describe('Unique entry name shown anywhere the team entry is listed.'),
-  tiebreakerValue: z.number().int().nullable().optional().describe('Optional tiebreaker prediction saved on the contest entry.'),
+  tiebreakerValue: z.number().int().nullable().optional().describe('Optional tiebreaker prediction saved on the contest entry. Refused with 400 CONTEST_FORMAT_MISMATCH on a prediction contest, whose tiebreaker is saved with its game picks (#721).'),
 }).refine((value) => value.name !== undefined || value.tiebreakerValue !== undefined, {
   message: 'At least one contest entry field must be provided.',
 }).describe('Request payload for updating a contest entry while the contest is still joinable.');

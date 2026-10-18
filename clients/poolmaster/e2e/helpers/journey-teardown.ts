@@ -31,7 +31,7 @@ export type JourneyUser = {
 
 /**
  * The sports a journey builds its catalog in: the golden journey's golf, the racing journey's
- * horse racing and the knockout journey's basketball.
+ * horse racing, and the basketball of the knockout and bracket journeys.
  */
 export type JourneySport = 'GOLF' | 'HORSE_RACING' | 'BASKETBALL';
 

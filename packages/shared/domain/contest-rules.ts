@@ -17,6 +17,8 @@ import { ContestScoringSettingsSchema } from './contest-scoring';
  *
  * - **Pick'em:** a prediction contest (#716). The entry picks the winner of every game of each
  *   of the contest's events; `mode` says whether it also ranks them by confidence.
+ * - **Bracket:** a prediction contest on one knockout event (#721). The entry picks the winner of
+ *   every game before the event starts, and a correct pick scores its round's value.
  *
  * In each roster type, the best `countedScores` golfer scores count toward the entry's total.
  */
@@ -61,12 +63,18 @@ export const PickEmContestRulesSchema = z.object({
 }).describe("Pick'em rules: pick the winner of every game of each event.");
 export type PickEmContestRules = z.infer<typeof PickEmContestRulesSchema>;
 
+export const BracketContestRulesSchema = z.object({
+  selectionType: z.literal(SelectionType.BRACKET),
+}).describe('Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final.');
+export type BracketContestRules = z.infer<typeof BracketContestRulesSchema>;
+
 /** The rules a commissioner chooses, and a template presets. */
 export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
   TieredContestRulesSchema,
   BudgetContestRulesSchema,
   RandomDrawContestRulesSchema,
   PickEmContestRulesSchema,
+  BracketContestRulesSchema,
 ]);
 export type ContestRules = z.infer<typeof ContestRulesSchema>;
 
@@ -82,6 +90,7 @@ export const ContestSelectionConfigSchema = z.discriminatedUnion('selectionType'
   BudgetContestConfigSchema,
   RandomDrawContestRulesSchema,
   PickEmContestRulesSchema,
+  BracketContestRulesSchema,
 ]);
 export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema>;
 
@@ -103,6 +112,7 @@ export const ContestRulesWithEntryLimitSchema = z.discriminatedUnion('selectionT
   BudgetContestRulesSchema.extend(withEntryLimit),
   RandomDrawContestRulesSchema.extend(withEntryLimit),
   PickEmContestRulesSchema.extend(withEntryLimit),
+  BracketContestRulesSchema.extend(withEntryLimit),
 ]);
 export type ContestRulesWithEntryLimit = z.infer<typeof ContestRulesWithEntryLimitSchema>;
 

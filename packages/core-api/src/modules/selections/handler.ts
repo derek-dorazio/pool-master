@@ -120,6 +120,7 @@ export function createSelectionHandlers(service: SelectionService, predictions: 
     const view = await predictions.saveGamePicks({
       ...gamePicksInput(request),
       picks: toGamePickWrites(request.body),
+      tiebreakerValue: request.body.tiebreakerValue,
     });
     return toGamePicksResponse(view);
   }

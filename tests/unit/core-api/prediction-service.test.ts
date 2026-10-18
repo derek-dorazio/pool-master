@@ -4,34 +4,25 @@
  * stored picks and the week's status rather than the calls that wrote them.
  */
 import { expect } from '@jest/globals';
-import type {
-  ContestEntryMatchPredictionRepository,
-  ContestEntryMatchPredictionWrite,
-  ParticipantRepository,
-  SportEventMatchRepository,
-  SportEventParticipantRepository,
-} from '@poolmaster/shared/db';
+import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
 import {
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
   MatchStatus,
-  ParticipantStatus,
   PickEmMode,
   SelectionType,
   SportEventStatus,
   contestEntryEventStatus,
   type ContestEntry,
-  type ContestEntryMatchPrediction,
-  type Participant,
   type SportEvent,
   type SportEventMatch,
-  type SportEventParticipant,
 } from '@poolmaster/shared/domain';
 import { PredictionService } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
+import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 
 const HOUR = 60 * 60 * 1000;
 /** The test's clock starts two hours before the week's first kickoff. */
@@ -39,124 +30,9 @@ const NOW = new Date('2026-09-10T20:00:00.000Z');
 const at = (offsetHours: number) => new Date(NOW.getTime() + offsetHours * HOUR);
 const T0 = new Date('2026-09-01T00:00:00.000Z');
 
-/** A week of games, the field playing them and the entry's picks, kept as rows. */
-class InMemoryWeek {
-  readonly matches = new Map<string, SportEventMatch>();
-  readonly field = new Map<string, SportEventParticipant>();
-  readonly participants = new Map<string, Participant>();
-  readonly predictions = new Map<string, ContestEntryMatchPrediction>();
-  private sequence = 0;
-
-  constructor(private readonly world: InMemoryContestWorld) {}
-
-  addTeam(sportEventId: string, name: string): SportEventParticipant {
-    this.sequence += 1;
-    const participant = {
-      id: `participant-${this.sequence}`,
-      sportId: 'sport-nfl',
-      name,
-      participantType: 'TEAM',
-      status: ParticipantStatus.ACTIVE,
-      externalIds: {},
-      createdAt: T0,
-      updatedAt: T0,
-    } as Participant;
-    this.participants.set(participant.id, participant);
-    const row: SportEventParticipant = {
-      id: `field-${this.sequence}`,
-      sportEventId,
-      participantId: participant.id,
-      isActive: true,
-      isPlayInPlace: false,
-      metadata: {},
-      createdAt: T0,
-      updatedAt: T0,
-    };
-    this.field.set(row.id, row);
-    return row;
-  }
-
-  addGame(sportEventId: string, matchNumber: number, kickoff: Date | null, status: MatchStatus = MatchStatus.SCHEDULED): SportEventMatch {
-    const home = this.addTeam(sportEventId, `Home ${matchNumber}`);
-    const away = this.addTeam(sportEventId, `Away ${matchNumber}`);
-    const match: SportEventMatch = {
-      id: `game-${matchNumber}`,
-      sportEventId,
-      roundNumber: 1,
-      matchNumber,
-      homeSportEventParticipantId: home.id,
-      awaySportEventParticipantId: away.id,
-      isNeutralSite: false,
-      scheduledDate: kickoff,
-      status,
-      winnerSide: null,
-      homeScore: null,
-      awayScore: null,
-      advancesToMatchId: null,
-      advancesToSide: null,
-      regionLabel: null,
-      createdAt: T0,
-      updatedAt: T0,
-    };
-    this.matches.set(match.id, match);
-    return match;
-  }
-
-  matchRepo(): Pick<SportEventMatchRepository, 'findBySportEvent'> {
-    return {
-      findBySportEvent: async (sportEventId) => [...this.matches.values()]
-        .filter((match) => match.sportEventId === sportEventId)
-        .sort((left, right) => left.matchNumber - right.matchNumber),
-    };
-  }
-
-  fieldRepo(): Pick<SportEventParticipantRepository, 'findBySportEvent'> {
-    return {
-      findBySportEvent: async (sportEventId) =>
-        [...this.field.values()].filter((row) => row.sportEventId === sportEventId),
-    };
-  }
-
-  participantRepo(): Pick<ParticipantRepository, 'findByIds'> {
-    return { findByIds: async (ids) => ids.flatMap((id) => this.participants.get(id) ?? []) };
-  }
-
-  /** Mirrors the adapter: all or none, unique per entry and game, confidence at least 1, the week's status stamped. */
-  predictionRepo(): ContestEntryMatchPredictionRepository {
-    const key = (entryId: string, matchId: string) => `${entryId}:${matchId}`;
-    return {
-      findByEntryAndEvent: async (contestEntryId, sportEventId) => [...this.predictions.values()]
-        .filter((row) => row.contestEntryId === contestEntryId && this.matches.get(row.sportEventMatchId)?.sportEventId === sportEventId)
-        .sort((left, right) =>
-          expectDefined(this.matches.get(left.sportEventMatchId)).matchNumber
-          - expectDefined(this.matches.get(right.sportEventMatchId)).matchNumber),
-      save: async ({ contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, at: when }) => {
-        if (saves.some((save) => save.confidence !== null && save.confidence < 1)) {
-          throw new Error('violates check constraint contest_entry_match_predictions_confidence_check');
-        }
-        for (const matchId of clearedMatchIds) this.predictions.delete(key(contestEntryId, matchId));
-        for (const save of saves) {
-          const existing = this.predictions.get(key(contestEntryId, save.sportEventMatchId));
-          this.predictions.set(key(contestEntryId, save.sportEventMatchId), {
-            id: existing?.id ?? `prediction-${contestEntryId}-${save.sportEventMatchId}`,
-            contestEntryId,
-            ...save,
-            pickedAt: when,
-            createdAt: existing?.createdAt ?? when,
-            updatedAt: when,
-          });
-        }
-        if (eventStatus !== null) {
-          await this.world.entryRepo().setEventStatus(contestEntryId, sportEventId, eventStatus, when);
-        }
-      },
-    };
-  }
-}
-
 function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; selectionType?: SelectionType } = {}) {
   const world = new InMemoryContestWorld();
-  const week = new InMemoryWeek(world);
+  const week = new InMemoryGamePicks(world);
   const league = world.addLeague();
   const alice = world.addUser({ email: 'alice@example.com' });
   const bob = world.addUser({ email: 'bob@example.com' });
@@ -196,6 +72,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
   const service = new PredictionService({
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
+    scoringRules: world.scoringRuleRepo(),
     entries: world.entryRepo(),
     squadMemberships: world.squadMembershipRepo(),
     sportEvents: world.sportEventRepo(),
@@ -358,6 +235,15 @@ describe('PredictionService.saveGamePicks — what a save is refused for', () =>
       context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, confidence)] }),
       'PREDICTION_CONFIDENCE_INVALID', 409,
     );
+  });
+
+  it('refuses a tiebreaker sent with pick\'em picks with 400 PREDICTION_TIEBREAKER_NOT_TAKEN, saving none of the picks', async () => {
+    const context = setup();
+    await expectRefused(
+      context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, 1)], tiebreakerValue: 45 }),
+      'PREDICTION_TIEBREAKER_NOT_TAKEN', 400,
+    );
+    expect(context.storedPicks()).toEqual([]);
   });
 
   it('refuses any confidence value in a straight-up pool with 409 PREDICTION_CONFIDENCE_INVALID', async () => {
@@ -613,6 +499,19 @@ describe('PredictionService.getGamePicks — what each viewer sees', () => {
     expect(other.canSubmit).toBe(false);
     expect(other.games.map((game) => game.pick)).toEqual([null, null, null]);
     expect(other.pickedCount).toBe(0);
+  });
+
+  it('reads a pick\'em week as PICK_EM in its mode, each game offering its own two teams, with no tiebreaker and no score yet', async () => {
+    const context = setup();
+    await submitFullWeek(context);
+
+    const view = await context.service.getGamePicks(context.input);
+
+    expect(view).toMatchObject({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, tiebreakerValue: null, points: null, maxPossiblePoints: null });
+    const thursday = expectDefined(view.games.find((game) => game.match.id === context.games.thursday.id));
+    expect(thursday.predictedHome).toEqual(thursday.home);
+    expect(thursday.predictedAway).toEqual(thursday.away);
+    expect(thursday.pickScore).toBeNull();
   });
 
   it('reveals to another team only the pick of a game that has kicked off once the contest is live', async () => {

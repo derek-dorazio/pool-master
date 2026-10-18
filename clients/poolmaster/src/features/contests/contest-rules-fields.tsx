@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 import { PickEmMode, RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, type SportNoun } from '@poolmaster/shared/domain';
 import { Checkbox, FormField, formatDollars, Input, SegmentedControl } from '@/features/shared/ui';
-import { describePickEmMode, formatPickEmModeName } from './contest-rules';
+import { describeBracketRules, describePickEmMode, formatPickEmModeName } from './contest-rules';
 import { defaultCountedScoresFor, perEntryLabel, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
 function TieredRulesInputs({
@@ -204,13 +204,17 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
   [SelectionType.PICK_EM]: ({ onChange, values }: RulesInputsProps) => (
     <PickEmRulesInputs onChange={onChange} values={values} />
   ),
+  // A bracket has no rules of its own (#721): every game is picked, and the round points below say what each is worth.
+  [SelectionType.BRACKET]: () => (
+    <p className="text-sm text-muted-foreground" data-testid="contest-bracket-rules">{describeBracketRules()}</p>
+  ),
 };
 
 /**
  * The rules inputs for a contest's format: picks per tier and scores that count for a tiered
  * contest, golfers per entry and scores that count under the event's salary cap for a budget
  * one, golfers dealt per entry and scores that count for a random draw, the mode for a pick'em
- * contest, then entries per member with No limit. Create and Edit contest both use it, so a new format
+ * contest, nothing more for a bracket, then entries per member with No limit. Create and Edit contest both use it, so a new format
  * adds its fields here once.
  */
 export function ContestRulesFields({

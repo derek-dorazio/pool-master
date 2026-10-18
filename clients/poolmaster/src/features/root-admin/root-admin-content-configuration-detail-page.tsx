@@ -25,7 +25,7 @@ import {
   type ContestConfigTemplate,
   updateTemplateRules,
 } from './content-configuration-utils';
-import { describePickEmMode } from '@/features/contests/contest-rules';
+import { describeBracketRules, describePickEmMode } from '@/features/contests/contest-rules';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -274,6 +274,10 @@ export function RootAdminContentConfigurationDetailPage() {
               ) : draft.configuration.selectionType === SelectionType.PICK_EM ? (
                 <p className="mt-4 text-sm text-muted-foreground" data-testid="root-admin-content-config-pick-em-rules">
                   {describePickEmMode(draft.configuration.mode)}
+                </p>
+              ) : draft.configuration.selectionType === SelectionType.BRACKET ? (
+                <p className="mt-4 text-sm text-muted-foreground" data-testid="root-admin-content-config-bracket-rules">
+                  {describeBracketRules()}
                 </p>
               ) : null}
           </FormEditorSection>

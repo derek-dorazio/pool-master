@@ -5,6 +5,21 @@ import type {
 } from '@poolmaster/shared/db';
 import { ContestEntryStatus, type ContestEntryMatchPrediction } from '@poolmaster/shared/domain';
 
+type PredictionRow = Awaited<ReturnType<PrismaClient['contestEntryMatchPrediction']['findMany']>>[number];
+
+function toPrediction(row: PredictionRow): ContestEntryMatchPrediction {
+  return {
+    id: row.id,
+    contestEntryId: row.contestEntryId,
+    sportEventMatchId: row.sportEventMatchId,
+    sportEventParticipantId: row.sportEventParticipantId,
+    confidence: row.confidence,
+    pickedAt: row.pickedAt,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
 /** A prediction contest entry's game picks (#716). */
 export class PrismaContestEntryMatchPredictionRepository implements ContestEntryMatchPredictionRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -14,20 +29,22 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
       where: { contestEntryId, sportEventMatch: { sportEventId } },
       orderBy: { sportEventMatch: { matchNumber: 'asc' } },
     });
-    return rows.map((row) => ({
-      id: row.id,
-      contestEntryId: row.contestEntryId,
-      sportEventMatchId: row.sportEventMatchId,
-      sportEventParticipantId: row.sportEventParticipantId,
-      confidence: row.confidence,
-      pickedAt: row.pickedAt,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }));
+    return rows.map(toPrediction);
+  }
+
+  async findByEntriesAndEvent(contestEntryIds: readonly string[], sportEventId: string): Promise<ContestEntryMatchPrediction[]> {
+    if (contestEntryIds.length === 0) {
+      return [];
+    }
+    const rows = await this.prisma.contestEntryMatchPrediction.findMany({
+      where: { contestEntryId: { in: [...contestEntryIds] }, sportEventMatch: { sportEventId } },
+      orderBy: [{ sportEventMatch: { matchNumber: 'asc' } }, { contestEntryId: 'asc' }],
+    });
+    return rows.map(toPrediction);
   }
 
   async save(change: ContestEntryMatchPredictionSave): Promise<void> {
-    const { contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, at } = change;
+    const { contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at } = change;
     await this.prisma.$transaction(async (tx) => {
       if (clearedMatchIds.length > 0) {
         await tx.contestEntryMatchPrediction.deleteMany({
@@ -40,6 +57,9 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
           create: { contestEntryId, sportEventMatchId, sportEventParticipantId, confidence, pickedAt: at },
           update: { sportEventParticipantId, confidence, pickedAt: at },
         });
+      }
+      if (tiebreakerValue !== undefined) {
+        await tx.contestEntry.update({ where: { id: contestEntryId }, data: { tiebreakerValue } });
       }
       if (eventStatus !== null) {
         const submittedAt = eventStatus === ContestEntryStatus.SUBMITTED ? at : null;

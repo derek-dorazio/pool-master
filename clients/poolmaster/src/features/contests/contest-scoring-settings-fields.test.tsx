@@ -15,6 +15,7 @@ describe('FinishPositionPointsFields', () => {
     render(
       <FinishPositionPointsFields
         onChange={vi.fn()}
+        selectionType="TIERED"
         values={values}
         vocabulary={getSportDefinition(Sport.HORSE_RACING).vocabulary}
       />,
@@ -33,6 +34,7 @@ describe('FinishPositionPointsFields', () => {
     render(
       <FinishPositionPointsFields
         onChange={vi.fn()}
+        selectionType="TIERED"
         values={values}
         vocabulary={vocabulary}
       />,
@@ -49,16 +51,26 @@ describe('KnockoutRoundPointsFields', () => {
 
   it('asks for a win\'s points in each round and shows the multiplier only with the upset bonus on', () => {
     const { rerender } = render(
-      <KnockoutRoundPointsFields onChange={vi.fn()} values={{ ...EMPTY_SCORING_SETTINGS_VALUES, roundValues: '1, 2' }} vocabulary={vocabulary} />,
+      <KnockoutRoundPointsFields onChange={vi.fn()} selectionType="TIERED" values={{ ...EMPTY_SCORING_SETTINGS_VALUES, roundValues: '1, 2' }} vocabulary={vocabulary} />,
     );
 
     expect(screen.getByTestId('contest-scoring-round-values')).toHaveValue('1, 2');
     expect(screen.queryByTestId('contest-scoring-upset-bonus-multiplier')).not.toBeInTheDocument();
 
     rerender(
-      <KnockoutRoundPointsFields onChange={vi.fn()} values={{ ...EMPTY_SCORING_SETTINGS_VALUES, upsetBonusRule: 'SEED_DIFFERENCE' }} vocabulary={vocabulary} />,
+      <KnockoutRoundPointsFields onChange={vi.fn()} selectionType="TIERED" values={{ ...EMPTY_SCORING_SETTINGS_VALUES, upsetBonusRule: 'SEED_DIFFERENCE' }} vocabulary={vocabulary} />,
     );
     expect(screen.getByTestId('contest-scoring-upset-bonus-multiplier')).toHaveValue(1);
+  });
+
+  it('asks a bracket for the points of a correct pick in each round, since its picks score rather than its teams', () => {
+    render(
+      <KnockoutRoundPointsFields onChange={vi.fn()} selectionType="BRACKET" values={EMPTY_SCORING_SETTINGS_VALUES} vocabulary={vocabulary} />,
+    );
+
+    expect(screen.getByText('Points for a correct pick')).toBeInTheDocument();
+    expect(screen.getByText('What a correct pick scores in each round, first round first: one value for every round of the bracket.')).toBeInTheDocument();
+    expect(screen.queryByText('Points for a win')).not.toBeInTheDocument();
   });
 
   /** The fields in a form that keeps their values, as the create page does, showing what it would save. */
@@ -66,7 +78,7 @@ describe('KnockoutRoundPointsFields', () => {
     const [current, setCurrent] = useState(initial);
     return (
       <>
-        <KnockoutRoundPointsFields onChange={(patch) => setCurrent((previous) => ({ ...previous, ...patch }))} values={current} vocabulary={vocabulary} />
+        <KnockoutRoundPointsFields onChange={(patch) => setCurrent((previous) => ({ ...previous, ...patch }))} selectionType="TIERED" values={current} vocabulary={vocabulary} />
         <output data-testid="saved-scoring">{JSON.stringify(SCORING_SETTINGS_UI.KNOCKOUT_ROUND_POINTS.parse(current).scoring ?? null)}</output>
       </>
     );

@@ -17,6 +17,7 @@ import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
   CONTEST_BUDGET_SALARY_CAP_MISMATCH,
   CONTEST_DRAW_FIELD_OUT_OF_RANGE,
+  CONTEST_BRACKET_SINGLE_EVENT,
   CONTEST_DRAW_SINGLE_EVENT,
   CONTEST_EVENTS_LEAGUE_MISMATCH,
   CONTEST_EVENTS_LOCKED,
@@ -27,6 +28,7 @@ import {
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_EVENT_ALREADY_STARTED,
   CONTEST_EVENT_GAME_UNDECIDED,
+  CONTEST_EVENT_NOT_A_BRACKET,
   CONTEST_EVENT_HAS_NO_GAMES,
   CONTEST_NOT_DRAFT,
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
@@ -97,6 +99,8 @@ export interface ContestCreateSportEventReader {
   countGames(sportEventId: string): Promise<number>;
   /** How many of those games still have a team to be decided. */
   countUndecidedGames(sportEventId: string): Promise<number>;
+  /** Why the event's games cannot be filled in as a bracket, or null when they can (#721). */
+  findBracketProblem(sportEventId: string): Promise<string | null>;
 }
 
 function createNoopLogger(): LifecycleLogger {
@@ -537,13 +541,23 @@ export class ContestManagementService {
     return first;
   }
 
-  /** A random draw deals one event's field (#601), so its contest covers exactly one (#713). */
+  /**
+   * A random draw deals one event's field (#601), so its contest covers exactly one (#713); so does
+   * a bracket, which is one knockout picked to its final (#721).
+   */
   private assertEventCountFitsSelectionType(selectionType: SelectionType, eventCount: number): void {
     if (selectionType === SelectionType.RANDOM_DRAW && eventCount > 1) {
       this.logger.warn({ selectionType, eventCount }, 'contest management events refused: a random draw covers one event');
       throw new ContestManagementError(
         'A random-draw contest covers one event: the draw deals that event\'s field.',
         CONTEST_DRAW_SINGLE_EVENT,
+      );
+    }
+    if (selectionType === SelectionType.BRACKET && eventCount > 1) {
+      this.logger.warn({ selectionType, eventCount }, 'contest management events refused: a bracket covers one event');
+      throw new ContestManagementError(
+        'A bracket contest covers one event: its knockout, picked to the final.',
+        CONTEST_BRACKET_SINGLE_EVENT,
       );
     }
   }
@@ -691,7 +705,28 @@ export class ContestManagementService {
           configJson: { selectionType: rules.selectionType, mode: rules.mode },
           scoring,
         };
+      case SelectionType.BRACKET:
+        // A bracket entry picks every game to the final, so the games must fill in as a bracket (#721).
+        for (const each of sportEvents) {
+          await this.assertEventIsBracket(each.id);
+        }
+        return {
+          configJson: { selectionType: rules.selectionType },
+          scoring,
+        };
     }
+  }
+
+  private async assertEventIsBracket(sportEventId: string): Promise<void> {
+    const problem = await this.sportEventReader.findBracketProblem(sportEventId);
+    if (problem === null) {
+      return;
+    }
+    this.logger.warn({ sportEventId, problem }, 'contest management rules refused a bracket event whose games do not fill in as a bracket');
+    throw new ContestManagementError(
+      `A bracket contest's event must be a knockout every game of which can be picked: ${problem}.`,
+      CONTEST_EVENT_NOT_A_BRACKET,
+    );
   }
 
   private async assertEventHasGames(sportEventId: string): Promise<void> {

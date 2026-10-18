@@ -1,10 +1,10 @@
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
 import { Link } from 'react-router-dom';
 import type { ContestDto } from '@/lib/api';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
 import { describeMyEntry, ENTRY_STATE_NOTE, type MyEntriesState } from '@/features/contests/my-contest-entry';
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
-import { useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
+import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
 import {
   buildLeagueContestLeaderboardPath,
@@ -15,8 +15,13 @@ import { Alert, LinkButton } from '@/features/shared/ui';
 
 /** The team's best place on a live contest's leaderboard; the server ranks best first. */
 function LiveRank({ contest, teamId }: { contest: ContestDto; teamId: string }) {
-  const leaderboardQuery = useContestLeaderboardQuery(contest.id, contest.status);
-  const position = leaderboardQuery.data?.entries.find((entry) => entry.squadId === teamId)?.displayPosition;
+  // A bracket contest's standings are their own read (#721).
+  const isBracket = contest.selectionType === SelectionType.BRACKET;
+  const rosterQuery = useContestLeaderboardQuery(contest.id, contest.status, { enabled: !isBracket });
+  const bracketQuery = useBracketLeaderboardQuery(contest.id, contest.status, { enabled: isBracket });
+  const leaderboardQuery = isBracket ? bracketQuery : rosterQuery;
+  const position = (isBracket ? bracketQuery.data?.entries : rosterQuery.data?.entries)
+    ?.find((entry) => entry.squadId === teamId)?.displayPosition;
 
   return (
     <span className="text-sm text-muted-foreground" data-testid={`my-team-entry-rank-${contest.id}`}>

@@ -1,4 +1,10 @@
-import { CONTEST_BUDGET_UNFILLABLE, CONTEST_DRAW_FIELD_OUT_OF_RANGE, CONTEST_EVENT_NOT_PRICED } from '@poolmaster/shared/dto';
+import {
+  CONTEST_BRACKET_SINGLE_EVENT,
+  CONTEST_BUDGET_UNFILLABLE,
+  CONTEST_DRAW_FIELD_OUT_OF_RANGE,
+  CONTEST_EVENT_NOT_A_BRACKET,
+  CONTEST_EVENT_NOT_PRICED,
+} from '@poolmaster/shared/dto';
 import type { ErrorCodeMessages } from '@/lib/errors';
 
 /**
@@ -17,4 +23,7 @@ export const CONTEST_RELEASE_CODE_MESSAGES: ErrorCodeMessages = {
     'Even the cheapest picks for every place cost more than the salary cap, so nobody could enter. Pick fewer per entry.',
   [CONTEST_DRAW_FIELD_OUT_OF_RANGE]:
     'More scores count than the draw deals each entry. Lower Scores that count, or deal more per entry.',
+  [CONTEST_BRACKET_SINGLE_EVENT]: 'A bracket contest covers one tournament, so it can’t take another event.',
+  [CONTEST_EVENT_NOT_A_BRACKET]:
+    'This event’s games can’t be filled in as a bracket yet: every first-round team must be set, and every game must lead to one final.',
 };

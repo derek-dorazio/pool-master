@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ContestDto, ContestLeaderboardResponse } from '@/lib/api';
-import { buildTopStandings, countdownUntil, pickUpNextContest } from './league-home';
+import { buildBracketTopStandings, buildTopStandings, countdownUntil, pickUpNextContest } from './league-home';
+import { bracketLeaderboardFixture } from '@/features/contests/test/bracket-fixtures';
 
 type LeaderboardEntry = ContestLeaderboardResponse['entries'][number];
 
@@ -223,5 +224,17 @@ describe('buildTopStandings', () => {
 
     expect(result.rows).toHaveLength(3);
     expect(result.myRowBelow?.entryId).toBe('entry-4');
+  });
+});
+
+describe('buildBracketTopStandings', () => {
+  it('lists a bracket contest\'s entries in the server\'s order with their points, marking the viewer\'s group', () => {
+    const result = buildBracketTopStandings(bracketLeaderboardFixture(), 'squad-1');
+
+    expect(result.rows).toEqual([
+      { entryId: 'entry-2', isMine: false, name: 'Derek’s Great Golf Guys', position: '1', total: '12' },
+      { entryId: 'entry-1', isMine: true, name: 'Morgan’s Madness', position: '2', total: '8' },
+    ]);
+    expect(result.myRowBelow).toBeNull();
   });
 });

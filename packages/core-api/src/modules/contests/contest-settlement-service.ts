@@ -5,7 +5,12 @@ import type {
   ContestRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { ContestFormat, ContestStatus, SportEventStatus, type Contest } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, SelectionType, SportEventStatus, type Contest, type SportEvent } from '@poolmaster/shared/domain';
+import {
+  BracketScoringUnavailableError,
+  loadBracketStandings,
+  type BracketStandingsReadDeps,
+} from './bracket-standings';
 import {
   buildContestEntryStanding,
   rankContestEntryStandings,
@@ -20,7 +25,6 @@ import {
   loadContestScoringConfiguration,
   loadEventField,
   toParticipantScores,
-  type ContestLeaderboardReadDeps,
 } from './contest-leaderboard-reads';
 import { FINISHED_EVENT_STATUSES } from './entry-window';
 
@@ -62,7 +66,7 @@ export interface ContestSettlementSummary {
   standingsUpserted: number;
 }
 
-export interface ContestSettlementDeps extends ContestLeaderboardReadDeps {
+export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   sportEvents: SportEventRepository;
   contests: ContestRepository;
   standings: ContestEntryStandingRepository;
@@ -111,9 +115,18 @@ export class ContestSettlementService {
     let contestsCompleted = 0;
     let contestsSettled = 0;
     for (const contest of contests) {
+      if (contest.selectionType === SelectionType.BRACKET) {
+        const settled = await this.settleBracketContest(contest, sportEvent, completedAt);
+        if (settled) {
+          contestsSettled++;
+          standingsUpserted += settled.standingsUpserted;
+          if (settled.completed) contestsCompleted++;
+        }
+        continue;
+      }
       if (contest.contestFormat === ContestFormat.PREDICTION) {
-        // Game picks are scored against the games' results, which settlement does not do yet
-        // (#717); the contest stays ACTIVE with its picks kept until it can.
+        // Weekly game picks are scored against the games' results, which settlement does not do
+        // yet (#717); the contest stays ACTIVE with its picks kept until it can.
         this.logger.info({ contestId: contest.id, sportEventId }, 'Left a prediction contest unsettled: game picks are not scored yet');
         continue;
       }
@@ -208,6 +221,61 @@ export class ContestSettlementService {
       contestsCompleted,
       standingsUpserted,
     };
+  }
+
+  /**
+   * Settles a bracket contest (#721), which covers its one knockout event: each submitted entry's
+   * points and place, frozen as both its event standing and its contest standing, then the contest
+   * is COMPLETED. Answers what it wrote, or null when a bracket whose scoring rule is not knockout
+   * round points is skipped and logged, as a roster contest without a usable rule is. A cancelled
+   * event is its only event, so the bracket completes with no standings (#743).
+   */
+  private async settleBracketContest(
+    contest: Contest,
+    sportEvent: SportEvent,
+    completedAt: Date,
+  ): Promise<{ standingsUpserted: number; completed: boolean } | null> {
+    const sportEventId = sportEvent.id;
+    if (sportEvent.status === SportEventStatus.CANCELLED) {
+      const completed = await this.deps.contests.transitionStatus(contest.id, {
+        from: SETTLEABLE,
+        to: ContestStatus.COMPLETED,
+        endsAt: completedAt,
+      });
+      this.logger.info({ contestId: contest.id, sportEventId, completed }, 'Completed a bracket contest whose event was cancelled, with no standings');
+      return { standingsUpserted: 0, completed };
+    }
+    let standings: Awaited<ReturnType<typeof loadBracketStandings>>;
+    try {
+      standings = await loadBracketStandings(this.deps, contest.id, sportEvent);
+    } catch (error) {
+      if (!(error instanceof BracketScoringUnavailableError)) throw error;
+      this.logger.error({ contestId: contest.id, sportEventId, reason: error.reason }, 'Skipped bracket contest settlement because it cannot be scored');
+      return null;
+    }
+    for (const standing of standings.entries) {
+      const frozen = {
+        contestId: contest.id,
+        contestEntryId: standing.entry.id,
+        position: standing.position,
+        displayPosition: standing.displayPosition,
+        // A bracket counts every pick: the limit is its game count, and a pick is scored once decided.
+        countingPickLimit: standings.gameCount,
+        scoredPickCount: standing.score.decidedPickCount,
+        asOf: completedAt,
+        settledAt: completedAt,
+        totalScore: standing.score.points,
+      };
+      await this.deps.eventStandings.upsert({ ...frozen, sportEventId });
+      await this.deps.standings.upsert(frozen);
+    }
+    const completed = await this.deps.contests.transitionStatus(contest.id, {
+      from: SETTLEABLE,
+      to: ContestStatus.COMPLETED,
+      endsAt: completedAt,
+    });
+    this.logger.info({ contestId: contest.id, sportEventId, entryCount: standings.entries.length, completed }, 'Settled a bracket contest');
+    return { standingsUpserted: standings.entries.length, completed };
   }
 
   /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */

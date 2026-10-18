@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { SelectionType } from '@poolmaster/shared/domain';
 import {
+  coversOneEvent,
   currentContestEvent,
   entryEventStatus,
   firstContestEvent,
@@ -109,5 +111,15 @@ describe('hasSubmittedAnyEvent', () => {
 
   it('is false when every event is still a draft', () => {
     expect(hasSubmittedAnyEvent({ events: [{ sportEventId: 'week-1', status: 'DRAFT', submittedAt: null }] })).toBe(false);
+  });
+});
+
+describe('coversOneEvent', () => {
+  it('holds a random draw and a bracket to one event, so neither offers to add events, while the other types may cover several', () => {
+    expect(coversOneEvent(SelectionType.RANDOM_DRAW)).toBe(true);
+    expect(coversOneEvent(SelectionType.BRACKET)).toBe(true);
+    expect(coversOneEvent(SelectionType.TIERED)).toBe(false);
+    expect(coversOneEvent(SelectionType.BUDGET_PICK)).toBe(false);
+    expect(coversOneEvent(SelectionType.PICK_EM)).toBe(false);
   });
 });

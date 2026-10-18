@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ContestStatus } from '@poolmaster/shared/domain';
-import { getContestLeaderboard, type ContestLeaderboardResponse } from '@/lib/api';
+import { getBracketLeaderboard, getContestLeaderboard, type BracketLeaderboardResponse, type ContestLeaderboardResponse } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { CONTEST_POLL_INTERVAL_MS, shouldPollContestEntries } from './contest-status';
@@ -29,6 +29,30 @@ export function useContestLeaderboardQuery(
         throwApiError(response.error, 'Contest leaderboard response is missing data.');
       }
 
+      return response.data;
+    },
+    enabled: Boolean(contestId) && (options.enabled ?? true),
+    retry: false,
+    refetchInterval: shouldPollContestEntries(status) ? CONTEST_POLL_INTERVAL_MS : false,
+  });
+}
+
+/**
+ * A bracket contest's leaderboard (#721), on the same cadence as the roster board: a bracket's
+ * standings are their own read, since its entries are picks of games rather than a lineup.
+ */
+export function useBracketLeaderboardQuery(
+  contestId: string,
+  status: ContestStatus | null | undefined,
+  options: { enabled?: boolean } = {},
+) {
+  return useQuery({
+    queryKey: QueryKeys.contests.bracketLeaderboard(contestId),
+    queryFn: async (): Promise<BracketLeaderboardResponse> => {
+      const response = await getBracketLeaderboard({ path: { contestId } });
+      if (!response.data) {
+        throwApiError(response.error, 'Bracket leaderboard response is missing data.');
+      }
       return response.data;
     },
     enabled: Boolean(contestId) && (options.enabled ?? true),

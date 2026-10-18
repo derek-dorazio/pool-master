@@ -12,6 +12,7 @@ import {
   PrismaContestEntryRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
+  PrismaParticipantContestScoringRuleRepository,
   PrismaParticipantRepository,
   PrismaSportEventMatchRepository,
   PrismaSportEventParticipantRepository,
@@ -53,6 +54,7 @@ export function createPredictionService(prisma: PrismaClient, logger: FastifyBas
   return new PredictionService({
     contests: new PrismaContestRepository(prisma),
     configurations: new PrismaContestConfigurationRepository(prisma),
+    scoringRules: new PrismaParticipantContestScoringRuleRepository(prisma),
     entries: new PrismaContestEntryRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
     sportEvents: new PrismaSportEventRepository(prisma),

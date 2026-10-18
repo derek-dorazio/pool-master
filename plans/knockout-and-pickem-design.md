@@ -1005,6 +1005,17 @@ allows `PREDICTION` until #715 renames it. Settlement leaves prediction contests
 #717 scores them, the web create page does not offer pick'em until the week screen (#718), and
 submitting a week sends no email yet.
 
+*As built in #721 (full brackets):* `BRACKET` is a prediction selection type on one event whose
+games fill in as a bracket. Picks are `ContestEntryMatchPrediction` rows on the event's games, and
+the picking flow is pick'em's (`PredictionService`, with a bracket engine). A later game's pick is
+a team the entry picked to get there; in a reseeded round the entry's picked winners are paired by
+seed with the admin's own rule, so the pick is a slot and is correct when its team wins a game in
+that round, wherever the real reseeding put it. A stranded later pick is cleared in the same
+write. The tiebreaker is `ContestEntry.tiebreakerValue`, saved with the picks and required at
+submit. Max possible points is an upper bound: two teams still in can meet before the round the
+entry picked them to win. Brackets settle; second-chance brackets (`startsAtRound`) follow in the
+next PR of #721.
+
 **Q5.5 What does `ACTIVE` mean for a pick'em contest?** *Decided by Derek 2026-10-17:* every
 week is its own mini workflow. Its event is set up, released, picked and submitted, then goes
 live and settles. The contest keeps the same four statuses as every contest. It is `ACTIVE`

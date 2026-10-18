@@ -16,6 +16,7 @@ export const CONTEST_FORMAT_BY_SELECTION_TYPE = {
   [SelectionType.BUDGET_PICK]: ContestFormat.ROSTER,
   [SelectionType.RANDOM_DRAW]: ContestFormat.ROSTER,
   [SelectionType.PICK_EM]: ContestFormat.PREDICTION,
+  [SelectionType.BRACKET]: ContestFormat.PREDICTION,
 } as const satisfies Record<SelectionType, ContestFormat>;
 
 /** The selection types that pick field members. */

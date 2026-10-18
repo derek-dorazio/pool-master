@@ -1,5 +1,6 @@
 import {
   FinishPositionPointsSettingsSchema,
+  type SelectionType,
   KnockoutRoundPointsSettingsSchema,
   UpsetBonusRule,
   type ContestScoringSettings,
@@ -42,6 +43,8 @@ type ScoringSettingsResult =
 
 export type ScoringSettingsFieldsProps = {
   onChange: (next: Partial<ScoringSettingsValues>) => void;
+  /** How the contest's entries pick: a bracket's points are earned by its correct picks, not by the teams. */
+  selectionType: SelectionType;
   vocabulary: SportVocabulary;
   values: ScoringSettingsValues;
 };

@@ -144,6 +144,34 @@ describe('pick\'em rules', () => {
   });
 });
 
+describe('bracket rules', () => {
+  const TEAM = getSportDefinition(Sport.BASKETBALL).vocabulary.participant;
+
+  it('names a bracket contest Bracket and reads its rules as every game picked to the final before the first game', () => {
+    expect(formatSelectionTypeName(SelectionType.BRACKET)).toBe('Bracket');
+    expect(formatPresetLabel({ selectionType: SelectionType.BRACKET }, 0)).toBe('Bracket');
+    expect(formatContestRules({ selectionType: SelectionType.BRACKET }, 4, TEAM))
+      .toBe('Fill in the whole bracket before the first game: pick the winner of every game, all the way to the final.');
+  });
+
+  it('suggests a bracket name from the event', () => {
+    expect(suggestContestName('March Madness', SelectionType.BRACKET, null, 4)).toBe('March Madness Bracket');
+  });
+
+  it('turns the bracket fields into bracket rules carrying only the entry limit', () => {
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxEntriesPerTeam: '3' }, SelectionType.BRACKET, 4, TEAM))
+      .toEqual({ configuration: { selectionType: SelectionType.BRACKET, maxEntriesPerSquad: 3 }, error: null });
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, unlimitedEntries: true }, SelectionType.BRACKET, 4, TEAM))
+      .toEqual({ configuration: { selectionType: SelectionType.BRACKET }, error: null });
+  });
+
+  it('fills only the entry limit from saved bracket rules, keeping every other format\'s fields', () => {
+    const current = { ...DEFAULT_CONTEST_RULES, countedScores: '5', rosterSize: '8' };
+    expect(toContestRulesValues({ selectionType: SelectionType.BRACKET, maxEntriesPerSquad: null }, current))
+      .toEqual({ ...current, maxEntriesPerTeam: '1', unlimitedEntries: true });
+  });
+});
+
 describe('Create contest wording', () => {
   it('labels a tiered preset by the golfers picked and the scores that count on the chosen event', () => {
     expect(formatPresetLabel({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, 6)).toBe('Pick 6, best 4');

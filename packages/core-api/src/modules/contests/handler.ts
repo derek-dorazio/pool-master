@@ -18,6 +18,7 @@ import {
   toContestResponse,
   toContestLeaderboardResponse,
 } from '../../mappers/contests.mapper';
+import { toBracketLeaderboardResponse } from '../../mappers/bracket-leaderboard.mapper';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import type { ContestService, ContestViewer } from './service';
@@ -54,6 +55,7 @@ export function createContestHandlers(contestService: ContestService) {
     listEntries,
     getEntry,
     getLeaderboard,
+    getBracketLeaderboard,
     createMyEntry,
     deleteMyEntry,
     updateEntry,
@@ -205,6 +207,31 @@ export function createContestHandlers(contestService: ContestService) {
         return sendError(reply, 400, err.code, err.message);
       }
       logger.error({ contestId: request.params.contestId, userId, err }, 'contest leaderboard route failed');
+      throw err;
+    }
+  }
+
+  async function getBracketLeaderboard(
+    request: FastifyRequest<{ Params: { contestId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = createRequestContextLogger(request);
+    const userId = request.authUser?.userId as string;
+    logger.debug({ contestId: request.params.contestId, userId }, 'bracket leaderboard route start');
+    try {
+      const leaderboard = await contestService.getBracketLeaderboard(request.params.contestId, userId);
+      logger.info({ contestId: request.params.contestId, userId, entryCount: leaderboard.entries.length }, 'bracket leaderboard route completed');
+      return reply.send(toBracketLeaderboardResponse(leaderboard));
+    } catch (err) {
+      if (err instanceof ContestNotFoundError) {
+        logger.warn({ contestId: request.params.contestId, userId }, 'bracket leaderboard route missing contest');
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
+      }
+      if (err instanceof ContestOperationError) {
+        logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'bracket leaderboard route rejected');
+        return sendError(reply, 400, err.code, err.message);
+      }
+      logger.error({ contestId: request.params.contestId, userId, err }, 'bracket leaderboard route failed');
       throw err;
     }
   }

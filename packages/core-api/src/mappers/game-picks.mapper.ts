@@ -8,7 +8,7 @@ import type { GamePickGameDto, GamePicksResponse, SaveGamePicksRequest } from '@
 import type { GamePickGame, GamePicksView } from '../modules/selections/prediction-service';
 
 function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
-  const { match, pick } = game;
+  const { match, pick, pickScore } = game;
   return {
     sportEventMatchId: match.id,
     matchNumber: match.matchNumber,
@@ -16,8 +16,11 @@ function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
     kickoff: game.kickoff.toISOString(),
     status: match.status,
     isNeutralSite: match.isNeutralSite,
+    regionLabel: match.regionLabel,
     home: game.home,
     away: game.away,
+    predictedHome: game.predictedHome,
+    predictedAway: game.predictedAway,
     locked: game.locked,
     revealed: game.revealed,
     pick: pick === null
@@ -26,6 +29,8 @@ function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
         sportEventParticipantId: pick.sportEventParticipantId,
         confidence: pick.confidence,
         pickedAt: pick.pickedAt.toISOString(),
+        outcome: pickScore?.outcome ?? null,
+        points: pickScore?.points ?? null,
       },
   };
 }
@@ -36,6 +41,7 @@ export function toGamePicksResponse(view: GamePicksView): GamePicksResponse {
     entryId: view.entryId,
     entryName: view.entryName,
     sportEventId: view.sportEventId,
+    selectionType: view.selectionType,
     mode: view.mode,
     status: view.status,
     submittedAt: view.submittedAt?.toISOString() ?? null,
@@ -43,6 +49,9 @@ export function toGamePicksResponse(view: GamePicksView): GamePicksResponse {
     canSubmit: view.canSubmit,
     pickedCount: view.pickedCount,
     gameCount: view.gameCount,
+    tiebreakerValue: view.tiebreakerValue,
+    points: view.points,
+    maxPossiblePoints: view.maxPossiblePoints,
     games: view.games.map(toGamePickGameDto),
   };
 }

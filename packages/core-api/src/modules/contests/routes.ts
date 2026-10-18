@@ -200,13 +200,35 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
         200: schemaRef('ContestLeaderboardResponse'),
         400: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event\'s picks are revealed yet, or not the asked-for one\'s), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule\'s settings are not valid for that definition).',
+          description: 'CONTEST_FORMAT_MISMATCH (a prediction contest: a bracket has its own leaderboard, getBracketLeaderboard), CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event\'s picks are revealed yet, or not the asked-for one\'s), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule\'s settings are not valid for that definition).',
         },
         404: schemaRef('ErrorEnvelope'),
       },
     },
     preHandler: requireContestLeagueMember,
     handler: handlers.getLeaderboard,
+  });
+
+  fastify.get('/:contestId/bracket-leaderboard', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Get a bracket contest leaderboard',
+      description:
+        'Returns a bracket contest\'s leaderboard (#721): each entry that submitted its bracket, with its points so far (a correct pick earns its round\'s value plus any upset bonus, under the contest\'s knockout round points), the most it can still reach (its points plus the round value of every pick whose team is still in), and its place. Entries level on points are ordered, once the final is played, by how close their tiebreaker was to the final\'s total points; entries still level share a place. Available once the event has started and picks are revealed. Once the contest is COMPLETED, points and places come from the standings frozen at settlement, so a later result correction does not change a settled place. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
+      operationId: 'getBracketLeaderboard',
+      response: {
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        200: schemaRef('BracketLeaderboardResponse'),
+        400: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'CONTEST_FORMAT_MISMATCH (not a bracket contest), CONTEST_LEADERBOARD_PICKS_HIDDEN (the event has not started), or CONTEST_LEADERBOARD_SCORING_RULE_MISSING, _SCORING_DEFINITION_UNKNOWN (its rule is not knockout round points) or _SCORING_SETTINGS_INVALID.',
+        },
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireContestLeagueMember,
+    handler: handlers.getBracketLeaderboard,
   });
 
   fastify.post('/:contestId/entries/me', {

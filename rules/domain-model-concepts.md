@@ -52,8 +52,13 @@ Two readings of this chain have both been held at once, so it is worth stating p
 - **A contest's format says what an entry picks** (#716). A `ROSTER` contest's entries pick a
   lineup of field members (`ContestEntryPick`); a `PREDICTION` contest's entries pick the winner
   of each game of an event (`ContestEntryMatchPrediction`), naming the team, never "home" or
-  "away". The selection type decides the format: `PICK_EM` is `PREDICTION`, every other type
-  `ROSTER`.
+  "away". The selection type decides the format: `PICK_EM` and `BRACKET` are `PREDICTION`,
+  every other type `ROSTER`.
+- **A bracket is one knockout picked to its final** (`BRACKET`, #721). Its contest covers one
+  event, and every pick is made before the event starts. A later game's pick is a team the entry
+  picked to get there (in a reseeded round, its picked winners paired by seed), so changing a pick
+  clears the later picks that followed from it. A correct pick scores its round's value under the
+  knockout round points, as a knockout roster pool does.
 
 The tenant/global split is access rule A11 in `docs/DOMAIN-OPERATIONS.md`.
 
