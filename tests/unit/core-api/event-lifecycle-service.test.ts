@@ -53,7 +53,7 @@ function contestDeps(options: { startedContest?: boolean; transitioned?: boolean
   const contest = buildContest({
     id: 'contest-1',
     leagueId: 'league-1',
-    sportEventId: 'sport-event-1',
+    sportEventIds: ['sport-event-1'],
     name: 'Masters Pick 6',
     status: ContestStatus.OPEN,
   });

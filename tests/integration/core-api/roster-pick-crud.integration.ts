@@ -100,7 +100,7 @@ describe('RosterPick CRUD integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Roster Pick CRUD Contest',
-        sportEventId: sportEvent.id,
+        sportEventIds: [sportEvent.id],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {

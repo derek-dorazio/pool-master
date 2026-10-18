@@ -8,6 +8,7 @@ import {
   PrismaContestConfigurationRepository,
   PrismaContestEntryPickRepository,
   PrismaContestEntryRepository,
+  PrismaContestEntryEventStandingRepository,
   PrismaContestEntryStandingRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
@@ -43,6 +44,7 @@ export function createContestService(
     ...createContestLeaderboardReadDeps(prisma, logger),
     contests: new PrismaContestRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
+    eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
     memberships: new PrismaLeagueMembershipRepository(prisma),
     squads: new PrismaSquadRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
@@ -65,6 +67,7 @@ export function createContestSettlementService(
     sportEvents: new PrismaSportEventRepository(prisma),
     contests: new PrismaContestRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
+    eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
     logger,
   });
 }

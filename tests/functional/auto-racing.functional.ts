@@ -152,7 +152,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
       path: { id: league.id },
       body: {
         name: `Harbour 400 Picks ${RUN}`,
-        sportEventId: eventId,
+        sportEventIds: [eventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         templateId: tieredTemplate.id,
@@ -176,7 +176,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(driver) } });
         expect(pick.response.status).toBe(200);
       }
-      expect((await submitContestEntry({ client, path: { contestId, entryId } })).response.status).toBe(200);
+      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
       return entryId;
     };
     const commissionerEntryId = await enterWith(commissioner.client, ['Larson', 'Byron', 'Bell', 'Blaney', 'Elliott']);
@@ -294,7 +294,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
       path: { id: league.id },
       body: {
         name: `Harbour Grand Prix Picks ${RUN}`,
-        sportEventId: eventId,
+        sportEventIds: [eventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         templateId: budgetTemplate.id,
@@ -315,7 +315,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(driver).id } });
         expect(pick.response.status).toBe(200);
       }
-      expect((await submitContestEntry({ client, path: { contestId, entryId } })).response.status).toBe(200);
+      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
       return entryId;
     };
     // The five cheapest, and the favourite in place of Piastri.

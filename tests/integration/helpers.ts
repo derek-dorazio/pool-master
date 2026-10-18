@@ -604,7 +604,7 @@ export async function cleanupTestData(): Promise<void> {
         where: {
           OR: [
             { leagueId: { in: leagueIds } },
-            { sportEventId: { in: providerSportEventIds } },
+            { sportEvents: { some: { sportEventId: { in: providerSportEventIds } } } },
           ],
         },
         select: { id: true },
@@ -657,6 +657,11 @@ export async function cleanupTestData(): Promise<void> {
   // SportEvent, so they must clear before the SportEvent delete below.
   await prisma.sportEventTier.deleteMany();
   await prisma.sportEventRound.deleteMany();
+  // Every event goes, so every contest's link to one goes first (#713): those rows hold RESTRICT
+  // foreign keys to the event, where a contest's single event column used to be set null.
+  await prisma.contestEntryEventStanding.deleteMany();
+  await prisma.contestEntryEvent.deleteMany();
+  await prisma.contestSportEvent.deleteMany();
   await prisma.sportEvent.deleteMany();
   await prisma.eventSeries.deleteMany();
   // A sport league that a contest template names is reference data (auto racing's series, seeded

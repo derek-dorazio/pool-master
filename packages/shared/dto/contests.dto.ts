@@ -10,6 +10,7 @@ import {
   ParticipantScoringDefinitionIdSchema,
   SelectionType,
   Sport,
+  SportEventStatus,
 } from '@poolmaster/shared/domain';
 import { ContestConfigurationRequestSchema } from './contest-management.dto';
 import { SportEventParticipantDtoSchema } from './events.dto';
@@ -28,7 +29,7 @@ export const CONTEST_CONFIGURATION_REQUIRED = 'CONTEST_CONFIGURATION_REQUIRED';
  */
 export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100).describe('Contest name shown to commissioners and members.'),
-  sportEventId: z.string().uuid().describe('Sport event the contest is run on.'),
+  sportEventIds: z.array(z.string().uuid()).min(1).describe('The events the contest covers (#713): one for a golf or race contest, several for a majors pool or a season. All from one sport league, each released, with its field loaded and not yet started. The contest keeps them in start-date order, whatever order they are sent in.'),
   contestFormat: z.literal(ContestFormat.ROSTER).describe(
     'First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.',
   ),
@@ -60,11 +61,20 @@ export type UpdateContestEntryRequest = z.infer<typeof UpdateContestEntryRequest
 
 // --- Response Sub-schemas ---
 
-export const ContestEventSummaryDtoSchema = z.object({
-  name: z.string().describe('The sport event\'s name.'),
-  startDate: z.string().datetime().describe('The sport event\'s scheduled start, which is also when entries close.'),
-}).describe('The sport event a listed contest runs on: enough to name, sort and search it without reading the event.');
-export type ContestEventSummaryDto = z.infer<typeof ContestEventSummaryDtoSchema>;
+export const ContestSportEventDtoSchema = z.object({
+  sportEventId: z.string().describe('The event.'),
+  sequence: z.number().int().min(1).describe('The event\'s place in the contest, 1 first: the contest\'s events in start-date order.'),
+  name: z.string().describe('The event\'s name.'),
+  startDate: z.string().datetime().describe('The event\'s scheduled start: when its picks close.'),
+  status: z.nativeEnum(SportEventStatus).describe('The event\'s own status. Each event of a contest is picked, submitted, played and settled on its own (#713).'),
+}).describe('One event a contest covers, enough to name, order and pick it without reading the event (#713).');
+export type ContestSportEventDto = z.infer<typeof ContestSportEventDtoSchema>;
+
+/** Body of the commissioner's "events in this contest" save (#713). */
+export const SetContestSportEventsRequestSchema = z.object({
+  sportEventIds: z.array(z.string().uuid()).min(1).describe('Every event the contest should cover: the ones it keeps and the ones added. An event left out is removed. Kept in start-date order.'),
+}).describe('Request payload for setting the events a contest covers.');
+export type SetContestSportEventsRequest = z.infer<typeof SetContestSportEventsRequestSchema>;
 
 export const ContestDtoSchema = z.object({
   id: z.string(),
@@ -78,10 +88,9 @@ export const ContestDtoSchema = z.object({
   contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]),
   selectionType: z.nativeEnum(SelectionType),
   leagueId: z.string(),
-  sportEventId: z.string().nullable().optional(),
+  sportEvents: z.array(ContestSportEventDtoSchema).describe('The events the contest covers, in sequence order (#713). One for a golf or race contest.'),
   sport: z.nativeEnum(Sport).nullable().optional(),
-  entryCount: z.number().optional().describe('Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.'),
-  sportEvent: ContestEventSummaryDtoSchema.nullable().optional().describe('The sport event\'s name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.'),
+  entryCount: z.number().optional().describe('Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.'),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
   drawnAt: z.string().datetime().nullable().optional().describe('When a random-draw contest\'s draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.'),
@@ -131,6 +140,7 @@ export type ContestEntryPickDto = z.infer<typeof ContestEntryPickDtoSchema>;
 export const ContestEntryParticipantDetailDtoSchema = z.object({
   pickId: z.string(),
   sportEventParticipantId: z.string(),
+  sportEventId: z.string().describe('The event of the contest the pick is in (#713).'),
   participantId: z.string(),
   participantName: z.string(),
   participantStatus: z.string().nullable().optional(),
@@ -140,6 +150,13 @@ export const ContestEntryParticipantDetailDtoSchema = z.object({
 }).describe('Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint.');
 export type ContestEntryParticipantDetailDto = z.infer<typeof ContestEntryParticipantDetailDtoSchema>;
 
+export const ContestEntryEventDtoSchema = z.object({
+  sportEventId: z.string().describe('One event of the entry\'s contest.'),
+  status: z.nativeEnum(ContestEntryStatus).describe('DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).'),
+  submittedAt: z.string().datetime().nullable().describe('When the event\'s picks were submitted; null while a draft.'),
+}).describe('An entry\'s status in one event of its contest (#713): "submit week 6".');
+export type ContestEntryEventDto = z.infer<typeof ContestEntryEventDtoSchema>;
+
 export const ContestEntryDtoSchema = z.object({
   id: z.string(),
   contestId: z.string(),
@@ -147,12 +164,12 @@ export const ContestEntryDtoSchema = z.object({
   squadName: z.string(),
   entryNumber: z.number().int().min(1),
   name: z.string(),
-  status: z.nativeEnum(ContestEntryStatus).describe('DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).'),
+  events: z.array(ContestEntryEventDtoSchema).describe('The entry\'s status in each event of its contest, in the contest\'s event order.'),
   tiebreakerValue: z.number().int().nullable().optional(),
   picksCount: z.number().int().min(0).describe('Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.'),
   createdAt: z.string().datetime().describe('When the contest entry was created.'),
   updatedAt: z.string().datetime().describe('When the contest entry was last updated.'),
-  participants: z.array(ContestEntryParticipantDetailDtoSchema).optional().describe('The entry\'s picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them.'),
+  participants: z.array(ContestEntryParticipantDetailDtoSchema).optional().describe('The entry\'s picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them.'),
 }).describe('A contest entry: the one shape every entry read and write returns (#248 collapsed the summary and detail variants, which differed by `participants`).');
 export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
 
@@ -198,20 +215,28 @@ export const ScoredContestEntryPickDtoSchema = z.object({
 }).describe('One pick on a contest entry, with whether it counts.');
 export type ScoredContestEntryPickDto = z.infer<typeof ScoredContestEntryPickDtoSchema>;
 
+export const ContestEntryEventResultDtoSchema = z.object({
+  sportEventId: z.string().describe('The event.'),
+  totalScore: z.number().int().nullable().describe('The entry\'s score in the event: the sum of its counting picks\' contest scores there. Null until a pick is scored.'),
+  position: z.number().int().nullable().describe('The entry\'s rank among the entries that submitted the event, 1 best; null while unscored.'),
+  displayPosition: z.string().nullable().describe('Position as shown, "T" prefixed for a tie.'),
+}).describe('An entry\'s result in one event of its contest (#713): one week\'s score, one major\'s.');
+export type ContestEntryEventResultDto = z.infer<typeof ContestEntryEventResultDtoSchema>;
+
 export const ContestEntryStandingDtoSchema = z.object({
   entryId: z.string().describe('Contest entry identifier.'),
   entryName: z.string().describe('Entry display name.'),
   entryNumber: z.number().int().min(1).describe('Entry number, for squads allowed several entries.'),
   squadId: z.string().describe('Squad identifier.'),
   squadName: z.string().describe('Squad display name.'),
-  status: z.nativeEnum(ContestEntryStatus).describe('Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.'),
-  position: z.number().int().nullable().describe('The entry\'s rank in the contest, direction-free: 1 is best in every sport. Null while unscored.'),
+  position: z.number().int().nullable().describe('The entry\'s rank in the contest by its total, direction-free: 1 is best in every sport. Null while unscored.'),
   displayPosition: z.string().nullable().describe('Position as shown, "T" prefixed for a tie.'),
-  countingPickLimit: z.number().int().min(0).describe('How many picks count toward the total under the counting rule: its N.'),
-  scoredPickCount: z.number().int().min(0).describe('How many picks currently have an event standing.'),
-  totalScore: z.number().int().nullable().describe('The entry\'s total, the sum of its counting picks\' contest scores, in the unit of the response\'s scoring definition (a golf to-par total, a race\'s points). Null until a pick is scored.'),
-  picks: z.array(ScoredContestEntryPickDtoSchema).describe('The entry\'s picks, counting picks first.'),
-}).describe('One entry\'s standing in a contest leaderboard. Each pick\'s score lives in its sport\'s block.');
+  countingPickLimit: z.number().int().min(0).describe('How many picks count toward the shown event\'s score under the counting rule: its N.'),
+  scoredPickCount: z.number().int().min(0).describe('How many of the entry\'s picks in the shown event currently have an event standing.'),
+  totalScore: z.number().int().nullable().describe('The entry\'s contest total, in the unit of the response\'s scoring definition (a golf to-par total, a race\'s points): the sum of its scores in the events it submitted (#713). In a one-event contest, that event\'s score. Null until a pick is scored.'),
+  events: z.array(ContestEntryEventResultDtoSchema).describe('The entry\'s score and place in each event it submitted whose picks are revealed, in the contest\'s event order.'),
+  picks: z.array(ScoredContestEntryPickDtoSchema).describe('The entry\'s picks in the shown event, counting picks first; empty when it did not submit that event.'),
+}).describe('One entry\'s standing in a contest leaderboard: its contest total, its result in each event, and its picks in the shown event. Each pick\'s score lives in its sport\'s block.');
 export type ContestEntryStandingDto = z.infer<typeof ContestEntryStandingDtoSchema>;
 
 export const ContestCountingRuleDtoSchema = z.object({
@@ -222,7 +247,7 @@ export type ContestCountingRuleDto = z.infer<typeof ContestCountingRuleDtoSchema
 
 export const ContestLeaderboardResponseSchema = z.object({
   contestId: z.string().describe('Contest whose leaderboard was requested.'),
-  sportEventId: z.string().describe('Sport event the contest runs on.'),
+  sportEventId: z.string().describe('The event whose field and picks are shown: the one asked for, else the contest\'s latest event whose picks are revealed.'),
   sport: z.nativeEnum(Sport).describe(
     'Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.',
   ),
@@ -230,12 +255,17 @@ export const ContestLeaderboardResponseSchema = z.object({
     'The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client\'s own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.',
   ),
   countingRule: ContestCountingRuleDtoSchema,
-  participants: z.array(SportEventParticipantDtoSchema).describe('The event\'s field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId.'),
-  entries: z.array(ContestEntryStandingDtoSchema).describe('Contest entries, best first.'),
+  participants: z.array(SportEventParticipantDtoSchema).describe('The shown event\'s field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId.'),
+  entries: z.array(ContestEntryStandingDtoSchema).describe('Contest entries that submitted at least one revealed event, best total first.'),
   asOf: z.string().datetime().nullable().describe('Latest standing timestamp the leaderboard reflects, or null when there is none.'),
 }).describe(
-  'Member-facing contest leaderboard. Live, entry standings are computed from the event\'s standings; once the contest is COMPLETED they are the standings frozen at settlement.',
+  'Member-facing contest leaderboard. Live, entry standings are computed from the events\' standings; a completed event answers from the standings frozen when it settled, and a COMPLETED contest\'s totals are the ones frozen at its settlement.',
 );
+
+export const ContestLeaderboardQuerySchema = z.object({
+  sportEventId: z.string().uuid().optional().describe('The contest event whose field and picks to show; its picks must be revealed. Defaults to the contest\'s latest event whose picks are revealed.'),
+}).describe('Optional query parameters for the contest leaderboard.');
+export type ContestLeaderboardQuery = z.infer<typeof ContestLeaderboardQuerySchema>;
 export type ContestLeaderboardResponse = z.infer<typeof ContestLeaderboardResponseSchema>;
 
 // --- Responses ---
@@ -258,7 +288,7 @@ export type ContestEntryResponse = z.infer<typeof ContestEntryResponseSchema>;
 
 export const ContestEntryDetailResponseSchema = z.object({
   contestId: z.string().describe('Contest that owns the entry.'),
-  picksRevealed: z.boolean().describe('Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase.'),
+  picksRevealed: z.boolean().describe('Whether any of the contest\'s events has its picks visible to non-owners: once the contest is live and that event has started, or once a random draw has dealt.'),
   entry: ContestEntryDtoSchema,
 }).describe('Expanded contest-entry detail response.');
 export type ContestEntryDetailResponse = z.infer<typeof ContestEntryDetailResponseSchema>;
@@ -269,8 +299,8 @@ export const ContestEntryListResponseSchema = z.object({
   isJoined: z.boolean().describe('Whether the current user has at least one active entry in the contest.'),
   myEntryId: z.string().nullable().describe('Primary current-user entry when the contest allows a single active entry.'),
   myEntryIds: z.array(z.string()).optional().describe('All current-user entry identifiers when multiple entries are allowed.'),
-  picksRevealed: z.boolean().describe('Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase.'),
-  entries: z.array(ContestEntryDtoSchema).describe('Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted.'),
+  picksRevealed: z.boolean().describe('Whether any of the contest\'s events has its picks visible to non-owners: once the contest is live and that event has started, or once a random draw has dealt.'),
+  entries: z.array(ContestEntryDtoSchema).describe('Entries for the contest. Each entry lists participants[]: all of them for the requester\'s own entries, and only the revealed events\' picks for everyone else\'s.'),
 }).describe('Contest-entry list response.');
 export type ContestEntryListResponse = z.infer<typeof ContestEntryListResponseSchema>;
 
@@ -286,7 +316,11 @@ export type ContestEntryDeletionResponse = z.infer<typeof ContestEntryDeletionRe
 registerSchema('CreateContestRequest', CreateContestRequestSchema);
 registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
 registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);
-registerSchema('ContestEventSummaryDto', ContestEventSummaryDtoSchema);
+registerSchema('ContestSportEventDto', ContestSportEventDtoSchema);
+registerSchema('SetContestSportEventsRequest', SetContestSportEventsRequestSchema);
+registerSchema('ContestEntryEventDto', ContestEntryEventDtoSchema);
+registerSchema('ContestEntryEventResultDto', ContestEntryEventResultDtoSchema);
+registerSchema('ContestLeaderboardQuery', ContestLeaderboardQuerySchema);
 registerSchema('ContestDto', ContestDtoSchema);
 registerSchema('ContestEntryDto', ContestEntryDtoSchema);
 registerSchema('ContestEntryPickDto', ContestEntryPickDtoSchema);

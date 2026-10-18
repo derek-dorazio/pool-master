@@ -251,3 +251,20 @@ export async function seedContestFixture(leagueId: string, options: {
   });
   return { contestId: contest.id };
 }
+
+/**
+ * Adds `sportEventId` to the end of a seeded contest's events (#713), as "Events in this
+ * contest" does: every entry the contest already has gets a DRAFT status in the new event.
+ * Fixtures that enter a contest before it has an event, so the entry does not wait on a loaded
+ * field, attach the event with this afterwards.
+ */
+export async function attachContestEvent(contestId: string, sportEventId: string): Promise<void> {
+  const prisma = getFunctionalPrisma();
+  const sequence = (await prisma.contestSportEvent.count({ where: { contestId } })) + 1;
+  await prisma.contestSportEvent.create({ data: { contestId, sportEventId, sequence } });
+  const entries = await prisma.contestEntry.findMany({ where: { contestId }, select: { id: true } });
+  await prisma.contestEntryEvent.createMany({
+    data: entries.map((entry) => ({ contestEntryId: entry.id, sportEventId })),
+    skipDuplicates: true,
+  });
+}

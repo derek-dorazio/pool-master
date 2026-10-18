@@ -128,6 +128,30 @@ export const CONTEST_NOT_DRAFT = 'CONTEST_NOT_DRAFT';
  */
 export const CONTEST_EVENT_ALREADY_STARTED = 'CONTEST_EVENT_ALREADY_STARTED';
 
+/**
+ * Error code for a contest event list mixing sport leagues (#713): every event of a contest is
+ * from one sport league, so one set of rules and one scoring definition fit them all.
+ */
+export const CONTEST_EVENTS_LEAGUE_MISMATCH = 'CONTEST_EVENTS_LEAGUE_MISMATCH';
+
+/**
+ * Error code for removing an event from a contest once one of its events has started (#713):
+ * entries have been played against the list, so it can only grow.
+ */
+export const CONTEST_EVENTS_LOCKED = 'CONTEST_EVENTS_LOCKED';
+
+/** Error code for a random-draw contest given more than one event: the draw deals one field (#713). */
+export const CONTEST_DRAW_SINGLE_EVENT = 'CONTEST_DRAW_SINGLE_EVENT';
+
+/**
+ * Error code for a budget contest whose events were priced against different salary caps
+ * (#713): the contest's rules carry one cap.
+ */
+export const CONTEST_BUDGET_SALARY_CAP_MISMATCH = 'CONTEST_BUDGET_SALARY_CAP_MISMATCH';
+
+/** Error code for naming an event the contest does not cover (#713). */
+export const CONTEST_EVENT_NOT_IN_CONTEST = 'CONTEST_EVENT_NOT_IN_CONTEST';
+
 const persistedConfigurationFields = {
   id: z.string().describe('Contest-configuration identifier.'),
   contestId: z.string().describe('Contest that owns the configuration.'),
@@ -226,10 +250,18 @@ export const EffectiveTierDtoSchema = z.object({
 }).describe('One inherited event tier and its participant assignments.');
 export type EffectiveTierDto = z.infer<typeof EffectiveTierDtoSchema>;
 
+export const ContestManagementSportEventDtoSchema = z.object({
+  sportEventId: z.string().describe('One event the contest covers.'),
+  effectiveTiers: z.array(EffectiveTierDtoSchema).describe(
+    "Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.",
+  ),
+}).describe('One event of a managed contest, with the tiers it inherits from it (#713).');
+export type ContestManagementSportEventDto = z.infer<typeof ContestManagementSportEventDtoSchema>;
+
 export const ContestManagementDetailDtoSchema = z.object({
   id: z.string().describe('Contest identifier.'),
   leagueId: z.string().describe('League that owns the contest.'),
-  sportEventId: z.string().describe('Sport event attached to the contest.'),
+  sportEvents: z.array(ContestManagementSportEventDtoSchema).min(1).describe('The events the contest covers, in sequence order (#713), each with its inherited tiers.'),
   name: z.string().describe('Contest display name.'),
   status: z.enum([
     ContestStatus.DRAFT,
@@ -238,9 +270,6 @@ export const ContestManagementDetailDtoSchema = z.object({
     ContestStatus.COMPLETED,
   ]),
   configuration: ContestConfigurationDtoSchema.describe('Current commissioner-managed contest configuration.'),
-  effectiveTiers: z.array(EffectiveTierDtoSchema).describe(
-    "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.",
-  ),
   createdAt: z.string().datetime().describe('When the contest was created.'),
   updatedAt: z.string().datetime().describe('When the contest was last updated.'),
   templateId: z.string().uuid().nullable().optional().describe('Seeded template chosen when the contest was created, if any.'),
@@ -259,6 +288,7 @@ export type ContestManagementResponse = z.infer<
 
 registerSchema('ContestConfigurationRequest', ContestConfigurationRequestSchema);
 registerSchema('EffectiveTierDto', EffectiveTierDtoSchema);
+registerSchema('ContestManagementSportEventDto', ContestManagementSportEventDtoSchema);
 registerSchema('ContestManagementDetailDto', ContestManagementDetailDtoSchema);
 registerSchema('ContestConfigTemplateDto', ContestConfigTemplateDtoSchema);
 registerSchema('ContestManagementResponse', ContestManagementResponseSchema);

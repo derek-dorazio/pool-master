@@ -8,7 +8,6 @@ import {
   compareScores,
   PARTICIPANT_SCORING_DEFINITIONS,
   rankSortedScores,
-  type ContestEntryStatus,
   type ContestScoringSettings,
   type ContestScoringSettingsParse,
   type ContestSelectionConfig,
@@ -44,7 +43,6 @@ export interface ContestLeaderboardEntryInput {
   id: string;
   entryNumber: number;
   name: string;
-  status: ContestEntryStatus;
   squadId: string;
   squad: { name: string };
   picks: Array<{
@@ -212,7 +210,6 @@ export function buildContestEntryStanding(
     entryNumber: entry.entryNumber,
     squadId: entry.squadId,
     squadName: entry.squad.name,
-    status: entry.status,
     score: countingScores.length > 0
       ? countingScores.reduce((sum, score) => sum + score, 0)
       : null,
@@ -229,6 +226,62 @@ export function rankContestEntryStandings(
   direction: ScoreDirection,
 ): ContestEntryStandingRow[] {
   const sorted = [...entries].sort((left, right) =>
+    compareScores(direction, left.score, right.score)
+    || left.entryNumber - right.entryNumber
+    || left.entryName.localeCompare(right.entryName)
+    || left.entryId.localeCompare(right.entryId),
+  );
+  const ranks = rankSortedScores(sorted.map((entry) => entry.score));
+  return sorted.map((entry, index) => ({ ...entry, ...ranks[index] }));
+}
+
+/** An entry's score in one event of its contest, live or frozen (#713). */
+export interface ContestEntryEventScore {
+  entryId: string;
+  sportEventId: string;
+  score: number | null;
+  scoredPickCount: number;
+}
+
+/** An entry as the contest total ranks it: who it is, its total, and its place by that total. */
+export interface ContestEntryTotal {
+  entryId: string;
+  entryName: string;
+  entryNumber: number;
+  /** The sum of the entry's scored events; null while none is scored. */
+  score: number | null;
+  /** Picks scored across its events. */
+  scoredPickCount: number;
+  position: number | null;
+  displayPosition: string | null;
+}
+
+/**
+ * The contest total (#713): each entry's scores in the events it submitted, summed, and ranked
+ * by the contest's scoring direction. An entry with no score in any event is unscored. In a
+ * one-event contest the total is that event's score, ranked as the event ranks it.
+ */
+export function rankContestTotals(
+  entries: readonly Pick<ContestLeaderboardEntryInput, 'id' | 'entryNumber' | 'name'>[],
+  eventScores: readonly ContestEntryEventScore[],
+  direction: ScoreDirection,
+): ContestEntryTotal[] {
+  const scoresByEntry = new Map<string, ContestEntryEventScore[]>();
+  for (const eventScore of eventScores) {
+    scoresByEntry.set(eventScore.entryId, [...(scoresByEntry.get(eventScore.entryId) ?? []), eventScore]);
+  }
+  const totals = entries.map((entry) => {
+    const scores = scoresByEntry.get(entry.id) ?? [];
+    const scored = scores.flatMap((eventScore) => (eventScore.score === null ? [] : [eventScore.score]));
+    return {
+      entryId: entry.id,
+      entryName: entry.name,
+      entryNumber: entry.entryNumber,
+      score: scored.length > 0 ? scored.reduce((sum, score) => sum + score, 0) : null,
+      scoredPickCount: scores.reduce((sum, eventScore) => sum + eventScore.scoredPickCount, 0),
+    };
+  });
+  const sorted = totals.sort((left, right) =>
     compareScores(direction, left.score, right.score)
     || left.entryNumber - right.entryNumber
     || left.entryName.localeCompare(right.entryName)
@@ -278,6 +331,36 @@ export function applySettledContestStandings(
         countingPickLimit: standing.countingPickLimit,
         scoredPickCount: standing.scoredPickCount,
       };
+    })
+    .sort((left, right) =>
+      rank(left) - rank(right)
+      || left.entryNumber - right.entryNumber
+      || left.entryName.localeCompare(right.entryName)
+      || left.entryId.localeCompare(right.entryId),
+    );
+}
+
+/**
+ * A settled contest's totals answer from its frozen standings (#713), as a settled event's
+ * standings do (`applySettledContestStandings`): each entry's total and rank are the frozen
+ * ones, in the frozen order, unranked last; an entry with no standing sorts after them all.
+ */
+export function applySettledContestTotals(
+  totals: readonly ContestEntryTotal[],
+  standings: readonly SettledContestEntryStanding[],
+): ContestEntryTotal[] {
+  const byEntryId = new Map(standings.map((standing) => [standing.contestEntryId, standing]));
+  const rank = (total: ContestEntryTotal) => {
+    const standing = byEntryId.get(total.entryId);
+    if (!standing) return Number.MAX_SAFE_INTEGER;
+    return standing.position ?? Number.MAX_SAFE_INTEGER - 1;
+  };
+  return totals
+    .map((total) => {
+      const standing = byEntryId.get(total.entryId);
+      return standing
+        ? { ...total, score: standing.score, position: standing.position, displayPosition: standing.displayPosition }
+        : total;
     })
     .sort((left, right) =>
       rank(left) - rank(right)

@@ -136,13 +136,18 @@ function entryList(contestId: string, squadIds: string[]) {
         squadName: `Team ${squadId}`,
         entryNumber: 1,
         name: `Team ${squadId} Entry 1`,
-        status: 'SUBMITTED',
+        events: [{ sportEventId: 'event-1', status: 'SUBMITTED', submittedAt: '2026-04-15T00:00:00.000Z' }],
         picksCount: 6,
         createdAt: '2026-04-15T00:00:00.000Z',
         updatedAt: '2026-04-15T00:00:00.000Z',
       })),
     },
   };
+}
+
+/** The one event a listed golf contest covers, as the contest list carries it (#713). */
+function listedEvents() {
+  return [{ sportEventId: 'event-1', sequence: 1, name: 'The Masters', startDate: '2099-04-09T12:40:00.000Z', status: 'SCHEDULED' }];
 }
 
 function contest(id: string, name: string, status: 'OPEN' | 'ACTIVE' | 'COMPLETED' = 'OPEN') {
@@ -154,6 +159,7 @@ function contest(id: string, name: string, status: 'OPEN' | 'ACTIVE' | 'COMPLETE
     selectionType: 'TIERED',
     leagueId: 'league-1',
     sport: 'GOLF',
+    sportEvents: listedEvents(),
     entryCount: 4,
   };
 }
@@ -181,6 +187,7 @@ describe('LeagueContestsPage', () => {
             selectionType: 'TIERED',
             leagueId: 'league-1',
             sport: 'GOLF',
+            sportEvents: listedEvents(),
             entryCount: 12,
           },
           {
@@ -191,6 +198,7 @@ describe('LeagueContestsPage', () => {
             selectionType: 'TIERED',
             leagueId: 'league-1',
             sport: 'GOLF',
+            sportEvents: listedEvents(),
             entryCount: 10,
           },
         ],
@@ -226,6 +234,7 @@ describe('LeagueContestsPage', () => {
             selectionType: 'TIERED',
             leagueId: 'league-1',
             sport: 'GOLF',
+            sportEvents: listedEvents(),
             entryCount: 12,
           },
           {
@@ -236,6 +245,7 @@ describe('LeagueContestsPage', () => {
             selectionType: 'TIERED',
             leagueId: 'league-1',
             sport: 'GOLF',
+            sportEvents: listedEvents(),
             entryCount: 10,
           },
         ],

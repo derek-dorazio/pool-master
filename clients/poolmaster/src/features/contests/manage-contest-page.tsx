@@ -10,6 +10,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import {
   buildLeagueAdminContestEditPath,
+  buildLeagueAdminContestEventsPath,
   buildLeagueAdminContestsPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
@@ -30,6 +31,7 @@ import {
   SettingsSection,
 } from '@/features/shared/ui';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
+import { firstContestEvent } from './contest-events';
 import { countParticipants, formatContestRules, formatEntriesPerTeam, formatSelectionTypeName } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
@@ -51,10 +53,12 @@ function ContestTiersSection({
   eventName,
   noun,
   tiers,
+  title,
 }: {
   eventName: string;
   noun: SportNoun;
   tiers: EffectiveTierDto[];
+  title: string;
 }) {
   const sortedTiers = [...tiers].sort((left, right) => left.tierNumber - right.tierNumber);
 
@@ -62,7 +66,7 @@ function ContestTiersSection({
     <SettingsSection
       description={`From the event, top tier first. Every contest on ${eventName} uses the same tiers.`}
       testId="contest-tiers"
-      title="Tiers"
+      title={title}
     >
       {sortedTiers.length ? (
         sortedTiers.map((tier) => (
@@ -97,9 +101,10 @@ export function ManageContestPage() {
   const managedContestQuery = useManagedContestQuery(league?.id, contestId);
   const teamsQuery = useLeagueSquadsQuery(leagueId);
   const contest = contestsQuery.data?.find((candidate) => candidate.id === contestId) ?? null;
-  const eventQuery = useQuery(
-    sportEventQueryOptions(contest?.sportEventId ?? managedContestQuery.data?.sportEventId ?? ''),
-  );
+  // The first event: its start is when entries close, and the status card counts down to it.
+  const firstEventId = (contest ? firstContestEvent(contest)?.sportEventId : undefined)
+    ?? managedContestQuery.data?.sportEvents.at(0)?.sportEventId;
+  const eventQuery = useQuery(sportEventQueryOptions(firstEventId ?? ''));
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const contestsPath = buildLeagueAdminContestsPath(leagueCode);
 
@@ -159,11 +164,17 @@ export function ManageContestPage() {
   const { configuration } = managedContest;
   const rules = formatContestRules(
     configuration,
-    managedContest.effectiveTiers.length,
+    managedContest.sportEvents.at(0)?.effectiveTiers.length ?? 0,
     getSportDefinition(event.sport).vocabulary.participant,
     configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null,
   );
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
+  const isMultiEvent = contest.sportEvents.length > 1;
+  // Events can change until the contest is final; a random draw deals one event, once.
+  const canChangeEvents = league.isActive
+    && contest.status !== ContestStatus.COMPLETED
+    && contest.selectionType !== SelectionType.RANDOM_DRAW;
+  const eventNamesById = new Map(contest.sportEvents.map((sportEvent) => [sportEvent.sportEventId, sportEvent.name]));
 
   function closeDeleteDialog() {
     if (!deleteContestMutation.isPending) {
@@ -215,14 +226,35 @@ export function ManageContestPage() {
       >
         <SettingsRow label="Name" testId="manage-contest-name" value={<span className="font-semibold">{contest.name}</span>} />
         <SettingsRow
-          action={isNotOpen ? <FixedNote /> : undefined}
-          label="Event"
+          action={canChangeEvents ? (
+            <LinkButton
+              data-testid="manage-contest-events-edit"
+              size="sm"
+              to={buildLeagueAdminContestEventsPath(leagueCode, contest.id)}
+              variant="secondary"
+            >
+              {isMultiEvent ? 'Change events' : 'Add events'}
+            </LinkButton>
+          ) : isNotOpen ? <FixedNote /> : undefined}
+          label={isMultiEvent ? `Events (${contest.sportEvents.length})` : 'Event'}
           testId="manage-contest-event-row"
           value={(
             <>
-              {eventLabel}
+              {isMultiEvent ? (
+                <ol className="space-y-0.5" data-testid="manage-contest-event-list">
+                  {contest.sportEvents.map((sportEvent) => (
+                    <li key={sportEvent.sportEventId}>
+                      {sportEvent.name}
+                      <span className="text-xs text-muted-foreground">
+                        {' · '}<DateDisplay className="text-muted-foreground" value={sportEvent.startDate} />
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              ) : eventLabel}
               <div className="text-xs text-muted-foreground">
-                Starts <DateDisplay className="text-muted-foreground" value={event.startDate} />.
+                {isMultiEvent ? 'The first event starts ' : 'Starts '}
+                <DateDisplay className="text-muted-foreground" value={event.startDate} />.
                 {contest.selectionType === SelectionType.RANDOM_DRAW
                   ? ' Entries close when you run the draw, which must be before then.'
                   : ' Entries close then.'}
@@ -244,11 +276,15 @@ export function ManageContestPage() {
         />
       </SettingsSection>
 
-      {isTiered ? <ContestTiersSection
-          eventName={event.name}
+      {isTiered ? managedContest.sportEvents.map((managedEvent) => (
+        <ContestTiersSection
+          eventName={eventNamesById.get(managedEvent.sportEventId) ?? event.name}
+          key={managedEvent.sportEventId}
           noun={getSportDefinition(event.sport).vocabulary.participant}
-          tiers={managedContest.effectiveTiers}
-        /> : null}
+          tiers={managedEvent.effectiveTiers}
+          title={isMultiEvent ? `Tiers · ${eventNamesById.get(managedEvent.sportEventId) ?? event.name}` : 'Tiers'}
+        />
+      )) : null}
 
       {isNotOpen ? (
         <DangerZone testId="manage-contest-danger-zone">

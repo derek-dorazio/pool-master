@@ -185,7 +185,11 @@ export interface ParticipantProviderMapping extends DomainEntity {
 /** Core contest record representing a pool or competition within a league. */
 export interface Contest extends DomainEntity {
   leagueId: string;
-  sportEventId?: string;
+  /**
+   * The events the contest covers, in sequence order: by start date (#713). One for a golf or
+   * race contest, several for a majors pool or a pick'em season. Every contest has at least one.
+   */
+  sportEventIds: string[];
   name: string;
   status: ContestStatus;
   contestFormat: ContestFormat;
@@ -235,8 +239,20 @@ export interface ContestEntry extends DomainEntity {
   squadId: string;
   entryNumber: number;
   name: string;
-  status: ContestEntryStatus;
   tiebreakerValue?: number | null;
+  /** The entry's status for each event of its contest (#713), in no particular order. */
+  events: ContestEntryEventStatus[];
+}
+
+/**
+ * An entry's draft/submitted status for one event of its contest (#713, design Q5.4): "submit
+ * week 6", "submit your Masters picks". Only an event the entry submitted counts for it.
+ */
+export interface ContestEntryEventStatus {
+  sportEventId: string;
+  status: ContestEntryStatus;
+  /** When the event's picks were last submitted; absent while a draft. */
+  submittedAt?: Date;
 }
 
 /**

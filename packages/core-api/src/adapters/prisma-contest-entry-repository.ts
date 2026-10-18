@@ -4,6 +4,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
+  ContestEntryCreate,
   ContestEntryCreateResult,
   ContestEntryDeleteResult,
   ContestEntryRepository,
@@ -12,24 +13,32 @@ import type {
 import type { ContestEntry, ContestEntryStatus } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
 
+/** Every entry read carries its status in each of its contest's events (#713). */
+const ENTRY_EVENTS = { events: { select: { sportEventId: true, status: true, submittedAt: true } } } as const;
+
 export class PrismaContestEntryRepository implements ContestEntryRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null> {
     const row = await this.prisma.contestEntry.findUnique({
       where: { id },
-      include: { squad: { select: { name: true } } },
+      include: { squad: { select: { name: true } }, ...ENTRY_EVENTS },
     });
     return row ? { ...mapToEntry(row), squadName: row.squad.name } : null;
   }
 
   async findByContestWithSquad(
     contestId: string,
-    options?: { submittedOnly?: boolean },
+    options?: { submittedFor?: string },
   ): Promise<ContestEntryWithSquad[]> {
     const rows = await this.prisma.contestEntry.findMany({
-      where: { contestId, ...(options?.submittedOnly && { status: 'SUBMITTED' }) },
-      include: { squad: { select: { name: true } } },
+      where: {
+        contestId,
+        ...(options?.submittedFor !== undefined && {
+          events: { some: { sportEventId: options.submittedFor, status: 'SUBMITTED' } },
+        }),
+      },
+      include: { squad: { select: { name: true } }, ...ENTRY_EVENTS },
       orderBy: [{ entryNumber: 'asc' }, { createdAt: 'asc' }],
     });
     return rows.map((row) => ({ ...mapToEntry(row), squadName: row.squad.name }));
@@ -41,43 +50,62 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     const rows = await this.prisma.contestEntry.findMany({
       where: { contestId },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: ENTRY_EVENTS,
     });
     return rows.map(mapToEntry);
   }
 
   async findBySquad(squadId: string): Promise<ContestEntry[]> {
-    const rows = await this.prisma.contestEntry.findMany({ where: { squadId } });
+    const rows = await this.prisma.contestEntry.findMany({ where: { squadId }, include: ENTRY_EVENTS });
     return rows.map(mapToEntry);
   }
 
   /** Refused once the contest is drawn; waits for a draw being recorded (#644). */
-  async create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntryCreateResult> {
+  async create(entry: ContestEntryCreate): Promise<ContestEntryCreateResult> {
     return this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, entry.contestId);
       if (await isContestDrawn(tx, entry.contestId)) return { status: 'contestDrawn' };
+      // Read under the lock, so an event added meanwhile is either here or given to the entry by
+      // the event change that runs after (`replaceSportEvents`).
+      const contestEvents = await tx.contestSportEvent.findMany({
+        where: { contestId: entry.contestId },
+        select: { sportEventId: true },
+      });
       const row = await tx.contestEntry.create({
         data: {
           contestId: entry.contestId,
           squadId: entry.squadId,
           entryNumber: entry.entryNumber,
           name: entry.name,
-          status: entry.status,
           tiebreakerValue: entry.tiebreakerValue,
+          events: { create: contestEvents.map(({ sportEventId }) => ({ sportEventId })) },
         },
+        include: ENTRY_EVENTS,
       });
       return { status: 'created', entry: mapToEntry(row) };
     });
   }
 
-  async update(id: string, updates: Partial<ContestEntry>): Promise<ContestEntry> {
+  async update(id: string, updates: Partial<Pick<ContestEntry, 'name' | 'tiebreakerValue'>>): Promise<ContestEntry> {
     const row = await this.prisma.contestEntry.update({
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
-        ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.tiebreakerValue !== undefined && { tiebreakerValue: updates.tiebreakerValue }),
       },
+      include: ENTRY_EVENTS,
     });
+    return mapToEntry(row);
+  }
+
+  async setEventStatus(id: string, sportEventId: string, status: ContestEntryStatus, at: Date): Promise<ContestEntry> {
+    const submittedAt = status === 'SUBMITTED' ? at : null;
+    await this.prisma.contestEntryEvent.upsert({
+      where: { contestEntryId_sportEventId: { contestEntryId: id, sportEventId } },
+      create: { contestEntryId: id, sportEventId, status, submittedAt },
+      update: { status, submittedAt },
+    });
+    const row = await this.prisma.contestEntry.findUniqueOrThrow({ where: { id }, include: ENTRY_EVENTS });
     return mapToEntry(row);
   }
 
@@ -103,8 +131,8 @@ function mapToEntry(row: {
   squadId: string;
   entryNumber: number;
   name: string;
-  status: ContestEntryStatus;
   tiebreakerValue: number | null;
+  events: { sportEventId: string; status: ContestEntryStatus; submittedAt: Date | null }[];
   createdAt: Date;
   updatedAt: Date;
 }): ContestEntry {
@@ -114,8 +142,12 @@ function mapToEntry(row: {
     squadId: row.squadId,
     entryNumber: row.entryNumber,
     name: row.name,
-    status: row.status,
     tiebreakerValue: row.tiebreakerValue ?? undefined,
+    events: row.events.map((event) => ({
+      sportEventId: event.sportEventId,
+      status: event.status,
+      submittedAt: event.submittedAt ?? undefined,
+    })),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

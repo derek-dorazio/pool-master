@@ -23,6 +23,7 @@ import { linksIn, sentMailTo, sentMailWithSubject } from './mail';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { FUNCTIONAL_APP_BASE_URL } from './state';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 
 // #442 — every system email the app sends, proven end to end: the functional server sends
 // through a local SMTP sink that records each message, and these tests read it back. Each one
@@ -43,6 +44,7 @@ async function cleanupEventFixtures(): Promise<void> {
   await prisma.sportEventParticipant.deleteMany({ where: { id: { in: createdSportEventParticipantIds } } });
   await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: createdSportEventIds } } });
   await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: createdSportEventIds } } });
+  await unlinkContestsFromSportEvents(prisma, createdSportEventIds);
   await prisma.sportEvent.deleteMany({ where: { id: { in: createdSportEventIds } } });
   await cleanupFreshEventEditions(prisma);
   await prisma.participant.deleteMany({ where: { id: { in: createdParticipantIds } } });
@@ -231,7 +233,7 @@ describe('SDK Functional: system emails', () => {
       path: { id: league.id },
       body: {
         name: contestName,
-        sportEventId: event.sportEventId,
+        sportEventIds: [event.sportEventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         templateId: template?.id as string,
@@ -247,7 +249,7 @@ describe('SDK Functional: system emails', () => {
     const entryId = entered.data?.entry.id as string;
     expect(entryId).toBeTruthy();
     // #481: an entry with an incomplete lineup cannot be submitted.
-    const early = await submitContestEntry({ client: member.client, path: { contestId, entryId } });
+    const early = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
     expect(early.response.status).toBe(409);
     expect(early.error?.error.code).toBe('ENTRY_LINEUP_INCOMPLETE');
     const picked = await submitContestSelection({
@@ -267,7 +269,7 @@ describe('SDK Functional: system emails', () => {
     // The confirmation goes out when the entry is submitted (#481), not when its details are saved.
     expect(await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
 
-    const submitted = await submitContestEntry({ client: member.client, path: { contestId, entryId } });
+    const submitted = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
     expect(submitted.response.status).toBe(200);
     expect(submitted.data?.entries.find((row) => row.id === entryId)?.status).toBe('SUBMITTED');
 

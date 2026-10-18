@@ -28,7 +28,7 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
     reason: 'Needs the body\'s entryId: SelectionService.submitSelection requires an ACTIVE squad membership on the squad that owns that entry of this contest (ENTRY_ACCESS_DENIED).',
   },
   {
-    route: 'POST /api/v1/selections/:contestId/entries/:entryId/submit',
+    route: 'POST /api/v1/selections/:contestId/entries/:entryId/events/:sportEventId/submit',
     reason: 'Authorizes on the entry, as the pick route does: SelectionService.submitEntry requires an ACTIVE squad membership on the squad that owns that entry of this contest (ENTRY_ACCESS_DENIED).',
   },
 

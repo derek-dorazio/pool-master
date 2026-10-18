@@ -11,6 +11,7 @@ import type {
   ContestEntryStatus,
   SelectionStatus,
   SelectionType,
+  SportEvent,
   SquadMembership,
 } from '@poolmaster/shared/domain';
 
@@ -57,18 +58,25 @@ export interface ParticipantValuation {
  */
 export interface SelectionContext {
   contest: Contest;
+  /**
+   * The contest event the operation is about (#713): its field, tiers and prices are the ones
+   * below, and only its picks count. A contest of one event always has that one.
+   */
+  sportEvent: SportEvent;
   configuration: ContestConfiguration | null;
   entries: ContestEntry[];
   squadMemberships: SquadMembership[];
   selectionParticipants: SelectionParticipant[];
   tiers: SelectionTierConfig[];
   /**
-   * Whether the contest takes pick changes now: it is OPEN and its event has not reached its
-   * start time. The start time counts even while the contest still says OPEN, because the
-   * status follows the event's own move to IN_PROGRESS, which can lag the start or, with
-   * auto-lifecycle off, not come at all.
+   * Whether the event takes pick changes now: the contest is OPEN (or ACTIVE, with this event
+   * still to start) and the event has not reached its start time. The start time counts even
+   * while the contest still says OPEN, because the status follows the event's own move to
+   * IN_PROGRESS, which can lag the start or, with auto-lifecycle off, not come at all.
    */
   acceptsPicks: boolean;
+  /** Whether the event's picks are visible to the whole league (contests/entry-window). */
+  picksRevealed: boolean;
 }
 
 /** A pick as the selection room reads it: the row, plus the canonical participant it points at. */
@@ -86,7 +94,7 @@ export interface ResolvedPick {
   pickedAt: Date;
 }
 
-/** An entry in the room, with the user who owns it, how many picks it holds, and its status. */
+/** An entry in the room, with the user who owns it, how many picks it holds in the event, and its status there. */
 export interface SelectionEntry {
   id: string;
   userId: string;
@@ -129,6 +137,10 @@ export interface SelectionGroup {
  */
 export interface SelectionView {
   contest: Contest;
+  /** The event the room shows (#713). */
+  sportEventId: string;
+  /** Whether the event's picks can still change. */
+  acceptsPicks: boolean;
   rosterSize: number;
   isCommissioner: boolean;
   status: SelectionStatus;

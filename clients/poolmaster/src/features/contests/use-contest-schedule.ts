@@ -2,13 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { getEvent, type ContestDto, type SportEventDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { firstContestEvent, lastContestEvent } from './contest-events';
 
 export type ContestSchedule = {
   startsAt: string;
   endsAt: string | null;
 };
 
-type ScheduledContest = Pick<ContestDto, 'sportEventId' | 'startsAt' | 'endsAt'>;
+type ScheduledContest = Pick<ContestDto, 'sportEvents' | 'startsAt' | 'endsAt'>;
 
 /**
  * One sport event, read through the event's shared key: the event is cached whole, and every
@@ -30,43 +31,44 @@ export function sportEventQueryOptions(eventId: string) {
   };
 }
 
-/** The sport event's schedule, from the event's shared read. */
-function sportEventScheduleQuery(eventId: string) {
+/** The sport event's scheduled end, from the event's shared read. */
+function sportEventEndQuery(eventId: string) {
   return {
     ...sportEventQueryOptions(eventId),
-    select: (event: SportEventDto) => ({ startDate: event.startDate, endDate: event.endDate }),
+    select: (event: SportEventDto) => event.endDate ?? null,
   };
 }
 
 function resolveSchedule(
   contest: ScheduledContest | undefined,
-  event: { startDate: string; endDate?: string | null } | undefined,
+  lastEventEndsAt: string | null | undefined,
 ): ContestSchedule | null {
-  const startsAt = contest?.startsAt ?? event?.startDate;
+  const startsAt = contest?.startsAt ?? (contest ? firstContestEvent(contest)?.startDate : undefined);
   if (!startsAt) {
     return null;
   }
-  return { startsAt, endsAt: contest?.endsAt ?? event?.endDate ?? null };
+  return { startsAt, endsAt: contest?.endsAt ?? lastEventEndsAt ?? null };
 }
 
 /**
- * When a contest runs (#221): its own `startsAt`/`endsAt` once set, else its sport event's
- * scheduled start and end.
+ * When a contest runs (#221): its own `startsAt`/`endsAt` once set, else its first event's
+ * scheduled start and its last event's scheduled end (#713).
  *
  * The contest's own times are lifecycle stamps: `startsAt` is written when the event goes live,
  * `endsAt` when the contest settles. Before then they are
  * empty, which is the whole time a member is deciding whether to enter, so the event's schedule
- * fills in. The event's start is also the entry cutoff (#430, #431).
+ * fills in. The first event's start is also the entry cutoff (#430, #431).
  */
 export function useContestSchedule(contest: ScheduledContest | undefined): ContestSchedule | null {
-  const eventQuery = useQuery(sportEventScheduleQuery(contest?.sportEventId ?? ''));
-  return resolveSchedule(contest, eventQuery.data);
+  const lastEventId = contest ? lastContestEvent(contest)?.sportEventId : undefined;
+  const lastEventEndQuery = useQuery(sportEventEndQuery(lastEventId ?? ''));
+  return resolveSchedule(contest, lastEventEndQuery.data);
 }
 
 /**
- * When a listed contest starts: its own `startsAt` once set, else its event's start, which the
- * contest list carries (#577), so a list never reads its events one by one.
+ * When a listed contest starts: its own `startsAt` once set, else its first event's start, which
+ * the contest list carries (#577), so a list never reads its events one by one.
  */
-export function listedContestStartsAt(contest: Pick<ContestDto, 'startsAt' | 'sportEvent'>): string | null {
-  return contest.startsAt ?? contest.sportEvent?.startDate ?? null;
+export function listedContestStartsAt(contest: Pick<ContestDto, 'startsAt' | 'sportEvents'>): string | null {
+  return contest.startsAt ?? firstContestEvent(contest)?.startDate ?? null;
 }

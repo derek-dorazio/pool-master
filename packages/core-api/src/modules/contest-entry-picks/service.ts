@@ -202,9 +202,10 @@ export class ContestEntryPickService {
           }))),
       });
 
-      await tx.contestEntry.updateMany({
-        where: { id: { in: [...dealtEntryIds] } },
-        data: { status: ContestEntryStatus.SUBMITTED },
+      // A random draw covers one event (#713), so each entry's one event row is the one submitted.
+      await tx.contestEntryEvent.updateMany({
+        where: { contestEntryId: { in: [...dealtEntryIds] } },
+        data: { status: ContestEntryStatus.SUBMITTED, submittedAt: new Date() },
       });
     });
 

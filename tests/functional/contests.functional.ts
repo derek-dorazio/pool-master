@@ -21,7 +21,7 @@ import {
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
+import { attachContestEvent, buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -31,6 +31,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 import { expectDefined } from '../support/expect-defined';
+import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
@@ -97,6 +98,7 @@ async function cleanupContestArtifacts(): Promise<void> {
         },
       },
     });
+    await unlinkContestsFromSportEvents(prisma, createdSportEventIds);
     await prisma.sportEvent.deleteMany({
       where: {
         id: {
@@ -261,7 +263,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: `${league.name} Managed Masters Functional Event`,
-        sportEventId: importedEvent.sportEventId,
+        sportEventIds: [importedEvent.sportEventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         templateId: defaultTemplate?.id as string,
@@ -291,13 +293,13 @@ describe('SDK Functional: Contests and Entries', () => {
       selectionType: templateRules.selectionType,
       countedScores: templateRules.countedScores,
     });
-    expect(configurationResponse.data?.contest.sportEventId).toBe(
+    expect(configurationResponse.data?.contest.sportEvents.map((event) => event.sportEventId)).toEqual([
       importedEvent.sportEventId,
-    );
+    ]);
     // pool-master-41t — the commissioner detail echoes the linked event's
     // effective tiers read-only (plans/124 §4.6/§5.3). seedImportedGolfEvent
     // splits the 80-golfer field across six tiers.
-    const echoedTiers = configurationResponse.data?.contest.effectiveTiers ?? [];
+    const echoedTiers = configurationResponse.data?.contest.sportEvents[0]?.effectiveTiers ?? [];
     expect(echoedTiers).toHaveLength(6);
     expect(echoedTiers[0]).toMatchObject({
       tierKey: 'A',
@@ -366,7 +368,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: `${league.name} Managed Selection Event`,
-        sportEventId: importedEvent.sportEventId,
+        sportEventIds: [importedEvent.sportEventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         templateId: defaultTemplate?.id as string,
@@ -481,7 +483,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Missing Template Contest',
-        sportEventId: importedEvent.sportEventId,
+        sportEventIds: [importedEvent.sportEventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         templateId: '00000000-0000-4000-8000-000000000000',
@@ -501,7 +503,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Empty Create Contest',
-        sportEventId: importedEvent.sportEventId,
+        sportEventIds: [importedEvent.sportEventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
       },
@@ -537,7 +539,7 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(listedContest).toBeDefined();
     expect(listedContest?.name).toBe('Functional Contest');
     expect(listedContest?.status).toBe('DRAFT');
-    expect(listedContest?.sportEvent).toBeNull();
+    expect(listedContest?.sportEvents).toEqual([]);
 
     const detailResponse = await getContest({
       client: commissioner.client,
@@ -609,7 +611,8 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expect(enterResponse.data).toBeDefined();
     expect(enterResponse.data?.contestId).toBe(contestId);
-    expect(enterResponse.data?.entry.status).toBe('DRAFT');
+    // The fixture contest names no event yet, so the entry holds no per-event status.
+    expect(enterResponse.data?.entry.events).toEqual([]);
     expect(enterResponse.data?.entry.entryNumber).toBe(1);
 
     const secondEnterResponse = await enterContest({
@@ -683,7 +686,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expect(reenterResponse.data).toBeDefined();
     expect(reenterResponse.data?.contestId).toBe(contestId);
-    expect(reenterResponse.data?.entry.status).toBe('DRAFT');
+    expect(reenterResponse.data?.entry.events).toEqual([]);
     expect(reenterResponse.data?.entry.entryNumber).toBe(1);
   });
 
@@ -748,7 +751,6 @@ describe('SDK Functional: Contests and Entries', () => {
         squadId: enterResponse.data?.entry.squadId as string,
         entryNumber: 2,
         name: 'Rename Functional League Entry 2',
-        status: 'SUBMITTED',
       },
     });
 
@@ -916,14 +918,7 @@ describe('SDK Functional: Contests and Entries', () => {
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
-    await prisma.contest.update({
-      where: {
-        id: contestId,
-      },
-      data: {
-        sportEventId: sportEvent.id,
-      },
-    });
+    await attachContestEvent(contestId, sportEvent.id);
 
 
     const entryResponse = await enterContest({
@@ -1109,14 +1104,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
-    await prisma.contest.update({
-      where: {
-        id: selectableContestId,
-      },
-      data: {
-        sportEventId: sportEvent.id,
-      },
-    });
+    await attachContestEvent(selectableContestId, sportEvent.id);
 
 
     const lockedEntryResponse = await enterContest({
@@ -1247,10 +1235,7 @@ describe('SDK Functional: Contests and Entries', () => {
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
-    await prisma.contest.update({
-      where: { id: contestId },
-      data: { sportEventId: sportEvent.id },
-    });
+    await attachContestEvent(contestId, sportEvent.id);
 
 
     // Member enters and adds a roster pick.
@@ -1298,7 +1283,9 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(preEventOwnerResponse.data?.entry.participants?.length).toBe(1);
     expect(preEventOwnerResponse.data?.entry.participants?.[0]?.participantId).toBe(participant.id);
 
-    // 3) Move contest past OPEN, then non-owner viewing must see picks.
+    // 3) Start the event and move the contest past OPEN, as going live does; non-owners now
+    //    see picks (an event's picks are revealed when it starts, #713).
+    await prisma.sportEvent.update({ where: { id: sportEvent.id }, data: { status: 'IN_PROGRESS' } });
     await prisma.contest.update({
       where: { id: contestId },
       data: { status: ContestStatus.ACTIVE },
@@ -1396,10 +1383,7 @@ describe('SDK Functional: Contests and Entries', () => {
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
-    await prisma.contest.update({
-      where: { id: contestId },
-      data: { sportEventId: sportEvent.id },
-    });
+    await attachContestEvent(contestId, sportEvent.id);
 
     // Both squads enter and pick.
     const commissionerEntryResponse = await enterContest({
@@ -1447,7 +1431,9 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(preCommissionerEntry?.picksCount).toBe(1);
     expect(preCommissionerEntry?.participants).toBeUndefined();
 
-    // Move contest past OPEN. Now member's perspective sees both squads' picks.
+    // Start the event and move the contest past OPEN, as going live does. Now member's
+    // perspective sees both squads' picks.
+    await prisma.sportEvent.update({ where: { id: sportEvent.id }, data: { status: 'IN_PROGRESS' } });
     await prisma.contest.update({
       where: { id: contestId },
       data: { status: ContestStatus.ACTIVE },

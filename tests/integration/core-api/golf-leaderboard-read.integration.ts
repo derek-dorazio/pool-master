@@ -146,7 +146,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
-        sportEventId: event.id,
+        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
         name: `Golf Leaderboard Contest ${suffix}`,
         status: 'ACTIVE',
         contestFormat: 'ROSTER',
@@ -175,7 +175,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
           squadId: squadOne.id,
           entryNumber: 1,
           name: `Standing Runner-Up ${suffix}`,
-          status: 'SUBMITTED',
+          events: { create: { sportEventId: event.id, status: 'SUBMITTED', submittedAt: new Date() } },
         },
       }),
       prisma.contestEntry.create({
@@ -184,7 +184,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
           squadId: squadTwo.id,
           entryNumber: 1,
           name: `Standing Winner ${suffix}`,
-          status: 'SUBMITTED',
+          events: { create: { sportEventId: event.id, status: 'SUBMITTED', submittedAt: new Date() } },
         },
       }),
     ]);
@@ -245,6 +245,21 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
         data: {
           contestId: contest.id,
           contestEntryId: entryId,
+          position,
+          displayPosition: String(position),
+          countingPickLimit: 3,
+          scoredPickCount: 3,
+          asOf: settledAt,
+          settledAt,
+          totalScore,
+        },
+      });
+      // Settlement freezes the event's own standing alongside the contest total (#713).
+      await prisma.contestEntryEventStanding.create({
+        data: {
+          contestId: contest.id,
+          contestEntryId: entryId,
+          sportEventId: event.id,
           position,
           displayPosition: String(position),
           countingPickLimit: 3,

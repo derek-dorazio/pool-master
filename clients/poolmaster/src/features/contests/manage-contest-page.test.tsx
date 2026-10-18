@@ -22,6 +22,7 @@ import { ManageContestPage } from './manage-contest-page';
 import {
   buildContest,
   buildContestEntry,
+  buildContestSportEvent,
   buildManagedContest,
   buildSelectionState,
   buildSportEvent,
@@ -148,7 +149,7 @@ describe('Commissioner tools › Contests › one contest', () => {
 
   it('lists the event\'s tiers as Tier 1, Tier 2… with Tier 1 on top, each with its golfer count', async () => {
     primeMocks({
-      managedContest: buildManagedContest({ effectiveTiers: [buildTier(3, 14), buildTier(1, 8), buildTier(2, 1)] }),
+      managedContest: buildManagedContest({ sportEvents: [{ sportEventId: 'event-1', effectiveTiers: [buildTier(3, 14), buildTier(1, 8), buildTier(2, 1)] }] }),
     });
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
@@ -268,7 +269,7 @@ describe('Commissioner tools › Contests › one contest', () => {
       entries: [
         buildContestEntry({ id: 'entry-1', squadId: 'team-1' }),
         buildContestEntry({ id: 'entry-2', squadId: 'team-1', entryNumber: 2 }),
-        buildContestEntry({ id: 'entry-3', squadId: 'team-2', status: 'DRAFT' }),
+        buildContestEntry({ id: 'entry-3', squadId: 'team-2', events: [{ sportEventId: 'event-1', status: 'DRAFT', submittedAt: null }] }),
       ],
     }));
 
@@ -329,8 +330,8 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
       total: 2,
       picksRevealed: false,
       entries: [
-        buildContestEntry({ id: 'entry-1', squadId: 'team-1', status: 'DRAFT', picksCount: 0 }),
-        buildContestEntry({ id: 'entry-2', squadId: 'team-2', status: 'DRAFT', picksCount: 0 }),
+        buildContestEntry({ id: 'entry-1', squadId: 'team-1', events: [{ sportEventId: 'event-1', status: 'DRAFT', submittedAt: null }], picksCount: 0 }),
+        buildContestEntry({ id: 'entry-2', squadId: 'team-2', events: [{ sportEventId: 'event-1', status: 'DRAFT', submittedAt: null }], picksCount: 0 }),
       ],
     }));
     // The room is never drawn here: the card must read the draw from the contest itself.
@@ -401,6 +402,74 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
     expect(await screen.findByText('The draw has run')).toBeInTheDocument();
     expect(screen.getByText('Drawn · entries closed')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Run draw' })).not.toBeInTheDocument();
+  });
+
+  it('offers no way to add or change events, since a random draw deals one event once', async () => {
+    primeDrawMocks();
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('manage-contest-event-row')).toHaveTextContent('The Masters');
+    expect(screen.queryByTestId('manage-contest-events-edit')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Add events' })).not.toBeInTheDocument();
+  });
+});
+
+describe('Commissioner tools › Contests › one contest › its events', () => {
+  it.each([
+    ['tiered', SelectionType.TIERED, buildManagedContest()],
+    ['budget', SelectionType.BUDGET_PICK, buildManagedContest({
+      configuration: {
+        id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1,
+        selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4, salaryCap: 50_000,
+      },
+    })],
+  ] as const)('offers "Add events" on a single-event %s contest, linking to its event picker', async (_label, selectionType, managedContest) => {
+    primeMocks({ contest: buildContest({ selectionType }), managedContest });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    const link = await screen.findByTestId('manage-contest-events-edit');
+    expect(link).toHaveTextContent('Add events');
+    expect(link).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-1/events');
+    expect(screen.getByTestId('manage-contest-event-row')).toHaveTextContent('Event');
+  });
+
+  it('lists every event of a multi-event contest in order and offers "Change events"', async () => {
+    primeMocks({
+      contest: buildContest({
+        sportEvents: [
+          buildContestSportEvent(),
+          buildContestSportEvent({ sportEventId: 'event-2', sequence: 2, name: 'PGA Championship', startDate: '2099-05-14T12:00:00.000Z' }),
+        ],
+      }),
+      managedContest: buildManagedContest({
+        sportEvents: [
+          { sportEventId: 'event-1', effectiveTiers: [buildTier(1, 8)] },
+          { sportEventId: 'event-2', effectiveTiers: [buildTier(1, 9)] },
+        ],
+      }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('manage-contest-events-edit')).toHaveTextContent('Change events');
+    const row = screen.getByTestId('manage-contest-event-row');
+    expect(row).toHaveTextContent('Events (2)');
+    const listed = within(screen.getByTestId('manage-contest-event-list')).getAllByRole('listitem');
+    expect(listed.map((item) => item.textContent.split(' · ')[0])).toEqual(['The Masters', 'PGA Championship']);
+  });
+
+  it('offers no way to add or change events once the contest is final', async () => {
+    primeMocks({
+      contest: buildContest({ status: 'COMPLETED' }),
+      managedContest: buildManagedContest({ status: 'COMPLETED' }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('manage-contest-event-row')).toHaveTextContent('The Masters');
+    expect(screen.queryByTestId('manage-contest-events-edit')).not.toBeInTheDocument();
   });
 });
 

@@ -74,12 +74,17 @@ export async function loadContestScoringConfiguration(
   };
 }
 
-/** The contest's SUBMITTED entries in entry order, each with its picks in pick order. */
+/**
+ * The contest's entries that SUBMITTED one event, in entry order, each with its picks in pick
+ * order (#713). Picks in the contest's other events come along too; scoring the event's field
+ * leaves them unscored and out of its standing.
+ */
 export async function loadContestLeaderboardEntries(
   deps: Pick<ContestLeaderboardReadDeps, 'entries' | 'picks'>,
   contestId: string,
+  sportEventId: string,
 ): Promise<ContestLeaderboardEntryInput[]> {
-  const entries = await deps.entries.findByContestWithSquad(contestId, { submittedOnly: true });
+  const entries = await deps.entries.findByContestWithSquad(contestId, { submittedFor: sportEventId });
   const picks = await deps.picks.findByEntries(entries.map((entry) => entry.id));
   const picksByEntry = new Map<string, ContestLeaderboardEntryInput['picks']>();
   for (const pick of picks) {
@@ -96,7 +101,6 @@ export async function loadContestLeaderboardEntries(
     id: entry.id,
     entryNumber: entry.entryNumber,
     name: entry.name,
-    status: entry.status,
     squadId: entry.squadId,
     squad: { name: entry.squadName },
     picks: picksByEntry.get(entry.id) ?? [],

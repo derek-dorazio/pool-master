@@ -28,6 +28,7 @@ import {
   LoadingState,
   Tile,
 } from '@/features/shared/ui';
+import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
 import { formatSelectionTypeName } from './contest-rules';
@@ -285,6 +286,8 @@ export function ContestDetailPage() {
   const visibleEntries = myOnly ? myEntries : entries;
   const entriesOpen = areContestEntriesOpen(contest, schedule?.startsAt);
   const isDraft = contest.status === ContestStatus.DRAFT;
+  // Each event takes its own submitted picks (#713): the board shows the current event's.
+  const currentEventId = currentContestEvent(contest)?.sportEventId;
   const canCreateEntry = entriesOpen && Boolean(myTeamId);
 
   const backToLeaguePath = hintedLeagueCode
@@ -456,13 +459,13 @@ export function ContestDetailPage() {
                             Yours
                           </Chip>
                         ) : null}
-                        {entry.status === ContestEntryStatus.SUBMITTED ? null : (
+                        {entryEventStatus(entry, currentEventId) === ContestEntryStatus.SUBMITTED ? null : (
                           // A draft counts nowhere until it is submitted (#481).
                           <Chip
                             data-testid={`contest-board-entry-status-${entry.id}`}
-                            tone={CONTEST_ENTRY_STATUS_TONES[entry.status]}
+                            tone={CONTEST_ENTRY_STATUS_TONES[ContestEntryStatus.DRAFT]}
                           >
-                            {CONTEST_ENTRY_STATUS_LABELS[entry.status]}
+                            {CONTEST_ENTRY_STATUS_LABELS[ContestEntryStatus.DRAFT]}
                           </Chip>
                         )}
                       </div>
@@ -588,6 +591,11 @@ export function ContestDetailPage() {
             { id: 'contest-format', label: 'Contest format', value: contest.contestFormat },
             { id: 'selection-type', label: 'Selection type', value: contest.selectionType },
             { id: 'status', label: 'Status', value: contestStatusLabel(contest.status) },
+            {
+              id: 'events',
+              label: contest.sportEvents.length === 1 ? 'Event' : 'Events',
+              value: contest.sportEvents.map((sportEvent) => sportEvent.name).join(', '),
+            },
           ]}
         />
       </Tile>

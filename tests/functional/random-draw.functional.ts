@@ -7,7 +7,7 @@ import {
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
 import { SelectionType } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
+import { attachContestEvent, buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -16,6 +16,7 @@ import {
 } from './setup';
 import { randomUUID } from 'node:crypto';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 
 // The random draw (#601) end to end over HTTP: members enter, nobody can pick, the
 // commissioner's draw deals every entry its golfers, and the deal is then final and public.
@@ -28,6 +29,7 @@ async function cleanupDrawArtifacts(): Promise<void> {
   if (createdSportEventIds.length > 0) {
     await prisma.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: createdSportEventIds } } } });
     await prisma.sportEventParticipant.deleteMany({ where: { sportEventId: { in: createdSportEventIds } } });
+    await unlinkContestsFromSportEvents(prisma, createdSportEventIds);
     await prisma.sportEvent.deleteMany({ where: { id: { in: createdSportEventIds } } });
     await cleanupFreshEventEditions(prisma);
     createdSportEventIds.length = 0;
@@ -97,7 +99,7 @@ async function seedRandomDrawFixture() {
     });
     fieldIds.push(row.id);
   }
-  await prisma.contest.update({ where: { id: contestId }, data: { sportEventId: event.id } });
+  await attachContestEvent(contestId, event.id);
 
   return {
     contestId,

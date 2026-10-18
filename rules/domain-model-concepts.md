@@ -24,10 +24,11 @@ User                                         Sport                (golf)
  └─→ SquadMembership ─→ Squad                            └─→ SportEvent (the 2026 Masters)
        (an owner; one per user per league)                     ├─→ SportEventRound   (Round 1..4)
                           │                                    ├─→ SportEventTier    (Tier A..)
-League ─→ Contest ─→ SportEvent                                └─→ SportEventParticipant ─→ Participant
-             │                                                       (the field)          (a golfer, or a team)
+League ─→ Contest ─→ ContestSportEvent[] ─→ SportEvent        └─→ SportEventParticipant ─→ Participant
+             │        (sequence: 1, 2, ...)                          (the field)          (a golfer, or a team)
              └─→ ContestEntry ←── Squad
                     (entryNumber: a squad may hold several)
+                    ├─→ ContestEntryEvent[]  (DRAFT | SUBMITTED, one per contest event)
                     └─→ ContestEntryPick[] ─→ SportEventParticipant
 ```
 
@@ -40,8 +41,12 @@ Two readings of this chain have both been held at once, so it is worth stating p
   entries as their own (co-owners included).
 - **A pick points at a `SportEventParticipant`, not a `Participant`.** It picks a golfer *in
   this event's field*, with that event's rank, tier and status.
-- **A Contest belongs to one League and runs on one SportEvent.** Many contests, in many
+- **A Contest belongs to one League and covers one or more SportEvents** (`ContestSportEvent`,
+  in `sequence` order, #713). A golf contest covers one event; an NFL pick'em covers one event
+  per week. Every event of a contest comes from the same sport league. Many contests, in many
   leagues, can run on the same event; they share its field, scores and tiers.
+- **Draft and submitted are per entry per event** (`ContestEntryEvent`). An entry submits each
+  event's picks on its own; a pick belongs to an event through the field row it points at.
 
 The tenant/global split is access rule A11 in `docs/DOMAIN-OPERATIONS.md`.
 
@@ -85,11 +90,14 @@ Shown By Its Name*.
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
-| `Contest` | contest | One league's game on one event: format, selection type and scoring | The `SportEvent` it runs on |
+| `Contest` | contest | One league's game on one or more events: format, selection type and scoring | The `SportEvent`s it covers (`ContestSportEvent`) |
+| `ContestSportEvent` | event (of a contest) | One event a contest covers, with its place in the contest's order | The `SportEvent` itself |
 | `ContestConfiguration` | contest settings | The contest's rules: roster size, picks per tier, entries per team, counting picks, prizes, and its scoring (a scoring definition and its settings, such as a racing points table) | `ContestConfigTemplate`, a global starting point it may be created from: sport-wide, or one sport league's own preset (`sportLeagueId`) |
 | `ContestEntry` | entry | One lineup a squad submits to one contest. A squad may hold several (`entryNumber`) | The squad itself |
-| `ContestEntryPick` | pick, lineup | One field member chosen on one entry. The entry's picks are its lineup | A `SportEventParticipant`, which it points at |
-| `ContestEntryStanding` | standings, final result | An entry's result, frozen when the contest settles | `SportEventParticipantStanding`, the golfer's position in the event |
+| `ContestEntryEvent` | entry status (submitted, not submitted) | An entry's draft/submitted status for one event of its contest | The entry itself |
+| `ContestEntryPick` | pick, lineup | One field member chosen on one entry. The entry's picks for an event are its lineup for that event | A `SportEventParticipant`, which it points at |
+| `ContestEntryEventStanding` | event result | An entry's result in one event, frozen when that event settles | `ContestEntryStanding`, the contest total |
+| `ContestEntryStanding` | standings, final result | An entry's contest total (the sum of its event results), frozen when the contest settles | `SportEventParticipantStanding`, the golfer's position in the event |
 
 ### Words that mean more than one thing
 
@@ -190,19 +198,20 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 | **join a league** | Accept a `LeagueInvitation` (email or link). Creates the `LeagueMembership` and the user's `Squad` with them as owner, or restores the squad they had before |
 | **invite a co-owner** | A `SquadOwnerInvitation` to one active squad, sent to one email address. An existing account is added as an owner (and league member) straight away; a new address joins on sign-up. Refused to someone already in the league |
 | **release an event** | Root admin moves a `SportEvent` from `DRAFT` to `SCHEDULED`. Until then commissioners cannot see it. Needs a loaded field with every active golfer tiered and priced (#93); locks tiers, prices and the event's pricing values for good |
-| **create a contest** | Commissioner creates a `Contest` on a released event that has not started. It is born `DRAFT`, seen only by commissioners, and its settings stay editable |
+| **create a contest** | Commissioner creates a `Contest` on one or more released events that have not started, all from one sport league. It is born `DRAFT`, seen only by commissioners, and its settings stay editable |
+| **add events**, **change a contest's events** | Commissioner sets the contest's events from its sport league (any year; "add all" takes a season). Added events must be released and not started; the contest keeps them in start order. Allowed until the contest is `COMPLETED`; removing one is refused once any of its events has started, and deletes the picks made for it. A random draw covers one event |
 | **open a contest** | Commissioner moves it `DRAFT` → `OPEN`. Members can now see and enter it; its name and settings are locked with no undo |
-| **enter a contest**, **create an entry** | A squad owner creates a `ContestEntry`, status `DRAFT`, numbered after the squad's highest entry in that contest |
+| **enter a contest**, **create an entry** | A squad owner creates a `ContestEntry`, `DRAFT` for every event of the contest, numbered after the squad's highest entry in that contest. Only while the contest is `OPEN` and its first event has not started: nobody joins a contest already being played |
 | **make picks**, **pick a golfer** | Add, swap or remove `ContestEntryPick`s on an entry in the selection room. Tiered: the configuration says how many picks come from each event tier; budget pick: the roster size caps the picks |
-| **submit an entry** | `DRAFT` → `SUBMITTED`, refused unless the lineup is complete. Only submitted entries count on the leaderboard and in settlement. A later change that leaves the lineup short sends it back to `DRAFT`; a draft left at tee-off simply does not count |
-| **lock a contest**, **entries close** | There is no lock action. Entries and picks change only while the contest is `OPEN` **and** its event's scheduled start (tee-off) has not passed — `areContestEntriesOpen`. Settings locked earlier, when the contest opened |
-| **start**, **go live** | The event moves to `IN_PROGRESS` (by the lifecycle scheduler from the round schedule, or by an admin) and every `OPEN` contest on it becomes `ACTIVE`. **Picks are revealed** to the league from here; before it each team sees only its own |
+| **submit an entry** | Submits one event's picks: that event's `ContestEntryEvent` goes `DRAFT` → `SUBMITTED`, refused unless the lineup is complete. Only submitted events count on the leaderboard and in settlement. A later change that leaves the lineup short sends that event back to `DRAFT`; an event left unsubmitted at its start simply scores nothing |
+| **lock a contest**, **entries close** | There is no lock action. Entries are created, renamed or left only while the contest is `OPEN` and its first event has not started (`areContestEntriesOpen`). An event's picks change while the contest is `OPEN` or `ACTIVE` and that event's scheduled start has not passed (`areEventPicksOpen`). Settings locked earlier, when the contest opened |
+| **start**, **go live** | The contest's first event moves to `IN_PROGRESS` (by the lifecycle scheduler from the round schedule, or by an admin) and the `OPEN` contest becomes `ACTIVE`. **Picks are revealed** event by event: an event's picks are visible to the league once that event starts; before it each team sees only its own |
 | **score a round**, **scores come in** | A `SportEventParticipantRound` and its golf row are written, by the provider sync for a linked event or by an admin's correction, and the event standings are recomputed. Scoring stops at the event's scheduled round count; playoff holes are not a round |
 | **unplayed round** | In contest scoring only, a round a golfer did not play (cut, withdrawn, disqualified, or the event ended) scores 80 strokes, counted against that round's par. The event's own standing keeps the golfer's real score |
 | **correct a score** | Root admin enters the round's values directly; the server does not derive to-par |
 | **sync**, **link an event** | Events are always created and owned by an admin. Linking one to a provider event (`syncScope` `SCORES_ONLY`) lets the provider send its live scores, and lets an admin load or refresh its field from the provider. A sync never creates an event or changes its details or status |
 | **seed / load / refresh the field** | Seed adds golfers from the tour's affiliations. Load/refresh queues a provider field sync that adds golfers and replaces the ranking, odds, seed and withdrawal of every golfer the provider reports, admin-set values included. All act on `SportEventParticipant` rows |
-| **settle** | When the event completes, each contest's submitted entries get a frozen `ContestEntryStanding` and the contest becomes `COMPLETED`. A later score correction does not change a settled result. Entries can tie |
+| **settle** | When an event completes, each contest on it freezes a `ContestEntryEventStanding` for every entry that submitted it. When the contest's last event has completed, each entry's total (the sum of its event results) is frozen as its `ContestEntryStanding` and the contest becomes `COMPLETED`. A later score correction does not change a settled result. Entries can tie |
 | **inactivate / delete a team** | §3 above |
 
 ### Not in the model

@@ -107,7 +107,7 @@ function entry(id: string, squadId: string, tiebreakerValue: number | null = nul
     squadId,
     entryNumber: 1,
     name: `Entry ${id}`,
-    status: 'DRAFT',
+    events: [{ sportEventId: EVENT_ID, status: 'DRAFT' }],
     tiebreakerValue,
     ...TIMESTAMPS,
   };
@@ -117,7 +117,7 @@ function buildWorld(options: WorldOptions = {}) {
   const contest = {
     id: CONTEST_ID,
     leagueId: LEAGUE_ID,
-    sportEventId: EVENT_ID,
+    sportEventIds: [EVENT_ID],
     name: 'Masters Pool',
     status: options.status ?? ContestStatus.OPEN,
     contestFormat: 'ROSTER',
@@ -192,11 +192,12 @@ function buildWorld(options: WorldOptions = {}) {
 
   const sportEvent = {
     id: EVENT_ID,
+    sport: 'GOLF',
     status: 'SCHEDULED',
     startDate: options.eventStartDate ?? new Date(NOW.getTime() + 24 * 60 * 60 * 1000),
   } as unknown as SportEvent;
   const deps = {
-    sportEvents: { findById: async (id: string) => (id === EVENT_ID ? sportEvent : null) },
+    sportEvents: { findByIds: async (ids: readonly string[]) => (ids.includes(EVENT_ID) ? [sportEvent] : []) },
     now: () => NOW,
     contests: fakeContestRepo({ findById: async (id: string) => (id === CONTEST_ID ? contest : null) }),
     configurations: fakeContestConfigurationRepo({ findByContest: async () => configuration }),
@@ -233,6 +234,7 @@ function buildWorld(options: WorldOptions = {}) {
         const created = {
           id: `pick-${nextId++}`,
           entryId: input.entryId,
+          sportEventId: row.sportEventId,
           sportEventParticipantId: input.sportEventParticipantId,
           contestFormat: 'ROSTER_SELECTION',
           lineupSlot: input.lineupSlot ?? null,
@@ -267,6 +269,7 @@ function buildWorld(options: WorldOptions = {}) {
   return {
     service,
     contest,
+    sportEvent,
     picks,
     /** Golfer letters currently held by an entry, in pick order. */
     held: (entryId: string) =>
@@ -415,10 +418,9 @@ describe('Tiered selection — withdrawn golfers', () => {
   });
 });
 
-describe('Tiered selection — picks change only while the contest is open', () => {
+describe('Tiered selection — picks change only while the contest takes them', () => {
   const closedStatuses = [
     ContestStatus.DRAFT,
-    ContestStatus.ACTIVE,
     ContestStatus.COMPLETED,
   ];
 
@@ -441,6 +443,25 @@ describe('Tiered selection — picks change only while the contest is open', () 
     await expect(world.pickFor(ENTRY_A, 'a')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
     await expect(world.pickFor(ENTRY_A, 'c')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED' });
     expect(world.held(ENTRY_A)).toEqual(['a', 'b']);
+  });
+});
+
+describe('Tiered selection — an ACTIVE contest still takes picks for an event that has not started (#713)', () => {
+  it('accepts and swaps picks on an ACTIVE contest while its event is still to start', async () => {
+    const world = buildWorld({ status: ContestStatus.ACTIVE });
+
+    await world.pickFor(ENTRY_A, 'a');
+    await world.pickFor(ENTRY_A, 'b');
+    await world.pickFor(ENTRY_A, 'a');
+
+    expect(world.held(ENTRY_A)).toEqual(['b']);
+  });
+
+  it('refuses a pick on an ACTIVE contest with 409 CONTEST_ENTRY_LOCKED once its event has started', async () => {
+    const world = buildWorld({ status: ContestStatus.ACTIVE, eventStartDate: new Date(NOW.getTime() - 60 * 1000) });
+
+    await expect(world.pickFor(ENTRY_A, 'a')).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED', statusCode: 409 });
+    expect(world.held(ENTRY_A)).toEqual([]);
   });
 });
 
@@ -496,6 +517,15 @@ describe('Selection room — what a member may see', () => {
     expect(room.picks.map((pick) => pick.entryId)).toEqual([ENTRY_A]);
   });
 
+  it('keeps another team\'s picks hidden on an ACTIVE contest whose event has not started yet (#713)', async () => {
+    const world = await bothEntriesPicked(ContestStatus.ACTIVE);
+
+    const room = await world.service.getSelectionState({ contestId: CONTEST_ID, selectedEntryId: ENTRY_B, actorUserId: ALICE });
+
+    expect(room.picks.map((pick) => pick.entryId)).toEqual([ENTRY_A]);
+    expect(room.selectedEntryId).toBe(ENTRY_A);
+  });
+
   it('does not show a member another team\'s selections or tiebreaker while the contest is open, falling back to their own entry', async () => {
     const world = await bothEntriesPicked(ContestStatus.OPEN);
 
@@ -512,8 +542,9 @@ describe('Selection room — what a member may see', () => {
     expect(selected).toEqual(['p-a']);
   });
 
-  it('shows every entry\'s picks, and another team\'s entry on request, once the contest is live', async () => {
+  it('shows every entry\'s picks, and another team\'s entry on request, once the contest is live and its event has started', async () => {
     const world = await bothEntriesPicked(ContestStatus.ACTIVE);
+    world.sportEvent.startDate = new Date(NOW.getTime() - 60 * 1000);
 
     const room = await world.service.getSelectionState({
       contestId: CONTEST_ID,

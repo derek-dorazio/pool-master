@@ -127,7 +127,7 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      sportEventId: sportEvent.id,
+      sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
       name: `Partial Uniques Contest ${suffix}`,
       status: 'OPEN',
       contestFormat: contestFormat as 'ROSTER',
@@ -140,7 +140,7 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
       squadId: squad.id,
       entryNumber: 1,
       name: `Entry ${suffix}`,
-      status: 'SUBMITTED',
+      events: { create: { sportEventId: sportEvent.id, status: 'SUBMITTED', submittedAt: new Date() } },
     },
   });
 

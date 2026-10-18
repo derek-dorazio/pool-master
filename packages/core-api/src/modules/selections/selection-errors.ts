@@ -28,6 +28,13 @@ export const selectionErrors = {
   contestNotFound: (contestId: string) =>
     new SelectionError(`Contest ${contestId} was not found`, 'CONTEST_NOT_FOUND', 404),
 
+  eventNotInContest: (sportEventId: string, contestId: string) =>
+    new SelectionError(`Event ${sportEventId} is not one contest ${contestId} covers`, 'CONTEST_EVENT_NOT_IN_CONTEST', 404),
+
+  /** A contest from before #713 whose single event was never set covers none, so it has no room. */
+  contestHasNoEvent: (contestId: string) =>
+    new SelectionError(`Contest ${contestId} covers no sport event yet`, 'CONTEST_EVENT_REQUIRED', 409),
+
   entryNotFound: (entryId: string, contestId: string) =>
     new SelectionError(
       `Entry ${entryId} was not found for contest ${contestId}`,

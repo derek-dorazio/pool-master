@@ -354,7 +354,7 @@ async function createGolfLiveVerificationContests(input: {
   const directContest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      sportEventId: input.sportEventId,
+      sportEvents: { create: { sportEventId: input.sportEventId, sequence: 1 } },
       name: `Direct Golf Live E2E ${suffix}`,
       status: 'ACTIVE',
       contestFormat: 'ROSTER',
@@ -364,6 +364,7 @@ async function createGolfLiveVerificationContests(input: {
   await createGolfLiveContestConfiguration(directContest.id);
   const directEntries = await createGolfLiveEntries({
     contestId: directContest.id,
+    sportEventId: input.sportEventId,
     leaderSquadId: leaderSquad.id,
     chaserSquadId: chaserSquad.id,
     leaderPicks: input.directPicks.leader,
@@ -393,6 +394,7 @@ async function createGolfLiveContestConfiguration(contestId: string) {
 
 async function createGolfLiveEntries(input: {
   contestId: string;
+  sportEventId: string;
   leaderSquadId: string;
   chaserSquadId: string;
   leaderPicks: string[];
@@ -406,7 +408,7 @@ async function createGolfLiveEntries(input: {
         squadId: input.leaderSquadId,
         entryNumber: 1,
         name: `Leader ${input.contestId.slice(0, 8)}`,
-        status: 'SUBMITTED',
+        events: { create: { sportEventId: input.sportEventId, status: 'SUBMITTED', submittedAt: new Date() } },
       },
     }),
     prisma.contestEntry.create({
@@ -415,7 +417,7 @@ async function createGolfLiveEntries(input: {
         squadId: input.chaserSquadId,
         entryNumber: 2,
         name: `Chaser ${input.contestId.slice(0, 8)}`,
-        status: 'SUBMITTED',
+        events: { create: { sportEventId: input.sportEventId, status: 'SUBMITTED', submittedAt: new Date() } },
       },
     }),
   ]);

@@ -593,28 +593,28 @@ model Sport {
 /// because League is already the PoolMaster office-pool model. See plans/124
 /// §4.2 design note.
 model SportLeague {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sportId          String   @map("sport_id") @db.Uuid
-  name             String   @db.VarChar(255)
-  matchKeyword     String?  @map("match_keyword") @db.VarChar(255)
+  id                 String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportId            String                   @map("sport_id") @db.Uuid
+  name               String                   @db.VarChar(255)
+  matchKeyword       String?                  @map("match_keyword") @db.VarChar(255)
   /// The event year the tour is currently on — a business pointer, not a foreign
   /// key: "set as current" refuses a year with no events for this tour, which is the
   /// integrity the season FK used to give (plans/147 decision 6).
-  currentEventYear Int?     @map("current_event_year")
-  isActive         Boolean  @default(true) @map("is_active")
+  currentEventYear   Int?                     @map("current_event_year")
+  isActive           Boolean                  @default(true) @map("is_active")
   /// How a bracket's winners reach their next match (#722): by fixed links, or reseeded by seed
   /// after a round (the NFL). Only a sport played as a bracket reads it.
   bracketAdvancement PrismaBracketAdvancement @default(FIXED) @map("bracket_advancement")
   /// What the sport league calls its bracket's rounds, first to final (#706: the NBA's First Round,
   /// Conference Semifinals, Conference Finals, NBA Finals). Empty: the sport's names are used.
   /// Reference data, set by the migration that seeds the league.
-  roundNames       String[] @default([]) @map("round_names")
+  roundNames         String[]                 @default([]) @map("round_names")
   /// How many tiers a new event of the sport league starts with (#707: the College Football
   /// Playoff's 12 teams in six tiers of two). Null: the sport's default tier count. Reference
   /// data, set by the migration that seeds the league.
-  tierCount        Int?     @map("tier_count")
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  tierCount          Int?                     @map("tier_count")
+  createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
   sport                  Sport                          @relation(fields: [sportId], references: [id])
   affiliations           ParticipantLeagueAffiliation[]
@@ -726,7 +726,6 @@ model ParticipantProviderMapping {
 model Contest {
   id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   leagueId      String              @map("league_id") @db.Uuid
-  sportEventId  String?             @map("sport_event_id") @db.Uuid
   name          String
   status        PrismaContestStatus @default(DRAFT)
   contestFormat PrismaContestFormat @default(ROSTER) @map("contest_format")
@@ -736,17 +735,36 @@ model Contest {
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
-  league         League                 @relation(fields: [leagueId], references: [id])
-  sportEvent     SportEvent?            @relation(fields: [sportEventId], references: [id])
-  configuration  ContestConfiguration?
-  entries        ContestEntry[]
-  entryStandings ContestEntryStanding[]
-  draw           ContestDraw?
+  league              League                      @relation(fields: [leagueId], references: [id])
+  sportEvents         ContestSportEvent[]
+  configuration       ContestConfiguration?
+  entries             ContestEntry[]
+  entryStandings      ContestEntryStanding[]
+  entryEventStandings ContestEntryEventStanding[]
+  draw                ContestDraw?
 
   @@index([leagueId])
-  @@index([sportEventId])
   @@index([status])
   @@map("contests")
+}
+
+// One event a contest covers (#713). Every contest has at least one: a golf or race contest has
+// one row, a majors pool or a pick'em season one per event. `sequence` is the events' order by
+// start, which the server keeps when the commissioner adds or removes events.
+model ContestSportEvent {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId    String   @map("contest_id") @db.Uuid
+  sportEventId String   @map("sport_event_id") @db.Uuid
+  sequence     Int
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  contest    Contest    @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  sportEvent SportEvent @relation(fields: [sportEventId], references: [id])
+
+  @@unique([contestId, sportEventId])
+  @@unique([contestId, sequence])
+  @@index([sportEventId])
+  @@map("contest_sport_events")
 }
 
 model ContestConfiguration {
@@ -843,24 +861,45 @@ model ContestPrizeDefinition {
 // =============================================================================
 
 model ContestEntry {
-  id              String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestId       String                   @map("contest_id") @db.Uuid
-  squadId         String                   @map("squad_id") @db.Uuid
-  entryNumber     Int                      @default(1) @map("entry_number")
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId       String   @map("contest_id") @db.Uuid
+  squadId         String   @map("squad_id") @db.Uuid
+  entryNumber     Int      @default(1) @map("entry_number")
   name            String
-  status          PrismaContestEntryStatus @default(DRAFT)
-  tiebreakerValue Int?                     @map("tiebreaker_value")
-  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+  tiebreakerValue Int?     @map("tiebreaker_value")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   contest Contest @relation(fields: [contestId], references: [id])
   squad   Squad   @relation(fields: [squadId], references: [id])
 
-  picks    ContestEntryPick[]
-  standing ContestEntryStanding?
+  picks          ContestEntryPick[]
+  events         ContestEntryEvent[]
+  standing       ContestEntryStanding?
+  eventStandings ContestEntryEventStanding[]
 
   @@unique([contestId, squadId, entryNumber])
   @@map("contest_entries")
+}
+
+// An entry's draft/submitted status for one event of its contest (#713, design Q5.4): "submit
+// week 6", "submit your Masters picks". One row per event of the contest, created with the entry
+// and when an event is added; only an event the entry submitted counts.
+model ContestEntryEvent {
+  id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestEntryId String                   @map("contest_entry_id") @db.Uuid
+  sportEventId   String                   @map("sport_event_id") @db.Uuid
+  status         PrismaContestEntryStatus @default(DRAFT)
+  submittedAt    DateTime?                @map("submitted_at") @db.Timestamptz
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+
+  contestEntry ContestEntry @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
+  sportEvent   SportEvent   @relation(fields: [sportEventId], references: [id])
+
+  @@unique([contestEntryId, sportEventId])
+  @@index([sportEventId])
+  @@map("contest_entry_events")
 }
 
 /// A contest entry's standing, frozen when its contest settles — cross-sport.
@@ -898,6 +937,33 @@ model ContestEntryStanding {
 
   @@index([contestId, position])
   @@map("contest_entry_standings")
+}
+
+// An entry's settled result in one event of its contest (#713): the weekly winner in pick'em,
+// one major's result in a majors pool. The contest total stays on ContestEntryStanding; the
+// columns mirror it, narrowed to the event. Written only by settlement, when the event completes.
+model ContestEntryEventStanding {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId         String    @map("contest_id") @db.Uuid
+  contestEntryId    String    @map("contest_entry_id") @db.Uuid
+  sportEventId      String    @map("sport_event_id") @db.Uuid
+  position          Int?
+  displayPosition   String?   @map("display_position") @db.VarChar(20)
+  countingPickLimit Int       @map("counting_pick_limit")
+  scoredPickCount   Int       @map("scored_pick_count")
+  totalScore        Int?      @map("total_score")
+  asOf              DateTime? @map("as_of") @db.Timestamptz
+  settledAt         DateTime  @map("settled_at") @db.Timestamptz
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  contestEntry ContestEntry @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
+  sportEvent   SportEvent   @relation(fields: [sportEventId], references: [id])
+
+  @@unique([contestEntryId, sportEventId])
+  @@index([contestId, sportEventId, position])
+  @@map("contest_entry_event_standings")
 }
 
 /// A random-draw contest's draw (#601): the commissioner's one explicit "Run draw", which dealt
@@ -1000,12 +1066,14 @@ model SportEvent {
   createdAt            DateTime                  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt            DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
 
-  contests               Contest[]
-  sportEventParticipants SportEventParticipant[]
-  tiers                  SportEventTier[]
-  roundSchedule          SportEventRound[]
-  matches                SportEventMatch[]
-  eventSeries            EventSeries             @relation(fields: [eventSeriesId], references: [id])
+  contests                   ContestSportEvent[]
+  contestEntryEvents         ContestEntryEvent[]
+  contestEntryEventStandings ContestEntryEventStanding[]
+  sportEventParticipants     SportEventParticipant[]
+  tiers                      SportEventTier[]
+  roundSchedule              SportEventRound[]
+  matches                    SportEventMatch[]
+  eventSeries                EventSeries                 @relation(fields: [eventSeriesId], references: [id])
 
   @@unique([providerId, externalId])
   // One edition of a series per year: there is one 2026 Masters (plans/147 decision 5).

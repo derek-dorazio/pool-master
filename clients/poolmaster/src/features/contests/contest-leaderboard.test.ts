@@ -268,12 +268,12 @@ describe('buildLeaderboardView', () => {
       entryNumber: 1,
       squadId: 'squad-1',
       squadName: 'Birdie Hunters',
-      status: 'SUBMITTED' as const,
       position: 1,
       displayPosition: '1',
       countingPickLimit: 2,
       scoredPickCount: 2,
       totalScore: -7,
+      events: [{ sportEventId: 'event-1', totalScore: -7, position: 1, displayPosition: '1' }],
       picks: [],
       ...overrides,
     };

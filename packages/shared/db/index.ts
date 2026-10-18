@@ -4,6 +4,9 @@ export type {
   ContestEntryPickParticipant,
   ContestEntryPickRepository,
   ContestEntryPickWithParticipant,
+  ContestEntryEventStandingRepository,
+  ContestEntryEventStandingResult,
+  ContestEntryEventStandingWrite,
   ContestEntryStandingRepository,
   ContestEntryStandingResult,
   ContestEntryStandingWrite,
@@ -11,6 +14,8 @@ export type {
 } from './contest-management-ports';
 export type {
   ContestCreate,
+  ContestEntryCreate,
+  ContestUpdate,
   ContestStatusFilter,
   ContestStatusTransition,
   ContestEntryCreateResult,

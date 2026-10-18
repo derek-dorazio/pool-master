@@ -26,6 +26,7 @@ import {
   Input,
   LoadingState,
 } from '@/features/shared/ui';
+import { firstContestEvent } from './contest-events';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { formatSelectionTypeName } from './contest-rules';
 import { ContestRulesFields } from './contest-rules-fields';
@@ -88,7 +89,8 @@ function EditContestForm({
   const logger = getLogger().child({ feature: 'edit-contest-page' });
   const navigate = useNavigate();
   const contestPath = buildLeagueAdminContestPath(leagueCode, contest.id);
-  const tierCount = managedContest.effectiveTiers.length;
+  // Every event of a tiered contest has the same number of tiers; the server checks it.
+  const tierCount = managedContest.sportEvents.at(0)?.effectiveTiers.length ?? 0;
   const { participant } = getSportDefinition(event.sport).vocabulary;
   const { selectionType } = configuration;
   const salaryCap = configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null;
@@ -154,7 +156,7 @@ function EditContestForm({
   return (
     <FormPage
       cancelTo={contestPath}
-      description="Event and format are fixed once the contest exists. To change them, delete this contest and create another."
+      description="The format is fixed once the contest exists. Events are added from the contest's Events section."
       errorMessage={errorMessage}
       isPending={saveMutation.isPending}
       onSubmit={(submitEvent) => {
@@ -182,7 +184,7 @@ function EditContestForm({
         />
       </FormField>
       <div className="grid gap-4 md:grid-cols-2">
-        <FixedValue label="Event">{`${event.name} · ${formatDateDisplay(event.startDate)}`}</FixedValue>
+        <FixedValue label={contest.sportEvents.length > 1 ? 'First event' : 'Event'}>{`${event.name} · ${formatDateDisplay(event.startDate)}`}</FixedValue>
         <FixedValue label="Format">{formatSelectionTypeName(contest.selectionType)}</FixedValue>
       </div>
       <div className="space-y-3">
@@ -216,7 +218,7 @@ export function EditContestPage() {
   const contestsQuery = useLeagueContestsQuery(league?.id ?? '');
   const managedContestQuery = useManagedContestQuery(league?.id, contestId);
   const contest = contestsQuery.data?.find((candidate) => candidate.id === contestId) ?? null;
-  const eventQuery = useQuery(sportEventQueryOptions(contest?.sportEventId ?? ''));
+  const eventQuery = useQuery(sportEventQueryOptions((contest ? firstContestEvent(contest)?.sportEventId : undefined) ?? ''));
   const contestPath = buildLeagueAdminContestPath(leagueCode, contestId);
 
   if (!league) {

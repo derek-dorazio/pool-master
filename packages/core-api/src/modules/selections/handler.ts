@@ -24,7 +24,7 @@ import type { SelectionService } from './service';
 type ContestParams = { contestId: string };
 type SelectionStateRequest = FastifyRequest<{ Params: ContestParams; Querystring: SelectionStateQuery }>;
 type SubmitSelectionRequest = FastifyRequest<{ Params: ContestParams; Body: SubmitPickRequest }>;
-type SubmitEntryRequest = FastifyRequest<{ Params: ContestParams & { entryId: string } }>;
+type SubmitEntryRequest = FastifyRequest<{ Params: ContestParams & { entryId: string; sportEventId: string } }>;
 type RunDrawRequest = FastifyRequest<{ Params: ContestParams }>;
 
 /**
@@ -44,6 +44,7 @@ export function createSelectionHandlers(service: SelectionService): SelectionHan
     const view = await service.getSelectionState({
       contestId: request.params.contestId,
       selectedEntryId: request.query.entryId,
+      sportEventId: request.query.sportEventId,
       actorUserId: request.authUser?.userId,
       actorIsRootAdmin: request.authUser?.isRootAdmin === true,
     });
@@ -69,11 +70,12 @@ export function createSelectionHandlers(service: SelectionService): SelectionHan
     return toSelectionStateResponse(result.view);
   }
 
-  /** Submitting an entry answers with the refreshed room, as a pick does (#481). */
+  /** Submitting an entry's picks for one event answers with the refreshed room, as a pick does (#481, #713). */
   async function submitContestEntry(request: SubmitEntryRequest): Promise<SelectionStateResponse> {
     const view = await service.submitEntry({
       contestId: request.params.contestId,
       entryId: request.params.entryId,
+      sportEventId: request.params.sportEventId,
       actorUserId: request.authUser?.userId,
     });
     return toSelectionStateResponse(view);

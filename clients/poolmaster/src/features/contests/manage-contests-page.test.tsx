@@ -64,8 +64,10 @@ const heritage = buildSportEvent({ id: 'event-2', name: 'RBC Heritage', startDat
 const players = buildSportEvent({ id: 'event-3', name: 'The Players', startDate: '2099-03-12T12:00:00.000Z' });
 
 /** A listed contest on `event`: the contest list carries the event's name and start. */
-function onEvent(event: SportEventDto): Pick<ContestDto, 'sportEventId' | 'sportEvent'> {
-  return { sportEventId: event.id, sportEvent: { name: event.name, startDate: event.startDate } };
+function onEvent(event: SportEventDto): Pick<ContestDto, 'sportEvents'> {
+  return {
+    sportEvents: [{ sportEventId: event.id, sequence: 1, name: event.name, startDate: event.startDate, status: event.status }],
+  };
 }
 
 function primeCommonMocks({
@@ -174,7 +176,7 @@ describe('ManageContestsPage', () => {
   it('says a contest has no event when the list carries none, and still lists the contest', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({
-      contests: [buildContest({ id: 'contest-bare', name: 'Bare Pool', sportEventId: null, sportEvent: null })],
+      contests: [buildContest({ id: 'contest-bare', name: 'Bare Pool', sportEvents: [] })],
     }));
 
     renderManageContestsPage();

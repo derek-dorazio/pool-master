@@ -36,6 +36,7 @@ import {
   ContestStatus,
   SelectionType,
   LeagueMembershipStatus,
+  contestEntryEventStatus,
   type ContestEntry,
   type Participant,
 } from '@poolmaster/shared/domain';
@@ -56,8 +57,8 @@ import {
   ContestDrawEntriesChangedError,
   type ContestEntryPickService,
 } from '../contest-entry-picks';
-import { contestPicksRevealed, type ContestService } from '../contests/service';
-import { areContestEntriesOpen } from '../contests/entry-window';
+import type { ContestService } from '../contests/service';
+import { areEventPicksOpen, areEventPicksRevealed, currentContestEvent } from '../contests/entry-window';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { selectionErrors, type SelectionError } from './selection-errors';
 import {
@@ -112,8 +113,8 @@ export interface SelectionServiceDeps {
    * room can be built without mail; the contests module owns the email.
    */
   entryReceipts?: Pick<ContestService, 'sendEntrySubmittedEmail'>;
-  /** Read for the event's start time, the cutoff for pick changes. */
-  sportEvents: Pick<SportEventRepository, 'findById'>;
+  /** Read for the contest's events' start times, the cutoff for each event's pick changes. */
+  sportEvents: Pick<SportEventRepository, 'findByIds'>;
   now?: () => Date;
   /** The seed a random draw shuffles by (#601); a fresh random one per draw unless given. */
   drawSeed?: () => string;
@@ -124,9 +125,11 @@ export interface GetSelectionStateInput {
   contestId: string;
   /**
    * The entry whose selections to show; defaults to the actor's own entry. Another team's
-   * entry is honoured only once the contest's picks are revealed.
+   * entry is honoured only once the event's picks are revealed.
    */
   selectedEntryId?: string;
+  /** The contest event to show (#713); defaults to its next event not yet started, else its last. */
+  sportEventId?: string;
   actorUserId?: string;
   /** Root admins see a DRAFT contest's room, as they see the contest itself (#117). */
   actorIsRootAdmin?: boolean;
@@ -149,6 +152,8 @@ export interface RunDrawInput {
 export interface SubmitEntryInput {
   contestId: string;
   entryId: string;
+  /** The contest event whose lineup is submitted (#713): "submit week 6". */
+  sportEventId: string;
   actorUserId?: string;
 }
 
@@ -161,7 +166,7 @@ export class SelectionService {
    * gives (#117).
    */
   async getSelectionState(input: GetSelectionStateInput): Promise<SelectionView> {
-    const context = await this.loadContext(input.contestId);
+    const context = await this.loadContext(input.contestId, input.sportEventId);
 
     if (
       context.contest.status === ContestStatus.DRAFT
@@ -193,7 +198,10 @@ export class SelectionService {
    */
   async submitSelection(input: SubmitSelectionInput): Promise<SubmitSelectionResult> {
     const { contestId, entryId, participantId, actorUserId } = input;
-    const context = await this.loadContext(contestId);
+    // The pick is in the event its field row belongs to (#713); a row from outside the contest
+    // is refused below, after the entry and actor checks.
+    const fieldRow = await this.deps.field.findById(participantId);
+    const context = await this.loadContext(contestId, fieldRow?.sportEventId, { fallBackToCurrent: true });
 
     const requestedEntry = context.entries.find((entry) => entry.id === entryId);
     if (!requestedEntry) throw selectionErrors.entryNotFound(entryId, contestId);
@@ -223,8 +231,7 @@ export class SelectionService {
     const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers });
     if (rosterSize <= 0) throw selectionErrors.selectionConfigInvalid(contestId);
 
-    const fieldRow = await this.deps.field.findById(participantId);
-    if (!fieldRow || fieldRow.sportEventId !== context.contest.sportEventId) {
+    if (!fieldRow || fieldRow.sportEventId !== context.sportEvent.id) {
       throw selectionErrors.participantNotInEvent(participantId, contestId);
     }
 
@@ -239,7 +246,7 @@ export class SelectionService {
       throw selectionErrors.participantNotSelectable(participantId, contestId);
     }
 
-    const existingPicks = await this.deps.picks.findByEntriesWithParticipant([entryId]);
+    const existingPicks = await this.findEventPicks(context, [entryId]);
     const heldPick = existingPicks.find((pick) => pick.sportEventParticipantId === participantId);
     const outcome = engine.evaluate({
       participant: selectionParticipant,
@@ -318,8 +325,8 @@ export class SelectionService {
    * submitted changes nothing and answers with the room.
    */
   async submitEntry(input: SubmitEntryInput): Promise<SelectionView> {
-    const { contestId, entryId, actorUserId } = input;
-    const context = await this.loadContext(contestId);
+    const { contestId, entryId, sportEventId, actorUserId } = input;
+    const context = await this.loadContext(contestId, sportEventId);
 
     const entry = context.entries.find((candidate) => candidate.id === entryId);
     if (!entry) throw selectionErrors.entryNotFound(entryId, contestId);
@@ -340,7 +347,7 @@ export class SelectionService {
       );
       throw context.contest.drawnAt
         ? selectionErrors.dealtByDraw(contestId)
-        : context.contest.status === ContestStatus.OPEN
+        : takesPicks(context.contest.status)
           ? selectionErrors.submitLockedByEventStart(contestId)
           : selectionErrors.submitLocked(contestId, context.contest.status);
     }
@@ -369,14 +376,14 @@ export class SelectionService {
     }
 
     let submittedContext = context;
-    if (entry.status !== ContestEntryStatus.SUBMITTED) {
-      const submitted = await this.deps.entries.update(entryId, { status: ContestEntryStatus.SUBMITTED });
+    if (contestEntryEventStatus(entry, context.sportEvent.id) !== ContestEntryStatus.SUBMITTED) {
+      const submitted = await this.deps.entries.setEventStatus(entryId, context.sportEvent.id, ContestEntryStatus.SUBMITTED, this.now());
       submittedContext = withEntry(context, submitted);
       this.deps.logger?.info(
-        { action: 'selection.submitEntry.submitted', data: { contestId, entryId } },
-        'Submitted a contest entry',
+        { action: 'selection.submitEntry.submitted', data: { contestId, entryId, sportEventId: context.sportEvent.id } },
+        'Submitted a contest entry\'s picks for one event',
       );
-      await this.deps.entryReceipts?.sendEntrySubmittedEmail(contestId, entryId, actorUserId);
+      await this.deps.entryReceipts?.sendEntrySubmittedEmail(contestId, entryId, actorUserId, context.sportEvent.id);
     }
 
     return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId });
@@ -451,8 +458,17 @@ export class SelectionService {
       'Ran a random draw',
     );
 
-    const drawnContext = await this.loadContext(contestId);
+    const drawnContext = await this.loadContext(contestId, context.sportEvent.id);
     return this.buildRoomView({ context: drawnContext, engine, actorUserId });
+  }
+
+  /** The entries' picks in the context's event (#713): a lineup is one event's picks. */
+  private async findEventPicks(
+    context: SelectionContext,
+    entryIds: readonly string[],
+  ): Promise<ContestEntryPickWithParticipant[]> {
+    const picks = await this.deps.picks.findByEntriesWithParticipant(entryIds);
+    return picks.filter((pick) => pick.sportEventId === context.sportEvent.id);
   }
 
   /** What stops the entry's lineup being submitted as of now, read fresh so it sees the latest pick write. */
@@ -462,7 +478,7 @@ export class SelectionService {
     entryId: string,
     rosterSize: number,
   ): Promise<{ issues: LineupIssue[]; pickCount: number }> {
-    const picks = await this.deps.picks.findByEntriesWithParticipant([entryId]);
+    const picks = await this.findEventPicks(context, [entryId]);
     const priceBySportEventParticipantId = buildPriceLookup(context);
     return {
       pickCount: picks.length,
@@ -479,10 +495,11 @@ export class SelectionService {
   }
 
   /**
-   * After a pick change on a submitted entry: a lineup it could no longer be submitted with goes
+   * After a pick change on a submitted event: a lineup it could no longer be submitted with goes
    * back to DRAFT (#481), so it stops counting until its owner fixes it and submits again. That
    * is a lineup left short, or a budget lineup a swap took over the cap (#93). A swap within a
-   * full tier, or one that stays under the cap, keeps the entry submitted.
+   * full tier, or one that stays under the cap, keeps the event submitted. Only the changed
+   * event moves (#713).
    */
   private async returnToDraftIfShort(
     context: SelectionContext,
@@ -490,15 +507,15 @@ export class SelectionService {
     entry: ContestEntry,
     rosterSize: number,
   ): Promise<SelectionContext> {
-    if (entry.status !== ContestEntryStatus.SUBMITTED) return context;
+    if (contestEntryEventStatus(entry, context.sportEvent.id) !== ContestEntryStatus.SUBMITTED) return context;
     const { issues } = await this.findEntryIssues(context, engine, entry.id, rosterSize);
     if (issues.length === 0) return context;
 
-    const reverted = await this.deps.entries.update(entry.id, { status: ContestEntryStatus.DRAFT });
+    const reverted = await this.deps.entries.setEventStatus(entry.id, context.sportEvent.id, ContestEntryStatus.DRAFT, this.now());
     this.deps.logger?.info(
       {
         action: 'selection.submitSelection.returnedToDraft',
-        data: { contestId: context.contest.id, entryId: entry.id, issues: issues.map((issue) => issue.kind) },
+        data: { contestId: context.contest.id, entryId: entry.id, sportEventId: context.sportEvent.id, issues: issues.map((issue) => issue.kind) },
       },
       'A pick change left a submitted lineup unsubmittable; the entry is a draft again',
     );
@@ -513,28 +530,47 @@ export class SelectionService {
     return membership?.status === LeagueMembershipStatus.ACTIVE && isCommissionerRole(membership.role);
   }
 
+  private now(): Date {
+    return this.deps.now?.() ?? new Date();
+  }
+
   /**
-   * Everything one operation reads about a contest, in six parallel reads plus the squad
+   * Everything one operation reads about a contest and one of its events (#713): the event
+   * named, else the contest's next event not yet started, else its last. An event the contest
+   * does not cover answers 404, unless `fallBackToCurrent` (a pick names its event through its
+   * field row, which is refused with its own error). Six parallel reads plus the squad
    * memberships, which need the entries' squad ids first.
    */
-  private async loadContext(contestId: string): Promise<SelectionContext> {
+  private async loadContext(
+    contestId: string,
+    requestedSportEventId?: string,
+    options?: { fallBackToCurrent?: boolean },
+  ): Promise<SelectionContext> {
     const contest = await this.deps.contests.findById(contestId);
     if (!contest) throw selectionErrors.contestNotFound(contestId);
 
-    const sportEventId = contest.sportEventId;
-    const [configuration, entries, field, tierGroups, valuations, sportEvent] = await Promise.all([
+    const now = this.now();
+    const eventsById = new Map(
+      (await this.deps.sportEvents.findByIds(contest.sportEventIds)).map((event) => [event.id, event]),
+    );
+    const contestEvents = contest.sportEventIds.flatMap((id) => eventsById.get(id) ?? []);
+    const requested = requestedSportEventId === undefined ? undefined : eventsById.get(requestedSportEventId);
+    if (requestedSportEventId !== undefined && !requested && !options?.fallBackToCurrent) {
+      throw selectionErrors.eventNotInContest(requestedSportEventId, contestId);
+    }
+    const sportEvent = requested ?? currentContestEvent(contestEvents, now);
+    if (!sportEvent) {
+      throw selectionErrors.contestHasNoEvent(contestId);
+    }
+
+    const sportEventId = sportEvent.id;
+    const [configuration, entries, field, tierGroups, valuations] = await Promise.all([
       this.deps.configurations.findByContest(contestId),
       this.deps.entries.findByContest(contestId),
-      sportEventId ? this.deps.field.findBySportEvent(sportEventId) : Promise.resolve([]),
-      sportEventId
-        ? this.deps.tiers.getEffectiveTiersForSportEvent(sportEventId)
-        : Promise.resolve([]),
-      sportEventId
-        ? this.deps.tiers.getEffectiveValuationsForSportEvent(sportEventId)
-        : Promise.resolve([]),
-      sportEventId ? this.deps.sportEvents.findById(sportEventId) : Promise.resolve(null),
+      this.deps.field.findBySportEvent(sportEventId),
+      this.deps.tiers.getEffectiveTiersForSportEvent(sportEventId),
+      this.deps.tiers.getEffectiveValuationsForSportEvent(sportEventId),
     ]);
-    const now = this.deps.now?.() ?? new Date();
 
     const squadIds = Array.from(new Set(entries.map((entry) => entry.squadId)));
     const [squadMemberships, participants] = await Promise.all([
@@ -544,6 +580,7 @@ export class SelectionService {
 
     return {
       contest,
+      sportEvent,
       configuration,
       entries,
       squadMemberships,
@@ -553,13 +590,14 @@ export class SelectionService {
         tierGroups,
         configuration?.configJson?.selectionType === SelectionType.TIERED ? configuration.configJson.picksPerTier : 0,
       ),
-      // One rule for every entry change: see contests/entry-window.
-      acceptsPicks: areContestEntriesOpen(contest, sportEvent, now),
+      // One rule for every pick change: see contests/entry-window.
+      acceptsPicks: areEventPicksOpen(contest, sportEvent, now),
+      picksRevealed: areEventPicksRevealed(contest, sportEvent, now),
       selectionParticipants: buildSelectionParticipants({
         field,
         participantsById: new Map(participants.map((p: Participant) => [p.id, p])),
         valuationBySportEventParticipantId: buildValuationLookup(valuations),
-        sport: sportEvent?.sport ?? null,
+        sport: sportEvent.sport,
       }),
     };
   }
@@ -583,7 +621,7 @@ export class SelectionService {
     const entryIds = contestEntries.map((entry) => entry.id);
 
     const [picks, actorMembership] = await Promise.all([
-      this.deps.picks.findByEntriesWithParticipant(entryIds),
+      this.findEventPicks(context, entryIds),
       actorUserId
         ? this.deps.memberships.findByLeagueAndUser(contest.leagueId, actorUserId)
         : Promise.resolve(null),
@@ -595,11 +633,11 @@ export class SelectionService {
     const tierByParticipantId = buildTierByParticipantId(tiers);
     const priceBySportEventParticipantId = buildPriceLookup(context);
 
-    // While the contest takes entries (DRAFT, OPEN) a team sees only its own picks, the rule
-    // the contest's entry reads follow (`contestPicksRevealed`). The actor's teams are every
-    // squad they are an active member of, co-owners included, not only the squad's first
-    // member, which is who `entryUserIdMap` attributes an entry to.
-    const picksRevealed = contestPicksRevealed(contest);
+    // Until the event's picks are revealed a team sees only its own, the rule the contest's
+    // entry reads follow (`areEventPicksRevealed`). The actor's teams are every squad they are
+    // an active member of, co-owners included, not only the squad's first member, which is who
+    // `entryUserIdMap` attributes an entry to.
+    const { picksRevealed } = context;
     const actorSquadIds = new Set(
       actorUserId
         ? context.squadMemberships
@@ -624,7 +662,7 @@ export class SelectionService {
       userId: entryUserIdMap.get(entry.id) ?? '',
       name: entry.name,
       pickCount: picksByEntry.get(entry.id)?.length ?? 0,
-      status: entry.status,
+      status: contestEntryEventStatus(entry, context.sportEvent.id),
     }));
 
     const myEntryId = entries.find((entry) => actorEntryIds.has(entry.id))?.id ?? null;
@@ -653,6 +691,8 @@ export class SelectionService {
 
     return {
       contest,
+      sportEventId: context.sportEvent.id,
+      acceptsPicks: context.acceptsPicks,
       rosterSize,
       isCommissioner: actorMembership ? isCommissionerRole(actorMembership.role) : false,
       status,
@@ -799,13 +839,18 @@ function rejectionError(
 
 /**
  * Why the room refuses a pick change: a drawn contest's picks are the draw's (#601); otherwise
- * the contest has left OPEN, or its event has started while it still says OPEN.
+ * the contest no longer takes picks, or the event has started while it still does.
  */
 function lockedSelectionError(context: SelectionContext, contestId: string): SelectionError {
   if (context.contest.drawnAt) return selectionErrors.dealtByDraw(contestId);
-  return context.contest.status === ContestStatus.OPEN
+  return takesPicks(context.contest.status)
     ? selectionErrors.selectionLockedByEventStart(contestId)
     : selectionErrors.selectionLocked(contestId, context.contest.status);
+}
+
+/** Whether the contest's status takes picks, so a refusal can only be its event's start (#713). */
+function takesPicks(status: ContestStatus): boolean {
+  return status === ContestStatus.OPEN || status === ContestStatus.ACTIVE;
 }
 
 /** The context with one entry replaced by its freshly written row. */

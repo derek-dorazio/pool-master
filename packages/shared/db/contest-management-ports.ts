@@ -59,6 +59,8 @@ export interface ContestEntryPickParticipant {
 }
 
 export interface ContestEntryPickWithParticipant extends ContestEntryPick {
+  /** The event the picked field row belongs to: which of the contest's events the pick is in (#713). */
+  sportEventId: string;
   participant: ContestEntryPickParticipant;
 }
 
@@ -101,4 +103,19 @@ export interface ContestEntryStandingRepository {
   findByContest(contestId: string): Promise<ContestEntryStandingResult[]>;
   /** One per entry: creates or overwrites the entry's standing. */
   upsert(write: ContestEntryStandingWrite): Promise<void>;
+}
+
+/** An entry's settled result in one event of its contest (#713): the contest standing, narrowed to the event. */
+export interface ContestEntryEventStandingResult extends ContestEntryStandingResult {
+  sportEventId: string;
+}
+
+export type ContestEntryEventStandingWrite = Omit<ContestEntryEventStandingResult, 'id'>;
+
+/** The frozen per-event entry standing (#713): written by settlement when the event completes. */
+export interface ContestEntryEventStandingRepository {
+  /** Every event's standings of the contest, best first within each event. */
+  findByContest(contestId: string): Promise<ContestEntryEventStandingResult[]>;
+  /** One per entry and event: creates or overwrites it. */
+  upsert(write: ContestEntryEventStandingWrite): Promise<void>;
 }

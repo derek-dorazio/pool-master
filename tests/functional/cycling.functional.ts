@@ -150,7 +150,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
       path: { id: league.id },
       body: {
         name: `Tour of the Harbour Picks ${RUN}`,
-        sportEventId: eventId,
+        sportEventIds: [eventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         templateId: tieredTemplate.id,
@@ -174,7 +174,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(rider) } });
         expect(pick.response.status).toBe(200);
       }
-      expect((await submitContestEntry({ client, path: { contestId, entryId } })).response.status).toBe(200);
+      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
       return entryId;
     };
     const commissionerEntryId = await enterWith(commissioner.client, ['Pogacar', 'Vingegaard', 'Evenepoel', 'Ayuso', 'Roglic']);

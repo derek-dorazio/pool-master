@@ -125,7 +125,7 @@ function buildEntry(overrides: Partial<{
   name: string;
   entryNumber: number;
   picksCount: number;
-  status: 'DRAFT' | 'SUBMITTED' | 'INACTIVE';
+  status: 'DRAFT' | 'SUBMITTED';
   participants: Array<{
     pickId: string;
     sportEventParticipantId: string;
@@ -141,7 +141,12 @@ function buildEntry(overrides: Partial<{
     squadName: overrides.squadName ?? 'Birdie Hunters',
     entryNumber: overrides.entryNumber ?? 1,
     name: overrides.name ?? 'Birdie Hunters Entry 1',
-    status: overrides.status ?? 'SUBMITTED',
+    // A one-event contest: the entry's status in its event (#713).
+    events: [{
+      sportEventId: 'event-1',
+      status: overrides.status ?? 'SUBMITTED',
+      submittedAt: (overrides.status ?? 'SUBMITTED') === 'SUBMITTED' ? '2026-04-15T00:00:00.000Z' : null,
+    }],
     tiebreakerValue: null,
     picksCount: overrides.picksCount ?? 0,
     createdAt: '2026-04-15T00:00:00.000Z',
@@ -156,7 +161,8 @@ function primeMocks(opts?: {
   entries?: ReturnType<typeof buildEntry>[];
   myTeamId?: string;
   role?: 'MEMBER' | 'COMMISSIONER';
-  sportEventId?: string;
+  /** The contest event's scheduled start; far in the future unless given. */
+  eventStartDate?: string;
   endsAt?: string;
 }) {
   const contestStatus = opts?.contestStatus ?? 'OPEN';
@@ -176,7 +182,13 @@ function primeMocks(opts?: {
         leagueId: 'league-1',
         sport: 'GOLF',
         entryCount: entries.length,
-        ...(opts?.sportEventId ? { sportEventId: opts.sportEventId } : {}),
+        sportEvents: [{
+          sportEventId: 'event-1',
+          sequence: 1,
+          name: 'The Masters',
+          startDate: opts?.eventStartDate ?? '2099-04-09T12:40:00.000Z',
+          status: 'SCHEDULED',
+        }],
         ...(opts?.endsAt ? { endsAt: opts.endsAt } : {}),
       },
     },
@@ -264,7 +276,7 @@ describe('ContestDetailPage (Contest Board)', () => {
   });
 
   it('shows when the contest starts and ends, from its sport event\'s schedule', async () => {
-    primeMocks({ sportEventId: 'event-1' });
+    primeMocks({ eventStartDate: '2026-04-09T12:00:00.000Z' });
     getEventMock.mockResolvedValue({
       data: {
         event: {
@@ -282,14 +294,16 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(await screen.findByTestId('contest-detail-starts')).toHaveTextContent(
       `Starts ${format('2026-04-09T12:00:00.000Z')}`,
     );
-    expect(screen.getByTestId('contest-detail-ends')).toHaveTextContent(
+    // The start is the contest's first event's, which the contest read carries; the end is the
+    // last event's, read from the event itself.
+    expect(await screen.findByTestId('contest-detail-ends')).toHaveTextContent(
       `Ends ${format('2026-04-12T23:00:00.000Z')}`,
     );
     expect(getEventMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1' } }));
   });
 
   it('shows the contest\'s own end once it has one, over the event\'s scheduled end', async () => {
-    primeMocks({ sportEventId: 'event-1', endsAt: '2026-04-14T18:00:00.000Z' });
+    primeMocks({ eventStartDate: '2026-04-09T12:00:00.000Z', endsAt: '2026-04-14T18:00:00.000Z' });
     getEventMock.mockResolvedValue({
       data: {
         event: { id: 'event-1', startDate: '2026-04-09T12:00:00.000Z', endDate: '2026-04-12T23:00:00.000Z' },
@@ -568,7 +582,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     primeMocks({
       contestStatus: 'OPEN',
       picksRevealed: false,
-      sportEventId: 'event-1',
+      eventStartDate: new Date(Date.now() - 60 * 60_000).toISOString(),
       entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
     });
     getEventMock.mockResolvedValue({
@@ -594,7 +608,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     primeMocks({
       contestStatus: 'OPEN',
       picksRevealed: false,
-      sportEventId: 'event-1',
+      eventStartDate: new Date(Date.now() + 60 * 60_000).toISOString(),
       entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
     });
     getEventMock.mockResolvedValue({
@@ -645,6 +659,13 @@ describe('ContestDetailPage (Contest Board)', () => {
             leagueId: 'league-1',
             sport: 'GOLF',
             entryCount: 0,
+            sportEvents: [{
+              sportEventId: 'event-1',
+              sequence: 1,
+              name: 'The Masters',
+              startDate: '2099-04-09T12:40:00.000Z',
+              status: 'SCHEDULED',
+            }],
           },
         },
       });
