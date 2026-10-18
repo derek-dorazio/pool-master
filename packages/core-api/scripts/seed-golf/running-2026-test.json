@@ -1,0 +1,1886 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "RUNNING",
+    "season": 2026,
+    "sportLeagues": [
+      "World Marathon Majors (men)",
+      "World Marathon Majors (women)"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-18",
+    "gatheredBy": "load-sport-data, the 2026 World Marathon Majors run so far (New York is on November 1): each race's top 10 men and women from its Wikipedia page (one source). Runners with equal times keep their separate places. Rankings are each runner's average finish across these races; odds to win are made up from them.",
+    "sources": [
+      {
+        "name": "2026 Tokyo Marathon (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Tokyo_Marathon"
+      },
+      {
+        "name": "2026 Boston Marathon (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Boston_Marathon"
+      },
+      {
+        "name": "2026 London Marathon (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_London_Marathon"
+      },
+      {
+        "name": "2026 Sydney Marathon (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Sydney_Marathon"
+      },
+      {
+        "name": "2026 Berlin Marathon (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Berlin_Marathon"
+      },
+      {
+        "name": "2026 Chicago Marathon (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Chicago_Marathon"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "World Marathon Majors (men)",
+      "players": [
+        {
+          "key": "world-marathon-majors-men-guye-adola",
+          "name": "Guye Adola",
+          "countryCode": "ET",
+          "ranking": 1
+        },
+        {
+          "key": "world-marathon-majors-men-john-korir",
+          "name": "John Korir",
+          "countryCode": "KE",
+          "ranking": 2
+        },
+        {
+          "key": "world-marathon-majors-men-sabastian-sawe",
+          "name": "Sabastian Sawe",
+          "countryCode": "KE",
+          "ranking": 3
+        },
+        {
+          "key": "world-marathon-majors-men-tadese-takele",
+          "name": "Tadese Takele",
+          "countryCode": "ET",
+          "ranking": 4
+        },
+        {
+          "key": "world-marathon-majors-men-chimdessa-debele",
+          "name": "Chimdessa Debele",
+          "countryCode": "ET",
+          "ranking": 5
+        },
+        {
+          "key": "world-marathon-majors-men-gemechu-dida",
+          "name": "Gemechu Dida",
+          "countryCode": "ET",
+          "ranking": 6
+        },
+        {
+          "key": "world-marathon-majors-men-geoffrey-toroitich",
+          "name": "Geoffrey Toroitich",
+          "countryCode": "KE",
+          "ranking": 7
+        },
+        {
+          "key": "world-marathon-majors-men-yomif-kejelcha",
+          "name": "Yomif Kejelcha",
+          "countryCode": "ET",
+          "ranking": 8
+        },
+        {
+          "key": "world-marathon-majors-men-amos-kipruto",
+          "name": "Amos Kipruto",
+          "countryCode": "KE",
+          "ranking": 9
+        },
+        {
+          "key": "world-marathon-majors-men-alexander-mutiso",
+          "name": "Alexander Mutiso",
+          "countryCode": "KE",
+          "ranking": 10
+        },
+        {
+          "key": "world-marathon-majors-men-benson-kipruto",
+          "name": "Benson Kipruto",
+          "countryCode": "KE",
+          "ranking": 11
+        },
+        {
+          "key": "world-marathon-majors-men-gabriel-geay",
+          "name": "Gabriel Geay",
+          "countryCode": "TZ",
+          "ranking": 12
+        },
+        {
+          "key": "world-marathon-majors-men-alphonce-simbu",
+          "name": "Alphonce Simbu",
+          "countryCode": "TZ",
+          "ranking": 13
+        },
+        {
+          "key": "world-marathon-majors-men-jacob-kiplimo",
+          "name": "Jacob Kiplimo",
+          "countryCode": "UG",
+          "ranking": 14
+        },
+        {
+          "key": "world-marathon-majors-men-addisu-gobena",
+          "name": "Addisu Gobena",
+          "countryCode": "ET",
+          "ranking": 15
+        },
+        {
+          "key": "world-marathon-majors-men-getaneh-molla",
+          "name": "Getaneh Molla",
+          "countryCode": "ET",
+          "ranking": 16
+        },
+        {
+          "key": "world-marathon-majors-men-tebello-ramakongoana",
+          "name": "Tebello Ramakongoana",
+          "countryCode": "LS",
+          "ranking": 17
+        },
+        {
+          "key": "world-marathon-majors-men-boki-diriba",
+          "name": "Boki Diriba",
+          "countryCode": "ET",
+          "ranking": 18
+        },
+        {
+          "key": "world-marathon-majors-men-daniel-mateiko",
+          "name": "Daniel Mateiko",
+          "countryCode": "KE",
+          "ranking": 19
+        },
+        {
+          "key": "world-marathon-majors-men-hailemaryam-kiros",
+          "name": "Hailemaryam Kiros",
+          "countryCode": "ET",
+          "ranking": 20
+        },
+        {
+          "key": "world-marathon-majors-men-jemal-mekonnen",
+          "name": "Jemal Mekonnen",
+          "countryCode": "ET",
+          "ranking": 21
+        },
+        {
+          "key": "world-marathon-majors-men-muktar-edris",
+          "name": "Muktar Edris",
+          "countryCode": "ET",
+          "ranking": 22
+        },
+        {
+          "key": "world-marathon-majors-men-tamirat-tola",
+          "name": "Tamirat Tola",
+          "countryCode": "ET",
+          "ranking": 23
+        },
+        {
+          "key": "world-marathon-majors-men-zouhair-talbi",
+          "name": "Zouhair Talbi",
+          "countryCode": "US",
+          "ranking": 24
+        },
+        {
+          "key": "world-marathon-majors-men-asefa-boki",
+          "name": "Asefa Boki",
+          "countryCode": "ET",
+          "ranking": 25
+        },
+        {
+          "key": "world-marathon-majors-men-deresa-geleta",
+          "name": "Deresa Geleta",
+          "countryCode": "ET",
+          "ranking": 26
+        },
+        {
+          "key": "world-marathon-majors-men-iliass-aouani",
+          "name": "Iliass Aouani",
+          "countryCode": "IT",
+          "ranking": 27
+        },
+        {
+          "key": "world-marathon-majors-men-selemon-barega",
+          "name": "Selemon Barega",
+          "countryCode": "ET",
+          "ranking": 28
+        },
+        {
+          "key": "world-marathon-majors-men-milkesa-mengesha",
+          "name": "Milkesa Mengesha",
+          "countryCode": "ET",
+          "ranking": 29
+        },
+        {
+          "key": "world-marathon-majors-men-andamlak-belihu",
+          "name": "Andamlak Belihu",
+          "countryCode": "ET",
+          "ranking": 30
+        },
+        {
+          "key": "world-marathon-majors-men-clayton-young",
+          "name": "Clayton Young",
+          "countryCode": "US",
+          "ranking": 31
+        },
+        {
+          "key": "world-marathon-majors-men-charles-hicks",
+          "name": "Charles Hicks",
+          "countryCode": "US",
+          "ranking": 32
+        },
+        {
+          "key": "world-marathon-majors-men-dawit-wolde",
+          "name": "Dawit Wolde",
+          "countryCode": "ET",
+          "ranking": 33
+        },
+        {
+          "key": "world-marathon-majors-men-geoffrey-kamworor",
+          "name": "Geoffrey Kamworor",
+          "countryCode": "KE",
+          "ranking": 34
+        },
+        {
+          "key": "world-marathon-majors-men-richard-ringer",
+          "name": "Richard Ringer",
+          "countryCode": "DE",
+          "ranking": 35
+        },
+        {
+          "key": "world-marathon-majors-men-seifu-tura",
+          "name": "Seifu Tura",
+          "countryCode": "ET",
+          "ranking": 36
+        },
+        {
+          "key": "world-marathon-majors-men-shura-kitata",
+          "name": "Shura Kitata",
+          "countryCode": "ET",
+          "ranking": 37
+        },
+        {
+          "key": "world-marathon-majors-men-vincent-kipkemoi-ngetich",
+          "name": "Vincent Kipkemoi Ngetich",
+          "countryCode": "KE",
+          "ranking": 38
+        },
+        {
+          "key": "world-marathon-majors-men-akira-akasaki",
+          "name": "Akira Akasaki",
+          "countryCode": "JP",
+          "ranking": 39
+        },
+        {
+          "key": "world-marathon-majors-men-alex-masai",
+          "name": "Alex Masai",
+          "countryCode": "KE",
+          "ranking": 40
+        },
+        {
+          "key": "world-marathon-majors-men-kennedy-kimutai",
+          "name": "Kennedy Kimutai",
+          "countryCode": "KE",
+          "ranking": 41
+        },
+        {
+          "key": "world-marathon-majors-men-peter-lynch",
+          "name": "Peter Lynch",
+          "countryCode": "IE",
+          "ranking": 42
+        },
+        {
+          "key": "world-marathon-majors-men-yuhei-urano",
+          "name": "Yuhei Urano",
+          "countryCode": "JP",
+          "ranking": 43
+        },
+        {
+          "key": "world-marathon-majors-men-gilbert-kibet",
+          "name": "Gilbert Kibet",
+          "countryCode": "KE",
+          "ranking": 44
+        },
+        {
+          "key": "world-marathon-majors-men-mahamed-mahamed",
+          "name": "Mahamed Mahamed",
+          "countryCode": "GB",
+          "ranking": 45
+        },
+        {
+          "key": "world-marathon-majors-men-shifera-tamru",
+          "name": "Shifera Tamru",
+          "countryCode": "ET",
+          "ranking": 46
+        },
+        {
+          "key": "world-marathon-majors-men-tadu-abate",
+          "name": "Tadu Abate",
+          "countryCode": "ET",
+          "ranking": 47
+        },
+        {
+          "key": "world-marathon-majors-men-vincent-mauri",
+          "name": "Vincent Mauri",
+          "countryCode": "US",
+          "ranking": 48
+        }
+      ],
+      "events": [
+        {
+          "key": "tokyo-marathon",
+          "name": "Tokyo Marathon",
+          "startDate": "2026-03-01",
+          "endDate": "2026-03-01",
+          "venue": null,
+          "location": "Tokyo, Japan",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-men-tadese-takele",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-geoffrey-toroitich",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-alexander-mutiso",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-daniel-mateiko",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-muktar-edris",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-iliass-aouani",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-selemon-barega",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-seifu-tura",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-vincent-kipkemoi-ngetich",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-shifera-tamru",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "boston-marathon",
+          "name": "Boston Marathon",
+          "startDate": "2026-04-20",
+          "endDate": "2026-04-20",
+          "venue": null,
+          "location": "Boston, Massachusetts",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-men-john-korir",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-alphonce-simbu",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-benson-kipruto",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-hailemaryam-kiros",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-zouhair-talbi",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-tebello-ramakongoana",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-charles-hicks",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-richard-ringer",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-alex-masai",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-milkesa-mengesha",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "london-marathon",
+          "name": "London Marathon",
+          "startDate": "2026-04-26",
+          "endDate": "2026-04-26",
+          "venue": null,
+          "location": "London, United Kingdom",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-men-sabastian-sawe",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-yomif-kejelcha",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-jacob-kiplimo",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-amos-kipruto",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-tamirat-tola",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-deresa-geleta",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-addisu-gobena",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-geoffrey-kamworor",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-peter-lynch",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-mahamed-mahamed",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "sydney-marathon",
+          "name": "Sydney Marathon",
+          "startDate": "2026-08-30",
+          "endDate": "2026-08-30",
+          "startsAt": "2026-08-30T06:30:00+10:00",
+          "venue": null,
+          "location": "Sydney, Australia",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-men-addisu-gobena",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-chimdessa-debele",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-tebello-ramakongoana",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-alphonce-simbu",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-jemal-mekonnen",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-hailemaryam-kiros",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-vincent-kipkemoi-ngetich",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-dawit-wolde",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-kennedy-kimutai",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-gilbert-kibet",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "berlin-marathon",
+          "name": "Berlin Marathon",
+          "startDate": "2026-09-27",
+          "endDate": "2026-09-27",
+          "venue": null,
+          "location": "Berlin, Germany",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-men-guye-adola",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-gemechu-dida",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-gabriel-geay",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-getaneh-molla",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-selemon-barega",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-asefa-boki",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-andamlak-belihu",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-shura-kitata",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-yuhei-urano",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-tadu-abate",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "chicago-marathon",
+          "name": "Chicago Marathon",
+          "startDate": "2026-10-11",
+          "endDate": "2026-10-11",
+          "startsAt": "2026-10-11T07:30:00-05:00",
+          "venue": null,
+          "location": "Chicago, Illinois",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-men-amos-kipruto",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-tadese-takele",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-milkesa-mengesha",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-jacob-kiplimo",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-boki-diriba",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-daniel-mateiko",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-clayton-young",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-charles-hicks",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-akira-akasaki",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-men-vincent-mauri",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "World Marathon Majors (women)",
+      "players": [
+        {
+          "key": "world-marathon-majors-women-peres-jepchirchir",
+          "name": "Peres Jepchirchir",
+          "countryCode": "KE",
+          "ranking": 1
+        },
+        {
+          "key": "world-marathon-majors-women-tigst-assefa",
+          "name": "Tigst Assefa",
+          "countryCode": "ET",
+          "ranking": 2
+        },
+        {
+          "key": "world-marathon-majors-women-sharon-lokedi",
+          "name": "Sharon Lokedi",
+          "countryCode": "KE",
+          "ranking": 3
+        },
+        {
+          "key": "world-marathon-majors-women-bedatu-hirpa",
+          "name": "Bedatu Hirpa",
+          "countryCode": "ET",
+          "ranking": 4
+        },
+        {
+          "key": "world-marathon-majors-women-bertukan-welde",
+          "name": "Bertukan Welde",
+          "countryCode": "ET",
+          "ranking": 5
+        },
+        {
+          "key": "world-marathon-majors-women-brigid-kosgei",
+          "name": "Brigid Kosgei",
+          "countryCode": "KE",
+          "ranking": 6
+        },
+        {
+          "key": "world-marathon-majors-women-hawi-feysa",
+          "name": "Hawi Feysa",
+          "countryCode": "ET",
+          "ranking": 7
+        },
+        {
+          "key": "world-marathon-majors-women-hellen-obiri",
+          "name": "Hellen Obiri",
+          "countryCode": "KE",
+          "ranking": 8
+        },
+        {
+          "key": "world-marathon-majors-women-dera-dida",
+          "name": "Dera Dida",
+          "countryCode": "ET",
+          "ranking": 9
+        },
+        {
+          "key": "world-marathon-majors-women-joyciline-jepkosgei",
+          "name": "Joyciline Jepkosgei",
+          "countryCode": "KE",
+          "ranking": 10
+        },
+        {
+          "key": "world-marathon-majors-women-shure-demise",
+          "name": "Shure Demise",
+          "countryCode": "ET",
+          "ranking": 11
+        },
+        {
+          "key": "world-marathon-majors-women-mary-ngugi-cooper",
+          "name": "Mary Ngugi-Cooper",
+          "countryCode": "KE",
+          "ranking": 12
+        },
+        {
+          "key": "world-marathon-majors-women-bekelech-gudeta",
+          "name": "Bekelech Gudeta",
+          "countryCode": "ET",
+          "ranking": 13
+        },
+        {
+          "key": "world-marathon-majors-women-haven-hailu",
+          "name": "Haven Hailu",
+          "countryCode": "ET",
+          "ranking": 14
+        },
+        {
+          "key": "world-marathon-majors-women-irine-cheptai",
+          "name": "Irine Cheptai",
+          "countryCode": "KE",
+          "ranking": 15
+        },
+        {
+          "key": "world-marathon-majors-women-mercy-chelangat",
+          "name": "Mercy Chelangat",
+          "countryCode": "KE",
+          "ranking": 16
+        },
+        {
+          "key": "world-marathon-majors-women-sutume-asefa-kebede",
+          "name": "Sutume Asefa Kebede",
+          "countryCode": "ET",
+          "ranking": 17
+        },
+        {
+          "key": "world-marathon-majors-women-alemitu-tariku",
+          "name": "Alemitu Tariku",
+          "countryCode": "ET",
+          "ranking": 18
+        },
+        {
+          "key": "world-marathon-majors-women-alemu-megertu",
+          "name": "Alemu Megertu",
+          "countryCode": "ET",
+          "ranking": 19
+        },
+        {
+          "key": "world-marathon-majors-women-catherine-amanang-ole",
+          "name": "Catherine Amanang'ole",
+          "countryCode": "KE",
+          "ranking": 20
+        },
+        {
+          "key": "world-marathon-majors-women-jessica-mcclain",
+          "name": "Jessica McClain",
+          "countryCode": "US",
+          "ranking": 21
+        },
+        {
+          "key": "world-marathon-majors-women-joan-kilimo",
+          "name": "Joan Kilimo",
+          "countryCode": "KE",
+          "ranking": 22
+        },
+        {
+          "key": "world-marathon-majors-women-meseret-abebayahau",
+          "name": "Meseret Abebayahau",
+          "countryCode": "ET",
+          "ranking": 23
+        },
+        {
+          "key": "world-marathon-majors-women-eunice-chebichii-chumba",
+          "name": "Eunice Chebichii Chumba",
+          "countryCode": "BH",
+          "ranking": 24
+        },
+        {
+          "key": "world-marathon-majors-women-isobel-batt-doyle",
+          "name": "Isobel Batt-Doyle",
+          "countryCode": "AU",
+          "ranking": 25
+        },
+        {
+          "key": "world-marathon-majors-women-loice-chemnung",
+          "name": "Loice Chemnung",
+          "countryCode": "KE",
+          "ranking": 26
+        },
+        {
+          "key": "world-marathon-majors-women-pascaline-jelagat",
+          "name": "Pascaline Jelagat",
+          "countryCode": "KE",
+          "ranking": 27
+        },
+        {
+          "key": "world-marathon-majors-women-priscah-cherono",
+          "name": "Priscah Cherono",
+          "countryCode": "KE",
+          "ranking": 28
+        },
+        {
+          "key": "world-marathon-majors-women-viola-cheptoo",
+          "name": "Viola Cheptoo",
+          "countryCode": "KE",
+          "ranking": 29
+        },
+        {
+          "key": "world-marathon-majors-women-degitu-azimeraw",
+          "name": "Degitu Azimeraw",
+          "countryCode": "ET",
+          "ranking": 30
+        },
+        {
+          "key": "world-marathon-majors-women-eilish-mccolgan",
+          "name": "Eilish McColgan",
+          "countryCode": "GB",
+          "ranking": 31
+        },
+        {
+          "key": "world-marathon-majors-women-emma-grace-hurley",
+          "name": "Emma Grace Hurley",
+          "countryCode": "US",
+          "ranking": 32
+        },
+        {
+          "key": "world-marathon-majors-women-mestawot-fikir",
+          "name": "Mestawot Fikir",
+          "countryCode": "ET",
+          "ranking": 33
+        },
+        {
+          "key": "world-marathon-majors-women-misgane-alemayehu",
+          "name": "Misgane Alemayehu",
+          "countryCode": "ET",
+          "ranking": 34
+        },
+        {
+          "key": "world-marathon-majors-women-stella-chesang",
+          "name": "Stella Chesang",
+          "countryCode": "UG",
+          "ranking": 35
+        },
+        {
+          "key": "world-marathon-majors-women-workenesh-edesa",
+          "name": "Workenesh Edesa",
+          "countryCode": "ET",
+          "ranking": 36
+        },
+        {
+          "key": "world-marathon-majors-women-annie-frisbie",
+          "name": "Annie Frisbie",
+          "countryCode": "US",
+          "ranking": 37
+        },
+        {
+          "key": "world-marathon-majors-women-fikrte-wereta",
+          "name": "Fikrte Wereta",
+          "countryCode": "ET",
+          "ranking": 38
+        },
+        {
+          "key": "world-marathon-majors-women-julia-paternain",
+          "name": "Julia Paternain",
+          "countryCode": "UY",
+          "ranking": 39
+        },
+        {
+          "key": "world-marathon-majors-women-ludwina-chepngetich",
+          "name": "Ludwina Chepngetich",
+          "countryCode": "KE",
+          "ranking": 40
+        },
+        {
+          "key": "world-marathon-majors-women-aberu-ayana",
+          "name": "Aberu Ayana",
+          "countryCode": "ET",
+          "ranking": 41
+        },
+        {
+          "key": "world-marathon-majors-women-ellie-pashley",
+          "name": "Ellie Pashley",
+          "countryCode": "AU",
+          "ranking": 42
+        },
+        {
+          "key": "world-marathon-majors-women-emily-sisson",
+          "name": "Emily Sisson",
+          "countryCode": "US",
+          "ranking": 43
+        },
+        {
+          "key": "world-marathon-majors-women-evaline-chirchir",
+          "name": "Evaline Chirchir",
+          "countryCode": "KE",
+          "ranking": 44
+        },
+        {
+          "key": "world-marathon-majors-women-magdalyne-masai",
+          "name": "Magdalyne Masai",
+          "countryCode": "KE",
+          "ranking": 45
+        },
+        {
+          "key": "world-marathon-majors-women-pascalia-jepkogei",
+          "name": "Pascalia Jepkogei",
+          "countryCode": "KE",
+          "ranking": 46
+        },
+        {
+          "key": "world-marathon-majors-women-rose-harvey",
+          "name": "Rose Harvey",
+          "countryCode": "GB",
+          "ranking": 47
+        },
+        {
+          "key": "world-marathon-majors-women-ai-hosoda",
+          "name": "Ai Hosoda",
+          "countryCode": "JP",
+          "ranking": 48
+        },
+        {
+          "key": "world-marathon-majors-women-aminet-ahmed",
+          "name": "Aminet Ahmed",
+          "countryCode": "ET",
+          "ranking": 49
+        },
+        {
+          "key": "world-marathon-majors-women-carrie-ellwood",
+          "name": "Carrie Ellwood",
+          "countryCode": "US",
+          "ranking": 50
+        },
+        {
+          "key": "world-marathon-majors-women-marta-galimany",
+          "name": "Marta Galimany",
+          "countryCode": "ES",
+          "ranking": 51
+        }
+      ],
+      "events": [
+        {
+          "key": "tokyo-marathon",
+          "name": "Tokyo Marathon",
+          "startDate": "2026-03-01",
+          "endDate": "2026-03-01",
+          "venue": null,
+          "location": "Tokyo, Japan",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-women-brigid-kosgei",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-bertukan-welde",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-hawi-feysa",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-sutume-asefa-kebede",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-alemu-megertu",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-viola-cheptoo",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-mestawot-fikir",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-aberu-ayana",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-pascalia-jepkogei",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-ai-hosoda",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "boston-marathon",
+          "name": "Boston Marathon",
+          "startDate": "2026-04-20",
+          "endDate": "2026-04-20",
+          "venue": null,
+          "location": "Boston, Massachusetts",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-women-sharon-lokedi",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-loice-chemnung",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-mary-ngugi-cooper",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-mercy-chelangat",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-jessica-mcclain",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-irine-cheptai",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-workenesh-edesa",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-annie-frisbie",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-emily-sisson",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-carrie-ellwood",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "london-marathon",
+          "name": "London Marathon",
+          "startDate": "2026-04-26",
+          "endDate": "2026-04-26",
+          "venue": null,
+          "location": "London, United Kingdom",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-women-tigst-assefa",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-hellen-obiri",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-joyciline-jepkosgei",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-degitu-azimeraw",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-catherine-amanang-ole",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-eunice-chebichii-chumba",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-eilish-mccolgan",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-julia-paternain",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-rose-harvey",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-marta-galimany",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "sydney-marathon",
+          "name": "Sydney Marathon",
+          "startDate": "2026-08-30",
+          "endDate": "2026-08-30",
+          "startsAt": "2026-08-30T06:30:00+10:00",
+          "venue": null,
+          "location": "Sydney, Australia",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-women-peres-jepchirchir",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-irine-cheptai",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-shure-demise",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-haven-hailu",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-meseret-abebayahau",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-priscah-cherono",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-stella-chesang",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-fikrte-wereta",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-ellie-pashley",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-aberu-ayana",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "berlin-marathon",
+          "name": "Berlin Marathon",
+          "startDate": "2026-09-27",
+          "endDate": "2026-09-27",
+          "venue": null,
+          "location": "Berlin, Germany",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-women-tigst-assefa",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-bedatu-hirpa",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-dera-dida",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-bekelech-gudeta",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-alemitu-tariku",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-pascaline-jelagat",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-misgane-alemayehu",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-ludwina-chepngetich",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-evaline-chirchir",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-aminet-ahmed",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        },
+        {
+          "key": "chicago-marathon",
+          "name": "Chicago Marathon",
+          "startDate": "2026-10-11",
+          "endDate": "2026-10-11",
+          "startsAt": "2026-10-11T07:30:00-05:00",
+          "venue": null,
+          "location": "Chicago, Illinois",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "world-marathon-majors-women-hawi-feysa",
+              "ranking": 3,
+              "oddsToWin": 8.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 1
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-sharon-lokedi",
+              "ranking": 1,
+              "oddsToWin": 2.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 2
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-brigid-kosgei",
+              "ranking": 2,
+              "oddsToWin": 4.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 3
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-mary-ngugi-cooper",
+              "ranking": 4,
+              "oddsToWin": 13.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 4
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-joan-kilimo",
+              "ranking": 5,
+              "oddsToWin": 20.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 5
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-isobel-batt-doyle",
+              "ranking": 6,
+              "oddsToWin": 28.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 6
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-emma-grace-hurley",
+              "ranking": 9,
+              "oddsToWin": 62.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 7
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-degitu-azimeraw",
+              "ranking": 8,
+              "oddsToWin": 49.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 8
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-magdalyne-masai",
+              "ranking": 10,
+              "oddsToWin": 76.5,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 9
+              }
+            },
+            {
+              "player": "world-marathon-majors-women-loice-chemnung",
+              "ranking": 7,
+              "oddsToWin": 38.2,
+              "raceResult": {
+                "status": "FINISHED",
+                "finishPosition": 10
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
