@@ -95,4 +95,35 @@ export function contestManagementModule(
     preHandler: requireCommissioner(membershipRepo),
     handler: handlers.openContest,
   });
+
+  fastify.put('/contests/:contestId/sport-events', {
+    schema: {
+      tags: ['Contest Management'],
+      summary: 'Set the events a contest covers',
+      description:
+        'Sets the events the contest covers (#713) and returns it as getContestConfiguration does. Commissioner only. Send every event the contest should cover; one left out is removed, and its picks with it. The contest keeps its events in start-date order. An added event must be released, have its field loaded, not have started, and be from the contest\'s sport league; the contest\'s rules are checked against it as at create. Events can be added while the contest is DRAFT, OPEN or ACTIVE, and removed only while none of its events has started.',
+      operationId: 'setContestSportEvents',
+      body: schemaRef('SetContestSportEventsRequest'),
+      response: {
+        200: schemaRef('ContestManagementResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND for an event that does not exist.',
+        },
+        409: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'CONTEST_EVENTS_LOCKED — an event would be removed after one of the contest\'s events started, or the contest is COMPLETED or drawn. CONTEST_BUDGET_SALARY_CAP_MISMATCH — a budget contest\'s events were priced against different salary caps, or an open one\'s new event against another cap than its entries were built under. CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules an added event cannot fill.',
+        },
+        422: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event.',
+        },
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: handlers.setContestSportEvents,
+  });
 }

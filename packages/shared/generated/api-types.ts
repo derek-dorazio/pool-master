@@ -1089,6 +1089,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/sport-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set the events a contest covers
+         * @description Sets the events the contest covers (#713) and returns it as getContestConfiguration does. Commissioner only. Send every event the contest should cover; one left out is removed, and its picks with it. The contest keeps its events in start-date order. An added event must be released, have its field loaded, not have started, and be from the contest's sport league; the contest's rules are checked against it as at create. Events can be added while the contest is DRAFT, OPEN or ACTIVE, and removed only while none of its events has started.
+         */
+        put: operations["setContestSportEvents"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/contests/{contestId}": {
         parameters: {
             query?: never;
@@ -1170,7 +1190,7 @@ export interface paths {
         };
         /**
          * Get contest leaderboard
-         * @description Returns the member-facing leaderboard for a contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event's standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event's own field rows). Once the contest is COMPLETED, each entry's total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns the member-facing leaderboard for a contest, as the cross-sport ContestLeaderboardResponse. Each entry carries its contest total and rank, its score and place in each of the contest's events whose picks are revealed (#713), and its picks in one shown event: `sportEventId`, else the latest revealed event. While an event is live, its entry standings are computed from the event's standings and joined to entry picks in memory, so picks remain pointers into `participants` (the shown event's own field rows). Once an event completes, its entries' scores, ranks and pick counts come from the standings frozen when it settled, and once the contest is COMPLETED its totals come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["getContestLeaderboard"];
         put?: never;
@@ -2428,7 +2448,7 @@ export interface paths {
         };
         /**
          * Get current selection state for a contest
-         * @description Returns the current selection-room state for the contest, including queue, picks, timers, and selection availability. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry's spend against the salary cap. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller's own entries, and entryId selects another team's entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller's own.
+         * @description Returns the current selection-room state for one event of the contest (#713): `sportEventId`, else its next event that has not started, else its last; 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. It includes the event's field, its picks, and each entry's status in it. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry's spend against the salary cap. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. Until the event's picks are revealed (the contest is live and the event has started, or a random draw has dealt) the pick history carries only the caller's own entries, and entryId selects another team's entry only once they are; otherwise it falls back to the caller's own. 409 CONTEST_EVENT_REQUIRED for a contest that covers no event.
          */
         get: operations["getSelectionState"];
         put?: never;
@@ -2450,7 +2470,7 @@ export interface paths {
         put?: never;
         /**
          * Submit a pick
-         * @description Submits a pick for the current turn and returns the refreshed selection state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. In a budget contest re-selecting a held golfer unselects it, a golfer with no price is refused with 400 PRICE_MISSING, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A change that leaves a SUBMITTED entry's lineup short, or over a budget contest's cap, sends the entry back to DRAFT; it must be submitted again to count.
+         * @description Submits a pick and returns the refreshed selection state for the pick's event: the event of the field row it names (#713). Picks are placed, swapped and unselected only while the contest is OPEN or ACTIVE and that event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. In a budget contest re-selecting a held golfer unselects it, a golfer with no price is refused with 400 PRICE_MISSING, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A change that leaves a SUBMITTED entry's lineup short, or over a budget contest's cap, sends the entry back to DRAFT; it must be submitted again to count.
          */
         post: operations["submitContestSelection"];
         delete?: never;
@@ -2459,7 +2479,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/selections/{contestId}/entries/{entryId}/submit": {
+    "/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/submit": {
         parameters: {
             query?: never;
             header?: never;
@@ -2469,8 +2489,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Submit a contest entry
-         * @description Submits the caller's entry once its lineup is complete, and returns the refreshed selection state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short or over the cap sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry's team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
+         * Submit a contest entry's picks for one event
+         * @description Submits the caller's entry for one event of its contest (#713: "submit week 6", "submit your Masters picks") once that event's lineup is complete, and returns the refreshed selection state for that event. Each event of an entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted event changes nothing. A later pick change that leaves the lineup short or over the cap sends that event back to DRAFT. An event is submitted only while the contest is OPEN or ACTIVE and that event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. Only a member of the entry's team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
          */
         post: operations["submitContestEntry"];
         delete?: never;
@@ -4655,14 +4675,62 @@ export interface components {
                 price: number | null;
             }[];
         };
+        /** @description One event of a managed contest, with the tiers it inherits from it (#713). */
+        ContestManagementSportEventDto: {
+            /** @description One event the contest covers. */
+            sportEventId: string;
+            /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+            effectiveTiers: {
+                /** @description Stable per-event tier key. */
+                tierKey: string;
+                /** @description Commissioner-facing tier label. */
+                label: string;
+                /** @description 1-based tier ordering. */
+                tierNumber: number;
+                /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
+                assignments: {
+                    /** @description Field entry the assignment belongs to. */
+                    sportEventParticipantId: string;
+                    /** @description Global participant identity. */
+                    participantId: string;
+                    /** @description Within-tier ordering position; null when the participant has no explicit order. */
+                    tierOrderIndex: number | null;
+                    /** @description Per-participant budget price when the event defines one; null otherwise. */
+                    price: number | null;
+                }[];
+            }[];
+        };
         /** @description Golf-first contest-management detail returned to commissioner tooling. */
         ContestManagementDetailDto: {
             /** @description Contest identifier. */
             id: string;
             /** @description League that owns the contest. */
             leagueId: string;
-            /** @description Sport event attached to the contest. */
-            sportEventId: string;
+            /** @description The events the contest covers, in sequence order (#713), each with its inherited tiers. */
+            sportEvents: {
+                /** @description One event the contest covers. */
+                sportEventId: string;
+                /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                effectiveTiers: {
+                    /** @description Stable per-event tier key. */
+                    tierKey: string;
+                    /** @description Commissioner-facing tier label. */
+                    label: string;
+                    /** @description 1-based tier ordering. */
+                    tierNumber: number;
+                    /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
+                    assignments: {
+                        /** @description Field entry the assignment belongs to. */
+                        sportEventParticipantId: string;
+                        /** @description Global participant identity. */
+                        participantId: string;
+                        /** @description Within-tier ordering position; null when the participant has no explicit order. */
+                        tierOrderIndex: number | null;
+                        /** @description Per-participant budget price when the event defines one; null otherwise. */
+                        price: number | null;
+                    }[];
+                }[];
+            }[];
             /** @description Contest display name. */
             name: string;
             /** @enum {string} */
@@ -4710,26 +4778,6 @@ export interface components {
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
             };
-            /** @description Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
-            effectiveTiers: {
-                /** @description Stable per-event tier key. */
-                tierKey: string;
-                /** @description Commissioner-facing tier label. */
-                label: string;
-                /** @description 1-based tier ordering. */
-                tierNumber: number;
-                /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
-                assignments: {
-                    /** @description Field entry the assignment belongs to. */
-                    sportEventParticipantId: string;
-                    /** @description Global participant identity. */
-                    participantId: string;
-                    /** @description Within-tier ordering position; null when the participant has no explicit order. */
-                    tierOrderIndex: number | null;
-                    /** @description Per-participant budget price when the event defines one; null otherwise. */
-                    price: number | null;
-                }[];
-            }[];
             /**
              * Format: date-time
              * @description When the contest was created.
@@ -4931,8 +4979,31 @@ export interface components {
                 id: string;
                 /** @description League that owns the contest. */
                 leagueId: string;
-                /** @description Sport event attached to the contest. */
-                sportEventId: string;
+                /** @description The events the contest covers, in sequence order (#713), each with its inherited tiers. */
+                sportEvents: {
+                    /** @description One event the contest covers. */
+                    sportEventId: string;
+                    /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                    effectiveTiers: {
+                        /** @description Stable per-event tier key. */
+                        tierKey: string;
+                        /** @description Commissioner-facing tier label. */
+                        label: string;
+                        /** @description 1-based tier ordering. */
+                        tierNumber: number;
+                        /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
+                        assignments: {
+                            /** @description Field entry the assignment belongs to. */
+                            sportEventParticipantId: string;
+                            /** @description Global participant identity. */
+                            participantId: string;
+                            /** @description Within-tier ordering position; null when the participant has no explicit order. */
+                            tierOrderIndex: number | null;
+                            /** @description Per-participant budget price when the event defines one; null otherwise. */
+                            price: number | null;
+                        }[];
+                    }[];
+                }[];
                 /** @description Contest display name. */
                 name: string;
                 /** @enum {string} */
@@ -4980,26 +5051,6 @@ export interface components {
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                 };
-                /** @description Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
-                effectiveTiers: {
-                    /** @description Stable per-event tier key. */
-                    tierKey: string;
-                    /** @description Commissioner-facing tier label. */
-                    label: string;
-                    /** @description 1-based tier ordering. */
-                    tierNumber: number;
-                    /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
-                    assignments: {
-                        /** @description Field entry the assignment belongs to. */
-                        sportEventParticipantId: string;
-                        /** @description Global participant identity. */
-                        participantId: string;
-                        /** @description Within-tier ordering position; null when the participant has no explicit order. */
-                        tierOrderIndex: number | null;
-                        /** @description Per-participant budget price when the event defines one; null otherwise. */
-                        price: number | null;
-                    }[];
-                }[];
                 /**
                  * Format: date-time
                  * @description When the contest was created.
@@ -8115,11 +8166,8 @@ export interface components {
         CreateContestRequest: {
             /** @description Contest name shown to commissioners and members. */
             name: string;
-            /**
-             * Format: uuid
-             * @description Sport event the contest is run on.
-             */
-            sportEventId: string;
+            /** @description The events the contest covers (#713): one for a golf or race contest, several for a majors pool or a season. All from one sport league, each released, with its field loaded and not yet started. The contest keeps them in start-date order, whatever order they are sent in. */
+            sportEventIds: string[];
             /**
              * @description First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
              * @enum {string}
@@ -8282,15 +8330,63 @@ export interface components {
             /** @description Optional tiebreaker prediction saved on the contest entry. */
             tiebreakerValue?: number | null;
         };
-        /** @description The sport event a listed contest runs on: enough to name, sort and search it without reading the event. */
-        ContestEventSummaryDto: {
-            /** @description The sport event's name. */
+        /** @description One event a contest covers, enough to name, order and pick it without reading the event (#713). */
+        ContestSportEventDto: {
+            /** @description The event. */
+            sportEventId: string;
+            /** @description The event's place in the contest, 1 first: the contest's events in start-date order. */
+            sequence: number;
+            /** @description The event's name. */
             name: string;
             /**
              * Format: date-time
-             * @description The sport event's scheduled start, which is also when entries close.
+             * @description The event's scheduled start: when its picks close.
              */
             startDate: string;
+            /**
+             * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
+             * @enum {string}
+             */
+            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+        };
+        /** @description Request payload for setting the events a contest covers. */
+        SetContestSportEventsRequest: {
+            /** @description Every event the contest should cover: the ones it keeps and the ones added. An event left out is removed. Kept in start-date order. */
+            sportEventIds: string[];
+        };
+        /** @description An entry's status in one event of its contest (#713): "submit week 6". */
+        ContestEntryEventDto: {
+            /** @description One event of the entry's contest. */
+            sportEventId: string;
+            /**
+             * @description DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+             * @enum {string}
+             */
+            status: "DRAFT" | "SUBMITTED";
+            /**
+             * Format: date-time
+             * @description When the event's picks were submitted; null while a draft.
+             */
+            submittedAt: string | null;
+        };
+        /** @description An entry's result in one event of its contest (#713): one week's score, one major's. */
+        ContestEntryEventResultDto: {
+            /** @description The event. */
+            sportEventId: string;
+            /** @description The entry's score in the event: the sum of its counting picks' contest scores there. Null until a pick is scored. */
+            totalScore: number | null;
+            /** @description The entry's rank among the entries that submitted the event, 1 best; null while unscored. */
+            position: number | null;
+            /** @description Position as shown, "T" prefixed for a tie. */
+            displayPosition: string | null;
+        };
+        /** @description Optional query parameters for the contest leaderboard. */
+        ContestLeaderboardQuery: {
+            /**
+             * Format: uuid
+             * @description The contest event whose field and picks to show; its picks must be revealed. Defaults to the contest's latest event whose picks are revealed.
+             */
+            sportEventId?: string;
         };
         /** @description A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields). */
         ContestDto: {
@@ -8303,21 +8399,29 @@ export interface components {
             /** @enum {string} */
             selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
             leagueId: string;
-            sportEventId?: string | null;
-            /** @enum {string|null} */
-            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | null;
-            /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
-            entryCount?: number;
-            /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
-            sportEvent?: {
-                /** @description The sport event's name. */
+            /** @description The events the contest covers, in sequence order (#713). One for a golf or race contest. */
+            sportEvents: {
+                /** @description The event. */
+                sportEventId: string;
+                /** @description The event's place in the contest, 1 first: the contest's events in start-date order. */
+                sequence: number;
+                /** @description The event's name. */
                 name: string;
                 /**
                  * Format: date-time
-                 * @description The sport event's scheduled start, which is also when entries close.
+                 * @description The event's scheduled start: when its picks close.
                  */
                 startDate: string;
-            } | null;
+                /**
+                 * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
+                 * @enum {string}
+                 */
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            }[];
+            /** @enum {string|null} */
+            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | null;
+            /** @description Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read. */
+            entryCount?: number;
             /** Format: date-time */
             startsAt?: string | null;
             /** Format: date-time */
@@ -8340,11 +8444,21 @@ export interface components {
             squadName: string;
             entryNumber: number;
             name: string;
-            /**
-             * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
-             * @enum {string}
-             */
-            status: "DRAFT" | "SUBMITTED";
+            /** @description The entry's status in each event of its contest, in the contest's event order. */
+            events: {
+                /** @description One event of the entry's contest. */
+                sportEventId: string;
+                /**
+                 * @description DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+                 * @enum {string}
+                 */
+                status: "DRAFT" | "SUBMITTED";
+                /**
+                 * Format: date-time
+                 * @description When the event's picks were submitted; null while a draft.
+                 */
+                submittedAt: string | null;
+            }[];
             tiebreakerValue?: number | null;
             /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
             picksCount: number;
@@ -8358,10 +8472,12 @@ export interface components {
              * @description When the contest entry was last updated.
              */
             updatedAt: string;
-            /** @description The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them. */
+            /** @description The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them. */
             participants?: {
                 pickId: string;
                 sportEventParticipantId: string;
+                /** @description The event of the contest the pick is in (#713). */
+                sportEventId: string;
                 participantId: string;
                 participantName: string;
                 participantStatus?: string | null;
@@ -8416,6 +8532,8 @@ export interface components {
         ContestEntryParticipantDetailDto: {
             pickId: string;
             sportEventParticipantId: string;
+            /** @description The event of the contest the pick is in (#713). */
+            sportEventId: string;
             participantId: string;
             participantName: string;
             participantStatus?: string | null;
@@ -8478,7 +8596,7 @@ export interface components {
                 isAlive: boolean;
             } | null;
         };
-        /** @description One entry's standing in a contest leaderboard. Each pick's score lives in its sport's block. */
+        /** @description One entry's standing in a contest leaderboard: its contest total, its result in each event, and its picks in the shown event. Each pick's score lives in its sport's block. */
         ContestEntryStandingDto: {
             /** @description Contest entry identifier. */
             entryId: string;
@@ -8490,22 +8608,28 @@ export interface components {
             squadId: string;
             /** @description Squad display name. */
             squadName: string;
-            /**
-             * @description Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
-             * @enum {string}
-             */
-            status: "DRAFT" | "SUBMITTED";
-            /** @description The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored. */
+            /** @description The entry's rank in the contest by its total, direction-free: 1 is best in every sport. Null while unscored. */
             position: number | null;
             /** @description Position as shown, "T" prefixed for a tie. */
             displayPosition: string | null;
-            /** @description How many picks count toward the total under the counting rule: its N. */
+            /** @description How many picks count toward the shown event's score under the counting rule: its N. */
             countingPickLimit: number;
-            /** @description How many picks currently have an event standing. */
+            /** @description How many of the entry's picks in the shown event currently have an event standing. */
             scoredPickCount: number;
-            /** @description The entry's total, the sum of its counting picks' contest scores, in the unit of the response's scoring definition (a golf to-par total, a race's points). Null until a pick is scored. */
+            /** @description The entry's contest total, in the unit of the response's scoring definition (a golf to-par total, a race's points): the sum of its scores in the events it submitted (#713). In a one-event contest, that event's score. Null until a pick is scored. */
             totalScore: number | null;
-            /** @description The entry's picks, counting picks first. */
+            /** @description The entry's score and place in each event it submitted whose picks are revealed, in the contest's event order. */
+            events: {
+                /** @description The event. */
+                sportEventId: string;
+                /** @description The entry's score in the event: the sum of its counting picks' contest scores there. Null until a pick is scored. */
+                totalScore: number | null;
+                /** @description The entry's rank among the entries that submitted the event, 1 best; null while unscored. */
+                position: number | null;
+                /** @description Position as shown, "T" prefixed for a tie. */
+                displayPosition: string | null;
+            }[];
+            /** @description The entry's picks in the shown event, counting picks first; empty when it did not submit that event. */
             picks: {
                 /** @description ContestEntryPick row identifier. */
                 pickId: string;
@@ -8557,11 +8681,11 @@ export interface components {
             /** @description N: how many picks count toward each entry's total. */
             count: number;
         };
-        /** @description Member-facing contest leaderboard. Live, entry standings are computed from the event's standings; once the contest is COMPLETED they are the standings frozen at settlement. */
+        /** @description Member-facing contest leaderboard. Live, entry standings are computed from the events' standings; a completed event answers from the standings frozen when it settled, and a COMPLETED contest's totals are the ones frozen at its settlement. */
         ContestLeaderboardResponse: {
             /** @description Contest whose leaderboard was requested. */
             contestId: string;
-            /** @description Sport event the contest runs on. */
+            /** @description The event whose field and picks are shown: the one asked for, else the contest's latest event whose picks are revealed. */
             sportEventId: string;
             /**
              * @description Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.
@@ -8583,7 +8707,7 @@ export interface components {
                 /** @description N: how many picks count toward each entry's total. */
                 count: number;
             };
-            /** @description The event's field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId. */
+            /** @description The shown event's field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId. */
             participants: {
                 /**
                  * Format: uuid
@@ -8781,7 +8905,7 @@ export interface components {
                  */
                 updatedAt: string;
             }[];
-            /** @description Contest entries, best first. */
+            /** @description Contest entries that submitted at least one revealed event, best total first. */
             entries: {
                 /** @description Contest entry identifier. */
                 entryId: string;
@@ -8793,22 +8917,28 @@ export interface components {
                 squadId: string;
                 /** @description Squad display name. */
                 squadName: string;
-                /**
-                 * @description Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
-                 * @enum {string}
-                 */
-                status: "DRAFT" | "SUBMITTED";
-                /** @description The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored. */
+                /** @description The entry's rank in the contest by its total, direction-free: 1 is best in every sport. Null while unscored. */
                 position: number | null;
                 /** @description Position as shown, "T" prefixed for a tie. */
                 displayPosition: string | null;
-                /** @description How many picks count toward the total under the counting rule: its N. */
+                /** @description How many picks count toward the shown event's score under the counting rule: its N. */
                 countingPickLimit: number;
-                /** @description How many picks currently have an event standing. */
+                /** @description How many of the entry's picks in the shown event currently have an event standing. */
                 scoredPickCount: number;
-                /** @description The entry's total, the sum of its counting picks' contest scores, in the unit of the response's scoring definition (a golf to-par total, a race's points). Null until a pick is scored. */
+                /** @description The entry's contest total, in the unit of the response's scoring definition (a golf to-par total, a race's points): the sum of its scores in the events it submitted (#713). In a one-event contest, that event's score. Null until a pick is scored. */
                 totalScore: number | null;
-                /** @description The entry's picks, counting picks first. */
+                /** @description The entry's score and place in each event it submitted whose picks are revealed, in the contest's event order. */
+                events: {
+                    /** @description The event. */
+                    sportEventId: string;
+                    /** @description The entry's score in the event: the sum of its counting picks' contest scores there. Null until a pick is scored. */
+                    totalScore: number | null;
+                    /** @description The entry's rank among the entries that submitted the event, 1 best; null while unscored. */
+                    position: number | null;
+                    /** @description Position as shown, "T" prefixed for a tie. */
+                    displayPosition: string | null;
+                }[];
+                /** @description The entry's picks in the shown event, counting picks first; empty when it did not submit that event. */
                 picks: {
                     /** @description ContestEntryPick row identifier. */
                     pickId: string;
@@ -8869,21 +8999,29 @@ export interface components {
                 /** @enum {string} */
                 selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
                 leagueId: string;
-                sportEventId?: string | null;
-                /** @enum {string|null} */
-                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | null;
-                /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
-                entryCount?: number;
-                /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
-                sportEvent?: {
-                    /** @description The sport event's name. */
+                /** @description The events the contest covers, in sequence order (#713). One for a golf or race contest. */
+                sportEvents: {
+                    /** @description The event. */
+                    sportEventId: string;
+                    /** @description The event's place in the contest, 1 first: the contest's events in start-date order. */
+                    sequence: number;
+                    /** @description The event's name. */
                     name: string;
                     /**
                      * Format: date-time
-                     * @description The sport event's scheduled start, which is also when entries close.
+                     * @description The event's scheduled start: when its picks close.
                      */
                     startDate: string;
-                } | null;
+                    /**
+                     * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
+                     * @enum {string}
+                     */
+                    status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                }[];
+                /** @enum {string|null} */
+                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | null;
+                /** @description Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read. */
+                entryCount?: number;
                 /** Format: date-time */
                 startsAt?: string | null;
                 /** Format: date-time */
@@ -8911,21 +9049,29 @@ export interface components {
                 /** @enum {string} */
                 selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
                 leagueId: string;
-                sportEventId?: string | null;
-                /** @enum {string|null} */
-                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | null;
-                /** @description Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read. */
-                entryCount?: number;
-                /** @description The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself. */
-                sportEvent?: {
-                    /** @description The sport event's name. */
+                /** @description The events the contest covers, in sequence order (#713). One for a golf or race contest. */
+                sportEvents: {
+                    /** @description The event. */
+                    sportEventId: string;
+                    /** @description The event's place in the contest, 1 first: the contest's events in start-date order. */
+                    sequence: number;
+                    /** @description The event's name. */
                     name: string;
                     /**
                      * Format: date-time
-                     * @description The sport event's scheduled start, which is also when entries close.
+                     * @description The event's scheduled start: when its picks close.
                      */
                     startDate: string;
-                } | null;
+                    /**
+                     * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
+                     * @enum {string}
+                     */
+                    status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                }[];
+                /** @enum {string|null} */
+                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | null;
+                /** @description Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read. */
+                entryCount?: number;
                 /** Format: date-time */
                 startsAt?: string | null;
                 /** Format: date-time */
@@ -8953,11 +9099,21 @@ export interface components {
                 squadName: string;
                 entryNumber: number;
                 name: string;
-                /**
-                 * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
-                 * @enum {string}
-                 */
-                status: "DRAFT" | "SUBMITTED";
+                /** @description The entry's status in each event of its contest, in the contest's event order. */
+                events: {
+                    /** @description One event of the entry's contest. */
+                    sportEventId: string;
+                    /**
+                     * @description DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+                     * @enum {string}
+                     */
+                    status: "DRAFT" | "SUBMITTED";
+                    /**
+                     * Format: date-time
+                     * @description When the event's picks were submitted; null while a draft.
+                     */
+                    submittedAt: string | null;
+                }[];
                 tiebreakerValue?: number | null;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                 picksCount: number;
@@ -8971,10 +9127,12 @@ export interface components {
                  * @description When the contest entry was last updated.
                  */
                 updatedAt: string;
-                /** @description The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them. */
+                /** @description The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them. */
                 participants?: {
                     pickId: string;
                     sportEventParticipantId: string;
+                    /** @description The event of the contest the pick is in (#713). */
+                    sportEventId: string;
                     participantId: string;
                     participantName: string;
                     participantStatus?: string | null;
@@ -8993,7 +9151,7 @@ export interface components {
         ContestEntryDetailResponse: {
             /** @description Contest that owns the entry. */
             contestId: string;
-            /** @description Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
+            /** @description Whether any of the contest's events has its picks visible to non-owners: once the contest is live and that event has started, or once a random draw has dealt. */
             picksRevealed: boolean;
             /** @description A contest entry: the one shape every entry read and write returns (#248 collapsed the summary and detail variants, which differed by `participants`). */
             entry: {
@@ -9003,11 +9161,21 @@ export interface components {
                 squadName: string;
                 entryNumber: number;
                 name: string;
-                /**
-                 * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
-                 * @enum {string}
-                 */
-                status: "DRAFT" | "SUBMITTED";
+                /** @description The entry's status in each event of its contest, in the contest's event order. */
+                events: {
+                    /** @description One event of the entry's contest. */
+                    sportEventId: string;
+                    /**
+                     * @description DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+                     * @enum {string}
+                     */
+                    status: "DRAFT" | "SUBMITTED";
+                    /**
+                     * Format: date-time
+                     * @description When the event's picks were submitted; null while a draft.
+                     */
+                    submittedAt: string | null;
+                }[];
                 tiebreakerValue?: number | null;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                 picksCount: number;
@@ -9021,10 +9189,12 @@ export interface components {
                  * @description When the contest entry was last updated.
                  */
                 updatedAt: string;
-                /** @description The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them. */
+                /** @description The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them. */
                 participants?: {
                     pickId: string;
                     sportEventParticipantId: string;
+                    /** @description The event of the contest the pick is in (#713). */
+                    sportEventId: string;
                     participantId: string;
                     participantName: string;
                     participantStatus?: string | null;
@@ -9051,9 +9221,9 @@ export interface components {
             myEntryId: string | null;
             /** @description All current-user entry identifiers when multiple entries are allowed. */
             myEntryIds?: string[];
-            /** @description Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
+            /** @description Whether any of the contest's events has its picks visible to non-owners: once the contest is live and that event has started, or once a random draw has dealt. */
             picksRevealed: boolean;
-            /** @description Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted. */
+            /** @description Entries for the contest. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's. */
             entries: {
                 id: string;
                 contestId: string;
@@ -9061,11 +9231,21 @@ export interface components {
                 squadName: string;
                 entryNumber: number;
                 name: string;
-                /**
-                 * @description DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
-                 * @enum {string}
-                 */
-                status: "DRAFT" | "SUBMITTED";
+                /** @description The entry's status in each event of its contest, in the contest's event order. */
+                events: {
+                    /** @description One event of the entry's contest. */
+                    sportEventId: string;
+                    /**
+                     * @description DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+                     * @enum {string}
+                     */
+                    status: "DRAFT" | "SUBMITTED";
+                    /**
+                     * Format: date-time
+                     * @description When the event's picks were submitted; null while a draft.
+                     */
+                    submittedAt: string | null;
+                }[];
                 tiebreakerValue?: number | null;
                 /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                 picksCount: number;
@@ -9079,10 +9259,12 @@ export interface components {
                  * @description When the contest entry was last updated.
                  */
                 updatedAt: string;
-                /** @description The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them. */
+                /** @description The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them. */
                 participants?: {
                     pickId: string;
                     sportEventParticipantId: string;
+                    /** @description The event of the contest the pick is in (#713). */
+                    sportEventId: string;
                     participantId: string;
                     participantName: string;
                     participantStatus?: string | null;
@@ -9111,6 +9293,11 @@ export interface components {
         SelectionStateQuery: {
             /** @description Specific contest entry to view within roster-based selection flows. */
             entryId?: string;
+            /**
+             * Format: uuid
+             * @description The contest event whose picks to show (#713). Defaults to the contest's next event that has not started, else its last event.
+             */
+            sportEventId?: string;
         };
         /** @description Request payload for submitting a pick. */
         SubmitPickRequest: {
@@ -9140,6 +9327,10 @@ export interface components {
         SelectionStateResponse: {
             contestId: string;
             contestName: string;
+            /** @description The contest event the room shows (#713): its field, its picks, and each entry's status in it. */
+            sportEventId: string;
+            /** @description Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started. */
+            acceptsPicks: boolean;
             /** @enum {string} */
             selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
             /**
@@ -9160,7 +9351,7 @@ export interface components {
                 /** @description Entry display name. */
                 name: string;
                 /**
-                 * @description DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+                 * @description The entry's status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
                  * @enum {string}
                  */
                 status: "DRAFT" | "SUBMITTED";
@@ -9238,6 +9429,10 @@ export interface components {
         SelectionPickResponse: {
             contestId: string;
             contestName: string;
+            /** @description The contest event the room shows (#713): its field, its picks, and each entry's status in it. */
+            sportEventId: string;
+            /** @description Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started. */
+            acceptsPicks: boolean;
             /** @enum {string} */
             selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW";
             /**
@@ -9258,7 +9453,7 @@ export interface components {
                 /** @description Entry display name. */
                 name: string;
                 /**
-                 * @description DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+                 * @description The entry's status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
                  * @enum {string}
                  */
                 status: "DRAFT" | "SUBMITTED";
@@ -15425,6 +15620,87 @@ export interface operations {
             };
         };
     };
+    setContestSportEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetContestSportEventsRequest"];
+            };
+        };
+        responses: {
+            /** @description Managed-contest detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContestManagementResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND for an event that does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description CONTEST_EVENTS_LOCKED — an event would be removed after one of the contest's events started, or the contest is COMPLETED or drawn. CONTEST_BUDGET_SALARY_CAP_MISMATCH — a budget contest's events were priced against different salary caps, or an open one's new event against another cap than its entries were built under. CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules an added event cannot fill. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     getContest: {
         parameters: {
             query?: never;
@@ -15767,7 +16043,10 @@ export interface operations {
     };
     getContestLeaderboard: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description The contest event whose field and picks to show; its picks must be revealed. Defaults to the contest's latest event whose picks are revealed. */
+                sportEventId?: string;
+            };
             header?: never;
             path: {
                 contestId: string;
@@ -15776,7 +16055,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Member-facing contest leaderboard. Live, entry standings are computed from the event's standings; once the contest is COMPLETED they are the standings frozen at settlement. */
+            /** @description Member-facing contest leaderboard. Live, entry standings are computed from the events' standings; a completed event answers from the standings frozen when it settled, and a COMPLETED contest's totals are the ones frozen at its settlement. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -15785,7 +16064,7 @@ export interface operations {
                     "application/json": components["schemas"]["ContestLeaderboardResponse"];
                 };
             };
-            /** @description CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule's settings are not valid for that definition). */
+            /** @description CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event's picks are revealed yet, or not the asked-for one's), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule's settings are not valid for that definition). */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -20231,6 +20510,8 @@ export interface operations {
             query?: {
                 /** @description Specific contest entry to view within roster-based selection flows. */
                 entryId?: string;
+                /** @description The contest event whose picks to show (#713). Defaults to the contest's next event that has not started, else its last event. */
+                sportEventId?: string;
             };
             header?: never;
             path: {
@@ -20269,6 +20550,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20356,6 +20646,7 @@ export interface operations {
             path: {
                 contestId: string;
                 entryId: string;
+                sportEventId: string;
             };
             cookie?: never;
         };

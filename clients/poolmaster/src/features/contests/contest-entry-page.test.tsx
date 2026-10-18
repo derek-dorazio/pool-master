@@ -139,22 +139,52 @@ function renderContestEntryPage() {
   };
 }
 
+/** Far enough ahead that "has not started" holds whatever day the suite runs. */
+const FUTURE_START = '2099-04-09T12:40:00.000Z';
+
+/** One event of the contest, as the contest read names it (#713). */
+function contestEventFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    sportEventId: 'event-1',
+    sequence: 1,
+    name: 'The Masters',
+    startDate: FUTURE_START,
+    status: 'SCHEDULED',
+    ...overrides,
+  };
+}
+
+/** The contest read: a one-event golf contest unless `overrides` says otherwise. */
+function contestFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'contest-1',
+    leagueId: 'league-1',
+    sport: 'GOLF',
+    name: 'Bohler Masters Tiered',
+    status: 'OPEN',
+    contestType: 'ROSTER',
+    selectionType: 'TIERED',
+    sportEvents: [contestEventFixture()],
+    ...overrides,
+  };
+}
+
+/** A listed entry's status in each contest event: a draft in the one event unless told otherwise. */
+function entryEvents(status: 'DRAFT' | 'SUBMITTED' = 'DRAFT', sportEventId = 'event-1') {
+  return [{ sportEventId, status, submittedAt: status === 'SUBMITTED' ? '2026-04-16T00:00:00.000Z' : null }];
+}
+
 function primeCommonMocks(overrides?: {
   contestStatus?: 'OPEN' | 'ACTIVE' | 'COMPLETED';
-  sportEventId?: string;
+  /** The contest event's scheduled start; in the future unless given. */
+  eventStartDate?: string;
 }) {
   getContestMock.mockResolvedValue({
     data: {
-      contest: {
-        id: 'contest-1',
-        leagueId: 'league-1',
-        sport: 'GOLF',
-        name: 'Bohler Masters Tiered',
+      contest: contestFixture({
         status: overrides?.contestStatus ?? 'OPEN',
-        contestType: 'ROSTER',
-        selectionType: 'TIERED',
-        ...(overrides?.sportEventId ? { sportEventId: overrides.sportEventId } : {}),
-      },
+        sportEvents: [contestEventFixture(overrides?.eventStartDate ? { startDate: overrides.eventStartDate } : {})],
+      }),
     },
   });
 
@@ -192,7 +222,7 @@ function primeCommonMocks(overrides?: {
           squadName: 'Birdie Hunters',
           entryNumber: 1,
           name: 'Birdie Hunters Entry 1',
-          status: 'DRAFT',
+          events: entryEvents('DRAFT'),
           tiebreakerValue: 271,
           createdAt: '2026-04-15T00:00:00.000Z',
           updatedAt: '2026-04-16T00:00:00.000Z',
@@ -212,6 +242,8 @@ function buildSelectionState(selectionGroups: SelectionGroup[]) {
   return {
     contestId: 'contest-1',
     contestName: 'Bohler Masters Tiered',
+    sportEventId: 'event-1',
+    acceptsPicks: true,
     selectionType: 'TIERED',
     isCommissioner: false,
     rosterSize: totalPicks,
@@ -289,6 +321,8 @@ describe('ContestEntryPage', () => {
       data: {
         contestId: 'contest-1',
         contestName: 'Bohler Masters Tiered',
+        sportEventId: 'event-1',
+        acceptsPicks: true,
         selectionType: 'TIERED',
         isCommissioner: false,
         rosterSize: 2,
@@ -363,7 +397,7 @@ describe('ContestEntryPage', () => {
           squadName: 'Birdie Hunters',
           entryNumber: 1,
           name: 'Sunday Charge',
-          status: 'DRAFT',
+          events: entryEvents('DRAFT'),
           tiebreakerValue: -12,
           createdAt: '2026-04-15T00:00:00.000Z',
           updatedAt: '2026-04-16T00:00:00.000Z',
@@ -434,7 +468,7 @@ describe('ContestEntryPage', () => {
     );
     await waitFor(() =>
       expect(submitContestEntryMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-1', entryId: 'entry-1' },
+        path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'event-1' },
       }),
     );
     expect(updateContestEntryMock.mock.invocationCallOrder[0])
@@ -452,15 +486,7 @@ describe('ContestEntryPage', () => {
     primeCommonMocks();
     getContestMock.mockResolvedValue({
       data: {
-        contest: {
-          id: 'contest-1',
-          leagueId: 'league-1',
-          sport: 'HORSE_RACING',
-          name: 'Derby Pick 3',
-          status: 'OPEN',
-          contestType: 'ROSTER',
-          selectionType: 'TIERED',
-        },
+        contest: contestFixture({ sport: 'HORSE_RACING', name: 'Derby Pick 3' }),
       },
     });
     getSelectionStateMock.mockResolvedValue({
@@ -492,7 +518,7 @@ describe('ContestEntryPage', () => {
 
     await waitFor(() =>
       expect(submitContestEntryMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-1', entryId: 'entry-1' },
+        path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'event-1' },
       }),
     );
     expect(updateContestEntryMock).not.toHaveBeenCalled();
@@ -560,6 +586,9 @@ describe('ContestEntryPage', () => {
       data: {
         contestId: 'contest-1',
         contestName: 'Bohler Masters Tiered',
+        sportEventId: 'event-1',
+        // The event is under way, so the server takes no more pick changes.
+        acceptsPicks: false,
         selectionType: 'TIERED',
         isCommissioner: false,
         rosterSize: 1,
@@ -617,7 +646,7 @@ describe('ContestEntryPage', () => {
   // The old page-only wording for a live contest was "Scoring live"; it must be gone.
   it('labels an ACTIVE contest "Live" in the badge and Contest phase row, as on every contest page', async () => {
     primeCommonMocks({ contestStatus: 'ACTIVE' });
-    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([]) });
+    getSelectionStateMock.mockResolvedValue({ data: { ...buildSelectionState([]), acceptsPicks: false } });
 
     renderContestEntryPage();
 
@@ -629,12 +658,13 @@ describe('ContestEntryPage', () => {
   // The server refuses picks once the event's scheduled start passes, even while the contest
   // still reads OPEN because the In Progress update is late.
   it('shows a read-only saved lineup once the event\'s scheduled start has passed, though the contest still reads OPEN', async () => {
-    primeCommonMocks({ sportEventId: 'event-1' });
+    const startedAt = new Date(Date.now() - 60 * 60_000).toISOString();
+    primeCommonMocks({ eventStartDate: startedAt });
     getEventMock.mockResolvedValue({
       data: {
         event: {
           id: 'event-1',
-          startDate: new Date(Date.now() - 60 * 60_000).toISOString(),
+          startDate: startedAt,
           endDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
         },
       },
@@ -977,7 +1007,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
             squadName: 'Other Team',
             entryNumber: 1,
             name: 'Other Team Entry 1',
-            status: 'ACTIVE',
+            events: entryEvents('DRAFT'),
             tiebreakerValue: null,
             createdAt: '2026-04-15T00:00:00.000Z',
             updatedAt: '2026-04-16T00:00:00.000Z',
@@ -993,7 +1023,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     renderContestEntryPage();
 
     expect(await screen.findByTestId('contest-entry-picks-hidden')).toHaveTextContent(
-      'picks stay hidden until the contest locks',
+      'picks stay hidden until the event starts',
     );
     expect(screen.getByTestId('contest-entry-heading')).toHaveTextContent('Other Team Entry 1');
     expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
@@ -1009,27 +1039,12 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(screen.queryByText('0/0')).not.toBeInTheDocument();
     expect(screen.queryByText('Lineup is fully selected')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-tiebreaker-status')).toHaveTextContent('Hidden');
-    expect(screen.getByTestId('contest-entry-tiebreaker-summary')).toHaveTextContent('Hidden until the contest locks');
-    expect(screen.getAllByText('Hidden until the contest locks')).toHaveLength(4);
+    expect(screen.getByTestId('contest-entry-tiebreaker-summary')).toHaveTextContent('Hidden until the event starts');
+    expect(screen.getAllByText('Hidden until the event starts')).toHaveLength(4);
   });
 
   it('closes editing once the event has started, even while the contest still says open', async () => {
-    primeCommonMocks();
-    getContestMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-1',
-          leagueId: 'league-1',
-          sport: 'GOLF',
-          name: 'Bohler Masters Tiered',
-          status: 'OPEN',
-          contestType: 'ROSTER',
-          selectionType: 'TIERED',
-          sportEventId: 'event-1',
-          startsAt: null,
-        },
-      },
-    });
+    primeCommonMocks({ eventStartDate: '2020-04-10T12:00:00.000Z' });
     getEventMock.mockResolvedValue({
       data: { event: { id: 'event-1', startDate: '2020-04-10T12:00:00.000Z', endDate: null } },
     });
@@ -1044,22 +1059,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
   });
 
   it('keeps editing open before the event\'s start time', async () => {
-    primeCommonMocks();
-    getContestMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-1',
-          leagueId: 'league-1',
-          sport: 'GOLF',
-          name: 'Bohler Masters Tiered',
-          status: 'OPEN',
-          contestType: 'ROSTER',
-          selectionType: 'TIERED',
-          sportEventId: 'event-1',
-          startsAt: null,
-        },
-      },
-    });
+    primeCommonMocks({ eventStartDate: '2099-04-10T12:00:00.000Z' });
     getEventMock.mockResolvedValue({
       data: { event: { id: 'event-1', startDate: '2099-04-10T12:00:00.000Z', endDate: null } },
     });
@@ -1073,7 +1073,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
   it('shows a live contest\'s lineup read-only, with the saved tiebreaker', async () => {
     primeCommonMocks({ contestStatus: 'ACTIVE' });
     getSelectionStateMock.mockResolvedValue({
-      data: { ...buildSelectionState([twoPickTier(['sep-1', 'sep-2'])]), tiebreakerValue: -6 },
+      data: { ...buildSelectionState([twoPickTier(['sep-1', 'sep-2'])]), acceptsPicks: false, tiebreakerValue: -6 },
     });
 
     renderContestEntryPage();
@@ -1156,7 +1156,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
             squadName: 'Birdie Hunters',
             entryNumber: 1,
             name: 'Birdie Hunters Entry 1',
-            status: 'DRAFT',
+            events: entryEvents('DRAFT'),
             tiebreakerValue: -12,
             createdAt: '2026-04-15T00:00:00.000Z',
             updatedAt: '2026-04-16T00:00:00.000Z',
@@ -1240,15 +1240,7 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     primeCommonMocks();
     getContestMock.mockResolvedValue({
       data: {
-        contest: {
-          id: 'contest-1',
-          leagueId: 'league-1',
-          sport: 'GOLF',
-          name: 'Bohler Masters Budget',
-          status: 'OPEN',
-          contestType: 'ROSTER',
-          selectionType: 'BUDGET_PICK',
-        },
+        contest: contestFixture({ name: 'Bohler Masters Budget', selectionType: 'BUDGET_PICK' }),
       },
     });
     getSelectionStateMock.mockResolvedValue({ data: budgetState(selectedParticipantIds, summary) });
@@ -1409,6 +1401,8 @@ describe('ContestEntryPage — a random-draw entry', () => {
       ...buildSelectionState([field]),
       selectionType: 'RANDOM_DRAW',
       drawnAt,
+      // A dealt contest takes no more pick changes.
+      acceptsPicks: drawnAt === null,
       entries: [
         { id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', status: drawnAt ? 'SUBMITTED' : 'DRAFT' },
       ],
@@ -1419,15 +1413,7 @@ describe('ContestEntryPage — a random-draw entry', () => {
     primeCommonMocks();
     getContestMock.mockResolvedValue({
       data: {
-        contest: {
-          id: 'contest-1',
-          leagueId: 'league-1',
-          sport: 'GOLF',
-          name: 'Masters Sweepstake',
-          status: 'OPEN',
-          contestType: 'ROSTER',
-          selectionType: 'RANDOM_DRAW',
-        },
+        contest: contestFixture({ name: 'Masters Sweepstake', selectionType: 'RANDOM_DRAW' }),
       },
     });
     getSelectionStateMock.mockResolvedValue({ data: drawState(dealtIds, drawnAt) });
@@ -1463,5 +1449,133 @@ describe('ContestEntryPage — a random-draw entry', () => {
     expect(screen.getAllByText('Entries closed').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-draw-pending')).not.toBeInTheDocument();
+  });
+});
+
+describe('ContestEntryPage — a contest of two events', () => {
+  afterEach(() => {
+    getContestMock.mockReset();
+    getSelectionStateMock.mockReset();
+    getEventMock.mockReset();
+    getLeagueMock.mockReset();
+    listContestEntriesMock.mockReset();
+    submitContestEntryMock.mockReset();
+    submitContestSelectionMock.mockReset();
+    updateContestEntryMock.mockReset();
+  });
+
+  const WEEK_1 = contestEventFixture({ sportEventId: 'event-1', sequence: 1, name: 'Week 1', startDate: '2099-09-06T17:00:00.000Z' });
+  const WEEK_2 = contestEventFixture({ sportEventId: 'event-2', sequence: 2, name: 'Week 2', startDate: '2099-09-13T17:00:00.000Z' });
+
+  /** The room for one event: its own field, each a complete one-pick lineup. */
+  function eventRoom(sportEventId: string) {
+    const golfer = sportEventId === 'event-2'
+      ? buildGolfParticipant('sep-21', 'Xander Schauffele', 1, true)
+      : buildGolfParticipant('sep-11', 'Scottie Scheffler', 1, true);
+    return {
+      ...buildSelectionState([{
+        groupId: 'tier-1',
+        groupName: 'Tier 1',
+        groupNumber: 1,
+        picksFromGroup: 1,
+        selectedParticipantIds: [golfer.sportEventParticipantId],
+        participants: [golfer],
+      }]),
+      sportEventId,
+      entries: [{
+        id: 'entry-1',
+        userId: 'user-1',
+        name: 'Birdie Hunters Entry 1',
+        status: sportEventId === 'event-1' ? 'SUBMITTED' : 'DRAFT',
+      }],
+    };
+  }
+
+  function primeTwoEventMocks() {
+    primeCommonMocks();
+    getContestMock.mockResolvedValue({ data: { contest: contestFixture({ sportEvents: [WEEK_1, WEEK_2] }) } });
+    listContestEntriesMock.mockResolvedValue({
+      data: {
+        contestId: 'contest-1',
+        total: 1,
+        isJoined: true,
+        myEntryId: 'entry-1',
+        myEntryIds: ['entry-1'],
+        entries: [{
+          id: 'entry-1',
+          contestId: 'contest-1',
+          squadId: 'squad-1',
+          squadName: 'Birdie Hunters',
+          entryNumber: 1,
+          name: 'Birdie Hunters Entry 1',
+          events: [...entryEvents('SUBMITTED', 'event-1'), ...entryEvents('DRAFT', 'event-2')],
+          tiebreakerValue: null,
+          picksCount: 1,
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-16T00:00:00.000Z',
+        }],
+      },
+    });
+    // With no event named the server opens on the contest's next event, week 1.
+    getSelectionStateMock.mockImplementation(({ query }: { query?: { sportEventId?: string } }) =>
+      Promise.resolve({ data: eventRoom(query?.sportEventId ?? 'event-1') }));
+  }
+
+  it('offers an event switcher naming each event with the entry\'s status in it, opened on the event the server shows', async () => {
+    primeTwoEventMocks();
+
+    renderContestEntryPage();
+
+    const switcher = await screen.findByTestId('contest-entry-event-switcher');
+    expect(switcher).toHaveValue('event-1');
+    const options = within(switcher).getAllByRole('option').map((option) => option.textContent);
+    expect(options).toHaveLength(2);
+    expect(options[0]).toMatch(/^Week 1 · .+ · Submitted$/);
+    expect(options[1]).toMatch(/^Week 2 · .+ · Not submitted$/);
+    expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
+  });
+
+  it('shows no event switcher for a contest of one event', async () => {
+    primeCommonMocks();
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([]) });
+
+    renderContestEntryPage();
+
+    await screen.findByTestId('contest-entry-heading');
+    expect(screen.queryByTestId('contest-entry-event-switcher')).not.toBeInTheDocument();
+  });
+
+  it('reads the other event\'s picks when the switcher moves to it, asking for that event by id', async () => {
+    primeTwoEventMocks();
+
+    renderContestEntryPage();
+
+    fireEvent.change(await screen.findByTestId('contest-entry-event-switcher'), { target: { value: 'event-2' } });
+
+    await waitFor(() => expect(getSelectionStateMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { contestId: 'contest-1' },
+      query: { entryId: 'entry-1', sportEventId: 'event-2' },
+    })));
+    expect(await screen.findByText('Xander Schauffele')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-event-switcher')).toHaveValue('event-2');
+    expect(screen.getByTestId('contest-entry-status-badge')).toHaveTextContent('Not submitted');
+  });
+
+  it('submits the shown event\'s picks through that event\'s submit, not the first event\'s', async () => {
+    primeTwoEventMocks();
+    updateContestEntryMock.mockResolvedValue({ data: { entry: { id: 'entry-1' } } });
+    submitContestEntryMock.mockResolvedValue({ data: { ...eventRoom('event-2'), entries: [{ id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', status: 'SUBMITTED' }] } });
+
+    renderContestEntryPage();
+
+    fireEvent.change(await screen.findByTestId('contest-entry-event-switcher'), { target: { value: 'event-2' } });
+    expect(await screen.findByText('Xander Schauffele')).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), { target: { value: '-12' } });
+    fireEvent.click(screen.getByTestId('contest-entry-submit'));
+
+    await waitFor(() => expect(submitContestEntryMock).toHaveBeenCalledWith({
+      path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'event-2' },
+    }));
+    expect(submitContestEntryMock).toHaveBeenCalledTimes(1);
   });
 });

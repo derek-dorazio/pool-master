@@ -21,7 +21,6 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     id: 'entry-1',
     entryNumber: 1,
     name: 'Fairway Fliers',
-    status: 'SUBMITTED',
     squadId: 'squad-1',
     squad: { name: 'Squad One' },
     picks,
@@ -173,13 +172,6 @@ describe('contest entry standing — best N of the entry\'s picks', () => {
     expect(standing.score).toBe(-1);
   });
 
-  it('reports a DRAFT entry as DRAFT and a SUBMITTED entry as SUBMITTED', () => {
-    const map = scores([]);
-    const rule = { type: 'BEST_N' as const, count: 1 };
-    expect(buildContestEntryStanding(entry([], { status: 'DRAFT' }), map, rule, 'LOWER_IS_BETTER').status).toBe('DRAFT');
-    expect(buildContestEntryStanding(entry([], { status: 'SUBMITTED' }), map, rule, 'LOWER_IS_BETTER').status).toBe('SUBMITTED');
-  });
-
   it('carries the entry and squad names and leaves position for the ranking step', () => {
     const standing = buildContestEntryStanding(entry([]), scores([]), { type: 'BEST_N', count: 1 }, 'LOWER_IS_BETTER');
 
@@ -202,7 +194,6 @@ describe('contest entry ranking — ties', () => {
     entryNumber,
     squadId: 'squad',
     squadName: 'Squad',
-    status: 'SUBMITTED' as const,
     score,
     position: null,
     displayPosition: null,
@@ -251,7 +242,6 @@ describe('settled contest standings — unranked standings', () => {
     entryNumber,
     squadId: 'squad',
     squadName: 'Squad',
-    status: 'SUBMITTED' as const,
     score: null,
     position: null,
     displayPosition: null,

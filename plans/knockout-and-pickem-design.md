@@ -912,6 +912,16 @@ carry a sport league and a year, and the commissioner picks the contest's events
   competition, and each contest picks its own contest format. One NFL playoffs event can host
   a team pool, a bracket pool and a weekly pick'em at once.
 
+*As built in #713:* the contest's events are kept in start order (`sequence` follows start
+date). The commissioner adds released, not-started events of the first event's sport league;
+the year is a filter on the picker, not a rule. Events can be added until the contest is
+`COMPLETED` and removed only until one of them starts (removal deletes that event's picks). A
+random draw covers one event, and a budget contest's events must share one salary cap. Per-event
+standings use the same `totalScore` column name as the contest standing. The contest total is
+the sum of the events an entry submitted; golf's "a missed major counts as even par" rule is
+left to #714. A cancelled event is not handled yet: a contest whose event is cancelled never
+reaches `COMPLETED`.
+
 *Rationale (Derek's):* a format setting on each event or on the sport could not describe a
 season of weeks, and a pool covering the regular season plus the playoffs needs several events
 anyway. It also opens pools we can't run today: a four-majors golf pool (**#714**), golf's
@@ -939,7 +949,7 @@ format value would only restate what the match links already say. Until slice 1,
   as `tiebreakerValue` on `ContestEntryEvent` (#717). Predicting each
   team's score (exact-score soccer pools) is left for later, as a `ContestEntryMatchPredictionScore`
   extension if wanted.
-- **`ContestEntryEventStanding`** (from #713): an entry's points and position for one event
+- **`ContestEntryEventStanding`** (from #713): an entry's total and position for one event
   of the contest (weekly winners), beside the contest total on `ContestEntryStanding`.
 - **The spread is a column on the match** (*decided by Derek 2026-10-16*): `homeSpread`, the
   points from the home team's side, null until set. Like tiers and prices it changes freely

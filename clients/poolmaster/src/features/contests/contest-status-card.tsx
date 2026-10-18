@@ -1,4 +1,4 @@
-import { ContestEntryStatus, ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { Check, X } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -14,6 +14,7 @@ import { formatTimeUntil, getContestReadinessChecks } from './contest-readiness'
 import { pluralize } from './contest-rules';
 import { RunDrawAction } from './run-draw-action';
 import { useContestDrawState } from './use-contest-draw';
+import { hasSubmittedAnyEvent } from './contest-events';
 import { fetchContestEntries } from './use-contest-entries';
 
 function StatusCardFrame({
@@ -105,7 +106,7 @@ function useEnteredTeams(contestId: string) {
     queryFn: () => fetchContestEntries(contestId),
     retry: false,
     select: (response) => {
-      const submitted = response.entries.filter((entry) => entry.status === ContestEntryStatus.SUBMITTED);
+      const submitted = response.entries.filter(hasSubmittedAnyEvent);
       return {
         submittedEntryCount: submitted.length,
         teamCount: new Set(submitted.map((entry) => entry.squadId)).size,

@@ -10,6 +10,7 @@ import type {
   ContestConfigurationRepository,
   ContestEntryPickRepository,
   ContestEntryPickWithParticipant,
+  ContestEntryEventStandingRepository,
   ContestEntryStandingRepository,
   ContestRepository,
   ContestEntryRepository,
@@ -29,27 +30,36 @@ import type {
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import {
-  ContestEntryStatus,
   ContestStatus,
   deriveLegacyParticipantStatus,
+  hasSubmittedAnyEvent,
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
 } from '@poolmaster/shared/domain';
-import type { ContestEntryDto, ApiErrorCode } from '@poolmaster/shared/dto';
+import { CONTEST_EVENT_NOT_IN_CONTEST, type ContestEntryDto, type ApiErrorCode } from '@poolmaster/shared/dto';
 import {
   toContestEntryDto,
+  type ContestEntryEventResultRow,
   type ContestEntryParticipantRow,
+  type ContestEntryStandingRow,
+  type ContestLeaderboardEntryRow,
   type ContestLeaderboardModel,
 } from '../../mappers/contests.mapper';
 import {
   applySettledContestStandings,
+  applySettledContestTotals,
   buildContestEntryStanding,
   rankContestEntryStandings,
+  rankContestTotals,
   resolveContestCountingRule,
   resolveContestScoringDefinition,
+  type ContestCountingRule,
+  type ContestEntryEventScore,
+  type ContestLeaderboardEntryInput,
   type ContestScoringResolutionFailure,
+  type ParticipantScore,
 } from './contest-leaderboard-calculator';
 import {
   loadContestLeaderboardEntries,
@@ -57,7 +67,7 @@ import {
   loadEventField,
   toParticipantScores,
 } from './contest-leaderboard-reads';
-import { areContestEntriesOpen } from './entry-window';
+import { areContestEntriesOpen, areEventPicksRevealed } from './entry-window';
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
@@ -90,7 +100,6 @@ interface ContestEntryReceiptData {
     id: string;
     leagueId: string;
     name: string;
-    sportEventId: string | null;
     league: {
       name: string;
       leagueCode: string;
@@ -98,6 +107,7 @@ interface ContestEntryReceiptData {
   };
   picks: Array<{
     pickedAt: Date;
+    sportEventId: string;
     sportEventParticipant: {
       id: string;
       participant: {
@@ -140,6 +150,7 @@ export interface ContestServiceDeps {
   entries: ContestEntryRepository;
   picks: ContestEntryPickRepository;
   standings: ContestEntryStandingRepository;
+  eventStandings: ContestEntryEventStandingRepository;
   memberships: LeagueMembershipRepository;
   squads: SquadRepository;
   squadMemberships: SquadMembershipRepository;
@@ -210,14 +221,30 @@ export class ContestService {
       && membership.role === LeagueRole.COMMISSIONER;
   }
 
-  /** The listed contests' sport events, by id, read once each (#577). */
+  /** The contests' sport events, by id, read once each (#577); every event of each contest (#713). */
   async findEventsForContests(contests: readonly Contest[]): Promise<Map<string, SportEvent>> {
-    const eventIds = [...new Set(contests.flatMap((contest) => contest.sportEventId ?? []))];
+    const eventIds = [...new Set(contests.flatMap((contest) => contest.sportEventIds))];
     const events = await this.deps.sportEvents.findByIds(eventIds);
     return new Map(events.map((event) => [event.id, event]));
   }
 
-  /** Submitted entries only: a draft is not an entry until its owner submits it (#481). */
+  /** The contest's events, in its sequence order. */
+  private async findContestEvents(contest: Contest): Promise<SportEvent[]> {
+    const eventsById = await this.findEventsForContests([contest]);
+    return contest.sportEventIds.flatMap((sportEventId) => eventsById.get(sportEventId) ?? []);
+  }
+
+  /** The ids of the contest's events whose picks everyone may see as of now (#713). */
+  private async findRevealedEventIds(contest: Contest): Promise<Set<string>> {
+    const now = this.now();
+    const events = await this.findContestEvents(contest);
+    return new Set(events.filter((event) => areEventPicksRevealed(contest, event, now)).map((event) => event.id));
+  }
+
+  /**
+   * Entries that submitted at least one event: a draft is not an entry until its owner submits
+   * it (#481), and in a contest of several events one submitted event is enough (#713).
+   */
   async countEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
     const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
     if (!contestIds.length) {
@@ -234,7 +261,7 @@ export class ContestService {
     for (const { contestId, entries } of entryLists) {
       counts.set(
         contestId,
-        entries.filter((entry) => entry.status === ContestEntryStatus.SUBMITTED).length,
+        entries.filter(hasSubmittedAnyEvent).length,
       );
     }
 
@@ -295,10 +322,11 @@ export class ContestService {
   }> {
     const context = await this.getEntryContext(contestId, userId, 'read');
     const squadId = context.squadMembership?.squadId ?? null;
-    const picksRevealed = contestPicksRevealed(context.contest);
-    const entries = await this.loadEntryDetailDtos(contestId, {
+    const revealedEventIds = await this.findRevealedEventIds(context.contest);
+    const picksRevealed = revealedEventIds.size > 0;
+    const entries = await this.loadEntryDetailDtos(context.contest, {
       requesterSquadId: squadId,
-      revealAll: picksRevealed,
+      revealedEventIds,
     });
     const myEntries = squadId
       ? entries.filter((entry) => entry.squadId === squadId)
@@ -325,7 +353,8 @@ export class ContestService {
   ): Promise<{ entry: ContestEntryDto; picksRevealed: boolean }> {
     const context = await this.getEntryContext(contestId, requesterUserId, 'read');
     const requesterSquadId = context.squadMembership?.squadId ?? null;
-    const picksRevealed = contestPicksRevealed(context.contest);
+    const revealedEventIds = await this.findRevealedEventIds(context.contest);
+    const picksRevealed = revealedEventIds.size > 0;
 
     const found = await this.deps.entries.findByIdWithSquad(entryId);
     const row = found?.contestId === contestId ? found : null;
@@ -333,51 +362,70 @@ export class ContestService {
       throw new ContestEntryNotFoundError(contestId, entryId);
     }
 
-    // pool-master-dxd.13 — non-owning squad members cannot see picks while the
-    // contest is still joinable; owning squad members see their own picks
+    // pool-master-dxd.13 — non-owning squad members see an entry's picks only in the events
+    // whose picks are revealed (#713); owning squad members see all of their own picks
     // regardless of contest status.
     const isOwner = requesterSquadId !== null && row.squadId === requesterSquadId;
-    const includeParticipants = picksRevealed || isOwner;
     const picks = await this.deps.picks.findByEntriesWithParticipant([row.id]);
+    const visiblePicks = isOwner ? picks : picks.filter((pick) => revealedEventIds.has(pick.sportEventId));
 
     const entry = toContestEntryDto(
       {
-        ...row,
+        ...withContestEventOrder(row, context.contest),
         picksCount: picks.length,
       },
       {
         name: row.squadName,
       },
-      includeParticipants ? picks.map(toContestEntryParticipantRow) : null,
+      // Another squad's entry lists no picks at all (rather than none) until an event is revealed.
+      isOwner || picksRevealed ? visiblePicks.map(toContestEntryParticipantRow) : null,
     );
 
     return { entry, picksRevealed };
   }
 
+  /**
+   * The contest leaderboard (#713): every entry's contest total and its result in each revealed
+   * event, with its picks in one shown event — `sportEventId`, else the latest revealed one. A
+   * completed event answers from the standings frozen when it settled; a COMPLETED contest's
+   * totals are the ones frozen at its settlement.
+   */
   async getLeaderboard(
     contestId: string,
     requesterUserId: string,
+    requestedSportEventId?: string,
   ): Promise<ContestLeaderboardModel> {
     const context = await this.getEntryContext(contestId, requesterUserId, 'read');
-    if (!contestPicksRevealed(context.contest)) {
+    const { contest } = context;
+    const now = this.now();
+    // No event's picks are revealed while the contest takes entries, unless a draw dealt them.
+    if (contest.drawnAt === undefined && (contest.status === ContestStatus.DRAFT || contest.status === ContestStatus.OPEN)) {
       throw new ContestOperationError(
         'The leaderboard is not available until contest picks are revealed.',
         'CONTEST_LEADERBOARD_PICKS_HIDDEN',
       );
     }
-
-    const { contest } = context;
-    if (!contest.sportEventId) {
+    const events = await this.findContestEvents(contest);
+    if (events.length === 0) {
       throw new ContestOperationError(
         'The leaderboard requires a contest sport event.',
         'CONTEST_LEADERBOARD_EVENT_REQUIRED',
       );
     }
-    const sportEvent = await this.deps.sportEvents.findById(contest.sportEventId);
-    if (!sportEvent) {
+    if (requestedSportEventId !== undefined && !events.some((event) => event.id === requestedSportEventId)) {
       throw new ContestOperationError(
-        'The leaderboard requires a contest sport event.',
-        'CONTEST_LEADERBOARD_EVENT_REQUIRED',
+        'That event is not one this contest covers.',
+        CONTEST_EVENT_NOT_IN_CONTEST,
+      );
+    }
+    const revealed = events.filter((event) => areEventPicksRevealed(contest, event, now));
+    const shownEvent = requestedSportEventId === undefined
+      ? revealed.at(-1)
+      : revealed.find((event) => event.id === requestedSportEventId);
+    if (!shownEvent) {
+      throw new ContestOperationError(
+        'The leaderboard is not available until contest picks are revealed.',
+        'CONTEST_LEADERBOARD_PICKS_HIDDEN',
       );
     }
 
@@ -395,60 +443,100 @@ export class ContestService {
       throw new ContestOperationError(refusal.message, refusal.code);
     }
     const { id: scoringDefinitionId, definition: scoringDefinition } = scoring;
-    const [field, entries] = await Promise.all([
-      loadEventField(this.deps, sportEvent.id),
-      loadContestLeaderboardEntries(this.deps, contestId),
-    ]);
-    const scores = toParticipantScores(field, sportEvent, scoring.scoring);
-    const scoreById = new Map(scores.map((score) => [score.sportEventParticipantId, score]));
+    const { direction } = scoringDefinition;
+    const settledEventStandings = await this.deps.eventStandings.findByContest(contestId);
 
-    const entryRows = entries.map((entry) =>
-      buildContestEntryStanding(entry, scoreById, countingRule, scoringDefinition.direction),
-    );
-    const rankedEntries = rankContestEntryStandings(entryRows, scoringDefinition.direction);
-    const latestAsOf = scores.reduce<Date | null>((latest, participant) => {
-      if (!participant.asOf) return latest;
-      if (!latest || participant.asOf.getTime() > latest.getTime()) return participant.asOf;
-      return latest;
-    }, null);
-
-    // A settled contest answers from its frozen standings (#246); a live one computes.
-    if (context.contest.status === ContestStatus.COMPLETED) {
-      const standings = await this.deps.standings.findByContest(contestId);
-      if (standings.length > 0) {
-        return {
-          contestId,
-          sportEventId: sportEvent.id,
-          sport: sportEvent.sport,
-          scoringDefinitionId,
-          countingRule: { type: 'BEST_N', count: standings[0].countingPickLimit },
-          participants: field,
-          entries: applySettledContestStandings(
-            rankedEntries,
-            standings.map((standing) => ({
-              contestEntryId: standing.contestEntryId,
-              position: standing.position,
-              displayPosition: standing.displayPosition,
-              countingPickLimit: standing.countingPickLimit,
-              scoredPickCount: standing.scoredPickCount,
-              score: standing.totalScore,
-            })),
-          ),
-          asOf: standings[0].asOf ?? latestAsOf,
-        };
+    // Each revealed event's standings: frozen once it settled, else computed from its field. The
+    // shown event is always computed too, for its picks' scores.
+    const eventScores: ContestEntryEventScore[] = [];
+    const eventResults: Array<ContestEntryEventResultRow & { entryId: string }> = [];
+    const entriesById = new Map<string, ContestLeaderboardEntryInput>();
+    let shown: { field: Awaited<ReturnType<typeof loadEventField>>; rows: ContestEntryStandingRow[]; asOf: Date | null } | null = null;
+    for (const event of revealed) {
+      const entries = await loadContestLeaderboardEntries(this.deps, contestId, event.id);
+      for (const entry of entries) entriesById.set(entry.id, entry);
+      const settled = settledEventStandings.filter((standing) => standing.sportEventId === event.id);
+      const isShown = event.id === shownEvent.id;
+      let rows: ContestEntryStandingRow[] | null = null;
+      if (isShown || settled.length === 0) {
+        const field = await loadEventField(this.deps, event.id);
+        const scores = toParticipantScores(field, event, scoring.scoring);
+        rows = rankEventStandings(entries, scores, countingRule, direction);
+        if (settled.length > 0) {
+          rows = applySettledContestStandings(rows, settled.map(toSettledStanding));
+        }
+        if (isShown) {
+          shown = { field, rows, asOf: settled.at(0)?.asOf ?? latestAsOf(scores) };
+        }
       }
-      this.logger.warn({ contestId }, 'completed contest has no settled standings; leaderboard computed live');
+      const results = rows
+        ? rows.map((row) => ({ entryId: row.entryId, score: row.score, position: row.position, displayPosition: row.displayPosition, scoredPickCount: row.scoredPickCount }))
+        : settled.map((standing) => ({
+          entryId: standing.contestEntryId,
+          score: standing.totalScore,
+          position: standing.position,
+          displayPosition: standing.displayPosition,
+          scoredPickCount: standing.scoredPickCount,
+        }));
+      for (const result of results) {
+        eventScores.push({ entryId: result.entryId, sportEventId: event.id, score: result.score, scoredPickCount: result.scoredPickCount });
+        eventResults.push({ entryId: result.entryId, sportEventId: event.id, score: result.score, position: result.position, displayPosition: result.displayPosition });
+      }
     }
+    if (!shown) {
+      throw new Error(`Contest ${contestId} leaderboard lost its shown event ${shownEvent.id}`);
+    }
+    const shownRows = new Map(shown.rows.map((row) => [row.entryId, row]));
+
+    let totals = rankContestTotals([...entriesById.values()], eventScores, direction);
+    // A settled contest answers from its frozen totals and the counting rule it settled under
+    // (#246); a live one sums its events under the live configuration.
+    let shownCountingRule = countingRule;
+    const frozenCountingPickLimits = new Map<string, number>();
+    if (contest.status === ContestStatus.COMPLETED) {
+      const standings = await this.deps.standings.findByContest(contestId);
+      const firstStanding = standings.at(0);
+      if (firstStanding) {
+        totals = applySettledContestTotals(totals, standings.map(toSettledStanding));
+        shownCountingRule = { type: 'BEST_N', count: firstStanding.countingPickLimit };
+        for (const standing of standings) {
+          frozenCountingPickLimits.set(standing.contestEntryId, standing.countingPickLimit);
+        }
+      } else {
+        this.logger.warn({ contestId }, 'completed contest has no settled standings; leaderboard computed live');
+      }
+    }
+
+    const leaderboardEntries: ContestLeaderboardEntryRow[] = totals.map((total) => {
+      const entry = entriesById.get(total.entryId);
+      const shownRow = shownRows.get(total.entryId);
+      return {
+        entryId: total.entryId,
+        entryName: total.entryName,
+        entryNumber: total.entryNumber,
+        squadId: entry?.squadId ?? '',
+        squadName: entry?.squad.name ?? '',
+        score: total.score,
+        position: total.position,
+        displayPosition: total.displayPosition,
+        countingPickLimit: frozenCountingPickLimits.get(total.entryId) ?? shownRow?.countingPickLimit ?? shownCountingRule.count,
+        scoredPickCount: shownRow?.scoredPickCount ?? 0,
+        picks: shownRow?.picks ?? [],
+        events: revealed.flatMap((event) =>
+          eventResults.filter((result) => result.entryId === total.entryId && result.sportEventId === event.id)
+            .map(({ entryId: _entryId, ...result }) => result)),
+      };
+    });
 
     return {
       contestId,
-      sportEventId: sportEvent.id,
-      sport: sportEvent.sport,
+      sportEventId: shownEvent.id,
+      sport: shownEvent.sport,
       scoringDefinitionId,
-      countingRule,
-      participants: field,
-      entries: rankedEntries,
-      asOf: latestAsOf,
+      countingRule: shownCountingRule,
+      participants: shown.field,
+      entries: leaderboardEntries,
+      asOf: shown.asOf,
     };
   }
 
@@ -494,8 +582,8 @@ export class ContestService {
       squadId: squad.id,
       entryNumber: nextEntryNumber,
       name: buildDefaultEntryName(squad.name, nextEntryNumber),
-      // Born a draft; the owner submits it once its lineup is complete (#481).
-      status: ContestEntryStatus.DRAFT,
+      // Born a draft in each of the contest's events; the owner submits each once its lineup is
+      // complete (#481, #713).
     });
     // The draw closed entries after the window check above: it ran while this entry was on its way in.
     if (result.status === 'contestDrawn') {
@@ -634,6 +722,7 @@ export class ContestService {
     contestId: string,
     entryId: string,
     userId: string,
+    sportEventId: string,
   ): Promise<void> {
     if (!this.deps.mailDelivery) {
       this.logger.debug({
@@ -681,7 +770,7 @@ export class ContestService {
       tiebreaker: entry.tiebreakerValue === null
         ? 'None'
         : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
-      tiers: await this.buildEntryTierSelectionsForEmail(entry),
+      tiers: await this.buildEntryTierSelectionsForEmail(entry, sportEventId),
     });
 
     try {
@@ -718,20 +807,25 @@ export class ContestService {
     }
   }
 
-  /** Groups the entry's picks by the tier label SportEventTierService resolves for each golfer. */
+  /**
+   * Groups the entry's picks in the submitted event by the tier label SportEventTierService
+   * resolves for each golfer (#713: one event's picks per confirmation).
+   */
   private async buildEntryTierSelectionsForEmail(
     entry: ContestEntryReceiptData,
+    sportEventId: string,
   ): Promise<ContestEntryCompletedTierSelection[]> {
     const tierLabelBySportEventParticipantId = new Map<string, string>();
-    if (entry.contest.sportEventId) {
-      const valuations = await this.deps.tiers.getEffectiveValuationsForSportEvent(entry.contest.sportEventId);
-      for (const valuation of valuations) {
-        if (valuation.tierLabel !== null) {
-          tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);
-        }
+    const valuations = await this.deps.tiers.getEffectiveValuationsForSportEvent(sportEventId);
+    for (const valuation of valuations) {
+      if (valuation.tierLabel !== null) {
+        tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);
       }
     }
-    return buildEntryTierSelections(entry, tierLabelBySportEventParticipantId);
+    return buildEntryTierSelections(
+      { ...entry, picks: entry.picks.filter((pick) => pick.sportEventId === sportEventId) },
+      tierLabelBySportEventParticipantId,
+    );
   }
 
   private async loadContestEntryReceiptData(
@@ -763,11 +857,11 @@ export class ContestService {
         id: contest.id,
         leagueId: contest.leagueId,
         name: contest.name,
-        sportEventId: contest.sportEventId ?? null,
         league: { name: league.name, leagueCode: league.leagueCode },
       },
       picks: picks.map((pick) => ({
         pickedAt: pick.pickedAt,
+        sportEventId: pick.sportEventId,
         sportEventParticipant: {
           id: pick.sportEventParticipantId,
           participant: { id: pick.participant.participantId, name: pick.participant.participantName },
@@ -842,12 +936,10 @@ export class ContestService {
     return { contest, membership, squadMembership };
   }
 
-  /** Whether entries can change now: see entry-window.ts. */
+  /** Whether entries can be created, renamed or left now: see entry-window.ts. */
   private async areEntriesOpen(contest: Contest): Promise<boolean> {
-    const sportEvent = contest.status === ContestStatus.OPEN && contest.sportEventId
-      ? await this.deps.sportEvents.findById(contest.sportEventId)
-      : null;
-    return areContestEntriesOpen(contest, sportEvent, this.now());
+    const sportEvents = contest.status === ContestStatus.OPEN ? await this.findContestEvents(contest) : [];
+    return areContestEntriesOpen(contest, sportEvents, this.now());
   }
 
   private async findEntriesBySquad(
@@ -878,52 +970,37 @@ export class ContestService {
   }
 
   private async loadEntryDetailDtos(
-    contestId: string,
-    options: { requesterSquadId: string | null; revealAll: boolean },
+    contest: Contest,
+    options: { requesterSquadId: string | null; revealedEventIds: ReadonlySet<string> },
   ): Promise<ContestEntryDto[]> {
-    const rows = await this.deps.entries.findByContestWithSquad(contestId);
+    const rows = await this.deps.entries.findByContestWithSquad(contest.id);
 
     const entryIds = rows.map((row) => row.id);
-    const pickCountByEntry = await this.deps.picks.countByEntries(entryIds);
+    const [pickCountByEntry, picks] = await Promise.all([
+      this.deps.picks.countByEntries(entryIds),
+      this.deps.picks.findByEntriesWithParticipant(entryIds),
+    ]);
 
-    // Determine which entries get participant detail bundled in.
-    // - Always include for the requester's own squad (owners see their picks pre-reveal).
-    // - When revealAll (post-event-start), include for every entry.
-    const ownEntryIds = options.requesterSquadId
+    // Which picks each entry lists: all of the requester's own squad's (owners see their picks
+    // pre-reveal), and everyone else's in the events whose picks are revealed (#713).
+    const ownEntryIds = new Set(options.requesterSquadId
       ? rows.filter((row) => row.squadId === options.requesterSquadId).map((row) => row.id)
-      : [];
-    const entryIdsWithParticipants = new Set<string>(
-      options.revealAll ? entryIds : ownEntryIds,
-    );
-
-    const participantsByEntry = entryIdsWithParticipants.size === 0
-      ? new Map<string, ContestEntryParticipantRow[]>()
-      : await this.loadParticipantsForEntries([...entryIdsWithParticipants]);
-
-    return rows.map((row) => {
-      const includeParticipants = entryIdsWithParticipants.has(row.id);
-      return toContestEntryDto(
-        {
-          ...row,
-          picksCount: pickCountByEntry.get(row.id) ?? 0,
-        },
-        { name: row.squadName },
-        includeParticipants ? (participantsByEntry.get(row.id) ?? []) : null,
-      );
-    });
-  }
-
-  private async loadParticipantsForEntries(
-    entryIds: string[],
-  ): Promise<Map<string, ContestEntryParticipantRow[]>> {
-    const picks = await this.deps.picks.findByEntriesWithParticipant(entryIds);
-    const grouped = new Map<string, ContestEntryParticipantRow[]>();
+      : []);
+    const participantsByEntry = new Map<string, ContestEntryParticipantRow[]>();
     for (const pick of picks) {
-      const list = grouped.get(pick.entryId) ?? [];
-      list.push(toContestEntryParticipantRow(pick));
-      grouped.set(pick.entryId, list);
+      if (!ownEntryIds.has(pick.entryId) && !options.revealedEventIds.has(pick.sportEventId)) continue;
+      participantsByEntry.set(pick.entryId, [...(participantsByEntry.get(pick.entryId) ?? []), toContestEntryParticipantRow(pick)]);
     }
-    return grouped;
+
+    return rows.map((row) => toContestEntryDto(
+      {
+        ...withContestEventOrder(row, contest),
+        picksCount: pickCountByEntry.get(row.id) ?? 0,
+      },
+      { name: row.squadName },
+      // Another squad's entry lists no picks at all (rather than none) until an event is revealed.
+      ownEntryIds.has(row.id) || options.revealedEventIds.size > 0 ? (participantsByEntry.get(row.id) ?? []) : null,
+    ));
   }
 
   private async loadEntryDtoById(entryId: string): Promise<ContestEntryDto> {
@@ -935,29 +1012,34 @@ export class ContestService {
       );
     }
 
-    const pickCounts = await this.deps.picks.countByEntries([row.id]);
+    const [pickCounts, contest] = await Promise.all([
+      this.deps.picks.countByEntries([row.id]),
+      this.deps.contests.findById(row.contestId),
+    ]);
     return toContestEntryDto({
-      ...row,
+      ...(contest ? withContestEventOrder(row, contest) : row),
       picksCount: pickCounts.get(row.id) ?? 0,
     }, {
       name: row.squadName,
     });
   }
 
+  /** An entry waits on its contest's first event's field: entering before any golfer is known is refused. */
   private async assertEntryFieldReady(contest: Contest, userId: string): Promise<void> {
-    if (!contest.sportEventId) {
+    const firstSportEventId = contest.sportEventIds.at(0);
+    if (!firstSportEventId) {
       return;
     }
 
-    const loadedParticipantCount = (await this.deps.sportEvents.countParticipants([contest.sportEventId]))
-      .get(contest.sportEventId) ?? 0;
+    const loadedParticipantCount = (await this.deps.sportEvents.countParticipants([firstSportEventId]))
+      .get(firstSportEventId) ?? 0;
     if (loadedParticipantCount > 0) {
       return;
     }
 
     this.logger.warn({
       contestId: contest.id,
-      sportEventId: contest.sportEventId,
+      sportEventId: firstSportEventId,
       userId,
     }, 'contest entry create rejected because event participant field is not loaded');
     throw new ContestEntryOperationError(
@@ -1095,6 +1177,7 @@ function toContestEntryParticipantRow(pick: ContestEntryPickWithParticipant): Co
   return {
     pickId: pick.id,
     sportEventParticipantId: pick.sportEventParticipantId,
+    sportEventId: pick.sportEventId,
     participantId: pick.participant.participantId,
     participantName: pick.participant.participantName,
     participantStatus: deriveLegacyParticipantStatus(
@@ -1141,16 +1224,51 @@ function buildEntryUrl(
   return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}/entries/${encodeURIComponent(entryId)}`;
 }
 
-/**
- * Whether participant picks on a contest are visible to non-owning squad members.
- *
- * pool-master-dxd.13 — picks are hidden from non-owners until the contest moves past
- * taking entries (DRAFT or OPEN). Once it progresses (ACTIVE, COMPLETED), picks are public to
- * every league member. A random draw is public from the moment it is dealt (#601): nobody
- * chose those picks, so there is nothing to hide.
- */
-export function contestPicksRevealed(contest: Pick<Contest, 'status' | 'drawnAt'>): boolean {
-  return contest.drawnAt !== undefined
-    || (contest.status !== ContestStatus.DRAFT && contest.status !== ContestStatus.OPEN);
+/** The entry with its event statuses in the contest's event order (#713). */
+function withContestEventOrder<Entry extends ContestEntry>(entry: Entry, contest: Pick<Contest, 'sportEventIds'>): Entry {
+  const order = (sportEventId: string) => {
+    const index = contest.sportEventIds.indexOf(sportEventId);
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  };
+  return { ...entry, events: [...entry.events].sort((left, right) => order(left.sportEventId) - order(right.sportEventId)) };
 }
 
+/** One event's entry standings, live: each submitted entry's picks scored against the event's field and ranked. */
+function rankEventStandings(
+  entries: readonly ContestLeaderboardEntryInput[],
+  scores: readonly ParticipantScore[],
+  countingRule: ContestCountingRule,
+  direction: Parameters<typeof rankContestEntryStandings>[1],
+): ContestEntryStandingRow[] {
+  const scoreById = new Map(scores.map((score) => [score.sportEventParticipantId, score]));
+  return rankContestEntryStandings(
+    entries.map((entry) => buildContestEntryStanding(entry, scoreById, countingRule, direction)),
+    direction,
+  );
+}
+
+function latestAsOf(scores: readonly ParticipantScore[]): Date | null {
+  return scores.reduce<Date | null>((latest, participant) => {
+    if (!participant.asOf) return latest;
+    if (!latest || participant.asOf.getTime() > latest.getTime()) return participant.asOf;
+    return latest;
+  }, null);
+}
+
+function toSettledStanding(standing: {
+  contestEntryId: string;
+  position: number | null;
+  displayPosition: string | null;
+  countingPickLimit: number;
+  scoredPickCount: number;
+  totalScore: number | null;
+}) {
+  return {
+    contestEntryId: standing.contestEntryId,
+    position: standing.position,
+    displayPosition: standing.displayPosition,
+    countingPickLimit: standing.countingPickLimit,
+    scoredPickCount: standing.scoredPickCount,
+    score: standing.totalScore,
+  };
+}

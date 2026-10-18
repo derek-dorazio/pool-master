@@ -164,7 +164,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
       path: { id: league.id },
       body: {
         name: `Harbour Marathon Picks ${RUN}`,
-        sportEventId: eventId,
+        sportEventIds: [eventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         templateId: tieredTemplate.id,
@@ -188,7 +188,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(runner) } });
         expect(pick.response.status).toBe(200);
       }
-      expect((await submitContestEntry({ client, path: { contestId, entryId } })).response.status).toBe(200);
+      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
       return entryId;
     };
     const commissionerEntryId = await enterWith(commissioner.client, ['Kiplimo', 'Lemma', 'Kipruto', 'Tola']);

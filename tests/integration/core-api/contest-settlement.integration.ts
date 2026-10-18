@@ -108,7 +108,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       prisma.contest.create({
         data: {
           leagueId: league.id,
-          sportEventId: event.id,
+          sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
           name: `Invalid Settlement ${suffix}`,
           status: 'ACTIVE',
           contestFormat: 'ROSTER',
@@ -126,6 +126,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     ]);
     const directEntries = await createSettlementEntries({
       contestId: directContest.id,
+      sportEventId: event.id,
       squadOneId: squadOne.id,
       squadTwoId: squadTwo.id,
       participants: participants.map((participant) => participant.id),
@@ -206,8 +207,14 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       select: { status: true, endsAt: true },
     })).resolves.toEqual({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') });
 
-    // A contest moved back out of COMPLETED is settled again from the corrected scores. No route
-    // does that today (the unused reopen endpoint was deleted), so the test moves it directly.
+    // The event's own standings froze at the first settlement too (#713).
+    await expect(prisma.contestEntryEventStanding.count({ where: { contestId: directContest.id, sportEventId: event.id } }))
+      .resolves.toBe(2);
+
+    // A contest moved back out of COMPLETED is completed again, its total re-summed from its
+    // events' frozen standings (#713): the late correction does not reach an event that already
+    // settled. No route does that today (the unused reopen endpoint was deleted), so the test
+    // moves it directly.
     await prisma.contest.update({ where: { id: directContest.id }, data: { status: 'ACTIVE' } });
     const third = await service.settleCompletedSportEvent(event.id);
 
@@ -219,8 +226,8 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     });
     const resettled = await readStandings();
     expect(resettled.map((standing) => [standing.totalScore, standing.displayPosition])).toEqual([
-      [1, 'T1'],
-      [1, 'T1'],
+      [-9, '1'],
+      [1, '2'],
     ]);
     // Still one row per entry: the resettle updated the standings in place.
     await expect(prisma.contestEntryStanding.count({ where: { contestId: directContest.id } })).resolves.toBe(2);
@@ -392,7 +399,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
-        sportEventId: event.id,
+        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
         name: `Unplayed Settlement ${suffix}`,
         status: 'ACTIVE',
         contestFormat: 'ROSTER',
@@ -408,14 +415,14 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
       },
     });
     const entry = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Leader and Cut', status: 'SUBMITTED' },
+      data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Leader and Cut', events: { create: { sportEventId: event.id, status: 'SUBMITTED', submittedAt: new Date() } } },
     });
     const unflaggedEntry = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squad.id, entryNumber: 2, name: 'Leader and Unflagged', status: 'SUBMITTED' },
+      data: { contestId: contest.id, squadId: squad.id, entryNumber: 2, name: 'Leader and Unflagged', events: { create: { sportEventId: event.id, status: 'SUBMITTED', submittedAt: new Date() } } },
     });
     // Never submitted: a draft is scored nowhere, 80s or not (#481).
     const draftEntry = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squad.id, entryNumber: 3, name: 'Draft Leader and Cut', status: 'DRAFT' },
+      data: { contestId: contest.id, squadId: squad.id, entryNumber: 3, name: 'Draft Leader and Cut', events: { create: { sportEventId: event.id, status: 'DRAFT' } } },
     });
     await prisma.contestEntryPick.createMany({
       data: [
@@ -486,7 +493,7 @@ async function createSettlementParticipant(input: {
 
 async function createSettlementContest(input: {
   leagueId: string;
-  sportEventId: string | null;
+  sportEventId: string;
   name: string;
   /** Every real configuration carries a scoring rule (#246); false builds one that does not. */
   withScoringRule?: boolean;
@@ -498,7 +505,7 @@ async function createSettlementContest(input: {
   const contest = await prisma.contest.create({
     data: {
       leagueId: input.leagueId,
-      sportEventId: input.sportEventId,
+      sportEvents: { create: { sportEventId: input.sportEventId, sequence: 1 } },
       name: input.name,
       status: input.status ?? 'ACTIVE',
       contestFormat: 'ROSTER',
@@ -526,6 +533,7 @@ async function createSettlementContest(input: {
 
 async function createSettlementEntries(input: {
   contestId: string;
+  sportEventId: string;
   squadOneId: string;
   squadTwoId: string;
   participants: string[];
@@ -538,7 +546,7 @@ async function createSettlementEntries(input: {
         squadId: input.squadOneId,
         entryNumber: 1,
         name: 'Winner',
-        status: 'SUBMITTED',
+        events: { create: { sportEventId: input.sportEventId, status: 'SUBMITTED', submittedAt: new Date() } },
       },
     }),
     prisma.contestEntry.create({
@@ -547,7 +555,7 @@ async function createSettlementEntries(input: {
         squadId: input.squadTwoId,
         entryNumber: 2,
         name: 'Runner Up',
-        status: 'SUBMITTED',
+        events: { create: { sportEventId: input.sportEventId, status: 'SUBMITTED', submittedAt: new Date() } },
       },
     }),
   ]);

@@ -100,7 +100,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      sportEventId: sportEvent.id,
+      sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
       name: `Invariant Contest ${suffix}`,
       status: 'OPEN',
       contestFormat: contestFormat as 'ROSTER',
@@ -113,7 +113,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
       squadId: squad.id,
       entryNumber: 1,
       name: `Invariant Entry ${suffix}`,
-      status: 'SUBMITTED',
+      events: { create: { sportEventId: sportEvent.id, status: 'SUBMITTED', submittedAt: new Date() } },
     },
   });
 

@@ -18,6 +18,7 @@ import { join } from 'node:path';
 import { BracketAdvancement, findSportRow, MatchSide, MatchStatus, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
+import { seedDateOffsetDays, shiftedEventDates } from '../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import {
   parseSportDataFile,
   SportDataContent,
@@ -34,7 +35,8 @@ import { standardEventPricing } from '../support/budget-pricing';
 // contests on, a real file filled in by comparison, and a second run that changes nothing.
 
 const RUN = `load-${Date.now()}`;
-const NOW = new Date('2026-10-08T19:00:00Z');
+// The real clock: release refuses an event that has started by the server's own clock.
+const NOW = new Date();
 
 function provenance(): SportDataFile['provenance'] {
   return { gatheredAt: '2026-10-13', gatheredBy: 'functional test', sources: [{ name: 'Test source', url: 'https://example.com/schedule' }] };
@@ -169,7 +171,7 @@ describe('Loading a golf test seed through the admin API', () => {
   };
   const getClient = () => Promise.resolve(admin.client);
 
-  it('reports every addition in a dry run without writing, then releases each tournament a week ahead with its field, tiers and stored final scores', async () => {
+  it('reports every addition in a dry run without writing, then releases each tournament at least a week after today with its field, tiers and stored final scores', async () => {
     const dryRun = await loadSportData(parsed(seed), { getClient, now: NOW, mode: LoadMode.DRY_RUN });
     expect(counts(dryRun)).toEqual({ 'SPORT_LEAGUE ADD': 1, 'PLAYER ADD': 12, 'EVENT ADD': 2, 'FIELD ADD': 2 });
     expect(await leagueNamed(tour)).toBeUndefined();
@@ -181,9 +183,13 @@ describe('Loading a golf test seed through the admin API', () => {
     expect(league.matchKeyword).toBe(tour);
     const events = await eventsOf(league.id, 2026);
     const opener = expectDefined(events.find((event) => event.name === `${prefix} Opener`));
-    // Released for contests, a whole number of weeks on from 2026-01-15 and at least a week after NOW.
+    // Released for contests, a whole number of weeks on from 2026-01-15 and at least a week after today.
     expect(events.map((event) => event.status)).toEqual(['SCHEDULED', 'SCHEDULED']);
-    expect(opener.startDate).toBe('2026-10-22T12:00:00.000Z');
+    expect(opener.startDate).toBe(shiftedEventDates(seed.sportLeagues[0].events[0], seedDateOffsetDays(seed, NOW)).startDate);
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const openerStart = Date.parse(opener.startDate);
+    expect(openerStart).toBeGreaterThanOrEqual(NOW.getTime() + weekMs);
+    expect((openerStart - Date.parse('2026-01-15T12:00:00Z')) % weekMs).toBe(0);
     expect(opener.autoLifecycleEnabled).toBe(false);
 
     const field = await fieldOf(opener.id);
@@ -216,10 +222,11 @@ describe('Loading a golf test seed through the admin API', () => {
     const league = expectDefined(await leagueNamed(tour));
     const finale = { ...seed.sportLeagues[0].events[1], key: 'third', name: `${prefix} Finale`, startDate: '2026-01-29', endDate: '2026-02-01' };
     const withFinale: SportDataFile = { ...seed, sportLeagues: [{ ...seed.sportLeagues[0], events: [...seed.sportLeagues[0].events, finale] }] };
+    const finaleStart = shiftedEventDates(finale, seedDateOffsetDays(withFinale, NOW)).startDate;
     // What a run that stopped straight after creating the event leaves behind.
     expectDefined((await createEvent({
       client: admin.client,
-      body: { sportLeagueId: league.id, eventYear: 2026, name: finale.name, startDate: '2026-11-05T12:00:00.000Z', rounds: 4, autoLifecycleEnabled: false },
+      body: { sportLeagueId: league.id, eventYear: 2026, name: finale.name, startDate: finaleStart, rounds: 4, autoLifecycleEnabled: false },
     })).data);
 
     const rows = await loadSportData(parsed(withFinale), { getClient, now: NOW, mode: LoadMode.APPLY });
@@ -229,7 +236,7 @@ describe('Loading a golf test seed through the admin API', () => {
       { sportLeague: tour, subject: LoadSubject.FIELD, action: LoadAction.UPDATE, name: finale.name, detail: expect.stringContaining('8 added') as unknown },
     ]);
     const stored = expectDefined((await eventsOf(league.id, 2026)).find((event) => event.name === finale.name));
-    expect(stored).toMatchObject({ status: 'SCHEDULED', startDate: '2026-11-05T12:00:00.000Z', roundsPar: 70 });
+    expect(stored).toMatchObject({ status: 'SCHEDULED', startDate: finaleStart, roundsPar: 70 });
     expect((await fieldOf(stored.id)).size).toBe(8);
   });
 });
@@ -754,7 +761,7 @@ describe('Filling an event from a test slate through the admin API', () => {
     const { league, commissioner } = await buildLeagueWithCommissioner({ displayName: 'Slate Commissioner', leagueName: `Slate League ${prefix}` });
     const { contestId } = await seedContestFixture(league.id, { name: `Slate Contest ${prefix}`, selectionType: 'TIERED' });
     const squad = await db.squad.create({ data: { leagueId: league.id, createdBy: commissioner.userId, name: `Slate Squad ${prefix}` } });
-    const entry = await db.contestEntry.create({ data: { contestId, squadId: squad.id, entryNumber: 1, name: `Slate Entry ${prefix}`, status: 'SUBMITTED' } });
+    const entry = await db.contestEntry.create({ data: { contestId, squadId: squad.id, entryNumber: 1, name: `Slate Entry ${prefix}` } });
     const picked = expectDefined((await fieldOf(eventId)).get(`${prefix} Golfer 2`));
     await db.contestEntryPick.create({ data: { entryId: entry.id, sportEventParticipantId: picked.id, contestFormat: 'ROSTER', slot: 1 } });
 

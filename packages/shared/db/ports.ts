@@ -8,6 +8,7 @@
 import type {
   Contest,
   ContestEntry,
+  ContestEntryStatus,
   League,
   LeagueInvitation,
   LeagueMembership,
@@ -305,7 +306,13 @@ export interface ContestRepository {
   /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
   create(contest: ContestCreate): Promise<Contest>;
-  update(id: string, updates: Partial<Contest>): Promise<Contest>;
+  update(id: string, updates: ContestUpdate): Promise<Contest>;
+  /**
+   * Sets the events the contest covers to `sportEventIds`, in that order (#713). In one
+   * transaction under the contest row lock: each entry gets a DRAFT status row for every added
+   * event, and loses its status row and its picks on every removed one.
+   */
+  replaceSportEvents(id: string, sportEventIds: readonly string[]): Promise<void>;
   /**
    * Moves a contest to `to` (with its start or end time), but only while it is in one of the
    * `from` statuses. Returns whether this call made the change: a guarded single write, so two
@@ -328,10 +335,17 @@ export interface ContestStatusTransition {
   endsAt?: Date;
 }
 
+/** A new contest; `sportEventIds` are its events in sequence order. */
 export type ContestCreate = Pick<
   Contest,
-  'leagueId' | 'sportEventId' | 'name' | 'status' | 'contestFormat' | 'selectionType'
+  'leagueId' | 'sportEventIds' | 'name' | 'status' | 'contestFormat' | 'selectionType'
 >;
+
+/** What can change on a contest row itself; its events change through `replaceSportEvents`. */
+export type ContestUpdate = Partial<Pick<Contest, 'name' | 'status' | 'startsAt' | 'endsAt'>>;
+
+/** A new entry; it is born a DRAFT in every event of its contest. */
+export type ContestEntryCreate = Pick<ContestEntry, 'contestId' | 'squadId' | 'entryNumber' | 'name' | 'tiebreakerValue'>;
 
 // --- Entries & Picks ---
 
@@ -351,11 +365,20 @@ export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contes
 export interface ContestEntryRepository {
   findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null>;
   findByContest(contestId: string): Promise<ContestEntry[]>;
-  /** In entry-number order, then creation order; `submittedOnly` keeps SUBMITTED entries alone (#481). */
-  findByContestWithSquad(contestId: string, options?: { submittedOnly?: boolean }): Promise<ContestEntryWithSquad[]>;
+  /**
+   * In entry-number order, then creation order. `submittedFor` keeps the entries that submitted
+   * that event alone (#481, per event since #713).
+   */
+  findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
   findBySquad(squadId: string): Promise<ContestEntry[]>;
-  create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntryCreateResult>;
-  update(id: string, updates: Partial<ContestEntry>): Promise<ContestEntry>;
+  /** Creates the entry with a DRAFT status row for each of its contest's events (#713). */
+  create(entry: ContestEntryCreate): Promise<ContestEntryCreateResult>;
+  update(id: string, updates: Partial<Pick<ContestEntry, 'name' | 'tiebreakerValue'>>): Promise<ContestEntry>;
+  /**
+   * Sets the entry's status for one event of its contest (#713), stamping `submittedAt` when it
+   * becomes SUBMITTED and clearing it when it returns to DRAFT. Answers with the entry.
+   */
+  setEventStatus(id: string, sportEventId: string, status: ContestEntryStatus, at: Date): Promise<ContestEntry>;
   delete(id: string): Promise<ContestEntryDeleteResult>;
 }
 

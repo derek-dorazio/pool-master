@@ -40,6 +40,13 @@ export interface LeaderboardPickRow {
   detailCells: LeaderboardDetailCell[];
 }
 
+/** One event's result for an entry in a contest of several events (#713). */
+export interface LeaderboardEventResult {
+  sportEventId: string;
+  displayPosition: string | null;
+  total: string | null;
+}
+
 /** One entry's block: its own standing, then its participants. */
 export interface LeaderboardEntryRow {
   entryId: string;
@@ -50,6 +57,8 @@ export interface LeaderboardEntryRow {
   total: string | null;
   countingPickLimit: number;
   scoredPickCount: number;
+  /** The entry's result in each event it submitted and that has been revealed, in contest order. */
+  events: LeaderboardEventResult[];
   picks: LeaderboardPickRow[];
 }
 
@@ -84,6 +93,11 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse): Lead
     total: entry.totalScore === null ? null : scoringDefinition.format(entry.totalScore),
     countingPickLimit: entry.countingPickLimit,
     scoredPickCount: entry.scoredPickCount,
+    events: entry.events.map((event) => ({
+      sportEventId: event.sportEventId,
+      displayPosition: event.displayPosition,
+      total: event.totalScore === null ? null : scoringDefinition.format(event.totalScore),
+    })),
     picks: entry.picks.flatMap((pick) => {
       const participant = participantsById.get(pick.sportEventParticipantId);
       // A pick is a pointer into `participants`; one that does not resolve has no participant

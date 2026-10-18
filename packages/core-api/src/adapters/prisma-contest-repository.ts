@@ -8,13 +8,20 @@ import type {
   ContestRepository,
   ContestStatusFilter,
   ContestStatusTransition,
+  ContestUpdate,
 } from '@poolmaster/shared/db';
 import type { Contest, ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
 
-/** What every contest read joins: its event's sport, and its draw when it has one (#601). */
+/**
+ * What every contest read joins: its events in sequence order with their sport (#713), and its
+ * draw when it has one (#601).
+ */
 const CONTEST_INCLUDE = {
-  sportEvent: { select: { sport: true } },
+  sportEvents: {
+    select: { sportEventId: true, sportEvent: { select: { sport: true } } },
+    orderBy: { sequence: 'asc' },
+  },
   draw: { select: { drawnAt: true } },
 } as const;
 
@@ -44,7 +51,7 @@ export class PrismaContestRepository implements ContestRepository {
   ): Promise<Contest[]> {
     const rows = await this.prisma.contest.findMany({
       where: {
-        sportEventId,
+        sportEvents: { some: { sportEventId } },
         ...((filter?.statuses || filter?.excludeStatuses?.length) && {
           status: {
             ...(filter.statuses && { in: [...filter.statuses] }),
@@ -62,11 +69,13 @@ export class PrismaContestRepository implements ContestRepository {
     const row = await this.prisma.contest.create({
       data: {
         leagueId: contest.leagueId,
-        sportEventId: contest.sportEventId,
         name: contest.name,
         status: contest.status,
         contestFormat: contest.contestFormat,
         selectionType: contest.selectionType,
+        sportEvents: {
+          create: contest.sportEventIds.map((sportEventId, index) => ({ sportEventId, sequence: index + 1 })),
+        },
       },
       include: CONTEST_INCLUDE,
     });
@@ -85,19 +94,46 @@ export class PrismaContestRepository implements ContestRepository {
     return result.count > 0;
   }
 
-  async update(id: string, updates: Partial<Contest>): Promise<Contest> {
+  async update(id: string, updates: ContestUpdate): Promise<Contest> {
     const row = await this.prisma.contest.update({
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.status !== undefined && { status: updates.status }),
-        ...(updates.sportEventId !== undefined && { sportEventId: updates.sportEventId }),
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
       },
       include: CONTEST_INCLUDE,
     });
     return mapToContest(row);
+  }
+
+  async replaceSportEvents(id: string, sportEventIds: readonly string[]): Promise<void> {
+    // The contest row lock comes first, as every entry write and the draw take it (#644), so an
+    // entry created meanwhile is either seen here or created after with the new events.
+    await this.prisma.$transaction(async (tx) => {
+      await lockContestRow(tx, id);
+      const current = await tx.contestSportEvent.findMany({ where: { contestId: id }, select: { sportEventId: true } });
+      const removed = current.map((row) => row.sportEventId).filter((eventId) => !sportEventIds.includes(eventId));
+      if (removed.length > 0) {
+        await tx.contestEntryPick.deleteMany({
+          where: { entry: { contestId: id }, sportEventParticipant: { sportEventId: { in: removed } } },
+        });
+        await tx.contestEntryEvent.deleteMany({
+          where: { contestEntry: { contestId: id }, sportEventId: { in: removed } },
+        });
+      }
+      // Sequences are rewritten whole: renumbering in place would collide on (contest, sequence).
+      await tx.contestSportEvent.deleteMany({ where: { contestId: id } });
+      await tx.contestSportEvent.createMany({
+        data: sportEventIds.map((sportEventId, index) => ({ contestId: id, sportEventId, sequence: index + 1 })),
+      });
+      const entries = await tx.contestEntry.findMany({ where: { contestId: id }, select: { id: true } });
+      await tx.contestEntryEvent.createMany({
+        data: entries.flatMap((entry) => sportEventIds.map((sportEventId) => ({ contestEntryId: entry.id, sportEventId }))),
+        skipDuplicates: true,
+      });
+    });
   }
 
   async delete(id: string): Promise<void> {
@@ -122,12 +158,11 @@ export class PrismaContestRepository implements ContestRepository {
 function mapToContest(row: {
   id: string;
   leagueId: string;
-  sportEventId: string | null;
+  sportEvents: { sportEventId: string; sportEvent: { sport: Sport } }[];
   name: string;
   status: ContestStatus;
   contestFormat: ContestFormat;
   selectionType: SelectionType;
-  sportEvent?: { sport: Sport } | null;
   draw?: { drawnAt: Date } | null;
   startsAt: Date | null;
   endsAt: Date | null;
@@ -137,12 +172,13 @@ function mapToContest(row: {
   return {
     id: row.id,
     leagueId: row.leagueId,
-    sportEventId: row.sportEventId ?? undefined,
+    sportEventIds: row.sportEvents.map((event) => event.sportEventId),
     name: row.name,
     status: row.status,
     contestFormat: row.contestFormat,
     selectionType: row.selectionType,
-    sport: row.sportEvent?.sport,
+    // Every event of a contest shares its sport (#713), so the first one answers for all.
+    sport: row.sportEvents.at(0)?.sportEvent.sport,
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
     drawnAt: row.draw?.drawnAt ?? undefined,

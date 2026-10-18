@@ -1,5 +1,4 @@
 import {
-  ContestEntryStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
   ScoringFamily,
   SelectionType,
@@ -8,6 +7,8 @@ import {
 } from '@poolmaster/shared/domain';
 import {
   applySettledContestStandings,
+  applySettledContestTotals,
+  rankContestTotals,
   buildContestEntryStanding,
   participantScoreDetailFor,
   rankContestEntryStandings,
@@ -98,7 +99,6 @@ describe('contest leaderboard ranking direction', () => {
     entryNumber,
     squadId: `squad-${entryId}`,
     squadName: `Squad ${entryId}`,
-    status: 'SUBMITTED' as const,
     score,
     position: null,
     displayPosition: null,
@@ -137,7 +137,6 @@ describe('settled contest standings', () => {
     entryNumber,
     squadId: `squad-${entryNumber}`,
     squadName: `Squad ${entryNumber}`,
-    status: 'SUBMITTED' as const,
     score,
     position,
     displayPosition: position === null ? null : String(position),
@@ -208,7 +207,6 @@ describe('an entry\'s standing from its picks', () => {
     id: 'entry-1',
     entryNumber: 1,
     name: 'Sunday Charge',
-    status: ContestEntryStatus.SUBMITTED,
     squadId: 'squad-1',
     squad: { name: 'Birdie Brigade' },
     picks: picks.map((pick) => ({
@@ -297,13 +295,84 @@ describe('an entry\'s standing from its picks', () => {
 
     expect(standing).toMatchObject({ score: null, scoredPickCount: 0, picks: [], countingPickLimit: 4 });
   });
-
-  it('carries the entry\'s own status, draft or submitted, onto its standing', () => {
-    const field = scores([]);
-    expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.DRAFT }, field, best(1), 'LOWER_IS_BETTER').status)
-      .toBe(ContestEntryStatus.DRAFT);
-    expect(buildContestEntryStanding({ ...entry([]), status: ContestEntryStatus.SUBMITTED }, field, best(1), 'LOWER_IS_BETTER').status)
-      .toBe(ContestEntryStatus.SUBMITTED);
-  });
 });
 
+
+// #713: a contest of several events ranks its entries by their summed event scores.
+describe('contest totals across events', () => {
+  const entries = [
+    { id: 'entry-a', entryNumber: 1, name: 'Amen Corner' },
+    { id: 'entry-b', entryNumber: 1, name: 'Bunker Brigade' },
+    { id: 'entry-c', entryNumber: 1, name: 'Cut Line' },
+  ];
+  const score = (entryId: string, sportEventId: string, value: number | null, scoredPickCount = 4) =>
+    ({ entryId, sportEventId, score: value, scoredPickCount });
+
+  it('sums each entry\'s event scores and ranks lowest first for a golf contest, with the scored picks of every event added', () => {
+    const totals = rankContestTotals(entries, [
+      score('entry-a', 'masters', -6), score('entry-a', 'pga', 2),
+      score('entry-b', 'masters', -1), score('entry-b', 'pga', -8),
+      score('entry-c', 'masters', 3), score('entry-c', 'pga', 1),
+    ], 'LOWER_IS_BETTER');
+
+    expect(totals.map((total) => [total.entryId, total.score, total.position, total.scoredPickCount])).toEqual([
+      ['entry-b', -9, 1, 8],
+      ['entry-a', -4, 2, 8],
+      ['entry-c', 4, 3, 8],
+    ]);
+  });
+
+  it('ranks highest first for a points contest', () => {
+    const totals = rankContestTotals(entries.slice(0, 2), [
+      score('entry-a', 'race-1', 10), score('entry-a', 'race-2', 5),
+      score('entry-b', 'race-1', 4), score('entry-b', 'race-2', 20),
+    ], 'HIGHER_IS_BETTER');
+
+    expect(totals.map((total) => [total.entryId, total.score, total.position])).toEqual([['entry-b', 24, 1], ['entry-a', 15, 2]]);
+  });
+
+  it('counts only the events an entry was scored in, and leaves an entry with no scored event unscored and unranked after the rest', () => {
+    const totals = rankContestTotals(entries, [
+      score('entry-a', 'masters', -2), score('entry-a', 'pga', null, 0),
+      score('entry-b', 'pga', -1),
+    ], 'LOWER_IS_BETTER');
+
+    expect(totals.map((total) => [total.entryId, total.score, total.position])).toEqual([
+      ['entry-a', -2, 1],
+      ['entry-b', -1, 2],
+      ['entry-c', null, null],
+    ]);
+  });
+
+  it('shares a position between entries tied on their total, as a single event ranks a tie', () => {
+    const totals = rankContestTotals(entries.slice(0, 2), [
+      score('entry-a', 'masters', -3), score('entry-a', 'pga', -1),
+      score('entry-b', 'masters', -2), score('entry-b', 'pga', -2),
+    ], 'LOWER_IS_BETTER');
+
+    expect(totals.map((total) => [total.score, total.position, total.displayPosition])).toEqual([[-4, 1, 'T1'], [-4, 1, 'T1']]);
+  });
+
+  it('gives a one-event contest\'s total as that event\'s score', () => {
+    const [total] = rankContestTotals(entries.slice(0, 1), [score('entry-a', 'masters', -7, 3)], 'LOWER_IS_BETTER');
+
+    expect(total).toMatchObject({ entryId: 'entry-a', score: -7, position: 1, scoredPickCount: 3 });
+  });
+
+  it('answers a settled contest\'s totals from its frozen standings, in their order, with an unstood entry last', () => {
+    const live = rankContestTotals(entries, [
+      score('entry-a', 'masters', -10), score('entry-b', 'masters', -1), score('entry-c', 'masters', 0),
+    ], 'LOWER_IS_BETTER');
+
+    const settled = applySettledContestTotals(live, [
+      { contestEntryId: 'entry-b', position: 1, displayPosition: '1', countingPickLimit: 4, scoredPickCount: 8, score: -9 },
+      { contestEntryId: 'entry-a', position: 2, displayPosition: '2', countingPickLimit: 4, scoredPickCount: 8, score: -4 },
+    ]);
+
+    expect(settled.map((total) => [total.entryId, total.score, total.position])).toEqual([
+      ['entry-b', -9, 1],
+      ['entry-a', -4, 2],
+      ['entry-c', 0, 3],
+    ]);
+  });
+});

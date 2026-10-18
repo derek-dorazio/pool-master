@@ -9,7 +9,7 @@ import {
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, SelectionType } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
+import { attachContestEvent, buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -18,6 +18,7 @@ import {
 } from './setup';
 import { randomUUID } from 'node:crypto';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
@@ -97,6 +98,7 @@ async function cleanupDraftArtifacts(): Promise<void> {
         },
       },
     });
+    await unlinkContestsFromSportEvents(prisma, createdSportEventIds);
     await prisma.sportEvent.deleteMany({
       where: {
         id: {
@@ -122,10 +124,11 @@ async function cleanupDraftArtifacts(): Promise<void> {
 }
 
 /**
- * A tiered contest on no sport event: enough for the selection-room guards that answer before
- * any participant is read (whose entry it is, whether the contest exists).
+ * A tiered contest with two entries on one small event, attached after both entered: enough for
+ * the selection-room guards that answer before any participant is read (whose entry it is,
+ * whether the contest exists).
  */
-async function seedEventlessContestFixture() {
+async function seedRoomGuardFixture() {
   const { commissioner, league } = await buildLeagueWithCommissioner({
     displayName: 'Draft Commissioner',
     leagueName: 'Draft Functional League',
@@ -183,6 +186,9 @@ async function seedEventlessContestFixture() {
   if (!challengerEntry.data) {
     throw new Error('Builder: enterContest failed for challenger draft fixture');
   }
+  // A selection room is always one event's (#713).
+  const event = await seedMultiTierGolfEvent({ tierCount: 1, golfersPerTier: 1 });
+  await attachContestEvent(contestId, event.sportEventId);
 
   return {
     contestId,
@@ -340,14 +346,7 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
     },
   });
 
-  await prisma.contest.update({
-    where: {
-      id: contestId,
-    },
-    data: {
-      sportEventId: event.id,
-    },
-  });
+  await attachContestEvent(contestId, event.id);
 
   return {
     contestId,
@@ -355,6 +354,7 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
     challenger,
     commissionerEntryId: commissionerEntry.data.entry.id,
     challengerEntryId: challengerEntry.data.entry.id,
+    sportEventId: event.id,
     firstEventParticipantId: firstEventParticipant.id,
     secondEventParticipantId: secondEventParticipant.id,
   };
@@ -457,14 +457,7 @@ async function seedTieredDraftFixture(options: {
     });
   }
 
-  await prisma.contest.update({
-    where: {
-      id: contestId,
-    },
-    data: {
-      sportEventId: event.id,
-    },
-  });
+  await attachContestEvent(contestId, event.id);
 
   return {
     contestId,
@@ -554,7 +547,7 @@ afterAll(async () => {
 
 describe('SDK Functional: Roster Selection', () => {
   it('#200 rejects a selection for another squad\'s entry and a selection-state read for an unknown contest', async () => {
-    const fixture = await seedEventlessContestFixture();
+    const fixture = await seedRoomGuardFixture();
 
     const wrongEntryResponse = await submitContestSelection({
       client: fixture.challenger.client,
@@ -674,7 +667,7 @@ describe('SDK Functional: Roster Selection', () => {
 
     const submitted = await submitContestEntry({
       client: fixture.commissioner.client,
-      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId },
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId, sportEventId: fixture.sportEventId },
     });
 
     if (expectSubmitted) {
@@ -682,8 +675,9 @@ describe('SDK Functional: Roster Selection', () => {
       expect(submitted.data?.entries.find((entry) => entry.id === fixture.commissionerEntryId)?.status).toBe('SUBMITTED');
     } else {
       expectFunctionalError(submitted, { status: 409, code: 'ENTRY_OVER_BUDGET' });
-      await expect(getFunctionalPrisma().contestEntry.findUniqueOrThrow({ where: { id: fixture.commissionerEntryId } }))
-        .resolves.toMatchObject({ status: 'DRAFT' });
+      await expect(getFunctionalPrisma().contestEntryEvent.findUniqueOrThrow({
+        where: { contestEntryId_sportEventId: { contestEntryId: fixture.commissionerEntryId, sportEventId: fixture.sportEventId } },
+      })).resolves.toMatchObject({ status: 'DRAFT' });
     }
   });
 
@@ -699,10 +693,10 @@ describe('SDK Functional: Roster Selection', () => {
     });
     const submit = () => submitContestEntry({
       client: fixture.commissioner.client,
-      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId },
+      path: { contestId: fixture.contestId, entryId: fixture.commissionerEntryId, sportEventId: fixture.sportEventId },
     });
-    const entryStatus = async () => (await getFunctionalPrisma().contestEntry.findUniqueOrThrow({
-      where: { id: fixture.commissionerEntryId },
+    const entryStatus = async () => (await getFunctionalPrisma().contestEntryEvent.findUniqueOrThrow({
+      where: { contestEntryId_sportEventId: { contestEntryId: fixture.commissionerEntryId, sportEventId: fixture.sportEventId } },
     })).status;
 
     expect((await pickFor(fixture.firstEventParticipantId)).response.status).toBe(200);
@@ -866,7 +860,7 @@ describe('SDK Functional: Roster Selection', () => {
       path: { id: league.id },
       body: {
         name: 'Two Per Tier Contest',
-        sportEventId: event.sportEventId,
+        sportEventIds: [event.sportEventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 4 },

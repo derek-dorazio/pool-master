@@ -149,7 +149,7 @@ describe('SDK Functional: College Football Playoff', () => {
     const contest = await createContest({
       client: commissioner.client,
       path: { id: league.id },
-      body: { name: `Playoff Pool ${RUN}`, sportEventId: event.id, contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tiered.id },
+      body: { name: `Playoff Pool ${RUN}`, sportEventIds: [event.id], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tiered.id },
     });
     expect(contest.response.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
@@ -161,7 +161,7 @@ describe('SDK Functional: College Football Playoff', () => {
     for (const team of lineup) {
       expect((await submitContestSelection({ client: member.client, path: { contestId }, body: { entryId, participantId: rowOf(team) } })).response.status).toBe(200);
     }
-    expect((await submitContestEntry({ client: member.client, path: { contestId, entryId } })).response.status).toBe(200);
+    expect((await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.id } })).response.status).toBe(200);
 
     // --- Kickoff, then settled -----------------------------------------------------------------------
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');

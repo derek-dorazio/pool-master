@@ -77,6 +77,11 @@ export function buildLeagueAdminContestEditPath(leagueCode: string, contestId: s
   return `/league/${leagueCode}/admin/contests/${contestId}/edit`;
 }
 
+/** The commissioner's event picker for a contest (#713): which sport events it covers. */
+export function buildLeagueAdminContestEventsPath(leagueCode: string, contestId: string) {
+  return `/league/${leagueCode}/admin/contests/${contestId}/events`;
+}
+
 export function buildLeagueAdminTeamsPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/teams`;
 }

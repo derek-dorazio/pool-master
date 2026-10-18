@@ -49,7 +49,7 @@ describe('Contest Validation Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Broken Tiered Contest',
-        sportEventId: randomUUID(),
+        sportEventIds: [randomUUID()],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         configuration: {
@@ -89,7 +89,7 @@ describe('Contest Validation Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: `Deferred ${selectionType}`,
-        sportEventId: randomUUID(),
+        sportEventIds: [randomUUID()],
         contestFormat: ContestFormat.ROSTER,
         selectionType,
         configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },

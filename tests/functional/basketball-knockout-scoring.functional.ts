@@ -162,7 +162,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
 
     const contestBody = (roundValues: number[]) => ({
       name: `Harbour Bracket Pool ${RUN}`,
-      sportEventId: eventId,
+      sportEventIds: [eventId],
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,
       configuration: {
@@ -187,7 +187,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
       for (const team of lineup) {
         expect((await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: rowOf(team) } })).response.status).toBe(200);
       }
-      expect((await submitContestEntry({ client, path: { contestId, entryId } })).response.status).toBe(200);
+      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
       return entryId;
     };
     const entryId = await enterWith(member.client, ['Duke', 'Houston', 'Vermont', 'Texas']);

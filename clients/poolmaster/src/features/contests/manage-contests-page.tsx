@@ -2,7 +2,7 @@ import { ContestStatus } from '@poolmaster/shared/domain';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import type { ContestDto, ContestEventSummaryDto } from '@/lib/api';
+import type { ContestDto } from '@/lib/api';
 import {
   buildLeagueAdminContestCreatePath,
   buildLeagueAdminContestPath,
@@ -20,6 +20,7 @@ import {
   SegmentedControl,
 } from '@/features/shared/ui';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
+import { firstContestEvent, type ContestSportEvent } from './contest-events';
 import { formatSelectionTypeName } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
 import { isHistoricalContest } from './contest-status';
@@ -31,7 +32,7 @@ type ContestFilter = 'active' | 'history';
 
 type ContestRow = {
   contest: ContestDto;
-  event: ContestEventSummaryDto | null;
+  event: ContestSportEvent | null;
   eventName: string;
   formatName: string;
 };
@@ -53,7 +54,7 @@ function compareHistoryRows(left: ContestRow, right: ContestRow) {
   return compareContestRows(right, left);
 }
 
-function EventCell({ contest, event }: { contest: ContestDto; event: ContestEventSummaryDto | null }) {
+function EventCell({ contest, event }: { contest: ContestDto; event: ContestSportEvent | null }) {
   if (!event) {
     return <span className="text-muted-foreground">No event</span>;
   }
@@ -63,7 +64,10 @@ function EventCell({ contest, event }: { contest: ContestDto; event: ContestEven
 
   return (
     <div>
-      <div>{event.name}</div>
+      <div>
+        {event.name}
+        {contest.sportEvents.length > 1 ? <span className="text-muted-foreground">{` and ${contest.sportEvents.length - 1} more`}</span> : null}
+      </div>
       <div className="text-xs text-muted-foreground">
         {when} <DateDisplay className="text-muted-foreground" value={event.startDate} />
       </div>
@@ -102,10 +106,10 @@ export function ManageContestsPage() {
   const historyContests = useMemo(() => contests.filter((contest) => isHistoricalContest(contest.status)), [contests]);
   const shownContests = filter === 'active' ? activeContests : historyContests;
 
-  // The event's name and start sort and search the table; the contest list carries them (#577).
+  // The first event's name and start sort and search the table; the contest list carries them (#577).
   const rows = useMemo<ContestRow[]>(() => {
     const built = shownContests.map((contest) => {
-      const event = contest.sportEvent ?? null;
+      const event = firstContestEvent(contest);
       return {
         contest,
         event,

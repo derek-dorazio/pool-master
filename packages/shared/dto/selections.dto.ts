@@ -9,6 +9,7 @@ import { ContestEntryStatus, SelectionStatus, SelectionType } from '../domain/en
 
 export const SelectionStateQuerySchema = z.object({
   entryId: z.string().optional().describe('Specific contest entry to view within roster-based selection flows.'),
+  sportEventId: z.string().uuid().optional().describe('The contest event whose picks to show (#713). Defaults to the contest\'s next event that has not started, else its last event.'),
 }).describe('Optional query parameters for loading selection state.');
 export type SelectionStateQuery = z.infer<typeof SelectionStateQuerySchema>;
 
@@ -43,7 +44,7 @@ export const SelectionEntryDtoSchema = z.object({
   id: z.string().describe('Entry identifier.'),
   userId: z.string().describe('User that owns the entry.'),
   name: z.string().describe('Entry display name.'),
-  status: z.nativeEnum(ContestEntryStatus).describe('DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).'),
+  status: z.nativeEnum(ContestEntryStatus).describe('The entry\'s status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).'),
 }).describe('Entry summary shown in the selection room.');
 export type SelectionEntryDto = z.infer<typeof SelectionEntryDtoSchema>;
 
@@ -89,6 +90,8 @@ export type SelectionBudgetLineupSummaryDto = z.infer<typeof SelectionBudgetLine
 export const SelectionStateResponseSchema = z.object({
   contestId: z.string(),
   contestName: z.string(),
+  sportEventId: z.string().describe('The contest event the room shows (#713): its field, its picks, and each entry\'s status in it.'),
+  acceptsPicks: z.boolean().describe('Whether this event\'s picks can still change: the contest is open or live, it has not been drawn, and the event has not started.'),
   selectionType: z.nativeEnum(SelectionType),
   drawnAt: z.string().datetime().nullable().describe('When a random-draw contest\'s draw dealt its picks, closing its entries and revealing every entry\'s picks. Null until then, and always for other selection types.'),
   isCommissioner: z.boolean().optional(),
@@ -115,6 +118,8 @@ export type SelectionStateResponse = z.infer<typeof SelectionStateResponseSchema
 export const SelectionPickResponseSchema = z.object({
   contestId: z.string(),
   contestName: z.string(),
+  sportEventId: z.string().describe('The contest event the room shows (#713): its field, its picks, and each entry\'s status in it.'),
+  acceptsPicks: z.boolean().describe('Whether this event\'s picks can still change: the contest is open or live, it has not been drawn, and the event has not started.'),
   selectionType: z.nativeEnum(SelectionType),
   drawnAt: z.string().datetime().nullable().describe('When a random-draw contest\'s draw dealt its picks, closing its entries and revealing every entry\'s picks. Null until then, and always for other selection types.'),
   isCommissioner: z.boolean().optional(),

@@ -5,6 +5,9 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type {
+  ContestEntryEventStandingRepository,
+  ContestEntryEventStandingResult,
+  ContestEntryEventStandingWrite,
   ContestEntryStandingRepository,
   ContestEntryStandingResult,
   ContestEntryStandingWrite,
@@ -37,6 +40,40 @@ export class PrismaContestEntryStandingRepository implements ContestEntryStandin
     await this.prisma.contestEntryStanding.upsert({
       where: { contestEntryId },
       create: { contestEntryId, ...standing },
+      update: standing,
+    });
+  }
+}
+
+/** Prisma adapter for the per-event entry standing (#713), the same columns narrowed to an event. */
+export class PrismaContestEntryEventStandingRepository implements ContestEntryEventStandingRepository {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async findByContest(contestId: string): Promise<ContestEntryEventStandingResult[]> {
+    const rows = await this.prisma.contestEntryEventStanding.findMany({
+      where: { contestId },
+      orderBy: [{ sportEventId: 'asc' }, { position: { sort: 'asc', nulls: 'last' } }, { contestEntryId: 'asc' }],
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      contestId: row.contestId,
+      contestEntryId: row.contestEntryId,
+      sportEventId: row.sportEventId,
+      position: row.position,
+      displayPosition: row.displayPosition,
+      countingPickLimit: row.countingPickLimit,
+      scoredPickCount: row.scoredPickCount,
+      asOf: row.asOf,
+      settledAt: row.settledAt,
+      totalScore: row.totalScore,
+    }));
+  }
+
+  async upsert(write: ContestEntryEventStandingWrite): Promise<void> {
+    const { contestEntryId, sportEventId, ...standing } = write;
+    await this.prisma.contestEntryEventStanding.upsert({
+      where: { contestEntryId_sportEventId: { contestEntryId, sportEventId } },
+      create: { contestEntryId, sportEventId, ...standing },
       update: standing,
     });
   }

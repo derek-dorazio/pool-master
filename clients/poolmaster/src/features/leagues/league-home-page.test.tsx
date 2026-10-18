@@ -85,7 +85,7 @@ function contest(id: string, name: string, status: ContestStatus, sportEventId =
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
     leagueId: 'league-1',
-    sportEventId,
+    sportEvents: [{ sportEventId, sequence: 1, name: `Event ${sportEventId}`, startDate: '2026-05-01T12:00:00.000Z', status: 'SCHEDULED' }],
     sport: 'GOLF',
     entryCount: 4,
   };
@@ -99,7 +99,7 @@ function entry(contestId: string, squadId: string, status: 'DRAFT' | 'SUBMITTED'
     squadName: squadId,
     entryNumber: 1,
     name: `${squadId} entry`,
-    status,
+    events: [{ sportEventId: `event-${contestId}`, status, submittedAt: status === 'SUBMITTED' ? '2026-04-02T00:00:00.000Z' : null }],
     picksCount: 6,
     createdAt: '2026-04-01T00:00:00.000Z',
     updatedAt: '2026-04-01T00:00:00.000Z',
@@ -125,12 +125,12 @@ function standing(position: number, squadId: string, squadName: string, totalSco
     entryNumber: 1,
     squadId,
     squadName,
-    status: 'SUBMITTED',
     position,
     displayPosition: String(position),
     countingPickLimit: 4,
     scoredPickCount: 4,
     totalScore,
+    events: [{ sportEventId: 'event-1', totalScore, position, displayPosition: String(position) }],
     picks: [],
   };
 }
@@ -161,10 +161,10 @@ function primeMocks({
   listContestsMock.mockResolvedValue(apiSuccess({
     contests: contests.map((listed) => ({
       ...listed,
-      sportEvent: {
-        name: `Event ${listed.sportEventId}`,
-        startDate: eventStarts[listed.sportEventId] ?? '2026-05-01T12:00:00.000Z',
-      },
+      sportEvents: listed.sportEvents.map((sportEvent) => ({
+        ...sportEvent,
+        startDate: eventStarts[sportEvent.sportEventId] ?? sportEvent.startDate,
+      })),
     })),
   }));
   listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData(

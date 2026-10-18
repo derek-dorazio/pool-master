@@ -1,13 +1,16 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  ContestEntryEventStandingRepository,
   ContestEntryStandingRepository,
   ContestRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, SportEventStatus, type Contest } from '@poolmaster/shared/domain';
 import {
   buildContestEntryStanding,
   rankContestEntryStandings,
+  rankContestTotals,
+  type ContestCountingRule,
   resolveContestCountingRule,
   resolveContestScoringDefinition,
   type ParticipantScore,
@@ -55,6 +58,7 @@ export interface ContestSettlementDeps extends ContestLeaderboardReadDeps {
   sportEvents: SportEventRepository;
   contests: ContestRepository;
   standings: ContestEntryStandingRepository;
+  eventStandings: ContestEntryEventStandingRepository;
   logger?: LifecycleLogger;
 }
 
@@ -85,7 +89,9 @@ export class ContestSettlementService {
     // A COMPLETED contest is already settled: its standing is the frozen result, and re-running
     // settlement (the event re-sent as COMPLETED, or a late score correction) must not rewrite
     // it. Only a contest moved back out of COMPLETED would be settled again, and no route does
-    // that today: the reopen endpoint, which nothing called, was deleted.
+    // that today: the reopen endpoint, which nothing called, was deleted. In a contest of several
+    // events (#713) each event's standings freeze the same way when that event settles, and the
+    // contest itself settles when its last event does.
     const contests = await this.deps.contests.findBySportEvent(sportEventId, {
       excludeStatuses: NOT_SETTLED,
     });
@@ -124,30 +130,41 @@ export class ContestSettlementService {
         participants.map((participant) => [participant.sportEventParticipantId, participant]),
       );
       const asOf = resolveContestStandingAsOf(participants, completedAt);
-      const entries = await loadContestLeaderboardEntries(this.deps, contest.id);
-      const rankedEntries = rankContestEntryStandings(
-        entries.map((entry) =>
-          buildContestEntryStanding(entry, scoreById, countingRule, scoringDefinition.direction),
-        ),
-        scoringDefinition.direction,
-      );
+      const settledEvents = await this.deps.eventStandings.findByContest(contest.id);
+      if (!settledEvents.some((standing) => standing.sportEventId === sportEventId)) {
+        const entries = await loadContestLeaderboardEntries(this.deps, contest.id, sportEventId);
+        const rankedEntries = rankContestEntryStandings(
+          entries.map((entry) =>
+            buildContestEntryStanding(entry, scoreById, countingRule, scoringDefinition.direction),
+          ),
+          scoringDefinition.direction,
+        );
+        for (const entry of rankedEntries) {
+          // The single writer of ContestEntryEventStanding.
+          await this.deps.eventStandings.upsert({
+            contestId: contest.id,
+            contestEntryId: entry.entryId,
+            sportEventId,
+            position: entry.position,
+            displayPosition: entry.displayPosition,
+            countingPickLimit: entry.countingPickLimit,
+            scoredPickCount: entry.scoredPickCount,
+            asOf,
+            settledAt: completedAt,
+            totalScore: entry.score,
+          });
+        }
+      }
       contestsSettled++;
 
-      for (const entry of rankedEntries) {
-        // The single writer of ContestEntryStanding (and so of its denormalized contestId).
-        await this.deps.standings.upsert({
+      if (!(await this.allEventsCompleted(contest))) {
+        this.logger.info({
           contestId: contest.id,
-          contestEntryId: entry.entryId,
-          position: entry.position,
-          displayPosition: entry.displayPosition,
-          countingPickLimit: entry.countingPickLimit,
-          scoredPickCount: entry.scoredPickCount,
-          asOf,
-          settledAt: completedAt,
-          totalScore: entry.score,
-        });
-        standingsUpserted++;
+          sportEventId,
+        }, 'Settled one event of a contest whose other events are still to finish');
+        continue;
       }
+      standingsUpserted += await this.settleContestTotals(contest, countingRule, scoringDefinition.direction, completedAt);
 
       const completed = await this.deps.contests.transitionStatus(contest.id, {
         from: SETTLEABLE,
@@ -173,6 +190,60 @@ export class ContestSettlementService {
       contestsCompleted,
       standingsUpserted,
     };
+  }
+
+  /** Whether every event the contest covers has completed: then the contest itself settles. */
+  private async allEventsCompleted(contest: Contest): Promise<boolean> {
+    const events = await this.deps.sportEvents.findByIds(contest.sportEventIds);
+    return events.length === contest.sportEventIds.length
+      && events.every((event) => event.status === SportEventStatus.COMPLETED);
+  }
+
+  /**
+   * The contest's settled total (#713): each entry's frozen event scores summed and ranked, the
+   * single writer of ContestEntryStanding (and so of its denormalized contestId). In a one-event
+   * contest the total is that event's standing. Answers how many standings it wrote.
+   */
+  private async settleContestTotals(
+    contest: Contest,
+    countingRule: ContestCountingRule,
+    direction: Parameters<typeof rankContestTotals>[2],
+    completedAt: Date,
+  ): Promise<number> {
+    const [entries, eventStandings] = await Promise.all([
+      this.deps.entries.findByContestWithSquad(contest.id),
+      this.deps.eventStandings.findByContest(contest.id),
+    ]);
+    const settledEntryIds = new Set(eventStandings.map((standing) => standing.contestEntryId));
+    const totals = rankContestTotals(
+      entries.filter((entry) => settledEntryIds.has(entry.id)),
+      eventStandings.map((standing) => ({
+        entryId: standing.contestEntryId,
+        sportEventId: standing.sportEventId,
+        score: standing.totalScore,
+        scoredPickCount: standing.scoredPickCount,
+      })),
+      direction,
+    );
+    const asOf = eventStandings
+      .map((standing) => standing.asOf)
+      .filter((value): value is Date => value !== null)
+      .sort((left, right) => right.getTime() - left.getTime())
+      .at(0) ?? completedAt;
+    for (const total of totals) {
+      await this.deps.standings.upsert({
+        contestId: contest.id,
+        contestEntryId: total.entryId,
+        position: total.position,
+        displayPosition: total.displayPosition,
+        countingPickLimit: countingRule.count,
+        scoredPickCount: total.scoredPickCount,
+        asOf,
+        settledAt: completedAt,
+        totalScore: total.score,
+      });
+    }
+    return totals.length;
   }
 }
 

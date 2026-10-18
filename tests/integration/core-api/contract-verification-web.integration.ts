@@ -592,7 +592,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: {
         name: 'Contract Managed Contest',
-        sportEventId: sportEvent.id,
+        sportEventIds: [sportEvent.id],
         contestFormat: ContestFormat.ROSTER,
         selectionType: 'TIERED',
         templateId: defaultTemplate.id,
@@ -624,10 +624,13 @@ describe('Contract verification (web)', () => {
     expect(listRes.statusCode).toBe(200);
     const listParsed = ContestListResponseSchema.safeParse(listRes.json());
     expect(listParsed.success).toBe(true);
-    expect(listParsed.data?.contests.find((contest) => contest.id === contestId)?.sportEvent).toEqual({
+    expect(listParsed.data?.contests.find((contest) => contest.id === contestId)?.sportEvents).toEqual([{
+      sportEventId: sportEvent.id,
+      sequence: 1,
       name: sportEvent.name,
       startDate: sportEvent.startDate.toISOString(),
-    });
+      status: sportEvent.status,
+    }]);
   });
 
   it('account lifecycle routes match their shared response DTOs', async () => {
@@ -753,10 +756,28 @@ describe('Contract verification (web)', () => {
     });
     const contestId = contest.id;
 
+    // Entered before the contest has an event, so the entry does not wait on a loaded field.
     await getApp().inject({
       method: 'POST',
       url: API_ROUTES.contests.myEntry(contestId),
       headers: withoutJsonBodyHeaders(owner.headers),
+    });
+    // A selection room is always one event's (#713), so the contest covers one.
+    const event = await getPrisma().sportEvent.create({
+      data: {
+        ...(await freshEventEdition(getPrisma())),
+        externalId: `contract-room-${randomUUID().slice(0, 8)}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: 'Contract Room Event',
+        startDate: new Date('2099-04-20T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+    await getPrisma().contestSportEvent.create({ data: { contestId, sportEventId: event.id, sequence: 1 } });
+    const roomEntries = await getPrisma().contestEntry.findMany({ where: { contestId }, select: { id: true } });
+    await getPrisma().contestEntryEvent.createMany({
+      data: roomEntries.map((entry) => ({ contestEntryId: entry.id, sportEventId: event.id })),
     });
 
     const stateRes = await getApp().inject({
@@ -824,7 +845,13 @@ describe('Contract verification (web)', () => {
       data: { sportId: sport.id, name: 'Contract Draw Golfer', participantType: 'INDIVIDUAL', externalIds: {} },
     });
     await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id, isActive: true } });
-    await prisma.contest.update({ where: { id: contest.id }, data: { sportEventId: event.id } });
+    // The event added after the entry, as "Events in this contest" adds one: the entry gets a
+    // DRAFT status in it (#713).
+    await prisma.contestSportEvent.create({ data: { contestId: contest.id, sportEventId: event.id, sequence: 1 } });
+    const drawEntries = await prisma.contestEntry.findMany({ where: { contestId: contest.id }, select: { id: true } });
+    await prisma.contestEntryEvent.createMany({
+      data: drawEntries.map((entry) => ({ contestEntryId: entry.id, sportEventId: event.id })),
+    });
 
     const drawRes = await getApp().inject({
       method: 'POST',

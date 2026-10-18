@@ -18,6 +18,7 @@ function renderCard(status: ContestDto['status'], overrides: Partial<ContestDto>
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
     leagueId: 'league-1',
+    sportEvents: [],
     sport: 'GOLF',
     entryCount: 3,
     ...overrides,
@@ -44,8 +45,7 @@ describe('ContestListCard', () => {
 
   it('shows when the contest starts, from the event start the contest list carries, without reading the event', () => {
     renderCard('OPEN', {
-      sportEventId: 'event-1',
-      sportEvent: { name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z' },
+      sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z', status: 'SCHEDULED' }],
     });
 
     expect(screen.getByTestId('contest-card-starts')).toHaveTextContent(
@@ -56,9 +56,8 @@ describe('ContestListCard', () => {
 
   it('shows the contest\'s own start once it is set, ahead of its event\'s scheduled start', () => {
     renderCard('ACTIVE', {
-      sportEventId: 'event-1',
       startsAt: '2026-04-10T08:00:00.000Z',
-      sportEvent: { name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z' },
+      sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z', status: 'SCHEDULED' }],
     });
 
     expect(screen.getByTestId('contest-card-starts')).toHaveTextContent(

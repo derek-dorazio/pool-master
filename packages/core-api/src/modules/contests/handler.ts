@@ -92,7 +92,7 @@ export function createContestHandlers(contestService: ContestService) {
       return sendError(reply, 404, 'CONTEST_NOT_FOUND', 'Contest not found');
     }
     logger.info({ contestId: request.params.contestId }, 'contest get route completed');
-    return reply.send(toContestResponse(contest));
+    return reply.send(toContestResponse(contest, await contestService.findEventsForContests([contest])));
   }
 
   async function listEntries(
@@ -172,7 +172,7 @@ export function createContestHandlers(contestService: ContestService) {
   }
 
   async function getLeaderboard(
-    request: FastifyRequest<{ Params: { contestId: string } }>,
+    request: FastifyRequest<{ Params: { contestId: string }; Querystring: { sportEventId?: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
     const logger = createRequestContextLogger(request);
@@ -182,6 +182,7 @@ export function createContestHandlers(contestService: ContestService) {
       const leaderboard = await contestService.getLeaderboard(
         request.params.contestId,
         userId,
+        request.query.sportEventId,
       );
       logger.info({
         contestId: request.params.contestId,
@@ -337,7 +338,7 @@ export function createContestHandlers(contestService: ContestService) {
         },
       );
       logger.info({ contestId: request.params.contestId }, 'contest update route completed');
-      return reply.send(toContestResponse(contest));
+      return reply.send(toContestResponse(contest, await contestService.findEventsForContests([contest])));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         logger.warn({ contestId: request.params.contestId }, 'contest update route missing contest');
@@ -415,7 +416,7 @@ export function createCreateContestHandler(
         throw new ContestNotFoundError(contestId);
       }
       logger.info({ contestId, leagueId: request.params.id }, 'contest create route completed');
-      return reply.status(201).send(toContestResponse(created));
+      return reply.status(201).send(toContestResponse(created, await contestService.findEventsForContests([created])));
     } catch (error) {
       if (error instanceof ContestManagementError) {
         logger.warn({ leagueId: request.params.id, code: error.code }, 'contest create route rejected');

@@ -202,16 +202,17 @@ export class EventLifecycleService {
   }
 
   /**
-   * The contest's league, its submitted entries (entry number, then name) and the people told:
+   * The contest's league, its entries submitted for the starting event (entry number, then
+   * name) and the people told:
    * the league's active commissioners, then each entry's active squad members, active users
    * only, each once. Null when the league is gone.
    */
-  private async loadContestStartedSummary(contest: Contest): Promise<ContestStartedSummary | null> {
+  private async loadContestStartedSummary(contest: Contest, sportEvent: SportEvent): Promise<ContestStartedSummary | null> {
     const { entries, leagues, memberships, squadMemberships, users } = this.contestDeps;
     const [league, leagueMemberships, contestEntries] = await Promise.all([
       leagues.findById(contest.leagueId),
       memberships.findByLeague(contest.leagueId),
-      entries.findByContestWithSquad(contest.id, { submittedOnly: true }),
+      entries.findByContestWithSquad(contest.id, { submittedFor: sportEvent.id }),
     ]);
     if (!league) {
       return null;
@@ -249,7 +250,7 @@ export class EventLifecycleService {
       return;
     }
 
-    const summary = await this.loadContestStartedSummary(contest);
+    const summary = await this.loadContestStartedSummary(contest, sportEvent);
     if (!summary) {
       this.logger?.warn({
         contestId: contest.id,

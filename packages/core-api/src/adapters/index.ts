@@ -13,7 +13,10 @@ export { PrismaPlatformRuntimeConfigRepository } from './prisma-platform-runtime
 export { PrismaProviderSyncRunRepository } from './prisma-provider-sync-run-repository';
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';
 export { PrismaContestEntryPickRepository } from './prisma-contest-entry-pick-repository';
-export { PrismaContestEntryStandingRepository } from './prisma-contest-entry-standing-repository';
+export {
+  PrismaContestEntryEventStandingRepository,
+  PrismaContestEntryStandingRepository,
+} from './prisma-contest-entry-standing-repository';
 export {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,

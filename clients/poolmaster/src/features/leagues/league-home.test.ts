@@ -13,13 +13,18 @@ function contestFixture(overrides: Partial<ContestDto> & { id: string }): Contes
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
     leagueId: 'league-1',
+    sportEvents: [],
     ...overrides,
   };
 }
 
 /** A listed contest whose event starts at `startDate`, as the contest list carries it. */
 function onEvent(id: string, startDate: string, overrides: Partial<ContestDto> = {}): ContestDto {
-  return contestFixture({ id, sportEvent: { name: `Event ${id}`, startDate }, ...overrides });
+  return contestFixture({
+    id,
+    sportEvents: [{ sportEventId: `event-${id}`, sequence: 1, name: `Event ${id}`, startDate, status: 'SCHEDULED' }],
+    ...overrides,
+  });
 }
 
 function entryFixture(index: number, overrides: Partial<LeaderboardEntry> = {}): LeaderboardEntry {
@@ -29,12 +34,12 @@ function entryFixture(index: number, overrides: Partial<LeaderboardEntry> = {}):
     entryNumber: 1,
     squadId: `squad-${index}`,
     squadName: `Squad ${index}`,
-    status: 'SUBMITTED',
     position: index,
     displayPosition: String(index),
     countingPickLimit: 4,
     scoredPickCount: 4,
     totalScore: index - 6,
+    events: [],
     picks: [],
     ...overrides,
   };
@@ -100,7 +105,7 @@ describe('pickUpNextContest', () => {
   });
 
   it('skips an open contest with no known cutoff', () => {
-    const unscheduled = contestFixture({ id: 'unscheduled', sportEvent: null });
+    const unscheduled = contestFixture({ id: 'unscheduled', sportEvents: [] });
     const scheduled = onEvent('scheduled', '2026-05-09T12:00:00.000Z');
 
     const result = pickUpNextContest([unscheduled, scheduled], NOW);
@@ -111,7 +116,7 @@ describe('pickUpNextContest', () => {
   it('returns null when no contest is open with a future cutoff', () => {
     const result = pickUpNextContest(
       [
-        contestFixture({ id: 'unscheduled', sportEvent: null }),
+        contestFixture({ id: 'unscheduled', sportEvents: [] }),
         onEvent('past', '2026-04-01T12:00:00.000Z'),
         onEvent('live', '2026-05-09T12:00:00.000Z', { status: 'ACTIVE' }),
       ],

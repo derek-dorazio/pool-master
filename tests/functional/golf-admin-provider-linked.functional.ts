@@ -147,7 +147,7 @@ async function cleanup(): Promise<void> {
 
   const contestIds = new Set<string>(created.contestIds);
   if (eventIds.length) {
-    const rows = await db.contest.findMany({ where: { sportEventId: { in: eventIds } }, select: { id: true } });
+    const rows = await db.contest.findMany({ where: { sportEvents: { some: { sportEventId: { in: eventIds } } } }, select: { id: true } });
     rows.forEach((c) => contestIds.add(c.id));
   }
   if (contestIds.size) {
@@ -615,7 +615,7 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
   const contest = await db.contest.create({
     data: {
       leagueId: league.id,
-      sportEventId,
+      sportEvents: { create: { sportEventId, sequence: 1 } },
       name: `Provider Linked Contest ${RUN} ${suffix}`,
       status: 'ACTIVE',
       contestFormat: 'ROSTER',
@@ -641,7 +641,7 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
       squadId: squad.id,
       entryNumber: 1,
       name: `Provider Entry ${suffix}`,
-      status: 'SUBMITTED',
+      events: { create: { sportEventId: sportEventId, status: 'SUBMITTED', submittedAt: new Date() } },
     },
   });
 

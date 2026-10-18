@@ -36,12 +36,13 @@ function selectionErrorResponses(...statuses: number[]): Record<number, unknown>
   return responses;
 }
 
-const contestEntryParams = {
+const contestEntryEventParams = {
   type: 'object',
-  required: ['contestId', 'entryId'],
+  required: ['contestId', 'entryId', 'sportEventId'],
   properties: {
     contestId: { type: 'string', format: 'uuid' },
     entryId: { type: 'string', format: 'uuid' },
+    sportEventId: { type: 'string', format: 'uuid' },
   },
 } as const;
 
@@ -64,13 +65,13 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
       tags: ['Selections'],
       summary: 'Get current selection state for a contest',
       description:
-        'Returns the current selection-room state for the contest, including queue, picks, timers, and selection availability. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry\'s spend against the salary cap. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league\'s commissioners and root admins. While the contest is DRAFT or OPEN the pick history carries only the caller\'s own entries, and entryId selects another team\'s entry only once picks are revealed (ACTIVE onwards); otherwise it falls back to the caller\'s own.',
+        'Returns the current selection-room state for one event of the contest (#713): `sportEventId`, else its next event that has not started, else its last; 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. It includes the event\'s field, its picks, and each entry\'s status in it. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry\'s spend against the salary cap. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league\'s commissioners and root admins. Until the event\'s picks are revealed (the contest is live and the event has started, or a random draw has dealt) the pick history carries only the caller\'s own entries, and entryId selects another team\'s entry only once they are; otherwise it falls back to the caller\'s own. 409 CONTEST_EVENT_REQUIRED for a contest that covers no event.',
       operationId: 'getSelectionState',
       params: contestIdParams,
       querystring: schemaRef('SelectionStateQuery'),
       response: {
         200: schemaRef('SelectionStateResponse'),
-        ...selectionErrorResponses(401, 403, 404),
+        ...selectionErrorResponses(401, 403, 404, 409),
       },
     },
     preHandler: requireContestLeagueMember,
@@ -82,7 +83,7 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
       tags: ['Selections'],
       summary: 'Submit a pick',
       description:
-        'Submits a pick for the current turn and returns the refreshed selection state after the selection is processed. Picks are placed, swapped and unselected only while the contest is OPEN and its event\'s start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. In a budget contest re-selecting a held golfer unselects it, a golfer with no price is refused with 400 PRICE_MISSING, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A change that leaves a SUBMITTED entry\'s lineup short, or over a budget contest\'s cap, sends the entry back to DRAFT; it must be submitted again to count.',
+        'Submits a pick and returns the refreshed selection state for the pick\'s event: the event of the field row it names (#713). Picks are placed, swapped and unselected only while the contest is OPEN or ACTIVE and that event\'s start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. In a budget contest re-selecting a held golfer unselects it, a golfer with no price is refused with 400 PRICE_MISSING, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A change that leaves a SUBMITTED entry\'s lineup short, or over a budget contest\'s cap, sends the entry back to DRAFT; it must be submitted again to count.',
       operationId: 'submitContestSelection',
       params: contestIdParams,
       body: schemaRef('SubmitPickRequest'),
@@ -94,14 +95,14 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
     handler: handlers.submitContestSelection,
   });
 
-  fastify.post('/:contestId/entries/:entryId/submit', {
+  fastify.post('/:contestId/entries/:entryId/events/:sportEventId/submit', {
     schema: {
       tags: ['Selections'],
-      summary: 'Submit a contest entry',
+      summary: 'Submit a contest entry\'s picks for one event',
       description:
-        'Submits the caller\'s entry once its lineup is complete, and returns the refreshed selection state. An entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier\'s picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted entry changes nothing. A later pick change that leaves the lineup short or over the cap sends the entry back to DRAFT. Entries are submitted only while the contest is OPEN and its event\'s start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. Only a member of the entry\'s team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.',
+        'Submits the caller\'s entry for one event of its contest (#713: "submit week 6", "submit your Masters picks") once that event\'s lineup is complete, and returns the refreshed selection state for that event. Each event of an entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier\'s picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted event changes nothing. A later pick change that leaves the lineup short or over the cap sends that event back to DRAFT. An event is submitted only while the contest is OPEN or ACTIVE and that event\'s start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. Only a member of the entry\'s team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.',
       operationId: 'submitContestEntry',
-      params: contestEntryParams,
+      params: contestEntryEventParams,
       response: {
         200: schemaRef('SelectionStateResponse'),
         ...selectionErrorResponses(400, 401, 403, 404, 409),

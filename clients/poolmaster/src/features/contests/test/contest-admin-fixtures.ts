@@ -3,6 +3,7 @@ import type {
   ContestDto,
   ContestEntryDto,
   ContestManagementDetailDto,
+  ContestSportEventDto,
   EffectiveTierDto,
   SelectionStateResponse,
   SportEventDto,
@@ -48,6 +49,20 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
   };
 }
 
+/** One event of a contest, as a contest read names it: the first event, not started. */
+export function buildContestSportEvent(
+  overrides: Partial<ContestSportEventDto> = {},
+): ContestSportEventDto {
+  return {
+    sportEventId: 'event-1',
+    sequence: 1,
+    name: 'The Masters',
+    startDate: FUTURE_START,
+    status: 'SCHEDULED',
+    ...overrides,
+  };
+}
+
 export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
   return {
     id: 'contest-1',
@@ -56,7 +71,7 @@ export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
     contestFormat: 'ROSTER',
     selectionType: SelectionType.TIERED,
     leagueId: 'league-1',
-    sportEventId: 'event-1',
+    sportEvents: [buildContestSportEvent()],
     sport: 'GOLF',
     entryCount: 0,
     ...overrides,
@@ -84,7 +99,12 @@ export function buildManagedContest(
   return {
     id,
     leagueId: 'league-1',
-    sportEventId: 'event-1',
+    sportEvents: [
+      {
+        sportEventId: 'event-1',
+        effectiveTiers: [buildTier(1, 8), buildTier(2, 12), buildTier(3, 14), buildTier(4, 16), buildTier(5, 18), buildTier(6, 21)],
+      },
+    ],
     name: 'Masters One-and-Done',
     status: 'DRAFT',
     createdAt: '2026-04-01T00:00:00.000Z',
@@ -97,7 +117,6 @@ export function buildManagedContest(
       picksPerTier: 1,
       countedScores: 4,
     },
-    effectiveTiers: [buildTier(1, 8), buildTier(2, 12), buildTier(3, 14), buildTier(4, 16), buildTier(5, 18), buildTier(6, 21)],
     ...overrides,
   };
 }
@@ -110,7 +129,7 @@ export function buildContestEntry(overrides: Partial<ContestEntryDto> = {}): Con
     squadName: 'Team One',
     entryNumber: 1,
     name: 'Entry 1',
-    status: 'SUBMITTED',
+    events: [{ sportEventId: 'event-1', status: 'SUBMITTED', submittedAt: '2026-04-03T00:00:00.000Z' }],
     picksCount: 6,
     createdAt: '2026-04-02T00:00:00.000Z',
     updatedAt: '2026-04-02T00:00:00.000Z',
@@ -123,6 +142,8 @@ export function buildSelectionState(overrides: Partial<SelectionStateResponse> =
   return {
     contestId: 'contest-1',
     contestName: 'Masters Sweepstake',
+    sportEventId: 'event-1',
+    acceptsPicks: true,
     selectionType: SelectionType.RANDOM_DRAW,
     drawnAt: null,
     isCommissioner: true,

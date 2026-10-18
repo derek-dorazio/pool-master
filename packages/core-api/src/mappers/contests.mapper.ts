@@ -3,7 +3,7 @@
  */
 import type {
   ContestDto,
-  ContestEventSummaryDto,
+  ContestSportEventDto,
   ContestResponse,
   ContestListResponse,
   ContestEntryDto,
@@ -19,11 +19,11 @@ import {
   type Sport,
   type Contest,
   type ContestEntry,
-  type ContestEntryStatus,
   type ContestStatus,
   type ContestFormat,
   type ParticipantScoringDefinitionId,
   type SelectionType,
+  type SportEventStatus,
 } from '@poolmaster/shared/domain';
 import {
   participantScoreDetailFor,
@@ -36,7 +36,7 @@ import { mapSportEventParticipantToDto } from './sport-event-participants.mapper
 interface ContestRow {
   id: string;
   leagueId: string;
-  sportEventId?: string | null;
+  sportEventIds: string[];
   name: string;
   status: ContestStatus;
   contestFormat: ContestFormat;
@@ -55,7 +55,8 @@ interface ContestEntryRow {
   squadId: string;
   entryNumber: number;
   name: string;
-  status: ContestEntry['status'];
+  /** The entry's status per event, already in the contest's event order. */
+  events: ContestEntry['events'];
   tiebreakerValue?: number | null;
   picksCount: number;
   createdAt: Date;
@@ -65,6 +66,7 @@ interface ContestEntryRow {
 export interface ContestEntryParticipantRow {
   pickId: string;
   sportEventParticipantId: string;
+  sportEventId: string;
   participantId: string;
   participantName: string;
   participantStatus?: string | null;
@@ -91,7 +93,6 @@ export interface ContestEntryStandingRow {
   entryNumber: number;
   squadId: string;
   squadName: string;
-  status: ContestEntryStatus;
   score: number | null;
   position: number | null;
   displayPosition: string | null;
@@ -100,31 +101,58 @@ export interface ContestEntryStandingRow {
   picks: ScoredContestEntryPickRow[];
 }
 
+/** An entry's result in one event of its contest (#713). */
+export interface ContestEntryEventResultRow {
+  sportEventId: string;
+  score: number | null;
+  position: number | null;
+  displayPosition: string | null;
+}
+
+/**
+ * A leaderboard entry: its contest total and rank (`score`, `position`), its result in each
+ * event, and its picks in the shown event with that event's counting.
+ */
+export interface ContestLeaderboardEntryRow extends ContestEntryStandingRow {
+  events: ContestEntryEventResultRow[];
+}
+
 export interface ContestLeaderboardModel {
   contestId: string;
+  /** The event whose field and picks are shown. */
   sportEventId: string;
   sport: Sport;
   scoringDefinitionId: ParticipantScoringDefinitionId;
   countingRule: ContestCountingRule;
-  /** The event's field rows, published as the event's own canonical DTO. */
+  /** The shown event's field rows, published as the event's own canonical DTO. */
   participants: SportEventParticipantView[];
-  entries: ContestEntryStandingRow[];
+  entries: ContestLeaderboardEntryRow[];
   asOf: Date | null;
 }
 
-/** What a contest list shows of the contest's sport event. */
-export interface ContestEventSummaryRow {
+/** What a contest read shows of each of its events. */
+export interface ContestSportEventRow {
+  id: string;
   name: string;
   startDate: Date;
+  status: SportEventStatus;
 }
 
-function toContestEventSummaryDto(event: ContestEventSummaryRow): ContestEventSummaryDto {
-  return { name: event.name, startDate: event.startDate.toISOString() };
+function toContestSportEventDto(event: ContestSportEventRow, sequence: number): ContestSportEventDto {
+  return {
+    sportEventId: event.id,
+    sequence,
+    name: event.name,
+    startDate: event.startDate.toISOString(),
+    status: event.status,
+  };
 }
 
+/** A contest with its events, in its sequence order, read from `eventsById` (#713). */
 export function toContestDto(
   contest: ContestRow,
-  opts?: { entryCount?: number; sportEvent?: ContestEventSummaryRow | null },
+  eventsById: ReadonlyMap<string, ContestSportEventRow>,
+  opts?: { entryCount?: number },
 ): ContestDto {
   return {
     id: contest.id,
@@ -133,12 +161,12 @@ export function toContestDto(
     contestFormat: contest.contestFormat,
     selectionType: contest.selectionType,
     leagueId: contest.leagueId,
-    sportEventId: contest.sportEventId ?? null,
+    sportEvents: contest.sportEventIds.flatMap((sportEventId, index) => {
+      const event = eventsById.get(sportEventId);
+      return event ? [toContestSportEventDto(event, index + 1)] : [];
+    }),
     sport: contest.sport ?? null,
     entryCount: opts?.entryCount,
-    ...(opts?.sportEvent !== undefined && {
-      sportEvent: opts.sportEvent ? toContestEventSummaryDto(opts.sportEvent) : null,
-    }),
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
     drawnAt: contest.drawnAt?.toISOString() ?? null,
@@ -147,23 +175,21 @@ export function toContestDto(
   };
 }
 
-export function toContestResponse(contest: ContestRow): ContestResponse {
-  return { contest: toContestDto(contest) };
+export function toContestResponse(
+  contest: ContestRow,
+  eventsById: ReadonlyMap<string, ContestSportEventRow>,
+): ContestResponse {
+  return { contest: toContestDto(contest, eventsById) };
 }
 
-/** Each listed contest with its entry count and its event's name and start (#577). */
+/** Each listed contest with its entry count and its events' names and starts (#577). */
 export function toContestListResponse(
   contests: ContestRow[],
   entryCounts: ReadonlyMap<string, number>,
-  eventsById: ReadonlyMap<string, ContestEventSummaryRow>,
+  eventsById: ReadonlyMap<string, ContestSportEventRow>,
 ): ContestListResponse {
   return {
-    contests: contests.map((c) =>
-      toContestDto(c, {
-        entryCount: entryCounts.get(c.id),
-        sportEvent: c.sportEventId ? eventsById.get(c.sportEventId) ?? null : null,
-      }),
-    ),
+    contests: contests.map((c) => toContestDto(c, eventsById, { entryCount: entryCounts.get(c.id) })),
   };
 }
 
@@ -180,7 +206,11 @@ export function toContestEntryDto(
     squadName: squad.name,
     entryNumber: entry.entryNumber,
     name: entry.name,
-    status: entry.status,
+    events: entry.events.map((event) => ({
+      sportEventId: event.sportEventId,
+      status: event.status,
+      submittedAt: event.submittedAt?.toISOString() ?? null,
+    })),
     tiebreakerValue: entry.tiebreakerValue ?? null,
     picksCount: entry.picksCount,
     createdAt: entry.createdAt.toISOString(),
@@ -199,6 +229,7 @@ export function toContestEntryParticipantDetailDto(
   return {
     pickId: participant.pickId,
     sportEventParticipantId: participant.sportEventParticipantId,
+    sportEventId: participant.sportEventId,
     participantId: participant.participantId,
     participantName: participant.participantName,
     participantStatus: participant.participantStatus ?? null,
@@ -282,12 +313,17 @@ export function toContestLeaderboardResponse(
       entryNumber: entry.entryNumber,
       squadId: entry.squadId,
       squadName: entry.squadName,
-      status: entry.status,
       position: entry.position,
       displayPosition: entry.displayPosition,
       countingPickLimit: entry.countingPickLimit,
       scoredPickCount: entry.scoredPickCount,
       totalScore: entry.score,
+      events: entry.events.map((event) => ({
+        sportEventId: event.sportEventId,
+        totalScore: event.score,
+        position: event.position,
+        displayPosition: event.displayPosition,
+      })),
       picks: entry.picks.map((pick) => ({
         pickId: pick.pickId,
         sportEventParticipantId: pick.sportEventParticipantId,
