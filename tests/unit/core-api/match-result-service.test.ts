@@ -184,7 +184,9 @@ describe('MatchResultService.clearResult', () => {
 describe('MatchResultService on a reseeded bracket', () => {
   // Seeds 1 and 2 on byes; the first-round games (3 v 6, 4 v 5) link nowhere, so the admin places
   // their winners into the second round by seed.
-  async function reseeded() {
+  // Matches are numbered in round order unless `finalFirst`, which numbers the final 1 and the
+  // first round 3 and 4: nothing makes a bracket number its rounds in order.
+  async function reseeded({ finalFirst = false }: { finalFirst?: boolean } = {}) {
     const store = new InMemorySportEvents();
     const sportRow = store.addSport(Sport.BASKETBALL);
     const event = store.addEvent({ sport: Sport.BASKETBALL, status: SportEventStatus.IN_PROGRESS, rounds: 3 });
@@ -199,13 +201,15 @@ describe('MatchResultService on a reseeded bracket', () => {
       advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null,
       createdAt: AS_OF, updatedAt: AS_OF,
     });
+    const [first, second, third, fourth, final] = finalFirst ? [3, 4, 5, 2, 1] : [1, 2, 3, 4, 5];
     store.matchRows.push(
-      match(1, 1, three.id, six.id, null),
-      match(2, 1, four.id, five.id, null),
-      match(3, 2, one.id, null, ['m5', MatchSide.HOME]),
-      match(4, 2, two.id, null, ['m5', MatchSide.AWAY]),
-      match(5, 3, null, null, null),
+      match(first, 1, three.id, six.id, null),
+      match(second, 1, four.id, five.id, null),
+      match(third, 2, one.id, null, [`m${final}`, MatchSide.HOME]),
+      match(fourth, 2, two.id, null, [`m${final}`, MatchSide.AWAY]),
+      match(final, 3, null, null, null),
     );
+    store.matchRows.sort((left, right) => left.matchNumber - right.matchNumber);
     const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
     const standingOf = (rowId: string) => store.standingRows.find((row) => row.sportEventParticipantId === rowId);
     const matchOf = (matchNumber: number) => expectMatch(store.matchRows.find((row) => row.matchNumber === matchNumber));
@@ -254,6 +258,17 @@ describe('MatchResultService on a reseeded bracket', () => {
     await service.recordResult(event.id, 3, homeWins);
 
     await expect(service.recordResult(event.id, 1, homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+  });
+
+  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) a new first-round winner once its next-round game is played, even when the final is numbered first', async () => {
+    const { service, event, six, matchOf } = await reseeded({ finalFirst: true });
+    await service.recordResult(event.id, 3, awayWins);
+    matchOf(5).awaySportEventParticipantId = six.id;
+    await service.recordResult(event.id, 5, awayWins);
+    expect(matchOf(1).homeSportEventParticipantId).toBe(six.id);
+
+    await expect(service.recordResult(event.id, 3, homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+    expect([matchOf(5).awaySportEventParticipantId, matchOf(1).homeSportEventParticipantId]).toEqual([six.id, six.id]);
   });
 
   it('crowns the winner of the one match in the last round, not a first-round winner that links nowhere', async () => {
