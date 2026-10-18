@@ -10,7 +10,8 @@
  * name, dates, venue, location and rounds, plus par for a stroke-play sport (golf) and an
  * optional start time for a sport whose cutoff is a set moment (a race's post time). A test
  * seed is golf's or a bracket sport's, because its made-up results are stroke rounds or match
- * results; a bracket sport's seed is a played bracket, entered after release round by round.
+ * results; a bracket sport's seed is a played bracket, entered after release round by round,
+ * each play-in place first taking its winner.
  *
  * A sport that plays a bracket (basketball) may also carry each event's bracket: its matches,
  * where each winner moves on to, and the field places that stand for a play-in pairing. The
@@ -69,6 +70,11 @@ const FieldEntrySchema = z.object({
   isPlayInPlace: z.boolean().optional(),
   // Test data only (RESULTS):
   oddsToWin: z.number().positive().optional(),
+  /**
+   * A play-in place's winner (the NBA play-in's 8 seed): a key from the same sport league's
+   * players, not in the field. Set on the place after release, before any result.
+   */
+  playInWinner: z.string().min(1).optional(),
   /** Strokes per round played. A withdrawal's last entry is the partial round. */
   rounds: z.array(z.number().int().positive()).optional(),
   /** MC: missed the cut after round 2. WD: withdrew during their last round. */
@@ -180,7 +186,7 @@ export interface ParseSportDataFileOptions {
   allowTestData: boolean;
 }
 
-const TEST_ONLY_FIELD_KEYS = ['oddsToWin', 'rounds', 'finish', 'withdrawnThru'] as const;
+const TEST_ONLY_FIELD_KEYS = ['oddsToWin', 'playInWinner', 'rounds', 'finish', 'withdrawnThru'] as const;
 
 const TEST_SLATE_CONTENTS: readonly SportDataContent[] = [SportDataContent.PLAYERS, SportDataContent.FIELDS];
 
@@ -280,8 +286,14 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
     if (!playsBracket && event.field.some((entry) => entry.isPlayInPlace !== undefined || entry.seed !== undefined)) {
       problems.push(`${where}: marks a seed or a play-in place, which only a sport played as a bracket has.`);
     }
+    const fieldKeys = new Set(event.field.map((entry) => entry.player));
     for (const entry of event.field) {
       if (!playerKeys.has(entry.player)) problems.push(`${where}: ${entry.player} is not in ${league.name}'s players.`);
+      if (entry.playInWinner !== undefined) {
+        if (entry.isPlayInPlace !== true) problems.push(`${where}: ${entry.player} names a play-in winner, but is not a play-in place.`);
+        if (!playerKeys.has(entry.playInWinner)) problems.push(`${where}: ${entry.player}'s play-in winner ${entry.playInWinner} is not in ${league.name}'s players.`);
+        if (fieldKeys.has(entry.playInWinner)) problems.push(`${where}: ${entry.player}'s play-in winner ${entry.playInWinner} is already in the field.`);
+      }
       if (file.testData && !playsBracket) {
         if (entry.oddsToWin === undefined || entry.rounds === undefined) {
           problems.push(`${where}: ${entry.player} needs oddsToWin and rounds in test data.`);

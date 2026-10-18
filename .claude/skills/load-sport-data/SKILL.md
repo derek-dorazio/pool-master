@@ -130,7 +130,9 @@ past bracket (`american-football-2026-nfl-playoffs-test.json`), with `contents` 
 `BRACKET` and `RESULTS`, made-up `oddsToWin` on each field entry and the real `result` on each
 match. Gather it like a real bracket, from two sources. A reseeded round's results name the
 side the server's reseed puts each team on (the 1 seed at home), since the file cannot place
-them. `docs/EVENT-SETUP-PROCEDURES.md` *Seeded NFL playoffs* says what a load of one does.
+them. A play-in place's entry names the team that won it in `playInWinner` (the NBA's 7 and 8
+seeds), which the load sets after release, before any result. `docs/EVENT-SETUP-PROCEDURES.md`
+*Seeded NFL playoffs* and *Seeded NBA and WNBA playoffs* say what a load of one does.
 
 ## Sources per sport
 

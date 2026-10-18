@@ -605,6 +605,10 @@ model SportLeague {
   /// How a bracket's winners reach their next match (#722): by fixed links, or reseeded by seed
   /// after a round (the NFL). Only a sport played as a bracket reads it.
   bracketAdvancement PrismaBracketAdvancement @default(FIXED) @map("bracket_advancement")
+  /// What the sport league calls its bracket's rounds, first to final (#706: the NBA's First Round,
+  /// Conference Semifinals, Conference Finals, NBA Finals). Empty: the sport's names are used.
+  /// Reference data, set by the migration that seeds the league.
+  roundNames       String[] @default([]) @map("round_names")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

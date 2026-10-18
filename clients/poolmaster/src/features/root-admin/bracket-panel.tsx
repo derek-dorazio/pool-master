@@ -6,6 +6,7 @@ import { matchNoun } from './bracket-copy';
 import { BracketMatchRow, type BracketContext } from './bracket-match-row';
 import { capitalize } from './manage-navigation';
 import { PlayInPlacesCard } from './play-in-places-card';
+import { useEventRoundLabel } from './use-sport-catalog';
 import { useSportEventBracketQuery, useSportEventFieldQuery } from './use-sport-event';
 
 /**
@@ -18,6 +19,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
   const definition = getSportDefinition(event.sport);
   const bracketQuery = useSportEventBracketQuery(event.id);
   const fieldQuery = useSportEventFieldQuery(event.id);
+  const roundLabel = useEventRoundLabel(event);
 
   if (bracketQuery.isError || fieldQuery.isError) {
     return (
@@ -61,7 +63,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
           </p>
         ) : roundNumbers.map((roundNumber) => (
           <section className="mt-4" data-testid={`root-admin-bracket-round-${roundNumber}`} key={roundNumber}>
-            <h4 className="text-sm font-semibold text-foreground">{definition.roundLabel(roundNumber, roundCount)}</h4>
+            <h4 className="text-sm font-semibold text-foreground">{roundLabel(roundNumber, roundCount)}</h4>
             <div className="mt-2 overflow-x-auto rounded-2xl border border-border">
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground">

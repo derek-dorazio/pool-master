@@ -44,7 +44,8 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
 1. **Scoring family.** Does an existing family already score this sport?
    - Stroke play: lowest total wins (golf).
    - Head to head: a bracket of matches, points per round won plus an optional seed upset
-     bonus (basketball, American football; tennis next). Its matches are `SportEventMatch` rows in the event core, not family tables.
+     bonus (basketball, American football; tennis next). A league whose rounds the sport's names
+     do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's). Its matches are `SportEventMatch` rows in the event core, not family tables.
    - Finish position: points by place (horse racing, auto racing, cycling).
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.

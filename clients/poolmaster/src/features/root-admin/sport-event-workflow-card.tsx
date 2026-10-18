@@ -22,6 +22,7 @@ import {
 import { SportEventReleaseAction } from './sport-event-release-action';
 import { SportEventWorkflowRail } from './sport-event-workflow-rail';
 import { buildSportEventPath, capitalize } from './manage-navigation';
+import { useEventRoundLabel } from './use-sport-catalog';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 import { SportEventStatus, getSportDefinition } from '@poolmaster/shared/domain';
 
@@ -46,6 +47,7 @@ export function SportEventWorkflowCard({
   });
   const definition = getSportDefinition(tournament.sport);
   const { event, round: roundNoun } = definition.vocabulary;
+  const roundLabel = useEventRoundLabel(tournament);
   const [transitionTarget, setTransitionTarget] =
     useState<SportEventDtoStatus | null>(null);
   const [autoToggleOpen, setAutoToggleOpen] = useState(false);
@@ -177,7 +179,7 @@ export function SportEventWorkflowCard({
               : rounds
                   .map(
                     (round) =>
-                      `${definition.roundLabel(round.roundNumber, rounds.length)} ${formatDateTimeDisplay(round.scheduledDate)}`,
+                      `${roundLabel(round.roundNumber, rounds.length)} ${formatDateTimeDisplay(round.scheduledDate)}`,
                   )
                   .join(' · ')
         }

@@ -209,6 +209,12 @@ on the Bracket tab:
   game has a result. Each play-in place takes its winner once, from the sport's active teams
   not already in the tournament.
 
+The NBA and WNBA playoffs are basketball tournaments too, in their own sport leagues. A series
+is one game of the bracket: choose the team that won the series, with the games each side won
+as the score (4-2). The NBA's 7 and 8 seeds in each conference are play-in places until the
+play-in tournament is played, as the First Four's are. Those leagues' rounds show their own
+names (Conference Finals, NBA Finals), not March Madness's.
+
 **Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
 `RESEED_BY_SEED`) loads each round that is placed by seed with no next game in the round
 before it, and names only its byes. The NFL's Wild Card and Divisional games both link nowhere,
@@ -369,3 +375,25 @@ To test a contest end to end, create and open it and submit entries, then on the
 Workflow card *Move to In Progress* and *Move to Completed*, as for the golf seed above.
 Running it again skips everything.
 
+## Seeded NBA and WNBA playoffs
+
+`basketball-2025-nba-playoffs-test.json` and `basketball-2025-wnba-playoffs-test.json` are test
+seeds of the 2025 NBA and WNBA playoffs as they went, one file each. A series is one game of the
+bracket: its winner moves on, and its scores are the games each side won (4-2). Seeds, pairings,
+Game 1 tip-offs and series results are real; the odds are made up. They load into the `NBA` and
+`WNBA` sport leagues, which the migrations create with their round names (First Round,
+Conference Semifinals, Conference Finals, NBA Finals; First Round, Semifinals, WNBA Finals).
+Load each with `mode` `apply` like any file. Because their envelopes say `testData`:
+
+- **Dates moved forward by whole weeks**, the tip-offs with them, so the first round starts at
+  least a week after the run.
+- **Released** with automatic lifecycle off, the field tiered by odds (four tiers) and priced.
+- **The NBA's play-in places filled**: each conference's 7 and 8 seeds are play-in places
+  ("West 8 seed (play-in)"), and after release each takes the team that won it (Golden State
+  and Orlando the 7 seeds, Memphis and Miami the 8 seeds), keeping its seed, tier and price, as
+  *Set winner* does. A field entry's `playInWinner` names that team; test data only.
+- **Every series result already entered**, round by round. The Oklahoma City Thunder beat the
+  Indiana Pacers 4-3 in the NBA Finals; the Las Vegas Aces beat the Phoenix Mercury 4-0 in the
+  WNBA Finals.
+
+Test a contest on either as for the NFL seed above. Running a file again skips everything.

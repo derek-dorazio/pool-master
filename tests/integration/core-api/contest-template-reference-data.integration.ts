@@ -16,6 +16,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 
 // The contest templates the migrations seed, read back from real Postgres. A template with a
 // sport league is offered only for that league's events, so a template pointing at a league of
@@ -333,7 +334,7 @@ const DOUBLING_ROUND_VALUES = [1, 2, 4, 8, 16, 32];
 describe('Seeded NCAA basketball leagues and their knockout templates', () => {
   it('seeds both NCAA Division I leagues with a Doubling and a Doubling + upset bonus template for each selection type, the tiered Doubling one the default', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.BASKETBALL },
+      where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' } },
       include: { sportLeague: { include: { sport: true } } },
       orderBy: [{ templateKey: 'asc' }],
     });
@@ -362,7 +363,7 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
   });
 
   it('presets round values 1, 2, 4, 8, 16 and 32, with no upset bonus on Doubling and the seed difference times 1 on Doubling + upset bonus', async () => {
-    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sport: Sport.BASKETBALL } });
+    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' } } });
 
     expect(templates).toHaveLength(12);
     for (const template of templates) {
@@ -512,5 +513,51 @@ describe('Every seeded contest template, whatever its sport', () => {
 
     expect(scopes.map(({ name }) => name)).toEqual(expect.arrayContaining(['IndyCar', "UCI Women's WorldTour", 'World Marathon Majors (women)']));
     expect(problems).toEqual([]);
+  });
+});
+
+// The NBA and WNBA playoffs (#706): two more basketball sport leagues, data only, each with its own
+// round names and knockout presets sized to its bracket.
+describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
+  it('seeds the NBA and WNBA as fixed brackets that name their own rounds, read back through the sport league repository', async () => {
+    const basketball = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.BASKETBALL } });
+    const sportLeagues = new PrismaSportLeagueRepository(getPrisma());
+
+    const [nba, wnba] = await Promise.all([sportLeagues.findBySportAndName(basketball.id, 'NBA'), sportLeagues.findBySportAndName(basketball.id, 'WNBA')]);
+
+    expect([nba?.bracketAdvancement, nba?.roundNames]).toEqual(['FIXED', ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals']]);
+    expect([wnba?.bracketAdvancement, wnba?.roundNames]).toEqual(['FIXED', ['First Round', 'Semifinals', 'WNBA Finals']]);
+    // The NCAA tournaments keep the sport's March Madness names.
+    expect((await sportLeagues.findBySportAndName(basketball.id, 'NCAA Division I Men'))?.roundNames).toEqual([]);
+  });
+
+  it.each([
+    { league: 'NBA', prefix: 'nba', roundValues: [1, 2, 4, 8], rosterSize: 4 },
+    { league: 'WNBA', prefix: 'wnba', roundValues: [1, 2, 4], rosterSize: 3 },
+  ])('gives the $league a Doubling and a Doubling + upset bonus template per selection type, on one round value per round, the tiered Doubling one the default', async ({ league, prefix, roundValues, rosterSize }) => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.BASKETBALL, sportLeague: { name: league } },
+      orderBy: [{ templateKey: 'asc' }],
+    });
+
+    expect(templates.map((template) => [template.templateKey, template.selectionType, template.isDefault])).toEqual([
+      [`${prefix}-budget-doubling`, SelectionType.BUDGET_PICK, false],
+      [`${prefix}-budget-doubling-upset-bonus`, SelectionType.BUDGET_PICK, false],
+      [`${prefix}-random-draw-doubling`, SelectionType.RANDOM_DRAW, false],
+      [`${prefix}-random-draw-doubling-upset-bonus`, SelectionType.RANDOM_DRAW, false],
+      [`${prefix}-tiered-doubling`, SelectionType.TIERED, true],
+      [`${prefix}-tiered-doubling-upset-bonus`, SelectionType.TIERED, false],
+    ]);
+    for (const template of templates) {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      expect(rules.scoring).toEqual({
+        participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+        config: {
+          roundValues,
+          upsetBonus: template.templateKey.endsWith('-upset-bonus') ? { rule: 'SEED_DIFFERENCE', multiplier: 1 } : { rule: 'NONE' },
+        },
+      });
+      if (rules.selectionType === SelectionType.BUDGET_PICK) expect(rules.rosterSize).toBe(rosterSize);
+    }
   });
 });

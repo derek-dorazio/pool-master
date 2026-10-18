@@ -245,6 +245,58 @@ describe('american-football-2026-nfl-playoffs-test.json', () => {
   });
 });
 
+describe('basketball-2025-nba-playoffs-test.json', () => {
+  const file = readDataFile('basketball-2025-nba-playoffs-test.json', true);
+  const [nba] = file.sportLeagues;
+  const [playoffs] = nba.events;
+  const matches = playoffs.matches ?? [];
+
+  it('is a test seed of one fixed four-round NBA playoffs bracket of 16 places, seeded 1 to 8 in each conference', () => {
+    expect(file.scope).toEqual({
+      sport: Sport.BASKETBALL,
+      season: 2025,
+      sportLeagues: ['NBA'],
+      contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS],
+    });
+    expect(nba.bracketAdvancement).toBeUndefined();
+    expect([playoffs.rounds, playoffs.startDate, playoffs.endDate]).toEqual([4, '2025-04-19', '2025-06-22']);
+    expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8]);
+  });
+
+  it('fills the 7 and 8 seeds through play-in places, each naming the team that won it and is not otherwise in the field', () => {
+    expect(playoffs.field.filter((entry) => entry.isPlayInPlace).map((entry) => [entry.player, entry.seed, entry.playInWinner])).toEqual([
+      ['nba-west-7-seed-play-in', 7, 'nba-golden-state-warriors'],
+      ['nba-east-7-seed-play-in', 7, 'nba-orlando-magic'],
+      ['nba-west-8-seed-play-in', 8, 'nba-memphis-grizzlies'],
+      ['nba-east-8-seed-play-in', 8, 'nba-miami-heat'],
+    ]);
+  });
+
+  it('plays each series as one game scored in games won, Oklahoma City beating Indiana 4-3 in the Finals', () => {
+    expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
+    expect(matches.every((match) => match.result !== undefined && Math.max(match.result.homeScore, match.result.awayScore) === 4)).toBe(true);
+    expect(matches.filter((match) => match.roundNumber < 4).every((match) => match.regionLabel === 'East' || match.regionLabel === 'West')).toBe(true);
+    expect(matches[14]).toMatchObject({ advancesTo: null, isNeutralSite: false, result: { winner: 'HOME', homeScore: 4, awayScore: 3 } });
+  });
+});
+
+describe('basketball-2025-wnba-playoffs-test.json', () => {
+  const file = readDataFile('basketball-2025-wnba-playoffs-test.json', true);
+  const [playoffs] = file.sportLeagues[0].events;
+  const matches = playoffs.matches ?? [];
+
+  it('is a test seed of one fixed three-round WNBA bracket of eight teams seeded 1 to 8, Las Vegas sweeping Phoenix 4-0 in the Finals', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.BASKETBALL, 2025, ['WNBA']]);
+    expect([playoffs.rounds, playoffs.startDate, playoffs.endDate]).toEqual([3, '2025-09-14', '2025-10-10']);
+    expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    // Best of three, then best of five, then best of seven.
+    expect(matches.map((match) => [match.roundNumber, Math.max(match.result?.homeScore ?? 0, match.result?.awayScore ?? 0)])).toEqual([
+      [1, 2], [1, 2], [1, 2], [1, 2], [2, 3], [2, 3], [3, 4],
+    ]);
+    expect(matches[6]).toMatchObject({ home: null, away: null, result: { winner: 'HOME', homeScore: 4, awayScore: 0 } });
+  });
+});
+
 describe('test seed match times', () => {
   it('move by the same whole days as the event dates, and stay put when the offset is zero', () => {
     const file = readDataFile('american-football-2026-nfl-playoffs-test.json', true);
