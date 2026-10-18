@@ -200,12 +200,6 @@ otherwise the field is built on the Field tab and the games are loaded through
 `loadEventBracket` ([`DOMAIN-OPERATIONS.md`](DOMAIN-OPERATIONS.md), *SportEventMatch*). Then
 on the Bracket tab:
 
-The NBA and WNBA playoffs are basketball tournaments too, in their own sport leagues. A series
-is one game of the bracket: choose the team that won the series, with the games each side won
-as the score (4-2). The NBA's 7 and 8 seeds in each conference are play-in places until the
-play-in tournament is played, as the First Four's are. Those leagues' rounds show their own
-names (Conference Finals, NBA Finals), not March Madness's.
-
 - **Before release**, *Edit pairing* changes a game's two teams. Only teams no other game holds
   are offered, so to swap two teams, empty one side first. A side an earlier game's winner fills
   cannot be edited. Under *Play-in places*, mark each field row that stands for a First Four
@@ -214,6 +208,12 @@ names (Conference Finals, NBA Finals), not March Madness's.
   the standings update. A wrong winner can be switched, or the result cleared, until the next
   game has a result. Each play-in place takes its winner once, from the sport's active teams
   not already in the tournament.
+
+The NBA and WNBA playoffs are basketball tournaments too, in their own sport leagues. A series
+is one game of the bracket: choose the team that won the series, with the games each side won
+as the score (4-2). The NBA's 7 and 8 seeds in each conference are play-in places until the
+play-in tournament is played, as the First Four's are. Those leagues' rounds show their own
+names (Conference Finals, NBA Finals), not March Madness's.
 
 **Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
 `RESEED_BY_SEED`) loads each round that is placed by seed with no next game in the round

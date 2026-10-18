@@ -812,12 +812,12 @@ class Loader {
  * tier, price and bracket side, as an admin's "Set winner" does.
  */
 async function fillPlayInPlacesFor(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>): Promise<void> {
-  const places = event.field.filter((entry) => entry.playInWinner !== undefined);
+  const places = event.field.filter((entry): entry is typeof entry & { playInWinner: string } => entry.playInWinner !== undefined);
   if (places.length === 0) return;
   const { participants: rows } = await must(listEventParticipants({ client, path: { eventId } }), `Read the field of ${event.name}`);
   for (const place of places) {
     const placeId = found(participantIds.get(place.player) ?? undefined, `${event.name}: the participant id for ${place.player}`);
-    const winnerId = found(participantIds.get(place.playInWinner ?? '') ?? undefined, `${event.name}: the participant id for ${place.playInWinner ?? ''}`);
+    const winnerId = found(participantIds.get(place.playInWinner) ?? undefined, `${event.name}: the participant id for ${place.playInWinner}`);
     const row = found(rows.find((candidate) => candidate.participantId === placeId), `${event.name}: the field row of ${place.player}`);
     await must(setEventPlayInWinner({ client, path: { eventId, sportEventParticipantId: row.id }, body: { participantId: winnerId } }), `Set the winner of ${place.player} in ${event.name}`);
   }
