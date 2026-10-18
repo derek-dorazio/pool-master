@@ -41,6 +41,9 @@ export const QueryKeys = {
       return ['poolmaster', 'sport-events'] as const;
     },
     detail: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId] as const,
+    /** One sport league's events: what a contest's event picker offers. */
+    bySportLeague: (sportLeagueId: QueryKeyId) =>
+      ['poolmaster', 'sport-events', 'sport-league', sportLeagueId] as const,
   },
   contests: {
     all: ['poolmaster', 'league-contests'] as const,
@@ -49,8 +52,11 @@ export const QueryKeys = {
         ? (['poolmaster', 'league-contests'] as const)
         : (['poolmaster', 'league-contests', filters.leagueId] as const),
     detail: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId] as const,
-    leaderboard: (contestId: QueryKeyId) =>
-      ['poolmaster', 'contest', contestId, 'leaderboard'] as const,
+    /** A contest's leaderboard, opened on one of its events when one is named (#713). */
+    leaderboard: (contestId: QueryKeyId, sportEventId?: QueryKeyId) =>
+      sportEventId === undefined
+        ? (['poolmaster', 'contest', contestId, 'leaderboard'] as const)
+        : (['poolmaster', 'contest', contestId, 'leaderboard', sportEventId] as const),
     standings: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'standings'] as const,
   },
   managedContests: {
@@ -77,8 +83,11 @@ export const QueryKeys = {
     all: ['poolmaster', 'selection-state'] as const,
     /** Every entry's room in one contest: what a draw changes all at once. */
     byContest: (contestId: QueryKeyId) => ['poolmaster', 'selection-state', contestId] as const,
-    detail: (contestId: QueryKeyId, entryId: QueryKeyId) =>
-      ['poolmaster', 'selection-state', contestId, entryId] as const,
+    /** One entry's room, on one of the contest's events when one is named (#713). */
+    detail: (contestId: QueryKeyId, entryId: QueryKeyId, sportEventId?: QueryKeyId) =>
+      sportEventId === undefined
+        ? (['poolmaster', 'selection-state', contestId, entryId] as const)
+        : (['poolmaster', 'selection-state', contestId, entryId, sportEventId] as const),
   },
   leagues: {
     all: ['poolmaster', 'leagues'] as const,

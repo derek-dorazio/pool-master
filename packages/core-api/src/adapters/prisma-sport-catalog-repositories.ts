@@ -341,12 +341,13 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async countContests(sportEventIds: readonly string[]): Promise<Map<string, number>> {
-    const groups = await this.prisma.contest.groupBy({
+    // A contest covers its events through contest_sport_events (#713): one row per contest and event.
+    const groups = await this.prisma.contestSportEvent.groupBy({
       by: ['sportEventId'],
       where: { sportEventId: { in: [...sportEventIds] } },
       _count: { _all: true },
     });
-    return countMap(sportEventIds, groups.flatMap((group) => (group.sportEventId ? [[group.sportEventId, group._count._all] as [string, number]] : [])));
+    return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
   }
 
   async countBySportLeagues(

@@ -395,7 +395,8 @@ export function CreateContestPage() {
       // and, with a preset, replaces the preset's (#245).
       const body: CreateContestRequest = {
         name: submitted.contestName.trim(),
-        sportEventId: event.id,
+        // A contest starts on one event; the commissioner adds more from its Events page (#713).
+        sportEventIds: [event.id],
         contestFormat: ContestFormat.ROSTER,
         selectionType: submitted.selectionType,
         ...(submitted.selectedTemplateId ? { templateId: submitted.selectedTemplateId } : {}),

@@ -7,17 +7,23 @@ import { CONTEST_POLL_INTERVAL_MS, shouldPollContestEntries } from './contest-st
 
 /**
  * A contest's leaderboard (#112), polled on the contest board's cadence while the contest is
- * live, so standings move without a reload and stop at settlement.
+ * live, so standings move without a reload and stop at settlement. `sportEventId` picks which of
+ * the contest's events its picks are shown for (#713); without it the server shows the latest
+ * one whose picks are revealed.
  */
 export function useContestLeaderboardQuery(
   contestId: string,
   status: ContestStatus | null | undefined,
-  options: { enabled?: boolean } = {},
+  options: { enabled?: boolean; sportEventId?: string | null } = {},
 ) {
+  const sportEventId = options.sportEventId ?? undefined;
   return useQuery({
-    queryKey: QueryKeys.contests.leaderboard(contestId),
+    queryKey: QueryKeys.contests.leaderboard(contestId, sportEventId),
     queryFn: async (): Promise<ContestLeaderboardResponse> => {
-      const response = await getContestLeaderboard({ path: { contestId } });
+      const response = await getContestLeaderboard({
+        path: { contestId },
+        query: sportEventId ? { sportEventId } : undefined,
+      });
 
       if (!response.data) {
         throwApiError(response.error, 'Contest leaderboard response is missing data.');

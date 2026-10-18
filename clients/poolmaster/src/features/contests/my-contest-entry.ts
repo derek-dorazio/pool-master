@@ -1,9 +1,10 @@
-import { ContestEntryStatus } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto } from '@/lib/api';
 import {
   buildLeagueContestEntryPath,
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
+import { ContestEntryStatus } from '@poolmaster/shared/domain';
+import { currentContestEvent, entryEventStatus } from './contest-events';
 
 /** Whether the viewer's entries in the current contests are known yet. */
 export type MyEntriesState = 'loading' | 'failed' | 'ready';
@@ -29,7 +30,9 @@ export function describeMyEntry(
   if (entriesState !== 'ready') {
     return { label: 'View contest', note: ENTRY_STATE_NOTE[entriesState], to: contestPath };
   }
-  const submitted = myEntries?.find((entry) => entry.status === ContestEntryStatus.SUBMITTED);
+  // A contest of several events asks for picks event by event: this is about the current one.
+  const currentEventId = currentContestEvent(contest)?.sportEventId;
+  const submitted = myEntries?.find((entry) => entryEventStatus(entry, currentEventId) === ContestEntryStatus.SUBMITTED);
   if (submitted) {
     return {
       label: 'View entry',

@@ -32,6 +32,7 @@ export class PrismaContestEntryPickRepository implements ContestEntryPickReposit
       include: {
         sportEventParticipant: {
           select: {
+            sportEventId: true,
             participantId: true,
             isActive: true,
             inactiveReason: true,
@@ -43,6 +44,7 @@ export class PrismaContestEntryPickRepository implements ContestEntryPickReposit
     });
     return rows.map((row) => ({
       ...mapContestEntryPickRowToDomain(row),
+      sportEventId: row.sportEventParticipant.sportEventId,
       participant: {
         participantId: row.sportEventParticipant.participantId,
         participantName: row.sportEventParticipant.participant.name,

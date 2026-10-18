@@ -36,6 +36,8 @@ import {
 import { fetchContestEntries } from './use-contest-entries';
 import { ContestStatus, getSportDefinition } from '@poolmaster/shared/domain';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
+import { ContestEventSwitcher } from './contest-event-switcher';
+import { hasContestEventStarted } from './contest-events';
 
 /**
  * The member-facing contest leaderboard (#110, #111, #112).
@@ -95,12 +97,15 @@ function leaderboardGridColumns(view: LeaderboardView) {
 
 function EntryBlock({
   entry,
+  eventNames,
   gridTemplateColumns,
   isCollapsed,
   isMine,
   onToggle,
 }: {
   entry: LeaderboardEntryRow;
+  /** The contest's event names by id when it covers several, for the per-event line; else null. */
+  eventNames: ReadonlyMap<string, string> | null;
   gridTemplateColumns: string;
   isCollapsed: boolean;
   isMine: boolean;
@@ -145,6 +150,13 @@ function EntryBlock({
             {entry.squadName} · best {entry.countingPickLimit} of {entry.picks.length} count ·{' '}
             {entry.scoredPickCount} scored
           </span>
+          {eventNames && entry.events.length > 0 ? (
+            <span className="mt-1 block text-xs text-muted-foreground" data-testid={`contest-leaderboard-events-${entry.entryId}`}>
+              {entry.events
+                .map((event) => `${eventNames.get(event.sportEventId) ?? 'Event'}: ${event.displayPosition ?? NO_SCORE}, ${event.total ?? NO_SCORE}`)
+                .join(' · ')}
+            </span>
+          ) : null}
         </span>
         <span
           className="text-lg font-semibold text-foreground"
@@ -218,6 +230,8 @@ export function ContestLeaderboardPage() {
   const [pageIndex, setPageIndex] = useState(0);
   // Set by Jump to my entry; once the page holding that entry renders, it is scrolled into view.
   const [jumpTargetId, setJumpTargetId] = useState<string | null>(null);
+  // Which event's picks the board shows (#713); null is the server's choice, its latest revealed.
+  const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
   const contestQuery = useQuery({
@@ -246,7 +260,9 @@ export function ContestLeaderboardPage() {
   // The contest read above refreshes until settlement (#362), so this starts when play starts and
   // stops when the contest settles, and each status change it sees reads the leaderboard once
   // more, which is how the final standings land.
-  const leaderboardQuery = useContestLeaderboardQuery(contestId, contestQuery.data?.status);
+  const leaderboardQuery = useContestLeaderboardQuery(contestId, contestQuery.data?.status, {
+    sportEventId: requestedEventId,
+  });
   const contestEntriesQuery = useQuery({
     queryKey: QueryKeys.contestEntries.byContest(contestId),
     queryFn: () => fetchContestEntries(contestId),
@@ -315,6 +331,14 @@ export function ContestLeaderboardPage() {
   const view = buildLeaderboardView(leaderboardQuery.data);
   const participantNoun = getSportDefinition(leaderboardQuery.data.sport).vocabulary.participant;
   const gridTemplateColumns = leaderboardGridColumns(view);
+  const isMultiEvent = contest.sportEvents.length > 1;
+  const eventNames = isMultiEvent
+    ? new Map(contest.sportEvents.map((sportEvent) => [sportEvent.sportEventId, sportEvent.name]))
+    : null;
+  // An event's picks are on the board once it has started (or the contest is final).
+  const revealedEvents = contest.sportEvents.filter((sportEvent) => (
+    contest.status === ContestStatus.COMPLETED || hasContestEventStarted(sportEvent)
+  ));
 
   const allCollapsed = view.entries.length > 0
     && view.entries.every((entry) => collapsedEntryIds.has(entry.entryId));
@@ -393,6 +417,16 @@ export function ContestLeaderboardPage() {
         </div>
       </ContestHeader>
 
+      <ContestEventSwitcher
+        events={revealedEvents}
+        onChange={(sportEventId) => {
+          setRequestedEventId(sportEventId);
+          setPageIndex(0);
+        }}
+        testId="contest-leaderboard-event-switcher"
+        value={leaderboardQuery.data.sportEventId}
+      />
+
       <Tile>
         {view.entries.length > 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-3">
@@ -454,6 +488,7 @@ export function ContestLeaderboardPage() {
             pageEntries.map((entry) => (
               <EntryBlock
                 entry={entry}
+                eventNames={eventNames}
                 gridTemplateColumns={gridTemplateColumns}
                 isCollapsed={collapsedEntryIds.has(entry.entryId)}
                 isMine={mySquadId !== null && entry.squadId === mySquadId}

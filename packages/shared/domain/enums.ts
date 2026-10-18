@@ -318,10 +318,11 @@ export const ContestStatus = {
 export type ContestStatus = (typeof ContestStatus)[keyof typeof ContestStatus];
 
 /**
- * Where an entry stands in its contest (#481). An entry is born DRAFT and its owner submits it
- * once its lineup is complete. Only SUBMITTED entries count: the leaderboard, standings,
- * settlement and member-visible entry counts all read them alone. A pick change that leaves a
- * submitted lineup short sends it back to DRAFT.
+ * Where an entry stands in one event of its contest (#481, per event since #713). An entry's
+ * event is born DRAFT and its owner submits it once that event's lineup is complete. Only
+ * SUBMITTED events count: the leaderboard, standings, settlement and member-visible entry
+ * counts all read them alone. A pick change that leaves a submitted lineup short sends that
+ * event back to DRAFT.
  */
 export const ContestEntryStatus = {
   DRAFT: 'DRAFT',

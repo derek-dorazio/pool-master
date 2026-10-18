@@ -2837,6 +2837,54 @@ export type EffectiveTierDto = {
 };
 
 /**
+ * One event of a managed contest, with the tiers it inherits from it (#713).
+ */
+export type ContestManagementSportEventDto = {
+    /**
+     * One event the contest covers.
+     */
+    sportEventId: string;
+    /**
+     * Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+     */
+    effectiveTiers: Array<{
+        /**
+         * Stable per-event tier key.
+         */
+        tierKey: string;
+        /**
+         * Commissioner-facing tier label.
+         */
+        label: string;
+        /**
+         * 1-based tier ordering.
+         */
+        tierNumber: number;
+        /**
+         * Participants assigned to this tier, ordered by tierOrderIndex ascending.
+         */
+        assignments: Array<{
+            /**
+             * Field entry the assignment belongs to.
+             */
+            sportEventParticipantId: string;
+            /**
+             * Global participant identity.
+             */
+            participantId: string;
+            /**
+             * Within-tier ordering position; null when the participant has no explicit order.
+             */
+            tierOrderIndex: number | null;
+            /**
+             * Per-participant budget price when the event defines one; null otherwise.
+             */
+            price: number | null;
+        }>;
+    }>;
+};
+
+/**
  * Golf-first contest-management detail returned to commissioner tooling.
  */
 export type ContestManagementDetailDto = {
@@ -2849,9 +2897,52 @@ export type ContestManagementDetailDto = {
      */
     leagueId: string;
     /**
-     * Sport event attached to the contest.
+     * The events the contest covers, in sequence order (#713), each with its inherited tiers.
      */
-    sportEventId: string;
+    sportEvents: Array<{
+        /**
+         * One event the contest covers.
+         */
+        sportEventId: string;
+        /**
+         * Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+         */
+        effectiveTiers: Array<{
+            /**
+             * Stable per-event tier key.
+             */
+            tierKey: string;
+            /**
+             * Commissioner-facing tier label.
+             */
+            label: string;
+            /**
+             * 1-based tier ordering.
+             */
+            tierNumber: number;
+            /**
+             * Participants assigned to this tier, ordered by tierOrderIndex ascending.
+             */
+            assignments: Array<{
+                /**
+                 * Field entry the assignment belongs to.
+                 */
+                sportEventParticipantId: string;
+                /**
+                 * Global participant identity.
+                 */
+                participantId: string;
+                /**
+                 * Within-tier ordering position; null when the participant has no explicit order.
+                 */
+                tierOrderIndex: number | null;
+                /**
+                 * Per-participant budget price when the event defines one; null otherwise.
+                 */
+                price: number | null;
+            }>;
+        }>;
+    }>;
     /**
      * Contest display name.
      */
@@ -2931,44 +3022,6 @@ export type ContestManagementDetailDto = {
          */
         maxEntriesPerSquad?: number | null;
     };
-    /**
-     * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
-     */
-    effectiveTiers: Array<{
-        /**
-         * Stable per-event tier key.
-         */
-        tierKey: string;
-        /**
-         * Commissioner-facing tier label.
-         */
-        label: string;
-        /**
-         * 1-based tier ordering.
-         */
-        tierNumber: number;
-        /**
-         * Participants assigned to this tier, ordered by tierOrderIndex ascending.
-         */
-        assignments: Array<{
-            /**
-             * Field entry the assignment belongs to.
-             */
-            sportEventParticipantId: string;
-            /**
-             * Global participant identity.
-             */
-            participantId: string;
-            /**
-             * Within-tier ordering position; null when the participant has no explicit order.
-             */
-            tierOrderIndex: number | null;
-            /**
-             * Per-participant budget price when the event defines one; null otherwise.
-             */
-            price: number | null;
-        }>;
-    }>;
     /**
      * When the contest was created.
      */
@@ -3249,9 +3302,52 @@ export type ContestManagementResponse = {
          */
         leagueId: string;
         /**
-         * Sport event attached to the contest.
+         * The events the contest covers, in sequence order (#713), each with its inherited tiers.
          */
-        sportEventId: string;
+        sportEvents: Array<{
+            /**
+             * One event the contest covers.
+             */
+            sportEventId: string;
+            /**
+             * Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+             */
+            effectiveTiers: Array<{
+                /**
+                 * Stable per-event tier key.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * 1-based tier ordering.
+                 */
+                tierNumber: number;
+                /**
+                 * Participants assigned to this tier, ordered by tierOrderIndex ascending.
+                 */
+                assignments: Array<{
+                    /**
+                     * Field entry the assignment belongs to.
+                     */
+                    sportEventParticipantId: string;
+                    /**
+                     * Global participant identity.
+                     */
+                    participantId: string;
+                    /**
+                     * Within-tier ordering position; null when the participant has no explicit order.
+                     */
+                    tierOrderIndex: number | null;
+                    /**
+                     * Per-participant budget price when the event defines one; null otherwise.
+                     */
+                    price: number | null;
+                }>;
+            }>;
+        }>;
         /**
          * Contest display name.
          */
@@ -3331,44 +3427,6 @@ export type ContestManagementResponse = {
              */
             maxEntriesPerSquad?: number | null;
         };
-        /**
-         * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
-         */
-        effectiveTiers: Array<{
-            /**
-             * Stable per-event tier key.
-             */
-            tierKey: string;
-            /**
-             * Commissioner-facing tier label.
-             */
-            label: string;
-            /**
-             * 1-based tier ordering.
-             */
-            tierNumber: number;
-            /**
-             * Participants assigned to this tier, ordered by tierOrderIndex ascending.
-             */
-            assignments: Array<{
-                /**
-                 * Field entry the assignment belongs to.
-                 */
-                sportEventParticipantId: string;
-                /**
-                 * Global participant identity.
-                 */
-                participantId: string;
-                /**
-                 * Within-tier ordering position; null when the participant has no explicit order.
-                 */
-                tierOrderIndex: number | null;
-                /**
-                 * Per-participant budget price when the event defines one; null otherwise.
-                 */
-                price: number | null;
-            }>;
-        }>;
         /**
          * When the contest was created.
          */
@@ -7486,9 +7544,9 @@ export type CreateContestRequest = {
      */
     name: string;
     /**
-     * Sport event the contest is run on.
+     * The events the contest covers (#713): one for a golf or race contest, several for a majors pool or a season. All from one sport league, each released, with its field loaded and not yet started. The contest keeps them in start-date order, whatever order they are sent in.
      */
-    sportEventId: string;
+    sportEventIds: Array<string>;
     /**
      * First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
      */
@@ -7714,17 +7772,89 @@ export type UpdateContestEntryRequest = {
 };
 
 /**
- * The sport event a listed contest runs on: enough to name, sort and search it without reading the event.
+ * One event a contest covers, enough to name, order and pick it without reading the event (#713).
  */
-export type ContestEventSummaryDto = {
+export type ContestSportEventDto = {
     /**
-     * The sport event's name.
+     * The event.
+     */
+    sportEventId: string;
+    /**
+     * The event's place in the contest, 1 first: the contest's events in start-date order.
+     */
+    sequence: number;
+    /**
+     * The event's name.
      */
     name: string;
     /**
-     * The sport event's scheduled start, which is also when entries close.
+     * The event's scheduled start: when its picks close.
      */
     startDate: string;
+    /**
+     * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
+     */
+    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+};
+
+/**
+ * Request payload for setting the events a contest covers.
+ */
+export type SetContestSportEventsRequest = {
+    /**
+     * Every event the contest should cover: the ones it keeps and the ones added. An event left out is removed. Kept in start-date order.
+     */
+    sportEventIds: Array<string>;
+};
+
+/**
+ * An entry's status in one event of its contest (#713): "submit week 6".
+ */
+export type ContestEntryEventDto = {
+    /**
+     * One event of the entry's contest.
+     */
+    sportEventId: string;
+    /**
+     * DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+     */
+    status: 'DRAFT' | 'SUBMITTED';
+    /**
+     * When the event's picks were submitted; null while a draft.
+     */
+    submittedAt: string | null;
+};
+
+/**
+ * An entry's result in one event of its contest (#713): one week's score, one major's.
+ */
+export type ContestEntryEventResultDto = {
+    /**
+     * The event.
+     */
+    sportEventId: string;
+    /**
+     * The entry's score in the event: the sum of its counting picks' contest scores there. Null until a pick is scored.
+     */
+    totalScore: number | null;
+    /**
+     * The entry's rank among the entries that submitted the event, 1 best; null while unscored.
+     */
+    position: number | null;
+    /**
+     * Position as shown, "T" prefixed for a tie.
+     */
+    displayPosition: string | null;
+};
+
+/**
+ * Optional query parameters for the contest leaderboard.
+ */
+export type ContestLeaderboardQuery = {
+    /**
+     * The contest event whose field and picks to show; its picks must be revealed. Defaults to the contest's latest event whose picks are revealed.
+     */
+    sportEventId?: string;
 };
 
 /**
@@ -7737,25 +7867,36 @@ export type ContestDto = {
     contestFormat: 'ROSTER';
     selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
     leagueId: string;
-    sportEventId?: string | null;
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | null;
     /**
-     * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
+     * The events the contest covers, in sequence order (#713). One for a golf or race contest.
      */
-    entryCount?: number;
-    /**
-     * The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.
-     */
-    sportEvent?: {
+    sportEvents: Array<{
         /**
-         * The sport event's name.
+         * The event.
+         */
+        sportEventId: string;
+        /**
+         * The event's place in the contest, 1 first: the contest's events in start-date order.
+         */
+        sequence: number;
+        /**
+         * The event's name.
          */
         name: string;
         /**
-         * The sport event's scheduled start, which is also when entries close.
+         * The event's scheduled start: when its picks close.
          */
         startDate: string;
-    } | null;
+        /**
+         * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
+         */
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    }>;
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | null;
+    /**
+     * Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.
+     */
+    entryCount?: number;
     startsAt?: string | null;
     endsAt?: string | null;
     /**
@@ -7777,9 +7918,22 @@ export type ContestEntryDto = {
     entryNumber: number;
     name: string;
     /**
-     * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+     * The entry's status in each event of its contest, in the contest's event order.
      */
-    status: 'DRAFT' | 'SUBMITTED';
+    events: Array<{
+        /**
+         * One event of the entry's contest.
+         */
+        sportEventId: string;
+        /**
+         * DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+         */
+        status: 'DRAFT' | 'SUBMITTED';
+        /**
+         * When the event's picks were submitted; null while a draft.
+         */
+        submittedAt: string | null;
+    }>;
     tiebreakerValue?: number | null;
     /**
      * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
@@ -7794,11 +7948,15 @@ export type ContestEntryDto = {
      */
     updatedAt: string;
     /**
-     * The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them.
+     * The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them.
      */
     participants?: Array<{
         pickId: string;
         sportEventParticipantId: string;
+        /**
+         * The event of the contest the pick is in (#713).
+         */
+        sportEventId: string;
         participantId: string;
         participantName: string;
         participantStatus?: string | null;
@@ -7876,6 +8034,10 @@ export type ContestEntryPickDto = {
 export type ContestEntryParticipantDetailDto = {
     pickId: string;
     sportEventParticipantId: string;
+    /**
+     * The event of the contest the pick is in (#713).
+     */
+    sportEventId: string;
     participantId: string;
     participantName: string;
     participantStatus?: string | null;
@@ -7980,7 +8142,7 @@ export type ScoredContestEntryPickDto = {
 };
 
 /**
- * One entry's standing in a contest leaderboard. Each pick's score lives in its sport's block.
+ * One entry's standing in a contest leaderboard: its contest total, its result in each event, and its picks in the shown event. Each pick's score lives in its sport's block.
  */
 export type ContestEntryStandingDto = {
     /**
@@ -8004,11 +8166,7 @@ export type ContestEntryStandingDto = {
      */
     squadName: string;
     /**
-     * Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
-     */
-    status: 'DRAFT' | 'SUBMITTED';
-    /**
-     * The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored.
+     * The entry's rank in the contest by its total, direction-free: 1 is best in every sport. Null while unscored.
      */
     position: number | null;
     /**
@@ -8016,19 +8174,40 @@ export type ContestEntryStandingDto = {
      */
     displayPosition: string | null;
     /**
-     * How many picks count toward the total under the counting rule: its N.
+     * How many picks count toward the shown event's score under the counting rule: its N.
      */
     countingPickLimit: number;
     /**
-     * How many picks currently have an event standing.
+     * How many of the entry's picks in the shown event currently have an event standing.
      */
     scoredPickCount: number;
     /**
-     * The entry's total, the sum of its counting picks' contest scores, in the unit of the response's scoring definition (a golf to-par total, a race's points). Null until a pick is scored.
+     * The entry's contest total, in the unit of the response's scoring definition (a golf to-par total, a race's points): the sum of its scores in the events it submitted (#713). In a one-event contest, that event's score. Null until a pick is scored.
      */
     totalScore: number | null;
     /**
-     * The entry's picks, counting picks first.
+     * The entry's score and place in each event it submitted whose picks are revealed, in the contest's event order.
+     */
+    events: Array<{
+        /**
+         * The event.
+         */
+        sportEventId: string;
+        /**
+         * The entry's score in the event: the sum of its counting picks' contest scores there. Null until a pick is scored.
+         */
+        totalScore: number | null;
+        /**
+         * The entry's rank among the entries that submitted the event, 1 best; null while unscored.
+         */
+        position: number | null;
+        /**
+         * Position as shown, "T" prefixed for a tie.
+         */
+        displayPosition: string | null;
+    }>;
+    /**
+     * The entry's picks in the shown event, counting picks first; empty when it did not submit that event.
      */
     picks: Array<{
         /**
@@ -8116,7 +8295,7 @@ export type ContestCountingRuleDto = {
 };
 
 /**
- * Member-facing contest leaderboard. Live, entry standings are computed from the event's standings; once the contest is COMPLETED they are the standings frozen at settlement.
+ * Member-facing contest leaderboard. Live, entry standings are computed from the events' standings; a completed event answers from the standings frozen when it settled, and a COMPLETED contest's totals are the ones frozen at its settlement.
  */
 export type ContestLeaderboardResponse = {
     /**
@@ -8124,7 +8303,7 @@ export type ContestLeaderboardResponse = {
      */
     contestId: string;
     /**
-     * Sport event the contest runs on.
+     * The event whose field and picks are shown: the one asked for, else the contest's latest event whose picks are revealed.
      */
     sportEventId: string;
     /**
@@ -8149,7 +8328,7 @@ export type ContestLeaderboardResponse = {
         count: number;
     };
     /**
-     * The event's field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId.
+     * The shown event's field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId.
      */
     participants: Array<{
         /**
@@ -8393,7 +8572,7 @@ export type ContestLeaderboardResponse = {
         updatedAt: string;
     }>;
     /**
-     * Contest entries, best first.
+     * Contest entries that submitted at least one revealed event, best total first.
      */
     entries: Array<{
         /**
@@ -8417,11 +8596,7 @@ export type ContestLeaderboardResponse = {
          */
         squadName: string;
         /**
-         * Contest entry lifecycle status. Always SUBMITTED: only submitted entries are ranked.
-         */
-        status: 'DRAFT' | 'SUBMITTED';
-        /**
-         * The entry's rank in the contest, direction-free: 1 is best in every sport. Null while unscored.
+         * The entry's rank in the contest by its total, direction-free: 1 is best in every sport. Null while unscored.
          */
         position: number | null;
         /**
@@ -8429,19 +8604,40 @@ export type ContestLeaderboardResponse = {
          */
         displayPosition: string | null;
         /**
-         * How many picks count toward the total under the counting rule: its N.
+         * How many picks count toward the shown event's score under the counting rule: its N.
          */
         countingPickLimit: number;
         /**
-         * How many picks currently have an event standing.
+         * How many of the entry's picks in the shown event currently have an event standing.
          */
         scoredPickCount: number;
         /**
-         * The entry's total, the sum of its counting picks' contest scores, in the unit of the response's scoring definition (a golf to-par total, a race's points). Null until a pick is scored.
+         * The entry's contest total, in the unit of the response's scoring definition (a golf to-par total, a race's points): the sum of its scores in the events it submitted (#713). In a one-event contest, that event's score. Null until a pick is scored.
          */
         totalScore: number | null;
         /**
-         * The entry's picks, counting picks first.
+         * The entry's score and place in each event it submitted whose picks are revealed, in the contest's event order.
+         */
+        events: Array<{
+            /**
+             * The event.
+             */
+            sportEventId: string;
+            /**
+             * The entry's score in the event: the sum of its counting picks' contest scores there. Null until a pick is scored.
+             */
+            totalScore: number | null;
+            /**
+             * The entry's rank among the entries that submitted the event, 1 best; null while unscored.
+             */
+            position: number | null;
+            /**
+             * Position as shown, "T" prefixed for a tie.
+             */
+            displayPosition: string | null;
+        }>;
+        /**
+         * The entry's picks in the shown event, counting picks first; empty when it did not submit that event.
          */
         picks: Array<{
             /**
@@ -8533,25 +8729,36 @@ export type ContestResponse = {
         contestFormat: 'ROSTER';
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
         leagueId: string;
-        sportEventId?: string | null;
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | null;
         /**
-         * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
+         * The events the contest covers, in sequence order (#713). One for a golf or race contest.
          */
-        entryCount?: number;
-        /**
-         * The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.
-         */
-        sportEvent?: {
+        sportEvents: Array<{
             /**
-             * The sport event's name.
+             * The event.
+             */
+            sportEventId: string;
+            /**
+             * The event's place in the contest, 1 first: the contest's events in start-date order.
+             */
+            sequence: number;
+            /**
+             * The event's name.
              */
             name: string;
             /**
-             * The sport event's scheduled start, which is also when entries close.
+             * The event's scheduled start: when its picks close.
              */
             startDate: string;
-        } | null;
+            /**
+             * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
+             */
+            status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        }>;
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | null;
+        /**
+         * Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.
+         */
+        entryCount?: number;
         startsAt?: string | null;
         endsAt?: string | null;
         /**
@@ -8574,25 +8781,36 @@ export type ContestListResponse = {
         contestFormat: 'ROSTER';
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
         leagueId: string;
-        sportEventId?: string | null;
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | null;
         /**
-         * Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.
+         * The events the contest covers, in sequence order (#713). One for a golf or race contest.
          */
-        entryCount?: number;
-        /**
-         * The sport event's name and start. Present on list reads, null when the contest has no event; omitted on a single-contest read, whose page reads the event itself.
-         */
-        sportEvent?: {
+        sportEvents: Array<{
             /**
-             * The sport event's name.
+             * The event.
+             */
+            sportEventId: string;
+            /**
+             * The event's place in the contest, 1 first: the contest's events in start-date order.
+             */
+            sequence: number;
+            /**
+             * The event's name.
              */
             name: string;
             /**
-             * The sport event's scheduled start, which is also when entries close.
+             * The event's scheduled start: when its picks close.
              */
             startDate: string;
-        } | null;
+            /**
+             * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
+             */
+            status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        }>;
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | null;
+        /**
+         * Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.
+         */
+        entryCount?: number;
         startsAt?: string | null;
         endsAt?: string | null;
         /**
@@ -8623,9 +8841,22 @@ export type ContestEntryResponse = {
         entryNumber: number;
         name: string;
         /**
-         * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+         * The entry's status in each event of its contest, in the contest's event order.
          */
-        status: 'DRAFT' | 'SUBMITTED';
+        events: Array<{
+            /**
+             * One event of the entry's contest.
+             */
+            sportEventId: string;
+            /**
+             * DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+             */
+            status: 'DRAFT' | 'SUBMITTED';
+            /**
+             * When the event's picks were submitted; null while a draft.
+             */
+            submittedAt: string | null;
+        }>;
         tiebreakerValue?: number | null;
         /**
          * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
@@ -8640,11 +8871,15 @@ export type ContestEntryResponse = {
          */
         updatedAt: string;
         /**
-         * The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them.
+         * The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them.
          */
         participants?: Array<{
             pickId: string;
             sportEventParticipantId: string;
+            /**
+             * The event of the contest the pick is in (#713).
+             */
+            sportEventId: string;
             participantId: string;
             participantName: string;
             participantStatus?: string | null;
@@ -8670,7 +8905,7 @@ export type ContestEntryDetailResponse = {
      */
     contestId: string;
     /**
-     * Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase.
+     * Whether any of the contest's events has its picks visible to non-owners: once the contest is live and that event has started, or once a random draw has dealt.
      */
     picksRevealed: boolean;
     /**
@@ -8684,9 +8919,22 @@ export type ContestEntryDetailResponse = {
         entryNumber: number;
         name: string;
         /**
-         * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+         * The entry's status in each event of its contest, in the contest's event order.
          */
-        status: 'DRAFT' | 'SUBMITTED';
+        events: Array<{
+            /**
+             * One event of the entry's contest.
+             */
+            sportEventId: string;
+            /**
+             * DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+             */
+            status: 'DRAFT' | 'SUBMITTED';
+            /**
+             * When the event's picks were submitted; null while a draft.
+             */
+            submittedAt: string | null;
+        }>;
         tiebreakerValue?: number | null;
         /**
          * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
@@ -8701,11 +8949,15 @@ export type ContestEntryDetailResponse = {
          */
         updatedAt: string;
         /**
-         * The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them.
+         * The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them.
          */
         participants?: Array<{
             pickId: string;
             sportEventParticipantId: string;
+            /**
+             * The event of the contest the pick is in (#713).
+             */
+            sportEventId: string;
             participantId: string;
             participantName: string;
             participantStatus?: string | null;
@@ -8747,11 +8999,11 @@ export type ContestEntryListResponse = {
      */
     myEntryIds?: Array<string>;
     /**
-     * Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase.
+     * Whether any of the contest's events has its picks visible to non-owners: once the contest is live and that event has started, or once a random draw has dealt.
      */
     picksRevealed: boolean;
     /**
-     * Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted.
+     * Entries for the contest. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's.
      */
     entries: Array<{
         id: string;
@@ -8761,9 +9013,22 @@ export type ContestEntryListResponse = {
         entryNumber: number;
         name: string;
         /**
-         * DRAFT until the owner submits a complete lineup; only SUBMITTED entries count on the leaderboard, in standings and at settlement (#481).
+         * The entry's status in each event of its contest, in the contest's event order.
          */
-        status: 'DRAFT' | 'SUBMITTED';
+        events: Array<{
+            /**
+             * One event of the entry's contest.
+             */
+            sportEventId: string;
+            /**
+             * DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713).
+             */
+            status: 'DRAFT' | 'SUBMITTED';
+            /**
+             * When the event's picks were submitted; null while a draft.
+             */
+            submittedAt: string | null;
+        }>;
         tiebreakerValue?: number | null;
         /**
          * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
@@ -8778,11 +9043,15 @@ export type ContestEntryListResponse = {
          */
         updatedAt: string;
         /**
-         * The entry's picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them.
+         * The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them.
          */
         participants?: Array<{
             pickId: string;
             sportEventParticipantId: string;
+            /**
+             * The event of the contest the pick is in (#713).
+             */
+            sportEventId: string;
             participantId: string;
             participantName: string;
             participantStatus?: string | null;
@@ -8821,6 +9090,10 @@ export type SelectionStateQuery = {
      * Specific contest entry to view within roster-based selection flows.
      */
     entryId?: string;
+    /**
+     * The contest event whose picks to show (#713). Defaults to the contest's next event that has not started, else its last event.
+     */
+    sportEventId?: string;
 };
 
 /**
@@ -8874,6 +9147,14 @@ export type SelectionBudgetLineupSummaryDto = {
 export type SelectionStateResponse = {
     contestId: string;
     contestName: string;
+    /**
+     * The contest event the room shows (#713): its field, its picks, and each entry's status in it.
+     */
+    sportEventId: string;
+    /**
+     * Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started.
+     */
+    acceptsPicks: boolean;
     selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
     /**
      * When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
@@ -8897,7 +9178,7 @@ export type SelectionStateResponse = {
          */
         name: string;
         /**
-         * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+         * The entry's status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
          */
         status: 'DRAFT' | 'SUBMITTED';
     }>;
@@ -8997,6 +9278,14 @@ export type SelectionStateResponse = {
 export type SelectionPickResponse = {
     contestId: string;
     contestName: string;
+    /**
+     * The contest event the room shows (#713): its field, its picks, and each entry's status in it.
+     */
+    sportEventId: string;
+    /**
+     * Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started.
+     */
+    acceptsPicks: boolean;
     selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW';
     /**
      * When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
@@ -9020,7 +9309,7 @@ export type SelectionPickResponse = {
          */
         name: string;
         /**
-         * DRAFT until the owner submits a complete lineup; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
+         * The entry's status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
          */
         status: 'DRAFT' | 'SUBMITTED';
     }>;
@@ -15537,6 +15826,54 @@ export type OpenContestResponses = {
 
 export type OpenContestResponse = OpenContestResponses[keyof OpenContestResponses];
 
+export type SetContestSportEventsData = {
+    body: SetContestSportEventsRequest;
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/sport-events';
+};
+
+export type SetContestSportEventsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND for an event that does not exist.
+     */
+    404: ErrorEnvelope;
+    /**
+     * CONTEST_EVENTS_LOCKED — an event would be removed after one of the contest's events started, or the contest is COMPLETED or drawn. CONTEST_BUDGET_SALARY_CAP_MISMATCH — a budget contest's events were priced against different salary caps, or an open one's new event against another cap than its entries were built under. CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules an added event cannot fill.
+     */
+    409: ErrorEnvelope;
+    /**
+     * SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event.
+     */
+    422: ErrorEnvelope;
+};
+
+export type SetContestSportEventsError = SetContestSportEventsErrors[keyof SetContestSportEventsErrors];
+
+export type SetContestSportEventsResponses = {
+    /**
+     * Managed-contest detail response.
+     */
+    200: ContestManagementResponse;
+};
+
+export type SetContestSportEventsResponse = SetContestSportEventsResponses[keyof SetContestSportEventsResponses];
+
 export type DeleteContestData = {
     body?: never;
     path: {
@@ -15770,13 +16107,18 @@ export type GetContestLeaderboardData = {
     path: {
         contestId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The contest event whose field and picks to show; its picks must be revealed. Defaults to the contest's latest event whose picks are revealed.
+         */
+        sportEventId?: string;
+    };
     url: '/api/v1/contests/{contestId}/leaderboard';
 };
 
 export type GetContestLeaderboardErrors = {
     /**
-     * CONTEST_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule's settings are not valid for that definition).
+     * CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event's picks are revealed yet, or not the asked-for one's), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule's settings are not valid for that definition).
      */
     400: ErrorEnvelope;
     /**
@@ -15797,7 +16139,7 @@ export type GetContestLeaderboardError = GetContestLeaderboardErrors[keyof GetCo
 
 export type GetContestLeaderboardResponses = {
     /**
-     * Member-facing contest leaderboard. Live, entry standings are computed from the event's standings; once the contest is COMPLETED they are the standings frozen at settlement.
+     * Member-facing contest leaderboard. Live, entry standings are computed from the events' standings; a completed event answers from the standings frozen when it settled, and a COMPLETED contest's totals are the ones frozen at its settlement.
      */
     200: ContestLeaderboardResponse;
 };
@@ -18799,6 +19141,10 @@ export type GetSelectionStateData = {
          * Specific contest entry to view within roster-based selection flows.
          */
         entryId?: string;
+        /**
+         * The contest event whose picks to show (#713). Defaults to the contest's next event that has not started, else its last event.
+         */
+        sportEventId?: string;
     };
     url: '/api/v1/selections/{contestId}';
 };
@@ -18877,9 +19223,10 @@ export type SubmitContestEntryData = {
     path: {
         contestId: string;
         entryId: string;
+        sportEventId: string;
     };
     query?: never;
-    url: '/api/v1/selections/{contestId}/entries/{entryId}/submit';
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/submit';
 };
 
 export type SubmitContestEntryErrors = {

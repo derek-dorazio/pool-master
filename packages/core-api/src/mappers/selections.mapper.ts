@@ -99,6 +99,8 @@ export function toSelectionStateResponse(view: SelectionView): SelectionStateRes
   return {
     contestId: view.contest.id,
     contestName: view.contest.name,
+    sportEventId: view.sportEventId,
+    acceptsPicks: view.acceptsPicks,
     selectionType: view.contest.selectionType,
     drawnAt: view.contest.drawnAt?.toISOString() ?? null,
     isCommissioner: view.isCommissioner,

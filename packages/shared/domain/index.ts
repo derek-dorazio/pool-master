@@ -2,6 +2,7 @@ export * from './enums';
 export * from './unvalidated';
 export * from './contest-validity';
 export * from './tiered-roster';
+export * from './contest-events';
 export * from './budget-pricing';
 export * from './contest-rules';
 export * from './sport-event-lifecycle';

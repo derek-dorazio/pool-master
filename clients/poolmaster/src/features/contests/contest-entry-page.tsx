@@ -50,13 +50,15 @@ import { ContestHeader, ContestSubMenu } from './contest-header';
 import { contestEntryTiebreaker, contestParticipantNoun } from './contest-sport';
 import { fetchContestEntries } from './use-contest-entries';
 import { useContestSchedule } from './use-contest-schedule';
+import { ContestEventSwitcher } from './contest-event-switcher';
+import { entryEventStatus, hasContestEventStarted } from './contest-events';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type SelectionState = SelectionStateResponse;
 
-const HIDDEN_PICKS_HELPER = 'Hidden until the contest locks';
+const HIDDEN_PICKS_HELPER = 'Hidden until the event starts';
 
 function formatStillToPick(count: number, participant: SportNoun): string {
   return `${count} ${count === 1 ? participant.one : participant.many} still to pick`;
@@ -111,7 +113,9 @@ export function ContestEntryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
-  const selectionStateQueryKey = QueryKeys.selectionStates.detail(contestId, entryId);
+  // Null opens the room on the contest's current event; the server says which one that is.
+  const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
+  const selectionStateQueryKey = QueryKeys.selectionStates.detail(contestId, entryId, requestedEventId ?? undefined);
   const groupToggleRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const [entryNameDraft, setEntryNameDraft] = useState('');
@@ -144,7 +148,7 @@ export function ContestEntryPage() {
     queryFn: async (): Promise<SelectionState> => {
       const response = await getSelectionState({
         path: { contestId },
-        query: { entryId },
+        query: requestedEventId ? { entryId, sportEventId: requestedEventId } : { entryId },
       });
       if (!response.data) {
         throwApiError(response.error, 'Selection state response is missing data.');
@@ -462,10 +466,11 @@ export function ContestEntryPage() {
     },
   });
 
-  // Submitting is what makes the entry count (#481); the server refuses an incomplete lineup.
+  // Submitting is what makes the entry count (#481), one event's picks at a time (#713); the
+  // server refuses an incomplete lineup.
   const submitEntryMutation = useInvalidatingMutation({
-    mutationFn: async () => {
-      const response = await submitContestEntry({ path: { contestId, entryId } });
+    mutationFn: async (sportEventId: string) => {
+      const response = await submitContestEntry({ path: { contestId, entryId, sportEventId } });
       if (!response.data) {
         throwApiError(response.error, 'Contest entry submit response is missing data.');
       }
@@ -534,15 +539,23 @@ export function ContestEntryPage() {
   const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
   const isMyEntry = myEntryIds.includes(entryId);
   const isRandomDraw = contest.selectionType === SelectionType.RANDOM_DRAW;
-  // A random draw closes entries when it deals, even though the contest stays open until tee-off.
-  const isEditable = areContestEntriesOpen({ status: contest.status, drawnAt: contest.drawnAt ?? selectionState.drawnAt }, schedule?.startsAt);
+  const shownEventId = selectionState.sportEventId;
+  const shownEvent = contest.sportEvents.find((sportEvent) => sportEvent.sportEventId === shownEventId) ?? null;
+  // The entry's name and tiebreaker are the contest's: they lock when its first event starts. A
+  // random draw closes entries when it deals, even though the contest stays open until tee-off.
+  const detailsEditable = areContestEntriesOpen({ status: contest.status, drawnAt: contest.drawnAt ?? selectionState.drawnAt }, schedule?.startsAt);
+  // The shown event's picks are its own (#713): open until that event starts, as the server
+  // read it, and closed here too once the start passes with the page still open.
+  const isEditable = selectionState.acceptsPicks
+    && !(contest.drawnAt ?? selectionState.drawnAt)
+    && !(shownEvent && hasContestEventStarted(shownEvent));
   // Before the contest locks, the server answers the viewer's own entry when another team's is
   // asked for, so a different selected entry means this one's picks are not ours to see yet.
   const picksHidden = selectionState.selectedEntryId !== entryId;
   const selectedEntry = selectionState.entries.find((entry) => entry.id === entryId) ?? null;
   // The room's copy is the fresher one: a pick change answers with it, and a change that leaves
   // a submitted lineup short sends the entry back to DRAFT there.
-  const entryStatus = selectedEntry?.status ?? entrySummary?.status ?? ContestEntryStatus.DRAFT;
+  const entryStatus = selectedEntry?.status ?? (entrySummary ? entryEventStatus(entrySummary, shownEventId) : ContestEntryStatus.DRAFT);
   const isSubmitted = entryStatus === ContestEntryStatus.SUBMITTED;
   const selectionGroups = picksHidden ? [] : selectionState.selectionGroups ?? [];
   const completionStats = getCompletionStats(selectionGroups);
@@ -571,7 +584,7 @@ export function ContestEntryPage() {
     || !isEditable
     || !lineupComplete
     || submitBlockedReason !== null
-    || (tiebreaker !== null && !hasSelectedTiebreaker)
+    || (tiebreaker !== null && detailsEditable && !hasSelectedTiebreaker)
     || saveEntryDetailsMutation.isPending
     || submitEntryMutation.isPending
     || submitSelectionMutation.isPending;
@@ -581,7 +594,7 @@ export function ContestEntryPage() {
   async function submitEntry() {
     try {
       await saveEntryDetailsMutation.mutateAsync();
-      await submitEntryMutation.mutateAsync();
+      await submitEntryMutation.mutateAsync(shownEventId);
     } catch {
       return;
     }
@@ -642,6 +655,22 @@ export function ContestEntryPage() {
         )}
         title={selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
         titleTestId="contest-entry-heading"
+      />
+
+      <ContestEventSwitcher
+        describe={(sportEvent) => (
+          picksHidden
+            ? null
+            : CONTEST_ENTRY_STATUS_LABELS[
+              sportEvent.sportEventId === shownEventId || !entrySummary
+                ? entryStatus
+                : entryEventStatus(entrySummary, sportEvent.sportEventId)
+            ]
+        )}
+        events={contest.sportEvents}
+        onChange={setRequestedEventId}
+        testId="contest-entry-event-switcher"
+        value={shownEventId}
       />
 
       {isRandomDraw ? <DrawEntryMetrics isEditable={isEditable} noun={participantNoun} selectionState={selectionState} /> : (
@@ -725,7 +754,7 @@ export function ContestEntryPage() {
             {isMyEntry ? (
               // A random-draw entry has no lineup to submit, so nothing here saves: the draw
               // sets its golfers and there is no tiebreaker to show.
-              isRandomDraw ? null : isEditable ? (
+              isRandomDraw ? null : detailsEditable ? (
                 <Tile className="mt-5 space-y-4" padding="sm" radius="lg" variant="subtle">
                   <FormField label="Entry name">
                     <Input
@@ -779,7 +808,7 @@ export function ContestEntryPage() {
           <div className="mt-5 space-y-5">
             {picksHidden ? (
               <Alert data-testid="contest-entry-picks-hidden">
-                This team&apos;s picks stay hidden until the contest locks.
+                This team&apos;s picks stay hidden until the event starts.
               </Alert>
             ) : null}
             {isBudget ? selectionGroups.map((group) => (isEditable ? (
@@ -889,7 +918,7 @@ export function ContestEntryPage() {
 
             {isEditable && isMyEntry && lineupComplete ? (
               <TiebreakerSelector
-                disabled={saveEntryDetailsMutation.isPending || submitEntryMutation.isPending}
+                disabled={!detailsEditable || saveEntryDetailsMutation.isPending || submitEntryMutation.isPending}
                 isSubmitted={isSubmitted}
                 isSubmitting={saveEntryDetailsMutation.isPending || submitEntryMutation.isPending}
                 onChange={setTiebreakerDraft}

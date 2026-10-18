@@ -28,6 +28,9 @@ export const selectionErrors = {
   contestNotFound: (contestId: string) =>
     new SelectionError(`Contest ${contestId} was not found`, 'CONTEST_NOT_FOUND', 404),
 
+  eventNotInContest: (sportEventId: string, contestId: string) =>
+    new SelectionError(`Event ${sportEventId} is not one contest ${contestId} covers`, 'CONTEST_EVENT_NOT_IN_CONTEST', 404),
+
   entryNotFound: (entryId: string, contestId: string) =>
     new SelectionError(
       `Entry ${entryId} was not found for contest ${contestId}`,

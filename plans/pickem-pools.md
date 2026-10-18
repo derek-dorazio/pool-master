@@ -209,7 +209,7 @@ Questions:
    (match, side) keeps one table for all pick'em formats; the team is derived.
 4. **Per-match lock and reveal.** Today a contest takes picks only while `OPEN` and before the
    event's start, and reveals every entry's picks once it leaves `OPEN`
-   (`SelectionService`, `contestPicksRevealed`). Pick'em needs both decided **per match**:
+   (`SelectionService`, `areEventPicksRevealed`). Pick'em needs both decided **per match**:
    a pick is editable until its match kicks off, and every entry's pick on that match becomes
    visible at kickoff. This is the largest behaviour change. It should become a property of the
    selection engine (roster engines lock per contest; match engines lock per match) rather than

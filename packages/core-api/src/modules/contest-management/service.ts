@@ -8,14 +8,18 @@ import type {
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import type {
   ContestManagementDetailDto,
+  ContestManagementSportEventDto,
   ContestConfigurationRequest,
   CreateContestRequest,
-  EffectiveTierDto,
   ApiErrorCode,
 } from '@poolmaster/shared/dto';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
+  CONTEST_BUDGET_SALARY_CAP_MISMATCH,
   CONTEST_DRAW_FIELD_OUT_OF_RANGE,
+  CONTEST_DRAW_SINGLE_EVENT,
+  CONTEST_EVENTS_LEAGUE_MISMATCH,
+  CONTEST_EVENTS_LOCKED,
   CONTEST_BUDGET_UNFILLABLE,
   CONTEST_CONFIGURATION_LOCKED,
   CONTEST_CONFIGURATION_REQUIRED,
@@ -32,6 +36,7 @@ import {
 import type {
   BudgetContestConfig,
   BudgetContestRules,
+  Contest,
   ContestConfigTemplate,
   ContestConfiguration,
   ContestRules,
@@ -121,7 +126,7 @@ export class ContestManagementService {
   ): Promise<string> {
     this.logger.debug({
       leagueId: context.leagueId,
-      sportEventId: input.sportEventId,
+      sportEventIds: input.sportEventIds,
       contestFormat: input.contestFormat,
       selectionType: input.selectionType,
       hasTemplate: input.templateId !== undefined,
@@ -131,11 +136,12 @@ export class ContestManagementService {
       input,
       this.contestConfigTemplateRepo,
     );
-    const sportEvent = await this.assertSportEventContestEligible(input.sportEventId);
+    const sportEvents = await this.assertSportEventsContestEligible(input.sportEventIds);
+    const sportEvent = this.assertOneSportLeague(sportEvents);
     const templateLeagueId = resolvedConfiguration.template?.sportLeagueId ?? null;
     if (templateLeagueId !== null && templateLeagueId !== sportEvent.sportLeagueId) {
       this.logger.warn({
-        sportEventId: input.sportEventId,
+        sportEventId: sportEvent.id,
         eventSportLeagueId: sportEvent.sportLeagueId,
         templateId: resolvedConfiguration.template?.id,
         templateSportLeagueId: templateLeagueId,
@@ -152,7 +158,7 @@ export class ContestManagementService {
       )
     ) {
       this.logger.warn({
-        sportEventId: input.sportEventId,
+        sportEventId: sportEvent.id,
         sport: sportEvent.sport,
         tournamentFormat: sportEvent.tournamentFormat,
         contestFormat: input.contestFormat,
@@ -164,14 +170,15 @@ export class ContestManagementService {
     }
     const { selectionType } = input;
     assertRulesMatchSelectionType(resolvedConfiguration.configuration, selectionType);
+    this.assertEventCountFitsSelectionType(selectionType, sportEvents.length);
     const { configJson, scoring } = await this.resolveContestRules(
-      input.sportEventId,
+      sportEvents,
       resolvedConfiguration.configuration,
       { requested: resolvedConfiguration.scoring, kept: null },
     );
     const contest = await this.contestRepo.create({
       leagueId: context.leagueId,
-      sportEventId: input.sportEventId,
+      sportEventIds: orderContestEvents(sportEvents),
       name: input.name,
       // A new contest is the commissioner's draft (#117): only they see it, nobody can enter,
       // and its settings stay editable until they open it to the league.
@@ -209,22 +216,19 @@ export class ContestManagementService {
   }
 
   /**
-   * Read-only echo of the tier structure the contest inherits from its
-   * linked SportEvent (plans/124 §4.6/§5.3). Tiers are event-owned — there
-   * is no per-contest override — so every ContestManagementDetailDto carries
-   * this so the commissioner UI can show what was inherited without a mode
-   * flag. Reads through the same SportEventTierService resolution the root-admin
-   * tier routes use. Returns [] when the contest has no linked event or the
-   * event has no tiers defined yet.
+   * Read-only echo of the tier structure the contest inherits from each of its events
+   * (plans/124 §4.6/§5.3, per event since #713). Tiers are event-owned — there is no per-contest
+   * override — so every ContestManagementDetailDto carries them so the commissioner UI can show
+   * what was inherited without a mode flag. Reads through the same SportEventTierService
+   * resolution the root-admin tier routes use; an event with no tiers yet has an empty list.
    */
-  private async resolveEffectiveTiers(
-    sportEventId: string | null | undefined,
-  ): Promise<EffectiveTierDto[]> {
-    if (!sportEventId) {
-      return [];
-    }
-    const tiers = await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId);
-    return toEffectiveTierDtoList(tiers);
+  private async resolveContestSportEvents(contest: Contest): Promise<ContestManagementSportEventDto[]> {
+    return Promise.all(contest.sportEventIds.map(async (sportEventId) => ({
+      sportEventId,
+      effectiveTiers: toEffectiveTierDtoList(
+        await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId),
+      ),
+    })));
   }
 
   async getContest(contestId: string): Promise<ContestManagementDetailDto> {
@@ -251,7 +255,7 @@ export class ContestManagementService {
     return buildContestManagementDetail(
       contest,
       configuration,
-      await this.resolveEffectiveTiers(contest.sportEventId),
+      await this.resolveContestSportEvents(contest),
     );
   }
 
@@ -286,7 +290,7 @@ export class ContestManagementService {
     }
     assertRulesMatchSelectionType(input, configuration.selectionType);
     // A rules change that does not send scoring keeps the contest's (its points table, say).
-    const { configJson, scoring } = await this.resolveContestRules(contest.sportEventId, input, {
+    const { configJson, scoring } = await this.resolveContestRules(await this.findContestSportEvents(contest), input, {
       requested: input.scoring,
       kept: currentScoring(await this.participantContestScoringRuleRepo.findByContestConfiguration(configuration.id)),
     });
@@ -317,7 +321,7 @@ export class ContestManagementService {
     return buildContestManagementDetail(
       contest,
       refreshedConfiguration,
-      await this.resolveEffectiveTiers(contest.sportEventId),
+      await this.resolveContestSportEvents(contest),
     );
   }
 
@@ -346,10 +350,11 @@ export class ContestManagementService {
       throw new ContestManagementError('Contest configuration not found', 'CONTEST_NOT_FOUND', 404);
     }
 
-    await this.assertSportEventNotStarted(contestId, contest.sportEventId);
-    // The event may have changed since the rules were saved: its tiers, or which golfers are
+    const sportEvents = await this.findContestSportEvents(contest);
+    this.assertNoSportEventStarted(contestId, sportEvents);
+    // The events may have changed since the rules were saved: their tiers, or which golfers are
     // still in the field. Rules nobody could enter are refused here too.
-    await this.resolveContestRules(contest.sportEventId, ensureTypedConfiguration(configuration), {
+    await this.resolveContestRules(sportEvents, ensureTypedConfiguration(configuration), {
       kept: currentScoring(await this.participantContestScoringRuleRepo.findByContestConfiguration(configuration.id)),
     });
 
@@ -375,28 +380,119 @@ export class ContestManagementService {
     this.logger.info({ contestId, leagueId }, 'contest opened to league');
   }
 
-  private async assertSportEventNotStarted(
+  /**
+   * "Events in this contest" (#713): sets the events the contest covers to `sportEventIds` and
+   * returns the contest as getContest does. An added event must be eligible as at create
+   * (released, field loaded, not started) and from the contest's sport league, and the contest's
+   * rules must fit it. Events can be added while the contest is a draft, open or live; one can be
+   * removed only while none of the contest's events has started, and removing it deletes the
+   * picks made on it. The contest keeps its events in start-date order.
+   */
+  async setContestSportEvents(
+    leagueId: string,
     contestId: string,
-    sportEventId: string | undefined,
-  ): Promise<void> {
-    if (!sportEventId) {
-      return;
+    sportEventIds: readonly string[],
+  ): Promise<ContestManagementDetailDto> {
+    this.logger.debug({ leagueId, contestId, sportEventIds }, 'contest management set sport events start');
+    const contest = await this.contestRepo.findById(contestId);
+    if (!contest || contest.leagueId !== leagueId) {
+      this.logger.warn({ leagueId, contestId }, 'contest management set sport events missing contest');
+      throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
     }
-    const sportEvent = await this.sportEventReader.findById(sportEventId);
-    if (!sportEvent) {
-      this.logger.warn({ contestId, sportEventId }, 'contest management open contest missing sport event');
+    if (contest.status === ContestStatus.COMPLETED || contest.drawnAt !== undefined) {
+      this.logger.warn({ contestId, status: contest.status, drawn: contest.drawnAt !== undefined }, 'contest management set sport events refused for a settled or drawn contest');
       throw new ContestManagementError(
-        'Selected sporting event was not found.',
-        'SPORT_EVENT_NOT_FOUND',
-        404,
+        contest.drawnAt ? 'This contest\'s draw has been dealt, so its event can no longer change.' : 'This contest is finished, so its events can no longer change.',
+        CONTEST_EVENTS_LOCKED,
+        409,
       );
     }
-    if (hasSportEventStarted(sportEvent, this.now())) {
+    const configuration = await this.contestConfigurationRepo.findByContest(contestId);
+    if (!configuration) {
+      this.logger.warn({ contestId }, 'contest management set sport events missing configuration');
+      throw new ContestManagementError('Contest configuration not found', 'CONTEST_NOT_FOUND', 404);
+    }
+
+    const current = await this.findContestSportEvents(contest);
+    const requestedIds = [...new Set(sportEventIds)];
+    const removed = current.filter((sportEvent) => !requestedIds.includes(sportEvent.id));
+    const startedEvent = current.find((sportEvent) => hasSportEventStarted(sportEvent, this.now()));
+    if (removed.length > 0 && startedEvent) {
       this.logger.warn({
         contestId,
-        sportEventId,
-        status: sportEvent.status,
-        startDate: sportEvent.startDate.toISOString(),
+        removedSportEventIds: removed.map((sportEvent) => sportEvent.id),
+        startedSportEventId: startedEvent.id,
+      }, 'contest management set sport events refused a removal once an event has started');
+      throw new ContestManagementError(
+        'One of this contest\'s events has started, so events can be added but not removed.',
+        CONTEST_EVENTS_LOCKED,
+        409,
+      );
+    }
+    const kept = current.filter((sportEvent) => requestedIds.includes(sportEvent.id));
+    const added = await this.assertSportEventsContestEligible(
+      requestedIds.filter((sportEventId) => !current.some((sportEvent) => sportEvent.id === sportEventId)),
+    );
+    const sportEvents = [...kept, ...added];
+    // The contest's league is its first event's; the new list must keep to it.
+    const first = current.at(0);
+    this.assertOneSportLeague(first ? [first, ...sportEvents] : sportEvents);
+    this.assertEventCountFitsSelectionType(contest.selectionType, sportEvents.length);
+
+    const storedRules = ensureTypedConfiguration(configuration);
+    const { configJson } = await this.resolveContestRules(sportEvents, storedRules, {
+      kept: currentScoring(await this.participantContestScoringRuleRepo.findByContestConfiguration(configuration.id)),
+    });
+    // Only a budget contest's rules depend on its events, through their salary cap. A draft takes
+    // the new events' cap; an open contest's members entered under the old one.
+    if (configJson.selectionType === SelectionType.BUDGET_PICK
+      && storedRules.selectionType === SelectionType.BUDGET_PICK
+      && configJson.salaryCap !== storedRules.salaryCap) {
+      if (contest.status !== ContestStatus.DRAFT) {
+        this.logger.warn({ contestId, salaryCap: storedRules.salaryCap, eventSalaryCap: configJson.salaryCap }, 'contest management set sport events refused another salary cap on an open contest');
+        throw new ContestManagementError(
+          `These events were priced against a $${configJson.salaryCap.toLocaleString('en-US')} salary cap, but this contest's entries are built under $${storedRules.salaryCap.toLocaleString('en-US')}.`,
+          CONTEST_BUDGET_SALARY_CAP_MISMATCH,
+          409,
+        );
+      }
+      await this.contestConfigurationRepo.update(configuration.id, { configJson });
+    }
+
+    await this.contestRepo.replaceSportEvents(contestId, orderContestEvents(sportEvents));
+    this.logger.info({
+      contestId,
+      sportEventIds: orderContestEvents(sportEvents),
+      addedCount: added.length,
+      removedCount: removed.length,
+    }, 'contest management set sport events completed');
+    return this.getContest(contestId);
+  }
+
+  /** The contest's events, in its sequence order; each must still exist. */
+  private async findContestSportEvents(contest: Contest): Promise<ContestCreateSportEventState[]> {
+    return Promise.all(contest.sportEventIds.map(async (sportEventId) => {
+      const sportEvent = await this.sportEventReader.findById(sportEventId);
+      if (!sportEvent) {
+        this.logger.warn({ contestId: contest.id, sportEventId }, 'contest management contest event missing');
+        throw new ContestManagementError(
+          'Selected sporting event was not found.',
+          'SPORT_EVENT_NOT_FOUND',
+          404,
+        );
+      }
+      return sportEvent;
+    }));
+  }
+
+  private assertNoSportEventStarted(contestId: string, sportEvents: readonly ContestCreateSportEventState[]): void {
+    const started = sportEvents.find((sportEvent) => hasSportEventStarted(sportEvent, this.now()));
+    if (started) {
+      this.logger.warn({
+        contestId,
+        sportEventId: started.id,
+        status: started.status,
+        startDate: started.startDate.toISOString(),
       }, 'contest management open contest refused for an event that has started');
       throw new ContestManagementError(
         'This contest\'s event has already started, so it can no longer be opened.',
@@ -404,6 +500,53 @@ export class ContestManagementService {
         409,
       );
     }
+  }
+
+  /**
+   * Every event of a contest is from one sport league (#713), so one sport's rules, templates and
+   * scoring fit them all. Answers with the first event, whose league stands for the list.
+   */
+  private assertOneSportLeague(
+    sportEvents: readonly ContestCreateSportEventState[],
+  ): ContestCreateSportEventState {
+    const first = sportEvents.at(0);
+    if (!first) {
+      throw new ContestManagementError('Choose at least one event for the contest.', 'SPORT_EVENT_NOT_FOUND', 404);
+    }
+    const other = sportEvents.find((sportEvent) => sportEvent.sportLeagueId !== first.sportLeagueId);
+    if (other) {
+      this.logger.warn({
+        sportEventId: other.id,
+        sportLeagueId: other.sportLeagueId,
+        contestSportLeagueId: first.sportLeagueId,
+      }, 'contest management events refused for mixing sport leagues');
+      throw new ContestManagementError(
+        'Every event in a contest must be from the same sport league.',
+        CONTEST_EVENTS_LEAGUE_MISMATCH,
+      );
+    }
+    return first;
+  }
+
+  /** A random draw deals one event's field (#601), so its contest covers exactly one (#713). */
+  private assertEventCountFitsSelectionType(selectionType: SelectionType, eventCount: number): void {
+    if (selectionType === SelectionType.RANDOM_DRAW && eventCount > 1) {
+      this.logger.warn({ selectionType, eventCount }, 'contest management events refused: a random draw covers one event');
+      throw new ContestManagementError(
+        'A random-draw contest covers one event: the draw deals that event\'s field.',
+        CONTEST_DRAW_SINGLE_EVENT,
+      );
+    }
+  }
+
+  private async assertSportEventsContestEligible(
+    sportEventIds: readonly string[],
+  ): Promise<ContestCreateSportEventState[]> {
+    const eligible: ContestCreateSportEventState[] = [];
+    for (const sportEventId of new Set(sportEventIds)) {
+      eligible.push(await this.assertSportEventContestEligible(sportEventId));
+    }
+    return eligible;
   }
 
   private async assertSportEventContestEligible(
@@ -471,11 +614,13 @@ export class ContestManagementService {
    * (`resolveContestScoring`).
    */
   private async resolveContestRules(
-    sportEventId: string | undefined,
+    sportEvents: readonly ContestCreateSportEventState[],
     rules: ContestRules,
     scoringInput: ContestScoringInput,
   ): Promise<{ configJson: ContestSelectionConfig; scoring: ContestScoringSettings }> {
-    const sportEvent = await this.findRulesSportEvent(sportEventId);
+    // One sport league, so one sport: the first event answers the sport's questions, and every
+    // event is checked where the events can differ (tiers, prices, rounds).
+    const sportEvent = this.assertOneSportLeague(sportEvents);
     const definition = getSportDefinition(sportEvent.sport);
     if (!sportAllowsSelectionType(definition, rules.selectionType)) {
       this.logger.warn({
@@ -489,10 +634,14 @@ export class ContestManagementService {
       );
     }
     const scoring = this.resolveContestScoring(sportEvent, scoringInput);
-    this.assertScoringFitsEvent(sportEvent, scoring);
+    for (const each of sportEvents) {
+      this.assertScoringFitsEvent(each, scoring);
+    }
     switch (rules.selectionType) {
       case SelectionType.TIERED:
-        await this.assertTieredRulesFitTierCount(sportEvent.id, rules);
+        for (const each of sportEvents) {
+          await this.assertTieredRulesFitTierCount(each.id, rules);
+        }
         return {
           configJson: {
             selectionType: rules.selectionType,
@@ -503,7 +652,7 @@ export class ContestManagementService {
         };
       case SelectionType.BUDGET_PICK:
         return {
-          configJson: await this.resolveBudgetRules(sportEvent, rules),
+          configJson: await this.resolveBudgetRulesForEvents(sportEvents, rules),
           scoring,
         };
       case SelectionType.RANDOM_DRAW:
@@ -614,29 +763,30 @@ export class ContestManagementService {
     }
   }
 
-  /** A contest's rules are checked against its event, so a contest with none has no rules to keep. */
-  private async findRulesSportEvent(
-    sportEventId: string | undefined,
-  ): Promise<ContestCreateSportEventState> {
-    if (!sportEventId) {
-      this.logger.warn({ sportEventId: null }, 'contest management rules validation for a contest with no sport event');
+  /**
+   * Budget rules against every event of the contest (#713): each must fill the roster under its
+   * cap, and they must share one cap, since the rules carry one.
+   */
+  private async resolveBudgetRulesForEvents(
+    sportEvents: readonly ContestCreateSportEventState[],
+    rules: BudgetContestRules,
+  ): Promise<BudgetContestConfig> {
+    const configs: BudgetContestConfig[] = [];
+    for (const sportEvent of sportEvents) {
+      configs.push(await this.resolveBudgetRules(sportEvent, rules));
+    }
+    const first = configs.at(0);
+    if (!first || configs.some((config) => config.salaryCap !== first.salaryCap)) {
+      this.logger.warn({
+        salaryCaps: configs.map((config) => config.salaryCap),
+      }, 'contest management budget rules refused for events priced against different caps');
       throw new ContestManagementError(
-        'This contest has no sporting event.',
-        'SPORT_EVENT_NOT_FOUND',
-        404,
+        'Every event in a budget contest must be priced against the same salary cap.',
+        CONTEST_BUDGET_SALARY_CAP_MISMATCH,
+        409,
       );
     }
-
-    const sportEvent = await this.sportEventReader.findById(sportEventId);
-    if (!sportEvent) {
-      this.logger.warn({ sportEventId }, 'contest management rules validation missing sport event');
-      throw new ContestManagementError(
-        'Selected sporting event was not found.',
-        'SPORT_EVENT_NOT_FOUND',
-        404,
-      );
-    }
-    return sportEvent;
+    return first;
   }
 
   /**
@@ -815,11 +965,17 @@ function currentScoring(rules: readonly ParticipantContestScoringRule[]): Contes
   return rule?.scoring.success ? rule.scoring.data : null;
 }
 
+/** The contest's events in sequence order: by start date, then id, so the order is stable. */
+function orderContestEvents(sportEvents: readonly Pick<ContestCreateSportEventState, 'id' | 'startDate'>[]): string[] {
+  return [...sportEvents]
+    .sort((left, right) => left.startDate.getTime() - right.startDate.getTime() || left.id.localeCompare(right.id))
+    .map((sportEvent) => sportEvent.id);
+}
+
 function buildContestManagementDetail(
   contest: {
     id: string;
     leagueId: string;
-    sportEventId?: string;
     name: string;
     status: ContestManagementDetailDto['status'];
     createdAt: Date;
@@ -833,16 +989,13 @@ function buildContestManagementDetail(
     configJson?: ContestSelectionConfig;
     maxEntriesPerSquad?: number | null;
   },
-  effectiveTiers: EffectiveTierDto[],
+  sportEvents: ContestManagementSportEventDto[],
 ): ContestManagementDetailDto {
   const configJson = ensureTypedConfiguration(configuration);
   return {
     id: contest.id,
     leagueId: contest.leagueId,
-    // Every contest the one create makes has an event (#245); only rows from before it can lack
-    // one. The response field is a required string, and the serializer always rendered a missing
-    // value as "" — kept as is here rather than hidden behind a cast.
-    sportEventId: contest.sportEventId ?? '',
+    sportEvents,
     name: contest.name,
     status: contest.status,
     createdAt: contest.createdAt.toISOString(),
@@ -854,7 +1007,6 @@ function buildContestManagementDetail(
       contestId: configuration.contestId,
       ...configJson,
     },
-    effectiveTiers,
   };
 }
 
