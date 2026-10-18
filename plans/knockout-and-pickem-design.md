@@ -995,6 +995,16 @@ How one week runs (described to Derek 2026-10-17):
   the week.
 - Weeks run side by side: week 7 can be picked and submitted while week 6 is still playing.
 
+*As built in #716:* the pick is `ContestEntryMatchPrediction` with a team that is never null
+(no sport with draws is built yet). Picks are saved in batches, all or none, so two confidence
+values can be swapped in one save; a value may repeat until submit. A week still in draft at
+its first kickoff can no longer be picked or submitted. A game's kickoff is its scheduled time,
+else the event's start; cancelled games are not picked. The pick window is declared by the
+prediction engines only (roster picks always close at the event's start). `KNOCKOUT_BRACKET`
+allows `PREDICTION` until #715 renames it. Settlement leaves prediction contests `ACTIVE` until
+#717 scores them, the web create page does not offer pick'em until the week screen (#718), and
+submitting a week sends no email yet.
+
 **Q5.5 What does `ACTIVE` mean for a pick'em contest?** *Decided by Derek 2026-10-17:* every
 week is its own mini workflow. Its event is set up, released, picked and submitted, then goes
 live and settles. The contest keeps the same four statuses as every contest. It is `ACTIVE`

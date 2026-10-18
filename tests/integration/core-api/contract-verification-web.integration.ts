@@ -18,6 +18,7 @@ import {
   ContestManagementResponseSchema,
   ContestResponseSchema,
   SelectionStateResponseSchema,
+  GamePicksResponseSchema,
   ErrorEnvelopeSchema,
   SportEventListResponseSchema,
   GenerateInviteLinkResponseSchema,
@@ -40,6 +41,7 @@ import type {
 } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
+  PickEmMode,
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
@@ -863,6 +865,105 @@ describe('Contract verification (web)', () => {
     const parsed = SelectionStateResponseSchema.safeParse(drawRes.json());
     expect(parsed.success).toBe(true);
     expect(parsed.data?.drawnAt).toEqual(expect.any(String));
+  });
+
+  it('game-pick read, save and submit routes match GamePicksResponseSchema, with a pick on the game', async () => {
+    const owner = await createTestUser({ displayName: 'Contract Pickem Owner' });
+    const leagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: owner.headers,
+      payload: buildCreateLeaguePayload('Contract Pickem League'),
+    });
+    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
+
+    const prisma = getPrisma();
+    const contest = await prisma.contest.create({
+      data: {
+        leagueId,
+        name: 'Contract Pickem Contest',
+        status: 'OPEN',
+        contestFormat: ContestFormat.PREDICTION,
+        selectionType: SelectionType.PICK_EM,
+      },
+    });
+    await prisma.contestConfiguration.create({
+      data: {
+        contestId: contest.id,
+        selectionType: SelectionType.PICK_EM,
+        maxEntriesPerSquad: 1,
+        configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE },
+      },
+    });
+    // Entered before the contest has an event, so the entry does not wait on a loaded field.
+    await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.contests.myEntry(contest.id),
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+
+    const sport = await prisma.sport.upsert({
+      where: { sport: Sport.BASKETBALL },
+      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'KNOCKOUT_BRACKET' },
+      update: {},
+    });
+    const event = await prisma.sportEvent.create({
+      data: {
+        ...(await freshEventEdition(prisma)),
+        externalId: `contract-pickem-${randomUUID().slice(0, 8)}`,
+        providerId: 'integration-test',
+        sport: Sport.BASKETBALL,
+        name: 'Contract Pickem Event',
+        startDate: new Date('2099-03-19T16:00:00.000Z'),
+        status: 'SCHEDULED',
+        rounds: 1,
+      },
+    });
+    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: event.startDate } });
+    const [home, away] = await Promise.all(['Contract Home', 'Contract Away'].map(async (name) => {
+      const team = await prisma.participant.create({ data: { sportId: sport.id, name, participantType: 'TEAM', externalIds: {} } });
+      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
+    }));
+    const game = await prisma.sportEventMatch.create({
+      data: {
+        sportEventId: event.id,
+        sportEventRoundId: round.id,
+        matchNumber: 1,
+        homeSportEventParticipantId: home.id,
+        awaySportEventParticipantId: away.id,
+        isNeutralSite: false,
+        scheduledDate: new Date('2099-03-19T16:00:00.000Z'),
+      },
+    });
+    await prisma.contestSportEvent.create({ data: { contestId: contest.id, sportEventId: event.id, sequence: 1 } });
+    const entry = await prisma.contestEntry.findFirstOrThrow({ where: { contestId: contest.id }, select: { id: true } });
+    await prisma.contestEntryEvent.create({ data: { contestEntryId: entry.id, sportEventId: event.id } });
+    const url = `/api/v1/selections/${contest.id}/entries/${entry.id}/events/${event.id}/game-picks`;
+
+    const saveRes = await getApp().inject({
+      method: 'PUT',
+      url,
+      headers: owner.headers,
+      payload: { picks: [{ sportEventMatchId: game.id, sportEventParticipantId: away.id, confidence: 1 }] },
+    });
+    expect(saveRes.statusCode).toBe(200);
+    const saved = GamePicksResponseSchema.safeParse(saveRes.json());
+    expect(saved.success).toBe(true);
+    expect(saved.data?.games[0]?.pick).toMatchObject({ sportEventParticipantId: away.id, confidence: 1 });
+
+    const readRes = await getApp().inject({ method: 'GET', url, headers: owner.headers });
+    expect(readRes.statusCode).toBe(200);
+    expect(GamePicksResponseSchema.safeParse(readRes.json()).success).toBe(true);
+
+    const submitRes = await getApp().inject({ method: 'POST', url: `${url}/submit`, headers: withoutJsonBodyHeaders(owner.headers) });
+    expect(submitRes.statusCode).toBe(200);
+    const submitted = GamePicksResponseSchema.safeParse(submitRes.json());
+    expect(submitted.success).toBe(true);
+    expect(submitted.data?.submittedAt).toEqual(expect.any(String));
+
+    const clearRes = await getApp().inject({ method: 'DELETE', url: `${url}/${game.id}`, headers: withoutJsonBodyHeaders(owner.headers) });
+    expect(clearRes.statusCode).toBe(200);
+    expect(GamePicksResponseSchema.safeParse(clearRes.json()).success).toBe(true);
   });
 
   it('active negative routes match ErrorEnvelopeSchema', async () => {

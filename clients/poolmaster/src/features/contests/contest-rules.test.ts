@@ -1,4 +1,4 @@
-import { SelectionType, Sport, getSportDefinition } from '@poolmaster/shared/domain';
+import { PickEmMode, SelectionType, Sport, getSportDefinition } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import {
   formatContestRules,
@@ -109,6 +109,38 @@ describe('contest rules form', () => {
     const current = { ...valid, picksPerTier: '2', rosterSize: '8' };
     expect(toContestRulesValues({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 5, maxEntriesPerSquad: null }, current))
       .toEqual({ ...current, rosterSize: '6', countedScores: '5', unlimitedEntries: true, maxEntriesPerTeam: '1' });
+  });
+});
+
+describe('pick\'em rules', () => {
+  const TEAM = getSportDefinition(Sport.AMERICAN_FOOTBALL).vocabulary.participant;
+
+  it('names pick\'em and its two modes in product words', () => {
+    expect(formatSelectionTypeName(SelectionType.PICK_EM)).toBe('Pick’em');
+    expect(formatPresetLabel({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP }, 0)).toBe('Straight up');
+    expect(formatPresetLabel({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE }, 0)).toBe('Confidence');
+  });
+
+  it('reads a straight-up contest as picking every game\'s winner, and a confidence one as also ranking each week\'s picks', () => {
+    expect(formatContestRules({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP }, 0, TEAM))
+      .toBe('Pick the winner of every game.');
+    expect(formatContestRules({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE }, 0, TEAM))
+      .toBe('Pick the winner of every game, then rank each week’s picks by confidence.');
+  });
+
+  it('suggests a pick\'em name from the event', () => {
+    expect(suggestContestName('NFL Week 1', SelectionType.PICK_EM, null, 0)).toBe('NFL Week 1 Pick’em');
+  });
+
+  it('turns the mode field into pick\'em rules with no roster size or scores that count', () => {
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, pickEmMode: PickEmMode.CONFIDENCE }, SelectionType.PICK_EM, 0, TEAM))
+      .toEqual({ configuration: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, maxEntriesPerSquad: 1 }, error: null });
+  });
+
+  it('fills only the mode and entry limit from saved pick\'em rules, keeping the roster fields as they were', () => {
+    const current = { ...DEFAULT_CONTEST_RULES, countedScores: '5', rosterSize: '8' };
+    expect(toContestRulesValues({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, maxEntriesPerSquad: 2 }, current))
+      .toEqual({ ...current, pickEmMode: PickEmMode.CONFIDENCE, maxEntriesPerTeam: '2', unlimitedEntries: false });
   });
 });
 

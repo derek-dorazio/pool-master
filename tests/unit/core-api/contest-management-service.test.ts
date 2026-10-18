@@ -3,6 +3,7 @@ import {
   ContestFormat,
   ContestStatus,
   type ContestScoringSettings,
+  PickEmMode,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -17,6 +18,7 @@ import {
   CONTEST_CONFIGURATION_REQUIRED,
   CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH,
   CONTEST_EVENT_ALREADY_STARTED,
+  CONTEST_EVENT_HAS_NO_GAMES,
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_NOT_DRAFT,
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
@@ -215,12 +217,15 @@ function createSportEventReader(overrides?: Partial<{
   rounds: number | null;
   salaryCap: number | null;
   activeFieldPrices: number[];
+  gameCount: number;
 }>): {
   findById: jest.Mock;
   findActiveFieldPrices: jest.Mock;
+  countGames: jest.Mock;
 } {
   return {
     findActiveFieldPrices: jest.fn().mockResolvedValue(overrides?.activeFieldPrices ?? []),
+    countGames: jest.fn().mockResolvedValue(overrides?.gameCount ?? 0),
     findById: jest.fn().mockResolvedValue({
       id: '11111111-1111-1111-1111-111111111111',
       status: overrides?.status ?? SportEventStatus.SCHEDULED,
@@ -699,7 +704,7 @@ describe('ContestManagementService', () => {
 
     expect(result.id).toBe('contest-1');
     expect(result.configuration.id).toBe('config-1');
-    expect(result.configuration.countedScores).toBe(4);
+    expect(result.configuration).toMatchObject({ selectionType: SelectionType.TIERED, countedScores: 4 });
     // pool-master-41t — the detail response always carries the read-only
     // effectiveTiers echo (plans/124 §5.3); empty here because this event
     // has no tiers defined.
@@ -1610,6 +1615,7 @@ describe('ContestManagementService — a contest of several events', () => {
     return {
       findById: jest.fn().mockImplementation(async (id: string) => byId.get(id) ?? null),
       findActiveFieldPrices: jest.fn().mockResolvedValue([10, 10, 10]),
+      countGames: jest.fn().mockResolvedValue(0),
     };
   }
 
@@ -1803,5 +1809,102 @@ describe('ContestManagementService — a contest of several events', () => {
     await expect(service.setContestSportEvents('league-2', 'contest-1', [MASTERS, PGA]))
       .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+  });
+});
+
+// #716: a pick'em contest is a PREDICTION contest on an event with games to pick.
+describe('ContestManagementService pick\'em rules (#716)', () => {
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  const pickEmRules = { selectionType: SelectionType.PICK_EM, maxEntriesPerSquad: 1, mode: PickEmMode.CONFIDENCE } as const;
+  const knockoutScoring: ContestScoringSettings = {
+    participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+    config: { roundValues: [1, 2, 4, 8], upsetBonus: { rule: 'NONE' } },
+  };
+  const pickEmRequest = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
+    name: 'Week 1 Confidence',
+    sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+    contestFormat: 'PREDICTION',
+    selectionType: SelectionType.PICK_EM,
+    configuration: { ...pickEmRules, scoring: knockoutScoring },
+    ...overrides,
+  });
+
+  function pickEmService(options: { gameCount: number; sport?: Sport; tournamentFormat?: TournamentFormat }) {
+    const contestCoreRepo = createContestRepo();
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const reader = createSportEventReader({
+      sport: options.sport ?? Sport.AMERICAN_FOOTBALL,
+      tournamentFormat: options.tournamentFormat ?? TournamentFormat.KNOCKOUT_BRACKET,
+      rounds: 4,
+      gameCount: options.gameCount,
+    });
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      contestConfigurationRepo,
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      reader,
+    );
+    return { contestCoreRepo, contestConfigurationRepo, reader, service };
+  }
+
+  it('creates a PREDICTION pick\'em contest on an event with games, storing only its selection type and mode', async () => {
+    const { contestCoreRepo, contestConfigurationRepo, service } = pickEmService({ gameCount: 3 });
+
+    await service.createContest({ leagueId: 'league-1' }, pickEmRequest());
+
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType: SelectionType.PICK_EM,
+    }));
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      selectionType: SelectionType.PICK_EM,
+      configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE },
+    }));
+  });
+
+  it('refuses a pick\'em contest on an event with no games with 422 CONTEST_EVENT_HAS_NO_GAMES, writing nothing', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 0 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest()))
+      .rejects.toMatchObject({ code: CONTEST_EVENT_HAS_NO_GAMES, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses PICK_EM sent as a ROSTER contest with 422 CONTEST_FORMAT_NOT_ALLOWED, writing nothing', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 3 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({ contestFormat: 'ROSTER' })))
+      .rejects.toMatchObject({ code: 'CONTEST_FORMAT_NOT_ALLOWED', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a roster selection type sent as a PREDICTION contest with 422 CONTEST_FORMAT_NOT_ALLOWED', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 3 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({
+      selectionType: SelectionType.RANDOM_DRAW,
+      configuration: { selectionType: SelectionType.RANDOM_DRAW, maxEntriesPerSquad: 1, picksPerEntry: 1, countedScores: 1, scoring: knockoutScoring },
+    }))).rejects.toMatchObject({ code: 'CONTEST_FORMAT_NOT_ALLOWED', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a PREDICTION contest on a stroke-play golf event with 422 CONTEST_FORMAT_NOT_ALLOWED', async () => {
+    const { contestCoreRepo, service } = pickEmService({
+      gameCount: 3, sport: Sport.GOLF, tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
+    });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: pickEmRules })))
+      .rejects.toMatchObject({ code: 'CONTEST_FORMAT_NOT_ALLOWED', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 });

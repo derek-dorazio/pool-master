@@ -1,4 +1,4 @@
-import { SelectionType, getTieredRosterSize, type ContestRules, type SportNoun } from '@poolmaster/shared/domain';
+import { PickEmMode, SelectionType, getTieredRosterSize, type ContestRules, type SportNoun } from '@poolmaster/shared/domain';
 import { formatDollars } from '@/features/shared/ui';
 
 /**
@@ -9,10 +9,21 @@ const SELECTION_TYPE_NAMES: Record<SelectionType, string> = {
   TIERED: 'Tiered',
   BUDGET_PICK: 'Budget',
   RANDOM_DRAW: 'Random draw',
+  PICK_EM: 'Pick’em',
 };
 
 export function formatSelectionTypeName(selectionType: SelectionType) {
   return SELECTION_TYPE_NAMES[selectionType];
+}
+
+/** What each pick'em mode is called: whether an entry also ranks its picks by confidence. */
+const PICK_EM_MODE_NAMES: Record<PickEmMode, string> = {
+  STRAIGHT_UP: 'Straight up',
+  CONFIDENCE: 'Confidence',
+};
+
+export function formatPickEmModeName(mode: PickEmMode) {
+  return PICK_EM_MODE_NAMES[mode];
 }
 
 /** "1 golfer", "6 golfers": a count with its noun. */
@@ -58,6 +69,13 @@ function formatRandomDrawRules({ countedScores, picksPerEntry }: RandomDrawRules
   return `The draw deals each entry ${countParticipants(picksPerEntry, participant)} at random. ${formatCountedScores(countedScores, picksPerEntry)}`;
 }
 
+/** A pick'em contest's rules: the winner of every game and, in confidence mode, a rank for each. */
+export function describePickEmMode(mode: PickEmMode) {
+  return mode === PickEmMode.CONFIDENCE
+    ? 'Pick the winner of every game, then rank each week’s picks by confidence.'
+    : 'Pick the winner of every game.';
+}
+
 /** "Pick 6, best 4" or "Pick 6, all count": a roster size and the scores that count. */
 function formatRosterLabel(verb: string, rosterSize: number, countedScores: number) {
   return `${verb} ${rosterSize}, ${countedScores >= rosterSize ? 'all count' : `best ${countedScores}`}`;
@@ -83,6 +101,8 @@ export function formatContestRules(
       return formatBudgetRules(configuration, salaryCap, participant);
     case SelectionType.RANDOM_DRAW:
       return formatRandomDrawRules(configuration, participant);
+    case SelectionType.PICK_EM:
+      return describePickEmMode(configuration.mode);
   }
 }
 
@@ -118,12 +138,14 @@ export function formatPresetLabel(configuration: ContestRules, tierCount: number
       return formatRosterLabel('Pick', configuration.rosterSize, configuration.countedScores);
     case SelectionType.RANDOM_DRAW:
       return formatRosterLabel('Draw', configuration.picksPerEntry, configuration.countedScores);
+    case SelectionType.PICK_EM:
+      return formatPickEmModeName(configuration.mode);
   }
 }
 
 /**
  * The name Create contest suggests from the event and the rules, such as "The Masters Pick 6" or
- * "The Masters Budget Pick 6", or "The Masters Sweepstake" for a random draw, until the commissioner types their own.
+ * "The Masters Budget Pick 6", "The Masters Sweepstake" for a random draw, or "NFL Week 1 Pick'em", until the commissioner types their own.
  */
 export function suggestContestName(
   eventName: string,
@@ -142,5 +164,7 @@ export function suggestContestName(
         : `${eventName} Budget`;
     case SelectionType.RANDOM_DRAW:
       return `${eventName} Sweepstake`;
+    case SelectionType.PICK_EM:
+      return `${eventName} Pick’em`;
   }
 }

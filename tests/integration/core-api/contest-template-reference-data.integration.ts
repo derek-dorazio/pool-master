@@ -8,6 +8,7 @@ import {
   assertNever,
   getSportDefinition,
   getTieredRosterSize,
+  isPredictionSelectionType,
   sportAllowsSelectionType,
 } from '@poolmaster/shared/domain';
 import {
@@ -160,6 +161,9 @@ describe('Seeded contest templates and their sport leagues', () => {
           return [template.templateKey, rules.rosterSize, rules.countedScores];
         case SelectionType.RANDOM_DRAW:
           return [template.templateKey, rules.picksPerEntry, rules.countedScores];
+        case SelectionType.PICK_EM:
+          // A pick'em preset picks games, not a lineup, so it counts no scores.
+          return [template.templateKey, rules.mode];
         default:
           return assertNever(rules, 'selection type');
       }
@@ -237,6 +241,9 @@ describe('Seeded cycling tours and their Top 10 templates', () => {
           return [template.templateKey, rules.rosterSize, rules.countedScores];
         case SelectionType.RANDOM_DRAW:
           return [template.templateKey, rules.picksPerEntry, rules.countedScores];
+        case SelectionType.PICK_EM:
+          // A pick'em preset picks games, not a lineup, so it counts no scores.
+          return [template.templateKey, rules.mode];
         default:
           return assertNever(rules, 'selection type');
       }
@@ -312,6 +319,9 @@ describe('Seeded running series and their Top 10 templates', () => {
           return [template.templateKey, rules.rosterSize, rules.countedScores];
         case SelectionType.RANDOM_DRAW:
           return [template.templateKey, rules.picksPerEntry, rules.countedScores];
+        case SelectionType.PICK_EM:
+          // A pick'em preset picks games, not a lineup, so it counts no scores.
+          return [template.templateKey, rules.mode];
         default:
           return assertNever(rules, 'selection type');
       }
@@ -471,17 +481,23 @@ describe('Every seeded contest template, whatever its sport', () => {
             return rules.rosterSize;
           case SelectionType.RANDOM_DRAW:
             return rules.picksPerEntry;
+          case SelectionType.PICK_EM:
+            // A pick'em preset holds no lineup and counts no scores: nothing to compare.
+            return null;
           default:
             return assertNever(rules, 'selection type');
         }
       })();
+      if (held === null || rules.selectionType === SelectionType.PICK_EM) return [];
       return rules.countedScores > held ? [`${template.templateKey}: counts ${rules.countedScores} of ${held}`] : [];
     });
 
     expect(problems).toEqual([]);
   });
 
-  it('gives each seeded sport league, and each sport with no league seeded, a roster default and a preset for every selection type its sport offers', async () => {
+  // Roster presets only: a pick'em contest (#716) is set up without a template, so its selection
+  // type, a PREDICTION one, has no ROSTER preset to find.
+  it('gives each seeded sport league, and each sport with no league seeded, a roster default and a preset for every roster selection type its sport offers', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { active: true, contestFormat: ContestFormat.ROSTER },
     });
@@ -507,6 +523,7 @@ describe('Every seeded contest template, whatever its sport', () => {
     const problems = scopes.flatMap(({ name, sport, offered }) => [
       ...(offered.some((template) => template.isDefault) ? [] : [`${name}: no default preset`]),
       ...getSportDefinition(sport).selectionTypes
+        .filter((selectionType) => !isPredictionSelectionType(selectionType))
         .filter((selectionType) => !offered.some((template) => template.selectionType === selectionType))
         .map((selectionType) => `${name}: no ${selectionType} preset`),
     ]);

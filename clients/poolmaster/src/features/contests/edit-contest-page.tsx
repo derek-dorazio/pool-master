@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, PickEmMode, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
@@ -43,6 +43,7 @@ const editContestFormSchema = z.object({
   contestName: z.string().trim().min(1, 'Contest name is required.'),
   countedScores: z.string(),
   maxEntriesPerTeam: z.string(),
+  pickEmMode: z.nativeEnum(PickEmMode),
   picksPerEntry: z.string(),
   picksPerTier: z.string(),
   rosterSize: z.string(),

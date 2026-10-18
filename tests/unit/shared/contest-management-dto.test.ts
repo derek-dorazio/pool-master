@@ -27,12 +27,21 @@ describe('contest-management dto schemas', () => {
     expect(parsed.templateId).toBeUndefined();
   });
 
-  it('rejects unsupported legacy contest-management payloads', () => {
-    expect(() =>
-      ContestConfigurationRequestSchema.parse({
-        selectionType: 'PICK_EM',
-      }),
-    ).toThrow();
+  it('refuses pick\'em rules that name no mode, and rules whose mode is not STRAIGHT_UP or CONFIDENCE', () => {
+    expect(ContestConfigurationRequestSchema.safeParse({ selectionType: 'PICK_EM' }).success).toBe(false);
+    expect(ContestConfigurationRequestSchema.safeParse({ selectionType: 'PICK_EM', mode: 'SPREAD' }).success).toBe(false);
+  });
+
+  it('accepts a PREDICTION create with confidence pick\'em rules, keeping the mode', () => {
+    const parsed = CreateContestRequestSchema.parse({
+      name: 'Week 1 confidence',
+      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+      contestFormat: 'PREDICTION',
+      selectionType: 'PICK_EM',
+      configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE' },
+    });
+
+    expect(parsed.configuration).toEqual({ selectionType: 'PICK_EM', mode: 'CONFIDENCE' });
   });
 
   it('accepts a create naming a template and no configuration', () => {
@@ -65,13 +74,25 @@ describe('contest-management dto schemas', () => {
     ]);
   });
 
-  it('refuses a selection type that has no typed rules yet', () => {
+  it('refuses a create whose selection type is not one of the enum\'s values', () => {
     expect(
       CreateContestRequestSchema.safeParse({
-        name: 'Pick em',
+        name: 'Survivor',
         sportEventIds: ['11111111-1111-1111-1111-111111111111'],
-        contestFormat: 'ROSTER',
-        selectionType: 'PICK_EM',
+        contestFormat: 'PREDICTION',
+        selectionType: 'SURVIVOR',
+        templateId: '11111111-1111-4111-8111-111111111111',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('refuses a create whose contest format is not ROSTER or PREDICTION', () => {
+    expect(
+      CreateContestRequestSchema.safeParse({
+        name: 'Bracket',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+        contestFormat: 'BRACKET',
+        selectionType: 'TIERED',
         templateId: '11111111-1111-4111-8111-111111111111',
       }).success,
     ).toBe(false);

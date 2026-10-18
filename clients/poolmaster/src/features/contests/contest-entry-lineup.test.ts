@@ -1,7 +1,7 @@
 import { SelectionType } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { SelectionStateResponse } from '@/lib/api';
-import { LINEUP_RULES } from './contest-entry-lineup';
+import { LINEUP_RULES, lineupRulesFor } from './contest-entry-lineup';
 
 function golfer(id: string, price: number, isSelected: boolean) {
   return {
@@ -91,5 +91,14 @@ describe('random-draw lineup rules on the entry page', () => {
     expect(draw.submitBlockedReason(room)).toBe(
       'Picks in this contest are dealt by the commissioner’s draw, so there is nothing to submit.',
     );
+  });
+});
+
+describe('lineup rules by selection type', () => {
+  it('has lineup rules for every roster type and none for pick\'em, whose entries pick games rather than a lineup', () => {
+    expect(lineupRulesFor(SelectionType.TIERED)).toBe(LINEUP_RULES[SelectionType.TIERED]);
+    expect(lineupRulesFor(SelectionType.BUDGET_PICK)).toBe(LINEUP_RULES[SelectionType.BUDGET_PICK]);
+    expect(lineupRulesFor(SelectionType.RANDOM_DRAW)).toBe(LINEUP_RULES[SelectionType.RANDOM_DRAW]);
+    expect(lineupRulesFor(SelectionType.PICK_EM)).toBeNull();
   });
 });
