@@ -31,8 +31,8 @@ export const PickWindow = {
 } as const;
 export type PickWindow = (typeof PickWindow)[keyof typeof PickWindow];
 
-/** Event statuses after which none of its games takes picks. */
-const FINISHED_EVENT_STATUSES: readonly SportEventStatus[] = [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED];
+/** Event statuses that finish an event: none of its games takes picks, and its contests settle (#743). */
+export const FINISHED_EVENT_STATUSES: readonly SportEventStatus[] = [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED];
 
 /** Contest statuses whose events take picks: OPEN, and ACTIVE while a later event is still to start. */
 const PICKING_STATUSES: readonly ContestStatus[] = [ContestStatus.OPEN, ContestStatus.ACTIVE];

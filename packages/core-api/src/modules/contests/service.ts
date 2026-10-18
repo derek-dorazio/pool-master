@@ -35,6 +35,7 @@ import {
   hasSubmittedAnyEvent,
   LeagueMembershipStatus,
   LeagueRole,
+  SportEventStatus,
   SquadMembershipStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
 } from '@poolmaster/shared/domain';
@@ -469,6 +470,9 @@ export class ContestService {
           shown = { field, rows, asOf: settled.at(0)?.asOf ?? latestAsOf(scores) };
         }
       }
+      // A cancelled event counts for nothing (#743): its picks still show, but no result of it
+      // reaches an entry's events or its total.
+      if (event.status === SportEventStatus.CANCELLED) continue;
       const results = rows
         ? rows.map((row) => ({ entryId: row.entryId, score: row.score, position: row.position, displayPosition: row.displayPosition, scoredPickCount: row.scoredPickCount }))
         : settled.map((standing) => ({
@@ -502,6 +506,9 @@ export class ContestService {
         for (const standing of standings) {
           frozenCountingPickLimits.set(standing.contestEntryId, standing.countingPickLimit);
         }
+      } else if (events.every((event) => event.status === SportEventStatus.CANCELLED)) {
+        // Every event was cancelled (#743): the contest completed with no standings by design.
+        this.logger.debug({ contestId }, 'completed contest had every event cancelled; leaderboard lists entries unscored');
       } else {
         this.logger.warn({ contestId }, 'completed contest has no settled standings; leaderboard computed live');
       }
