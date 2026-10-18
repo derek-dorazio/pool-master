@@ -26,6 +26,7 @@ import {
   CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH,
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_EVENT_ALREADY_STARTED,
+  CONTEST_EVENT_GAME_UNDECIDED,
   CONTEST_EVENT_HAS_NO_GAMES,
   CONTEST_NOT_DRAFT,
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
@@ -94,6 +95,8 @@ export interface ContestCreateSportEventReader {
   findActiveFieldPrices(sportEventId: string): Promise<number[]>;
   /** How many games the event has to pick, cancelled games left out (#716). */
   countGames(sportEventId: string): Promise<number>;
+  /** How many of those games still have a team to be decided. */
+  countUndecidedGames(sportEventId: string): Promise<number>;
 }
 
 function createNoopLogger(): LifecycleLogger {
@@ -682,6 +685,7 @@ export class ContestManagementService {
         // A pick'em entry picks the winner of each game, so every event must have games (#716).
         for (const each of sportEvents) {
           await this.assertEventHasGames(each.id);
+          await this.assertEventGamesDecided(each.id);
         }
         return {
           configJson: { selectionType: rules.selectionType, mode: rules.mode },
@@ -698,6 +702,19 @@ export class ContestManagementService {
     throw new ContestManagementError(
       'A pick\'em contest\'s events must each have games to pick.',
       CONTEST_EVENT_HAS_NO_GAMES,
+    );
+  }
+
+  /** A pick names one of a game's two teams, so a week with a team still to be decided could never be submitted. */
+  private async assertEventGamesDecided(sportEventId: string): Promise<void> {
+    const undecided = await this.sportEventReader.countUndecidedGames(sportEventId);
+    if (undecided === 0) {
+      return;
+    }
+    this.logger.warn({ sportEventId, undecided }, 'contest management rules refused a pick\'em event with an undecided game');
+    throw new ContestManagementError(
+      'A pick\'em contest\'s events must have both teams of every game decided.',
+      CONTEST_EVENT_GAME_UNDECIDED,
     );
   }
 

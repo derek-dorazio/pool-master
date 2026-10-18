@@ -999,7 +999,7 @@ How one week runs (described to Derek 2026-10-17):
 (no sport with draws is built yet). Picks are saved in batches, all or none, so two confidence
 values can be swapped in one save; a value may repeat until submit. A week still in draft at
 its first kickoff can no longer be picked or submitted. A game's kickoff is its scheduled time,
-else the event's start; cancelled games are not picked. The pick window is declared by the
+else the event's start; cancelled games are not picked, and a pick'em contest refuses an event with a game whose team is still undecided. The pick window is declared by the
 prediction engines only (roster picks always close at the event's start). `KNOCKOUT_BRACKET`
 allows `PREDICTION` until #715 renames it. Settlement leaves prediction contests `ACTIVE` until
 #717 scores them, the web create page does not offer pick'em until the week screen (#718), and

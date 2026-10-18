@@ -153,6 +153,9 @@ export const CONTEST_BUDGET_SALARY_CAP_MISMATCH = 'CONTEST_BUDGET_SALARY_CAP_MIS
 /** Error code for a pick'em contest given an event with no games to pick (#716). */
 export const CONTEST_EVENT_HAS_NO_GAMES = 'CONTEST_EVENT_HAS_NO_GAMES';
 
+/** Error code for a pick'em contest given an event with a game whose team is still undecided (#716). */
+export const CONTEST_EVENT_GAME_UNDECIDED = 'CONTEST_EVENT_GAME_UNDECIDED';
+
 /** Error code for naming an event the contest does not cover (#713). */
 export const CONTEST_EVENT_NOT_IN_CONTEST = 'CONTEST_EVENT_NOT_IN_CONTEST';
 

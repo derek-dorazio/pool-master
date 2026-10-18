@@ -52,9 +52,10 @@ import { getPredictionEngine } from './prediction-engines/registry';
 import {
   PredictionIssueKind,
   type PredictionEngine,
+  type PredictionIssue,
   type WeekPrediction,
 } from './prediction-engines/prediction-engine';
-import { selectionErrors } from './selection-errors';
+import { selectionErrors, type SelectionError } from './selection-errors';
 
 export interface PredictionServiceDeps {
   contests: Pick<ContestRepository, 'findById'>;
@@ -227,24 +228,13 @@ export class PredictionService {
       throw selectionErrors.weekNotSubmittedInTime(context.entry.id, context.sportEvent.id);
     }
 
-    const issues = this.findWeekIssues(context, context.predictions);
-    for (const issue of issues) {
-      switch (issue.kind) {
-        case PredictionIssueKind.WEEK_INCOMPLETE:
-          this.deps.logger?.warn(
-            { action: 'prediction.submit.incomplete', data: { entryId: context.entry.id, pickedCount: issue.pickedCount, gameCount: issue.gameCount } },
-            'Refused to submit a week with games still to pick',
-          );
-          throw selectionErrors.weekIncomplete(context.entry.id, issue.pickedCount, issue.gameCount);
-        case PredictionIssueKind.CONFIDENCE_INVALID:
-          this.deps.logger?.warn(
-            { action: 'prediction.submit.confidenceInvalid', data: { entryId: context.entry.id } },
-            'Refused to submit a week whose confidence values are not 1 to its game count, each once',
-          );
-          throw selectionErrors.confidenceInvalid(
-            `Entry ${context.entry.id} cannot be submitted until its confidence values are 1 to ${context.games.length}, each used once`,
-          );
-      }
+    const issue = this.findWeekIssues(context, context.predictions).at(0);
+    if (issue) {
+      this.deps.logger?.warn(
+        { action: 'prediction.submit.refused', data: { entryId: context.entry.id, issue: issue.kind } },
+        'Refused to submit a week its picks do not pass',
+      );
+      throw this.weekIssueError(context, issue);
     }
 
     await this.deps.predictions.save({
@@ -272,13 +262,11 @@ export class PredictionService {
     change: { saves: readonly ContestEntryMatchPredictionWrite[]; clearedMatchIds: readonly string[] },
   ): Promise<void> {
     const submitted = contestEntryEventStatus(context.entry, context.sportEvent.id) === ContestEntryStatus.SUBMITTED;
-    const valid = this.findWeekIssues(context, after).length === 0;
+    const issue = this.findWeekIssues(context, after).at(0);
     let eventStatus: ContestEntryStatus | null = null;
-    if (submitted && !valid) {
+    if (submitted && issue) {
       if (hasSportEventStarted(context.sportEvent, context.now)) {
-        throw selectionErrors.confidenceInvalid(
-          `The week's first game has started, so entry ${context.entry.id}'s confidence values must stay 1 to ${context.games.length}, each used once`,
-        );
+        throw this.weekIssueError(context, issue);
       }
       eventStatus = ContestEntryStatus.DRAFT;
       this.deps.logger?.info(
@@ -294,6 +282,18 @@ export class PredictionService {
       eventStatus,
       at: context.now,
     });
+  }
+
+  /** The refusal for the first thing stopping a week's picks from passing. */
+  private weekIssueError(context: WeekContext, issue: PredictionIssue): SelectionError {
+    switch (issue.kind) {
+      case PredictionIssueKind.WEEK_INCOMPLETE:
+        return selectionErrors.weekIncomplete(context.entry.id, issue.pickedCount, issue.gameCount);
+      case PredictionIssueKind.CONFIDENCE_INVALID:
+        return selectionErrors.confidenceInvalid(
+          `Entry ${context.entry.id}'s confidence values must be 1 to ${context.games.length}, each used once`,
+        );
+    }
   }
 
   private findWeekIssues(context: WeekContext, predictions: readonly WeekPrediction[]) {

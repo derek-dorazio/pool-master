@@ -14,9 +14,9 @@ import type { PickWindow } from '../../contests/entry-window';
 /** What stops a week's picks being submitted. */
 export const PredictionIssueKind = {
   /** A game of the week has no pick. */
-  WEEK_INCOMPLETE: 'weekIncomplete',
+  WEEK_INCOMPLETE: 'WEEK_INCOMPLETE',
   /** A confidence pool's values are not 1 to the week's game count, each used once. */
-  CONFIDENCE_INVALID: 'confidenceInvalid',
+  CONFIDENCE_INVALID: 'CONFIDENCE_INVALID',
 } as const;
 export type PredictionIssueKind = (typeof PredictionIssueKind)[keyof typeof PredictionIssueKind];
 

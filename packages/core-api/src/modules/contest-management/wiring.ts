@@ -96,5 +96,8 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
     },
     countGames: async (sportEventId) =>
       (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED).length,
+    countUndecidedGames: async (sportEventId) =>
+      (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED
+        && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null)).length,
   };
 }
