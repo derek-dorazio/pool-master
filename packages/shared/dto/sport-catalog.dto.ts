@@ -10,7 +10,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { ParticipantType, Sport, TournamentFormat } from '../domain/enums';
+import { BracketAdvancement, ParticipantType, Sport, TournamentFormat } from '../domain/enums';
 import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 
@@ -40,6 +40,7 @@ export const SportLeagueDtoSchema = z.object({
   matchKeyword: z.string().nullable().describe('The provider\'s tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.'),
   currentEventYear: z.number().int().nullable().describe('The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.'),
   isActive: z.boolean().describe('Whether the sport league is in use; a read filter, not a write lock.'),
+  bracketAdvancement: z.nativeEnum(BracketAdvancement).describe('How the sport league\'s bracket winners reach their next match: FIXED by each match\'s link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.'),
   affiliationCount: z.number().int().describe('Participants currently affiliated with the sport league.'),
   sportEventCount: z.number().int().describe('Events on record for the sport league, across every series and year.'),
   createdAt: DateTimeSchema,
@@ -68,6 +69,7 @@ export const CreateSportLeagueRequestSchema = z.object({
   sport: z.nativeEnum(Sport).describe('The sport the new sport league belongs to.'),
   name: z.string().min(1).describe('Unique within the sport.'),
   matchKeyword: z.string().optional().describe('Provider event-name keyword for this sport league; set it to the provider\'s tour name (e.g. "PGA TOUR") to use the event-year import.'),
+  bracketAdvancement: z.nativeEnum(BracketAdvancement).optional().describe('FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_EVENT_NOT_BRACKET otherwise.'),
 }).describe('A new sport league.');
 export type CreateSportLeagueRequest = z.infer<typeof CreateSportLeagueRequestSchema>;
 
@@ -76,6 +78,7 @@ export const UpdateSportLeagueRequestSchema = z.object({
   matchKeyword: z.string().nullable().optional().describe('null clears it.'),
   isActive: z.boolean().optional(),
   currentEventYear: z.number().int().optional().describe('Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.'),
+  bracketAdvancement: z.nativeEnum(BracketAdvancement).optional().describe('RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_EVENT_NOT_BRACKET otherwise.'),
 }).describe('Changes to a sport league; omitted fields are left alone.');
 export type UpdateSportLeagueRequest = z.infer<typeof UpdateSportLeagueRequestSchema>;
 

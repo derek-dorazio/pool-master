@@ -41,8 +41,10 @@ import type {
   FillPlayInSlotRequest,
   LoadSportEventBracketRequest,
   RecordSportEventMatchResultRequest,
+  SetSportEventRoundMatchupsRequest,
   SportEventBracketResponse,
   SportEventMatchResponse,
+  SportEventRoundMatchupsResponse,
   UpdateSportEventMatchRequest,
 } from '@poolmaster/shared/dto/bracket.dto';
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
@@ -415,6 +417,19 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
     ): Promise<SportEventBracketResponse> => {
       const matches = await matchResults.clearResult(request.params.eventId, request.params.matchNumber);
+      return { matches: matches.map(mapSportEventMatchToDto) };
+    },
+
+    proposeEventRoundMatchups: async (
+      request: FastifyRequest<{ Params: { eventId: string; roundNumber: number } }>,
+    ): Promise<SportEventRoundMatchupsResponse> => {
+      return { matches: await bracket.proposeRoundMatchups(request.params.eventId, request.params.roundNumber) };
+    },
+
+    setEventRoundMatchups: async (
+      request: FastifyRequest<{ Params: { eventId: string; roundNumber: number }; Body: SetSportEventRoundMatchupsRequest }>,
+    ): Promise<SportEventBracketResponse> => {
+      const matches = await bracket.setRoundMatchups(request.params.eventId, request.params.roundNumber, request.body.matches);
       return { matches: matches.map(mapSportEventMatchToDto) };
     },
 

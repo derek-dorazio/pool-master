@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { Sport } from '@poolmaster/shared/domain';
+import { BracketAdvancement, Sport } from '@poolmaster/shared/domain';
 import type { Participant, SportLeague } from '@poolmaster/shared/domain';
 import { SportLeagueService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import {
@@ -22,6 +22,7 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     sportId: 'sport-golf',
     name: 'PGA Tour',
     matchKeyword: 'PGA',
+    bracketAdvancement: BracketAdvancement.FIXED,
     currentEventYear: null,
     isActive: true,
     createdAt: new Date('2026-01-01'),
@@ -86,6 +87,29 @@ describe('SportLeagueService — sport leagues', () => {
 
     await expect(service.createSportLeague(Sport.GOLF, { name: 'PGA Tour' }))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NAME_ALREADY_EXISTS', statusCode: 409 });
+  });
+});
+
+describe('SportLeagueService — bracket advancement', () => {
+  const BASKETBALL = { id: 'sport-basketball', sport: Sport.BASKETBALL } as never;
+
+  it('creates a sport league fixed by default, and one that reseeds when its sport plays a bracket', async () => {
+    const { service } = buildService({ sports: { findBySport: jest.fn().mockResolvedValue(BASKETBALL) } });
+
+    await expect(service.createSportLeague(Sport.BASKETBALL, { name: 'Harbour Conference' })).resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.FIXED });
+    await expect(service.createSportLeague(Sport.BASKETBALL, { name: 'Gridiron League', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
+      .resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
+  });
+
+  it('refuses (422 SPORT_EVENT_NOT_BRACKET) a golf sport league that reseeds, on create and on update, writing nothing', async () => {
+    const { service, deps } = buildService({ sports: { findById: jest.fn().mockResolvedValue(GOLF) } });
+
+    await expect(service.createSportLeague(Sport.GOLF, { name: 'Champions Tour', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_BRACKET', statusCode: 422 });
+    await expect(service.updateSportLeague('sl-pga', { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_BRACKET', statusCode: 422 });
+    expect(deps.sportLeagues.create).not.toHaveBeenCalled();
+    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
   });
 });
 

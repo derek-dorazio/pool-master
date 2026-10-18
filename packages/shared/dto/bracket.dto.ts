@@ -28,6 +28,7 @@ export const SportEventMatchDtoSchema = z.object({
   awayScore: z.number().int().nullable().describe('The away side\'s score; in a series, games won.'),
   advancesToMatchId: z.string().uuid().nullable().describe('The match the winner moves on to; null for the final.'),
   advancesToSide: MatchSideDtoSchema.nullable().describe('The side of that match the winner fills; null for the final.'),
+  regionLabel: z.string().nullable().describe('The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.'),
 }).describe('One game or match of an event, which in a bracket is also a slot naming where its winner goes.');
 export type SportEventMatchDto = z.infer<typeof SportEventMatchDtoSchema>;
 
@@ -51,7 +52,8 @@ export const LoadSportEventBracketMatchSchema = z.object({
   advancesTo: z.object({
     matchNumber: z.number().int().min(1).describe('A match of this bracket in a later round.'),
     side: MatchSideDtoSchema.describe('The side of that match the winner fills, which must not name a team.'),
-  }).nullable().describe('Where the winner moves on to; null for the final, and only for the final.'),
+  }).nullable().describe('Where the winner moves on to; null for the final. In a league that reseeds, also null for each match of a round whose winners are placed by seed.'),
+  regionLabel: z.string().min(1).max(40).nullable().optional().describe('The region or conference the match is played in; omitted or null for none.'),
 }).describe('One match of a bracket being loaded. A team placed straight into a later round (a bye) is named on that match\'s side.');
 
 export const LoadSportEventBracketRequestSchema = z.object({
@@ -79,6 +81,23 @@ export const RecordSportEventMatchResultRequestSchema = z.object({
 }).describe('A match\'s result: who won, and both scores or neither. The winner\'s score must be the higher.');
 export type RecordSportEventMatchResultRequest = z.infer<typeof RecordSportEventMatchResultRequestSchema>;
 
+export const RoundMatchupDtoSchema = z.object({
+  matchNumber: z.number().int().min(1).describe('A match of the round.'),
+  homeSportEventParticipantId: z.string().uuid().describe('The field row on the home side.'),
+  awaySportEventParticipantId: z.string().uuid().describe('The field row on the away side.'),
+}).describe('Both sides of one match of a reseeded round.');
+export type RoundMatchupDto = z.infer<typeof RoundMatchupDtoSchema>;
+
+export const SportEventRoundMatchupsResponseSchema = z.object({
+  matches: z.array(RoundMatchupDtoSchema).describe('One per match of the round, in match-number order.'),
+}).describe('The pairing the server proposes for a reseeded round: in each region the best seed left hosts the worst, the second best the second worst, and a team already holding its place keeps it.');
+export type SportEventRoundMatchupsResponse = z.infer<typeof SportEventRoundMatchupsResponseSchema>;
+
+export const SetSportEventRoundMatchupsRequestSchema = z.object({
+  matches: z.array(RoundMatchupDtoSchema).min(1).max(BRACKET_MATCHES_MAX).describe('Every match of the round, once each.'),
+}).describe('A reseeded round\'s teams, all at once. Every team left in the round plays once, in its own region, and a team holding its place (a bye, a linked winner) keeps it.');
+export type SetSportEventRoundMatchupsRequest = z.infer<typeof SetSportEventRoundMatchupsRequestSchema>;
+
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('MatchStatusDto', MatchStatusDtoSchema);
 registerSchema('MatchSideDto', MatchSideDtoSchema);
@@ -89,3 +108,6 @@ registerSchema('LoadSportEventBracketRequest', LoadSportEventBracketRequestSchem
 registerSchema('UpdateSportEventMatchRequest', UpdateSportEventMatchRequestSchema);
 registerSchema('FillPlayInSlotRequest', FillPlayInSlotRequestSchema);
 registerSchema('RecordSportEventMatchResultRequest', RecordSportEventMatchResultRequestSchema);
+registerSchema('RoundMatchupDto', RoundMatchupDtoSchema);
+registerSchema('SportEventRoundMatchupsResponse', SportEventRoundMatchupsResponseSchema);
+registerSchema('SetSportEventRoundMatchupsRequest', SetSportEventRoundMatchupsRequestSchema);

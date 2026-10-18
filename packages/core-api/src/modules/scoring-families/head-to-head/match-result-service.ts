@@ -13,6 +13,10 @@
  * own (409 SPORT_EVENT_MATCH_RESULT_LOCKED): changing an early winner then would leave the later
  * match between the wrong teams, so the admin clears the later result first. Fixing only the
  * scores never moves a team and is always allowed.
+ *
+ * In a reseeded bracket (#722) a match before a reseed links nowhere: its winner's next match is
+ * the one the admin placed it in. Changing or clearing that result swaps or empties the winner's
+ * place there, under the same lock, and the admin can set the round again before it starts.
  */
 import type { FastifyBaseLogger } from 'fastify';
 import type {
@@ -60,6 +64,7 @@ function sideRowId(match: Pick<SportEventMatch, 'homeSportEventParticipantId' | 
  * and teams alive in the same round, share a place.
  */
 export function bracketStandings(matches: readonly SportEventMatch[], asOf: Date): BracketStandingWrite[] {
+  const finalRound = Math.max(0, ...matches.map((match) => match.roundNumber));
   const progress = new Map<string, { roundReached: number; lostInRound: number | null; champion: boolean }>();
   for (const match of matches) {
     for (const side of [MatchSide.HOME, MatchSide.AWAY]) {
@@ -69,8 +74,10 @@ export function bracketStandings(matches: readonly SportEventMatch[], asOf: Date
       team.roundReached = Math.max(team.roundReached, match.roundNumber);
       if (match.status === MatchStatus.COMPLETED && match.winnerSide !== null) {
         if (match.winnerSide === side) {
-          // The final is the one match that sends its winner nowhere.
-          if (match.advancesToMatchId === null) team.champion = true;
+          // The final is the match in the last round, which sends its winner nowhere. A winner a
+          // reseed has still to place has reached the next round.
+          if (match.advancesToMatchId === null && match.roundNumber === finalRound) team.champion = true;
+          else if (match.advancesToMatchId === null) team.roundReached = Math.max(team.roundReached, match.roundNumber + 1);
         } else {
           team.lostInRound = match.roundNumber;
         }
@@ -78,7 +85,6 @@ export function bracketStandings(matches: readonly SportEventMatch[], asOf: Date
       progress.set(rowId, team);
     }
   }
-  const finalRound = Math.max(0, ...matches.map((match) => match.roundNumber));
   // How far each team went, higher is further: out in round N is 2N, alive in round N is 2N + 1,
   // and the champion is past every round.
   const reach = [...progress].map(([sportEventParticipantId, team]) => ({
@@ -133,7 +139,7 @@ export class MatchResultService {
     }
 
     const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore };
-    const sideFill = this.advance(match, winnerId);
+    const sideFill = this.advance(bracket, match, winnerId);
     await this.write(sportEventId, bracket, result, sideFill);
     this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, winnerChanges }, 'Saved a match result');
     return this.deps.matches.findBySportEvent(sportEventId);
@@ -153,16 +159,21 @@ export class MatchResultService {
     }
     this.assertNextMatchOpen(sportEventId, bracket, match);
     const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null };
-    await this.write(sportEventId, bracket, result, this.advance(match, null));
+    await this.write(sportEventId, bracket, result, this.advance(bracket, match, null));
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cleared a match result');
     return this.deps.matches.findBySportEvent(sportEventId);
   }
 
-  /** The side of the next match the result puts `rowId` on, or empties; null for the final. */
-  private advance(match: SportEventMatch, rowId: string | null): MatchSideFill | null {
-    return match.advancesToMatchId !== null && match.advancesToSide !== null
-      ? { id: match.advancesToMatchId, side: match.advancesToSide, sportEventParticipantId: rowId }
-      : null;
+  /**
+   * The side of the next match the result puts `rowId` on, or empties; null for the final, and for
+   * a match before a reseed whose winner is not placed yet.
+   */
+  private advance(bracket: readonly SportEventMatch[], match: SportEventMatch, rowId: string | null): MatchSideFill | null {
+    if (match.advancesToMatchId !== null && match.advancesToSide !== null) {
+      return { id: match.advancesToMatchId, side: match.advancesToSide, sportEventParticipantId: rowId };
+    }
+    const placed = placementOf(bracket, match);
+    return placed ? { id: placed.match.id, side: placed.side, sportEventParticipantId: rowId } : null;
   }
 
   private async write(
@@ -187,7 +198,7 @@ export class MatchResultService {
   }
 
   private assertNextMatchOpen(sportEventId: string, bracket: readonly SportEventMatch[], match: SportEventMatch): void {
-    const next = bracket.find((candidate) => candidate.id === match.advancesToMatchId);
+    const next = bracket.find((candidate) => candidate.id === match.advancesToMatchId) ?? placementOf(bracket, match)?.match;
     if (next?.status === MatchStatus.COMPLETED) {
       this.deps.logger?.warn({ sportEventId, matchNumber: match.matchNumber, nextMatchNumber: next.matchNumber }, 'Refused a match result change after the next match was decided');
       throw new SportEventError(
@@ -233,6 +244,22 @@ export class MatchResultService {
     }
     return event;
   }
+}
+
+/**
+ * Where a reseed placed the winner of a match that links nowhere: the later match naming it, and
+ * the side. Undefined for a match without a result, or a winner not placed yet.
+ */
+function placementOf(bracket: readonly SportEventMatch[], match: SportEventMatch): { match: SportEventMatch; side: MatchSide } | undefined {
+  if (match.advancesToMatchId !== null || match.status !== MatchStatus.COMPLETED || match.winnerSide === null) return undefined;
+  const winnerId = sideRowId(match, match.winnerSide);
+  for (const later of bracket) {
+    if (later.roundNumber <= match.roundNumber) continue;
+    for (const side of [MatchSide.HOME, MatchSide.AWAY]) {
+      if (sideRowId(later, side) === winnerId) return { match: later, side };
+    }
+  }
+  return undefined;
 }
 
 /** What is wrong with a result's scores, or null: both or neither, and the winner's the higher. */

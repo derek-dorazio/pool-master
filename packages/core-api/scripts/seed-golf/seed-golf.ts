@@ -73,6 +73,7 @@ import {
   updateEvent,
   updateEventBracketMatch,
   updateEventParticipants,
+  updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
 import { golferRoundScore, seedDateOffsetDays, shiftedEventDates } from './seed-golf-data';
@@ -199,10 +200,10 @@ function filledPlayInPlaces(
 
 /**
  * What the file would change on an event's bracket. Before release (`locked` false) any
- * difference in a match's round, sides, site, time or link, or a match only one side has, means
+ * difference in a match's round, sides, site, time, link or region, or a match only one side has, means
  * loading the bracket whole again. After release pairings are locked, so only each match's site
  * and time are changed, as one edit per match. A match only one side has, or a changed round,
- * link or named side, is then a conflict. Results fill the later sides, so only the sides the
+ * link, region or named side, is then a conflict. Results fill the later sides, so only the sides the
  * file names are compared, and a filled play-in place (`filled`) matches its pairing.
  */
 function bracketChanges(
@@ -228,7 +229,8 @@ function bracketChanges(
   };
   const sameLink = (match: SportDataMatch, stored: StoredMatch): boolean => {
     const advancesTo = stored.advancesToMatchId === null ? null : numberById.get(stored.advancesToMatchId) ?? null;
-    return advancesTo === (match.advancesTo?.matchNumber ?? null) && stored.advancesToSide === (match.advancesTo?.side ?? null);
+    return advancesTo === (match.advancesTo?.matchNumber ?? null) && stored.advancesToSide === (match.advancesTo?.side ?? null)
+      && stored.regionLabel === (match.region ?? null);
   };
 
   if (locked) {
@@ -241,7 +243,7 @@ function bracketChanges(
     const conflicts = [
       ...(missing.length > 0 ? [`${matchList(missing)} not on the site`] : []),
       ...(extra.length > 0 ? [`${matchList(extra)} not in the file`] : []),
-      ...(repaired.length > 0 ? [`pairing, round or link of ${matchList(repaired)} differs`] : []),
+      ...(repaired.length > 0 ? [`pairing, round, link or region of ${matchList(repaired)} differs`] : []),
     ];
     const edits = matches.flatMap((match) => {
       const stored = byNumber.get(match.matchNumber);
@@ -315,17 +317,31 @@ class Loader {
     for (const league of this.file.sportLeagues) await this.loadLeague(league);
   }
 
-  /** The league's id, or null in a dry run that would create it. */
-  private async ensureLeague(client: Client, name: string): Promise<string | null> {
+  /**
+   * The league's id, or null in a dry run that would create it. A bracket rule the file names
+   * is set on a new league, and changed on an existing one that has another.
+   */
+  private async ensureLeague(client: Client, league: SportDataLeague): Promise<string | null> {
+    const { name, bracketAdvancement } = league;
     const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: this.sport } }), 'List sport leagues');
-    const existing = sportLeagues.find((league) => league.name.toLowerCase() === name.toLowerCase());
+    const existing = sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase());
     if (existing) {
-      this.report({ sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.SKIP, name, detail: null });
+      const changed = bracketAdvancement !== undefined && existing.bracketAdvancement !== bracketAdvancement;
+      this.report({
+        sportLeague: name,
+        subject: LoadSubject.SPORT_LEAGUE,
+        action: changed ? LoadAction.UPDATE : LoadAction.SKIP,
+        name,
+        detail: changed ? `bracket advancement ${existing.bracketAdvancement} -> ${bracketAdvancement}` : null,
+      });
+      if (changed && this.apply) {
+        await must(updateSportLeague({ client, path: { sportLeagueId: existing.id }, body: { bracketAdvancement } }), `Update sport league ${name}`);
+      }
       return existing.id;
     }
     this.report({ sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.ADD, name, detail: null });
     if (!this.apply) return null;
-    const created = await must(createSportLeague({ client, body: { sport: this.sport, name, matchKeyword: name } }), `Create sport league ${name}`);
+    const created = await must(createSportLeague({ client, body: { sport: this.sport, name, matchKeyword: name, ...(bracketAdvancement && { bracketAdvancement }) } }), `Create sport league ${name}`);
     return created.sportLeague.id;
   }
 
@@ -374,7 +390,7 @@ class Loader {
 
   private async loadLeague(league: SportDataLeague): Promise<void> {
     const client = await this.options.getClient();
-    const sportLeagueId = await this.ensureLeague(client, league.name);
+    const sportLeagueId = await this.ensureLeague(client, league);
     const participantIds = this.contents.has(SportDataContent.PLAYERS)
       ? await this.ensurePlayers(client, league, sportLeagueId)
       : new Map<string, string | null>();
@@ -677,6 +693,7 @@ class Loader {
       isNeutralSite: match.isNeutralSite,
       scheduledDate: match.scheduledAt === undefined ? storedTime.get(match.matchNumber) ?? null : new Date(match.scheduledAt).toISOString(),
       advancesTo: match.advancesTo,
+      regionLabel: match.region ?? null,
     }));
     await must(loadEventBracket({ client, path: { eventId }, body: { matches: body } }), `Load the bracket of ${event.name}`);
   }

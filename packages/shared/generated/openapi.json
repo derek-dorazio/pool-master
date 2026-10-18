@@ -10370,6 +10370,14 @@
             "type": "boolean",
             "description": "Whether the sport league is in use; a read filter, not a write lock."
           },
+          "bracketAdvancement": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "RESEED_BY_SEED"
+            ],
+            "description": "How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket."
+          },
           "affiliationCount": {
             "type": "integer",
             "description": "Participants currently affiliated with the sport league."
@@ -10396,6 +10404,7 @@
           "matchKeyword",
           "currentEventYear",
           "isActive",
+          "bracketAdvancement",
           "affiliationCount",
           "sportEventCount",
           "createdAt",
@@ -10467,6 +10476,14 @@
                   "type": "boolean",
                   "description": "Whether the sport league is in use; a read filter, not a write lock."
                 },
+                "bracketAdvancement": {
+                  "type": "string",
+                  "enum": [
+                    "FIXED",
+                    "RESEED_BY_SEED"
+                  ],
+                  "description": "How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket."
+                },
                 "affiliationCount": {
                   "type": "integer",
                   "description": "Participants currently affiliated with the sport league."
@@ -10493,6 +10510,7 @@
                 "matchKeyword",
                 "currentEventYear",
                 "isActive",
+                "bracketAdvancement",
                 "affiliationCount",
                 "sportEventCount",
                 "createdAt",
@@ -10548,6 +10566,14 @@
                 "type": "boolean",
                 "description": "Whether the sport league is in use; a read filter, not a write lock."
               },
+              "bracketAdvancement": {
+                "type": "string",
+                "enum": [
+                  "FIXED",
+                  "RESEED_BY_SEED"
+                ],
+                "description": "How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket."
+              },
               "affiliationCount": {
                 "type": "integer",
                 "description": "Participants currently affiliated with the sport league."
@@ -10574,6 +10600,7 @@
               "matchKeyword",
               "currentEventYear",
               "isActive",
+              "bracketAdvancement",
               "affiliationCount",
               "sportEventCount",
               "createdAt",
@@ -10612,6 +10639,14 @@
           "matchKeyword": {
             "type": "string",
             "description": "Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. \"PGA TOUR\") to use the event-year import."
+          },
+          "bracketAdvancement": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "RESEED_BY_SEED"
+            ],
+            "description": "FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_EVENT_NOT_BRACKET otherwise."
           }
         },
         "required": [
@@ -10641,6 +10676,14 @@
           "currentEventYear": {
             "type": "integer",
             "description": "Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in."
+          },
+          "bracketAdvancement": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "RESEED_BY_SEED"
+            ],
+            "description": "RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_EVENT_NOT_BRACKET otherwise."
           }
         },
         "additionalProperties": false,
@@ -25028,6 +25071,13 @@
               null
             ],
             "description": "The side of that match the winner fills; null for the final."
+          },
+          "regionLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The region or conference the match is played in (\"AFC\", \"East\"); null when the bracket has none. In a reseeded round each team stays in its region."
           }
         },
         "required": [
@@ -25044,7 +25094,8 @@
           "homeScore",
           "awayScore",
           "advancesToMatchId",
-          "advancesToSide"
+          "advancesToSide",
+          "regionLabel"
         ],
         "additionalProperties": false,
         "description": "One game or match of an event, which in a bracket is also a slot naming where its winner goes."
@@ -25156,6 +25207,13 @@
                     null
                   ],
                   "description": "The side of that match the winner fills; null for the final."
+                },
+                "regionLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The region or conference the match is played in (\"AFC\", \"East\"); null when the bracket has none. In a reseeded round each team stays in its region."
                 }
               },
               "required": [
@@ -25172,7 +25230,8 @@
                 "homeScore",
                 "awayScore",
                 "advancesToMatchId",
-                "advancesToSide"
+                "advancesToSide",
+                "regionLabel"
               ],
               "additionalProperties": false,
               "description": "One game or match of an event, which in a bracket is also a slot naming where its winner goes."
@@ -25291,6 +25350,13 @@
                   null
                 ],
                 "description": "The side of that match the winner fills; null for the final."
+              },
+              "regionLabel": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The region or conference the match is played in (\"AFC\", \"East\"); null when the bracket has none. In a reseeded round each team stays in its region."
               }
             },
             "required": [
@@ -25307,7 +25373,8 @@
               "homeScore",
               "awayScore",
               "advancesToMatchId",
-              "advancesToSide"
+              "advancesToSide",
+              "regionLabel"
             ],
             "additionalProperties": false,
             "description": "One game or match of an event, which in a bracket is also a slot naming where its winner goes."
@@ -25388,7 +25455,16 @@
                     "side"
                   ],
                   "additionalProperties": false,
-                  "description": "Where the winner moves on to; null for the final, and only for the final."
+                  "description": "Where the winner moves on to; null for the final. In a league that reseeds, also null for each match of a round whose winners are placed by seed."
+                },
+                "regionLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 40,
+                  "description": "The region or conference the match is played in; omitted or null for none."
                 }
               },
               "required": [
@@ -25497,6 +25573,117 @@
         ],
         "additionalProperties": false,
         "description": "A match's result: who won, and both scores or neither. The winner's score must be the higher."
+      },
+      "RoundMatchupDto": {
+        "type": "object",
+        "properties": {
+          "matchNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "A match of the round."
+          },
+          "homeSportEventParticipantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The field row on the home side."
+          },
+          "awaySportEventParticipantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The field row on the away side."
+          }
+        },
+        "required": [
+          "matchNumber",
+          "homeSportEventParticipantId",
+          "awaySportEventParticipantId"
+        ],
+        "additionalProperties": false,
+        "description": "Both sides of one match of a reseeded round."
+      },
+      "SportEventRoundMatchupsResponse": {
+        "type": "object",
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "matchNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "A match of the round."
+                },
+                "homeSportEventParticipantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The field row on the home side."
+                },
+                "awaySportEventParticipantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The field row on the away side."
+                }
+              },
+              "required": [
+                "matchNumber",
+                "homeSportEventParticipantId",
+                "awaySportEventParticipantId"
+              ],
+              "additionalProperties": false,
+              "description": "Both sides of one match of a reseeded round."
+            },
+            "description": "One per match of the round, in match-number order."
+          }
+        },
+        "required": [
+          "matches"
+        ],
+        "additionalProperties": false,
+        "description": "The pairing the server proposes for a reseeded round: in each region the best seed left hosts the worst, the second best the second worst, and a team already holding its place keeps it."
+      },
+      "SetSportEventRoundMatchupsRequest": {
+        "type": "object",
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "matchNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "A match of the round."
+                },
+                "homeSportEventParticipantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The field row on the home side."
+                },
+                "awaySportEventParticipantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The field row on the away side."
+                }
+              },
+              "required": [
+                "matchNumber",
+                "homeSportEventParticipantId",
+                "awaySportEventParticipantId"
+              ],
+              "additionalProperties": false,
+              "description": "Both sides of one match of a reseeded round."
+            },
+            "minItems": 1,
+            "maxItems": 127,
+            "description": "Every match of the round, once each."
+          }
+        },
+        "required": [
+          "matches"
+        ],
+        "additionalProperties": false,
+        "description": "A reseeded round's teams, all at once. Every team left in the round plays once, in its own region, and a team holding its place (a bye, a linked winner) keeps it."
       },
       "EventSyncRequest": {
         "type": "object",
@@ -36101,6 +36288,210 @@
         }
       }
     },
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/reseed": {
+      "get": {
+        "operationId": "proposeEventRoundMatchups",
+        "summary": "Propose a reseeded round's matchups",
+        "tags": [
+          "Events"
+        ],
+        "description": "For a league that reseeds (the NFL after Wild Card weekend): in each region the best seed left hosts the worst and the second best the second worst; a bye or a linked winner keeps its place. Saves nothing. 422 BRACKET_NOT_RESEEDED when the event's league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. 409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started. 422 BRACKET_INVALID when the teams left do not fit the round. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "roundNumber",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The pairing the server proposes for a reseeded round: in each region the best seed left hosts the worst, the second best the second worst, and a team already holding its place keeps it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventRoundMatchupsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matchups": {
+      "put": {
+        "operationId": "setEventRoundMatchups",
+        "summary": "Set a reseeded round's matchups",
+        "tags": [
+          "Events"
+        ],
+        "description": "Places both sides of every match of the round, all or none; it can be set again until the round starts. 422 BRACKET_NOT_RESEEDED when the event's league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. 409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started. 422 BRACKET_INVALID, naming every problem, when a match is left out or set twice, a team is not one left in the round or plays twice, a team leaves its region, or a bye or linked winner is moved. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSportEventRoundMatchupsRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "roundNumber",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's bracket.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventBracketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/events/{eventId}/participants/{sportEventParticipantId}/play-in-winner": {
       "put": {
         "operationId": "setEventPlayInWinner",
@@ -36300,7 +36691,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Adding a tour is one call, not a migration. Root admin only.",
+        "description": "Adding a tour is one call, not a migration. 422 SPORT_EVENT_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -36343,6 +36734,16 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -36402,7 +36803,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Setting currentEventYear is \"set as current\": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). Root admin only.",
+        "description": "Setting currentEventYear is \"set as current\": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_EVENT_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {

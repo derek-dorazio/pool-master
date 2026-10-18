@@ -669,6 +669,39 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     handler: handler.clearEventMatchResult,
   });
 
+  const ROUND_REFUSALS = '422 BRACKET_NOT_RESEEDED when the event\'s league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. '
+    + '409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started.';
+
+  fastify.get('/:eventId/bracket/rounds/:roundNumber/reseed', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Propose a reseeded round\'s matchups',
+      description: 'For a league that reseeds (the NFL after Wild Card weekend): in each region the best seed left hosts the worst and the second best the second worst; a bye or a linked winner keeps its place. Saves nothing. '
+        + `${ROUND_REFUSALS} 422 BRACKET_INVALID when the teams left do not fit the round. 422 ${BRACKET_NOT_A_BRACKET} Root admin only.`,
+      operationId: 'proposeEventRoundMatchups',
+      params: ROUND_PARAMS,
+      response: { 200: schemaRef('SportEventRoundMatchupsResponse'), ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.proposeEventRoundMatchups,
+  });
+
+  fastify.put('/:eventId/bracket/rounds/:roundNumber/matchups', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Set a reseeded round\'s matchups',
+      description: 'Places both sides of every match of the round, all or none; it can be set again until the round starts. '
+        + `${ROUND_REFUSALS} 422 BRACKET_INVALID, naming every problem, when a match is left out or set twice, a team is not one left in the round or plays twice, a team leaves its region, or a bye or linked winner is moved. `
+        + `422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
+      operationId: 'setEventRoundMatchups',
+      params: ROUND_PARAMS,
+      body: schemaRef('SetSportEventRoundMatchupsRequest'),
+      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+    },
+    handler: handler.setEventRoundMatchups,
+  });
+
   fastify.put('/:eventId/participants/:sportEventParticipantId/play-in-winner', {
     ...write,
     schema: {

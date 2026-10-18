@@ -16,6 +16,7 @@ export interface SportEventMatchWrite {
   scheduledDate: Date | null;
   advancesToMatchId: string | null;
   advancesToSide: MatchSide | null;
+  regionLabel: string | null;
 }
 
 /** What one match edit changes; a value left out keeps what is stored. */
@@ -68,6 +69,8 @@ export interface SportEventMatchRepository {
   /** Replaces every match of the event with `matches`, all or none. Every round named must exist. */
   replaceBracket(sportEventId: string, matches: readonly SportEventMatchWrite[]): Promise<void>;
   update(id: string, patch: SportEventMatchPatch): Promise<void>;
+  /** Both sides of each match given, all or none: a reseeded round's teams placed (#722). */
+  placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[]): Promise<void>;
   /** A result entered or cleared, the side it fills and the standings it leaves, all or none. */
   applyResult(apply: MatchResultApply): Promise<void>;
 }

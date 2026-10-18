@@ -18,10 +18,13 @@ import type {
   SportLeagueUpdate,
   SportRepository,
 } from '@poolmaster/shared/db';
-import type {
-  ParticipantLeagueAffiliation,
-  Sport,
-  SportLeague,
+import {
+  BracketAdvancement,
+  getSportDefinition,
+  sportPlaysBracket,
+  type ParticipantLeagueAffiliation,
+  type Sport,
+  type SportLeague,
 } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
 import { requireSport } from './sport-row';
@@ -73,8 +76,10 @@ export class SportLeagueService {
     return sportLeague ? (await this.summarize([sportLeague]))[0] : null;
   }
 
-  async createSportLeague(sport: Sport, input: { name: string; matchKeyword?: string }): Promise<SportLeagueSummary> {
+  /** 422 SPORT_EVENT_NOT_BRACKET for a reseeded sport league of a sport not played as a bracket. */
+  async createSportLeague(sport: Sport, input: { name: string; matchKeyword?: string; bracketAdvancement?: BracketAdvancement }): Promise<SportLeagueSummary> {
     const sportRow = await requireSport(this.deps.sports, sport);
+    this.assertAdvancementFits(sport, input.bracketAdvancement);
     if (await this.deps.sportLeagues.findBySportAndName(sportRow.id, input.name)) {
       throw new SportCatalogError(
         `A sport league named "${input.name}" already exists for ${sport}.`,
@@ -86,6 +91,7 @@ export class SportLeagueService {
       sportId: sportRow.id,
       name: input.name,
       matchKeyword: input.matchKeyword ?? null,
+      bracketAdvancement: input.bracketAdvancement ?? BracketAdvancement.FIXED,
     });
     this.deps.logger?.info({ sportLeagueId: sportLeague.id, sport, name: input.name }, 'Created sport league');
     return (await this.summarize([sportLeague]))[0];
@@ -99,12 +105,18 @@ export class SportLeagueService {
    * year column accepts 1823. So the guarantee is kept here instead: 422
    * EVENT_YEAR_HAS_NO_EVENTS for a year this sport league has no events in. It is one write
    * on the sport league row, so the sport league never has two current years.
+   *
+   * 422 SPORT_EVENT_NOT_BRACKET for RESEED_BY_SEED on a sport not played as a bracket.
    */
   async updateSportLeague(
     sportLeagueId: string,
-    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive'> & { currentEventYear?: number },
+    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive' | 'bracketAdvancement'> & { currentEventYear?: number },
   ): Promise<SportLeagueSummary> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
+    if (updates.bracketAdvancement !== undefined) {
+      const sportRow = await this.deps.sports.findById(sportLeague.sportId);
+      if (sportRow) this.assertAdvancementFits(sportRow.sport, updates.bracketAdvancement);
+    }
     if (updates.currentEventYear !== undefined) {
       const events = (await this.deps.sportEvents.countBySportLeagues([sportLeagueId], { eventYear: updates.currentEventYear }))
         .get(sportLeagueId) ?? 0;
@@ -121,11 +133,24 @@ export class SportLeagueService {
       matchKeyword: updates.matchKeyword,
       isActive: updates.isActive,
       currentEventYear: updates.currentEventYear,
+      bracketAdvancement: updates.bracketAdvancement,
     });
     if (updates.currentEventYear !== undefined) {
       this.deps.logger?.info({ sportLeagueId, currentEventYear: updates.currentEventYear }, 'Set current event year');
     }
     return (await this.summarize([updated]))[0];
+  }
+
+  /** A reseeded bracket is a bracket's rule: only a sport played as a bracket takes one. */
+  private assertAdvancementFits(sport: Sport, bracketAdvancement: BracketAdvancement | undefined): void {
+    if (bracketAdvancement === BracketAdvancement.RESEED_BY_SEED && !sportPlaysBracket(sport)) {
+      this.deps.logger?.warn({ sport, bracketAdvancement }, 'Refused a reseeded bracket for a sport not played as a bracket');
+      throw new SportCatalogError(
+        `A ${getSportDefinition(sport).name.toLowerCase()} sport league plays no bracket, so it cannot reseed one.`,
+        'SPORT_EVENT_NOT_BRACKET',
+        422,
+      );
+    }
   }
 
   /** 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league. */

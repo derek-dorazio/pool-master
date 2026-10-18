@@ -291,6 +291,13 @@ enum PrismaMatchSide {
   AWAY
 }
 
+/// How a sport league's bracket winners reach their next match (#722). Mirrors the domain
+/// `BracketAdvancement`.
+enum PrismaBracketAdvancement {
+  FIXED
+  RESEED_BY_SEED
+}
+
 /// How one field member's race ended (#622). Mirrors the domain `RaceResultStatus`. Only a
 /// FINISHED runner has a finishing place; every other status scores the contest's
 /// "did not finish" points.
@@ -594,6 +601,9 @@ model SportLeague {
   /// integrity the season FK used to give (plans/147 decision 6).
   currentEventYear Int?     @map("current_event_year")
   isActive         Boolean  @default(true) @map("is_active")
+  /// How a bracket's winners reach their next match (#722): by fixed links, or reseeded by seed
+  /// after a round (the NFL). Only a sport played as a bracket reads it.
+  bracketAdvancement PrismaBracketAdvancement @default(FIXED) @map("bracket_advancement")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -1074,6 +1084,9 @@ model SportEventMatch {
   awayScore                   Int?              @map("away_score")
   advancesToMatchId           String?           @map("advances_to_match_id") @db.Uuid
   advancesToSide              PrismaMatchSide?  @map("advances_to_side")
+  /// The bracket region or conference the match is in ("East", "AFC"); null where the bracket
+  /// has none. A reseeded round pairs the teams of one region (#722).
+  regionLabel                 String?           @map("region_label") @db.VarChar(40)
   createdAt                   DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                   DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 

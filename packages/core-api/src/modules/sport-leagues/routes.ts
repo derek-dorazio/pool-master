@@ -63,10 +63,10 @@ export function sportLeaguesModule(fastify: FastifyInstance): void {
     schema: {
       tags: TAGS,
       summary: 'Create a sport league',
-      description: 'Adding a tour is one call, not a migration. Root admin only.',
+      description: 'Adding a tour is one call, not a migration. 422 SPORT_EVENT_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.',
       operationId: 'createSportLeague',
       body: schemaRef('CreateSportLeagueRequest'),
-      response: { 201: schemaRef('SportLeagueResponse'), ...errors(403, 404, 409) },
+      response: { 201: schemaRef('SportLeagueResponse'), ...errors(403, 404, 409, 422) },
     },
     handler: handler.createSportLeague,
   });
@@ -77,7 +77,8 @@ export function sportLeaguesModule(fastify: FastifyInstance): void {
       tags: TAGS,
       summary: 'Update a sport league',
       description: 'Setting currentEventYear is "set as current": one write, so the sport league never has two current years, '
-        + 'and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). Root admin only.',
+        + 'and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). '
+        + '422 SPORT_EVENT_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.',
       operationId: 'updateSportLeague',
       params: SPORT_LEAGUE_PARAMS,
       body: schemaRef('UpdateSportLeagueRequest'),

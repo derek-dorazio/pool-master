@@ -4762,6 +4762,10 @@ export type SportLeagueDto = {
      */
     isActive: boolean;
     /**
+     * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
+     */
+    bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
+    /**
      * Participants currently affiliated with the sport league.
      */
     affiliationCount: number;
@@ -4826,6 +4830,10 @@ export type SportLeagueListResponse = {
          */
         isActive: boolean;
         /**
+         * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
+         */
+        bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
+        /**
          * Participants currently affiliated with the sport league.
          */
         affiliationCount: number;
@@ -4877,6 +4885,10 @@ export type SportLeagueResponse = {
          */
         isActive: boolean;
         /**
+         * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
+         */
+        bracketAdvancement: 'FIXED' | 'RESEED_BY_SEED';
+        /**
          * Participants currently affiliated with the sport league.
          */
         affiliationCount: number;
@@ -4911,6 +4923,10 @@ export type CreateSportLeagueRequest = {
      * Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import.
      */
     matchKeyword?: string;
+    /**
+     * FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_EVENT_NOT_BRACKET otherwise.
+     */
+    bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
 };
 
 /**
@@ -4927,6 +4943,10 @@ export type UpdateSportLeagueRequest = {
      * Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.
      */
     currentEventYear?: number;
+    /**
+     * RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_EVENT_NOT_BRACKET otherwise.
+     */
+    bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
 };
 
 /**
@@ -11971,6 +11991,10 @@ export type SportEventMatchDto = {
      * The side of that match the winner fills; null for the final.
      */
     advancesToSide: 'HOME' | 'AWAY' | null;
+    /**
+     * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
+     */
+    regionLabel: string | null;
 };
 
 /**
@@ -12031,6 +12055,10 @@ export type SportEventBracketResponse = {
          * The side of that match the winner fills; null for the final.
          */
         advancesToSide: 'HOME' | 'AWAY' | null;
+        /**
+         * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
+         */
+        regionLabel: string | null;
     }>;
 };
 
@@ -12092,6 +12120,10 @@ export type SportEventMatchResponse = {
          * The side of that match the winner fills; null for the final.
          */
         advancesToSide: 'HOME' | 'AWAY' | null;
+        /**
+         * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
+         */
+        regionLabel: string | null;
     };
 };
 
@@ -12119,7 +12151,7 @@ export type LoadSportEventBracketRequest = {
         isNeutralSite: boolean;
         scheduledDate: string | null;
         /**
-         * Where the winner moves on to; null for the final, and only for the final.
+         * Where the winner moves on to; null for the final. In a league that reseeds, also null for each match of a round whose winners are placed by seed.
          */
         advancesTo: {
             /**
@@ -12131,6 +12163,10 @@ export type LoadSportEventBracketRequest = {
              */
             side: 'HOME' | 'AWAY';
         } | null;
+        /**
+         * The region or conference the match is played in; omitted or null for none.
+         */
+        regionLabel?: string | null;
     }>;
 };
 
@@ -12179,6 +12215,70 @@ export type RecordSportEventMatchResultRequest = {
      * The away side's score, or null with the home score null too.
      */
     awayScore: number | null;
+};
+
+/**
+ * Both sides of one match of a reseeded round.
+ */
+export type RoundMatchupDto = {
+    /**
+     * A match of the round.
+     */
+    matchNumber: number;
+    /**
+     * The field row on the home side.
+     */
+    homeSportEventParticipantId: string;
+    /**
+     * The field row on the away side.
+     */
+    awaySportEventParticipantId: string;
+};
+
+/**
+ * The pairing the server proposes for a reseeded round: in each region the best seed left hosts the worst, the second best the second worst, and a team already holding its place keeps it.
+ */
+export type SportEventRoundMatchupsResponse = {
+    /**
+     * One per match of the round, in match-number order.
+     */
+    matches: Array<{
+        /**
+         * A match of the round.
+         */
+        matchNumber: number;
+        /**
+         * The field row on the home side.
+         */
+        homeSportEventParticipantId: string;
+        /**
+         * The field row on the away side.
+         */
+        awaySportEventParticipantId: string;
+    }>;
+};
+
+/**
+ * A reseeded round's teams, all at once. Every team left in the round plays once, in its own region, and a team holding its place (a bye, a linked winner) keeps it.
+ */
+export type SetSportEventRoundMatchupsRequest = {
+    /**
+     * Every match of the round, once each.
+     */
+    matches: Array<{
+        /**
+         * A match of the round.
+         */
+        matchNumber: number;
+        /**
+         * The field row on the home side.
+         */
+        homeSportEventParticipantId: string;
+        /**
+         * The field row on the away side.
+         */
+        awaySportEventParticipantId: string;
+    }>;
 };
 
 /**
@@ -17451,6 +17551,98 @@ export type RecordEventMatchResultResponses = {
 
 export type RecordEventMatchResultResponse = RecordEventMatchResultResponses[keyof RecordEventMatchResultResponses];
 
+export type ProposeEventRoundMatchupsData = {
+    body?: never;
+    path: {
+        eventId: string;
+        roundNumber: number;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/reseed';
+};
+
+export type ProposeEventRoundMatchupsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type ProposeEventRoundMatchupsError = ProposeEventRoundMatchupsErrors[keyof ProposeEventRoundMatchupsErrors];
+
+export type ProposeEventRoundMatchupsResponses = {
+    /**
+     * The pairing the server proposes for a reseeded round: in each region the best seed left hosts the worst, the second best the second worst, and a team already holding its place keeps it.
+     */
+    200: SportEventRoundMatchupsResponse;
+};
+
+export type ProposeEventRoundMatchupsResponse = ProposeEventRoundMatchupsResponses[keyof ProposeEventRoundMatchupsResponses];
+
+export type SetEventRoundMatchupsData = {
+    body: SetSportEventRoundMatchupsRequest;
+    path: {
+        eventId: string;
+        roundNumber: number;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matchups';
+};
+
+export type SetEventRoundMatchupsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type SetEventRoundMatchupsError = SetEventRoundMatchupsErrors[keyof SetEventRoundMatchupsErrors];
+
+export type SetEventRoundMatchupsResponses = {
+    /**
+     * An event's bracket.
+     */
+    200: SportEventBracketResponse;
+};
+
+export type SetEventRoundMatchupsResponse = SetEventRoundMatchupsResponses[keyof SetEventRoundMatchupsResponses];
+
 export type SetEventPlayInWinnerData = {
     body: FillPlayInSlotRequest;
     path: {
@@ -17569,6 +17761,10 @@ export type CreateSportLeagueErrors = {
      * Standard API error envelope.
      */
     409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type CreateSportLeagueError = CreateSportLeagueErrors[keyof CreateSportLeagueErrors];

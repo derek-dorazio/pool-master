@@ -21,5 +21,6 @@ export function mapSportEventMatchToDto(match: SportEventMatch): SportEventMatch
     awayScore: match.awayScore,
     advancesToMatchId: match.advancesToMatchId,
     advancesToSide: match.advancesToSide,
+    regionLabel: match.regionLabel,
   };
 }

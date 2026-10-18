@@ -6,7 +6,7 @@
  */
 
 import type { DomainEntity, Participant } from './types';
-import type { MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantStandingStatus, RaceResultStatus, ValuationSource } from './enums';
+import type { BracketAdvancement, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantStandingStatus, RaceResultStatus, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {
@@ -20,6 +20,8 @@ export interface SportLeague extends DomainEntity {
    */
   currentEventYear: number | null;
   isActive: boolean;
+  /** How its bracket winners reach their next match; read only for a sport played as a bracket. */
+  bracketAdvancement: BracketAdvancement;
 }
 
 /**
@@ -172,4 +174,6 @@ export interface SportEventMatch extends DomainEntity {
   awayScore: number | null;
   advancesToMatchId: string | null;
   advancesToSide: MatchSide | null;
+  /** The bracket region or conference ("East", "AFC"); null where the bracket has none. */
+  regionLabel: string | null;
 }

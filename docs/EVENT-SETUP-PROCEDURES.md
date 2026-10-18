@@ -209,6 +209,15 @@ on the Bracket tab:
   game has a result. Each play-in place takes its winner once, from the sport's active teams
   not already in the tournament.
 
+**Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
+`RESEED_BY_SEED`) loads its first-round games with no next game, and the next round with only
+its byes named. Release lets that round wait. Once every first-round game has a result, ask the
+server for the reseed (`proposeEventRoundMatchups`): in each conference the best seed left hosts
+the worst. Set it, or a pairing of your own that keeps each team in its conference and each bye
+in place, with `setEventRoundMatchups`, before the round starts. A first-round result corrected
+after that moves the team it placed, until that team has played. The Bracket tab does not have a
+reseed button yet, so the two calls go through the API.
+
 ## Loading sport data
 
 Sport leagues, players, events and fields can be loaded from a data file instead of typed
@@ -248,7 +257,10 @@ alone. A withdrawn player the file lists again is reinstated.
 give each event its `matches`: each match's number, round, its two sides as player keys from
 the event's field (`null` where an earlier match's winner fills the side), whether it is on a
 neutral site, its `scheduledAt` once announced, and `advancesTo` (the match and side its winner
-moves on to; `null` for the final). A field entry may give its bracket `seed` (1-16 in each
+moves on to; `null` for the final), and its `region` (the March Madness region or NFL
+conference) where it has one. A league that reseeds gives `bracketAdvancement`
+`RESEED_BY_SEED`, and its first-round games `advancesTo: null`; the run sets the rule on the
+sport league, new or existing. A field entry may give its bracket `seed` (1-16 in each
 March Madness region) where the seed is not its place in the field, and `isPlayInPlace` for a
 First Four pairing. The run refuses a bracket the bracket endpoint would refuse, before any
 write.

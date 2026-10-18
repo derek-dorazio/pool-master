@@ -33,7 +33,7 @@ import type {
   SportLeagueRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
-import { findSportRow, MatchSide, MatchStatus, ParticipantStatus } from '@poolmaster/shared/domain';
+import { BracketAdvancement, findSportRow, MatchSide, MatchStatus, ParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   GolfRoundResult,
   GolfStandingResult,
@@ -101,7 +101,7 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, currentEventYear: null, isActive: true });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, currentEventYear: null, isActive: true });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -596,6 +596,13 @@ export class InMemorySportEvents {
             awayScore: null,
           })),
         ];
+      },
+      placeSides: async (sides) => {
+        for (const { id, ...placed } of sides) {
+          const row = this.matchRows.find((match) => match.id === id);
+          if (!row) throw new Error('unknown match');
+          Object.assign(row, placed);
+        }
       },
       update: async (id, patch) => {
         const row = this.matchRows.find((match) => match.id === id);

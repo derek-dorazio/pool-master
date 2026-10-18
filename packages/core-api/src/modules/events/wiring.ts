@@ -85,6 +85,7 @@ export function createRaceResultService(prisma: PrismaClient, logger?: FastifyBa
 export function createSportEventBracketService(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventBracketService {
   return new SportEventBracketService({
     sportEvents: new PrismaSportEventRepository(prisma),
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),

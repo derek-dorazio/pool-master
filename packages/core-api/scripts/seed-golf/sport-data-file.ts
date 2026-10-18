@@ -23,7 +23,7 @@
  */
 
 import { z } from 'zod';
-import { getSportDefinition, MatchSide, ScoringFamily, type Sport, sportPlaysBracket, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { BracketAdvancement, getSportDefinition, MatchSide, ScoringFamily, type Sport, sportPlaysBracket, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import { findBracketProblems } from '../../src/modules/events/sport-event-bracket-service';
 
 /** The one envelope version this loader reads; any other is refused rather than misread. */
@@ -86,8 +86,13 @@ const MatchSchema = z.object({
   isNeutralSite: z.boolean(),
   /** Tip-off or kickoff, with its UTC offset, once it is announced. A time left out keeps the site's. */
   scheduledAt: z.string().datetime({ offset: true }).optional(),
-  /** Where the winner moves on to; null for the final, and only for the final. */
+  /**
+   * Where the winner moves on to; null for the final. In a league that reseeds, also null for
+   * each match of a round whose winners are placed by seed (the NFL's Wild Card games).
+   */
   advancesTo: z.object({ matchNumber: z.number().int().min(1), side: z.nativeEnum(MatchSide) }).strict().nullable(),
+  /** The region or conference the match is played in ("AFC", "East"); left out for none. */
+  region: z.string().min(1).max(40).optional(),
 }).strict();
 
 const EventSchema = z.object({
@@ -116,6 +121,8 @@ const EventSchema = z.object({
 
 const SportLeagueSchema = z.object({
   name: z.string().min(1),
+  /** How its brackets fill later rounds; left out keeps the site's (FIXED for a new league). */
+  bracketAdvancement: z.nativeEnum(BracketAdvancement).optional(),
   players: z.array(PlayerSchema),
   events: z.array(EventSchema),
 }).strict();
@@ -202,7 +209,7 @@ function duplicates(values: readonly string[]): string[] {
  * The bracket's shape problems, by the same check the bracket endpoint applies, with each side
  * named by a player key; empty when the event's field is the file's to say.
  */
-function bracketProblems(event: SportDataEvent, matches: readonly SportDataMatch[]): string[] {
+function bracketProblems(league: SportDataLeague, event: SportDataEvent, matches: readonly SportDataMatch[]): string[] {
   return findBracketProblems(
     matches.map((match) => ({
       matchNumber: match.matchNumber,
@@ -216,6 +223,7 @@ function bracketProblems(event: SportDataEvent, matches: readonly SportDataMatch
     {
       roundNumbers: new Set(Array.from({ length: event.rounds }, (_, index) => index + 1)),
       fieldIds: new Set(event.field.map((entry) => entry.player)),
+      reseeds: league.bracketAdvancement === BracketAdvancement.RESEED_BY_SEED,
     },
   );
 }
@@ -227,6 +235,9 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
   }
   for (const name of duplicates(league.events.map((event) => event.name.toLowerCase()))) {
     problems.push(`${league.name}: event ${name} appears more than once.`);
+  }
+  if (!playsBracket && league.bracketAdvancement === BracketAdvancement.RESEED_BY_SEED) {
+    problems.push(`${league.name}: reseeds its brackets, which only a sport played as a bracket has.`);
   }
   const playerKeys = new Set(league.players.map((player) => player.key));
   for (const event of league.events) {
@@ -249,7 +260,7 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
     if (matches.length > 0) {
       if (!playsBracket) problems.push(`${where}: has a bracket, which only a sport played as a bracket has.`);
       else if (!contents.has(SportDataContent.BRACKET)) problems.push(`${where}: has a bracket, but the scope's contents leave out BRACKET.`);
-      else for (const problem of bracketProblems(event, matches)) problems.push(`${where}: bracket: ${problem}.`);
+      else for (const problem of bracketProblems(league, event, matches)) problems.push(`${where}: bracket: ${problem}.`);
     }
     if (!playsBracket && event.field.some((entry) => entry.isPlayInPlace !== undefined || entry.seed !== undefined)) {
       problems.push(`${where}: marks a seed or a play-in place, which only a sport played as a bracket has.`);
