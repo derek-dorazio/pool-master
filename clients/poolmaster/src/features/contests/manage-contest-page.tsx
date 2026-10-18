@@ -31,7 +31,7 @@ import {
   SettingsSection,
 } from '@/features/shared/ui';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
-import { firstContestEvent } from './contest-events';
+import { coversOneEvent, firstContestEvent } from './contest-events';
 import { countParticipants, formatContestRules, formatEntriesPerTeam, formatSelectionTypeName } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
@@ -170,10 +170,11 @@ export function ManageContestPage() {
   );
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
   const isMultiEvent = contest.sportEvents.length > 1;
-  // Events can change until the contest is final; a random draw deals one event, once.
+  // Events can change until the contest is final; a random draw deals one event, once, and a
+  // bracket is one knockout.
   const canChangeEvents = league.isActive
     && contest.status !== ContestStatus.COMPLETED
-    && contest.selectionType !== SelectionType.RANDOM_DRAW;
+    && !coversOneEvent(contest.selectionType);
   const eventNamesById = new Map(contest.sportEvents.map((sportEvent) => [sportEvent.sportEventId, sportEvent.name]));
 
   function closeDeleteDialog() {

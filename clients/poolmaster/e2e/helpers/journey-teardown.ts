@@ -29,8 +29,11 @@ export type JourneyUser = {
   lastName: string;
 };
 
-/** The sports a journey builds its catalog in: the golden journey's golf, the racing journey's horse racing. */
-export type JourneySport = 'GOLF' | 'HORSE_RACING';
+/**
+ * The sports a journey builds its catalog in: the golden journey's golf, the racing journey's
+ * horse racing, the bracket journey's basketball.
+ */
+export type JourneySport = 'GOLF' | 'HORSE_RACING' | 'BASKETBALL';
 
 /**
  * Every name one attempt of a journey can create, all derived from its run id. The tour, players

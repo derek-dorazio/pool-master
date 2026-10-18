@@ -10,6 +10,7 @@ const SELECTION_TYPE_NAMES: Record<SelectionType, string> = {
   BUDGET_PICK: 'Budget',
   RANDOM_DRAW: 'Random draw',
   PICK_EM: 'Pick’em',
+  BRACKET: 'Bracket',
 };
 
 export function formatSelectionTypeName(selectionType: SelectionType) {
@@ -76,6 +77,11 @@ export function describePickEmMode(mode: PickEmMode) {
     : 'Pick the winner of every game.';
 }
 
+/** A bracket contest's rules (#721): every game picked before the event starts, to the final. */
+export function describeBracketRules() {
+  return 'Fill in the whole bracket before the first game: pick the winner of every game, all the way to the final.';
+}
+
 /** "Pick 6, best 4" or "Pick 6, all count": a roster size and the scores that count. */
 function formatRosterLabel(verb: string, rosterSize: number, countedScores: number) {
   return `${verb} ${rosterSize}, ${countedScores >= rosterSize ? 'all count' : `best ${countedScores}`}`;
@@ -103,6 +109,8 @@ export function formatContestRules(
       return formatRandomDrawRules(configuration, participant);
     case SelectionType.PICK_EM:
       return describePickEmMode(configuration.mode);
+    case SelectionType.BRACKET:
+      return describeBracketRules();
   }
 }
 
@@ -140,12 +148,14 @@ export function formatPresetLabel(configuration: ContestRules, tierCount: number
       return formatRosterLabel('Draw', configuration.picksPerEntry, configuration.countedScores);
     case SelectionType.PICK_EM:
       return formatPickEmModeName(configuration.mode);
+    case SelectionType.BRACKET:
+      return formatSelectionTypeName(SelectionType.BRACKET);
   }
 }
 
 /**
  * The name Create contest suggests from the event and the rules, such as "The Masters Pick 6" or
- * "The Masters Budget Pick 6", "The Masters Sweepstake" for a random draw, or "NFL Week 1 Pick'em", until the commissioner types their own.
+ * "The Masters Budget Pick 6", "The Masters Sweepstake" for a random draw, "NFL Week 1 Pick'em" or "March Madness Bracket", until the commissioner types their own.
  */
 export function suggestContestName(
   eventName: string,
@@ -166,5 +176,7 @@ export function suggestContestName(
       return `${eventName} Sweepstake`;
     case SelectionType.PICK_EM:
       return `${eventName} Pick’em`;
+    case SelectionType.BRACKET:
+      return `${eventName} Bracket`;
   }
 }

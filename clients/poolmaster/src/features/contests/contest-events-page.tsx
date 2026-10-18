@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestStatus } from '@poolmaster/shared/domain';
 import {
   CONTEST_BUDGET_SALARY_CAP_MISMATCH,
   CONTEST_EVENTS_LEAGUE_MISMATCH,
@@ -24,7 +24,7 @@ import {
   LoadingState,
   Select,
 } from '@/features/shared/ui';
-import { firstContestEvent, hasContestEventStarted } from './contest-events';
+import { coversOneEvent, firstContestEvent, hasContestEventStarted } from './contest-events';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useLeagueContestsQuery } from './use-league-contests-query';
@@ -309,14 +309,14 @@ export function ContestEventsPage() {
   if (contestsQuery.isLoading || firstEventQuery.isLoading || leagueEventsQuery.isLoading) {
     return <LoadingState body="Loading events..." testId="contest-events-loading" />;
   }
-  // A missing contest, a final or drawn one, or a read that failed goes back to the contest
+  // A missing contest, a final one, one that covers a single event (a draw, a bracket), or a read that failed goes back to the contest
   // page, which says why.
   if (
     !contest
     || !firstEvent
     || !leagueEventsQuery.data
     || contest.status === ContestStatus.COMPLETED
-    || contest.selectionType === SelectionType.RANDOM_DRAW
+    || coversOneEvent(contest.selectionType)
     || !league.isActive
   ) {
     return <Navigate replace to={contestPath} />;

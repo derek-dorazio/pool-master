@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { ContestStatus, SquadMembershipStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
-import { useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
+import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
   cn,
   formatDateTimeDisplay,
@@ -13,6 +13,7 @@ import {
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
 import { TeamIcon } from '@/features/teams/team-icon';
 import {
+  buildBracketTopStandings,
   buildTopStandings,
   countdownUntil,
   type StandingRow,
@@ -209,8 +210,14 @@ export function LiveStandingsCard({
   leagueCode: string;
   mySquadId: string | null;
 }) {
-  const leaderboardQuery = useContestLeaderboardQuery(contest.id, contest.status);
-  const standings = leaderboardQuery.data ? buildTopStandings(leaderboardQuery.data, mySquadId) : null;
+  // A bracket contest's standings are their own read (#721).
+  const isBracket = contest.selectionType === SelectionType.BRACKET;
+  const rosterQuery = useContestLeaderboardQuery(contest.id, contest.status, { enabled: !isBracket });
+  const bracketQuery = useBracketLeaderboardQuery(contest.id, contest.status, { enabled: isBracket });
+  const leaderboardQuery = isBracket ? bracketQuery : rosterQuery;
+  const standings = isBracket
+    ? bracketQuery.data ? buildBracketTopStandings(bracketQuery.data, mySquadId) : null
+    : rosterQuery.data ? buildTopStandings(rosterQuery.data, mySquadId) : null;
 
   return (
     <HomeCard

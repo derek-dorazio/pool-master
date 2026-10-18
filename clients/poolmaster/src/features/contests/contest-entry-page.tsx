@@ -32,6 +32,7 @@ import {
   type SelectionGroup,
 } from './contest-entry-selection';
 import { BudgetLineupBuilder, LockedBudgetLineup } from './contest-entry-budget';
+import { BracketEntryPage } from './bracket-entry-page';
 import { DrawEntryMetrics, DrawLineup } from './contest-entry-draw';
 import {
   buildPickedAtById,
@@ -100,7 +101,40 @@ function getNextIncompleteGroupId(selectionGroups: SelectionGroup[]) {
   return selectionGroups.find((group) => group.selectedParticipantIds.length < group.picksFromGroup)?.groupId ?? null;
 }
 
+/**
+ * The contest entry page: a bracket contest's entries fill in a bracket (#721); every roster
+ * contest's build a lineup in the selection room. The contest read says which, and is shared
+ * with the page it opens through the contest's own key.
+ */
 export function ContestEntryPage() {
+  const { contestId = '' } = useParams<{ contestId: string }>();
+  const contestQuery = useQuery(contestDetailQueryOptions(contestId));
+  if (contestQuery.isLoading) {
+    return <LoadingState body="Loading contest entry..." />;
+  }
+  if (contestQuery.data?.selectionType === SelectionType.BRACKET) {
+    return <BracketEntryPage contest={contestQuery.data} />;
+  }
+  return <RosterContestEntryPage />;
+}
+
+function contestDetailQueryOptions(contestId: string) {
+  return {
+    queryKey: QueryKeys.contests.detail(contestId),
+    queryFn: async (): Promise<ContestDto> => {
+      const response = await getContest({ path: { contestId } });
+      if (!response.data?.contest) {
+        throwApiError(response.error, 'Contest detail response is missing data.');
+      }
+      return response.data.contest;
+    },
+    enabled: Boolean(contestId),
+    retry: false,
+  };
+}
+
+/** A roster contest's entry: its lineup, picked in the selection room for each of its events. */
+function RosterContestEntryPage() {
   const logger = getLogger().child({
     feature: 'contest-entry-page',
   });
@@ -123,18 +157,7 @@ export function ContestEntryPage() {
   const [draftDetailsSeedKey, setDraftDetailsSeedKey] = useState<string | null>(null);
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
 
-  const contestQuery = useQuery({
-    queryKey: QueryKeys.contests.detail(contestId),
-    queryFn: async (): Promise<ContestDto> => {
-      const response = await getContest({ path: { contestId } });
-      if (!response.data?.contest) {
-        throwApiError(response.error, 'Contest detail response is missing data.');
-      }
-      return response.data.contest;
-    },
-    enabled: Boolean(contestId),
-    retry: false,
-  });
+  const contestQuery = useQuery(contestDetailQueryOptions(contestId));
 
   const contestEntriesQuery = useQuery({
     queryKey: QueryKeys.contestEntries.byContest(contestId),

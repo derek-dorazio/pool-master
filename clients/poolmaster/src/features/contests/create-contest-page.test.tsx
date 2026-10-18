@@ -241,6 +241,40 @@ function singleEvent(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/**
+ * The golf reads, plus one contest-ready basketball tournament of three rounds with no presets of
+ * its own, as the reads answer when Basketball is chosen.
+ */
+function primeBasketballMocks() {
+  primeCommonMocks();
+  const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
+  listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'BASKETBALL'
+    ? Promise.resolve({
+      data: {
+        events: [{
+          id: 'bb-1',
+          sport: 'BASKETBALL',
+          name: 'March Madness',
+          venue: null,
+          status: 'SCHEDULED',
+          startDate: '2099-03-19T16:00:00.000Z',
+          participantCount: 8,
+          readinessStatus: 'CONTEST_ELIGIBLE',
+          readinessReasons: [],
+          contestEligible: true,
+          tierCount: 4,
+          rounds: 3,
+          sportLeagueId: 'ncaa-men',
+        }],
+      },
+    })
+    : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
+  const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
+  listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'BASKETBALL'
+    ? Promise.resolve({ data: { templates: [] } })
+    : golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } })));
+}
+
 function submittedBody() {
   const [request] = createContestMock.mock.calls[0] as [{ body: Record<string, unknown> }];
   return request.body;
@@ -492,7 +526,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     );
   });
 
-  it('offers basketball\'s roster formats but not pick\'em, which has no screen to pick on yet', async () => {
+  it('offers basketball\'s roster formats and Bracket but not pick\'em, which has no screen to pick on yet', async () => {
     primeCommonMocks();
     renderCreateContestPage();
     await waitForStartingChoices();
@@ -503,8 +537,64 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-format-TIERED')).toBeInTheDocument();
     expect(screen.getByTestId('contest-format-BUDGET_PICK')).toBeInTheDocument();
     expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-format-BRACKET')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-format-PICK_EM')).not.toBeInTheDocument();
     expect(screen.queryByText('Pick’em')).not.toBeInTheDocument();
+  });
+
+  it('offers Bracket on a basketball knockout event and creates a prediction contest with the bracket rules and the round points typed', async () => {
+    primeBasketballMocks();
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-bracket' } } });
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+    await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
+    expect(screen.getByTestId('contest-format-BRACKET')).toHaveTextContent('Bracket');
+    fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
+
+    expect(await screen.findByTestId('contest-bracket-rules')).toBeInTheDocument();
+    expect(screen.getByText('Points for a correct pick')).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4' } });
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('March Madness Bracket'));
+    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
+      'Fill in the whole bracket before the first game: pick the winner of every game, all the way to the final. Points for a win in each round: 1, 2, 4. 1 entry per member.',
+    );
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).toEqual({
+      name: 'March Madness Bracket',
+      sportEventIds: ['bb-1'],
+      contestFormat: 'PREDICTION',
+      selectionType: 'BRACKET',
+      configuration: {
+        selectionType: 'BRACKET',
+        maxEntriesPerSquad: 1,
+        scoring: {
+          participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+          config: { roundValues: [1, 2, 4], upsetBonus: { rule: 'NONE' } },
+        },
+      },
+    });
+  });
+
+  it('says a bracket needs games that fill in as one when the server refuses the event with CONTEST_EVENT_NOT_A_BRACKET', async () => {
+    primeBasketballMocks();
+    createContestMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_EVENT_NOT_A_BRACKET', message: 'Not a bracket.' } },
+      status: 422,
+    });
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+    await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
+    fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
+    fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4' } });
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    expect(await screen.findByText(/can’t be filled in as a bracket yet/)).toBeInTheDocument();
   });
 
   it('says no event is available and keeps Create contest disabled when no golf event is contest-ready', async () => {

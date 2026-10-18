@@ -1,5 +1,5 @@
 import { FormField, Input, Select } from '@/features/shared/ui';
-import { UpsetBonusRule } from '@poolmaster/shared/domain';
+import { isPredictionSelectionType, UpsetBonusRule } from '@poolmaster/shared/domain';
 import type { ScoringSettingsFieldsProps } from './contest-scoring-settings';
 
 /** A finish-position contest's points table and its "did not finish" value (#622). */
@@ -35,14 +35,21 @@ export function FinishPositionPointsFields({ onChange, values, vocabulary }: Sco
   );
 }
 
-/** A knockout contest's points for a win in each round and its upset bonus (#699). */
-export function KnockoutRoundPointsFields({ onChange, values, vocabulary }: ScoringSettingsFieldsProps) {
+/**
+ * A knockout contest's points for a win in each round and its upset bonus (#699). In a bracket
+ * (#721) the same settings score the entry's correct picks rather than the teams it holds.
+ */
+export function KnockoutRoundPointsFields({ onChange, selectionType, values, vocabulary }: ScoringSettingsFieldsProps) {
   const team = vocabulary.participant.one;
+  const round = vocabulary.round.one;
+  const scoresPicks = isPredictionSelectionType(selectionType);
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <FormField
-        helperText={`What a ${team} scores for a win in each ${vocabulary.round.one}, first ${vocabulary.round.one} first: one value for every ${vocabulary.round.one} of the bracket.`}
-        label="Points for a win"
+        helperText={scoresPicks
+          ? `What a correct pick scores in each ${round}, first ${round} first: one value for every ${round} of the bracket.`
+          : `What a ${team} scores for a win in each ${round}, first ${round} first: one value for every ${round} of the bracket.`}
+        label={scoresPicks ? 'Points for a correct pick' : 'Points for a win'}
       >
         <Input
           data-testid="contest-scoring-round-values"
@@ -53,7 +60,9 @@ export function KnockoutRoundPointsFields({ onChange, values, vocabulary }: Scor
         />
       </FormField>
       <FormField
-        helperText={`With the bonus on, a win by the worse seed adds the seed difference. An unseeded ${team} counts as the field's worst seed.`}
+        helperText={scoresPicks
+          ? `With the bonus on, a correct pick of the worse seed adds the seed difference. An unseeded ${team} counts as the field's worst seed.`
+          : `With the bonus on, a win by the worse seed adds the seed difference. An unseeded ${team} counts as the field's worst seed.`}
         label="Upset bonus"
       >
         <Select

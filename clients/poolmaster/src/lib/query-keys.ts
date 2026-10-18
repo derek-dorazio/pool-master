@@ -58,6 +58,8 @@ export const QueryKeys = {
         ? (['poolmaster', 'contest', contestId, 'leaderboard'] as const)
         : (['poolmaster', 'contest', contestId, 'leaderboard', sportEventId] as const),
     standings: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'standings'] as const,
+    /** A bracket contest's leaderboard (#721): its own read, not the roster leaderboard. */
+    bracketLeaderboard: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'bracket-leaderboard'] as const,
   },
   managedContests: {
     all: ['poolmaster', 'managed-contest'] as const,
@@ -88,6 +90,16 @@ export const QueryKeys = {
       sportEventId === undefined
         ? (['poolmaster', 'selection-state', contestId, entryId] as const)
         : (['poolmaster', 'selection-state', contestId, entryId, sportEventId] as const),
+  },
+  /** A prediction contest entry's game picks on one of its events: a bracket's picks (#721). */
+  gamePicks: {
+    all: ['poolmaster', 'game-picks'] as const,
+    detail: (contestId: QueryKeyId, entryId: QueryKeyId, sportEventId: QueryKeyId) =>
+      ['poolmaster', 'game-picks', contestId, entryId, sportEventId] as const,
+  },
+  /** One sport league: a bracket's own round names (#706). */
+  sportLeagues: {
+    detail: (sportLeagueId: QueryKeyId) => ['poolmaster', 'sport-league', sportLeagueId] as const,
   },
   leagues: {
     all: ['poolmaster', 'leagues'] as const,

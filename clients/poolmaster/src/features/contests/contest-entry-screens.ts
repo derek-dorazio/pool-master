@@ -10,6 +10,8 @@ export const HAS_WEB_ENTRY_SCREEN = {
   [SelectionType.BUDGET_PICK]: true,
   [SelectionType.RANDOM_DRAW]: true,
   [SelectionType.PICK_EM]: false,
+  // A bracket entry fills in its bracket on the contest entry page (#721).
+  [SelectionType.BRACKET]: true,
 } as const satisfies Record<SelectionType, boolean>;
 
 /** The selection types whose entries have a web screen to pick on. */

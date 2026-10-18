@@ -3,7 +3,7 @@
  * a live leaderboard. Pure, so each rule is testable on its own.
  */
 import { ContestStatus } from '@poolmaster/shared/domain';
-import type { ContestDto, ContestLeaderboardResponse } from '@/lib/api';
+import type { BracketLeaderboardResponse, ContestDto, ContestLeaderboardResponse } from '@/lib/api';
 import { buildLeaderboardView } from '@/features/contests/contest-leaderboard';
 import { areContestEntriesOpen } from '@/features/contests/contest-status';
 import { listedContestStartsAt } from '@/features/contests/use-contest-schedule';
@@ -64,13 +64,31 @@ export function buildTopStandings(
   limit = 5,
 ): TopStandings {
   const view = buildLeaderboardView(response);
-  const rows = response.entries.map((entry, index): StandingRow => ({
+  return topOf(response.entries.map((entry, index): StandingRow => ({
     entryId: entry.entryId,
     isMine: mySquadId !== null && entry.squadId === mySquadId,
     name: entry.squadName,
     position: entry.displayPosition,
     total: view.entries[index]?.total ?? null,
-  }));
+  })), limit);
+}
+
+/** The top `limit` entries of a bracket contest's leaderboard (#721), by points. */
+export function buildBracketTopStandings(
+  response: BracketLeaderboardResponse,
+  mySquadId: string | null,
+  limit = 5,
+): TopStandings {
+  return topOf(response.entries.map((entry): StandingRow => ({
+    entryId: entry.entryId,
+    isMine: mySquadId !== null && entry.squadId === mySquadId,
+    name: entry.squadName,
+    position: entry.displayPosition,
+    total: String(entry.points),
+  })), limit);
+}
+
+function topOf(rows: StandingRow[], limit: number): TopStandings {
   const top = rows.slice(0, limit);
   const myRowBelow = top.some((row) => row.isMine)
     ? null

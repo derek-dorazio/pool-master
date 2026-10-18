@@ -5,7 +5,7 @@ import {
   getContest,
   type ContestDto,
 } from '@/lib/api';
-import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
@@ -29,12 +29,14 @@ import {
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
 import {
+  LEADERBOARD_ERROR_MESSAGES,
   buildLeaderboardView,
   type LeaderboardEntryRow,
   type LeaderboardView,
 } from './contest-leaderboard';
 import { fetchContestEntries } from './use-contest-entries';
-import { ContestStatus, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
+import { BracketLeaderboard } from './bracket-leaderboard';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
@@ -51,16 +53,9 @@ import { hasContestEventStarted } from './contest-events';
  * sport definition's.
  *
  * Once the contest is COMPLETED the same endpoint serves the standings frozen at settlement,
- * so there is no separate final mode to render.
+ * so there is no separate final mode to render. A bracket contest's board is its own
+ * (`BracketLeaderboard`, #721): an entry there is its picks of games, not a lineup.
  */
-
-const LEADERBOARD_ERROR_MESSAGES: ErrorCodeMessages = {
-  CONTEST_LEADERBOARD_PICKS_HIDDEN:
-    'Scores appear once picks are revealed. Until then, the contest board shows who has entered.',
-  LEAGUE_MEMBERSHIP_REQUIRED: 'Only members of this league can see its contest leaderboards.',
-  LEAGUE_MEMBERSHIP_INACTIVE:
-    'Your league membership is inactive, so this contest leaderboard is not available to you.',
-};
 
 /** An unscored cell. A participant with nothing posted is not a zero. */
 const NO_SCORE = '—';
@@ -247,7 +242,9 @@ export function ContestLeaderboardPage() {
         queryClient,
         QueryKeys.contests.detail(contestId),
         response.data.contest.status,
-        QueryKeys.contests.leaderboard(contestId),
+        response.data.contest.selectionType === SelectionType.BRACKET
+          ? QueryKeys.contests.bracketLeaderboard(contestId)
+          : QueryKeys.contests.leaderboard(contestId),
       );
       return response.data.contest;
     },
@@ -260,7 +257,11 @@ export function ContestLeaderboardPage() {
   // The contest read above refreshes until settlement (#362), so this starts when play starts and
   // stops when the contest settles, and each status change it sees reads the leaderboard once
   // more, which is how the final standings land.
+  // A bracket contest has its own board (#721); the roster board waits for the contest to say
+  // which it is, since it refuses a prediction contest.
+  const isBracket = contestQuery.data?.selectionType === SelectionType.BRACKET;
   const leaderboardQuery = useContestLeaderboardQuery(contestId, contestQuery.data?.status, {
+    enabled: contestQuery.data !== undefined && !isBracket,
     sportEventId: requestedEventId,
   });
   const contestEntriesQuery = useQuery({
@@ -295,7 +296,15 @@ export function ContestLeaderboardPage() {
     );
   }, [contestId, hintedLeagueCode, leaderboardQuery.error, leaderboardQuery.isError, logger]);
 
-  if (contestQuery.isLoading || leaderboardQuery.isLoading) {
+  if (contestQuery.isLoading) {
+    return <LoadingState body="Loading contest leaderboard..." />;
+  }
+
+  if (contestQuery.data && isBracket) {
+    return <BracketLeaderboard contest={contestQuery.data} leagueCode={leagueCode} />;
+  }
+
+  if (leaderboardQuery.isLoading) {
     return <LoadingState body="Loading contest leaderboard..." />;
   }
 
