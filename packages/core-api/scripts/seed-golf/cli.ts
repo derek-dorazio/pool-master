@@ -81,15 +81,9 @@ async function siteEnvironment(baseUrl: string): Promise<string> {
   return version.data.environment;
 }
 
-/** Every test data file in the folder, by name; test slates fill one named event, so they are left out. */
-function allTestDataFiles(dataDir: string): string[] {
-  return readdirSync(dataDir)
-    .filter((name) => name.endsWith('.json'))
-    .sort()
-    .filter((name) => {
-      const file = parseSportDataFile(JSON.parse(readFileSync(resolve(dataDir, name), 'utf8')) as unknown, { allowTestData: true });
-      return file.testData && !isTestSlate(file);
-    });
+/** Every data file in the folder, by name. Test slates sit in their own folder, so none is listed. */
+function allDataFiles(dataDir: string): string[] {
+  return readdirSync(dataDir).filter((name) => name.endsWith('.json')).sort();
 }
 
 async function main(): Promise<void> {
@@ -123,15 +117,17 @@ async function main(): Promise<void> {
   }
 
   const dataDir = dirname(fileURLToPath(import.meta.url));
-  const names = allTestData ? allTestDataFiles(dataDir) : [values.file ?? 'golf-2026.json'];
-  const files = names.map((name): { name: string; file: SportDataFile } => {
+  const names = allTestData ? allDataFiles(dataDir) : [values.file ?? 'golf-2026.json'];
+  /** The file to load, or null for a real data file that a load-every-test-file run passes over. */
+  const readFile = (name: string): SportDataFile | null => {
     const path = resolve(dataDir, name);
     const inside = relative(dataDir, path);
     if (inside.startsWith('..') || isAbsolute(inside)) throw new Error(`--file ${name} is outside ${dataDir}.`);
     const file = parseSportDataFile(JSON.parse(readFileSync(path, 'utf8')) as unknown, { allowTestData: values['allow-test-data'] });
+    if (allTestData && (!file.testData || isTestSlate(file))) return null;
     if (withParticipants && (!file.testData || isTestSlate(file))) throw new Error(`--with-participants goes with a test data file, and ${name} is not one.`);
-    return { name, file };
-  });
+    return file;
+  };
 
   let signedIn: { client: Client; at: number } | null = null;
   const getClient = async (): Promise<Client> => {
@@ -145,9 +141,12 @@ async function main(): Promise<void> {
 
   const reports: string[] = [];
   const failed: string[] = [];
-  for (const { name, file } of files) {
-    console.log(`${mode === LoadMode.APPLY ? 'Loading' : 'Dry run of'} ${name} into ${baseUrl}.`);
+  for (const name of names) {
     try {
+      // Read inside the try, so a malformed file in a load-every-test-file run is listed as failed.
+      const file = readFile(name);
+      if (file === null) continue;
+      console.log(`${mode === LoadMode.APPLY ? 'Loading' : 'Dry run of'} ${name} into ${baseUrl}.`);
       const rows = await loadSportData(file, {
         getClient,
         now: new Date(),
@@ -172,7 +171,7 @@ async function main(): Promise<void> {
     }
   }
   if (values.report) writeFileSync(values.report, reports.join('\n'));
-  if (failed.length > 0) throw new Error(`${failed.length} of ${files.length} files failed: ${failed.join(', ')}. Run again to fill in the rest.`);
+  if (failed.length > 0) throw new Error(`${failed.length} file${failed.length === 1 ? '' : 's'} failed: ${failed.join(', ')}. Run again to fill in the rest.`);
 }
 
 main().catch((error: unknown) => {

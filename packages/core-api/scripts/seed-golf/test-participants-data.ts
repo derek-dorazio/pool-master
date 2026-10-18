@@ -7,12 +7,13 @@
 import { createHash } from 'node:crypto';
 import { SelectionType } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@poolmaster/shared/generated/hey-api';
+import { AppEnvironment } from '../../src/core/config';
 
 type SelectionGroup = NonNullable<SelectionStateResponse['selectionGroups']>[number];
 type GroupParticipant = SelectionGroup['participants'][number];
 
 /** The environments a test-data run may write to: QA and the local ones, never staging or prod. */
-const TEST_TARGET_ENVIRONMENTS: ReadonlySet<string> = new Set(['qa', 'development', 'test', 'ci']);
+const TEST_TARGET_ENVIRONMENTS: ReadonlySet<string> = new Set([AppEnvironment.QA, AppEnvironment.DEVELOPMENT, AppEnvironment.TEST, AppEnvironment.CI]);
 
 /**
  * Refuses a run that would put test data on a site that is not a test target. `environment`

@@ -71,6 +71,9 @@ export const QA_TEST_PLAYERS: readonly TestPlayer[] = [
 /** Every QA test player's password; a tester signs in as any of them with it. */
 export const QA_TEST_PLAYER_PASSWORD = 'QaTestPlayer2026';
 
+/** Access tokens last 15 minutes; a player signs in again well before that. */
+const SIGN_IN_AGAIN_AFTER_MS = 10 * 60 * 1000;
+
 /** How many of each sport league's upcoming events get a contest. */
 export const CONTESTS_PER_SPORT_LEAGUE = 3;
 
@@ -115,7 +118,7 @@ class ParticipantLoader {
   private readonly password: string;
   private readonly log: (line: string) => void;
   private readonly userIds = new Map<string, string>();
-  private readonly playerClients = new Map<string, Client>();
+  private readonly playerClients = new Map<string, { client: Client; at: number }>();
 
   constructor(private readonly file: SportDataFile, private readonly options: LoadTestParticipantsOptions) {
     this.apply = options.mode === LoadMode.APPLY;
@@ -153,13 +156,15 @@ class ParticipantLoader {
     }
   }
 
+  /** A player's client, signed in again well before their access token runs out, as the admin's is. */
   private async playerClient(player: TestPlayer): Promise<Client> {
     const cached = this.playerClients.get(player.username);
-    if (cached) return cached;
+    if (cached && Date.now() - cached.at < SIGN_IN_AGAIN_AFTER_MS) return cached.client;
     const client = await this.options.signIn(player.username, this.password);
-    this.playerClients.set(player.username, client);
+    this.playerClients.set(player.username, { client, at: Date.now() });
     return client;
   }
+
 
   private async loadLeague(sportLeagueName: string, fileEvents: ReadonlySet<string>): Promise<void> {
     const client = await this.options.getClient();
