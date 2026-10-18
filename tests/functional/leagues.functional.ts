@@ -122,7 +122,7 @@ describe('SDK Functional: Leagues', () => {
     expect(commissionerSquads.data?.squads[0]?.createdBy).toBe(commissioner.userId);
     expect(commissionerSquads.data?.squads[0]?.memberCount).toBe(1);
     expect(commissionerSquads.data?.squads[0]?.name).toBe(
-      `${commissioner.firstName} ${commissioner.lastName}'s Team`,
+      `${commissioner.firstName} ${commissioner.lastName}`,
     );
   });
 
@@ -333,7 +333,7 @@ describe('SDK Functional: Leagues', () => {
     expect(inviteeTeam).toBeDefined();
     expect(inviteeTeam?.memberships).toHaveLength(1);
     expect(inviteeTeam?.name).toBe(
-      `${invitee.firstName} ${invitee.lastName}'s Team`,
+      `${invitee.firstName} ${invitee.lastName}`,
     );
   });
 

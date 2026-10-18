@@ -61,7 +61,7 @@ function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRep
       id,
       leagueId: 'new-league-id',
       createdBy: 'user-1',
-      name: "User One's Team",
+      name: "User One",
       iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
       isActive: true,
       createdAt: new Date(),
