@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Sport } from '@poolmaster/shared/domain';
+import { SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   deleteUser,
   disableUser,
@@ -465,6 +465,10 @@ describe('SDK Functional: Root Admin', () => {
     if (!template) {
       throw new Error('Expected at least one contest template');
     }
+    if (template.configuration.selectionType === SelectionType.PICK_EM) {
+      throw new Error('Expected a golf template to be a roster template');
+    }
+    const rosterConfiguration = template.configuration;
     const originalTemplate = structuredClone(template);
 
     // #245 / A11 — templates are global: any signed-in user reads them, only a root admin writes.
@@ -498,14 +502,14 @@ describe('SDK Functional: Root Admin', () => {
         body: {
           description: 'Updated from functional root-admin coverage.',
           configuration: {
-            ...template.configuration,
+            ...rosterConfiguration,
             countedScores: 5,
           },
         },
       });
 
       expect(updateResponse.data?.template.description).toBe('Updated from functional root-admin coverage.');
-      expect(updateResponse.data?.template.configuration.countedScores).toBe(5);
+      expect(updateResponse.data?.template.configuration).toMatchObject({ countedScores: 5 });
     } finally {
       await getFunctionalPrisma().contestConfigTemplate.update({
         where: { id: template.id },

@@ -17,6 +17,13 @@ import {
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { MatchSide, MatchStatus, Sport, findSportRow } from '@poolmaster/shared/domain';
+import {
+  AddSportEventParticipantsResponseSchema,
+  SportEventBracketResponseSchema,
+  SportEventMatchResponseSchema,
+  SportEventParticipantResponseSchema,
+  SportListResponseSchema,
+} from '@poolmaster/shared/dto';
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
   cleanupFunctionalData,
@@ -26,6 +33,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
+import { expectMatchesSchema } from '../support/expect-matches-schema';
 
 // A basketball bracket end to end over HTTP (#698): an admin builds a four-team tournament in the
 // run's own league, with one place standing for a First Four pairing, loads its
@@ -88,7 +96,7 @@ describe('SDK Functional: Basketball bracket', () => {
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
+    const sportId = expectDefined(findSportRow(expectMatchesSchema(SportListResponseSchema, (await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
 
     // --- A league, a tournament in it, and its field --------------------------------------------
     const conference = await createSportLeague({ client: a, body: { sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
@@ -112,7 +120,8 @@ describe('SDK Functional: Basketball bracket', () => {
       teamIdOf.set(name, id);
     }
     const fieldTeamIds = FIELD.map((team) => expectDefined(teamIdOf.get(team.name)));
-    expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: fieldTeamIds } })).data?.added).toBe(4);
+    const added = await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: fieldTeamIds } });
+    expect(expectMatchesSchema(AddSportEventParticipantsResponseSchema, added.data).added).toBe(4);
 
     const upload = await applyEventParticipantUpload({
       client: a,
@@ -139,7 +148,7 @@ describe('SDK Functional: Basketball bracket', () => {
     const early = await releaseEvent({ client: a, path: { eventId } });
     expectFunctionalError(early, { status: 422, code: 'SPORT_EVENT_NOT_READY' });
     expect(JSON.stringify(early.error)).toContain('its bracket is not loaded');
-    expect(expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches).toEqual([]);
+    expect(expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches).toEqual([]);
 
     const firstRound = [
       { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: rowOf('Duke'), awaySportEventParticipantId: rowOf(PAIRING), isNeutralSite: true, scheduledDate: '2099-03-19T16:00:00.000Z', advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
@@ -166,7 +175,7 @@ describe('SDK Functional: Basketball bracket', () => {
       },
     });
     expect(loaded.response.status).toBe(200);
-    const bracket = expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches;
+    const bracket = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
     expect(bracket.map((match) => [match.matchNumber, match.roundNumber, match.status])).toEqual([
       [1, 1, MatchStatus.SCHEDULED], [2, 1, MatchStatus.SCHEDULED], [3, 2, MatchStatus.SCHEDULED],
     ]);
@@ -201,7 +210,7 @@ describe('SDK Functional: Basketball bracket', () => {
       path: { eventId, matchNumber: 3 },
       body: { scheduledDate: '2099-03-21T18:30:00.000Z' },
     });
-    expect(expectDefined(moved.data).match.scheduledDate).toBe('2099-03-21T18:30:00.000Z');
+    expect(expectMatchesSchema(SportEventMatchResponseSchema, moved.data).match.scheduledDate).toBe('2099-03-21T18:30:00.000Z');
 
     // A row that is not a play-in place cannot take a play-in winner, so a real team stays put.
     expectFunctionalError(
@@ -220,7 +229,7 @@ describe('SDK Functional: Basketball bracket', () => {
       body: { participantId: expectDefined(teamIdOf.get('Texas')) },
     });
     expect(filled.response.status).toBe(200);
-    expect(expectDefined(filled.data).participant).toMatchObject({ id: rowOf(PAIRING), seedNumber: 16, participant: { name: `Texas ${RUN}` } });
+    expect(expectMatchesSchema(SportEventParticipantResponseSchema, filled.data).participant).toMatchObject({ id: rowOf(PAIRING), seedNumber: 16, participant: { name: `Texas ${RUN}` } });
     const afterFill = expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches;
     expect(expectDefined(afterFill.find((match) => match.matchNumber === 1)).awaySportEventParticipantId).toBe(rowOf(PAIRING));
     const pairing = await getFunctionalPrisma().participant.findUniqueOrThrow({ where: { id: expectDefined(teamIdOf.get(PAIRING)) } });

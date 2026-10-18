@@ -204,6 +204,25 @@ describe('RootAdminContentConfigurationDetailPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows a pick\'em template\'s mode in words, with no size or scores that count to edit', async () => {
+    const pickEmTemplate = {
+      ...buildTemplate(),
+      sport: 'AMERICAN_FOOTBALL',
+      contestFormat: 'PREDICTION',
+      selectionType: 'PICK_EM',
+      templateKey: 'american-football-pick-em-confidence',
+      configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE' },
+    };
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [pickEmTemplate] } });
+    renderPage('american-football-pick-em-confidence');
+
+    expect(await screen.findByTestId('root-admin-content-config-pick-em-rules'))
+      .toHaveTextContent('Pick the winner of every game, then rank each week’s picks by confidence.');
+    expect(screen.queryByTestId('root-admin-content-config-counted-scores')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-content-config-picks-per-tier')).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-content-config-save')).toBeInTheDocument();
+  });
+
   it('says the template was not found when no template has the key in the address', async () => {
     seedTemplates();
     renderPage('no-such-template');

@@ -8,6 +8,7 @@ import {
   GolfCategoryKey,
   GolfCutRuleType,
   RandomDrawContestRulesSchema,
+  PickEmContestRulesSchema,
   SelectionType,
   Sport,
   TieredContestRulesSchema,
@@ -149,6 +150,12 @@ export const CONTEST_DRAW_SINGLE_EVENT = 'CONTEST_DRAW_SINGLE_EVENT';
  */
 export const CONTEST_BUDGET_SALARY_CAP_MISMATCH = 'CONTEST_BUDGET_SALARY_CAP_MISMATCH';
 
+/** Error code for a pick'em contest given an event with no games to pick (#716). */
+export const CONTEST_EVENT_HAS_NO_GAMES = 'CONTEST_EVENT_HAS_NO_GAMES';
+
+/** Error code for a pick'em contest given an event with a game whose team is still undecided (#716). */
+export const CONTEST_EVENT_GAME_UNDECIDED = 'CONTEST_EVENT_GAME_UNDECIDED';
+
 /** Error code for naming an event the contest does not cover (#713). */
 export const CONTEST_EVENT_NOT_IN_CONTEST = 'CONTEST_EVENT_NOT_IN_CONTEST';
 
@@ -162,6 +169,7 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType
   TieredContestRulesSchema.extend(persistedConfigurationFields),
   BudgetContestConfigSchema.extend(persistedConfigurationFields),
   RandomDrawContestRulesSchema.extend(persistedConfigurationFields),
+  PickEmContestRulesSchema.extend(persistedConfigurationFields),
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 

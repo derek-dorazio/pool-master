@@ -62,6 +62,7 @@ export type {
   LeagueInvitation,
   LeagueMembership,
   ContestEntryPick,
+  ContestEntryMatchPrediction,
   Participant,
   ParticipantProviderMapping,
   PayoutConfig,

@@ -12,8 +12,10 @@ import {
   enterContest,
   generateInviteLink,
   getContest,
+  getContestEntry,
   getContestLeaderboard,
   getSelectionState,
+  listContestEntries,
   listEventParticipants,
   listSports,
   loadEventBracket,
@@ -25,6 +27,15 @@ import {
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, MatchSide, MatchStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
+import {
+  ContestEntryDetailResponseSchema,
+  ContestEntryListResponseSchema,
+  ContestEntryResponseSchema,
+  ContestLeaderboardResponseSchema,
+  SelectionPickResponseSchema,
+  SelectionStateResponseSchema,
+  SportEventBracketResponseSchema,
+} from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
   cleanupFunctionalData,
@@ -34,6 +45,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
+import { expectMatchesSchema } from '../support/expect-matches-schema';
 
 // Knockout scoring end to end over HTTP (#699): an admin releases a four-team, two-round bracket, a
 // commissioner runs a contest scored by knockout round points (1 for a first-round win, 2 for the
@@ -135,7 +147,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`)).id;
     const nameOf = (rowId: string) => expectDefined(field.find((row) => row.id === rowId)).participant.name.replace(` ${RUN}`, '');
 
-    expect((await loadEventBracket({
+    const loaded = await loadEventBracket({
       client: a,
       path: { eventId },
       body: {
@@ -145,7 +157,9 @@ describe('SDK Functional: Basketball knockout scoring', () => {
           { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
         ],
       },
-    })).response.status).toBe(200);
+    });
+    expect(loaded.response.status).toBe(200);
+    expect(expectMatchesSchema(SportEventBracketResponseSchema, loaded.data).matches).toHaveLength(3);
     // A draft takes no results: its pairings can still change.
     expectFunctionalError(
       await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 1 }, body: { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null } }),
@@ -183,14 +197,24 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
     const enterWith = async (client: typeof a, lineup: string[]) => {
-      const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
+      const entryId = expectMatchesSchema(ContestEntryResponseSchema, (await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const team of lineup) {
-        expect((await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: rowOf(team) } })).response.status).toBe(200);
+        const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: rowOf(team) } });
+        expect(pick.response.status).toBe(200);
+        expectMatchesSchema(SelectionPickResponseSchema, pick.data);
       }
-      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
+      const submitted = await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } });
+      expect(submitted.response.status).toBe(200);
+      expectMatchesSchema(SelectionStateResponseSchema, submitted.data);
       return entryId;
     };
     const entryId = await enterWith(member.client, ['Duke', 'Houston', 'Vermont', 'Texas']);
+
+    // The entry reads back submitted for the tournament, in the contest's list and on its own.
+    const entries = expectMatchesSchema(ContestEntryListResponseSchema, (await listContestEntries({ client: member.client, path: { contestId } })).data).entries;
+    expect(entries.map((entry) => entry.id)).toEqual([entryId]);
+    const detail = expectMatchesSchema(ContestEntryDetailResponseSchema, (await getContestEntry({ client: member.client, path: { contestId, entryId } })).data);
+    expect(detail.entry.events.map((event) => [event.sportEventId, event.status])).toEqual([[eventId, 'SUBMITTED']]);
 
     // The selection room shows each team with its bracket seed.
     const room = expectDefined((await getSelectionState({ client: member.client, path: { contestId }, query: { entryId } })).data);
@@ -210,8 +234,15 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     // Duke beats Texas; Vermont, a 15 seed, beats Houston, a 2.
     await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 1 }, body: { winnerSide: MatchSide.HOME, homeScore: 82, awayScore: 60 } });
     const afterFirstRound = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 71 } });
-    const final = expectDefined(expectDefined(afterFirstRound.data).matches.find((match) => match.matchNumber === 3));
+    const final = expectDefined(expectMatchesSchema(SportEventBracketResponseSchema, afterFirstRound.data).matches.find((match) => match.matchNumber === 3));
     expect([nameOf(expectDefined(final.homeSportEventParticipantId)), nameOf(expectDefined(final.awaySportEventParticipantId))]).toEqual(['Duke', 'Vermont']);
+
+    // While the final is unplayed a first-round result can be taken back: Vermont leaves the
+    // final's away side, and the result goes in again.
+    const cleared = await clearEventMatchResult({ client: a, path: { eventId, matchNumber: 2 } });
+    const clearedFinal = expectDefined(expectMatchesSchema(SportEventBracketResponseSchema, cleared.data).matches.find((match) => match.matchNumber === 3));
+    expect(clearedFinal.awaySportEventParticipantId).toBeNull();
+    await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 71 } });
 
     // After the first round: Duke 1, Vermont 1 + (15 - 2) = 14, Houston and Texas 0; the best two count.
     const totalsOf = async () => Object.fromEntries(
@@ -222,7 +253,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
 
     // Vermont beats Duke in the final: 2 + (15 - 1) = 16 more.
     await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 3 }, body: { winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 72 } });
-    const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
+    const board = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(board.scoringDefinitionId).toBe('KNOCKOUT_ROUND_POINTS');
     const picks = Object.fromEntries(board.entries.flatMap((entry) => entry.picks).map((pick) => [nameOf(pick.sportEventParticipantId), pick.knockout]));
     expect(picks).toEqual({

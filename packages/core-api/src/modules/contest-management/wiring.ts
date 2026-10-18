@@ -6,17 +6,19 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  SportEventMatchRepository,
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
-import { getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
+import { MatchStatus, getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
   PrismaContestRepository,
   PrismaParticipantContestScoringRuleRepository,
+  PrismaSportEventMatchRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,
@@ -42,6 +44,7 @@ export function createContestManagementService(
       sports: new PrismaSportRepository(prisma),
       field: new PrismaSportEventParticipantRepository(prisma),
       valuations: new PrismaSportEventParticipantValuationRepository(prisma),
+      matches: new PrismaSportEventMatchRepository(prisma),
     }),
   );
 }
@@ -52,11 +55,12 @@ export function createContestManagementService(
  * loaded, and for budget rules its salary cap and its active golfers' prices (#93). Composed
  * from the slice-2 ports (#247) — it was a raw Prisma read inlined here.
  */
-export function createContestSportEventReader({ sportEvents, sports, field, valuations }: {
+export function createContestSportEventReader({ sportEvents, sports, field, valuations, matches }: {
   sportEvents: SportEventRepository;
   sports: SportRepository;
   field: SportEventParticipantRepository;
   valuations: SportEventParticipantValuationRepository;
+  matches: SportEventMatchRepository;
 }): ContestCreateSportEventReader {
   return {
     findById: async (sportEventId) => {
@@ -90,5 +94,10 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
       return eventValuations.flatMap((valuation) =>
         activeEntryIds.has(valuation.sportEventParticipantId) && valuation.price !== null ? [valuation.price] : []);
     },
+    countGames: async (sportEventId) =>
+      (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED).length,
+    countUndecidedGames: async (sportEventId) =>
+      (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED
+        && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null)).length,
   };
 }

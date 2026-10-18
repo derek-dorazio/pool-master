@@ -492,6 +492,21 @@ describe('Commissioner tools › Contests › Create contest', () => {
     );
   });
 
+  it('offers basketball\'s roster formats but not pick\'em, which has no screen to pick on yet', async () => {
+    primeCommonMocks();
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-sport-BASKETBALL')).toBeChecked());
+    expect(screen.getByTestId('contest-format-TIERED')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-format-BUDGET_PICK')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-format-PICK_EM')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pick’em')).not.toBeInTheDocument();
+  });
+
   it('says no event is available and keeps Create contest disabled when no golf event is contest-ready', async () => {
     primeCommonMocks();
     listEventsMock.mockResolvedValue(singleEvent({

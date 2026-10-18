@@ -1,4 +1,4 @@
-import { SelectionStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { SelectionStatus, SelectionType, Sport, isPredictionSelectionType } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -410,13 +410,25 @@ describe('#324 draft rules — tier lookups', () => {
 });
 
 // A compile-time anchor rather than a behavioural one: the two reads the room makes of a
-// contest are typed off the domain Contest, so a selection type added to the enum fails here
-// rather than silently falling through the engine registry.
+// contest are typed off the domain Contest. A contest's selection type reaches the roster engine
+// registry only once it is narrowed to a roster type (#716), so a selection type added to the
+// enum fails the typecheck until it is placed in a contest format and given an engine.
 describe('#324 draft rules — contest shape', () => {
-  it('reads selection type and status off the domain contest', () => {
+  it('narrows a roster contest\'s selection type to its roster engine, and reads OPEN as LIVE', () => {
     const contest = { selectionType: SelectionType.TIERED, status: 'OPEN' } as Contest;
+    const { selectionType } = contest;
+    if (isPredictionSelectionType(selectionType)) {
+      throw new Error('a TIERED contest must be a roster contest');
+    }
 
-    expect(getSelectionEngine(contest.selectionType).selectionType).toBe(SelectionType.TIERED);
+    expect(getSelectionEngine(selectionType).selectionType).toBe(SelectionType.TIERED);
     expect(mapContestStatusToSelectionStatus(contest.status, false)).toBe(SelectionStatus.LIVE);
+  });
+
+  it('classes PICK_EM as a prediction type, which the roster engine registry never serves', () => {
+    expect(isPredictionSelectionType(SelectionType.PICK_EM)).toBe(true);
+    expect(isPredictionSelectionType(SelectionType.TIERED)).toBe(false);
+    expect(isPredictionSelectionType(SelectionType.BUDGET_PICK)).toBe(false);
+    expect(isPredictionSelectionType(SelectionType.RANDOM_DRAW)).toBe(false);
   });
 });

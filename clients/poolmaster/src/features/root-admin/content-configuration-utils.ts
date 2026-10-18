@@ -1,8 +1,17 @@
-import { SelectionType, type SportVocabulary } from '@poolmaster/shared/domain';
+import { SelectionType, isPredictionSelectionType, type RosterSelectionType, type SportVocabulary } from '@poolmaster/shared/domain';
 import { capitalize } from './manage-navigation';
 import type { ContestConfigTemplateDto } from '@/lib/api';
 
 export type ContestConfigTemplate = ContestConfigTemplateDto;
+
+/** A roster template's rules: a size and the scores that count. */
+export type RosterTemplateConfiguration = Extract<ContestConfigTemplate['configuration'], { selectionType: RosterSelectionType }>;
+
+export function isRosterTemplateConfiguration(
+  configuration: ContestConfigTemplate['configuration'],
+): configuration is RosterTemplateConfiguration {
+  return !isPredictionSelectionType(configuration.selectionType);
+}
 
 export function cloneContestTemplate(template: ContestConfigTemplate): ContestConfigTemplate {
   return {
@@ -24,7 +33,7 @@ export function toPositiveNumber(value: string) {
  * per-template override (plans/124 §4.6/§4.6a). A template only says how big the roster is
  * (picks per tier for tiered rules, participants per entry for budget rules, participants dealt per entry
  * for a random draw) and how many scores count. An update for another selection type's size is
- * ignored.
+ * ignored, and a pick'em template has neither, so it is returned as it is.
  */
 export function updateTemplateRules(
   template: ContestConfigTemplate,
@@ -36,6 +45,9 @@ export function updateTemplateRules(
   },
 ): ContestConfigTemplate {
   const { configuration } = template;
+  if (!isRosterTemplateConfiguration(configuration)) {
+    return template;
+  }
   const countedScores = updates.countedScores ?? configuration.countedScores;
   switch (configuration.selectionType) {
     case SelectionType.TIERED:
@@ -61,12 +73,12 @@ type TemplateSizeKey = 'picksPerEntry' | 'picksPerTier' | 'rosterSize';
 
 /**
  * How the template editor shows each selection type's size field, in the template's sport's
- * words ("Golfers per entry", "Horses per entry"). A `Record` over the enum, so a new selection
- * type without a size field fails the typecheck.
+ * words ("Golfers per entry", "Horses per entry"). A `Record` over the roster types, so a new
+ * one without a size field fails the typecheck.
  */
 export function templateSizeFields(
   vocabulary: Pick<SportVocabulary, 'event' | 'participant'>,
-): Record<SelectionType, { helperText?: string; key: TemplateSizeKey; label: string; testId: string }> {
+): Record<RosterSelectionType, { helperText?: string; key: TemplateSizeKey; label: string; testId: string }> {
   return {
     [SelectionType.TIERED]: {
       key: 'picksPerTier',
@@ -89,7 +101,7 @@ export function templateSizeFields(
 }
 
 /** The template's size: picks per tier, golfers per entry, or golfers dealt per entry. */
-export function getTemplateSize(configuration: ContestConfigTemplate['configuration']) {
+export function getTemplateSize(configuration: RosterTemplateConfiguration) {
   switch (configuration.selectionType) {
     case SelectionType.TIERED:
       return configuration.picksPerTier;

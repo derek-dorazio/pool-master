@@ -7,6 +7,7 @@ export * from './team-owner-invitations.dto';
 export * from './contest-management.dto';
 export * from './contests.dto';
 export * from './selections.dto';
+export * from './predictions.dto';
 export * from './participants.dto';
 export * from './config.dto';
 export * from './settings.dto';
