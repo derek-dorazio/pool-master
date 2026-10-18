@@ -186,6 +186,10 @@ describe('Loading a golf test seed through the admin API', () => {
     // Released for contests, a whole number of weeks on from 2026-01-15 and at least a week after today.
     expect(events.map((event) => event.status)).toEqual(['SCHEDULED', 'SCHEDULED']);
     expect(opener.startDate).toBe(shiftedEventDates(seed.sportLeagues[0].events[0], seedDateOffsetDays(seed, NOW)).startDate);
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const openerStart = Date.parse(opener.startDate);
+    expect(openerStart).toBeGreaterThanOrEqual(NOW.getTime() + weekMs);
+    expect((openerStart - Date.parse('2026-01-15T12:00:00Z')) % weekMs).toBe(0);
     expect(opener.autoLifecycleEnabled).toBe(false);
 
     const field = await fieldOf(opener.id);
