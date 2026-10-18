@@ -192,6 +192,19 @@ export class PredictionService {
       const game = gamesById.get(pick.sportEventMatchId);
       if (!game) throw selectionErrors.gameNotFound(pick.sportEventMatchId, context.sportEvent.id);
       this.assertGameOpen(context, game);
+    }
+
+    // A saved pick must name a team its game offers the entry, its earlier picks included; a pick
+    // already saved that no longer does (a bracket pick that followed from a changed one) is cleared.
+    // The team is checked before the pick's confidence value, as it always was (#716).
+    const saved = new Map(input.picks.map((pick) => [pick.sportEventMatchId, pick]));
+    const resolved = this.resolvePicks(context, [
+      ...context.predictions.filter((prediction) => !saved.has(prediction.sportEventMatchId)),
+      ...input.picks,
+    ]);
+    const refused = resolved.stranded.find((pick) => saved.has(pick.sportEventMatchId));
+    if (refused) throw selectionErrors.teamNotInGame(refused.sportEventParticipantId, refused.sportEventMatchId);
+    for (const pick of input.picks) {
       if (!context.engine.acceptsConfidence({
         configuration: context.configuration?.configJson,
         confidence: pick.confidence,
@@ -202,16 +215,6 @@ export class PredictionService {
           : 'This pool\'s picks carry no confidence value');
       }
     }
-
-    // A saved pick must name a team its game offers the entry, its earlier picks included; a pick
-    // already saved that no longer does (a bracket pick that followed from a changed one) is cleared.
-    const saved = new Map(input.picks.map((pick) => [pick.sportEventMatchId, pick]));
-    const resolved = this.resolvePicks(context, [
-      ...context.predictions.filter((prediction) => !saved.has(prediction.sportEventMatchId)),
-      ...input.picks,
-    ]);
-    const refused = resolved.stranded.find((pick) => saved.has(pick.sportEventMatchId));
-    if (refused) throw selectionErrors.teamNotInGame(refused.sportEventParticipantId, refused.sportEventMatchId);
     await this.writeWeek(context, resolved.kept, {
       saves: input.picks,
       clearedMatchIds: resolved.stranded.map((pick) => pick.sportEventMatchId),
