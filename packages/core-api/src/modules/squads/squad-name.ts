@@ -10,7 +10,7 @@
  *   - A name the USER chose collides → their problem to resolve, so it is a typed error
  *     they can act on.
  *   - The DEFAULT name collides → not their problem. `buildDefaultSquadName` produces
- *     "{First} {Last}'s Team", so two members of one league who share a name collide, and
+ *     "{First} {Last}" (#738), so two members of one league who share a name collide, and
  *     so do two members with no name at all, since `formatUserFullName` falls back to
  *     "Unknown User". Failing league-join because someone shares your surname would be a
  *     regression introduced by the constraint, so the default name is disambiguated.
@@ -45,14 +45,14 @@ export async function assertSquadNameAvailable(
     return;
   }
   throw new SquadOperationError(
-    `Another squad in this league is already named "${name}"`,
+    `Someone in this league already uses the name "${name}"`,
     'SQUAD_NAME_TAKEN',
   );
 }
 
 /**
  * Builds the default squad name for a user and makes it unique within the league by
- * appending a counter — "Dee Dorazio's Team", then "Dee Dorazio's Team 2", and so on.
+ * appending a counter — "Dee Dorazio", then "Dee Dorazio 2", and so on.
  *
  * Never throws for a collision: a default name the user did not choose must not be able
  * to block them joining a league.

@@ -38,7 +38,7 @@ import { MatchResultService } from '../scoring-families/head-to-head/match-resul
 import { sportStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { sportStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
-import { EventLifecycleService, type CompletedSportEventSettlement } from './event-lifecycle-service';
+import { EventLifecycleService, type FinishedSportEventSettlement } from './event-lifecycle-service';
 import { SportEventService } from './service';
 import { SportEventBracketService } from './sport-event-bracket-service';
 import { SportEventParticipantService } from './sport-event-participant-service';
@@ -184,7 +184,7 @@ export function createEventLifecycleService(
     logger?: FastifyBaseLogger;
     mailDelivery?: MailDeliveryProvider;
     appBaseUrl?: string;
-    contestSettlement?: CompletedSportEventSettlement;
+    contestSettlement?: FinishedSportEventSettlement;
   } = {},
 ): EventLifecycleService {
   return new EventLifecycleService(

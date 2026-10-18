@@ -181,7 +181,7 @@ describe('ContestSettlementService — a bracket contest (#721)', () => {
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK, FINAL_T1_70_66);
     context.completeEvent();
 
-    const summary = await context.settlement.settleCompletedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
+    const summary = await context.settlement.settleFinishedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
 
     const frozen = [...context.world.standings.values()]
       .map((row) => [row.contestEntryId, row.totalScore, row.position, row.displayPosition, row.scoredPickCount, row.countingPickLimit])
@@ -203,7 +203,7 @@ describe('ContestSettlementService — a bracket contest (#721)', () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK);
 
-    const summary = await context.settlement.settleCompletedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
+    const summary = await context.settlement.settleFinishedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
 
     expect(summary.contestsSettled).toBe(0);
     expect(context.world.standings.size).toBe(0);
@@ -218,11 +218,23 @@ describe('ContestSettlementService — a bracket contest (#721)', () => {
     });
     context.completeEvent();
 
-    const summary = await context.settlement.settleCompletedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
+    const summary = await context.settlement.settleFinishedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
 
     expect(summary).toMatchObject({ contestsSettled: 0, standingsUpserted: 0 });
     expect([context.world.standings.size, context.world.eventStandings.size]).toEqual([0, 0]);
     expect(expectDefined(context.world.contests.get(context.contest.id)).status).toBe(ContestStatus.ACTIVE);
+  });
+
+  it('completes a bracket whose event was cancelled with no standings, whatever results it holds', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK, FINAL_T1_70_66);
+    context.world.sportEvents.set(context.sportEvent.id, { ...expectDefined(context.world.sportEvents.get(context.sportEvent.id)), status: SportEventStatus.CANCELLED });
+
+    const summary = await context.settlement.settleFinishedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
+
+    expect([context.world.standings.size, context.world.eventStandings.size]).toEqual([0, 0]);
+    expect(expectDefined(context.world.contests.get(context.contest.id)).status).toBe(ContestStatus.COMPLETED);
+    expect(summary).toMatchObject({ contestsCompleted: 1, standingsUpserted: 0 });
   });
 
   it('leaves a pick\'em contest on the completed event unsettled and ACTIVE', async () => {
@@ -230,7 +242,7 @@ describe('ContestSettlementService — a bracket contest (#721)', () => {
     context.world.contests.set(context.contest.id, { ...context.contest, selectionType: SelectionType.PICK_EM });
     context.completeEvent();
 
-    const summary = await context.settlement.settleCompletedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
+    const summary = await context.settlement.settleFinishedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
 
     expect(summary.contestsSettled).toBe(0);
     expect(expectDefined(context.world.contests.get(context.contest.id)).status).toBe(ContestStatus.ACTIVE);
@@ -294,7 +306,7 @@ describe('ContestService.getBracketLeaderboard', () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK, FINAL_T1_70_66);
     context.completeEvent();
-    await context.settlement.settleCompletedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
+    await context.settlement.settleFinishedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
     // A correction after settlement: the final was really won by T2, 66 to 70.
     context.play(new Map([[7, { home: 'T1', away: 'T2', winner: AWAY, homeScore: 66, awayScore: 70 }]]));
 

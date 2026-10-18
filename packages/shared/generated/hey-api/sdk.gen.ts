@@ -497,7 +497,7 @@ export const importMembers = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * List squads in a league
  *
- * Returns the squads associated with the current league for team management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
+ * Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
  */
 export const listLeagueSquads = <ThrowOnError extends boolean = false>(options: Options<ListLeagueSquadsData, ThrowOnError>) => (options.client ?? client).get<ListLeagueSquadsResponses, ListLeagueSquadsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -521,9 +521,9 @@ export const createLeagueSquad = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Permanently delete an inactive team
+ * Permanently delete an inactive squad
  *
- * Permanently deletes an inactive team and cascades related team-owned data. This route is root-admin only and exists to support QA cleanup flows from Team Home.
+ * Permanently deletes an inactive squad and cascades related squad-owned data. This route is root-admin only and exists to support QA cleanup flows from the web app.
  */
 export const deleteLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<DeleteLeagueSquadData, ThrowOnError>) => (options.client ?? client).delete<DeleteLeagueSquadResponses, DeleteLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -545,7 +545,7 @@ export const getLeagueSquad = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Update squad details
  *
- * Updates mutable squad fields such as naming and presentation detail for an active team owner, league commissioner, or root admin.
+ * Updates mutable squad fields such as naming and presentation detail for an active squad owner, league commissioner, or root admin.
  */
 export const updateLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<UpdateLeagueSquadData, ThrowOnError>) => (options.client ?? client).patch<UpdateLeagueSquadResponses, UpdateLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -558,11 +558,11 @@ export const updateLeagueSquad = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Inactivate a team
+ * Inactivate a squad
  *
- * Inactivates the target team, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the team's owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).
+ * Inactivates the target squad, preserves its history, removes its active owners from the league, and revokes its pending co-owner invitations so an old invite cannot revive it. Refused with LEAGUE_LAST_COMMISSIONER_REQUIRED when the squad's owners are every active commissioner the league has. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original squad (#218).
  *
- * **League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners' league memberships, so it is league administration rather than team management.
+ * **League commissioners and root admins only (#219).** Squad owners may invite and remove co-owners on their own squad, but ending a squad also ends its owners' league memberships, so it is league administration rather than squad management.
  */
 export const inactivateLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<InactivateLeagueSquadData, ThrowOnError>) => (options.client ?? client).post<InactivateLeagueSquadResponses, InactivateLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -571,9 +571,9 @@ export const inactivateLeagueSquad = <ThrowOnError extends boolean = false>(opti
 });
 
 /**
- * Add or reactivate a team owner
+ * Add or reactivate a squad owner
  *
- * Adds an owner to the team or reactivates an existing inactive owner membership for an active team owner, league commissioner, or root admin.
+ * Adds an owner to the squad or reactivates an existing inactive owner membership for an active squad owner, league commissioner, or root admin.
  */
 export const addSquadOwner = <ThrowOnError extends boolean = false>(options: Options<AddSquadOwnerData, ThrowOnError>) => (options.client ?? client).post<AddSquadOwnerResponses, AddSquadOwnerErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -586,9 +586,9 @@ export const addSquadOwner = <ThrowOnError extends boolean = false>(options: Opt
 });
 
 /**
- * Remove a team owner
+ * Remove a squad owner
  *
- * Removes the owner relationship between the target user and team. The backend blocks removal of the final active owner and requires team inactivation instead.
+ * Removes the owner relationship between the target user and squad. The backend blocks removal of the final active owner and requires squad inactivation instead.
  */
 export const removeSquadOwner = <ThrowOnError extends boolean = false>(options: Options<RemoveSquadOwnerData, ThrowOnError>) => (options.client ?? client).delete<RemoveSquadOwnerResponses, RemoveSquadOwnerErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -597,9 +597,9 @@ export const removeSquadOwner = <ThrowOnError extends boolean = false>(options: 
 });
 
 /**
- * List team-owner invitations for a league
+ * List co-owner invitations for a league
  *
- * Returns pending and historical team-owner invitations visible to the current commissioner, active team owner, or root admin.
+ * Returns pending and historical co-owner invitations visible to the current commissioner, active squad owner, or root admin.
  */
 export const listSquadOwnerInvitations = <ThrowOnError extends boolean = false>(options: Options<ListSquadOwnerInvitationsData, ThrowOnError>) => (options.client ?? client).get<ListSquadOwnerInvitationsResponses, ListSquadOwnerInvitationsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -610,7 +610,7 @@ export const listSquadOwnerInvitations = <ThrowOnError extends boolean = false>(
 /**
  * Invite a co-owner by email
  *
- * Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active team owners, league commissioners, and root admins may start this flow.
+ * Starts the co-owner invite flow for a squad. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. An inactive league refuses with 400 `LEAGUE_INACTIVE`. Active squad owners, league commissioners, and root admins may start this flow.
  */
 export const createSquadOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<CreateSquadOwnerInvitationData, ThrowOnError>) => (options.client ?? client).post<CreateSquadOwnerInvitationResponses, CreateSquadOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -623,9 +623,9 @@ export const createSquadOwnerInvitation = <ThrowOnError extends boolean = false>
 });
 
 /**
- * Replace an active team owner
+ * Replace an active squad owner
  *
- * Guided replacement flow that removes the selected current owner (ending their team and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A team owner may replace a co-owner; a league commissioner or root admin may also replace a team's only owner, and the team stays active for the replacement.
+ * Guided replacement flow that removes the selected current owner (ending their squad and league membership, as removing an owner does) and starts the same co-owner invite/provisioning flow for the replacement email. Refused when the owner being replaced is the league's last active commissioner, and in an inactive league (400 `LEAGUE_INACTIVE`). A squad owner may replace a co-owner; a league commissioner or root admin may also replace a squad's only owner, and the squad stays active for the replacement.
  */
 export const replaceSquadOwner = <ThrowOnError extends boolean = false>(options: Options<ReplaceSquadOwnerData, ThrowOnError>) => (options.client ?? client).post<ReplaceSquadOwnerResponses, ReplaceSquadOwnerErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -638,9 +638,9 @@ export const replaceSquadOwner = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Revoke a pending team-owner invitation
+ * Revoke a pending co-owner invitation
  *
- * Revokes a pending co-owner invitation so it can no longer be accepted. Active team owners, league commissioners, and root admins may revoke invitations in their allowed scope.
+ * Revokes a pending co-owner invitation so it can no longer be accepted. Active squad owners, league commissioners, and root admins may revoke invitations in their allowed scope.
  */
 export const revokeSquadOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<RevokeSquadOwnerInvitationData, ThrowOnError>) => (options.client ?? client).delete<RevokeSquadOwnerInvitationResponses, RevokeSquadOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -675,9 +675,9 @@ export const acceptInvitation = <ThrowOnError extends boolean = false>(options: 
 });
 
 /**
- * Preview a team-owner invitation by invite code
+ * Preview a co-owner invitation by invite code
  *
- * Returns the minimal league and team identity needed to render the public team-owner invitation flow before or after authentication.
+ * Returns the minimal league and squad identity needed to render the public co-owner invitation flow before or after authentication.
  */
 export const getTeamOwnerInvitationPreview = <ThrowOnError extends boolean = false>(options: Options<GetTeamOwnerInvitationPreviewData, ThrowOnError>) => (options.client ?? client).get<GetTeamOwnerInvitationPreviewResponses, GetTeamOwnerInvitationPreviewErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -686,9 +686,9 @@ export const getTeamOwnerInvitationPreview = <ThrowOnError extends boolean = fal
 });
 
 /**
- * Accept a team-owner invitation using an invite code
+ * Accept a co-owner invitation using an invite code
  *
- * Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a team that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
+ * Accepts a co-owner invitation for the authenticated user and provisions league membership plus squad ownership on the target squad. Only the account whose email the invitation was sent to may accept it (400 `SQUAD_OWNER_INVITATION_EMAIL_MISMATCH`). An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a squad that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
  */
 export const acceptTeamOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<AcceptTeamOwnerInvitationData, ThrowOnError>) => (options.client ?? client).post<AcceptTeamOwnerInvitationResponses, AcceptTeamOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -701,13 +701,13 @@ export const acceptTeamOwnerInvitation = <ThrowOnError extends boolean = false>(
 });
 
 /**
- * Register a new account against a team-owner invitation and accept it
+ * Register a new account against a co-owner invitation and accept it
  *
- * Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited team — registration, league membership and team ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their team.
+ * Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited squad — registration, league membership and squad ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their squad.
  *
  * Unauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.
  *
- * The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a team that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
+ * The account is created with the address the invitation was sent to; the request carries no email. A co-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person. An inactive league refuses with 400 `LEAGUE_INACTIVE`, and a squad that has gone inactive since the invitation was sent refuses with 400 `SQUAD_INACTIVE`.
  */
 export const registerWithTeamOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<RegisterWithTeamOwnerInvitationData, ThrowOnError>) => (options.client ?? client).post<RegisterWithTeamOwnerInvitationResponses, RegisterWithTeamOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -859,7 +859,7 @@ export const getContestEntry = <ThrowOnError extends boolean = false>(options: O
 /**
  * Update a contest entry
  *
- * Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.
+ * Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is OPEN and its event has not reached its scheduled start (400 CONTEST_ENTRY_LOCKED otherwise). Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no squad.
  */
 export const updateContestEntry = <ThrowOnError extends boolean = false>(options: Options<UpdateContestEntryData, ThrowOnError>) => (options.client ?? client).patch<UpdateContestEntryResponses, UpdateContestEntryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -896,7 +896,7 @@ export const getBracketLeaderboard = <ThrowOnError extends boolean = false>(opti
 /**
  * Delete the current user contest entry
  *
- * Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
+ * Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad.
  */
 export const leaveContest = <ThrowOnError extends boolean = false>(options: Options<LeaveContestData, ThrowOnError>) => (options.client ?? client).delete<LeaveContestResponses, LeaveContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -907,7 +907,7 @@ export const leaveContest = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Create the current user contest entry
  *
- * Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.
+ * Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad.
  */
 export const enterContest = <ThrowOnError extends boolean = false>(options: Options<EnterContestData, ThrowOnError>) => (options.client ?? client).post<EnterContestResponses, EnterContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1929,7 +1929,7 @@ export const ingestClientLogs = <ThrowOnError extends boolean = false>(options: 
 /**
  * Get current selection state for a contest
  *
- * Returns the current selection-room state for one event of the contest (#713): `sportEventId`, else its next event that has not started, else its last; 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. It includes the event's field, its picks, and each entry's status in it. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry's spend against the salary cap. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. Until the event's picks are revealed (the contest is live and the event has started, or a random draw has dealt) the pick history carries only the caller's own entries, and entryId selects another team's entry only once they are; otherwise it falls back to the caller's own. 409 CONTEST_EVENT_REQUIRED for a contest that covers no event.
+ * Returns the current selection-room state for one event of the contest (#713): `sportEventId`, else its next event that has not started, else its last; 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. It includes the event's field, its picks, and each entry's status in it. A budget contest lists the whole field as one group, dearest first, and carries `lineupSummary`: the viewed entry's spend against the salary cap. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. A DRAFT contest answers 404 CONTEST_NOT_FOUND to anyone but its league's commissioners and root admins. Until the event's picks are revealed (the contest is live and the event has started, or a random draw has dealt) the pick history carries only the caller's own entries, and entryId selects another squad's entry only once they are; otherwise it falls back to the caller's own. 409 CONTEST_EVENT_REQUIRED for a contest that covers no event.
  */
 export const getSelectionState = <ThrowOnError extends boolean = false>(options: Options<GetSelectionStateData, ThrowOnError>) => (options.client ?? client).get<GetSelectionStateResponses, GetSelectionStateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1955,7 +1955,7 @@ export const submitContestSelection = <ThrowOnError extends boolean = false>(opt
 /**
  * Submit a contest entry's picks for one event
  *
- * Submits the caller's entry for one event of its contest (#713: "submit week 6", "submit your Masters picks") once that event's lineup is complete, and returns the refreshed selection state for that event. Each event of an entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted event changes nothing. A later pick change that leaves the lineup short or over the cap sends that event back to DRAFT. An event is submitted only while the contest is OPEN or ACTIVE and that event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. Only a member of the entry's team may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
+ * Submits the caller's entry for one event of its contest (#713: "submit week 6", "submit your Masters picks") once that event's lineup is complete, and returns the refreshed selection state for that event. Each event of an entry starts as DRAFT and counts nowhere (leaderboard, standings, settlement, entry counts) until it is SUBMITTED. The lineup must hold the full roster with exactly each tier's picks: 409 ENTRY_LINEUP_INCOMPLETE otherwise. In a budget contest its picks must also cost no more than the salary cap: 409 ENTRY_OVER_BUDGET otherwise, reported only once the lineup is complete. Submitting an already submitted event changes nothing. A later pick change that leaves the lineup short or over the cap sends that event back to DRAFT. An event is submitted only while the contest is OPEN or ACTIVE and that event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. 404 CONTEST_EVENT_NOT_IN_CONTEST for an event the contest does not cover. Only a member of the entry's squad may submit it: 403 ENTRY_ACCESS_DENIED otherwise.
  */
 export const submitContestEntry = <ThrowOnError extends boolean = false>(options: Options<SubmitContestEntryData, ThrowOnError>) => (options.client ?? client).post<SubmitContestEntryResponses, SubmitContestEntryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1966,7 +1966,7 @@ export const submitContestEntry = <ThrowOnError extends boolean = false>(options
 /**
  * Get a prediction contest entry's game picks for one event
  *
- * Returns one event's games, in game-number order and without cancelled games, with the entry's pick on each (#716). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. The entry's own team sees every pick; anyone else sees a pick only once its game is revealed, at that game's kickoff once the contest is live (in a bracket, every pick at the event's start). Each game carries the teams really playing it and the teams the entry's own picks put in it (`predictedHome`, `predictedAway`): in a bracket (#721) a later game offers the teams the entry picked to win the games before it, paired by seed in a reseeded round. A bracket's picks also carry their outcome (CORRECT, BUSTED or PENDING) and points, and the entry its points, the most it can still reach, and its tiebreaker. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
+ * Returns one event's games, in game-number order and without cancelled games, with the entry's pick on each (#716). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. The entry's own squad sees every pick; anyone else sees a pick only once its game is revealed, at that game's kickoff once the contest is live (in a bracket, every pick at the event's start). Each game carries the teams really playing it and the teams the entry's own picks put in it (`predictedHome`, `predictedAway`): in a bracket (#721) a later game offers the teams the entry picked to win the games before it, paired by seed in a reseeded round. A bracket's picks also carry their outcome (CORRECT, BUSTED or PENDING) and points, and the entry its points, the most it can still reach, and its tiebreaker. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
  */
 export const getGamePicks = <ThrowOnError extends boolean = false>(options: Options<GetGamePicksData, ThrowOnError>) => (options.client ?? client).get<GetGamePicksResponses, GetGamePicksErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1977,7 +1977,7 @@ export const getGamePicks = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Save game picks
  *
- * Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, and replaces the entry's pick on that game. In a bracket (#721) a pick must name a team the entry's picks put in the game (picks earlier in the same request count), and a later pick that no longer follows from them is cleared; the request may also set the bracket's `tiebreakerValue`, the final's total points (400 PREDICTION_TIEBREAKER_NOT_TAKEN in a pick'em pool; 409 CONTEST_ENTRY_LOCKED once the event has started). A bracket's every pick locks at the event's start. Only a member of the entry's team may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team the game does not offer the entry; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
+ * Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, and replaces the entry's pick on that game. In a bracket (#721) a pick must name a team the entry's picks put in the game (picks earlier in the same request count), and a later pick that no longer follows from them is cleared; the request may also set the bracket's `tiebreakerValue`, the final's total points (400 PREDICTION_TIEBREAKER_NOT_TAKEN in a pick'em pool; 409 CONTEST_ENTRY_LOCKED once the event has started). A bracket's every pick locks at the event's start. Only a member of the entry's squad may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team the game does not offer the entry; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
  */
 export const saveGamePicks = <ThrowOnError extends boolean = false>(options: Options<SaveGamePicksData, ThrowOnError>) => (options.client ?? client).put<SaveGamePicksResponses, SaveGamePicksErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

@@ -132,7 +132,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       participants: participants.map((participant) => participant.id),
     });
 
-    const first = await service.settleCompletedSportEvent(event.id);
+    const first = await service.settleFinishedSportEvent(event.id);
 
     expect(first).toEqual({
       sportEventId: event.id,
@@ -191,7 +191,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       where: { standing: { sportEventParticipantId: participants[0].id } },
       data: { eventScoreToPar: 10 },
     });
-    const second = await service.settleCompletedSportEvent(event.id);
+    const second = await service.settleFinishedSportEvent(event.id);
 
     expect(second).toEqual({
       sportEventId: event.id,
@@ -216,7 +216,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     // settled. No route does that today (the unused reopen endpoint was deleted), so the test
     // moves it directly.
     await prisma.contest.update({ where: { id: directContest.id }, data: { status: 'ACTIVE' } });
-    const third = await service.settleCompletedSportEvent(event.id);
+    const third = await service.settleFinishedSportEvent(event.id);
 
     expect(third).toEqual({
       sportEventId: event.id,
@@ -274,7 +274,7 @@ describe('golf contest settlement — which contests settle', () => {
     });
     const active = await createSettlementContest({ leagueId: league.id, sportEventId: event.id, name: `Running ${suffix}` });
 
-    const summary = await service.settleCompletedSportEvent(event.id);
+    const summary = await service.settleFinishedSportEvent(event.id);
 
     expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1 });
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: draft.id }, select: { status: true } }))
@@ -301,7 +301,7 @@ describe('golf contest settlement — which contests settle', () => {
       scoringRuleConfig: { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 }, playoffHandling: 'EXCLUDE_PLAYOFF_HOLES' },
     });
 
-    const summary = await service.settleCompletedSportEvent(event.id);
+    const summary = await service.settleFinishedSportEvent(event.id);
 
     expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1 });
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: invalidSettings.id }, select: { status: true } }))
@@ -317,7 +317,7 @@ describe('golf contest settlement — which contests settle', () => {
     const { league, event, suffix } = await seedCompletedEvent('IN_PROGRESS');
     const active = await createSettlementContest({ leagueId: league.id, sportEventId: event.id, name: `Still Playing ${suffix}` });
 
-    await expect(service.settleCompletedSportEvent(event.id)).resolves.toEqual({
+    await expect(service.settleFinishedSportEvent(event.id)).resolves.toEqual({
       sportEventId: event.id,
       contestsSettled: 0,
       contestsCompleted: 0,
@@ -331,7 +331,7 @@ describe('golf contest settlement — which contests settle', () => {
     const service = createContestSettlementService(getPrisma());
     const missingId = randomUUID();
 
-    await expect(service.settleCompletedSportEvent(missingId)).resolves.toEqual({
+    await expect(service.settleFinishedSportEvent(missingId)).resolves.toEqual({
       sportEventId: missingId,
       contestsSettled: 0,
       contestsCompleted: 0,
@@ -435,7 +435,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
       ],
     });
 
-    await expect(service.settleCompletedSportEvent(event.id)).resolves.toMatchObject({ contestsSettled: 1, standingsUpserted: 2 });
+    await expect(service.settleFinishedSportEvent(event.id)).resolves.toMatchObject({ contestsSettled: 1, standingsUpserted: 2 });
 
     // -8 for the leader; +2 played plus +8 for each of rounds 3 and 4 for the cut golfer.
     const standing = await prisma.contestEntryStanding.findFirstOrThrow({

@@ -53,7 +53,7 @@ describe('Default team provisioning', () => {
 
     const squad = await provision(world, league.id, user.id);
 
-    expect(squad).toMatchObject({ name: "Dee Dorazio's Team", isActive: true, iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD });
+    expect(squad).toMatchObject({ name: "Dee Dorazio", isActive: true, iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD });
     expect(world.squadMembershipOf(league.id, user.id)).toMatchObject({
       squadId: squad.id,
       status: SquadMembershipStatus.ACTIVE,
@@ -71,7 +71,7 @@ describe('Default team provisioning', () => {
     await provision(world, league.id, first.id);
     const squad = await provision(world, league.id, second.id);
 
-    expect(squad.name).toBe("Sam Smith's Team 2");
+    expect(squad.name).toBe("Sam Smith 2");
   });
 
   it('returns the team a member already owns instead of creating a second one', async () => {
@@ -155,7 +155,7 @@ describe('Default team provisioning', () => {
     const squad = await provision(world, league.id, user.id);
 
     expect(squad.id).not.toBe(original.id);
-    expect(squad.name).toBe("Ray Turner's Team");
+    expect(squad.name).toBe("Ray Turner");
     expect(world.squadMembershipOf(league.id, user.id)).toMatchObject({
       id: ownership.id,
       squadId: squad.id,

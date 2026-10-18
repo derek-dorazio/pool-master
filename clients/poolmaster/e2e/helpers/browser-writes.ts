@@ -41,3 +41,13 @@ export async function submitAndRead<T = unknown>(
   expect(response.ok(), `${method} ${path} answered ${response.status()}`).toBe(true);
   return (await response.json()) as T;
 }
+
+/** The CSRF token the session issued, which a state-changing request has to echo in a header. */
+export async function readCsrfToken(page: Page): Promise<string> {
+  const cookies = await page.context().cookies();
+  const csrf = cookies.find((cookie) => cookie.name === 'poolmaster_csrf');
+  if (!csrf) {
+    throw new Error('the session carries no poolmaster_csrf cookie, so no write can be signed');
+  }
+  return csrf.value;
+}

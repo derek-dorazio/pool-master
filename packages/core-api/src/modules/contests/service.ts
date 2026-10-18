@@ -39,6 +39,7 @@ import {
   hasSubmittedAnyEvent,
   LeagueMembershipStatus,
   LeagueRole,
+  SportEventStatus,
   SquadMembershipStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
 } from '@poolmaster/shared/domain';
@@ -483,6 +484,9 @@ export class ContestService {
           shown = { field, rows, asOf: settled.at(0)?.asOf ?? latestAsOf(scores) };
         }
       }
+      // A cancelled event counts for nothing (#743): its picks still show, but no result of it
+      // reaches an entry's events or its total.
+      if (event.status === SportEventStatus.CANCELLED) continue;
       const results = rows
         ? rows.map((row) => ({ entryId: row.entryId, score: row.score, position: row.position, displayPosition: row.displayPosition, scoredPickCount: row.scoredPickCount }))
         : settled.map((standing) => ({
@@ -516,6 +520,9 @@ export class ContestService {
         for (const standing of standings) {
           frozenCountingPickLimits.set(standing.contestEntryId, standing.countingPickLimit);
         }
+      } else if (events.every((event) => event.status === SportEventStatus.CANCELLED)) {
+        // Every event was cancelled (#743): the contest completed with no standings by design.
+        this.logger.debug({ contestId }, 'completed contest had every event cancelled; leaderboard lists entries unscored');
       } else {
         this.logger.warn({ contestId }, 'completed contest has no settled standings; leaderboard computed live');
       }
@@ -641,7 +648,7 @@ export class ContestService {
         maxEntriesPerSquad,
       }, 'contest entry create entry limit reached');
       throw new ContestEntryOperationError(
-        'This squad has already reached the entry limit for the contest',
+        'You already have the most entries this contest allows',
         'CONTEST_ENTRY_LIMIT_REACHED',
       );
     }
@@ -689,7 +696,7 @@ export class ContestService {
       // whoever reaches it (a root admin passes the gate and lands here).
       this.logger.warn({ contestId, userId }, 'contest entry delete missing squad');
       throw new ContestEntryAccessError(
-        'You must have an active team in this league to perform this action',
+        'You must be an active member of this league to do this',
         'SQUAD_MEMBERSHIP_REQUIRED',
       );
     }
@@ -768,7 +775,7 @@ export class ContestService {
       if (duplicateEntry) {
         this.logger.warn({ contestId, entryId, userId, duplicateEntryId: duplicateEntry.id }, 'contest entry update duplicate name');
         throw new ContestEntryOperationError(
-          'This team already has another entry with that name in the contest',
+          'You already have another entry with that name in this contest',
           'CONTEST_ENTRY_NAME_DUPLICATE',
         );
       }
@@ -1009,7 +1016,7 @@ export class ContestService {
       if (squadRow && !squadMembership) {
         this.logger.warn({ contestId, userId, squadId: squadRow.squadId, status: squadRow.status }, 'contest entry access inactive squad membership');
         throw new ContestEntryAccessError(
-          'Your membership of this team has ended',
+          'Your membership in this league has ended',
           'SQUAD_MEMBERSHIP_INACTIVE',
         );
       }
@@ -1149,7 +1156,7 @@ export class ContestService {
     }
 
     throw new ContestEntryAccessError(
-      'You must have an active team in this league before entering a contest',
+      'You must be an active member of this league to enter a contest',
       'SQUAD_MEMBERSHIP_REQUIRED',
     );
   }

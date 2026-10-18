@@ -221,7 +221,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z treats a same-status call as a no-op, never rejecting it', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED, endDate: new Date('2026-05-31T22:00:00.000Z') });
     const contests = contestDeps();
-    const contestSettlement = { settleCompletedSportEvent: jest.fn().mockResolvedValue(undefined) };
+    const contestSettlement = { settleFinishedSportEvent: jest.fn().mockResolvedValue(undefined) };
     const service = new EventLifecycleService(
       contests,
       sportEvents,
@@ -310,7 +310,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   // tests/unit/core-api/ingestion-persistence.test.ts).
   it('pool-master-eux.6 triggers Golf contest settlement from completed schedule events', async () => {
     const settlement = {
-      settleCompletedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
+      settleFinishedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
     };
     const eventEndDate = new Date('2026-05-31T22:00:00.000Z');
     const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS, endDate: eventEndDate });
@@ -330,9 +330,36 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       actor: { type: 'SYSTEM' },
     });
 
-    expect(settlement.settleCompletedSportEvent).toHaveBeenCalledWith('sport-event-1', {
+    expect(settlement.settleFinishedSportEvent).toHaveBeenCalledWith('sport-event-1', {
       completedAt: eventEndDate,
     });
+  });
+
+  it('settles the contests of an event when it is cancelled, at the cancellation rather than its future start', async () => {
+    const settlement = {
+      settleFinishedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
+    };
+    const startDate = new Date('2099-05-28T12:00:00.000Z');
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED, startDate });
+    const before = new Date();
+    const service = new EventLifecycleService(
+      contestDeps(),
+      sportEvents,
+      fakeLogger(),
+      undefined,
+      'http://localhost:5173',
+      settlement,
+    );
+
+    await service.applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.CANCELLED,
+      actor: { type: 'ROOT_ADMIN' },
+    });
+
+    const [, input] = settlement.settleFinishedSportEvent.mock.calls[0] as [string, { completedAt: Date }];
+    expect(input.completedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect(input.completedAt.getTime()).toBeLessThan(startDate.getTime());
   });
 
   // pool-master-9ya — relocated from ingestion-persistence.test.ts.

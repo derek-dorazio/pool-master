@@ -234,4 +234,7 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
   pays it.
 - **A contest cannot be cancelled, and an entry cannot be made inactive.** A contest is
   `DRAFT`, `OPEN`, `ACTIVE` or `COMPLETED`; an entry is `DRAFT` or `SUBMITTED`.
+- **A cancelled event counts for nothing.** It is settled with no result for anyone, adds
+  nothing to any total, and never holds its contest open: a contest settles once each of its
+  events is completed or cancelled.
 - **A league has no join policy.** Every join is through an invitation.

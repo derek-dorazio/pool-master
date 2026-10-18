@@ -352,7 +352,7 @@ describe('My team › Create team', () => {
 
     expect(await screen.findByRole('heading', { name: 'Choose your name and icon' })).toBeInTheDocument();
     const name = screen.getByRole('textbox', { name: 'Your name in this league' });
-    expect(name).toHaveValue("Casey Commissioner's Team");
+    expect(name).toHaveValue("Casey Commissioner");
     fireEvent.change(name, { target: { value: 'Ocean Winkers' } });
     fireEvent.click(screen.getByTestId(`team-icon-${TeamIconKey.CAPTAIN_WINK_OCEAN}`));
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));

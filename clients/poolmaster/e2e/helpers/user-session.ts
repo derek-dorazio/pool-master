@@ -16,18 +16,29 @@ export type FreshUser = {
 };
 
 /**
+ * A password for a user a spec registers. The prefix is what lets redact-artifacts.ts find it in
+ * a trace.
+ */
+export function generatePassword(): string {
+  return `${GENERATED_PASSWORD_PREFIX}${randomBytes(12).toString('hex')}`;
+}
+
+/**
  * Fills and submits the register form, which the caller has already opened, and returns the new
  * user's id from the register response. The submit routes client-side (no document navigation),
- * so the response body is still readable when the click resolves.
+ * so the response body is still readable when the click resolves. A spec that signs the user in
+ * again later passes the password; otherwise it is never needed again, since teardown deletes
+ * the user with the admin token.
  */
-export async function registerFreshUser(page: Page, user: FreshUser): Promise<string> {
+export async function registerFreshUser(
+  page: Page,
+  user: FreshUser,
+  password: string = generatePassword(),
+): Promise<string> {
   await page.getByTestId('auth-register-first-name').fill(user.firstName);
   await page.getByTestId('auth-register-last-name').fill(user.lastName);
   await page.getByTestId('auth-register-email').fill(user.email);
   await page.getByTestId('auth-register-username').fill(user.username);
-  // Never needed again: teardown deletes this user with the admin token. The prefix is what
-  // lets redact-artifacts.ts find it in a trace.
-  const password = `${GENERATED_PASSWORD_PREFIX}${randomBytes(12).toString('hex')}`;
   await page.getByTestId('auth-register-password').fill(password);
   await page.getByTestId('auth-register-confirm-password').fill(password);
 

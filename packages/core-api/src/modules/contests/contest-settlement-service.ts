@@ -26,6 +26,7 @@ import {
   loadEventField,
   toParticipantScores,
 } from './contest-leaderboard-reads';
+import { FINISHED_EVENT_STATUSES } from './entry-window';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
@@ -51,6 +52,13 @@ const NOT_SETTLED: readonly ContestStatus[] = [ContestStatus.COMPLETED, ContestS
 /** Every status settlement may complete a contest from. */
 const SETTLEABLE = Object.values(ContestStatus).filter((status) => !NOT_SETTLED.includes(status));
 
+/*
+ * A CANCELLED event counts as settled with no result for anyone (#743): it writes no standings
+ * and adds nothing to any total, so a contest whose events are each completed or cancelled
+ * (`FINISHED_EVENT_STATUSES`) settles on the completed ones. A contest whose every event is
+ * cancelled completes with no standings.
+ */
+
 export interface ContestSettlementSummary {
   sportEventId: string;
   contestsSettled: number;
@@ -73,12 +81,13 @@ export class ContestSettlementService {
     this.logger = deps.logger ?? createNoopLogger();
   }
 
-  async settleCompletedSportEvent(
+  /** Settles the contests of a finished event: one that completed, or one that was cancelled. */
+  async settleFinishedSportEvent(
     sportEventId: string,
     input?: { completedAt?: Date },
   ): Promise<ContestSettlementSummary> {
     const sportEvent = await this.deps.sportEvents.findById(sportEventId);
-    if (!sportEvent || sportEvent.status !== SportEventStatus.COMPLETED) {
+    if (!sportEvent || !FINISHED_EVENT_STATUSES.includes(sportEvent.status)) {
       return {
         sportEventId,
         contestsSettled: 0,
@@ -88,8 +97,10 @@ export class ContestSettlementService {
     }
 
     const completedAt = input?.completedAt ?? sportEvent.endDate ?? sportEvent.startDate;
+    const cancelled = sportEvent.status === SportEventStatus.CANCELLED;
     // The field is the event's, read once; each contest scores it under its own settings below.
-    const field = await loadEventField(this.deps, sportEventId);
+    // A cancelled event is never scored, whatever scores it holds.
+    const field = cancelled ? [] : await loadEventField(this.deps, sportEventId);
     // A COMPLETED contest is already settled: its standing is the frozen result, and re-running
     // settlement (the event re-sent as COMPLETED, or a late score correction) must not rewrite
     // it. Only a contest moved back out of COMPLETED would be settled again, and no route does
@@ -105,7 +116,7 @@ export class ContestSettlementService {
     let contestsSettled = 0;
     for (const contest of contests) {
       if (contest.selectionType === SelectionType.BRACKET) {
-        const settled = await this.settleBracketContest(contest, sportEventId, completedAt);
+        const settled = await this.settleBracketContest(contest, sportEventId, completedAt, cancelled);
         if (settled) {
           contestsSettled++;
           standingsUpserted += settled.standingsUpserted;
@@ -150,7 +161,7 @@ export class ContestSettlementService {
       );
       const asOf = resolveContestStandingAsOf(participants, completedAt);
       const settledEvents = await this.deps.eventStandings.findByContest(contest.id);
-      if (!settledEvents.some((standing) => standing.sportEventId === sportEventId)) {
+      if (!cancelled && !settledEvents.some((standing) => standing.sportEventId === sportEventId)) {
         const entries = await loadContestLeaderboardEntries(this.deps, contest.id, sportEventId);
         const rankedEntries = rankContestEntryStandings(
           entries.map((entry) =>
@@ -176,7 +187,7 @@ export class ContestSettlementService {
       }
       contestsSettled++;
 
-      if (!(await this.allEventsCompleted(contest))) {
+      if (!(await this.allEventsFinished(contest))) {
         this.logger.info({
           contestId: contest.id,
           sportEventId,
@@ -201,7 +212,8 @@ export class ContestSettlementService {
       contestsSettled,
       contestsCompleted,
       standingsUpserted,
-    }, 'Contest settlement completed from completed sport event');
+      cancelled,
+    }, 'Contest settlement completed from finished sport event');
 
     return {
       sportEventId,
@@ -215,13 +227,24 @@ export class ContestSettlementService {
    * Settles a bracket contest (#721), which covers its one knockout event: each submitted entry's
    * points and place, frozen as both its event standing and its contest standing, then the contest
    * is COMPLETED. Answers what it wrote, or null when a bracket whose scoring rule is not knockout
-   * round points is skipped and logged, as a roster contest without a usable rule is.
+   * round points is skipped and logged, as a roster contest without a usable rule is. A cancelled
+   * event is its only event, so the bracket completes with no standings (#743).
    */
   private async settleBracketContest(
     contest: Contest,
     sportEventId: string,
     completedAt: Date,
+    cancelled: boolean,
   ): Promise<{ standingsUpserted: number; completed: boolean } | null> {
+    if (cancelled) {
+      const completed = await this.deps.contests.transitionStatus(contest.id, {
+        from: SETTLEABLE,
+        to: ContestStatus.COMPLETED,
+        endsAt: completedAt,
+      });
+      this.logger.info({ contestId: contest.id, sportEventId, completed }, 'Completed a bracket contest whose event was cancelled, with no standings');
+      return { standingsUpserted: 0, completed };
+    }
     let standings: Awaited<ReturnType<typeof loadBracketStandings>>;
     try {
       standings = await loadBracketStandings(this.deps, contest.id, sportEventId);
@@ -255,11 +278,11 @@ export class ContestSettlementService {
     return { standingsUpserted: standings.entries.length, completed };
   }
 
-  /** Whether every event the contest covers has completed: then the contest itself settles. */
-  private async allEventsCompleted(contest: Contest): Promise<boolean> {
+  /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */
+  private async allEventsFinished(contest: Contest): Promise<boolean> {
     const events = await this.deps.sportEvents.findByIds(contest.sportEventIds);
     return events.length === contest.sportEventIds.length
-      && events.every((event) => event.status === SportEventStatus.COMPLETED);
+      && events.every((event) => FINISHED_EVENT_STATUSES.includes(event.status));
   }
 
   /**

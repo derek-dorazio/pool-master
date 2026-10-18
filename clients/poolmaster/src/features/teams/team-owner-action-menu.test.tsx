@@ -203,13 +203,13 @@ describe('TeamOwnerActionMenu', () => {
 
   it('shows the server\'s refusal to remove an owner, and clears it when the dialog is closed', async () => {
     removeSquadOwnerMock.mockResolvedValue({
-      error: { error: { code: 'SQUAD_OWNER_REQUIRED', message: 'You must be an active team owner to perform this action' } },
+      error: { error: { code: 'SQUAD_OWNER_REQUIRED', message: 'Only an active owner can do this' } },
     });
     renderMenu();
 
     openAction('remove');
     fireEvent.click(await screen.findByTestId('team-home-owner-actions-confirm-remove-team-1-user-2'));
-    expect(await screen.findByText('You must be an active team owner to perform this action')).toBeInTheDocument();
+    expect(await screen.findByText('Only an active owner can do this')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Close Remove owner' }));
     await waitFor(() =>
@@ -218,6 +218,6 @@ describe('TeamOwnerActionMenu', () => {
     openAction('remove');
 
     expect(await screen.findByTestId('team-home-owner-actions-confirm-remove-team-1-user-2')).toBeInTheDocument();
-    expect(screen.queryByText('You must be an active team owner to perform this action')).not.toBeInTheDocument();
+    expect(screen.queryByText('Only an active owner can do this')).not.toBeInTheDocument();
   });
 });

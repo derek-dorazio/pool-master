@@ -178,7 +178,7 @@ export class SquadService {
         action: 'squad.update.blankName',
         data: { leagueId, squadId, userId },
       }, 'Rejected blank squad name');
-      throw new SquadOperationError('Team name cannot be blank', 'SQUAD_NAME_REQUIRED');
+      throw new SquadOperationError('Name cannot be blank', 'SQUAD_NAME_REQUIRED');
     }
     if (nextName !== undefined) {
       // excludeSquadId so a no-op rename does not collide with itself (#202).
@@ -291,7 +291,7 @@ export class SquadService {
           data: { leagueId, squadId, actorUserId, targetUserId, existingSquadId: existingLeagueMembership.squadId },
         }, 'Cannot add owner who already belongs to another squad');
         throw new SquadOperationError(
-          'User already belongs to another squad in this league',
+          'That user is already a member of this league',
           'SQUAD_MEMBERSHIP_CONFLICT',
         );
       }
@@ -363,7 +363,7 @@ export class SquadService {
         data: { leagueId, squadId, actorUserId, targetUserId },
       }, 'Rejected remove owner because the team only has one active owner');
       throw new SquadOperationError(
-        'This team only has one active owner. Inactivate the team instead.',
+        'The only active owner cannot be removed. Inactivate instead.',
         'SQUAD_OWNER_REMOVE_REQUIRES_MULTIPLE_OWNERS',
       );
     }
@@ -423,7 +423,7 @@ export class SquadService {
         data: { leagueId, squadId, userId },
       }, 'Rejected squad delete because team is still active');
       throw new SquadOperationError(
-        'Team must already be inactive before it can be permanently deleted.',
+        `${squad.name} must already be inactive before it can be permanently deleted.`,
         'SQUAD_DELETE_REQUIRES_INACTIVE',
       );
     }
@@ -577,7 +577,7 @@ export class SquadService {
         },
       }, 'Rejected squad action for non-active league member');
       throw new SquadOperationError(
-        'You must be an active league member to manage squads',
+        'You must be an active league member to do this',
         'LEAGUE_MEMBERSHIP_REQUIRED',
       );
     }
@@ -613,7 +613,7 @@ export class SquadService {
         },
       }, 'Rejected squad action for non-owner');
       throw new SquadOperationError(
-        'You must be an active team owner to perform this action',
+        'Only an active owner can do this',
         'SQUAD_OWNER_REQUIRED',
       );
     }
@@ -623,7 +623,7 @@ export class SquadService {
         data: { leagueId, squadId, userId, membershipLeagueId: membership.leagueId },
       }, 'Rejected squad action due to league mismatch');
       throw new SquadOperationError(
-        'Squad membership does not match the requested league',
+        'Your membership does not match the requested league',
         'SQUAD_LEAGUE_MISMATCH',
       );
     }
@@ -657,7 +657,7 @@ export class SquadService {
         data: { leagueId, squadId, userId, role: leagueMembership.role },
       }, 'Rejected commissioner-only squad action');
       throw new SquadOperationError(
-        'Only a league commissioner can inactivate a team',
+        'Only a league commissioner can do this',
         'LEAGUE_PERMISSION_DENIED',
       );
     }

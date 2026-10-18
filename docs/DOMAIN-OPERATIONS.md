@@ -786,7 +786,7 @@ golf to-par total, a race's points), so no scoring family keeps a settled-total 
 
 | Operation | Role | Notes |
 |---|---|---|
-| Write | *(settlement)* | Written once per entry when the contest's last event completes, as the sum of the entry's `ContestEntryEventStanding` totals; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; a `DRAFT` (never opened) contest is skipped too and keeps its status, since a draft leaves only by being opened or deleted (#117). No route moves a contest back out of `COMPLETED` (the unused reopen, close-early and extend-deadline endpoints were deleted) |
+| Write | *(settlement)* | Written once per entry when the contest's last event finishes (completes or is cancelled), as the sum of the entry's `ContestEntryEventStanding` totals. A cancelled event writes no event standings and adds nothing to any total, so a contest whose every event is cancelled completes with no standings (#743); settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; a `DRAFT` (never opened) contest is skipped too and keeps its status, since a draft leaves only by being opened or deleted (#117). No route moves a contest back out of `COMPLETED` (the unused reopen, close-early and extend-deadline endpoints were deleted) |
 | Read | `member` | Through the contest leaderboard of a `COMPLETED` contest |
 
 ### ContestEntryEventStanding

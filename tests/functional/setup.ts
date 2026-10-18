@@ -362,24 +362,6 @@ export async function cleanupFunctionalData(): Promise<void> {
   const providerParticipantIds = [...new Set(
     providerSportEventParticipants.map((participant) => participant.participantId),
   )];
-  const providerParticipants = providerParticipantIds.length > 0
-    ? await database.participant.findMany({
-        where: {
-          id: {
-            in: providerParticipantIds,
-          },
-        },
-        select: {
-          id: true,
-          sportId: true,
-        },
-      })
-    : [];
-  const providerSportIds = [...new Set(
-    providerParticipants
-      .map((participant) => participant.sportId)
-      .filter((sportId): sportId is string => Boolean(sportId)),
-  )];
   const leagues = await database.league.findMany({
     // #202 — no `createdBy` arm. League creation always writes the creator's
     // COMMISSIONER membership, so the membership filter already covers them.
@@ -517,18 +499,8 @@ export async function cleanupFunctionalData(): Promise<void> {
       },
     });
   }
-  if (providerSportIds.length > 0) {
-    await database.sport.deleteMany({
-      where: {
-        id: {
-          in: providerSportIds,
-        },
-        participants: {
-          none: {},
-        },
-      },
-    });
-  }
+  // Sports are migration reference data: a participant's sport row stays when its last test
+  // participant goes, or every suite after this one finds no sport to load into.
   if (userIds.length > 0) {
     await database.refreshToken.deleteMany({
       where: {

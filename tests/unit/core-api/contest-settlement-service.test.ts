@@ -181,6 +181,10 @@ function world({
       const event = events.get(sportEventId);
       if (event) events.set(sportEventId, { ...event, status: SportEventStatus.COMPLETED });
     },
+    cancel: (sportEventId: string) => {
+      const event = events.get(sportEventId);
+      if (event) events.set(sportEventId, { ...event, status: SportEventStatus.CANCELLED });
+    },
   };
 }
 
@@ -193,7 +197,7 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
     const w = world();
     w.complete(MASTERS);
 
-    const summary = await w.service.settleCompletedSportEvent(MASTERS, { completedAt: T });
+    const summary = await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
 
     expect(eventRows(w.eventStandings, MASTERS)).toEqual([['entry-a', -6, 1], ['entry-b', -1, 2]]);
     expect(eventRows(w.eventStandings, PGA)).toEqual([]);
@@ -205,10 +209,10 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
   it('settles the contest when its last event completes: that event\'s standings, totals summed over both events, and COMPLETED', async () => {
     const w = world();
     w.complete(MASTERS);
-    await w.service.settleCompletedSportEvent(MASTERS, { completedAt: T });
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
     w.complete(PGA);
 
-    const summary = await w.service.settleCompletedSportEvent(PGA, { completedAt: T });
+    const summary = await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
 
     expect(eventRows(w.eventStandings, PGA)).toEqual([['entry-b', -8, 1], ['entry-a', 2, 2]]);
     expect(w.standings.map((row) => [row.contestEntryId, row.totalScore, row.position, row.scoredPickCount]))
@@ -220,11 +224,11 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
   it('does not rewrite an event\'s frozen standings when that event is settled again while the contest is still live', async () => {
     const w = world();
     w.complete(MASTERS);
-    await w.service.settleCompletedSportEvent(MASTERS, { completedAt: T });
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
     // A late score correction arrives for the Masters after it settled.
     w.fields.set(MASTERS, [golfer('sep-m1', 4), golfer('sep-m2', -1)]);
 
-    await w.service.settleCompletedSportEvent(MASTERS, { completedAt: T });
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
 
     expect(eventRows(w.eventStandings, MASTERS)).toEqual([['entry-a', -6, 1], ['entry-b', -1, 2]]);
     expect(w.contest().status).toBe(ContestStatus.ACTIVE);
@@ -233,7 +237,7 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
   it('settles nothing for an event that has not completed', async () => {
     const w = world();
 
-    const summary = await w.service.settleCompletedSportEvent(MASTERS, { completedAt: T });
+    const summary = await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
 
     expect(summary).toMatchObject({ contestsSettled: 0, contestsCompleted: 0 });
     expect(w.eventStandings).toEqual([]);
@@ -243,10 +247,10 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
     const w = world();
     w.entries[1] = entry('entry-b', 2, [PGA]);
     w.complete(MASTERS);
-    await w.service.settleCompletedSportEvent(MASTERS, { completedAt: T });
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
     w.complete(PGA);
 
-    await w.service.settleCompletedSportEvent(PGA, { completedAt: T });
+    await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
 
     expect(eventRows(w.eventStandings, MASTERS)).toEqual([['entry-a', -6, 1]]);
     expect(w.standings.map((row) => [row.contestEntryId, row.totalScore, row.position]))
@@ -266,10 +270,57 @@ describe('ContestSettlementService — a contest it cannot score', () => {
     subject.complete(MASTERS);
     subject.complete(PGA);
 
-    const summary = await subject.service.settleCompletedSportEvent(PGA);
+    const summary = await subject.service.settleFinishedSportEvent(PGA);
 
     expect(summary).toEqual({ sportEventId: PGA, contestsSettled: 0, contestsCompleted: 0, standingsUpserted: 0 });
     expect([subject.eventStandings, subject.standings]).toEqual([[], []]);
     expect(subject.contest().status).toBe(ContestStatus.ACTIVE);
+  });
+});
+
+describe('ContestSettlementService — a cancelled event counts for nothing (#743)', () => {
+  it('completes the contest on its played event when its last event is cancelled, writing no standings for the cancelled one', async () => {
+    const w = world();
+    w.complete(MASTERS);
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
+    w.cancel(PGA);
+
+    const summary = await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
+
+    expect(eventRows(w.eventStandings, PGA)).toEqual([]);
+    expect(w.standings.map((row) => [row.contestEntryId, row.totalScore, row.position]))
+      .toEqual([['entry-a', -6, 1], ['entry-b', -1, 2]]);
+    expect(w.contest().status).toBe(ContestStatus.COMPLETED);
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
+  });
+
+  it('keeps the contest ACTIVE when its first event is cancelled, then settles it on the second event alone', async () => {
+    const w = world();
+    w.cancel(MASTERS);
+
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
+
+    expect(w.eventStandings).toEqual([]);
+    expect(w.contest().status).toBe(ContestStatus.ACTIVE);
+
+    w.complete(PGA);
+    await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
+
+    expect(w.standings.map((row) => [row.contestEntryId, row.totalScore, row.position]))
+      .toEqual([['entry-b', -8, 1], ['entry-a', 2, 2]]);
+    expect(w.contest().status).toBe(ContestStatus.COMPLETED);
+  });
+
+  it('completes a contest whose every event is cancelled, with no standings at all', async () => {
+    const w = world();
+    w.cancel(MASTERS);
+    w.cancel(PGA);
+
+    const summary = await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
+
+    expect(w.eventStandings).toEqual([]);
+    expect(w.standings).toEqual([]);
+    expect(w.contest().status).toBe(ContestStatus.COMPLETED);
+    expect(summary).toMatchObject({ contestsCompleted: 1, standingsUpserted: 0 });
   });
 });
