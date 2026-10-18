@@ -543,6 +543,7 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 | 3 | ~~Test-disable discipline~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` / `pending()`, plus `*.skip.test.ts` files and `skipped/` dirs. The `SKIP: #NN` escape comment was **removed** — see below. | `eslint-rules/no-disabled-tests.mjs` |
 | 4 | ~~Shared UI controls~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | Bare `<button>`, `<input>`, `<textarea>` in `features/**` outside `features/shared/ui/`. More precise than the scanner, which also flagged controls inside comments. | `eslint-rules/no-bare-ui-controls.mjs` |
 | 2a | Route authorization | `rules:check:route-authorization` | **blocking** | clean | A route whose full path has a parameter, under any mount (by-id like `/api/v1/contests` or nested like `/api/v1/leagues/:id/squads`), that declares no `preHandler`/`onRequest` hook and is not on `scripts/route-authorization-opt-outs.mjs` with a reason. Also fails a stale or reasonless opt-out. Added by #193; nested mounts since #292. | `scripts/check-route-authorization.mjs` |
+| 2b | Contract verification | `rules:check:contract-verification` | **blocking** | 15 listed gaps | An exported `*ResponseSchema` in `packages/shared/dto` that no test under `tests/` parses (`.safeParse(` / `.parse(` / `expectMatchesSchema(`) and that `scripts/contract-verification-gaps.mjs` does not list. Also fails a listed schema that is checked now or no longer exported, and a list longer than `GAP_CEILING`, so the list only shrinks. Added by #745. | `scripts/check-contract-verification.mjs` |
 | 5 | Form/query mirror | `rules:check:form-query-mirror` | warn-only | 1 | `useEffect` whose deps reference a TanStack Query result and whose body calls a `setState` (the form-overwrite-on-refetch hazard) | `scripts/check-form-query-mirror.mjs` |
 | 6 | Generated API freshness | `api:check` | **blocking** | clean | Re-exports OpenAPI to a tmp dir, regenerates the hey-api SDK, diffs against committed `packages/shared/generated/`. Fails if any file is stale. | `scripts/check-openapi-fresh.mjs` |
 | — | Plan references | `rules:check:plan-references` | warn-only | clean | A `plans/NN` citation in `docs/`, `rules/`, `requirements/`, `tech-specs/`, `AGENTS.md`, `CLAUDE.md`, or any `README.md` under `packages/` or `clients/` whose plan is absent from the tree and which has no `git show <sha>^:plans/NN-…` retrieval command within three lines (#147; `workflow-rules.md §0` governing rule 2). Accepted ADRs are exempt. The two source roots are scanned by file name, not walked wholesale, so build output cannot enter scope (#334). The hint's SHA is not verified — CI's shallow checkout cannot. | `scripts/check-plan-references.mjs` |
@@ -746,6 +747,7 @@ PR_NUMBER=42 node scripts/check-pr-review-triggers.mjs
 | `poolmaster/no-mocked-api` via `npm run lint` (**block**) | A test added a module-level mock of the generated API. | Replace `vi.mock('@/lib/api', ...)` with MSW handlers under a shared test-handler module. See `rules/testing-rules.md §5` and the `pool-master-rop.4` cleanup defect. |
 | `rules:check:route-discipline` (warn) | A route or handler file violates `service-rules.md §10`. | Pull `prisma.*` calls into a service. Move inline `.map((...))` shaping into `packages/core-api/src/mappers/<module>.mapper.ts`. Replace `additionalProperties: true` with `zodToJsonSchema(SomeSchema)`. |
 | `rules:check:route-authorization` (**block**) | A route with a path parameter authorizes nowhere a reader can see, or an opt-out entry is stale or has no reason. | Declare the gate as a `preHandler` (`requireMemberOfLeague`, `requireMemberOfSquad`, `requireCommissionerForContest`, ...). If the route genuinely authorizes in its handler or service, add it to `scripts/route-authorization-opt-outs.mjs` with a one-line reason naming the function that does it. See `rules/service-rules.md` §3 *Route Authorization*. |
+| `rules:check:contract-verification` (**block**) | A response schema is never checked against a live response, or a gap entry is stale. | Add a contract-verification case for the endpoint, or call `expectMatchesSchema(Schema, res.data)` in a functional journey that already gets the response; delete the schema's entry from `scripts/contract-verification-gaps.mjs` if it had one. New schemas never go on that list. See `rules/testing-rules.md` §4 *Contract Verification Gate*. |
 | `poolmaster/no-unawaited-send-error` via `npm run lint` (**block**) | A backend `sendError(...)` is discarded (`void sendError(...)` or a bare statement), so a hook could let Fastify run the handler behind its refusal. | Write `await sendError(...)` or `return sendError(...)`. See `rules/service-rules.md` §3 *Route Authorization*. |
 | `poolmaster/no-disabled-tests` via `npm run lint` (**block**) | A test was disabled. There is no exempting comment. | Either fix the test, or delete it and note the coverage gap in the slice's closing comment. |
 | `poolmaster/no-bare-ui-controls` via `npm run lint` (**block**) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
@@ -879,7 +881,7 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:coverage:service:unit` — run with coverage
 - **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit` with Jest's default Babel coverage provider; the coverage threshold below fails the job, and it is the only coverage gate in CI.
 - **Required pre-push gate:** `npx jest --config tests/jest.config.js --forceExit` (per `AGENTS.md` Quality Gates).
-- **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 65% statements, 60.5% branches, 62% functions, 65% lines. These are regression floors, not aspirational targets, set in #298 about 3 points under the lower of two measurements: Babel (this job) 71.3 / 63.75 / 65.45 / 71.07, and V8 (the merged report, which reuses this config) 67.95 / 83.04 / 79.03 / 67.95.
+- **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 67.5% statements, 65.5% branches, 65.5% functions, 67.5% lines. These are regression floors, not aspirational targets, raised in #747 to about 3 points under the lower of two measurements: Babel (this job) 74.63 / 68.84 / 68.42 / 74.36, and V8 (the merged report, which reuses this config) 70.69 / 85.52 / 79.87 / 70.69.
 - **Database:** none. Pure unit tests must not touch Postgres; if a test needs a DB, it belongs in the integration suite.
 
 ### 2. Backend integration (`tests/integration/**/*.integration.ts`)
@@ -930,7 +932,7 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:coverage:poolmaster:unit` — run with coverage (v8 provider, lcov + json-summary reporters)
 - **CI job:** `poolmaster-unit-tests` (uploads `coverage-webapp-unit` artifact).
 - **Required pre-push gate:** `npm run test:poolmaster:unit` (per `AGENTS.md` Quality Gates).
-- **Coverage policy:** **No threshold configured** in `vitest.config.ts`. Coverage is reported but not gated. (Flagged during the rop.19 review; future work to set per-feature thresholds will need to add a `coverage.thresholds` block.)
+- **Coverage policy:** **Threshold configured at the suite level** — `coverage.thresholds` in `vitest.config.ts`: 89% statements, 81.5% branches, 89.5% functions, 89% lines (V8). A regression floor set in #747 about 3 points under the suite's 2026-10-18 measurement, 92.02 / 84.6 / 92.79 / 92.0; `npm run test:coverage:poolmaster:unit` fails below it.
 - **Known anti-pattern this suite has accumulated:** `vi.mock('@/lib/api')` at module level in 30+ tests — see `pool-master-rop.4`. The intent is for this suite to use **MSW** for HTTP boundary mocking instead of replacing the SDK; the migration is tracked in epic `pool-master-rop.71`.
 
 ### 5. Webapp browser E2E (`clients/poolmaster/e2e/**/*.e2e.ts`)
@@ -989,13 +991,13 @@ release, and the mock contest feed provider has its own suite.
 
 | Suite | Threshold today | Source of truth |
 |---|---|---|
-| Backend unit | 65% / 60.5% / 62% / 65% (stmts / branches / fns / lines) | `tests/jest.config.js` |
+| Backend unit | 67.5% / 65.5% / 65.5% / 67.5% (stmts / branches / fns / lines) | `tests/jest.config.js` |
 | Backend integration | none | — |
 | Backend FAPI | none | — |
-| Webapp unit | none | — |
+| Webapp unit | 89% / 81.5% / 89.5% / 89% (stmts / branches / fns / lines) | `clients/poolmaster/vitest.config.ts` |
 | Webapp E2E | N/A | — |
 
-The single configured threshold is intentionally a **regression floor**, not a target. It is measured with Babel statement counts, the method it was set against (#302). Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
+Both configured thresholds are intentionally **regression floors**, not targets. The backend one is measured with Babel statement counts, the method it was set against (#302), and must also clear the V8 run; the web one is V8, the only provider that suite uses. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
 
 ## File reference
 
@@ -1007,6 +1009,8 @@ eslint-rules/no-mocked-api.mjs       — gate 1 (migrated from scripts/)
 scripts/check-route-discipline.mjs   — gate 2
 scripts/check-route-authorization.mjs — gate 2a, with its opt-out list in
                                         scripts/route-authorization-opt-outs.mjs
+scripts/check-contract-verification.mjs — gate 2b, with its known gaps in
+                                        scripts/contract-verification-gaps.mjs
 eslint-rules/no-disabled-tests.mjs — gate 3 (migrated from scripts/)
 eslint-rules/no-bare-ui-controls.mjs — gate 4 (migrated from scripts/)
 scripts/check-form-query-mirror.mjs  — gate 5

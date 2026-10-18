@@ -1,7 +1,8 @@
 import { getSportDefinition, Sport } from '@poolmaster/shared/domain';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { EMPTY_SCORING_SETTINGS_VALUES } from './contest-scoring-settings';
+import { EMPTY_SCORING_SETTINGS_VALUES, SCORING_SETTINGS_UI, type ScoringSettingsValues } from './contest-scoring-settings';
 import { FinishPositionPointsFields, KnockoutRoundPointsFields } from './contest-scoring-settings-fields';
 
 // The points table's hint reads the sport's own name for its top places, so a second
@@ -58,5 +59,37 @@ describe('KnockoutRoundPointsFields', () => {
       <KnockoutRoundPointsFields onChange={vi.fn()} values={{ ...EMPTY_SCORING_SETTINGS_VALUES, upsetBonusRule: 'SEED_DIFFERENCE' }} vocabulary={vocabulary} />,
     );
     expect(screen.getByTestId('contest-scoring-upset-bonus-multiplier')).toHaveValue(1);
+  });
+
+  /** The fields in a form that keeps their values, as the create page does, showing what it would save. */
+  function KnockoutForm({ initial }: { initial: ScoringSettingsValues }) {
+    const [current, setCurrent] = useState(initial);
+    return (
+      <>
+        <KnockoutRoundPointsFields onChange={(patch) => setCurrent((previous) => ({ ...previous, ...patch }))} values={current} vocabulary={vocabulary} />
+        <output data-testid="saved-scoring">{JSON.stringify(SCORING_SETTINGS_UI.KNOCKOUT_ROUND_POINTS.parse(current).scoring ?? null)}</output>
+      </>
+    );
+  }
+  const saved = () => JSON.parse(screen.getByTestId('saved-scoring').textContent) as unknown;
+
+  it('saves the round values typed, and the upset bonus with the multiplier typed once the bonus is switched on', () => {
+    render(<KnockoutForm initial={{ ...EMPTY_SCORING_SETTINGS_VALUES, roundValues: '1, 2' }} />);
+
+    fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4' } });
+    expect(saved()).toEqual({ participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4], upsetBonus: { rule: 'NONE' } } });
+
+    fireEvent.change(screen.getByTestId('contest-scoring-upset-bonus'), { target: { value: 'SEED_DIFFERENCE' } });
+    fireEvent.change(screen.getByTestId('contest-scoring-upset-bonus-multiplier'), { target: { value: '3' } });
+    expect(saved()).toEqual({ participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4], upsetBonus: { rule: 'SEED_DIFFERENCE', multiplier: 3 } } });
+  });
+
+  it('hides the multiplier and saves no bonus once the upset bonus is switched back off', () => {
+    render(<KnockoutForm initial={{ ...EMPTY_SCORING_SETTINGS_VALUES, roundValues: '1, 2', upsetBonusRule: 'SEED_DIFFERENCE', upsetBonusMultiplier: '2' }} />);
+
+    fireEvent.change(screen.getByTestId('contest-scoring-upset-bonus'), { target: { value: 'NONE' } });
+
+    expect(screen.queryByTestId('contest-scoring-upset-bonus-multiplier')).not.toBeInTheDocument();
+    expect(saved()).toEqual({ participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2], upsetBonus: { rule: 'NONE' } } });
   });
 });
