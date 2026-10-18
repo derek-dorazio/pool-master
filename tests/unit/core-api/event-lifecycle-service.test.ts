@@ -335,6 +335,32 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     });
   });
 
+  it('settles the contests of an event when it is cancelled, so a cancelled event cannot hold a contest open', async () => {
+    const settlement = {
+      settleCompletedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
+    };
+    const startDate = new Date('2026-05-28T12:00:00.000Z');
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED, startDate });
+    const service = new EventLifecycleService(
+      contestDeps(),
+      sportEvents,
+      fakeLogger(),
+      undefined,
+      'http://localhost:5173',
+      settlement,
+    );
+
+    await service.applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.CANCELLED,
+      actor: { type: 'ROOT_ADMIN' },
+    });
+
+    expect(settlement.settleCompletedSportEvent).toHaveBeenCalledWith('sport-event-1', {
+      completedAt: startDate,
+    });
+  });
+
   // pool-master-9ya — relocated from ingestion-persistence.test.ts.
   it('pool-master-9ya activates open contests and sends contest-started summary emails when an event starts', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });

@@ -178,6 +178,10 @@ function world({
       const event = events.get(sportEventId);
       if (event) events.set(sportEventId, { ...event, status: SportEventStatus.COMPLETED });
     },
+    cancel: (sportEventId: string) => {
+      const event = events.get(sportEventId);
+      if (event) events.set(sportEventId, { ...event, status: SportEventStatus.CANCELLED });
+    },
   };
 }
 
@@ -268,5 +272,52 @@ describe('ContestSettlementService — a contest it cannot score', () => {
     expect(summary).toEqual({ sportEventId: PGA, contestsSettled: 0, contestsCompleted: 0, standingsUpserted: 0 });
     expect([subject.eventStandings, subject.standings]).toEqual([[], []]);
     expect(subject.contest().status).toBe(ContestStatus.ACTIVE);
+  });
+});
+
+describe('ContestSettlementService — a cancelled event counts for nothing (#743)', () => {
+  it('completes the contest on its played event when its last event is cancelled, writing no standings for the cancelled one', async () => {
+    const w = world();
+    w.complete(MASTERS);
+    await w.service.settleCompletedSportEvent(MASTERS, { completedAt: T });
+    w.cancel(PGA);
+
+    const summary = await w.service.settleCompletedSportEvent(PGA, { completedAt: T });
+
+    expect(eventRows(w.eventStandings, PGA)).toEqual([]);
+    expect(w.standings.map((row) => [row.contestEntryId, row.totalScore, row.position]))
+      .toEqual([['entry-a', -6, 1], ['entry-b', -1, 2]]);
+    expect(w.contest().status).toBe(ContestStatus.COMPLETED);
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
+  });
+
+  it('keeps the contest ACTIVE when its first event is cancelled, then settles it on the second event alone', async () => {
+    const w = world();
+    w.cancel(MASTERS);
+
+    await w.service.settleCompletedSportEvent(MASTERS, { completedAt: T });
+
+    expect(w.eventStandings).toEqual([]);
+    expect(w.contest().status).toBe(ContestStatus.ACTIVE);
+
+    w.complete(PGA);
+    await w.service.settleCompletedSportEvent(PGA, { completedAt: T });
+
+    expect(w.standings.map((row) => [row.contestEntryId, row.totalScore, row.position]))
+      .toEqual([['entry-b', -8, 1], ['entry-a', 2, 2]]);
+    expect(w.contest().status).toBe(ContestStatus.COMPLETED);
+  });
+
+  it('completes a contest whose every event is cancelled, with no standings at all', async () => {
+    const w = world();
+    w.cancel(MASTERS);
+    w.cancel(PGA);
+
+    const summary = await w.service.settleCompletedSportEvent(PGA, { completedAt: T });
+
+    expect(w.eventStandings).toEqual([]);
+    expect(w.standings).toEqual([]);
+    expect(w.contest().status).toBe(ContestStatus.COMPLETED);
+    expect(summary).toMatchObject({ contestsCompleted: 1, standingsUpserted: 0 });
   });
 });
