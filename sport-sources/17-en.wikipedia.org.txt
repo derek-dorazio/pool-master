@@ -1,0 +1,97 @@
+Source: https://en.wikipedia.org/w/index.php?title=2026_Sydney_Marathon&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Sydney_Marathon&action=raw
+HTTP 200
+Fetched: 2026-10-18T12:47:43.054Z
+
+{{short description|26.2 mi (42.195 km) race held in Sydney Australia}}
+{{Use dmy dates|date=October 2026}}
+{{infobox sports competition event
+| competition = 26th Sydney Marathon
+| image =
+| caption =
+| location = [[Sydney]], Australia
+| dates = {{start date and age|2026|8|30|df=y}}
+| website = {{URL|https://tcssydneymarathon.com/}}
+| men = [[Addisu Gobena]]
+| men_win_value = 2:04:42 '''CR'''
+| women = [[Peres Jepchirchir]]
+| women_win_value = 2:18:31
+| wheelchair_men = [[Daniel Romanchuk]]
+| wheelchair_men_win_value = 1:26:50
+| wheelchair_women = [[Manuela Schär]]
+| wheelchair_women_win_value = 1:42:04
+| previous = [[2025 Sydney Marathon|2025]]
+| next = [[2027 Sydney Marathon|2027]]
+}}
+The '''2026 Sydney Marathon''' was the 26th edition of the event and notably the second running since the race was announced as the seventh addition to the [[World Marathon Majors]] in November 2024. {{Cite news |date=3 November 2024 |title=Sydney Marathon to join elite ranks of world marathon majors alongside London and New York City |url=https://www.abc.net.au/news/2024-11-04/sydney-marathon-to-join-world-marathon-majors-series/104556282 |access-date=11 October 2025 |work=ABC News |language=en-AU}}
+==Background==
+The race had 120,000 applications in 2026 with an expected 40,000 runners set to participate. A blunder was committed in the creation of the event medals where they depicted the [[Allianz Arena]] in Germany as opposed to the [[Sydney Football Stadium (2022)]] known as Allianz Stadium in its depiction of the Sydney skyline. {{Cite news |date=21 August 2026 |title=Sydney Marathon medal mistakenly depicts Munich stadium |url=https://www.bbc.com/news/articles/cvg92y1wzn8o |access-date=30 August 2026 |work=[[BBC]]}} Reigning marathon world champions [[Alphonce Simbu]] and [[Peres Jepchirchir]] were set to compete in the elite field. {{Cite news |date=27 August 2026 |title=World champions Jepchirchir and Simbu lead strong fields for Sydney Marathon |url=https://worldathletics.org/competitions/world-athletics-label-road-races/news/jepchirchir-simbu-2026-sydney-marathon |access-date=30 August 2026 |work=[[World Athletics]]}}
+==Results==
+The Sydney Marathon began on 30 August at 6:30am local time.
+=== Men ===
+{| class="wikitable sortable"
+|+ Elite men's top 10 finishers {{Cite web |date=30 August 2026 |title=Gobena breaks course record while Jepchirchir dominates in Sydney |url=https://worldathletics.org/news/report/sydney-marathon-2026-gobena-jepchirchir |access-date=30 August 2026 |website=[[World Athletics]]}}
+|-
+!scope="col"| Position
+!scope="col"| Athlete
+!scope="col"| Nationality
+!scope="col"| Time
+|- bgcolor="#F7F6A8"
+| align=center| {{gold1}} ||[[Addisu Gobena]] ||{{ETH}} || 2:04:42 '''[[Athletics abbreviations|CR]]'''
+|- bgcolor="#DCE5E5"
+| align=center| {{silver2}} ||[[Chimdessa Debele]]||{{ETH}} || 2:04:46
+|- bgcolor="#FFDAB9"
+| align=center| {{bronze3}} ||[[Tebello Ramakongoana]] ||{{LSO}} || 2:04:57
+|-
+| align=center| 4 ||[[Alphonce Simbu]] ||{{TAN}} || 2:04:57
+|-
+| align=center| 5 ||[[Jemal Yimer Mekonnen|Jemal Mekonnen]] ||{{ETH}} || 2:04:59
+|-
+| align=center| 6 ||[[Hailemaryam Kiros]] ||{{ETH}} || 2:05:16
+|-
+| align=center| 7 ||[[Vincent Kipkemoi|Vincent Ngetich]] ||{{KEN}} || 2:05:28
+|-
+| align=center| 8 ||[[Dawit Wolde]] ||{{ETH}} || 2:06:41
+|-
+| align=center| 9 ||[[Kennedy Kimutai]] ||{{KEN}} || 2:06:50
+|-
+| align=center| 10 ||[[Gilbert Kibet]] ||{{KEN}} || 2:07:13
+|}
+=== Women ===
+{| class="wikitable sortable"
+|+ Elite women's top 10 finishers
+|-
+!scope="col"| Position
+!scope="col"| Athlete
+!scope="col"| Nationality
+!scope="col"| Time
+|- bgcolor="#F7F6A8"
+| align=center| {{gold1}} ||[[Peres Jepchirchir]] ||{{KEN}} || 2:18:31
+|- bgcolor="#DCE5E5"
+| align=center| {{silver2}} ||[[Irine Cheptai]] ||{{KEN}} || 2:22:11
+|- bgcolor="#FFDAB9"
+| align=center| {{bronze3}} ||[[Shure Demise]] ||{{ETH}} || 2:22:33
+|-
+| align=center| 4 ||[[Haven Hailu Desse|Haven Hailu]] ||{{ETH}}|| 2:22:57
+|-
+| align=center| 5 ||[[Meseret Abebayahau]] ||{{ETH}} || 2:23:40
+|-
+| align=center| 6 ||[[Priscah Jepleting Cherono|Priscah Cherono]] ||{{KEN}} || 2:23:49
+|-
+| align=center| 7 ||[[Stella Chesang]] ||{{UGA}} || 2:23:52
+|-
+| align=center| 8 ||[[Fikrte Wereta]] ||{{ETH}}|| 2:25:18
+|-
+| align=center| 9 ||[[Ellie Pashley]] ||{{AUS}} || 2:28:28
+|-
+| align=center| 10 ||[[Ayana Aberu Mulisa|Aberu Ayana]] ||{{ETH}} || 2:28:30
+|}
+==References==
+{{RefList}}
+{{2026 in athletics}}
+{{Sydney Marathon}}
+{{DEFAULTSORT:Sydney Marathon}}
+[[Category:2026 marathons]]
+[[Category:2026 in Sydney]]
+[[Category:Sports competitions in Sydney]]
+[[Category:August 2026 sports events in Australia]]

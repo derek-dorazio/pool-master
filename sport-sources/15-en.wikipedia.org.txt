@@ -1,373 +1,208 @@
-Source: https://en.wikipedia.org/w/index.php?title=2026_Giro_d%27Italia_Women&action=raw
-Final URL: https://en.wikipedia.org/w/index.php?title=2026_Giro_d%27Italia_Women&action=raw
+Source: https://en.wikipedia.org/w/index.php?title=2026_Berlin_Marathon&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Berlin_Marathon&action=raw
 HTTP 200
-Fetched: 2026-10-18T12:46:16.305Z
+Fetched: 2026-10-18T12:47:42.961Z
 
-{{short description|Italian cycling race}}
-{{for|the men's race|2026 Giro d'Italia}}
-{{Infobox cycling race report
-| name = 2026 Giro d'Italia Women
-| image = File:Giro d'Italia Women 2026 logo.png
-| image_caption =
-| image_size =180
-| date = 30 May – 7 June 2026
-| series = [[2026 UCI Women's World Tour]]
-| race_no = 19
-| season_no = 26
-| stages = 9
-| distance = 1130.1
-| unit = km
-| time = 29h 54' 19"
-| first = [[Demi Vollering]]
-| first_nat = NED
-| first_team = {{UCI team code|FSF|2026}}
-| first_color = pink
-| second = [[Antonia Niedermaier]]
-| second_nat = GER
-| second_team = {{UCI team code|CSZ|2026b}}
-| third = [[Anna van der Breggen]]
-| third_nat = NED
-| third_team = {{UCI team code|SDW|2026}}
-| points = [[Elisa Balsamo (cyclist)|Elisa Balsamo]]
-| points_nat = ITA
-| points_team = {{UCI team code|LTK women|2026}}
-| points_color = red
-| mountains = [[Demi Vollering]]
-| mountains_nat = NED
-| mountains_team = {{UCI team code|FSF|2026}}
-| mountains_color = blue
-| youth = [[Isabella Holmgren]]
-| youth_nat = CAN
-| youth_team = {{UCI team code|LTK women|2026}}
-| youth_color = white
-| team_nat = GER
-| team = {{UCI team code|LTK women|2026}}
-| previous = [[2025 Giro d'Italia Women|2025]]
-| next = [[2027 Giro d'Italia Women|2027]]
-}}
-The '''2026 Giro d'Italia Women''' was the 37th edition of the [[Giro d'Italia Women]], a women's [[Road bicycle racing|road cycling]] [[stage race]] in [[Italy]], and the 19th event of the [[2026 UCI Women's World Tour]] calendar. The race started on 30 May and finished on 7 June. The race was organised by [[RCS Sport]], which also organises the men's [[Giro d'Italia]].
-The race moved to June from its traditional July date – and started on the same weekend as the finish of the men's race. {{Cite web |last=Mitchell |first=Mathew |date=2025-06-12 |title=UCI approves 2026 Women's WorldTour calendar and introduces key reforms for women's cycling |url=https://procyclinguk.com/uci-approves-2026-womens-worldtour-calendar-and-introduces-key-reforms-for-womens-cycling/ |access-date=2025-10-14 |language=en-GB|website=Pro Cycling UK}} The race previously had to compete for attention with the more famous men's {{Lang|fr|[[Tour de France]]|italic=no}}, and organisers had previously stated that they wished to move the calendar position of the race, so that the race is not overshadowed. {{Cite web |last=Rogers |first=Owen |date=10 July 2022 |title=Rome the target for 2023 Giro Donne 'grande partenza' |url=https://www.cyclingweekly.com/racing/rome-the-target-for-2023-giro-donne-grande-partenza |access-date=23 June 2023 |website=cyclingweekly.com |quote=Organisers confirm they are working with the UCI to ensure the race does not clash with the men's Tour de France}} Compared to other races in the UCI Women's World Tour, more ranking points are now awarded at the Giro d'Italia Women, [[Tour de France Femmes]] and the [[La Vuelta Femenina|Vuelta Femenina]] – elevating these races in status. {{Cite web |date=1 June 2025 |title=Part II Road Races - Amendments to Regulations as from 20.10.2025 |url=https://assets.ctfassets.net/761l7gh5x5an/NAeT9EN3grfH1b8uTXoYv/8b18929d380cb33fbb62d3efd3a71f27/2-ROA-20251020-E-amendments_on_20.10.25.pdf |access-date=20 June 2025 |website=[[Union Cycliste Internationale]] |page=15 |quote=2.10.017 Points scale Women Elite}} {{Cite web |last=Price |first=Matilda |date=2025-06-20 |title=UCI points update brings Women's WorldTour system in line with men's, designating women's Monuments and boosting Tour de France Femmes |url=https://www.cyclingnews.com/news/uci-points-update-brings-womens-worldtour-system-in-line-with-mens-designating-womens-monuments-and-boosting-tour-de-france-femmes/ |access-date=2025-06-20 |website=Cyclingnews |language=en}}
-The race was won by Dutch rider [[Demi Vollering]] ({{UCI team code|FSF|2026}}) for the first time, after a strong performance on the final stage overcame a deficit of just under a minute. Vollering won two stages on her way to victory, becoming only the second woman after [[Annemiek van Vleuten]] to win all three [[Grand Tour (cycling)|Grand Tours]]. Second overall was German rider [[Antonia Niedermaier]] ({{UCI team code|CSZ|2026b}}), who performed strongly throughout the race, finishing in the top 5 on four stages. Third overall was Dutch rider [[Anna van der Breggen]] ({{UCI team code|SDW|2026}}), who led the race for four stages, after winning the mountainous [[individual time trial]] on stage 4. {{Cite web |last=Knöfler |first=Lukas |date=2026-06-07 |title=Giro d'Italia Women: Demi Vollering overtakes Anna van der Breggen on final day for overall title as Elisa Longo Borghini wins stage 9 sprint |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-demi-vollering-overtakes-anna-van-der-bregen-on-final-day-for-overall-title-as-elisa-longo-borghini-wins-stage-9-sprint/ |access-date=2026-06-07 |website=Cyclingnews |language=en}}
-In the race's other classifications, the mountains classification was won by Vollering, and the points classification was won by Italian rider [[Elisa Balsamo (cyclist)|Elisa Balsamo]] ({{UCI team code|LTK women|2026}}), who won 4 stages. Her main rival [[Lorena Wiebes]] was disqualified from the race on stage 1 due to an underweight bike. The young rider classification was won by Canadian rider [[Isabella Holmgren]] ({{UCI team code|LTK women|2026|nolink=y}}), who finished 7th overall after finishing in the top 10 on four stages. {{UCI team code|LTK women|2026|nolink=y}} won the teams classification.
-== Teams ==
-{{main|List of teams and cyclists in the 2026 Giro d'Italia Women}}
-Twenty-one teams participated in the race. {{Cite web |title=Startlist for Giro d'Italia Women 2026 |url=https://www.procyclingstats.com/race/giro-d-italia-women/2026/startlist |access-date=15 May 2026 |website=ProCyclingStats.com}} All fourteen [[UCI Women's Team|UCI Women's WorldTeams]] were automatically invited. They were joined by two [[UCI Women's ProTeams]] and five UCI Women's Continental Teams.
-'''UCI Women's WorldTeams'''
-{{div col|colwidth=20em|style=margin-right:20%;}}
-* {{UCI team code|AGS|2026}}
-* {{UCI team code|CSZ|2026b}}
-* {{UCI team code|EFO|2026}}
-* {{UCI team code|FSF|2026}}
-* {{UCI team code|FPT|2026}}
-* {{UCI team code|HPH|2026}}
-* {{UCI team code|LTK women|2026}}
-* {{UCI team code|LAJ|2026}}
-* {{UCI team code|MOV women|2026}}
-* {{UCI team code|TPP women|2026}}
-* {{UCI team code|SDW|2026}}
-* {{UCI team code|UAD women|2026a}}
-* {{UCI team code|UXM women|2026}}
-* {{UCI team code|TVL women|2026}}
-{{div col end}}
-'''UCI Women's Pro Teams'''
-{{div col|colwidth=20em|style=margin-right:20%;}}
-* {{UCI team code|LKF|2026}}
-* {{UCI team code|AUB women|2026}}
-{{div col end}}
-'''UCI Women's Continental Teams'''
-{{div col|colwidth=20em|style=margin-right:20%;}}
-* {{UCI team code|VAI|2026}}
-* {{UCI team code|SBT|2026}}
-* {{UCI team code|MDS|2026}}
-* {{UCI team code|TOP|2026}}
-* {{UCI team code|BPK|2026}}
-{{div col end}}
-== Route and stages ==
-[[File:ColleFinestre0001.jpg|thumb|Stage 8 finished at the top of [[Colle delle Finestre]], after an avalanche shortened the stage]]
-In December 2025, the route was announced by organisers RCS Sport. {{Cite web |date=1 Dec 2025 |title=Giro d'Italia Women 2026: here is the route |url=https://www.giroditaliawomen.it/en/news/giro-ditalia-women-2026-here-is-the-route/ |access-date=2026-01-15 |website=Giro d'Italia Women 2026 |language=en}} It comprised nine days of racing with nine stages, covering a total of {{convert|1153.7|km|mi}} with {{convert|12,500|m|ft}} of elevation gain. The race started in [[Cesenatico]], [[Emilia-Romagna]] in northern Italy, before heading north through the [[Veneto]] and [[Friuli-Venezia Giulia]] regions, before heading west through the [[Trentino]], [[Lombardy]] and [[Piedmont]] regions. The race finished in [[Saluzzo]], Piedmont. {{Cite web |last=Price |first=Matilda |date=2025-12-01 |title=Giro d'Italia Women route to tackle epic Colle delle Finestre and steep uphill time trial in tough 2026 race |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-route-to-tackle-epic-colle-delle-finestre-and-steep-uphill-time-trial-in-tough-2026-race/ |access-date=2026-01-14 |website=Cyclingnews |language=en}} {{Cite web |last=Camisa |first=Fulvia |title=Giro d'Italia Women 2026 route: The Colle delle Finestre makes its debut |url=https://www.rouleur.cc/blogs/the-rouleur-journal/giro-d-italia-women-2026-route-the-colle-delle-finestre-makes-its-debut |access-date=2026-01-14 |website=Rouleur |language=en}}
-The race had two summit finishes, with an [[Individual time trial|uphill time trial]] between [[Belluno]] and {{Interlanguage link|Nevegal|lt=Nevegal|it}} in the Veneto region on stage 4, and a summit finish in [[Sestriere]] following the classic climb of [[Colle delle Finestre]] on stage 8. The Colle delle Finestre climb is {{convert|18.5|km|mi|abbr=on}} in length with an average gradient of 9.2%, with the final {{convert|8|km|mi|abbr=on}} of the climb on gravel roads. {{Cite web |title=Giro d'Italia Women 2026, a Thrilling Journey from Romagna to Saluzzo |url=https://www.giroditaliawomen.it/en/news/giro-ditalia-women-2026-a-thrilling-journey-from-romagna-to-saluzzo/ |access-date=2026-01-15 |website=Giro d'Italia Women 2026 |language=en}} As the highest climb of the race, the first rider to pass Colle delle Finestre ({{convert|2178|m}}) was awarded the "Cima Alfonsina Strada" – a prize named after Italian cyclist [[Alfonsina Strada]], who took part in the men's Giro d'Italia in 1924. {{Cite web |title=Giro d'Italia Women 2024: the route has been announced |url=https://www.giroditaliawomen.it/en/news/giro-ditalia-women-2024-the-route-has-been-announced/ |access-date=2024-01-31 |website=www.giroditaliawomen.it |language=en |quote='Cima Alfonsina Strada', the highest peak of the race, established in memory of the cyclist who took part in the men's Giro d'Italia in 1924.}}
-The race returned to 9 stages in length, and was the longest edition of the Giro d'Italia Women since the {{Ill|Giro Donne 2001|lt=2001 edition|it}} of the race. As with previous editions, the route required a waiver from the [[Union Cycliste Internationale]], as Women's WorldTour races have a maximum race length of six days. {{cite web |last=Frattini |first=Kirsten |date=2021-10-16 |title=A closer look reveals the inequity at Tour de France Femmes |url=https://www.cyclingnews.com/features/a-closer-look-reveals-the-inequity-at-tour-de-france-femmes/ |access-date=2022-02-28 |website=cyclingnews.com |language=en |quote=Regarding, the number of days of competition during a stage race, the UCI sets the elite women's stage races at six days, unless an exemption is made by its Management Committee.}}
-Reacting to the route, [[Rouleur (magazine)|''Rouleur'']] stated that the "iconic climb" of Colle delle Finestre "makes clear just how demanding this route is" and that "pink jersey may not be decided until the very last minute" owing to the "mountainous back-loaded route". ''[[Cycling News]]'' called the route "really tough", summarising that a "lowkey start builds to a big crescendo with the Colle delle Finestre, a tough stage in the Dolomites, and a challenging uphill [time trial]". {{Cite web |last=Price |first=Matilda |date=2025-12-02 |title=A climber-friendly course that could get in the way of Elisa Longo Borghini's third title – Analysing the Giro d'Italia Women route |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/a-climber-friendly-course-that-could-get-in-the-way-of-elisa-longo-borghinis-third-title-analysing-the-giro-d-italia-women-route/ |access-date=2026-01-14 |website=Cyclingnews |language=en}} 2024 and 2025 winner [[Elisa Longo Borghini]] stated that she "really [likes] the route" and that "we needed an iconic climb like the Colle delle Finestre", and it "will decide the 2026 Giro Women". {{Cite web |last=Farrand |first=Stephen |date=2025-12-01 |title='The Colle delle Finestre will decide the 2026 Giro d'Italia Women' – Elisa Longo Borghini eyes third consecutive victory next summer |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/the-colle-delle-finestre-will-decide-the-2026-giro-d-italia-women-elisa-longo-borghini-eyes-third-consecutive-victory-next-summer/ |access-date=2026-01-14 |website=Cyclingnews |language=en}}
+{{short description|42.195 km (26.2 mi) race in Germany}}
+{{infobox sports competition event|event=52nd Berlin Marathon|competition=|image=|caption=|location=[[Berlin]], [[Germany]]|dates={{start date|2026|09|27|df=y}}|competitors=|website=https://www.bmw-berlin-marathon.com|previous=[[2025 Berlin Marathon|2025]]|next=[[2027 Berlin Marathon|2027]]|men=[[Guye Adola]]|women=[[Tigst Assefa]]|men_win_value=2:02:50|women_win_value=2:11:04|wheelchair_men=[[Marcel Hug]]|wheelchair_men_win_value=1:23:28|wheelchair_women=[[Catherine Debrunner]]|wheelchair_women_win_value=1:35:01}}
+The '''2026 Berlin Marathon''' was the 52nd edition of the annual [[Berlin Marathon|marathon race in Berlin]], held on Sunday, September 27, 2026. A [[World Athletics Label Road Races|Platinum Label]] marathon, it was one of the six [[World Marathon Majors]] events scheduled for 2026.
+Ethiopian runner [[Tigst Assefa]] won the women's race running the 3rd all-time best marathon time and a course record of 2:11:04 despite acquiring an injury which forced her to adopt a visible limp in the final two kilometers. {{Cite web |date=2026-09-27 |title=Injured Assefa narrowly misses world record in Berlin |url=https://www.bbc.com/sport/athletics/articles/c6rr4y59n0r0o |access-date=2026-09-27 |website=[[BBC Sport]]}} In the men's race, the 2021 Berlin marathon champion [[Guye Adola]] ran a personal best to capture his second title in the event. {{Cite web |date=2026-09-27 |title=Berlin Marathon 2026: Ethiopia shines as Tigst Assefa narrowly misses world record and Guye Adola claims second title |url=https://www.olympics.com/en/news/berlin-marathon-2026-ethiopia-shines-as-tigst-assefa-narrowly-misses-world-record-and-guye-adola-claims-second-title |access-date=2026-09-27 |website=[[Olympics]]}} Swiss wheelchair athletes [[Marcel Hug]] and [[Catherine Debrunner]] won their respective races.
+== Competitors ==
+Defending champion [[Sabastian Sawe]] was forced to withdraw from the event due to injury a month out from the race. {{Cite web |date=2026-08-27 |title=Sabastian Sawe withdraws from the BMW BERLIN-MARATHON |url=https://www.bmw-berlin-marathon.com/en/news-media/news/detail/sabastian-sawe-withdraws-from-the-bmw-berlin-marathon |access-date=2026-08-27 |website=[[Berlin Marathon]]}} A few days prior, former champion [[Kenenisa Bekele]] was also forced to withdraw due to an Achilles injury. {{Cite web |date=2026-08-24 |title=Kenenisa Bekele withdraws from Berlin Marathon |url=https://runningmagazine.ca/the-scene/kenenisa-bekele-withdraws-from-berlin-marathon/ |access-date=2026-08-27 |website=Canadian Running Magazine}} In the women's race, [[Esther Pfeiffer]] was aiming to break the German women's national record set by [[Irina Mikitenko]] in 2008 but was forced to withdraw mid-race due to physical conditions. {{Cite web |date=2026-09-27 |title=Outstanding Performances at the BMW BERLIN-MARATHON 2026 |url=https://www.bmw-berlin-marathon.com/en/news-media/news/detail/outstanding-performances-at-the-bmw-berlin-marathon-2026 |access-date=2026-09-27 |website=[[Berlin Marathon]]}}
+== Results ==
+Results for the top ten in the running races and top five in the wheelchair races are listed below.
 {| class="wikitable sortable"
-|+Stage characteristics {{Cite web |title=Giro d'Italia Women 2026 |url=https://www.procyclingstats.com/race/giro-d-italia-women/2026 |access-date=15 May 2026 |website=ProCyclingStats.com}}
-! scope="col" |Stage
-! scope="col" |Date
-! scope="col" |Course
-! scope="col" |Distance
-! colspan="2" scope="col" |Type
-! scope="col" |Winner
+|+Men's race result
+! scope="col" |Position
+! scope="col" |Athlete
+! scope="col" |Nationality
+! scope="col" |Time
 |-
-! scope="row" |[[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 1|1]]
-| 30 May
-| [[Cesenatico]] to [[Ravenna]]
-| {{convert|139|km|abbr=on}}
-| [[File:Plainstage.svg|link=|20x20px]]
-| Flat stage
-| {{Flagathlete|[[Elisa Balsamo (cyclist)|Elisa Balsamo]]|ITA}}
+| style="text-align:center" |{{gold1}}
+|[[Guye Adola]]
+|{{ETH}}
+|2:02:50
 |-
-! scope="row" |[[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 2|2]]
-| 31 May
-| [[Roncade|Roncade H-Farm]] to [[Caorle]]
-| {{convert|146|km|abbr=on}}
-| [[File:Plainstage.svg|link=|20x20px]]
-| Flat stage
-| {{Flagathlete|[[Elisa Balsamo (cyclist)|Elisa Balsamo]]|ITA}}
+| style="text-align:center" |{{silver2}}
+|[[Gemechu Dida]]
+|{{ETH}}
+|2:03:19
 |-
-! scope="row" |[[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 3|3]]
-| 1 June
-| [[Bibione]] to [[Buja]]
-| {{convert|154|km|abbr=on}}
-| [[File:Hillystage.svg|link=|20x20px]]
-| Hilly stage
-| {{Flagathlete|[[Elisa Balsamo (cyclist)|Elisa Balsamo]]|ITA}}
+| style="text-align:center" |{{bronze3}}
+|[[Gabriel Geay]]
+|{{TAN}}
+|2:03:59
 |-
-! scope="row" |[[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 4|4]]
-| 2 June
-| [[Belluno]] to {{Interlanguage link|Nevegal|lt=Nevegal|it}}
-| {{convert|12.7|km|abbr=on}}
-| [[File:Time_Trial.svg|link=|alt=|20x20px]]
-| [[Individual time trial]]
-| {{Flagathlete|[[Anna van der Breggen]]|NED}}
+| style="text-align:center" |4
+|[[Getaneh Molla]]
+|{{ETH}}
+|2:04:55
 |-
-! scope="row" |[[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 5|5]]
-| 3 June
-| [[Longarone]] to [[Santo Stefano di Cadore]]
-| {{convert|138|km|abbr=on}}
-| [[File:Mountainstage.svg|link=|20x20px]]
-| Mountain stage
-| {{Flagathlete|[[Demi Vollering]]|NED}}
+| style="text-align:center" |5
+|[[Selemon Barega]]
+|{{ETH}}
+|2:04:58
 |-
-! scope="row" |[[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 6|6]]
-| 4 June
-| [[Ala, Trentino|Ala]] to [[Brescello]]
-| {{convert|155|km|abbr=on}}
-| [[File:Plainstage.svg|link=|20x20px]]
-| Flat stage
-| {{Flagathlete|[[Elisa Balsamo (cyclist)|Elisa Balsamo]]|ITA}}
+| style="text-align:center" |6
+|[[Asefa Boki]]
+|{{ETH}}
+|2:05:32
 |-
-! scope="row" |[[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 7|7]]
-| 5 June
-| [[Sorbolo Mezzani]] to [[Salice Terme]]
-| {{convert|165|km|abbr=on}}
-| [[File:Hillystage.svg|link=|20x20px]]
-| Hilly stage
-| {{Flagathlete|[[Célia Gery]]|FRA}}
+| style="text-align:center" |7
+|[[Andamlak Belihu]]
+|{{ETH}}
+|2:05:55
 |-
-! scope="row" |[[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 8|8]]
-| 6 June
-| [[Rivoli, Piedmont|Rivoli]] to [[Sestriere]] [[Colle delle Finestre]]
-| {{convert|101|km|abbr=on}} {{convert|77.4|km|abbr=on}}
-| [[File:Mountainstage.svg|link=|20x20px]]
-| Mountain stage
-| {{Flagathlete|[[Demi Vollering]]|NED}}
+| style="text-align:center" |8
+|[[Shura Kitata]]
+|{{ETH}}
+|2:06:04
 |-
-! scope="row" |[[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 9|9]]
-| 7 June
-| [[Saluzzo]] to Saluzzo
-| {{convert|143|km|abbr=on}}
-| [[File:Mountainstage.svg|link=|20x20px]]
-| Mountain stage
-| {{Flagathlete|[[Elisa Longo Borghini]]|ITA}}
+| style="text-align:center" |9
+|[[Yuhei Urano]]
+|{{JPN}}
+|2:06:09
 |-
-! colspan="3" |Total
-| colspan="4" |{{convert|1130.1|km|abbr=on}}
+| style="text-align:center" |10
+|[[Tadu Abate]]
+|{{ETH}}
+|2:07:16
 |}
-== Race overview ==
-{{main|2026 Giro d'Italia Women, Stage 1 to Stage 9}}
-{{multiple image
-| align = right
-| total_width = 480
-| direction = grid
-| image1 = Demi Vollering - 2025 European road championship podium - Guilherand-Granges.jpg
-| image2 = 2025 AGR start - Elisa Longo Borghini 3 (cropped).jpg
-| image3 = Anna van der Breggen - 2025 European road championship podium - Guilherand-Granges.jpg
-| image4 = 2025 LBL Presentation - Steels Reusser (cropped).jpg
-| footer = (left to right) [[Demi Vollering]], [[Elisa Longo Borghini]], [[Anna van der Breggen]] and [[Marlen Reusser]] were considered contenders for the general classification (GC)
-| image5 =
-}}
-Prior to the start of the race, [[Demi Vollering]] ({{UCI team code|FSF|2026}}) was considered favourite for the overall victory. Other contenders for the general classification (GC) included 2024 and 2025 Giro d'Italia Women winner [[Elisa Longo Borghini]] ({{UCI team code|UAD women|2026a}}), four-time Giro d'Italia Women winner [[Anna van der Breggen]] ({{UCI team code|SDW|2026}}) and [[UCI Road World Championships – Women's time trial|world time trial champion]] [[Marlen Reusser]] ({{UCI team code|MOV women|2026}}). {{Cite web |last=Richardson |first=Simon |date=2026-05-29 |title=Who will win the Giro d'Italia Women? |url=https://www.cyclingweekly.com/racing/giro-ditalia/who-will-win-the-giro-d-italia-women |access-date=2026-05-31 |website=Cycling Weekly |language=en}} {{Cite web |last=Price |first=Matilda |date=2026-05-25 |title=Demi Vollering and Elisa Longo Borghini set to do battle, but super strong rivals could surprise them – Analysing the contenders for the Giro d'Italia Women |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/demi-vollering-and-elisa-longo-borghini-set-to-do-battle-but-super-strong-rivals-could-surprise-them-analysing-the-contenders-for-the-giro-d-italia-women/ |access-date=2026-05-31 |website=Cyclingnews |language=en}} ''[[Cycling News]]'' considered that the race would have "one of its biggest {{abbr|GC|general classification}} battles in recent history", owing to the greater gap between the Giro d'Italia Women and the Tour de France Femmes.
-=== Initial stages and mountain time trial ===
-The first stage was to [[Ravenna]] in the [[Emilia-Romagna]] region, {{Cite web |last=Price|first=Matilda|date=2025-12-01|title=Giro d'Italia Women 2026 route|url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-route-to-tackle-epic-colle-delle-finestre-and-steep-uphill-time-trial-in-tough-2026-race/|access-date=2026-06-02|website=Cyclingnews|language=en}} with [[Lorena Wiebes]] ({{UCI team code|SDW|2026|nolink=y}}) winning the stage in a sprint finish ahead of [[Elisa Balsamo (cyclist)|Elisa Balsamo]] ({{UCI team code|LTK women|2026}}). Wiebes was later disqualified from the race as her bike was {{Convert|20|g|lb}} under the weight limit of {{Convert|6.8|kg|lb}}. Balsamo was awarded the stage win instead, and therefore led the {{abbr|GC|general classification}}. {{Cite web |date=2026-05-30 |title=Giro d'Italia Women: Elisa Balsamo wins stage one after Lorena Wiebes disqualified |url=https://www.bbc.co.uk/sport/cycling/articles/c232xnj38kmo |access-date=2026-05-31 |website=BBC Sport |language=en-GB}} {{Cite web |last=Giuliani |first=Simone |date=2026-05-31 |title='Astonished' – SD Worx-Protime has 'serious questions' about bicycle-weighing procedures at Giro d'Italia Women after Lorena Wiebes disqualified |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/astonished-sd-worx-protime-has-serious-questions-about-bicycle-weighing-procedures-at-giro-d-italia-women-after-lorena-wiebes-disqualified/ |access-date=2026-05-31 |website=Cyclingnews |language=en}} {{UCI team code|SDW|2026|nolink=y}} called Wiebes disqualification "an exceptionally severe sanction" as there was no advantage to an underweight bike on a sprint stage and that Wiebes' bike was identical to that used throughout the season. {{Cite web |last=Davidson |first=Tom |date=2026-05-30 |title='An exceptionally severe sanction' – Lorena Wiebes's team 'astonished' after sprinter kicked off Giro d'Italia Women for underweight bike |url=https://www.cyclingweekly.com/racing/an-exceptionally-severe-sanction-lorena-wiebess-team-astonished-after-sprinter-kicked-off-giro-d-italia-women-for-underweight-bike |access-date=2026-05-31 |website=Cycling Weekly |language=en}} {{UCI team code|SDW|2026|nolink=y}} subsequently considered legal action against the [[Union Cycliste Internationale]], cycling's governing body. {{Cite web |last=Becket |first=Adam |date=2026-06-04 |title='The UCI is simply not responding, no one is answering the phone' – SD Worx-Protime 'brushed off' over Lorena Wiebes disqualification |url=https://www.cyclingweekly.com/racing/the-uci-is-simply-not-responding-no-one-is-answering-the-phone-sd-worx-protime-brushed-off-over-lorena-wiebes-disqualification |access-date=2026-06-05 |website=Cycling Weekly |language=en}} {{Cite web |last=Dubbeld |first=Julian |date=2026-06-04 |title=SD Worx-Protime ergert zich in zaak-Wiebes groen en geel aan UCI: "Ze nemen gewoon de telefoon niet op" |url=https://www.wielerflits.nl/nieuws/sd-worx-protime-ergert-zich-in-zaak-wiebes-groen-en-geel-aan-uci-ze-nemen-gewoon-de-telefoon-niet-op/ |access-date=2026-06-05 |website=WielerFlits |language=nl}}
-The race moved to the [[Veneto]] region, with the second stage finishing in [[Caorle]]. Balsamo won the stage in a sprint finish, retaining her lead in the {{abbr|GC|general classification}}, with a 20 second lead over most of the peloton thanks to bonus seconds. {{Cite web |last=Knöfler |first=Lukas |date=2026-05-31 |title=Giro d'Italia Women: Maglia rosa Elisa Balsamo speeds to second win in a row in stage 2 bunch sprint |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-elisa-balsamo-speeds-to-stage-2-sprint-win-in-maglia-rosa/ |access-date=2026-05-31 |website=Cyclingnews |language=en}}
-The third stage was a hilly course, finishing in [[Buja]] in the [[Friuli-Venezia Giulia]] region. On the climbs, GC contenders split the peloton, with a smaller group heading to the finish. In the uphill sprint to the finish line, Balsamo won her third stage ahead of [[Lily Williams (cyclist)|Lily Williams]] ({{UCI team code|HPH|2026|nolink=}}) and [[Femke Gerritse]] ({{UCI team code|SDW|2026|nolink=y}}). Balsamo maintained her lead in the {{abbr|GC|general classification}}, now around 30 seconds over most of the peloton. {{Cite web |last=Knöfler |first=Lukas |date=2026-06-01 |title=Giro d'Italia Women: Elisa Balsamo powers to hat-trick victory on stage 3 with searing uphill sprint |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-elisa-balsamo-powers-to-hat-trick-victory-on-stage-3-with-searing-uphill-sprint/ |access-date=2026-06-01 |website=Cyclingnews |language=en}}
-The fourth stage of the race was a {{convert|12.7|km|mi|abbr=on|adj=mid|-long}} [[individual time trial]] from [[Belluno]] to {{Interlanguage link|Nevegal|lt=Nevegal|it}} in the Veneto region. The uphill course included a {{convert|7.4|km|abbr=on}} climb with an average gradient of 8.2% and a maximum gradient of 14%. The fastest time of 31 minutes 38 minutes was set by Anna van der Breggen, with Marlen Reusser in second place, 1 minute 4 seconds behind. Demi Vollering finished third, six seconds slower. Van der Breggen therefore took the lead in the {{abbr|GC|general classification}}, with Balsamo falling to 56th overall. {{Cite web |last=Knöfler |first=Lukas |date=2026-06-02 |title=Giro d'Italia Women: Anna van der Breggen crushes opposition with stunning uphill time trial victory on stage 4, moves into pink jersey |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-anna-van-der-breggen-crushes-opposition-with-stunning-uphill-time-trial-victory-on-stage-4-moves-into-pink-jersey/ |access-date=2026-06-02 |website=Cyclingnews |language=en}} Van der Breggen last wore the ''maglia rosa'' of the leaders jersey on her way to victory at the [[2021 Giro Rosa|2021 edition]] of the race.
-The fifth stage remained in the Veneto region, with a {{convert|138|km|abbr=on}} mountain stage in the [[Dolomites]] with 4 categorised climbs including the 1st category {{Interlanguage link|Passo Tre Croci|lt=Passo Tre Croci|it}}. On the last climb of the day, Vollering, van der Breggen, [[Antonia Niedermaier]] ({{UCI team code|CSR|2026b|nolink=}}) and [[Isabella Holmgren]] ({{UCI team code|LTK women|2026|nolink=y}}) formed a group of four riders. By the top of the climb, they had an advantage of 40 seconds over Longo Borghini and [[Niamh Fisher-Black]] ({{UCI team code|LTK women|2026|nolink=y}}), with Reusser 15 seconds further behind. Descending to the finish, the gap tightened however the group of four stayed away. Vollering took her first Giro d'Italia Women stage win by outsprinting van der Breggen and Niedermaier. {{Cite web |last=Knöfler |first=Lukas |date=2026-06-03 |title=Giro d'Italia Women: Demi Vollering takes sprint ahead of Anna van der Breggen for stage 5 win and first-ever career Giro stage victory |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-demi-vollering-takes-mountaintop-sprint-ahead-of-anna-van-der-breggen-for-stage-5-victory/ |access-date=2026-06-03 |website=Cyclingnews |language=en}} Van der Breggen maintained her lead in the {{abbr|GC|general classification}}, with Vollering gaining 10 seconds to move to second overall. Reusser finished 53 seconds behind Vollering, falling to fifth overall – thereby elevating Niedermaier moved to third overall.
-The sixth stage of the race took riders south to [[Brescello]] in the [[Emilia-Romagna]] region on a flat route. Despite crosswinds on the stage, Balsamo won her fourth stage of the race in a sprint finish – further extending their lead in the points classification. Van der Breggen maintained her lead in the {{abbr|GC|general classification}}. {{Cite web |last=Knöfler |first=Lukas |date=2026-06-04 |title=Giro d'Italia Women: Fourth victory for Elisa Balsamo on stage 6 after 'best lead-out in the world' |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-fourth-stage-victory-for-elisa-balsamo-on-stage-6/ |access-date=2026-06-05 |website=Cyclingnews |language=en}}
-=== Stages in the mountains ===
-The seventh stage was the longest of the race at {{convert|165|km|abbr=on}} in length, taking the riders westwards to [[Godiasco Salice Terme|Salice Terme]] in [[Lombardy]], with one climb at Pietragavina located {{convert|32|km|abbr=on}} from the finish. With {{convert|56|km|abbr=on}} to go, a large crash involved van der Breggen and Reusser, however they returned to the peloton and did not lose any time. On the descent from the Pietragavina climb, the breakaway included Longo Borghini, who aimed to gain time from her {{abbr|GC|general classification}} rivals. At the finish, the breakaway held off the chasing peloton with [[Célia Gery]] ({{UCI team code|FSF|2026|nolink=y}}) beating [[Lucinda Brand]] ({{UCI team code|LTK women|2026|nolink=y}}) and [[Chantal Pegolo]] ({{UCI team code|SBT|2026}}) in a sprint finish. Longo Borghini gained five seconds, but remained over 2 minutes behind van der Breggen. {{Cite web |last=Knöfler |first=Lukas |date=2026-06-05 |title=Giro d'Italia Women: Célia Gery wins stage 7 as Elisa Longo Borghini goes on the attack for time |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-celia-gery-wins-stage-7-as-elisa-longo-borghini-goes-on-the-attack-for-time/ |access-date=2026-06-05 |website=Cyclingnews |language=en}}
-The eighth stage was considered to be the ''[[queen stage]]'' of the race, originally planned to be {{convert|101|km|abbr=on}} from [[Rivoli, Piedmont|Rivoli]] to [[Sestriere]] in the [[Piedmont]] region. The stage would feature two climbs, the [[Colle delle Finestre]] ({{convert|18.5|km|mi|abbr=on}} in length with an average gradient of 9.2%, with the final {{convert|8|km|mi|abbr=on}} of the climb on gravel roads) and the ascent to the finish at [[Sestriere]].
-On the climb to Colle delle Finestre, a {{abbr|GC|general classification}} group including Vollering, van der Breggen, Holmgren and Niedermaier slowly reduced the lead of the breakaway until they were at the front of the race. {{Cite web |last=Knöfler |first=Lukas |date=2026-06-06 |title=Giro d'Italia Women: Demi Vollering powers across gravel sector of Colle delle Finestre to win compressed stage 8 and second stage of race |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-demi-vollering-powers-across-gravel-sector-of-colle-delle-finestre-to-win-compressed-stage-8-and-second-stage-of-race/ |access-date=2026-06-06 |website=Cyclingnews |language=en}} With {{convert|7.5|km|abbr=on}} of the climb remaining, organisers announced that the stage would be shortened for safety reasons, finishing around {{convert|1|km|mi|abbr=on}} from the summit of the Colle delle Finestre. {{Cite web |last=Moultrie |first=James |date=2026-06-06 |title='It was absolutely unforeseeable' – Giro d'Italia Women queen stage shortened due to avalanche risk on Colle delle Finestre |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/giro-d-italia-women-queen-stage-shortened-due-to-unstable-sheet-of-ice-that-could-fall-onto-the-road-with-finish-moved-to-1km-from-top-of-colle-delle-finestre/ |access-date=2026-06-06 |website=Cyclingnews |language=en}} Organisers noted an "unstable sheet of ice that could fall onto the road" and that the top of the climb had previously been blocked by an avalanche. The stage would therefore be {{convert|77.4|km|abbr=on}} in length. As riders were made aware of the shortened route, Vollering attacked several times with only van der Breggen, Holmgren and Niedermaier able to follow with around {{convert|5.5|km|abbr=on}} to go. After a flurry of attacks, van der Breggen set the pace at the front approaching the finish – with Vollering attacking in the final to take the stage win ahead of Holmgren and Niedermaier. Van de Breggen maintained her lead in the {{abbr|GC|general classification}}, however bonus seconds meant that her lead over Vollering had been cut to 49 seconds.
-The ninth stage of the race started and finished in [[Saluzzo]] in the Piedmont region. The {{convert|143|km|abbr=on}} course included three categorised climbs, followed by a "punchy finale" into the finish in Saluzzo.
-Niedermaier attacked with around {{convert|80|km|abbr=on}} to go, followed by Longo Borghini and Fisher-Black. Niedermaier gained a substantial lead of over two minutes, thereby taking the virtual lead in the {{abbr|GC|general classification}}. On the Colletta di Brondello climb, Vollering attacked, distancing her rival van der Breggen and joining the group of Niedermaier, Longo Borghini and Fisher-Black with around {{convert|30|km|abbr=on}} remaining. Vollering had a lead over van der Breggen of over a minute, thereby taking the virtual {{abbr|GC|general classification}} lead. As the group of four pushed towards the finish, van der Breggen continued to lose time. Approaching the finish, Vollering knew overall victory had been secured, so let the other three riders fight for the win – with Longo Borghini beating a long sprint by Fisher-Black to take the stage win and secure 4th place overall. Van der Breggen finished the stage 2 minutes 23 seconds behind Vollering, and therefore fell to third overall behind Niedermaier.
-=== Results ===
-In the final general classification (GC), Demi Vollering ({{UCI team code|FSF|2026|nolink=y}}) won the Giro d'Italia Women for the first time, with an advantage over Antonia Niedermaier ({{UCI team code|CSZ|2026b|nolink=y}}) of 30 seconds. With her win, Vollering became the second woman after [[Annemiek van Vleuten]] to win all three [[Grand Tour (cycling)|Grand Tours]]. Third overall was Anna van der Breggen ({{UCI team code|SDW|2026|nolink=y}}), who was 1 minutes 37 seconds behind Vollering.
-In the race's other classifications, the mountains classification was won by Vollering ahead of Niedermaier and van der Breggen. The points classification was led from start to finish by [[Elisa Balsamo (cyclist)|Elisa Balsamo]] ({{UCI team code|LTK women|2026|nolink=y}}), finishing with over twice as many points as her closest rival. The young rider classification was won by Isabella Holmgren ({{UCI team code|LTK women|2026|nolink=y}}), who finished 7th overall after finishing in the top 10 on four stages. {{UCI team code|LTK women|2026|nolink=y}} won the teams classification.
-Reacting to her victory, Vollering stated that she had to "dare to lose it all" on the final stage, knowing she had missed an opportunity to take time on the shortened stage 8. {{Cite web |last=Moultrie |first=James |date=2026-06-07 |title='I had to dare to lose it all' – How Demi Vollering snatched the pink jersey at last gasp on an epic Giro d'Italia Women finale |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/i-had-to-dare-to-lose-it-all-how-demi-vollering-snatched-the-pink-jersey-at-last-gasp-on-an-epic-giro-d-italia-women-finale/ |access-date=2026-06-08 |website=Cyclingnews |language=en}} Van der Breegen stated that she "sad to lose it, [but] I fought with what I could". {{Cite web |last=Moultrie |first=James |date=2026-06-07 |title='It's sad to lose it, but I fought with what I could' – Another Grand Tour slips away for Anna van der Breggen on final stage as she's unable to match Vollering at Giro d'Italia Women |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/its-sad-to-lose-it-but-i-fought-with-what-i-could-another-grand-tour-slips-away-for-anna-van-der-breggen-on-final-stage-as-shes-unable-to-match-vollering-at-giro-d-italia-women/ |access-date=2026-06-08 |website=Cyclingnews |language=en}} Niedermaier expressed her delight in gaining second overall, calling it "a great Giro". {{Cite web |last=Tyson |first=Jackie |date=2026-06-07 |title='I tried everything I could' - Former best young rider Antonia Niedermaier finally lands on the Giro d'Italia Women podium |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/i-tried-everything-i-could-former-best-young-rider-antonia-niedermaier-goes-from-33rd-to-second-overall-at-giro-d-italia-women/ |access-date=2026-06-08 |website=Cyclingnews |language=en}} {{UCI team code|LTK women|2026|nolink=y}} celebrated their success of winning the team classification, alongside Holmgren winning the young rider classification, Balsamo winning the points classification and Fisher-Black finishing 5th overall. {{Cite web |last=Farrand |first=Stephen |date=2026-06-08 |title='It's no coincidence that we won the team classification' - Lidl-Trek celebrate hugely successful Giro d'Italia Women |url=https://www.cyclingnews.com/pro-cycling/womens-cycling/its-no-coincidence-that-we-won-the-team-classification-lidl-trek-celebrate-hugely-successful-giro-d-italia-women/ |access-date=2026-06-08 |website=Cyclingnews |language=en}}
-== Classification leadership table ==
-{| class="wikitable" style="text-align: center; font-size:smaller;"
-|- style="background-color: #efefef;"
-|+ Classification leadership by stage
-! width="2%" | Stage
-! width="14%" | Winner
-! width="14%" | [[General classification]]
-{{cjersey|pink|size=25px}}
-! width="14%" | [[Points classification]]
-{{cjersey|red|size=25px}}
-! width="14%" | [[Queen of the Mountains|Mountains classification]]
-{{cjersey|azul|size=25px}}
-! width="14%" | [[Young rider classification]]
-{{cjersey|white|size=25px}}
-! width="14%" | [[Team classification]]
+{| class="wikitable sortable"
+|+Women's race result
+! scope="col" |Position
+! scope="col" |Athlete
+! scope="col" |Nationality
+! scope="col" |Time
 |-
-! [[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 1|1]]
-| [[Elisa Balsamo (cyclist)|Elisa Balsamo]]
-| style="background:pink;" rowspan="3"| [[Elisa Balsamo (cyclist)|Elisa Balsamo]]
-| style="background:#FFE6E6;" rowspan="9"| [[Elisa Balsamo (cyclist)|Elisa Balsamo]]{{Efn|group=|name=a}}
-| ''not awarded''
-| style="background:#F8F9FA;" | [[Célia Gery]]
-| style="background:#FFCD5F;" rowspan="3"| {{UCI team code|UAD women|2026a}}
+| style="text-align:center" |{{gold1}}
+|[[Tigst Assefa]]
+|{{ETH}}
+|2:11:04
 |-
-! [[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 2|2]]
-| [[Elisa Balsamo (cyclist)|Elisa Balsamo]]
-| style="background:lightblue;" | [[Eleonora La Bella]]
-| style="background:#F8F9FA;" | {{Interlanguage link|Alessia Zambelli|lt=Alessia Zambelli|fr}}
+| style="text-align:center" |{{silver2}}
+|[[Bedatu Hirpa]]
+|{{ETH}}
+|2:16:53
 |-
-! [[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 3|3]]
-| [[Elisa Balsamo (cyclist)|Elisa Balsamo]]
-| style="background:lightblue;" rowspan="5"| [[Anna van der Breggen]]{{Efn|group=|name=b}}
-| style="background:#F8F9FA;" | [[Célia Gery]]
+| style="text-align:center" |{{bronze3}}
+|[[Dera Dida]]
+|{{ETH}}
+|2:16:55
 |-
-! [[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 4|4]]
-| [[Anna van der Breggen]]
-| style="background:pink;" rowspan="5"| [[Anna van der Breggen]]
-| style="background:#F8F9FA;" rowspan="6"| [[Isabella Holmgren]]
-| style="background:#FFCD5F;" | {{UCI team code|FSF|2026}}
+| style="text-align:center" |4
+|[[Bekelech Gudeta]]
+|{{ETH}}
+|2:18:58
 |-
-! [[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 5|5]]
-| [[Demi Vollering]]
-| style="background:#FFCD5F;" rowspan="4"| {{UCI team code|AGS|2026}}
+| style="text-align:center" |5
+|[[Alemitu Tariku]]
+|{{ETH}}
+|2:19:01
 |-
-! [[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 6|6]]
-| [[Elisa Balsamo (cyclist)|Elisa Balsamo]]
+| style="text-align:center" |6
+|[[Pascaline Jelagat]]
+|{{KEN}}
+|2:20:23
 |-
-! [[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 7|7]]
-| [[Célia Gery]]
+| style="text-align:center" |7
+|[[Misgane Alemayehu]]
+|{{ETH}}
+|2:20:27
 |-
-! [[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 8|8]]
-| [[Demi Vollering]]
-| style="background:lightblue;" rowspan="2"| [[Demi Vollering]]
+| style="text-align:center" |8
+|[[Ludwina Chepngetich]]
+|{{KEN}}
+|2:21:25
 |-
-! [[2026 Giro d'Italia Women, Stage 1 to Stage 9#Stage 9|9]]
-| [[Elisa Longo Borghini]]
-| style="background:pink;" | [[Demi Vollering]]
-| style="background:#FFCD5F;" | {{UCI team code|LTK women|2026}}
+| style="text-align:center" |9
+|[[Evaline Chirchir]]
+|{{KEN}}
+|2:21:32
 |-
-! colspan="2" | Final
-! style="background:#F660AB;" | {{font color|white|Demi Vollering|link=Demi Vollering}}
-! style="background:#f00;" | {{fontcolour|white|Elisa Balsamo|link=Elisa Balsamo (cyclist)}}
-! style="background:dodgerblue;" | {{font color|white|Demi Vollering|link=Demi Vollering}}
-! style="background:offwhite;" | [[Isabella Holmgren]]
-! style="background:#FF8C00;" | {{UCI team code|LTK women|2026}}
+| style="text-align:center" |10
+|[[Aminet Ahmed]]
+|{{ETH}}
+|2:21:45
 |}
-{{notelist|refs=
-{{efn|name=a|On stages 2–4, [[Lara Gillespie]], who was second in the points classification, wore the red jersey, because first placed [[Elisa Balsamo (cyclist)|Elisa Balsamo]] wore the pink jersey as the leader of the general classification.}}
-{{efn|name=b|On stage 5, [[Marlen Reusser]], who was second in the mountains classification, wore the azul jersey, because first placed [[Anna van der Breggen]] wore the pink jersey as the leader of the general classification. On stages 6–8, [[Valentina Cavallar]] wore the azul jersey for the same reason.}}
-}}
-== Classification standings ==
-{| class="wikitable"
+{| class="wikitable sortable"
+|+Wheelchair men's race result
+! scope="col" |Position
+! scope="col" |Athlete
+! scope="col" |Nationality
+! scope="col" |Time
 |-
-! colspan="4" | Legend
+| align="center" |{{gold1}}
+|[[Marcel Hug]]
+|{{SUI}}
+|1:23:28
 |-
-| {{cjersey|pink}}
-| Denotes the winner of the general classification
-| {{cjersey|azul}}
-| Denotes the winner of the mountains classification
+| align="center" |{{silver2}}
+|[[Sho Watanabe]]
+|{{JPN}}
+|1:29:26
 |-
-| {{cjersey|red}}
-| Denotes the winner of the points classification
-| {{cjersey|white}}
-| Denotes the winner of the young rider classification
+| align="center" |{{bronze3}}
+|[[Lito Anker]]
+|{{NED}}
+|1:29:26
+|-
+| align="center" |4
+|[[Ludwig Malter]]
+|{{AUT}}
+|1:29:27
+|-
+| align="center" |5
+|[[Geert Schipper]]
+|{{NED}}
+|1:29:29
 |}
-=== General classification ===
-{{cyclingresult start |title=Final general classification (1–10)}}
-{{cyclingresult|1|[[Demi Vollering]]|NED|{{UCI team code|FSF|2026}} | 29h 54' 19"| {{cjersey|pink}}{{cjersey|azul}}}}
-{{cyclingresult|2|[[Antonia Niedermaier]]|GER|{{UCI team code|CSZ|2026b}} | + 30"|}}
-{{cyclingresult|3|[[Anna van der Breggen]]|NED|{{UCI team code|SDW|2026}} | + 1' 37"|}}
-{{cyclingresult|4|[[Elisa Longo Borghini]]|ITA|{{UCI team code|UAD women|2026a}} | + 2' 44"|}}
-{{cyclingresult|5|[[Niamh Fisher-Black]]|NZL|{{UCI team code|LTK women|2026}} | + 3' 26"|}}
-{{cyclingresult|6|[[Femke de Vries]]|NED|{{UCI team code|TVL women|2026}} | + 5' 07"|}}
-{{cyclingresult|7|[[Isabella Holmgren]]|CAN|{{UCI team code|LTK women|2026}} | + 7' 10"| {{cjersey|white}}}}
-{{cyclingresult|8|[[Urška Žigart]]|SLO|{{UCI team code|AGS|2026}} | + 12' 39"|}}
-{{cyclingresult|9|[[Valentina Cavallar]]|AUT|{{UCI team code|SDW|2026}} | + 13' 12"|}}
-{{cyclingresult|10|[[Lore De Schepper]]|BEL|{{UCI team code|AGS|2026}} | + 13' 29"|}}
-{{cyclingresult end |source= {{cite web|url=https://www.giroditaliawomen.it/en/rankings/|title=Rankings of the Giro d'Italia Women 2026|work=[[Giro d'Italia]]|access-date=7 June 2026}} }}
-{{columns-start}}
-=== Points classification ===
-{{cyclingresult start |title=Final points classification (1–10) |points=yes}}
-{{cyclingresult|1|[[Elisa Balsamo (cyclist)|Elisa Balsamo]]|ITA|{{UCI team code|LTK women|2026}} | 152| {{cjersey|red}}}}
-{{cyclingresult|2|[[Demi Vollering]]|NED|{{UCI team code|FSF|2026}} | 73| {{cjersey|pink}}{{cjersey|azul}}}}
-{{cyclingresult|3|[[Célia Gery]]|FRA|{{UCI team code|FSF|2026}} | 63|}}
-{{cyclingresult|4|[[Lara Gillespie]]|IRL|{{UCI team code|UAD women|2026a}} | 60|}}
-{{cyclingresult|5|[[Elisa Longo Borghini]]|ITA|{{UCI team code|UAD women|2026a}} | 55|}}
-{{cyclingresult|6|[[Chiara Consonni]]|ITA|{{UCI team code|CSZ|2026b}} | 49|}}
-{{cyclingresult|7|[[Antonia Niedermaier]]|GER|{{UCI team code|CSZ|2026b}} | 48|}}
-{{cyclingresult|8|[[Anna van der Breggen]]|NED|{{UCI team code|SDW|2026}} | 42|}}
-{{cyclingresult|9|[[Lucinda Brand]]|NED|{{UCI team code|LTK women|2026}} | 31|}}
-{{cyclingresult|10|[[Lily Williams (cyclist)|Lily Williams]]|USA|{{UCI team code|HPH|2026}} | 30|}}
-{{cyclingresult end |source= }}
-{{column}}
-=== Mountains classification ===
-{{cyclingresult start |title=Final mountains classification (1–10) |points=yes}}
-{{cyclingresult|1|[[Demi Vollering]]|NED|{{UCI team code|FSF|2026}} | 67| {{cjersey|azul}}{{cjersey|pink}}}}
-{{cyclingresult|2|[[Antonia Niedermaier]]|GER|{{UCI team code|CSZ|2026b}} | 55|}}
-{{cyclingresult|3|[[Anna van der Breggen]]|NED|{{UCI team code|SDW|2026}} | 53|}}
-{{cyclingresult|4|[[Isabella Holmgren]]|CAN|{{UCI team code|LTK women|2026}} | 28| {{cjersey|white}}}}
-{{cyclingresult|5|[[Valentina Cavallar]]|AUT|{{UCI team code|SDW|2026}} | 24|}}
-{{cyclingresult|6|[[Lauren Dickson]]|GBR|{{UCI team code|FSF|2026}} | 21|}}
-{{cyclingresult|7|[[Caroline Andersson]]|SWE|{{UCI team code|LIV|2026}} | 21|}}
-{{cyclingresult|8|[[Marlen Reusser]]|SUI|{{UCI team code|MOV women|2026}} | 18|}}
-{{cyclingresult|9|[[Femke de Vries]]|NED|{{UCI team code|TVL women|2026}} | 11|}}
-{{cyclingresult|10|[[Niamh Fisher-Black]]|NZL|{{UCI team code|LTK women|2026}} | 10|}}
-{{cyclingresult end |source= }}
-{{columns-end}}
-{{columns-start}}
-=== Young rider classification ===
-{{cyclingresult start |title=Final young rider classification (1–10)}}
-{{cyclingresult|1|[[Isabella Holmgren]]|CAN|{{UCI team code|LTK women|2026}} | 30h 01' 29"| {{cjersey|white}}}}
-{{cyclingresult|2|[[Lore De Schepper]]|BEL|{{UCI team code|AGS|2026}} | + 6' 19"|}}
-{{cyclingresult|3|[[Viktória Chladoňová]]|SVK|{{UCI team code|TVL women|2026}} | + 27' 24"|}}
-{{cyclingresult|4|[[Rosita Reijnhout]]|NED|{{UCI team code|TVL women|2026}} | + 29' 01"|}}
-{{cyclingresult|5|[[Marion Bunel]]|FRA|{{UCI team code|TVL women|2026}} | + 29' 13"|}}
-{{cyclingresult|6|[[Célia Gery]]|FRA|{{UCI team code|FSF|2026}} | + 34' 38"|}}
-{{cyclingresult|7|[[Gaia Segato]]|ITA|{{UCI team code|BPK|2026}} | + 42' 41"|}}
-{{cyclingresult|8|[[Justyna Czapla]]|GER|{{UCI team code|CSZ|2026b}} | + 1h 13' 18"|}}
-{{cyclingresult|9|[[Stina Kagevi]]|SWE|{{UCI team code|EFO|2026}} | + 1h 13' 54"|}}
-{{cyclingresult|10|[[Mirre Knaven]]|NED|{{UCI team code|EFO|2026}} | + 1h 21' 27"|}}
-{{cyclingresult end |source= }}
-{{column}}
-=== Team classification ===
-{{cyclingresult start |title=Final team classification (1–10) |rider=no}}
-{{cyclingresult|1|||{{flagicon|GER}} {{UCI team code|LTK women|2026}}| 90h 29' 10"}}
-{{cyclingresult|2|||{{flagicon|BEL}} {{UCI team code|AGS|2026}}| + 3' 23"}}
-{{cyclingresult|3|||{{flagicon|FRA}} {{UCI team code|FSF|2026}}| + 10' 02"}}
-{{cyclingresult|4|||{{flagicon|NED}} {{UCI team code|TVL women|2026}}| + 22' 38"}}
-{{cyclingresult|5|||{{flagicon|UAE}} {{UCI team code|UAD women|2026a}}| + 24' 03"}}
-{{cyclingresult|6|||{{flagicon|NED}} {{UCI team code|SDW|2026}}| + 40' 41"}}
-{{cyclingresult|7|||{{flagicon|AUS}} {{UCI team code|LIV|2026}}| + 53' 41"}}
-{{cyclingresult|8|||{{flagicon|GER}} {{UCI team code|CSZ|2026b}}| + 56' 24"}}
-{{cyclingresult|9|||{{flagicon|NOR}} {{UCI team code|UXM women|2026}}| + 59' 16"}}
-{{cyclingresult|10|||{{flagicon|USA}} {{UCI team code|HPH|2026}}| + 1h 02' 03"}}
-{{cyclingresult end |source= }}
-{{columns-end}}
+{| class="wikitable sortable"
+|+Wheelchair women's race result
+! scope="col" |Position
+! scope="col" |Athlete
+! scope="col" |Nationality
+! scope="col" |Time
+|-
+| align="center" |{{gold1}}
+|[[Catherine Debrunner]]
+|{{SUI}}
+|1:35:01
+|-
+| align="center" |{{silver2}}
+|[[Manuela Schär]]
+|{{SUI}}
+|1:41:53
+|-
+| align="center" |{{bronze3}}
+|[[Eden Rainbow-Cooper]]
+|{{GBR}}
+|1:44:51
+|-
+| align="center" |4
+|[[Melanie Woods]]
+|{{GBR}}
+|1:47:00
+|-
+| align="center" |5
+|[[Vanessa De Souza]]
+|{{BRA}}
+|1:47:01
+|}
 == References ==
 {{reflist}}
+== See also ==
+* [[World Marathon Majors]]
+* [[List of marathon races (disambiguation)|List of marathon races]]
+* [[List of World Athletics Label marathon races]]
 == External links ==
-* [https://www.giroditaliawomen.it/en/ Official website]
-{{Giro d'Italia Femminile}}
-{{2026 UCI Women's World Tour}}
-{{Giro d'Italia Women general classification winners}}
-[[Category:Giro d'Italia Women]]
-[[Category:2026 UCI Women's World Tour|Giro d'Italia Women]]
-[[Category:May 2026 sports events in Italy|Giro d'Italia Women]]
-[[Category:June 2026 sports events in Italy|Giro d'Italia Women]]
-[[Category:2026 in Italian women's sport|Giro d'Italia Women]]
+* [https://www.bmw-berlin-marathon.com Official site] {{In lang|de|en}}
+{{2026 in athletics}}
+{{Berlin Marathon}}
+{{Footer Berlin Marathon Champions Men}}
+{{Footer Berlin Marathon Champions Women}}
+{{Footer Berlin Marathon Champions Wheelchair Men}}
+{{Footer Berlin Marathon Champions Wheelchair Women}}
+[[Category:2026 in Berlin]]
+[[Category:2026 marathons]]
+[[Category:Berlin Marathon]]
