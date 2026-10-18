@@ -14,6 +14,7 @@ import {
   getContest,
   getContestLeaderboard,
   listContestConfigTemplates,
+  listContestEntries,
   listEventParticipants,
   listSports,
   openContest,
@@ -24,11 +25,20 @@ import {
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
+import {
+  ContestEntryListResponseSchema,
+  ContestEntryResponseSchema,
+  ContestLeaderboardResponseSchema,
+  ContestManagementResponseSchema,
+  LeagueMembershipResponseSchema,
+  SelectionStateResponseSchema,
+} from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
+import { expectMatchesSchema } from '../support/expect-matches-schema';
 
 // A golf contest over two tournaments end to end over HTTP (#713). An admin builds two one-round
 // tournaments on a tour of their own, each with the same seven golfers, ranked so the default
@@ -142,7 +152,8 @@ describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Starter', leagueName: `Two Majors ${RUN}` });
     const member = await buildRegisteredUser({ displayName: 'Marshal' });
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
-    await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
+    const joined = await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
+    expect(expectMatchesSchema(LeagueMembershipResponseSchema, joined.data).membership.leagueId).toBe(league.id);
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
@@ -171,14 +182,14 @@ describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
       body: { sportEventIds: [classic.eventId, open.eventId] },
     });
     expect(replaced.response.status).toBe(200);
-    expect(expectDefined(replaced.data).contest.sportEvents.map((event) => event.sportEventId)).toEqual([open.eventId, classic.eventId]);
+    expect(expectMatchesSchema(ContestManagementResponseSchema, replaced.data).contest.sportEvents.map((event) => event.sportEventId)).toEqual([open.eventId, classic.eventId]);
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
     const read = expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest;
     expect(read.sportEvents.map((event) => [event.sportEventId, event.sequence])).toEqual([[open.eventId, 1], [classic.eventId, 2]]);
 
     // --- Each team picks and submits a roster for each tournament ------------------------------
     const enterWith = async (client: typeof a, lastTierPick: { open: string; classic: string }) => {
-      const entry = expectDefined((await enterContest({ client, path: { contestId } })).data).entry;
+      const entry = expectMatchesSchema(ContestEntryResponseSchema, (await enterContest({ client, path: { contestId } })).data).entry;
       expect(entry.events.map((event) => [event.sportEventId, event.status])).toEqual([[open.eventId, 'DRAFT'], [classic.eventId, 'DRAFT']]);
       for (const [tournament, lastTier] of [[open, lastTierPick.open], [classic, lastTierPick.classic]] as const) {
         for (const golfer of [...SHARED, lastTier]) {
@@ -187,12 +198,20 @@ describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
         }
         const submitted = await submitContestEntry({ client, path: { contestId, entryId: entry.id, sportEventId: tournament.eventId } });
         expect(submitted.response.status).toBe(200);
+        expectMatchesSchema(SelectionStateResponseSchema, submitted.data);
       }
       return entry.id;
     };
     // The commissioner backs Fade in both; the member backs Gimme in both.
     const commissionerEntryId = await enterWith(commissioner.client, { open: 'Fade', classic: 'Fade' });
     const memberEntryId = await enterWith(member.client, { open: 'Gimme', classic: 'Gimme' });
+
+    // Each entry lists a status per tournament, both submitted.
+    const listed = expectMatchesSchema(ContestEntryListResponseSchema, (await listContestEntries({ client: commissioner.client, path: { contestId } })).data);
+    expect(Object.fromEntries(listed.entries.map((entry) => [entry.id, entry.events.map((event) => [event.sportEventId, event.status])]))).toEqual({
+      [commissionerEntryId]: [[open.eventId, 'SUBMITTED'], [classic.eventId, 'SUBMITTED']],
+      [memberEntryId]: [[open.eventId, 'SUBMITTED'], [classic.eventId, 'SUBMITTED']],
+    });
 
     const playTournament = async (eventId: string, scores: Record<string, number>) => {
       expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
@@ -230,7 +249,7 @@ describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
       });
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.ACTIVE);
 
-    const midway = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId }, query: { sportEventId: open.eventId } })).data);
+    const midway = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId }, query: { sportEventId: open.eventId } })).data);
     expect(midway.sportEventId).toBe(open.eventId);
     expect(standingsOf(midway.entries)).toEqual({
       [commissionerEntryId]: { totalScore: -3, displayPosition: '1', events: { [open.eventId]: [-3, '1'] } },
@@ -248,7 +267,7 @@ describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
     await playTournament(classic.eventId, CLASSIC_SCORES);
 
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
-    const settled = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId }, query: { sportEventId: classic.eventId } })).data);
+    const settled = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId }, query: { sportEventId: classic.eventId } })).data);
     expect(standingsOf(settled.entries)).toEqual({
       [memberEntryId]: { totalScore: -6, displayPosition: '1', events: { [open.eventId]: [0, '2'], [classic.eventId]: [-6, '1'] } },
       [commissionerEntryId]: { totalScore: -3, displayPosition: '2', events: { [open.eventId]: [-3, '1'], [classic.eventId]: [0, '2'] } },

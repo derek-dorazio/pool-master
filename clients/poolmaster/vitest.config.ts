@@ -46,6 +46,14 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'lcov'],
+      // A regression floor, about 3 points under the whole suite's measurement on 2026-10-18
+      // (#747): 92.02 / 84.6 / 92.79 / 92.0. Raise it as coverage grows; never lower it to pass.
+      thresholds: {
+        statements: 89,
+        branches: 81.5,
+        functions: 89.5,
+        lines: 89,
+      },
     },
   },
 });

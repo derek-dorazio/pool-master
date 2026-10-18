@@ -23,6 +23,7 @@ import {
   GenerateInviteLinkResponseSchema,
   ListLeagueInvitationsResponseSchema,
   ResendLeagueInvitationResponseSchema,
+  LeagueContextResponseSchema,
   LeagueResponseSchema,
   SendLeagueInvitationsResponseSchema,
   SquadListResponseSchema,
@@ -124,7 +125,7 @@ describe('Contract verification (web)', () => {
     expect(ErrorEnvelopeSchema.safeParse(meRes.json()).success).toBe(true);
   });
 
-  it('POST /api/v1/leagues matches LeagueResponseSchema', async () => {
+  it('POST /api/v1/leagues matches LeagueContextResponseSchema, carrying the creator\'s commissioner membership', async () => {
     const owner = await createTestUser({ displayName: 'Contract League Owner' });
 
     const res = await getApp().inject({
@@ -135,8 +136,9 @@ describe('Contract verification (web)', () => {
     });
 
     expect(res.statusCode).toBe(201);
-    const parsed = LeagueResponseSchema.safeParse(res.json());
+    const parsed = LeagueContextResponseSchema.safeParse(res.json());
     expect(parsed.success).toBe(true);
+    expect(parsed.data?.membership?.role).toBe('COMMISSIONER');
   });
 
   it('league invitation routes match their response DTOs', async () => {

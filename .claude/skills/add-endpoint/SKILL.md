@@ -22,7 +22,10 @@ The rules this routes to are authoritative. This file exists to say *what order*
    `operationId`, request schema, and a `response` schema **for every status the handler
    actually returns**.
 4. **Regenerate** — `npm run api:refresh`, then `npm run api:validate`.
-5. **Contract-verification case** — a `.safeParse()` assertion against the live response.
+5. **Contract-verification case** — a `.safeParse()` assertion against the live response, in a
+   contract-verification suite or a functional journey that already holds it
+   (`rules/testing-rules.md` §4 *Contract Verification Gate*). `rules:check:contract-verification`
+   fails a response schema no test checks.
 
 Full detail: `rules/service-rules.md` §4 *DTOs, Mappers, and OpenAPI*, including the
 Contract Documentation Checklist you run before calling the work done.
