@@ -458,7 +458,7 @@ describe('Every seeded contest template, whatever its sport', () => {
     expect(problems).toEqual([]);
   });
 
-  it('counts no more scores than an entry holds: a tiered preset on its sport\'s default tiers, a budget roster, or a draw\'s hand', async () => {
+  it('counts no more scores than an entry holds: a tiered preset on its league\'s or else its sport\'s default tiers, a budget roster, or a draw\'s hand', async () => {
     const templates = await activeTemplates();
 
     const problems = templates.flatMap((template) => {
@@ -466,7 +466,7 @@ describe('Every seeded contest template, whatever its sport', () => {
       const held = (() => {
         switch (rules.selectionType) {
           case SelectionType.TIERED:
-            return getTieredRosterSize(getSportDefinition(template.sport).defaultTierLayout.tierCount, rules.picksPerTier);
+            return getTieredRosterSize(template.sportLeague?.tierCount ?? getSportDefinition(template.sport).defaultTierLayout.tierCount, rules.picksPerTier);
           case SelectionType.BUDGET_PICK:
             return rules.rosterSize;
           case SelectionType.RANDOM_DRAW:
