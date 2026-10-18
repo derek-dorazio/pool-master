@@ -146,7 +146,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
       path: { id: league.id },
       body: {
         name: `No Points ${RUN}`,
-        sportEventId: eventId,
+        sportEventIds: [eventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.RANDOM_DRAW,
         configuration: { selectionType: SelectionType.RANDOM_DRAW, maxEntriesPerSquad: 1, picksPerEntry: 1, countedScores: 1 },
@@ -163,7 +163,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
       path: { id: league.id },
       body: {
         name: `Win Place Show ${RUN}`,
-        sportEventId: eventId,
+        sportEventIds: [eventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.RANDOM_DRAW,
         templateId: drawTemplate.id,

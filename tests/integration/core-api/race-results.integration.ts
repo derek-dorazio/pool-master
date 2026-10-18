@@ -162,7 +162,7 @@ describe('horse racing contest — read and settled from the finishing order', (
     })));
     const contest = await prisma.contest.create({
       data: {
-        leagueId: league.id, sportEventId: event.id, name: `Win Place Show ${suffix}`,
+        leagueId: league.id, sportEvents: { create: { sportEventId: event.id, sequence: 1 } }, name: `Win Place Show ${suffix}`,
         status: 'ACTIVE', contestFormat: 'ROSTER', selectionType: 'BUDGET_PICK',
       },
     });
@@ -181,8 +181,8 @@ describe('horse racing contest — read and settled from the finishing order', (
       },
     });
     const [winners, scratch] = await Promise.all([
-      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squadOne.id, entryNumber: 1, name: 'Arrow and Comet', status: 'SUBMITTED' } }),
-      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squadTwo.id, entryNumber: 1, name: 'Bolt and Drift', status: 'SUBMITTED' } }),
+      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squadOne.id, entryNumber: 1, name: 'Arrow and Comet', events: { create: { sportEventId: event.id, status: 'SUBMITTED', submittedAt: new Date() } } } }),
+      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squadTwo.id, entryNumber: 1, name: 'Bolt and Drift', events: { create: { sportEventId: event.id, status: 'SUBMITTED', submittedAt: new Date() } } } }),
     ]);
     await prisma.contestEntryPick.createMany({
       data: [

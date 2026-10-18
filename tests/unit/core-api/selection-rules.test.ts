@@ -64,7 +64,7 @@ function entry(id: string, squadId: string): ContestEntry {
     squadId,
     entryNumber: 1,
     name: `Entry ${id}`,
-    status: 'DRAFT',
+    events: [],
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
   };

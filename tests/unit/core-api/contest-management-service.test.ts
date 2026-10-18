@@ -49,7 +49,7 @@ function createContestRepo(): ContestRepository {
     findById: jest.fn().mockResolvedValue({
       id: 'contest-1',
       leagueId: 'league-1',
-      sportEventId: '11111111-1111-1111-1111-111111111111',
+      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
       name: 'Contest 1',
       status: ContestStatus.DRAFT,
       contestFormat: ContestFormat.ROSTER,
@@ -267,7 +267,7 @@ describe('ContestManagementService', () => {
       { leagueId: 'league-1' },
       {
         name: 'Masters Pick 6',
-        sportEventId: '11111111-1111-1111-1111-111111111111',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {
@@ -281,7 +281,7 @@ describe('ContestManagementService', () => {
 
     expect(contestCoreRepo.create).toHaveBeenCalledWith({
       leagueId: 'league-1',
-      sportEventId: '11111111-1111-1111-1111-111111111111',
+      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
       name: 'Masters Pick 6',
       selectionType: 'TIERED',
       contestFormat: ContestFormat.ROSTER,
@@ -326,7 +326,7 @@ describe('ContestManagementService', () => {
         { leagueId: 'league-1' },
         {
           name: 'Invalid counted scores',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
+          sportEventIds: ['11111111-1111-1111-1111-111111111111'],
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
           configuration: {
@@ -365,7 +365,7 @@ describe('ContestManagementService', () => {
         { leagueId: 'league-1' },
         {
           name: 'Every pick counts',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
+          sportEventIds: ['11111111-1111-1111-1111-111111111111'],
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
           configuration: {
@@ -432,7 +432,7 @@ describe('ContestManagementService', () => {
       );
       const created = service.createContest({ leagueId: 'league-1' }, {
         name: 'Major Pick 6',
-        sportEventId: '11111111-1111-1111-1111-111111111111',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         templateId: '11111111-1111-4111-8111-111111111111',
@@ -474,7 +474,7 @@ describe('ContestManagementService', () => {
       const draft = {
         id: 'contest-1',
         leagueId: options?.leagueId ?? 'league-1',
-        sportEventId: '11111111-1111-1111-1111-111111111111',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         name: 'Contest 1',
         status: options?.status ?? ContestStatus.DRAFT,
         contestFormat: ContestFormat.ROSTER,
@@ -623,7 +623,7 @@ describe('ContestManagementService', () => {
     expect(result.configuration).toMatchObject({ selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 5 });
     // pool-master-41t — the refreshed detail carries the read-only
     // effectiveTiers echo (plans/124 §5.3).
-    expect(result.effectiveTiers).toEqual([]);
+    expect(result.sportEvents[0]?.effectiveTiers).toEqual([]);
   });
 
   it('refuses a tiered contest update whose countedScores exceeds the event\'s tier count times picksPerTier, writing nothing', async () => {
@@ -703,7 +703,7 @@ describe('ContestManagementService', () => {
     // pool-master-41t — the detail response always carries the read-only
     // effectiveTiers echo (plans/124 §5.3); empty here because this event
     // has no tiers defined.
-    expect(result.effectiveTiers).toEqual([]);
+    expect(result.sportEvents[0]?.effectiveTiers).toEqual([]);
   });
 
   it('pool-master-41t echoes the linked event\'s effective tiers read-only on the management detail', async () => {
@@ -723,7 +723,7 @@ describe('ContestManagementService', () => {
     expect(golfTierService.getEffectiveTiersForSportEvent).toHaveBeenCalledWith(
       '11111111-1111-1111-1111-111111111111',
     );
-    expect(result.effectiveTiers).toEqual([
+    expect(result.sportEvents[0]?.effectiveTiers).toEqual([
       {
         tierKey: 'tier-1',
         label: 'Tier 1',
@@ -773,7 +773,7 @@ describe('ContestManagementService', () => {
       { leagueId: 'league-1' },
       {
         name: 'Masters Template Contest',
-        sportEventId: '11111111-1111-1111-1111-111111111111',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         templateId: '11111111-1111-4111-8111-111111111111',
@@ -818,7 +818,7 @@ describe('ContestManagementService', () => {
       { leagueId: 'league-1' },
       {
         name: 'Masters Template Override',
-        sportEventId: '11111111-1111-1111-1111-111111111111',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         templateId: '11111111-1111-4111-8111-111111111111',
@@ -858,7 +858,7 @@ describe('ContestManagementService', () => {
         { leagueId: 'league-1' },
         {
           name: 'Empty create',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
+          sportEventIds: ['11111111-1111-1111-1111-111111111111'],
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
         },
@@ -892,7 +892,7 @@ describe('ContestManagementService', () => {
         { leagueId: 'league-1' },
         {
           name: 'Mismatched template',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
+          sportEventIds: ['11111111-1111-1111-1111-111111111111'],
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
           templateId: '11111111-1111-4111-8111-111111111111',
@@ -925,7 +925,7 @@ describe('ContestManagementService', () => {
         { leagueId: 'league-1' },
         {
           name: 'Missing Template Contest',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
+          sportEventIds: ['11111111-1111-1111-1111-111111111111'],
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
           templateId: 'missing-template-id',
@@ -983,7 +983,7 @@ describe('ContestManagementService', () => {
       { leagueId: 'league-1' },
       {
         name: 'Missing Field Contest',
-        sportEventId: '11111111-1111-1111-1111-111111111111',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {
@@ -1035,7 +1035,7 @@ describe('ContestManagementService', () => {
       { leagueId: 'league-1' },
       {
         name: 'Unavailable Event Contest',
-        sportEventId: '11111111-1111-1111-1111-111111111111',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {
@@ -1053,7 +1053,7 @@ describe('ContestManagementService', () => {
     const EVENT_ID = '11111111-1111-1111-1111-111111111111';
     const CREATE: CreateContestRequest = {
       name: 'Masters Pool',
-      sportEventId: EVENT_ID,
+      sportEventIds: [EVENT_ID],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
@@ -1152,7 +1152,7 @@ describe('ContestManagementService', () => {
     it('refuses a settings change on a contest with no sport event, with 404 SPORT_EVENT_NOT_FOUND and nothing stored', async () => {
       const contestRepo = createContestRepo();
       const contest = await contestRepo.findById('contest-1');
-      (contestRepo.findById as jest.Mock).mockResolvedValue({ ...contest, sportEventId: undefined });
+      (contestRepo.findById as jest.Mock).mockResolvedValue({ ...contest, sportEventIds: [] });
       const { service, configurationRepo } = build({ contestRepo });
 
       await expect(service.updateContestConfiguration('contest-1', expectDefined(CREATE.configuration)))
@@ -1216,7 +1216,7 @@ describe('ContestManagementService budget rules (#93)', () => {
 
   const budgetRequest = (configuration: { rosterSize: number; countedScores: number }): CreateContestRequest => ({
     name: 'Masters Budget',
-    sportEventId: '11111111-1111-1111-1111-111111111111',
+    sportEventIds: ['11111111-1111-1111-1111-111111111111'],
     contestFormat: 'ROSTER',
     selectionType: SelectionType.BUDGET_PICK,
     configuration: { selectionType: SelectionType.BUDGET_PICK, maxEntriesPerSquad: 1, ...configuration },
@@ -1315,7 +1315,7 @@ describe('ContestManagementService budget rules (#93)', () => {
     (contestCoreRepo.findById as jest.Mock).mockResolvedValue({
       id: 'contest-1',
       leagueId: 'league-1',
-      sportEventId: '11111111-1111-1111-1111-111111111111',
+      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
       name: 'Masters Budget',
       status: ContestStatus.DRAFT,
       contestFormat: ContestFormat.ROSTER,
@@ -1351,7 +1351,7 @@ describe('ContestManagementService random-draw rules (#601)', () => {
 
   const drawRequest = (configuration: { picksPerEntry: number; countedScores: number }): CreateContestRequest => ({
     name: 'Masters Sweepstake',
-    sportEventId: '11111111-1111-1111-1111-111111111111',
+    sportEventIds: ['11111111-1111-1111-1111-111111111111'],
     contestFormat: 'ROSTER',
     selectionType: SelectionType.RANDOM_DRAW,
     configuration: { selectionType: SelectionType.RANDOM_DRAW, maxEntriesPerSquad: 1, ...configuration },
@@ -1411,7 +1411,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
   const tieredRules = { selectionType: SelectionType.TIERED, maxEntriesPerSquad: 1, picksPerTier: 1, countedScores: 3 } as const;
   const raceRequest = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
     name: 'Derby Sweepstake',
-    sportEventId: '11111111-1111-1111-1111-111111111111',
+    sportEventIds: ['11111111-1111-1111-1111-111111111111'],
     contestFormat: 'ROSTER',
     selectionType: SelectionType.RANDOM_DRAW,
     configuration: drawRules,
@@ -1569,5 +1569,239 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     await service.updateContestConfiguration('contest-1', { ...tieredRules, scoring });
 
     expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({ scoring }));
+  });
+});
+
+// #713: a contest covers one or more events of one sport league, kept in start-date order.
+describe('ContestManagementService — a contest of several events', () => {
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  const MASTERS = '22222222-2222-4222-8222-222222222222';
+  const PGA = '33333333-3333-4333-8333-333333333333';
+  const US_OPEN = '44444444-4444-4444-8444-444444444444';
+  const LPGA_MAJOR = '55555555-5555-4555-8555-555555555555';
+
+  interface ReaderEvent {
+    status: SportEventStatus;
+    sportLeagueId: string;
+    salaryCap: number | null;
+  }
+
+  /** A reader over several events, each the default eligible PGA Tour event unless overridden. */
+  function multiEventReader(events: Array<{ id: string; startDate: string } & Partial<ReaderEvent>>) {
+    const byId = new Map(events.map((event) => [event.id, {
+      status: SportEventStatus.SCHEDULED,
+      sport: Sport.GOLF,
+      sportLeagueId: PGA_TOUR_LEAGUE_ID,
+      tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
+      participantCount: 72,
+      loadedParticipantCount: 72,
+      rounds: 4,
+      salaryCap: null,
+      ...event,
+      startDate: new Date(event.startDate),
+    }]));
+    return {
+      findById: jest.fn().mockImplementation(async (id: string) => byId.get(id) ?? null),
+      findActiveFieldPrices: jest.fn().mockResolvedValue([10, 10, 10]),
+    };
+  }
+
+  const READER_EVENTS = [
+    { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z' },
+    { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
+    { id: US_OPEN, startDate: '2026-06-18T12:00:00.000Z' },
+    { id: LPGA_MAJOR, startDate: '2026-06-25T12:00:00.000Z', sportLeagueId: LPGA_TOUR_LEAGUE_ID },
+  ];
+
+  function build(options: {
+    reader?: ReturnType<typeof multiEventReader>;
+    contest?: Record<string, unknown>;
+    storedConfigJson?: { selectionType: typeof SelectionType.BUDGET_PICK; rosterSize: number; salaryCap: number; countedScores: number };
+  } = {}) {
+    const contestRepo = createContestRepo();
+    if (options.contest) {
+      (contestRepo.findById as jest.Mock).mockResolvedValue({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        sportEventIds: [MASTERS],
+        name: 'Majors Pool',
+        status: ContestStatus.DRAFT,
+        contestFormat: ContestFormat.ROSTER,
+        selectionType: SelectionType.TIERED,
+        createdAt: new Date('2026-04-07T12:00:00.000Z'),
+        updatedAt: new Date('2026-04-07T12:00:00.000Z'),
+        ...options.contest,
+      });
+    }
+    const configurationRepo = createContestConfigurationRepo();
+    if (options.storedConfigJson) {
+      (configurationRepo.findByContest as jest.Mock).mockResolvedValue({
+        id: 'config-1',
+        contestId: 'contest-1',
+        selectionType: options.storedConfigJson.selectionType,
+        configJson: options.storedConfigJson,
+        maxEntriesPerSquad: 1,
+        createdAt: new Date('2026-04-07T12:00:00.000Z'),
+        updatedAt: new Date('2026-04-07T12:00:00.000Z'),
+      });
+    }
+    const service = new ContestManagementService(
+      contestRepo,
+      createContestConfigTemplateRepo(),
+      configurationRepo,
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      options.reader ?? multiEventReader(READER_EVENTS),
+      () => CONTEST_MANAGEMENT_TEST_NOW,
+    );
+    return { service, contestRepo, configurationRepo };
+  }
+
+  const tiered = (sportEventIds: string[]): CreateContestRequest => ({
+    name: 'Majors Pool',
+    sportEventIds,
+    contestFormat: 'ROSTER',
+    selectionType: 'TIERED',
+    configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
+  });
+
+  it('creates a contest on several events of one sport league, storing them in start-date order whatever order they were sent in', async () => {
+    const { service, contestRepo } = build();
+
+    await service.createContest({ leagueId: 'league-1' }, tiered([US_OPEN, MASTERS, PGA]));
+
+    expect(contestRepo.create).toHaveBeenCalledWith(expect.objectContaining({ sportEventIds: [MASTERS, PGA, US_OPEN] }));
+  });
+
+  it('refuses a contest mixing two sport leagues\' events with CONTEST_EVENTS_LEAGUE_MISMATCH, creating nothing', async () => {
+    const { service, contestRepo } = build();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, tiered([MASTERS, LPGA_MAJOR])))
+      .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LEAGUE_MISMATCH' });
+    expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a random-draw contest on more than one event with CONTEST_DRAW_SINGLE_EVENT, creating nothing', async () => {
+    const { service, contestRepo } = build();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, {
+      name: 'Draw',
+      sportEventIds: [MASTERS, PGA],
+      contestFormat: 'ROSTER',
+      selectionType: SelectionType.RANDOM_DRAW,
+      configuration: { selectionType: SelectionType.RANDOM_DRAW, maxEntriesPerSquad: 1, picksPerEntry: 1, countedScores: 1 },
+    })).rejects.toMatchObject({ code: 'CONTEST_DRAW_SINGLE_EVENT' });
+    expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a budget contest whose events were priced against different salary caps with 409 CONTEST_BUDGET_SALARY_CAP_MISMATCH', async () => {
+    const { service, contestRepo } = build({
+      reader: multiEventReader([
+        { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z', salaryCap: 100 },
+        { id: PGA, startDate: '2026-05-14T12:00:00.000Z', salaryCap: 200 },
+      ]),
+    });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, {
+      name: 'Budget Majors',
+      sportEventIds: [MASTERS, PGA],
+      contestFormat: 'ROSTER',
+      selectionType: SelectionType.BUDGET_PICK,
+      configuration: { selectionType: SelectionType.BUDGET_PICK, maxEntriesPerSquad: 1, rosterSize: 2, countedScores: 2 },
+    })).rejects.toMatchObject({ code: 'CONTEST_BUDGET_SALARY_CAP_MISMATCH', statusCode: 409 });
+    expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('adds a later event to a live contest, keeping the events in start-date order', async () => {
+    const { service, contestRepo } = build({
+      reader: multiEventReader([
+        { id: MASTERS, startDate: '2026-04-20T12:00:00.000Z', status: SportEventStatus.IN_PROGRESS },
+        { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
+      ]),
+      contest: { status: ContestStatus.ACTIVE },
+    });
+
+    await service.setContestSportEvents('league-1', 'contest-1', [PGA, MASTERS]);
+
+    expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA]);
+  });
+
+  it('refuses removing an event once one of the contest\'s events has started with 409 CONTEST_EVENTS_LOCKED, changing nothing', async () => {
+    const { service, contestRepo } = build({
+      reader: multiEventReader([
+        { id: MASTERS, startDate: '2026-04-20T12:00:00.000Z', status: SportEventStatus.IN_PROGRESS },
+        { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
+      ]),
+      contest: { status: ContestStatus.ACTIVE, sportEventIds: [MASTERS, PGA] },
+    });
+
+    await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS]))
+      .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LOCKED', statusCode: 409 });
+    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+  });
+
+  it('removes an event from a contest none of whose events has started', async () => {
+    const { service, contestRepo } = build({ contest: { status: ContestStatus.OPEN, sportEventIds: [MASTERS, PGA] } });
+
+    await service.setContestSportEvents('league-1', 'contest-1', [PGA]);
+
+    expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [PGA]);
+  });
+
+  it('refuses adding another sport league\'s event with CONTEST_EVENTS_LEAGUE_MISMATCH, changing nothing', async () => {
+    const { service, contestRepo } = build({ contest: { status: ContestStatus.OPEN } });
+
+    await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, LPGA_MAJOR]))
+      .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LEAGUE_MISMATCH' });
+    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+  });
+
+  it('refuses a second event on a random-draw contest with CONTEST_DRAW_SINGLE_EVENT', async () => {
+    const { service, contestRepo } = build({ contest: { selectionType: SelectionType.RANDOM_DRAW } });
+
+    await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]))
+      .rejects.toMatchObject({ code: 'CONTEST_DRAW_SINGLE_EVENT' });
+    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+  });
+
+  it('refuses changing the events of a drawn or COMPLETED contest with 409 CONTEST_EVENTS_LOCKED', async () => {
+    for (const contest of [{ drawnAt: new Date('2026-04-10T00:00:00.000Z') }, { status: ContestStatus.COMPLETED }]) {
+      const { service, contestRepo } = build({ contest });
+
+      await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]))
+        .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LOCKED', statusCode: 409 });
+      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    }
+  });
+
+  it('refuses adding an event priced against another salary cap to an open budget contest with 409 CONTEST_BUDGET_SALARY_CAP_MISMATCH', async () => {
+    const { service, contestRepo } = build({
+      reader: multiEventReader([
+        { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z', salaryCap: 100 },
+        { id: PGA, startDate: '2026-05-14T12:00:00.000Z', salaryCap: 200 },
+      ]),
+      contest: { status: ContestStatus.OPEN, selectionType: SelectionType.BUDGET_PICK },
+      storedConfigJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 100, countedScores: 2 },
+    });
+
+    await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]))
+      .rejects.toMatchObject({ code: 'CONTEST_BUDGET_SALARY_CAP_MISMATCH', statusCode: 409 });
+    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 CONTEST_NOT_FOUND for another league\'s contest, changing nothing', async () => {
+    const { service, contestRepo } = build({ contest: {} });
+
+    await expect(service.setContestSportEvents('league-2', 'contest-1', [MASTERS, PGA]))
+      .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
   });
 });

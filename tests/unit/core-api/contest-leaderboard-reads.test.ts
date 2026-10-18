@@ -46,11 +46,11 @@ describe('contest leaderboard reads', () => {
     });
   });
 
-  it('reads only active entries, gives an entry with no picks an empty list, and an unslotted pick a null slot', async () => {
+  it('reads only the entries that submitted the scored event, gives an entry with no picks an empty list, and an unslotted pick a null slot', async () => {
     const entries = fakeContestEntryRepo({
       findByContestWithSquad: jest.fn().mockResolvedValue([
-        { id: 'entry-1', entryNumber: 1, name: 'One', status: 'ACTIVE', squadId: 'squad-1', squadName: 'Squad One' },
-        { id: 'entry-2', entryNumber: 2, name: 'Two', status: 'ACTIVE', squadId: 'squad-2', squadName: 'Squad Two' },
+        { id: 'entry-1', entryNumber: 1, name: 'One', squadId: 'squad-1', squadName: 'Squad One' },
+        { id: 'entry-2', entryNumber: 2, name: 'Two', squadId: 'squad-2', squadName: 'Squad Two' },
       ]),
     });
     const pickedAt = new Date('2026-05-30T12:00:00.000Z');
@@ -62,9 +62,9 @@ describe('contest leaderboard reads', () => {
           { id: 'pick-1', entryId: 'entry-1', sportEventParticipantId: 'sep-1', pickedAt, slot: undefined },
         ]),
       }),
-    }, 'contest-1');
+    }, 'contest-1', 'event-1');
 
-    expect(entries.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { submittedOnly: true });
+    expect(entries.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { submittedFor: 'event-1' });
     expect(rows.map((row) => [row.id, row.squad.name, row.picks])).toEqual([
       ['entry-1', 'Squad One', [{ id: 'pick-1', sportEventParticipantId: 'sep-1', pickedAt, slot: null }]],
       ['entry-2', 'Squad Two', []],

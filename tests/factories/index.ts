@@ -96,7 +96,7 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
   return {
     id: nextId(),
     leagueId: 'league-1',
-    sportEventId: undefined,
+    sportEventIds: [],
     name: 'Masters Pool 2026',
     status: ContestStatus.DRAFT,
     contestFormat: ContestFormat.ROSTER,

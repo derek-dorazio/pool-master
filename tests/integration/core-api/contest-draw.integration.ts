@@ -28,6 +28,7 @@ afterAll(async () => {
 
 interface DrawFixture {
   contestId: string;
+  sportEventId: string;
   userId: string;
   entryIds: [string, string];
   fieldIds: string[];
@@ -85,7 +86,7 @@ async function seedRandomDrawContest(): Promise<DrawFixture> {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      sportEventId: sportEvent.id,
+      sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
       name: `Draw Contest ${suffix}`,
       status: 'OPEN',
       contestFormat: 'ROSTER',
@@ -93,11 +94,11 @@ async function seedRandomDrawContest(): Promise<DrawFixture> {
     },
   });
   const entries = await Promise.all(squads.map((squad, index) => prisma.contestEntry.create({
-    data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Draw Entry ${index} ${suffix}`, status: 'DRAFT' },
+    data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Draw Entry ${index} ${suffix}`, events: { create: { sportEventId: sportEvent.id } } },
   })));
   const [first, second] = entries.map((entry) => entry.id);
 
-  return { contestId: contest.id, userId: user.id, entryIds: [first, second] as [string, string], fieldIds };
+  return { contestId: contest.id, sportEventId: sportEvent.id, userId: user.id, entryIds: [first, second] as [string, string], fieldIds };
 }
 
 function drawOf(fixture: DrawFixture) {
@@ -143,7 +144,7 @@ describe('ContestEntryPickService.recordDraw', () => {
         [second, draw.fieldOrder[2], 2, 3, 'ROSTER', true],
         [first, draw.fieldOrder[3], 2, 4, 'ROSTER', true],
       ]);
-    const entries = await prisma.contestEntry.findMany({ where: { contestId: fixture.contestId } });
+    const entries = await prisma.contestEntryEvent.findMany({ where: { contestEntry: { contestId: fixture.contestId } } });
     expect(entries.map((entry) => entry.status)).toEqual(['SUBMITTED', 'SUBMITTED']);
 
     const contest = await new PrismaContestRepository(prisma).findById(fixture.contestId);
@@ -173,7 +174,7 @@ describe('ContestEntryPickService.recordDraw', () => {
 
     expect(await prisma.contestDraw.count({ where: { contestId: fixture.contestId } })).toBe(0);
     expect(await prisma.contestEntryPick.count({ where: { entry: { contestId: fixture.contestId } } })).toBe(0);
-    const entries = await prisma.contestEntry.findMany({ where: { contestId: fixture.contestId } });
+    const entries = await prisma.contestEntryEvent.findMany({ where: { contestEntry: { contestId: fixture.contestId } } });
     expect(entries.map((entry) => entry.status)).toEqual(['DRAFT', 'DRAFT']);
   });
 
@@ -195,7 +196,13 @@ describe('a draw racing an entry write', () => {
     const firstEntry = await prisma.contestEntry.findUniqueOrThrow({ where: { id: first } });
 
     const holder = holdContestLocks(prisma, [fixture.contestId], (tx) => tx.contestEntry.create({
-      data: { contestId: fixture.contestId, squadId: firstEntry.squadId, entryNumber: 2, name: 'Late Entry', status: 'DRAFT' },
+      data: {
+        contestId: fixture.contestId,
+        squadId: firstEntry.squadId,
+        entryNumber: 2,
+        name: 'Late Entry',
+        events: { create: { sportEventId: fixture.sportEventId } },
+      },
     }));
     const holderPid = await holder.ready;
     const draw = new ContestEntryPickService(prisma).recordDraw(drawOf(fixture)).then(() => 'recorded', (error: unknown) => error);
@@ -203,7 +210,7 @@ describe('a draw racing an entry write', () => {
 
     expect(await draw).toBeInstanceOf(ContestDrawEntriesChangedError);
     expect(await prisma.contestDraw.count({ where: { contestId: fixture.contestId } })).toBe(0);
-    const entries = await prisma.contestEntry.findMany({ where: { contestId: fixture.contestId } });
+    const entries = await prisma.contestEntryEvent.findMany({ where: { contestEntry: { contestId: fixture.contestId } } });
     expect(entries.map((entry) => entry.status)).toEqual(['DRAFT', 'DRAFT', 'DRAFT']);
   });
 
@@ -222,7 +229,6 @@ describe('a draw racing an entry write', () => {
       squadId: firstEntry.squadId,
       entryNumber: 2,
       name: 'Late Entry',
-      status: 'DRAFT',
       tiebreakerValue: null,
     });
     await waitUntilBlockedBy(prisma, holderPid).finally(() => holder.release());

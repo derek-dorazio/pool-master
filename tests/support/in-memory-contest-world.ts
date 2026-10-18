@@ -13,6 +13,8 @@
  */
 import type {
   ContestConfigurationRepository,
+  ContestEntryEventStandingRepository,
+  ContestEntryEventStandingResult,
   ContestEntryPickRepository,
   ContestEntryPickWithParticipant,
   ContestEntryRepository,
@@ -31,6 +33,7 @@ import type {
   Contest,
   ContestConfiguration,
   ContestEntry,
+  ContestEntryStatus,
   League,
   LeagueMembership,
   SportEvent,
@@ -74,6 +77,8 @@ export class InMemoryContestWorld {
   readonly configurations = new Map<string, ContestConfiguration>();
   readonly entries = new Map<string, ContestEntry>();
   readonly picks = new Map<string, ContestEntryPickWithParticipant>();
+  /** Settled per-event standings, keyed by entry and event (#713). */
+  readonly eventStandings = new Map<string, ContestEntryEventStandingResult>();
   readonly leagues = new Map<string, League>();
   readonly users = new Map<string, User>();
   readonly memberships = new Map<string, LeagueMembership>();
@@ -172,7 +177,7 @@ export class InMemoryContestWorld {
     const contest: Contest = {
       id: this.nextId('contest'),
       leagueId,
-      sportEventId: undefined,
+      sportEventIds: [],
       name: 'Masters Pool',
       status: ContestStatus.OPEN,
       contestFormat: ContestFormat.ROSTER,
@@ -234,11 +239,18 @@ export class InMemoryContestWorld {
     return tiers;
   }
 
-  /** Seeds a pick directly; production picks come only through ContestEntryPickService. */
-  addPick(entryId: string, sportEventParticipantId: string): ContestEntryPickWithParticipant {
+  /**
+   * Seeds a pick directly; production picks come only through ContestEntryPickService. The pick
+   * is in `sportEventId`, or by default the first event of the entry's contest.
+   */
+  addPick(entryId: string, sportEventParticipantId: string, sportEventId?: string): ContestEntryPickWithParticipant {
+    const contestId = this.entries.get(entryId)?.contestId;
     const pick: ContestEntryPickWithParticipant = {
       id: this.nextId('pick'),
       entryId,
+      sportEventId: sportEventId
+        ?? (contestId !== undefined ? this.contests.get(contestId)?.sportEventIds.at(0) : undefined)
+        ?? 'event-unset',
       sportEventParticipantId,
       contestFormat: ContestFormat.ROSTER,
       isAutoPicked: false,
@@ -283,7 +295,7 @@ export class InMemoryContestWorld {
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId),
       findBySportEvent: async (sportEventId, filter) =>
         [...this.contests.values()].filter((contest) =>
-          contest.sportEventId === sportEventId
+          contest.sportEventIds.includes(sportEventId)
           && (!filter?.statuses || filter.statuses.includes(contest.status))
           && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
       create: async (input) => this.addContest(input.leagueId, input),
@@ -293,6 +305,27 @@ export class InMemoryContestWorld {
         const updated = { ...existing, ...updates, updatedAt: this.tick() };
         this.contests.set(id, updated);
         return updated;
+      },
+      // Mirrors the adapter: removed events take their picks and entry statuses with them, and
+      // every entry gets a DRAFT status for each added event.
+      replaceSportEvents: async (id, sportEventIds) => {
+        const existing = this.contests.get(id);
+        if (!existing) throw new Error(`Record to update not found: contest ${id}`);
+        const removed = existing.sportEventIds.filter((eventId) => !sportEventIds.includes(eventId));
+        this.contests.set(id, { ...existing, sportEventIds: [...sportEventIds] });
+        for (const [pickId, pick] of this.picks) {
+          if (this.entries.get(pick.entryId)?.contestId === id && removed.includes(pick.sportEventId)) {
+            this.picks.delete(pickId);
+          }
+        }
+        for (const entry of this.entries.values()) {
+          if (entry.contestId !== id) continue;
+          const kept = entry.events.filter((event) => !removed.includes(event.sportEventId));
+          const added = sportEventIds
+            .filter((eventId) => !kept.some((event) => event.sportEventId === eventId))
+            .map((sportEventId) => ({ sportEventId, status: 'DRAFT' as const }));
+          this.entries.set(entry.id, { ...entry, events: [...kept, ...added] });
+        }
       },
       transitionStatus: async (id, transition) => {
         const existing = this.contests.get(id);
@@ -337,7 +370,10 @@ export class InMemoryContestWorld {
       findByContestWithSquad: async (contestId, options) =>
         [...this.entries.values()]
           .filter((entry) =>
-            entry.contestId === contestId && (!options?.submittedOnly || entry.status === 'SUBMITTED'))
+            entry.contestId === contestId
+            && (options?.submittedFor === undefined
+              || entry.events.some((event) =>
+                event.sportEventId === options.submittedFor && event.status === 'SUBMITTED')))
           .sort((left, right) => this.byEntryOrder(left, right))
           .map((entry) => this.withSquad(entry)),
       findBySquad: async (squadId) =>
@@ -356,6 +392,9 @@ export class InMemoryContestWorld {
         const now = this.tick();
         const entry: ContestEntry = {
           ...input,
+          // The adapter gives a new entry a DRAFT status in each of its contest's events.
+          events: (this.contests.get(input.contestId)?.sportEventIds ?? [])
+            .map((sportEventId) => ({ sportEventId, status: 'DRAFT' as const })),
           id: this.nextId('entry'),
           createdAt: now,
           updatedAt: now,
@@ -367,6 +406,17 @@ export class InMemoryContestWorld {
         const existing = this.entries.get(id);
         if (!existing) throw new Error(`Record to update not found: entry ${id}`);
         const updated = { ...existing, ...updates, updatedAt: this.tick() };
+        this.entries.set(id, updated);
+        return updated;
+      },
+      setEventStatus: async (id, sportEventId, status: ContestEntryStatus, at) => {
+        const existing = this.entries.get(id);
+        if (!existing) throw new Error(`Record to update not found: entry ${id}`);
+        const event = { sportEventId, status, ...(status === 'SUBMITTED' && { submittedAt: at }) };
+        const updated: ContestEntry = {
+          ...existing,
+          events: [...existing.events.filter((row) => row.sportEventId !== sportEventId), event],
+        };
         this.entries.set(id, updated);
         return updated;
       },
@@ -505,6 +555,17 @@ export class InMemoryContestWorld {
     return fakeContestEntryStandingRepo();
   }
 
+  eventStandingRepo(): ContestEntryEventStandingRepository {
+    return {
+      findByContest: async (contestId) =>
+        [...this.eventStandings.values()].filter((row) => row.contestId === contestId),
+      upsert: async (write) => {
+        const key = `${write.contestEntryId}:${write.sportEventId}`;
+        this.eventStandings.set(key, { id: this.eventStandings.get(key)?.id ?? this.nextId('event-standing'), ...write });
+      },
+    };
+  }
+
   /** Everything ContestService needs, wired to this world. */
   contestServiceDeps(overrides: Partial<ContestServiceDeps> = {}): ContestServiceDeps {
     return {
@@ -514,6 +575,7 @@ export class InMemoryContestWorld {
       entries: this.entryRepo(),
       picks: this.pickRepo(),
       standings: this.standingRepo(),
+      eventStandings: this.eventStandingRepo(),
       memberships: this.membershipRepo(),
       squads: this.squadRepo(),
       squadMemberships: this.squadMembershipRepo(),

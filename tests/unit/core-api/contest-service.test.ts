@@ -21,16 +21,19 @@ import {
   LeagueRole,
   SelectionType,
   Sport,
+  SportEventStatus,
   SquadMembershipStatus,
   TeamIconKey,
   parseContestScoringSettings,
   type ParticipantContestScoringRule,
+  type SportEvent,
 } from '@poolmaster/shared/domain';
 import { buildContest, buildMembership, buildUser } from '../../factories';
 import {
   fakeContestConfigurationRepo,
   fakeContestEntryPickRepo,
   fakeContestEntryRepo,
+  fakeContestEntryEventStandingRepo,
   fakeContestEntryStandingRepo,
   fakeContestRepo,
   fakeLeagueMembershipRepo,
@@ -93,7 +96,7 @@ const DEFAULT_ENTRY_WITH_SQUAD = {
   squadId: 'squad-1',
   entryNumber: 1,
   name: "Derek's Squad Entry 1",
-  status: 'SUBMITTED' as const,
+  events: [{ sportEventId: 'event-1', status: 'SUBMITTED' as const }],
   tiebreakerValue: undefined,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
@@ -108,6 +111,7 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
       status: 'created',
       entry: {
         ...input,
+        events: [],
         id: 'entry-1',
         createdAt: new Date('2026-01-01'),
         updatedAt: new Date('2026-01-01'),
@@ -119,7 +123,7 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
       squadId: 'squad-1',
       entryNumber: 1,
       name: 'Ace Squad Entry 1',
-      status: 'SUBMITTED',
+      events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }],
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
       ...updates,
@@ -172,6 +176,14 @@ function createMockSquadMembershipRepo(
   });
 }
 
+/** The default contest event: a golf event already under way, so a live contest's picks are revealed. */
+const STARTED_EVENT = {
+  id: 'event-1',
+  sport: Sport.GOLF,
+  status: SportEventStatus.IN_PROGRESS,
+  startDate: new Date('2026-01-01T12:00:00.000Z'),
+} as SportEvent;
+
 /**
  * A ContestService on port fakes. The defaults stand in for an event with a loaded field, a
  * user who can be emailed, and a league; a test passes the ports its behaviour depends on.
@@ -184,6 +196,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
     entries: createMockEntryRepo(),
     picks: fakeContestEntryPickRepo(),
     standings: fakeContestEntryStandingRepo(),
+    eventStandings: fakeContestEntryEventStandingRepo(),
     memberships: createMockMembershipRepo(),
     squads: createMockSquadRepo(),
     squadMemberships: createMockSquadMembershipRepo(),
@@ -194,7 +207,8 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
       findById: jest.fn().mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' })),
     }),
     sportEvents: fakeSportEventRepo({
-      findById: jest.fn().mockResolvedValue({ id: 'event-1', sport: Sport.GOLF }),
+      findById: jest.fn().mockResolvedValue(STARTED_EVENT),
+      findByIds: jest.fn().mockImplementation(async (ids: readonly string[]) => (ids.includes(STARTED_EVENT.id) ? [STARTED_EVENT] : [])),
       countParticipants: jest.fn().mockImplementation(async (ids: readonly string[]) => new Map(ids.map((id) => [id, 1]))),
     }),
     eventParticipants: { listEventParticipants: jest.fn().mockResolvedValue([]) },
@@ -232,7 +246,7 @@ const UNSUBMITTED_ENTRY = {
   squadId: 'squad-1',
   entryNumber: 1,
   name: "Derek's Squad Entry 1",
-  status: 'SUBMITTED' as const,
+  events: [{ sportEventId: 'event-1', status: 'SUBMITTED' as const }],
   tiebreakerValue: undefined,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
@@ -258,6 +272,7 @@ function buildReceiptPick(
   return {
     id,
     entryId: 'entry-1',
+    sportEventId: 'event-1',
     sportEventParticipantId,
     contestFormat: ContestFormat.ROSTER,
     isAutoPicked: false,
@@ -491,11 +506,11 @@ describe('ContestService', () => {
       const entryRepo = createMockEntryRepo({
         findByContest: jest.fn()
           .mockResolvedValueOnce([
-            { id: 'entry-1', status: 'SUBMITTED' },
-            { id: 'entry-2', status: 'SUBMITTED' },
-            { id: 'entry-draft', status: 'DRAFT' },
+            { id: 'entry-1', events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }] },
+            { id: 'entry-2', events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }] },
+            { id: 'entry-draft', events: [{ sportEventId: 'event-1', status: 'DRAFT' }] },
           ])
-          .mockResolvedValueOnce([{ id: 'entry-3', status: 'SUBMITTED' }]),
+          .mockResolvedValueOnce([{ id: 'entry-3', events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }] }]),
       });
       const service = buildService({
         contests: contestRepo,
@@ -739,7 +754,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'SUBMITTED',
+            events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }],
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -766,7 +781,7 @@ describe('ContestService', () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
-        sportEventId: 'sport-event-1',
+        sportEventIds: ['sport-event-1'],
         status: ContestStatus.OPEN,
       });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
@@ -841,7 +856,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'SUBMITTED',
+            events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }],
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -918,7 +933,7 @@ describe('ContestService', () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
-        sportEventId: 'event-1',
+        sportEventIds: ['event-1'],
         status: ContestStatus.ACTIVE,
       });
       const contestRepo = createMockContestRepo({
@@ -1048,8 +1063,8 @@ describe('ContestService', () => {
       const formatRound = expectDefined(PARTICIPANT_SCORING_DEFINITIONS[result.scoringDefinitionId].formatRound);
       expect(rory?.rounds.map(({ round, golf }) => formatRound({ status: round.status, ...expectDefined(golf) })))
         .toEqual(['69', '-2']);
-      // Entry order is the port's contract (entryNumber, then createdAt); only active entries count.
-      expect(entryRepo.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { submittedOnly: true });
+      // Entry order is the port's contract (entryNumber, then createdAt); only the entries that submitted the event count.
+      expect(entryRepo.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { submittedFor: 'event-1' });
       expect(listEventParticipants).toHaveBeenCalledWith('event-1');
     });
 
@@ -1070,7 +1085,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'SUBMITTED',
+            events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }],
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -1123,7 +1138,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'SUBMITTED',
+            events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }],
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -1133,7 +1148,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 2,
             name: "Derek's Squad Entry 2",
-            status: 'SUBMITTED',
+            events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }],
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
           },
@@ -1144,7 +1159,7 @@ describe('ContestService', () => {
           squadId: 'squad-1',
           entryNumber: id === 'entry-1' ? 1 : 2,
           name: updates.name ?? "Derek's Squad Entry 1",
-          status: 'SUBMITTED',
+          events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }],
           createdAt: new Date('2026-01-01'),
           updatedAt: new Date('2026-01-02'),
         })),
@@ -1199,7 +1214,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'SUBMITTED',
+            events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }],
             tiebreakerValue: null,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -1210,7 +1225,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 2,
             name: 'Second Bullet',
-            status: 'SUBMITTED',
+            events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }],
             tiebreakerValue: null,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -1298,7 +1313,7 @@ describe('ContestService', () => {
             squadId: 'squad-1',
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
-            status: 'SUBMITTED',
+            events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }],
             tiebreakerValue: null,
             createdAt: new Date('2026-01-01'),
             updatedAt: new Date('2026-01-01'),
@@ -1333,7 +1348,7 @@ describe('ContestService', () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
-        sportEventId: 'event-1',
+        sportEventIds: ['event-1'],
         name: 'Masters Pick 2',
         status: ContestStatus.OPEN,
       });
@@ -1377,7 +1392,7 @@ describe('ContestService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1');
+      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1', 'event-1');
 
       expect(tiers.getEffectiveValuationsForSportEvent).toHaveBeenCalledWith('event-1');
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
@@ -1439,7 +1454,7 @@ describe('ContestService', () => {
         mailDelivery: mailDelivery,
       });
 
-      await expect(service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1')).resolves.toBeUndefined();
+      await expect(service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1', 'event-1')).resolves.toBeUndefined();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(entryRepo.update).not.toHaveBeenCalled();
     });
@@ -1553,7 +1568,7 @@ describe('ContestService', () => {
 
       const contestRepo = createMockContestRepo({
         findById: jest.fn().mockResolvedValue(
-          buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.ACTIVE }),
+          buildContest({ id: 'contest-1', leagueId: 'league-1', sportEventIds: ['event-1'], status: ContestStatus.ACTIVE }),
         ),
       });
       const service = buildService({
@@ -1679,7 +1694,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
     findById: jest.fn().mockResolvedValue(buildContest({
       id: 'contest-1',
       leagueId: 'league-1',
-      sportEventId: 'event-1',
+      sportEventIds: ['event-1'],
       status: ContestStatus.ACTIVE,
       ...overrides,
     })),
@@ -1705,7 +1720,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
   });
 
   it('refuses a contest with no sport event', async () => {
-    const service = buildService({ contests: contestRepoFor({ sportEventId: undefined }), memberships: member() });
+    const service = buildService({ contests: contestRepoFor({ sportEventIds: [] }), memberships: member() });
 
     await expect(service.getLeaderboard('contest-1', 'user-1'))
       .rejects.toMatchObject({ code: 'CONTEST_LEADERBOARD_EVENT_REQUIRED' });
@@ -1715,7 +1730,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
     const service = buildService({
       contests: contestRepoFor(),
       memberships: member(),
-      sportEvents: fakeSportEventRepo({ findById: jest.fn().mockResolvedValue(null) }),
+      sportEvents: fakeSportEventRepo({ findById: jest.fn().mockResolvedValue(null), findByIds: jest.fn().mockResolvedValue([]) }),
     });
 
     await expect(service.getLeaderboard('contest-1', 'user-1'))
@@ -1786,6 +1801,13 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
       entries: entryRepo,
       standings: fakeContestEntryStandingRepo({
         findByContest: jest.fn().mockResolvedValue([standingRow('entry-2', 1, -9), standingRow('entry-1', 2, -4)]),
+      }),
+      // Settlement froze the event's standings with the contest's (#713).
+      eventStandings: fakeContestEntryEventStandingRepo({
+        findByContest: jest.fn().mockResolvedValue([
+          { ...standingRow('entry-2', 1, -9), sportEventId: 'event-1' },
+          { ...standingRow('entry-1', 2, -4), sportEventId: 'event-1' },
+        ]),
       }),
     });
 

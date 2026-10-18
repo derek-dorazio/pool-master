@@ -754,7 +754,7 @@ describe('Filling an event from a test slate through the admin API', () => {
     const { league, commissioner } = await buildLeagueWithCommissioner({ displayName: 'Slate Commissioner', leagueName: `Slate League ${prefix}` });
     const { contestId } = await seedContestFixture(league.id, { name: `Slate Contest ${prefix}`, selectionType: 'TIERED' });
     const squad = await db.squad.create({ data: { leagueId: league.id, createdBy: commissioner.userId, name: `Slate Squad ${prefix}` } });
-    const entry = await db.contestEntry.create({ data: { contestId, squadId: squad.id, entryNumber: 1, name: `Slate Entry ${prefix}`, status: 'SUBMITTED' } });
+    const entry = await db.contestEntry.create({ data: { contestId, squadId: squad.id, entryNumber: 1, name: `Slate Entry ${prefix}` } });
     const picked = expectDefined((await fieldOf(eventId)).get(`${prefix} Golfer 2`));
     await db.contestEntryPick.create({ data: { entryId: entry.id, sportEventParticipantId: picked.id, contestFormat: 'ROSTER', slot: 1 } });
 

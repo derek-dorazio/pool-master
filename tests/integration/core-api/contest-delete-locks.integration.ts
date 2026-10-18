@@ -45,7 +45,7 @@ async function seedLeagueWithEntry() {
     data: { leagueId: league.id, name: `Lock Contest ${suffix}`, status: 'OPEN', selectionType: 'RANDOM_DRAW' },
   });
   const entry = await prisma.contestEntry.create({
-    data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Lock Entry ${suffix}`, status: 'DRAFT' },
+    data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Lock Entry ${suffix}` },
   });
   return { commissioner, league, squad, contest, entry };
 }

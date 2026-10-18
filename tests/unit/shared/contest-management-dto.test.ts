@@ -12,7 +12,7 @@ describe('contest-management dto schemas', () => {
   it('accepts a create carrying a configuration and no template', () => {
     const parsed = CreateContestRequestSchema.parse({
       name: 'Masters Pick 6',
-      sportEventId: '11111111-1111-1111-1111-111111111111',
+      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       configuration: {
@@ -38,7 +38,7 @@ describe('contest-management dto schemas', () => {
   it('accepts a create naming a template and no configuration', () => {
     const parsed = CreateContestRequestSchema.parse({
       name: 'Masters Template Contest',
-      sportEventId: '11111111-1111-1111-1111-111111111111',
+      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       templateId: '11111111-1111-4111-8111-111111111111',
@@ -51,7 +51,7 @@ describe('contest-management dto schemas', () => {
   it('refuses a create naming neither a template nor a configuration, with the documented code', () => {
     const result = CreateContestRequestSchema.safeParse({
       name: 'Empty',
-      sportEventId: '11111111-1111-1111-1111-111111111111',
+      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
     });
@@ -69,7 +69,7 @@ describe('contest-management dto schemas', () => {
     expect(
       CreateContestRequestSchema.safeParse({
         name: 'Pick em',
-        sportEventId: '11111111-1111-1111-1111-111111111111',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'ROSTER',
         selectionType: 'PICK_EM',
         templateId: '11111111-1111-4111-8111-111111111111',
@@ -150,12 +150,11 @@ describe('contest-management dto schemas', () => {
 
   // pool-master-41t — the commissioner management detail echoes the linked
   // event's effective tiers read-only (plans/124 §4.6/§5.3).
-  it('accepts a management detail response carrying the read-only effectiveTiers echo', () => {
+  it('accepts a management detail response carrying each event\'s read-only effectiveTiers echo', () => {
     const parsed = ContestManagementResponseSchema.parse({
       contest: {
         id: 'contest-1',
         leagueId: 'league-1',
-        sportEventId: '11111111-1111-1111-1111-111111111111',
         name: 'Masters Pick 6',
         status: 'OPEN',
         configuration: {
@@ -166,7 +165,9 @@ describe('contest-management dto schemas', () => {
           picksPerTier: 1,
           countedScores: 4,
         },
-        effectiveTiers: [
+        sportEvents: [{
+          sportEventId: '11111111-1111-1111-1111-111111111111',
+          effectiveTiers: [
           {
             tierKey: 'tier-1',
             label: 'Tier 1',
@@ -181,22 +182,23 @@ describe('contest-management dto schemas', () => {
             ],
           },
         ],
+        }],
         createdAt: '2026-04-07T12:00:00.000Z',
         updatedAt: '2026-04-07T12:00:00.000Z',
       },
     });
 
-    expect(parsed.contest.effectiveTiers).toHaveLength(1);
-    expect(parsed.contest.effectiveTiers[0].assignments[0].participantId).toBe('golfer-1');
+    expect(parsed.contest.sportEvents[0]?.effectiveTiers).toHaveLength(1);
+    expect(parsed.contest.sportEvents[0]?.effectiveTiers[0]?.assignments[0]?.participantId).toBe('golfer-1');
   });
 
-  it('requires effectiveTiers on the management detail response', () => {
+  it('rejects a management detail response whose event carries no effectiveTiers', () => {
     expect(() =>
       ContestManagementResponseSchema.parse({
         contest: {
           id: 'contest-1',
           leagueId: 'league-1',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
+          sportEvents: [{ sportEventId: '11111111-1111-1111-1111-111111111111' }],
           name: 'Masters Pick 6',
           status: 'OPEN',
           configuration: {

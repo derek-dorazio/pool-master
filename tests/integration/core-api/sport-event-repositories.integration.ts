@@ -536,12 +536,12 @@ async function createContestFixture(sportEventId: string) {
   const squad = await prisma.squad.create({ data: { leagueId: league.id, name: `Repository Squad ${suffix}`, createdBy: user.id } });
   const contest = await prisma.contest.create({
     data: {
-      leagueId: league.id, sportEventId, name: `Repository Contest ${suffix}`, status: 'OPEN',
+      leagueId: league.id, sportEvents: { create: { sportEventId, sequence: 1 } }, name: `Repository Contest ${suffix}`, status: 'OPEN',
       contestFormat: 'ROSTER', selectionType: 'TIERED',
     },
   });
   const entry = await prisma.contestEntry.create({
-    data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Entry ${suffix}`, status: 'SUBMITTED' },
+    data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Entry ${suffix}`, events: { create: { sportEventId: sportEventId, status: 'SUBMITTED', submittedAt: new Date() } } },
   });
   return { contestId: contest.id, entryId: entry.id };
 }

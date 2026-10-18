@@ -54,6 +54,7 @@ import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestEntryPickRepository,
+  ContestEntryEventStandingRepository,
   ContestEntryRepository,
   ContestEntryStandingRepository,
   ContestRepository,
@@ -337,6 +338,7 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
     findBySportEvent: many(),
     create: echoCreate('contest'),
     update: echoUpdate(),
+    replaceSportEvents: nothing(),
     transitionStatus: jest.fn().mockResolvedValue(true),
     delete: nothing(),
     ...overrides,
@@ -353,15 +355,28 @@ export function fakeContestEntryRepo(
     findBySquad: many(),
     create: createdEntry(echoCreate('contest-entry')),
     update: echoUpdate(),
+    setEventStatus: echoEventStatus(),
     delete: jest.fn().mockResolvedValue({ status: 'deleted' }),
     ...overrides,
   };
 }
 
-/** Wraps an echoing create in the entry port's result, as an entry written to an undrawn contest. */
+/**
+ * Wraps an echoing create in the entry port's result, as an entry written to an undrawn contest.
+ * The echo carries no event rows: the adapter derives them from the contest, which this fake
+ * cannot see; a test that reads them passes its own `create`.
+ */
 function createdEntry(create: jest.Mock): ContestEntryRepository['create'] {
   return jest.fn().mockImplementation(async (input: Record<string, unknown>) =>
-    ({ status: 'created', entry: (await create(input)) as ContestEntry }));
+    ({ status: 'created', entry: { events: [], ...((await create(input)) as Partial<ContestEntry>) } }));
+}
+
+/** Echoes the one event status the call set, as the entry the port answers with. */
+function echoEventStatus(): ContestEntryRepository['setEventStatus'] {
+  return jest.fn().mockImplementation(async (id: string, sportEventId: string, status: ContestEntry['events'][number]['status'], at: Date) => ({
+    id,
+    events: [{ sportEventId, status, ...(status === 'SUBMITTED' && { submittedAt: at }) }],
+  }));
 }
 
 /** Read-only, like the port: a pick is only ever inserted through ContestEntryPickService. */
@@ -380,6 +395,16 @@ export function fakeContestEntryPickRepo(
 export function fakeContestEntryStandingRepo(
   overrides: Partial<ContestEntryStandingRepository> = {},
 ): ContestEntryStandingRepository {
+  return {
+    findByContest: many(),
+    upsert: nothing(),
+    ...overrides,
+  };
+}
+
+export function fakeContestEntryEventStandingRepo(
+  overrides: Partial<ContestEntryEventStandingRepository> = {},
+): ContestEntryEventStandingRepository {
   return {
     findByContest: many(),
     upsert: nothing(),

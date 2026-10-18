@@ -406,8 +406,12 @@ export async function cleanupFunctionalData(): Promise<void> {
           },
         },
         {
-          sportEventId: {
-            in: providerSportEventIds,
+          sportEvents: {
+            some: {
+              sportEventId: {
+                in: providerSportEventIds,
+              },
+            },
           },
         },
       ],

@@ -199,7 +199,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Masters Pick 6',
-        sportEventId,
+        sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {
@@ -215,7 +215,7 @@ describe('Contest management integration', () => {
     const createdContest = createRes.json<ContestResponse>().contest;
     contestId = createdContest.id;
     expect(createdContest.status).toBe(ContestStatus.DRAFT);
-    expect(createdContest.sportEventId).toBe(sportEventId);
+    expect(createdContest.sportEvents.map((event) => [event.sportEventId, event.sequence])).toEqual([[sportEventId, 1]]);
 
     const getRes = await getApp().inject({
       method: 'GET',
@@ -353,7 +353,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Masters Template Contest',
-        sportEventId,
+        sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         templateId: defaultTemplate.id,
@@ -383,7 +383,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Invalid Masters Pick 6',
-        sportEventId,
+        sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         configuration: {
@@ -404,7 +404,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Empty Create',
-        sportEventId,
+        sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
       },
@@ -424,7 +424,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Pick Em Create',
-        sportEventId,
+        sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'PICK_EM',
         configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
@@ -442,7 +442,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Budget Create',
-        sportEventId,
+        sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'BUDGET_PICK',
         configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
@@ -478,7 +478,7 @@ describe('Contest management integration', () => {
         headers: ownerHeaders,
         payload: {
           name: 'Other League Template',
-          sportEventId,
+          sportEventIds: [sportEventId],
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
           templateId: leagueTemplate.id,
@@ -510,7 +510,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Unpriced Budget Create',
-        sportEventId,
+        sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'BUDGET_PICK',
         configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 },
@@ -540,7 +540,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Masters Template Override',
-        sportEventId,
+        sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         templateId: defaultTemplate.id,
@@ -574,7 +574,7 @@ describe('Contest management integration', () => {
         headers: ownerHeaders,
         payload: {
           name,
-          sportEventId,
+          sportEventIds: [sportEventId],
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
           configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },

@@ -1,4 +1,5 @@
-import { ContestEntryStatus, ScoringFamily, Sport } from '@poolmaster/shared/domain';
+import { expect } from '@jest/globals';
+import { ScoringFamily, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import {
   toContestLeaderboardResponse,
@@ -8,36 +9,69 @@ import {
 import { buildContest } from '../../factories';
 
 describe('toContestListResponse', () => {
-  const masters = { name: 'The Masters', startDate: new Date('2026-04-09T12:40:00.000Z') };
+  const masters = {
+    id: 'event-1',
+    name: 'The Masters',
+    startDate: new Date('2026-04-09T12:40:00.000Z'),
+    status: SportEventStatus.SCHEDULED,
+  };
+  const pga = {
+    id: 'event-2',
+    name: 'PGA Championship',
+    startDate: new Date('2026-05-14T12:00:00.000Z'),
+    status: SportEventStatus.SCHEDULED,
+  };
 
-  it('gives each listed contest its entry count and its event\'s name and start', () => {
+  it('gives each listed contest its entry count and its event\'s id, sequence, name, start and status', () => {
     const response = toContestListResponse(
-      [buildContest({ id: 'contest-1', sportEventId: 'event-1' })],
+      [buildContest({ id: 'contest-1', sportEventIds: ['event-1'] })],
       new Map([['contest-1', 3]]),
       new Map([['event-1', masters]]),
     );
 
     expect(response.contests[0]).toMatchObject({
       entryCount: 3,
-      sportEvent: { name: 'The Masters', startDate: '2026-04-09T12:40:00.000Z' },
+      sportEvents: [{
+        sportEventId: 'event-1',
+        sequence: 1,
+        name: 'The Masters',
+        startDate: '2026-04-09T12:40:00.000Z',
+        status: SportEventStatus.SCHEDULED,
+      }],
     });
   });
 
-  it('lists a contest with no event, or one whose event was not found, with a null event', () => {
+  it('lists a multi-event contest\'s events in its sequence order, numbered from 1', () => {
     const response = toContestListResponse(
-      [buildContest({ id: 'no-event', sportEventId: undefined }), buildContest({ id: 'lost-event', sportEventId: 'event-gone' })],
+      [buildContest({ id: 'majors', sportEventIds: ['event-1', 'event-2'] })],
+      new Map(),
+      new Map([['event-2', pga], ['event-1', masters]]),
+    );
+
+    expect(response.contests[0]?.sportEvents.map((event) => [event.sequence, event.name]))
+      .toEqual([[1, 'The Masters'], [2, 'PGA Championship']]);
+  });
+
+  it('leaves an event that was not found out of the contest\'s events rather than inventing one', () => {
+    const response = toContestListResponse(
+      [buildContest({ id: 'lost-event', sportEventIds: ['event-gone'] })],
       new Map(),
       new Map([['event-1', masters]]),
     );
 
-    expect(response.contests.map((contest) => contest.sportEvent)).toEqual([null, null]);
+    expect(response.contests[0]?.sportEvents).toEqual([]);
   });
 });
 
-describe('toContestResponse event summary', () => {
-  it('leaves the event summary off a single-contest read, whose page reads the event itself', () => {
-    expect(toContestResponse(buildContest({ id: 'contest-1', sportEventId: 'event-1' })).contest).not.toHaveProperty('sportEvent');
+describe('toContestResponse events', () => {
+  it('gives a single-contest read its events too, so a page reads each event\'s name and status from it', () => {
+    expect(toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]])).contest.sportEvents)
+      .toEqual([expect.objectContaining({ sportEventId: 'event-1', name: 'The Masters' })]);
   });
+
+  function masters() {
+    return { id: 'event-1', name: 'The Masters', startDate: new Date('2026-04-09T12:40:00.000Z'), status: SportEventStatus.SCHEDULED };
+  }
 });
 
 describe('toContestLeaderboardResponse', () => {
@@ -71,12 +105,12 @@ describe('toContestLeaderboardResponse', () => {
         entryNumber: 1,
         squadId: 'squad-1',
         squadName: 'Paddock Pals',
-        status: ContestEntryStatus.SUBMITTED,
         score: 8,
         position: 1,
         displayPosition: '1',
         countingPickLimit: 3,
         scoredPickCount: 2,
+        events: [{ sportEventId: 'event-1', score: 8, position: 1, displayPosition: '1' }],
         picks: [{
           pickId: 'pick-1',
           sportEventParticipantId: 'sep-1',
@@ -99,5 +133,6 @@ describe('toContestLeaderboardResponse', () => {
     const [entry] = ContestLeaderboardResponseSchema.parse(response).entries;
     expect(entry.totalScore).toBe(8);
     expect([entry.picks[0].golf, entry.picks[0].race]).toEqual([null, { points: 5 }]);
+    expect(entry.events).toEqual([{ sportEventId: 'event-1', totalScore: 8, position: 1, displayPosition: '1' }]);
   });
 });

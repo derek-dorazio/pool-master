@@ -4,6 +4,7 @@ import {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
   PrismaContestEntryPickRepository,
+  PrismaContestEntryEventStandingRepository,
   PrismaContestEntryRepository,
   PrismaContestEntryStandingRepository,
   PrismaContestRepository,
@@ -19,6 +20,7 @@ import {
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { mockFn } from '../../support/mock-fn';
+import { expectDefined } from '../../support/expect-defined';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
@@ -41,6 +43,7 @@ function repos() {
     entries: new PrismaContestEntryRepository(prisma),
     picks: new PrismaContestEntryPickRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
+    eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
   };
 }
 
@@ -88,15 +91,59 @@ async function createLeagueAndEvent() {
   return { owner, league, squads: [alpha, bravo] as const, event, field, suffix };
 }
 
-async function createContest(leagueId: string, sportEventId: string, name: string, status: ContestStatus = ContestStatus.ACTIVE) {
+/** A second golf event with a two-golfer field, starting after the first. */
+async function createLaterEvent(suffix: string, startDate = new Date('2026-07-16T12:00:00.000Z')) {
+  const prisma = getPrisma();
+  const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
+  const event = await prisma.sportEvent.create({
+    data: {
+      ...(await freshEventEdition(prisma)),
+      externalId: `contest-repo-later-${suffix}-${randomUUID().slice(0, 4)}`,
+      providerId: 'integration-test',
+      sport: Sport.GOLF,
+      name: `Contest Repo Later Open ${suffix}`,
+      startDate,
+      status: 'SCHEDULED',
+    },
+  });
+  const field = [];
+  for (const name of ['Later One', 'Later Two']) {
+    const participant = await prisma.participant.create({
+      data: { sportId: sport.id, name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
+    });
+    field.push(await prisma.sportEventParticipant.create({
+      data: { sportEventId: event.id, participantId: participant.id, isActive: true },
+    }));
+  }
+  return { event, field };
+}
+
+async function createContest(
+  leagueId: string,
+  sportEventId: string | readonly string[],
+  name: string,
+  status: ContestStatus = ContestStatus.ACTIVE,
+) {
   return repos().contests.create({
     leagueId,
-    sportEventId,
+    sportEventIds: typeof sportEventId === 'string' ? [sportEventId] : [...sportEventId],
     name,
     status,
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
   });
+}
+
+/** An entry made through the port, so it carries a DRAFT status row in each contest event, as production's do. */
+async function createEntry(contestId: string, squadId: string, entryNumber: number, name: string) {
+  const result = await repos().entries.create({ contestId, squadId, entryNumber, name, tiebreakerValue: null });
+  if (result.status !== 'created') throw new Error(`seed: entry ${name} refused (${result.status})`);
+  return result.entry;
+}
+
+/** An entry's event statuses as [event, status] pairs, by event id. */
+function byEvent(events: ReadonlyArray<{ sportEventId: string; status: string }>) {
+  return events.map((row) => [row.sportEventId, row.status]).sort(([left], [right]) => left.localeCompare(right));
 }
 
 describe('ContestRepository', () => {
@@ -107,7 +154,7 @@ describe('ContestRepository', () => {
 
     expect(created).toEqual(expect.objectContaining({
       leagueId: league.id,
-      sportEventId: event.id,
+      sportEventIds: [event.id],
       name: 'Created Contest',
       status: ContestStatus.DRAFT,
       contestFormat: 'ROSTER',
@@ -227,10 +274,65 @@ describe('ContestRepository', () => {
       name: 'After',
       startsAt,
       status: ContestStatus.DRAFT,
-      sportEventId: event.id,
+      sportEventIds: [event.id],
       sport: Sport.GOLF,
     }));
     await expect(repos().contests.findById(contest.id)).resolves.toEqual(renamed);
+  });
+
+  it('creates a contest on several events, reads them back in the given sequence, and finds it from each of its events', async () => {
+    const { league, event, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+
+    const created = await createContest(league.id, [event.id, later.event.id], 'Two Majors');
+
+    expect(created.sportEventIds).toEqual([event.id, later.event.id]);
+    await expect(getPrisma().contestSportEvent.findMany({
+      where: { contestId: created.id },
+      orderBy: { sequence: 'asc' },
+      select: { sportEventId: true, sequence: true },
+    })).resolves.toEqual([{ sportEventId: event.id, sequence: 1 }, { sportEventId: later.event.id, sequence: 2 }]);
+    expect((await repos().contests.findBySportEvent(event.id)).map((contest) => contest.id)).toEqual([created.id]);
+    expect((await repos().contests.findBySportEvent(later.event.id)).map((contest) => contest.id)).toEqual([created.id]);
+  });
+
+  it('adds an event to a contest with a DRAFT status for it on every entry, renumbering the sequence by the order given', async () => {
+    const { league, squads, event, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, event.id, 'Growing', ContestStatus.OPEN);
+    const entry = await createEntry(contest.id, squads[0].id, 1, 'Grower');
+    await repos().entries.setEventStatus(entry.id, event.id, 'SUBMITTED', new Date('2026-06-01T12:00:00.000Z'));
+
+    await repos().contests.replaceSportEvents(contest.id, [later.event.id, event.id]);
+
+    expect((await repos().contests.findById(contest.id))?.sportEventIds).toEqual([later.event.id, event.id]);
+    const reread = expectDefined(await repos().entries.findByIdWithSquad(entry.id));
+    expect(byEvent(reread.events)).toEqual([
+      [event.id, 'SUBMITTED'],
+      [later.event.id, 'DRAFT'],
+    ].sort(([left], [right]) => left.localeCompare(right)));
+  });
+
+  it('removes an event from a contest with each entry\'s status and picks in it, keeping the other event\'s', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event, field, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, [event.id, later.event.id], 'Shrinking', ContestStatus.OPEN);
+    const entry = await createEntry(contest.id, squads[0].id, 1, 'Shrinker');
+    await prisma.contestEntryPick.createMany({
+      data: [
+        { entryId: entry.id, sportEventParticipantId: field[0].id, contestFormat: 'ROSTER', slot: 1 },
+        { entryId: entry.id, sportEventParticipantId: later.field[0].id, contestFormat: 'ROSTER', slot: 1 },
+      ],
+    });
+
+    await repos().contests.replaceSportEvents(contest.id, [later.event.id]);
+
+    expect((await repos().contests.findById(contest.id))?.sportEventIds).toEqual([later.event.id]);
+    const reread = expectDefined(await repos().entries.findByIdWithSquad(entry.id));
+    expect(byEvent(reread.events)).toEqual([[later.event.id, 'DRAFT']]);
+    const picks = await repos().picks.findByEntriesWithParticipant([entry.id]);
+    expect(picks.map((pick) => [pick.sportEventParticipantId, pick.sportEventId])).toEqual([[later.field[0].id, later.event.id]]);
   });
 });
 
@@ -425,24 +527,49 @@ describe('ContestConfigTemplateRepository', () => {
 });
 
 describe('ContestEntryRepository', () => {
-  it('lists a contest\'s entries by entry number with squad names, optionally only the submitted ones', async () => {
-    const prisma = getPrisma();
+  it('creates an entry a DRAFT in each of its contest\'s events, with no submit time', async () => {
     const { league, squads, event, suffix } = await createLeagueAndEvent();
-    const contest = await createContest(league.id, event.id, 'Entries');
-    // Inserted out of order, so the order below is the adapter's, not insertion order.
-    const second = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 2, name: 'Second', status: 'SUBMITTED' },
-    });
-    const first = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'First', status: 'SUBMITTED' },
-    });
-    // Stored without a status: the column defaults to DRAFT (#481), which counts nowhere.
-    const draft = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 3, name: 'Draft' },
-    });
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, [event.id, later.event.id], 'Born Drafts', ContestStatus.OPEN);
+
+    const entry = await createEntry(contest.id, squads[0].id, 1, 'Newcomer');
+
+    expect(byEvent(entry.events)).toEqual([[event.id, 'DRAFT'], [later.event.id, 'DRAFT']].sort(([left], [right]) => left.localeCompare(right)));
+    expect(entry.events.every((row) => row.submittedAt === undefined)).toBe(true);
+  });
+
+  it('submits one event of an entry with its submit time, leaving its other event a draft, and clears the time when it returns to DRAFT', async () => {
+    const { league, squads, event, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, [event.id, later.event.id], 'Per Event', ContestStatus.OPEN);
+    const entry = await createEntry(contest.id, squads[0].id, 1, 'Submitter');
+    const at = new Date('2026-06-02T08:00:00.000Z');
+
+    const submitted = await repos().entries.setEventStatus(entry.id, event.id, 'SUBMITTED', at);
+
+    expect(submitted.events.find((row) => row.sportEventId === event.id)).toEqual({ sportEventId: event.id, status: 'SUBMITTED', submittedAt: at });
+    expect(submitted.events.find((row) => row.sportEventId === later.event.id)).toEqual({ sportEventId: later.event.id, status: 'DRAFT', submittedAt: undefined });
+
+    const reverted = await repos().entries.setEventStatus(entry.id, event.id, 'DRAFT', new Date('2026-06-03T08:00:00.000Z'));
+
+    expect(reverted.events.find((row) => row.sportEventId === event.id)).toEqual({ sportEventId: event.id, status: 'DRAFT', submittedAt: undefined });
+  });
+
+  it('lists a contest\'s entries by entry number with squad names, optionally only the ones that submitted one event', async () => {
+    const { league, squads, event, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, [event.id, later.event.id], 'Entries');
+    // Created out of order, so the order below is the adapter's, not insertion order.
+    const second = await createEntry(contest.id, squads[1].id, 2, 'Second');
+    const first = await createEntry(contest.id, squads[0].id, 1, 'First');
+    const draft = await createEntry(contest.id, squads[1].id, 3, 'Draft');
+    await repos().entries.setEventStatus(second.id, event.id, 'SUBMITTED', new Date());
+    await repos().entries.setEventStatus(first.id, event.id, 'SUBMITTED', new Date());
+    await repos().entries.setEventStatus(draft.id, later.event.id, 'SUBMITTED', new Date());
 
     const all = await repos().entries.findByContestWithSquad(contest.id);
-    const submitted = await repos().entries.findByContestWithSquad(contest.id, { submittedOnly: true });
+    const submittedFirstEvent = await repos().entries.findByContestWithSquad(contest.id, { submittedFor: event.id });
+    const submittedLaterEvent = await repos().entries.findByContestWithSquad(contest.id, { submittedFor: later.event.id });
     const one = await repos().entries.findByIdWithSquad(second.id);
 
     expect(all.map((entry) => [entry.id, entry.squadName])).toEqual([
@@ -450,42 +577,38 @@ describe('ContestEntryRepository', () => {
       [second.id, `Bravo ${suffix}`],
       [draft.id, `Bravo ${suffix}`],
     ]);
-    expect(draft.status).toBe('DRAFT');
-    expect(submitted.map((entry) => entry.id)).toEqual([first.id, second.id]);
+    expect(submittedFirstEvent.map((entry) => entry.id)).toEqual([first.id, second.id]);
+    expect(submittedLaterEvent.map((entry) => entry.id)).toEqual([draft.id]);
     expect(one).toEqual(expect.objectContaining({ id: second.id, entryNumber: 2, squadName: `Bravo ${suffix}` }));
     await expect(repos().entries.findByIdWithSquad(randomUUID())).resolves.toBeNull();
   });
 
-  it('updates only the entry fields given, leaving the others as stored', async () => {
-    const prisma = getPrisma();
+  it('updates only the entry fields given, leaving the others and its event statuses as stored', async () => {
     const { league, squads, event } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Entry Update');
-    const entry = await prisma.contestEntry.create({
-      data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Original', tiebreakerValue: 270 },
+    const created = await repos().entries.create({
+      contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Original', tiebreakerValue: 270,
     });
+    const entry = created.status === 'created' ? created.entry : null;
+    const stored = expectDefined(entry);
+    await repos().entries.setEventStatus(stored.id, event.id, 'SUBMITTED', new Date());
 
-    const updated = await repos().entries.update(entry.id, { name: 'Renamed', status: 'SUBMITTED' });
+    const updated = await repos().entries.update(stored.id, { name: 'Renamed' });
 
-    expect(updated).toEqual(expect.objectContaining({
-      id: entry.id,
-      name: 'Renamed',
-      status: 'SUBMITTED',
-      tiebreakerValue: 270,
-    }));
+    expect(updated).toEqual(expect.objectContaining({ id: stored.id, name: 'Renamed', tiebreakerValue: 270 }));
+    expect(byEvent(updated.events)).toEqual([[event.id, 'SUBMITTED']]);
   });
 
   it('deletes one entry of an undrawn contest and leaves the contest\'s other entries', async () => {
-    const prisma = getPrisma();
     const { league, squads, event } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Entry Delete');
-    const [leaving, staying] = await Promise.all([
-      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Leaving' } }),
-      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 1, name: 'Staying' } }),
-    ]);
+    const leaving = await createEntry(contest.id, squads[0].id, 1, 'Leaving');
+    const staying = await createEntry(contest.id, squads[1].id, 1, 'Staying');
 
     await expect(repos().entries.delete(leaving.id)).resolves.toEqual({ status: 'deleted' });
 
     expect((await repos().entries.findByContest(contest.id)).map((entry) => entry.id)).toEqual([staying.id]);
+    await expect(getPrisma().contestEntryEvent.count({ where: { contestEntryId: leaving.id } })).resolves.toBe(0);
   });
 });
 
@@ -541,6 +664,8 @@ describe('ContestEntryPickRepository — read-only', () => {
         teamAffiliation: null,
       },
     ]);
+    // Each pick names the event its field row belongs to (#713).
+    expect(withParticipant.map((pick) => pick.sportEventId)).toEqual([event.id, event.id]);
     // An entry with no picks is absent from the map, not zero.
     expect(counts).toEqual(new Map([[picked.id, 2]]));
     await expect(repos().picks.findByEntries([])).resolves.toEqual([]);
@@ -643,9 +768,8 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
         data: { squadId: squads[0].id, leagueId: league.id, userId: user.user.id, status: 'ACTIVE', joinedAt: new Date() },
       });
     }
-    await prisma.contestEntry.create({
-      data: { contestId: open.id, squadId: squads[0].id, entryNumber: 1, name: 'Alpha Entry', status: 'SUBMITTED' },
-    });
+    const alphaEntry = await createEntry(open.id, squads[0].id, 1, 'Alpha Entry');
+    await repos().entries.setEventStatus(alphaEntry.id, event.id, 'SUBMITTED', new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
     const lifecycle = createEventLifecycleService(prisma, {
       mailDelivery: { providerName: 'smtp', send },
