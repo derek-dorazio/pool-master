@@ -125,7 +125,7 @@ export function JoinTeamOwnerPage() {
         },
       });
       if (!response.data?.user) {
-        throwApiError(response.error, 'Team-owner registration response is missing data.');
+        throwApiError(response.error, 'Registration response is missing data.');
       }
 
       return response.data;
