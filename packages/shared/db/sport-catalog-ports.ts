@@ -35,14 +35,14 @@ export interface SportLeagueFilters {
   isActive?: boolean;
 }
 
-export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear'>>;
+export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement'>>;
 
 export interface SportLeagueRepository {
   findById(id: string): Promise<SportLeague | null>;
   /** Ordered by name. */
   findAll(filters: SportLeagueFilters): Promise<SportLeague[]>;
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
-  create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword'>): Promise<SportLeague>;
+  create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
 }
 

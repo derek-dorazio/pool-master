@@ -97,6 +97,7 @@ function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto,
     awayScore: null,
     advancesToMatchId: null,
     advancesToSide: null,
+    regionLabel: null,
     ...overrides,
   };
 }

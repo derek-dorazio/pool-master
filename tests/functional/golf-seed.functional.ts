@@ -13,7 +13,7 @@ import {
   setEventPlayInWinner,
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
-import { findSportRow, MatchSide, Sport } from '@poolmaster/shared/domain';
+import { BracketAdvancement, findSportRow, MatchSide, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import {
@@ -103,7 +103,7 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ id: string; matchKeyword: string | null } | undefined> {
+async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ id: string; matchKeyword: string | null; bracketAdvancement: BracketAdvancement } | undefined> {
   const { sportLeagues } = expectDefined((await listSportLeagues({ client: admin.client, query: { sport } })).data);
   return sportLeagues.find((league) => league.name === name);
 }
@@ -546,6 +546,28 @@ describe('Loading a real basketball bracket through the admin API', () => {
     await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY });
   });
 
+  it('sets the league\'s reseed rule and each match\'s region from the file, reloading a draft\'s bracket when a region changes', async () => {
+    const reseeding = file((event) => {
+      event.matches = baseMatches().map((match) => ({ ...match, regionLabel: 'East' }));
+    });
+    reseeding.sportLeagues[0].bracketAdvancement = BracketAdvancement.RESEED_BY_SEED;
+
+    expect(changes(await loadSportData(parsed(reseeding), { getClient, now: NOW, mode: LoadMode.APPLY }))).toEqual([
+      { sportLeague: conference, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.UPDATE, name: conference, detail: 'bracket advancement FIXED -> RESEED_BY_SEED' },
+      bracketRow(LoadAction.UPDATE, 'matches 1, 2, 3 changed; bracket loaded whole again'),
+    ]);
+    expect(expectDefined(await leagueNamed(conference, Sport.BASKETBALL)).bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
+    const { matches } = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: (await storedEvent()).id } })).data);
+    expect(matches.map((match) => match.regionLabel)).toEqual(['East', 'East', 'East']);
+    expect(changes(await loadSportData(parsed(reseeding), { getClient, now: NOW, mode: LoadMode.APPLY }))).toEqual([]);
+
+    // Back to a fixed league with no regions, for the release below.
+    const fixed = file();
+    fixed.sportLeagues[0].bracketAdvancement = BracketAdvancement.FIXED;
+    await loadSportData(parsed(fixed), { getClient, now: NOW, mode: LoadMode.APPLY });
+    expect(expectDefined(await leagueNamed(conference, Sport.BASKETBALL)).bracketAdvancement).toBe(BracketAdvancement.FIXED);
+  });
+
   it('after release changes only a match time, leaves a filled play-in place alone, and reports a changed pairing or field as a conflict', async () => {
     const event = await storedEvent();
     const eventId = event.id;
@@ -587,7 +609,7 @@ describe('Loading a real basketball bracket through the admin API', () => {
       });
     });
     expect(changes(await loadSportData(parsed(swapped), { getClient, now: NOW, mode: LoadMode.DRY_RUN }))).toEqual([
-      bracketRow(LoadAction.CONFLICT, 'SCHEDULED, so the bracket is not changed: pairing, round or link of matches 1, 2 differs'),
+      bracketRow(LoadAction.CONFLICT, 'SCHEDULED, so the bracket is not changed: pairing, round, link or region of matches 1, 2 differs'),
     ]);
 
     const dropped = file((event) => {

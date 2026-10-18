@@ -1846,6 +1846,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/reseed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Propose a reseeded round's matchups
+         * @description For a league that reseeds (the NFL after Wild Card weekend): in each region the best seed left hosts the worst and the second best the second worst; a bye or a linked winner keeps its place. Saves nothing. 422 BRACKET_NOT_RESEEDED when the event's league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. 409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started. 422 BRACKET_INVALID when the teams left do not fit the round. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
+         */
+        get: operations["proposeEventRoundMatchups"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/matchups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set a reseeded round's matchups
+         * @description Places both sides of every match of the round, all or none; it can be set again until the round starts. 422 BRACKET_NOT_RESEEDED when the event's league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. 409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started. 422 BRACKET_INVALID, naming every problem, when a match is left out or set twice, a team is not one left in the round or plays twice, a team leaves its region, or a bye or linked winner is moved. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         */
+        put: operations["setEventRoundMatchups"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/participants/{sportEventParticipantId}/play-in-winner": {
         parameters: {
             query?: never;
@@ -1901,7 +1941,7 @@ export interface paths {
         put?: never;
         /**
          * Create a sport league
-         * @description Adding a tour is one call, not a migration. Root admin only.
+         * @description Adding a tour is one call, not a migration. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.
          */
         post: operations["createSportLeague"];
         delete?: never;
@@ -1926,7 +1966,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport league
-         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). Root admin only.
+         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.
          */
         patch: operations["updateSportLeague"];
         trace?: never;
@@ -5989,6 +6029,11 @@ export interface components {
             currentEventYear: number | null;
             /** @description Whether the sport league is in use; a read filter, not a write lock. */
             isActive: boolean;
+            /**
+             * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
+             * @enum {string}
+             */
+            bracketAdvancement: "FIXED" | "RESEED_BY_SEED";
             /** @description Participants currently affiliated with the sport league. */
             affiliationCount: number;
             /** @description Events on record for the sport league, across every series and year. */
@@ -6036,6 +6081,11 @@ export interface components {
                 currentEventYear: number | null;
                 /** @description Whether the sport league is in use; a read filter, not a write lock. */
                 isActive: boolean;
+                /**
+                 * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
+                 * @enum {string}
+                 */
+                bracketAdvancement: "FIXED" | "RESEED_BY_SEED";
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -6074,6 +6124,11 @@ export interface components {
                 currentEventYear: number | null;
                 /** @description Whether the sport league is in use; a read filter, not a write lock. */
                 isActive: boolean;
+                /**
+                 * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
+                 * @enum {string}
+                 */
+                bracketAdvancement: "FIXED" | "RESEED_BY_SEED";
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -6101,6 +6156,11 @@ export interface components {
             name: string;
             /** @description Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import. */
             matchKeyword?: string;
+            /**
+             * @description FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
+             * @enum {string}
+             */
+            bracketAdvancement?: "FIXED" | "RESEED_BY_SEED";
         };
         /** @description Changes to a sport league; omitted fields are left alone. */
         UpdateSportLeagueRequest: {
@@ -6110,6 +6170,11 @@ export interface components {
             isActive?: boolean;
             /** @description Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in. */
             currentEventYear?: number;
+            /**
+             * @description RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
+             * @enum {string}
+             */
+            bracketAdvancement?: "FIXED" | "RESEED_BY_SEED";
         };
         /** @description A participant's membership of a sport league, and their current rank there. */
         ParticipantLeagueAffiliationDto: {
@@ -11151,6 +11216,8 @@ export interface components {
              * @enum {string|null}
              */
             advancesToSide: "HOME" | "AWAY" | null;
+            /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
+            regionLabel: string | null;
         };
         /** @description An event's bracket. */
         SportEventBracketResponse: {
@@ -11205,6 +11272,8 @@ export interface components {
                  * @enum {string|null}
                  */
                 advancesToSide: "HOME" | "AWAY" | null;
+                /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
+                regionLabel: string | null;
             }[];
         };
         /** @description One match of an event's bracket. */
@@ -11260,6 +11329,8 @@ export interface components {
                  * @enum {string|null}
                  */
                 advancesToSide: "HOME" | "AWAY" | null;
+                /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
+                regionLabel: string | null;
             };
         };
         /** @description The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side. */
@@ -11282,7 +11353,7 @@ export interface components {
                 isNeutralSite: boolean;
                 /** Format: date-time */
                 scheduledDate: string | null;
-                /** @description Where the winner moves on to; null for the final, and only for the final. */
+                /** @description Where the winner moves on to; null for the final. In a league that reseeds, also null for each match of a round whose winners are placed by seed. */
                 advancesTo: {
                     /** @description A match of this bracket in a later round. */
                     matchNumber: number;
@@ -11292,6 +11363,8 @@ export interface components {
                      */
                     side: "HOME" | "AWAY";
                 } | null;
+                /** @description The region or conference the match is played in; omitted or null for none. */
+                regionLabel?: string | null;
             }[];
         };
         /** @description One match edit. Its time and site can change at any point; its sides only until the event is released. */
@@ -11332,6 +11405,57 @@ export interface components {
             homeScore: number | null;
             /** @description The away side's score, or null with the home score null too. */
             awayScore: number | null;
+        };
+        /** @description Both sides of one match of a reseeded round. */
+        RoundMatchupDto: {
+            /** @description A match of the round. */
+            matchNumber: number;
+            /**
+             * Format: uuid
+             * @description The field row on the home side.
+             */
+            homeSportEventParticipantId: string;
+            /**
+             * Format: uuid
+             * @description The field row on the away side.
+             */
+            awaySportEventParticipantId: string;
+        };
+        /** @description The pairing the server proposes for a reseeded round: in each region the best seed left hosts the worst, the second best the second worst, and a team already holding its place keeps it. */
+        SportEventRoundMatchupsResponse: {
+            /** @description One per match of the round, in match-number order. */
+            matches: {
+                /** @description A match of the round. */
+                matchNumber: number;
+                /**
+                 * Format: uuid
+                 * @description The field row on the home side.
+                 */
+                homeSportEventParticipantId: string;
+                /**
+                 * Format: uuid
+                 * @description The field row on the away side.
+                 */
+                awaySportEventParticipantId: string;
+            }[];
+        };
+        /** @description A reseeded round's teams, all at once. Every team left in the round plays once, in its own region, and a team holding its place (a bye, a linked winner) keeps it. */
+        SetSportEventRoundMatchupsRequest: {
+            /** @description Every match of the round, once each. */
+            matches: {
+                /** @description A match of the round. */
+                matchNumber: number;
+                /**
+                 * Format: uuid
+                 * @description The field row on the home side.
+                 */
+                homeSportEventParticipantId: string;
+                /**
+                 * Format: uuid
+                 * @description The field row on the away side.
+                 */
+                awaySportEventParticipantId: string;
+            }[];
         };
         /** @description Feed-aware event sync request. */
         EventSyncRequest: {
@@ -18395,6 +18519,155 @@ export interface operations {
             };
         };
     };
+    proposeEventRoundMatchups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                roundNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The pairing the server proposes for a reseeded round: in each region the best seed left hosts the worst, the second best the second worst, and a team already holding its place keeps it. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventRoundMatchupsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    setEventRoundMatchups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                roundNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetSportEventRoundMatchupsRequest"];
+            };
+        };
+        responses: {
+            /** @description An event's bracket. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventBracketResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     setEventPlayInWinner: {
         parameters: {
             query?: never;
@@ -18572,6 +18845,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

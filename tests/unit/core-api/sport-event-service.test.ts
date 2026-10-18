@@ -49,6 +49,7 @@ function setup(sportName: Sport = Sport.GOLF) {
     tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo() }),
     bracket: new SportEventBracketService({
       sportEvents,
+      sportLeagues: store.sportLeagueRepo(),
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
       participants: store.participantRepo(),
@@ -310,7 +311,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
     const [home, away] = store.field;
     await store.matchRepo().replaceBracket(event.id, [{
       id: 'final', roundNumber: 1, matchNumber: 1, homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,
-      isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSide: null,
+      isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSide: null, regionLabel: null,
     }]);
 
     await expect(service.releaseEvent(event.id)).resolves.toMatchObject({ event: { status: SportEventStatus.SCHEDULED } });

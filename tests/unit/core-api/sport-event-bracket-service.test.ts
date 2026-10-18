@@ -30,6 +30,7 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT }: { 
   let sequence = 0;
   const service = new SportEventBracketService({
     sportEvents: store.sportEventRepo(),
+    sportLeagues: store.sportLeagueRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
@@ -306,7 +307,7 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
       id: 'match-started', sportEventId: event.id, roundNumber: 1, matchNumber: 1,
       homeSportEventParticipantId: duke.id, awaySportEventParticipantId: slot.id, isNeutralSite: true,
       scheduledDate: null, status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: null, awayScore: null,
-      advancesToMatchId: null, advancesToSide: null, createdAt: new Date(), updatedAt: new Date(),
+      advancesToMatchId: null, advancesToSide: null, regionLabel: null, createdAt: new Date(), updatedAt: new Date(),
     });
 
     await expect(service.fillPlayInSlot(event.id, slot.id, xavier.id))

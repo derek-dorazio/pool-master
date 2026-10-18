@@ -550,6 +550,7 @@ an operation's shape from a 400 — the answer the `/admin` routes these replace
 | List, read one | `authenticated` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its affiliation and event counts and its `currentEventYear` |
 | Create, update | `rootAdmin` | `createSportLeague` takes the sport; unique on `(sportId, name)`. Adding a tour is one call, not a migration |
 | Set the current event year | `rootAdmin` | `updateSportLeague` with `currentEventYear` — one write, so a sport league never has two. 422 `EVENT_YEAR_HAS_NO_EVENTS` for a year the sport league has no events in: the integrity the season foreign key it replaced used to give (#315) |
+| Set how brackets advance | `rootAdmin` | `bracketAdvancement` on create or update (#722): `FIXED` (the default) sends each winner to the match its link names; `RESEED_BY_SEED` lets a round's matches link nowhere, so the admin places their winners by seed (the NFL after Wild Card weekend). 422 `SPORT_LEAGUE_NOT_BRACKET` for `RESEED_BY_SEED` on a sport not played as a bracket |
 
 ### EventSeries
 
@@ -621,7 +622,8 @@ that shows the status.
 ### SportEventMatch — a bracket event's games
 
 The matches of an event whose sport's tournament format is `KNOCKOUT_BRACKET` (#698). Each
-names its round, its home and away field rows, and the match and side its winner advances to;
+names its round, its home and away field rows, the match and side its winner advances to, and
+the region or conference it is played in (`regionLabel`, null for none);
 the database refuses a match feeding itself, two matches feeding one side, a winner on a match
 that is not `COMPLETED`, and a field row's delete while a match names it.
 
@@ -632,6 +634,15 @@ that is not `COMPLETED`, and a field row's delete while a match names it.
 | Edit a match | `rootAdmin` | `updateEventBracketMatch` by match number: time and site at any point, sides only until release (409 `SPORT_EVENT_BRACKET_LOCKED`). 404 `BRACKET_MATCH_NOT_FOUND`; 422 `BRACKET_INVALID` for a side problem |
 | Enter a result | `rootAdmin` | `recordEventMatchResult` by match number (#699): the winner's side, with both scores or neither (a series' score is games won). In one write it completes the match, puts the winner on its side of the next match, and rewrites every team's standing from the bracket: champion `COMPLETE` and first, teams out in the same round sharing a place, a loser `ELIMINATED`, `currentRound` the latest round with a match. Only on a released event (409 `SPORT_EVENT_NOT_RELEASED` for a draft). 422 `MATCH_SIDES_NOT_SET` while a side waits for its team; 422 `MATCH_RESULT_INVALID` for one score without the other, or the winner not scoring more. Changing the winner is 409 `SPORT_EVENT_MATCH_RESULT_LOCKED` once the next match has a result; fixing only the scores is always allowed |
 | Clear a result | `rootAdmin` | `clearEventMatchResult`: the match is scheduled again, the side its winner filled is emptied and the standings are rewritten. A match with no result is left as it is. 409 `SPORT_EVENT_MATCH_RESULT_LOCKED` once the next match has a result |
+| Propose a reseeded round | `rootAdmin` | `proposeEventRoundMatchups`, `GET /events/:eventId/bracket/rounds/:roundNumber/reseed` (#722), saving nothing: in each region the best seed left hosts the worst, the second best the second worst, and a bye or a linked winner keeps its match and side. 422 `BRACKET_NOT_RESEEDED` when the sport league is `FIXED` or the round is not one after matches that link nowhere; 409 `SPORT_EVENT_NOT_RELEASED` for a draft; 409 `BRACKET_ROUND_NOT_FINISHED` while a match of the round before has no result; 409 `BRACKET_ROUND_ALREADY_PLAYED` once a match of the round has started; 422 `BRACKET_INVALID` when the teams left do not fill a region's matches |
+| Set a reseeded round | `rootAdmin` | `setEventRoundMatchups`, `PUT /events/:eventId/bracket/rounds/:roundNumber/matchups`: both sides of every match of the round, all or none, and again until the round starts. The refusals above, and 422 `BRACKET_INVALID` naming every problem: a match left out or set twice, a team not left in the round or placed twice, a team out of its region, a bye or linked winner moved |
+
+**Reseeded brackets** (#722). In a `RESEED_BY_SEED` sport league a round's matches may name no
+next match; release lets the round after them wait with empty sides, and a result there places
+no one. The final is still the one match in the last round. Once the admin sets the next round,
+a changed or cleared result in the round before swaps or empties the team it placed, until that
+team's next match has a result (409 `SPORT_EVENT_MATCH_RESULT_LOCKED`). A winner waiting to be
+placed stands `ACTIVE` with `currentRound` the next round.
 
 A bracket contest scores by `KNOCKOUT_ROUND_POINTS`: each win scores its round's value, plus
 the seed difference times the multiplier when the upset bonus is on and the worse seed wins

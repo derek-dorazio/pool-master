@@ -121,6 +121,18 @@ export const MatchSide = {
 export type MatchSide = (typeof MatchSide)[keyof typeof MatchSide];
 
 /**
+ * How a sport league's bracket winners reach their next match (#722). FIXED: each match names
+ * the match and side its winner moves on to (March Madness, the NBA). RESEED_BY_SEED: after a
+ * round whose matches name no next match, the admin places the teams left in each region, the
+ * best seed hosting the worst (the NFL after Wild Card weekend).
+ */
+export const BracketAdvancement = {
+  FIXED: 'FIXED',
+  RESEED_BY_SEED: 'RESEED_BY_SEED',
+} as const;
+export type BracketAdvancement = (typeof BracketAdvancement)[keyof typeof BracketAdvancement];
+
+/**
  * How one field member's race ended (#622): the finish-position family's result status. Only a
  * FINISHED runner has a finishing place; every other status scores the contest's "did not
  * finish" points. A horse scratched before the start is WITHDRAWN on the field, not here.

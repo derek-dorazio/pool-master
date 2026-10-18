@@ -102,9 +102,9 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     return row ? toSportLeague(row) : null;
   }
 
-  async create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword'>): Promise<SportLeague> {
+  async create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement'>): Promise<SportLeague> {
     return toSportLeague(await this.prisma.sportLeague.create({
-      data: { sportId: input.sportId, name: input.name, matchKeyword: input.matchKeyword },
+      data: { sportId: input.sportId, name: input.name, matchKeyword: input.matchKeyword, bracketAdvancement: input.bracketAdvancement },
     }));
   }
 
@@ -116,6 +116,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         ...(updates.matchKeyword !== undefined && { matchKeyword: updates.matchKeyword }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
         ...(updates.currentEventYear !== undefined && { currentEventYear: updates.currentEventYear }),
+        ...(updates.bracketAdvancement !== undefined && { bracketAdvancement: updates.bracketAdvancement }),
       },
     }));
   }
@@ -701,6 +702,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     matchKeyword: row.matchKeyword,
     currentEventYear: row.currentEventYear,
     isActive: row.isActive,
+    bracketAdvancement: row.bracketAdvancement,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

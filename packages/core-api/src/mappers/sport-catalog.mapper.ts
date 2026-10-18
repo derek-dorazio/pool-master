@@ -32,6 +32,7 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     matchKeyword: sportLeague.matchKeyword,
     currentEventYear: sportLeague.currentEventYear,
     isActive: sportLeague.isActive,
+    bracketAdvancement: sportLeague.bracketAdvancement,
     affiliationCount: sportLeague.affiliationCount,
     sportEventCount: sportLeague.sportEventCount,
     createdAt: sportLeague.createdAt.toISOString(),

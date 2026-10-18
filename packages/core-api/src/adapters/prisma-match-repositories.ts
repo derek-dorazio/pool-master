@@ -52,6 +52,10 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
     await this.prisma.sportEventMatch.update({ where: { id }, data: patch });
   }
 
+  async placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[]): Promise<void> {
+    await this.prisma.$transaction(sides.map(({ id, ...values }) => this.prisma.sportEventMatch.update({ where: { id }, data: values })));
+  }
+
   async applyResult({ result, sideFill, standings }: MatchResultApply): Promise<void> {
     const { id, ...values } = result;
     await this.prisma.$transaction([

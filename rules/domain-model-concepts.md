@@ -78,7 +78,7 @@ Shown By Its Name*.
 | `SportEventParticipant` | the field, a golfer in the field | A participant entered in one event, with that event's rank, odds, seed and active/withdrawn/cut state | The global `Participant` |
 | `SportEventTier`, `SportEventParticipantValuation` | tier, price | Tiers belong to the **event** and are shared by every contest on it; the valuation puts one field member in one tier, with a price | A contest-level setting: there is no per-contest tier override |
 | `SportEventParticipantStanding` | position, leaderboard row | A field member's running position in the event (1 is best, every sport) | An entry's standing in a contest |
-| `SportEventMatch` | match, game, bracket | One game of a knockout event's bracket (#698): its round, its home and away field members (either empty until an earlier match's winner fills it), a neutral-site flag, a time, a status, the winning side and both scores, and the match and side its winner advances to. A playoff series is one match whose score is games won. Only a sport whose tournament format is `KNOCKOUT_BRACKET` has them | A `Contest`, and a `SportEventRound`, the round it is played in |
+| `SportEventMatch` | match, game, bracket | One game of a knockout event's bracket (#698): its round, its home and away field members (either empty until an earlier match's winner fills it), a neutral-site flag, a time, a status, the winning side and both scores, the match and side its winner advances to, and its region or conference. A playoff series is one match whose score is games won. Only a sport whose tournament format is `KNOCKOUT_BRACKET` has them | A `Contest`, and a `SportEventRound`, the round it is played in |
 | `SportEventParticipantRaceResult` | finish, result | How one runner's race ended (finish position): its place, or did not finish, disqualified, did not start; whether the race's result is official; its rider and post position. The admin enters it | `SportEventParticipantStanding`, its place in the event, which the finishing order writes beside it |
 
 ### Contests and entries
@@ -140,7 +140,9 @@ Shown By Its Name*.
   `isPlayInPlace` before release; only a marked row takes a winner, and its winner
   takes over that field row, ending the mark, keeping its seed, tier, price and picks, and the pairing's
   participant is inactivated. A side with no team is filled by an earlier match's winner; a team with a **bye** is named
-  straight on a later round's match, with no earlier match feeding its side.
+  straight on a later round's match, with no earlier match feeding its side. A sport league whose
+  `bracketAdvancement` is `RESEED_BY_SEED` **reseeds**: a round's winners go to no fixed match, and
+  the admin places them by seed within their region (the NFL's Divisional round).
 - **Active**: `isActive` on a league, squad, user or field member (present in normal views),
   and the contest status `ACTIVE` (its event is in progress). Different things.
 

@@ -83,9 +83,9 @@ async function createBracketEvent() {
 function fourTeamBracket(entryOf: (name: string) => { id: string }): SportEventMatchWrite[] {
   const finalId = randomUUID();
   return [
-    { id: randomUUID(), roundNumber: 1, matchNumber: 1, homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Vermont').id, isNeutralSite: true, scheduledDate: new Date('2027-03-18T19:10:00.000Z'), advancesToMatchId: finalId, advancesToSide: MatchSide.HOME },
-    { id: randomUUID(), roundNumber: 1, matchNumber: 2, homeSportEventParticipantId: entryOf('Houston').id, awaySportEventParticipantId: entryOf('Texas').id, isNeutralSite: true, scheduledDate: null, advancesToMatchId: finalId, advancesToSide: MatchSide.AWAY },
-    { id: finalId, roundNumber: 2, matchNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSide: null },
+    { id: randomUUID(), roundNumber: 1, matchNumber: 1, homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Vermont').id, isNeutralSite: true, scheduledDate: new Date('2027-03-18T19:10:00.000Z'), advancesToMatchId: finalId, advancesToSide: MatchSide.HOME, regionLabel: null },
+    { id: randomUUID(), roundNumber: 1, matchNumber: 2, homeSportEventParticipantId: entryOf('Houston').id, awaySportEventParticipantId: entryOf('Texas').id, isNeutralSite: true, scheduledDate: null, advancesToMatchId: finalId, advancesToSide: MatchSide.AWAY, regionLabel: null },
+    { id: finalId, roundNumber: 2, matchNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSide: null, regionLabel: null },
   ];
 }
 

@@ -90,7 +90,9 @@ announced. The envelope:
   across regions or conferences, so give each entry its own.
 - A bracket's sides are player keys from the event's field, and every match says where its
   winner goes (`advancesTo`), except the final. A team with a bye is named on its later
-  match's side. A First Four pairing is one field entry ("Texas / Xavier") with
+  match's side. Give each match its `regionLabel` (March Madness region, NFL conference). A league
+  that reseeds (the NFL) sets `bracketAdvancement: "RESEED_BY_SEED"` and leaves the games before
+  a reseed with `advancesTo: null`. A First Four pairing is one field entry ("Texas / Xavier") with
   `isPlayInPlace`; its game is not a match. The rules are `docs/EVENT-SETUP-PROCEDURES.md`
   *Loading sport data*.
 - Leave a game time out until it is announced, rather than writing a placeholder. A time the

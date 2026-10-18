@@ -8,6 +8,11 @@
  * its sides are filled by results (#699). Loading checks the bracket's shape; release checks
  * that it is complete (`releaseBlockers`), so a bracket can be loaded before its field is.
  *
+ * A sport league whose bracket reseeds (BracketAdvancement.RESEED_BY_SEED, the NFL) leaves the
+ * matches of a round before a reseed without links. Once every game of that round is final the
+ * admin places the next round's teams region by region (`setRoundMatchups`), from the pairing the
+ * server proposes from seeds (`proposeRoundMatchups`, bracket-reseed.ts).
+ *
  * The March Madness First Four is not played here: each play-in place is one field row standing
  * for the pairing, which `fillPlayInSlot` points at the winning team once the game is played.
  */
@@ -16,6 +21,7 @@ import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantRepository,
+  SportLeagueRepository,
   SportEventMatchPatch,
   SportEventMatchRepository,
   SportEventMatchWrite,
@@ -24,6 +30,7 @@ import type {
   SportEventRoundRepository,
 } from '@poolmaster/shared/db';
 import {
+  BracketAdvancement,
   getSportDefinition,
   MatchSide,
   MatchStatus,
@@ -34,6 +41,7 @@ import {
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
+import { findRoundMatchupProblems, proposeRoundMatchups, reseededRounds, roundPlacementBlocker, type RoundMatchup } from './bracket-reseed';
 
 /** Where a match's winner moves on to: the next match, by number, and the side it fills there. */
 export interface BracketAdvance {
@@ -49,8 +57,10 @@ export interface BracketMatchInput {
   awaySportEventParticipantId: string | null;
   isNeutralSite: boolean;
   scheduledDate: Date | null;
-  /** Null for the final, the one match whose winner goes nowhere. */
+  /** Null for the final, the one match whose winner goes nowhere; in a reseeded bracket, also a match before a reseed. */
   advancesTo: BracketAdvance | null;
+  /** The bracket region or conference; omitted or null where the bracket has none. */
+  regionLabel?: string | null;
 }
 
 /** One match edit; a value left out keeps what is stored. */
@@ -70,11 +80,12 @@ function describeSide(matchNumber: number, side: MatchSide): string {
 /**
  * Everything wrong with a bracket's shape, in words an admin can act on; empty when it can be
  * loaded. A side may be empty here (its team is not known yet), but never both named and filled
- * by an earlier match's winner.
+ * by an earlier match's winner. A bracket that `reseeds` may leave a match before its last round
+ * without a link: its winner is placed when the next round is reseeded.
  */
 export function findBracketProblems(
   matches: readonly BracketMatchInput[],
-  context: { roundNumbers: ReadonlySet<number>; fieldIds: ReadonlySet<string> },
+  context: { roundNumbers: ReadonlySet<number>; fieldIds: ReadonlySet<string>; reseeds?: boolean },
 ): string[] {
   const problems: string[] = [];
   const byNumber = new Map<number, BracketMatchInput>();
@@ -126,11 +137,13 @@ export function findBracketProblems(
     }
   }
 
-  const finals = matches.filter((match) => match.advancesTo === null);
-  if (finals.length !== 1) {
+  const lastRound = Math.max(...matches.map((match) => match.roundNumber));
+  const finals = matches.filter((match) => match.advancesTo === null && (context.reseeds !== true || match.roundNumber === lastRound));
+  if (context.reseeds === true && finals.length !== 1) {
+    problems.push(`a bracket has one final, the one match in its last round, but this one has ${finals.length} in round ${lastRound}`);
+  } else if (finals.length !== 1) {
     problems.push(`a bracket has one final, the one match whose winner advances nowhere, but this one has ${finals.length}`);
   } else {
-    const lastRound = Math.max(...matches.map((match) => match.roundNumber));
     if (finals[0].roundNumber !== lastRound) {
       problems.push(`the final, match ${finals[0].matchNumber}, is not in the bracket's last round (round ${lastRound})`);
     }
@@ -140,6 +153,7 @@ export function findBracketProblems(
 
 export interface SportEventBracketServiceDeps {
   sportEvents: Pick<SportEventRepository, 'findById'>;
+  sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   rounds: Pick<SportEventRoundRepository, 'findBySportEvent'>;
   field: SportEventParticipantRepository;
   participants: Pick<ParticipantRepository, 'findById'>;
@@ -171,6 +185,7 @@ export class SportEventBracketService {
     const problems = findBracketProblems(matches, {
       roundNumbers: new Set(rounds.map((round) => round.roundNumber)),
       fieldIds: new Set(field.map((entry) => entry.id)),
+      reseeds: await this.reseeds(event),
     });
     if (problems.length > 0) {
       this.deps.logger?.warn({ sportEventId, matches: matches.length, problems }, 'Refused a bracket with problems');
@@ -179,8 +194,9 @@ export class SportEventBracketService {
 
     const newId = this.deps.newId ?? randomUUID;
     const idByNumber = new Map(matches.map((match) => [match.matchNumber, newId()]));
-    const writes: SportEventMatchWrite[] = matches.map(({ advancesTo, ...match }) => ({
+    const writes: SportEventMatchWrite[] = matches.map(({ advancesTo, regionLabel, ...match }) => ({
       ...match,
+      regionLabel: regionLabel ?? null,
       id: idByNumber.get(match.matchNumber) as string,
       advancesToMatchId: advancesTo ? idByNumber.get(advancesTo.matchNumber) as string : null,
       advancesToSide: advancesTo?.side ?? null,
@@ -235,6 +251,8 @@ export class SportEventBracketService {
     if (bracket.length === 0) {
       return ['its bracket is not loaded'];
     }
+    // A reseeded round's teams are placed after the round before it is played.
+    const placedLater = await this.reseeds(event) ? reseededRounds(bracket) : new Set<number>();
     const fed = new Set(bracket
       .filter((match) => match.advancesToMatchId !== null && match.advancesToSide !== null)
       .map((match) => `${match.advancesToMatchId}/${match.advancesToSide}`));
@@ -245,7 +263,7 @@ export class SportEventBracketService {
         const sportEventParticipantId = sideOf(match, side);
         if (sportEventParticipantId !== null) {
           named.add(sportEventParticipantId);
-        } else if (!fed.has(`${match.id}/${side}`)) {
+        } else if (!fed.has(`${match.id}/${side}`) && !placedLater.has(match.roundNumber)) {
           emptySides += 1;
         }
       }
@@ -265,6 +283,77 @@ export class SportEventBracketService {
       blockers.push(`${withdrawn} withdrawn ${participant.many} are still in the bracket`);
     }
     return blockers;
+  }
+
+  /**
+   * The reseeded pairing the server proposes for one round of a reseeded bracket (#722): in each
+   * region the best seed left hosts the worst. 422 BRACKET_NOT_RESEEDED for a sport league whose
+   * bracket does not reseed, or a round its links fill; 409 BRACKET_ROUND_NOT_FINISHED while the
+   * round before has a match without a result; 409 BRACKET_ROUND_ALREADY_PLAYED once the round has
+   * started; 422 BRACKET_INVALID when the teams left do not fit the round's places.
+   */
+  async proposeRoundMatchups(sportEventId: string, roundNumber: number): Promise<RoundMatchup[]> {
+    const { bracket, seedOf } = await this.requireReseededRound(sportEventId, roundNumber);
+    const { matchups, problems } = proposeRoundMatchups(bracket, roundNumber, seedOf);
+    if (problems.length > 0) {
+      this.deps.logger?.warn({ sportEventId, roundNumber, problems }, 'Could not propose a reseeded round');
+      throw new SportEventError(`Round ${roundNumber} cannot be reseeded: ${problems.join('; ')}.`, 'BRACKET_INVALID', 422);
+    }
+    return matchups;
+  }
+
+  /**
+   * Places a reseeded round's teams (#722): both sides of every match of the round, all or none.
+   * The refusals of `proposeRoundMatchups`, and 422 BRACKET_INVALID when a match is set twice or
+   * left out, a team is not one left in the round or plays twice, a team leaves its region, or a
+   * team holding its place (a bye, a link's winner) is moved. It can be set again until the round
+   * starts. Returns the bracket.
+   */
+  async setRoundMatchups(sportEventId: string, roundNumber: number, matchups: readonly RoundMatchup[]): Promise<SportEventMatch[]> {
+    const { bracket, seedOf } = await this.requireReseededRound(sportEventId, roundNumber);
+    const problems = findRoundMatchupProblems(bracket, roundNumber, matchups, seedOf);
+    if (problems.length > 0) {
+      this.deps.logger?.warn({ sportEventId, roundNumber, problems }, 'Refused a reseeded round with problems');
+      throw new SportEventError(`Round ${roundNumber} cannot be set: ${problems.join('; ')}.`, 'BRACKET_INVALID', 422);
+    }
+    const idByNumber = new Map(bracket.map((match) => [match.matchNumber, match.id]));
+    await this.deps.matches.placeSides(matchups.map((matchup) => ({
+      id: idByNumber.get(matchup.matchNumber) as string,
+      homeSportEventParticipantId: matchup.homeSportEventParticipantId,
+      awaySportEventParticipantId: matchup.awaySportEventParticipantId,
+    })));
+    this.deps.logger?.info({ sportEventId, roundNumber, matches: matchups.length }, 'Placed a reseeded round');
+    return this.deps.matches.findBySportEvent(sportEventId);
+  }
+
+  /** The bracket and its seeds, for a released event's reseeded round that can be placed now. */
+  private async requireReseededRound(sportEventId: string, roundNumber: number): Promise<{ bracket: SportEventMatch[]; seedOf: Map<string, number | null> }> {
+    const event = await this.requireBracketEvent(sportEventId);
+    if (!(await this.reseeds(event))) {
+      throw new SportEventError(`Sport event ${sportEventId}'s bracket does not reseed: each winner's next match is fixed by its link.`, 'BRACKET_NOT_RESEEDED', 422);
+    }
+    if (event.status === SportEventStatus.DRAFT) {
+      throw new SportEventError(`Sport event ${sportEventId} is not released yet: set its pairings with the bracket.`, 'SPORT_EVENT_NOT_RELEASED', 409);
+    }
+    const [bracket, field] = await Promise.all([
+      this.deps.matches.findBySportEvent(sportEventId),
+      this.deps.field.findBySportEvent(sportEventId),
+    ]);
+    if (!reseededRounds(bracket).has(roundNumber)) {
+      throw new SportEventError(`Round ${roundNumber} of sport event ${sportEventId} is not reseeded: its teams come from the links of the round before.`, 'BRACKET_NOT_RESEEDED', 422);
+    }
+    const blocker = roundPlacementBlocker(bracket, roundNumber);
+    if (blocker) {
+      this.deps.logger?.warn({ sportEventId, roundNumber, code: blocker.code }, 'Refused to place a reseeded round');
+      throw new SportEventError(`Round ${roundNumber} cannot be placed: ${blocker.reason}.`, blocker.code, 409);
+    }
+    return { bracket, seedOf: new Map(field.map((entry) => [entry.id, entry.seedNumber ?? null])) };
+  }
+
+  /** Whether the event's sport league reseeds its bracket; a missing sport league reads as fixed. */
+  private async reseeds(event: SportEvent): Promise<boolean> {
+    const sportLeague = await this.deps.sportLeagues.findById(event.sportLeagueId);
+    return sportLeague?.bracketAdvancement === BracketAdvancement.RESEED_BY_SEED;
   }
 
   /**

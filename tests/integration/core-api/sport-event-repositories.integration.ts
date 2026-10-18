@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { Sport } from '@poolmaster/shared/domain';
+import { BracketAdvancement, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaEventSeriesRepository,
   PrismaParticipantProviderMappingRepository,
@@ -206,7 +206,7 @@ describe('SportEventRepository — writes', () => {
 describe('EventSeriesRepository', () => {
   it('finds a sport league\'s recurring event by name, creating it only the first time', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null });
+    const sportLeague = await new PrismaSportLeagueRepository(getPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
     const { eventSeries } = repos();
 
     const first = await eventSeries.findOrCreate(sportLeague.id, 'The Masters');
@@ -219,7 +219,7 @@ describe('EventSeriesRepository', () => {
   // plans/147 decision 9 (#314) — a series is a dimension with a lifecycle, and starts active.
   it('creates a series active', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null });
+    const sportLeague = await new PrismaSportLeagueRepository(getPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
 
     const series = await repos().eventSeries.findOrCreate(sportLeague.id, 'The Masters');
 

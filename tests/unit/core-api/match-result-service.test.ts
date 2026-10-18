@@ -25,6 +25,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
   let sequence = 0;
   const brackets = new SportEventBracketService({
     sportEvents: store.sportEventRepo(),
+    sportLeagues: store.sportLeagueRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
@@ -177,5 +178,112 @@ describe('MatchResultService.clearResult', () => {
     await service.recordResult(event.id, 3, homeWins);
 
     await expect(service.clearResult(event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+  });
+});
+
+describe('MatchResultService on a reseeded bracket', () => {
+  // Seeds 1 and 2 on byes; the first-round games (3 v 6, 4 v 5) link nowhere, so the admin places
+  // their winners into the second round by seed.
+  // Matches are numbered in round order unless `finalFirst`, which numbers the final 1 and the
+  // first round 3 and 4: nothing makes a bracket number its rounds in order.
+  async function reseeded({ finalFirst = false }: { finalFirst?: boolean } = {}) {
+    const store = new InMemorySportEvents();
+    const sportRow = store.addSport(Sport.BASKETBALL);
+    const event = store.addEvent({ sport: Sport.BASKETBALL, status: SportEventStatus.IN_PROGRESS, rounds: 3 });
+    const [one, two, three, four, five, six] = [1, 2, 3, 4, 5, 6].map((seed) => {
+      const team = store.addParticipant(sportRow.id, `Seed ${seed}`, { participantType: 'TEAM' });
+      return store.addToField(event.id, team.id, { seedNumber: seed });
+    });
+    const match = (matchNumber: number, roundNumber: number, home: string | null, away: string | null, advancesTo: [string, MatchSide] | null) => ({
+      id: `m${matchNumber}`, sportEventId: event.id, roundNumber, matchNumber,
+      homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
+      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null,
+      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null,
+      createdAt: AS_OF, updatedAt: AS_OF,
+    });
+    const [first, second, third, fourth, final] = finalFirst ? [3, 4, 5, 2, 1] : [1, 2, 3, 4, 5];
+    store.matchRows.push(
+      match(first, 1, three.id, six.id, null),
+      match(second, 1, four.id, five.id, null),
+      match(third, 2, one.id, null, [`m${final}`, MatchSide.HOME]),
+      match(fourth, 2, two.id, null, [`m${final}`, MatchSide.AWAY]),
+      match(final, 3, null, null, null),
+    );
+    store.matchRows.sort((left, right) => left.matchNumber - right.matchNumber);
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+    const standingOf = (rowId: string) => store.standingRows.find((row) => row.sportEventParticipantId === rowId);
+    const matchOf = (matchNumber: number) => expectMatch(store.matchRows.find((row) => row.matchNumber === matchNumber));
+    return { store, service, event, one, two, three, four, five, six, standingOf, matchOf };
+  }
+
+  function expectMatch<T>(value: T | undefined): T {
+    if (value === undefined) throw new Error('no such match');
+    return value;
+  }
+
+  it('leaves a first-round winner unplaced but counts it into the next round, still alive', async () => {
+    const { service, event, six, three, standingOf, matchOf } = await reseeded();
+
+    await service.recordResult(event.id, 1, awayWins);
+
+    expect([matchOf(3).awaySportEventParticipantId, matchOf(4).awaySportEventParticipantId]).toEqual([null, null]);
+    expect(standingOf(six.id)).toMatchObject({ status: ParticipantStandingStatus.ACTIVE, currentRound: 2 });
+    expect(standingOf(three.id)).toMatchObject({ status: ParticipantStandingStatus.ELIMINATED, currentRound: 1 });
+  });
+
+  it('swaps the placed team when a first-round winner changes before the next round is played', async () => {
+    const { service, event, three, six, matchOf } = await reseeded();
+    await service.recordResult(event.id, 1, awayWins);
+    matchOf(3).awaySportEventParticipantId = six.id;
+
+    await service.recordResult(event.id, 1, homeWins);
+
+    expect(matchOf(3).awaySportEventParticipantId).toBe(three.id);
+  });
+
+  it('empties the placed team\'s side when its first-round result is cleared', async () => {
+    const { service, event, six, matchOf } = await reseeded();
+    await service.recordResult(event.id, 1, awayWins);
+    matchOf(3).awaySportEventParticipantId = six.id;
+
+    await service.clearResult(event.id, 1);
+
+    expect(matchOf(3).awaySportEventParticipantId).toBeNull();
+  });
+
+  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) a new first-round winner once the match it was placed in has a result', async () => {
+    const { service, event, six, matchOf } = await reseeded();
+    await service.recordResult(event.id, 1, awayWins);
+    matchOf(3).awaySportEventParticipantId = six.id;
+    await service.recordResult(event.id, 3, homeWins);
+
+    await expect(service.recordResult(event.id, 1, homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+  });
+
+  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) a new first-round winner once its next-round game is played, even when the final is numbered first', async () => {
+    const { service, event, six, matchOf } = await reseeded({ finalFirst: true });
+    await service.recordResult(event.id, 3, awayWins);
+    matchOf(5).awaySportEventParticipantId = six.id;
+    await service.recordResult(event.id, 5, awayWins);
+    expect(matchOf(1).homeSportEventParticipantId).toBe(six.id);
+
+    await expect(service.recordResult(event.id, 3, homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+    expect([matchOf(5).awaySportEventParticipantId, matchOf(1).homeSportEventParticipantId]).toEqual([six.id, six.id]);
+  });
+
+  it('crowns the winner of the one match in the last round, not a first-round winner that links nowhere', async () => {
+    const { service, event, one, two, six, five, standingOf, matchOf } = await reseeded();
+    await service.recordResult(event.id, 1, awayWins);
+    await service.recordResult(event.id, 2, awayWins);
+    Object.assign(matchOf(3), { awaySportEventParticipantId: six.id });
+    Object.assign(matchOf(4), { awaySportEventParticipantId: five.id });
+    await service.recordResult(event.id, 3, homeWins);
+    await service.recordResult(event.id, 4, homeWins);
+
+    await service.recordResult(event.id, 5, awayWins);
+
+    expect(standingOf(two.id)).toMatchObject({ position: 1, status: ParticipantStandingStatus.COMPLETE });
+    expect(standingOf(one.id)).toMatchObject({ position: 2, status: ParticipantStandingStatus.ELIMINATED });
+    expect(standingOf(six.id)?.status).toBe(ParticipantStandingStatus.ELIMINATED);
   });
 });
