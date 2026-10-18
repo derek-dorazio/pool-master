@@ -17,7 +17,7 @@ import { Pager } from "./pager";
 
 /** One search box across the grid's text columns (rules/ux-rules.md §12 rule 7). */
 export type DataGridSearch = {
-  /** Accessible name of the search box, e.g. "Find a team". */
+  /** Accessible name of the search box, e.g. "Find a member". */
   label: string;
   placeholder?: string;
   testId?: string;

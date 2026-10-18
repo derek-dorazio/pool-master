@@ -212,7 +212,7 @@ export function TeamOwnerActionMenu({
             ? `${ownerName} will gain commissioner authority for this league.`
             : activeAction === 'demote'
               ? `${ownerName} will lose commissioner authority and return to member status in this league.`
-              : `${ownerName} will lose owner access on this team.`
+              : `${ownerName} will stop being an owner and will leave this league.`
         }
         onOpenChange={(open) => {
           if (!open) {
@@ -273,19 +273,19 @@ export function TeamOwnerActionMenu({
               canManageLeagueRole ? (
                 <>
                   <p className="text-sm text-muted-foreground">
-                    This team has only one active owner. To remove them, inactivate the team in its Danger zone on Manage team.
+                    {ownerName} is the only active owner, so removing them means inactivating. Use Inactivate in the Danger zone on the Manage page.
                   </p>
                   <Link
                     className="inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted/40"
                     onClick={() => setActiveAction(null)}
                     to={buildLeagueAdminTeamPath(leagueCode, teamId)}
                   >
-                    Open Manage team
+                    Open the Manage page
                   </Link>
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  This team has only one active owner, so they can&apos;t be removed. To step away from the team, use Leave league.
+                  {ownerName} is the only active owner, so they can&apos;t be removed. To step away from this league, use Leave league.
                 </p>
               )
             ) : (
@@ -296,8 +296,8 @@ export function TeamOwnerActionMenu({
                   * with no squad is invisible on every surface that lists people in the league.
                   */}
                 <p className="text-sm text-muted-foreground">
-                  This removes them from the team and from the league. Team history stays intact,
-                  and a commissioner can invite them back — rejoining restores their original team.
+                  This removes them as an owner and from the league. Contest history stays intact,
+                  and a commissioner can invite them back — rejoining restores everything they had.
                 </p>
                 {removeError ? <p className="text-sm text-destructive">{removeError}</p> : null}
                 <Button
@@ -307,7 +307,7 @@ export function TeamOwnerActionMenu({
                   onClick={() => void removeOwnerMutation.mutateAsync().catch(() => undefined)}
                   type="button"
                 >
-                  {removeOwnerMutation.isPending ? 'Removing...' : 'Remove from team and league'}
+                  {removeOwnerMutation.isPending ? 'Removing...' : 'Remove as co-owner and from the league'}
                 </Button>
               </>
             )}

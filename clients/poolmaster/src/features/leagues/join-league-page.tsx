@@ -291,7 +291,7 @@ export function JoinLeaguePage() {
       title={invitationQuery.data ? `Join ${invitationQuery.data.league.name}` : 'Accept your league invite'}
     >
       <p className="mt-2 text-sm text-muted-foreground">
-        Review the invitation, pick your team name and icon, and join when you&apos;re ready.
+        Review the invitation, choose your name and icon in this league, and join when you&apos;re ready.
       </p>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
@@ -302,7 +302,7 @@ export function JoinLeaguePage() {
             <InvitationContextCard
               inviteCode={invitationQuery.data.inviteCode}
               leagueName={invitationQuery.data.league.name}
-              message="Name your team and choose Join League when you're ready."
+              message="Choose your name in this league and select Join League when you're ready."
               title="Ready to join"
             />
           ) : null}
@@ -313,13 +313,13 @@ export function JoinLeaguePage() {
         </div>
 
         <div className="rounded-[1.5rem] border border-border bg-background p-5">
-          <h3 className="text-base font-semibold text-foreground">Your team setup</h3>
+          <h3 className="text-base font-semibold text-foreground">Your name and icon</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            New members get a team as part of joining the league. You can rename it and choose a built-in icon now.
+            Every member plays in the league under a name and an icon. Choose yours now; you can change both later.
           </p>
 
           <div className="mt-5 space-y-4">
-            <FormField label="Team name">
+            <FormField label="Your name in this league">
               <Input
                 data-testid="join-league-team-name"
                 maxLength={100}
@@ -329,7 +329,7 @@ export function JoinLeaguePage() {
             </FormField>
 
             <div className="space-y-3">
-              <div className="text-sm font-medium text-foreground">Team icon</div>
+              <div className="text-sm font-medium text-foreground">Your icon</div>
               <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
                 <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.themeClass}`}>
                   <TeamIcon iconKey={selectedIconKey} size="lg" />

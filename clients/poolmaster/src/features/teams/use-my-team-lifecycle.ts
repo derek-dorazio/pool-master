@@ -37,7 +37,7 @@ export function useMyTeamLifecycle({
     mutationFn: async () => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
-        throw new Error('A team must exist before it can be inactivated.');
+        throw new Error('There is nothing to inactivate yet.');
       }
 
       const response = await inactivateLeagueSquad({
@@ -53,7 +53,7 @@ export function useMyTeamLifecycle({
     onSuccess: (team) => {
       setActiveDialog(null);
       setTeamInactivationNotice(
-        `${team.name} is now inactive. Its owners were removed from this league. Their accounts and their other leagues are untouched, and inviting them back restores this team.`,
+        `${team.name} is now inactive. Its owners were removed from this league. Their accounts and their other leagues are untouched, and inviting them back restores it.`,
       );
       resetOwnerForms();
     },
@@ -72,7 +72,7 @@ export function useMyTeamLifecycle({
     mutationFn: async () => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
-        throw new Error('A team must exist before it can be deleted.');
+        throw new Error('There is nothing to delete yet.');
       }
 
       const response = await deleteLeagueSquad({

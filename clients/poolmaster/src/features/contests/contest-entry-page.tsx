@@ -779,7 +779,7 @@ export function ContestEntryPage() {
           <div className="mt-5 space-y-5">
             {picksHidden ? (
               <Alert data-testid="contest-entry-picks-hidden">
-                This team&apos;s picks stay hidden until the contest locks.
+                This entry&apos;s picks stay hidden until the contest locks.
               </Alert>
             ) : null}
             {isBudget ? selectionGroups.map((group) => (isEditable ? (
