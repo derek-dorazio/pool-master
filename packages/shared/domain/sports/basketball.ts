@@ -29,7 +29,7 @@ export const basketballSportDefinition: SportDefinition = {
   tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
   defaultRounds: 6,
   defaultTierLayout: { tierCount: 4, tierSize: 16 },
-  selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM],
+  selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   vocabulary: {
     participant: { one: 'team', many: 'teams' },

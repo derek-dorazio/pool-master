@@ -15,6 +15,29 @@ function pickEmMode(configuration: ContestSelectionConfig | undefined): PickEmMo
 export const pickEmPredictionEngine: PredictionEngine = {
   selectionType: SelectionType.PICK_EM,
   pickWindow: PickWindow.UNTIL_MATCH_START,
+  // A weekly pool's tiebreaker is one per week, with its scoring (#717).
+  takesTiebreaker: false,
+
+  resolvePicks({ games, predictions }) {
+    const sides = new Map(games.map((game) => [game.id, {
+      home: game.homeSportEventParticipantId,
+      away: game.awaySportEventParticipantId,
+    }]));
+    const stands = (prediction: (typeof predictions)[number]) => {
+      const game = sides.get(prediction.sportEventMatchId);
+      return game !== undefined
+        && (prediction.sportEventParticipantId === game.home || prediction.sportEventParticipantId === game.away);
+    };
+    return {
+      sides,
+      kept: predictions.filter(stands),
+      stranded: predictions.filter((prediction) => !stands(prediction)),
+    };
+  },
+
+  scorePicks() {
+    return null;
+  },
 
   acceptsConfidence({ configuration, confidence, gameCount }) {
     if (confidence === null) {

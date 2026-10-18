@@ -337,6 +337,7 @@ enum PrismaSelectionType {
   BUDGET_PICK
   RANDOM_DRAW
   PICK_EM
+  BRACKET
 }
 
 enum PrismaPrizePayoutType {

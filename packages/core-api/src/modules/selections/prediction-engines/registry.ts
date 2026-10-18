@@ -4,11 +4,13 @@
  */
 
 import { SelectionType, type PredictionSelectionType } from '@poolmaster/shared/domain';
+import { bracketPredictionEngine } from './bracket';
 import { pickEmPredictionEngine } from './pick-em';
 import type { PredictionEngine } from './prediction-engine';
 
 const ENGINE_BY_SELECTION_TYPE: Readonly<Record<PredictionSelectionType, PredictionEngine>> = {
   [SelectionType.PICK_EM]: pickEmPredictionEngine,
+  [SelectionType.BRACKET]: bracketPredictionEngine,
 };
 
 export function getPredictionEngine(selectionType: PredictionSelectionType): PredictionEngine {

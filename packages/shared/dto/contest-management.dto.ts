@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  BracketContestRulesSchema,
   BudgetContestConfigSchema,
   ContestRulesWithEntryLimitSchema,
   ContestStatus,
@@ -156,6 +157,15 @@ export const CONTEST_EVENT_HAS_NO_GAMES = 'CONTEST_EVENT_HAS_NO_GAMES';
 /** Error code for a pick'em contest given an event with a game whose team is still undecided (#716). */
 export const CONTEST_EVENT_GAME_UNDECIDED = 'CONTEST_EVENT_GAME_UNDECIDED';
 
+/** Error code for a bracket contest given more than one event: a bracket is one knockout (#721). */
+export const CONTEST_BRACKET_SINGLE_EVENT = 'CONTEST_BRACKET_SINGLE_EVENT';
+
+/**
+ * Error code for a bracket contest on an event whose games cannot be filled in as a bracket (#721):
+ * a first-round team still to be decided, a later game no earlier game leads to, or no single final.
+ */
+export const CONTEST_EVENT_NOT_A_BRACKET = 'CONTEST_EVENT_NOT_A_BRACKET';
+
 /** Error code for naming an event the contest does not cover (#713). */
 export const CONTEST_EVENT_NOT_IN_CONTEST = 'CONTEST_EVENT_NOT_IN_CONTEST';
 
@@ -170,6 +180,7 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType
   BudgetContestConfigSchema.extend(persistedConfigurationFields),
   RandomDrawContestRulesSchema.extend(persistedConfigurationFields),
   PickEmContestRulesSchema.extend(persistedConfigurationFields),
+  BracketContestRulesSchema.extend(persistedConfigurationFields),
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 

@@ -6,6 +6,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   PrismaContestConfigurationRepository,
+  PrismaContestEntryMatchPredictionRepository,
   PrismaContestEntryPickRepository,
   PrismaContestEntryRepository,
   PrismaContestEntryEventStandingRepository,
@@ -14,6 +15,7 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaParticipantContestScoringRuleRepository,
+  PrismaSportEventMatchRepository,
   PrismaSportEventRepository,
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
@@ -22,16 +24,18 @@ import {
 import type { MailDeliveryProvider } from '../email';
 import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
 import { ContestSettlementService } from './contest-settlement-service';
-import type { ContestLeaderboardReadDeps } from './contest-leaderboard-reads';
+import type { BracketStandingsReadDeps } from './bracket-standings';
 import { ContestService } from './service';
 
-function createContestLeaderboardReadDeps(prisma: PrismaClient, logger?: FastifyBaseLogger): ContestLeaderboardReadDeps {
+function createContestLeaderboardReadDeps(prisma: PrismaClient, logger?: FastifyBaseLogger): BracketStandingsReadDeps {
   return {
     eventParticipants: createSportEventParticipantService(prisma, logger),
     configurations: new PrismaContestConfigurationRepository(prisma),
     scoringRules: new PrismaParticipantContestScoringRuleRepository(prisma),
     entries: new PrismaContestEntryRepository(prisma),
     picks: new PrismaContestEntryPickRepository(prisma),
+    predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
+    matches: new PrismaSportEventMatchRepository(prisma),
   };
 }
 

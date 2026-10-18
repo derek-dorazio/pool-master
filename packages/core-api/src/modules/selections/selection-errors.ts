@@ -304,6 +304,30 @@ export const selectionErrors = {
       409,
     ),
 
+  /** A bracket is submitted with its guess of the final's total points, its tiebreaker (#721). */
+  tiebreakerMissing: (entryId: string) =>
+    new SelectionError(
+      `Entry ${entryId} cannot be submitted until it gives a tiebreaker: the total points of the final`,
+      'PREDICTION_TIEBREAKER_MISSING',
+      409,
+    ),
+
+  /** A bracket's tiebreaker locks with its picks, when the event starts (#721). */
+  tiebreakerLocked: (entryId: string) =>
+    new SelectionError(
+      `The event has started; entry ${entryId}'s tiebreaker can no longer be changed`,
+      'CONTEST_ENTRY_LOCKED',
+      409,
+    ),
+
+  /** Only a bracket takes a tiebreaker with its picks; a weekly pool's comes with its scoring (#721). */
+  tiebreakerNotTaken: (contestId: string) =>
+    new SelectionError(
+      `Contest ${contestId}'s game picks take no tiebreaker`,
+      'PREDICTION_TIEBREAKER_NOT_TAKEN',
+      400,
+    ),
+
   /** After the first kickoff a submitted week stays submitted: a pick can be swapped, not cleared (#716). */
   clearAfterFirstKickoff: (sportEventMatchId: string) =>
     new SelectionError(

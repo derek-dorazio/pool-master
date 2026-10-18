@@ -8,6 +8,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestConfigurationRepository,
+  ContestEntryMatchPredictionRepository,
   ContestEntryPickRepository,
   ContestEntryPickWithParticipant,
   ContestEntryEventStandingRepository,
@@ -17,6 +18,7 @@ import type {
   LeagueMembershipRepository,
   LeagueRepository,
   ParticipantContestScoringRuleRepository,
+  SportEventMatchRepository,
   SportEventRepository,
   SquadMembershipRepository,
   SquadRepository,
@@ -30,7 +32,9 @@ import type {
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import {
+  ContestFormat,
   ContestStatus,
+  SelectionType,
   deriveLegacyParticipantStatus,
   hasSubmittedAnyEvent,
   LeagueMembershipStatus,
@@ -47,6 +51,8 @@ import {
   type ContestLeaderboardEntryRow,
   type ContestLeaderboardModel,
 } from '../../mappers/contests.mapper';
+import type { BracketLeaderboardEntryRow, BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
+import { BracketScoringUnavailableError, loadBracketStandings } from './bracket-standings';
 import {
   applySettledContestStandings,
   applySettledContestTotals,
@@ -149,6 +155,8 @@ export interface ContestServiceDeps {
   scoringRules: ParticipantContestScoringRuleRepository;
   entries: ContestEntryRepository;
   picks: ContestEntryPickRepository;
+  predictions: Pick<ContestEntryMatchPredictionRepository, 'findByEntriesAndEvent'>;
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
   standings: ContestEntryStandingRepository;
   eventStandings: ContestEntryEventStandingRepository;
   memberships: LeagueMembershipRepository;
@@ -429,6 +437,12 @@ export class ContestService {
       );
     }
 
+    if (contest.contestFormat === ContestFormat.PREDICTION) {
+      throw new ContestOperationError(
+        'A prediction contest\'s entries pick games, not a lineup: a bracket has its own leaderboard.',
+        'CONTEST_FORMAT_MISMATCH',
+      );
+    }
     const configuration = await loadContestScoringConfiguration(this.deps, contestId);
     const countingRule = resolveContestCountingRule(configuration);
     if (!countingRule) {
@@ -537,6 +551,65 @@ export class ContestService {
       participants: shown.field,
       entries: leaderboardEntries,
       asOf: shown.asOf,
+    };
+  }
+
+  /**
+   * A bracket contest's leaderboard (#721): every submitted entry's points, the most it can still
+   * reach, and its place, once the event has started and picks are revealed. A COMPLETED contest
+   * answers from the standings frozen at settlement, so a later result correction does not change
+   * a settled place.
+   */
+  async getBracketLeaderboard(contestId: string, requesterUserId: string): Promise<BracketLeaderboardModel> {
+    const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
+    if (contest.selectionType !== SelectionType.BRACKET) {
+      throw new ContestOperationError(
+        'Only a bracket contest has a bracket leaderboard.',
+        'CONTEST_FORMAT_MISMATCH',
+      );
+    }
+    const event = (await this.findContestEvents(contest)).at(0);
+    if (!event || !areEventPicksRevealed(contest, event, this.now())) {
+      throw new ContestOperationError(
+        'The leaderboard is not available until contest picks are revealed.',
+        'CONTEST_LEADERBOARD_PICKS_HIDDEN',
+      );
+    }
+    let standings: Awaited<ReturnType<typeof loadBracketStandings>>;
+    try {
+      standings = await loadBracketStandings(this.deps, contestId, event.id);
+    } catch (error) {
+      if (!(error instanceof BracketScoringUnavailableError)) throw error;
+      this.logger.error({ contestId, reason: error.reason }, 'bracket leaderboard refused: the contest cannot be scored');
+      // A rule naming another definition than knockout round points is one a bracket does not know.
+      const refusal = LEADERBOARD_SCORING_REFUSALS[error.reason === 'NOT_KNOCKOUT_ROUND_POINTS' ? 'DEFINITION_UNKNOWN' : error.reason];
+      throw new ContestOperationError(refusal.message, refusal.code);
+    }
+    const frozen = contest.status === ContestStatus.COMPLETED
+      ? new Map((await this.deps.standings.findByContest(contestId)).map((standing) => [standing.contestEntryId, standing]))
+      : new Map<string, never>();
+    const entries = standings.entries.map((standing): BracketLeaderboardEntryRow => {
+      const settled = frozen.get(standing.entry.id);
+      return {
+        entryId: standing.entry.id,
+        entryName: standing.entry.name,
+        entryNumber: standing.entry.entryNumber,
+        squadId: standing.entry.squadId,
+        squadName: standing.entry.squadName,
+        position: settled?.position ?? standing.position,
+        displayPosition: settled?.displayPosition ?? standing.displayPosition,
+        points: settled?.totalScore ?? standing.score.points,
+        maxPossiblePoints: settled?.totalScore ?? standing.score.maxPossiblePoints,
+        correctPickCount: standing.score.correctPickCount,
+        tiebreakerValue: standing.entry.tiebreakerValue ?? null,
+      };
+    }).sort((left, right) => left.position - right.position || left.entryNumber - right.entryNumber || left.entryName.localeCompare(right.entryName));
+    return {
+      contestId,
+      sportEventId: event.id,
+      gameCount: standings.gameCount,
+      finalTotalPoints: standings.finalTotalPoints,
+      entries,
     };
   }
 
@@ -704,6 +777,14 @@ export class ContestService {
     }
 
     if (updates.tiebreakerValue !== undefined) {
+      // A bracket's tiebreaker rides with its picks, where its status is kept (#721).
+      if (context.contest.contestFormat === ContestFormat.PREDICTION) {
+        this.logger.warn({ contestId, entryId, userId }, 'contest entry update refused a prediction contest tiebreaker');
+        throw new ContestEntryOperationError(
+          'A prediction contest\'s tiebreaker is saved with its game picks.',
+          'CONTEST_FORMAT_MISMATCH',
+        );
+      }
       pendingUpdates.tiebreakerValue = updates.tiebreakerValue;
     }
 

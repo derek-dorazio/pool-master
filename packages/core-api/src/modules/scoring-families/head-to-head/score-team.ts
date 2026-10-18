@@ -64,6 +64,16 @@ export function upsetBonusFor(bonus: UpsetBonus, winnerSeed: number | null, lose
   }
 }
 
+/**
+ * Each field row's seed as the upset bonus reads it, by field row id: an unseeded team counts as
+ * the field's worst seed, and with no seeds at all every team is null.
+ */
+export function knockoutSeeds(field: ReadonlyArray<{ id: string; seedNumber?: number }>): Map<string, number | null> {
+  const seeds = field.flatMap((row) => (row.seedNumber === undefined ? [] : [row.seedNumber]));
+  const worstSeed = seeds.length > 0 ? Math.max(...seeds) : null;
+  return new Map(field.map((row) => [row.id, row.seedNumber ?? worstSeed]));
+}
+
 /** Every field row's knockout score and record under one contest's settings, in field order. */
 export function scoreKnockoutField(
   field: readonly SportEventParticipantView[],
@@ -77,9 +87,7 @@ export function scoreKnockoutField(
       }
     }
   }
-  const seeds = field.flatMap((row) => (row.entry.seedNumber === undefined ? [] : [row.entry.seedNumber]));
-  const worstSeed = seeds.length > 0 ? Math.max(...seeds) : null;
-  const seedById = new Map(field.map((row) => [row.entry.id, row.entry.seedNumber ?? worstSeed]));
+  const seedById = knockoutSeeds(field.map((row) => row.entry));
 
   return field.map((row) => {
     const results = row.matches.flatMap((match) => {

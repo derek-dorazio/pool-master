@@ -399,12 +399,16 @@ export interface ContestEntryMatchPredictionSave {
   clearedMatchIds: readonly string[];
   /** The entry's status for the event after the change, when it changes; stamped as `setEventStatus` does. */
   eventStatus: ContestEntryStatus | null;
+  /** The entry's tiebreaker guess after the change, when it changes (a bracket's final total, #721). */
+  tiebreakerValue?: number | null;
   at: Date;
 }
 
 export interface ContestEntryMatchPredictionRepository {
   /** The entry's picks on the event's games. */
   findByEntryAndEvent(contestEntryId: string, sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
+  /** Several entries' picks on the event's games, in game order: a leaderboard's or settlement's read. */
+  findByEntriesAndEvent(contestEntryIds: readonly string[], sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
   save(change: ContestEntryMatchPredictionSave): Promise<void>;
 }
 

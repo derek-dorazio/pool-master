@@ -8,7 +8,6 @@ import {
   compareScores,
   PARTICIPANT_SCORING_DEFINITIONS,
   rankSortedScores,
-  SelectionType,
   type ContestScoringSettings,
   type ContestScoringSettingsParse,
   type ContestSelectionConfig,
@@ -105,7 +104,7 @@ export function resolveContestCountingRule(
 ): ContestCountingRule | null {
   const rules = configuration?.configJson;
   // A prediction contest scores its game picks, not its best N field members (#716).
-  const countedScores = rules == null || rules.selectionType === SelectionType.PICK_EM
+  const countedScores = rules == null || !('countedScores' in rules)
     ? undefined
     : rules.countedScores;
 

@@ -184,6 +184,11 @@ export const SelectionType = {
   RANDOM_DRAW: 'RANDOM_DRAW',
   /** Pick the winner of every game of each week (#716): a PREDICTION contest. */
   PICK_EM: 'PICK_EM',
+  /**
+   * Pick the winner of every game of a knockout before it starts, all the way to the final
+   * (#721): a PREDICTION contest. A later game's pick is a team the entry picked to get there.
+   */
+  BRACKET: 'BRACKET',
 } as const;
 export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
 
@@ -197,6 +202,18 @@ export const PickEmMode = {
   CONFIDENCE: 'CONFIDENCE',
 } as const;
 export type PickEmMode = (typeof PickEmMode)[keyof typeof PickEmMode];
+
+/**
+ * How one game pick stands against the results (#721). CORRECT: the team picked won its game in
+ * that round. BUSTED: the team picked is out, so the pick can no longer come true. PENDING: the
+ * game is still to be decided and the team picked is still in.
+ */
+export const PickOutcome = {
+  CORRECT: 'CORRECT',
+  BUSTED: 'BUSTED',
+  PENDING: 'PENDING',
+} as const;
+export type PickOutcome = (typeof PickOutcome)[keyof typeof PickOutcome];
 
 // --- Selection ---
 

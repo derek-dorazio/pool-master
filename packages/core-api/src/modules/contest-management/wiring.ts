@@ -25,6 +25,8 @@ import {
   PrismaSportRepository,
 } from '../../adapters';
 import { createSportEventTierService } from '../events/wiring';
+import { findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
+import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
 import { ContestManagementService, type ContestCreateSportEventReader } from './service';
 
 export function createContestManagementService(
@@ -99,5 +101,9 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
     countUndecidedGames: async (sportEventId) =>
       (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED
         && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null)).length,
+    findBracketProblem: async (sportEventId) => {
+      const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
+      return findBracketProblem(games.filter((match) => match.status !== MatchStatus.CANCELLED), knockoutSeeds(entries));
+    },
   };
 }

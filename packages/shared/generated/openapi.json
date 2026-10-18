@@ -6265,6 +6265,176 @@
             ],
             "additionalProperties": false,
             "description": "Pick'em rules: pick the winner of every game of each event."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "selectionType": {
+                "type": "string",
+                "enum": [
+                  "BRACKET"
+                ]
+              },
+              "maxEntriesPerSquad": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "description": "Maximum entries a Team may create. Null means unlimited."
+              },
+              "scoring": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "GOLF_RELATIVE_TO_PAR_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "FINISH_POSITION_POINTS"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "pointsTable": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "minItems": 1,
+                            "maxItems": 50,
+                            "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                          },
+                          "didNotFinishPoints": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                          }
+                        },
+                        "required": [
+                          "pointsTable",
+                          "didNotFinishPoints"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "KNOCKOUT_ROUND_POINTS"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "roundValues": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "minItems": 1,
+                            "maxItems": 8,
+                            "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                          },
+                          "upsetBonus": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "rule": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SEED_DIFFERENCE"
+                                    ]
+                                  },
+                                  "multiplier": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                  }
+                                },
+                                "required": [
+                                  "rule",
+                                  "multiplier"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "rule": {
+                                    "type": "string",
+                                    "enum": [
+                                      "NONE"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "rule"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                          }
+                        },
+                        "required": [
+                          "roundValues",
+                          "upsetBonus"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  }
+                ],
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+              }
+            },
+            "required": [
+              "selectionType"
+            ],
+            "additionalProperties": false,
+            "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
           }
         ],
         "description": "Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest's."
@@ -6719,6 +6889,40 @@
                 ],
                 "additionalProperties": false,
                 "description": "Pick'em rules: pick the winner of every game of each event."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "BRACKET"
+                    ]
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Contest-configuration identifier."
+                  },
+                  "contestId": {
+                    "type": "string",
+                    "description": "Contest that owns the configuration."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "id",
+                  "contestId"
+                ],
+                "additionalProperties": false,
+                "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
               }
             ],
             "description": "Current commissioner-managed contest configuration."
@@ -6812,7 +7016,8 @@
               "TIERED",
               "BUDGET_PICK",
               "RANDOM_DRAW",
-              "PICK_EM"
+              "PICK_EM",
+              "BRACKET"
             ],
             "description": "How an entry picks in a contest created from this template."
           },
@@ -7572,6 +7777,176 @@
                 ],
                 "additionalProperties": false,
                 "description": "Pick'em rules: pick the winner of every game of each event."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "BRACKET"
+                    ]
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+                  }
+                },
+                "required": [
+                  "selectionType"
+                ],
+                "additionalProperties": false,
+                "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
               }
             ],
             "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -7901,6 +8276,40 @@
                     ],
                     "additionalProperties": false,
                     "description": "Pick'em rules: pick the winner of every game of each event."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "BRACKET"
+                        ]
+                      },
+                      "id": {
+                        "type": "string",
+                        "description": "Contest-configuration identifier."
+                      },
+                      "contestId": {
+                        "type": "string",
+                        "description": "Contest that owns the configuration."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "id",
+                      "contestId"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
                   }
                 ],
                 "description": "Current commissioner-managed contest configuration."
@@ -8047,7 +8456,8 @@
                     "TIERED",
                     "BUDGET_PICK",
                     "RANDOM_DRAW",
-                    "PICK_EM"
+                    "PICK_EM",
+                    "BRACKET"
                   ],
                   "description": "How an entry picks in a contest created from this template."
                 },
@@ -8807,6 +9217,176 @@
                       ],
                       "additionalProperties": false,
                       "description": "Pick'em rules: pick the winner of every game of each event."
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "selectionType": {
+                          "type": "string",
+                          "enum": [
+                            "BRACKET"
+                          ]
+                        },
+                        "maxEntriesPerSquad": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "description": "Maximum entries a Team may create. Null means unlimited."
+                        },
+                        "scoring": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GOLF_RELATIVE_TO_PAR_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "FINISH_POSITION_POINTS"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {
+                                    "pointsTable": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "minItems": 1,
+                                      "maxItems": 50,
+                                      "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                                    },
+                                    "didNotFinishPoints": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                                    }
+                                  },
+                                  "required": [
+                                    "pointsTable",
+                                    "didNotFinishPoints"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "KNOCKOUT_ROUND_POINTS"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {
+                                    "roundValues": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "minItems": 1,
+                                      "maxItems": 8,
+                                      "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                                    },
+                                    "upsetBonus": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "rule": {
+                                              "type": "string",
+                                              "enum": [
+                                                "SEED_DIFFERENCE"
+                                              ]
+                                            },
+                                            "multiplier": {
+                                              "type": "integer",
+                                              "minimum": 1,
+                                              "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                            }
+                                          },
+                                          "required": [
+                                            "rule",
+                                            "multiplier"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "rule": {
+                                              "type": "string",
+                                              "enum": [
+                                                "NONE"
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "rule"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ],
+                                      "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                                    }
+                                  },
+                                  "required": [
+                                    "roundValues",
+                                    "upsetBonus"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ],
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+                        }
+                      },
+                      "required": [
+                        "selectionType"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
                     }
                   ],
                   "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -9595,6 +10175,176 @@
                 ],
                 "additionalProperties": false,
                 "description": "Pick'em rules: pick the winner of every game of each event."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "BRACKET"
+                    ]
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+                  }
+                },
+                "required": [
+                  "selectionType"
+                ],
+                "additionalProperties": false,
+                "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
               }
             ],
             "description": "Updated persisted configuration payload copied into future contests when this template is selected."
@@ -9656,7 +10406,8 @@
                   "TIERED",
                   "BUDGET_PICK",
                   "RANDOM_DRAW",
-                  "PICK_EM"
+                  "PICK_EM",
+                  "BRACKET"
                 ],
                 "description": "How an entry picks in a contest created from this template."
               },
@@ -10416,6 +11167,176 @@
                     ],
                     "additionalProperties": false,
                     "description": "Pick'em rules: pick the winner of every game of each event."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "BRACKET"
+                        ]
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      },
+                      "scoring": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "GOLF_RELATIVE_TO_PAR_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "FINISH_POSITION_POINTS"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {
+                                  "pointsTable": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 50,
+                                    "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                                  },
+                                  "didNotFinishPoints": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                                  }
+                                },
+                                "required": [
+                                  "pointsTable",
+                                  "didNotFinishPoints"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "KNOCKOUT_ROUND_POINTS"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {
+                                  "roundValues": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 8,
+                                    "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                                  },
+                                  "upsetBonus": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "rule": {
+                                            "type": "string",
+                                            "enum": [
+                                              "SEED_DIFFERENCE"
+                                            ]
+                                          },
+                                          "multiplier": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                          }
+                                        },
+                                        "required": [
+                                          "rule",
+                                          "multiplier"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "rule": {
+                                            "type": "string",
+                                            "enum": [
+                                              "NONE"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "rule"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ],
+                                    "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                                  }
+                                },
+                                "required": [
+                                  "roundValues",
+                                  "upsetBonus"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ],
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+                      }
+                    },
+                    "required": [
+                      "selectionType"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
                   }
                 ],
                 "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -17005,7 +17926,7 @@
               "ROSTER",
               "PREDICTION"
             ],
-            "description": "ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). It must be the format the selection type plays (PICK_EM is PREDICTION, every other type ROSTER) and one the event's tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise."
+            "description": "ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). It must be the format the selection type plays (PICK_EM and BRACKET are PREDICTION, every other type ROSTER) and one the event's tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise."
           },
           "selectionType": {
             "type": "string",
@@ -17013,7 +17934,8 @@
               "TIERED",
               "BUDGET_PICK",
               "RANDOM_DRAW",
-              "PICK_EM"
+              "PICK_EM",
+              "BRACKET"
             ],
             "description": "How an entry picks: the selection types with typed rules. It must match the template's selection type when a template is named, and the configuration's."
           },
@@ -17750,6 +18672,176 @@
                 ],
                 "additionalProperties": false,
                 "description": "Pick'em rules: pick the winner of every game of each event."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "BRACKET"
+                    ]
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+                  }
+                },
+                "required": [
+                  "selectionType"
+                ],
+                "additionalProperties": false,
+                "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
               }
             ],
             "description": "The contest configuration. With a template, replaces the template's configuration; without one, is the configuration."
@@ -17983,7 +19075,8 @@
               "TIERED",
               "BUDGET_PICK",
               "RANDOM_DRAW",
-              "PICK_EM"
+              "PICK_EM",
+              "BRACKET"
             ]
           },
           "leagueId": {
@@ -19754,7 +20847,8 @@
                   "TIERED",
                   "BUDGET_PICK",
                   "RANDOM_DRAW",
-                  "PICK_EM"
+                  "PICK_EM",
+                  "BRACKET"
                 ]
               },
               "leagueId": {
@@ -19914,7 +21008,8 @@
                     "TIERED",
                     "BUDGET_PICK",
                     "RANDOM_DRAW",
-                    "PICK_EM"
+                    "PICK_EM",
+                    "BRACKET"
                   ]
                 },
                 "leagueId": {
@@ -20714,7 +21809,8 @@
               "TIERED",
               "BUDGET_PICK",
               "RANDOM_DRAW",
-              "PICK_EM"
+              "PICK_EM",
+              "BRACKET"
             ]
           },
           "drawnAt": {
@@ -21091,7 +22187,8 @@
               "TIERED",
               "BUDGET_PICK",
               "RANDOM_DRAW",
-              "PICK_EM"
+              "PICK_EM",
+              "BRACKET"
             ]
           },
           "drawnAt": {
@@ -21461,7 +22558,7 @@
                 "sportEventParticipantId": {
                   "type": "string",
                   "format": "uuid",
-                  "description": "The team picked to win: the field row of one of the game's two teams."
+                  "description": "The team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it."
                 },
                 "confidence": {
                   "type": [
@@ -21479,8 +22576,16 @@
               "additionalProperties": false,
               "description": "One game's pick as it is saved."
             },
-            "minItems": 1,
-            "description": "The picks to save, one per game. Each replaces the entry's pick on that game; the entry's other picks are kept. Saved together or not at all, so two confidence values can be swapped in one request."
+            "description": "The picks to save, one per game; may be empty when only the tiebreaker changes. Each replaces the entry's pick on that game; the entry's other picks are kept, except that in a bracket a later pick that no longer follows from the entry's picks is cleared. Saved together or not at all, so two confidence values can be swapped, or a whole bracket filled, in one request."
+          },
+          "tiebreakerValue": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 999,
+            "description": "A bracket's tiebreaker: the total points the entry expects in the final, both teams together. Required before submit; null clears it, omitted leaves it as it is. Refused with 400 PREDICTION_TIEBREAKER_NOT_TAKEN in a pick'em pool."
           }
         },
         "required": [
@@ -21488,6 +22593,106 @@
         ],
         "additionalProperties": false,
         "description": "Request payload for saving an entry's picks on one event's games."
+      },
+      "BracketLeaderboardResponse": {
+        "type": "object",
+        "properties": {
+          "contestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sportEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "gameCount": {
+            "type": "integer",
+            "description": "The bracket's games: an entry picks each one."
+          },
+          "finalTotalPoints": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "The final's combined score, both teams together, once it is played: what the tiebreakers are measured against."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entryId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "entryName": {
+                  "type": "string"
+                },
+                "entryNumber": {
+                  "type": "integer"
+                },
+                "squadId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "squadName": {
+                  "type": "string"
+                },
+                "position": {
+                  "type": "integer",
+                  "description": "The entry's place: by points, then, once the final is played, by how close its tiebreaker was to the final's total points. Entries still level share a place."
+                },
+                "displayPosition": {
+                  "type": "string",
+                  "description": "The place as shown, \"T2\" when shared."
+                },
+                "points": {
+                  "type": "integer",
+                  "description": "Points so far: each correct pick's round value plus any upset bonus."
+                },
+                "maxPossiblePoints": {
+                  "type": "integer",
+                  "description": "Points so far plus the round value of every pick whose team is still in: the most the entry can still reach."
+                },
+                "correctPickCount": {
+                  "type": "integer"
+                },
+                "tiebreakerValue": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "The entry's guess of the final's total points."
+                }
+              },
+              "required": [
+                "entryId",
+                "entryName",
+                "entryNumber",
+                "squadId",
+                "squadName",
+                "position",
+                "displayPosition",
+                "points",
+                "maxPossiblePoints",
+                "correctPickCount",
+                "tiebreakerValue"
+              ],
+              "additionalProperties": false,
+              "description": "One entry's standing in a bracket contest."
+            },
+            "description": "The entries that submitted their bracket, best first. An entry still in draft when the event started is left out."
+          }
+        },
+        "required": [
+          "contestId",
+          "sportEventId",
+          "gameCount",
+          "finalTotalPoints",
+          "entries"
+        ],
+        "additionalProperties": false,
+        "description": "A bracket contest's leaderboard."
       },
       "GamePicksResponse": {
         "type": "object",
@@ -21507,12 +22712,24 @@
             "type": "string",
             "format": "uuid"
           },
-          "mode": {
+          "selectionType": {
             "type": "string",
             "enum": [
-              "STRAIGHT_UP",
-              "CONFIDENCE"
+              "PICK_EM",
+              "BRACKET"
             ]
+          },
+          "mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "STRAIGHT_UP",
+              "CONFIDENCE",
+              null
+            ],
+            "description": "A pick'em pool's mode; null in a bracket."
           },
           "status": {
             "type": "string",
@@ -21535,7 +22752,7 @@
           },
           "canSubmit": {
             "type": "boolean",
-            "description": "Whether the caller can submit the event now: their own draft entry, every game picked with valid confidence values, before the first game starts."
+            "description": "Whether the caller can submit the event now: their own draft entry, every game picked with valid confidence values (and a bracket's tiebreaker given), before the first game starts."
           },
           "pickedCount": {
             "type": "integer",
@@ -21543,6 +22760,27 @@
           },
           "gameCount": {
             "type": "integer"
+          },
+          "tiebreakerValue": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "A bracket's tiebreaker, the final's total points. Null when not given, in a pick'em pool, and on another team's entry until its picks are revealed."
+          },
+          "points": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "A bracket's points so far. Null in a pick'em pool until it is scored, and on another team's entry until its picks are revealed."
+          },
+          "maxPossiblePoints": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "A bracket's points so far plus the round value of every pick still pending: the most it can still reach. Null where points is."
           },
           "games": {
             "type": "array",
@@ -21576,6 +22814,13 @@
                 "isNeutralSite": {
                   "type": "boolean"
                 },
+                "regionLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The bracket region or conference the game is in (\"East\", \"AFC\"), for grouping on screen; null where the bracket has none."
+                },
                 "home": {
                   "type": [
                     "object",
@@ -21601,7 +22846,7 @@
                     "name"
                   ],
                   "additionalProperties": false,
-                  "description": "Null until the team is decided."
+                  "description": "The team really playing on this side; null until it is decided."
                 },
                 "away": {
                   "type": [
@@ -21628,7 +22873,61 @@
                     "name"
                   ],
                   "additionalProperties": false,
-                  "description": "Null until the team is decided."
+                  "description": "The team really playing on this side; null until it is decided."
+                },
+                "predictedHome": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "sportEventParticipantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The team's field row in the event: what a pick names."
+                    },
+                    "participantId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "sportEventParticipantId",
+                    "participantId",
+                    "name"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed."
+                },
+                "predictedAway": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "sportEventParticipantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The team's field row in the event: what a pick names."
+                    },
+                    "participantId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "sportEventParticipantId",
+                    "participantId",
+                    "name"
+                  ],
+                  "additionalProperties": false,
+                  "description": "As predictedHome, for the away side."
                 },
                 "locked": {
                   "type": "boolean",
@@ -21654,17 +22953,39 @@
                         "integer",
                         "null"
                       ],
-                      "description": "The pick's confidence value; null in a straight-up pool or until given."
+                      "description": "The pick's confidence value; null in a straight-up pool, in a bracket, or until given."
                     },
                     "pickedAt": {
                       "type": "string",
                       "format": "date-time"
+                    },
+                    "outcome": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "CORRECT",
+                        "BUSTED",
+                        "PENDING",
+                        null
+                      ],
+                      "description": "How the pick stands against the results: CORRECT once its team won the game's round, BUSTED once its team is out, else PENDING. Null in a pick'em pool until it is scored."
+                    },
+                    "points": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "What the pick earned: its round's value plus any upset bonus when CORRECT, 0 when BUSTED, null while PENDING or not scored."
                     }
                   },
                   "required": [
                     "sportEventParticipantId",
                     "confidence",
-                    "pickedAt"
+                    "pickedAt",
+                    "outcome",
+                    "points"
                   ],
                   "additionalProperties": false,
                   "description": "The entry's pick on the game. Null when it has none, and on another team's entry until the game is revealed."
@@ -21677,8 +22998,11 @@
                 "kickoff",
                 "status",
                 "isNeutralSite",
+                "regionLabel",
                 "home",
                 "away",
+                "predictedHome",
+                "predictedAway",
                 "locked",
                 "revealed",
                 "pick"
@@ -21694,6 +23018,7 @@
           "entryId",
           "entryName",
           "sportEventId",
+          "selectionType",
           "mode",
           "status",
           "submittedAt",
@@ -21701,6 +23026,9 @@
           "canSubmit",
           "pickedCount",
           "gameCount",
+          "tiebreakerValue",
+          "points",
+          "maxPossiblePoints",
           "games"
         ],
         "additionalProperties": false,
@@ -34830,7 +36158,79 @@
             }
           },
           "400": {
-            "description": "CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event's picks are revealed yet, or not the asked-for one's), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule's settings are not valid for that definition).",
+            "description": "CONTEST_FORMAT_MISMATCH (a prediction contest: a bracket has its own leaderboard, getBracketLeaderboard), CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event's picks are revealed yet, or not the asked-for one's), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule's settings are not valid for that definition).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contests/{contestId}/bracket-leaderboard": {
+      "get": {
+        "operationId": "getBracketLeaderboard",
+        "summary": "Get a bracket contest leaderboard",
+        "tags": [
+          "Contests"
+        ],
+        "description": "Returns a bracket contest's leaderboard (#721): each entry that submitted its bracket, with its points so far (a correct pick earns its round's value plus any upset bonus, under the contest's knockout round points), the most it can still reach (its points plus the round value of every pick whose team is still in), and its place. Entries level on points are ordered, once the final is played, by how close their tiebreaker was to the final's total points; entries still level share a place. Available once the event has started and picks are revealed. Once the contest is COMPLETED, points and places come from the standings frozen at settlement, so a later result correction does not change a settled place. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A bracket contest's leaderboard.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BracketLeaderboardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "CONTEST_FORMAT_MISMATCH (not a bracket contest), CONTEST_LEADERBOARD_PICKS_HIDDEN (the event has not started), or CONTEST_LEADERBOARD_SCORING_RULE_MISSING, _SCORING_DEFINITION_UNKNOWN (its rule is not knockout round points) or _SCORING_SETTINGS_INVALID.",
             "content": {
               "application/json": {
                 "schema": {
@@ -41099,7 +42499,7 @@
         "tags": [
           "Selections"
         ],
-        "description": "Returns one event's games, in game-number order and without cancelled games, with the entry's pick on each (#716). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. The entry's own team sees every pick; anyone else sees a pick only once its game is revealed, at that game's kickoff once the contest is live. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
+        "description": "Returns one event's games, in game-number order and without cancelled games, with the entry's pick on each (#716). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. The entry's own team sees every pick; anyone else sees a pick only once its game is revealed, at that game's kickoff once the contest is live (in a bracket, every pick at the event's start). Each game carries the teams really playing it and the teams the entry's own picks put in it (`predictedHome`, `predictedAway`): in a bracket (#721) a later game offers the teams the entry picked to win the games before it, paired by seed in a reseeded round. A bracket's picks also carry their outcome (CORRECT, BUSTED or PENDING) and points, and the entry its points, the most it can still reach, and its tiebreaker. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
         "parameters": [
           {
             "schema": {
@@ -41198,7 +42598,7 @@
         "tags": [
           "Selections"
         ],
-        "description": "Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, and replaces the entry's pick on that game. Only a member of the entry's team may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team not playing the game; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
+        "description": "Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, and replaces the entry's pick on that game. In a bracket (#721) a pick must name a team the entry's picks put in the game (picks earlier in the same request count), and a later pick that no longer follows from them is cleared; the request may also set the bracket's `tiebreakerValue`, the final's total points (400 PREDICTION_TIEBREAKER_NOT_TAKEN in a pick'em pool; 409 CONTEST_ENTRY_LOCKED once the event has started). A bracket's every pick locks at the event's start. Only a member of the entry's team may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team the game does not offer the entry; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
         "requestBody": {
           "required": true,
           "content": {
@@ -41309,7 +42709,7 @@
         "tags": [
           "Selections"
         ],
-        "description": "Removes the caller's pick on one game and returns the event's games with the entry's picks (#716). Clearing a game with no pick changes nothing. Before the event's first kickoff, clearing a pick of a submitted week sends it back to DRAFT. Refused as saving is, and with 409 PREDICTION_CLEAR_AFTER_FIRST_KICKOFF once the first game has started: a submitted week then stays submitted, and a pick on a game still to start can be changed to the other team but not cleared. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
+        "description": "Removes the caller's pick on one game and returns the event's games with the entry's picks (#716). Clearing a game with no pick changes nothing. In a bracket the later picks that followed from it are cleared too (#721). Before the event's first kickoff, clearing a pick of a submitted week sends it back to DRAFT. Refused as saving is, and with 409 PREDICTION_CLEAR_AFTER_FIRST_KICKOFF once the first game has started: a submitted week then stays submitted, and a pick on a game still to start can be changed to the other team but not cleared. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
         "parameters": [
           {
             "schema": {
@@ -41419,7 +42819,7 @@
         "tags": [
           "Selections"
         ],
-        "description": "Submits the caller's entry for one event (\"submit week 6\") and returns the event's games with the entry's picks (#716). Only a submitted event counts. Every game must be picked: 409 PREDICTION_WEEK_INCOMPLETE otherwise. In a confidence pool the values must be 1 to the game count, each used once: 409 PREDICTION_CONFIDENCE_INVALID otherwise. Submitting a submitted event changes nothing. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE and the event's first game has not started. Only a member of the entry's team may submit: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
+        "description": "Submits the caller's entry for one event (\"submit week 6\") and returns the event's games with the entry's picks (#716). Only a submitted event counts. Every game must be picked: 409 PREDICTION_WEEK_INCOMPLETE otherwise. In a confidence pool the values must be 1 to the game count, each used once: 409 PREDICTION_CONFIDENCE_INVALID otherwise. A bracket needs its tiebreaker: 409 PREDICTION_TIEBREAKER_MISSING otherwise (#721). Submitting a submitted event changes nothing. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE and the event's first game has not started. Only a member of the entry's team may submit: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
         "parameters": [
           {
             "schema": {

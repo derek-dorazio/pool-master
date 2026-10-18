@@ -4,23 +4,28 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { ContestEntryStatus, MatchStatus, PickEmMode } from '../domain/enums';
+import { ContestEntryStatus, MatchStatus, PickEmMode, PickOutcome, SelectionType } from '../domain/enums';
 
 // --- Requests ---
 
 export const GamePickWriteSchema = z.object({
   sportEventMatchId: z.string().uuid().describe('The game picked: one of the event\'s games.'),
-  sportEventParticipantId: z.string().uuid().describe('The team picked to win: the field row of one of the game\'s two teams.'),
+  sportEventParticipantId: z.string().uuid().describe('The team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it.'),
   confidence: z.number().int().min(1).nullable().optional().describe('A confidence pool\'s value for this pick, 1 to the week\'s number of games. Omitted or null in a straight-up pool, and until the entry gives one. A value may repeat until the week is submitted.'),
 }).describe('One game\'s pick as it is saved.');
 export type GamePickWrite = z.infer<typeof GamePickWriteSchema>;
 
+/** The highest tiebreaker guess taken: a final's combined score is well under it in every sport. */
+export const GAME_PICKS_TIEBREAKER_MAX = 999;
+
 export const SaveGamePicksRequestSchema = z.object({
-  picks: z.array(GamePickWriteSchema).min(1)
+  picks: z.array(GamePickWriteSchema)
     .refine((picks) => new Set(picks.map((pick) => pick.sportEventMatchId)).size === picks.length, {
       message: 'Each game is picked at most once per request.',
     })
-    .describe('The picks to save, one per game. Each replaces the entry\'s pick on that game; the entry\'s other picks are kept. Saved together or not at all, so two confidence values can be swapped in one request.'),
+    .describe('The picks to save, one per game; may be empty when only the tiebreaker changes. Each replaces the entry\'s pick on that game; the entry\'s other picks are kept, except that in a bracket a later pick that no longer follows from the entry\'s picks is cleared. Saved together or not at all, so two confidence values can be swapped, or a whole bracket filled, in one request.'),
+  tiebreakerValue: z.number().int().min(0).max(GAME_PICKS_TIEBREAKER_MAX).nullable().optional()
+    .describe('A bracket\'s tiebreaker: the total points the entry expects in the final, both teams together. Required before submit; null clears it, omitted leaves it as it is. Refused with 400 PREDICTION_TIEBREAKER_NOT_TAKEN in a pick\'em pool.'),
 }).describe('Request payload for saving an entry\'s picks on one event\'s games.');
 export type SaveGamePicksRequest = z.infer<typeof SaveGamePicksRequestSchema>;
 
@@ -35,8 +40,10 @@ export type GamePickTeamDto = z.infer<typeof GamePickTeamDtoSchema>;
 
 export const GamePickDtoSchema = z.object({
   sportEventParticipantId: z.string().uuid().describe('The team picked to win.'),
-  confidence: z.number().int().nullable().describe('The pick\'s confidence value; null in a straight-up pool or until given.'),
+  confidence: z.number().int().nullable().describe('The pick\'s confidence value; null in a straight-up pool, in a bracket, or until given.'),
   pickedAt: z.string().datetime(),
+  outcome: z.nativeEnum(PickOutcome).nullable().describe('How the pick stands against the results: CORRECT once its team won the game\'s round, BUSTED once its team is out, else PENDING. Null in a pick\'em pool until it is scored.'),
+  points: z.number().int().nullable().describe('What the pick earned: its round\'s value plus any upset bonus when CORRECT, 0 when BUSTED, null while PENDING or not scored.'),
 }).describe('An entry\'s pick on one game.');
 export type GamePickDto = z.infer<typeof GamePickDtoSchema>;
 
@@ -47,8 +54,11 @@ export const GamePickGameDtoSchema = z.object({
   kickoff: z.string().datetime().describe('When the game starts: its scheduled time, else its event\'s start. Its pick locks then.'),
   status: z.nativeEnum(MatchStatus),
   isNeutralSite: z.boolean(),
-  home: GamePickTeamDtoSchema.nullable().describe('Null until the team is decided.'),
-  away: GamePickTeamDtoSchema.nullable().describe('Null until the team is decided.'),
+  regionLabel: z.string().nullable().describe('The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none.'),
+  home: GamePickTeamDtoSchema.nullable().describe('The team really playing on this side; null until it is decided.'),
+  away: GamePickTeamDtoSchema.nullable().describe('The team really playing on this side; null until it is decided.'),
+  predictedHome: GamePickTeamDtoSchema.nullable().describe('The team the entry\'s own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team\'s entry, the real team until the game is revealed.'),
+  predictedAway: GamePickTeamDtoSchema.nullable().describe('As predictedHome, for the away side.'),
   locked: z.boolean().describe('Whether the game\'s pick can no longer change: it has kicked off, or the contest no longer takes picks.'),
   revealed: z.boolean().describe('Whether picks on this game are shown to the whole league: from its kickoff once the contest is live.'),
   pick: GamePickDtoSchema.nullable().describe('The entry\'s pick on the game. Null when it has none, and on another team\'s entry until the game is revealed.'),
@@ -60,16 +70,45 @@ export const GamePicksResponseSchema = z.object({
   entryId: z.string().uuid(),
   entryName: z.string(),
   sportEventId: z.string().uuid(),
-  mode: z.nativeEnum(PickEmMode),
+  selectionType: z.enum([SelectionType.PICK_EM, SelectionType.BRACKET]),
+  mode: z.nativeEnum(PickEmMode).nullable().describe('A pick\'em pool\'s mode; null in a bracket.'),
   status: z.nativeEnum(ContestEntryStatus).describe('The entry\'s status for this event: DRAFT while picking, SUBMITTED once every game is picked and submitted. Only a submitted event counts.'),
   submittedAt: z.string().datetime().nullable(),
   ownEntry: z.boolean().describe('Whether the caller is on the entry\'s team, and so sees every pick on it.'),
-  canSubmit: z.boolean().describe('Whether the caller can submit the event now: their own draft entry, every game picked with valid confidence values, before the first game starts.'),
+  canSubmit: z.boolean().describe('Whether the caller can submit the event now: their own draft entry, every game picked with valid confidence values (and a bracket\'s tiebreaker given), before the first game starts.'),
   pickedCount: z.number().int().describe('How many of the games have a pick. Counted on the caller\'s own entry; on another team\'s, only revealed games are counted.'),
   gameCount: z.number().int(),
+  tiebreakerValue: z.number().int().nullable().describe('A bracket\'s tiebreaker, the final\'s total points. Null when not given, in a pick\'em pool, and on another team\'s entry until its picks are revealed.'),
+  points: z.number().int().nullable().describe('A bracket\'s points so far. Null in a pick\'em pool until it is scored, and on another team\'s entry until its picks are revealed.'),
+  maxPossiblePoints: z.number().int().nullable().describe('A bracket\'s points so far plus the round value of every pick still pending: the most it can still reach. Null where points is.'),
   games: z.array(GamePickGameDtoSchema).describe('The event\'s games in game-number order. Cancelled games are left out: they are not picked.'),
 }).describe('A prediction contest entry\'s picks on one event\'s games.');
 export type GamePicksResponse = z.infer<typeof GamePicksResponseSchema>;
 
+export const BracketLeaderboardEntryDtoSchema = z.object({
+  entryId: z.string().uuid(),
+  entryName: z.string(),
+  entryNumber: z.number().int(),
+  squadId: z.string().uuid(),
+  squadName: z.string(),
+  position: z.number().int().describe('The entry\'s place: by points, then, once the final is played, by how close its tiebreaker was to the final\'s total points. Entries still level share a place.'),
+  displayPosition: z.string().describe('The place as shown, "T2" when shared.'),
+  points: z.number().int().describe('Points so far: each correct pick\'s round value plus any upset bonus.'),
+  maxPossiblePoints: z.number().int().describe('Points so far plus the round value of every pick whose team is still in: the most the entry can still reach.'),
+  correctPickCount: z.number().int(),
+  tiebreakerValue: z.number().int().nullable().describe('The entry\'s guess of the final\'s total points.'),
+}).describe('One entry\'s standing in a bracket contest.');
+export type BracketLeaderboardEntryDto = z.infer<typeof BracketLeaderboardEntryDtoSchema>;
+
+export const BracketLeaderboardResponseSchema = z.object({
+  contestId: z.string().uuid(),
+  sportEventId: z.string().uuid(),
+  gameCount: z.number().int().describe('The bracket\'s games: an entry picks each one.'),
+  finalTotalPoints: z.number().int().nullable().describe('The final\'s combined score, both teams together, once it is played: what the tiebreakers are measured against.'),
+  entries: z.array(BracketLeaderboardEntryDtoSchema).describe('The entries that submitted their bracket, best first. An entry still in draft when the event started is left out.'),
+}).describe('A bracket contest\'s leaderboard.');
+export type BracketLeaderboardResponse = z.infer<typeof BracketLeaderboardResponseSchema>;
+
 registerSchema('SaveGamePicksRequest', SaveGamePicksRequestSchema);
+registerSchema('BracketLeaderboardResponse', BracketLeaderboardResponseSchema);
 registerSchema('GamePicksResponse', GamePicksResponseSchema);
