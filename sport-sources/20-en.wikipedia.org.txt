@@ -1,102 +1,168 @@
-Source: https://en.wikipedia.org/w/index.php?title=2026_Milan%E2%80%93San_Remo&action=raw
-Final URL: https://en.wikipedia.org/w/index.php?title=2026_Milan%E2%80%93San_Remo&action=raw
+Source: https://en.wikipedia.org/w/index.php?title=2026_Tokyo_Marathon&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Tokyo_Marathon&action=raw
 HTTP 200
-Fetched: 2026-10-18T12:44:19.770Z
+Fetched: 2026-10-18T12:46:16.517Z
 
-{{short description|Italian one-day cycling race}}
-{{For|the women's race|2026 Milan–San Remo Women}}
-{{use dmy dates|date=March 2026}}
-{{Infobox cycling race report
-| name = 2026 Milan–San Remo
-| series = [[2026 UCI World Tour]]
-| race_no = 8
-| season_no = 35
-| date = 21 March 2026
-| stages = 1
-| distance = 298
-| unit = km
-| time = 6h 35' 49"
-| first = [[Tadej Pogačar]]
-| first_nat = SLO
-| first_team = {{UCI team code|UAD men|2026}}
-| second = [[Tom Pidcock]]
-| second_nat = GBR
-| second_team = {{UCI team code|PQT|2026}}
-| third = [[Wout van Aert]]
-| third_nat = BEL
-| third_team = {{UCI team code|TVL|2026}}
-| previous = [[2025 Milan–San Remo|2025]]
-| next = [[2027 Milan–San Remo|2027]]
-| image = Milan–San_Remo-2026_poster.jpg
-| image_caption = Official event poster
+{{Short description|Long-distance running race in Japan}}
+{{use dmy dates|date=November 2025}}
+{{infobox sports competition event
+| competition = 19th [[Tokyo Marathon]]
+| image =
+| caption =
+| location = [[Tokyo]], Japan
+| date = Sunday, {{start date and age|2026|03|01|df=y|p=y}}
+| website = {{URL|www.marathon.tokyo/en/}}
+| men = [[Tadese Takele]]
+| men_win_value = 2:03:37
+| women = [[Brigid Kosgei]]
+| women_win_value = 2:14:29
+| wheelchair_men = [[Marcel Hug]]
+| wheelchair_men_win_value = 1:21:09
+| wheelchair_women = [[Catherine Debrunner]]
+| wheelchair_women_win_value = 1:37:15
+| previous = [[2025 Tokyo Marathon|2025]]
+| next = [[2027 Tokyo Marathon|2027]]
 }}
-The '''2026 Milan–San Remo''' was a [[road bicycle racing|road cycling]] one-day race that took place on 21 March in north-western Italy. It was the 117th edition of the [[Milan–San Remo]] [[Classic cycle races|cycling classic]].
-[[File:MilanoSanremo26.jpg|thumb|[[Tadej Pogačar]], [[Tom Pidcock]] and [[Mathieu van der Poel]] on the [[Cipressa]] climb]]
-The race was won by [[Tadej Pogačar]] of {{UCI team code|UAD men|2026}} in a sprint finish against of [[Tom Pidcock]] of {{UCI team code|PQT|2026}}, after Pogačar attacked on the [[Cipressa]] climb for the second year in succession. Third place went to [[Wout van Aert]] of {{UCI team code|TVL|2026}}, the best of the chasing peloton behind.
-Pogačar's win was his fourth different [[Cycling monument|Monument]] victory and was his first victory in the race after four consecutive top-five finishes. The victory marked Pogačar's eleventh in a Monument, tying [[Roger De Vlaeminck]]'s tally for the second-most Monument wins.
-==Teams==
-All eighteen [[UCI WorldTeam]]s and seven [[UCI ProSeries|UCI ProTeams]] participated in the race. {{cite web|title=2026 Milan–San Remo Startlist|url=https://www.procyclingstats.com/race/milano-sanremo/2026/startlist|website=procyclingstats.com|access-date=18 March 2026}}
-'''UCI WorldTeams'''
-{{div col|colwidth=20em|style=margin-right:20%;}}
-* {{UCI team code|ADC|2026}}
-* {{UCI team code|DAT|2026}}
-* {{UCI team code|EFE|2026}}
-* {{UCI team code|FDJ|2026}}
-* {{UCI team code|IGD|2026a}}
-* {{UCI team code|LTK men|2026}}
-* {{UCI team code|LTD|2026}}
-* {{UCI team code|MOV men|2026}}
-* {{UCI team code|NSN|2026}}
-* {{UCI team code|RBH|2026}}
-* {{UCI team code|SOQ|2026}}
-* {{UCI team code|TBV|2026}}
-* {{UCI team code|JAY men|2026}}
-* {{UCI team code|TPP men|2026}}
-* {{UCI team code|TVL|2026}}
-* {{UCI team code|UAD men|2026}}
-* {{UCI team code|UXM men|2026}}
-* {{UCI team code|XAT|2026}}
-{{div col end}}
-'''UCI ProTeams'''
-{{div col|colwidth=20em|style=margin-right:20%;}}
-* {{UCI team code|BCS|2026}}
-* {{UCI team code|COF men|2026}}
-* {{UCI team code|PQT|2026}}
-* {{UCI team code|TNN|2026}}
-* {{UCI team code|PTK|2026}}
-* {{UCI team code|TUD|2026}}
-* {{UCI team code|URR|2026}}
-{{div col end}}
-==Race==
-The route of the 117th edition of Milan–San Remo was similar to recent years edition, with a start in [[Pavia]], just outside [[Milan]]. {{Cite web |last=Weislo |first=Laura |date=2026-03-04 |title=Milan-San Remo 2026 route |url=https://www.cyclingnews.com/pro-cycling/racing/milan-san-remo-2026-route/ |access-date=2026-03-24 |website=Cyclingnews |language=en}} The route leading to [[Sanremo|San Remo]] remained largely intact, featuring iconic landmarks such as the [[Passo del Turchino]], the three Capi, the [[Cipressa]], and the pivotal [[Poggio di San Remo|Poggio]]. The overall race distance was {{Convert|298|km|mi}}.
-Like most recent editions, the race came to life on the lead-up to the penultimate climb of [[Cipressa]]. With {{convert|32.5|km|abbr=on}} left, a crash brought down several riders, including [[Tadej Pogačar]] ({{UCI team code|UAD men|2026}}) and [[Wout van Aert]] ({{UCI team code|TVL|2026}}) while the reigning winner, [[Mathieu van der Poel]] ({{UCI team code|ADC|2026}}), was also involved. Pogačar made it back to the peloton at the foot of the Cipressa before being brought to the front by his teammate [[Brandon McNulty]], who began to set a furious pace. {{cite web|url=https://www.cyclingnews.com/pro-cycling/racing/milan-san-remo-tadej-pogacar-strikes-in-closing-metres-to-hold-off-tom-pidcock-in-electrifying-two-rider-finish-and-earns-masterful-victory/|title=Milan-San Remo: Tadej Pogačar strikes in closing metres to hold off Tom Pidcock in electrifying two-rider finish and earns masterful victory|first=Dani|last=Ostanek|work=Cycling News|date=21 March 2026|access-date=21 March 2026}} {{cite web|url=https://www.cyclingweekly.com/racing/tadej-pogacar-outsprints-tom-pidcock-to-win-milan-san-remo-after-late-crash|title='I thought it was all over' – Tadej Pogačar outsprints Tom Pidcock to win Milan-San Remo after late crash|first=Joseph|last=Lycett|work=Cycling Weekly|date=21 March 2026|access-date=21 March 2026}}
-Following a leadout by teammate [[Isaac Del Toro]], Pogačar made his move with {{convert|24|km|abbr=on}} to go and {{convert|2.5|km|abbr=on}} from the top of the Cipressa, bringing [[Tom Pidcock]] ({{UCI team code|PQT|2026}}) and van der Poel with him. The trio worked together to keep the peloton at bay before reaching the foot of the [[Poggio di San Remo|Poggio]] with an advantage of 10 seconds. On the climb, Pogačar successfully dropped van der Poel with his first attack. He attacked a few more times to shake off Pidcock but to no avail, with the duo reaching the top of the Poggio with a lead of around 20 seconds.
-On the Via Roma, Pogačar started his sprint with {{convert|200|m|abbr=on}} left, managing to hold off Pidcock by half a wheel to win the race. Just four seconds behind them, van Aert, who attacked the peloton at the bottom of the Poggio descent, barely held off the peloton to take third place.
-Interviewed after the race, Pogačar stated that he thought the crash meant that his chance of victory "was all over". {{Cite web |last=Lycett |first=Joseph |date=2026-03-21 |title='I thought it was all over' – Tadej Pogačar outsprints Tom Pidcock to win Milan-San Remo after late crash |url=https://www.cyclingweekly.com/racing/tadej-pogacar-outsprints-tom-pidcock-to-win-milan-san-remo-after-late-crash |access-date=2026-03-24 |website=Cycling Weekly |language=en}} Pogačar complimented Pidcock, stating he is "punchy [and] a really fast guy", noting that he was "a bit afraid when [Pidcock] let me go first" in the final sprint. Pidcock stated that "winning by such close margins, [but] also losing by such close margins, is what makes the times when you win better". {{Cite web |last=Moultrie |first=James |date=2026-03-23 |title=Tom Pidcock suggests Milan-San Remo victory would have been 'a bit of a fluke' as he makes quick switch to GC mode for Volta a Catalunya |url=https://www.cyclingnews.com/pro-cycling/teams-riders/tom-pidcock-suggests-milan-san-remo-victory-would-have-been-a-bit-of-a-fluke-as-he-makes-quick-switch-to-gc-mode-for-volta-a-catalunya/ |access-date=2026-03-24 |website=Cyclingnews |language=en}}
-Following the race, {{UCI team code|UAD men|2026|nolink=y}} mechanics revealed that Pogačar had won the race on a bike with a cracked frame and a rubbing brake, following his crash earlier in the race. {{Cite web |last=Shrubsall |first=James |date=2026-03-24 |title=Tadej Pogačar won Milan-San Remo on a cracked frame with a rubbing disc brake |url=https://www.cyclingweekly.com/racing/tadej-pogacar-won-milan-san-remo-on-a-cracked-frame-with-a-rubbing-disc-brake |access-date=2026-03-24 |website=Cycling Weekly |language=en}}
-==Result==
-{{cyclingresult start|title=Result (1–10) {{cite web|last=Ostanek|first=Dani|title=Milan-San Remo: Tadej Pogačar strikes in closing metres to hold off Tom Pidcock in electrifying two-rider finish and earns masterful victory|url=https://www.cyclingnews.com/pro-cycling/racing/milan-san-remo-tadej-pogacar-strikes-in-closing-metres-to-hold-off-tom-pidcock-in-electrifying-two-rider-finish-and-earns-masterful-victory/|website=cyclingnews.com|access-date=22 March 2026|date=21 March 2026}} }}
-{{cyclingresult|1|[[Tadej Pogačar]]|SLO|{{UCI team code|UAD men|2026}}|6h 35' 49"}}
-{{cyclingresult|2|[[Tom Pidcock]]|GBR|{{UCI team code|PQT|2026}}|+ 0"}}
-{{cyclingresult|3|[[Wout van Aert]]|BEL|{{UCI team code|TVL|2026}}|+ 4"}}
-{{cyclingresult|4|[[Mads Pedersen]]|DEN|{{UCI team code|LTK men|2026}}|+ 4"}}
-{{cyclingresult|5|[[Corbin Strong]]|NZL|{{UCI team code|NSN|2026}}|+ 4"}}
-{{cyclingresult|6|[[Andrea Vendrame]]|ITA|{{UCI team code|JAY men|2026}}|+ 4"}}
-{{cyclingresult|7|[[Jasper Stuyven]]|BEL|{{UCI team code|SOQ|2026}}|+ 4"}}
-{{cyclingresult|8|[[Mathieu van der Poel]]|NED|{{UCI team code|ADC|2026}}|+ 4"}}
-{{cyclingresult|9|[[Matteo Trentin]]|ITA|{{UCI team code|TUD|2026}}|+ 4"}}
-{{cyclingresult|10|[[Edoardo Zambanini]]|ITA|{{UCI team code|TBV|2026}}|+ 4"}}
-{{cyclingresult end}}
+{{Draft article|nomove=yes}}
+The '''2026 Tokyo Marathon''' was the 19th edition of the annual [[Tokyo Marathon|marathon race in Tokyo]], held on Sunday, 1 March 2026. A [[World Athletics Label Road Races|Platinum Label]] marathon, it was the first of seven [[World Marathon Majors]] {{Cite news |date=2024-11-03 |title=Sydney Marathon to join elite ranks of world marathon majors alongside London and New York City |url=https://www.abc.net.au/news/2024-11-04/sydney-marathon-to-join-world-marathon-majors-series/104556282 |access-date=2024-11-04 |work=ABC News |language=en-AU}} events to be held in 2026. {{Cite web |title=Platinum Label Road Races Results |url=https://worldathletics.org/results/platinum-label-road-races |access-date=2025-11-16 |website=worldathletics.org}}
+==Map and course preview==
+The 2026 Tokyo Marathon map [https://therunningchannel.com/wp-content/uploads/2026/02/TOKYO-MARATHON-MAP-.jpg 2026 Tokyo Marathon map] and a course video [https://www.youtube.com/watch?v=tVXOnhjjGWo course video] are available. [https://therunningchannel.com/tokyo-marathon-info/] The Running Channel
+==Results==
+===Men===
+{| class="wikitable sortable"
+|+ Elite men's top 10 finishers [https://www.watchathletics.com/page/7440/results-tokyo-marathon-2026 2026 Tokyo Marathon Results] WatchAthletics.com
+|-
+!scope="col"| Position
+!scope="col"| Athlete
+!scope="col"| Nationality
+!scope="col"| Time
+|- bgcolor="#F7F6A8"
+| align=center| {{gold1}} || [[Tadese Takele]] || {{ETH}} || 2:03:37
+|- bgcolor="#DCE5E5"
+| align=center| {{silver2}} || [[Geoffrey Toroitich]] || {{KEN}} || 2:03:37
+|- bgcolor="#FFDAB9"
+| align=center| {{bronze3}} || [[Alexander Mutiso]] || {{KEN}} || 2:03:38
+|-
+|align=center|4 || [[Daniel Mateiko]] || {{KEN}} || 2:03:44
+|-
+|align=center|5 || [[Muktar Edris]] || {{ETH}} || 2:04:07
+|-
+|align=center|6 || [[Iliass Aouani]] || {{ITA}} || 2:04:26
+|-
+|align=center|7 || [[Selemon Barega]] || {{ETH}} || 2:05:00
+|-
+|align=center|8 || [[Seifu Tura]] || {{ETH}} || 2:05:02
+|-
+|align=center|9 || [[Vincent Kipkemoi|Vincent Kipkemoi Ngetich]] || {{KEN}} || 2:05:21
+|-
+| align=center|10 || [[Shifera Tamru]] || {{ETH}} || 2:05:56
+|}
+===Women===
+{| class="wikitable sortable"
+|+ Elite women's top 10 finishers{{r|WatchAthletics}}
+|-
+!scope="col"| Position
+!scope="col"| Athlete
+!scope="col"| Nationality
+!scope="col"| Time
+|- bgcolor="#F7F6A8"
+| align=center| {{gold1}} || [[Brigid Kosgei]] || {{KEN}} || 2:14:29
+|- bgcolor="#DCE5E5"
+| align=center| {{silver2}} || [[Bertukan Welde]] || {{ETH}} || 2:16:36
+|- bgcolor="#FFDAB9"
+| align=center| {{bronze3}} || [[Hawi Feysa]] || {{ETH}} || 2:17:39
+|-
+| align=center|4 || [[Sutume Kebede|Sutume Asefa Kebede]] || {{ETH}} || 2:17:39
+|-
+| align=center|5 || [[Alemu Megertu]] || {{ETH}} || 2:18:50
+|-
+| align=center|6 || [[Viola Cheptoo Lagat|Viola Cheptoo]] || {{KEN}} || 2:19:05
+|-
+| align=center|7 || [[Mestawot Fikir]] || {{ETH}} || 2:20:00
+|-
+| align=center|8 || [[Ayana Aberu Mulisa|Aberu Ayana]] || {{ETH}} || 2:20:30
+|-
+| align=center|9 || [[Paskalia Chepkorir Kipkoech|Pascalia Jepkogei]] || {{KEN}} || 2:21:39
+|-
+| align=center|10 || [[Ai Hosoda]] || {{JPN}} || 2:23:39
+|}
+=== Men's Wheelchair ===
+{| class="wikitable sortable"
+|+Wheelchair men's race result
+! scope="col" |Position
+! scope="col" |Athlete
+! scope="col" |Nationality
+! scope="col" |Time
+|- bgcolor="#F7F6A8"
+| align="center" |{{Gold medal icon}}
+| [[Marcel Hug]]
+| {{SUI}}
+| 1:21:09
+|- bgcolor="#DCE5E5"
+| align="center" |{{Silver medal icon}}
+| [[Luo Xingchuan]]
+| {{CHN}}
+| 1:28:08
+|- bgcolor="#FFDAB9"
+| align="center" |{{Bronze medal icon}}
+| [[Sho Watanabe]]
+| {{JPN}}
+| 1:33:10
+|-
+| align="center" |4
+| [[Sam Rizzo]]
+| {{AUS}}
+| 1:33:12
+|-
+| align="center" |5
+| [[Geert Schipper (paratriathlete)|Geert Schipper]]
+| {{NED}}
+| 1:33:12
+|}
+=== Women's Wheelchair ===
+{| class="wikitable sortable"
+|+Wheelchair women's race result
+! scope="col" |Position
+! scope="col" |Athlete
+! scope="col" |Nationality
+! scope="col" |Time
+|- bgcolor="#F7F6A8"
+| align="center" |{{Gold medal icon}}
+| [[Catherine Debrunner]]
+| {{SUI}}
+| 1:37:15
+|- bgcolor="#DCE5E5"
+| align="center" |{{Silver medal icon}}
+| [[Eden Rainbow-Cooper]]
+| {{GBN}}
+| 1:41:13
+|- bgcolor="#FFDAB9"
+| align="center" |{{Bronze medal icon}}
+| [[Zhou Zhaoqian]]
+| {{CHN}}
+| 1:41:13
+|-
+| align="center" |4
+| [[Tatyana McFadden]]
+| {{USA}}
+| 1:41:15
+|-
+| align="center" |5
+| [[Vanessa Cristina de Souza]]
+| {{BRA}}
+| 1:41:20
+|}
+== Figures ==
+[[Tadese Takele]] became only the second man ever to win two consecutive Tokyo Marathon titles, after [[Birhanu Legese]] in 2019 and 2020. Female winner [[Brigid Kosgei]] set a course record of 2:14:29, taking a minute off the previous mark from 2024. {{Cite web |title=東京マラソン2026 |url=https://www.marathon.tokyo/ |access-date=2026-05-18 |website=www.marathon.tokyo/ |language=en}} 5.6% of finishers finished in under 3 hours, the highest percentage in the history of the [[Tokyo Marathon]]. Overall, 73.9% of finishers were male and 26.1% were female. {{Cite web |last=Ercilla |first=Rosana |date=2026-04-07 |title=The Tokyo Marathon- tracking its growth by the data |url=https://meta-endurance.com/the-tokyo-marathon-tracking-its-growth-by-the-data/ |access-date=2026-05-18 |website=Meta Endurance |language=en-GB}}
 == References ==
 {{reflist}}
 == External links ==
-* {{Official website|http://www.milanosanremo.it/en/}}
-{{2026 UCI World Tour}}
-{{Milan–San Remo}}
-{{Milan–San Remo winners}}
-[[Category:Milan–San Remo]]
-[[Category:21st century in Lombardy]]
-[[Category:21st century in Liguria]]
-[[Category:2026 UCI World Tour|Milan-San Remo]]
-[[Category:2026 in Italian sport|Milan-San Remo]]
-[[Category:March 2026 sports events in Italy|Milan-San Remo]]
+* [https://www.marathon.tokyo Official site]
+{{Tokyo Marathon}}
+{{2026 in athletics}}
+{{DEFAULTSORT:Tokyo Marathon, 2026}}
+[[Category:2026 in Tokyo|Marathon]]
+[[Category:2026 marathons]]
+[[Category:March 2026 sports events in Japan]]
+[[Category:Tokyo Marathon|2026]]
+[[Category:2026 in Japanese sport]]

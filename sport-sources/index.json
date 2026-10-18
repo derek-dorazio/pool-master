@@ -1,141 +1,141 @@
 {
-  "fetchedAt": "2026-10-18T12:44:19.770Z",
+  "fetchedAt": "2026-10-18T12:46:16.517Z",
   "results": [
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_men%27s_basketball_tournament&action=raw",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260317&groups=100&limit=100",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "01-en.wikipedia.org.txt"
+      "file": "01-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_women%27s_basketball_tournament&action=raw",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260318&groups=100&limit=100",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "02-en.wikipedia.org.txt"
+      "file": "02-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260317-20260407&groups=100&limit=300",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260319&groups=100&limit=100",
       "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 400,
+      "status": "OK",
+      "httpStatus": 200,
       "file": "03-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=20260318-20260406&groups=100&limit=300",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260320&groups=100&limit=100",
       "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 400,
+      "status": "OK",
+      "httpStatus": 200,
       "file": "04-site.api.espn.com.txt"
     },
     {
-      "url": "https://api.jolpi.ca/ergast/f1/2026/results.json?limit=100&offset=0",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260321&groups=100&limit=100",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "05-api.jolpi.ca.txt"
+      "file": "05-site.api.espn.com.txt"
     },
     {
-      "url": "https://api.jolpi.ca/ergast/f1/2026/results.json?limit=100&offset=100",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260322&groups=100&limit=100",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "06-api.jolpi.ca.txt"
+      "file": "06-site.api.espn.com.txt"
     },
     {
-      "url": "https://api.jolpi.ca/ergast/f1/2026/results.json?limit=100&offset=200",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260326&groups=100&limit=100",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "07-api.jolpi.ca.txt"
+      "file": "07-site.api.espn.com.txt"
     },
     {
-      "url": "https://api.jolpi.ca/ergast/f1/2026/results.json?limit=100&offset=300",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260327&groups=100&limit=100",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "08-api.jolpi.ca.txt"
+      "file": "08-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Daytona_500&action=raw",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260328&groups=100&limit=100",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "09-en.wikipedia.org.txt"
+      "file": "09-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Coca-Cola_600&action=raw",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260329&groups=100&limit=100",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "10-en.wikipedia.org.txt"
+      "file": "10-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Brickyard_400&action=raw",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260404&groups=100&limit=100",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "11-en.wikipedia.org.txt"
+      "file": "11-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Indianapolis_500&action=raw",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260406&groups=100&limit=100",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "12-en.wikipedia.org.txt"
+      "file": "12-site.api.espn.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_IndyCar_Series&action=raw",
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Formula_One_World_Championship&action=raw",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "13-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Pegasus_World_Cup&action=raw",
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_NASCAR_Cup_Series&action=raw",
       "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 404,
+      "status": "OK",
+      "httpStatus": 200,
       "file": "14-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Kentucky_Derby&action=raw",
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Giro_d%27Italia_Women&action=raw",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "15-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Preakness_Stakes&action=raw",
+      "url": "https://www.procyclingstats.com/race/tour-de-france/2026/gc",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "16-en.wikipedia.org.txt"
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "16-procyclingstats.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Belmont_Stakes&action=raw",
+      "url": "https://www.procyclingstats.com/race/giro-d-italia/2026/gc",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "17-en.wikipedia.org.txt"
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "17-procyclingstats.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Tour_de_France&action=raw",
+      "url": "https://www.procyclingstats.com/race/milano-sanremo/2026/result",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "18-en.wikipedia.org.txt"
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "18-procyclingstats.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Giro_d%27Italia&action=raw",
+      "url": "https://www.procyclingstats.com/race/giro-d-italia-donne/2026/gc",
       "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "19-en.wikipedia.org.txt"
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "19-procyclingstats.com.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_Milan%E2%80%93San_Remo&action=raw",
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Tokyo_Marathon&action=raw",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
