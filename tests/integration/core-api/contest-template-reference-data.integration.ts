@@ -382,6 +382,36 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
   });
 });
 
+// The NFL's knockout presets (#702): four playoff rounds, so the doubling stops at 8.
+describe('The seeded NFL league and its knockout templates', () => {
+  it('seeds the NFL, which reseeds, with a Doubling and a Doubling + upset bonus template per selection type on round values 1, 2, 4, 8, the tiered Doubling one the default', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.AMERICAN_FOOTBALL },
+      include: { sportLeague: true },
+      orderBy: [{ templateKey: 'asc' }],
+    });
+
+    expect(new Set(templates.map((template) => [template.sportLeague?.name, template.sportLeague?.bracketAdvancement].join(' ')))).toEqual(new Set(['NFL RESEED_BY_SEED']));
+    expect(templates.map((template) => [template.templateKey, template.selectionType, template.isDefault])).toEqual([
+      ['nfl-budget-doubling', SelectionType.BUDGET_PICK, false],
+      ['nfl-budget-doubling-upset-bonus', SelectionType.BUDGET_PICK, false],
+      ['nfl-random-draw-doubling', SelectionType.RANDOM_DRAW, false],
+      ['nfl-random-draw-doubling-upset-bonus', SelectionType.RANDOM_DRAW, false],
+      ['nfl-tiered-doubling', SelectionType.TIERED, true],
+      ['nfl-tiered-doubling-upset-bonus', SelectionType.TIERED, false],
+    ]);
+    for (const template of templates) {
+      expect(ContestRulesWithEntryLimitSchema.parse(template.configJson).scoring).toEqual({
+        participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+        config: {
+          roundValues: [1, 2, 4, 8],
+          upsetBonus: template.templateKey.endsWith('-upset-bonus') ? { rule: 'SEED_DIFFERENCE', multiplier: 1 } : { rule: 'NONE' },
+        },
+      });
+    }
+  });
+});
+
 // What contest creation holds a template's rules to, checked on every seeded template of every
 // sport rather than sport by sport, so a preset seeded for a new sport or series that no
 // commissioner could create a contest from fails here instead of on the create page.
