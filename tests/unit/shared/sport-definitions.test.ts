@@ -254,9 +254,9 @@ describe('basketball', () => {
     expect(basketball.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 16 });
   });
 
-  it('offers the three roster selection types and pick\'em', () => {
+  it('offers the three roster selection types, pick\'em and bracket', () => {
     expect(basketball.selectionTypes).toEqual([
-      SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM,
+      SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET,
     ]);
   });
 
@@ -304,6 +304,12 @@ describe('American football', () => {
       'Wild Card', 'Divisional', 'Conference Championship', 'Super Bowl',
     ]);
     expect(americanFootball.roundLabel(5, 4)).toBe('Round 5');
+  });
+
+  it('offers the three roster selection types, pick\'em and bracket', () => {
+    expect(americanFootball.selectionTypes).toEqual([
+      SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET,
+    ]);
   });
 
   it('calls the event the playoffs and the moment entries close the first kickoff', () => {

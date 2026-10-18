@@ -245,6 +245,85 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
   });
 });
 
+describe('PrismaContestEntryMatchPredictionRepository — several entries and the tiebreaker (#721)', () => {
+  /** A second entry in the same contest, on a new squad of its league. */
+  async function secondEntry(contest: { id: string; leagueId: string }, name: string) {
+    const prisma = getPrisma();
+    const creator = await prisma.leagueMembership.findFirstOrThrow({ where: { leagueId: contest.leagueId } });
+    const squad = await prisma.squad.create({ data: { leagueId: contest.leagueId, createdBy: creator.userId, name: `${name} ${randomUUID().slice(0, 6)}` } });
+    const result = await repos().entries.create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name, tiebreakerValue: null });
+    if (result.status !== 'created') throw new Error(`seed: entry refused (${result.status})`);
+    return result.entry;
+  }
+
+  const homePick = (game: { id: string; homeSportEventParticipantId: string | null }) =>
+    ({ sportEventMatchId: game.id, sportEventParticipantId: expectDefined(game.homeSportEventParticipantId), confidence: null });
+
+  it('reads several entries\' picks on one event in game order, then entry order, leaving out other entries and other events', async () => {
+    const week1 = await createWeek('Week 1', AT);
+    const week2 = await createWeek('Week 2', LATER);
+    const { contest, entry: first } = await createPickEmEntry([week1.event.id, week2.event.id]);
+    const second = await secondEntry(contest, 'Second');
+    const third = await secondEntry(contest, 'Third');
+    for (const entry of [first, second, third]) {
+      await repos().predictions.save({
+        contestEntryId: entry.id, sportEventId: week1.event.id, clearedMatchIds: [], eventStatus: null, at: AT,
+        saves: [homePick(week1.game(2)), homePick(week1.game(1))],
+      });
+    }
+    await repos().predictions.save({
+      contestEntryId: first.id, sportEventId: week2.event.id, clearedMatchIds: [], eventStatus: null, at: AT, saves: [homePick(week2.game(1))],
+    });
+
+    const picks = await repos().predictions.findByEntriesAndEvent([second.id, first.id], week1.event.id);
+
+    const [lower, higher] = [first.id, second.id].sort();
+    expect(picks.map((pick) => [pick.sportEventMatchId, pick.contestEntryId])).toEqual([
+      [week1.game(1).id, lower],
+      [week1.game(1).id, higher],
+      [week1.game(2).id, lower],
+      [week1.game(2).id, higher],
+    ]);
+  });
+
+  it('reads no picks for no entries', async () => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { entry } = await createPickEmEntry([event.id]);
+    await repos().predictions.save({ contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT, saves: [homePick(game(1))] });
+
+    await expect(repos().predictions.findByEntriesAndEvent([], event.id)).resolves.toEqual([]);
+  });
+
+  it('writes the tiebreaker onto the entry with the picks, leaves it alone when a save gives none, and clears it with null', async () => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { entry } = await createPickEmEntry([event.id]);
+    const tiebreaker = async () => expectDefined(await repos().entries.findByIdWithSquad(entry.id)).tiebreakerValue ?? null;
+
+    await repos().predictions.save({
+      contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT, saves: [homePick(game(1))], tiebreakerValue: 141,
+    });
+    expect(await tiebreaker()).toBe(141);
+
+    await repos().predictions.save({ contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: LATER, saves: [homePick(game(2))] });
+    expect(await tiebreaker()).toBe(141);
+
+    await repos().predictions.save({ contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: LATER, saves: [], tiebreakerValue: null });
+    expect(await tiebreaker()).toBeNull();
+  });
+
+  it('writes no tiebreaker when a pick of the same save breaks a database check', async () => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { entry } = await createPickEmEntry([event.id]);
+
+    await expect(repos().predictions.save({
+      contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT, tiebreakerValue: 141,
+      saves: [{ ...homePick(game(1)), confidence: 0 }],
+    })).rejects.toThrow();
+
+    expect(expectDefined(await repos().entries.findByIdWithSquad(entry.id)).tiebreakerValue ?? null).toBeNull();
+  });
+});
+
 describe('contest_entry_match_predictions constraints', () => {
   async function seeded() {
     const week = await createWeek('Week 1', AT);

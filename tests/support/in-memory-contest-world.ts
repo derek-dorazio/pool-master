@@ -19,6 +19,7 @@ import type {
   ContestEntryPickWithParticipant,
   ContestEntryRepository,
   ContestEntryStandingRepository,
+  ContestEntryStandingResult,
   ContestEntryWithSquad,
   ContestRepository,
   LeagueMembershipRepository,
@@ -55,7 +56,6 @@ import {
 import type { ContestServiceDeps } from '../../packages/core-api/src/modules/contests/service';
 import { buildLeague, buildUser } from '../factories';
 import {
-  fakeContestEntryStandingRepo,
   fakeLeagueRepo,
   fakeParticipantContestScoringRuleRepo,
   fakeSportEventRepo,
@@ -79,6 +79,8 @@ export class InMemoryContestWorld {
   readonly picks = new Map<string, ContestEntryPickWithParticipant>();
   /** Settled per-event standings, keyed by entry and event (#713). */
   readonly eventStandings = new Map<string, ContestEntryEventStandingResult>();
+  /** Settled contest standings, one per entry. */
+  readonly standings = new Map<string, ContestEntryStandingResult>();
   readonly leagues = new Map<string, League>();
   readonly users = new Map<string, User>();
   readonly memberships = new Map<string, LeagueMembership>();
@@ -552,7 +554,14 @@ export class InMemoryContestWorld {
   }
 
   standingRepo(): ContestEntryStandingRepository {
-    return fakeContestEntryStandingRepo();
+    return {
+      findByContest: async (contestId) =>
+        [...this.standings.values()].filter((row) => row.contestId === contestId),
+      // One per entry, as the adapter's upsert on contest_entry_id.
+      upsert: async (write) => {
+        this.standings.set(write.contestEntryId, { id: this.standings.get(write.contestEntryId)?.id ?? this.nextId('standing'), ...write });
+      },
+    };
   }
 
   eventStandingRepo(): ContestEntryEventStandingRepository {
@@ -566,7 +575,10 @@ export class InMemoryContestWorld {
     };
   }
 
-  /** Everything ContestService needs, wired to this world. */
+  /**
+   * Everything ContestService needs, wired to this world. The world keeps no games, so a test of
+   * game picks passes `predictions` and `matches` from an `InMemoryGamePicks` over it.
+   */
   contestServiceDeps(overrides: Partial<ContestServiceDeps> = {}): ContestServiceDeps {
     return {
       contests: this.contestRepo(),
@@ -574,6 +586,8 @@ export class InMemoryContestWorld {
       scoringRules: this.scoringRuleRepo(),
       entries: this.entryRepo(),
       picks: this.pickRepo(),
+      predictions: { findByEntriesAndEvent: async () => [] },
+      matches: { findBySportEvent: async () => [] },
       standings: this.standingRepo(),
       eventStandings: this.eventStandingRepo(),
       memberships: this.membershipRepo(),

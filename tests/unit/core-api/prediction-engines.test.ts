@@ -1,20 +1,24 @@
 /**
- * The pick'em prediction engine (#716): which confidence values one pick may carry, and what
- * stops a week of picks being submitted, in a straight-up and a confidence pool.
+ * The prediction engines: pick'em (#716) — which confidence values one pick may carry, and what
+ * stops a week of picks being submitted, in a straight-up and a confidence pool — and bracket
+ * (#721), whose later games offer the entry's own picked winners and which needs a tiebreaker.
  */
 import { expect } from '@jest/globals';
-import { PickEmMode, SelectionType } from '@poolmaster/shared/domain';
+import { MatchSide, PickEmMode, PickOutcome, SelectionType, UpsetBonusRule, type ContestScoringSettings } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../../packages/core-api/src/modules/contests/entry-window';
+import { bracketPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/bracket';
 import { pickEmPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/pick-em';
 import { PredictionIssueKind } from '../../../packages/core-api/src/modules/selections/prediction-engines/prediction-engine';
 import { getPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/registry';
+import { expectDefined } from '../../support/expect-defined';
+import { EIGHT_SEEDS, bracketPick, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 
 const STRAIGHT_UP = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP };
 const CONFIDENCE = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE };
 const GAMES = ['game-1', 'game-2', 'game-3'];
 
 function picks(...confidences: Array<number | null>) {
-  return confidences.map((confidence, index) => ({ sportEventMatchId: `game-${index + 1}`, confidence }));
+  return confidences.map((confidence, index) => ({ sportEventMatchId: `game-${index + 1}`, sportEventParticipantId: `home-${index + 1}`, confidence }));
 }
 
 describe('pick\'em engine — registry and pick window', () => {
@@ -51,19 +55,19 @@ describe('pick\'em engine — acceptsConfidence', () => {
 describe('pick\'em engine — findWeekIssues', () => {
   it('finds nothing in a straight-up week with every game picked and no values', () => {
     expect(pickEmPredictionEngine.findWeekIssues({
-      configuration: STRAIGHT_UP, gameMatchIds: GAMES, predictions: picks(null, null, null),
+      configuration: STRAIGHT_UP, gameMatchIds: GAMES, predictions: picks(null, null, null), tiebreakerValue: null,
     })).toEqual([]);
   });
 
   it('finds nothing in a confidence week whose values are 1 to the game count, each once', () => {
     expect(pickEmPredictionEngine.findWeekIssues({
-      configuration: CONFIDENCE, gameMatchIds: GAMES, predictions: picks(2, 3, 1),
+      configuration: CONFIDENCE, gameMatchIds: GAMES, predictions: picks(2, 3, 1), tiebreakerValue: null,
     })).toEqual([]);
   });
 
   it('reports an incomplete week with how many of its games are picked', () => {
     expect(pickEmPredictionEngine.findWeekIssues({
-      configuration: STRAIGHT_UP, gameMatchIds: GAMES, predictions: picks(null, null),
+      configuration: STRAIGHT_UP, gameMatchIds: GAMES, predictions: picks(null, null), tiebreakerValue: null,
     })).toEqual([{ kind: PredictionIssueKind.WEEK_INCOMPLETE, pickedCount: 2, gameCount: 3 }]);
   });
 
@@ -71,40 +75,134 @@ describe('pick\'em engine — findWeekIssues', () => {
     expect(pickEmPredictionEngine.findWeekIssues({
       configuration: STRAIGHT_UP,
       gameMatchIds: GAMES,
-      predictions: [...picks(null, null), { sportEventMatchId: 'cancelled-game', confidence: null }],
+      predictions: [...picks(null, null), { sportEventMatchId: 'cancelled-game', sportEventParticipantId: 'home-9', confidence: null }],
+      tiebreakerValue: null,
     })).toEqual([{ kind: PredictionIssueKind.WEEK_INCOMPLETE, pickedCount: 2, gameCount: 3 }]);
   });
 
   it('reports invalid confidence when a confidence pick has no value', () => {
     expect(pickEmPredictionEngine.findWeekIssues({
-      configuration: CONFIDENCE, gameMatchIds: GAMES, predictions: picks(1, null, 3),
+      configuration: CONFIDENCE, gameMatchIds: GAMES, predictions: picks(1, null, 3), tiebreakerValue: null,
     })).toEqual([{ kind: PredictionIssueKind.CONFIDENCE_INVALID }]);
   });
 
   it('reports invalid confidence when a value is above the game count', () => {
     expect(pickEmPredictionEngine.findWeekIssues({
-      configuration: CONFIDENCE, gameMatchIds: GAMES, predictions: picks(1, 2, 4),
+      configuration: CONFIDENCE, gameMatchIds: GAMES, predictions: picks(1, 2, 4), tiebreakerValue: null,
     })).toEqual([{ kind: PredictionIssueKind.CONFIDENCE_INVALID }]);
   });
 
   it('reports invalid confidence when a value is used twice', () => {
     expect(pickEmPredictionEngine.findWeekIssues({
-      configuration: CONFIDENCE, gameMatchIds: GAMES, predictions: picks(1, 3, 3),
+      configuration: CONFIDENCE, gameMatchIds: GAMES, predictions: picks(1, 3, 3), tiebreakerValue: null,
     })).toEqual([{ kind: PredictionIssueKind.CONFIDENCE_INVALID }]);
   });
 
   it('reports invalid confidence when a straight-up pick carries a value', () => {
     expect(pickEmPredictionEngine.findWeekIssues({
-      configuration: STRAIGHT_UP, gameMatchIds: GAMES, predictions: picks(null, 2, null),
+      configuration: STRAIGHT_UP, gameMatchIds: GAMES, predictions: picks(null, 2, null), tiebreakerValue: null,
     })).toEqual([{ kind: PredictionIssueKind.CONFIDENCE_INVALID }]);
   });
 
   it('reports both an incomplete week and a repeated value together', () => {
     expect(pickEmPredictionEngine.findWeekIssues({
-      configuration: CONFIDENCE, gameMatchIds: GAMES, predictions: picks(2, 2),
+      configuration: CONFIDENCE, gameMatchIds: GAMES, predictions: picks(2, 2), tiebreakerValue: null,
     })).toEqual([
       { kind: PredictionIssueKind.WEEK_INCOMPLETE, pickedCount: 2, gameCount: 3 },
       { kind: PredictionIssueKind.CONFIDENCE_INVALID },
     ]);
+  });
+});
+
+describe('pick\'em engine — resolvePicks, scorePicks and the tiebreaker', () => {
+  const games = eightTeamBracket().filter((game) => game.roundNumber === 1);
+
+  it('offers each game its own two teams and keeps only the picks naming one of them', () => {
+    const resolved = pickEmPredictionEngine.resolvePicks({
+      games,
+      predictions: [{ ...bracketPick(1, 'T8'), confidence: null }, { ...bracketPick(2, 'T1'), confidence: null }],
+      seedOf: EIGHT_SEEDS,
+    });
+
+    expect(resolved.sides.get('m1')).toEqual({ home: 'T1', away: 'T8' });
+    expect(resolved.kept.map((each) => each.sportEventMatchId)).toEqual(['m1']);
+    expect(resolved.stranded.map((each) => each.sportEventMatchId)).toEqual(['m2']);
+  });
+
+  it('scores nothing yet and takes no tiebreaker with its picks', () => {
+    expect(pickEmPredictionEngine.takesTiebreaker).toBe(false);
+    expect(pickEmPredictionEngine.scorePicks({ games, predictions: [], seedOf: EIGHT_SEEDS, scoring: null })).toBeNull();
+  });
+});
+
+describe('bracket engine', () => {
+  const KNOCKOUT: ContestScoringSettings = {
+    participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+    config: { roundValues: [1, 2, 4], upsetBonus: { rule: UpsetBonusRule.NONE } },
+  };
+  const GAME_IDS = eightTeamBracket().map((game) => game.id);
+  const fullBracket = [
+    bracketPick(1, 'T1'), bracketPick(2, 'T4'), bracketPick(3, 'T2'), bracketPick(4, 'T3'),
+    bracketPick(5, 'T1'), bracketPick(6, 'T2'), bracketPick(7, 'T1'),
+  ].map((each) => ({ ...each, confidence: null }));
+
+  it('serves BRACKET from the registry, locking every pick at the event\'s start and taking a tiebreaker', () => {
+    expect(getPredictionEngine(SelectionType.BRACKET)).toBe(bracketPredictionEngine);
+    expect(bracketPredictionEngine.pickWindow).toBe(PickWindow.UNTIL_EVENT_START);
+    expect(bracketPredictionEngine.takesTiebreaker).toBe(true);
+  });
+
+  it('accepts a pick only without a confidence value', () => {
+    expect(bracketPredictionEngine.acceptsConfidence({ configuration: undefined, confidence: null, gameCount: 7 })).toBe(true);
+    expect(bracketPredictionEngine.acceptsConfidence({ configuration: undefined, confidence: 1, gameCount: 7 })).toBe(false);
+  });
+
+  it('offers a later game the entry\'s picked winners and strands a pick that no longer follows from them', () => {
+    const resolved = bracketPredictionEngine.resolvePicks({
+      games: eightTeamBracket(),
+      predictions: fullBracket.map((each) => (each.sportEventMatchId === 'm1' ? { ...each, sportEventParticipantId: 'T8' } : each)),
+      seedOf: EIGHT_SEEDS,
+    });
+
+    expect(resolved.sides.get('m5')).toEqual({ home: 'T8', away: 'T4' });
+    expect(resolved.stranded.map((each) => each.sportEventMatchId)).toEqual(['m5', 'm7']);
+  });
+
+  it('scores the picks with the contest\'s knockout round values', () => {
+    const played = withResults(eightTeamBracket(), new Map([[1, { winner: MatchSide.HOME }], [2, { winner: MatchSide.AWAY }]]));
+    const score = expectDefined(bracketPredictionEngine.scorePicks({ games: played, predictions: fullBracket, seedOf: EIGHT_SEEDS, scoring: KNOCKOUT }));
+
+    expect(score.picks.get('m1')).toEqual({ outcome: PickOutcome.CORRECT, points: 1 });
+    expect(score.picks.get('m2')).toEqual({ outcome: PickOutcome.BUSTED, points: 0 });
+    expect(score.points).toBe(1);
+    expect(score.maxPossiblePoints).toBe(1 + 1 + 1 + 2 + 2 + 4);
+  });
+
+  it('scores nothing when the contest has no knockout round-points scoring', () => {
+    expect(bracketPredictionEngine.scorePicks({ games: eightTeamBracket(), predictions: fullBracket, seedOf: EIGHT_SEEDS, scoring: null })).toBeNull();
+    expect(bracketPredictionEngine.scorePicks({
+      games: eightTeamBracket(),
+      predictions: fullBracket,
+      seedOf: EIGHT_SEEDS,
+      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+    })).toBeNull();
+  });
+
+  it('finds nothing in a bracket with every game picked and a tiebreaker given', () => {
+    expect(bracketPredictionEngine.findWeekIssues({ configuration: undefined, gameMatchIds: GAME_IDS, predictions: fullBracket, tiebreakerValue: 140 })).toEqual([]);
+  });
+
+  it('reports a bracket with a game unpicked and no tiebreaker as incomplete and missing its tiebreaker', () => {
+    expect(bracketPredictionEngine.findWeekIssues({
+      configuration: undefined, gameMatchIds: GAME_IDS, predictions: fullBracket.slice(0, 6), tiebreakerValue: null,
+    })).toEqual([
+      { kind: PredictionIssueKind.WEEK_INCOMPLETE, pickedCount: 6, gameCount: 7 },
+      { kind: PredictionIssueKind.TIEBREAKER_MISSING },
+    ]);
+  });
+
+  it('reports only the missing tiebreaker on a fully picked bracket', () => {
+    expect(bracketPredictionEngine.findWeekIssues({ configuration: undefined, gameMatchIds: GAME_IDS, predictions: fullBracket, tiebreakerValue: null }))
+      .toEqual([{ kind: PredictionIssueKind.TIEBREAKER_MISSING }]);
   });
 });

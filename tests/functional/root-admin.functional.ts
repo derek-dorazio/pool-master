@@ -465,7 +465,7 @@ describe('SDK Functional: Root Admin', () => {
     if (!template) {
       throw new Error('Expected at least one contest template');
     }
-    if (template.configuration.selectionType === SelectionType.PICK_EM) {
+    if (template.configuration.selectionType === SelectionType.PICK_EM || template.configuration.selectionType === SelectionType.BRACKET) {
       throw new Error('Expected a golf template to be a roster template');
     }
     const rosterConfiguration = template.configuration;

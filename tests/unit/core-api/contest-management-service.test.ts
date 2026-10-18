@@ -11,6 +11,7 @@ import {
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
+  CONTEST_BRACKET_SINGLE_EVENT,
   CONTEST_BUDGET_UNFILLABLE,
   CONTEST_DRAW_FIELD_OUT_OF_RANGE,
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
@@ -19,6 +20,7 @@ import {
   CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH,
   CONTEST_EVENT_ALREADY_STARTED,
   CONTEST_EVENT_HAS_NO_GAMES,
+  CONTEST_EVENT_NOT_A_BRACKET,
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_NOT_DRAFT,
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
@@ -219,16 +221,19 @@ function createSportEventReader(overrides?: Partial<{
   activeFieldPrices: number[];
   gameCount: number;
   undecidedGameCount: number;
+  bracketProblem: string | null;
 }>): {
   findById: jest.Mock;
   findActiveFieldPrices: jest.Mock;
   countGames: jest.Mock;
   countUndecidedGames: jest.Mock;
+  findBracketProblem: jest.Mock;
 } {
   return {
     findActiveFieldPrices: jest.fn().mockResolvedValue(overrides?.activeFieldPrices ?? []),
     countGames: jest.fn().mockResolvedValue(overrides?.gameCount ?? 0),
     countUndecidedGames: jest.fn().mockResolvedValue(overrides?.undecidedGameCount ?? 0),
+    findBracketProblem: jest.fn().mockResolvedValue(overrides?.bracketProblem ?? null),
     findById: jest.fn().mockResolvedValue({
       id: '11111111-1111-1111-1111-111111111111',
       status: overrides?.status ?? SportEventStatus.SCHEDULED,
@@ -1620,6 +1625,7 @@ describe('ContestManagementService — a contest of several events', () => {
       findActiveFieldPrices: jest.fn().mockResolvedValue([10, 10, 10]),
       countGames: jest.fn().mockResolvedValue(0),
       countUndecidedGames: jest.fn().mockResolvedValue(0),
+      findBracketProblem: jest.fn().mockResolvedValue(null),
     };
   }
 
@@ -1774,6 +1780,14 @@ describe('ContestManagementService — a contest of several events', () => {
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
   });
 
+  it('refuses a second event on a bracket contest with 422 CONTEST_BRACKET_SINGLE_EVENT, changing nothing', async () => {
+    const { service, contestRepo } = build({ contest: { contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.BRACKET } });
+
+    await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]))
+      .rejects.toMatchObject({ code: CONTEST_BRACKET_SINGLE_EVENT, statusCode: 422 });
+    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+  });
+
   it('refuses a second event on a random-draw contest with CONTEST_DRAW_SINGLE_EVENT', async () => {
     const { service, contestRepo } = build({ contest: { selectionType: SelectionType.RANDOM_DRAW } });
 
@@ -1917,6 +1931,97 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     });
 
     await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: pickEmRules })))
+      .rejects.toMatchObject({ code: 'CONTEST_FORMAT_NOT_ALLOWED', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+});
+
+// #721: a bracket contest is a PREDICTION contest on one knockout event whose every game can be picked.
+describe('ContestManagementService bracket rules (#721)', () => {
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  const EVENT_ID = '11111111-1111-1111-1111-111111111111';
+  const bracketRequest = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
+    name: 'March bracket',
+    sportEventIds: [EVENT_ID],
+    contestFormat: 'PREDICTION',
+    selectionType: SelectionType.BRACKET,
+    configuration: {
+      selectionType: SelectionType.BRACKET,
+      maxEntriesPerSquad: 2,
+      scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4, 8], upsetBonus: { rule: 'NONE' } } },
+    },
+    ...overrides,
+  });
+
+  function bracketService(options: { bracketProblem?: string | null } = {}) {
+    const contestCoreRepo = createContestRepo();
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const reader = createSportEventReader({
+      sport: Sport.BASKETBALL,
+      tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
+      rounds: 4,
+      gameCount: 15,
+      bracketProblem: options.bracketProblem ?? null,
+    });
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      contestConfigurationRepo,
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      reader,
+    );
+    return { contestCoreRepo, contestConfigurationRepo, service };
+  }
+
+  it('creates a PREDICTION bracket contest on a knockout whose games fill in as a bracket, storing only its selection type', async () => {
+    const { contestCoreRepo, contestConfigurationRepo, service } = bracketService();
+
+    await service.createContest({ leagueId: 'league-1' }, bracketRequest());
+
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType: SelectionType.BRACKET,
+      sportEventIds: [EVENT_ID],
+    }));
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      selectionType: SelectionType.BRACKET,
+      configJson: { selectionType: SelectionType.BRACKET },
+      maxEntriesPerSquad: 2,
+    }));
+  });
+
+  it('refuses a bracket on an event whose games cannot be filled in with 422 CONTEST_EVENT_NOT_A_BRACKET naming why, writing nothing', async () => {
+    const { contestCoreRepo, service } = bracketService({ bracketProblem: 'game 3 of round 1 has a team that no pick can decide' });
+
+    const refusal = service.createContest({ leagueId: 'league-1' }, bracketRequest());
+
+    await expect(refusal).rejects.toMatchObject({ code: CONTEST_EVENT_NOT_A_BRACKET, statusCode: 422 });
+    await expect(refusal).rejects.toThrow(/game 3 of round 1 has a team that no pick can decide/);
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a bracket over two events with 422 CONTEST_BRACKET_SINGLE_EVENT, writing nothing', async () => {
+    const { contestCoreRepo, service } = bracketService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, bracketRequest({
+      sportEventIds: [EVENT_ID, '22222222-2222-2222-2222-222222222222'],
+    }))).rejects.toMatchObject({ code: CONTEST_BRACKET_SINGLE_EVENT, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses BRACKET sent as a ROSTER contest with 422 CONTEST_FORMAT_NOT_ALLOWED, writing nothing', async () => {
+    const { contestCoreRepo, service } = bracketService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, bracketRequest({ contestFormat: 'ROSTER' })))
       .rejects.toMatchObject({ code: 'CONTEST_FORMAT_NOT_ALLOWED', statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });

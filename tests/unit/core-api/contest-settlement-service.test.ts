@@ -146,6 +146,9 @@ function world({
     eventParticipants: {
       listEventParticipants: jest.fn().mockImplementation(async (sportEventId: string) => fields.get(sportEventId) ?? []),
     },
+    // Golf contests pick no games; a bracket contest's settlement is in bracket-standings.test.ts.
+    predictions: { findByEntriesAndEvent: jest.fn().mockResolvedValue([]) },
+    matches: { findBySportEvent: jest.fn().mockResolvedValue([]) },
     eventStandings: {
       findByContest: async (contestId) => eventStandings.filter((row) => row.contestId === contestId),
       upsert: async (write) => {
