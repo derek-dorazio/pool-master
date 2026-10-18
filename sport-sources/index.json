@@ -1,145 +1,47 @@
 {
-  "fetchedAt": "2026-10-18T04:22:27.168Z",
+  "fetchedAt": "2026-10-18T04:24:17.574Z",
   "results": [
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250415",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250916",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "01-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250416",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250918",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "02-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250418",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250919",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "03-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250419",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250928",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "04-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250420",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250930",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "05-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250504",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20251010",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "06-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250505",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "07-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250506",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "08-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250520",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "09-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250521",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "10-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250605",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "11-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250914",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "12-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250915",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "13-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250921",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "14-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20250922",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "15-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20251003",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "16-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://www.basketball-reference.com/playoffs/NBA_2025.html",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "17-basketball-reference.com.txt"
-    },
-    {
-      "url": "https://www.basketball-reference.com/wnba/playoffs/WNBA_2025.html",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 404,
-      "file": "18-basketball-reference.com.txt"
-    },
-    {
-      "url": "https://www.basketball-reference.com/leagues/NBA_2025_standings.html",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "19-basketball-reference.com.txt"
-    },
-    {
-      "url": "https://www.basketball-reference.com/wnba/years/2025.html",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "20-basketball-reference.com.txt"
     }
   ]
 }
