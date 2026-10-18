@@ -76,7 +76,7 @@ export class SportLeagueService {
     return sportLeague ? (await this.summarize([sportLeague]))[0] : null;
   }
 
-  /** 422 SPORT_EVENT_NOT_BRACKET for a reseeded sport league of a sport not played as a bracket. */
+  /** 422 SPORT_LEAGUE_NOT_BRACKET for a reseeded sport league of a sport not played as a bracket. */
   async createSportLeague(sport: Sport, input: { name: string; matchKeyword?: string; bracketAdvancement?: BracketAdvancement }): Promise<SportLeagueSummary> {
     const sportRow = await requireSport(this.deps.sports, sport);
     this.assertAdvancementFits(sport, input.bracketAdvancement);
@@ -106,7 +106,7 @@ export class SportLeagueService {
    * EVENT_YEAR_HAS_NO_EVENTS for a year this sport league has no events in. It is one write
    * on the sport league row, so the sport league never has two current years.
    *
-   * 422 SPORT_EVENT_NOT_BRACKET for RESEED_BY_SEED on a sport not played as a bracket.
+   * 422 SPORT_LEAGUE_NOT_BRACKET for RESEED_BY_SEED on a sport not played as a bracket.
    */
   async updateSportLeague(
     sportLeagueId: string,
@@ -147,7 +147,7 @@ export class SportLeagueService {
       this.deps.logger?.warn({ sport, bracketAdvancement }, 'Refused a reseeded bracket for a sport not played as a bracket');
       throw new SportCatalogError(
         `A ${getSportDefinition(sport).name.toLowerCase()} sport league plays no bracket, so it cannot reseed one.`,
-        'SPORT_EVENT_NOT_BRACKET',
+        'SPORT_LEAGUE_NOT_BRACKET',
         422,
       );
     }

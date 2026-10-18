@@ -230,7 +230,7 @@ function bracketChanges(
   const sameLink = (match: SportDataMatch, stored: StoredMatch): boolean => {
     const advancesTo = stored.advancesToMatchId === null ? null : numberById.get(stored.advancesToMatchId) ?? null;
     return advancesTo === (match.advancesTo?.matchNumber ?? null) && stored.advancesToSide === (match.advancesTo?.side ?? null)
-      && stored.regionLabel === (match.region ?? null);
+      && stored.regionLabel === (match.regionLabel ?? null);
   };
 
   if (locked) {
@@ -693,7 +693,7 @@ class Loader {
       isNeutralSite: match.isNeutralSite,
       scheduledDate: match.scheduledAt === undefined ? storedTime.get(match.matchNumber) ?? null : new Date(match.scheduledAt).toISOString(),
       advancesTo: match.advancesTo,
-      regionLabel: match.region ?? null,
+      regionLabel: match.regionLabel ?? null,
     }));
     await must(loadEventBracket({ client, path: { eventId }, body: { matches: body } }), `Load the bracket of ${event.name}`);
   }

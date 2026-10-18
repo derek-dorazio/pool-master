@@ -92,7 +92,7 @@ const MatchSchema = z.object({
    */
   advancesTo: z.object({ matchNumber: z.number().int().min(1), side: z.nativeEnum(MatchSide) }).strict().nullable(),
   /** The region or conference the match is played in ("AFC", "East"); left out for none. */
-  region: z.string().min(1).max(40).optional(),
+  regionLabel: z.string().min(1).max(40).optional(),
 }).strict();
 
 const EventSchema = z.object({

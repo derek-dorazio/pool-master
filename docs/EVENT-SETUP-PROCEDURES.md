@@ -257,7 +257,7 @@ alone. A withdrawn player the file lists again is reinstated.
 give each event its `matches`: each match's number, round, its two sides as player keys from
 the event's field (`null` where an earlier match's winner fills the side), whether it is on a
 neutral site, its `scheduledAt` once announced, and `advancesTo` (the match and side its winner
-moves on to; `null` for the final), and its `region` (the March Madness region or NFL
+moves on to; `null` for the final), and its `regionLabel` (the March Madness region or NFL
 conference) where it has one. A league that reseeds gives `bracketAdvancement`
 `RESEED_BY_SEED`, and its first-round games `advancesTo: null`; the run sets the rule on the
 sport league, new or existing. A field entry may give its bracket `seed` (1-16 in each

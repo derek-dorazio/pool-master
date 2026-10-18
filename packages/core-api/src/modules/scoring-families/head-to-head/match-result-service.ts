@@ -247,14 +247,14 @@ export class MatchResultService {
 }
 
 /**
- * Where a reseed placed the winner of a match that links nowhere: the later match naming it, and
+ * Where a reseed placed the winner of a match that links nowhere: the next round's match naming it, and
  * the side. Undefined for a match without a result, or a winner not placed yet.
  */
 function placementOf(bracket: readonly SportEventMatch[], match: SportEventMatch): { match: SportEventMatch; side: MatchSide } | undefined {
   if (match.advancesToMatchId !== null || match.status !== MatchStatus.COMPLETED || match.winnerSide === null) return undefined;
   const winnerId = sideRowId(match, match.winnerSide);
   for (const later of bracket) {
-    if (later.roundNumber <= match.roundNumber) continue;
+    if (later.roundNumber !== match.roundNumber + 1) continue;
     for (const side of [MatchSide.HOME, MatchSide.AWAY]) {
       if (sideRowId(later, side) === winnerId) return { match: later, side };
     }

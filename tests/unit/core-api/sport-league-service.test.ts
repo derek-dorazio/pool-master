@@ -101,13 +101,13 @@ describe('SportLeagueService — bracket advancement', () => {
       .resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
   });
 
-  it('refuses (422 SPORT_EVENT_NOT_BRACKET) a golf sport league that reseeds, on create and on update, writing nothing', async () => {
+  it('refuses (422 SPORT_LEAGUE_NOT_BRACKET) a golf sport league that reseeds, on create and on update, writing nothing', async () => {
     const { service, deps } = buildService({ sports: { findById: jest.fn().mockResolvedValue(GOLF) } });
 
     await expect(service.createSportLeague(Sport.GOLF, { name: 'Champions Tour', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
-      .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_BRACKET', statusCode: 422 });
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_BRACKET', statusCode: 422 });
     await expect(service.updateSportLeague('sl-pga', { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
-      .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_BRACKET', statusCode: 422 });
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_BRACKET', statusCode: 422 });
     expect(deps.sportLeagues.create).not.toHaveBeenCalled();
     expect(deps.sportLeagues.update).not.toHaveBeenCalled();
   });

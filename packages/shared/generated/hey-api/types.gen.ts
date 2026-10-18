@@ -4924,7 +4924,7 @@ export type CreateSportLeagueRequest = {
      */
     matchKeyword?: string;
     /**
-     * FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_EVENT_NOT_BRACKET otherwise.
+     * FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
      */
     bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
 };
@@ -4944,7 +4944,7 @@ export type UpdateSportLeagueRequest = {
      */
     currentEventYear?: number;
     /**
-     * RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_EVENT_NOT_BRACKET otherwise.
+     * RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
      */
     bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
 };

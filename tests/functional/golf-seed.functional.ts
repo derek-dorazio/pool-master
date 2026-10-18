@@ -548,7 +548,7 @@ describe('Loading a real basketball bracket through the admin API', () => {
 
   it('sets the league\'s reseed rule and each match\'s region from the file, reloading a draft\'s bracket when a region changes', async () => {
     const reseeding = file((event) => {
-      event.matches = baseMatches().map((match) => ({ ...match, region: 'East' }));
+      event.matches = baseMatches().map((match) => ({ ...match, regionLabel: 'East' }));
     });
     reseeding.sportLeagues[0].bracketAdvancement = BracketAdvancement.RESEED_BY_SEED;
 

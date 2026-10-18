@@ -194,7 +194,7 @@ describe('sport data file envelope', () => {
 
 describe('sport data bracket', () => {
   // A four-team basketball bracket: two semifinals whose winners meet in the final.
-  interface BracketMatch { home: string | null; away: string | null; advancesTo: { matchNumber: number; side: string } | null; region?: string }
+  interface BracketMatch { home: string | null; away: string | null; advancesTo: { matchNumber: number; side: string } | null; regionLabel?: string }
   interface BracketFile {
     scope: { contents: string[] };
     sportLeagues: Array<{ bracketAdvancement?: string; events: Array<{ field: unknown[]; matches: BracketMatch[] }> }>;
@@ -284,14 +284,14 @@ describe('sport data bracket', () => {
   it('reads a league that reseeds: first-round games that link nowhere, each match in its region', () => {
     const file = bracketFile();
     file.sportLeagues[0].bracketAdvancement = 'RESEED_BY_SEED';
-    for (const match of file.sportLeagues[0].events[0].matches) match.region = 'East';
+    for (const match of file.sportLeagues[0].events[0].matches) match.regionLabel = 'East';
     file.sportLeagues[0].events[0].matches[0].advancesTo = null;
     file.sportLeagues[0].events[0].matches[1].advancesTo = null;
 
     const league = parseSportDataFile(file, { allowTestData: false }).sportLeagues[0];
 
     expect(league.bracketAdvancement).toBe('RESEED_BY_SEED');
-    expect(league.events[0].matches?.map((match) => [match.matchNumber, match.region, match.advancesTo])).toEqual([[1, 'East', null], [2, 'East', null], [3, 'East', null]]);
+    expect(league.events[0].matches?.map((match) => [match.matchNumber, match.regionLabel, match.advancesTo])).toEqual([[1, 'East', null], [2, 'East', null], [3, 'East', null]]);
   });
 
   it('refuses first-round games that link nowhere when the league does not reseed', () => {
