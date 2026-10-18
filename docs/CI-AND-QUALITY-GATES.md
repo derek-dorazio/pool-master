@@ -572,12 +572,18 @@ The flow:
 
 1. Export OpenAPI to a temp file via
    `node --import tsx packages/core-api/scripts/export-openapi.ts`.
-2. Generate a fresh hey-api client to a temp directory using
-   `@hey-api/openapi-ts`.
+2. Generate a fresh hey-api client to a temp directory with
+   `@hey-api/openapi-ts`'s `createClient`, called in-process, and `api-types.ts` with
+   `openapi-typescript`.
 3. Diff the temp output against the committed
    `packages/shared/generated/openapi.json` and
    `packages/shared/generated/hey-api/`.
 4. Report any file that differs as stale and exit 1.
+
+Each step has a two-minute limit and the script exits explicitly when it is done. The
+hey-api CLI twice printed "Done!" and then never exited (2026-10-18), holding
+`all-contract-gates` until its 10-minute job timeout with nothing in the log naming the step.
+A step that hangs now fails in two minutes with its name in the error.
 
 This gate closes a long-standing drift hole. Before it existed, route or DTO
 changes could ship with a stale committed SDK; consumers would fall back to
