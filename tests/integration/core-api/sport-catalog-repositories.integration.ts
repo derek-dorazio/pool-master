@@ -66,11 +66,12 @@ describe('Sport and SportLeague repositories', () => {
 
     await expect(sports.findById(golf.id)).resolves.toMatchObject({ id: golf.id, sport: Sport.GOLF, participantType: 'INDIVIDUAL' });
     await expect(sports.findById(randomUUID())).resolves.toBeNull();
-    // Auto racing's, cycling's, running's, basketball's and American football's rows survive the
-    // cleanup: their seeded leagues carry contest templates. The sport enum orders them, so American
-    // football, added last, lists last.
+    // Every sport the migrations seed survives the cleanup, as reference data. The sport enum orders
+    // them, so American football, added last, lists last.
     const allSports = await sports.findAll();
-    expect(allSports.map((row) => row.sport)).toEqual([Sport.GOLF, Sport.AUTO_RACING, Sport.CYCLING, Sport.RUNNING, Sport.BASKETBALL, Sport.AMERICAN_FOOTBALL]);
+    expect(allSports.map((row) => row.sport)).toEqual([
+      Sport.GOLF, Sport.HORSE_RACING, Sport.AUTO_RACING, Sport.CYCLING, Sport.RUNNING, Sport.BASKETBALL, Sport.AMERICAN_FOOTBALL,
+    ]);
     expect(allSports[0].id).toBe(golf.id);
   });
 
