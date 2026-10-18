@@ -6458,7 +6458,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ],
             "description": "Sport this template applies to."
           },
@@ -7402,7 +7403,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ],
             "description": "Only templates for this sport."
           },
@@ -7451,7 +7453,8 @@
                     "AUTO_RACING",
                     "CYCLING",
                     "RUNNING",
-                    "BASKETBALL"
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL"
                   ],
                   "description": "Sport this template applies to."
                 },
@@ -8699,7 +8702,8 @@
                   "AUTO_RACING",
                   "CYCLING",
                   "RUNNING",
-                  "BASKETBALL"
+                  "BASKETBALL",
+                  "AMERICAN_FOOTBALL"
                 ],
                 "description": "Sport this template applies to."
               },
@@ -10219,7 +10223,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ],
             "description": "The sport."
           },
@@ -10283,7 +10288,8 @@
                     "AUTO_RACING",
                     "CYCLING",
                     "RUNNING",
-                    "BASKETBALL"
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL"
                   ],
                   "description": "The sport."
                 },
@@ -10424,7 +10430,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ],
             "description": "Only sport leagues of this sport."
           },
@@ -10627,7 +10634,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ],
             "description": "The sport the new sport league belongs to."
           },
@@ -11525,7 +11533,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ],
             "description": "Sport the event belongs to."
           },
@@ -11802,7 +11811,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ],
             "description": "Only events of this sport."
           },
@@ -11864,7 +11874,8 @@
                     "AUTO_RACING",
                     "CYCLING",
                     "RUNNING",
-                    "BASKETBALL"
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -12166,7 +12177,8 @@
                   "AUTO_RACING",
                   "CYCLING",
                   "RUNNING",
-                  "BASKETBALL"
+                  "BASKETBALL",
+                  "AMERICAN_FOOTBALL"
                 ],
                 "description": "Sport the event belongs to."
               },
@@ -12613,7 +12625,8 @@
                     "AUTO_RACING",
                     "CYCLING",
                     "RUNNING",
-                    "BASKETBALL"
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -16557,6 +16570,7 @@
               "CYCLING",
               "RUNNING",
               "BASKETBALL",
+              "AMERICAN_FOOTBALL",
               null
             ]
           },
@@ -17326,7 +17340,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ],
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
           },
@@ -18197,6 +18212,7 @@
                   "CYCLING",
                   "RUNNING",
                   "BASKETBALL",
+                  "AMERICAN_FOOTBALL",
                   null
                 ]
               },
@@ -18334,6 +18350,7 @@
                     "CYCLING",
                     "RUNNING",
                     "BASKETBALL",
+                    "AMERICAN_FOOTBALL",
                     null
                   ]
                 },
@@ -19894,7 +19911,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "minItems": 1
@@ -19994,7 +20012,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "minItems": 1,
@@ -20004,7 +20023,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ],
             "description": "Sports that scheduled ingestion is allowed to run automatically."
           },
@@ -20110,7 +20130,8 @@
                       "AUTO_RACING",
                       "CYCLING",
                       "RUNNING",
-                      "BASKETBALL"
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL"
                     ]
                   },
                   "minItems": 1
@@ -20309,7 +20330,8 @@
                         "AUTO_RACING",
                         "CYCLING",
                         "RUNNING",
-                        "BASKETBALL"
+                        "BASKETBALL",
+                        "AMERICAN_FOOTBALL"
                       ]
                     },
                     "minItems": 1,
@@ -20319,7 +20341,8 @@
                       "AUTO_RACING",
                       "CYCLING",
                       "RUNNING",
-                      "BASKETBALL"
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -20425,7 +20448,8 @@
                               "AUTO_RACING",
                               "CYCLING",
                               "RUNNING",
-                              "BASKETBALL"
+                              "BASKETBALL",
+                              "AMERICAN_FOOTBALL"
                             ]
                           },
                           "minItems": 1
@@ -20537,7 +20561,8 @@
                         "AUTO_RACING",
                         "CYCLING",
                         "RUNNING",
-                        "BASKETBALL"
+                        "BASKETBALL",
+                        "AMERICAN_FOOTBALL"
                       ]
                     },
                     "minItems": 1,
@@ -20547,7 +20572,8 @@
                       "AUTO_RACING",
                       "CYCLING",
                       "RUNNING",
-                      "BASKETBALL"
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -20653,7 +20679,8 @@
                               "AUTO_RACING",
                               "CYCLING",
                               "RUNNING",
-                              "BASKETBALL"
+                              "BASKETBALL",
+                              "AMERICAN_FOOTBALL"
                             ]
                           },
                           "minItems": 1
@@ -21228,7 +21255,8 @@
                               "AUTO_RACING",
                               "CYCLING",
                               "RUNNING",
-                              "BASKETBALL"
+                              "BASKETBALL",
+                              "AMERICAN_FOOTBALL"
                             ]
                           },
                           "minItems": 1,
@@ -21238,7 +21266,8 @@
                             "AUTO_RACING",
                             "CYCLING",
                             "RUNNING",
-                            "BASKETBALL"
+                            "BASKETBALL",
+                            "AMERICAN_FOOTBALL"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -21344,7 +21373,8 @@
                                     "AUTO_RACING",
                                     "CYCLING",
                                     "RUNNING",
-                                    "BASKETBALL"
+                                    "BASKETBALL",
+                                    "AMERICAN_FOOTBALL"
                                   ]
                                 },
                                 "minItems": 1
@@ -21456,7 +21486,8 @@
                               "AUTO_RACING",
                               "CYCLING",
                               "RUNNING",
-                              "BASKETBALL"
+                              "BASKETBALL",
+                              "AMERICAN_FOOTBALL"
                             ]
                           },
                           "minItems": 1,
@@ -21466,7 +21497,8 @@
                             "AUTO_RACING",
                             "CYCLING",
                             "RUNNING",
-                            "BASKETBALL"
+                            "BASKETBALL",
+                            "AMERICAN_FOOTBALL"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -21572,7 +21604,8 @@
                                     "AUTO_RACING",
                                     "CYCLING",
                                     "RUNNING",
-                                    "BASKETBALL"
+                                    "BASKETBALL",
+                                    "AMERICAN_FOOTBALL"
                                   ]
                                 },
                                 "minItems": 1
@@ -22104,7 +22137,8 @@
                         "AUTO_RACING",
                         "CYCLING",
                         "RUNNING",
-                        "BASKETBALL"
+                        "BASKETBALL",
+                        "AMERICAN_FOOTBALL"
                       ]
                     },
                     "minItems": 1,
@@ -22212,7 +22246,8 @@
                               "AUTO_RACING",
                               "CYCLING",
                               "RUNNING",
-                              "BASKETBALL"
+                              "BASKETBALL",
+                              "AMERICAN_FOOTBALL"
                             ]
                           },
                           "minItems": 1
@@ -22563,7 +22598,8 @@
                         "AUTO_RACING",
                         "CYCLING",
                         "RUNNING",
-                        "BASKETBALL"
+                        "BASKETBALL",
+                        "AMERICAN_FOOTBALL"
                       ]
                     },
                     "minItems": 1,
@@ -22573,7 +22609,8 @@
                       "AUTO_RACING",
                       "CYCLING",
                       "RUNNING",
-                      "BASKETBALL"
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -22679,7 +22716,8 @@
                               "AUTO_RACING",
                               "CYCLING",
                               "RUNNING",
-                              "BASKETBALL"
+                              "BASKETBALL",
+                              "AMERICAN_FOOTBALL"
                             ]
                           },
                           "minItems": 1
@@ -22791,7 +22829,8 @@
                         "AUTO_RACING",
                         "CYCLING",
                         "RUNNING",
-                        "BASKETBALL"
+                        "BASKETBALL",
+                        "AMERICAN_FOOTBALL"
                       ]
                     },
                     "minItems": 1,
@@ -22801,7 +22840,8 @@
                       "AUTO_RACING",
                       "CYCLING",
                       "RUNNING",
-                      "BASKETBALL"
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -22907,7 +22947,8 @@
                               "AUTO_RACING",
                               "CYCLING",
                               "RUNNING",
-                              "BASKETBALL"
+                              "BASKETBALL",
+                              "AMERICAN_FOOTBALL"
                             ]
                           },
                           "minItems": 1
@@ -23440,7 +23481,8 @@
                               "AUTO_RACING",
                               "CYCLING",
                               "RUNNING",
-                              "BASKETBALL"
+                              "BASKETBALL",
+                              "AMERICAN_FOOTBALL"
                             ]
                           },
                           "minItems": 1,
@@ -23450,7 +23492,8 @@
                             "AUTO_RACING",
                             "CYCLING",
                             "RUNNING",
-                            "BASKETBALL"
+                            "BASKETBALL",
+                            "AMERICAN_FOOTBALL"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -23556,7 +23599,8 @@
                                     "AUTO_RACING",
                                     "CYCLING",
                                     "RUNNING",
-                                    "BASKETBALL"
+                                    "BASKETBALL",
+                                    "AMERICAN_FOOTBALL"
                                   ]
                                 },
                                 "minItems": 1
@@ -23668,7 +23712,8 @@
                               "AUTO_RACING",
                               "CYCLING",
                               "RUNNING",
-                              "BASKETBALL"
+                              "BASKETBALL",
+                              "AMERICAN_FOOTBALL"
                             ]
                           },
                           "minItems": 1,
@@ -23678,7 +23723,8 @@
                             "AUTO_RACING",
                             "CYCLING",
                             "RUNNING",
-                            "BASKETBALL"
+                            "BASKETBALL",
+                            "AMERICAN_FOOTBALL"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -23784,7 +23830,8 @@
                                     "AUTO_RACING",
                                     "CYCLING",
                                     "RUNNING",
-                                    "BASKETBALL"
+                                    "BASKETBALL",
+                                    "AMERICAN_FOOTBALL"
                                   ]
                                 },
                                 "minItems": 1
@@ -25773,7 +25820,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "description": "Sports the provider covers that ingestion is scheduled for."
@@ -25852,7 +25900,8 @@
                       "AUTO_RACING",
                       "CYCLING",
                       "RUNNING",
-                      "BASKETBALL"
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL"
                     ]
                   },
                   "description": "Sports the provider covers that ingestion is scheduled for."
@@ -25905,7 +25954,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ]
           },
           "eventId": {
@@ -25984,7 +26034,8 @@
                       "AUTO_RACING",
                       "CYCLING",
                       "RUNNING",
-                      "BASKETBALL"
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL"
                     ]
                   },
                   "eventId": {
@@ -26143,7 +26194,8 @@
                       "AUTO_RACING",
                       "CYCLING",
                       "RUNNING",
-                      "BASKETBALL"
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL"
                     ]
                   },
                   "eventExternalId": {
@@ -26431,7 +26483,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ]
           },
           "status": {
@@ -26480,7 +26533,8 @@
                     "AUTO_RACING",
                     "CYCLING",
                     "RUNNING",
-                    "BASKETBALL"
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL"
                   ]
                 },
                 "eventId": {
@@ -26559,7 +26613,8 @@
                             "AUTO_RACING",
                             "CYCLING",
                             "RUNNING",
-                            "BASKETBALL"
+                            "BASKETBALL",
+                            "AMERICAN_FOOTBALL"
                           ]
                         },
                         "eventId": {
@@ -26718,7 +26773,8 @@
                             "AUTO_RACING",
                             "CYCLING",
                             "RUNNING",
-                            "BASKETBALL"
+                            "BASKETBALL",
+                            "AMERICAN_FOOTBALL"
                           ]
                         },
                         "eventExternalId": {
@@ -27011,7 +27067,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ]
           },
           "eventId": {
@@ -27053,7 +27110,8 @@
                     "AUTO_RACING",
                     "CYCLING",
                     "RUNNING",
-                    "BASKETBALL"
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL"
                   ]
                 },
                 "eventId": {
@@ -27132,7 +27190,8 @@
                             "AUTO_RACING",
                             "CYCLING",
                             "RUNNING",
-                            "BASKETBALL"
+                            "BASKETBALL",
+                            "AMERICAN_FOOTBALL"
                           ]
                         },
                         "eventId": {
@@ -27291,7 +27350,8 @@
                             "AUTO_RACING",
                             "CYCLING",
                             "RUNNING",
-                            "BASKETBALL"
+                            "BASKETBALL",
+                            "AMERICAN_FOOTBALL"
                           ]
                         },
                         "eventExternalId": {
@@ -27602,7 +27662,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ]
           }
         },
@@ -27646,7 +27707,8 @@
                     "AUTO_RACING",
                     "CYCLING",
                     "RUNNING",
-                    "BASKETBALL"
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL"
                   ]
                 }
               },
@@ -27686,7 +27748,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ]
           },
           "name": {
@@ -27774,7 +27837,8 @@
               "AUTO_RACING",
               "CYCLING",
               "RUNNING",
-              "BASKETBALL"
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL"
             ]
           },
           "sportLeagueId": {
@@ -27824,7 +27888,8 @@
                     "AUTO_RACING",
                     "CYCLING",
                     "RUNNING",
-                    "BASKETBALL"
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL"
                   ]
                 },
                 "name": {
@@ -32862,7 +32927,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "in": "query",
@@ -33055,7 +33121,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "in": "query",
@@ -36644,7 +36711,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "in": "query",
@@ -37988,7 +38056,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "in": "path",
@@ -38058,7 +38127,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "in": "path",
@@ -38220,7 +38290,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "in": "query",
@@ -38325,7 +38396,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "in": "path",
@@ -38465,7 +38537,8 @@
                 "AUTO_RACING",
                 "CYCLING",
                 "RUNNING",
-                "BASKETBALL"
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL"
               ]
             },
             "in": "query",

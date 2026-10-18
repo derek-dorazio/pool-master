@@ -68,15 +68,18 @@ import {
   listSportLeagues,
   listSports,
   loadEventBracket,
+  proposeEventRoundMatchups,
+  recordEventMatchResult,
   releaseEvent,
   removeEventParticipant,
+  setEventRoundMatchups,
   updateEvent,
   updateEventBracketMatch,
   updateEventParticipants,
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
-import { golferRoundScore, seedDateOffsetDays, shiftedEventDates } from './seed-golf-data';
+import { golferRoundScore, seedDateOffsetDays, shiftedEventDates, shiftedMatchTimes } from './seed-golf-data';
 import {
   isTestSlate,
   SportDataContent,
@@ -285,11 +288,15 @@ class Loader {
   private readonly testSeed: boolean;
   private readonly replaceField: boolean;
 
-  constructor(private readonly file: SportDataFile, private readonly options: LoadSportDataOptions, private readonly sportId: string) {
+  private readonly file: SportDataFile;
+
+  constructor(file: SportDataFile, private readonly options: LoadSportDataOptions, private readonly sportId: string) {
     this.apply = options.mode === LoadMode.APPLY;
     this.contents = new Set(file.scope.contents);
     this.testSeed = file.testData && this.contents.has(SportDataContent.RESULTS);
     this.offsetDays = this.testSeed ? seedDateOffsetDays(file, options.now) : 0;
+    // A test seed's game times move with its event dates.
+    this.file = shiftedMatchTimes(file, this.offsetDays);
     this.log = options.log ?? (() => {});
     this.replaceField = options.replaceField ?? false;
   }
@@ -777,6 +784,11 @@ class Loader {
     const path = { eventId };
     await must(autoAssignEventTiers({ client, path, body: { source: 'ODDS' } }), `Assign tiers for ${event.name}`);
     await must(autoAssignEventPrices({ client, path, body: await defaultPricing(client) }), `Assign prices for ${event.name}`);
+    if (sportPlaysBracket(this.sport)) {
+      await must(releaseEvent({ client, path }), `Release ${event.name}`);
+      await enterBracketResultsFor(client, eventId, event);
+      return;
+    }
     for (let roundNumber = 1; roundNumber <= event.rounds; roundNumber += 1) {
       const rows = event.field.flatMap((entry) => {
         const score = event.roundsPar === null ? null : golferRoundScore(entry, roundNumber, event.roundsPar);
@@ -788,6 +800,34 @@ class Loader {
       }
     }
     await must(releaseEvent({ client, path }), `Release ${event.name}`);
+  }
+}
+
+/**
+ * A bracket test seed's results, entered on the released event round by round. A round placed by
+ * reseeding (its sides wait on no link) takes the server's proposed pairing first, the rule a
+ * real reseed follows; each match's result then names the side as the match stands. Which rounds
+ * reseed is the server's rule (reseededRounds in bracket-reseed.ts), read here from the file's
+ * links; keep the two alike.
+ */
+async function enterBracketResultsFor(client: Client, eventId: string, event: SportDataEvent): Promise<void> {
+  const matches = event.matches ?? [];
+  const rounds = [...new Set(matches.map((match) => match.roundNumber))].sort((left, right) => left - right);
+  const linked = new Set(matches.flatMap((match) => (match.advancesTo ? [`${match.advancesTo.matchNumber}/${match.advancesTo.side}`] : [])));
+  for (const roundNumber of rounds) {
+    const round = matches.filter((match) => match.roundNumber === roundNumber);
+    const waitsOnReseed = round.some((match) => (match.home === null && !linked.has(`${match.matchNumber}/${MatchSide.HOME}`))
+      || (match.away === null && !linked.has(`${match.matchNumber}/${MatchSide.AWAY}`)));
+    const results = round.flatMap((match) => (match.result ? [{ matchNumber: match.matchNumber, result: match.result }] : []));
+    if (results.length === 0) continue;
+    if (waitsOnReseed) {
+      const proposal = await must(proposeEventRoundMatchups({ client, path: { eventId, roundNumber } }), `Propose round ${roundNumber} of ${event.name}`);
+      await must(setEventRoundMatchups({ client, path: { eventId, roundNumber }, body: { matches: proposal.matches } }), `Place round ${roundNumber} of ${event.name}`);
+    }
+    for (const { matchNumber, result } of results) {
+      const body = { winnerSide: result.winner, homeScore: result.homeScore, awayScore: result.awayScore };
+      await must(recordEventMatchResult({ client, path: { eventId, matchNumber }, body }), `Enter the result of match ${matchNumber} of ${event.name}`);
+    }
   }
 }
 

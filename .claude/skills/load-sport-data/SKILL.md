@@ -125,6 +125,13 @@ is a file in `test-slates/` with `testData: true`, `contents` `PLAYERS` and `FIE
 sport league and no events. Its players may come from memory or an old list, because it is
 test data: say so in its `provenance`, and never load it as a real field.
 
+A sport played as a bracket tries contests on a played bracket instead: a test seed of a real
+past bracket (`american-football-2026-nfl-playoffs-test.json`), with `contents` adding
+`BRACKET` and `RESULTS`, made-up `oddsToWin` on each field entry and the real `result` on each
+match. Gather it like a real bracket, from two sources. A reseeded round's results name the
+side the server's reseed puts each team on (the 1 seed at home), since the file cannot place
+them. `docs/EVENT-SETUP-PROCEDURES.md` *Seeded NFL playoffs* says what a load of one does.
+
 ## Sources per sport
 
 `docs/SPORT-DATA-SOURCES.md` lists the primary and second source for each sport's schedule,
