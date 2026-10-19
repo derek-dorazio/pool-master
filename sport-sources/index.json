@@ -1,54 +1,33 @@
 {
-  "fetchedAt": "2026-10-19T07:51:30.704Z",
+  "fetchedAt": "2026-10-19T07:56:56.388Z",
   "results": [
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=1&dates=2025",
+      "url": "https://fixturedownload.com/feed/json/nfl-2025",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "01-site.api.espn.com.txt"
+      "file": "01-fixturedownload.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=2&dates=2025",
-      "rendered": false,
+      "url": "https://www.nfl.com/schedules/2025/REG1/",
+      "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "02-site.api.espn.com.txt"
+      "file": "02-nfl.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=3&dates=2025",
-      "rendered": false,
+      "url": "https://www.nfl.com/schedules/2025/REG2/",
+      "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "03-site.api.espn.com.txt"
+      "file": "03-nfl.com.txt"
     },
     {
-      "url": "https://www.pro-football-reference.com/years/2025/week_1.htm",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "04-pro-football-reference.com.txt"
-    },
-    {
-      "url": "https://www.pro-football-reference.com/years/2025/week_2.htm",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "05-pro-football-reference.com.txt"
-    },
-    {
-      "url": "https://www.pro-football-reference.com/years/2025/week_3.htm",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "06-pro-football-reference.com.txt"
-    },
-    {
-      "url": "https://en.wikipedia.org/wiki/2025_NFL_season",
-      "rendered": false,
+      "url": "https://www.nfl.com/schedules/2025/REG3/",
+      "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "07-en.wikipedia.org.txt"
+      "file": "04-nfl.com.txt"
     }
   ]
 }
