@@ -414,8 +414,8 @@ Running it again skips everything.
 real; the odds are made up. It loads into the `NFL` sport league beside the playoffs seed, and
 keeps that seed's team rankings. Like the playoffs, each week is moved forward, released with its
 32 teams tiered by odds and priced, and has every result entered. A postponed game would be
-cancelled on the week's *Games* tab and added to the week it moves to while that week is a
-draft.
+cancelled with *Cancel game* on its row of the week's results page, and added to the week it
+moves to while that week is a draft.
 
 ## Seeded College Football Playoff
 
