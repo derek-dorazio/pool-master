@@ -86,11 +86,6 @@ export async function loadContestScoringConfiguration(
 }
 
 /**
- * The contest's entries that SUBMITTED one event, in entry order, each with its picks in pick
- * order (#713). Picks in the contest's other events come along too; scoring the event's field
- * leaves them unscored and out of its standing.
- */
-/**
  * The entries of a contest of several events that did not submit a lineup for one of them (#714):
  * each is scored for that event as a missed lineup once it finishes. A one-event contest has
  * none: an entry that never submitted is simply not in it.
@@ -124,6 +119,11 @@ export function toLeaderboardEntryInput(
   };
 }
 
+/**
+ * The contest's entries that SUBMITTED one event, in entry order, each with its picks in pick
+ * order (#713). Picks in the contest's other events come along too; scoring the event's field
+ * leaves them unscored and out of its standing.
+ */
 export async function loadContestLeaderboardEntries(
   deps: Pick<ContestLeaderboardReadDeps, 'entries' | 'picks'>,
   contestId: string,

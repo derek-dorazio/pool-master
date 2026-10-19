@@ -160,6 +160,9 @@ export class EventLifecycleService {
     });
 
     // A released edition joins the contests made to cover its series, a majors pool's major (#714).
+    // It runs after the release is written, outside a transaction: a contest whose rules refuse the
+    // edition is logged and skipped inside, but any other failure answers the release as failed
+    // with the event already released, and its commissioner can still add the edition by hand.
     if (input.release && input.toStatus === SportEventStatus.SCHEDULED) {
       await this.releasedEditionContests?.addReleasedEditionToTemplateContests(updated);
     }
