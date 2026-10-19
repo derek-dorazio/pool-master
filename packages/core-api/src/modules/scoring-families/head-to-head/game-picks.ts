@@ -9,8 +9,8 @@
  * - **Against the spread** (#720) a correct pick names the team that covers: the home team's
  *   score plus its spread beats the away team's. A game that lands exactly on the spread is a
  *   push, and every pick on it earns nothing, as does a game completed without its scores, which
- *   cannot be measured against the spread. Release refuses a week with a game missing its spread,
- *   so every game of such a contest has one.
+ *   cannot be measured against the spread. Contest setup refuses a week with a game missing its
+ *   spread, and a released game's spread can't be cleared, so every game of such a contest has one.
  * - **A cancelled game** is not one of the week's games, so a pick on it is not scored or counted,
  *   even when it was made before the cancellation. A confidence pool keeps the other picks' values
  *   as they were submitted, unrenumbered, so nobody's ranking moves after kickoff.

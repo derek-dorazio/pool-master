@@ -322,8 +322,8 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       await waitFor(() => expect(getEventBracketMock).toHaveBeenCalledTimes(2));
     });
 
-    it('clears a game\'s spread when the box is left empty', async () => {
-      seed([{ ...week[0], homeSpread: -3.5 }, week[1]]);
+    it('clears a draft game\'s spread when the box is left empty', async () => {
+      seed([{ ...week[0], homeSpread: -3.5 }, week[1]], { event: { ...tournament, status: 'DRAFT' } });
       updateEventBracketMatchMock.mockResolvedValue({ data: { match: week[0] } });
       renderPage();
 
@@ -331,6 +331,18 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       await userEvent.clear(screen.getByTestId('root-admin-bracket-spread-input-1'));
       await userEvent.click(screen.getByTestId('root-admin-bracket-spread-save-1'));
       expect(updateEventBracketMatchMock).toHaveBeenCalledWith(expect.objectContaining({ body: { homeSpread: null } }));
+    });
+
+    it('refuses clearing a released game\'s spread before sending it', async () => {
+      seed([{ ...week[0], homeSpread: -3.5 }, week[1]]);
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-spread-edit-1'));
+      await userEvent.clear(screen.getByTestId('root-admin-bracket-spread-input-1'));
+
+      expect(screen.getByTestId('root-admin-bracket-spread-save-1')).toBeDisabled();
+      expect(screen.getByText('The tournament has been released, so this spread can be changed but not cleared.')).toBeInTheDocument();
+      expect(updateEventBracketMatchMock).not.toHaveBeenCalled();
     });
 
     it('refuses a spread that is not in half points before sending it', async () => {

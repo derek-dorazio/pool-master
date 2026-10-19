@@ -1897,7 +1897,7 @@ export interface paths {
         head?: never;
         /**
          * Edit one match of a sport event's bracket
-         * @description Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
+         * @description Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED), and never cleared (422 MATCH_SPREAD_REQUIRED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
          */
         patch: operations["updateEventBracketMatch"];
         trace?: never;

@@ -59,6 +59,7 @@ export function bracketErrorMessages(
     PLAY_IN_SLOT_ALREADY_PLAYED: `That place has already played a ${noun.one}, so its ${team.one} can't change.`,
     PARTICIPANT_NOT_FOUND: `That ${team.one} is no longer active. Pick another.`,
     MATCH_SPREAD_LOCKED: `This ${noun.one} already has picks, so its spread can no longer change.`,
+    MATCH_SPREAD_REQUIRED: `The ${vocabulary.event.one} has been released, so this ${noun.one}'s spread can be changed but not cleared.`,
   };
 }
 

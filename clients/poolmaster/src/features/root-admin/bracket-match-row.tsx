@@ -132,7 +132,7 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
       </td>
       {context.spreads ? (
         <td className="px-4 py-2" data-testid={`root-admin-bracket-spread-${match.matchNumber}`}>
-          <SpreadCell context={context} match={match} />
+          <SpreadCell context={context} match={match} released={released} />
         </td>
       ) : null}
       <td className="px-4 py-2 text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, 'To be announced')}</td>
@@ -334,14 +334,16 @@ function describeSpread(match: SportEventMatchDto, context: BracketContext): str
 /**
  * A game's points spread from the home side (#720), used by pools scored against the spread. An
  * admin sets it before release, and after release while no entry has picked the game, which the
- * server checks; a cancelled game keeps its spread.
+ * server checks, though never back to none; a cancelled game keeps its spread.
  */
-function SpreadCell({ match, context }: { match: SportEventMatchDto; context: BracketContext }) {
+function SpreadCell({ match, released, context }: { match: SportEventMatchDto; released: boolean; context: BracketContext }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(match.homeSpread === null ? '' : String(match.homeSpread));
   const home = sideEntry(match, MatchSide.HOME, context.fieldById);
   const parsed = value.trim() === '' ? null : Number(value);
-  const valid = parsed === null || (Number.isFinite(parsed) && Math.abs(parsed) <= 99.5 && Number.isInteger(parsed * 2));
+  // A released game keeps its spread once set: only a draft one can go back to none.
+  const clearing = parsed === null && released;
+  const valid = parsed === null ? !clearing : Number.isFinite(parsed) && Math.abs(parsed) <= 99.5 && Number.isInteger(parsed * 2);
 
   const save = useInvalidatingMutation({
     mutationFn: async (homeSpread: number | null) => {
@@ -398,7 +400,11 @@ function SpreadCell({ match, context }: { match: SportEventMatchDto; context: Br
         />
       </label>
       {valid ? null : (
-        <p className="text-sm text-destructive">Enter a spread in half points, such as -3.5 or 7, between -99.5 and 99.5.</p>
+        <p className="text-sm text-destructive">
+          {clearing
+            ? `The ${context.vocabulary.event.one} has been released, so this spread can be changed but not cleared.`
+            : 'Enter a spread in half points, such as -3.5 or 7, between -99.5 and 99.5.'}
+        </p>
       )}
       <div className="flex gap-2">
         <Button

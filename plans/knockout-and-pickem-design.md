@@ -1325,7 +1325,7 @@ Each is one PR opened against main, after knockout.
    unspread game (`CONTEST_EVENT_SPREAD_MISSING`), so every spread is in before anyone picks.
    Because a contest only takes released weeks, the release check Q5.8 describes would never
    fire and was not built: the lock is per game instead, as Q5.9 decided. A released game's spread
-   changes only while nobody has picked it (`MATCH_SPREAD_LOCKED` after that). The week screen
+   changes only while nobody has picked it (`MATCH_SPREAD_LOCKED` after that), and can't be cleared (`MATCH_SPREAD_REQUIRED`). The week screen
    shows each team's spread ("-3.5", "+3.5", "PK") only in a pool against the spread. The data
    loader does not carry spreads: no public spread source has been agreed, and spreads move
    until kickoff, so an admin enters them.
