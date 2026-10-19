@@ -8,6 +8,7 @@ import { SportEventTierService } from '../../../packages/core-api/src/modules/ev
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
 import {
+  fakeContestConfigurationRepo,
   fakeContestEntryRepo,
   fakeContestRepo,
   fakeLeagueMembershipRepo,
@@ -37,6 +38,8 @@ function setup(sportName: Sport = Sport.GOLF) {
       memberships: fakeLeagueMembershipRepo(),
       squadMemberships: fakeSquadMembershipRepo(),
       users: fakeUserRepo(),
+      configurations: fakeContestConfigurationRepo(),
+      matches: store.matchRepo(),
     },
     sportEvents,
   );

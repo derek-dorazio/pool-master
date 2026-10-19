@@ -42,6 +42,7 @@ import {
 } from '@poolmaster/shared/domain';
 import {
   BracketLeaderboardResponseSchema,
+  ContestResponseSchema,
   GamePicksResponseSchema,
   SportEventBracketResponseSchema,
   SportEventRoundMatchupsResponseSchema,
@@ -57,13 +58,16 @@ import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
+import { PrismaSportEventRepository } from '../../packages/core-api/src/adapters';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
 // BRACKET contest on it scored by knockout round points; each team fills in the winner of every
 // game before tip-off, the later games offering the teams its own picks sent there, and gives a
 // tiebreaker, the final's total points. The admin then enters the results round by round, the
 // bracket leaderboard shrinks each entry's most possible points as its picks bust, and the
-// settled contest keeps the places the tiebreaker decided.
+// settled contest keeps the places the tiebreaker decided. A second-chance bracket starts at a
+// later round once the event is under way, and its window runs on that round's first game.
 //
 // Every date is fixed in 2099, so the server's real clock never reaches the event: the admin
 // starts and completes it by status, which is what locks, reveals and settles the picks.
@@ -116,6 +120,8 @@ interface BracketMatchInput {
   away: number | null;
   advancesTo: { matchNumber: number; side: MatchSide } | null;
   regionLabel?: string;
+  /** When the game tips off; with none it is timed at the event's start. */
+  scheduledDate?: string;
 }
 
 /**
@@ -184,7 +190,7 @@ async function releasedKnockout(options: {
         homeSportEventParticipantId: match.home === null ? null : row(match.home),
         awaySportEventParticipantId: match.away === null ? null : row(match.away),
         isNeutralSite: true,
-        scheduledDate: null,
+        scheduledDate: match.scheduledDate ?? null,
         advancesTo: match.advancesTo,
         ...(match.regionLabel !== undefined && { regionLabel: match.regionLabel }),
       })),
@@ -247,6 +253,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       selectionType: SelectionType.BRACKET,
       configuration: {
         selectionType: SelectionType.BRACKET,
+        startsAtRound: 1,
         maxEntriesPerSquad: 1,
         scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS' as const, config: { roundValues: [1, 2, 4, 8], upsetBonus: { rule: 'NONE' as const } } },
       },
@@ -458,6 +465,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
         selectionType: SelectionType.BRACKET,
         configuration: {
           selectionType: SelectionType.BRACKET,
+          startsAtRound: 1,
           maxEntriesPerSquad: 1,
           scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4], upsetBonus: { rule: 'NONE' } } },
         },
@@ -519,5 +527,172 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     expect(expectDefined((await getContest({ client: bob.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const frozen = await getFunctionalPrisma().contestEntryStanding.findMany({ where: { contestId }, orderBy: { position: 'asc' } });
     expect(frozen.map((standing) => [standing.contestEntryId, standing.totalScore, standing.displayPosition])).toEqual([[aliceEntry, 11, '1'], [bobEntry, 3, '2']]);
+  });
+
+  it('runs a second-chance bracket from round 2 while the knockout is under way: entered and picked until round 2 tips off, live at its first game, scored and settled on rounds 2 and 3 only', async () => {
+    // --- An eight-team knockout whose first round is under way ----------------------------------
+    // Round 1 pairs 1-8, 4-5, 2-7 and 3-6 at the event's start; round 2 tips off two days later
+    // (game 5 first) and the final, game 7, two days after that. Every date is in 2099, so the
+    // server's clock never reaches round 2: a game's result is what starts the round for it.
+    const ROUND_TWO_FIRST_GAME = '2099-03-21T16:00:00.000Z';
+    const link = (matchNumber: number, side: MatchSide) => ({ matchNumber, side });
+    const { admin: a, eventId, row, gameId } = await releasedKnockout({
+      label: 'SecondChance',
+      seeds: [1, 2, 3, 4, 5, 6, 7, 8],
+      rounds: 3,
+      tierSize: 2,
+      matches: [
+        { matchNumber: 1, roundNumber: 1, home: 1, away: 8, advancesTo: link(5, MatchSide.HOME) },
+        { matchNumber: 2, roundNumber: 1, home: 4, away: 5, advancesTo: link(5, MatchSide.AWAY) },
+        { matchNumber: 3, roundNumber: 1, home: 2, away: 7, advancesTo: link(6, MatchSide.HOME) },
+        { matchNumber: 4, roundNumber: 1, home: 3, away: 6, advancesTo: link(6, MatchSide.AWAY) },
+        { matchNumber: 5, roundNumber: 2, home: null, away: null, advancesTo: link(7, MatchSide.HOME), scheduledDate: ROUND_TWO_FIRST_GAME },
+        { matchNumber: 6, roundNumber: 2, home: null, away: null, advancesTo: link(7, MatchSide.AWAY), scheduledDate: '2099-03-21T19:00:00.000Z' },
+        { matchNumber: 7, roundNumber: 3, home: null, away: null, advancesTo: null, scheduledDate: '2099-03-23T20:00:00.000Z' },
+      ],
+    });
+    const { commissioner, league, bob, cara } = await leagueOfThree('SecondChance');
+    const alice = commissioner;
+    const contestBody = (startsAtRound: number) => ({
+      name: `Second Chance ${startsAtRound} ${RUN}`,
+      sportEventIds: [eventId],
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType: SelectionType.BRACKET,
+      configuration: {
+        selectionType: SelectionType.BRACKET,
+        startsAtRound,
+        maxEntriesPerSquad: 2,
+        scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS' as const, config: { roundValues: [1, 2, 4], upsetBonus: { rule: 'NONE' as const } } },
+      },
+    });
+    const win = async (matchNumber: number, seed: number, winnerScore = 70, loserScore = 60) => {
+      const game = expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches.find((match) => match.matchNumber === matchNumber));
+      const winnerSide = game.homeSportEventParticipantId === row(seed) ? MatchSide.HOME : MatchSide.AWAY;
+      expect([game.homeSportEventParticipantId, game.awaySportEventParticipantId]).toContain(row(seed));
+      const [homeScore, awayScore] = winnerSide === MatchSide.HOME ? [winnerScore, loserScore] : [loserScore, winnerScore];
+      const result = await recordEventMatchResult({ client: a, path: { eventId, matchNumber }, body: { winnerSide, homeScore, awayScore } });
+      expect([result.error, result.response.status]).toEqual([undefined, 200]);
+    };
+
+    // --- Tip-off: no full bracket can be made now, and round 2 is not yet decided ---------------
+    expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
+    expectFunctionalError(
+      await createContest({ client: alice.client, path: { id: league.id }, body: contestBody(1) }),
+      { status: 422, code: 'SPORT_EVENT_ALREADY_STARTED' },
+    );
+    expectFunctionalError(
+      await createContest({ client: alice.client, path: { id: league.id }, body: contestBody(2) }),
+      { status: 422, code: 'CONTEST_EVENT_NOT_A_BRACKET' },
+    );
+    // Round 1: chalk, except 5 beats 4. Round 2 is now 1-5 and 2-3.
+    for (const [matchNumber, seed] of [[1, 1], [2, 5], [3, 2], [4, 3]]) await win(matchNumber, seed);
+
+    // --- The second-chance bracket, made, opened and entered while the event is under way -------
+    const contest = await createContest({ client: alice.client, path: { id: league.id }, body: contestBody(2) });
+    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    const contestId = expectDefined(contest.data).contest.id;
+    const opened = await openContest({ client: alice.client, path: { id: league.id, contestId } });
+    expect([opened.error, opened.data?.contest.status]).toEqual([undefined, ContestStatus.OPEN]);
+    const entryOf = async (client: Client) => {
+      const entered = await enterContest({ client, path: { contestId } });
+      expect([entered.error, entered.response.status]).toEqual([undefined, 201]);
+      return expectDefined(entered.data).entry.id;
+    };
+    const entries = { alice: await entryOf(alice.client), bob: await entryOf(bob.client), cara: await entryOf(cara.client) };
+    const path = (entryId: string) => ({ contestId, entryId, sportEventId: eventId });
+    const pick = (matchNumber: number, seed: number) => ({ sportEventMatchId: gameId(matchNumber), sportEventParticipantId: row(seed), confidence: null });
+    const sides = (view: { games: Array<{ matchNumber: number; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }, matchNumber: number) => {
+      const game = expectDefined(view.games.find((each) => each.matchNumber === matchNumber));
+      return [game.predictedHome?.sportEventParticipantId ?? null, game.predictedAway?.sportEventParticipantId ?? null];
+    };
+
+    // Only round 2 and the final are picked; round 2 offers the teams the results put there.
+    const fresh = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: alice.client, path: path(entries.alice) })).data);
+    expect(fresh).toMatchObject({ selectionType: SelectionType.BRACKET, gameCount: 3, pickedCount: 0, canSubmit: false });
+    expect(fresh.games.map((game) => [game.matchNumber, game.locked])).toEqual([[5, false], [6, false], [7, false]]);
+    expect(sides(fresh, 5)).toEqual([row(1), row(5)]);
+    expect(sides(fresh, 6)).toEqual([row(2), row(3)]);
+    expectFunctionalError(
+      await saveGamePicks({ client: alice.client, path: path(entries.alice), body: { picks: [pick(1, 1)] } }),
+      { status: 404, code: 'PREDICTION_GAME_NOT_FOUND' },
+    );
+
+    // Alice: 1 and 2 through, 1 champion. Bob: the 5 upsets the 1, the 2 champion. Cara: 1 and 3, the 3 champion.
+    const enter = async (client: Client, entryId: string, winners: readonly [number, number, number], tiebreakerValue: number) => {
+      const saved = expectMatchesSchema(GamePicksResponseSchema, (await saveGamePicks({
+        client, path: path(entryId), body: { picks: [pick(5, winners[0]), pick(6, winners[1]), pick(7, winners[2])], tiebreakerValue },
+      })).data);
+      expect(saved).toMatchObject({ pickedCount: 3, tiebreakerValue, canSubmit: true });
+      expect((await submitGamePicks({ client, path: path(entryId) })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
+      return saved;
+    };
+    expect(sides(await enter(alice.client, entries.alice, [1, 2, 1], 140), 7)).toEqual([row(1), row(2)]);
+    await enter(bob.client, entries.bob, [5, 2, 2], 130);
+    await enter(cara.client, entries.cara, [1, 3, 3], 150);
+
+    // Before round 2 nobody sees another team's picks, and there is no leaderboard.
+    const hidden = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: bob.client, path: path(entries.alice) })).data);
+    expect(hidden).toMatchObject({ ownEntry: false, pickedCount: 0, tiebreakerValue: null });
+    expectFunctionalError(await getBracketLeaderboard({ client: bob.client, path: { contestId } }), { status: 400, code: 'CONTEST_LEADERBOARD_PICKS_HIDDEN' });
+
+    // The lifecycle sweep of an event in progress (the scheduler's step, run here as the system
+    // would) leaves the bracket OPEN before round 2's first game...
+    const lifecycle = createEventLifecycleService(getFunctionalPrisma());
+    const liveEvent = async () => expectDefined(await new PrismaSportEventRepository(getFunctionalPrisma()).findById(eventId));
+    await lifecycle.activateContestsPastCutoff(await liveEvent(), new Date(Date.parse(ROUND_TWO_FIRST_GAME) - 60 * 60 * 1000));
+    expect(expectDefined((await getContest({ client: bob.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.OPEN);
+
+    // --- Round 2 tips off: 1 beats 5 in game 5 ---------------------------------------------------
+    await win(5, 1);
+    // Entries, picks and the tiebreaker are closed from the starting round's first game.
+    expectFunctionalError(await enterContest({ client: alice.client, path: { contestId } }), { status: 400, code: 'CONTEST_ENTRY_LOCKED' });
+    expectFunctionalError(
+      await saveGamePicks({ client: alice.client, path: path(entries.alice), body: { picks: [pick(7, 2)] } }),
+      { status: 409, code: 'PREDICTION_GAME_STARTED' },
+    );
+    expectFunctionalError(
+      await saveGamePicks({ client: alice.client, path: path(entries.alice), body: { picks: [], tiebreakerValue: 136 } }),
+      { status: 409, code: 'CONTEST_ENTRY_LOCKED' },
+    );
+    // ...and the sweep past that game starts the contest, at that game's time.
+    await lifecycle.activateContestsPastCutoff(await liveEvent(), new Date(Date.parse(ROUND_TWO_FIRST_GAME) + 60 * 1000));
+    const live = expectMatchesSchema(ContestResponseSchema, (await getContest({ client: bob.client, path: { contestId } })).data).contest;
+    expect(live).toMatchObject({ status: ContestStatus.ACTIVE, startsAt: ROUND_TWO_FIRST_GAME });
+
+    const revealed = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: bob.client, path: path(entries.alice) })).data);
+    expect(revealed).toMatchObject({ pickedCount: 3, tiebreakerValue: 140, points: 2, maxPossiblePoints: 2 + 2 + 4 });
+    const standings = async () => expectMatchesSchema(BracketLeaderboardResponseSchema, (await getBracketLeaderboard({ client: cara.client, path: { contestId } })).data);
+    const board = async () => Object.fromEntries((await standings()).entries
+      .map((entry) => [entry.entryId, [entry.displayPosition, entry.points, entry.maxPossiblePoints]]));
+    // Round 2 is worth 2 a game: Alice and Cara had the 1; Bob's 5 is out.
+    expect(await standings()).toMatchObject({ gameCount: 3, finalTotalPoints: null });
+    expect(await board()).toEqual({
+      [entries.alice]: ['T1', 2, 8],
+      [entries.cara]: ['T1', 2, 8],
+      [entries.bob]: ['3', 0, 6],
+    });
+
+    // --- The rest: 2 beats 3, then 1 beats 2 in the final, 70 to 66 --------------------------------
+    await win(6, 2);
+    await win(7, 1, 70, 66);
+    // Alice 2 + 2 + 4. Bob only his 2 in game 6; Cara only her 1 in game 5. The final totals 136:
+    // Bob's 130 is 6 away, Cara's 150 is 14 away.
+    const decided = await standings();
+    expect(decided.finalTotalPoints).toBe(136);
+    expect(decided.entries.map((entry) => [entry.entryId, entry.displayPosition, entry.points, entry.correctPickCount])).toEqual([
+      [entries.alice, '1', 8, 3],
+      [entries.bob, '2', 2, 1],
+      [entries.cara, '3', 2, 1],
+    ]);
+
+    // --- Settled ---------------------------------------------------------------------------------
+    expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
+    expect(expectDefined((await getContest({ client: bob.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
+    const frozen = await getFunctionalPrisma().contestEntryStanding.findMany({ where: { contestId }, orderBy: { position: 'asc' } });
+    expect(frozen.map((standing) => [standing.contestEntryId, standing.totalScore, standing.displayPosition])).toEqual([
+      [entries.alice, 8, '1'],
+      [entries.bob, 2, '2'],
+      [entries.cara, 2, '3'],
+    ]);
   });
 });
