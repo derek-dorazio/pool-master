@@ -38,6 +38,7 @@ import {
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from '../../events/errors';
+import type { EventLifecycleService } from '../../events/event-lifecycle-service';
 
 export interface MatchResultInput {
   winnerSide: MatchSide;
@@ -49,6 +50,12 @@ export interface MatchResultInput {
 export interface MatchResultServiceDeps {
   sportEvents: Pick<SportEventRepository, 'findById'>;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'applyResult'>;
+  /**
+   * Starts the event's contests whose cutoff a result shows has passed (#721): a result in a
+   * second-chance bracket's starting round puts it live even where the scheduler leaves the event
+   * to an admin.
+   */
+  contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff'>;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -115,7 +122,7 @@ export class MatchResultService {
    * next match has a result.
    */
   async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput): Promise<SportEventMatch[]> {
-    await this.requireReleasedBracketEvent(sportEventId);
+    const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = this.requireMatch(sportEventId, bracket, matchNumber);
     const winnerId = sideRowId(match, input.winnerSide);
@@ -142,6 +149,9 @@ export class MatchResultService {
     const sideFill = this.advance(bracket, match, winnerId);
     await this.write(sportEventId, bracket, result, sideFill);
     this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, winnerChanges }, 'Saved a match result');
+    if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
+      await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, this.deps.now?.() ?? new Date());
+    }
     return this.deps.matches.findBySportEvent(sportEventId);
   }
 

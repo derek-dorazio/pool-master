@@ -1013,8 +1013,17 @@ seed with the admin's own rule, so the pick is a slot and is correct when its te
 that round, wherever the real reseeding put it. A stranded later pick is cleared in the same
 write. The tiebreaker is `ContestEntry.tiebreakerValue`, saved with the picks and required at
 submit. Max possible points is an upper bound: two teams still in can meet before the round the
-entry picked them to win. Brackets settle; second-chance brackets (`startsAtRound`) follow in the
-next PR of #721.
+entry picked them to win. Brackets settle.
+
+*As built in #721 (second-chance brackets):* `startsAtRound` is required in the bracket rules (1 for
+a full bracket; stored brackets were backfilled with 1). The contest's bracket is the event's games
+from that round on, so the starting round reads as a first round with the real teams. Its cutoff is
+the typed `ContestCutoff` (`EVENT_START` or `ROUND_START` with the round, in
+`contests/entry-window.ts`): joining, picks, the tiebreaker and submit close, picks are revealed and
+the contest goes `ACTIVE` at the starting round's first game, which the lifecycle scheduler checks
+for each event in progress, as does each match result entered. Round release (§5.3) is not built, so setup stands in for it: a
+second-chance bracket is refused until its starting round has all its teams, and after that round's
+first game. The event's round values score the rounds picked.
 
 **Q5.5 What does `ACTIVE` mean for a pick'em contest?** *Decided by Derek 2026-10-17:* every
 week is its own mini workflow. Its event is set up, released, picked and submitted, then goes

@@ -16,22 +16,27 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  ContestConfigurationRepository,
   ContestEntryRepository,
   ContestRepository,
   LeagueMembershipRepository,
   LeagueRepository,
+  SportEventMatchRepository,
   SportEventRepository,
   SquadMembershipRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
-import type { Contest, League, SportEvent, User } from '@poolmaster/shared/domain';
+import type { Contest, League, SportEvent, SportEventMatch, User } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
   LeagueRole,
   LeagueMembershipStatus,
+  SelectionType,
   SportEventStatus,
   isDeclaredSportEventTransition,
 } from '@poolmaster/shared/domain';
+import { ContestCutoffKind, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
+import { hasSportEventStarted } from './operational-timing';
 import {
   renderSystemEmailTemplate,
   type ContestStartedEntrySummary,
@@ -87,6 +92,9 @@ export interface EventLifecycleContestDeps {
   memberships: LeagueMembershipRepository;
   squadMemberships: SquadMembershipRepository;
   users: UserRepository;
+  /** A second-chance bracket's rules and games: it goes live at its starting round, not the event's start (#721). */
+  configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
 }
 
 /** A contest being started, with everything its summary email reads. */
@@ -144,7 +152,7 @@ export class EventLifecycleService {
     });
 
     if (input.toStatus === SportEventStatus.IN_PROGRESS) {
-      await this.activateContestsForStartedEvent(updated);
+      await this.activateContestsPastCutoff(updated);
     }
     // A cancelled event settles its contests too (#743): it counts for nothing, so it must not
     // hold a contest open.
@@ -174,16 +182,32 @@ export class EventLifecycleService {
     });
   }
 
-  private async activateContestsForStartedEvent(
+  /**
+   * The event's OPEN contests go live at their cutoff (#721): every contest when the event starts,
+   * and a second-chance bracket at its starting round's first game, which comes while the event is
+   * under way, so the lifecycle scheduler asks again on each sweep of an event in progress.
+   */
+  async activateContestsPastCutoff(
     sportEvent: SportEvent,
+    now: Date = new Date(),
   ): Promise<void> {
     const candidates = await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: STARTABLE });
+    let games: SportEventMatch[] | undefined;
 
     for (const contest of candidates) {
+      const cutoff = contest.selectionType === SelectionType.BRACKET
+        ? contestCutoff((await this.contestDeps.configurations.findByContest(contest.id))?.configJson)
+        : { kind: ContestCutoffKind.EVENT_START } as const;
+      const window: EventTiming = cutoff.kind === ContestCutoffKind.EVENT_START
+        ? sportEvent
+        : cutoffTiming(cutoff, sportEvent, games ??= await this.contestDeps.matches.findBySportEvent(sportEvent.id));
+      if (!hasSportEventStarted(window, now)) {
+        continue;
+      }
       const started = await this.contestDeps.contests.transitionStatus(contest.id, {
         from: STARTABLE,
         to: ContestStatus.ACTIVE,
-        startsAt: sportEvent.startDate,
+        startsAt: window.startDate,
       });
 
       if (!started) {
@@ -201,6 +225,7 @@ export class EventLifecycleService {
         sportEventId: sportEvent.id,
         providerId: sportEvent.providerId,
         eventExternalId: sportEvent.externalId,
+        cutoff: cutoff.kind,
       }, 'Activated contest from in-progress sport event');
       await this.deliverContestStartedSummaryEmails(contest, sportEvent);
     }

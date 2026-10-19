@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { PickEmMode, SelectionType } from './enums';
 import { BUDGET_SALARY_CAP_MAX } from './budget-pricing';
-import { ContestScoringSettingsSchema } from './contest-scoring';
+import { ContestScoringSettingsSchema, KNOCKOUT_ROUND_VALUES_MAX_ROUNDS } from './contest-scoring';
 
 /**
  * A contest's rules (#93): one shape per selection type, told apart by `selectionType`, which
@@ -65,7 +65,9 @@ export type PickEmContestRules = z.infer<typeof PickEmContestRulesSchema>;
 
 export const BracketContestRulesSchema = z.object({
   selectionType: z.literal(SelectionType.BRACKET),
-}).describe('Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final.');
+  startsAtRound: z.number().int().min(1).max(KNOCKOUT_ROUND_VALUES_MAX_ROUNDS)
+    .describe('The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event\'s round values score each round from it on.'),
+}).describe('Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round\'s first game.');
 export type BracketContestRules = z.infer<typeof BracketContestRulesSchema>;
 
 /** The rules a commissioner chooses, and a template presets. */

@@ -6275,6 +6275,12 @@
                   "BRACKET"
                 ]
               },
+              "startsAtRound": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 8,
+                "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
+              },
               "maxEntriesPerSquad": {
                 "type": [
                   "integer",
@@ -6431,10 +6437,11 @@
               }
             },
             "required": [
-              "selectionType"
+              "selectionType",
+              "startsAtRound"
             ],
             "additionalProperties": false,
-            "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
+            "description": "Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round's first game."
           }
         ],
         "description": "Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest's."
@@ -6899,6 +6906,12 @@
                       "BRACKET"
                     ]
                   },
+                  "startsAtRound": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 8,
+                    "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
+                  },
                   "id": {
                     "type": "string",
                     "description": "Contest-configuration identifier."
@@ -6918,11 +6931,12 @@
                 },
                 "required": [
                   "selectionType",
+                  "startsAtRound",
                   "id",
                   "contestId"
                 ],
                 "additionalProperties": false,
-                "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
+                "description": "Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round's first game."
               }
             ],
             "description": "Current commissioner-managed contest configuration."
@@ -7787,6 +7801,12 @@
                       "BRACKET"
                     ]
                   },
+                  "startsAtRound": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 8,
+                    "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -7943,10 +7963,11 @@
                   }
                 },
                 "required": [
-                  "selectionType"
+                  "selectionType",
+                  "startsAtRound"
                 ],
                 "additionalProperties": false,
-                "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
+                "description": "Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round's first game."
               }
             ],
             "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -8286,6 +8307,12 @@
                           "BRACKET"
                         ]
                       },
+                      "startsAtRound": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 8,
+                        "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
+                      },
                       "id": {
                         "type": "string",
                         "description": "Contest-configuration identifier."
@@ -8305,11 +8332,12 @@
                     },
                     "required": [
                       "selectionType",
+                      "startsAtRound",
                       "id",
                       "contestId"
                     ],
                     "additionalProperties": false,
-                    "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
+                    "description": "Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round's first game."
                   }
                 ],
                 "description": "Current commissioner-managed contest configuration."
@@ -9227,6 +9255,12 @@
                             "BRACKET"
                           ]
                         },
+                        "startsAtRound": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 8,
+                          "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
+                        },
                         "maxEntriesPerSquad": {
                           "type": [
                             "integer",
@@ -9383,10 +9417,11 @@
                         }
                       },
                       "required": [
-                        "selectionType"
+                        "selectionType",
+                        "startsAtRound"
                       ],
                       "additionalProperties": false,
-                      "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
+                      "description": "Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round's first game."
                     }
                   ],
                   "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -10185,6 +10220,12 @@
                       "BRACKET"
                     ]
                   },
+                  "startsAtRound": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 8,
+                    "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -10341,10 +10382,11 @@
                   }
                 },
                 "required": [
-                  "selectionType"
+                  "selectionType",
+                  "startsAtRound"
                 ],
                 "additionalProperties": false,
-                "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
+                "description": "Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round's first game."
               }
             ],
             "description": "Updated persisted configuration payload copied into future contests when this template is selected."
@@ -11177,6 +11219,12 @@
                           "BRACKET"
                         ]
                       },
+                      "startsAtRound": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 8,
+                        "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
+                      },
                       "maxEntriesPerSquad": {
                         "type": [
                           "integer",
@@ -11333,10 +11381,11 @@
                       }
                     },
                     "required": [
-                      "selectionType"
+                      "selectionType",
+                      "startsAtRound"
                     ],
                     "additionalProperties": false,
-                    "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
+                    "description": "Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round's first game."
                   }
                 ],
                 "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -18682,6 +18731,12 @@
                       "BRACKET"
                     ]
                   },
+                  "startsAtRound": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 8,
+                    "description": "The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -18838,10 +18893,11 @@
                   }
                 },
                 "required": [
-                  "selectionType"
+                  "selectionType",
+                  "startsAtRound"
                 ],
                 "additionalProperties": false,
-                "description": "Bracket rules: pick the winner of every game of one knockout event before it starts, all the way to the final."
+                "description": "Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round's first game."
               }
             ],
             "description": "The contest configuration. With a template, replaces the template's configuration; without one, is the configuration."

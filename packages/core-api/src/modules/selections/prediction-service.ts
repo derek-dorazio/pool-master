@@ -53,9 +53,9 @@ import type {
   SquadMembershipRepository,
 } from '@poolmaster/shared/db';
 import { resolveContestScoringDefinition } from '../contests/contest-leaderboard-calculator';
-import { areMatchPicksOpen, areMatchPicksRevealed } from '../contests/entry-window';
+import { areMatchPicksOpen, areMatchPicksRevealed, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
-import type { PredictedSides, ScoredBracketPick } from '../scoring-families/head-to-head/bracket-picks';
+import { contestBracketGames, type PredictedSides, type ScoredBracketPick } from '../scoring-families/head-to-head/bracket-picks';
 import { hasSportEventStarted } from '../events/operational-timing';
 import { getPredictionEngine } from './prediction-engines/registry';
 import {
@@ -151,11 +151,13 @@ interface WeekContext {
   selectionType: PredictionSelectionType;
   mode: PickEmMode | null;
   sportEvent: SportEvent;
+  /** The timing the contest's window runs on: the event's, or its starting round's for a second-chance bracket (#721). */
+  window: EventTiming;
   /** The event's field, and each row's seed as a reseeded bracket and the upset bonus read it. */
   field: SportEventParticipant[];
   seedOf: Map<string, number | null>;
   entry: ContestEntry & { squadName: string };
-  /** The event's games that are played, in game-number order: cancelled games are not picked. */
+  /** The games the entry picks, in game-number order: cancelled games are not picked, and a bracket's start at its starting round. */
   games: SportEventMatch[];
   predictions: ContestEntryMatchPrediction[];
   ownEntry: boolean;
@@ -184,7 +186,7 @@ export class PredictionService {
     this.assertCanChange(context, input.actorUserId);
     if (input.tiebreakerValue !== undefined) {
       if (!context.engine.takesTiebreaker) throw selectionErrors.tiebreakerNotTaken(context.contest.id);
-      if (hasSportEventStarted(context.sportEvent, context.now)) throw selectionErrors.tiebreakerLocked(context.entry.id);
+      if (hasSportEventStarted(context.window, context.now)) throw selectionErrors.tiebreakerLocked(context.entry.id);
     }
 
     const gamesById = new Map(context.games.map((game) => [game.id, game]));
@@ -238,7 +240,7 @@ export class PredictionService {
     if (!context.predictions.some((prediction) => prediction.sportEventMatchId === game.id)) {
       return this.buildView(context);
     }
-    if (hasSportEventStarted(context.sportEvent, context.now)) {
+    if (hasSportEventStarted(context.window, context.now)) {
       throw selectionErrors.clearAfterFirstKickoff(game.id);
     }
 
@@ -265,7 +267,7 @@ export class PredictionService {
       return this.buildView(context);
     }
     this.assertContestTakesPicks(context);
-    if (hasSportEventStarted(context.sportEvent, context.now)) {
+    if (hasSportEventStarted(context.window, context.now)) {
       throw selectionErrors.weekNotSubmittedInTime(context.entry.id, context.sportEvent.id);
     }
 
@@ -306,7 +308,7 @@ export class PredictionService {
     const issue = this.findWeekIssues(context, after, change.tiebreakerValue === undefined ? context.entry.tiebreakerValue ?? null : change.tiebreakerValue).at(0);
     let eventStatus: ContestEntryStatus | null = null;
     if (submitted && issue) {
-      if (hasSportEventStarted(context.sportEvent, context.now)) {
+      if (hasSportEventStarted(context.window, context.now)) {
         throw this.weekIssueError(context, issue);
       }
       eventStatus = ContestEntryStatus.DRAFT;
@@ -370,7 +372,7 @@ export class PredictionService {
     this.assertOwner(context, actorUserId);
     this.assertContestTakesPicks(context);
     if (
-      hasSportEventStarted(context.sportEvent, context.now)
+      hasSportEventStarted(context.window, context.now)
       && contestEntryEventStatus(context.entry, context.sportEvent.id) !== ContestEntryStatus.SUBMITTED
     ) {
       throw selectionErrors.weekNotSubmittedInTime(context.entry.id, context.sportEvent.id);
@@ -378,7 +380,7 @@ export class PredictionService {
   }
 
   private assertGameOpen(context: WeekContext, game: SportEventMatch): void {
-    if (!areMatchPicksOpen(context.engine.pickWindow, context.contest, context.sportEvent, game, context.now)) {
+    if (!areMatchPicksOpen(context.engine.pickWindow, context.contest, context.window, game, context.now)) {
       this.deps.logger?.warn(
         { action: 'prediction.gameStarted', data: { entryId: context.entry.id, sportEventMatchId: game.id } },
         'Refused a pick change on a game that has started',
@@ -417,6 +419,9 @@ export class PredictionService {
     if (!sportEvent) throw selectionErrors.eventNotInContest(sportEventId, contestId);
     const rules = configuration?.configJson;
     if (rules?.selectionType !== selectionType) throw selectionErrors.selectionConfigInvalid(contestId);
+    const games = rules.selectionType === SelectionType.BRACKET
+      ? contestBracketGames(matches, rules.startsAtRound)
+      : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
 
     return {
       contest,
@@ -425,10 +430,11 @@ export class PredictionService {
       selectionType,
       mode: rules.selectionType === SelectionType.PICK_EM ? rules.mode : null,
       sportEvent,
+      window: cutoffTiming(contestCutoff(rules), sportEvent, matches),
       field,
       seedOf: knockoutSeeds(field),
       entry,
-      games: matches.filter((match) => match.status !== MatchStatus.CANCELLED),
+      games,
       predictions,
       ownEntry: actorUserId !== undefined && memberships.some((membership) => membership.userId === actorUserId),
       now: this.now(),
@@ -445,7 +451,7 @@ export class PredictionService {
   }
 
   private async buildView(context: WeekContext): Promise<GamePicksView> {
-    const { contest, engine, sportEvent, entry, games, now, ownEntry, field } = context;
+    const { contest, engine, sportEvent, window, entry, games, now, ownEntry, field } = context;
     const participants = await this.deps.participants.findByIds(field.map((row) => row.participantId));
     const nameByParticipantId = new Map(participants.map((participant) => [participant.id, participant.name]));
     const teamByFieldId = new Map(field.map((row) => [row.id, {
@@ -460,7 +466,7 @@ export class PredictionService {
 
     const status = contestEntryEventStatus(entry, sportEvent.id);
     const viewGames = games.map((match): GamePickGame => {
-      const revealed = areMatchPicksRevealed(engine.pickWindow, contest, sportEvent, match, now);
+      const revealed = areMatchPicksRevealed(engine.pickWindow, contest, window, match, now);
       const shown = ownEntry || revealed;
       const prediction = predictionByMatchId.get(match.id) ?? null;
       // Another team's predicted sides would show its picks, so until they are revealed it sees the game's own.
@@ -473,7 +479,7 @@ export class PredictionService {
         away: team(match.awaySportEventParticipantId),
         predictedHome: team(sides.home),
         predictedAway: team(sides.away),
-        locked: !areMatchPicksOpen(engine.pickWindow, contest, sportEvent, match, now),
+        locked: !areMatchPicksOpen(engine.pickWindow, contest, window, match, now),
         revealed,
         pick: shown ? prediction : null,
         pickScore: shown && prediction !== null ? score?.picks.get(match.id) ?? null : null,
@@ -483,7 +489,7 @@ export class PredictionService {
     const canSubmit = ownEntry
       && status === ContestEntryStatus.DRAFT
       && (contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE)
-      && !hasSportEventStarted(sportEvent, now)
+      && !hasSportEventStarted(window, now)
       && this.findWeekIssues(context, context.predictions, entry.tiebreakerValue ?? null).length === 0;
 
     return {
