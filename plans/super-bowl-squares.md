@@ -301,7 +301,7 @@ At settlement the contest writes `ContestEntryStanding` for each entry that hold
   `ContestSquaresWinner` table** (contest, period, row, column, entry or none), written by
   settlement only, which the Final leaderboard reads. The alternative is no table, and a score
   correction after Final would move the highlighted box on the grid while the standings stayed.
-- **Q3.8** Does overtime count toward the Final box? **Recommendation: yes**, the final score
+- **Q3.8** Does overtime count toward the Final box? *Decided by Derek 2026-10-19:* **yes**, the final score
   including overtime, which is the common rule. It is not a separate period winner.
 - **Q3.9** Which side is rows and which columns? **Recommendation: the away team along the side
   (rows), the home team across the top (columns)**, which is how TV scorebugs read (away first).
