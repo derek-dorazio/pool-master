@@ -259,7 +259,7 @@ draw, so claiming does not depend on the draw, and boxes can be claimed before t
   and change it until the draw. A squares contest takes one entry per squad, so the cap per entry
   is the cap per squad. A lowered cap does not take away boxes already claimed; it only stops
   new claims.
-- **Q3.4** Can the commissioner claim and clear boxes for others? **Recommendation: yes, until
+- **Q3.4** Can the commissioner claim and clear boxes for others? *Decided by Derek 2026-10-19:* **yes, until
   the draw**, for the member who paid cash and never opened the app. A member can clear only
   their own entry's boxes. Every claim and clear is logged with who did it.
 
@@ -275,7 +275,7 @@ It is a sibling of `ContestDraw`, not more columns on it. `ContestDraw`'s `field
 `entryOrder` mean nothing for squares and the digits mean nothing for a random draw, so §9 splits
 them. The shuffle code is shared.
 
-- **Q3.5** When can the draw run? **Recommendation: any time the contest is OPEN, until the end of
+- **Q3.5** When can the draw run? *Decided by Derek 2026-10-19:* **any time the contest is OPEN, until the end of
   the first quarter is entered.** Claiming closes at kickoff whether or not the draw has run, so
   a commissioner who forgets until the game has begun can still draw, and nobody can choose their
   box knowing the digits. There is no automatic draw at kickoff (passive time locks were rejected;
