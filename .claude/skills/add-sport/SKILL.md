@@ -166,7 +166,7 @@ down: a lesson that was true mid-series may not be by the end.
   and scoring-family folders is the bug this structure exists to prevent; lint rejects it.
   Put the difference in the definition or the family.
 - **Keying format behaviour off the sport.** What a bracket needs (its release checks, the
-  seed lock at release) follows the tournament format through `sportPlaysBracket`, so the next
+  seed lock at release) follows the tournament format through `sportPlaysMatches`, so the next
   bracket sport inherits it. Its release checks join the event service's blocker list rather
   than adding a second release path.
 - **A `switch` without an exhaustive default.** End it in `default: assertNever(value)`, so the
