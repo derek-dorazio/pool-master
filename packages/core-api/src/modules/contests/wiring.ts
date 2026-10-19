@@ -46,6 +46,7 @@ export function createContestService(
 ): ContestService {
   return new ContestService({
     ...createContestLeaderboardReadDeps(prisma, logger),
+    matches: new PrismaSportEventMatchRepository(prisma),
     contests: new PrismaContestRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
     eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
