@@ -229,12 +229,14 @@ the contest is a draft.
 It is its own table rather than a nullable column on `ContestSportEvent` or `Contest`, by the same
 §9 test: the column would mean something only for squares.
 
-- **Q3.2** Which games can a commissioner pick? **Recommendation: any game of the contest's event
-  whose kickoff is still ahead**, with the event's final (the match with no next match, which is
-  the Super Bowl) offered first. That also covers a Monday night game on a pick'em week and the
-  College Football Playoff final (#707) for free, with no sport branching. Teams may still be
-  unknown at setup (the Super Bowl's sides are set after the conference games); the grid shows
-  "Home" and "Away" until they are.
+- **Q3.2** Which games can a commissioner pick? *Decided by Derek 2026-10-19:* **any game of the
+  contest's event whose kickoff is still ahead**, with the event's final (the match with no next
+  match) offered first. The two games that matter most are the **Super Bowl** and the **college
+  football national championship game**; both are the final of their playoff event, so both are
+  covered with no sport branching. The championship game needs the College Football Playoff
+  league and its bracket (#707) loaded first. Teams may still be unknown at setup (the Super
+  Bowl's sides are set after the conference games); the grid shows "Home" and "Away" until they
+  are.
 
 ### 3.3 `ContestEntrySquare` (new)
 
