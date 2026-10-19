@@ -191,4 +191,18 @@ export interface SportEventMatch extends DomainEntity {
    * +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
    */
   homeSpread: number | null;
+  /**
+   * The score at the end of each period entered so far (#772), in period order: the end of each
+   * quarter but the last in American football. The final score is `homeScore`/`awayScore`.
+   * Empty for a sport without periods (`SportDefinition.matchPeriods`).
+   */
+  periodScores: readonly SportEventMatchPeriodScore[];
+}
+
+/** Both sides' score at the end of one period of a game, as the scoreboard shows it (#772). */
+export interface SportEventMatchPeriodScore {
+  /** 1 for the first period; never the last, whose score is the match's final result. */
+  periodNumber: number;
+  homeScore: number;
+  awayScore: number;
 }

@@ -244,6 +244,15 @@ describe('american-football-2026-nfl-playoffs-test.json', () => {
     expect(matches.every((match) => match.result !== undefined)).toBe(true);
     expect(matches[12]).toMatchObject({ isNeutralSite: true, result: { winner: 'AWAY', homeScore: 13, awayScore: 29 } });
   });
+
+  it('carries the Super Bowl\'s score at the end of each of the first three quarters, the Seahawks ahead 3-0, 9-0 and 12-0, and no other game\'s', () => {
+    expect(matches[12].periodScores).toEqual([
+      { periodNumber: 1, homeScore: 0, awayScore: 3 },
+      { periodNumber: 2, homeScore: 0, awayScore: 9 },
+      { periodNumber: 3, homeScore: 0, awayScore: 12 },
+    ]);
+    expect(matches.slice(0, 12).every((match) => match.periodScores === undefined)).toBe(true);
+  });
 });
 
 describe('basketball-2025-nba-playoffs-test.json', () => {

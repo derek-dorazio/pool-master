@@ -133,7 +133,9 @@ side the server's reseed puts each team on (the 1 seed at home), since the file 
 them. A play-in place's entry names the team that won it in `playInWinner` (the NBA's 7 and 8
 seeds), which the load sets after release, before any result. A bye is a team named straight
 into a later round's match, its other side filled by a link (the College Football Playoff's top
-four seeds in the quarterfinals).
+four seeds in the quarterfinals). A match of a sport with periods (American football) may also
+carry `periodScores`, the score at the end of each period but the last, which the load enters
+before its result: the 2026 NFL seed's Super Bowl does, for squares pools.
 
 A racing sport's test seed is its last season's races as played: each field entry carries
 made-up `oddsToWin` and its real `raceResult` (status, finishing place, grid or post position,

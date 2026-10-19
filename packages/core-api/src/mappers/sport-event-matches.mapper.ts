@@ -23,5 +23,6 @@ export function mapSportEventMatchToDto(match: SportEventMatch): SportEventMatch
     advancesToSide: match.advancesToSide,
     regionLabel: match.regionLabel,
     homeSpread: match.homeSpread,
+    periodScores: match.periodScores.map(({ periodNumber, homeScore, awayScore }) => ({ periodNumber, homeScore, awayScore })),
   };
 }

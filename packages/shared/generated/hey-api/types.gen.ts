@@ -13780,6 +13780,24 @@ export type MatchStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCEL
 export type MatchSideDto = 'HOME' | 'AWAY';
 
 /**
+ * Both sides' score at the end of one period of a game (#772).
+ */
+export type SportEventMatchPeriodScoreDto = {
+    /**
+     * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+     */
+    periodNumber: number;
+    /**
+     * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+     */
+    homeScore: number;
+    /**
+     * The away side's score at the end of the period, earlier periods included.
+     */
+    awayScore: number;
+};
+
+/**
  * One game or match of an event, which in a bracket is also a slot naming where its winner goes.
  */
 export type SportEventMatchDto = {
@@ -13841,6 +13859,23 @@ export type SportEventMatchDto = {
      * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
      */
     homeSpread: number | null;
+    /**
+     * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
+     */
+    periodScores: Array<{
+        /**
+         * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+         */
+        periodNumber: number;
+        /**
+         * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+         */
+        homeScore: number;
+        /**
+         * The away side's score at the end of the period, earlier periods included.
+         */
+        awayScore: number;
+    }>;
 };
 
 /**
@@ -13909,6 +13944,23 @@ export type SportEventBracketResponse = {
          * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
          */
         homeSpread: number | null;
+        /**
+         * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
+         */
+        periodScores: Array<{
+            /**
+             * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+             */
+            periodNumber: number;
+            /**
+             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+             */
+            homeScore: number;
+            /**
+             * The away side's score at the end of the period, earlier periods included.
+             */
+            awayScore: number;
+        }>;
     }>;
 };
 
@@ -13978,6 +14030,23 @@ export type SportEventMatchResponse = {
          * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
          */
         homeSpread: number | null;
+        /**
+         * The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.
+         */
+        periodScores: Array<{
+            /**
+             * 1 for the first period (quarter, in American football); never the last, whose score is the match's final result.
+             */
+            periodNumber: number;
+            /**
+             * The home side's score at the end of the period, earlier periods included, as the scoreboard shows it.
+             */
+            homeScore: number;
+            /**
+             * The away side's score at the end of the period, earlier periods included.
+             */
+            awayScore: number;
+        }>;
     };
 };
 
@@ -14073,6 +14142,20 @@ export type RecordSportEventMatchResultRequest = {
      * The away side's score, or null with the home score null too.
      */
     awayScore: number | null;
+};
+
+/**
+ * Both sides' score at the end of one period, as the scoreboard shows it. Neither may be below its score at an earlier period's end, or above its score at a later one's or its final score.
+ */
+export type RecordSportEventMatchPeriodScoreRequest = {
+    /**
+     * The home side's score at the end of the period, earlier periods included.
+     */
+    homeScore: number;
+    /**
+     * The away side's score at the end of the period, earlier periods included.
+     */
+    awayScore: number;
 };
 
 /**
@@ -19578,6 +19661,100 @@ export type RecordEventMatchResultResponses = {
 };
 
 export type RecordEventMatchResultResponse = RecordEventMatchResultResponses[keyof RecordEventMatchResultResponses];
+
+export type ClearEventMatchPeriodScoreData = {
+    body?: never;
+    path: {
+        eventId: string;
+        matchNumber: number;
+        periodNumber: number;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}';
+};
+
+export type ClearEventMatchPeriodScoreErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type ClearEventMatchPeriodScoreError = ClearEventMatchPeriodScoreErrors[keyof ClearEventMatchPeriodScoreErrors];
+
+export type ClearEventMatchPeriodScoreResponses = {
+    /**
+     * An event's bracket.
+     */
+    200: SportEventBracketResponse;
+};
+
+export type ClearEventMatchPeriodScoreResponse = ClearEventMatchPeriodScoreResponses[keyof ClearEventMatchPeriodScoreResponses];
+
+export type RecordEventMatchPeriodScoreData = {
+    body: RecordSportEventMatchPeriodScoreRequest;
+    path: {
+        eventId: string;
+        matchNumber: number;
+        periodNumber: number;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}';
+};
+
+export type RecordEventMatchPeriodScoreErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type RecordEventMatchPeriodScoreError = RecordEventMatchPeriodScoreErrors[keyof RecordEventMatchPeriodScoreErrors];
+
+export type RecordEventMatchPeriodScoreResponses = {
+    /**
+     * An event's bracket.
+     */
+    200: SportEventBracketResponse;
+};
+
+export type RecordEventMatchPeriodScoreResponse = RecordEventMatchPeriodScoreResponses[keyof RecordEventMatchPeriodScoreResponses];
 
 export type CancelEventMatchData = {
     body?: never;

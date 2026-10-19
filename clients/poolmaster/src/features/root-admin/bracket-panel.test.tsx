@@ -19,6 +19,8 @@ const {
   listEventParticipantsMock,
   recordEventMatchResultMock,
   clearEventMatchResultMock,
+  recordEventMatchPeriodScoreMock,
+  clearEventMatchPeriodScoreMock,
   cancelEventMatchMock,
   updateEventBracketMatchMock,
   updateEventParticipantsMock,
@@ -43,6 +45,8 @@ const {
     listEventParticipantsMock: vi.fn(),
     recordEventMatchResultMock: vi.fn(),
     clearEventMatchResultMock: vi.fn(),
+    recordEventMatchPeriodScoreMock: vi.fn(),
+    clearEventMatchPeriodScoreMock: vi.fn(),
     cancelEventMatchMock: vi.fn(),
     updateEventBracketMatchMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
@@ -60,6 +64,8 @@ bindApiMocks({
   listEventParticipants: listEventParticipantsMock,
   recordEventMatchResult: recordEventMatchResultMock,
   clearEventMatchResult: clearEventMatchResultMock,
+  recordEventMatchPeriodScore: recordEventMatchPeriodScoreMock,
+  clearEventMatchPeriodScore: clearEventMatchPeriodScoreMock,
   cancelEventMatch: cancelEventMatchMock,
   updateEventBracketMatch: updateEventBracketMatchMock,
   updateEventParticipants: updateEventParticipantsMock,
@@ -105,6 +111,7 @@ function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto,
     advancesToSide: null,
     regionLabel: null,
     homeSpread: null,
+    periodScores: [],
     ...overrides,
   };
 }
@@ -374,6 +381,105 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       expect(await screen.findByTestId('root-admin-bracket-spread-1')).toHaveTextContent('Duke -3.5');
       expect(screen.getByTestId('root-admin-bracket-spread-edit-1')).toBeInTheDocument();
       expect(screen.queryByTestId('root-admin-bracket-spread-edit-2')).not.toBeInTheDocument();
+    });
+  });
+
+  // #772: American football keeps the score at the end of each quarter but the last; the final
+  // score, overtime included, is the game's result.
+  describe('quarter scores for an American football game', () => {
+    const playoffs = sportEventFixture({ id: 'evt-1', sport: 'AMERICAN_FOOTBALL', name: 'NFL Playoffs', status: 'IN_PROGRESS', rounds: 1, roundsPar: null, allowedTransitions: [] });
+    const superBowl = (overrides: Partial<SportEventMatchDto> = {}) => match({
+      id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', ...overrides,
+    });
+
+    it('shows the score at the end of the first three quarters and the final score, away side first, and "Not entered" for the rest', async () => {
+      seed([superBowl({ periodScores: [{ periodNumber: 1, homeScore: 0, awayScore: 3 }], status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 13, awayScore: 29 })], { event: playoffs });
+      renderPage();
+
+      expect(await screen.findByTestId('root-admin-bracket-score-1-1')).toHaveTextContent('End of quarter 1');
+      expect(screen.getByTestId('root-admin-bracket-score-1-1-value')).toHaveTextContent('Vermont 3, Duke 0');
+      expect(screen.getByTestId('root-admin-bracket-score-1-2-value')).toHaveTextContent('Not entered');
+      expect(screen.getByTestId('root-admin-bracket-score-1-3-value')).toHaveTextContent('Not entered');
+      expect(screen.queryByTestId('root-admin-bracket-score-1-4')).not.toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-bracket-score-1-final-value')).toHaveTextContent('Vermont 29, Duke 13');
+    });
+
+    it('saves a quarter\'s score and clears one on request, reloading the games', async () => {
+      seed([superBowl({ periodScores: [{ periodNumber: 1, homeScore: 0, awayScore: 3 }] })], { event: playoffs });
+      recordEventMatchPeriodScoreMock.mockResolvedValue({ data: { matches: [] } });
+      clearEventMatchPeriodScoreMock.mockResolvedValue({ data: { matches: [] } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-score-1-2-edit'));
+      await userEvent.type(screen.getByTestId('root-admin-bracket-score-1-2-away'), '9');
+      await userEvent.type(screen.getByTestId('root-admin-bracket-score-1-2-home'), '0');
+      await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-2-save'));
+      expect(recordEventMatchPeriodScoreMock).toHaveBeenCalledWith(expect.objectContaining({
+        path: { eventId: 'evt-1', matchNumber: '1', periodNumber: '2' },
+        body: { homeScore: 0, awayScore: 9 },
+      }));
+
+      await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-1-clear'));
+      expect(clearEventMatchPeriodScoreMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'evt-1', matchNumber: '1', periodNumber: '1' } }));
+      await waitFor(() => expect(getEventBracketMock).toHaveBeenCalledTimes(3));
+    });
+
+    it('saves the final score as the game\'s result, the higher score winning, and refuses a tie before sending it', async () => {
+      seed([superBowl()], { event: playoffs });
+      recordEventMatchResultMock.mockResolvedValue({ data: { matches: [] } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-score-1-final-edit'));
+      await userEvent.type(screen.getByTestId('root-admin-bracket-score-1-final-away'), '13');
+      await userEvent.type(screen.getByTestId('root-admin-bracket-score-1-final-home'), '13');
+      expect(screen.getByText('The final score can\'t be a tie: the winner\'s score is the higher.')).toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-bracket-score-1-final-save')).toBeDisabled();
+
+      await userEvent.clear(screen.getByTestId('root-admin-bracket-score-1-final-away'));
+      await userEvent.type(screen.getByTestId('root-admin-bracket-score-1-final-away'), '29');
+      await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-final-save'));
+      expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
+        path: { eventId: 'evt-1', matchNumber: '1' },
+        body: { winnerSide: 'AWAY', homeScore: 13, awayScore: 29 },
+      }));
+    });
+
+    it('explains in product copy a quarter\'s score that is out of step with the game\'s other scores', async () => {
+      seed([superBowl()], { event: playoffs });
+      recordEventMatchPeriodScoreMock.mockResolvedValue({ error: { error: { code: 'MATCH_PERIOD_SCORE_INVALID', message: 'out of step' } }, response: { status: 422 } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-score-1-3-edit'));
+      await userEvent.type(screen.getByTestId('root-admin-bracket-score-1-3-away'), '1');
+      await userEvent.type(screen.getByTestId('root-admin-bracket-score-1-3-home'), '0');
+      await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-3-save'));
+
+      expect(await screen.findByTestId('root-admin-bracket-score-1-3-error')).toHaveTextContent('A score can only go up as the game goes on. Check it against the other scores of this game.');
+    });
+
+    it('offers no scores for a basketball game, whose sport keeps none by period, or for a draft', async () => {
+      seed([superBowl()]);
+      const { unmount } = renderPage();
+      await screen.findByTestId('root-admin-bracket-match-1');
+      expect(screen.queryByTestId('root-admin-bracket-scores-1')).not.toBeInTheDocument();
+      unmount();
+
+      seed([superBowl()], { event: { ...playoffs, status: 'DRAFT' } });
+      renderPage();
+      await screen.findByTestId('root-admin-bracket-match-1');
+      expect(screen.queryByTestId('root-admin-bracket-scores-1')).not.toBeInTheDocument();
+    });
+
+    it('offers no scores for a game still waiting on a team or a cancelled game', async () => {
+      seed([
+        superBowl(),
+        match({ id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3' }),
+        match({ id: 'm-3', matchNumber: 3, roundNumber: 1, homeSportEventParticipantId: 'sep-4', awaySportEventParticipantId: 'sep-2', status: 'CANCELLED' }),
+      ], { event: playoffs });
+      renderPage();
+      await screen.findByTestId('root-admin-bracket-scores-1');
+      expect(screen.queryByTestId('root-admin-bracket-scores-2')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-bracket-scores-3')).not.toBeInTheDocument();
     });
   });
 

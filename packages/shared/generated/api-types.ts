@@ -1926,6 +1926,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Enter a game's score at the end of a period
+         * @description Both sides' score at the end of one period before the last (the end of the first, second or third quarter in American football), as the scoreboard shows it. It can be entered while the game is played and corrected after it; re-sending it changes it. Squares pools read it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_CANCELLED for a cancelled game. 422 MATCH_PERIOD_INVALID when the event's sport keeps no score by period, or for the last period or past it, whose score is the final result. 422 MATCH_SIDES_NOT_SET while a side waits for its team. 422 MATCH_PERIOD_SCORE_INVALID when a side's score is below its score at an earlier period's end, or above its score at a later one's or its final score. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         */
+        put: operations["recordEventMatchPeriodScore"];
+        post?: never;
+        /**
+         * Clear a game's score at the end of a period
+         * @description Clearing a score that is not entered changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_CANCELLED for a cancelled game. 422 MATCH_PERIOD_INVALID when the event's sport keeps no score by period, or for the last period or past it, whose score is the final result. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         */
+        delete: operations["clearEventMatchPeriodScore"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/cancel": {
         parameters: {
             query?: never;
@@ -12657,6 +12681,15 @@ export interface components {
          * @enum {string}
          */
         MatchSideDto: "HOME" | "AWAY";
+        /** @description Both sides' score at the end of one period of a game (#772). */
+        SportEventMatchPeriodScoreDto: {
+            /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
+            periodNumber: number;
+            /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it. */
+            homeScore: number;
+            /** @description The away side's score at the end of the period, earlier periods included. */
+            awayScore: number;
+        };
         /** @description One game or match of an event, which in a bracket is also a slot naming where its winner goes. */
         SportEventMatchDto: {
             /** Format: uuid */
@@ -12712,6 +12745,15 @@ export interface components {
             regionLabel: string | null;
             /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
             homeSpread: number | null;
+            /** @description The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
+            periodScores: {
+                /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
+                periodNumber: number;
+                /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it. */
+                homeScore: number;
+                /** @description The away side's score at the end of the period, earlier periods included. */
+                awayScore: number;
+            }[];
         };
         /** @description An event's bracket. */
         SportEventBracketResponse: {
@@ -12770,6 +12812,15 @@ export interface components {
                 regionLabel: string | null;
                 /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
                 homeSpread: number | null;
+                /** @description The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
+                periodScores: {
+                    /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
+                    periodNumber: number;
+                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it. */
+                    homeScore: number;
+                    /** @description The away side's score at the end of the period, earlier periods included. */
+                    awayScore: number;
+                }[];
             }[];
         };
         /** @description One match of an event's bracket. */
@@ -12829,6 +12880,15 @@ export interface components {
                 regionLabel: string | null;
                 /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
                 homeSpread: number | null;
+                /** @description The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
+                periodScores: {
+                    /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
+                    periodNumber: number;
+                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it. */
+                    homeScore: number;
+                    /** @description The away side's score at the end of the period, earlier periods included. */
+                    awayScore: number;
+                }[];
             };
         };
         /** @description The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side. */
@@ -12905,6 +12965,13 @@ export interface components {
             homeScore: number | null;
             /** @description The away side's score, or null with the home score null too. */
             awayScore: number | null;
+        };
+        /** @description Both sides' score at the end of one period, as the scoreboard shows it. Neither may be below its score at an earlier period's end, or above its score at a later one's or its final score. */
+        RecordSportEventMatchPeriodScoreRequest: {
+            /** @description The home side's score at the end of the period, earlier periods included. */
+            homeScore: number;
+            /** @description The away side's score at the end of the period, earlier periods included. */
+            awayScore: number;
         };
         /** @description Both sides of one match of a reseeded round. */
         RoundMatchupDto: {
@@ -20216,6 +20283,157 @@ export interface operations {
             path: {
                 eventId: string;
                 matchNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description An event's bracket. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventBracketResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    recordEventMatchPeriodScore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                matchNumber: number;
+                periodNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordSportEventMatchPeriodScoreRequest"];
+            };
+        };
+        responses: {
+            /** @description An event's bracket. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventBracketResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    clearEventMatchPeriodScore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                matchNumber: number;
+                periodNumber: number;
             };
             cookie?: never;
         };

@@ -13,6 +13,13 @@ export const BRACKET_MATCHES_MAX = 127;
 export const MatchStatusDtoSchema = z.nativeEnum(MatchStatus).describe('Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.');
 export const MatchSideDtoSchema = z.nativeEnum(MatchSide).describe('One side of a match. On a neutral site HOME is the upper line of the bracket.');
 
+export const SportEventMatchPeriodScoreDtoSchema = z.object({
+  periodNumber: z.number().int().min(1).describe('1 for the first period (quarter, in American football); never the last, whose score is the match\'s final result.'),
+  homeScore: z.number().int().min(0).describe('The home side\'s score at the end of the period, earlier periods included, as the scoreboard shows it.'),
+  awayScore: z.number().int().min(0).describe('The away side\'s score at the end of the period, earlier periods included.'),
+}).describe('Both sides\' score at the end of one period of a game (#772).');
+export type SportEventMatchPeriodScoreDto = z.infer<typeof SportEventMatchPeriodScoreDtoSchema>;
+
 export const SportEventMatchDtoSchema = z.object({
   id: z.string().uuid(),
   sportEventId: z.string().uuid(),
@@ -30,6 +37,7 @@ export const SportEventMatchDtoSchema = z.object({
   advancesToSide: MatchSideDtoSchema.nullable().describe('The side of that match the winner fills; null for the final.'),
   regionLabel: z.string().nullable().describe('The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.'),
   homeSpread: z.number().nullable().describe('The points spread from the home team\'s side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick\'em contest scored against the spread reads it.'),
+  periodScores: z.array(SportEventMatchPeriodScoreDtoSchema).describe('The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.'),
 }).describe('One game or match of an event, which in a bracket is also a slot naming where its winner goes.');
 export type SportEventMatchDto = z.infer<typeof SportEventMatchDtoSchema>;
 
@@ -84,6 +92,12 @@ export const RecordSportEventMatchResultRequestSchema = z.object({
 }).describe('A match\'s result: who won, and both scores or neither. The winner\'s score must be the higher.');
 export type RecordSportEventMatchResultRequest = z.infer<typeof RecordSportEventMatchResultRequestSchema>;
 
+export const RecordSportEventMatchPeriodScoreRequestSchema = z.object({
+  homeScore: z.number().int().min(0).describe('The home side\'s score at the end of the period, earlier periods included.'),
+  awayScore: z.number().int().min(0).describe('The away side\'s score at the end of the period, earlier periods included.'),
+}).describe('Both sides\' score at the end of one period, as the scoreboard shows it. Neither may be below its score at an earlier period\'s end, or above its score at a later one\'s or its final score.');
+export type RecordSportEventMatchPeriodScoreRequest = z.infer<typeof RecordSportEventMatchPeriodScoreRequestSchema>;
+
 export const RoundMatchupDtoSchema = z.object({
   matchNumber: z.number().int().min(1).describe('A match of the round.'),
   homeSportEventParticipantId: z.string().uuid().describe('The field row on the home side.'),
@@ -104,6 +118,7 @@ export type SetSportEventRoundMatchupsRequest = z.infer<typeof SetSportEventRoun
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('MatchStatusDto', MatchStatusDtoSchema);
 registerSchema('MatchSideDto', MatchSideDtoSchema);
+registerSchema('SportEventMatchPeriodScoreDto', SportEventMatchPeriodScoreDtoSchema);
 registerSchema('SportEventMatchDto', SportEventMatchDtoSchema);
 registerSchema('SportEventBracketResponse', SportEventBracketResponseSchema);
 registerSchema('SportEventMatchResponse', SportEventMatchResponseSchema);
@@ -111,6 +126,7 @@ registerSchema('LoadSportEventBracketRequest', LoadSportEventBracketRequestSchem
 registerSchema('UpdateSportEventMatchRequest', UpdateSportEventMatchRequestSchema);
 registerSchema('FillPlayInSlotRequest', FillPlayInSlotRequestSchema);
 registerSchema('RecordSportEventMatchResultRequest', RecordSportEventMatchResultRequestSchema);
+registerSchema('RecordSportEventMatchPeriodScoreRequest', RecordSportEventMatchPeriodScoreRequestSchema);
 registerSchema('RoundMatchupDto', RoundMatchupDtoSchema);
 registerSchema('SportEventRoundMatchupsResponse', SportEventRoundMatchupsResponseSchema);
 registerSchema('SetSportEventRoundMatchupsRequest', SetSportEventRoundMatchupsRequestSchema);

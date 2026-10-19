@@ -2,16 +2,19 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   acceptInvitation,
+  clearEventMatchPeriodScore,
   createContest,
   enterContest,
   generateInviteLink,
   getContest,
   getContestLeaderboard,
+  getEventBracket,
   listContestConfigTemplates,
   listEventParticipants,
   listEvents,
   listSportLeagues,
   openContest,
+  recordEventMatchPeriodScore,
   submitContestEntry,
   submitContestSelection,
   transitionEvent,
@@ -93,6 +96,29 @@ describe('SDK Functional: American football', () => {
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants;
     const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === team), team).id;
+
+    // --- The Super Bowl's quarter scores (#772): Seattle, the away side, 3-0, 9-0 and 12-0 --------
+    const superBowlOf = async () => expectDefined(expectDefined((await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches
+      .find((match) => match.matchNumber === 13));
+    const superBowl = await superBowlOf();
+    expect([superBowl.awaySportEventParticipantId, superBowl.awayScore, superBowl.homeScore]).toEqual([rowOf('Seattle Seahawks'), 29, 13]);
+    const asLoaded = [
+      { periodNumber: 1, homeScore: 0, awayScore: 3 },
+      { periodNumber: 2, homeScore: 0, awayScore: 9 },
+      { periodNumber: 3, homeScore: 0, awayScore: 12 },
+    ];
+    expect(superBowl.periodScores).toEqual(asLoaded);
+    const superBowlQuarter = (periodNumber: number) => ({ eventId: event.id, matchNumber: 13, periodNumber });
+    // A score below the half's, past the final score, or for the last quarter is refused; a member may not enter one.
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(3), body: { homeScore: 0, awayScore: 6 } })).error?.error.code).toBe('MATCH_PERIOD_SCORE_INVALID');
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(3), body: { homeScore: 14, awayScore: 12 } })).error?.error.code).toBe('MATCH_PERIOD_SCORE_INVALID');
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(4), body: { homeScore: 0, awayScore: 12 } })).error?.error.code).toBe('MATCH_PERIOD_INVALID');
+    const outsider = await buildRegisteredUser({ displayName: 'Scoreboard Stranger' });
+    expect((await recordEventMatchPeriodScore({ client: outsider.client, path: superBowlQuarter(1), body: { homeScore: 0, awayScore: 3 } })).response.status).toBe(403);
+    // Cleared and entered again, the half's score reads as before.
+    expect(expectDefined((await clearEventMatchPeriodScore({ client: a, path: superBowlQuarter(2) })).data).matches[12].periodScores.map((score) => score.periodNumber)).toEqual([1, 3]);
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } })).response.status).toBe(200);
+    expect((await superBowlOf()).periodScores).toEqual(asLoaded);
 
     // --- A contest from the NFL's default template ----------------------------------------------
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Playoff Commissioner', leagueName: `Gridiron ${RUN}` });
