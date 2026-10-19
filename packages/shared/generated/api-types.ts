@@ -6591,7 +6591,7 @@ export interface components {
              * @description Structural format of the sport's events; decides which contest formats are valid.
              * @enum {string}
              */
-            tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE" | "KNOCKOUT_BRACKET";
+            tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE" | "MATCHES";
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -6626,7 +6626,7 @@ export interface components {
                  * @description Structural format of the sport's events; decides which contest formats are valid.
                  * @enum {string}
                  */
-                tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE" | "KNOCKOUT_BRACKET";
+                tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE" | "MATCHES";
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.

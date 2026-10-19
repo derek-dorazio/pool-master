@@ -12312,7 +12312,7 @@
             "enum": [
               "STROKE_PLAY_TOURNAMENT",
               "RACE",
-              "KNOCKOUT_BRACKET"
+              "MATCHES"
             ],
             "description": "Structural format of the sport's events; decides which contest formats are valid."
           },
@@ -12377,7 +12377,7 @@
                   "enum": [
                     "STROKE_PLAY_TOURNAMENT",
                     "RACE",
-                    "KNOCKOUT_BRACKET"
+                    "MATCHES"
                   ],
                   "description": "Structural format of the sport's events; decides which contest formats are valid."
                 },

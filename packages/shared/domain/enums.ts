@@ -93,10 +93,11 @@ export const TournamentFormat = {
   /** One race: one field, one finishing order (#623). */
   RACE: 'RACE',
   /**
-   * A knockout bracket (#698): matches round by round, each winner moving on to the match its
-   * bracket slot names, until one is left.
+   * Games between two sides (#698; renamed from KNOCKOUT_BRACKET in #715). Whether an event's
+   * games form a knockout bracket is read from their links (`advancesToMatchId`): a playoff's do,
+   * an NFL regular-season week's don't.
    */
-  KNOCKOUT_BRACKET: 'KNOCKOUT_BRACKET',
+  MATCHES: 'MATCHES',
 } as const;
 export type TournamentFormat = (typeof TournamentFormat)[keyof typeof TournamentFormat];
 

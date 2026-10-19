@@ -5387,7 +5387,7 @@ export type SportDto = {
     /**
      * Structural format of the sport's events; decides which contest formats are valid.
      */
-    tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'KNOCKOUT_BRACKET';
+    tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
     /**
      * ISO 8601 datetime string.
      */
@@ -5421,7 +5421,7 @@ export type SportListResponse = {
         /**
          * Structural format of the sport's events; decides which contest formats are valid.
          */
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'KNOCKOUT_BRACKET';
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
         /**
          * ISO 8601 datetime string.
          */

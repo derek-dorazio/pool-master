@@ -38,7 +38,7 @@ export type ContestReadinessCheck = { id: string; isMet: boolean; label: string 
  * say when the contest is created.
  */
 export function isKnockoutUnderWay(event: SportEventDto) {
-  return getSportDefinition(event.sport).tournamentFormat === TournamentFormat.KNOCKOUT_BRACKET
+  return getSportDefinition(event.sport).tournamentFormat === TournamentFormat.MATCHES
     && event.status === SportEventStatus.IN_PROGRESS
     && event.readinessReasons.length > 0
     && event.readinessReasons.every((reason) => reason === 'EVENT_STARTED');

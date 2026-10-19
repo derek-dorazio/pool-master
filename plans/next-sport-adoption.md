@@ -39,7 +39,7 @@ Read from the code on `main` (2026-10-10), not from plans.
 - The sport side of the model already anticipates other sports: `Sport` lists 14 sports
   including `TENNIS`, `NCAA_BASKETBALL`, `SOCCER`, `NASCAR`, `F1`, `HORSE_RACING`
   (`packages/shared/domain/enums.ts`); `Participant.participantType` is `INDIVIDUAL` or `TEAM`.
-- `TournamentFormat` already has `KNOCKOUT_BRACKET`, `GROUP_STAGE_KNOCKOUT`, `TIME_TRIAL_RACE`,
+- `TournamentFormat` already has `MATCHES` (`KNOCKOUT_BRACKET` until #715), `GROUP_STAGE_KNOCKOUT`, `TIME_TRIAL_RACE`,
   and `packages/shared/domain/contest-validity.ts` maps tennis and NCAA basketball to knockout,
   soccer to group stage plus knockout, racing to races.
 - A pick points at a `SportEventParticipant` (a member of one event's field) with `ranking`,

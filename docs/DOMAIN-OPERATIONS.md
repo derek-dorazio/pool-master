@@ -621,7 +621,7 @@ that shows the status.
 
 ### SportEventMatch — a bracket event's games
 
-The matches of an event whose sport's tournament format is `KNOCKOUT_BRACKET` (#698). Each
+The matches of an event whose sport's tournament format is `MATCHES` (#698; `KNOCKOUT_BRACKET` until #715, renamed because an NFL week's games are matches that form no bracket). Each
 names its round, its home and away field rows, the match and side its winner advances to, and
 the region or conference it is played in (`regionLabel`, null for none);
 the database refuses a match feeding itself, two matches feeding one side, a winner on a match

@@ -10,7 +10,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import {
   getDefaultTournamentFormatForSport,
   type Sport,
-  sportPlaysBracket,
+  sportPlaysMatches,
   SportEventStatus,
 } from '@poolmaster/shared/domain';
 import type {
@@ -240,7 +240,7 @@ export class IngestionPersistence {
 
     let sportEventParticipantsPersisted = 0;
     // A released bracket's seeds are locked (#698): the upset bonus reads them as they stood at release.
-    const seedsLocked = sportPlaysBracket(persistedEvent.sport) && persistedEvent.status !== SportEventStatus.DRAFT;
+    const seedsLocked = sportPlaysMatches(persistedEvent.sport) && persistedEvent.status !== SportEventStatus.DRAFT;
 
     for (const participant of detail.participants) {
       const mapping = await this.prisma.participantProviderMapping.findUnique({

@@ -21,7 +21,7 @@ import type {
 import {
   BracketAdvancement,
   getSportDefinition,
-  sportPlaysBracket,
+  sportPlaysMatches,
   type ParticipantLeagueAffiliation,
   type Sport,
   type SportLeague,
@@ -143,7 +143,7 @@ export class SportLeagueService {
 
   /** A reseeded bracket is a bracket's rule: only a sport played as a bracket takes one. */
   private assertAdvancementFits(sport: Sport, bracketAdvancement: BracketAdvancement | undefined): void {
-    if (bracketAdvancement === BracketAdvancement.RESEED_BY_SEED && !sportPlaysBracket(sport)) {
+    if (bracketAdvancement === BracketAdvancement.RESEED_BY_SEED && !sportPlaysMatches(sport)) {
       this.deps.logger?.warn({ sport, bracketAdvancement }, 'Refused a reseeded bracket for a sport not played as a bracket');
       throw new SportCatalogError(
         `A ${getSportDefinition(sport).name.toLowerCase()} sport league plays no bracket, so it cannot reseed one.`,

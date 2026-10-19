@@ -107,7 +107,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'KNOCKOUT_BRACKET' },
+      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
       update: {},
     });
   });

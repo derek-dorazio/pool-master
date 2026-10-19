@@ -35,7 +35,7 @@ import {
   MatchSide,
   MatchStatus,
   ParticipantStatus,
-  sportPlaysBracket,
+  sportPlaysMatches,
   SportEventStatus,
   type SportEvent,
   type SportEventMatch,
@@ -241,7 +241,7 @@ export class SportEventBracketService {
    * sport plays no bracket.
    */
   async releaseBlockers(event: SportEvent): Promise<string[]> {
-    if (!sportPlaysBracket(event.sport)) {
+    if (!sportPlaysMatches(event.sport)) {
       return [];
     }
     const [bracket, field] = await Promise.all([
@@ -472,7 +472,7 @@ export class SportEventBracketService {
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
-    if (!sportPlaysBracket(event.sport)) {
+    if (!sportPlaysMatches(event.sport)) {
       this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused a bracket operation on an event that plays no bracket');
       throw new SportEventError(
         `A ${getSportDefinition(event.sport).name.toLowerCase()} event is not played as a bracket.`,

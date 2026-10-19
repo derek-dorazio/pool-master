@@ -71,7 +71,7 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
   // The integration cleanup empties sport leagues no template names, so the football rows are set up here.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'KNOCKOUT_BRACKET' },
+    create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({

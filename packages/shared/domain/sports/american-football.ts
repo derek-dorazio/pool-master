@@ -25,7 +25,7 @@ export const americanFootballSportDefinition: SportDefinition = {
   name: 'American football',
   participantType: ParticipantType.TEAM,
   scoringFamily: ScoringFamily.HEAD_TO_HEAD,
-  tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
+  tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
   defaultTierLayout: { tierCount: 7, tierSize: 2 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET],

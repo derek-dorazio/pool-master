@@ -33,7 +33,7 @@ import {
   compareScores,
   getSportDefinition,
   rankSortedScores,
-  sportPlaysBracket,
+  sportPlaysMatches,
   type SportEvent,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
@@ -236,7 +236,7 @@ export class MatchResultService {
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
-    if (!sportPlaysBracket(event.sport)) {
+    if (!sportPlaysMatches(event.sport)) {
       this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused a match result for an event that plays no bracket');
       throw new SportEventError(
         `A ${getSportDefinition(event.sport).name.toLowerCase()} event is not played as a bracket.`,

@@ -5,7 +5,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { BracketAdvancement, Sport } from '@poolmaster/shared/domain';
+import { BracketAdvancement, Sport, TournamentFormat, getSportDefinition } from '@poolmaster/shared/domain';
 import {
   PrismaEventSeriesRepository,
   PrismaParticipantLeagueAffiliationRepository,
@@ -73,6 +73,16 @@ describe('Sport and SportLeague repositories', () => {
       Sport.GOLF, Sport.HORSE_RACING, Sport.AUTO_RACING, Sport.CYCLING, Sport.RUNNING, Sport.BASKETBALL, Sport.AMERICAN_FOOTBALL,
     ]);
     expect(allSports[0].id).toBe(golf.id);
+  });
+
+  // #715 renamed KNOCKOUT_BRACKET to MATCHES in place, so the sports rows seeded with it carry the new value.
+  it('stores each seeded sport\'s tournament format as its sport definition gives it, basketball and American football as MATCHES', async () => {
+    const sports = await new PrismaSportRepository(getPrisma()).findAll();
+
+    expect(sports.map((row) => [row.sport, row.tournamentFormat]))
+      .toEqual(sports.map((row) => [row.sport, getSportDefinition(row.sport).tournamentFormat]));
+    expect(sports.filter((row) => row.tournamentFormat === TournamentFormat.MATCHES).map((row) => row.sport).sort())
+      .toEqual([Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL]);
   });
 
   it('finds a sport by its sport value and lists sport leagues filtered by sport and activity, ordered by name', async () => {

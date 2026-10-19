@@ -25,7 +25,7 @@
  */
 
 import { z } from 'zod';
-import { BracketAdvancement, getSportDefinition, MatchSide, RaceResultStatus, ScoringFamily, type Sport, sportPlaysBracket, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { BracketAdvancement, getSportDefinition, MatchSide, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import { findBracketProblems } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -380,7 +380,7 @@ export function parseSportDataFile(json: unknown, options: ParseSportDataFileOpt
     problems.push(`scope.sport ${sport} is not a sport in the sport registry.`);
   }
   const strokePlay = isSport(sport) && getSportDefinition(sport).scoringFamily === ScoringFamily.STROKE_PLAY;
-  const playsBracket = isSport(sport) && sportPlaysBracket(sport);
+  const playsBracket = isSport(sport) && sportPlaysMatches(sport);
 
   const contents = new Set(file.scope.contents);
   if (contents.has(SportDataContent.FIELDS) && !contents.has(SportDataContent.PLAYERS)) {

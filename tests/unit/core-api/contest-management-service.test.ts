@@ -1538,7 +1538,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       scoringRuleRepo,
       createSportEventTierServiceStub(),
       undefined,
-      createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET, rounds }),
+      createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.MATCHES, rounds }),
     );
     return { contestCoreRepo, scoringRuleRepo, service };
   }
@@ -1932,7 +1932,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const reader = createSportEventReader({
       sport: options.sport ?? Sport.AMERICAN_FOOTBALL,
-      tournamentFormat: options.tournamentFormat ?? TournamentFormat.KNOCKOUT_BRACKET,
+      tournamentFormat: options.tournamentFormat ?? TournamentFormat.MATCHES,
       rounds: options.rounds ?? 4,
       gameCount: options.gameCount,
       undecidedGameCount: options.undecidedGameCount,
@@ -2068,7 +2068,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const reader = createSportEventReader({
       sport: Sport.BASKETBALL,
-      tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
+      tournamentFormat: TournamentFormat.MATCHES,
       rounds: 4,
       gameCount: 15,
       bracketProblem: options.bracketProblem ?? null,
@@ -2142,7 +2142,7 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
   function secondChance(options: { roundOnePlayed?: boolean; eventStatus?: SportEventStatus; eventStartHours?: number } = {}) {
     const store = new InMemorySportEvents();
     const sport = store.addSport(Sport.BASKETBALL);
-    sport.tournamentFormat = TournamentFormat.KNOCKOUT_BRACKET;
+    sport.tournamentFormat = TournamentFormat.MATCHES;
     const event = store.addEvent({
       sport: Sport.BASKETBALL,
       status: options.eventStatus ?? SportEventStatus.IN_PROGRESS,

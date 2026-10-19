@@ -299,7 +299,7 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
 
     function seedPlayIn() {
       seed([], { field: [duke, vermont, houston, texas, pairing] });
-      listSportsMock.mockResolvedValue({ data: { sports: [{ id: 'sport-basketball', sport: 'BASKETBALL', participantType: 'TEAM', tournamentFormat: 'KNOCKOUT_BRACKET', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
+      listSportsMock.mockResolvedValue({ data: { sports: [{ id: 'sport-basketball', sport: 'BASKETBALL', participantType: 'TEAM', tournamentFormat: 'MATCHES', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
       listParticipantsMock.mockResolvedValue({ data: { participants: [duke.participant, texas.participant, xavier].map((participant) => participantFixture({ ...participant, sportId: 'sport-basketball' })) } });
     }
 
