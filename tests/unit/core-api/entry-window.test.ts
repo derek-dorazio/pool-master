@@ -3,15 +3,18 @@
  * when each event's picks can change, when each event's picks are revealed, and which event a
  * contest's pages open on.
  */
-import { ContestStatus, MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, MatchStatus, PickEmMode, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import {
+  ContestCutoffKind,
   PickWindow,
   areContestEntriesOpen,
   areEventPicksOpen,
   areEventPicksRevealed,
   areMatchPicksOpen,
   areMatchPicksRevealed,
+  contestCutoff,
   currentContestEvent,
+  cutoffTiming,
   hasMatchStarted,
 } from '../../../packages/core-api/src/modules/contests/entry-window';
 
@@ -228,5 +231,76 @@ describe('areMatchPicksRevealed — who may see one game\'s pick', () => {
       .toBe(areEventPicksRevealed(active, weekUnderway, NOW));
     expect(areMatchPicksRevealed(PickWindow.UNTIL_EVENT_START, active, weekUnderway, sundayGame, NOW)).toBe(true);
     expect(areMatchPicksRevealed(PickWindow.UNTIL_EVENT_START, active, weekAhead, game(-1), NOW)).toBe(false);
+  });
+});
+
+describe('contestCutoff — where a contest\'s window closes (#721)', () => {
+  it('closes every contest but a later-round bracket at its event\'s start', () => {
+    expect(contestCutoff(undefined)).toEqual({ kind: ContestCutoffKind.EVENT_START });
+    expect(contestCutoff({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 })).toEqual({ kind: ContestCutoffKind.EVENT_START });
+    expect(contestCutoff({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE })).toEqual({ kind: ContestCutoffKind.EVENT_START });
+    expect(contestCutoff({ selectionType: SelectionType.BRACKET, startsAtRound: 1 })).toEqual({ kind: ContestCutoffKind.EVENT_START });
+  });
+
+  it('closes a second-chance bracket at the start of the round it starts at', () => {
+    expect(contestCutoff({ selectionType: SelectionType.BRACKET, startsAtRound: 3 })).toEqual({ kind: ContestCutoffKind.ROUND_START, roundNumber: 3 });
+  });
+});
+
+describe('cutoffTiming — the timing a contest\'s window runs on (#721)', () => {
+  const ROUND_TWO = { kind: ContestCutoffKind.ROUND_START, roundNumber: 2 } as const;
+  const underWay = event('regional', -48, SportEventStatus.IN_PROGRESS);
+  const game = (roundNumber: number, startOffsetHours: number | null, status: MatchStatus = MatchStatus.SCHEDULED) => ({
+    roundNumber,
+    status,
+    scheduledDate: startOffsetHours === null ? null : new Date(NOW.getTime() + startOffsetHours * HOUR),
+  });
+
+  it('is the event\'s own timing for a contest that closes at the event\'s start', () => {
+    expect(cutoffTiming({ kind: ContestCutoffKind.EVENT_START }, underWay, [game(2, 5)])).toBe(underWay);
+  });
+
+  it('is not yet started, at the round\'s earliest game, while the event is under way and the round\'s games are all still to play', () => {
+    const timing = cutoffTiming(ROUND_TWO, underWay, [game(1, -48, MatchStatus.COMPLETED), game(2, 5), game(2, 2), game(3, 50)]);
+
+    expect(timing).toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 2 * HOUR) });
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], NOW)).toBe(true);
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], new Date(NOW.getTime() + 2 * HOUR))).toBe(false);
+  });
+
+  it('leaves a cancelled game of the round out of its start', () => {
+    expect(cutoffTiming(ROUND_TWO, underWay, [game(2, 1, MatchStatus.CANCELLED), game(2, 4)]).startDate)
+      .toEqual(new Date(NOW.getTime() + 4 * HOUR));
+  });
+
+  it('times a round game with no time of its own at the event\'s start, so a round without game times is already past', () => {
+    const timing = cutoffTiming(ROUND_TWO, underWay, [game(2, null), game(2, 5)]);
+
+    expect(timing.startDate).toEqual(underWay.startDate);
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], NOW)).toBe(false);
+  });
+
+  it('is started once any game of the round has moved on from SCHEDULED, though no game time has passed', () => {
+    const timing = cutoffTiming(ROUND_TWO, underWay, [game(2, 5, MatchStatus.IN_PROGRESS), game(2, 8)]);
+
+    expect(timing.status).toBe(SportEventStatus.IN_PROGRESS);
+    expect(areEventPicksOpen({ status: ContestStatus.OPEN }, timing, NOW)).toBe(false);
+  });
+
+  it('keeps an event that has not started, or is postponed, in its own status, at the round\'s first game', () => {
+    const ahead = event('regional', 24);
+    expect(cutoffTiming(ROUND_TWO, ahead, [game(2, 72)])).toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 72 * HOUR) });
+    const postponed = event('regional', 24, SportEventStatus.POSTPONED);
+    expect(cutoffTiming(ROUND_TWO, postponed, [game(2, 72)]).status).toBe(SportEventStatus.POSTPONED);
+  });
+
+  it('times a round with no games at the event\'s start', () => {
+    expect(cutoffTiming(ROUND_TWO, underWay, [game(1, -48)])).toEqual({ status: SportEventStatus.SCHEDULED, startDate: underWay.startDate });
+  });
+
+  it.each([SportEventStatus.COMPLETED, SportEventStatus.CANCELLED])('keeps a %s event finished for a round\'s cutoff, whatever its games say', (status) => {
+    const finished = event('regional', -48, status);
+
+    expect(cutoffTiming(ROUND_TWO, finished, [game(2, 5)])).toBe(finished);
   });
 });

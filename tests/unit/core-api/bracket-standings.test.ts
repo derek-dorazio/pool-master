@@ -73,7 +73,7 @@ function setup(options: { rules?: (configurationId: string) => ParticipantContes
   });
   const configuration = world.addConfiguration(contest.id, {
     selectionType: SelectionType.BRACKET,
-    configJson: { selectionType: SelectionType.BRACKET },
+    configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
   });
   const rules = options.rules?.(configuration.id)
     ?? [knockoutScoringRule(configuration.id, { roundValues: [1, 2, 4], upsetBonus: { rule: UpsetBonusRule.NONE } })];

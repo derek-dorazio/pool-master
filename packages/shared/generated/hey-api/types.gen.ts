@@ -2855,6 +2855,10 @@ export type ContestConfigurationRequest = {
 } | {
     selectionType: 'BRACKET';
     /**
+     * The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on.
+     */
+    startsAtRound: number;
+    /**
      * Maximum entries a Team may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
@@ -3151,6 +3155,10 @@ export type ContestManagementDetailDto = {
         maxEntriesPerSquad?: number | null;
     } | {
         selectionType: 'BRACKET';
+        /**
+         * The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on.
+         */
+        startsAtRound: number;
         /**
          * Contest-configuration identifier.
          */
@@ -3484,6 +3492,10 @@ export type ContestConfigTemplateDto = {
     } | {
         selectionType: 'BRACKET';
         /**
+         * The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on.
+         */
+        startsAtRound: number;
+        /**
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
@@ -3698,6 +3710,10 @@ export type ContestManagementResponse = {
             maxEntriesPerSquad?: number | null;
         } | {
             selectionType: 'BRACKET';
+            /**
+             * The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on.
+             */
+            startsAtRound: number;
             /**
              * Contest-configuration identifier.
              */
@@ -4059,6 +4075,10 @@ export type ContestConfigTemplateListResponse = {
         } | {
             selectionType: 'BRACKET';
             /**
+             * The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on.
+             */
+            startsAtRound: number;
+            /**
              * Maximum entries a Team may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
@@ -4382,6 +4402,10 @@ export type UpdateContestConfigTemplateRequest = {
         };
     } | {
         selectionType: 'BRACKET';
+        /**
+         * The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on.
+         */
+        startsAtRound: number;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -4741,6 +4765,10 @@ export type ContestConfigTemplateResponse = {
             };
         } | {
             selectionType: 'BRACKET';
+            /**
+             * The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on.
+             */
+            startsAtRound: number;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -8418,6 +8446,10 @@ export type CreateContestRequest = {
         };
     } | {
         selectionType: 'BRACKET';
+        /**
+         * The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on.
+         */
+        startsAtRound: number;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */

@@ -11,15 +11,70 @@
  * Joining, leaving and renaming are the contest's: only while it is OPEN (#117) and before its
  * first event starts, so nobody joins a contest already being played (design Q5.6).
  *
+ * A second-chance bracket (#721) closes later than its event's start: at its starting round's
+ * first game. `ContestCutoff` says which, and `cutoffTiming` gives every check below the timing
+ * it runs on, so the checks themselves stay the same for every contest.
+ *
  * A random draw closes entries early (#601): once it has dealt, nobody may enter, leave or
  * change an entry, or the deal would no longer be the one every entry was given.
  */
-import type { Contest } from '@poolmaster/shared/domain';
-import { ContestStatus, MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import type { Contest, ContestRules, ContestSelectionConfig } from '@poolmaster/shared/domain';
+import { ContestStatus, MatchStatus, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import { hasSportEventStarted } from '../events/operational-timing';
 
-type EventTiming = { status: SportEventStatus; startDate: Date };
+export type EventTiming = { status: SportEventStatus; startDate: Date };
 type MatchTiming = { status: MatchStatus; scheduledDate: Date | null };
+type RoundMatchTiming = MatchTiming & { roundNumber: number };
+
+/**
+ * Where a contest's window on an event closes (#721): at the event's start, as for every contest,
+ * or at the first game of a later round, for a second-chance bracket that starts there. Entries,
+ * picks and the tiebreaker close, picks are revealed and the contest goes live at this point.
+ */
+export const ContestCutoffKind = {
+  EVENT_START: 'EVENT_START',
+  ROUND_START: 'ROUND_START',
+} as const;
+export type ContestCutoffKind = (typeof ContestCutoffKind)[keyof typeof ContestCutoffKind];
+
+export type ContestCutoff =
+  | { kind: typeof ContestCutoffKind.EVENT_START }
+  | { kind: typeof ContestCutoffKind.ROUND_START; roundNumber: number };
+
+const AT_EVENT_START: ContestCutoff = { kind: ContestCutoffKind.EVENT_START };
+
+/** A contest's cutoff, from its rules: a bracket starting after round 1 closes at its starting round. */
+export function contestCutoff(rules: ContestRules | ContestSelectionConfig | undefined): ContestCutoff {
+  return rules?.selectionType === SelectionType.BRACKET && rules.startsAtRound > 1
+    ? { kind: ContestCutoffKind.ROUND_START, roundNumber: rules.startsAtRound }
+    : AT_EVENT_START;
+}
+
+/**
+ * The timing a contest's window runs on for one event, in the shape every check below reads: the
+ * event's own, or, at a round's start, the round's first game time (a game without a time is
+ * timed at the event's start, as a weekly game is) and whether any of its games has moved on from
+ * SCHEDULED. A finished event is finished for every cutoff.
+ */
+export function cutoffTiming(cutoff: ContestCutoff, sportEvent: EventTiming, games: readonly RoundMatchTiming[]): EventTiming {
+  switch (cutoff.kind) {
+    case ContestCutoffKind.EVENT_START:
+      return sportEvent;
+    case ContestCutoffKind.ROUND_START: {
+      if (FINISHED_EVENT_STATUSES.includes(sportEvent.status)) {
+        return sportEvent;
+      }
+      const round = games.filter((game) => game.roundNumber === cutoff.roundNumber && game.status !== MatchStatus.CANCELLED);
+      const times = round.map((game) => (game.scheduledDate ?? sportEvent.startDate).getTime());
+      const startDate = times.length > 0 ? new Date(Math.min(...times)) : sportEvent.startDate;
+      const started = round.some((game) => game.status !== MatchStatus.SCHEDULED);
+      const status = started
+        ? SportEventStatus.IN_PROGRESS
+        : sportEvent.status === SportEventStatus.IN_PROGRESS ? SportEventStatus.SCHEDULED : sportEvent.status;
+      return { status, startDate };
+    }
+  }
+}
 
 /**
  * When an engine's picks close, and are revealed (#716): at its event's start (every roster pick,

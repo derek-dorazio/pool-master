@@ -1,5 +1,6 @@
 /**
- * How a bracket contest's games are laid out on screen (#721): by round, first round first, and
+ * How a bracket contest's games are laid out on screen (#721): by round, first round first (a
+ * second-chance bracket's first round is a later one, still named for where it falls), and
  * within a round by region in the order the bracket lists them. The later rounds, where the
  * regions meet (a Final Four, a Super Bowl), carry no region, so they read as one group after the
  * regional rounds. Everything here is derived from the game-pick read; nothing is stored.
@@ -47,6 +48,16 @@ export function buildBracketRounds(games: readonly BracketGame[], roundLabel: Br
     region.games.push(game);
   }
   return [...rounds.values()];
+}
+
+/**
+ * When the bracket's picks close, for a sentence: the event's start ("the opening tip-off") for a
+ * full bracket, or for a second-chance bracket, whose games start at a later round (#721), that
+ * round's first game ("the first game of the Sweet 16").
+ */
+export function describeBracketClose(rounds: readonly BracketRound[], eventStart: string): string {
+  const first = rounds.at(0);
+  return first && first.roundNumber > 1 ? `the first game of the ${first.label}` : `the ${eventStart}`;
 }
 
 /**

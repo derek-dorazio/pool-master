@@ -12,7 +12,8 @@
  * schedule no longer reflects reality.
  *
  * A DRAFT event is never touched: only an admin's release moves it (#431). This
- * scheduler's job is exactly the two status writes below, nothing else.
+ * scheduler's job is the two status writes below, and, while an event is in progress, starting
+ * the contests whose cutoff comes after the event's start (a second-chance bracket, #721).
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -28,7 +29,7 @@ export class EventLifecycleScheduler {
   constructor(
     private readonly sportEvents: Pick<SportEventRepository, 'findAutoLifecycleCandidates'>,
     private readonly rounds: Pick<SportEventRoundRepository, 'findBySportEvents'>,
-    private readonly eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition'>,
+    private readonly eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff'>,
     private readonly logger?: FastifyBaseLogger,
     private readonly now: () => Date = () => new Date(),
   ) {}
@@ -83,6 +84,8 @@ export class EventLifecycleScheduler {
     }
 
     if (candidate.status === SportEventStatus.IN_PROGRESS) {
+      // A second-chance bracket goes live at its starting round's first game, mid-event (#721).
+      await this.eventLifecycleService.activateContestsPastCutoff(candidate, now);
       const roundEnds = roundSchedule
         .map((round) => round.scheduledEndAt)
         .filter((date): date is Date => date !== null);

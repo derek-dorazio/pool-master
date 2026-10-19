@@ -74,7 +74,14 @@ import {
   loadEventField,
   toParticipantScores,
 } from './contest-leaderboard-reads';
-import { areContestEntriesOpen, areEventPicksRevealed } from './entry-window';
+import {
+  ContestCutoffKind,
+  areContestEntriesOpen,
+  areEventPicksRevealed,
+  contestCutoff,
+  cutoffTiming,
+  type EventTiming,
+} from './entry-window';
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
@@ -243,11 +250,27 @@ export class ContestService {
     return contest.sportEventIds.flatMap((sportEventId) => eventsById.get(sportEventId) ?? []);
   }
 
+  /**
+   * Each event's timing as the contest's window runs on it (#721): the event's own, or, for a
+   * second-chance bracket, its starting round's first game. Only a bracket reads its rules for it.
+   */
+  private async findContestWindows<Event extends SportEvent>(contest: Contest, events: readonly Event[]): Promise<Array<{ event: Event; window: EventTiming }>> {
+    if (contest.selectionType !== SelectionType.BRACKET) {
+      return events.map((event) => ({ event, window: event }));
+    }
+    const cutoff = contestCutoff((await this.deps.configurations.findByContest(contest.id))?.configJson);
+    if (cutoff.kind === ContestCutoffKind.EVENT_START) {
+      return events.map((event) => ({ event, window: event }));
+    }
+    return Promise.all(events.map(async (event) =>
+      ({ event, window: cutoffTiming(cutoff, event, await this.deps.matches.findBySportEvent(event.id)) })));
+  }
+
   /** The ids of the contest's events whose picks everyone may see as of now (#713). */
   private async findRevealedEventIds(contest: Contest): Promise<Set<string>> {
     const now = this.now();
-    const events = await this.findContestEvents(contest);
-    return new Set(events.filter((event) => areEventPicksRevealed(contest, event, now)).map((event) => event.id));
+    const windows = await this.findContestWindows(contest, await this.findContestEvents(contest));
+    return new Set(windows.filter(({ window }) => areEventPicksRevealed(contest, window, now)).map(({ event }) => event.id));
   }
 
   /**
@@ -576,7 +599,8 @@ export class ContestService {
       );
     }
     const event = (await this.findContestEvents(contest)).at(0);
-    if (!event || !areEventPicksRevealed(contest, event, this.now())) {
+    const window = event ? (await this.findContestWindows(contest, [event])).at(0)?.window : undefined;
+    if (!event || !window || !areEventPicksRevealed(contest, window, this.now())) {
       throw new ContestOperationError(
         'The leaderboard is not available until contest picks are revealed.',
         'CONTEST_LEADERBOARD_PICKS_HIDDEN',
@@ -1029,7 +1053,8 @@ export class ContestService {
   /** Whether entries can be created, renamed or left now: see entry-window.ts. */
   private async areEntriesOpen(contest: Contest): Promise<boolean> {
     const sportEvents = contest.status === ContestStatus.OPEN ? await this.findContestEvents(contest) : [];
-    return areContestEntriesOpen(contest, sportEvents, this.now());
+    const windows = await this.findContestWindows(contest, sportEvents);
+    return areContestEntriesOpen(contest, windows.map(({ window }) => window), this.now());
   }
 
   private async findEntriesBySquad(

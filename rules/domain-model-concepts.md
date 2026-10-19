@@ -55,7 +55,9 @@ Two readings of this chain have both been held at once, so it is worth stating p
   "away". The selection type decides the format: `PICK_EM` and `BRACKET` are `PREDICTION`,
   every other type `ROSTER`.
 - **A bracket is one knockout picked to its final** (`BRACKET`, #721). Its contest covers one
-  event, and every pick is made before the event starts. A later game's pick is a team the entry
+  event, and every pick is made before the event starts. A **second-chance bracket** starts at a
+  later round (`startsAtRound`, the Sweet 16): it is picked from that round on, and its picks close,
+  are revealed and the contest goes live at that round's first game, while the event is under way. A later game's pick is a team the entry
   picked to get there (in a reseeded round, its picked winners paired by seed), so changing a pick
   clears the later picks that followed from it. A correct pick scores its round's value under the
   knockout round points, as a knockout roster pool does.

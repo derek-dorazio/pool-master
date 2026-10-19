@@ -72,7 +72,7 @@ function setup(options: { bracket?: SportEventMatch[]; seeds?: ReadonlyMap<strin
   });
   const configuration = world.addConfiguration(contest.id, {
     selectionType: SelectionType.BRACKET,
-    configJson: { selectionType: SelectionType.BRACKET },
+    configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
   });
   const rules = [knockoutScoringRule(configuration.id, {
     roundValues: [1, 2, 4, 8],

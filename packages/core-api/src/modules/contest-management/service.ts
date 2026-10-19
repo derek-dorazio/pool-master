@@ -66,6 +66,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
+import { ContestCutoffKind, contestCutoff, type ContestCutoff, type EventTiming } from '../contests/entry-window';
 
 interface CreateContestManagementContext {
   leagueId: string;
@@ -99,8 +100,10 @@ export interface ContestCreateSportEventReader {
   countGames(sportEventId: string): Promise<number>;
   /** How many of those games still have a team to be decided. */
   countUndecidedGames(sportEventId: string): Promise<number>;
-  /** Why the event's games cannot be filled in as a bracket, or null when they can (#721). */
-  findBracketProblem(sportEventId: string): Promise<string | null>;
+  /** Why the event's games from `startsAtRound` on cannot be filled in as a bracket, or null when they can (#721). */
+  findBracketProblem(sportEventId: string, startsAtRound: number): Promise<string | null>;
+  /** When a contest with this cutoff closes on the event (#721): at its start, or at its starting round's first game. */
+  findCutoffTiming(sportEvent: ContestCreateSportEventState, cutoff: ContestCutoff): Promise<EventTiming>;
 }
 
 function createNoopLogger(): LifecycleLogger {
@@ -147,7 +150,7 @@ export class ContestManagementService {
       input,
       this.contestConfigTemplateRepo,
     );
-    const sportEvents = await this.assertSportEventsContestEligible(input.sportEventIds);
+    const sportEvents = await this.assertSportEventsContestEligible(input.sportEventIds, contestCutoff(resolvedConfiguration.configuration));
     const sportEvent = this.assertOneSportLeague(sportEvents);
     const templateLeagueId = resolvedConfiguration.template?.sportLeagueId ?? null;
     if (templateLeagueId !== null && templateLeagueId !== sportEvent.sportLeagueId) {
@@ -364,7 +367,7 @@ export class ContestManagementService {
     }
 
     const sportEvents = await this.findContestSportEvents(contest);
-    this.assertNoSportEventStarted(contestId, sportEvents);
+    await this.assertCutoffAhead(contestId, sportEvents, contestCutoff(configuration.configJson));
     // The events may have changed since the rules were saved: their tiers, or which golfers are
     // still in the field. Rules nobody could enter are refused here too.
     await this.resolveContestRules(sportEvents, ensureTypedConfiguration(configuration), {
@@ -445,6 +448,7 @@ export class ContestManagementService {
     const kept = current.filter((sportEvent) => requestedIds.includes(sportEvent.id));
     const added = await this.assertSportEventsContestEligible(
       requestedIds.filter((sportEventId) => !current.some((sportEvent) => sportEvent.id === sportEventId)),
+      contestCutoff(configuration.configJson),
     );
     const sportEvents = [...kept, ...added];
     // The contest's league is its first event's; the new list must keep to it.
@@ -498,8 +502,18 @@ export class ContestManagementService {
     }));
   }
 
-  private assertNoSportEventStarted(contestId: string, sportEvents: readonly ContestCreateSportEventState[]): void {
-    const started = sportEvents.find((sportEvent) => hasSportEventStarted(sportEvent, this.now()));
+  /**
+   * Refuses opening a contest past its cutoff on any of its events: the event's start, or a
+   * second-chance bracket's starting round (#721), which may come while the event is under way.
+   */
+  private async assertCutoffAhead(
+    contestId: string,
+    sportEvents: readonly ContestCreateSportEventState[],
+    cutoff: ContestCutoff,
+  ): Promise<void> {
+    const timings = await Promise.all(sportEvents.map(async (sportEvent) =>
+      ({ sportEvent, timing: await this.sportEventReader.findCutoffTiming(sportEvent, cutoff) })));
+    const started = timings.find(({ timing }) => hasSportEventStarted(timing, this.now()))?.sportEvent;
     if (started) {
       this.logger.warn({
         contestId,
@@ -564,16 +578,23 @@ export class ContestManagementService {
 
   private async assertSportEventsContestEligible(
     sportEventIds: readonly string[],
+    cutoff: ContestCutoff,
   ): Promise<ContestCreateSportEventState[]> {
     const eligible: ContestCreateSportEventState[] = [];
     for (const sportEventId of new Set(sportEventIds)) {
-      eligible.push(await this.assertSportEventContestEligible(sportEventId));
+      eligible.push(await this.assertSportEventContestEligible(sportEventId, cutoff));
     }
     return eligible;
   }
 
+  /**
+   * Whether a contest can be built on the event: released, its field loaded, and its cutoff still
+   * ahead. The cutoff is the event's start, so nothing is built on an event under way, except a
+   * second-chance bracket (#721), which closes at its starting round's first game instead.
+   */
   private async assertSportEventContestEligible(
     sportEventId: string,
+    cutoff: ContestCutoff,
   ): Promise<ContestCreateSportEventState> {
     const sportEvent = await this.sportEventReader.findById(sportEventId);
     if (!sportEvent) {
@@ -615,14 +636,18 @@ export class ContestManagementService {
       );
     }
 
-    if (operationalState.readinessReasons.includes('EVENT_STARTED')) {
+    const timing = await this.sportEventReader.findCutoffTiming(sportEvent, cutoff);
+    if (hasSportEventStarted(timing, this.now())) {
       this.logger.warn({
         sportEventId,
         status: sportEvent.status,
-        startDate: sportEvent.startDate.toISOString(),
-      }, 'contest management create contest rejected for a sport event that has started');
+        cutoff: cutoff.kind,
+        cutoffAt: timing.startDate.toISOString(),
+      }, 'contest management create contest rejected for a sport event past the contest cutoff');
       throw new ContestManagementError(
-        'Selected sporting event has already started, so contests can no longer be created on it.',
+        cutoff.kind === ContestCutoffKind.ROUND_START
+          ? 'The bracket\'s starting round has already started, so a bracket can no longer start there.'
+          : 'Selected sporting event has already started, so contests can no longer be created on it.',
         'SPORT_EVENT_ALREADY_STARTED',
       );
     }
@@ -706,23 +731,24 @@ export class ContestManagementService {
           scoring,
         };
       case SelectionType.BRACKET:
-        // A bracket entry picks every game to the final, so the games must fill in as a bracket (#721).
+        // A bracket entry picks every game from its starting round to the final, so those games
+        // must fill in as a bracket (#721): a second-chance bracket's starting round needs its teams.
         for (const each of sportEvents) {
-          await this.assertEventIsBracket(each.id);
+          await this.assertEventIsBracket(each.id, rules.startsAtRound);
         }
         return {
-          configJson: { selectionType: rules.selectionType },
+          configJson: { selectionType: rules.selectionType, startsAtRound: rules.startsAtRound },
           scoring,
         };
     }
   }
 
-  private async assertEventIsBracket(sportEventId: string): Promise<void> {
-    const problem = await this.sportEventReader.findBracketProblem(sportEventId);
+  private async assertEventIsBracket(sportEventId: string, startsAtRound: number): Promise<void> {
+    const problem = await this.sportEventReader.findBracketProblem(sportEventId, startsAtRound);
     if (problem === null) {
       return;
     }
-    this.logger.warn({ sportEventId, problem }, 'contest management rules refused a bracket event whose games do not fill in as a bracket');
+    this.logger.warn({ sportEventId, startsAtRound, problem }, 'contest management rules refused a bracket event whose games do not fill in as a bracket');
     throw new ContestManagementError(
       `A bracket contest's event must be a knockout every game of which can be picked: ${problem}.`,
       CONTEST_EVENT_NOT_A_BRACKET,

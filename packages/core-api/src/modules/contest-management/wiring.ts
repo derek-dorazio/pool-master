@@ -25,7 +25,8 @@ import {
   PrismaSportRepository,
 } from '../../adapters';
 import { createSportEventTierService } from '../events/wiring';
-import { findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
+import { contestBracketGames, findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
+import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
 import { ContestManagementService, type ContestCreateSportEventReader } from './service';
 
@@ -101,9 +102,12 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
     countUndecidedGames: async (sportEventId) =>
       (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED
         && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null)).length,
-    findBracketProblem: async (sportEventId) => {
+    findBracketProblem: async (sportEventId, startsAtRound) => {
       const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
-      return findBracketProblem(games.filter((match) => match.status !== MatchStatus.CANCELLED), knockoutSeeds(entries));
+      return findBracketProblem(contestBracketGames(games, startsAtRound), knockoutSeeds(entries), startsAtRound);
     },
+    findCutoffTiming: async (sportEvent, cutoff) => cutoff.kind === ContestCutoffKind.EVENT_START
+      ? sportEvent
+      : cutoffTiming(cutoff, sportEvent, await matches.findBySportEvent(sportEvent.id)),
   };
 }

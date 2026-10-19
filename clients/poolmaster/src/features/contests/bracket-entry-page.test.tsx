@@ -14,6 +14,7 @@ import {
   filledBracketGames,
   gamePick,
   gamePicksFixture,
+  secondChanceBracketGames,
 } from './test/bracket-fixtures';
 
 const {
@@ -309,5 +310,58 @@ describe('Bracket contest entry page', () => {
     expect(team(7, TEAMS.duke.sportEventParticipantId)).toHaveAttribute('data-picked', 'true');
     expect(screen.queryByTestId('bracket-submit-panel')).not.toBeInTheDocument();
     expect(saveGamePicksMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('Bracket contest entry page › a second-chance bracket', () => {
+  afterEach(() => {
+    for (const mock of [
+      getContestMock, getEventMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
+      getSportLeagueMock, listContestEntriesMock, saveGamePicksMock, submitGamePicksMock,
+    ]) {
+      mock.mockReset();
+    }
+  });
+
+  it('lays out a bracket starting at the Elite Eight from that round, by region, with each round named for where it falls in the six', async () => {
+    primeMocks({ gamePicks: gamePicksFixture({ games: secondChanceBracketGames() }) });
+    renderBracketEntry();
+
+    const board = await screen.findByTestId('bracket-board');
+    expect(within(board).getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent))
+      .toEqual(['Elite Eight', 'Final Four', 'National Championship']);
+    const opening = screen.getByTestId('bracket-round-4');
+    expect(within(opening).getAllByRole('heading', { level: 4 }).map((heading) => heading.textContent)).toEqual(['East', 'West']);
+    expect(screen.queryByTestId('bracket-round-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('bracket-picked-count')).toHaveTextContent('0 of 7 picked');
+  });
+
+  it('offers the starting round\'s decided teams as choices, and has a later side wait on that round\'s winner', async () => {
+    primeMocks({ gamePicks: gamePicksFixture({ games: secondChanceBracketGames() }) });
+    renderBracketEntry();
+
+    await screen.findByTestId('bracket-board');
+    expect(team(57, TEAMS.duke.sportEventParticipantId)).toHaveRole('button');
+    expect(team(57, TEAMS.vermont.sportEventParticipantId)).toHaveRole('button');
+    expect(screen.getByTestId('bracket-game-61-open-home')).toHaveTextContent('Elite Eight winner');
+    expect(screen.getByTestId('bracket-game-63-open-home')).toHaveTextContent('Final Four winner');
+  });
+
+  it('says the bracket is open, and its picks lock, until the starting round\'s first game rather than the opening tip-off', async () => {
+    primeMocks({ gamePicks: gamePicksFixture({ games: secondChanceBracketGames() }) });
+    renderBracketEntry();
+
+    await screen.findByTestId('bracket-board');
+    expect(screen.getByText('Open until the first game of the Elite Eight')).toBeInTheDocument();
+    expect(screen.getByText('Picks lock at the first game of the Elite Eight.')).toBeInTheDocument();
+    expect(screen.queryByText(/opening tip-off/)).not.toBeInTheDocument();
+  });
+
+  it('keeps another member\'s second-chance bracket hidden until the starting round\'s first game', async () => {
+    primeMocks({ gamePicks: gamePicksFixture({ entryId: 'entry-2', ownEntry: false, games: secondChanceBracketGames(), points: null, maxPossiblePoints: null }) });
+    renderBracketEntry('entry-2');
+
+    expect(await screen.findByTestId('bracket-picks-hidden'))
+      .toHaveTextContent('This bracket stays hidden until the first game of the Elite Eight.');
   });
 });

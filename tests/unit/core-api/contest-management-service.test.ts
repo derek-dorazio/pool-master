@@ -3,6 +3,9 @@ import {
   ContestFormat,
   ContestStatus,
   type ContestScoringSettings,
+  MatchSide,
+  MatchStatus,
+  type ParticipantContestScoringRule,
   PickEmMode,
   SelectionType,
   Sport,
@@ -37,7 +40,10 @@ import type {
 import {
   ContestManagementError,
   ContestManagementService,
+  type ContestCreateSportEventReader,
 } from '../../../packages/core-api/src/modules/contest-management/service';
+import { cutoffTiming } from '../../../packages/core-api/src/modules/contests/entry-window';
+import { createContestSportEventReader } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
   fakeContestRepo,
@@ -45,6 +51,9 @@ import {
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 import { expectDefined } from '../../support/expect-defined';
+import { EIGHT_SEEDS, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
+import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
+import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 
@@ -228,12 +237,15 @@ function createSportEventReader(overrides?: Partial<{
   countGames: jest.Mock;
   countUndecidedGames: jest.Mock;
   findBracketProblem: jest.Mock;
+  findCutoffTiming: jest.Mock;
 } {
   return {
     findActiveFieldPrices: jest.fn().mockResolvedValue(overrides?.activeFieldPrices ?? []),
     countGames: jest.fn().mockResolvedValue(overrides?.gameCount ?? 0),
     countUndecidedGames: jest.fn().mockResolvedValue(overrides?.undecidedGameCount ?? 0),
     findBracketProblem: jest.fn().mockResolvedValue(overrides?.bracketProblem ?? null),
+    // The event's own timing for an ordinary contest; a later round's start would read its games, of which this event has none.
+    findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
     findById: jest.fn().mockResolvedValue({
       id: '11111111-1111-1111-1111-111111111111',
       status: overrides?.status ?? SportEventStatus.SCHEDULED,
@@ -1626,6 +1638,7 @@ describe('ContestManagementService — a contest of several events', () => {
       countGames: jest.fn().mockResolvedValue(0),
       countUndecidedGames: jest.fn().mockResolvedValue(0),
       findBracketProblem: jest.fn().mockResolvedValue(null),
+      findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
     };
   }
 
@@ -1954,6 +1967,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
     selectionType: SelectionType.BRACKET,
     configuration: {
       selectionType: SelectionType.BRACKET,
+      startsAtRound: 1,
       maxEntriesPerSquad: 2,
       scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4, 8], upsetBonus: { rule: 'NONE' } } },
     },
@@ -1994,7 +2008,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
     }));
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.BRACKET,
-      configJson: { selectionType: SelectionType.BRACKET },
+      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
       maxEntriesPerSquad: 2,
     }));
   });
@@ -2024,5 +2038,159 @@ describe('ContestManagementService bracket rules (#721)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, bracketRequest({ contestFormat: 'ROSTER' })))
       .rejects.toMatchObject({ code: 'CONTEST_FORMAT_NOT_ALLOWED', statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('ContestManagementService — a second-chance bracket, started at a later round (#721)', () => {
+  // Over the real event reader (the wiring's), so its bracket check and its cutoff read the event's
+  // games: an eight-team, three-round knockout that tipped off two days before the clock.
+  const NOW = CONTEST_MANAGEMENT_TEST_NOW;
+  const HOUR = 60 * 60 * 1000;
+  const at = (offsetHours: number) => new Date(NOW.getTime() + offsetHours * HOUR);
+  /** Round 1 two days ago; round 2's first game (5) two hours from the clock, its second (6) five. */
+  const KICKOFF_HOURS = new Map([[1, -48], [2, -48], [3, -46], [4, -46], [5, 2], [6, 5], [7, 50]]);
+
+  function secondChance(options: { roundOnePlayed?: boolean; eventStatus?: SportEventStatus; eventStartHours?: number } = {}) {
+    const store = new InMemorySportEvents();
+    const sport = store.addSport(Sport.BASKETBALL);
+    sport.tournamentFormat = TournamentFormat.KNOCKOUT_BRACKET;
+    const event = store.addEvent({
+      sport: Sport.BASKETBALL,
+      status: options.eventStatus ?? SportEventStatus.IN_PROGRESS,
+      startDate: at(options.eventStartHours ?? -48),
+      rounds: 3,
+      participantCount: 8,
+    });
+    for (const [team, seed] of EIGHT_SEEDS) {
+      const participant = store.addParticipant(sport.id, `Team ${team}`);
+      store.addToField(event.id, participant.id, { id: team, seedNumber: seed ?? undefined });
+    }
+    // Round 1 played as chalk, and the results placing round 2: T1-T4 and T2-T3.
+    const bracket = options.roundOnePlayed === false ? eightTeamBracket(event.id) : withResults(eightTeamBracket(event.id), new Map([
+      [1, { winner: MatchSide.HOME }], [2, { winner: MatchSide.HOME }], [3, { winner: MatchSide.HOME }], [4, { winner: MatchSide.HOME }],
+      [5, { home: 'T1', away: 'T4', winner: MatchSide.HOME }], [6, { home: 'T2', away: 'T3', winner: MatchSide.HOME }],
+    ])).map((match) => (match.roundNumber === 2 ? { ...match, status: MatchStatus.SCHEDULED, winnerSide: null } : match));
+    store.matchRows.push(...bracket.map((match) => ({ ...match, scheduledDate: at(expectDefined(KICKOFF_HOURS.get(match.matchNumber))) })));
+
+    const world = new InMemoryContestWorld();
+    const configurationRepo = createContestConfigurationRepo();
+    // The rules' scoring, as it was stored: opening keeps it.
+    const scoringRules: ParticipantContestScoringRule[] = [];
+    const scoringRuleRepo = fakeParticipantContestScoringRuleRepo({
+      findByContestConfiguration: mockFn<ParticipantContestScoringRuleRepository['findByContestConfiguration']>(async () => [...scoringRules]),
+      create: mockFn<ParticipantContestScoringRuleRepository['create']>(async (rule) => {
+        const created = { id: `rule-${rule.sortOrder}`, ...rule, scoring: { success: true as const, data: rule.scoring }, createdAt: NOW, updatedAt: NOW };
+        scoringRules.push(created);
+        return created;
+      }),
+    });
+    let now = NOW;
+    const service = new ContestManagementService(
+      world.contestRepo(),
+      createContestConfigTemplateRepo(),
+      configurationRepo,
+      scoringRuleRepo,
+      createSportEventTierServiceStub(),
+      undefined,
+      createContestSportEventReader({
+        sportEvents: store.sportEventRepo(),
+        sports: store.sportRepo(),
+        field: store.fieldRepo(),
+        valuations: store.valuationRepo(),
+        matches: store.matchRepo(),
+      }),
+      () => now,
+    );
+    const request = (startsAtRound: number): CreateContestRequest => ({
+      name: 'Second chance',
+      sportEventIds: [event.id],
+      contestFormat: 'PREDICTION',
+      selectionType: SelectionType.BRACKET,
+      configuration: {
+        selectionType: SelectionType.BRACKET,
+        startsAtRound,
+        maxEntriesPerSquad: 1,
+        scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4], upsetBonus: { rule: 'NONE' } } },
+      },
+    });
+    return {
+      service, world, configurationRepo, request, event,
+      setNow: (when: Date) => { now = when; },
+      create: (startsAtRound: number) => service.createContest({ leagueId: 'league-1' }, request(startsAtRound)),
+    };
+  }
+
+  async function refusal(promise: Promise<unknown>): Promise<unknown> {
+    return promise.then(() => undefined, (caught: unknown) => caught);
+  }
+
+  it('creates a bracket starting at round 2 on an IN_PROGRESS event before round 2\'s first game, storing its starting round', async () => {
+    const context = secondChance();
+
+    const contestId = await context.create(2);
+
+    expect(expectDefined(context.world.contests.get(contestId))).toMatchObject({ status: ContestStatus.DRAFT, selectionType: SelectionType.BRACKET });
+    expect(context.configurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 2 },
+    }));
+  });
+
+  it('refuses it once round 2\'s first game time has passed with 422 SPORT_EVENT_ALREADY_STARTED, creating nothing', async () => {
+    const context = secondChance();
+    context.setNow(at(2.5));
+
+    const error = await refusal(context.create(2));
+
+    expect(error).toBeInstanceOf(ContestManagementError);
+    expect(error).toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 422 });
+    expect(context.world.contests.size).toBe(0);
+  });
+
+  it('refuses a starting round whose teams the results have not decided with 422 CONTEST_EVENT_NOT_A_BRACKET naming the game, creating nothing', async () => {
+    const context = secondChance({ roundOnePlayed: false });
+
+    const error = await refusal(context.create(2));
+
+    expect(error).toMatchObject({ code: CONTEST_EVENT_NOT_A_BRACKET, statusCode: 422 });
+    expect(error).toMatchObject({ message: expect.stringMatching(/game 5 of round 2 has a team that no pick can decide/) });
+    expect(context.world.contests.size).toBe(0);
+  });
+
+  it('still refuses a full bracket on the event under way with 422 SPORT_EVENT_ALREADY_STARTED', async () => {
+    const context = secondChance();
+
+    expect(await refusal(context.create(1))).toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 422 });
+    expect(context.world.contests.size).toBe(0);
+  });
+
+  it('refuses a starting round past the bracket\'s last round with 422 CONTEST_EVENT_NOT_A_BRACKET, creating nothing', async () => {
+    // An event still to start, so the refusal is the bracket's, not the cutoff's.
+    const context = secondChance({ eventStatus: SportEventStatus.SCHEDULED, eventStartHours: 24, roundOnePlayed: false });
+
+    const error = await refusal(context.create(4));
+
+    expect(error).toMatchObject({ code: CONTEST_EVENT_NOT_A_BRACKET, statusCode: 422 });
+    expect(error).toMatchObject({ message: expect.stringMatching(/it has no games from round 4 on/) });
+    expect(context.world.contests.size).toBe(0);
+  });
+
+  it('opens the second-chance draft while the event is under way, before round 2\'s first game', async () => {
+    const context = secondChance();
+    const contestId = await context.create(2);
+    context.setNow(at(1));
+
+    const opened = await context.service.openContest('league-1', contestId);
+
+    expect(opened.status).toBe(ContestStatus.OPEN);
+    expect(expectDefined(context.world.contests.get(contestId)).status).toBe(ContestStatus.OPEN);
+  });
+
+  it('refuses opening it once round 2\'s first game time has passed with 409 CONTEST_EVENT_ALREADY_STARTED, leaving it a draft', async () => {
+    const context = secondChance();
+    const contestId = await context.create(2);
+    context.setNow(at(2.5));
+
+    expect(await refusal(context.service.openContest('league-1', contestId))).toMatchObject({ code: CONTEST_EVENT_ALREADY_STARTED, statusCode: 409 });
+    expect(expectDefined(context.world.contests.get(contestId)).status).toBe(ContestStatus.DRAFT);
   });
 });

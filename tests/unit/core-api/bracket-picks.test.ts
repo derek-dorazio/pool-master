@@ -6,11 +6,13 @@
 import { expect } from '@jest/globals';
 import {
   MatchSide,
+  MatchStatus,
   PickOutcome,
   UpsetBonusRule,
   type KnockoutRoundPointsSettings,
 } from '@poolmaster/shared/domain';
 import {
+  contestBracketGames,
   finalTotalPoints,
   findBracketProblem,
   rankBracketStandings,
@@ -317,5 +319,111 @@ describe('rankBracketStandings', () => {
       { entryId: 'over', position: 1, displayPosition: 'T1' },
       { entryId: 'last', position: 3, displayPosition: '3' },
     ]);
+  });
+});
+
+describe('a second-chance bracket, started at a later round once the results decide its teams', () => {
+  const ROUND_VALUES: KnockoutRoundPointsSettings = { roundValues: [1, 2, 4], upsetBonus: { rule: UpsetBonusRule.SEED_DIFFERENCE, multiplier: 1 } };
+  // Round 1 played: T1, T2 and T3 won and T5 upset T4; the results placed round 2 as T1-T5 and T2-T3.
+  const afterRoundOne = withResults(eightTeamBracket(), new Map([
+    [1, { winner: HOME }], [2, { winner: AWAY }], [3, { winner: HOME }], [4, { winner: HOME }],
+  ])).map((match) => (match.matchNumber === 5 ? { ...match, homeSportEventParticipantId: 'T1', awaySportEventParticipantId: 'T5' }
+    : match.matchNumber === 6 ? { ...match, homeSportEventParticipantId: 'T2', awaySportEventParticipantId: 'T3' }
+      : match));
+  const fromRoundTwo = contestBracketGames(afterRoundOne, 2);
+
+  it('picks the games from its starting round on, leaving cancelled games out; a full bracket picks every game played', () => {
+    const gameIds = (games: ReadonlyArray<{ id: string }>) => games.map((each) => each.id);
+    expect(gameIds(fromRoundTwo)).toEqual(['m5', 'm6', 'm7']);
+    expect(gameIds(contestBracketGames(eightTeamBracket(), 1))).toEqual(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7']);
+    const cancelled = eightTeamBracket().map((match) => (match.matchNumber === 6 ? { ...match, status: MatchStatus.CANCELLED } : match));
+    expect(gameIds(contestBracketGames(cancelled, 2))).toEqual(['m5', 'm7']);
+  });
+
+  it('offers its starting round the real teams the results put there, and the final the entry\'s picks of that round', () => {
+    const resolved = resolveBracketPicks(fromRoundTwo, [pick(5, 'T5'), pick(6, 'T2'), pick(7, 'T5')], EIGHT_SEEDS);
+
+    expect(sidesOf(resolved, 5)).toEqual({ home: 'T1', away: 'T5' });
+    expect(sidesOf(resolved, 6)).toEqual({ home: 'T2', away: 'T3' });
+    expect(sidesOf(resolved, 7)).toEqual({ home: 'T5', away: 'T2' });
+    expect(ids(resolved.kept)).toEqual(['m5', 'm6', 'm7']);
+  });
+
+  it('strands a starting-round pick on a team already knocked out, and the final pick that followed from it', () => {
+    const resolved = resolveBracketPicks(fromRoundTwo, [pick(5, 'T4'), pick(6, 'T2'), pick(7, 'T4')], EIGHT_SEEDS);
+
+    expect(ids(resolved.kept)).toEqual(['m6']);
+    expect(ids(resolved.stranded)).toEqual(['m5', 'm7']);
+  });
+
+  it('finds nothing wrong once its starting round\'s teams are decided', () => {
+    expect(findBracketProblem(fromRoundTwo, EIGHT_SEEDS, 2)).toBeNull();
+  });
+
+  it('refuses a starting round whose teams the results have not yet decided', () => {
+    expect(findBracketProblem(contestBracketGames(eightTeamBracket(), 2), EIGHT_SEEDS, 2)).toBe('game 5 of round 2 has a team that no pick can decide');
+  });
+
+  it('refuses a starting round past the bracket\'s last round, naming the round', () => {
+    expect(findBracketProblem(contestBracketGames(afterRoundOne, 4), EIGHT_SEEDS, 4)).toBe('it has no games from round 4 on');
+  });
+
+  it('scores each pick at its own round\'s value of the event, with the upset bonus, and ignores the results of the rounds before it', () => {
+    const played = withResults(afterRoundOne, new Map([
+      [5, { winner: AWAY }],
+      [6, { winner: HOME }],
+      [7, { home: 'T5', away: 'T2', winner: AWAY, homeScore: 60, awayScore: 72 }],
+    ]));
+    const score = scoreBracketPicks(contestBracketGames(played, 2), [pick(5, 'T5'), pick(6, 'T2'), pick(7, 'T5')], EIGHT_SEEDS, ROUND_VALUES);
+
+    // T5 over T1 in round 2: 2 plus a seed difference of 4. T2 in round 2: 2. T5 lost the final.
+    expect(Object.fromEntries(score.picks)).toEqual({
+      m5: { outcome: PickOutcome.CORRECT, points: 2 + 4 },
+      m6: { outcome: PickOutcome.CORRECT, points: 2 },
+      m7: { outcome: PickOutcome.BUSTED, points: 0 },
+    });
+    expect(score).toMatchObject({ points: 8, maxPossiblePoints: 8, correctPickCount: 2, decidedPickCount: 3 });
+    expect(finalTotalPoints(contestBracketGames(played, 2))).toBe(132);
+  });
+
+  describe('on a reseeded NFL-style playoff, starting at the reseeded Divisional round', () => {
+    // Wild Card: the AFC home teams win; in the NFC the 7 upsets the 2. The admin reseeds the
+    // Divisional round from those results: AFC-1 hosts AFC-4 and AFC-2 hosts AFC-3; NFC-1 hosts
+    // NFC-7 and NFC-3 hosts NFC-4.
+    const placed = new Map([[7, ['AFC-1', 'AFC-4']], [8, ['AFC-2', 'AFC-3']], [9, ['NFC-1', 'NFC-7']], [10, ['NFC-3', 'NFC-4']]]);
+    const afterWildCard = withResults(nflPlayoff(), new Map([
+      [1, { winner: HOME }], [2, { winner: HOME }], [3, { winner: HOME }],
+      [4, { winner: AWAY }], [5, { winner: HOME }], [6, { winner: HOME }],
+    ])).map((match) => {
+      const sides = placed.get(match.matchNumber);
+      return sides ? { ...match, homeSportEventParticipantId: sides[0], awaySportEventParticipantId: sides[1] } : match;
+    });
+    const divisionalOn = contestBracketGames(afterWildCard, 2);
+
+    it('refuses the Divisional round before the Wild Card results place its visitors', () => {
+      expect(findBracketProblem(contestBracketGames(nflPlayoff(), 2), NFL_SEEDS, 2)).toBe('game 7 of round 2 has a team that no pick can decide');
+    });
+
+    it('takes the Divisional games as the admin reseeded them, not re-paired from picks, and fills in the later rounds from the entry\'s picks', () => {
+      expect(findBracketProblem(divisionalOn, NFL_SEEDS, 2)).toBeNull();
+      const resolved = resolveBracketPicks(divisionalOn, [pick(7, 'AFC-4'), pick(8, 'AFC-2'), pick(9, 'NFC-1'), pick(10, 'NFC-3'), pick(11, 'AFC-4'), pick(13, 'AFC-4')], NFL_SEEDS);
+
+      expect(sidesOf(resolved, 7)).toEqual({ home: 'AFC-1', away: 'AFC-4' });
+      expect(sidesOf(resolved, 10)).toEqual({ home: 'NFC-3', away: 'NFC-4' });
+      expect(sidesOf(resolved, 11)).toEqual({ home: 'AFC-4', away: 'AFC-2' });
+      expect(sidesOf(resolved, 12)).toEqual({ home: 'NFC-1', away: 'NFC-3' });
+      expect(sidesOf(resolved, 13)).toEqual({ home: 'AFC-4', away: null });
+      expect(ids(resolved.kept)).toEqual(['m7', 'm8', 'm9', 'm10', 'm11', 'm13']);
+    });
+
+    it('scores a Divisional upset at the Divisional round\'s value, not the first round\'s', () => {
+      const played = withResults(afterWildCard, new Map([[7, { winner: AWAY }], [8, { winner: HOME }]]));
+      const score = scoreBracketPicks(contestBracketGames(played, 2), [pick(7, 'AFC-4'), pick(8, 'AFC-3')], NFL_SEEDS, {
+        roundValues: [1, 2, 4, 8], upsetBonus: { rule: UpsetBonusRule.NONE },
+      });
+
+      expect(score.picks.get('m7')).toEqual({ outcome: PickOutcome.CORRECT, points: 2 });
+      expect(score.picks.get('m8')).toEqual({ outcome: PickOutcome.BUSTED, points: 0 });
+    });
   });
 });

@@ -1,6 +1,7 @@
-import { expect } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 import { MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
+import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { MatchResultService } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 
@@ -59,6 +60,26 @@ describe('MatchResultService.recordResult', () => {
 
     expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80 });
     expect(bracket.find((match) => match.matchNumber === 3)).toMatchObject({ homeSportEventParticipantId: vermont.id, awaySportEventParticipantId: null });
+  });
+
+  it('asks the lifecycle to start the contests whose cutoff the result passed, with the service clock, on an event under way', async () => {
+    const { store, event } = await setup();
+    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, now: () => AS_OF });
+
+    await service.recordResult(event.id, 1, homeWins);
+
+    expect(activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: event.id, status: SportEventStatus.IN_PROGRESS }), AS_OF);
+  });
+
+  it('starts no contest for a result on an event that is not under way', async () => {
+    const { store, event } = await setup({ status: SportEventStatus.SCHEDULED });
+    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, now: () => AS_OF });
+
+    await service.recordResult(event.id, 1, homeWins);
+
+    expect(activateContestsPastCutoff).not.toHaveBeenCalled();
   });
 
   it('accepts a result with no scores', async () => {

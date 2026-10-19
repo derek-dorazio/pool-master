@@ -84,7 +84,10 @@ export function NoEligibleEventsAlert({ sport }: { sport: SportDefinition }) {
   );
 }
 
-/** The contest-ready events of the chosen sport, soonest first, one card each. */
+/**
+ * The events of the chosen sport a contest can be created on, soonest first, one card each. A
+ * knockout under way, offered for a second-chance bracket, says so in place of when it starts.
+ */
 export function EventChoices({
   events,
   onSelect,
@@ -109,14 +112,14 @@ export function EventChoices({
             <span className="font-semibold">{event.name}</span>
             {event.venue ? <span className="text-xs text-muted-foreground"> · {event.venue}</span> : null}
             <span className="block text-xs text-muted-foreground">
-              Starts {formatDateTimeDisplay(event.startDate)}
+              {event.contestEligible ? 'Starts' : 'Started'} {formatDateTimeDisplay(event.startDate)}
               {' · '}
               {countParticipants(event.participantCount ?? 0, sport.vocabulary.participant)}
               {' · '}
               {pluralize(event.tierCount, 'tier')}
             </span>
           </span>
-          <Chip>{formatStartsIn(event.startDate)}</Chip>
+          <Chip>{event.contestEligible ? formatStartsIn(event.startDate) : 'Under way'}</Chip>
         </ChoiceCard>
       ))}
     </div>

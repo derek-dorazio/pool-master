@@ -83,6 +83,25 @@ export function emptyBracketGames(): Game[] {
 }
 
 /**
+ * A second-chance bracket's games (#721): only those from its starting round on, here the Elite
+ * Eight, Final Four and final of a six-round bracket, numbered as the whole bracket numbers them.
+ * The Elite Eight's teams are decided, so they are offered as the first round's are.
+ */
+export function secondChanceBracketGames(): Game[] {
+  const eliteEight = (matchNumber: number, regionLabel: string, home: Team, away: Team) =>
+    bracketGame({ matchNumber, roundNumber: 4, regionLabel, home, away, predictedHome: home, predictedAway: away });
+  return [
+    eliteEight(57, 'East', TEAMS.duke, TEAMS.vermont),
+    eliteEight(58, 'East', TEAMS.houston, TEAMS.texas),
+    eliteEight(59, 'West', TEAMS.kansas, TEAMS.akron),
+    eliteEight(60, 'West', TEAMS.gonzaga, TEAMS.yale),
+    bracketGame({ matchNumber: 61, roundNumber: 5 }),
+    bracketGame({ matchNumber: 62, roundNumber: 5 }),
+    bracketGame({ matchNumber: 63, roundNumber: 6 }),
+  ];
+}
+
+/**
  * Every game picked: Duke, Houston, Kansas and Gonzaga through the first round, Duke and Kansas
  * through the second, and Duke to win the final.
  */

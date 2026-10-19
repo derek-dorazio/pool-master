@@ -7,6 +7,7 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
+  PrismaContestConfigurationRepository,
   PrismaContestEntryRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
@@ -106,10 +107,15 @@ export interface SportEventServices {
   sportLeagues: SportLeagueService;
 }
 
-export function createMatchResultService(prisma: PrismaClient, logger?: FastifyBaseLogger): MatchResultService {
+export function createMatchResultService(
+  prisma: PrismaClient,
+  logger?: FastifyBaseLogger,
+  contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff'>,
+): MatchResultService {
   return new MatchResultService({
     sportEvents: new PrismaSportEventRepository(prisma),
     matches: new PrismaSportEventMatchRepository(prisma),
+    contestActivation,
     logger,
   });
 }
@@ -169,7 +175,7 @@ export function createSportEventServices(
     field: createSportEventParticipantService(prisma, logger),
     golfScores: createGolfScoreService(prisma, logger),
     raceResults: createRaceResultService(prisma, logger),
-    matchResults: createMatchResultService(prisma, logger),
+    matchResults: createMatchResultService(prisma, logger, lifecycle),
     sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, affiliations, participants, logger }),
   };
 }
@@ -195,6 +201,8 @@ export function createEventLifecycleService(
       memberships: new PrismaLeagueMembershipRepository(prisma),
       squadMemberships: new PrismaSquadMembershipRepository(prisma),
       users: new PrismaUserRepository(prisma),
+      configurations: new PrismaContestConfigurationRepository(prisma),
+      matches: new PrismaSportEventMatchRepository(prisma),
     },
     new PrismaSportEventRepository(prisma),
     options.logger,

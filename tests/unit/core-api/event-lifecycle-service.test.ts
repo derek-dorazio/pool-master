@@ -14,6 +14,7 @@ import {
 import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import {
+  fakeContestConfigurationRepo,
   fakeContestEntryRepo,
   fakeContestRepo,
   fakeLeagueMembershipRepo,
@@ -99,6 +100,8 @@ function contestDeps(options: { startedContest?: boolean; transitioned?: boolean
     users: fakeUserRepo({
       findById: jest.fn().mockImplementation(async (id: string) => USERS.find((user) => user.id === id) ?? null),
     }),
+    configurations: fakeContestConfigurationRepo(),
+    matches: { findBySportEvent: jest.fn().mockResolvedValue([]) },
   };
 }
 

@@ -1,5 +1,6 @@
 import {
   BUDGET_ROSTER_SIZE_MAX,
+  KNOCKOUT_ROUND_VALUES_MAX_ROUNDS,
   PickEmMode,
   RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
   SelectionType,
@@ -25,6 +26,8 @@ export type ContestRulesValues = {
   picksPerEntry: string;
   picksPerTier: string;
   rosterSize: string;
+  /** A bracket's starting round: "1" for the full bracket, a later round for a second chance. */
+  startsAtRound: string;
   unlimitedEntries: boolean;
 };
 
@@ -105,9 +108,16 @@ function parsePickEmRules(values: ContestRulesValues): RulesResult {
   return withEntryLimit(values, { selectionType: SelectionType.PICK_EM, mode: values.pickEmMode });
 }
 
-/** The bracket rules (#721): nothing of their own beyond the entry limit; the scoring is set apart. */
+/**
+ * The bracket rules (#721): the round the bracket starts at, 1 for the full bracket, and the
+ * entry limit; the scoring is set apart.
+ */
 function parseBracketRules(values: ContestRulesValues): RulesResult {
-  return withEntryLimit(values, { selectionType: SelectionType.BRACKET });
+  const startsAtRound = parseWholeNumber(values.startsAtRound);
+  if (startsAtRound === null || startsAtRound > KNOCKOUT_ROUND_VALUES_MAX_ROUNDS) {
+    return { configuration: null, error: 'Choose the round the bracket starts at.' };
+  }
+  return withEntryLimit(values, { selectionType: SelectionType.BRACKET, startsAtRound });
 }
 
 /**
@@ -155,6 +165,7 @@ export function toContestRulesValues(
     picksPerEntry: current.picksPerEntry,
     picksPerTier: current.picksPerTier,
     rosterSize: current.rosterSize,
+    startsAtRound: current.startsAtRound,
     unlimitedEntries: current.unlimitedEntries,
   };
   const entryLimit = {
@@ -171,7 +182,7 @@ export function toContestRulesValues(
     case SelectionType.PICK_EM:
       return { ...rules, ...entryLimit, pickEmMode: configuration.mode };
     case SelectionType.BRACKET:
-      return { ...rules, ...entryLimit };
+      return { ...rules, ...entryLimit, startsAtRound: String(configuration.startsAtRound) };
   }
 }
 
@@ -183,6 +194,8 @@ export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
   picksPerEntry: '4',
   picksPerTier: '1',
   rosterSize: '6',
+  // A bracket starts as the full bracket.
+  startsAtRound: '1',
   unlimitedEntries: false,
 };
 

@@ -1,6 +1,7 @@
 import { PickEmMode, SelectionType, Sport, getSportDefinition } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import {
+  formatBracketStartLabel,
   formatContestRules,
   formatEntriesPerTeam,
   formatEntriesPerTeamSentence,
@@ -146,29 +147,52 @@ describe('pick\'em rules', () => {
 
 describe('bracket rules', () => {
   const TEAM = getSportDefinition(Sport.BASKETBALL).vocabulary.participant;
+  const MARCH_MADNESS_ROUND = (roundNumber: number) => getSportDefinition(Sport.BASKETBALL).roundLabel(roundNumber, 6);
 
-  it('names a bracket contest Bracket and reads its rules as every game picked to the final before the first game', () => {
+  it('names a full bracket contest Bracket and reads its rules as every game picked to the final before the first game', () => {
     expect(formatSelectionTypeName(SelectionType.BRACKET)).toBe('Bracket');
-    expect(formatPresetLabel({ selectionType: SelectionType.BRACKET }, 0)).toBe('Bracket');
-    expect(formatContestRules({ selectionType: SelectionType.BRACKET }, 4, TEAM))
+    expect(formatPresetLabel({ selectionType: SelectionType.BRACKET, startsAtRound: 1 }, 0)).toBe('Bracket');
+    expect(formatContestRules({ selectionType: SelectionType.BRACKET, startsAtRound: 1 }, 4, TEAM, null, MARCH_MADNESS_ROUND))
       .toBe('Fill in the whole bracket before the first game: pick the winner of every game, all the way to the final.');
   });
 
-  it('suggests a bracket name from the event', () => {
+  it('reads a bracket starting at round 3 of six as a second-chance bracket from the Sweet 16, closing at its first game', () => {
+    expect(formatContestRules({ selectionType: SelectionType.BRACKET, startsAtRound: 3 }, 4, TEAM, null, MARCH_MADNESS_ROUND))
+      .toBe('Second-chance bracket from the Sweet 16: pick the winner of every game from the Sweet 16 on, all the way to the final, before its first game.');
+    expect(formatPresetLabel({ selectionType: SelectionType.BRACKET, startsAtRound: 3 }, 0)).toBe('Second chance');
+  });
+
+  it('labels the starting-round choice Full bracket for round 1 and "From the" a later round\'s name', () => {
+    expect(formatBracketStartLabel(1, MARCH_MADNESS_ROUND)).toBe('Full bracket');
+    expect(formatBracketStartLabel(4, MARCH_MADNESS_ROUND)).toBe('From the Elite Eight');
+  });
+
+  it('suggests a bracket name from the event, and a second-chance bracket name for a later starting round', () => {
     expect(suggestContestName('March Madness', SelectionType.BRACKET, null, 4)).toBe('March Madness Bracket');
+    expect(suggestContestName('March Madness', SelectionType.BRACKET, { selectionType: SelectionType.BRACKET, startsAtRound: 1 }, 4))
+      .toBe('March Madness Bracket');
+    expect(suggestContestName('March Madness', SelectionType.BRACKET, { selectionType: SelectionType.BRACKET, startsAtRound: 3 }, 4))
+      .toBe('March Madness Second-Chance Bracket');
   });
 
-  it('turns the bracket fields into bracket rules carrying only the entry limit', () => {
+  it('turns the bracket fields into bracket rules carrying the starting round and the entry limit, the full bracket by default', () => {
     expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxEntriesPerTeam: '3' }, SelectionType.BRACKET, 4, TEAM))
-      .toEqual({ configuration: { selectionType: SelectionType.BRACKET, maxEntriesPerSquad: 3 }, error: null });
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, unlimitedEntries: true }, SelectionType.BRACKET, 4, TEAM))
-      .toEqual({ configuration: { selectionType: SelectionType.BRACKET }, error: null });
+      .toEqual({ configuration: { selectionType: SelectionType.BRACKET, startsAtRound: 1, maxEntriesPerSquad: 3 }, error: null });
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, startsAtRound: '3', unlimitedEntries: true }, SelectionType.BRACKET, 4, TEAM))
+      .toEqual({ configuration: { selectionType: SelectionType.BRACKET, startsAtRound: 3 }, error: null });
   });
 
-  it('fills only the entry limit from saved bracket rules, keeping every other format\'s fields', () => {
+  it('refuses a bracket starting round that is blank or past the most rounds a bracket can have', () => {
+    for (const startsAtRound of ['', '0', '9', '2.5']) {
+      expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, startsAtRound }, SelectionType.BRACKET, 4, TEAM))
+        .toEqual({ configuration: null, error: 'Choose the round the bracket starts at.' });
+    }
+  });
+
+  it('fills the starting round and the entry limit from saved bracket rules, keeping every other format\'s fields', () => {
     const current = { ...DEFAULT_CONTEST_RULES, countedScores: '5', rosterSize: '8' };
-    expect(toContestRulesValues({ selectionType: SelectionType.BRACKET, maxEntriesPerSquad: null }, current))
-      .toEqual({ ...current, maxEntriesPerTeam: '1', unlimitedEntries: true });
+    expect(toContestRulesValues({ selectionType: SelectionType.BRACKET, startsAtRound: 3, maxEntriesPerSquad: null }, current))
+      .toEqual({ ...current, maxEntriesPerTeam: '1', startsAtRound: '3', unlimitedEntries: true });
   });
 });
 
