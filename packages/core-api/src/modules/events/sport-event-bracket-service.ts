@@ -79,6 +79,15 @@ function describeSide(matchNumber: number, side: MatchSide): string {
 }
 
 /**
+ * Whether the games are a set of games rather than a bracket (an NFL regular-season week, #715):
+ * one round, none linking anywhere. Unlinked games over several rounds are still a (reseeded)
+ * bracket. `links` says whether a game sends its winner on, for a loaded match or one being loaded.
+ */
+export function formsNoBracket<M extends { roundNumber: number }>(matches: readonly M[], links: (match: M) => boolean): boolean {
+  return matches.every((match) => !links(match) && match.roundNumber === matches[0]?.roundNumber);
+}
+
+/**
  * Everything wrong with a bracket's shape, in words an admin can act on; empty when it can be
  * loaded. A side may be empty here (its team is not known yet), but never both named and filled
  * by an earlier match's winner. A bracket that `reseeds` may leave a match before its last round
@@ -140,9 +149,8 @@ export function findBracketProblems(
     }
   }
 
-  // Games of one round that link nowhere form no bracket (an NFL regular-season week, #715): there
-  // is no final to find. Unlinked games over several rounds are still a (reseeded) bracket.
-  if (matches.every((match) => match.advancesTo === null && match.roundNumber === matches[0]?.roundNumber)) {
+  // A set of games has no final to find.
+  if (formsNoBracket(matches, (match) => match.advancesTo !== null)) {
     return problems;
   }
   const lastRound = Math.max(...matches.map((match) => match.roundNumber));

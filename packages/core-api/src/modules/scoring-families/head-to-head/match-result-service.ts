@@ -40,6 +40,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { SportEventError } from '../../events/errors';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
+import { formsNoBracket } from '../../events/sport-event-bracket-service';
 
 export interface MatchResultInput {
   winnerSide: MatchSide;
@@ -65,13 +66,8 @@ function sideRowId(match: Pick<SportEventMatch, 'homeSportEventParticipantId' | 
   return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
 }
 
-/**
- * Whether the games are a set of games rather than a bracket (a week of NFL games): one round, none
- * linking anywhere. The rule `findBracketProblems` loads them by.
- */
-export function formsNoBracket(matches: readonly Pick<SportEventMatch, 'roundNumber' | 'advancesToMatchId'>[]): boolean {
-  return matches.every((match) => match.advancesToMatchId === null && match.roundNumber === matches[0].roundNumber);
-}
+/** Whether a loaded game sends its winner on to a later match. */
+const linksOn = (match: SportEventMatch): boolean => match.advancesToMatchId !== null;
 
 /**
  * Every team's standing in a week of games that forms no bracket: no place, since a week has no
@@ -226,7 +222,7 @@ export class MatchResultService {
       );
     }
     // A reseeded bracket links no games, but its games still span several rounds.
-    if (!formsNoBracket(bracket)) {
+    if (!formsNoBracket(bracket, linksOn)) {
       this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused to cancel a bracket game');
       throw new SportEventError(
         `Match ${matchNumber} is part of a bracket, which cannot lose a game: change its time instead.`,
@@ -269,7 +265,7 @@ export class MatchResultService {
       return candidate;
     });
     const asOf = (this.deps.now ?? (() => new Date()))();
-    const standings = formsNoBracket(after) ? gameStandings(after, asOf) : bracketStandings(after, asOf);
+    const standings = formsNoBracket(after, linksOn) ? gameStandings(after, asOf) : bracketStandings(after, asOf);
     await this.deps.matches.applyResult({ result, sideFill, standings });
     this.deps.logger?.debug({ sportEventId, matchId: result.id }, 'Rewrote the event standings');
   }
