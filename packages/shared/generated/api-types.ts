@@ -1906,6 +1906,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a game
+         * @description Calls off an unplayed game of a released week whose games form no bracket, such as a postponed NFL game: it counts for nothing in any contest, and is added to the week it moves to while that week is a draft. Cancelling a cancelled game changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft, whose games are edited freely. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_ALREADY_PLAYED for a game with a result (clear it first). 422 MATCH_IN_BRACKET for a game of a bracket, which cannot lose one. Returns the games. Root admin only.
+         */
+        post: operations["cancelEventMatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/bracket/rounds/{roundNumber}/reseed": {
         parameters: {
             query?: never;
@@ -19767,6 +19787,74 @@ export interface operations {
         };
     };
     clearEventMatchResult: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                matchNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description An event's bracket. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventBracketResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cancelEventMatch: {
         parameters: {
             query?: never;
             header?: never;

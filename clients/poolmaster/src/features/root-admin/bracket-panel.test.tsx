@@ -19,6 +19,7 @@ const {
   listEventParticipantsMock,
   recordEventMatchResultMock,
   clearEventMatchResultMock,
+  cancelEventMatchMock,
   updateEventBracketMatchMock,
   updateEventParticipantsMock,
   setEventPlayInWinnerMock,
@@ -42,6 +43,7 @@ const {
     listEventParticipantsMock: vi.fn(),
     recordEventMatchResultMock: vi.fn(),
     clearEventMatchResultMock: vi.fn(),
+    cancelEventMatchMock: vi.fn(),
     updateEventBracketMatchMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
     setEventPlayInWinnerMock: vi.fn(),
@@ -58,6 +60,7 @@ bindApiMocks({
   listEventParticipants: listEventParticipantsMock,
   recordEventMatchResult: recordEventMatchResultMock,
   clearEventMatchResult: clearEventMatchResultMock,
+  cancelEventMatch: cancelEventMatchMock,
   updateEventBracketMatch: updateEventBracketMatchMock,
   updateEventParticipants: updateEventParticipantsMock,
   setEventPlayInWinner: setEventPlayInWinnerMock,
@@ -229,6 +232,62 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
     const final = await screen.findByTestId('root-admin-bracket-match-3');
     expect(within(final).getByText('Waiting on both teams')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-bracket-winner-3-HOME')).not.toBeInTheDocument();
+  });
+
+  // #715: a week's games link nowhere and share one round; a postponed one is cancelled.
+  describe('a week of games that form no bracket', () => {
+    const week = [
+      match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', isNeutralSite: false }),
+      match({ id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4', isNeutralSite: false }),
+    ];
+
+    it('cancels an unplayed game after the admin confirms, and reloads the games', async () => {
+      seed(week);
+      cancelEventMatchMock.mockResolvedValue({ data: { matches: [] } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-cancel-2'));
+      expect(screen.getByText(/^\(15\) Texas @ \(2\) Houston will count for nothing in every contest\. If it is played later, add it to the week it moves to before that week is released\.$/)).toBeInTheDocument();
+      expect(cancelEventMatchMock).not.toHaveBeenCalled();
+      await userEvent.click(screen.getByTestId('root-admin-bracket-cancel-confirm-2'));
+
+      expect(cancelEventMatchMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'evt-1', matchNumber: '2' } }));
+      await waitFor(() => expect(getEventBracketMock).toHaveBeenCalledTimes(2));
+    });
+
+    it('explains in product copy that a game with a result is cleared before it is cancelled', async () => {
+      seed(week);
+      cancelEventMatchMock.mockResolvedValue({ error: { error: { code: 'MATCH_ALREADY_PLAYED', message: 'Match 1 has a result.' } } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-cancel-1'));
+      await userEvent.click(screen.getByTestId('root-admin-bracket-cancel-confirm-1'));
+
+      expect(await screen.findByTestId('root-admin-bracket-cancel-error-1')).toHaveTextContent('This game has a result. Clear it before cancelling the game.');
+    });
+
+    it('offers no cancel for a played or cancelled game, a draft week, or a game of a bracket', async () => {
+      seed([{ ...week[0], status: 'COMPLETED', winnerSide: 'HOME' }, { ...week[1], status: 'CANCELLED' }]);
+      const { unmount: unmountPlayed } = renderPage();
+      expect(await screen.findByTestId('root-admin-bracket-winner-1-HOME')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-bracket-cancel-1')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-bracket-cancel-2')).not.toBeInTheDocument();
+      unmountPlayed();
+
+      seed(week, { event: { ...tournament, status: 'DRAFT' } });
+      const { unmount: unmountDraft } = renderPage();
+      expect(await screen.findByTestId('root-admin-bracket-edit-1')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-bracket-cancel-1')).not.toBeInTheDocument();
+      unmountDraft();
+
+      seed([
+        { ...week[0], advancesToMatchId: 'm-3', advancesToSide: 'HOME' },
+        match({ id: 'm-3', matchNumber: 3, roundNumber: 2, awaySportEventParticipantId: 'sep-3' }),
+      ]);
+      renderPage();
+      expect(await screen.findByTestId('root-admin-bracket-winner-1-HOME')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-bracket-cancel-1')).not.toBeInTheDocument();
+    });
   });
 
   describe('before release', () => {
