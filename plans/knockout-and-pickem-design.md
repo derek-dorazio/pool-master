@@ -1297,7 +1297,8 @@ Each is one PR opened against main, after knockout.
    points are refused on it at contest setup (`CONTEST_EVENT_NOT_A_BRACKET`). A postponed game
    of a released week is cancelled with `cancelEventMatch`, and the admin adds it to its new
    week while that week is a draft. The 2027 schedule is not published until about May 2027,
-   so its data file waits; QA test data is a few played 2025 weeks.
+   so its data file waits. QA test data is the 2025 season's weeks 1 to 3 as played
+   (`american-football-2025-nfl-weeks-test.json`).
 2. **Prediction contests and the weekly submit flow** (#716): `PREDICTION`,
    `ContestEntryMatchPrediction`, `PICK_EM` (straight-up, confidence), per-game lock and reveal.
 3. **Prediction scoring and weekly winners** (#717): the entry scorer, the weekly tiebreaker,

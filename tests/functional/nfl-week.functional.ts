@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   addEventParticipants,
   applyEventParticipantUpload,
@@ -8,7 +10,10 @@ import {
   createEvent,
   createParticipant,
   createSportLeague,
+  getEventBracket,
   listEventParticipants,
+  listEvents,
+  listSportLeagues,
   listSports,
   loadEventBracket,
   recordEventMatchResult,
@@ -25,6 +30,9 @@ import {
   findSportRow,
 } from '@poolmaster/shared/domain';
 import { SportEventBracketResponseSchema } from '@poolmaster/shared/dto';
+import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
+import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
+import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
   cleanupFunctionalData,
@@ -42,10 +50,12 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 // in a league that reseeds its playoff bracket. An admin loads the games, releases the week,
 // cancels the game that is postponed, enters the other three results and completes the week. A
 // contest scored by knockout round points is refused on it, because no team goes a round further.
+// The QA test seed of the 2025 season's first weeks loads a week the same way, played.
 //
-// Every date is fixed in 2099, so the server's real clock never reaches the week.
+// Every date in the first test is fixed in 2099, so the server's real clock never reaches the week.
 
 const RUN = `nfl-week-${Date.now()}`;
+const SEED_FILE = join(__dirname, '../../packages/core-api/scripts/seed-golf/american-football-2025-nfl-weeks-test.json');
 const TEAMS = ['Bills', 'Jets', 'Chiefs', 'Raiders', 'Packers', 'Bears', 'Eagles', 'Giants'];
 
 const created = {
@@ -73,6 +83,9 @@ async function cleanup(): Promise<void> {
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
+  const seededIds = (await db.participant.findMany({ where: { externalId: { startsWith: RUN } }, select: { id: true } })).map((row) => row.id);
+  await db.participantLeagueAffiliation.deleteMany({ where: { participantId: { in: seededIds } } });
+  await db.participant.deleteMany({ where: { id: { in: seededIds } } });
   if (created.sportLeagueIds.size) {
     await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
   }
@@ -196,5 +209,41 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     expectFunctionalError(await cancelEventMatch({ client: a, path: { eventId, matchNumber: 1 } }), { status: 409, code: 'MATCH_ALREADY_PLAYED' });
 
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
+  });
+
+  it('loads week 1 of the 2025 season\'s test seed into the NFL, released with its sixteen games played, and completes it', async () => {
+    const admin = await buildRegisteredUser({ displayName: 'Week Loader' });
+    await promoteToRootAdmin(admin);
+    const a = admin.client;
+
+    // Week 1 only, its teams and event tagged with this run.
+    const file = parseSportDataFile(JSON.parse(readFileSync(SEED_FILE, 'utf8')) as unknown, { allowTestData: true });
+    const [nflLeague] = file.sportLeagues;
+    const week = expectDefined(nflLeague.events[0]);
+    nflLeague.events = [week];
+    const tagged = (key: string | null) => (key === null ? null : `${RUN}-${key}`);
+    week.name = `NFL Week 1 ${RUN}`;
+    for (const player of nflLeague.players) player.key = expectDefined(tagged(player.key));
+    for (const entry of week.field) entry.player = expectDefined(tagged(entry.player));
+    for (const game of week.matches ?? []) Object.assign(game, { home: tagged(game.home), away: tagged(game.away) });
+    // Release refuses an event that has started by the server's clock, so the seed is dated from today.
+    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
+
+    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+      .find((league) => league.name === 'NFL'));
+    const event = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: nfl.id } })).data).events
+      .find((row) => row.name === week.name));
+    created.sportEventIds.add(event.id);
+    expect([event.status, event.rounds]).toEqual(['SCHEDULED', 1]);
+    const games = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches;
+    expect(games).toHaveLength(16);
+    expect(games.every((game) => game.status === MatchStatus.COMPLETED && game.advancesToMatchId === null)).toBe(true);
+    const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants;
+    const nameOf = (id: string | null) => expectDefined(field.find((row) => row.id === id)).participant.name;
+    expect(games.slice(0, 1).map((game) => [nameOf(game.homeSportEventParticipantId), nameOf(game.awaySportEventParticipantId), game.homeScore, game.awayScore, game.winnerSide]))
+      .toEqual([['Philadelphia Eagles', 'Dallas Cowboys', 24, 20, MatchSide.HOME]]);
+
+    expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
+    expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
   });
 });

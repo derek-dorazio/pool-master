@@ -406,6 +406,17 @@ To test a contest end to end, create and open it and submit entries, then on the
 Workflow card *Move to In Progress* and *Move to Completed*, as for the golf seed above.
 Running it again skips everything.
 
+## Seeded NFL regular-season weeks
+
+`american-football-2025-nfl-weeks-test.json` is a test seed of the 2025 NFL season's weeks 1 to
+3 as played, for trying pick'em contests. Each week is its own event, `NFL Week 1` to `NFL Week
+3`, of one round whose 16 games link nowhere. Kickoffs, home sides, neutral sites and scores are
+real; the odds are made up. It loads into the `NFL` sport league beside the playoffs seed, and
+keeps that seed's team rankings. Like the playoffs, each week is moved forward, released with its
+32 teams tiered by odds and priced, and has every result entered. A postponed game would be
+cancelled on the week's *Games* tab and added to the week it moves to while that week is a
+draft.
+
 ## Seeded College Football Playoff
 
 `american-football-2025-cfp-test.json` is a test seed of the 2025-26 College Football Playoff
