@@ -3,9 +3,9 @@
 **Tracking issue:** #711
 
 Written 2026-10-19 for Derek's ask: a detailed design and plan for squares, with the model
-changes and how they fit Poolmaster's existing model. Status: design for review; no code. It
-builds on the ticket's approach and checks it against main as of #771. Open questions sit under
-the section they belong to, each with a recommendation; nothing waits on them.
+changes and how they fit Poolmaster's existing model. Status: design agreed; no code yet. It
+builds on the ticket's approach and checks it against main as of #771. Every question below was
+answered by Derek on 2026-10-19; the slices in section 6 are filed under #711.
 
 ---
 
@@ -303,7 +303,7 @@ At settlement the contest writes `ContestEntryStanding` for each entry that hold
   correction after Final would move the highlighted box on the grid while the standings stayed.
 - **Q3.8** Does overtime count toward the Final box? *Decided by Derek 2026-10-19:* **yes**, the final score
   including overtime, which is the common rule. It is not a separate period winner.
-- **Q3.9** Which side is rows and which columns? **Recommendation: the away team along the side
+- **Q3.9** Which side is rows and which columns? *Decided by Derek 2026-10-19:* **the away team along the side
   (rows), the home team across the top (columns)**, which is how TV scorebugs read (away first).
   Fixed; not a setting.
 
@@ -366,14 +366,14 @@ squares GET carry `maxSquaresPerEntry`.
 
 Three PRs under #711, in order. Each is a normal implement, review, merge cycle.
 
-1. **Quarter scores.** `SportEventMatchPeriodScore`, `SportDefinition.matchPeriods` (American
-   football 4), the admin period endpoint and the period fields on the match results screen, and the data file `periodScores` with Super Bowl LX in the 2026
-   test file. Useful on its own and unblocks the rest.
-2. **Squares contests, server side.** The enums, `ContestSquaresGame`, `ContestEntrySquare`,
+1. **Quarter scores (#772).** `SportEventMatchPeriodScore`, `SportDefinition.matchPeriods` (American
+   football 4), the admin period endpoint and the period fields on the match results screen, and the data
+   file `periodScores` with Super Bowl LX in the 2026 test file. Useful on its own and unblocks the rest.
+2. **Squares contests, server side (#773).** The enums, `ContestSquaresGame`, `ContestEntrySquare`,
    `ContestSquaresDraw`, `ContestSquaresWinner`, the `MATCH_START` cutoff, the
    squares service and endpoints, settlement and the leaderboard reader, the template row, and the
    scenario test.
-3. **Squares screens.** Setup, the grid with claiming and commissioner tools, the draw, live and
+3. **Squares screens (#774).** Setup, the grid with claiming and commissioner tools, the draw, live and
    Final winners, and the browser test.
 
 Slices 2 and 3 can share one PR if the review stays small enough; the plan assumes separate.
