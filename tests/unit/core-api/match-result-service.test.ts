@@ -37,7 +37,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
       return `match-${sequence}`;
     },
   });
-  if (sport === Sport.BASKETBALL) {
+  if (sport === Sport.BASKETBALL || sport === Sport.AMERICAN_FOOTBALL) {
     await brackets.loadBracket(event.id, [
       { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: duke.id, awaySportEventParticipantId: vermont.id, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
       { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: houston.id, awaySportEventParticipantId: texas.id, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
@@ -201,6 +201,29 @@ describe('MatchResultService.recordResult', () => {
 
     await expect(service.recordResult(event.id, 1, homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_BRACKET', statusCode: 422 });
     await expect(service.recordResult('no-such-event', 1, homeWins)).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+// #772 review: quarter scores belong to the two teams playing, so a game with any is under way.
+describe('MatchResultService once the next game has quarter scores', () => {
+  async function scoredFinal() {
+    const context = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+    await context.service.recordResult(context.event.id, 1, homeWins);
+    await context.service.recordResult(context.event.id, 2, homeWins);
+    await context.service.recordPeriodScore(context.event.id, 3, 1, { homeScore: 7, awayScore: 3 });
+    return context;
+  }
+
+  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) a new winner for a game whose winner is playing a game with quarter scores', async () => {
+    const { service, event } = await scoredFinal();
+
+    await expect(service.recordResult(event.id, 1, awayWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+  });
+
+  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) clearing the result of a game whose winner is playing a game with quarter scores', async () => {
+    const { service, event } = await scoredFinal();
+
+    await expect(service.clearResult(event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
   });
 });
 
