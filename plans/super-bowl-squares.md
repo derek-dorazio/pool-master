@@ -118,8 +118,8 @@ classDiagram
     <<new>>
     sportEventMatchId
     Int periodNumber
-    Int homePoints
-    Int awayPoints
+    Int homeScore
+    Int awayScore
   }
   class SportDefinition {
     <<changed>>
@@ -202,23 +202,23 @@ classDiagram
 
 ### 3.1 `SportEventMatchPeriodScore` (new, core event data)
 
-One row per game per period that has ended: `sportEventMatchId`, `periodNumber` (1 to the sport's
-period count), `homePoints`, `awayPoints`; unique on (match, period). Database checks: period
-at least 1, points never negative.
+The score at the end of a period, exactly as the admin enters it: `sportEventMatchId`,
+`periodNumber`, `homeScore`, `awayScore`; unique on (match, period). Rows exist for every period
+but the last (Q1, Q2 and Q3 in football). The last scoring moment is the **final score**, overtime
+included, which is the match's own result (`SportEventMatch.homeScore`/`awayScore`), entered on the
+existing results screen; it is not stored twice. Database checks: period at least 1, scores never
+negative.
 
-It is a separate table, not four columns on `SportEventMatch`, by
+It is a separate table, not three columns on `SportEventMatch`, by
 `rules/domain-model-conventions-rules.md` §9 *Schema Design*: only squares reads it, and a
 period count differs by sport (basketball halves vs quarters). It is a child of the match, like
 the match is of the round, so it is plain event data any later feature (a live game screen,
 props) can read.
 
-- **Q3.1** Store the points scored *in* each quarter, or the running score *at the end of* each
-  quarter? **Recommendation: points in each quarter**, as a box score prints them, so the admin
-  copies four numbers per side without adding. The server sums them for the grid. Once all four quarters
-  are in, it refuses a final result lower than their sum for either side; anything above the sum
-  is overtime. This is not the server deriving
-  a result the admin did not enter (the golf rule in #116): the admin enters every number; the
-  server only adds them.
+- **Q3.1** *Decided by Derek 2026-10-19:* the admin enters the score at each of the four
+  scoring moments (end of Q1, end of Q2, end of Q3, final), as shown on the scoreboard. The
+  server does no addition. Each of the four settles its own winner, and the last one is the
+  final score, not the end of the fourth quarter.
 
 ### 3.2 `ContestSquaresGame` (new)
 
@@ -276,16 +276,16 @@ them. The shuffle code is shared.
   a commissioner who forgets until the game has begun can still draw, and nobody can choose their
   box knowing the digits. There is no automatic draw at kickoff (passive time locks were rejected;
   explicit actions instead).
-- **Q3.6** What about boxes nobody claimed? **Recommendation: the draw runs with empty boxes, and
-  a quarter whose winning box is empty shows "No winner"**. Commissioners handle that payout
+- **Q3.6** What about boxes nobody claimed? *Decided by Derek 2026-10-19:* **the draw runs with
+  empty boxes, and a quarter whose winning box is empty shows "No winner"**. Commissioners handle that payout
   their own way (roll it over, refund), outside Poolmaster. A "fill the empty boxes at random"
   button is a possible later add, not in this ticket.
 
 ### 3.5 Results and standings
 
 Winners are derived, not stored while the game is live: quarter *n*'s winning box is at
-(position of the last digit of the away team's running score in `rowDigits`, position of the
-home team's in `columnDigits`). Final uses the match's final score, overtime included.
+(position of the last digit of the away team's score at the end of that quarter in `rowDigits`,
+position of the home team's in `columnDigits`). Final uses the match's final score, overtime included.
 
 At settlement the contest writes `ContestEntryStanding` for each entry that holds a box:
 `totalScore` = quarters won (0 to 4), position by that, ties shared, `countingPickLimit` and
@@ -311,14 +311,14 @@ At settlement the contest writes `ContestEntryStanding` for each entry that hold
 
 | Endpoint | Who | What |
 |---|---|---|
-| `GET /contests/:contestId/squares` | League members | The grid: each claimed box's position and owner (entry name), digits once drawn, the game and its sides, each period's running score, and each quarter's winning box. One response serves the claim screen and the live board |
+| `GET /contests/:contestId/squares` | League members | The grid: each claimed box's position and owner (entry name), digits once drawn, the game and its sides, the score at each scoring moment, and each quarter's winning box. One response serves the claim screen and the live board |
 | `PUT /contests/:contestId/squares/:row/:column` | Entry owner, or commissioner | Claim a box for an entry (`contestEntryId` in the body). 409 when taken, the cap is reached, the digits are drawn, or the game has started |
 | `DELETE /contests/:contestId/squares/:row/:column` | Owner of that box's entry, or commissioner | Clear a box, under the same windows |
 | `POST /contests/:contestId/squares/draw` | Commissioner | Draw the digits. 409 when already drawn, not OPEN, or the first quarter's score is in |
-| `PUT /events/:eventId/bracket/matches/:matchNumber/periods/:periodNumber` | Root admin | Enter one period's points for both sides. Allowed while the game is in progress, unlike the final result |
-| `DELETE` of the same | Root admin | Clear a period's points |
+| `PUT /events/:eventId/bracket/matches/:matchNumber/periods/:periodNumber` | Root admin | Enter both sides' score at the end of one period (Q1 to Q3). Allowed while the game is in progress, unlike the final result |
+| `DELETE` of the same | Root admin | Clear a period's score |
 
-The existing `PUT .../matches/:matchNumber/result` gains the check from Q3.1. The contest setup
+The existing final result endpoint is unchanged, and its score is the Final winner. The contest setup
 request gains the game (`sportEventMatchId`) for a squares contest, and contest setup and the
 squares GET carry `maxSquaresPerEntry`.
 
@@ -347,7 +347,7 @@ squares GET carry `maxSquaresPerEntry`.
   `load-sport-data` skill. The sport data file schema gets an optional `periodScores` array on a
   match, and the loader writes `SportEventMatchPeriodScore`. That lets a squares contest be
   played start to finish in tests and in QA with no dependency on today's date.
-- **Unit:** winner derivation (digits, running sums, overtime, empty box), the draw shuffle
+- **Unit:** winner derivation (digits, quarter scores, overtime in the final, empty box), the draw shuffle
   (replayable from the seed, a permutation of 0 to 9), the cap and window checks, the cutoff at
   the game's kickoff.
 - **Integration:** one test per new query, plus the race of two claims on one box (the unique key
@@ -363,8 +363,7 @@ squares GET carry `maxSquaresPerEntry`.
 Three PRs under #711, in order. Each is a normal implement, review, merge cycle.
 
 1. **Quarter scores.** `SportEventMatchPeriodScore`, `SportDefinition.matchPeriods` (American
-   football 4), the admin period endpoint and the period fields on the match results screen, the
-   sum check on the final result, and the data file `periodScores` with Super Bowl LX in the 2026
+   football 4), the admin period endpoint and the period fields on the match results screen, and the data file `periodScores` with Super Bowl LX in the 2026
    test file. Useful on its own and unblocks the rest.
 2. **Squares contests, server side.** The enums, `ContestSquaresGame`, `ContestEntrySquare`,
    `ContestSquaresDraw`, `ContestSquaresWinner` (if Q3.7 stands), the `MATCH_START` cutoff, the
