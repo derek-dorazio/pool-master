@@ -669,6 +669,21 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     handler: handler.clearEventMatchResult,
   });
 
+  fastify.post('/:eventId/bracket/matches/:matchNumber/cancel', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Cancel a game',
+      description: 'Calls off an unplayed game of a released week whose games form no bracket, such as a postponed NFL game: it counts for nothing in any contest, and is added to the week it moves to while that week is a draft. '
+        + 'Cancelling a cancelled game changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft, whose games are edited freely. 404 BRACKET_MATCH_NOT_FOUND. '
+        + '409 MATCH_ALREADY_PLAYED for a game with a result (clear it first). 422 MATCH_IN_BRACKET for a game of a bracket, which cannot lose one. Returns the games. Root admin only.',
+      operationId: 'cancelEventMatch',
+      params: MATCH_PARAMS,
+      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.cancelEventMatch,
+  });
+
   const ROUND_REFUSALS = '422 BRACKET_NOT_RESEEDED when the event\'s league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. '
     + '409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started.';
 

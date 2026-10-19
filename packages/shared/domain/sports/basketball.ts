@@ -26,7 +26,7 @@ export const basketballSportDefinition: SportDefinition = {
   name: 'Basketball',
   participantType: ParticipantType.TEAM,
   scoringFamily: ScoringFamily.HEAD_TO_HEAD,
-  tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
+  tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 6,
   defaultTierLayout: { tierCount: 4, tierSize: 16 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET],

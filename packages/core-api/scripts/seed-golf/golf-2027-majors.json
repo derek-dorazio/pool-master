@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "scope": { "sport": "GOLF", "season": 2027, "sportLeagues": ["PGA TOUR"], "contents": ["SCHEDULE"] },
+  "testData": false,
+  "provenance": {
+    "gatheredAt": "2026-10-19",
+    "gatheredBy": "load-sport-data skill",
+    "sources": [
+      { "name": "ESPN PGA TOUR scoreboard feed, 2027 calendar (Masters, PGA Championship and U.S. Open dates)", "url": "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard?dates=2027" },
+      { "name": "Wikipedia, 2027 PGA Tour schedule (each major's final day and state)", "url": "https://en.wikipedia.org/wiki/2027_PGA_Tour" },
+      { "name": "Wikipedia, PGA Championship future sites (2027: PGA Frisco, Frisco, Texas, May 20-23)", "url": "https://en.wikipedia.org/wiki/PGA_Championship" },
+      { "name": "Wikipedia, U.S. Open future sites (2027: Pebble Beach Golf Links, Jun 17-20)", "url": "https://en.wikipedia.org/wiki/U.S._Open_(golf)" },
+      { "name": "Wikipedia, The Open Championship future venues (2027: Old Course at St Andrews, 15-18 July)", "url": "https://en.wikipedia.org/wiki/The_Open_Championship" },
+      { "name": "PGA of America, PGA Championship site (Fields Ranch East at PGA Frisco, Frisco, Texas; championship week May 17-23, 2027)", "url": "https://www.pgachampionship.com/" },
+      { "name": "The R&A, The Open site (The 155th Open at St Andrews, 11-18 July 2027)", "url": "https://www.theopen.com/" }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "PGA TOUR",
+      "players": [],
+      "events": [
+        { "key": "pga-tour-2027-masters-tournament", "name": "Masters Tournament", "startDate": "2027-04-08", "endDate": "2027-04-11", "venue": null, "location": null, "rounds": 4, "roundsPar": null, "field": [] },
+        { "key": "pga-tour-2027-pga-championship", "name": "PGA Championship", "startDate": "2027-05-20", "endDate": "2027-05-23", "venue": "Fields Ranch East at PGA Frisco", "location": "Frisco, TX, US", "rounds": 4, "roundsPar": null, "field": [] },
+        { "key": "pga-tour-2027-u-s-open", "name": "U.S. Open", "startDate": "2027-06-17", "endDate": "2027-06-20", "venue": null, "location": null, "rounds": 4, "roundsPar": null, "field": [] },
+        { "key": "pga-tour-2027-the-open-championship", "name": "The Open Championship", "startDate": "2027-07-15", "endDate": "2027-07-18", "venue": "Old Course at St Andrews", "location": "St Andrews, Scotland, GB", "rounds": 4, "roundsPar": null, "field": [] }
+      ]
+    }
+  ]
+}

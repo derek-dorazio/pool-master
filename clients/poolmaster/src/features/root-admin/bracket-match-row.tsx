@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { MatchSide, MatchStatus, type SportVocabulary } from '@poolmaster/shared/domain';
-import { clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
+import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, formatDateTimeDisplay, Select, StatusBadge } from '@/features/shared/ui';
+import { Button, ConfirmDialog, formatDateTimeDisplay, Select, StatusBadge } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -62,12 +62,22 @@ function bracketInvalidates(eventId: string) {
 }
 
 /**
+ * Whether the event's games form no bracket (a week of NFL games, #715): none links to another
+ * and all are in one round. Only such a game can be cancelled, since a bracket can't lose one.
+ */
+function formsNoBracket(bracket: readonly SportEventMatchDto[]): boolean {
+  return bracket.every((game) => game.advancesToMatchId === null && game.roundNumber === bracket[0]?.roundNumber);
+}
+
+/**
  * One match of the bracket tab (#700). Before release an admin edits the pairing of any side no
  * earlier match fills; once the event is released one tap names the winner, and a final result
- * can be switched or cleared while the next match has none.
+ * can be switched or cleared while the next match has none. A released game of a week that forms
+ * no bracket can be cancelled once it is postponed (#715).
  */
 export function BracketMatchRow({ match, released, context }: { match: SportEventMatchDto; released: boolean; context: BracketContext }) {
   const [editing, setEditing] = useState(false);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const noun = matchNoun(context.vocabulary);
   const errorCopy = bracketErrorMessages(context.vocabulary, match, context.bracket);
 
@@ -88,12 +98,34 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
     },
   });
 
+  const cancel = useInvalidatingMutation({
+    mutationFn: async () => {
+      const response = await cancelEventMatch({ path: { eventId: context.eventId, matchNumber: match.matchNumber } });
+      if (response.error) {
+        throwApiError(response.error);
+      }
+      return response.data;
+    },
+    invalidates: bracketInvalidates(context.eventId),
+    onSuccess: () => setConfirmingCancel(false),
+    onError: (error) => {
+      logger.warn({ action: 'event.bracket.cancel.failed', data: { matchNumber: match.matchNumber }, err: error }, 'Game cancellation was rejected');
+    },
+  });
+
   const home = sideEntry(match, MatchSide.HOME, context.fieldById);
   const away = sideEntry(match, MatchSide.AWAY, context.fieldById);
   const decided = match.status === MatchStatus.COMPLETED;
   const homeFed = feederOf(match, MatchSide.HOME, context.bracket) !== undefined;
   const awayFed = feederOf(match, MatchSide.AWAY, context.bracket) !== undefined;
   const pairingEditable = !released && !(homeFed && awayFed);
+  const cancellable = released && match.status === MatchStatus.SCHEDULED && formsNoBracket(context.bracket);
+  const closeCancel = () => {
+    if (!cancel.isPending) {
+      cancel.reset();
+      setConfirmingCancel(false);
+    }
+  };
 
   return (
     <tr className="border-t border-border align-top" data-testid={`root-admin-bracket-match-${match.matchNumber}`}>
@@ -142,8 +174,39 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
                 Clear result
               </Button>
             ) : null}
+            {cancellable ? (
+              <Button
+                data-testid={`root-admin-bracket-cancel-${match.matchNumber}`}
+                disabled={result.isPending}
+                onClick={() => setConfirmingCancel(true)}
+                size="sm"
+                variant="ghost"
+              >
+                {`Cancel ${noun.one}`}
+              </Button>
+            ) : null}
           </div>
         ) : null}
+        <ConfirmDialog
+          cancelLabel={`Keep ${noun.one}`}
+          confirmLabel={`Cancel ${noun.one}`}
+          confirmTestId={`root-admin-bracket-cancel-confirm-${match.matchNumber}`}
+          description={`${describePairing(match, context)} will count for nothing in every contest. If it is played later, add it to the week it moves to before that week is released.`}
+          isPending={cancel.isPending}
+          onCancel={closeCancel}
+          onConfirm={() => cancel.mutate()}
+          onOpenChange={(open) => (open ? setConfirmingCancel(true) : closeCancel())}
+          open={confirmingCancel}
+          pendingLabel="Cancelling..."
+          title={`Cancel ${noun.one} ${match.matchNumber}?`}
+          tone="danger"
+        >
+          {cancel.isError ? (
+            <p className="text-sm text-destructive" data-testid={`root-admin-bracket-cancel-error-${match.matchNumber}`} role="alert">
+              {extractErrorMessage(cancel.error, { codeMessages: errorCopy, fallback: `This ${noun.one} could not be cancelled. Try again.` })}
+            </p>
+          ) : null}
+        </ConfirmDialog>
         {released && (!home || !away) ? (
           <p className="text-sm text-muted-foreground">{`Waiting on both ${context.vocabulary.participant.many}`}</p>
         ) : null}

@@ -5387,7 +5387,7 @@ export type SportDto = {
     /**
      * Structural format of the sport's events; decides which contest formats are valid.
      */
-    tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'KNOCKOUT_BRACKET';
+    tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
     /**
      * ISO 8601 datetime string.
      */
@@ -5421,7 +5421,7 @@ export type SportListResponse = {
         /**
          * Structural format of the sport's events; decides which contest formats are valid.
          */
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'KNOCKOUT_BRACKET';
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
         /**
          * ISO 8601 datetime string.
          */
@@ -19045,6 +19045,50 @@ export type RecordEventMatchResultResponses = {
 };
 
 export type RecordEventMatchResultResponse = RecordEventMatchResultResponses[keyof RecordEventMatchResultResponses];
+
+export type CancelEventMatchData = {
+    body?: never;
+    path: {
+        eventId: string;
+        matchNumber: number;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/cancel';
+};
+
+export type CancelEventMatchErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type CancelEventMatchError = CancelEventMatchErrors[keyof CancelEventMatchErrors];
+
+export type CancelEventMatchResponses = {
+    /**
+     * An event's bracket.
+     */
+    200: SportEventBracketResponse;
+};
+
+export type CancelEventMatchResponse = CancelEventMatchResponses[keyof CancelEventMatchResponses];
 
 export type ProposeEventRoundMatchupsData = {
     body?: never;

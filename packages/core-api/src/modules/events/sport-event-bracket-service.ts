@@ -35,7 +35,7 @@ import {
   MatchSide,
   MatchStatus,
   ParticipantStatus,
-  sportPlaysBracket,
+  sportPlaysMatches,
   SportEventStatus,
   type SportEvent,
   type SportEventMatch,
@@ -81,7 +81,9 @@ function describeSide(matchNumber: number, side: MatchSide): string {
  * Everything wrong with a bracket's shape, in words an admin can act on; empty when it can be
  * loaded. A side may be empty here (its team is not known yet), but never both named and filled
  * by an earlier match's winner. A bracket that `reseeds` may leave a match before its last round
- * without a link: its winner is placed when the next round is reseeded.
+ * without a link: its winner is placed when the next round is reseeded. Games of one round none of
+ * which link anywhere are a set of games rather than a bracket (a week of NFL games), and have no
+ * final.
  */
 export function findBracketProblems(
   matches: readonly BracketMatchInput[],
@@ -137,6 +139,11 @@ export function findBracketProblems(
     }
   }
 
+  // Games of one round that link nowhere form no bracket (an NFL regular-season week, #715): there
+  // is no final to find. Unlinked games over several rounds are still a (reseeded) bracket.
+  if (matches.every((match) => match.advancesTo === null && match.roundNumber === matches[0]?.roundNumber)) {
+    return problems;
+  }
   const lastRound = Math.max(...matches.map((match) => match.roundNumber));
   const finals = matches.filter((match) => match.advancesTo === null && (context.reseeds !== true || match.roundNumber === lastRound));
   if (context.reseeds === true && finals.length !== 1) {
@@ -241,7 +248,7 @@ export class SportEventBracketService {
    * sport plays no bracket.
    */
   async releaseBlockers(event: SportEvent): Promise<string[]> {
-    if (!sportPlaysBracket(event.sport)) {
+    if (!sportPlaysMatches(event.sport)) {
       return [];
     }
     const [bracket, field] = await Promise.all([
@@ -472,7 +479,7 @@ export class SportEventBracketService {
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
-    if (!sportPlaysBracket(event.sport)) {
+    if (!sportPlaysMatches(event.sport)) {
       this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused a bracket operation on an event that plays no bracket');
       throw new SportEventError(
         `A ${getSportDefinition(event.sport).name.toLowerCase()} event is not played as a bracket.`,

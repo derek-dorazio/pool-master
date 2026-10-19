@@ -43,7 +43,7 @@ async function createBracketEvent() {
   // The integration cleanup empties sport leagues no template names, so the basketball rows are set up here.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.BASKETBALL },
-    create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'KNOCKOUT_BRACKET' },
+    create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({

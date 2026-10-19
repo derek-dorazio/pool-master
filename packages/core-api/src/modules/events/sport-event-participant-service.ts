@@ -37,7 +37,7 @@ import type {
 import {
   getSportDefinition,
   ParticipantStatus,
-  sportPlaysBracket,
+  sportPlaysMatches,
   SportEventStatus,
   type ParticipantInactiveReason,
   type Participant,
@@ -321,7 +321,7 @@ export class SportEventParticipantService {
       }
     }
     const field = await this.deps.field.findBySportEvent(sportEventId);
-    const seedsLocked = sportPlaysBracket(event.sport) && event.status !== SportEventStatus.DRAFT;
+    const seedsLocked = sportPlaysMatches(event.sport) && event.status !== SportEventStatus.DRAFT;
     if (seedsLocked) {
       const seedById = new Map(field.map((entry) => [entry.id, entry.seedNumber ?? null]));
       const reseeded = updates.filter((update) => update.seedNumber !== undefined
@@ -341,7 +341,7 @@ export class SportEventParticipantService {
       && playInById.has(update.sportEventParticipantId)
       && update.isPlayInPlace !== playInById.get(update.sportEventParticipantId));
     if (remarked.length > 0) {
-      if (!sportPlaysBracket(event.sport)) {
+      if (!sportPlaysMatches(event.sport)) {
         this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused a play-in place on an event that plays no bracket');
         throw new SportEventError(
           `A ${getSportDefinition(event.sport).name.toLowerCase()} event is not played as a bracket, so it has no play-in places.`,

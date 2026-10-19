@@ -273,8 +273,9 @@ enum PrismaTournamentFormat {
   STROKE_PLAY_TOURNAMENT
   /// One race: one field, one finishing order (#623).
   RACE
-  /// A knockout bracket of matches, each winner moving on to the slot it names (#698).
-  KNOCKOUT_BRACKET
+  /// Games between two sides (#698; KNOCKOUT_BRACKET until #715). Whether they form a bracket
+  /// is read from the match links.
+  MATCHES
 }
 
 /// Where one match stands (#698). Mirrors the domain `MatchStatus`.

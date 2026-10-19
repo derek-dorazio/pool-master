@@ -4,7 +4,7 @@ import { getSportDefinition } from './sports/registry';
 export const VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT = {
   [TournamentFormat.STROKE_PLAY_TOURNAMENT]: [ContestFormat.ROSTER],
   [TournamentFormat.RACE]: [ContestFormat.ROSTER],
-  [TournamentFormat.KNOCKOUT_BRACKET]: [ContestFormat.ROSTER, ContestFormat.PREDICTION],
+  [TournamentFormat.MATCHES]: [ContestFormat.ROSTER, ContestFormat.PREDICTION],
 } as const satisfies Record<TournamentFormat, readonly ContestFormat[]>;
 
 /**

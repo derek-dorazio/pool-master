@@ -33,7 +33,7 @@ import {
   compareScores,
   getSportDefinition,
   rankSortedScores,
-  sportPlaysBracket,
+  sportPlaysMatches,
   type SportEvent,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
@@ -175,6 +175,46 @@ export class MatchResultService {
   }
 
   /**
+   * Cancels one game of a released event that was never played (#715, design Q5.9): a postponed
+   * regular-season game is cancelled in its week and added to the week it moves to while that week
+   * is still a draft. A cancelled game counts for no pick and no standing. Cancelling a cancelled
+   * game changes nothing. 404 BRACKET_MATCH_NOT_FOUND; 409 MATCH_ALREADY_PLAYED for a game with a
+   * result; 422 MATCH_IN_BRACKET for a game of a bracket (it sends its winner on, takes a team from
+   * an earlier game, or sits among games of several rounds), since a bracket cannot lose a game.
+   */
+  async cancelMatch(sportEventId: string, matchNumber: number): Promise<SportEventMatch[]> {
+    await this.requireReleasedBracketEvent(sportEventId);
+    const bracket = await this.deps.matches.findBySportEvent(sportEventId);
+    const match = this.requireMatch(sportEventId, bracket, matchNumber);
+    if (match.status === MatchStatus.CANCELLED) {
+      return bracket;
+    }
+    if (match.status === MatchStatus.COMPLETED) {
+      this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused to cancel a game that has a result');
+      throw new SportEventError(
+        `Match ${matchNumber} has a result: clear it before cancelling the game.`,
+        'MATCH_ALREADY_PLAYED',
+        409,
+      );
+    }
+    // A reseeded bracket links no games, but its games still span several rounds.
+    const fedByEarlier = bracket.some((candidate) => candidate.advancesToMatchId === match.id);
+    const severalRounds = bracket.some((candidate) => candidate.roundNumber !== match.roundNumber);
+    if (match.advancesToMatchId !== null || fedByEarlier || severalRounds) {
+      this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused to cancel a bracket game');
+      throw new SportEventError(
+        `Match ${matchNumber} is part of a bracket, which cannot lose a game: change its time instead.`,
+        'MATCH_IN_BRACKET',
+        422,
+      );
+    }
+    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null };
+    await this.write(sportEventId, bracket, result, null);
+    this.deps.logger?.info({ sportEventId, matchNumber }, 'Cancelled a game');
+    return this.deps.matches.findBySportEvent(sportEventId);
+  }
+
+  /**
    * The side of the next match the result puts `rowId` on, or empties; null for the final, and for
    * a match before a reseed whose winner is not placed yet.
    */
@@ -236,7 +276,7 @@ export class MatchResultService {
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
-    if (!sportPlaysBracket(event.sport)) {
+    if (!sportPlaysMatches(event.sport)) {
       this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused a match result for an event that plays no bracket');
       throw new SportEventError(
         `A ${getSportDefinition(event.sport).name.toLowerCase()} event is not played as a bracket.`,

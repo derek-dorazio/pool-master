@@ -90,7 +90,7 @@ describe('SDK Functional: Basketball bracket', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'KNOCKOUT_BRACKET' },
+      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
@@ -158,7 +158,15 @@ describe('SDK Functional: Basketball bracket', () => {
       await loadEventBracket({
         client: a,
         path: { eventId },
-        body: { matches: firstRound.map((match) => ({ ...match, roundNumber: 2, advancesTo: null })) },
+        // Game 1 links nowhere while game 2 feeds a final, so two games end the bracket. (Games
+        // none of which link are a week's games, which load: #715.)
+        body: {
+          matches: [
+            { ...expectDefined(firstRound[0]), advancesTo: null },
+            expectDefined(firstRound[1]),
+            { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+          ],
+        },
       }),
       { status: 422, code: 'BRACKET_INVALID' },
     );

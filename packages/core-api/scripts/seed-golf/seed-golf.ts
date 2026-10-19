@@ -40,7 +40,7 @@
  * instead, because removing it would break that entry.
  */
 
-import { findSportRow, getSportDefinition, MatchSide, ScoringFamily, type Sport, SportEventStatus, sportPlaysBracket } from '@poolmaster/shared/domain';
+import { findSportRow, getSportDefinition, MatchSide, ScoringFamily, type Sport, SportEventStatus, sportPlaysMatches } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
@@ -623,7 +623,7 @@ class Loader {
 
     const editable = EDITABLE_STATUSES.has(stored.status);
     // Release locks a bracket event's pairings, seeds and play-in places with its field.
-    const bracketLocked = sportPlaysBracket(this.sport) && stored.status !== SportEventStatus.DRAFT;
+    const bracketLocked = sportPlaysMatches(this.sport) && stored.status !== SportEventStatus.DRAFT;
     const eventPlan = loadsSchedule ? this.eventChanges(event, stored) : { body: {}, changes: [] };
     const storedField = loadsField || loadsBracket
       ? (await must(listEventParticipants({ client, path: { eventId: stored.id } }), `Read the field of ${event.name}`)).participants
@@ -788,7 +788,7 @@ class Loader {
     const path = { eventId };
     await must(autoAssignEventTiers({ client, path, body: { source: 'ODDS' } }), `Assign tiers for ${event.name}`);
     await must(autoAssignEventPrices({ client, path, body: await defaultPricing(client) }), `Assign prices for ${event.name}`);
-    if (sportPlaysBracket(this.sport)) {
+    if (sportPlaysMatches(this.sport)) {
       await must(releaseEvent({ client, path }), `Release ${event.name}`);
       await fillPlayInPlacesFor(client, eventId, event, participantIds);
       await enterBracketResultsFor(client, eventId, event);

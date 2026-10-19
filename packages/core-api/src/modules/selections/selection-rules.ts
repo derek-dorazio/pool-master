@@ -12,7 +12,7 @@
 
 import {
   deriveLegacyParticipantStatus,
-  sportPlaysBracket,
+  sportPlaysMatches,
   SelectionStatus,
   type Contest,
   type ContestEntry,
@@ -129,7 +129,7 @@ export function buildSelectionParticipants(input: {
    */
   sport: Sport | null;
 }): SelectionParticipant[] {
-  const showsSeeds = input.sport !== null && sportPlaysBracket(input.sport);
+  const showsSeeds = input.sport !== null && sportPlaysMatches(input.sport);
   return input.field
     .map((entry) => {
       const participant = input.participantsById.get(entry.participantId);

@@ -48,6 +48,8 @@ export function bracketErrorMessages(
       : `This ${noun.one}'s winner has already played its next ${noun.one}. Clear that result first.`,
     MATCH_SIDES_NOT_SET: `Both ${team.many} in this ${noun.one} aren't known yet. Enter the results of the ${noun.many} before it first.`,
     MATCH_RESULT_INVALID: 'That result could not be saved. Check it and try again.',
+    MATCH_ALREADY_PLAYED: `This ${noun.one} has a result. Clear it before cancelling the ${noun.one}.`,
+    MATCH_IN_BRACKET: `This ${noun.one} is part of a bracket, which can't lose a ${noun.one}. Change its time instead.`,
     SPORT_EVENT_NOT_RELEASED: `Release the ${vocabulary.event.one} before entering results.`,
     SPORT_EVENT_BRACKET_LOCKED: `The ${vocabulary.event.one} has been released, so its pairings are locked.`,
     BRACKET_INVALID: `That pairing could not be saved. Each ${team.one} plays one opening ${noun.one}, and two different ${team.many} meet in a ${noun.one}.`,

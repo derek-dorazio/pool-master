@@ -1,0 +1,1440 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "AMERICAN_FOOTBALL",
+    "season": 2025,
+    "sportLeagues": [
+      "NFL"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-19",
+    "gatheredBy": "load-sport-data, regular-season weeks 1 to 3 of the 2025 NFL season as played, each week its own event whose games form no bracket: kickoffs, home teams, neutral sites and scores from the ESPN scoreboard, cross-checked game by game against FixtureDownload. Teams in the 2025 playoffs keep the playoffs test file's ranking; the rest are ranked 15 to 32 by their final 2025 record from Wikipedia. Odds to win are made up from the ranking.",
+    "sources": [
+      {
+        "name": "ESPN NFL scoreboard, regular season week 1",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=1&dates=2025"
+      },
+      {
+        "name": "ESPN NFL scoreboard, regular season week 2",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=2&dates=2025"
+      },
+      {
+        "name": "ESPN NFL scoreboard, regular season week 3",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=3&dates=2025"
+      },
+      {
+        "name": "FixtureDownload NFL 2025 fixtures and results",
+        "url": "https://fixturedownload.com/feed/json/nfl-2025"
+      },
+      {
+        "name": "2025 NFL season (Wikipedia), final standings",
+        "url": "https://en.wikipedia.org/wiki/2025_NFL_season"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "NFL",
+      "bracketAdvancement": "RESEED_BY_SEED",
+      "players": [
+        {
+          "key": "nfl-denver-broncos",
+          "name": "Denver Broncos",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "nfl-seattle-seahawks",
+          "name": "Seattle Seahawks",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "nfl-new-england-patriots",
+          "name": "New England Patriots",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "nfl-chicago-bears",
+          "name": "Chicago Bears",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "nfl-jacksonville-jaguars",
+          "name": "Jacksonville Jaguars",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "nfl-philadelphia-eagles",
+          "name": "Philadelphia Eagles",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "nfl-pittsburgh-steelers",
+          "name": "Pittsburgh Steelers",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "nfl-carolina-panthers",
+          "name": "Carolina Panthers",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "nfl-houston-texans",
+          "name": "Houston Texans",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "nfl-los-angeles-rams",
+          "name": "Los Angeles Rams",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "nfl-buffalo-bills",
+          "name": "Buffalo Bills",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "nfl-san-francisco-49ers",
+          "name": "San Francisco 49ers",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "nfl-los-angeles-chargers",
+          "name": "Los Angeles Chargers",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "nfl-green-bay-packers",
+          "name": "Green Bay Packers",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "nfl-detroit-lions",
+          "name": "Detroit Lions",
+          "countryCode": "US",
+          "ranking": 15
+        },
+        {
+          "key": "nfl-minnesota-vikings",
+          "name": "Minnesota Vikings",
+          "countryCode": "US",
+          "ranking": 16
+        },
+        {
+          "key": "nfl-indianapolis-colts",
+          "name": "Indianapolis Colts",
+          "countryCode": "US",
+          "ranking": 17
+        },
+        {
+          "key": "nfl-baltimore-ravens",
+          "name": "Baltimore Ravens",
+          "countryCode": "US",
+          "ranking": 18
+        },
+        {
+          "key": "nfl-tampa-bay-buccaneers",
+          "name": "Tampa Bay Buccaneers",
+          "countryCode": "US",
+          "ranking": 19
+        },
+        {
+          "key": "nfl-atlanta-falcons",
+          "name": "Atlanta Falcons",
+          "countryCode": "US",
+          "ranking": 20
+        },
+        {
+          "key": "nfl-dallas-cowboys",
+          "name": "Dallas Cowboys",
+          "countryCode": "US",
+          "ranking": 21
+        },
+        {
+          "key": "nfl-miami-dolphins",
+          "name": "Miami Dolphins",
+          "countryCode": "US",
+          "ranking": 22
+        },
+        {
+          "key": "nfl-kansas-city-chiefs",
+          "name": "Kansas City Chiefs",
+          "countryCode": "US",
+          "ranking": 23
+        },
+        {
+          "key": "nfl-new-orleans-saints",
+          "name": "New Orleans Saints",
+          "countryCode": "US",
+          "ranking": 24
+        },
+        {
+          "key": "nfl-cincinnati-bengals",
+          "name": "Cincinnati Bengals",
+          "countryCode": "US",
+          "ranking": 25
+        },
+        {
+          "key": "nfl-washington-commanders",
+          "name": "Washington Commanders",
+          "countryCode": "US",
+          "ranking": 26
+        },
+        {
+          "key": "nfl-cleveland-browns",
+          "name": "Cleveland Browns",
+          "countryCode": "US",
+          "ranking": 27
+        },
+        {
+          "key": "nfl-new-york-giants",
+          "name": "New York Giants",
+          "countryCode": "US",
+          "ranking": 28
+        },
+        {
+          "key": "nfl-arizona-cardinals",
+          "name": "Arizona Cardinals",
+          "countryCode": "US",
+          "ranking": 29
+        },
+        {
+          "key": "nfl-las-vegas-raiders",
+          "name": "Las Vegas Raiders",
+          "countryCode": "US",
+          "ranking": 30
+        },
+        {
+          "key": "nfl-tennessee-titans",
+          "name": "Tennessee Titans",
+          "countryCode": "US",
+          "ranking": 31
+        },
+        {
+          "key": "nfl-new-york-jets",
+          "name": "New York Jets",
+          "countryCode": "US",
+          "ranking": 32
+        }
+      ],
+      "events": [
+        {
+          "key": "nfl-2025-week-1",
+          "name": "NFL Week 1",
+          "startDate": "2025-09-04",
+          "endDate": "2025-09-08",
+          "venue": null,
+          "location": "United States",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-denver-broncos",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "nfl-seattle-seahawks",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "nfl-new-england-patriots",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "nfl-chicago-bears",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "nfl-jacksonville-jaguars",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "nfl-philadelphia-eagles",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "nfl-pittsburgh-steelers",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "nfl-carolina-panthers",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "nfl-houston-texans",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "nfl-los-angeles-rams",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "nfl-buffalo-bills",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "nfl-san-francisco-49ers",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "nfl-los-angeles-chargers",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "nfl-green-bay-packers",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "nfl-detroit-lions",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "nfl-minnesota-vikings",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "nfl-indianapolis-colts",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "nfl-baltimore-ravens",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "nfl-tampa-bay-buccaneers",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "nfl-atlanta-falcons",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "nfl-dallas-cowboys",
+              "ranking": 21,
+              "oddsToWin": 33.5
+            },
+            {
+              "player": "nfl-miami-dolphins",
+              "ranking": 22,
+              "oddsToWin": 35.0
+            },
+            {
+              "player": "nfl-kansas-city-chiefs",
+              "ranking": 23,
+              "oddsToWin": 36.5
+            },
+            {
+              "player": "nfl-new-orleans-saints",
+              "ranking": 24,
+              "oddsToWin": 38.0
+            },
+            {
+              "player": "nfl-cincinnati-bengals",
+              "ranking": 25,
+              "oddsToWin": 39.5
+            },
+            {
+              "player": "nfl-washington-commanders",
+              "ranking": 26,
+              "oddsToWin": 41.0
+            },
+            {
+              "player": "nfl-cleveland-browns",
+              "ranking": 27,
+              "oddsToWin": 42.5
+            },
+            {
+              "player": "nfl-new-york-giants",
+              "ranking": 28,
+              "oddsToWin": 44.0
+            },
+            {
+              "player": "nfl-arizona-cardinals",
+              "ranking": 29,
+              "oddsToWin": 45.5
+            },
+            {
+              "player": "nfl-las-vegas-raiders",
+              "ranking": 30,
+              "oddsToWin": 47.0
+            },
+            {
+              "player": "nfl-tennessee-titans",
+              "ranking": 31,
+              "oddsToWin": 48.5
+            },
+            {
+              "player": "nfl-new-york-jets",
+              "ranking": 32,
+              "oddsToWin": 50.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nfl-philadelphia-eagles",
+              "away": "nfl-dallas-cowboys",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-05T00:20:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 24,
+                "awayScore": 20
+              }
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nfl-los-angeles-chargers",
+              "away": "nfl-kansas-city-chiefs",
+              "isNeutralSite": true,
+              "scheduledAt": "2025-09-06T00:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 27,
+                "awayScore": 21
+              }
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nfl-atlanta-falcons",
+              "away": "nfl-tampa-bay-buccaneers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 20,
+                "awayScore": 23
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nfl-cleveland-browns",
+              "away": "nfl-cincinnati-bengals",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 16,
+                "awayScore": 17
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "nfl-indianapolis-colts",
+              "away": "nfl-miami-dolphins",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 33,
+                "awayScore": 8
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "nfl-jacksonville-jaguars",
+              "away": "nfl-carolina-panthers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 26,
+                "awayScore": 10
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "nfl-new-england-patriots",
+              "away": "nfl-las-vegas-raiders",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 13,
+                "awayScore": 20
+              }
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "nfl-new-orleans-saints",
+              "away": "nfl-arizona-cardinals",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 13,
+                "awayScore": 20
+              }
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "nfl-new-york-jets",
+              "away": "nfl-pittsburgh-steelers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 32,
+                "awayScore": 34
+              }
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "nfl-washington-commanders",
+              "away": "nfl-new-york-giants",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 21,
+                "awayScore": 6
+              }
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "nfl-denver-broncos",
+              "away": "nfl-tennessee-titans",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T20:05:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 20,
+                "awayScore": 12
+              }
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "nfl-seattle-seahawks",
+              "away": "nfl-san-francisco-49ers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T20:05:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 13,
+                "awayScore": 17
+              }
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "nfl-green-bay-packers",
+              "away": "nfl-detroit-lions",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T20:25:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 27,
+                "awayScore": 13
+              }
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "nfl-los-angeles-rams",
+              "away": "nfl-houston-texans",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-07T20:25:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 14,
+                "awayScore": 9
+              }
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "nfl-buffalo-bills",
+              "away": "nfl-baltimore-ravens",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-08T00:20:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 41,
+                "awayScore": 40
+              }
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "nfl-chicago-bears",
+              "away": "nfl-minnesota-vikings",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-09T00:15:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 24,
+                "awayScore": 27
+              }
+            }
+          ]
+        },
+        {
+          "key": "nfl-2025-week-2",
+          "name": "NFL Week 2",
+          "startDate": "2025-09-11",
+          "endDate": "2025-09-15",
+          "venue": null,
+          "location": "United States",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-denver-broncos",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "nfl-seattle-seahawks",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "nfl-new-england-patriots",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "nfl-chicago-bears",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "nfl-jacksonville-jaguars",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "nfl-philadelphia-eagles",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "nfl-pittsburgh-steelers",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "nfl-carolina-panthers",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "nfl-houston-texans",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "nfl-los-angeles-rams",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "nfl-buffalo-bills",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "nfl-san-francisco-49ers",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "nfl-los-angeles-chargers",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "nfl-green-bay-packers",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "nfl-detroit-lions",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "nfl-minnesota-vikings",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "nfl-indianapolis-colts",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "nfl-baltimore-ravens",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "nfl-tampa-bay-buccaneers",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "nfl-atlanta-falcons",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "nfl-dallas-cowboys",
+              "ranking": 21,
+              "oddsToWin": 33.5
+            },
+            {
+              "player": "nfl-miami-dolphins",
+              "ranking": 22,
+              "oddsToWin": 35.0
+            },
+            {
+              "player": "nfl-kansas-city-chiefs",
+              "ranking": 23,
+              "oddsToWin": 36.5
+            },
+            {
+              "player": "nfl-new-orleans-saints",
+              "ranking": 24,
+              "oddsToWin": 38.0
+            },
+            {
+              "player": "nfl-cincinnati-bengals",
+              "ranking": 25,
+              "oddsToWin": 39.5
+            },
+            {
+              "player": "nfl-washington-commanders",
+              "ranking": 26,
+              "oddsToWin": 41.0
+            },
+            {
+              "player": "nfl-cleveland-browns",
+              "ranking": 27,
+              "oddsToWin": 42.5
+            },
+            {
+              "player": "nfl-new-york-giants",
+              "ranking": 28,
+              "oddsToWin": 44.0
+            },
+            {
+              "player": "nfl-arizona-cardinals",
+              "ranking": 29,
+              "oddsToWin": 45.5
+            },
+            {
+              "player": "nfl-las-vegas-raiders",
+              "ranking": 30,
+              "oddsToWin": 47.0
+            },
+            {
+              "player": "nfl-tennessee-titans",
+              "ranking": 31,
+              "oddsToWin": 48.5
+            },
+            {
+              "player": "nfl-new-york-jets",
+              "ranking": 32,
+              "oddsToWin": 50.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nfl-green-bay-packers",
+              "away": "nfl-washington-commanders",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-12T00:15:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 27,
+                "awayScore": 18
+              }
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nfl-baltimore-ravens",
+              "away": "nfl-cleveland-browns",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 41,
+                "awayScore": 17
+              }
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nfl-cincinnati-bengals",
+              "away": "nfl-jacksonville-jaguars",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 31,
+                "awayScore": 27
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nfl-dallas-cowboys",
+              "away": "nfl-new-york-giants",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 40,
+                "awayScore": 37
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "nfl-detroit-lions",
+              "away": "nfl-chicago-bears",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 52,
+                "awayScore": 21
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "nfl-miami-dolphins",
+              "away": "nfl-new-england-patriots",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 27,
+                "awayScore": 33
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "nfl-new-orleans-saints",
+              "away": "nfl-san-francisco-49ers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 21,
+                "awayScore": 26
+              }
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "nfl-new-york-jets",
+              "away": "nfl-buffalo-bills",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 10,
+                "awayScore": 30
+              }
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "nfl-pittsburgh-steelers",
+              "away": "nfl-seattle-seahawks",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 17,
+                "awayScore": 31
+              }
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "nfl-tennessee-titans",
+              "away": "nfl-los-angeles-rams",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 19,
+                "awayScore": 33
+              }
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "nfl-arizona-cardinals",
+              "away": "nfl-carolina-panthers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T20:05:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 27,
+                "awayScore": 22
+              }
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "nfl-indianapolis-colts",
+              "away": "nfl-denver-broncos",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T20:05:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 29,
+                "awayScore": 28
+              }
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "nfl-kansas-city-chiefs",
+              "away": "nfl-philadelphia-eagles",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T20:25:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 17,
+                "awayScore": 20
+              }
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "nfl-minnesota-vikings",
+              "away": "nfl-atlanta-falcons",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-15T00:20:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 6,
+                "awayScore": 22
+              }
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "nfl-houston-texans",
+              "away": "nfl-tampa-bay-buccaneers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-15T23:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 19,
+                "awayScore": 20
+              }
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "nfl-las-vegas-raiders",
+              "away": "nfl-los-angeles-chargers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-16T02:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 9,
+                "awayScore": 20
+              }
+            }
+          ]
+        },
+        {
+          "key": "nfl-2025-week-3",
+          "name": "NFL Week 3",
+          "startDate": "2025-09-18",
+          "endDate": "2025-09-22",
+          "venue": null,
+          "location": "United States",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-denver-broncos",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "nfl-seattle-seahawks",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "nfl-new-england-patriots",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "nfl-chicago-bears",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "nfl-jacksonville-jaguars",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "nfl-philadelphia-eagles",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "nfl-pittsburgh-steelers",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "nfl-carolina-panthers",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "nfl-houston-texans",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "nfl-los-angeles-rams",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "nfl-buffalo-bills",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "nfl-san-francisco-49ers",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "nfl-los-angeles-chargers",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "nfl-green-bay-packers",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "nfl-detroit-lions",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "nfl-minnesota-vikings",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "nfl-indianapolis-colts",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "nfl-baltimore-ravens",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "nfl-tampa-bay-buccaneers",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "nfl-atlanta-falcons",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "nfl-dallas-cowboys",
+              "ranking": 21,
+              "oddsToWin": 33.5
+            },
+            {
+              "player": "nfl-miami-dolphins",
+              "ranking": 22,
+              "oddsToWin": 35.0
+            },
+            {
+              "player": "nfl-kansas-city-chiefs",
+              "ranking": 23,
+              "oddsToWin": 36.5
+            },
+            {
+              "player": "nfl-new-orleans-saints",
+              "ranking": 24,
+              "oddsToWin": 38.0
+            },
+            {
+              "player": "nfl-cincinnati-bengals",
+              "ranking": 25,
+              "oddsToWin": 39.5
+            },
+            {
+              "player": "nfl-washington-commanders",
+              "ranking": 26,
+              "oddsToWin": 41.0
+            },
+            {
+              "player": "nfl-cleveland-browns",
+              "ranking": 27,
+              "oddsToWin": 42.5
+            },
+            {
+              "player": "nfl-new-york-giants",
+              "ranking": 28,
+              "oddsToWin": 44.0
+            },
+            {
+              "player": "nfl-arizona-cardinals",
+              "ranking": 29,
+              "oddsToWin": 45.5
+            },
+            {
+              "player": "nfl-las-vegas-raiders",
+              "ranking": 30,
+              "oddsToWin": 47.0
+            },
+            {
+              "player": "nfl-tennessee-titans",
+              "ranking": 31,
+              "oddsToWin": 48.5
+            },
+            {
+              "player": "nfl-new-york-jets",
+              "ranking": 32,
+              "oddsToWin": 50.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nfl-buffalo-bills",
+              "away": "nfl-miami-dolphins",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-19T00:15:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 31,
+                "awayScore": 21
+              }
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nfl-carolina-panthers",
+              "away": "nfl-atlanta-falcons",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 30,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nfl-cleveland-browns",
+              "away": "nfl-green-bay-packers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 13,
+                "awayScore": 10
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nfl-jacksonville-jaguars",
+              "away": "nfl-houston-texans",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 17,
+                "awayScore": 10
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "nfl-minnesota-vikings",
+              "away": "nfl-cincinnati-bengals",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 48,
+                "awayScore": 10
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "nfl-new-england-patriots",
+              "away": "nfl-pittsburgh-steelers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 14,
+                "awayScore": 21
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "nfl-philadelphia-eagles",
+              "away": "nfl-los-angeles-rams",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 33,
+                "awayScore": 26
+              }
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "nfl-tampa-bay-buccaneers",
+              "away": "nfl-new-york-jets",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 29,
+                "awayScore": 27
+              }
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "nfl-tennessee-titans",
+              "away": "nfl-indianapolis-colts",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 20,
+                "awayScore": 41
+              }
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "nfl-washington-commanders",
+              "away": "nfl-las-vegas-raiders",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T17:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 41,
+                "awayScore": 24
+              }
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "nfl-los-angeles-chargers",
+              "away": "nfl-denver-broncos",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T20:05:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 23,
+                "awayScore": 20
+              }
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "nfl-seattle-seahawks",
+              "away": "nfl-new-orleans-saints",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T20:05:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 44,
+                "awayScore": 13
+              }
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "nfl-chicago-bears",
+              "away": "nfl-dallas-cowboys",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T20:25:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 31,
+                "awayScore": 14
+              }
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "nfl-san-francisco-49ers",
+              "away": "nfl-arizona-cardinals",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T20:25:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 16,
+                "awayScore": 15
+              }
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "nfl-new-york-giants",
+              "away": "nfl-kansas-city-chiefs",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-22T00:20:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 9,
+                "awayScore": 22
+              }
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "nfl-baltimore-ravens",
+              "away": "nfl-detroit-lions",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-23T00:15:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 30,
+                "awayScore": 38
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

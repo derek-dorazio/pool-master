@@ -130,6 +130,25 @@ describe('findBracketProblems', () => {
     expect(problems).toEqual([]);
   });
 
+  it('accepts games none of which link anywhere, as a week of NFL games is, even in a league that reseeds', () => {
+    const week = [{ ...first, advancesTo: null }, { ...second, advancesTo: null }];
+
+    expect(findBracketProblems(week, context)).toEqual([]);
+    expect(findBracketProblems(week, { ...context, reseeds: true })).toEqual([]);
+  });
+
+  it('still asks unlinked games over several rounds, a reseeded bracket, for one final in their last round', () => {
+    const twoFinals = [{ ...first, advancesTo: null }, { ...second, advancesTo: null, roundNumber: 2 }, { ...final, advancesTo: null }];
+
+    expect(findBracketProblems(twoFinals, { ...context, reseeds: true })).toEqual(['a bracket has one final, the one match in its last round, but this one has 2 in round 2']);
+  });
+
+  it('still checks the sides of games that link nowhere', () => {
+    const week = [{ ...first, advancesTo: null }, { ...second, advancesTo: null, homeSportEventParticipantId: ids.duke }];
+
+    expect(findBracketProblems(week, context)).toEqual(['match 2 home names the same field row as match 1 home']);
+  });
+
   it.each([
     ['a match number used twice', [first, { ...second, matchNumber: 1 }, final], 'match number 1 is used more than once'],
     ['a round the event does not have', [first, second, { ...final, roundNumber: 3 }], 'match 3 is in round 3, which the event does not have'],

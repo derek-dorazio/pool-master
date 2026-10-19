@@ -379,6 +379,43 @@ describe('2026 racing test seeds', () => {
   });
 });
 
+// #715: each NFL regular-season week is its own event, its games forming no bracket.
+describe('american-football-2025-nfl-weeks-test.json', () => {
+  const file = readDataFile('american-football-2025-nfl-weeks-test.json', true);
+  const [nfl] = file.sportLeagues;
+
+  it('is a test seed of the 2025 NFL season\'s first three weeks, each one round of sixteen played games that link nowhere', () => {
+    expect(file.scope).toEqual({ sport: Sport.AMERICAN_FOOTBALL, season: 2025, sportLeagues: ['NFL'], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS] });
+    expect(eventRows(file)).toEqual([
+      ['NFL Week 1', '2025-09-04', '2025-09-08', 1, null],
+      ['NFL Week 2', '2025-09-11', '2025-09-15', 1, null],
+      ['NFL Week 3', '2025-09-18', '2025-09-22', 1, null],
+    ]);
+    for (const week of nfl.events) {
+      const games = week.matches ?? [];
+      expect(games).toHaveLength(16);
+      expect(games.every((game) => game.roundNumber === 1 && game.advancesTo === null && game.result !== undefined)).toBe(true);
+      // Every team plays once a week, and the field is the teams playing.
+      const sides = games.flatMap((game) => [game.home, game.away]);
+      expect(new Set(sides).size).toBe(32);
+      expect(new Set(week.field.map((entry) => entry.player))).toEqual(new Set(sides));
+    }
+  });
+
+  it('opens the season with the Eagles\' 24-20 win over the Cowboys, and plays the Chiefs and Chargers in Brazil', () => {
+    const [opener, brazil] = nfl.events[0].matches ?? [];
+    expect(opener).toMatchObject({ home: 'nfl-philadelphia-eagles', away: 'nfl-dallas-cowboys', isNeutralSite: false, scheduledAt: '2025-09-05T00:20:00Z', result: { winner: 'HOME', homeScore: 24, awayScore: 20 } });
+    expect(brazil).toMatchObject({ home: 'nfl-los-angeles-chargers', away: 'nfl-kansas-city-chiefs', isNeutralSite: true, result: { winner: 'HOME', homeScore: 27, awayScore: 21 } });
+  });
+
+  it('ranks its 32 teams 1 to 32, the playoff teams as the playoffs test seed does, so loading either keeps the other\'s rankings', () => {
+    const playoffs = readDataFile('american-football-2026-nfl-playoffs-test.json', true).sportLeagues[0].players;
+    expect(nfl.players.map((player) => player.ranking).sort((left, right) => left - right)).toEqual(Array.from({ length: 32 }, (_, index) => index + 1));
+    const rankingOf = new Map(nfl.players.map((player) => [player.key, player.ranking]));
+    expect(playoffs.map((player) => [player.key, rankingOf.get(player.key)])).toEqual(playoffs.map((player) => [player.key, player.ranking]));
+  });
+});
+
 describe('test seed match times', () => {
   it('move by the same whole days as the event dates, and stay put when the offset is zero', () => {
     const file = readDataFile('american-football-2026-nfl-playoffs-test.json', true);

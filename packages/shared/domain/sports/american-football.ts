@@ -7,7 +7,8 @@ const ROUND_NAMES_FROM_FINAL = ['Super Bowl', 'Conference Championship', 'Divisi
 
 /**
  * American football (#702, plans/knockout-and-pickem-design.md §3.5): teams playing a knockout
- * bracket, scored by the head-to-head family from the bracket's matches. The NFL is its sport
+ * bracket, scored by the head-to-head family from the bracket's matches. A regular-season week
+ * is its own event of one round whose games form no bracket (#715), for pick'em contests. The NFL is its sport
  * league, and reseeds after Wild Card weekend and again after the Divisional round
  * (BracketAdvancement.RESEED_BY_SEED, #722), so the best seed left always hosts.
  *
@@ -25,7 +26,7 @@ export const americanFootballSportDefinition: SportDefinition = {
   name: 'American football',
   participantType: ParticipantType.TEAM,
   scoringFamily: ScoringFamily.HEAD_TO_HEAD,
-  tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
+  tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
   defaultTierLayout: { tierCount: 7, tierSize: 2 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET],

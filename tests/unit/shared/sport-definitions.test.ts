@@ -14,7 +14,7 @@ import {
   contestFormatForSelectionType,
   isPredictionSelectionType,
   sportAllowsSelectionType,
-  sportPlaysBracket,
+  sportPlaysMatches,
 } from '@poolmaster/shared/domain';
 import { getSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
 import { getPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/registry';
@@ -244,9 +244,9 @@ describe('basketball', () => {
     expect(basketball.name).toBe('Basketball');
     expect(basketball.participantType).toBe('TEAM');
     expect(basketball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
-    expect(basketball.tournamentFormat).toBe(TournamentFormat.KNOCKOUT_BRACKET);
+    expect(basketball.tournamentFormat).toBe(TournamentFormat.MATCHES);
     expect(basketball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(sportPlaysBracket(Sport.BASKETBALL)).toBe(true);
+    expect(sportPlaysMatches(Sport.BASKETBALL)).toBe(true);
   });
 
   it('gives a new tournament six rounds and the four seed lines as four tiers of 16', () => {
@@ -291,7 +291,7 @@ describe('American football', () => {
     expect(americanFootball.participantType).toBe('TEAM');
     expect(americanFootball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
     expect(americanFootball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(sportPlaysBracket(Sport.AMERICAN_FOOTBALL)).toBe(true);
+    expect(sportPlaysMatches(Sport.AMERICAN_FOOTBALL)).toBe(true);
   });
 
   it('gives new playoffs four rounds and seven tiers of two, one for each pair of the 14 teams', () => {
@@ -318,10 +318,10 @@ describe('American football', () => {
   });
 });
 
-describe('sportPlaysBracket', () => {
+describe('sportPlaysMatches', () => {
   it('is true only for a sport whose tournament format is a knockout bracket', () => {
     for (const definition of definitions) {
-      expect(sportPlaysBracket(definition.sport)).toBe(definition.tournamentFormat === TournamentFormat.KNOCKOUT_BRACKET);
+      expect(sportPlaysMatches(definition.sport)).toBe(definition.tournamentFormat === TournamentFormat.MATCHES);
     }
   });
 });

@@ -1292,6 +1292,13 @@ Each is one PR opened against main, after knockout.
    (entry status per event), `ContestEntryEventStanding`. First use: the golf majors pool (#714).
 1. **NFL weeks as events** (#715): one event per week with its games, from the sport data
    pipeline; `KNOCKOUT_BRACKET` renamed to `MATCHES` (Q5.2a).
+   *As built in #715:* a week is an event of one round whose games all have `advancesTo: null`;
+   loading such a set skips the one-final check, even in a league that reseeds. Knockout round
+   points are refused on it at contest setup (`CONTEST_EVENT_NOT_A_BRACKET`). A postponed game
+   of a released week is cancelled with `cancelEventMatch`, and the admin adds it to its new
+   week while that week is a draft. The 2027 schedule is not published until about May 2027,
+   so its data file waits. QA test data is the 2025 season's weeks 1 to 3 as played
+   (`american-football-2025-nfl-weeks-test.json`).
 2. **Prediction contests and the weekly submit flow** (#716): `PREDICTION`,
    `ContestEntryMatchPrediction`, `PICK_EM` (straight-up, confidence), per-game lock and reveal.
 3. **Prediction scoring and weekly winners** (#717): the entry scorer, the weekly tiebreaker,

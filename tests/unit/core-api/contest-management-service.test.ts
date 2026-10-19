@@ -1528,7 +1528,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  function basketballService(rounds: number) {
+  function basketballService(rounds: number, bracketProblem: string | null = null) {
     const contestCoreRepo = createContestRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const service = new ContestManagementService(
@@ -1538,7 +1538,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       scoringRuleRepo,
       createSportEventTierServiceStub(),
       undefined,
-      createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET, rounds }),
+      createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.MATCHES, rounds, bracketProblem }),
     );
     return { contestCoreRepo, scoringRuleRepo, service };
   }
@@ -1563,6 +1563,17 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       name: 'Bracket Pool',
       configuration: { ...drawRules, scoring: knockoutScoring([1, 2, 4, 8, 16, 32]) },
     }))).rejects.toMatchObject({ code: CONTEST_SCORING_ROUNDS_MISMATCH, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  // #715: a regular-season week's games form no bracket, so there are no rounds to score a team by.
+  it('refuses knockout round values on an event whose games form no bracket (a regular-season week) with 422 CONTEST_EVENT_NOT_A_BRACKET, writing nothing', async () => {
+    const { contestCoreRepo, service } = basketballService(1, 'its last round has 16 games, not one final');
+
+    await expect(service.createContest({ leagueId: 'league-1' }, raceRequest({
+      name: 'Week Pool',
+      configuration: { ...drawRules, scoring: knockoutScoring([1]) },
+    }))).rejects.toMatchObject({ code: CONTEST_EVENT_NOT_A_BRACKET, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
@@ -1932,7 +1943,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const reader = createSportEventReader({
       sport: options.sport ?? Sport.AMERICAN_FOOTBALL,
-      tournamentFormat: options.tournamentFormat ?? TournamentFormat.KNOCKOUT_BRACKET,
+      tournamentFormat: options.tournamentFormat ?? TournamentFormat.MATCHES,
       rounds: options.rounds ?? 4,
       gameCount: options.gameCount,
       undecidedGameCount: options.undecidedGameCount,
@@ -2068,7 +2079,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const reader = createSportEventReader({
       sport: Sport.BASKETBALL,
-      tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
+      tournamentFormat: TournamentFormat.MATCHES,
       rounds: 4,
       gameCount: 15,
       bracketProblem: options.bracketProblem ?? null,
@@ -2142,7 +2153,7 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
   function secondChance(options: { roundOnePlayed?: boolean; eventStatus?: SportEventStatus; eventStartHours?: number } = {}) {
     const store = new InMemorySportEvents();
     const sport = store.addSport(Sport.BASKETBALL);
-    sport.tournamentFormat = TournamentFormat.KNOCKOUT_BRACKET;
+    sport.tournamentFormat = TournamentFormat.MATCHES;
     const event = store.addEvent({
       sport: Sport.BASKETBALL,
       status: options.eventStatus ?? SportEventStatus.IN_PROGRESS,
