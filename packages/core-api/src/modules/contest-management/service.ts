@@ -63,6 +63,7 @@ import {
   getTieredRosterSize,
   contestFormatForSelectionType,
   isContestFormatValidForTournamentFormat,
+  UpsetBonusRule,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
@@ -681,6 +682,17 @@ export class ContestManagementService {
         CONTEST_SELECTION_TYPE_NOT_ALLOWED,
       );
     }
+    if (rules.selectionType === SelectionType.PICK_EM) {
+      // A pick'em entry picks the winner of each game, so every event must have games (#716).
+      for (const each of sportEvents) {
+        await this.assertEventHasGames(each.id);
+        await this.assertEventGamesDecided(each.id);
+      }
+      return {
+        configJson: { selectionType: rules.selectionType, mode: rules.mode },
+        scoring: resolvePickEmScoring(scoringInput),
+      };
+    }
     const scoring = this.resolveContestScoring(sportEvent, scoringInput);
     for (const each of sportEvents) {
       this.assertScoringFitsEvent(each, scoring);
@@ -718,16 +730,6 @@ export class ContestManagementService {
             picksPerEntry: rules.picksPerEntry,
             countedScores: rules.countedScores,
           },
-          scoring,
-        };
-      case SelectionType.PICK_EM:
-        // A pick'em entry picks the winner of each game, so every event must have games (#716).
-        for (const each of sportEvents) {
-          await this.assertEventHasGames(each.id);
-          await this.assertEventGamesDecided(each.id);
-        }
-        return {
-          configJson: { selectionType: rules.selectionType, mode: rules.mode },
           scoring,
         };
       case SelectionType.BRACKET:
@@ -1052,6 +1054,20 @@ function defaultContestScoringSettings(
     default:
       return assertNever(participantScoringDefinitionId);
   }
+}
+
+/**
+ * A pick'em contest's stored scoring rule. A pick'em pool scores by its mode (#717): a correct
+ * pick is worth a point, or its confidence value, whatever rule the contest carries, so the
+ * commissioner sets no scoring table and the rule is never checked against a week's rounds. Every
+ * contest stores a rule, so one sent (or kept) is kept as it is, and otherwise the rule says what
+ * straight up scores: one point.
+ */
+function resolvePickEmScoring({ requested, kept }: ContestScoringInput): ContestScoringSettings {
+  return requested ?? kept ?? {
+    participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+    config: { roundValues: [1], upsetBonus: { rule: UpsetBonusRule.NONE } },
+  };
 }
 
 /** What a contest's scoring is resolved from: the settings sent, and the ones it already has. */
