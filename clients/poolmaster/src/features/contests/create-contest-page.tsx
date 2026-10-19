@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ListOrdered, Network, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
+import { CalendarCheck, ListOrdered, Network, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -57,6 +57,7 @@ import {
 import {
   EMPTY_SCORING_SETTINGS_VALUES,
   SCORING_SETTINGS_UI,
+  scoringSettingsUiFor,
 } from './contest-scoring-settings';
 import { EventChoices, NoEligibleEventsAlert, SetupSection, SportPicker } from './create-contest-sections';
 import { ContestRulesFields } from './contest-rules-fields';
@@ -92,6 +93,10 @@ const FORMAT_CHOICES: Record<CreatableSelectionType, { describe: (participant: S
   [SelectionType.RANDOM_DRAW]: {
     icon: Shuffle,
     describe: ({ many }) => `A sweepstake: nobody picks. Once entries are in, you run the draw and each entry is dealt ${many} at random.`,
+  },
+  [SelectionType.PICK_EM]: {
+    icon: CalendarCheck,
+    describe: () => 'Pick the winner of every game, week by week, straight up or ranked by confidence. Add the season\'s other weeks once the contest is created.',
   },
   [SelectionType.BRACKET]: {
     icon: Network,
@@ -204,7 +209,7 @@ export function CreateContestPage() {
   const { contestName, scoringDefinitionId, selectedTemplateId, selectionType, sport, sportEventId } = values;
   const sportDefinition = getSportDefinition(sport);
   const { participant } = sportDefinition.vocabulary;
-  const scoringSettingsUi = SCORING_SETTINGS_UI[scoringDefinitionId];
+  const scoringSettingsUi = scoringSettingsUiFor(selectionType, scoringDefinitionId);
   const [isNameEdited, setIsNameEdited] = useState(false);
   // The sport and sport league whose default preset was applied last: their default is applied
   // when their presets arrive and again on switching back to them; while both stay, Custom stays
@@ -435,7 +440,7 @@ export function CreateContestPage() {
       if (parsed.error !== null) {
         throw new Error(parsed.error);
       }
-      const scoring = SCORING_SETTINGS_UI[submitted.scoringDefinitionId].parse(submitted);
+      const scoring = scoringSettingsUiFor(submitted.selectionType, submitted.scoringDefinitionId).parse(submitted);
       if (scoring.error !== null) {
         throw new Error(scoring.error);
       }
@@ -549,7 +554,9 @@ export function CreateContestPage() {
       <SetupSection
         lead={selectionType === SelectionType.BRACKET
           ? `Released events that haven't started, and ${sportDefinition.vocabulary.event.many} under way for a second-chance bracket. Entries close at the ${sportDefinition.vocabulary.eventStart}, or at a second-chance bracket's first game.`
-          : `Released events that haven't started. Entries close at the ${sportDefinition.vocabulary.eventStart}.`}
+          : selectionType === SelectionType.PICK_EM
+            ? 'Released weeks that haven\'t started. Choose the first week of the contest; you add the rest of the season from its Events page. Each week closes at its first kickoff.'
+            : `Released events that haven't started. Entries close at the ${sportDefinition.vocabulary.eventStart}.`}
         step={1}
         testId="create-contest-event"
         title="Event"

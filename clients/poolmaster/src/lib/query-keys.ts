@@ -60,6 +60,8 @@ export const QueryKeys = {
     standings: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'standings'] as const,
     /** A bracket contest's leaderboard (#721): its own read, not the roster leaderboard. */
     bracketLeaderboard: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'bracket-leaderboard'] as const,
+    /** A pick'em contest's season leaderboard (#718): its own read, every week at once. */
+    pickEmLeaderboard: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'pick-em-leaderboard'] as const,
   },
   managedContests: {
     all: ['poolmaster', 'managed-contest'] as const,
@@ -91,7 +93,7 @@ export const QueryKeys = {
         ? (['poolmaster', 'selection-state', contestId, entryId] as const)
         : (['poolmaster', 'selection-state', contestId, entryId, sportEventId] as const),
   },
-  /** A prediction contest entry's game picks on one of its events: a bracket's picks (#721). */
+  /** A prediction contest entry's game picks on one of its events: a bracket's picks (#721), a pick'em week's (#718). */
   gamePicks: {
     all: ['poolmaster', 'game-picks'] as const,
     detail: (contestId: QueryKeyId, entryId: QueryKeyId, sportEventId: QueryKeyId) =>

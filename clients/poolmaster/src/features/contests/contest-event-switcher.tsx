@@ -9,6 +9,7 @@ import type { ContestSportEvent } from './contest-events';
 export function ContestEventSwitcher({
   describe,
   events,
+  label = 'Event',
   onChange,
   testId,
   value,
@@ -16,6 +17,8 @@ export function ContestEventSwitcher({
   /** A short note after an event's name, such as whether this entry submitted it. */
   describe?: (sportEvent: ContestSportEvent) => string | null;
   events: readonly ContestSportEvent[];
+  /** What the contest calls its events: a pick'em's are weeks. */
+  label?: string;
   onChange: (sportEventId: string) => void;
   testId: string;
   value: string;
@@ -25,7 +28,7 @@ export function ContestEventSwitcher({
   }
 
   return (
-    <FormField className="max-w-md" label="Event">
+    <FormField className="max-w-md" label={label}>
       <Select data-testid={testId} onChange={(event) => onChange(event.target.value)} value={value}>
         {events.map((sportEvent) => {
           const note = describe?.(sportEvent) ?? null;

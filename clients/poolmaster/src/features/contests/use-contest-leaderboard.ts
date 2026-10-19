@@ -1,6 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ContestStatus } from '@poolmaster/shared/domain';
-import { getBracketLeaderboard, getContestLeaderboard, type BracketLeaderboardResponse, type ContestLeaderboardResponse } from '@/lib/api';
+import {
+  getBracketLeaderboard,
+  getContestLeaderboard,
+  getPickEmLeaderboard,
+  type BracketLeaderboardResponse,
+  type ContestLeaderboardResponse,
+  type PickEmLeaderboardResponse,
+} from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { CONTEST_POLL_INTERVAL_MS, shouldPollContestEntries } from './contest-status';
@@ -56,6 +63,26 @@ export function useBracketLeaderboardQuery(
       return response.data;
     },
     enabled: Boolean(contestId) && (options.enabled ?? true),
+    retry: false,
+    refetchInterval: shouldPollContestEntries(status) ? CONTEST_POLL_INTERVAL_MS : false,
+  });
+}
+
+/**
+ * A pick'em contest's season leaderboard (#718): every week's points and places in one read, on
+ * the same cadence, so a week under way moves as its games are played.
+ */
+export function usePickEmLeaderboardQuery(contestId: string, status: ContestStatus | null | undefined) {
+  return useQuery({
+    queryKey: QueryKeys.contests.pickEmLeaderboard(contestId),
+    queryFn: async (): Promise<PickEmLeaderboardResponse> => {
+      const response = await getPickEmLeaderboard({ path: { contestId } });
+      if (!response.data) {
+        throwApiError(response.error, 'Pick\'em leaderboard response is missing data.');
+      }
+      return response.data;
+    },
+    enabled: Boolean(contestId),
     retry: false,
     refetchInterval: shouldPollContestEntries(status) ? CONTEST_POLL_INTERVAL_MS : false,
   });

@@ -1,6 +1,6 @@
 import {
   FinishPositionPointsSettingsSchema,
-  type SelectionType,
+  SelectionType,
   KnockoutRoundPointsSettingsSchema,
   UpsetBonusRule,
   type ContestScoringSettings,
@@ -189,3 +189,12 @@ export const SCORING_SETTINGS_UI: Readonly<Record<ParticipantScoringDefinitionId
   FINISH_POSITION_POINTS: finishPositionPointsUi,
   KNOCKOUT_ROUND_POINTS: knockoutRoundPointsUi,
 };
+
+/**
+ * The scoring settings Create contest offers a contest of this selection type. A pick'em pool
+ * scores by its mode alone (1 point, or the pick's confidence value), so it takes none; every
+ * other type takes its scoring definition's.
+ */
+export function scoringSettingsUiFor(selectionType: SelectionType, definitionId: ParticipantScoringDefinitionId): ScoringSettingsUi {
+  return selectionType === SelectionType.PICK_EM ? noSettingsUi : SCORING_SETTINGS_UI[definitionId];
+}

@@ -1036,6 +1036,17 @@ and locks and is revealed with that game's pick. Each completed week freezes its
 `ContestEntryEventStanding`s (place 1 wins the week); the contest's last week sums them into
 `ContestEntryStanding` and completes it. `getPickEmLeaderboard` is the season leaderboard.
 
+*As built in #718 (pick'em screens):* Create contest offers Pick'em with its mode, Straight up or
+Confidence, and no scoring settings, since the mode alone scores it. The contest starts on one week
+and the commissioner adds the season's others from its Events page (Add all). The entry page shows
+one week at a time with a week switcher: each game in kickoff order, away team first, picked with a
+tap; in a confidence pool each pick takes a value from a list, and choosing a value another open
+game holds swaps the two in one save. The tiebreaker is typed on the week's tiebreaker game. A draft
+week warns until its first kickoff that it scores nothing unless submitted, and once that kickoff
+passes it says so and locks. Another entry's pick on a game shows from that game's kickoff. The
+season leaderboard has a column per week with the entry's points and place, a trophy on each week's
+winners, and the season total.
+
 **Q5.5 What does `ACTIVE` mean for a pick'em contest?** *Decided by Derek 2026-10-17:* every
 week is its own mini workflow. Its event is set up, released, picked and submitted, then goes
 live and settles. The contest keeps the same four statuses as every contest. It is `ACTIVE`

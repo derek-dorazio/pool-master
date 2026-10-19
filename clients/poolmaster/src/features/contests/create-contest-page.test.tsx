@@ -546,7 +546,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     );
   });
 
-  it('offers basketball\'s roster formats and Bracket but not pick\'em, which has no screen to pick on yet', async () => {
+  it('offers basketball\'s roster formats, Pick\'em and Bracket', async () => {
     primeCommonMocks();
     renderCreateContestPage();
     await waitForStartingChoices();
@@ -557,9 +557,36 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-format-TIERED')).toBeInTheDocument();
     expect(screen.getByTestId('contest-format-BUDGET_PICK')).toBeInTheDocument();
     expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-format-PICK_EM')).toHaveTextContent('Pick’em');
     expect(screen.getByTestId('contest-format-BRACKET')).toBeInTheDocument();
-    expect(screen.queryByTestId('contest-format-PICK_EM')).not.toBeInTheDocument();
-    expect(screen.queryByText('Pick’em')).not.toBeInTheDocument();
+  });
+
+  it('creates a confidence pick\'em on its first week as a prediction contest with the mode chosen and no scoring settings, since the mode alone scores it', async () => {
+    primeBasketballMocks([basketballEvent({ id: 'week-1', name: 'Week 1', rounds: 1 })]);
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-pick-em' } } });
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+    await waitFor(() => expect(screen.getByTestId('contest-event-week-1')).toBeChecked());
+    fireEvent.click(screen.getByTestId('contest-format-PICK_EM'));
+
+    expect(await screen.findByTestId('contest-pick-em-mode-STRAIGHT_UP')).toBeChecked();
+    expect(screen.getByTestId('create-contest-event')).toHaveTextContent('you add the rest of the season from its Events page');
+    expect(screen.queryByTestId('contest-scoring-round-values')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('contest-pick-em-mode-CONFIDENCE'));
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Week 1 Pick’em'));
+    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('Pick the winner of every game, then rank each week’s picks by confidence.');
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).toEqual({
+      name: 'Week 1 Pick’em',
+      sportEventIds: ['week-1'],
+      contestFormat: 'PREDICTION',
+      selectionType: 'PICK_EM',
+      configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE', maxEntriesPerSquad: 1 },
+    });
   });
 
   it('offers Bracket on a basketball knockout event and creates a prediction contest with the bracket rules and the round points typed', async () => {

@@ -1867,13 +1867,14 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     ...overrides,
   });
 
-  function pickEmService(options: { gameCount: number; undecidedGameCount?: number; sport?: Sport; tournamentFormat?: TournamentFormat }) {
+  function pickEmService(options: { gameCount: number; undecidedGameCount?: number; sport?: Sport; tournamentFormat?: TournamentFormat; rounds?: number }) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
+    const scoringRuleRepo = createParticipantScoringRuleRepo();
     const reader = createSportEventReader({
       sport: options.sport ?? Sport.AMERICAN_FOOTBALL,
       tournamentFormat: options.tournamentFormat ?? TournamentFormat.KNOCKOUT_BRACKET,
-      rounds: 4,
+      rounds: options.rounds ?? 4,
       gameCount: options.gameCount,
       undecidedGameCount: options.undecidedGameCount,
     });
@@ -1881,13 +1882,42 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
       contestCoreRepo,
       createContestConfigTemplateRepo(),
       contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
+      scoringRuleRepo,
       createSportEventTierServiceStub(),
       undefined,
       reader,
     );
-    return { contestCoreRepo, contestConfigurationRepo, reader, service };
+    return { contestCoreRepo, contestConfigurationRepo, reader, scoringRuleRepo, service };
   }
+
+  // A pick'em pool scores by its mode (#717), so the commissioner sets no scoring table for it.
+  it('creates a pick\'em contest sent no scoring, storing a rule of one point a round that its scoring never reads', async () => {
+    const { contestCoreRepo, scoringRuleRepo, service } = pickEmService({ gameCount: 3 });
+
+    await service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: pickEmRules }));
+
+    expect(contestCoreRepo.create).toHaveBeenCalled();
+    expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1], upsetBonus: { rule: 'NONE' } } },
+    }));
+  });
+
+  it('refuses a pick\'em contest sent a scoring definition its sport does not offer with 422 CONTEST_SCORING_DEFINITION_NOT_ALLOWED, writing nothing', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 3 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({
+      configuration: { ...pickEmRules, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
+    }))).rejects.toMatchObject({ code: 'CONTEST_SCORING_DEFINITION_NOT_ALLOWED', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('creates a pick\'em contest whose round table does not match the week\'s rounds, since a pick\'em contest never scores by round', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 3, rounds: 1 });
+
+    await service.createContest({ leagueId: 'league-1' }, pickEmRequest());
+
+    expect(contestCoreRepo.create).toHaveBeenCalled();
+  });
 
   it('creates a PREDICTION pick\'em contest on an event with games, storing only its selection type and mode', async () => {
     const { contestCoreRepo, contestConfigurationRepo, service } = pickEmService({ gameCount: 3 });
