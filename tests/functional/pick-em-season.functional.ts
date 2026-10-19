@@ -240,6 +240,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
         configuration: {
           selectionType: SelectionType.PICK_EM,
           mode: PickEmMode.CONFIDENCE,
+          againstTheSpread: false,
           maxEntriesPerSquad: 1,
           scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 3], upsetBonus: { rule: 'NONE' } } },
         },

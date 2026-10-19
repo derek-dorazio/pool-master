@@ -6,6 +6,11 @@
  *   confidence value in a confidence pool.
  * - **A pick on a lost game, or on a tie,** earns nothing. A tie has no winner, so every pick on it
  *   is wrong (an NFL tie scores 0).
+ * - **Against the spread** (#720) a correct pick names the team that covers: the home team's
+ *   score plus its spread beats the away team's. A game that lands exactly on the spread is a
+ *   push, and every pick on it earns nothing, as does a game completed without its scores, which
+ *   cannot be measured against the spread. Contest setup refuses a week with a game missing its
+ *   spread, and a released game's spread can't be cleared, so every game of such a contest has one.
  * - **A cancelled game** is not one of the week's games, so a pick on it is not scored or counted,
  *   even when it was made before the cancellation. A confidence pool keeps the other picks' values
  *   as they were submitted, unrenumbered, so nobody's ranking moves after kickoff.
@@ -33,6 +38,24 @@ function winnerOf(game: SportEventMatch): string | null {
   return game.winnerSide === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;
 }
 
+/** How a pick'em pool scores its picks: weighted by its mode, and against the spread or straight up. */
+export interface GamePickScoring {
+  mode: PickEmMode;
+  againstTheSpread: boolean;
+}
+
+/**
+ * The team a completed game's result says covered its spread (#720); null for a push, and for a
+ * game without both scores and a spread to measure them by. Undefined for a game still to be decided.
+ */
+function coverOf(game: SportEventMatch): string | null | undefined {
+  if (game.status !== MatchStatus.COMPLETED) return undefined;
+  if (game.homeScore === null || game.awayScore === null || game.homeSpread === null) return null;
+  const margin = game.homeScore + game.homeSpread - game.awayScore;
+  if (margin === 0) return null;
+  return margin > 0 ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;
+}
+
 /** What a pick is worth when it is correct: 1 straight up, its confidence value in a confidence pool. */
 function pickValue(pick: GamePick, mode: PickEmMode): number {
   return mode === PickEmMode.CONFIDENCE ? pick.confidence ?? 0 : 1;
@@ -46,7 +69,7 @@ function pickValue(pick: GamePick, mode: PickEmMode): number {
 export function scoreGamePicks(
   games: readonly SportEventMatch[],
   picks: readonly GamePick[],
-  mode: PickEmMode,
+  { mode, againstTheSpread }: GamePickScoring,
 ): BracketScore {
   const gamesById = new Map(games.map((game) => [game.id, game]));
   const scored = new Map<string, ScoredBracketPick>();
@@ -57,10 +80,13 @@ export function scoreGamePicks(
     const game = gamesById.get(pick.sportEventMatchId);
     if (!game) continue;
     const value = pickValue(pick, mode);
+    const right = againstTheSpread ? coverOf(game) : winnerOf(game);
     if (game.status !== MatchStatus.COMPLETED) {
       scored.set(game.id, { outcome: PickOutcome.PENDING, points: null });
       pendingPoints += value;
-    } else if (winnerOf(game) === pick.sportEventParticipantId) {
+    } else if (againstTheSpread && right === null) {
+      scored.set(game.id, { outcome: PickOutcome.PUSH, points: 0 });
+    } else if (right === pick.sportEventParticipantId) {
       scored.set(game.id, { outcome: PickOutcome.CORRECT, points: value });
       points += value;
       correctPickCount += 1;

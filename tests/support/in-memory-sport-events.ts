@@ -33,6 +33,7 @@ import type {
   SportLeagueRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
+import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { BracketAdvancement, findSportRow, MatchSide, MatchStatus, ParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   GolfRoundResult,
@@ -64,6 +65,11 @@ function stamp<T extends object>(row: T): T & { createdAt: Date; updatedAt: Date
 function nullable<T>(value: T | null | undefined): T | undefined {
   return value === null ? undefined : value;
 }
+
+/** The picks side of the bracket service (#720) for an event no entry has picked: no spread is ever locked. */
+export const NO_PICKS_ON_EVENT: Pick<SportEventBracketServiceDeps, 'predictions'> = {
+  predictions: { hasAnyOnMatch: async () => false },
+};
 
 export class InMemorySportEvents {
   private sequence = 0;
@@ -592,6 +598,7 @@ export class InMemorySportEvents {
           ...matches.map((match) => stamp({
             ...match,
             sportEventId,
+            homeSpread: null,
             status: MatchStatus.SCHEDULED,
             winnerSide: null,
             homeScore: null,

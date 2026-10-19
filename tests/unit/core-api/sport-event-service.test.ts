@@ -5,7 +5,7 @@ import { SportEventService } from '../../../packages/core-api/src/modules/events
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
-import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
 import {
   fakeContestConfigurationRepo,
@@ -57,6 +57,7 @@ function setup(sportName: Sport = Sport.GOLF) {
       field: store.fieldRepo(),
       participants: store.participantRepo(),
       matches: store.matchRepo(),
+      ...NO_PICKS_ON_EVENT,
     }),
     lifecycle,
     now: () => NOW,

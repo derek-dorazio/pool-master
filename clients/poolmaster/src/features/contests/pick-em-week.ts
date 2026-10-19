@@ -23,6 +23,31 @@ export function describeMatchup(game: PickEmGame): string {
   return `${away?.name ?? 'To be decided'} ${game.isNeutralSite ? 'vs' : 'at'} ${home?.name ?? 'To be decided'}`;
 }
 
+/** "-3.5", "+7", or "PK" for a pick'em line: a spread as a sportsbook prints it. */
+export function formatSpread(spread: number): string {
+  if (spread === 0) {
+    return 'PK';
+  }
+  return spread > 0 ? `+${spread}` : String(spread);
+}
+
+/**
+ * The spread a team plays the game at (#720), as shown beside it when the pool is scored against
+ * the spread: the home spread for the home team and its opposite for the away team. Null when the
+ * pool is not against the spread or the game has no spread yet.
+ */
+export function teamSpread(
+  gamePicks: Pick<GamePicksResponse, 'againstTheSpread'>,
+  game: Pick<PickEmGame, 'home' | 'homeSpread'>,
+  team: PickEmTeam,
+): string | null {
+  if (!gamePicks.againstTheSpread || game.homeSpread === null) {
+    return null;
+  }
+  const isHome = team.sportEventParticipantId === game.home?.sportEventParticipantId;
+  return formatSpread(isHome ? game.homeSpread : -game.homeSpread);
+}
+
 /** The week's first kickoff: a draft week still unsubmitted then scores nothing. Null for a week with no games. */
 export function firstKickoff(games: readonly PickEmGame[]): string | null {
   return games.reduce<string | null>(

@@ -139,6 +139,8 @@ export interface GamePicksView {
   selectionType: PredictionSelectionType;
   /** A pick'em pool's mode; null in a bracket or survivor pool. */
   mode: PickEmMode | null;
+  /** A pick'em pool scored against each game's spread (#720); false in every other pool. */
+  againstTheSpread: boolean;
   /** A survivor entry's season (#719); null in the other pools. */
   survivor: GamePicksSurvivorView | null;
   status: ContestEntryStatus;
@@ -170,6 +172,7 @@ interface WeekContext {
   engine: PredictionEngine;
   selectionType: PredictionSelectionType;
   mode: PickEmMode | null;
+  againstTheSpread: boolean;
   sportEvent: SportEvent;
   /** The timing the contest's window runs on: the event's, or its starting round's for a second-chance bracket (#721). */
   window: EventTiming;
@@ -498,6 +501,7 @@ export class PredictionService {
       engine,
       selectionType,
       mode: rules.selectionType === SelectionType.PICK_EM ? rules.mode : null,
+      againstTheSpread: rules.selectionType === SelectionType.PICK_EM && rules.againstTheSpread,
       sportEvent,
       window: cutoffTiming(contestCutoff(rules), sportEvent, matches),
       field,
@@ -599,6 +603,7 @@ export class PredictionService {
       sportEventId: sportEvent.id,
       selectionType: context.selectionType,
       mode: context.mode,
+      againstTheSpread: context.againstTheSpread,
       survivor: context.season === null ? null : {
         eliminatedInWeek: context.season.eliminatedInWeek,
         usedParticipantIds: ownEntry ? [...context.season.usedParticipantIds] : null,

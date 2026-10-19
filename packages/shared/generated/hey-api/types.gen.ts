@@ -2802,6 +2802,10 @@ export type ContestConfigurationRequest = {
      */
     mode: 'STRAIGHT_UP' | 'CONFIDENCE';
     /**
+     * Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.
+     */
+    againstTheSpread: boolean;
+    /**
      * Maximum entries a Team may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
@@ -3195,6 +3199,10 @@ export type ContestManagementDetailDto = {
          */
         mode: 'STRAIGHT_UP' | 'CONFIDENCE';
         /**
+         * Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.
+         */
+        againstTheSpread: boolean;
+        /**
          * Contest-configuration identifier.
          */
         id: string;
@@ -3506,6 +3514,10 @@ export type ContestConfigTemplateDto = {
          */
         mode: 'STRAIGHT_UP' | 'CONFIDENCE';
         /**
+         * Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.
+         */
+        againstTheSpread: boolean;
+        /**
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
@@ -3816,6 +3828,10 @@ export type ContestManagementResponse = {
              * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
              */
             mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+            /**
+             * Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.
+             */
+            againstTheSpread: boolean;
             /**
              * Contest-configuration identifier.
              */
@@ -4155,6 +4171,10 @@ export type ContestConfigTemplateListResponse = {
              * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
              */
             mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+            /**
+             * Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.
+             */
+            againstTheSpread: boolean;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -4536,6 +4556,10 @@ export type UpdateContestConfigTemplateRequest = {
          * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
          */
         mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+        /**
+         * Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.
+         */
+        againstTheSpread: boolean;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -4952,6 +4976,10 @@ export type ContestConfigTemplateResponse = {
              * STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
              */
             mode: 'STRAIGHT_UP' | 'CONFIDENCE';
+            /**
+             * Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.
+             */
+            againstTheSpread: boolean;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -8687,6 +8715,10 @@ export type CreateContestRequest = {
          */
         mode: 'STRAIGHT_UP' | 'CONFIDENCE';
         /**
+         * Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.
+         */
+        againstTheSpread: boolean;
+        /**
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
@@ -10614,6 +10646,10 @@ export type PickEmLeaderboardResponse = {
     contestId: string;
     mode: 'STRAIGHT_UP' | 'CONFIDENCE';
     /**
+     * Whether picks are scored against each game's spread.
+     */
+    againstTheSpread: boolean;
+    /**
      * The contest's weeks in its week order.
      */
     weeks: Array<{
@@ -10760,6 +10796,10 @@ export type GamePicksResponse = {
      */
     mode: 'STRAIGHT_UP' | 'CONFIDENCE' | null;
     /**
+     * Whether picks are scored against each game's spread: a pick names the team that covers. Only a pick'em pool can be.
+     */
+    againstTheSpread: boolean;
+    /**
      * A survivor pool's season for the entry; null in the other pools.
      */
     survivor: {
@@ -10823,6 +10863,10 @@ export type GamePicksResponse = {
          * The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none.
          */
         regionLabel: string | null;
+        /**
+         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set.
+         */
+        homeSpread: number | null;
         /**
          * The team really playing on this side; null until it is decided.
          */
@@ -10889,11 +10933,11 @@ export type GamePicksResponse = {
             confidence: number | null;
             pickedAt: string;
             /**
-             * How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round), BUSTED once it can no longer come true (a loss, a tie, or in a bracket its team out), else PENDING.
+             * How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING.
              */
-            outcome: 'CORRECT' | 'BUSTED' | 'PENDING' | null;
+            outcome: 'CORRECT' | 'BUSTED' | 'PUSH' | 'PENDING' | null;
             /**
-             * What the pick earned when CORRECT: in a bracket its round's value plus any upset bonus, in a pick'em pool 1 point straight up or its confidence value. 0 when BUSTED, null while PENDING or not scored.
+             * What the pick earned when CORRECT: in a bracket its round's value plus any upset bonus, in a pick'em pool 1 point straight up or its confidence value. 0 when BUSTED or PUSH, null while PENDING or not scored.
              */
             points: number | null;
         } | null;
@@ -13793,6 +13837,10 @@ export type SportEventMatchDto = {
      * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
      */
     regionLabel: string | null;
+    /**
+     * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
+     */
+    homeSpread: number | null;
 };
 
 /**
@@ -13857,6 +13905,10 @@ export type SportEventBracketResponse = {
          * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
          */
         regionLabel: string | null;
+        /**
+         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
+         */
+        homeSpread: number | null;
     }>;
 };
 
@@ -13922,6 +13974,10 @@ export type SportEventMatchResponse = {
          * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
          */
         regionLabel: string | null;
+        /**
+         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
+         */
+        homeSpread: number | null;
     };
 };
 
@@ -13969,7 +14025,7 @@ export type LoadSportEventBracketRequest = {
 };
 
 /**
- * One match edit. Its time and site can change at any point; its sides only until the event is released.
+ * One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game.
  */
 export type UpdateSportEventMatchRequest = {
     /**
@@ -13985,6 +14041,10 @@ export type UpdateSportEventMatchRequest = {
      * Omitted keeps it; null clears it.
      */
     scheduledDate?: string | null;
+    /**
+     * The points spread from the home team's side, in half points (-3.5: the home team favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game.
+     */
+    homeSpread?: number | null;
 };
 
 /**
@@ -17171,7 +17231,7 @@ export type CreateContestErrors = {
      */
     409: ErrorEnvelope;
     /**
-     * The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).
+     * The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).
      */
     422: ErrorEnvelope;
 };
@@ -17355,7 +17415,7 @@ export type SetContestSportEventsErrors = {
      */
     409: ErrorEnvelope;
     /**
-     * SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event.
+     * SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules.
      */
     422: ErrorEnvelope;
 };

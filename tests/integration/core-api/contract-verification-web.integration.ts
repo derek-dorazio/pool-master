@@ -894,7 +894,7 @@ describe('Contract verification (web)', () => {
         contestId: contest.id,
         selectionType: SelectionType.PICK_EM,
         maxEntriesPerSquad: 1,
-        configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE },
+        configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false },
       },
     });
     // Entered before the contest has an event, so the entry does not wait on a loaded field.

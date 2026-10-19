@@ -60,7 +60,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
     sportEventIds: [sportEvent.id],
   });
   world.addConfiguration(contest.id, selectionType === SelectionType.PICK_EM
-    ? { selectionType, configJson: { selectionType: SelectionType.PICK_EM, mode } }
+    ? { selectionType, configJson: { selectionType: SelectionType.PICK_EM, mode, againstTheSpread: false } }
     : {});
   const aliceEntry: ContestEntry = {
     id: 'entry-alice', contestId: contest.id, squadId: aliceSquad.id, entryNumber: 1, name: 'Alice FC',
@@ -537,7 +537,7 @@ describe('PredictionService.getGamePicks — what each viewer sees', () => {
 
     const view = await context.service.getGamePicks(context.input);
 
-    expect(view).toMatchObject({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, tiebreakerValue: 41, points: 0, maxPossiblePoints: 6 });
+    expect(view).toMatchObject({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false, tiebreakerValue: 41, points: 0, maxPossiblePoints: 6 });
     const thursday = expectDefined(view.games.find((game) => game.match.id === context.games.thursday.id));
     expect(thursday.predictedHome).toEqual(thursday.home);
     expect(thursday.predictedAway).toEqual(thursday.away);

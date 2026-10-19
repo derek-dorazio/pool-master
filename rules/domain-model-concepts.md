@@ -66,6 +66,10 @@ Two readings of this chain have both been held at once, so it is worth stating p
   Every week needs one to submit. A roster contest's tiebreaker stays on the `ContestEntry`.
 - **A pick'em pick scores by the pool's mode** (#717), not by a scoring definition: 1 point
   straight up, its confidence value in a confidence pool, nothing for a loss or a tie.
+- **A pool against the spread scores the team that covers** (`againstTheSpread`, #720), in
+  either mode. Each game carries its spread from the home side (`homeSpread`, "Chiefs -3.5"); a
+  team covers when its score plus its spread beats the other team's. A game landing exactly on
+  the spread is a **push**, worth nothing to either side.
 - **A survivor entry plays until it loses** (`SURVIVOR`, #719): one pick a week, each team once
   a season (by participant, not field row), out after a loss, a tie or a week not submitted by
   its first kickoff, and out for good. Its score is the weeks it survived; it has no tiebreaker.

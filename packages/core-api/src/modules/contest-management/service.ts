@@ -30,6 +30,7 @@ import {
   CONTEST_EVENT_GAME_UNDECIDED,
   CONTEST_EVENT_NOT_A_BRACKET,
   CONTEST_EVENT_HAS_NO_GAMES,
+  CONTEST_EVENT_SPREAD_MISSING,
   CONTEST_NOT_DRAFT,
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
@@ -104,6 +105,8 @@ export interface ContestCreateSportEventReader {
   countGames(sportEventId: string): Promise<number>;
   /** How many of those games still have a team to be decided. */
   countUndecidedGames(sportEventId: string): Promise<number>;
+  /** How many of those games have no spread yet (#720). */
+  countGamesWithoutSpread(sportEventId: string): Promise<number>;
   /** Why the event's games from `startsAtRound` on cannot be filled in as a bracket, or null when they can (#721). */
   findBracketProblem(sportEventId: string, startsAtRound: number): Promise<string | null>;
   /** When a contest with this cutoff closes on the event (#721): at its start, or at its starting round's first game. */
@@ -733,9 +736,13 @@ export class ContestManagementService {
       for (const each of sportEvents) {
         await this.assertEventHasGames(each.id);
         await this.assertEventGamesDecided(each.id);
+        // Picks against the spread need every game's spread before the week joins the contest (#720).
+        if (rules.againstTheSpread) {
+          await this.assertEventGamesSpread(each.id);
+        }
       }
       return {
-        configJson: { selectionType: rules.selectionType, mode: rules.mode },
+        configJson: { selectionType: rules.selectionType, mode: rules.mode, againstTheSpread: rules.againstTheSpread },
         scoring: this.resolvePickEmScoring(sportEvent, scoringInput),
       };
     }
@@ -855,6 +862,18 @@ export class ContestManagementService {
     throw new ContestManagementError(
       'A pick\'em contest\'s events must have both teams of every game decided.',
       CONTEST_EVENT_GAME_UNDECIDED,
+    );
+  }
+
+  private async assertEventGamesSpread(sportEventId: string): Promise<void> {
+    const unspread = await this.sportEventReader.countGamesWithoutSpread(sportEventId);
+    if (unspread === 0) {
+      return;
+    }
+    this.logger.warn({ sportEventId, unspread }, 'contest management rules refused against-the-spread picks on a released event with a game missing its spread');
+    throw new ContestManagementError(
+      'Every game of a released week needs its spread before a contest can score it against the spread.',
+      CONTEST_EVENT_SPREAD_MISSING,
     );
   }
 

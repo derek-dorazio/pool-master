@@ -25,6 +25,7 @@ export interface SportEventMatchPatch {
   awaySportEventParticipantId?: string | null;
   isNeutralSite?: boolean;
   scheduledDate?: Date | null;
+  homeSpread?: number | null;
 }
 
 /** A match's result as it is written: entered (COMPLETED with a winner) or cleared (SCHEDULED, empty). */

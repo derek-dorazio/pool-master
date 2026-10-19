@@ -43,6 +43,7 @@ export function bracketMatches(sportEventId: string, specs: readonly BracketMatc
     advancesToMatchId: spec.advancesTo ? `m${spec.advancesTo.matchNumber}` : null,
     advancesToSide: spec.advancesTo?.side ?? null,
     regionLabel: spec.region ?? null,
+    homeSpread: null,
     createdAt: T0,
     updatedAt: T0,
   }));

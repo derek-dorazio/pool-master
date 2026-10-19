@@ -28,4 +28,23 @@ describe('contest rules fields for a pick\'em contest', () => {
 
     expect(onChange).toHaveBeenCalledWith({ pickEmMode: PickEmMode.CONFIDENCE });
   });
+
+  it('offers scoring against the spread, off by default, and reports it when ticked', () => {
+    const onChange = vi.fn();
+    render(
+      <ContestRulesFields
+        onChange={onChange}
+        participant={TEAM}
+        salaryCap={null}
+        selectionType={SelectionType.PICK_EM}
+        tierCount={0}
+        values={DEFAULT_CONTEST_RULES}
+      />,
+    );
+
+    expect(screen.getByTestId('contest-pick-em-against-the-spread')).not.toBeChecked();
+    fireEvent.click(screen.getByTestId('contest-pick-em-against-the-spread'));
+
+    expect(onChange).toHaveBeenCalledWith({ pickEmAgainstTheSpread: true });
+  });
 });

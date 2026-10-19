@@ -25,6 +25,7 @@ import {
   CONTEST_EVENT_HAS_NO_GAMES,
   CONTEST_EVENT_NOT_A_BRACKET,
   CONTEST_EVENT_NOT_PRICED,
+  CONTEST_EVENT_SPREAD_MISSING,
   CONTEST_NOT_DRAFT,
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
   CONTEST_SCORING_ROUNDS_MISMATCH,
@@ -232,12 +233,14 @@ function createSportEventReader(overrides?: Partial<{
   activeFieldPrices: number[];
   gameCount: number;
   undecidedGameCount: number;
+  gamesWithoutSpreadCount: number;
   bracketProblem: string | null;
 }>): {
   findById: jest.Mock;
   findActiveFieldPrices: jest.Mock;
   countGames: jest.Mock;
   countUndecidedGames: jest.Mock;
+  countGamesWithoutSpread: jest.Mock;
   findBracketProblem: jest.Mock;
   findCutoffTiming: jest.Mock;
 } {
@@ -245,6 +248,7 @@ function createSportEventReader(overrides?: Partial<{
     findActiveFieldPrices: jest.fn().mockResolvedValue(overrides?.activeFieldPrices ?? []),
     countGames: jest.fn().mockResolvedValue(overrides?.gameCount ?? 0),
     countUndecidedGames: jest.fn().mockResolvedValue(overrides?.undecidedGameCount ?? 0),
+    countGamesWithoutSpread: jest.fn().mockResolvedValue(overrides?.gamesWithoutSpreadCount ?? 0),
     findBracketProblem: jest.fn().mockResolvedValue(overrides?.bracketProblem ?? null),
     // The event's own timing for an ordinary contest; a later round's start would read its games, of which this event has none.
     findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
@@ -1653,6 +1657,7 @@ describe('ContestManagementService — a contest of several events', () => {
       findActiveFieldPrices: jest.fn().mockResolvedValue([10, 10, 10]),
       countGames: jest.fn().mockResolvedValue(0),
       countUndecidedGames: jest.fn().mockResolvedValue(0),
+      countGamesWithoutSpread: jest.fn().mockResolvedValue(0),
       findBracketProblem: jest.fn().mockResolvedValue(null),
       findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
     };
@@ -1923,7 +1928,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     jest.useRealTimers();
   });
 
-  const pickEmRules = { selectionType: SelectionType.PICK_EM, maxEntriesPerSquad: 1, mode: PickEmMode.CONFIDENCE } as const;
+  const pickEmRules = { selectionType: SelectionType.PICK_EM, maxEntriesPerSquad: 1, mode: PickEmMode.CONFIDENCE, againstTheSpread: false } as const;
   const knockoutScoring: ContestScoringSettings = {
     participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
     config: { roundValues: [1, 2, 4, 8], upsetBonus: { rule: 'NONE' } },
@@ -1937,7 +1942,14 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     ...overrides,
   });
 
-  function pickEmService(options: { gameCount: number; undecidedGameCount?: number; sport?: Sport; tournamentFormat?: TournamentFormat; rounds?: number }) {
+  function pickEmService(options: {
+    gameCount: number;
+    undecidedGameCount?: number;
+    gamesWithoutSpreadCount?: number;
+    sport?: Sport;
+    tournamentFormat?: TournamentFormat;
+    rounds?: number;
+  }) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
@@ -1947,6 +1959,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
       rounds: options.rounds ?? 4,
       gameCount: options.gameCount,
       undecidedGameCount: options.undecidedGameCount,
+      gamesWithoutSpreadCount: options.gamesWithoutSpreadCount,
     });
     const service = new ContestManagementService(
       contestCoreRepo,
@@ -2000,7 +2013,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     }));
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.PICK_EM,
-      configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE },
+      configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false },
     }));
   });
 
@@ -2018,6 +2031,35 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest()))
       .rejects.toMatchObject({ code: 'CONTEST_EVENT_GAME_UNDECIDED', statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  // #720: picks against the spread need every game's spread before the week joins the contest.
+  it('creates a pick\'em contest against the spread on a released week whose games all have a spread, storing the option', async () => {
+    const { contestConfigurationRepo, reader, service } = pickEmService({ gameCount: 3 });
+
+    await service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: { ...pickEmRules, againstTheSpread: true } }));
+
+    expect(reader.countGamesWithoutSpread).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111');
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: true },
+    }));
+  });
+
+  it('refuses a pick\'em contest against the spread on a released week with a game lacking a spread with 422 CONTEST_EVENT_SPREAD_MISSING, writing nothing', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 3, gamesWithoutSpreadCount: 1 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: { ...pickEmRules, againstTheSpread: true } })))
+      .rejects.toMatchObject({ code: CONTEST_EVENT_SPREAD_MISSING, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('creates a straight-up pick\'em contest on a week with no spreads, never reading them', async () => {
+    const { contestCoreRepo, reader, service } = pickEmService({ gameCount: 3, gamesWithoutSpreadCount: 3 });
+
+    await service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: pickEmRules }));
+
+    expect(reader.countGamesWithoutSpread).not.toHaveBeenCalled();
+    expect(contestCoreRepo.create).toHaveBeenCalled();
   });
 
   it('refuses PICK_EM sent as a ROSTER contest with 422 CONTEST_FORMAT_NOT_ALLOWED, writing nothing', async () => {

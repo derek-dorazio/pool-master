@@ -42,6 +42,7 @@ export interface PickEmLeaderboardEntryRow {
 export interface PickEmLeaderboardModel {
   contestId: string;
   mode: PickEmMode;
+  againstTheSpread: boolean;
   weeks: PickEmLeaderboardWeekRow[];
   entries: PickEmLeaderboardEntryRow[];
 }
@@ -50,6 +51,7 @@ export function toPickEmLeaderboardResponse(model: PickEmLeaderboardModel): Pick
   return {
     contestId: model.contestId,
     mode: model.mode,
+    againstTheSpread: model.againstTheSpread,
     weeks: model.weeks.map((week) => ({
       ...week,
       startDate: week.startDate.toISOString(),

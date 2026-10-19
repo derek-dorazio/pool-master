@@ -86,12 +86,14 @@ export function pickedTeam(game: BracketGame): BracketTeam | null {
 const OUTCOME_LABELS: Record<PickOutcome, string> = {
   CORRECT: 'Correct',
   BUSTED: 'Busted',
+  PUSH: 'Push',
   PENDING: 'Pending',
 };
 
 const OUTCOME_TONES: Record<PickOutcome, NonNullable<StatusBadgeProps['tone']>> = {
   CORRECT: 'success',
   BUSTED: 'danger',
+  PUSH: 'neutral',
   PENDING: 'neutral',
 };
 

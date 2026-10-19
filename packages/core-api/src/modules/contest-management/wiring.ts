@@ -103,6 +103,8 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
     countUndecidedGames: async (sportEventId) =>
       (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED
         && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null)).length,
+    countGamesWithoutSpread: async (sportEventId) =>
+      (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED && match.homeSpread === null).length,
     findBracketProblem: async (sportEventId, startsAtRound) => {
       const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
       return findBracketProblem(contestBracketGames(games, startsAtRound), knockoutSeeds(entries), startsAtRound);

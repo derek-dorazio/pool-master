@@ -445,7 +445,7 @@ describe('Contest management integration', () => {
         sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'PICK_EM',
-        configuration: { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP' },
+        configuration: { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP', againstTheSpread: false },
       },
     });
 

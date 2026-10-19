@@ -417,6 +417,11 @@ keeps that seed's team rankings. Like the playoffs, each week is moved forward, 
 cancelled with *Cancel game* on its row of the week's results page, and added to the week it
 moves to while that week is a draft.
 
+The seed carries no spreads. To try a pool scored against the spread (#720), set each game's
+spread first with *Set spread* on its row of the results page: the home team's spread in half
+points, such as -3.5 for a favourite. Create contest refuses such a pool on a week with any game
+still unspread. A game's spread can change until an entry picks it.
+
 ## Seeded College Football Playoff
 
 `american-football-2025-cfp-test.json` is a test seed of the 2025-26 College Football Playoff

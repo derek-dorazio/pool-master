@@ -60,7 +60,7 @@ function setup() {
   });
   world.addConfiguration(contest.id, {
     selectionType: SelectionType.PICK_EM,
-    configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP },
+    configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
   });
   const viewer = world.addUser({ email: 'viewer@example.com' });
   world.addMember(league.id, viewer.id);
@@ -163,7 +163,7 @@ describe('loadPickEmWeekStandings', () => {
     const week = await loadPickEmWeekStandings(context.world.contestServiceDeps({
       predictions: context.games.predictionRepo(),
       matches: context.games.matchRepo(),
-    }), context.contest.id, expectDefined(context.world.sportEvents.get(context.week1.id)), PickEmMode.STRAIGHT_UP);
+    }), context.contest.id, expectDefined(context.world.sportEvents.get(context.week1.id)), { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false });
 
     expect(week).toMatchObject({ gameCount: 3, tiebreakerTotalPoints: 41, eventCancelled: false });
     expect(week.entries.map((standing) => [standing.entry.name, standing.score.points, standing.tiebreakerValue, standing.displayPosition])).toEqual([

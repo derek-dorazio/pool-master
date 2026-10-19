@@ -29,6 +29,7 @@ export const SportEventMatchDtoSchema = z.object({
   advancesToMatchId: z.string().uuid().nullable().describe('The match the winner moves on to; null for the final.'),
   advancesToSide: MatchSideDtoSchema.nullable().describe('The side of that match the winner fills; null for the final.'),
   regionLabel: z.string().nullable().describe('The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.'),
+  homeSpread: z.number().nullable().describe('The points spread from the home team\'s side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick\'em contest scored against the spread reads it.'),
 }).describe('One game or match of an event, which in a bracket is also a slot naming where its winner goes.');
 export type SportEventMatchDto = z.infer<typeof SportEventMatchDtoSchema>;
 
@@ -66,7 +67,9 @@ export const UpdateSportEventMatchRequestSchema = z.object({
   awaySportEventParticipantId: z.string().uuid().nullable().optional().describe('Omitted keeps it; null empties the side. Only until the event is released.'),
   isNeutralSite: z.boolean().optional(),
   scheduledDate: z.string().datetime().nullable().optional().describe('Omitted keeps it; null clears it.'),
-}).describe('One match edit. Its time and site can change at any point; its sides only until the event is released.');
+  homeSpread: z.number().min(-99.5).max(99.5).multipleOf(0.5).nullable().optional()
+    .describe('The points spread from the home team\'s side, in half points (-3.5: the home team favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game.'),
+}).describe('One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game.');
 export type UpdateSportEventMatchRequest = z.infer<typeof UpdateSportEventMatchRequestSchema>;
 
 export const FillPlayInSlotRequestSchema = z.object({

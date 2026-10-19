@@ -60,6 +60,11 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
     }));
   }
 
+  async hasAnyOnMatch(sportEventMatchId: string): Promise<boolean> {
+    const row = await this.prisma.contestEntryMatchPrediction.findFirst({ where: { sportEventMatchId }, select: { id: true } });
+    return row !== null;
+  }
+
   async save(change: ContestEntryMatchPredictionSave): Promise<void> {
     const { contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at } = change;
     await this.prisma.$transaction(async (tx) => {

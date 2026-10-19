@@ -8,6 +8,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   PrismaContestConfigurationRepository,
+  PrismaContestEntryMatchPredictionRepository,
   PrismaContestEntryRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
@@ -91,6 +92,7 @@ export function createSportEventBracketService(prisma: PrismaClient, logger?: Fa
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
     matches: new PrismaSportEventMatchRepository(prisma),
+    predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
     logger,
   });
 }

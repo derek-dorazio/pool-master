@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { MatchSide, MatchStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, ConfirmDialog, formatDateTimeDisplay, Select, StatusBadge } from '@/features/shared/ui';
+import { formatSpread } from '@/features/contests/pick-em-week';
+import { Button, ConfirmDialog, formatDateTimeDisplay, Input, Select, StatusBadge } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, describeEntry, feederOf, matchNoun, sideEntry } from './bracket-copy';
+import { bracketErrorMessages, describeEntry, feederOf, formsNoBracket, matchNoun, sideEntry } from './bracket-copy';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
 
@@ -34,6 +35,8 @@ export type BracketContext = {
   bracket: readonly SportEventMatchDto[];
   field: readonly SportEventParticipantDto[];
   fieldById: ReadonlyMap<string, SportEventParticipantDto>;
+  /** Whether the rows carry a spread column: a week of games that forms no bracket (#720). */
+  spreads: boolean;
 };
 
 /** A side's team, with its seed, or who fills it while that is still to be decided. */
@@ -59,14 +62,6 @@ function describePairing(match: SportEventMatchDto, context: BracketContext): st
  */
 function bracketInvalidates(eventId: string) {
   return [QueryKeys.rootAdmin.manageSport.event(eventId)];
-}
-
-/**
- * Whether the event's games form no bracket (a week of NFL games, #715): none links to another
- * and all are in one round. Only such a game can be cancelled, since a bracket can't lose one.
- */
-function formsNoBracket(bracket: readonly SportEventMatchDto[]): boolean {
-  return bracket.every((game) => game.advancesToMatchId === null && game.roundNumber === bracket[0]?.roundNumber);
 }
 
 /**
@@ -135,6 +130,11 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
           <PairingEditor context={context} homeFed={homeFed} awayFed={awayFed} match={match} onDone={() => setEditing(false)} />
         ) : describePairing(match, context)}
       </td>
+      {context.spreads ? (
+        <td className="px-4 py-2" data-testid={`root-admin-bracket-spread-${match.matchNumber}`}>
+          <SpreadCell context={context} match={match} released={released} />
+        </td>
+      ) : null}
       <td className="px-4 py-2 text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, 'To be announced')}</td>
       <td className="px-4 py-2">
         <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{MATCH_STATUS_LABEL[match.status]}</StatusBadge>
@@ -314,6 +314,114 @@ function PairingEditor({
           {extractErrorMessage(save.error, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: `This ${noun.one}'s pairing could not be saved. Try again.`,
+          })}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** "Chiefs -3.5": the spread told from the home team's side, or "No spread" while it has none. */
+function describeSpread(match: SportEventMatchDto, context: BracketContext): string {
+  if (match.homeSpread === null) {
+    return 'No spread';
+  }
+  const home = sideEntry(match, MatchSide.HOME, context.fieldById);
+  const spread = formatSpread(match.homeSpread);
+  return home ? `${home.participant.name} ${spread}` : `Home ${spread}`;
+}
+
+/**
+ * A game's points spread from the home side (#720), used by pools scored against the spread. An
+ * admin sets it before release, and after release while no entry has picked the game, which the
+ * server checks, though never back to none; a cancelled game keeps its spread.
+ */
+function SpreadCell({ match, released, context }: { match: SportEventMatchDto; released: boolean; context: BracketContext }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(match.homeSpread === null ? '' : String(match.homeSpread));
+  const home = sideEntry(match, MatchSide.HOME, context.fieldById);
+  const parsed = value.trim() === '' ? null : Number(value);
+  // A released game keeps its spread once set: only a draft one can go back to none.
+  const clearing = parsed === null && released;
+  const valid = parsed === null ? !clearing : Number.isFinite(parsed) && Math.abs(parsed) <= 99.5 && Number.isInteger(parsed * 2);
+
+  const save = useInvalidatingMutation({
+    mutationFn: async (homeSpread: number | null) => {
+      const response = await updateEventBracketMatch({
+        path: { eventId: context.eventId, matchNumber: match.matchNumber },
+        body: { homeSpread },
+      });
+      if (response.error) {
+        throwApiError(response.error);
+      }
+      return response.data;
+    },
+    invalidates: bracketInvalidates(context.eventId),
+    onSuccess: () => setEditing(false),
+    onError: (error, homeSpread) => {
+      logger.warn({ action: 'event.bracket.spread.failed', data: { matchNumber: match.matchNumber, homeSpread }, err: error }, 'Spread edit was rejected');
+    },
+  });
+
+  if (!editing) {
+    return (
+      <div className="flex flex-col items-start gap-1">
+        <span className={match.homeSpread === null ? 'text-muted-foreground' : undefined}>{describeSpread(match, context)}</span>
+        {match.status !== MatchStatus.CANCELLED ? (
+          <Button
+            data-testid={`root-admin-bracket-spread-edit-${match.matchNumber}`}
+            onClick={() => {
+              save.reset();
+              setValue(match.homeSpread === null ? '' : String(match.homeSpread));
+              setEditing(true);
+            }}
+            size="sm"
+            variant="ghost"
+          >
+            {match.homeSpread === null ? 'Set spread' : 'Change spread'}
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        {`${home ? home.participant.name : 'Home'} spread`}
+        <Input
+          data-testid={`root-admin-bracket-spread-input-${match.matchNumber}`}
+          inputMode="decimal"
+          onChange={(change) => setValue(change.target.value)}
+          placeholder="-3.5"
+          step="0.5"
+          type="number"
+          value={value}
+        />
+      </label>
+      {valid ? null : (
+        <p className="text-sm text-destructive">
+          {clearing
+            ? `The ${context.vocabulary.event.one} has been released, so this spread can be changed but not cleared.`
+            : 'Enter a spread in half points, such as -3.5 or 7, between -99.5 and 99.5.'}
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button
+          data-testid={`root-admin-bracket-spread-save-${match.matchNumber}`}
+          disabled={save.isPending || !valid}
+          onClick={() => save.mutate(parsed)}
+          size="sm"
+        >
+          Save spread
+        </Button>
+        <Button disabled={save.isPending} onClick={() => setEditing(false)} size="sm" variant="ghost">Cancel</Button>
+      </div>
+      {save.isError ? (
+        <p className="text-sm text-destructive" data-testid={`root-admin-bracket-spread-error-${match.matchNumber}`} role="alert">
+          {extractErrorMessage(save.error, {
+            codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
+            fallback: 'This spread could not be saved. Try again.',
           })}
         </p>
       ) : null}

@@ -28,9 +28,10 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
       include: { sportEventRound: { select: { roundNumber: true } } },
       orderBy: [{ sportEventId: 'asc' }, { matchNumber: 'asc' }],
     });
-    return rows.map(({ sportEventRound, sportEventRoundId: _roundId, ...row }) => ({
+    return rows.map(({ sportEventRound, sportEventRoundId: _roundId, homeSpread, ...row }) => ({
       ...row,
       roundNumber: sportEventRound.roundNumber,
+      homeSpread: homeSpread === null ? null : Number(homeSpread),
     }));
   }
 

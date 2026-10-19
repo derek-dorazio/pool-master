@@ -32,16 +32,26 @@ describe('contest-management dto schemas', () => {
     expect(ContestConfigurationRequestSchema.safeParse({ selectionType: 'PICK_EM', mode: 'SPREAD' }).success).toBe(false);
   });
 
-  it('accepts a PREDICTION create with confidence pick\'em rules, keeping the mode', () => {
+  it('accepts a PREDICTION create with confidence pick\'em rules, keeping the mode and the spread option', () => {
     const parsed = CreateContestRequestSchema.parse({
       name: 'Week 1 confidence',
       sportEventIds: ['11111111-1111-1111-1111-111111111111'],
       contestFormat: 'PREDICTION',
       selectionType: 'PICK_EM',
-      configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE' },
+      configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE', againstTheSpread: true },
     });
 
-    expect(parsed.configuration).toEqual({ selectionType: 'PICK_EM', mode: 'CONFIDENCE' });
+    expect(parsed.configuration).toEqual({ selectionType: 'PICK_EM', mode: 'CONFIDENCE', againstTheSpread: true });
+  });
+
+  it('refuses pick\'em rules that do not say whether the pool scores against the spread', () => {
+    expect(CreateContestRequestSchema.safeParse({
+      name: 'Week 1 confidence',
+      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+      contestFormat: 'PREDICTION',
+      selectionType: 'PICK_EM',
+      configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE' },
+    }).success).toBe(false);
   });
 
   it('accepts a create naming a template and no configuration', () => {

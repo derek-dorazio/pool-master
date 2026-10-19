@@ -118,15 +118,31 @@ describe('pick\'em rules', () => {
 
   it('names pick\'em and its two modes in product words', () => {
     expect(formatSelectionTypeName(SelectionType.PICK_EM)).toBe('Pick’em');
-    expect(formatPresetLabel({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP }, 0)).toBe('Straight up');
-    expect(formatPresetLabel({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE }, 0)).toBe('Confidence');
+    expect(formatPresetLabel({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false }, 0)).toBe('Straight up');
+    expect(formatPresetLabel({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false }, 0)).toBe('Confidence');
   });
 
   it('reads a straight-up contest as picking every game\'s winner, and a confidence one as also ranking each week\'s picks', () => {
-    expect(formatContestRules({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP }, 0, TEAM))
+    expect(formatContestRules({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false }, 0, TEAM))
       .toBe('Pick the winner of every game.');
-    expect(formatContestRules({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE }, 0, TEAM))
+    expect(formatContestRules({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false }, 0, TEAM))
       .toBe('Pick the winner of every game, then rank each week’s picks by confidence.');
+  });
+
+  it('names and reads a pool scored against the spread as picking the team that covers, with a game on the spread scoring nothing', () => {
+    expect(formatPresetLabel({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true }, 0))
+      .toBe('Straight up, against the spread');
+    expect(formatContestRules({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true }, 0, TEAM))
+      .toBe('Pick the team that covers the spread in every game. A game that lands exactly on the spread scores nothing.');
+    expect(formatContestRules({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: true }, 0, TEAM))
+      .toBe('Pick the team that covers the spread in every game, then rank each week’s picks by confidence. A game that lands exactly on the spread scores nothing.');
+  });
+
+  it('turns the against-the-spread box into the pick\'em rules and back', () => {
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, pickEmAgainstTheSpread: true }, SelectionType.PICK_EM, 0, TEAM).configuration)
+      .toMatchObject({ selectionType: SelectionType.PICK_EM, againstTheSpread: true });
+    expect(toContestRulesValues({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true, maxEntriesPerSquad: 1 }, DEFAULT_CONTEST_RULES))
+      .toMatchObject({ pickEmAgainstTheSpread: true });
   });
 
   it('suggests a pick\'em name from the event', () => {
@@ -135,12 +151,12 @@ describe('pick\'em rules', () => {
 
   it('turns the mode field into pick\'em rules with no roster size or scores that count', () => {
     expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, pickEmMode: PickEmMode.CONFIDENCE }, SelectionType.PICK_EM, 0, TEAM))
-      .toEqual({ configuration: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, maxEntriesPerSquad: 1 }, error: null });
+      .toEqual({ configuration: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false, maxEntriesPerSquad: 1 }, error: null });
   });
 
   it('fills only the mode and entry limit from saved pick\'em rules, keeping the roster fields as they were', () => {
     const current = { ...DEFAULT_CONTEST_RULES, countedScores: '5', rosterSize: '8' };
-    expect(toContestRulesValues({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, maxEntriesPerSquad: 2 }, current))
+    expect(toContestRulesValues({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false, maxEntriesPerSquad: 2 }, current))
       .toEqual({ ...current, pickEmMode: PickEmMode.CONFIDENCE, maxEntriesPerTeam: '2', unlimitedEntries: false });
   });
 });
