@@ -3,6 +3,7 @@ import type {
   ContestEntryListResponse,
   GamePicksResponse,
   PickEmLeaderboardResponse,
+  SurvivorLeaderboardResponse,
 } from '@/lib/api';
 
 /**
@@ -84,6 +85,7 @@ export function pickEmWeekFixture(overrides: Partial<GamePicksResponse> = {}): G
     sportEventId: 'week-1',
     selectionType: 'PICK_EM',
     mode: 'STRAIGHT_UP',
+    survivor: null,
     status: 'DRAFT',
     submittedAt: null,
     ownEntry: true,
@@ -183,6 +185,55 @@ export function pickEmLeaderboardFixture(overrides: Partial<PickEmLeaderboardRes
         weeks: [
           { sportEventId: 'week-1', submitted: false, points: null, position: null, displayPosition: null, weeklyWinner: false },
           { sportEventId: 'week-2', submitted: true, points: 1, position: 1, displayPosition: 'T1', weeklyWinner: false },
+        ],
+      },
+    ],
+    ...overrides,
+  };
+}
+
+/**
+ * A survivor week (#719) on week 1's games: one pick, no tiebreaker or points, and the Bills
+ * already used in another week.
+ */
+export function survivorWeekFixture(overrides: Partial<GamePicksResponse> = {}): GamePicksResponse {
+  return pickEmWeekFixture({
+    selectionType: 'SURVIVOR',
+    mode: null,
+    survivor: { eliminatedInWeek: null, usedParticipantIds: [NFL_TEAMS.bills.participantId] },
+    tiebreakerMatchId: null,
+    points: null,
+    maxPossiblePoints: null,
+    ...overrides,
+  });
+}
+
+/**
+ * A survivor board in week 2: Morgan's Picks survived week 1 and is still in, its week 2 pick
+ * not shown until its game kicks off; Chalk All The Way went out in week 2 on the Bears.
+ */
+export function survivorLeaderboardFixture(overrides: Partial<SurvivorLeaderboardResponse> = {}): SurvivorLeaderboardResponse {
+  return {
+    contestId: 'contest-1',
+    weeks: [
+      { sportEventId: 'week-1', weekNumber: 1, name: 'Week 1', startDate: WEEK_1_START, status: 'COMPLETED', started: true, aliveCount: 2 },
+      { sportEventId: 'week-2', weekNumber: 2, name: 'Week 2', startDate: WEEK_2_START, status: 'IN_PROGRESS', started: true, aliveCount: 1 },
+    ],
+    entries: [
+      {
+        entryId: 'entry-1', entryName: 'Morgan’s Picks', entryNumber: 1, squadId: 'squad-1', squadName: 'Morgan’s Madness',
+        alive: true, eliminatedInWeek: null, weeksSurvived: 1, position: 1, displayPosition: '1',
+        weeks: [
+          { sportEventId: 'week-1', outcome: 'SURVIVED', team: 'Chiefs' },
+          { sportEventId: 'week-2', outcome: 'PENDING', team: null },
+        ],
+      },
+      {
+        entryId: 'entry-2', entryName: 'Chalk All The Way', entryNumber: 1, squadId: 'squad-2', squadName: 'Derek’s Great Golf Guys',
+        alive: false, eliminatedInWeek: 2, weeksSurvived: 1, position: 2, displayPosition: '2',
+        weeks: [
+          { sportEventId: 'week-1', outcome: 'SURVIVED', team: 'Bills' },
+          { sportEventId: 'week-2', outcome: 'ELIMINATED', team: 'Bears' },
         ],
       },
     ],

@@ -11,6 +11,7 @@ const SELECTION_TYPE_NAMES: Record<SelectionType, string> = {
   RANDOM_DRAW: 'Random draw',
   PICK_EM: 'Pick’em',
   BRACKET: 'Bracket',
+  SURVIVOR: 'Survivor',
 };
 
 export function formatSelectionTypeName(selectionType: SelectionType) {
@@ -77,6 +78,11 @@ export function describePickEmMode(mode: PickEmMode) {
     : 'Pick the winner of every game.';
 }
 
+/** A survivor contest's rules (#719): one winner a week, each team once, out after a loss. */
+export function describeSurvivorRules() {
+  return 'Pick one team to win each week, and never the same team twice. A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.';
+}
+
 /** A round of a knockout event by its number, in the event's words: "Sweet 16", "Divisional Round". */
 export type RoundName = (roundNumber: number) => string;
 
@@ -134,6 +140,8 @@ export function formatContestRules(
       return describePickEmMode(configuration.mode);
     case SelectionType.BRACKET:
       return describeBracketRules(isSecondChanceBracket(configuration.startsAtRound) ? roundName(configuration.startsAtRound) : null);
+    case SelectionType.SURVIVOR:
+      return describeSurvivorRules();
   }
 }
 
@@ -173,6 +181,8 @@ export function formatPresetLabel(configuration: ContestRules, tierCount: number
       return formatPickEmModeName(configuration.mode);
     case SelectionType.BRACKET:
       return isSecondChanceBracket(configuration.startsAtRound) ? 'Second chance' : formatSelectionTypeName(SelectionType.BRACKET);
+    case SelectionType.SURVIVOR:
+      return formatSelectionTypeName(SelectionType.SURVIVOR);
   }
 }
 
@@ -205,5 +215,7 @@ export function suggestContestName(
       return configuration?.selectionType === SelectionType.BRACKET && isSecondChanceBracket(configuration.startsAtRound)
         ? `${eventName} Second-Chance Bracket`
         : `${eventName} Bracket`;
+    case SelectionType.SURVIVOR:
+      return `${eventName} Survivor`;
   }
 }

@@ -404,11 +404,19 @@ export interface ContestEntryMatchPredictionSave {
   at: Date;
 }
 
+/** A pick read across several events (#719): which event its game is in, and the participant its field row stands for. */
+export interface ContestEntrySeasonPrediction extends ContestEntryMatchPrediction {
+  sportEventId: string;
+  participantId: string;
+}
+
 export interface ContestEntryMatchPredictionRepository {
   /** The entry's picks on the event's games. */
   findByEntryAndEvent(contestEntryId: string, sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
   /** Several entries' picks on the event's games, in game order: a leaderboard's or settlement's read. */
   findByEntriesAndEvent(contestEntryIds: readonly string[], sportEventId: string): Promise<ContestEntryMatchPrediction[]>;
+  /** Several entries' picks on several events' games, each with its event and team: a survivor season's read (#719). */
+  findByEntriesAndEvents(contestEntryIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestEntrySeasonPrediction[]>;
   save(change: ContestEntryMatchPredictionSave): Promise<void>;
 }
 

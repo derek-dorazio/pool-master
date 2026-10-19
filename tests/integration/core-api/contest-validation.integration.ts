@@ -81,7 +81,6 @@ describe('Contest Validation Integration', () => {
   it.each([
     'SNAKE_DRAFT',
     'OPEN_SELECTION',
-    'SURVIVOR',
   ])('rejects the unbuilt selection type %s at the create contract boundary', async (selectionType) => {
     const createRes = await getApp().inject({
       method: 'POST',

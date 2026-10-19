@@ -304,6 +304,30 @@ export const selectionErrors = {
       409,
     ),
 
+  /** A survivor week (#719) is submitted with exactly one pick. */
+  onePickRequired: (entryId: string, pickedCount: number) =>
+    new SelectionError(
+      `Entry ${entryId} picks one team a week in a survivor pool: it has ${pickedCount}`,
+      'PREDICTION_ONE_PICK_REQUIRED',
+      409,
+    ),
+
+  /** A survivor entry (#719) picks each team once a season. */
+  teamAlreadyUsed: (entryId: string, sportEventParticipantId: string) =>
+    new SelectionError(
+      `Entry ${entryId} picked team ${sportEventParticipantId} in another week: a survivor entry picks each team once a season`,
+      'PREDICTION_TEAM_ALREADY_USED',
+      409,
+    ),
+
+  /** A survivor entry (#719) that is out plays no later week. */
+  entryEliminated: (entryId: string, weekNumber: number) =>
+    new SelectionError(
+      `Entry ${entryId} went out in week ${weekNumber}, so it picks no later week`,
+      'PREDICTION_ENTRY_ELIMINATED',
+      409,
+    ),
+
   /** Every week is submitted with its tiebreaker (#717): a guess of its tiebreaker game's total points. */
   tiebreakerMissing: (entryId: string) =>
     new SelectionError(

@@ -145,6 +145,26 @@ describe('pick\'em rules', () => {
   });
 });
 
+describe('survivor rules', () => {
+  const TEAM = getSportDefinition(Sport.AMERICAN_FOOTBALL).vocabulary.participant;
+
+  it('names survivor and reads its rules as one winner a week, each team once, out after a loss', () => {
+    expect(formatSelectionTypeName(SelectionType.SURVIVOR)).toBe('Survivor');
+    expect(formatPresetLabel({ selectionType: SelectionType.SURVIVOR }, 0)).toBe('Survivor');
+    expect(formatContestRules({ selectionType: SelectionType.SURVIVOR }, 0, TEAM)).toBe(
+      'Pick one team to win each week, and never the same team twice. A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.',
+    );
+    expect(suggestContestName('NFL Week 1', SelectionType.SURVIVOR, null, 0)).toBe('NFL Week 1 Survivor');
+  });
+
+  it('turns the rules fields into survivor rules with only the entry limit, and fills only the entry limit back', () => {
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxEntriesPerTeam: '2' }, SelectionType.SURVIVOR, 0, TEAM))
+      .toEqual({ configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 2 }, error: null });
+    expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: null }, DEFAULT_CONTEST_RULES))
+      .toEqual({ ...DEFAULT_CONTEST_RULES, unlimitedEntries: true });
+  });
+});
+
 describe('bracket rules', () => {
   const TEAM = getSportDefinition(Sport.BASKETBALL).vocabulary.participant;
   const MARCH_MADNESS_ROUND = (roundNumber: number) => getSportDefinition(Sport.BASKETBALL).roundLabel(roundNumber, 6);

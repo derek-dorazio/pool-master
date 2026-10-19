@@ -423,10 +423,10 @@ describe('Contest management integration', () => {
       url: API_ROUTES.leagues.contests(leagueId),
       headers: ownerHeaders,
       payload: {
-        name: 'Survivor Create',
+        name: 'Last Man Standing Create',
         sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
-        selectionType: 'SURVIVOR',
+        selectionType: 'LAST_MAN_STANDING',
         configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
       },
     });

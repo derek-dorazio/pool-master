@@ -1,10 +1,25 @@
 import { Check, Lock } from 'lucide-react';
-import { PickEmMode } from '@poolmaster/shared/domain';
+import { PickEmMode, type PickOutcome } from '@poolmaster/shared/domain';
 import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
 import { Button, Chip, FormField, Input, Select, cn, formatDateTimeDisplay } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { describePickOutcome, parseBracketTiebreaker } from './bracket-layout';
-import { confidenceOptions, describeMatchup, gameTeams, type PickEmGame, type PickEmTeam } from './pick-em-week';
+import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, type PickEmGame, type PickEmTeam } from './pick-em-week';
+
+/** A survivor pick's mark (#719): its team won, or the entry is out. */
+const SURVIVOR_OUTCOME_LABELS: Record<PickOutcome, string> = {
+  CORRECT: 'Survived',
+  BUSTED: 'Out',
+  PENDING: 'Pending',
+};
+
+/** How a pick stands against its game: a survivor pick reads as surviving or going out. */
+function pickOutcome(gamePicks: GamePicksResponse, pick: NonNullable<PickEmGame['pick']>) {
+  const outcome = describePickOutcome(pick);
+  return outcome && isSurvivorWeek(gamePicks) && pick.outcome !== null
+    ? { ...outcome, label: SURVIVOR_OUTCOME_LABELS[pick.outcome] }
+    : outcome;
+}
 
 /** The tiebreaker's draft and its save, owned by the page: the field sits on its game's card. */
 export interface PickEmTiebreaker {
@@ -20,12 +35,15 @@ function TeamChoice({
   game,
   isBusy,
   isPicked,
+  isUsed,
   onPick,
   team,
 }: {
   game: PickEmGame;
   isBusy: boolean;
   isPicked: boolean;
+  /** A survivor entry picked the team in another week, so cannot pick it again. */
+  isUsed: boolean;
   onPick: (game: PickEmGame, team: PickEmTeam) => void;
   team: PickEmTeam;
 }) {
@@ -34,7 +52,8 @@ function TeamChoice({
       aria-pressed={isPicked}
       className="w-full justify-between text-left"
       data-testid={`pick-em-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
-      disabled={isBusy}
+      data-used={isUsed || undefined}
+      disabled={isBusy || isUsed}
       onClick={() => {
         if (!isPicked) {
           onPick(game, team);
@@ -45,6 +64,7 @@ function TeamChoice({
     >
       <span className="truncate">{team.name}</span>
       {isPicked ? <Check aria-label="Your pick" size={16} /> : null}
+      {isUsed && !isPicked ? <span className="text-xs text-muted-foreground">Used</span> : null}
     </Button>
   );
 }
@@ -182,7 +202,7 @@ function GameCard({
   const isHidden = !gamePicks.ownEntry && !game.revealed;
   const pickedId = game.pick?.sportEventParticipantId ?? null;
   // A pick is only marked against the result once its game is under way.
-  const outcome = game.pick && (game.locked || game.revealed) ? describePickOutcome(game.pick) : null;
+  const outcome = game.pick && (game.locked || game.revealed) ? pickOutcome(gamePicks, game.pick) : null;
   const isTiebreakerGame = game.sportEventMatchId === gamePicks.tiebreakerMatchId;
   const tiebreakerShown = gamePicks.tiebreakerValue !== null;
   return (
@@ -211,7 +231,15 @@ function GameCard({
           }
           const isPicked = !isHidden && team.sportEventParticipantId === pickedId;
           return choosable ? (
-            <TeamChoice game={game} isBusy={isBusy} isPicked={isPicked} key={team.sportEventParticipantId} onPick={onPick} team={team} />
+            <TeamChoice
+              game={game}
+              isBusy={isBusy}
+              isPicked={isPicked}
+              isUsed={isTeamUsed(gamePicks, team)}
+              key={team.sportEventParticipantId}
+              onPick={onPick}
+              team={team}
+            />
           ) : (
             <TeamLine game={game} isPicked={isPicked} key={team.sportEventParticipantId} team={team} />
           );
@@ -238,7 +266,8 @@ function GameCard({
 
 /**
  * A pick'em week's games in kickoff order (#718): a tap on a team picks it, a confidence pool
- * ranks each pick, and the tiebreaker is typed on its game. A game that has kicked off is locked
+ * ranks each pick, and the tiebreaker is typed on its game. In a survivor week (#719) the tap
+ * replaces the entry's one pick, and a team it used in another week can't be tapped. A game that has kicked off is locked
  * and marked against its result; on another entry each pick shows from its game's kickoff.
  */
 export function PickEmGames({

@@ -5,11 +5,13 @@ import {
   confidencePicks,
   describeMatchup,
   firstKickoff,
+  isTeamUsed,
   missedWeek,
+  survivorPickTeam,
   tiebreakerGame,
   weekSubmitHint,
 } from './pick-em-week';
-import { NFL_TEAMS, WEEK_1_START, pickEmWeekFixture, week1Games, weekPick } from './test/pick-em-fixtures';
+import { NFL_TEAMS, WEEK_1_START, pickEmWeekFixture, survivorWeekFixture, week1Games, weekPick } from './test/pick-em-fixtures';
 
 const id = (team: { sportEventParticipantId: string }) => team.sportEventParticipantId;
 
@@ -87,5 +89,27 @@ describe('pick\'em week helpers', () => {
       .toBe('Use each value from 1 to 3 once: a value is on more than one pick.');
     expect(weekSubmitHint(pickEmWeekFixture({ mode: 'CONFIDENCE', games: allPicked([1, 2, 3]) }))).toBe('Save your tiebreaker to submit.');
     expect(weekSubmitHint(pickEmWeekFixture({ games: allPicked([null, null, null]), tiebreakerValue: 41 }))).toBeNull();
+  });
+});
+
+describe('survivor week helpers', () => {
+  it('knows the teams used in another week, and names the week\'s one pick', () => {
+    const week = survivorWeekFixture({ games: week1Games({ 3: { pick: weekPick(NFL_TEAMS.eagles) } }) });
+    expect(isTeamUsed(week, NFL_TEAMS.bills)).toBe(true);
+    expect(isTeamUsed(week, NFL_TEAMS.chiefs)).toBe(false);
+    expect(survivorPickTeam(week)).toEqual(NFL_TEAMS.eagles);
+    expect(survivorPickTeam(survivorWeekFixture())).toBeNull();
+  });
+
+  it('asks for one pick to submit, and nothing more once the week has it', () => {
+    expect(weekSubmitHint(survivorWeekFixture())).toBe('Pick one team to submit.');
+    expect(weekSubmitHint(survivorWeekFixture({ games: week1Games({ 3: { pick: weekPick(NFL_TEAMS.eagles) } }) }))).toBeNull();
+  });
+
+  it('lets an entry that is out change nothing, and keeps a pick whose game has kicked off as the week\'s', () => {
+    expect(canChangeWeek(survivorWeekFixture({ survivor: { eliminatedInWeek: 1, usedParticipantIds: [] } }))).toBe(false);
+    const kickedOff = week1Games({ 2: { locked: true, pick: weekPick(NFL_TEAMS.chiefs) } });
+    expect(canChangeWeek(survivorWeekFixture({ status: 'SUBMITTED', games: kickedOff }))).toBe(false);
+    expect(canChangeWeek(pickEmWeekFixture({ status: 'SUBMITTED', games: kickedOff }))).toBe(true);
   });
 });

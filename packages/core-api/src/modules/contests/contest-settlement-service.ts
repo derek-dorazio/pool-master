@@ -5,8 +5,9 @@ import type {
   ContestRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus, SelectionType, SportEventStatus, type Contest, type PickEmMode, type SportEvent } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, SportEventStatus, SurvivorWeekOutcome, type Contest, type PickEmMode, type SportEvent } from '@poolmaster/shared/domain';
 import { loadPickEmMode, loadPickEmWeekStandings, PickEmRulesMissingError } from './pick-em-standings';
+import { loadSurvivorSeason, type SurvivorStandingsReadDeps } from './survivor-standings';
 import {
   BracketScoringUnavailableError,
   loadBracketStandings,
@@ -17,6 +18,7 @@ import {
   buildMissedEventStanding,
   rankContestEntryStandings,
   rankContestTotals,
+  type ContestEntryTotal,
   resolveContestCountingRule,
   resolveContestScoringDefinition,
   type ParticipantScore,
@@ -70,6 +72,8 @@ export interface ContestSettlementSummary {
 }
 
 export interface ContestSettlementDeps extends BracketStandingsReadDeps {
+  predictions: BracketStandingsReadDeps['predictions'] & SurvivorStandingsReadDeps['predictions'];
+  matches: BracketStandingsReadDeps['matches'] & SurvivorStandingsReadDeps['matches'];
   sportEvents: SportEventRepository;
   contests: ContestRepository;
   standings: ContestEntryStandingRepository;
@@ -125,6 +129,13 @@ export class ContestSettlementService {
           standingsUpserted += settled.standingsUpserted;
           if (settled.completed) contestsCompleted++;
         }
+        continue;
+      }
+      if (contest.selectionType === SelectionType.SURVIVOR) {
+        const settled = await this.settleSurvivorWeek(contest, sportEvent, completedAt);
+        contestsSettled++;
+        standingsUpserted += settled.standingsUpserted;
+        if (settled.completed) contestsCompleted++;
         continue;
       }
       if (contest.selectionType === SelectionType.PICK_EM) {
@@ -352,6 +363,75 @@ export class ContestSettlementService {
     return { standingsUpserted, completed };
   }
 
+  /**
+   * Settles one week of a survivor contest (#719): each entry still in coming into the week is
+   * frozen with 1 when it survived the week and 0 when it went out, survivors first. Entries out
+   * before the week have no standing for it, and a cancelled week counts for nothing (#743). A
+   * week settles once. When the contest's last week settles, the contest standings are ranked from
+   * the season's run, as the live board ranks it (entries still in first, then weeks survived,
+   * entries out in the same week sharing a place), and the contest is COMPLETED.
+   */
+  private async settleSurvivorWeek(
+    contest: Contest,
+    sportEvent: SportEvent,
+    completedAt: Date,
+  ): Promise<{ standingsUpserted: number; completed: boolean }> {
+    const sportEventId = sportEvent.id;
+    const settledWeeks = await this.deps.eventStandings.findByContest(contest.id);
+    if (sportEvent.status !== SportEventStatus.CANCELLED && !settledWeeks.some((standing) => standing.sportEventId === sportEventId)) {
+      const season = await loadSurvivorSeason(this.deps, contest, completedAt);
+      const weekIndex = season.weeks.findIndex((week) => week.event.id === sportEventId);
+      const decided = season.entries.flatMap(({ entry, run }) => {
+        const outcome = run.weeks[weekIndex]?.outcome ?? null;
+        return outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.ELIMINATED
+          ? [{ entry, survived: outcome === SurvivorWeekOutcome.SURVIVED }]
+          : [];
+      });
+      const survivorCount = decided.filter(({ survived }) => survived).length;
+      const placeOf = (survived: boolean) => {
+        const position = survived ? 1 : survivorCount + 1;
+        const sharing = survived ? survivorCount : decided.length - survivorCount;
+        return { position, displayPosition: sharing > 1 ? `T${position}` : String(position) };
+      };
+      for (const { entry, survived } of decided) {
+        await this.deps.eventStandings.upsert({
+          contestId: contest.id,
+          contestEntryId: entry.id,
+          sportEventId,
+          ...placeOf(survived),
+          // One pick a week, decided once its game is played.
+          countingPickLimit: 1,
+          scoredPickCount: 1,
+          asOf: completedAt,
+          settledAt: completedAt,
+          totalScore: survived ? 1 : 0,
+        });
+      }
+      this.logger.info({ contestId: contest.id, sportEventId, entryCount: decided.length, survivorCount }, 'Settled one week of a survivor contest');
+    }
+    if (!(await this.allEventsFinished(contest))) {
+      return { standingsUpserted: 0, completed: false };
+    }
+    // Ranked from the season's run, as the live board is, not from the weekly snapshots: a week
+    // settled before an earlier week's result was in froze an entry the run later puts out.
+    const season = await loadSurvivorSeason(this.deps, contest, completedAt);
+    const playedWeeks = season.weeks.filter((week) => !week.cancelled).length;
+    const standingsUpserted = await this.writeContestTotals(contest, season.entries.map(({ entry, run, position, displayPosition }) => ({
+      entryId: entry.id,
+      position,
+      displayPosition,
+      score: run.weeksSurvived,
+      scoredPickCount: run.weeks.filter(({ outcome }) => outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.ELIMINATED).length,
+    })), playedWeeks, completedAt, completedAt);
+    const completed = await this.deps.contests.transitionStatus(contest.id, {
+      from: SETTLEABLE,
+      to: ContestStatus.COMPLETED,
+      endsAt: completedAt,
+    });
+    this.logger.info({ contestId: contest.id, sportEventId, standingsUpserted, completed }, 'Settled a survivor contest\'s season after its last week');
+    return { standingsUpserted, completed };
+  }
+
   /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */
   private async allEventsFinished(contest: Contest): Promise<boolean> {
     const events = await this.deps.sportEvents.findByIds(contest.sportEventIds);
@@ -360,8 +440,7 @@ export class ContestSettlementService {
   }
 
   /**
-   * The contest's settled total (#713): each entry's frozen event scores summed and ranked, the
-   * single writer of ContestEntryStanding (and so of its denormalized contestId). In a one-event
+   * The contest's settled total (#713): each entry's frozen event scores summed and ranked. In a one-event
    * contest the total is that event's standing. Answers how many standings it wrote.
    */
   private async settleContestTotals(
@@ -390,6 +469,17 @@ export class ContestSettlementService {
       .filter((value): value is Date => value !== null)
       .sort((left, right) => right.getTime() - left.getTime())
       .at(0) ?? completedAt;
+    return this.writeContestTotals(contest, totals, countingPickLimit, asOf, completedAt);
+  }
+
+  /** Writes the contest's ranked totals: the one writer of ContestEntryStanding. Answers how many it wrote. */
+  private async writeContestTotals(
+    contest: Contest,
+    totals: readonly Pick<ContestEntryTotal, 'entryId' | 'position' | 'displayPosition' | 'score' | 'scoredPickCount'>[],
+    countingPickLimit: number,
+    asOf: Date,
+    completedAt: Date,
+  ): Promise<number> {
     for (const total of totals) {
       await this.deps.standings.upsert({
         contestId: contest.id,

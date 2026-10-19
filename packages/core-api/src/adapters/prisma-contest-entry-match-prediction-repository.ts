@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import type {
   ContestEntryMatchPredictionRepository,
   ContestEntryMatchPredictionSave,
+  ContestEntrySeasonPrediction,
 } from '@poolmaster/shared/db';
 import { ContestEntryStatus, type ContestEntryMatchPrediction } from '@poolmaster/shared/domain';
 
@@ -41,6 +42,22 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
       orderBy: [{ sportEventMatch: { matchNumber: 'asc' } }, { contestEntryId: 'asc' }],
     });
     return rows.map(toPrediction);
+  }
+
+  async findByEntriesAndEvents(contestEntryIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestEntrySeasonPrediction[]> {
+    if (contestEntryIds.length === 0 || sportEventIds.length === 0) {
+      return [];
+    }
+    const rows = await this.prisma.contestEntryMatchPrediction.findMany({
+      where: { contestEntryId: { in: [...contestEntryIds] }, sportEventMatch: { sportEventId: { in: [...sportEventIds] } } },
+      include: { sportEventMatch: { select: { sportEventId: true } }, sportEventParticipant: { select: { participantId: true } } },
+      orderBy: [{ contestEntryId: 'asc' }, { sportEventMatch: { matchNumber: 'asc' } }],
+    });
+    return rows.map((row) => ({
+      ...toPrediction(row),
+      sportEventId: row.sportEventMatch.sportEventId,
+      participantId: row.sportEventParticipant.participantId,
+    }));
   }
 
   async save(change: ContestEntryMatchPredictionSave): Promise<void> {

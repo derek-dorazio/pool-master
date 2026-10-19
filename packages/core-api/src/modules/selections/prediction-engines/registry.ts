@@ -7,10 +7,12 @@ import { SelectionType, type PredictionSelectionType } from '@poolmaster/shared/
 import { bracketPredictionEngine } from './bracket';
 import { pickEmPredictionEngine } from './pick-em';
 import type { PredictionEngine } from './prediction-engine';
+import { survivorPredictionEngine } from './survivor';
 
 const ENGINE_BY_SELECTION_TYPE: Readonly<Record<PredictionSelectionType, PredictionEngine>> = {
   [SelectionType.PICK_EM]: pickEmPredictionEngine,
   [SelectionType.BRACKET]: bracketPredictionEngine,
+  [SelectionType.SURVIVOR]: survivorPredictionEngine,
 };
 
 export function getPredictionEngine(selectionType: PredictionSelectionType): PredictionEngine {

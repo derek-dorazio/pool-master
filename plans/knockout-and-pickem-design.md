@@ -1305,6 +1305,15 @@ Each is one PR opened against main, after knockout.
    per-week settlement.
 4. **Week pick screen and season leaderboard** (#718).
 5. **Survivor** (#719).
+   *As built in #719:* `SURVIVOR` is a prediction selection type for American football and
+   basketball, played on the week screen: one pick a week, which replaces the entry's other
+   pick, of a team (by participant) it has not picked in another week it submitted. A loss, a
+   tie or a week not submitted by its first kickoff puts the entry out, and it picks no later
+   week; a pick on a cancelled game survives, and a cancelled week counts for nothing. There is
+   no tiebreaker. Each settled week freezes 1 for a survivor and 0 for an entry that went out in
+   it; the season total is weeks survived, so entries out in the same week share a place. Its
+   own leaderboard is `getSurvivorLeaderboard`. The rules are in `survivor.ts` in the
+   head-to-head family, and `contests/survivor-standings.ts` is the one season read.
 6. **Against the spread** (#720): `homeSpread`, locked at week release.
 7. **Bracket pools** (#721): pick every game of a knockout, scored with the knockout round values;
    also second-chance brackets (start at a later round) and "max possible points" (Q3.10),

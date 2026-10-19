@@ -39,6 +39,7 @@ import { fetchContestEntries } from './use-contest-entries';
 import { ContestStatus, SelectionType, SportEventStatus, getSportDefinition } from '@poolmaster/shared/domain';
 import { BracketLeaderboard } from './bracket-leaderboard';
 import { PickEmLeaderboard } from './pick-em-leaderboard';
+import { SurvivorLeaderboard } from './survivor-leaderboard';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { hasContestEventStarted } from './contest-events';
@@ -56,17 +57,20 @@ import { hasContestEventStarted } from './contest-events';
  *
  * Once the contest is COMPLETED the same endpoint serves the standings frozen at settlement,
  * so there is no separate final mode to render. A bracket contest's board is its own
- * (`BracketLeaderboard`, #721), and so is a pick'em contest's season board (`PickEmLeaderboard`,
- * #718): an entry there is its picks of games, not a lineup.
+ * (`BracketLeaderboard`, #721), and so are a pick'em contest's season board (`PickEmLeaderboard`,
+ * #718) and a survivor contest's (`SurvivorLeaderboard`, #719): an entry there is its picks of
+ * games, not a lineup.
  */
 
-/** The leaderboard read a contest's board shows: a bracket's and a pick'em's are their own. */
+/** The leaderboard read a contest's board shows: a bracket's, a pick'em's and a survivor's are their own. */
 function leaderboardKeyFor(contestId: string, selectionType: SelectionType) {
   switch (selectionType) {
     case SelectionType.BRACKET:
       return QueryKeys.contests.bracketLeaderboard(contestId);
     case SelectionType.PICK_EM:
       return QueryKeys.contests.pickEmLeaderboard(contestId);
+    case SelectionType.SURVIVOR:
+      return QueryKeys.contests.survivorLeaderboard(contestId);
     case SelectionType.TIERED:
     case SelectionType.BUDGET_PICK:
     case SelectionType.RANDOM_DRAW:
@@ -284,13 +288,14 @@ export function ContestLeaderboardPage() {
   // The contest read above refreshes until settlement (#362), so this starts when play starts and
   // stops when the contest settles, and each status change it sees reads the leaderboard once
   // more, which is how the final standings land.
-  // A bracket (#721) and a pick'em contest (#718) have their own boards; the roster board waits
+  // A bracket (#721), a pick'em contest (#718) and a survivor contest (#719) have their own boards; the roster board waits
   // for the contest to say which it is, since it refuses a prediction contest.
   const selectionType = contestQuery.data?.selectionType;
   const isBracket = selectionType === SelectionType.BRACKET;
   const isPickEm = selectionType === SelectionType.PICK_EM;
+  const isSurvivor = selectionType === SelectionType.SURVIVOR;
   const leaderboardQuery = useContestLeaderboardQuery(contestId, contestQuery.data?.status, {
-    enabled: contestQuery.data !== undefined && !isBracket && !isPickEm,
+    enabled: contestQuery.data !== undefined && !isBracket && !isPickEm && !isSurvivor,
     sportEventId: requestedEventId,
   });
   const contestEntriesQuery = useQuery({
@@ -334,6 +339,9 @@ export function ContestLeaderboardPage() {
   }
   if (contestQuery.data && isPickEm) {
     return <PickEmLeaderboard contest={contestQuery.data} leagueCode={leagueCode} />;
+  }
+  if (contestQuery.data && isSurvivor) {
+    return <SurvivorLeaderboard contest={contestQuery.data} leagueCode={leagueCode} />;
   }
 
   if (leaderboardQuery.isLoading) {

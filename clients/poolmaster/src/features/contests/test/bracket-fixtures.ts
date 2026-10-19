@@ -127,6 +127,7 @@ export function gamePicksFixture(overrides: Partial<GamePicksResponse> = {}): Ga
     sportEventId: 'event-1',
     selectionType: 'BRACKET',
     mode: null,
+    survivor: null,
     status: 'DRAFT',
     submittedAt: null,
     ownEntry: true,

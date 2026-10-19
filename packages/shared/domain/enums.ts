@@ -190,6 +190,11 @@ export const SelectionType = {
    * (#721): a PREDICTION contest. A later game's pick is a team the entry picked to get there.
    */
   BRACKET: 'BRACKET',
+  /**
+   * Pick one team to win each week, each team once a season (#719): a PREDICTION contest. A
+   * loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win.
+   */
+  SURVIVOR: 'SURVIVOR',
 } as const;
 export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
 
@@ -215,6 +220,18 @@ export const PickOutcome = {
   PENDING: 'PENDING',
 } as const;
 export type PickOutcome = (typeof PickOutcome)[keyof typeof PickOutcome];
+
+/**
+ * How a survivor entry's week went (#719). SURVIVED: its team won, or its game was cancelled.
+ * ELIMINATED: its team lost or tied, or the week started with no submitted pick. PENDING: its
+ * game is still to be decided.
+ */
+export const SurvivorWeekOutcome = {
+  SURVIVED: 'SURVIVED',
+  ELIMINATED: 'ELIMINATED',
+  PENDING: 'PENDING',
+} as const;
+export type SurvivorWeekOutcome = (typeof SurvivorWeekOutcome)[keyof typeof SurvivorWeekOutcome];
 
 // --- Selection ---
 

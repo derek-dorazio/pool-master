@@ -19,6 +19,8 @@ import { ContestScoringSettingsSchema, KNOCKOUT_ROUND_VALUES_MAX_ROUNDS } from '
  *   of the contest's events; `mode` says whether it also ranks them by confidence.
  * - **Bracket:** a prediction contest on one knockout event (#721). The entry picks the winner of
  *   every game before the event starts, and a correct pick scores its round's value.
+ * - **Survivor:** a prediction contest (#719). Each week the entry picks one team to win, never one
+ *   it picked in an earlier week; a loss, a tie or a week left unsubmitted puts it out.
  *
  * In each roster type, the best `countedScores` golfer scores count toward the entry's total.
  */
@@ -70,6 +72,11 @@ export const BracketContestRulesSchema = z.object({
 }).describe('Bracket rules: pick the winner of every game of one knockout event, from the starting round to the final, before the starting round\'s first game.');
 export type BracketContestRules = z.infer<typeof BracketContestRulesSchema>;
 
+export const SurvivorContestRulesSchema = z.object({
+  selectionType: z.literal(SelectionType.SURVIVOR),
+}).describe('Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win.');
+export type SurvivorContestRules = z.infer<typeof SurvivorContestRulesSchema>;
+
 /** The rules a commissioner chooses, and a template presets. */
 export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
   TieredContestRulesSchema,
@@ -77,6 +84,7 @@ export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
   RandomDrawContestRulesSchema,
   PickEmContestRulesSchema,
   BracketContestRulesSchema,
+  SurvivorContestRulesSchema,
 ]);
 export type ContestRules = z.infer<typeof ContestRulesSchema>;
 
@@ -93,6 +101,7 @@ export const ContestSelectionConfigSchema = z.discriminatedUnion('selectionType'
   RandomDrawContestRulesSchema,
   PickEmContestRulesSchema,
   BracketContestRulesSchema,
+  SurvivorContestRulesSchema,
 ]);
 export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema>;
 
@@ -115,6 +124,7 @@ export const ContestRulesWithEntryLimitSchema = z.discriminatedUnion('selectionT
   RandomDrawContestRulesSchema.extend(withEntryLimit),
   PickEmContestRulesSchema.extend(withEntryLimit),
   BracketContestRulesSchema.extend(withEntryLimit),
+  SurvivorContestRulesSchema.extend(withEntryLimit),
 ]);
 export type ContestRulesWithEntryLimit = z.infer<typeof ContestRulesWithEntryLimitSchema>;
 

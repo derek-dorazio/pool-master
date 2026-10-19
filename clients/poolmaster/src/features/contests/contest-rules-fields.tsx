@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { PickEmMode, RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, type SportNoun } from '@poolmaster/shared/domain';
 import { Checkbox, FormField, formatDollars, Input, SegmentedControl, Select } from '@/features/shared/ui';
 import type { BracketStartRoundOption } from './bracket-start-round';
-import { describeBracketRules, describePickEmMode, formatPickEmModeName, isSecondChanceBracket } from './contest-rules';
+import { describeBracketRules, describePickEmMode, describeSurvivorRules, formatPickEmModeName, isSecondChanceBracket } from './contest-rules';
 import { defaultCountedScoresFor, perEntryLabel, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
 function TieredRulesInputs({
@@ -249,13 +249,16 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
   [SelectionType.BRACKET]: ({ bracketStartRounds, onChange, values }: RulesInputsProps) => (
     <BracketRulesInputs onChange={onChange} startRounds={bracketStartRounds} values={values} />
   ),
+  [SelectionType.SURVIVOR]: () => (
+    <p className="text-sm text-muted-foreground" data-testid="contest-survivor-rules">{describeSurvivorRules()}</p>
+  ),
 };
 
 /**
  * The rules inputs for a contest's format: picks per tier and scores that count for a tiered
  * contest, golfers per entry and scores that count under the event's salary cap for a budget
  * one, golfers dealt per entry and scores that count for a random draw, the mode for a pick'em
- * contest, where a bracket starts, then entries per member with No limit. Create and Edit contest both use it, so a new format
+ * contest, where a bracket starts, a survivor contest's rules, then entries per member with No limit. Create and Edit contest both use it, so a new format
  * adds its fields here once.
  */
 export function ContestRulesFields({

@@ -43,6 +43,7 @@ export function toGamePicksResponse(view: GamePicksView): GamePicksResponse {
     sportEventId: view.sportEventId,
     selectionType: view.selectionType,
     mode: view.mode,
+    survivor: view.survivor,
     status: view.status,
     submittedAt: view.submittedAt?.toISOString() ?? null,
     ownEntry: view.ownEntry,

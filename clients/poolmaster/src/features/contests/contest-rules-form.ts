@@ -120,6 +120,11 @@ function parseBracketRules(values: ContestRulesValues): RulesResult {
   return withEntryLimit(values, { selectionType: SelectionType.BRACKET, startsAtRound });
 }
 
+/** The survivor rules (#719): nothing to set but the entry limit. */
+function parseSurvivorRules(values: ContestRulesValues): RulesResult {
+  return withEntryLimit(values, { selectionType: SelectionType.SURVIVOR });
+}
+
 /**
  * The configuration the rules fields describe for a format, or the first thing wrong with them
  * in the words the form shows.
@@ -141,6 +146,8 @@ export function parseContestRules(
       return parsePickEmRules(values);
     case SelectionType.BRACKET:
       return parseBracketRules(values);
+    case SelectionType.SURVIVOR:
+      return parseSurvivorRules(values);
   }
 }
 
@@ -183,6 +190,8 @@ export function toContestRulesValues(
       return { ...rules, ...entryLimit, pickEmMode: configuration.mode };
     case SelectionType.BRACKET:
       return { ...rules, ...entryLimit, startsAtRound: String(configuration.startsAtRound) };
+    case SelectionType.SURVIVOR:
+      return { ...rules, ...entryLimit };
   }
 }
 

@@ -17,6 +17,8 @@ function pickEmMode(configuration: ContestSelectionConfig | undefined): PickEmMo
 export const pickEmPredictionEngine: PredictionEngine = {
   selectionType: SelectionType.PICK_EM,
   pickWindow: PickWindow.UNTIL_MATCH_START,
+  onePickPerEvent: false,
+  readsEarlierWeeks: false,
 
   tiebreakerGame({ games, eventStart }) {
     return weekTiebreakerGame(games, eventStart);

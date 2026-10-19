@@ -286,6 +286,35 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
     ]);
   });
 
+  it('reads several entries\' picks across the asked-about events, each with its event and its team, leaving out other entries and events (#719)', async () => {
+    const week1 = await createWeek('Week 1', AT);
+    const week2 = await createWeek('Week 2', LATER);
+    const week3 = await createWeek('Week 3', LATER);
+    const { contest, entry: first } = await createPickEmEntry([week1.event.id, week2.event.id, week3.event.id]);
+    const second = await secondEntry(contest, 'Second');
+    const third = await secondEntry(contest, 'Third');
+    const save = (entryId: string, week: { event: { id: string } }, game: { id: string; homeSportEventParticipantId: string | null }) =>
+      repos().predictions.save({ contestEntryId: entryId, sportEventId: week.event.id, clearedMatchIds: [], eventStatus: null, at: AT, saves: [homePick(game)] });
+    await save(first.id, week1, week1.game(1));
+    await save(first.id, week2, week2.game(2));
+    await save(first.id, week3, week3.game(3));
+    await save(second.id, week1, week1.game(3));
+    await save(third.id, week1, week1.game(2));
+
+    const picks = await repos().predictions.findByEntriesAndEvents([first.id, second.id], [week1.event.id, week2.event.id]);
+
+    const field = await new PrismaSportEventParticipantRepository(getPrisma()).findBySportEvent(week1.event.id);
+    const participantOf = (fieldRowId: string | null) => expectDefined(field.find((row) => row.id === fieldRowId)).participantId;
+    const key = (row: readonly string[]) => row.join(':');
+    expect(picks.map((pick) => key([pick.contestEntryId, pick.sportEventId, pick.sportEventMatchId])).sort((left, right) => left.localeCompare(right))).toEqual([
+      key([first.id, week1.event.id, week1.game(1).id]),
+      key([first.id, week2.event.id, week2.game(2).id]),
+      key([second.id, week1.event.id, week1.game(3).id]),
+    ].sort((left, right) => left.localeCompare(right)));
+    expect(picks.find((pick) => pick.contestEntryId === second.id)?.participantId).toBe(participantOf(week1.game(3).homeSportEventParticipantId));
+    await expect(repos().predictions.findByEntriesAndEvents([], [week1.event.id])).resolves.toEqual([]);
+  });
+
   it('reads no picks for no entries', async () => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry } = await createPickEmEntry([event.id]);

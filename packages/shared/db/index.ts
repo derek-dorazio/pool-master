@@ -23,6 +23,7 @@ export type {
   ContestEntryRepository,
   ContestEntryMatchPredictionRepository,
   ContestEntryMatchPredictionSave,
+  ContestEntrySeasonPrediction,
   ContestEntryMatchPredictionWrite,
   ContestEntryWithSquad,
   ContestRepository,
