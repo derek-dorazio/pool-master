@@ -7,13 +7,16 @@
 
 import { SelectionType } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../contests/entry-window';
-import { resolveBracketPicks, scoreBracketPicks } from '../../scoring-families/head-to-head/bracket-picks';
+import { bracketFinal, resolveBracketPicks, scoreBracketPicks } from '../../scoring-families/head-to-head/bracket-picks';
 import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from './prediction-engine';
 
 export const bracketPredictionEngine: PredictionEngine = {
   selectionType: SelectionType.BRACKET,
   pickWindow: PickWindow.UNTIL_EVENT_START,
-  takesTiebreaker: true,
+
+  tiebreakerGame({ games }) {
+    return bracketFinal(games);
+  },
 
   acceptsConfidence({ confidence }) {
     return confidence === null;

@@ -1221,6 +1221,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/contests/{contestId}/pick-em-leaderboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a pick'em contest leaderboard
+         * @description Returns a pick'em contest's season leaderboard (#717): each entry that submitted at least one week, with its season total and, for each week, its points and place. A correct pick earns 1 point straight up, or its confidence value in a confidence pool; a pick on a lost game, a tie or a cancelled game earns nothing, and a week still in draft at its first kickoff scores nothing. Entries level on a week's points are ordered, once the week's last game is played, by how close their tiebreaker was to that game's total points; entries still level share the place. A week under way is scored live from its played games. Once a week settles, its points and places are frozen and its first-place entries are its winners; a later result correction changes nothing. Once the contest is COMPLETED, the season totals and places come from the standings frozen at settlement. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["getPickEmLeaderboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/contests/{contestId}/entries/me": {
         parameters: {
             query?: never;
@@ -2533,7 +2553,7 @@ export interface paths {
         get: operations["getGamePicks"];
         /**
          * Save game picks
-         * @description Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, and replaces the entry's pick on that game. In a bracket (#721) a pick must name a team the entry's picks put in the game (picks earlier in the same request count), and a later pick that no longer follows from them is cleared; the request may also set the bracket's `tiebreakerValue`, the final's total points (400 PREDICTION_TIEBREAKER_NOT_TAKEN in a pick'em pool; 409 CONTEST_ENTRY_LOCKED once the event has started). A bracket's every pick locks at the event's start. Only a member of the entry's squad may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team the game does not offer the entry; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
+         * @description Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, and replaces the entry's pick on that game. In a bracket (#721) a pick must name a team the entry's picks put in the game (picks earlier in the same request count), and a later pick that no longer follows from them is cleared; the request may also set the event's `tiebreakerValue`, the total points of its tiebreaker game, a bracket's final or a week's last game (#717; 409 CONTEST_ENTRY_LOCKED once that game's pick has locked). A bracket's every pick locks at the event's start. Only a member of the entry's squad may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team the game does not offer the entry; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
          */
         put: operations["saveGamePicks"];
         post?: never;
@@ -2574,7 +2594,7 @@ export interface paths {
         put?: never;
         /**
          * Submit an entry's game picks for one event
-         * @description Submits the caller's entry for one event ("submit week 6") and returns the event's games with the entry's picks (#716). Only a submitted event counts. Every game must be picked: 409 PREDICTION_WEEK_INCOMPLETE otherwise. In a confidence pool the values must be 1 to the game count, each used once: 409 PREDICTION_CONFIDENCE_INVALID otherwise. A bracket needs its tiebreaker: 409 PREDICTION_TIEBREAKER_MISSING otherwise (#721). Submitting a submitted event changes nothing. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE and the event's first game has not started. Only a member of the entry's team may submit: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
+         * @description Submits the caller's entry for one event ("submit week 6") and returns the event's games with the entry's picks (#716). Only a submitted event counts. Every game must be picked: 409 PREDICTION_WEEK_INCOMPLETE otherwise. In a confidence pool the values must be 1 to the game count, each used once: 409 PREDICTION_CONFIDENCE_INVALID otherwise. Every event needs its tiebreaker, a bracket's (#721) and a pick'em week's (#717): 409 PREDICTION_TIEBREAKER_MISSING otherwise. Submitting a submitted event changes nothing. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE and the event's first game has not started. Only a member of the entry's team may submit: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
          */
         post: operations["submitGamePicks"];
         delete?: never;
@@ -10188,8 +10208,69 @@ export interface components {
                 /** @description A confidence pool's value for this pick, 1 to the week's number of games. Omitted or null in a straight-up pool, and until the entry gives one. A value may repeat until the week is submitted. */
                 confidence?: number | null;
             }[];
-            /** @description A bracket's tiebreaker: the total points the entry expects in the final, both teams together. Required before submit; null clears it, omitted leaves it as it is. Refused with 400 PREDICTION_TIEBREAKER_NOT_TAKEN in a pick'em pool. */
+            /** @description The event's tiebreaker: the total points the entry expects in its tiebreaker game (`tiebreakerMatchId`: a bracket's final, a pick'em week's last game), both teams together. Required before submit; null clears it, omitted leaves it as it is. Refused with 409 CONTEST_ENTRY_LOCKED once that game's pick has locked. */
             tiebreakerValue?: number | null;
+        };
+        /** @description A pick'em contest's season leaderboard: the season total, each week's points and places, and the weekly winners. */
+        PickEmLeaderboardResponse: {
+            /** Format: uuid */
+            contestId: string;
+            /** @enum {string} */
+            mode: "STRAIGHT_UP" | "CONFIDENCE";
+            /** @description The contest's weeks in its week order. */
+            weeks: {
+                /** Format: uuid */
+                sportEventId: string;
+                name: string;
+                /**
+                 * Format: date-time
+                 * @description The week's first kickoff.
+                 */
+                startDate: string;
+                /** @enum {string} */
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description Whether the week's first game has kicked off: until then no entry has points for it. */
+                started: boolean;
+                /** @description Whether the week has settled: its points and places are frozen, and a later result correction changes nothing. */
+                settled: boolean;
+                /** @description The week's games, cancelled ones left out. None when the week was cancelled. */
+                gameCount: number;
+                /** @description The week's last game's combined score once it is played: what the week's tiebreakers are measured against. */
+                tiebreakerTotalPoints: number | null;
+                /** @description The week's winners, the entries in first place once the week has settled; more than one when they are still level after the tiebreaker. Empty until it settles. */
+                winnerEntryIds: string[];
+            }[];
+            /** @description The entries that submitted at least one week, best first. */
+            entries: {
+                /** Format: uuid */
+                entryId: string;
+                entryName: string;
+                entryNumber: number;
+                /** Format: uuid */
+                squadId: string;
+                squadName: string;
+                /** @description The entry's place in the season, by total points. Entries level share a place. Null until a week the entry submitted has started. */
+                position: number | null;
+                /** @description The place as shown, "T2" when shared. */
+                displayPosition: string | null;
+                /** @description The season total so far: the sum of the entry's points over the weeks that have started. */
+                totalPoints: number;
+                /** @description The entry's result for each of the contest's weeks, in the contest's week order. */
+                weeks: {
+                    /** Format: uuid */
+                    sportEventId: string;
+                    /** @description Whether the entry submitted the week. A week still in draft at its first kickoff scores nothing. */
+                    submitted: boolean;
+                    /** @description The entry's points for the week: 1 for each correct pick straight up, the pick's confidence value in a confidence pool. Null until the week starts, and for a week it did not submit or that was cancelled. */
+                    points: number | null;
+                    /** @description The entry's place in the week: by points, then, once the week's last game is played, by how close its tiebreaker was to that game's total points. Null where points is. */
+                    position: number | null;
+                    /** @description The place as shown, "T2" when shared. */
+                    displayPosition: string | null;
+                    /** @description Whether the entry won the week: first place once the week has settled. */
+                    weeklyWinner: boolean;
+                }[];
+            }[];
         };
         /** @description A bracket contest's leaderboard. */
         BracketLeaderboardResponse: {
@@ -10250,16 +10331,21 @@ export interface components {
             submittedAt: string | null;
             /** @description Whether the caller is on the entry's team, and so sees every pick on it. */
             ownEntry: boolean;
-            /** @description Whether the caller can submit the event now: their own draft entry, every game picked with valid confidence values (and a bracket's tiebreaker given), before the first game starts. */
+            /** @description Whether the caller can submit the event now: their own draft entry, every game picked with valid confidence values and the tiebreaker given, before the first game starts. */
             canSubmit: boolean;
             /** @description How many of the games have a pick. Counted on the caller's own entry; on another team's, only revealed games are counted. */
             pickedCount: number;
             gameCount: number;
-            /** @description A bracket's tiebreaker, the final's total points. Null when not given, in a pick'em pool, and on another team's entry until its picks are revealed. */
+            /**
+             * Format: uuid
+             * @description The game whose total points the tiebreaker guesses: a bracket's final, a pick'em week's last game by kickoff. Null while there is none.
+             */
+            tiebreakerMatchId: string | null;
+            /** @description The entry's tiebreaker for the event, the tiebreaker game's total points. Null when not given, and on another team's entry until that game's picks are revealed. */
             tiebreakerValue: number | null;
-            /** @description A bracket's points so far. Null in a pick'em pool until it is scored, and on another team's entry until its picks are revealed. */
+            /** @description Points so far: a bracket's round values and upset bonuses, a pick'em pick's 1 point, or its confidence value, for each correct pick. Null on another team's entry until all its picks are revealed. */
             points: number | null;
-            /** @description A bracket's points so far plus the round value of every pick still pending: the most it can still reach. Null where points is. */
+            /** @description Points so far plus what every pick still pending is worth: the most the entry can still reach. Null where points is. */
             maxPossiblePoints: number | null;
             /** @description The event's games in game-number order. Cancelled games are left out: they are not picked. */
             games: {
@@ -10337,11 +10423,11 @@ export interface components {
                     /** Format: date-time */
                     pickedAt: string;
                     /**
-                     * @description How the pick stands against the results: CORRECT once its team won the game's round, BUSTED once its team is out, else PENDING. Null in a pick'em pool until it is scored.
+                     * @description How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round), BUSTED once it can no longer come true (a loss, a tie, or in a bracket its team out), else PENDING.
                      * @enum {string|null}
                      */
                     outcome: "CORRECT" | "BUSTED" | "PENDING" | null;
-                    /** @description What the pick earned: its round's value plus any upset bonus when CORRECT, 0 when BUSTED, null while PENDING or not scored. */
+                    /** @description What the pick earned when CORRECT: in a bracket its round's value plus any upset bonus, in a pick'em pool 1 point straight up or its confidence value. 0 when BUSTED, null while PENDING or not scored. */
                     points: number | null;
                 } | null;
             }[];
@@ -16883,7 +16969,7 @@ export interface operations {
                     "application/json": components["schemas"]["ContestLeaderboardResponse"];
                 };
             };
-            /** @description CONTEST_FORMAT_MISMATCH (a prediction contest: a bracket has its own leaderboard, getBracketLeaderboard), CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event's picks are revealed yet, or not the asked-for one's), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule's settings are not valid for that definition). */
+            /** @description CONTEST_FORMAT_MISMATCH (a prediction contest: a bracket and a pick'em pool have their own leaderboards, getBracketLeaderboard and getPickEmLeaderboard), CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event's picks are revealed yet, or not the asked-for one's), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule's settings are not valid for that definition). */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -16942,6 +17028,64 @@ export interface operations {
                 };
             };
             /** @description CONTEST_FORMAT_MISMATCH (not a bracket contest), CONTEST_LEADERBOARD_PICKS_HIDDEN (the event has not started), or CONTEST_LEADERBOARD_SCORING_RULE_MISSING, _SCORING_DEFINITION_UNKNOWN (its rule is not knockout round points) or _SCORING_SETTINGS_INVALID. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getPickEmLeaderboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A pick'em contest's season leaderboard: the season total, each week's points and places, and the weekly winners. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PickEmLeaderboardResponse"];
+                };
+            };
+            /** @description CONTEST_FORMAT_MISMATCH (not a pick'em contest). */
             400: {
                 headers: {
                     [name: string]: unknown;

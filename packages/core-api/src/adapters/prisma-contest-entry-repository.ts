@@ -14,7 +14,7 @@ import type { ContestEntry, ContestEntryStatus } from '@poolmaster/shared/domain
 import { lockContestRow } from './contest-row-lock';
 
 /** Every entry read carries its status in each of its contest's events (#713). */
-const ENTRY_EVENTS = { events: { select: { sportEventId: true, status: true, submittedAt: true } } } as const;
+const ENTRY_EVENTS = { events: { select: { sportEventId: true, status: true, submittedAt: true, tiebreakerValue: true } } } as const;
 
 export class PrismaContestEntryRepository implements ContestEntryRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -132,7 +132,7 @@ function mapToEntry(row: {
   entryNumber: number;
   name: string;
   tiebreakerValue: number | null;
-  events: { sportEventId: string; status: ContestEntryStatus; submittedAt: Date | null }[];
+  events: { sportEventId: string; status: ContestEntryStatus; submittedAt: Date | null; tiebreakerValue: number | null }[];
   createdAt: Date;
   updatedAt: Date;
 }): ContestEntry {
@@ -147,6 +147,7 @@ function mapToEntry(row: {
       sportEventId: event.sportEventId,
       status: event.status,
       submittedAt: event.submittedAt ?? undefined,
+      tiebreakerValue: event.tiebreakerValue ?? undefined,
     })),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

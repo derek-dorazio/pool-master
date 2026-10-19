@@ -9,11 +9,11 @@ import type {
   ContestEntryWithSquad,
   SportEventMatchRepository,
 } from '@poolmaster/shared/db';
-import { SelectionType, SportEventStatus, type SportEvent } from '@poolmaster/shared/domain';
+import { SelectionType, SportEventStatus, contestEntryEventTiebreaker, type SportEvent } from '@poolmaster/shared/domain';
 import {
   contestBracketGames,
   finalTotalPoints,
-  rankBracketStandings,
+  rankPredictionStandings,
   resolveBracketPicks,
   scoreBracketPicks,
   type BracketScore,
@@ -104,8 +104,8 @@ export async function loadBracketStandings(
     return { entry, score: scoreBracketPicks(games, kept, seedOf, settings) };
   });
   const finalTotal = finalTotalPoints(games);
-  const ranks = new Map(rankBracketStandings(
-    scored.map(({ entry, score }) => ({ entryId: entry.id, points: score.points, tiebreakerValue: entry.tiebreakerValue ?? null })),
+  const ranks = new Map(rankPredictionStandings(
+    scored.map(({ entry, score }) => ({ entryId: entry.id, points: score.points, tiebreakerValue: contestEntryEventTiebreaker(entry, sportEventId) })),
     finalTotal,
   ).map((rank) => [rank.entryId, rank]));
   return {

@@ -35,6 +35,9 @@ import {
   ContestFormat,
   ContestStatus,
   SelectionType,
+  ContestEntryStatus,
+  contestEntryEventStatus,
+  contestEntryEventTiebreaker,
   deriveLegacyParticipantStatus,
   hasSubmittedAnyEvent,
   LeagueMembershipStatus,
@@ -53,7 +56,9 @@ import {
   type ContestLeaderboardModel,
 } from '../../mappers/contests.mapper';
 import type { BracketLeaderboardEntryRow, BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
+import type { PickEmLeaderboardEntryRow, PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
 import { BracketScoringUnavailableError, loadBracketStandings } from './bracket-standings';
+import { loadPickEmMode, loadPickEmWeekStandings } from './pick-em-standings';
 import {
   applySettledContestStandings,
   applySettledContestTotals,
@@ -463,7 +468,7 @@ export class ContestService {
 
     if (contest.contestFormat === ContestFormat.PREDICTION) {
       throw new ContestOperationError(
-        'A prediction contest\'s entries pick games, not a lineup: a bracket has its own leaderboard.',
+        'A prediction contest\'s entries pick games, not a lineup: a bracket and a pick\'em pool each have their own leaderboard.',
         'CONTEST_FORMAT_MISMATCH',
       );
     }
@@ -633,7 +638,7 @@ export class ContestService {
         maxPossiblePoints: settled?.totalScore ?? standing.score.maxPossiblePoints,
         // Not frozen at settlement: a result corrected after it can move this count, never the place or points.
         correctPickCount: standing.score.correctPickCount,
-        tiebreakerValue: standing.entry.tiebreakerValue ?? null,
+        tiebreakerValue: contestEntryEventTiebreaker(standing.entry, event.id),
       };
     }).sort((left, right) => left.position - right.position || left.entryNumber - right.entryNumber || left.entryName.localeCompare(right.entryName));
     return {
@@ -643,6 +648,116 @@ export class ContestService {
       gameCount: standings.gameCount,
       finalTotalPoints: standings.finalTotalPoints,
       entries,
+    };
+  }
+
+  /**
+   * A pick'em contest's season leaderboard (#717): each entry that submitted a week, with its
+   * points and place in every week that has started and its season total. A settled week answers
+   * from the standings frozen at its settlement, with its winners marked; a week under way is
+   * scored live, and a pick only scores once its game is played, so a live week shows nothing a
+   * game's kickoff has not revealed. A COMPLETED contest's totals and places are the frozen ones.
+   */
+  async getPickEmLeaderboard(contestId: string, requesterUserId: string): Promise<PickEmLeaderboardModel> {
+    const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
+    if (contest.selectionType !== SelectionType.PICK_EM) {
+      throw new ContestOperationError(
+        'Only a pick\'em contest has a pick\'em leaderboard.',
+        'CONTEST_FORMAT_MISMATCH',
+      );
+    }
+    const mode = await loadPickEmMode(this.deps, contestId);
+    const now = this.now();
+    const [events, entries, frozenWeeks] = await Promise.all([
+      this.findContestEvents(contest),
+      this.deps.entries.findByContestWithSquad(contestId),
+      this.deps.eventStandings.findByContest(contestId),
+    ]);
+    const counted = entries.filter(hasSubmittedAnyEvent);
+
+    const weeks = await Promise.all(events.map(async (event) => {
+      const live = await loadPickEmWeekStandings(this.deps, contestId, event, mode);
+      const frozen = frozenWeeks.filter((standing) => standing.sportEventId === event.id);
+      const started = areEventPicksRevealed(contest, event, now);
+      const settled = frozen.length > 0;
+      const cells = new Map<string, { points: number | null; position: number | null; displayPosition: string | null }>(
+        settled
+          ? frozen.map((standing) => [standing.contestEntryId, {
+            points: standing.totalScore,
+            position: standing.position,
+            displayPosition: standing.displayPosition,
+          }])
+          : started && !live.eventCancelled
+            ? live.entries.map((standing) => [standing.entry.id, {
+              points: standing.score.points,
+              position: standing.position,
+              displayPosition: standing.displayPosition,
+            }])
+            : [],
+      );
+      const winnerEntryIds = settled ? frozen.filter((standing) => standing.position === 1).map((standing) => standing.contestEntryId) : [];
+      return { event, live, started, settled, cells, winnerEntryIds };
+    }));
+
+    const totals = new Map(rankContestTotals(
+      counted,
+      weeks.flatMap(({ event, cells }) => [...cells].map(([entryId, cell]) => ({
+        entryId,
+        sportEventId: event.id,
+        score: cell.points,
+        scoredPickCount: 0,
+      }))),
+      'HIGHER_IS_BETTER',
+    ).map((total) => [total.entryId, total]));
+    const seasonFrozen = contest.status === ContestStatus.COMPLETED
+      ? new Map((await this.deps.standings.findByContest(contestId)).map((standing) => [standing.contestEntryId, standing]))
+      : new Map<string, never>();
+
+    const rows = counted.map((entry): PickEmLeaderboardEntryRow => {
+      const total = totals.get(entry.id);
+      const settled = seasonFrozen.get(entry.id);
+      return {
+        entryId: entry.id,
+        entryName: entry.name,
+        entryNumber: entry.entryNumber,
+        squadId: entry.squadId,
+        squadName: entry.squadName,
+        // Unranked until the entry has a started week.
+        position: settled?.position ?? total?.position ?? null,
+        displayPosition: settled?.displayPosition ?? total?.displayPosition ?? null,
+        totalPoints: settled?.totalScore ?? total?.score ?? 0,
+        weeks: weeks.map(({ event, cells, winnerEntryIds }) => {
+          const cell = cells.get(entry.id);
+          return {
+            sportEventId: event.id,
+            submitted: contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED,
+            points: cell?.points ?? null,
+            position: cell?.position ?? null,
+            displayPosition: cell?.displayPosition ?? null,
+            weeklyWinner: winnerEntryIds.includes(entry.id),
+          };
+        }),
+      };
+    }).sort((left, right) =>
+      (left.position ?? Number.MAX_SAFE_INTEGER) - (right.position ?? Number.MAX_SAFE_INTEGER)
+      || left.entryNumber - right.entryNumber
+      || left.entryName.localeCompare(right.entryName));
+
+    return {
+      contestId,
+      mode,
+      weeks: weeks.map(({ event, live, started, settled, winnerEntryIds }) => ({
+        sportEventId: event.id,
+        name: event.name,
+        startDate: event.startDate,
+        status: event.status,
+        started,
+        settled,
+        gameCount: live.gameCount,
+        tiebreakerTotalPoints: live.tiebreakerTotalPoints,
+        winnerEntryIds,
+      })),
+      entries: rows,
     };
   }
 

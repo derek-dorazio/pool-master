@@ -49,6 +49,7 @@ export function toGamePicksResponse(view: GamePicksView): GamePicksResponse {
     canSubmit: view.canSubmit,
     pickedCount: view.pickedCount,
     gameCount: view.gameCount,
+    tiebreakerMatchId: view.tiebreakerMatchId,
     tiebreakerValue: view.tiebreakerValue,
     points: view.points,
     maxPossiblePoints: view.maxPossiblePoints,

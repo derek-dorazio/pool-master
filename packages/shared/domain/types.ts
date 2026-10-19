@@ -253,6 +253,11 @@ export interface ContestEntryEventStatus {
   status: ContestEntryStatus;
   /** When the event's picks were last submitted; absent while a draft. */
   submittedAt?: Date;
+  /**
+   * A prediction contest's tiebreaker for the event (#717): the guessed total points of its
+   * tiebreaker game. Absent until given, and in a roster contest, whose tiebreaker is the entry's.
+   */
+  tiebreakerValue?: number;
 }
 
 /**

@@ -26,6 +26,7 @@ import {
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { proposeRoundMatchups, reseededRounds } from '../../events/bracket-reseed';
+import { gameTotalPoints } from './game-picks';
 import { upsetBonusFor } from './score-team';
 
 /** One bracket pick: the team an entry says wins one game. */
@@ -271,45 +272,48 @@ export function scoreBracketPicks(
   };
 }
 
-/** The final's combined score, both teams together, once it is played: what the tiebreaker guesses. */
-export function finalTotalPoints(bracket: readonly SportEventMatch[]): number | null {
+/** The bracket's final, its one game of the last round; null while that round has not one game. */
+export function bracketFinal(bracket: readonly SportEventMatch[]): SportEventMatch | null {
   const lastRound = Math.max(...bracket.map((match) => match.roundNumber));
   const finals = bracket.filter((match) => match.roundNumber === lastRound);
-  const final = finals.length === 1 ? finals[0] : undefined;
-  if (final?.status !== MatchStatus.COMPLETED || final.homeScore === null || final.awayScore === null) {
-    return null;
-  }
-  return final.homeScore + final.awayScore;
+  return finals.length === 1 ? finals[0] ?? null : null;
 }
 
-export interface BracketStandingInput {
+/** The final's combined score, both teams together, once it is played: what the tiebreaker guesses. */
+export function finalTotalPoints(bracket: readonly SportEventMatch[]): number | null {
+  return gameTotalPoints(bracketFinal(bracket));
+}
+
+export interface PredictionStandingInput {
   entryId: string;
   points: number;
   tiebreakerValue: number | null;
 }
 
-export interface RankedBracketStanding {
+export interface RankedPredictionStanding {
   entryId: string;
   position: number;
   displayPosition: string;
 }
 
 /**
- * Ranks entries by points, most first. Among equal points, once the final's total is known the
- * entry whose tiebreaker is closest ranks first; an entry without one ranks after those with one.
- * Entries still level share a position ("T2"), as roster standings do.
+ * Ranks a prediction contest's entries for one event, a bracket or a pick'em week (#717), by
+ * points, most first. Among equal points, once the tiebreaker game's total is known (a bracket's
+ * final, a week's last game) the entry whose tiebreaker is closest ranks first; an entry without
+ * one ranks after those with one. Entries still level share a position ("T2"), as roster
+ * standings do.
  */
-export function rankBracketStandings(
-  standings: readonly BracketStandingInput[],
+export function rankPredictionStandings(
+  standings: readonly PredictionStandingInput[],
   finalTotal: number | null,
-): RankedBracketStanding[] {
-  const distance = (standing: BracketStandingInput): number =>
+): RankedPredictionStanding[] {
+  const distance = (standing: PredictionStandingInput): number =>
     finalTotal === null ? 0
       : standing.tiebreakerValue === null ? Number.MAX_SAFE_INTEGER
         : Math.abs(standing.tiebreakerValue - finalTotal);
   const sorted = [...standings].sort((left, right) =>
     right.points - left.points || distance(left) - distance(right));
-  const key = (standing: BracketStandingInput) => `${standing.points}/${distance(standing)}`;
+  const key = (standing: PredictionStandingInput) => `${standing.points}/${distance(standing)}`;
   const counts = new Map<string, number>();
   for (const standing of sorted) counts.set(key(standing), (counts.get(key(standing)) ?? 0) + 1);
   let lastKey: string | null = null;
