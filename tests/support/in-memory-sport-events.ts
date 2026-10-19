@@ -577,11 +577,13 @@ export class InMemorySportEvents {
   }
 
   matchRepo(): SportEventMatchRepository {
+    const findBySportEvents = async (sportEventIds: readonly string[]) => this.matchRows
+      .filter((row) => sportEventIds.includes(row.sportEventId))
+      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.matchNumber - right.matchNumber)
+      .map((row) => ({ ...row }));
     return {
-      findBySportEvent: async (sportEventId) => this.matchRows
-        .filter((row) => row.sportEventId === sportEventId)
-        .sort((left, right) => left.matchNumber - right.matchNumber)
-        .map((row) => ({ ...row })),
+      findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
+      findBySportEvents,
       replaceBracket: async (sportEventId, matches) => {
         const roundNumbers = new Set(this.roundRows.filter((round) => round.sportEventId === sportEventId).map((round) => round.roundNumber));
         if (matches.some((match) => !roundNumbers.has(match.roundNumber))) throw new Error('unknown round');

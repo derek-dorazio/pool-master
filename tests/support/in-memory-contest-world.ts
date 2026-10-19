@@ -594,7 +594,7 @@ export class InMemoryContestWorld {
       entries: this.entryRepo(),
       picks: this.pickRepo(),
       predictions: { findByEntriesAndEvent: async () => [] },
-      matches: { findBySportEvent: async () => [] },
+      matches: { findBySportEvent: async () => [], findBySportEvents: async () => [] },
       standings: this.standingRepo(),
       eventStandings: this.eventStandingRepo(),
       memberships: this.membershipRepo(),

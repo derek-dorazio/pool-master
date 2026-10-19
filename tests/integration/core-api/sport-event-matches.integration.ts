@@ -134,6 +134,23 @@ describe('PrismaSportEventMatchRepository', () => {
     await expect(repos().matches.findBySportEvent(other.event.id)).resolves.toEqual([]);
   });
 
+  it('reads several events\' matches in one call, each event\'s in match order, leaving out events not asked about and reading none for none', async () => {
+    const one = await createBracketEvent();
+    const two = await createBracketEvent();
+    const notAsked = await createBracketEvent();
+    for (const { event, entryOf } of [one, two, notAsked]) {
+      await repos().matches.replaceBracket(event.id, [...fourTeamBracket(entryOf)].reverse());
+    }
+
+    const matches = await repos().matches.findBySportEvents([two.event.id, one.event.id]);
+
+    const byEvent = (sportEventId: string) => matches.filter((match) => match.sportEventId === sportEventId).map((match) => [match.matchNumber, match.roundNumber]);
+    expect(matches).toHaveLength(6);
+    expect(byEvent(one.event.id)).toEqual([[1, 1], [2, 1], [3, 2]]);
+    expect(byEvent(two.event.id)).toEqual([[1, 1], [2, 1], [3, 2]]);
+    await expect(repos().matches.findBySportEvents([])).resolves.toEqual([]);
+  });
+
   it('edits one match, clearing a value sent as null and keeping the ones left out', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));

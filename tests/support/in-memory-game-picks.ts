@@ -113,11 +113,13 @@ export class InMemoryGamePicks {
     }
   }
 
-  matchRepo(): Pick<SportEventMatchRepository, 'findBySportEvent'> {
+  matchRepo(): Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'> {
+    const findBySportEvents = async (sportEventIds: readonly string[]) => [...this.matches.values()]
+      .filter((match) => sportEventIds.includes(match.sportEventId))
+      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.matchNumber - right.matchNumber);
     return {
-      findBySportEvent: async (sportEventId) => [...this.matches.values()]
-        .filter((match) => match.sportEventId === sportEventId)
-        .sort((left, right) => left.matchNumber - right.matchNumber),
+      findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
+      findBySportEvents,
     };
   }
 
