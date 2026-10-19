@@ -108,8 +108,9 @@ draft entry gets the picks it lacks and is submitted; a submitted one is left al
 A test slate fills the field of one event on the site with a fixed list of players, for
 trying contests before the real field is announced. There is one per sport league in
 `packages/core-api/scripts/seed-golf/test-slates/`: `pga-tour.json` and `lpga-tour.json`
-(the test seed's ranked golfers), and one per sport league of every other sport, named for the
-league (`formula-1.json`, `us-thoroughbred.json`), whose players come from memory: they are
+(the test seed's ranked golfers), and one per sport league of every other roster sport, named
+for the league (`formula-1.json`, `us-thoroughbred.json`); a knockout has none, since a slate
+fills a field but no bracket, and its test data is its last real bracket, whose players come from memory: they are
 for trying contests only.
 Its envelope says `testData` with `contents` `PLAYERS` and `FIELDS` and no events; any sport
 in the registry can have one.
@@ -279,7 +280,7 @@ Load one with `mode` `apply` like any file. Because its envelope says `testData`
   leaves a draft that the next run finishes.
 - **The official finishing order already entered**: every runner's place (or did not finish,
   did not start), grid or post position, and jockey, as *The finishing order* in
-  [`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md) step 7 would.
+  [`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md) step 4 would.
 
 Then create a contest on a race, enter it, and move the race through *In Progress* and
 *Completed* from its Manage page: it settles on the finishing order already there. Running the

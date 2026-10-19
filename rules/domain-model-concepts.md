@@ -80,7 +80,8 @@ Two readings of this chain have both been held at once, so it is worth stating p
   the spread is a **push**, worth nothing to either side.
 - **A survivor entry plays until it loses** (`SURVIVOR`, #719): one pick a week, each team once
   a season (by participant, not field row), out after a loss, a tie or a week not submitted by
-  its first kickoff, and out for good. Its score is the weeks it survived; it has no tiebreaker.
+  its first kickoff, and out for good. A pick on a cancelled game survives, and since it locks only at
+  its game's kickoff, it can still be swapped to a later game that week. Its score is the weeks it survived; it has no tiebreaker.
 - **An entry that misses an event of a multi-event contest still scores it** (#714): as if each
   counted pick were unplayed (golf: 80 a round), so missing a major costs, never helps.
 - **A week of games is not a knockout** (#768). An event whose matches form no bracket (an NFL
