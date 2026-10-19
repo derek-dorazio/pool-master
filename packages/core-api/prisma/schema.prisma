@@ -1215,6 +1215,7 @@ model SportEventMatch {
   advancesTo      SportEventMatch?              @relation("SportEventMatchAdvancesTo", fields: [advancesToMatchId], references: [id], onDelete: NoAction)
   fedBy           SportEventMatch[]             @relation("SportEventMatchAdvancesTo")
   predictions     ContestEntryMatchPrediction[]
+  periodScores    SportEventMatchPeriodScore[]
 
   @@unique([sportEventId, matchNumber])
   // Two matches cannot feed the same side of the next one.
@@ -1223,6 +1224,25 @@ model SportEventMatch {
   @@index([homeSportEventParticipantId])
   @@index([awaySportEventParticipantId])
   @@map("sport_event_matches")
+}
+
+/// The score at the end of one period of a game (#772): the end of a quarter in American
+/// football, as the scoreboard shows it, so a later period's score includes the earlier ones.
+/// Rows exist for every period but the last: the final score, overtime included, is the match's
+/// own result. Squares pools read it (#711); nothing derives one period from another.
+model SportEventMatchPeriodScore {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportEventMatchId String   @map("sport_event_match_id") @db.Uuid
+  periodNumber      Int      @map("period_number")
+  homeScore         Int      @map("home_score")
+  awayScore         Int      @map("away_score")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportEventMatch SportEventMatch @relation(fields: [sportEventMatchId], references: [id], onDelete: Cascade)
+
+  @@unique([sportEventMatchId, periodNumber])
+  @@map("sport_event_match_period_scores")
 }
 
 /// One participant's part in one round of an event — the (participant, round)

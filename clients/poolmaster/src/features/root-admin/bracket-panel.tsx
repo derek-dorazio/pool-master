@@ -43,6 +43,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
     field: fieldQuery.data,
     fieldById: new Map(fieldQuery.data.map((entry) => [entry.id, entry])),
     spreads: bracket.length > 0 && formsNoBracket(bracket),
+    periods: definition.matchPeriods,
   };
   const roundCount = Math.max(event.rounds ?? 0, ...bracket.map((match) => match.roundNumber));
   const roundNumbers = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);

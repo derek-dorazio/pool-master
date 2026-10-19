@@ -58,6 +58,7 @@ function nflPlayoff(): SportEventMatch[] {
     advancesToSide: spec.advancesTo?.side ?? null,
     regionLabel: spec.region,
     homeSpread: null,
+    periodScores: [],
     createdAt: new Date('2027-01-01T00:00:00.000Z'),
     updatedAt: new Date('2027-01-01T00:00:00.000Z'),
   }));
@@ -101,6 +102,14 @@ describe('roundPlacementBlocker', () => {
 
     const started = bracket.map((match) => (match.matchNumber === 9 ? { ...match, status: MatchStatus.IN_PROGRESS } : match));
     expect(roundPlacementBlocker(started, 2)).toMatchObject({ code: 'BRACKET_ROUND_ALREADY_PLAYED' });
+  });
+
+  it('blocks placing a round once one of its games has a quarter score, though its status is still scheduled', () => {
+    const scored = afterWildCard(UPSET_WEEKEND).map((match) => (match.matchNumber === 9
+      ? { ...match, periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 0 }] }
+      : match));
+
+    expect(roundPlacementBlocker(scored, 2)).toMatchObject({ code: 'BRACKET_ROUND_ALREADY_PLAYED' });
   });
 });
 

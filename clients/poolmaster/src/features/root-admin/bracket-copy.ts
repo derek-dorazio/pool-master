@@ -44,10 +44,10 @@ export function bracketErrorMessages(
   const next = match ? bracket.find((candidate) => candidate.id === match.advancesToMatchId) : undefined;
   return {
     SPORT_EVENT_MATCH_RESULT_LOCKED: next
-      ? `This ${noun.one}'s winner has already played ${noun.one} ${next.matchNumber}. Clear that result first.`
-      : `This ${noun.one}'s winner has already played its next ${noun.one}. Clear that result first.`,
+      ? `This ${noun.one}'s winner is already in ${noun.one} ${next.matchNumber}, which has a score. Clear ${noun.one} ${next.matchNumber}'s score first.`
+      : `This ${noun.one}'s winner is already in its next ${noun.one}, which has a score. Clear that score first.`,
     MATCH_SIDES_NOT_SET: `Both ${team.many} in this ${noun.one} aren't known yet. Enter the results of the ${noun.many} before it first.`,
-    MATCH_RESULT_INVALID: 'That result could not be saved. Check it and try again.',
+    MATCH_RESULT_INVALID: 'That result could not be saved. The winner\'s score is the higher, and a final score is never below an earlier one.',
     MATCH_ALREADY_PLAYED: `This ${noun.one} has a result. Clear it before cancelling the ${noun.one}.`,
     MATCH_IN_BRACKET: `This ${noun.one} is part of a bracket, which can't lose a ${noun.one}. Change its time instead.`,
     SPORT_EVENT_NOT_RELEASED: `Release the ${vocabulary.event.one} before entering results.`,
@@ -59,6 +59,9 @@ export function bracketErrorMessages(
     PLAY_IN_SLOT_ALREADY_PLAYED: `That place has already played a ${noun.one}, so its ${team.one} can't change.`,
     PARTICIPANT_NOT_FOUND: `That ${team.one} is no longer active. Pick another.`,
     MATCH_SPREAD_LOCKED: `This ${noun.one} already has picks, so its spread can no longer change.`,
+    MATCH_PERIOD_SCORE_INVALID: 'A score can only go up as the game goes on. Check it against the other scores of this game.',
+    MATCH_PERIOD_INVALID: `This ${noun.one}'s score at that point can't be entered here.`,
+    MATCH_CANCELLED: `This ${noun.one} was cancelled, so it has no score.`,
     MATCH_SPREAD_REQUIRED: `The ${vocabulary.event.one} has been released, so this ${noun.one}'s spread can be changed but not cleared.`,
   };
 }

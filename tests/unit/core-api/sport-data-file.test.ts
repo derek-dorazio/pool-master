@@ -262,6 +262,7 @@ describe('sport data bracket', () => {
     advancesTo: { matchNumber: number; side: string } | null;
     regionLabel?: string;
     result?: { winner: string; homeScore: number; awayScore: number };
+    periodScores?: Array<{ periodNumber: number; homeScore: number; awayScore: number }>;
   }
   interface BracketFile {
     testData: boolean;
@@ -417,6 +418,33 @@ describe('sport data bracket', () => {
     file.sportLeagues[0].events[0].matches[0].result = { winner: 'AWAY', homeScore: 60, awayScore: 64 };
 
     expect(problemsOf(file)).toEqual(['NCAA Men, Tournament: carries match results, which only test data may.']);
+  });
+
+  it('refuses period scores in a real file, and on a sport whose games keep no score by period', () => {
+    const real = bracketFile();
+    real.sportLeagues[0].events[0].matches[0].periodScores = [{ periodNumber: 1, homeScore: 30, awayScore: 28 }];
+    expect(problemsOf(real)).toEqual([
+      'NCAA Men, Tournament: carries period scores, which only test data may.',
+      'NCAA Men, Tournament: match 1 carries period scores, but its sport keeps no score by period.',
+    ]);
+  });
+
+  it('refuses a football test seed\'s period scores for the last quarter, out of order, or on a match with no result', () => {
+    const file = bracketTestSeed();
+    (file.scope as { sport?: string }).sport = 'AMERICAN_FOOTBALL';
+    const matches = file.sportLeagues[0].events[0].matches;
+    matches[0].periodScores = [{ periodNumber: 1, homeScore: 7, awayScore: 0 }, { periodNumber: 3, homeScore: 14, awayScore: 7 }];
+    expect(problemsOf(file, true)).toEqual([]);
+
+    matches[0].periodScores = [{ periodNumber: 4, homeScore: 21, awayScore: 7 }];
+    matches[1].periodScores = [{ periodNumber: 2, homeScore: 7, awayScore: 0 }, { periodNumber: 1, homeScore: 0, awayScore: 0 }];
+    delete matches[2].result;
+    matches[2].periodScores = [{ periodNumber: 1, homeScore: 0, awayScore: 0 }];
+    expect(problemsOf(file, true)).toEqual([
+      'NCAA Men, Tournament: match 1 has a score for quarter 4 or later, which is the result\'s final score.',
+      'NCAA Men, Tournament: match 2\'s period scores are not in period order, once each.',
+      'NCAA Men, Tournament: match 3 carries period scores but no result, and they are entered with its result.',
+    ]);
   });
 
   it('reads a league that reseeds: first-round games that link nowhere, each match in its region', () => {

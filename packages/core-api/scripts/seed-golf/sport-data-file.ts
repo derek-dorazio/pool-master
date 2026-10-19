@@ -123,6 +123,16 @@ const MatchSchema = z.object({
     homeScore: z.number().int().min(0),
     awayScore: z.number().int().min(0),
   }).strict().optional(),
+  /**
+   * Test data only (RESULTS), for a sport with periods (#772): the score at the end of each period
+   * but the last, as the scoreboard showed it, entered before the match's result. The last
+   * period's score is the result's.
+   */
+  periodScores: z.array(z.object({
+    periodNumber: z.number().int().min(1),
+    homeScore: z.number().int().min(0),
+    awayScore: z.number().int().min(0),
+  }).strict()).optional(),
 }).strict();
 
 const EventSchema = z.object({
@@ -355,7 +365,28 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
       if (!placesFormFinishingOrder(places)) problems.push(`${where}: the finishing places do not run 1, 2, 3 ... (a dead heat repeats a place and skips the next).`);
     }
     if (!file.testData && matches.some((match) => match.result !== undefined)) problems.push(`${where}: carries match results, which only test data may.`);
+    if (!file.testData && matches.some((match) => match.periodScores !== undefined)) problems.push(`${where}: carries period scores, which only test data may.`);
+    for (const problem of periodScoreProblems(file.scope.sport, matches)) problems.push(`${where}: ${problem}.`);
   }
+}
+
+/** What is wrong with the matches' period scores: a sport without periods, the last period or past it, or a period twice or out of order. */
+function periodScoreProblems(sport: string, matches: readonly SportDataMatch[]): string[] {
+  const periods = isSport(sport) ? getSportDefinition(sport).matchPeriods : undefined;
+  return matches.flatMap((match) => {
+    const scores = match.periodScores ?? [];
+    if (scores.length === 0) return [];
+    if (!periods) return [`match ${match.matchNumber} carries period scores, but its sport keeps no score by period`];
+    const problems: string[] = [];
+    if (match.result === undefined) problems.push(`match ${match.matchNumber} carries period scores but no result, and they are entered with its result`);
+    if (scores.some((score) => score.periodNumber >= periods.count)) {
+      problems.push(`match ${match.matchNumber} has a score for ${periods.label.one} ${periods.count} or later, which is the result's final score`);
+    }
+    if (scores.some((score, index) => index > 0 && score.periodNumber <= scores[index - 1].periodNumber)) {
+      problems.push(`match ${match.matchNumber}'s period scores are not in period order, once each`);
+    }
+    return problems;
+  });
 }
 
 /**

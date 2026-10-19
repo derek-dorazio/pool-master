@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MatchSide, MatchStatus, type SportVocabulary } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, type SportMatchPeriods, type SportVocabulary } from '@poolmaster/shared/domain';
 import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { formatSpread } from '@/features/contests/pick-em-week';
@@ -9,6 +9,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { bracketErrorMessages, describeEntry, feederOf, formsNoBracket, matchNoun, sideEntry } from './bracket-copy';
+import { MatchScoresRow } from './match-scores-row';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
 
@@ -37,6 +38,8 @@ export type BracketContext = {
   fieldById: ReadonlyMap<string, SportEventParticipantDto>;
   /** Whether the rows carry a spread column: a week of games that forms no bracket (#720). */
   spreads: boolean;
+  /** The periods a game is scored by, for a sport that keeps a score at each period's end (#772). */
+  periods?: SportMatchPeriods;
 };
 
 /** A side's team, with its seed, or who fills it while that is still to be decided. */
@@ -122,101 +125,107 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
     }
   };
 
+  // A released game with both teams keeps its score by period, for a sport that has periods.
+  const periods = released && home && away && match.status !== MatchStatus.CANCELLED ? context.periods : undefined;
+
   return (
-    <tr className="border-t border-border align-top" data-testid={`root-admin-bracket-match-${match.matchNumber}`}>
-      <td className="px-4 py-2 font-medium">{match.matchNumber}</td>
-      <td className="px-4 py-2" data-testid={`root-admin-bracket-pairing-${match.matchNumber}`}>
-        {editing ? (
-          <PairingEditor context={context} homeFed={homeFed} awayFed={awayFed} match={match} onDone={() => setEditing(false)} />
-        ) : describePairing(match, context)}
-      </td>
-      {context.spreads ? (
-        <td className="px-4 py-2" data-testid={`root-admin-bracket-spread-${match.matchNumber}`}>
-          <SpreadCell context={context} match={match} released={released} />
+    <>
+      <tr className="border-t border-border align-top" data-testid={`root-admin-bracket-match-${match.matchNumber}`}>
+        <td className="px-4 py-2 font-medium">{match.matchNumber}</td>
+        <td className="px-4 py-2" data-testid={`root-admin-bracket-pairing-${match.matchNumber}`}>
+          {editing ? (
+            <PairingEditor context={context} homeFed={homeFed} awayFed={awayFed} match={match} onDone={() => setEditing(false)} />
+          ) : describePairing(match, context)}
         </td>
-      ) : null}
-      <td className="px-4 py-2 text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, 'To be announced')}</td>
-      <td className="px-4 py-2">
-        <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{MATCH_STATUS_LABEL[match.status]}</StatusBadge>
-      </td>
-      <td className="px-4 py-2">
-        {pairingEditable && !editing ? (
-          <Button data-testid={`root-admin-bracket-edit-${match.matchNumber}`} onClick={() => setEditing(true)} size="sm" variant="secondary">
-            Edit pairing
-          </Button>
+        {context.spreads ? (
+          <td className="px-4 py-2" data-testid={`root-admin-bracket-spread-${match.matchNumber}`}>
+            <SpreadCell context={context} match={match} released={released} />
+          </td>
         ) : null}
-        {released && home && away && match.status !== MatchStatus.CANCELLED ? (
-          <div className="flex flex-wrap gap-2">
-            {([[MatchSide.HOME, home], [MatchSide.AWAY, away]] as const).map(([side, entry]) => {
-              const won = decided && match.winnerSide === side;
-              return (
+        <td className="px-4 py-2 text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, 'To be announced')}</td>
+        <td className="px-4 py-2">
+          <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{MATCH_STATUS_LABEL[match.status]}</StatusBadge>
+        </td>
+        <td className="px-4 py-2">
+          {pairingEditable && !editing ? (
+            <Button data-testid={`root-admin-bracket-edit-${match.matchNumber}`} onClick={() => setEditing(true)} size="sm" variant="secondary">
+              Edit pairing
+            </Button>
+          ) : null}
+          {released && home && away && match.status !== MatchStatus.CANCELLED ? (
+            <div className="flex flex-wrap gap-2">
+              {([[MatchSide.HOME, home], [MatchSide.AWAY, away]] as const).map(([side, entry]) => {
+                const won = decided && match.winnerSide === side;
+                return (
+                  <Button
+                    aria-pressed={won}
+                    data-testid={`root-admin-bracket-winner-${match.matchNumber}-${side}`}
+                    disabled={won || result.isPending}
+                    key={side}
+                    onClick={() => result.mutate(side)}
+                    size="sm"
+                    variant={won ? 'primary' : 'secondary'}
+                  >
+                    {won ? `${entry.participant.name} won` : `${entry.participant.name} wins`}
+                  </Button>
+                );
+              })}
+              {decided ? (
                 <Button
-                  aria-pressed={won}
-                  data-testid={`root-admin-bracket-winner-${match.matchNumber}-${side}`}
-                  disabled={won || result.isPending}
-                  key={side}
-                  onClick={() => result.mutate(side)}
+                  data-testid={`root-admin-bracket-clear-${match.matchNumber}`}
+                  disabled={result.isPending}
+                  onClick={() => result.mutate(null)}
                   size="sm"
-                  variant={won ? 'primary' : 'secondary'}
+                  variant="ghost"
                 >
-                  {won ? `${entry.participant.name} won` : `${entry.participant.name} wins`}
+                  Clear result
                 </Button>
-              );
-            })}
-            {decided ? (
-              <Button
-                data-testid={`root-admin-bracket-clear-${match.matchNumber}`}
-                disabled={result.isPending}
-                onClick={() => result.mutate(null)}
-                size="sm"
-                variant="ghost"
-              >
-                Clear result
-              </Button>
+              ) : null}
+              {cancellable ? (
+                <Button
+                  data-testid={`root-admin-bracket-cancel-${match.matchNumber}`}
+                  disabled={result.isPending}
+                  onClick={() => setConfirmingCancel(true)}
+                  size="sm"
+                  variant="ghost"
+                >
+                  {`Cancel ${noun.one}`}
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+          <ConfirmDialog
+            cancelLabel={`Keep ${noun.one}`}
+            confirmLabel={`Cancel ${noun.one}`}
+            confirmTestId={`root-admin-bracket-cancel-confirm-${match.matchNumber}`}
+            description={`${describePairing(match, context)} will count for nothing in every contest. If it is played later, add it to the week it moves to before that week is released.`}
+            isPending={cancel.isPending}
+            onCancel={closeCancel}
+            onConfirm={() => cancel.mutate()}
+            onOpenChange={(open) => (open ? setConfirmingCancel(true) : closeCancel())}
+            open={confirmingCancel}
+            pendingLabel="Cancelling..."
+            title={`Cancel ${noun.one} ${match.matchNumber}?`}
+            tone="danger"
+          >
+            {cancel.isError ? (
+              <p className="text-sm text-destructive" data-testid={`root-admin-bracket-cancel-error-${match.matchNumber}`} role="alert">
+                {extractErrorMessage(cancel.error, { codeMessages: errorCopy, fallback: `This ${noun.one} could not be cancelled. Try again.` })}
+              </p>
             ) : null}
-            {cancellable ? (
-              <Button
-                data-testid={`root-admin-bracket-cancel-${match.matchNumber}`}
-                disabled={result.isPending}
-                onClick={() => setConfirmingCancel(true)}
-                size="sm"
-                variant="ghost"
-              >
-                {`Cancel ${noun.one}`}
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
-        <ConfirmDialog
-          cancelLabel={`Keep ${noun.one}`}
-          confirmLabel={`Cancel ${noun.one}`}
-          confirmTestId={`root-admin-bracket-cancel-confirm-${match.matchNumber}`}
-          description={`${describePairing(match, context)} will count for nothing in every contest. If it is played later, add it to the week it moves to before that week is released.`}
-          isPending={cancel.isPending}
-          onCancel={closeCancel}
-          onConfirm={() => cancel.mutate()}
-          onOpenChange={(open) => (open ? setConfirmingCancel(true) : closeCancel())}
-          open={confirmingCancel}
-          pendingLabel="Cancelling..."
-          title={`Cancel ${noun.one} ${match.matchNumber}?`}
-          tone="danger"
-        >
-          {cancel.isError ? (
-            <p className="text-sm text-destructive" data-testid={`root-admin-bracket-cancel-error-${match.matchNumber}`} role="alert">
-              {extractErrorMessage(cancel.error, { codeMessages: errorCopy, fallback: `This ${noun.one} could not be cancelled. Try again.` })}
+          </ConfirmDialog>
+          {released && (!home || !away) ? (
+            <p className="text-sm text-muted-foreground">{`Waiting on both ${context.vocabulary.participant.many}`}</p>
+          ) : null}
+          {result.isError ? (
+            <p className="mt-2 text-sm text-destructive" data-testid={`root-admin-bracket-error-${match.matchNumber}`} role="alert">
+              {extractErrorMessage(result.error, { codeMessages: errorCopy, fallback: `This ${noun.one}'s result could not be saved. Try again.` })}
             </p>
           ) : null}
-        </ConfirmDialog>
-        {released && (!home || !away) ? (
-          <p className="text-sm text-muted-foreground">{`Waiting on both ${context.vocabulary.participant.many}`}</p>
-        ) : null}
-        {result.isError ? (
-          <p className="mt-2 text-sm text-destructive" data-testid={`root-admin-bracket-error-${match.matchNumber}`} role="alert">
-            {extractErrorMessage(result.error, { codeMessages: errorCopy, fallback: `This ${noun.one}'s result could not be saved. Try again.` })}
-          </p>
-        ) : null}
-      </td>
-    </tr>
+        </td>
+      </tr>
+      {periods ? <MatchScoresRow columns={context.spreads ? 6 : 5} context={context} match={match} periods={periods} /> : null}
+    </>
   );
 }
 

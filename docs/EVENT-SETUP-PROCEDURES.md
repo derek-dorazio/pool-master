@@ -210,6 +210,12 @@ on the Bracket tab:
   the standings update. A wrong winner can be switched, or the result cleared, until the next
   game has a result. Each play-in place takes its winner once, from the sport's active teams
   not already in the tournament.
+- **Quarter scores**, for American football (#772): under each released game with both teams,
+  *Enter score* takes both teams' score at the end of the first, second and third quarters, as
+  the scoreboard shows it, and the final score, overtime included, which saves the game's result
+  with the higher score winning. A score can't go down as the game goes on, so a quarter's score
+  is refused below an earlier quarter's or above a later one's or the final score. Squares pools
+  read them.
 
 The NBA and WNBA playoffs are basketball tournaments too, in their own sport leagues. A series
 is one game of the bracket: choose the team that won the series, with the games each side won
@@ -400,7 +406,8 @@ create with its reseed rule. Because its envelope says `testData`:
   Card games, the Divisional round placed by the server's reseed (each 1 seed hosts the lowest
   seed left in its conference), the conference championships placed by a second reseed (the
   better seed left hosts), and Super Bowl LX, which the Seattle Seahawks win 29-13 over the New
-  England Patriots.
+  England Patriots. The Super Bowl also carries its score at the end of each of the first three
+  quarters (Seahawks 3-0, 9-0, 12-0), entered before its result, for squares pools (#711).
 
 To test a contest end to end, create and open it and submit entries, then on the event's
 Workflow card *Move to In Progress* and *Move to Completed*, as for the golf seed above.

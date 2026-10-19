@@ -72,6 +72,7 @@ import {
   listSports,
   loadEventBracket,
   proposeEventRoundMatchups,
+  recordEventMatchPeriodScore,
   recordEventMatchResult,
   releaseEvent,
   removeEventParticipant,
@@ -858,13 +859,16 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
     const round = matches.filter((match) => match.roundNumber === roundNumber);
     const waitsOnReseed = round.some((match) => (match.home === null && !linked.has(`${match.matchNumber}/${MatchSide.HOME}`))
       || (match.away === null && !linked.has(`${match.matchNumber}/${MatchSide.AWAY}`)));
-    const results = round.flatMap((match) => (match.result ? [{ matchNumber: match.matchNumber, result: match.result }] : []));
+    const results = round.flatMap((match) => (match.result ? [{ matchNumber: match.matchNumber, result: match.result, periodScores: match.periodScores ?? [] }] : []));
     if (results.length === 0) continue;
     if (waitsOnReseed) {
       const proposal = await must(proposeEventRoundMatchups({ client, path: { eventId, roundNumber } }), `Propose round ${roundNumber} of ${event.name}`);
       await must(setEventRoundMatchups({ client, path: { eventId, roundNumber }, body: { matches: proposal.matches } }), `Place round ${roundNumber} of ${event.name}`);
     }
-    for (const { matchNumber, result } of results) {
+    for (const { matchNumber, result, periodScores } of results) {
+      for (const { periodNumber, ...score } of periodScores) {
+        await must(recordEventMatchPeriodScore({ client, path: { eventId, matchNumber, periodNumber }, body: score }), `Enter the score at the end of period ${periodNumber} of match ${matchNumber} of ${event.name}`);
+      }
       const body = { winnerSide: result.winner, homeScore: result.homeScore, awayScore: result.awayScore };
       await must(recordEventMatchResult({ client, path: { eventId, matchNumber }, body }), `Enter the result of match ${matchNumber} of ${event.name}`);
     }

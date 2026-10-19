@@ -1,9 +1,10 @@
 /**
  * Repository port for an event's matches (#698): its bracket. The admin loads the whole bracket
- * at once and edits one match at a time; results (#699) are written by the head-to-head family.
+ * at once and edits one match at a time; results (#699) and period scores (#772) are written by
+ * the head-to-head family.
  */
 
-import type { MatchSide, MatchStatus, ParticipantStandingStatus, SportEventMatch } from '../domain';
+import type { MatchSide, MatchStatus, ParticipantStandingStatus, SportEventMatch, SportEventMatchPeriodScore } from '../domain';
 
 /** One match of a bracket being loaded. `id` is chosen by the caller so links can name it. */
 export interface SportEventMatchWrite {
@@ -76,4 +77,8 @@ export interface SportEventMatchRepository {
   placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[]): Promise<void>;
   /** A result entered or cleared, the side it fills and the standings it leaves, all or none. */
   applyResult(apply: MatchResultApply): Promise<void>;
+  /** Creates or replaces the score at the end of one period of a match (#772). */
+  savePeriodScore(sportEventMatchId: string, score: SportEventMatchPeriodScore): Promise<void>;
+  /** Removes the score at the end of one period of a match; removing none changes nothing. */
+  deletePeriodScore(sportEventMatchId: string, periodNumber: number): Promise<void>;
 }

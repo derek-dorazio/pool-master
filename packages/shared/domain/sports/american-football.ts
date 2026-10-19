@@ -31,6 +31,7 @@ export const americanFootballSportDefinition: SportDefinition = {
   defaultTierLayout: { tierCount: 7, tierSize: 2 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
+  matchPeriods: { count: 4, label: { one: 'quarter', many: 'quarters' } },
   vocabulary: {
     participant: { one: 'team', many: 'teams' },
     event: { one: 'playoffs', many: 'playoffs' },

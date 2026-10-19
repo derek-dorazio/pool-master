@@ -176,6 +176,36 @@ describe('PrismaSportEventMatchRepository', () => {
     expect((await repos().matches.findBySportEvent(event.id))[0]?.homeSpread).toBeNull();
   });
 
+  it('saves, replaces and deletes a game\'s period scores, reading them in period order, and drops them with the bracket (#772)', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+
+    await repos().matches.savePeriodScore(first.id, { periodNumber: 3, homeScore: 21, awayScore: 14 });
+    await repos().matches.savePeriodScore(first.id, { periodNumber: 1, homeScore: 7, awayScore: 0 });
+    await repos().matches.savePeriodScore(first.id, { periodNumber: 1, homeScore: 7, awayScore: 3 });
+    expect((await repos().matches.findBySportEvent(event.id))[0]?.periodScores).toEqual([
+      { periodNumber: 1, homeScore: 7, awayScore: 3 },
+      { periodNumber: 3, homeScore: 21, awayScore: 14 },
+    ]);
+
+    await repos().matches.deletePeriodScore(first.id, 3);
+    await repos().matches.deletePeriodScore(first.id, 2);
+    expect((await repos().matches.findBySportEvent(event.id))[0]?.periodScores).toEqual([{ periodNumber: 1, homeScore: 7, awayScore: 3 }]);
+
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    await expect(getPrisma().sportEventMatchPeriodScore.count({ where: { sportEventMatchId: first.id } })).resolves.toBe(0);
+  });
+
+  it('refuses a period before the first and a negative period score in the database', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+
+    await expect(repos().matches.savePeriodScore(first.id, { periodNumber: 0, homeScore: 0, awayScore: 0 })).rejects.toThrow(/period_number_check/);
+    await expect(repos().matches.savePeriodScore(first.id, { periodNumber: 1, homeScore: -1, awayScore: 0 })).rejects.toThrow(/scores_check/);
+  });
+
   it('deletes the bracket with its event', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));

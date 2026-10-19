@@ -12,7 +12,7 @@ import type {
   SportEventMatchWrite,
 } from '@poolmaster/shared/db';
 import { MatchSide } from '@poolmaster/shared/domain';
-import type { SportEventMatch } from '@poolmaster/shared/domain';
+import type { SportEventMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
 
 export class PrismaSportEventMatchRepository implements SportEventMatchRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -25,7 +25,10 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
     if (sportEventIds.length === 0) return [];
     const rows = await this.prisma.sportEventMatch.findMany({
       where: { sportEventId: { in: [...sportEventIds] } },
-      include: { sportEventRound: { select: { roundNumber: true } } },
+      include: {
+        sportEventRound: { select: { roundNumber: true } },
+        periodScores: { select: { periodNumber: true, homeScore: true, awayScore: true }, orderBy: { periodNumber: 'asc' } },
+      },
       orderBy: [{ sportEventId: 'asc' }, { matchNumber: 'asc' }],
     });
     return rows.map(({ sportEventRound, sportEventRoundId: _roundId, homeSpread, ...row }) => ({
@@ -56,6 +59,18 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
 
   async update(id: string, patch: SportEventMatchPatch): Promise<void> {
     await this.prisma.sportEventMatch.update({ where: { id }, data: patch });
+  }
+
+  async savePeriodScore(sportEventMatchId: string, { periodNumber, homeScore, awayScore }: SportEventMatchPeriodScore): Promise<void> {
+    await this.prisma.sportEventMatchPeriodScore.upsert({
+      where: { sportEventMatchId_periodNumber: { sportEventMatchId, periodNumber } },
+      create: { sportEventMatchId, periodNumber, homeScore, awayScore },
+      update: { homeScore, awayScore },
+    });
+  }
+
+  async deletePeriodScore(sportEventMatchId: string, periodNumber: number): Promise<void> {
+    await this.prisma.sportEventMatchPeriodScore.deleteMany({ where: { sportEventMatchId, periodNumber } });
   }
 
   async placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[]): Promise<void> {

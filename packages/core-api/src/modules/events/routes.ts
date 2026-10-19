@@ -637,7 +637,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     required: ['eventId', 'matchNumber'],
     properties: { eventId: uuid, matchNumber: { type: 'integer', minimum: 1 } },
   } as const;
-  const MATCH_RESULT_LOCKED = '409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result: clear that result first.';
+  const MATCH_RESULT_LOCKED = '409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first.';
 
   fastify.put('/:eventId/bracket/matches/:matchNumber/result', {
     ...write,
@@ -670,6 +670,44 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     handler: handler.clearEventMatchResult,
   });
 
+  const PERIOD_PARAMS = {
+    type: 'object',
+    required: ['eventId', 'matchNumber', 'periodNumber'],
+    properties: { eventId: uuid, matchNumber: { type: 'integer', minimum: 1 }, periodNumber: { type: 'integer', minimum: 1 } },
+  } as const;
+  const PERIOD_REFUSALS = '409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_CANCELLED for a cancelled game. '
+    + '422 MATCH_PERIOD_INVALID when the event\'s sport keeps no score by period, or for the last period or past it, whose score is the final result.';
+
+  fastify.put('/:eventId/bracket/matches/:matchNumber/periods/:periodNumber', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Enter a game\'s score at the end of a period',
+      description: 'Both sides\' score at the end of one period before the last (the end of the first, second or third quarter in American football), as the scoreboard shows it. '
+        + 'It can be entered while the game is played and corrected after it; re-sending it changes it. Squares pools read it. '
+        + `${PERIOD_REFUSALS} 422 MATCH_SIDES_NOT_SET while a side waits for its team. 422 MATCH_PERIOD_SCORE_INVALID when a side's score is below its score at an earlier period's end, or above its score at a later one's or its final score. `
+        + `422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
+      operationId: 'recordEventMatchPeriodScore',
+      params: PERIOD_PARAMS,
+      body: schemaRef('RecordSportEventMatchPeriodScoreRequest'),
+      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+    },
+    handler: handler.recordEventMatchPeriodScore,
+  });
+
+  fastify.delete('/:eventId/bracket/matches/:matchNumber/periods/:periodNumber', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Clear a game\'s score at the end of a period',
+      description: `Clearing a score that is not entered changes nothing. ${PERIOD_REFUSALS} 422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
+      operationId: 'clearEventMatchPeriodScore',
+      params: PERIOD_PARAMS,
+      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.clearEventMatchPeriodScore,
+  });
+
   fastify.post('/:eventId/bracket/matches/:matchNumber/cancel', {
     ...write,
     schema: {
@@ -686,7 +724,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
   });
 
   const ROUND_REFUSALS = '422 BRACKET_NOT_RESEEDED when the event\'s league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. '
-    + '409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started.';
+    + '409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started or has a period score.';
 
   fastify.get('/:eventId/bracket/rounds/:roundNumber/reseed', {
     ...write,

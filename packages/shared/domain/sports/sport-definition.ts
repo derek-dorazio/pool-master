@@ -52,6 +52,17 @@ export interface SportVocabulary {
   match?: SportNoun;
 }
 
+/**
+ * The periods one game is played in (#772): four quarters in American football. The score at the
+ * end of each period but the last is entered on its own; the last period's is the final score.
+ */
+export interface SportMatchPeriods {
+  /** How many periods a game has, overtime aside: 4 for American football. */
+  count: number;
+  /** What one period is called: "quarter" / "quarters". */
+  label: SportNoun;
+}
+
 /** How a new event's pick tiers are laid out before an admin edits them. */
 export interface SportTierLayout {
   /** How many tiers a new event gets. */
@@ -89,6 +100,12 @@ export interface SportDefinition {
    */
   scoringDefinitions: readonly ParticipantScoringDefinitionId[];
   vocabulary: SportVocabulary;
+  /**
+   * The periods a game is played in, for a sport that plays matches and keeps a score at the end
+   * of each one (American football's quarters). Absent for every other sport: its games take no
+   * period scores, and squares pools (#711) are not offered on it.
+   */
+  matchPeriods?: SportMatchPeriods;
   /** How one round is labelled: "Round 2" for golf, "Quarterfinal" for tennis. */
   roundLabel: (roundNumber: number, roundCount: number) => string;
 }

@@ -37,7 +37,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
       return `match-${sequence}`;
     },
   });
-  if (sport === Sport.BASKETBALL) {
+  if (sport === Sport.BASKETBALL || sport === Sport.AMERICAN_FOOTBALL) {
     await brackets.loadBracket(event.id, [
       { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: duke.id, awaySportEventParticipantId: vermont.id, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
       { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: houston.id, awaySportEventParticipantId: texas.id, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
@@ -204,6 +204,29 @@ describe('MatchResultService.recordResult', () => {
   });
 });
 
+// #772 review: quarter scores belong to the two teams playing, so a game with any is under way.
+describe('MatchResultService once the next game has quarter scores', () => {
+  async function scoredFinal() {
+    const context = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+    await context.service.recordResult(context.event.id, 1, homeWins);
+    await context.service.recordResult(context.event.id, 2, homeWins);
+    await context.service.recordPeriodScore(context.event.id, 3, 1, { homeScore: 7, awayScore: 3 });
+    return context;
+  }
+
+  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) a new winner for a game whose winner is playing a game with quarter scores', async () => {
+    const { service, event } = await scoredFinal();
+
+    await expect(service.recordResult(event.id, 1, awayWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+  });
+
+  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) clearing the result of a game whose winner is playing a game with quarter scores', async () => {
+    const { service, event } = await scoredFinal();
+
+    await expect(service.clearResult(event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+  });
+});
+
 describe('MatchResultService.clearResult', () => {
   it('schedules the match again, empties the side its winner filled and restores the loser\'s standing', async () => {
     const context = await setup();
@@ -278,6 +301,84 @@ describe('MatchResultService.cancelMatch', () => {
   });
 });
 
+// #772: the score at the end of each quarter but the last, as the scoreboard shows it. The final
+// score, overtime included, is the game's result.
+describe('MatchResultService period scores', () => {
+  it('saves the score at the end of a quarter while the game is played, keeping the quarters in order', async () => {
+    const { service, event } = await week();
+
+    await service.recordPeriodScore(event.id, 1, 2, { homeScore: 10, awayScore: 7 });
+    const games = await service.recordPeriodScore(event.id, 1, 1, { homeScore: 3, awayScore: 0 });
+
+    expect(games.find((game) => game.matchNumber === 1)?.periodScores).toEqual([
+      { periodNumber: 1, homeScore: 3, awayScore: 0 },
+      { periodNumber: 2, homeScore: 10, awayScore: 7 },
+    ]);
+    expect(games.find((game) => game.matchNumber === 2)?.periodScores).toEqual([]);
+  });
+
+  it('replaces a quarter\'s score when it is entered again, and corrects it after the game is final', async () => {
+    const { service, event } = await week();
+    await service.recordPeriodScore(event.id, 1, 3, { homeScore: 14, awayScore: 3 });
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 24, awayScore: 10 });
+
+    const games = await service.recordPeriodScore(event.id, 1, 3, { homeScore: 17, awayScore: 3 });
+
+    expect(games.find((game) => game.matchNumber === 1)?.periodScores).toEqual([{ periodNumber: 3, homeScore: 17, awayScore: 3 }]);
+  });
+
+  it('clears a quarter\'s score, and changes nothing for a quarter not entered', async () => {
+    const { service, event } = await week();
+    await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
+
+    await service.clearPeriodScore(event.id, 1, 2);
+    const games = await service.clearPeriodScore(event.id, 1, 1);
+
+    expect(games.find((game) => game.matchNumber === 1)?.periodScores).toEqual([]);
+  });
+
+  it('refuses (422 MATCH_PERIOD_SCORE_INVALID) a score below an earlier quarter\'s or above a later quarter\'s or the final score', async () => {
+    const { service, event } = await week();
+    await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 3 });
+    await service.recordPeriodScore(event.id, 1, 3, { homeScore: 14, awayScore: 10 });
+    const refused = { code: 'MATCH_PERIOD_SCORE_INVALID', statusCode: 422 };
+
+    await expect(service.recordPeriodScore(event.id, 1, 2, { homeScore: 7, awayScore: 0 })).rejects.toMatchObject(refused);
+    await expect(service.recordPeriodScore(event.id, 1, 2, { homeScore: 17, awayScore: 3 })).rejects.toMatchObject(refused);
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 21, awayScore: 10 });
+    await expect(service.recordPeriodScore(event.id, 1, 3, { homeScore: 24, awayScore: 10 })).rejects.toMatchObject(refused);
+  });
+
+  it('refuses (422 MATCH_RESULT_INVALID) a final score below a side\'s score at the end of a quarter', async () => {
+    const { service, event } = await week();
+    await service.recordPeriodScore(event.id, 1, 3, { homeScore: 14, awayScore: 10 });
+
+    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 13, awayScore: 10 }))
+      .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
+  });
+
+  it('refuses (422 MATCH_PERIOD_INVALID) the last quarter, whose score is the final result, and a sport whose games keep no score by period', async () => {
+    const football = await week();
+    await expect(football.service.recordPeriodScore(football.event.id, 1, 4, { homeScore: 7, awayScore: 0 }))
+      .rejects.toMatchObject({ code: 'MATCH_PERIOD_INVALID', statusCode: 422 });
+
+    const basketball = await setup();
+    await expect(basketball.service.recordPeriodScore(basketball.event.id, 1, 1, { homeScore: 40, awayScore: 38 }))
+      .rejects.toMatchObject({ code: 'MATCH_PERIOD_INVALID', statusCode: 422 });
+  });
+
+  it('refuses (409 MATCH_CANCELLED) a cancelled game, and (409 SPORT_EVENT_NOT_RELEASED) a game of a draft week', async () => {
+    const { service, event } = await week();
+    await service.cancelMatch(event.id, 2);
+    await expect(service.recordPeriodScore(event.id, 2, 1, { homeScore: 7, awayScore: 0 }))
+      .rejects.toMatchObject({ code: 'MATCH_CANCELLED', statusCode: 409 });
+
+    event.status = SportEventStatus.DRAFT;
+    await expect(service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 }))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED', statusCode: 409 });
+  });
+});
+
 describe('MatchResultService on a week of games that form no bracket', () => {
   it('ranks no team on a week\'s result: both teams of the played game COMPLETE with no place, the teams still to play ACTIVE', async () => {
     const { service, event, bills, jets, chiefs, raiders, standingOf } = await week();
@@ -338,7 +439,7 @@ describe('MatchResultService on a reseeded bracket', () => {
       id: `m${matchNumber}`, sportEventId: event.id, roundNumber, matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null,
-      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null,
+      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
     });
     const [first, second, third, fourth, final] = finalFirst ? [3, 4, 5, 2, 1] : [1, 2, 3, 4, 5];

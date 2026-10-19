@@ -37,6 +37,7 @@ import {
   sportPlaysMatches,
   type SportEvent,
   type SportEventMatch,
+  type SportMatchPeriods,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from '../../events/errors';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
@@ -49,9 +50,15 @@ export interface MatchResultInput {
   awayScore: number | null;
 }
 
+/** Both sides' score at the end of one period, as the scoreboard shows it. */
+export interface PeriodScoreInput {
+  homeScore: number;
+  awayScore: number;
+}
+
 export interface MatchResultServiceDeps {
   sportEvents: Pick<SportEventRepository, 'findById'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'applyResult'>;
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'applyResult' | 'savePeriodScore' | 'deletePeriodScore'>;
   /**
    * Starts the event's contests whose cutoff a result shows has passed (#721): a result in a
    * second-chance bracket's starting round puts it live even where the scheduler leaves the event
@@ -159,7 +166,7 @@ export class MatchResultService {
         422,
       );
     }
-    const scoreProblem = describeScoreProblem(input);
+    const scoreProblem = describeScoreProblem(input) ?? describeFinalBelowPeriods(match, input, getSportDefinition(sportEvent.sport).matchPeriods);
     if (scoreProblem) {
       this.deps.logger?.warn({ sportEventId, matchNumber, scoreProblem }, 'Refused a match result with invalid scores');
       throw new SportEventError(`Match ${matchNumber}'s result cannot be saved: ${scoreProblem}.`, 'MATCH_RESULT_INVALID', 422);
@@ -237,6 +244,85 @@ export class MatchResultService {
   }
 
   /**
+   * Enters or corrects the score at the end of one period of a game (#772): the end of the first,
+   * second or third quarter in American football, as the scoreboard shows it. It can go in while
+   * the game is played and be corrected after it. The last period's score is the final result,
+   * entered with `recordResult`. 422 MATCH_PERIOD_INVALID for a sport without periods or a period
+   * that is not one before the last; 404 BRACKET_MATCH_NOT_FOUND; 422 MATCH_SIDES_NOT_SET while a
+   * side waits for its team; 409 MATCH_CANCELLED for a cancelled game; 422 MATCH_PERIOD_SCORE_INVALID
+   * for a score below an earlier period's or above a later one's or the final score.
+   */
+  async recordPeriodScore(sportEventId: string, matchNumber: number, periodNumber: number, input: PeriodScoreInput): Promise<SportEventMatch[]> {
+    const { match, periods } = await this.requirePeriod(sportEventId, matchNumber, periodNumber);
+    if (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null) {
+      this.deps.logger?.warn({ sportEventId, matchNumber, periodNumber }, 'Refused a period score for a game whose teams are not both known');
+      throw new SportEventError(
+        `Match ${matchNumber} does not have both teams yet, so it has no score.`,
+        'MATCH_SIDES_NOT_SET',
+        422,
+      );
+    }
+    const problem = describePeriodScoreProblem(match, periodNumber, input, periods);
+    if (problem) {
+      this.deps.logger?.warn({ sportEventId, matchNumber, periodNumber, problem }, 'Refused a period score out of step with the game\'s other scores');
+      throw new SportEventError(
+        `The score at the end of ${periods.label.one} ${periodNumber} of match ${matchNumber} cannot be saved: ${problem}.`,
+        'MATCH_PERIOD_SCORE_INVALID',
+        422,
+      );
+    }
+    await this.deps.matches.savePeriodScore(match.id, { periodNumber, ...input });
+    this.deps.logger?.info({ sportEventId, matchNumber, periodNumber }, 'Saved a period score');
+    return this.deps.matches.findBySportEvent(sportEventId);
+  }
+
+  /**
+   * Clears the score at the end of one period of a game. Clearing one that is not entered changes
+   * nothing. The refusals of `recordPeriodScore` for the event, the period and the match.
+   */
+  async clearPeriodScore(sportEventId: string, matchNumber: number, periodNumber: number): Promise<SportEventMatch[]> {
+    const { match } = await this.requirePeriod(sportEventId, matchNumber, periodNumber);
+    if (!match.periodScores.some((score) => score.periodNumber === periodNumber)) {
+      return this.deps.matches.findBySportEvent(sportEventId);
+    }
+    await this.deps.matches.deletePeriodScore(match.id, periodNumber);
+    this.deps.logger?.info({ sportEventId, matchNumber, periodNumber }, 'Cleared a period score');
+    return this.deps.matches.findBySportEvent(sportEventId);
+  }
+
+  /** A released event's game, of a sport with periods, and a period of it before the last. */
+  private async requirePeriod(
+    sportEventId: string,
+    matchNumber: number,
+    periodNumber: number,
+  ): Promise<{ match: SportEventMatch; periods: SportMatchPeriods }> {
+    const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
+    const periods = getSportDefinition(sportEvent.sport).matchPeriods;
+    if (!periods) {
+      this.deps.logger?.warn({ sportEventId, sport: sportEvent.sport }, 'Refused a period score for a sport without periods');
+      throw new SportEventError(
+        `A ${getSportDefinition(sportEvent.sport).name.toLowerCase()} game keeps no score by period.`,
+        'MATCH_PERIOD_INVALID',
+        422,
+      );
+    }
+    if (periodNumber >= periods.count) {
+      this.deps.logger?.warn({ sportEventId, matchNumber, periodNumber }, 'Refused a score for the last period or past it');
+      throw new SportEventError(
+        `A game has ${periods.count} ${periods.label.many}, and the score at the end of the last is the final score: enter it as the game's result.`,
+        'MATCH_PERIOD_INVALID',
+        422,
+      );
+    }
+    const match = this.requireMatch(sportEventId, await this.deps.matches.findBySportEvent(sportEventId), matchNumber);
+    if (match.status === MatchStatus.CANCELLED) {
+      this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused a period score for a cancelled game');
+      throw new SportEventError(`Match ${matchNumber} was cancelled, so it has no score.`, 'MATCH_CANCELLED', 409);
+    }
+    return { match, periods };
+  }
+
+  /**
    * The side of the next match the result puts `rowId` on, or empties; null for the final, and for
    * a match before a reseed whose winner is not placed yet.
    */
@@ -272,10 +358,14 @@ export class MatchResultService {
 
   private assertNextMatchOpen(sportEventId: string, bracket: readonly SportEventMatch[], match: SportEventMatch): void {
     const next = bracket.find((candidate) => candidate.id === match.advancesToMatchId) ?? placementOf(bracket, match)?.match;
-    if (next?.status === MatchStatus.COMPLETED) {
-      this.deps.logger?.warn({ sportEventId, matchNumber: match.matchNumber, nextMatchNumber: next.matchNumber }, 'Refused a match result change after the next match was decided');
+    // A quarter score belongs to the two teams playing (#772), so a next match with one is locked
+    // as one with a result is: changing who plays it would leave the score on another pairing.
+    if (next && (next.status === MatchStatus.COMPLETED || next.periodScores.length > 0)) {
+      this.deps.logger?.warn({ sportEventId, matchNumber: match.matchNumber, nextMatchNumber: next.matchNumber }, 'Refused a match result change after the next match was decided or scored');
       throw new SportEventError(
-        `Match ${match.matchNumber}'s winner already played match ${next.matchNumber}, which has a result: clear match ${next.matchNumber}'s result first.`,
+        next.status === MatchStatus.COMPLETED
+          ? `Match ${match.matchNumber}'s winner already played match ${next.matchNumber}, which has a result: clear match ${next.matchNumber}'s result first.`
+          : `Match ${match.matchNumber}'s winner is playing match ${next.matchNumber}, which has scores entered: clear them first.`,
         'SPORT_EVENT_MATCH_RESULT_LOCKED',
         409,
       );
@@ -342,3 +432,42 @@ function describeScoreProblem({ winnerSide, homeScore, awayScore }: MatchResultI
   const [winner, loser] = winnerSide === MatchSide.HOME ? [homeScore, awayScore] : [awayScore, homeScore];
   return winner > loser ? null : 'the winner\'s score must be higher than the loser\'s';
 }
+
+/**
+ * What is wrong with the score at the end of `periodNumber`, or null. A scoreboard's score never
+ * goes down, so neither side's may be below its score at the end of an earlier period, or above
+ * its score at the end of a later one or its final score (overtime included).
+ */
+export function describePeriodScoreProblem(
+  match: Pick<SportEventMatch, 'periodScores' | 'status' | 'homeScore' | 'awayScore'>,
+  periodNumber: number,
+  score: PeriodScoreInput,
+  periods: SportMatchPeriods,
+): string | null {
+  const below = (left: PeriodScoreInput, right: PeriodScoreInput) => left.homeScore < right.homeScore || left.awayScore < right.awayScore;
+  for (const other of match.periodScores) {
+    if (other.periodNumber < periodNumber && below(score, other)) {
+      return `a side's score is lower than at the end of ${periods.label.one} ${other.periodNumber}`;
+    }
+    if (other.periodNumber > periodNumber && below(other, score)) {
+      return `a side's score is higher than at the end of ${periods.label.one} ${other.periodNumber}`;
+    }
+  }
+  if (match.status === MatchStatus.COMPLETED && match.homeScore !== null && match.awayScore !== null
+    && below({ homeScore: match.homeScore, awayScore: match.awayScore }, score)) {
+    return 'a side\'s score is higher than its final score';
+  }
+  return null;
+}
+
+/** A final score below a side's score at the end of an entered period, or null when it fits them all. */
+function describeFinalBelowPeriods(
+  match: Pick<SportEventMatch, 'periodScores'>,
+  { homeScore, awayScore }: MatchResultInput,
+  periods: SportMatchPeriods | undefined,
+): string | null {
+  if (homeScore === null || awayScore === null || !periods) return null;
+  const higher = match.periodScores.find((period) => period.homeScore > homeScore || period.awayScore > awayScore);
+  return higher ? `a side's final score is lower than at the end of ${periods.label.one} ${higher.periodNumber}` : null;
+}
+

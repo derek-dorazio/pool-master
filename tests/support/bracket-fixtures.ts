@@ -44,6 +44,7 @@ export function bracketMatches(sportEventId: string, specs: readonly BracketMatc
     advancesToSide: spec.advancesTo?.side ?? null,
     regionLabel: spec.region ?? null,
     homeSpread: null,
+    periodScores: [],
     createdAt: T0,
     updatedAt: T0,
   }));

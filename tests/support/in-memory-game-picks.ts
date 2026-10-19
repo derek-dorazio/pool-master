@@ -98,6 +98,7 @@ export class InMemoryGamePicks {
       advancesToSide: null,
       regionLabel: null,
       homeSpread: null,
+      periodScores: [],
       createdAt: T0,
       updatedAt: T0,
     };

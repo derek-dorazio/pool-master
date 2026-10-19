@@ -40,6 +40,7 @@ import type {
 import type {
   FillPlayInSlotRequest,
   LoadSportEventBracketRequest,
+  RecordSportEventMatchPeriodScoreRequest,
   RecordSportEventMatchResultRequest,
   SetSportEventRoundMatchupsRequest,
   SportEventBracketResponse,
@@ -417,6 +418,22 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
     ): Promise<SportEventBracketResponse> => {
       const matches = await matchResults.clearResult(request.params.eventId, request.params.matchNumber);
+      return { matches: matches.map(mapSportEventMatchToDto) };
+    },
+
+    recordEventMatchPeriodScore: async (
+      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number; periodNumber: number }; Body: RecordSportEventMatchPeriodScoreRequest }>,
+    ): Promise<SportEventBracketResponse> => {
+      const { eventId, matchNumber, periodNumber } = request.params;
+      const matches = await matchResults.recordPeriodScore(eventId, matchNumber, periodNumber, request.body);
+      return { matches: matches.map(mapSportEventMatchToDto) };
+    },
+
+    clearEventMatchPeriodScore: async (
+      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number; periodNumber: number } }>,
+    ): Promise<SportEventBracketResponse> => {
+      const { eventId, matchNumber, periodNumber } = request.params;
+      const matches = await matchResults.clearPeriodScore(eventId, matchNumber, periodNumber);
       return { matches: matches.map(mapSportEventMatchToDto) };
     },
 

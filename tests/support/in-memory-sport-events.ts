@@ -586,7 +586,12 @@ export class InMemorySportEvents {
     const findBySportEvents = async (sportEventIds: readonly string[]) => this.matchRows
       .filter((row) => sportEventIds.includes(row.sportEventId))
       .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.matchNumber - right.matchNumber)
-      .map((row) => ({ ...row }));
+      .map((row) => ({ ...row, periodScores: [...row.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) }));
+    const requireRow = (id: string) => {
+      const row = this.matchRows.find((match) => match.id === id);
+      if (!row) throw new Error('unknown match');
+      return row;
+    };
     return {
       findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
       findBySportEvents,
@@ -599,6 +604,7 @@ export class InMemorySportEvents {
             ...match,
             sportEventId,
             homeSpread: null,
+            periodScores: [],
             status: MatchStatus.SCHEDULED,
             winnerSide: null,
             homeScore: null,
@@ -637,6 +643,14 @@ export class InMemorySportEvents {
           }
           Object.assign(stored, standing);
         }
+      },
+      savePeriodScore: async (sportEventMatchId, score) => {
+        const row = requireRow(sportEventMatchId);
+        row.periodScores = [...row.periodScores.filter((other) => other.periodNumber !== score.periodNumber), { ...score }];
+      },
+      deletePeriodScore: async (sportEventMatchId, periodNumber) => {
+        const row = requireRow(sportEventMatchId);
+        row.periodScores = row.periodScores.filter((other) => other.periodNumber !== periodNumber);
       },
     };
   }
