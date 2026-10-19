@@ -7,7 +7,8 @@
  * - puts the winner on the side of the match it advances to,
  * - and rewrites every team's core standing from the bracket: champion 1, runner-up 2, teams out in
  *   the same round sharing a place below everyone who went further, a team that lost ELIMINATED,
- *   and `currentRound` the latest round the team has a match in.
+ *   and `currentRound` the latest round the team has a match in. A week of games that forms no
+ *   bracket (#768) ranks no team: a team is COMPLETE once its game is played or cancelled.
  *
  * A result can be changed, or cleared, until the match its winner advanced to has a result of its
  * own (409 SPORT_EVENT_MATCH_RESULT_LOCKED): changing an early winner then would leave the later
@@ -39,6 +40,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { SportEventError } from '../../events/errors';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
+import { formsNoBracket } from '../../events/sport-event-bracket-service';
 
 export interface MatchResultInput {
   winnerSide: MatchSide;
@@ -62,6 +64,28 @@ export interface MatchResultServiceDeps {
 
 function sideRowId(match: Pick<SportEventMatch, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>, side: MatchSide): string | null {
   return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
+}
+
+/** Whether a loaded game sends its winner on to a later match. */
+const linksOn = (match: SportEventMatch): boolean => match.advancesToMatchId !== null;
+
+/**
+ * Every team's standing in a week of games that forms no bracket: no place, since a week has no
+ * winner of its own, and COMPLETE once the team's game is played or cancelled, ACTIVE until then.
+ */
+export function gameStandings(matches: readonly SportEventMatch[], asOf: Date): BracketStandingWrite[] {
+  return matches.flatMap((match) => [match.homeSportEventParticipantId, match.awaySportEventParticipantId]
+    .filter((rowId): rowId is string => rowId !== null)
+    .map((sportEventParticipantId) => ({
+      sportEventParticipantId,
+      position: null,
+      displayPosition: null,
+      status: match.status === MatchStatus.COMPLETED || match.status === MatchStatus.CANCELLED
+        ? ParticipantStandingStatus.COMPLETE
+        : ParticipantStandingStatus.ACTIVE,
+      currentRound: match.roundNumber,
+      asOf,
+    })));
 }
 
 /**
@@ -198,9 +222,7 @@ export class MatchResultService {
       );
     }
     // A reseeded bracket links no games, but its games still span several rounds.
-    const fedByEarlier = bracket.some((candidate) => candidate.advancesToMatchId === match.id);
-    const severalRounds = bracket.some((candidate) => candidate.roundNumber !== match.roundNumber);
-    if (match.advancesToMatchId !== null || fedByEarlier || severalRounds) {
+    if (!formsNoBracket(bracket, linksOn)) {
       this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused to cancel a bracket game');
       throw new SportEventError(
         `Match ${matchNumber} is part of a bracket, which cannot lose a game: change its time instead.`,
@@ -243,8 +265,9 @@ export class MatchResultService {
       return candidate;
     });
     const asOf = (this.deps.now ?? (() => new Date()))();
-    await this.deps.matches.applyResult({ result, sideFill, standings: bracketStandings(after, asOf) });
-    this.deps.logger?.debug({ sportEventId, matchId: result.id }, 'Rewrote bracket standings');
+    const standings = formsNoBracket(after, linksOn) ? gameStandings(after, asOf) : bracketStandings(after, asOf);
+    await this.deps.matches.applyResult({ result, sideFill, standings });
+    this.deps.logger?.debug({ sportEventId, matchId: result.id }, 'Rewrote the event standings');
   }
 
   private assertNextMatchOpen(sportEventId: string, bracket: readonly SportEventMatch[], match: SportEventMatch): void {
