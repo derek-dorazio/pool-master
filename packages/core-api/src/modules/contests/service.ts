@@ -678,11 +678,14 @@ export class ContestService {
     // Every week's games in one read (#762): a week's game count and tiebreaker total need no more.
     const matchesByEvent = new Map<string, SportEventMatch[]>();
     for (const match of await this.deps.matches.findBySportEvents(events.map((event) => event.id))) {
-      matchesByEvent.set(match.sportEventId, [...(matchesByEvent.get(match.sportEventId) ?? []), match]);
+      const weekMatches = matchesByEvent.get(match.sportEventId);
+      if (weekMatches) weekMatches.push(match);
+      else matchesByEvent.set(match.sportEventId, [match]);
     }
 
     const weeks = await Promise.all(events.map(async (event) => {
-      const games = pickEmWeekGames(event, matchesByEvent.get(event.id) ?? []);
+      const weekMatches = matchesByEvent.get(event.id) ?? [];
+      const games = pickEmWeekGames(event, weekMatches);
       const frozen = frozenWeeks.filter((standing) => standing.sportEventId === event.id);
       const started = areEventPicksRevealed(contest, event, now);
       // A week settles by freezing its submitted entries; a cancelled week, or a completed one no
@@ -693,7 +696,7 @@ export class ContestService {
           && !entries.some((entry) => contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED));
       // Only a week under way is scored live: a settled week answers from its frozen standings,
       // and one not started shows no points (#762).
-      const live = started && !settled ? await loadPickEmWeekStandings(this.deps, contestId, event, mode) : null;
+      const live = started && !settled ? await loadPickEmWeekStandings(this.deps, contestId, event, mode, weekMatches) : null;
       const cells = new Map<string, { points: number | null; position: number | null; displayPosition: string | null }>(
         settled
           ? frozen.map((standing) => [standing.contestEntryId, {

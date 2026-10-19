@@ -82,17 +82,21 @@ export function pickEmWeekGames(
   return { eventCancelled, games, tiebreakerTotalPoints: gameTotalPoints(weekTiebreakerGame(games, sportEvent.startDate)) };
 }
 
-/** The contest's entries that submitted the week, scored against its games and ranked. */
+/**
+ * The contest's entries that submitted the week, scored against its games and ranked. A caller
+ * that already read the week's matches passes them in, so they are not read again.
+ */
 export async function loadPickEmWeekStandings(
   deps: PickEmStandingsReadDeps,
   contestId: string,
   sportEvent: Pick<SportEvent, 'id' | 'status' | 'startDate'>,
   mode: PickEmMode,
+  weekMatches?: readonly SportEventMatch[],
 ): Promise<PickEmWeekStandings> {
   const sportEventId = sportEvent.id;
   const [entries, matches] = await Promise.all([
     deps.entries.findByContestWithSquad(contestId, { submittedFor: sportEventId }),
-    deps.matches.findBySportEvent(sportEventId),
+    weekMatches ?? deps.matches.findBySportEvent(sportEventId),
   ]);
   const { eventCancelled, games, tiebreakerTotalPoints: tiebreakerTotal } = pickEmWeekGames(sportEvent, matches);
   const predictions = await deps.predictions.findByEntriesAndEvent(entries.map((entry) => entry.id), sportEventId);

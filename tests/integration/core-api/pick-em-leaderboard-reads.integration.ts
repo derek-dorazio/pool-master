@@ -34,8 +34,8 @@ import {
 
 // The pick'em season leaderboard's reads against real Postgres (#762): however many weeks the
 // season has, the games of every week come from one query, and only the week under way loads its
-// submitted entries, games and picks to be scored live. A settled week answers from what was
-// frozen, and a week not started shows nothing, so neither loads them. No mocks.
+// submitted entries and picks, scored live against the games already read. A settled week answers
+// from what was frozen, and a week not started shows nothing, so neither loads them. No mocks.
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -192,14 +192,14 @@ async function midSeason() {
 }
 
 describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
-  it('loads the games of all six weeks in one query and the entries and picks of only the week under way, not a set per week', async () => {
+  it('loads the games of all six weeks in one query, and the entries and picks of only the week under way, not a set per week', async () => {
     const season = await midSeason();
     const { prisma, count } = countingPrisma();
 
     const leaderboard = await createContestService(prisma, getApp().log).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
-    // One query for every week's games, one for the live week's own scoring read.
-    expect(count('SportEventMatch.findMany')).toBe(2);
+    // One query for every week's games; the live week is scored from those, not read again.
+    expect(count('SportEventMatch.findMany')).toBe(1);
     // The contest's entries once for the board, once for the live week's submitted entries.
     expect(count('ContestEntry.findMany')).toBe(2);
     expect(count('ContestEntryMatchPrediction.findMany')).toBe(1);
@@ -208,7 +208,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
     ]);
   });
 
-  it('reports each settled week\'s game count and tiebreaker total from the batched games, and the live week\'s from its own scoring', async () => {
+  it('reports each settled week\'s game count and tiebreaker total from the batched games, and the live week\'s too', async () => {
     const season = await midSeason();
 
     const leaderboard = await createContestService(getPrisma(), getApp().log).getPickEmLeaderboard(season.contest.id, season.viewerId);
