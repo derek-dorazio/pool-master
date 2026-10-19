@@ -295,6 +295,35 @@ describe('ContestService.getPickEmLeaderboard', () => {
     expect(leaderboard.weeks.map((week) => week.winnerEntryIds)).toEqual([['entry-alice'], ['entry-bob']]);
   });
 
+  it('reads a completed week that no entry submitted as settled, since it has nothing to freeze', async () => {
+    const context = setup();
+    await settleWeek1(context);
+    for (const entry of context.world.entries.values()) {
+      context.world.entries.set(entry.id, {
+        ...entry,
+        events: entry.events.map((event) => event.sportEventId === context.week2.id ? { ...event, status: ContestEntryStatus.DRAFT } : event),
+      });
+    }
+    await settleWeek2(context);
+
+    const leaderboard = await context.leaderboard();
+    expect(leaderboard.weeks.map((week) => [week.name, week.settled, week.winnerEntryIds])).toEqual([
+      ['Week 1', true, ['entry-alice']],
+      ['Week 2', true, []],
+    ]);
+  });
+
+  it('reads a cancelled week as settled, with no points for any entry', async () => {
+    const context = setup();
+    await settleWeek1(context);
+    context.setEventStatus(context.week2.id, SportEventStatus.CANCELLED);
+    await context.settlement.settleFinishedSportEvent(context.week2.id, { completedAt: WEEK_2_SETTLED });
+
+    const leaderboard = await context.leaderboard();
+    expect(leaderboard.weeks[1]).toMatchObject({ settled: true, winnerEntryIds: [] });
+    expect(leaderboard.entries.map((entry) => entry.weeks[1]?.points)).toEqual([null, null, null]);
+  });
+
   it('refuses a contest that is not pick\'em with CONTEST_FORMAT_MISMATCH', async () => {
     const context = setup();
     context.world.contests.set(context.contest.id, { ...context.contest, selectionType: SelectionType.BRACKET });
