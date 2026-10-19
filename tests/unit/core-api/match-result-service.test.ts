@@ -50,6 +50,37 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
   return { store, service, event, duke, vermont, houston, texas, standingOf };
 }
 
+/** A released week of two games that form no bracket, as an NFL regular-season week is. */
+async function week() {
+  const store = new InMemorySportEvents();
+  const sportRow = store.addSport(Sport.AMERICAN_FOOTBALL);
+  const event = store.addEvent({ sport: Sport.AMERICAN_FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
+  await store.roundRepo().createMany(event.id, [{ roundNumber: 1, scheduledDate: new Date('2027-09-12T17:00:00.000Z') }]);
+  const [bills, jets, chiefs, raiders] = ['Bills', 'Jets', 'Chiefs', 'Raiders'].map((name) =>
+    store.addToField(event.id, store.addParticipant(sportRow.id, name, { participantType: 'TEAM' }).id));
+  let sequence = 0;
+  await new SportEventBracketService({
+    sportEvents: store.sportEventRepo(),
+    sportLeagues: store.sportLeagueRepo(),
+    rounds: store.roundRepo(),
+    field: store.fieldRepo(),
+    participants: store.participantRepo(),
+    matches: store.matchRepo(),
+    ...NO_PICKS_ON_EVENT,
+    newId: () => {
+      sequence += 1;
+      return `game-${sequence}`;
+    },
+  }).loadBracket(event.id, [
+    { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: bills.id, awaySportEventParticipantId: jets.id, isNeutralSite: false, scheduledDate: null, advancesTo: null },
+    { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: chiefs.id, awaySportEventParticipantId: raiders.id, isNeutralSite: false, scheduledDate: null, advancesTo: null },
+  ]);
+  event.status = SportEventStatus.SCHEDULED;
+  const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+  const standingOf = (rowId: string) => store.standingRows.find((row) => row.sportEventParticipantId === rowId);
+  return { store, service, event, bills, jets, chiefs, raiders, standingOf };
+}
+
 const homeWins = { winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70 };
 const awayWins = { winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80 };
 
@@ -205,36 +236,6 @@ describe('MatchResultService.clearResult', () => {
 
 // #715: a postponed regular-season game is cancelled in its week and added to the week it moves to.
 describe('MatchResultService.cancelMatch', () => {
-  /** A released week of two games that form no bracket, as an NFL regular-season week is. */
-  async function week() {
-    const store = new InMemorySportEvents();
-    const sportRow = store.addSport(Sport.AMERICAN_FOOTBALL);
-    const event = store.addEvent({ sport: Sport.AMERICAN_FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
-    await store.roundRepo().createMany(event.id, [{ roundNumber: 1, scheduledDate: new Date('2027-09-12T17:00:00.000Z') }]);
-    const [bills, jets, chiefs, raiders] = ['Bills', 'Jets', 'Chiefs', 'Raiders'].map((name) =>
-      store.addToField(event.id, store.addParticipant(sportRow.id, name, { participantType: 'TEAM' }).id));
-    let sequence = 0;
-    await new SportEventBracketService({
-      sportEvents: store.sportEventRepo(),
-      sportLeagues: store.sportLeagueRepo(),
-      rounds: store.roundRepo(),
-      field: store.fieldRepo(),
-      participants: store.participantRepo(),
-      matches: store.matchRepo(),
-      ...NO_PICKS_ON_EVENT,
-      newId: () => {
-        sequence += 1;
-        return `game-${sequence}`;
-      },
-    }).loadBracket(event.id, [
-      { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: bills.id, awaySportEventParticipantId: jets.id, isNeutralSite: false, scheduledDate: null, advancesTo: null },
-      { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: chiefs.id, awaySportEventParticipantId: raiders.id, isNeutralSite: false, scheduledDate: null, advancesTo: null },
-    ]);
-    event.status = SportEventStatus.SCHEDULED;
-    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
-    return { store, service, event };
-  }
-
   it('cancels a game of a released week that has not been played, leaving the week\'s other game as it was', async () => {
     const { service, event } = await week();
 
@@ -274,6 +275,49 @@ describe('MatchResultService.cancelMatch', () => {
     event.status = SportEventStatus.DRAFT;
 
     await expect(service.cancelMatch(event.id, 1)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED', statusCode: 409 });
+  });
+});
+
+describe('MatchResultService on a week of games that form no bracket', () => {
+  it('ranks no team on a week\'s result: both teams of the played game COMPLETE with no place, the teams still to play ACTIVE', async () => {
+    const { service, event, bills, jets, chiefs, raiders, standingOf } = await week();
+
+    await service.recordResult(event.id, 1, homeWins);
+
+    for (const team of [bills, jets]) {
+      expect(standingOf(team.id)).toMatchObject({ position: null, displayPosition: null, status: ParticipantStandingStatus.COMPLETE, currentRound: 1 });
+    }
+    for (const team of [chiefs, raiders]) {
+      expect(standingOf(team.id)).toMatchObject({ position: null, displayPosition: null, status: ParticipantStandingStatus.ACTIVE, currentRound: 1 });
+    }
+  });
+
+  it('crowns no champion once every game of the week is played', async () => {
+    const { service, event, bills, jets, chiefs, raiders, standingOf } = await week();
+
+    await service.recordResult(event.id, 1, homeWins);
+    await service.recordResult(event.id, 2, awayWins);
+
+    expect([bills, jets, chiefs, raiders].map((team) => standingOf(team.id)?.position ?? null)).toEqual([null, null, null, null]);
+  });
+
+  it('puts a cleared game\'s teams back to ACTIVE', async () => {
+    const { service, event, bills, jets, standingOf } = await week();
+    await service.recordResult(event.id, 1, homeWins);
+
+    await service.clearResult(event.id, 1);
+
+    expect([standingOf(bills.id)?.status, standingOf(jets.id)?.status]).toEqual([ParticipantStandingStatus.ACTIVE, ParticipantStandingStatus.ACTIVE]);
+  });
+
+  it('marks a cancelled game\'s teams COMPLETE with no place, since their week is over', async () => {
+    const { service, event, bills, jets, standingOf } = await week();
+
+    await service.cancelMatch(event.id, 1);
+
+    for (const team of [bills, jets]) {
+      expect(standingOf(team.id)).toMatchObject({ position: null, displayPosition: null, status: ParticipantStandingStatus.COMPLETE });
+    }
   });
 });
 
