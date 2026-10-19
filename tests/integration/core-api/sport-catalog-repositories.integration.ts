@@ -83,9 +83,13 @@ describe('Sport and SportLeague repositories', () => {
     const liv = await sportLeagues.create({ sportId: sport.id, name: 'LIV Golf', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
     await sportLeagues.update(liv.id, { isActive: false });
 
+    // Golf's reference leagues (the PGA TOUR its majors template names, #714) survive the cleanup,
+    // so only this test's own two are read.
+    const ours = (rows: Array<{ name: string }>) => rows.map((row) => row.name).filter((name) => name === 'LIV Golf' || name === 'PGA Tour');
+
     await expect(sports.findBySport(Sport.GOLF)).resolves.toMatchObject({ id: sport.id, sport: Sport.GOLF });
-    expect((await sportLeagues.findAll({ sportId: sport.id })).map((row) => row.name)).toEqual(['LIV Golf', 'PGA Tour']);
-    expect((await sportLeagues.findAll({ sportId: sport.id, isActive: true })).map((row) => row.name)).toEqual(['PGA Tour']);
+    expect(ours(await sportLeagues.findAll({ sportId: sport.id }))).toEqual(['LIV Golf', 'PGA Tour']);
+    expect(ours(await sportLeagues.findAll({ sportId: sport.id, isActive: true }))).toEqual(['PGA Tour']);
     await expect(sportLeagues.findBySportAndName(sport.id, 'PGA Tour')).resolves.toMatchObject({ matchKeyword: 'PGA' });
   });
 
