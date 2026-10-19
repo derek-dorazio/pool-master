@@ -1,9 +1,9 @@
-Source: https://en.wikipedia.org/wiki/2027_PGA_Championship
-Final URL: https://en.wikipedia.org/wiki/2027_PGA_Championship
+Source: https://en.wikipedia.org/wiki/U.S._Open_(golf)
+Final URL: https://en.wikipedia.org/wiki/U.S._Open_(golf)
 HTTP 200
-Fetched: 2026-10-19T07:20:59.005Z
+Fetched: 2026-10-19T07:23:37.569Z
 
-PGA Championship - Wikipedia
+U.S. Open (golf) - Wikipedia
 Jump to content
 Main menu
 Main menu
@@ -39,26 +39,17 @@ hide
 (Top)
 1
 History
-Toggle History subsection
-1.1
-Format
-1.2
-Location
-1.3
-Promotion
 2
-Trophy
-3
 Qualification
+Toggle Qualification subsection
+2.1
+USGA special exemptions
+3
+Prizes
 4
-Winners
-Toggle Winners subsection
-4.1
-Stroke play era winners
-4.2
-Match play era winners
+Playoff format
 5
-Match play era details
+Winners
 6
 Summary by course, state and region
 7
@@ -76,7 +67,7 @@ References
 13
 External links
 Toggle the table of contents
-PGA Championship
+U.S. Open (golf)
 23 languages
 Čeština
 Dansk
@@ -86,9 +77,7 @@ Español
 Euskara
 Suomi
 Français
-Galego
 Magyar
-Bahasa Indonesia
 Italiano
 日本語
 한국어
@@ -97,9 +86,11 @@ Norsk bokmål
 Português
 Русский
 Simple English
+Slovenščina
 Svenska
 Türkçe
 Українська
+吴语
 中文
 Edit links
 Article
@@ -135,615 +126,798 @@ Appearance
 move to sidebar
 hide
 From Wikipedia, the free encyclopedia
-(Redirected from 2027 PGA Championship )
-Golf tournament in the United States
-This article is about the major golf championship held in the United States. For the European Tour Championship held at Wentworth Club, United Kingdom, see BMW PGA Championship . For the PGA Tour's championship event, see Tour Championship .
-[[European Tour]]<br>[[Japan Golf Tour]]"},"format":{"wt":"[[Stroke play]] ([[1958 PGA Championship|1958]]–present)<br>[[Match play]] ([[1916 PGA Championship|1916]]–[[1957 PGA Championship|1957]])"},"month_played":{"wt":"May (formerly August)"},"website":{"wt":"{{URL|https://www.pgachampionship.com/|pgachampionship.com}}"},"purse":{"wt":"{{currency|20,500,000|USD}}"},"aggregate":{"wt":"263{{efn|name=record|Scoring record for all major championships.}} [[Xander Schauffele]] ([[2024 PGA Championship|2024]])"},"to_par":{"wt":"−21{{efn|name=record}} [[Xander Schauffele]] ([[2024 PGA Championship|2024]])"},"current_champion":{"wt":"{{flagicon|ENG}} [[Aaron Rai]]"},"current_tournament":{"wt":"2026 PGA Championship"}},"i":0}}]}'>Golf tournament
-PGA Championship
+Golf tournament held in the United States
+This article is about the men's golf tournament. For other uses, see U.S. Open .
+[[European Tour]]<br />[[Japan Golf Tour]]"},"format":{"wt":"[[Stroke play]]"},"purse":{"wt":"$22,500,000"},"website":{"wt":"{{URL|https://www.usopen.com/|usopen.com}}"},"month_played":{"wt":"June"},"aggregate":{"wt":"268 [[Rory McIlroy]] ([[2011 U.S. Open (golf)|2011]])"},"to_par":{"wt":"−16 [[Rory McIlroy]] ([[2011 U.S. Open (golf)|2011]])<br />−16 [[Brooks Koepka]] ([[2017 U.S. Open (golf)|2017]])"},"current_champion":{"wt":"{{flagicon|USA}} [[Wyndham Clark]]"},"current_tournament":{"wt":"2026 U.S. Open (golf)"},"pushpin_map":{"wt":""},"pushpin_relief":{"wt":""},"pushpin_label":{"wt":""},"pushpin_map_caption":{"wt":""},"coordinates":{"wt":""}},"i":0}}]}'>Golf tournament
+U.S. Open
 Tournament information
-Location multiple
-Established 1916
-Course multiple
-Organized by PGA of America
+Established 1895 , 131 years ago
+Organized by United States Golf Association
 Tours PGA Tour
 European Tour
 Japan Golf Tour
-Format Stroke play ( 1958 –present)
-Match play ( 1916 – 1957 )
-Prize fund US$ 20,500,000
-Month played May (formerly August)
-Website pgachampionship.com
+Format Stroke play
+Prize fund $22,500,000
+Month played June
+Website usopen.com
 Tournament record score
-Aggregate 263 [ a ] Xander Schauffele ( 2024 )
-To par −21 [ a ] Xander Schauffele ( 2024 )
+Aggregate 268 Rory McIlroy ( 2011 )
+To par −16 Rory McIlroy ( 2011 )
+−16 Brooks Koepka ( 2017 )
 Current champion
-Aaron Rai
+Wyndham Clark
 Current tournament
-2026 PGA Championship
-The PGA Championship (often referred to as the US PGA Championship or USPGA outside the United States [ 1 ] [ 2 ] [ 3 ] ) is an annual golf tournament conducted by the Professional Golfers' Association of America . The PGA is one of the four men's major golf championships (the others being The Open , the Masters , and the U.S. Open ) and is the only one of the four that is exclusively for professional players.
-It was formerly played in mid-August on the third weekend before Labor Day weekend, serving as the fourth and final men's major of the golf season. Beginning in 2019, the tournament is played in May on the weekend before Memorial Day , as the season's second major following the Masters in April. It is an official money event on the PGA Tour , European Tour , and Japan Golf Tour , with a purse of $11 million for the 100th edition in 2018 .
-In line with the other majors, winning the PGA gains privileges that improve career security. PGA champions are automatically invited to play in the other three majors and The Players Championship for the next five years, and are eligible for the PGA Championship for life. They also earn a five-year exemption on the PGA Tour and a seven-year membership on the DP World Tour .
-The PGA Championship has been held at various venues. Some of the early sites are now quite obscure, but in recent years, the event has generally been played at a small group of celebrated courses.
+2026 U.S. Open (golf)
+The United States Open Championship , commonly known as the U.S. Open , is the annual open championship of golf in the United States. It is the third of the four major championships , and is on the official schedule of the PGA Tour and European Tour . Since 1898 , the competition has been 72 holes of stroke play (four rounds on an 18-hole course). It is staged by the United States Golf Association (USGA) in mid-June, scheduled to conclude on the third Sunday, Father's Day . Staged at a variety of courses, the U.S. Open is set up so that scoring is very difficult, with a premium placed on accurate driving. [ 1 ] [ 2 ] As of 2026 , the U.S. Open awards a $22.5 million purse, the largest of the four major championships. [ 3 ]
 History
 [ edit ]
-In 1894, with 41 golf courses operating in the United States, two unofficial national championships for amateur golfers were organized. One was held at Newport Country Club in Rhode Island , and the other at Saint Andrew's Golf Club in New York . In addition, and at the same time as the amateur event, Saint Andrew's conducted an Open championship for professional golfers. None of the championships were officially sanctioned by a governing body for American golf, causing considerable controversy among players and organizers. Later in 1894 this led to the formation of the United States Golf Association (USGA), which became the first formal golf organization in the country. After the formation of the USGA, golf quickly became a sport of national popularity and importance. [ 4 ]
-In February 1916, the Professional Golfers Association of America (PGA) was established in New York City . One month earlier, the wealthy department store owner Rodman Wanamaker hosted a luncheon with the leading golf professionals of the day at the Wykagyl Country Club in nearby New Rochelle . The attendees prepared the agenda for the formal organization of the PGA; [ 5 ] consequently, golf historians have dubbed Wykagyl "The Cradle of the PGA." [ 6 ] The new organization's first president was Robert White, one of Wykagyl's best-known golf professionals. [ 4 ]
-The first PGA Championship was held in October 1916 at Siwanoy Country Club in Bronxville, New York . [ 7 ] The winner, Jim Barnes , received $500 and a diamond-studded gold medal donated by Rodman Wanamaker. The 2016 winner, Jimmy Walker , earned $1.8 million. The champion is also awarded a replica of the Wanamaker Trophy, which was also donated by Wanamaker, to keep for one year, and a smaller-sized keeper replica Wanamaker Trophy. [ 8 ] [ 9 ]
-Format
-[ edit ]
-The PGA Championship was originally a match play event in the early fall, but it varied from May to December. After World War II , the championship was usually in late May or late June, then moved to early July in 1953 and a few weeks later in 1954 , with the finals played on Tuesday. As a match play event (with a stroke play qualifier), it was not uncommon for the finalists to play over 200 holes in seven days. The 1957 event lost money, [ 10 ] and at the PGA meetings in November it was changed to stroke play , starting in 1958 , with the standard 72-hole format of 18 holes per day for four days, Thursday to Sunday. Network television broadcasters, preferring a large group of well-known contenders on the final day, pressured the PGA of America to make the format change. [ 11 ]
-During the 1960s, the PGA Championship was played the week after The Open Championship five times, making it virtually impossible for players to compete in both majors. In 1965 , the PGA was contested for the first time in August, and returned in 1969 , save for a one-year move to late February in 1971 , played in Florida . The 2016 event was moved to late July, two weeks after the Open Championship , to accommodate the 2016 Summer Olympics in August. [ 12 ]
-Before the 2017 edition, it was announced that the PGA Championship would be moved to May on the weekend before Memorial Day , beginning in 2019. The PGA Tour concurrently announced that it would move its Players Championship back to March the same year; it had been moved from March to May in 2007. The PGA of America cited the addition of golf to the Summer Olympics, as well as cooler weather enabling a wider array of options for host courses, as reasoning for the change. It was also believed that the PGA Tour wished to re-align its season so that the FedEx Cup Playoffs would not have to compete with the start of football season in late-August. [ 13 ] [ 14 ] [ 15 ]
-Location
-[ edit ]
-The PGA Championship has normally been played in the eastern half of the United States except eleven times, most recently in 2020 at TPC Harding Park in San Francisco . [ 16 ] It was the first for the Bay Area , returning to California after a quarter century . Prior to 2020, it was last played in the Pacific time zone in 1998 , at Sahalee east of Seattle . (The Mountain time zone has hosted three editions, all in suburban Denver , in 1941 , 1967 , and 1985 .) The 103rd PGA Championship was held at the Kiawah Island Golf Resort's Ocean Course in Kiawah Island, South Carolina, [ 17 ] and the 104th was held at Southern Hills Country Club in Tulsa, Oklahoma. [ 18 ]
-The state of New York has hosted the championship thirteen times, followed by Ohio (11) and Pennsylvania (9).
-Promotion
-[ edit ]
-The tournament was previously promoted with the slogan "Glory's Last Shot". In 2013, the tagline was dropped in favor of "The Season's Final Major", as suggested by PGA Tour commissioner Tim Finchem while discussing the allowance of a one-week break in its schedule before the Ryder Cup . Finchem had argued that the slogan was not appropriate as it weakened the stature of events that occur after it, such as the PGA Tour's FedEx Cup playoffs. PGA of America CEO Pete Bevacqua explained that they had also had discussions with CBS, adding that "it was three entities that all quickly came to the same conclusion that, you know what, there's just not much in that tag line and we don't feel it's doing much for the PGA Championship, so let's not stick with it. Let's think what else is out there." [ 19 ] [ 20 ] For a time, the tournament used the slogan "This is Major" as a replacement. [ 21 ] [ 22 ]
-Trophy
-[ edit ]
-The Wanamaker Trophy, named after businessman, golfer, and PGA of America founder Rodman Wanamaker , stands nearly 2.5 feet (75 cm) tall and weighs 27 pounds (12 kg) . The trophy was lost, briefly, for a few years until it showed up in 1930 in the cellar of L.A. Young and Company. Ironically, this cellar was in the factory which made the clubs for the man responsible for losing it, Walter Hagen . Hagen claimed to have trusted a taxi driver with the precious cargo, but it never returned to his hotel. There is a smaller replica trophy that the champion gets to keep permanently, but the original must be returned for the following years tournament. [ 23 ]
+This section needs more citations . Please help improve this section by adding citations to reliable sources . Unsourced material may be challenged and removed .
+Find sources: "U.S. Open" golf – news · newspapers · books · scholar · JSTOR ( October 2021 ) ( Learn how and when to remove this message )
+The first U.S. Open was played on October 4, 1895, on a nine-hole course at the Newport Country Club in Newport, Rhode Island . It was a 36-hole competition and was played in a single day. Ten professionals and one amateur entered. The winner was Horace Rawlins , a 21-year-old Englishman, who had arrived in the U.S. earlier that year to take up a position at the host club. He received $150 cash out of a prize fund of $335, plus a $50 gold medal; his club received the Open Championship Cup trophy, which was presented by the USGA. [ 4 ] [ 5 ]
+In the beginning, the tournament was dominated by experienced British players until 1911, when John J. McDermott became the first native-born American winner. American golfers soon began to win regularly and the tournament evolved to become one of the four majors .
+U.S. Open Trophy at the 2008 PGA Golf Show.
+Since 1911, the title has been won mostly by players from the United States. Since 1950, players from only six countries other than the United States have won the championship, most notably South Africa , which has won five times since 1965. [ 6 ] A streak of four consecutive non-American winners occurred from 2004 to 2007 for the first time since 1910. These four players, South African Retief Goosen (2004), [ 7 ] New Zealander Michael Campbell (2005), [ 8 ] Australian Geoff Ogilvy (2006) [ 9 ] and Argentine Ángel Cabrera (2007), [ 10 ] are all from countries in the Southern Hemisphere . Northern Ireland's Graeme McDowell (2010) became the first European player to win the event [ 11 ] since Tony Jacklin of England in 1970; three more Europeans won in the next four editions, making it only three American wins in the 11 tournaments from 2004 to 2014.
+U.S. Open play is characterized by tight scoring at or around par by the leaders, with the winner usually emerging at around even par. A U.S. Open course is seldom beaten severely, and there have been many over-par wins (in part because par is usually set at 70, except for the very longest courses). Normally, an Open course is quite long and will have a high cut of primary rough (termed "Open rough" by the American press and fans); undulating greens (such as at Pinehurst No. 2 in 2005, which was described by Johnny Miller of NBC as "like trying to hit a ball on top of a VW Beetle "); pinched fairways (especially on what are expected to be less difficult holes); and two or three holes that are short par fives under regular play would be used as long par fours during the tournament (often to meet that frequently used par of 70, forcing players to have accurate long drives). Some courses that are attempting to get into the rotation for the U.S. Open will undergo renovations to develop these features. Rees Jones is the most notable of the "Open Doctors" who take on these projects; his father Robert Trent Jones had filled that role earlier. As with any professional golf tournament, the available space surrounding the course (for spectators, among other considerations) and local infrastructure also factor into deciding which courses will host the event.
 Qualification
 [ edit ]
-The PGA Championship was established for the purpose of providing a high-profile tournament specifically for professional golfers at a time when they were generally not held in high esteem in a sport that was largely run by wealthy amateurs. This origin is still reflected in the entry system for the Championship. It is the only major that does not explicitly invite leading amateurs to compete (it is possible for amateurs to get into the field, although the only viable ways are by winning one of the other major championships, or winning a PGA Tour event while playing on a sponsor's exemption), and the only one that reserves so many places, 20 of 156, for club professionals. These slots are determined by the top finishers in the PGA Professional Championship , which is held in late April.
-Since December 1968, the PGA Tour has been independent of the PGA of America . [ 24 ] [ 25 ] [ 26 ]
-The PGA Tour is an elite organization of tournament professionals , but the PGA Championship is still run by the PGA of America, which is mainly a body for club and teaching professionals. The PGA Championship is the only major that does not explicitly grant entry to the top 50 players in the Official World Golf Ranking , although special exemptions are commonly given to players in the top 100 (not just top 50) of the ranking who are not already qualified. [ 27 ]
-As of 2023 [ update ] , the qualification criteria are as follows: [ 28 ]
-Former PGA Champions.
-Winners of the last five U.S. Opens .
-Winners of the last five Masters .
-Winners of the last five Open Championships .
-Winners of the last three The Players Championships .
-Top 3 on the Official World Golf Ranking International Federation Ranking List (criterion added in 2023). [ 28 ]
-The current Senior PGA Champion .
-The low 15 scorers and ties in the previous PGA Championship.
-The 20 low scorers in the last PGA Professional Championship .
-The 70 leaders in PGA Championship points list (based on official money earned on the PGA Tour since the previous PGA Championship).
-Members of the most recent United States and European Ryder Cup Teams who are ranked the top 100 of the Official World Golf Ranking as of one week before the start of the tournament.
-Any tournament winner co-sponsored or approved by the PGA Tour since the previous PGA Championship .
-The PGA of America reserves the right to invite additional players not included in the categories listed above.
-The total field is a maximum of 156 players. Vacancies are filled by the first available player from the list of alternates (those below 70th place in official money standings).
+The U.S. Open is open to any professional, or to any amateur with a USGA Handicap Index not exceeding 0.4. [ 12 ] Players (male or female) [ 12 ] may obtain a place by being fully exempt or by competing successfully in qualifying. The field is 156 players.
+About half of the field is made up of players who are fully exempt from qualifying. The current exemption categories are: [ 13 ] [ 14 ] [ 15 ]
+Winners of the U.S. Open for the last ten years
+Winner and runner-up from the previous year's U.S. Amateur and winners of the previous year's U.S. Junior Amateur , Amateur Championship , Latin America Amateur Championship , and U.S. Mid-Amateur [ 14 ]
+The runner-up from the U.S. Amateur and the winners of all tournaments except the U.S. Amateur must remain an amateur.
+The winner of the U.S. Amateur, however, may turn professional after winning the U.S. Amateur and retain his eligibility.
+The previous year's Mark H. McCormack Medal winner for the top-ranked amateur golfer in the world [ 16 ]
+The individual winner of the most recent NCAA Division I men's golf championship
+Winners of each of Masters Tournament , Open Championship and PGA Championship for the last five years
+Winners of the last three Players Championships
+Winner of the current year's BMW PGA Championship
+Winner of the last U.S. Senior Open
+Players who win multiple U.S. PGA Tour events during the time between tournaments, provided the tournaments each offer 500 or more points to the winner, and are not opposite-field events.
+In the year after the Olympic golf tournament , the reigning men's gold medalist
+Top 10 finishers and ties from the previous year's U.S. Open
+Players who qualified for the previous year's Tour Championship
+The top 60 in the Official World Golf Ranking (OWGR) as of two weeks before the start of the tournament
+The top 60 in the OWGR as of the tournament date
+The top player in the Korn Ferry Tour points, based on combined points from the Regular Season and Finals, from the previous season (starting in 2023). [ 17 ]
+The top two DP World Tour players from the previous season's final Race to Dubai rankings who did not qualify through any previous exemption, as well as the top non-exempt player in the current season's Race to Dubai
+Should a LIV Golf League player not previously exempt finish in the top 3 of the individual league rankings in the previous or current season, they will qualify
+Special exemptions selected by the USGA
+All remaining spots after the second top 60 OWGR cutoff date filled by alternates from qualifying tournaments.
+The exemptions for amateurs apply only if the players remain amateurs as of the tournament date, excluding the U.S. Amateur champion; they can retain their earned exemption regardless of amateur status for the U.S. Open following a 2019 rule change. As the U.S. Open typically takes place after the college golf season has ended, it is not uncommon for top amateur players to turn professional immediately after their last collegiate event (typically the end of the NCAA championships) in order to maximize the number of FedEx Cup points they may score before the August cutoff to avoid qualifying school. [ 18 ]
+Before 2011, the sole OWGR cutoff for entry was the top 50 as of two weeks before the tournament. An exemption category for the top 50 as of the tournament date was added for 2011, apparently in response to the phenomenon of golfers entering the top 50 between the original cutoff date and the tournament (such as Justin Rose and Rickie Fowler in 2010). [ 19 ]
+Through 2011, exemptions existed for leading money winners on the PGA, European, Japanese, and Australasian tours, as well as winners of multiple PGA Tour events in the year before the U.S. Open. These categories were eliminated in favor of inviting the top 60 on the OWGR at both relevant dates. [ 19 ] Starting with the 2012 championship, an exemption was added for the winner of the current year's BMW PGA Championship, the European Tour's equivalent of The Players Championship. [ 20 ]
+Potential competitors who are not fully exempt must enter the Qualifying process, which has two stages. Firstly there is Local Qualifying, which is played over 18 holes at more than 100 courses around the United States. Many leading players are exempt from this first stage, and they join the successful local qualifiers at the Sectional Qualifying stage, which is played over 36 holes in one day at several sites in the U.S., as well as one each in Europe , Canada , and Japan . Most sectional qualifiers are held on the Monday of the week prior to the U.S. Open. Field sizes and qualifying spots on offer vary from site to site; in recent years, the USGA has placed events near scheduled PGA Tour and Korn Ferry Tour stops to better accommodate touring pros who did not qualify through an exemption. There is no lower age limit and the youngest-ever qualifier was 14-year-old Andy Zhang of China , who qualified in 2012 after Paul Casey withdrew days before the tournament.
+USGA special exemptions
+[ edit ]
+The USGA has granted a special exemption to 35 players 53 times since 1966 . [ 21 ] Players with multiple special exemptions include: Arnold Palmer (1978, 1980, 1981, 1983, 1994), Seve Ballesteros (1978, 1994), Gary Player (1981, 1983), Lee Trevino (1983, 1984), Hale Irwin (1990, 2002, 2003), Jack Nicklaus (1991, 1993, 1995, 1996, 1997, 1998, 1999, 2000), and Tom Watson (1993, 1996, 2000, 2003, 2010). [ 22 ]
+Irwin won the 1990 U.S. Open after accepting a special exemption. In 2016 , a special exemption was extended to former champion Retief Goosen (2001, 2004). [ 23 ] In 2018 , a special exemption was extended to former U.S. Open champions Jim Furyk (2003) and Ernie Els (1994, 1997). [ 24 ] The last special exemption was granted to three-time champion Tiger Woods to play in 2024 . [ 25 ]
+Prizes
+[ edit ]
+The purse at the 2026 U.S. Open was $22.5 million, and the winner's share was $4.5 million. The European Tour uses conversion rates at the time of the tournament to calculate the official prize money used in their Race to Dubai.
+In line with the other majors, winning the U.S. Open gives a golfer several privileges that make his career much more secure if he is not already one of the elite players of the sport. U.S. Open champions are automatically invited to play in the other three majors (the Masters , The Open Championship (British Open), and the PGA Championship ) for the next five years. They are also automatically invited to play in The Players Championship for the next five years, and they are exempt from qualifying for the U.S. Open itself for 10 years.
+Winners may also receive a five-year exemption on the PGA Tour, which is automatic for regular members. Non-PGA Tour members who win the U.S. Open have the choice of joining the PGA Tour either within 60 days of winning, or prior to the beginning of any one of the next five tour seasons.
+Finally, U.S. Open winners receive automatic invitations to three of the five senior majors once they turn 50; they receive a five-year invitation to the U.S. Senior Open and a lifetime invitation to the Senior PGA Championship and Senior British Open .
+The top 10 finishers at the U.S. Open are fully exempt from qualifying for the following year's Open, and the top four are automatically invited to the following season's Masters.
+Players who make the cut but have no status on the PGA Tour and are not exempt by any other means earn entry into the second stage of PGA Tour Qualifying Tournament .
+Playoff format
+[ edit ]
+Through 2017 , the U.S. Open retained a full 18-hole playoff the following day (Monday). If a tie existed after that fifth round, then the playoff continued as sudden-death on the 91st hole. The U.S. Open advanced to sudden-death three times ( 1990 , 1994 , 2008 ), most recently when Tiger Woods defeated Rocco Mediate on the first additional playoff hole in 2008. Before sudden-death was introduced (1970s?), additional 18-hole rounds were played ( 1925 , 1939 , 1946 ) to break the tie. When the playoff was scheduled for 36 holes and ended in a tie, as in 1931 , a second 36-hole playoff was required.
+After consulting fans, players, and media partners, the USGA adopted a two-hole aggregate playoff format in 2018 ; if the playoff ends tied, sudden death will commence. [ 26 ] Through 2026 , the two-hole format has yet to be used, as the most recent playoff was 18 years ago in 2008.
 Winners
 [ edit ]
-Main article: List of PGA Championship champions
-Stroke play era winners
-[ edit ]
-Year
-Winner
-Score
-To par
-Margin of
-victory
-Runner(s)-up
-Winner's
-share ($)
-Venue
-Location
-2026 Aaron Rai 271 −9 3 strokes Jon Rahm
-Alex Smalley 3,690,000 Aronimink Golf Club Newtown Square, Pennsylvania
-2025 Scottie Scheffler 273 −11 5 strokes Bryson DeChambeau
-Harris English
-Davis Riley 3,420,000 Quail Hollow Club Charlotte, North Carolina
-2024 Xander Schauffele 263 −21 1 stroke Bryson DeChambeau 3,330,000 Valhalla Golf Club Louisville, Kentucky
-2023 Brooks Koepka (3) 271 −9 2 strokes Viktor Hovland
-Scottie Scheffler 3,150,000 Oak Hill Country Club
-(East Course) Rochester, New York [ b ]
-2022 Justin Thomas (2) 275 −5 Playoff Will Zalatoris 2,700,000 Southern Hills Country Club Tulsa, Oklahoma
-2021 Phil Mickelson (2) 282 −6 2 strokes Brooks Koepka
-Louis Oosthuizen 2,160,000 Kiawah Island Golf Resort
-(Ocean Course) Kiawah Island, South Carolina
-2020 Collin Morikawa 267 −13 2 strokes Paul Casey
-Dustin Johnson 1,980,000 TPC Harding Park San Francisco, California
-2019 Brooks Koepka (2) 272 −8 2 strokes Dustin Johnson 1,980,000 Bethpage State Park
-( Black Course ) Farmingdale, New York
-2018 Brooks Koepka 264 −16 2 strokes Tiger Woods 1,980,000 Bellerive Country Club Town and Country, Missouri
-2017 Justin Thomas 276 −8 2 strokes Francesco Molinari
-Louis Oosthuizen
-Patrick Reed 1,890,000 Quail Hollow Club Charlotte, North Carolina
-2016 Jimmy Walker 266 −14 1 stroke Jason Day 1,800,000 Baltusrol Golf Club
-(Lower Course) Springfield, New Jersey
-2015 Jason Day 268 −20 3 strokes Jordan Spieth 1,800,000 Whistling Straits
-(Straits Course) Kohler, Wisconsin [ c ]
-2014 Rory McIlroy (2) 268 −16 1 stroke Phil Mickelson 1,800,000 Valhalla Golf Club Louisville, Kentucky
-2013 Jason Dufner 270 −10 2 strokes Jim Furyk 1,445,000 Oak Hill Country Club
-(East Course) Rochester, New York [ b ]
-2012 Rory McIlroy 275 −13 8 strokes David Lynn 1,445,000 Kiawah Island Golf Resort
-(Ocean Course) Kiawah Island, South Carolina
-2011 Keegan Bradley 272 −8 Playoff Jason Dufner 1,445,000 Atlanta Athletic Club
-(Highlands Course) Johns Creek, Georgia [ d ]
-2010 Martin Kaymer 277 −11 Playoff Bubba Watson 1,350,000 Whistling Straits
-(Straits Course) Kohler, Wisconsin [ c ]
-2009 Yang Yong-eun 280 −8 3 strokes Tiger Woods 1,350,000 Hazeltine National Golf Club Chaska, Minnesota
-2008 Pádraig Harrington 277 −3 2 strokes Ben Curtis
-Sergio García 1,350,000 Oakland Hills Country Club
-(South Course) Bloomfield, Michigan
-2007 Tiger Woods (4) 272 −8 2 strokes Woody Austin 1,260,000 Southern Hills Country Club Tulsa, Oklahoma
-2006 Tiger Woods (3) 270 −18 5 strokes Shaun Micheel 1,224,000 Medinah Country Club
-(Course No. 3) Medinah, Illinois
-2005 Phil Mickelson 276 −4 1 stroke Thomas Bjørn
-Steve Elkington 1,170,000 Baltusrol Golf Club
-(Lower Course) Springfield, New Jersey
-2004 Vijay Singh (2) 280 −8 Playoff Chris DiMarco
-Justin Leonard 1,125,000 Whistling Straits
-(Straits Course) Kohler, Wisconsin [ c ]
-2003 Shaun Micheel 276 −4 2 strokes Chad Campbell 1,080,000 Oak Hill Country Club
-(East Course) Rochester, New York [ b ]
-2002 Rich Beem 278 −10 1 stroke Tiger Woods 990,000 Hazeltine National Golf Club Chaska, Minnesota
-2001 David Toms 265 −15 1 stroke Phil Mickelson 936,000 Atlanta Athletic Club
-(Highlands Course) Duluth, Georgia [ d ]
-2000 Tiger Woods (2) 270 −18 Playoff Bob May 900,000 Valhalla Golf Club Louisville, Kentucky [ e ]
-1999 Tiger Woods 277 −11 1 stroke Sergio García 630,000 Medinah Country Club
-(Course No. 3) Medinah, Illinois
-1998 Vijay Singh 271 −9 2 strokes Steve Stricker 540,000 Sahalee Country Club Sammamish, Washington
-1997 Davis Love III 269 −11 5 strokes Justin Leonard 470,000 Winged Foot Golf Club
-(West Course) Mamaroneck, New York
-1996 Mark Brooks 277 −11 Playoff Kenny Perry 430,000 Valhalla Golf Club Louisville, Kentucky [ e ]
-1995 Steve Elkington 267 −17 Playoff Colin Montgomerie 360,000 Riviera Country Club Pacific Palisades, California [ f ]
-1994 Nick Price (2) 269 −11 6 strokes Corey Pavin 310,000 Southern Hills Country Club Tulsa, Oklahoma
-1993 Paul Azinger 272 −12 Playoff Greg Norman 300,000 Inverness Club Toledo, Ohio
-1992 Nick Price 278 −6 3 strokes John Cook
-Nick Faldo
-Jim Gallagher Jr.
-Gene Sauers 280,000 Bellerive Country Club St. Louis, Missouri [ g ]
-1991 John Daly 276 −12 3 strokes Bruce Lietzke 230,000 Crooked Stick Golf Club Carmel, Indiana
-1990 Wayne Grady 282 −6 3 strokes Fred Couples 225,000 Shoal Creek Golf & Country Club Birmingham, Alabama
-1989 Payne Stewart 276 −12 1 stroke Andy Bean
-Mike Reid
-Curtis Strange 200,000 Kemper Lakes Golf Club Kildeer, Illinois
-1988 Jeff Sluman 272 −12 3 strokes Paul Azinger 160,000 Oak Tree Golf Club Edmond, Oklahoma
-1987 Larry Nelson (2) 287 −1 Playoff Lanny Wadkins 150,000 PGA National Resort & Spa Palm Beach Gardens, Florida
-1986 Bob Tway 276 −8 2 strokes Greg Norman 145,000 Inverness Club Toledo, Ohio
-1985 Hubert Green 278 −6 2 strokes Lee Trevino 125,000 Cherry Hills Country Club Cherry Hills Village, Colorado
-1984 Lee Trevino (2) 273 −15 4 strokes Gary Player
-Lanny Wadkins 125,000 Shoal Creek Golf & Country Club Birmingham, Alabama
-1983 Hal Sutton 274 −10 1 stroke Jack Nicklaus 100,000 Riviera Country Club Pacific Palisades, California [ f ]
-1982 Raymond Floyd (2) 272 −8 3 strokes Lanny Wadkins 65,000 Southern Hills Country Club Tulsa, Oklahoma
-1981 Larry Nelson 273 −7 4 strokes Fuzzy Zoeller 60,000 Atlanta Athletic Club
-(Highlands Course) Duluth, Georgia [ d ]
-1980 Jack Nicklaus (5) 274 −6 7 strokes Andy Bean 60,000 Oak Hill Country Club
-(East Course) Rochester, New York [ b ]
-1979 David Graham 272 −8 Playoff Ben Crenshaw 60,000 Oakland Hills Country Club
-(South Course) Bloomfield, Michigan
-1978 John Mahaffey 276 −8 Playoff Jerry Pate
-Tom Watson 50,000 Oakmont Country Club Plum, Pennsylvania
-1977 Lanny Wadkins 282 −6 Playoff Gene Littler 45,000 Pebble Beach Golf Links Pebble Beach, California
-1976 Dave Stockton (2) 281 +1 1 stroke Raymond Floyd
-Don January 45,000 Congressional Country Club
-(Blue Course) Bethesda, Maryland
-1975 Jack Nicklaus (4) 276 −4 2 strokes Bruce Crampton 45,000 Firestone Country Club
-(South Course) Akron, Ohio
-1974 Lee Trevino 276 −4 1 stroke Jack Nicklaus 45,000 Tanglewood Park
-(Championship Course) Clemmons, North Carolina
-1973 Jack Nicklaus (3) 277 −7 4 strokes Bruce Crampton 45,000 Canterbury Golf Club Beachwood, Ohio
-1972 Gary Player (2) 281 +1 2 strokes Tommy Aaron
-Jim Jamieson 45,000 Oakland Hills Country Club
-(South Course) Bloomfield Hills, Michigan
-1971 Jack Nicklaus (2) 281 −7 2 strokes Billy Casper 40,000 PGA National Golf Club Palm Beach Gardens, Florida
-1970 Dave Stockton 279 −1 2 strokes Bob Murphy
-Arnold Palmer 40,000 Southern Hills Country Club Tulsa, Oklahoma
-1969 Raymond Floyd 276 −8 1 stroke Gary Player 35,000 NCR Country Club
-(South Course) Dayton, Ohio
-1968 Julius Boros 281 +1 1 stroke Bob Charles
-Arnold Palmer 25,000 Pecan Valley Golf Club San Antonio, Texas
-1967 Don January 281 −7 Playoff Don Massengale 25,000 Columbine Country Club Columbine Valley, Colorado
-1966 Al Geiberger 280 E 4 strokes Dudley Wysong 25,000 Firestone Country Club
-(South Course) Akron, Ohio
-1965 Dave Marr 280 −4 2 strokes Billy Casper
-Jack Nicklaus 25,000 Laurel Valley Golf Club Ligonier, Pennsylvania
-1964 Bobby Nichols 271 −9 3 strokes Jack Nicklaus
-Arnold Palmer 18,000 Columbus Country Club Columbus, Ohio
-1963 Jack Nicklaus 279 −5 2 strokes Dave Ragan 13,000 Dallas Athletic Club
-(Blue Course) Dallas, Texas
-1962 Gary Player 278 −2 1 stroke Bob Goalby 13,000 Aronimink Golf Club Newtown Square, Pennsylvania
-1961 Jerry Barber 277 −3 Playoff Don January 11,000 Olympia Fields Country Club Olympia Fields, Illinois
-1960 Jay Hebert 281 +1 1 stroke Jim Ferrier 11,000 Firestone Country Club
-(South Course) Akron, Ohio
-1959 Bob Rosburg 277 −3 1 stroke Jerry Barber
-Doug Sanders 8,250 Minneapolis Golf Club St. Louis Park, Minnesota
-1958 Dow Finsterwald 276 −4 2 strokes Billy Casper 5,500 Llanerch Country Club Havertown, Pennsylvania
-Match play era winners
-[ edit ]
-Year Winner Score Runner-up Winners
+Main article: List of U.S. Open (golf) champions
+Year Winner Score To par Margin of
+victory Runner(s)-up Winner's
 share ($) Venue Location
-1957 Lionel Hebert 2 and 1 Dow Finsterwald 8,000 Miami Valley Country Club Dayton, Ohio
-1956 Jack Burke Jr. 3 and 2 Ted Kroll 5,000 Blue Hill Country Club Canton, Massachusetts
-1955 Doug Ford 4 and 3 Cary Middlecoff 5,000 Meadowbrook Country Club Northville, Michigan
-1954 Chick Harbert 4 and 3 Walter Burkemo 5,000 Keller Golf Course Maplewood, Minnesota
-1953 Walter Burkemo 2 and 1 Felice Torza 5,000 Birmingham Country Club Birmingham, Michigan
-1952 Jim Turnesa 1 up Chick Harbert 3,500 Big Spring Country Club Louisville, Kentucky
-1951 Sam Snead (3) 7 and 6 Walter Burkemo 3,500 Oakmont Country Club Plum, Pennsylvania
-1950 Chandler Harper 4 and 3 Henry Williams Jr. 3,500 Scioto Country Club Columbus, Ohio
-1949 Sam Snead (2) 3 and 2 Johnny Palmer 3,500 Hermitage Country Club Richmond, Virginia
-1948 Ben Hogan (2) 7 and 6 Mike Turnesa 3,500 Norwood Hills Country Club St. Louis, Missouri
-1947 Jim Ferrier 2 and 1 Chick Harbert 3,500 Plum Hollow Country Club Southfield, Michigan
-1946 Ben Hogan 6 and 4 Ed Oliver 3,500 Portland Golf Club Portland, Oregon
-1945 Byron Nelson (2) 4 and 3 Sam Byrd 3,750 Moraine Country Club Kettering, Ohio
-1944 Bob Hamilton 1 up Byron Nelson 3,500 Manito Golf & Country Club Spokane, Washington
-1943: No tournament due to World War II
-1942 Sam Snead 2 and 1 Jim Turnesa 1,000 Seaview Country Club Atlantic City, New Jersey
-1941 Vic Ghezzi 38 holes Byron Nelson 1,100 Cherry Hills Country Club Cherry Hills Village, Colorado
-1940 Byron Nelson 1 up Sam Snead 1,100 Hershey Country Club
-(West Course) Hershey, Pennsylvania
-1939 Henry Picard 37 holes Byron Nelson 1,100 Pomonok Country Club Flushing, New York
-1938 Paul Runyan (2) 8 and 7 Sam Snead 1,100 The Shawnee Inn & Golf Resort Smithfield Township, Pennsylvania
-1937 Denny Shute (2) 37 holes Harold McSpaden 1,000 Pittsburgh Field Club O'Hara Township, Pennsylvania
-1936 Denny Shute 3 and 2 Jimmy Thomson 1,000 Pinehurst Resort
-(No. 2 Course) Pinehurst, North Carolina
-1935 Johnny Revolta 5 and 4 Tommy Armour 1,000 Twin Hills Golf & Country Club Oklahoma City, Oklahoma
-1934 Paul Runyan 38 holes Craig Wood 1,000 The Park Country Club Williamsville, New York
-1933 Gene Sarazen (3) 5 and 4 Willie Goggin 1,000 Blue Mound Golf & Country Club Wauwatosa, Wisconsin
-1932 Olin Dutra 4 and 3 Frank Walsh 1,000 Keller Golf Course Maplewood, Minnesota
-1931 Tom Creavy 2 and 1 Denny Shute 1,000 Wannamoisett Country Club Rumford, Rhode Island
-1930 Tommy Armour [ h ] 1 up Gene Sarazen Fresh Meadow Country Club Queens, New York
-1929 Leo Diegel (2) 6 and 4 Johnny Farrell Hillcrest Country Club Los Angeles, California
-1928 Leo Diegel 6 and 5 Al Espinosa Baltimore Country Club
-(East Course) Timonium, Maryland
-1927 Walter Hagen (5) 1 up Joe Turnesa Cedar Crest Dallas, Texas
-1926 Walter Hagen (4) 5 and 3 Leo Diegel Salisbury
-(Red Course) East Meadow, New York
-1925 Walter Hagen (3) 6 and 5 Bill Mehlhorn Olympia Fields Country Club Olympia Fields, Illinois
-1924 Walter Hagen (2) 2 up Jim Barnes French Lick Springs
-(Hill Course) French Lick, Indiana
-1923 Gene Sarazen (2) 38 holes Walter Hagen Pelham Country Club Pelham Manor, New York
-1922 Gene Sarazen 4 and 3 Emmet French 500 Oakmont Country Club Plum, Pennsylvania
-1921 Walter Hagen 3 and 2 Jim Barnes 500 Inwood Country Club Inwood, New York
-1920 Jock Hutchison [ h ] 1 up J. Douglas Edgar 500 Flossmoor Country Club Flossmoor, Illinois
-1919 Jim Barnes (2) 6 and 5 Fred McLeod 500 Engineers Country Club Roslyn Harbor, New York
-1917–18: No tournament due to World War I
-1916 Jim Barnes 1 up Jock Hutchison 500 Siwanoy Country Club Bronxville, New York
-Source: [ 29 ]
-Match play era details
-[ edit ]
-The table below lists the field sizes and qualification methods for the match play era. All rounds were played over 36 holes except as noted in the table. [ 30 ]
-Years Field size Qualification 18 hole rounds
-1916–21 32 sectional*
-1922 64 sectional 1st two rounds
-1923 64 sectional
-1924–34 32 36 hole qualifier
-1935–41 64 36 hole qualifier 1st two rounds
-1942–45 32 36 hole qualifier
-1946–55 64 36 hole qualifier 1st two rounds
-1956 128 sectional 1st four rounds
-1957 128 sectional 1st four rounds, consolation matches (3rd-8th place)
-* In 1921, the field consisted of the defending champion and the top 31 qualifiers from the 1921 U.S. Open .
+2026 Wyndham Clark (2) 276 −4 1 stroke Sam Burns 4,500,000 Shinnecock Hills Shinnecock Hills, New York
+2025 J. J. Spaun 279 –1 2 strokes Robert MacIntyre 4,300,000 Oakmont Plum, Pennsylvania
+2024 Bryson DeChambeau (2) 274 −6 1 stroke Rory McIlroy 4,300,000 Pinehurst Resort
+(Course No. 2) Pinehurst, North Carolina
+2023 Wyndham Clark 270 −10 1 stroke Rory McIlroy 3,600,000 Los Angeles Country Club
+(North Course) Los Angeles, California
+2022 Matt Fitzpatrick 274 −6 1 stroke Scottie Scheffler
+Will Zalatoris 3,150,000 The Country Club
+(Composite Course) Brookline, Massachusetts
+2021 Jon Rahm 278 −6 1 stroke Louis Oosthuizen 2,250,000 Torrey Pines
+(South Course) San Diego, California
+2020 Bryson DeChambeau 274 −6 6 strokes Matthew Wolff 2,250,000 Winged Foot
+(West Course) Mamaroneck, New York
+2019 Gary Woodland 271 −13 3 strokes Brooks Koepka 2,250,000 Pebble Beach Pebble Beach, California
+2018 Brooks Koepka (2) 281 +1 1 stroke Tommy Fleetwood 2,160,000 Shinnecock Hills Shinnecock Hills, New York
+2017 Brooks Koepka 272 −16 4 strokes Hideki Matsuyama
+Brian Harman 2,160,000 Erin Hills Erin, Wisconsin
+2016 Dustin Johnson 276 −4 3 strokes Jim Furyk
+Shane Lowry
+Scott Piercy 1,800,000 Oakmont Plum, Pennsylvania
+2015 Jordan Spieth 275 −5 1 stroke Dustin Johnson
+Louis Oosthuizen 1,800,000 Chambers Bay University Place, Washington
+2014 Martin Kaymer 271 −9 8 strokes Erik Compton
+Rickie Fowler 1,620,000 Pinehurst Resort
+(Course No. 2) Pinehurst, North Carolina
+2013 Justin Rose 281 +1 2 strokes Jason Day
+Phil Mickelson 1,440,000 Merion
+(East Course) Ardmore, Pennsylvania
+2012 Webb Simpson 281 +1 1 stroke Graeme McDowell
+Michael Thompson 1,440,000 Olympic Club
+(Lake Course) San Francisco, California [ a ]
+2011 Rory McIlroy 268 −16 8 strokes Jason Day 1,440,000 Congressional
+(Blue Course) Bethesda, Maryland
+2010 Graeme McDowell 284 E 1 stroke Grégory Havret 1,350,000 Pebble Beach Pebble Beach, California
+2009 Lucas Glover 276 −4 2 strokes Ricky Barnes
+David Duval
+Phil Mickelson 1,350,000 Bethpage State Park
+( Black Course ) Farmingdale, New York [ b ]
+2008 Tiger Woods (3) 283 −1 Playoff Rocco Mediate 1,350,000 Torrey Pines
+(South Course) San Diego, California
+2007 Ángel Cabrera 285 +5 1 stroke Jim Furyk
+Tiger Woods 1,260,000 Oakmont Plum, Pennsylvania
+2006 Geoff Ogilvy 285 +5 1 stroke Jim Furyk
+Phil Mickelson
+Colin Montgomerie 1,225,000 Winged Foot
+(West Course) Mamaroneck, New York
+2005 Michael Campbell 280 E 2 strokes Tiger Woods 1,170,000 Pinehurst Resort
+(Course No. 2) Pinehurst, North Carolina
+2004 Retief Goosen (2) 276 −4 2 strokes Phil Mickelson 1,125,000 Shinnecock Hills Shinnecock Hills, New York
+2003 Jim Furyk 272 −8 3 strokes Stephen Leaney 1,080,000 Olympia Fields
+(North Course) Olympia Fields, Illinois
+2002 Tiger Woods (2) 277 −3 3 strokes Phil Mickelson 1,000,000 Bethpage State Park
+( Black Course ) Farmingdale, New York [ b ]
+2001 Retief Goosen 276 −4 Playoff Mark Brooks 900,000 Southern Hills Tulsa, Oklahoma
+2000 Tiger Woods 272 −12 15 strokes Ernie Els
+Miguel Ángel Jiménez 800,000 Pebble Beach Pebble Beach, California
+1999 Payne Stewart (2) 279 −1 1 stroke Phil Mickelson 625,000 Pinehurst Resort
+(Course No. 2) Pinehurst, North Carolina
+1998 Lee Janzen (2) 280 E 1 stroke Payne Stewart 535,000 Olympic Club
+(Lake Course) San Francisco, California [ a ]
+1997 Ernie Els (2) 276 −4 1 stroke Colin Montgomerie 465,000 Congressional
+(Blue Course) Bethesda, Maryland
+1996 Steve Jones 278 −2 1 stroke Tom Lehman
+Davis Love III 425,000 Oakland Hills
+(South Course) Bloomfield Hills, Michigan
+1995 Corey Pavin 280 E 2 strokes Greg Norman 350,000 Shinnecock Hills Shinnecock Hills, New York
+1994 Ernie Els 279 −5 Playoff Colin Montgomerie
+Loren Roberts 320,000 Oakmont Plum, Pennsylvania
+1993 Lee Janzen 272 −8 2 strokes Payne Stewart 290,000 Baltusrol
+(Lower Course) Springfield, New Jersey
+1992 Tom Kite 285 −3 2 strokes Jeff Sluman 275,000 Pebble Beach Pebble Beach, California
+1991 Payne Stewart 282 −6 Playoff Scott Simpson 235,000 Hazeltine National Chaska, Minnesota
+1990 Hale Irwin (3) 280 −8 Playoff Mike Donald 220,000 Medinah
+(Course No. 3) Medinah, Illinois
+1989 Curtis Strange (2) 278 −2 1 stroke Chip Beck
+Mark McCumber
+Ian Woosnam 200,000 Oak Hill
+(East Course) Rochester, New York [ c ]
+1988 Curtis Strange 278 −6 Playoff Nick Faldo 180,000 The Country Club
+(Composite Course) Brookline, Massachusetts
+1987 Scott Simpson 277 −3 1 stroke Tom Watson 150,000 Olympic Club
+(Lake Course) San Francisco, California [ a ]
+1986 Raymond Floyd 279 −1 2 strokes Chip Beck
+Lanny Wadkins 115,000 Shinnecock Hills Shinnecock Hills, New York
+1985 Andy North (2) 279 −1 1 stroke Dave Barr
+Chen Tze-chung
+Denis Watson 103,000 Oakland Hills
+(South Course) Bloomfield Hills, Michigan
+1984 Fuzzy Zoeller 276 −4 Playoff Greg Norman 94,000 Winged Foot
+(West Course) Mamaroneck, New York
+1983 Larry Nelson 280 −4 1 stroke Tom Watson 72,000 Oakmont Plum, Pennsylvania
+1982 Tom Watson 282 −6 2 strokes Jack Nicklaus 60,000 Pebble Beach Pebble Beach, California
+1981 David Graham 273 −7 3 strokes George Burns
+Bill Rogers 55,000 Merion
+(East Course) Ardmore, Pennsylvania
+1980 Jack Nicklaus (4) 272 −8 2 strokes Isao Aoki 55,000 Baltusrol
+(Lower Course) Springfield, New Jersey
+1979 Hale Irwin (2) 284 E 2 strokes Jerry Pate
+Gary Player 50,000 Inverness Club Toledo, Ohio
+1978 Andy North 285 +1 1 stroke J. C. Snead
+Dave Stockton 45,000 Cherry Hills Cherry Hills Village, Colorado
+1977 Hubert Green 278 −2 1 stroke Lou Graham 45,000 Southern Hills Tulsa, Oklahoma
+1976 Jerry Pate 277 −3 2 strokes Al Geiberger
+Tom Weiskopf 42,000 Atlanta Athletic Club
+(Highlands Course) Duluth, Georgia [ d ]
+1975 Lou Graham 287 +3 Playoff John Mahaffey 40,000 Medinah
+(Course No. 3) Medinah, Illinois
+1974 Hale Irwin 287 +7 2 strokes Forrest Fezler 35,000 Winged Foot
+(West Course) Mamaroneck, New York
+1973 Johnny Miller 279 −5 1 stroke John Schlee 35,000 Oakmont Plum, Pennsylvania
+1972 Jack Nicklaus (3) 290 +2 3 strokes Bruce Crampton 30,000 Pebble Beach Pebble Beach, California
+1971 Lee Trevino (2) 280 E Playoff Jack Nicklaus 30,000 Merion
+(East Course) Ardmore, Pennsylvania
+1970 Tony Jacklin 281 −7 7 strokes Dave Hill 30,000 Hazeltine National Chaska, Minnesota
+1969 Orville Moody 281 +1 1 stroke Deane Beman
+Al Geiberger
+Bob Rosburg 30,000 Champions
+(Cypress Creek Course) Houston, Texas
+1968 Lee Trevino 275 −5 4 strokes Jack Nicklaus 30,000 Oak Hill
+(East Course) Rochester, New York [ c ]
+1967 Jack Nicklaus (2) 275 −5 4 strokes Arnold Palmer 30,000 Baltusrol
+(Lower Course) Springfield, New Jersey
+1966 Billy Casper (2) 278 −2 Playoff Arnold Palmer 26,500 Olympic Club
+(Lake Course) San Francisco, California [ a ]
+1965 Gary Player 282 +2 Playoff Kel Nagle 26,000 Bellerive St. Louis, Missouri [ e ]
+1964 Ken Venturi 278 −2 4 strokes Tommy Jacobs 17,000 Congressional
+(Blue Course) Bethesda, Maryland
+1963 Julius Boros (2) 293 +9 Playoff Jacky Cupit
+Arnold Palmer 17,500 The Country Club
+(Composite Course) Brookline, Massachusetts
+1962 Jack Nicklaus 283 −1 Playoff Arnold Palmer 17,500 Oakmont Plum, Pennsylvania
+1961 Gene Littler 281 +1 1 stroke Bob Goalby
+Doug Sanders 14,000 Oakland Hills
+(South Course) Bloomfield Hills, Michigan
+1960 Arnold Palmer 280 −4 2 strokes Jack Nicklaus (a) 14,400 Cherry Hills Cherry Hills Village, Colorado
+1959 Billy Casper 282 +2 1 stroke Bob Rosburg 12,000 Winged Foot
+(West Course) Mamaroneck, New York
+1958 Tommy Bolt 283 +3 4 strokes Gary Player 8,000 Southern Hills Tulsa, Oklahoma
+1957 Dick Mayer 282 +2 Playoff Cary Middlecoff 7,200 Inverness Club Toledo, Ohio
+1956 Cary Middlecoff (2) 281 +1 1 stroke Julius Boros
+Ben Hogan 6,000 Oak Hill
+(East Course) Rochester, New York [ c ]
+1955 Jack Fleck 287 +7 Playoff Ben Hogan 6,000 Olympic Club
+(Lake Course) San Francisco, California [ a ]
+1954 Ed Furgol 284 +4 1 stroke Gene Littler 6,000 Baltusrol
+(Lower Course) Springfield, New Jersey
+1953 Ben Hogan (4) 283 −5 6 strokes Sam Snead 5,000 Oakmont Plum, Pennsylvania
+1952 Julius Boros 281 +1 4 strokes Ed Oliver 4,000 Northwood Club Dallas, Texas
+1951 Ben Hogan (3) 287 +7 2 strokes Clayton Heafner 4,000 Oakland Hills
+(South Course) Bloomfield Hills, Michigan
+1950 Ben Hogan (2) 287 +7 Playoff Lloyd Mangrum (2nd)
+George Fazio (3rd) 4,000 Merion
+(East Course) Ardmore, Pennsylvania
+1949 Cary Middlecoff 286 +2 1 stroke Clayton Heafner
+Sam Snead 2,000 Medinah
+(Course No. 3) Medinah, Illinois
+1948 Ben Hogan 276 −8 2 strokes Jimmy Demaret 2,000 Riviera Pacific Palisades, California [ f ]
+1947 Lew Worsham 282 −2 Playoff Sam Snead 2,500 St. Louis Ladue, Missouri
+1946 Lloyd Mangrum 284 −4 Playoff Vic Ghezzi
+Byron Nelson 1,833 Canterbury Beachwood, Ohio
+1942–1945: Cancelled due to World War II
+1941 Craig Wood 284 +4 3 strokes Denny Shute 1,000 Colonial Fort Worth, Texas
+1940 Lawson Little 287 −1 Playoff Gene Sarazen 1,000 Canterbury Beachwood, Ohio
+1939 Byron Nelson 284 −4 Playoff Craig Wood (2nd)
+Denny Shute (3rd) 1,000 Philadelphia
+(Spring Mill Course) Gladwyne, Pennsylvania
+1938 Ralph Guldahl (2) 284 E 6 strokes Dick Metz 1,000 Cherry Hills Cherry Hills Village, Colorado
+1937 Ralph Guldahl 281 +1 2 strokes Sam Snead 1,000 Oakland Hills
+(South Course) Bloomfield Hills, Michigan
+1936 Tony Manero 282 −2 2 strokes Harry Cooper 1,000 Baltusrol
+(Upper Course) Springfield, New Jersey
+1935 Sam Parks Jr. 299 +11 2 strokes Jimmy Thomson 1,000 Oakmont Plum, Pennsylvania
+1934 Olin Dutra 293 +13 1 stroke Gene Sarazen 1,000 Merion
+(East Course) Ardmore, Pennsylvania
+1933 Johnny Goodman (a) 287 −1 1 stroke Ralph Guldahl 1,000 North Shore Glenview, Illinois
+1932 Gene Sarazen (2) 286 +6 3 strokes Bobby Cruickshank
+Philip Perkins 1,000 Fresh Meadow Queens, New York
+1931 Billy Burke 292 +4 Playoff George Von Elm 1,750 Inverness Club Toledo, Ohio
+1930 Bobby Jones (a) (4) 287 −1 2 strokes Macdonald Smith 1,000 Interlachen Edina, Minnesota
+1929 Bobby Jones (a) (3) 294 Playoff Al Espinosa 1,000 Winged Foot
+(West Course) Mamaroneck, New York
+1928 Johnny Farrell 294 Playoff Bobby Jones (a) 500 Olympia Fields
+(North Course) Olympia Fields, Illinois
+1927 Tommy Armour 301 Playoff Harry Cooper 500 Oakmont Plum, Pennsylvania
+1926 Bobby Jones (a) (2) 293 1 stroke Joe Turnesa 500 Scioto Columbus, Ohio
+1925 Willie Macfarlane 291 Playoff Bobby Jones (a) 500 Worcester Worcester, Massachusetts
+1924 Cyril Walker 297 3 strokes Bobby Jones (a) 500 Oakland Hills
+(South Course) Bloomfield Hills, Michigan
+1923 Bobby Jones (a) 296 Playoff Bobby Cruickshank 500 Inwood Inwood, New York
+1922 Gene Sarazen 288 1 stroke John Black
+Bobby Jones (a) 500 Skokie Glencoe, Illinois
+1921 Jim Barnes 289 9 strokes Walter Hagen
+Fred McLeod 500 Columbia Chevy Chase, Maryland
+1920 Ted Ray 295 1 stroke Jack Burke Sr.
+Leo Diegel
+Jock Hutchison
+Harry Vardon 500 Inverness Club Toledo, Ohio
+1919 Walter Hagen (2) 301 Playoff Mike Brady 500 Brae Burn
+(Main Course) West Newton, Massachusetts
+1917–1918: Cancelled due to World War I
+1916 Chick Evans (a) 286 2 strokes Jock Hutchison 300 The Minikahda Club Minneapolis, Minnesota
+1915 Jerome Travers (a) 297 1 stroke Tom McNamara 300 Baltusrol
+(Revised Course) Springfield, New Jersey
+1914 Walter Hagen 290 1 stroke Chick Evans (a) 300 Midlothian Midlothian, Illinois
+1913 Francis Ouimet (a) 304 Playoff Harry Vardon (2nd)
+Ted Ray (3rd) 300 The Country Club Brookline, Massachusetts
+1912 John McDermott (2) 294 2 strokes Tom McNamara 300 Country Club of Buffalo Buffalo, New York
+1911 John McDermott 307 Playoff Mike Brady (2nd)
+George Simpson (3rd) 300 Chicago Wheaton, Illinois
+1910 Alex Smith (2) 298 Playoff John McDermott (2nd)
+Macdonald Smith (3rd) 300 Philadelphia Cricket Club
+(St. Martin's Course) Philadelphia, Pennsylvania
+1909 George Sargent 290 4 strokes Tom McNamara 300 Englewood Englewood, New Jersey
+1908 Fred McLeod 322 Playoff Willie Smith 300 Myopia Hunt Club South Hamilton, Massachusetts
+1907 Alec Ross 302 2 strokes Gilbert Nicholls 300 Philadelphia Cricket Club
+(St. Martin's Course) Philadelphia, Pennsylvania
+1906 Alex Smith 295 7 strokes Willie Smith 300 Onwentsia Club Lake Forest, Illinois
+1905 Willie Anderson (4) 314 2 strokes Alex Smith 200 Myopia Hunt Club South Hamilton, Massachusetts
+1904 Willie Anderson (3) 303 4 strokes Gilbert Nicholls 200 Glen View Club Golf, Illinois
+1903 Willie Anderson (2) 307 Playoff David Brown 200 Baltusrol
+(Original Course) Springfield, New Jersey
+1902 Laurie Auchterlonie 307 6 strokes Stewart Gardner
+Walter Travis (a) 200 Garden City Garden City, New York
+1901 Willie Anderson 331 Playoff Alex Smith 200 Myopia Hunt Club South Hamilton, Massachusetts
+1900 Harry Vardon 313 2 strokes John Henry Taylor 200 Chicago Wheaton, Illinois
+1899 Willie Smith 315 11 strokes Val Fitzjohn
+George Low Sr.
+Bert Way 150 Baltimore
+(Roland Park Course) Baltimore, Maryland
+1898 Fred Herd 328 7 strokes Alex Smith 150 Myopia Hunt Club South Hamilton, Massachusetts
+1897 Joe Lloyd 162 1 stroke Willie Anderson 150 Chicago Wheaton, Illinois
+1896 James Foulis 152 3 strokes Horace Rawlins 150 Shinnecock Hills Shinnecock Hills, New York
+1895 Horace Rawlins 173 2 strokes Willie Dunn 150 Newport Newport, Rhode Island
 Summary by course, state and region
 [ edit ]
-Summary by course, state and region
-Course
-Number
-State
-Number
-Region
-Number
-Blue Hill Country Club
+The U.S. Open has been played on 52 different golf courses; 22 in the Northeast, 18 in the Midwest, 6 in the South, and 6 in the West.
+Legend
+State totals – preceding courses are in that state
+Division totals – Divisions as defined by U.S. Census Bureau
+Region totals – each is composed of 2 or 3 divisions
+Total U.S. Opens
+Col. 4 shows larger region which contains entity in col. 1
+Course/State/Region
+No.
+Years hosted
+Geog.
+sort
+Myopia Hunt Club
+4
+1908, 1905, 1901, 1898
+MA
+The Country Club
+4
+2022, 1988, 1963, 1913
+MA
+Worcester Country Club
 1
-Massachusetts
+1925
+MA
+Brae Burn Country Club
 1
-New England
-2
-Wannamoisett Country Club
+1919
+MA
+Total Massachusetts
+10
+NewEng
+Newport Country Club
 1
-Rhode Island
+1895
+RI
+Total Rhode Island
 1
-Baltusrol Golf Club
-2
-New Jersey
+NewEng
+Total New England
+11
+NEast
+Winged Foot Golf Club
+6
+2020, 2006, 1984, 1974, 1959, 1929
+NY
+Shinnecock Hills Golf Club
+6
+2026, 2018, 2004, 1995, 1986, 1896
+NY
+Oak Hill Country Club
 3
-Mid-Atlantic
-27
-Seaview Country Club
-1
+1989, 1968, 1956
+NY
 Bethpage Black Course
-1
-New York
-14
-Engineers Country Club
-1
+2
+2009, 2002
+NY
 Fresh Meadow Country Club
 1
+1932
+NY
 Inwood Country Club
 1
-Oak Hill Country Club
-4
-Pelham Country Club
+1923
+NY
+Country Club of Buffalo
 1
-Pomonok Country Club
+1912
+NY
+Garden City Golf Club
 1
-Salisbury Golf Club
-1
-Siwanoy Country Club
-1
-The Park Country Club
-1
-Winged Foot Golf Club
-1
-Aronimink Golf Club
-2
-Pennsylvania
-10
-Hershey Country Club
-1
-Laurel Valley Golf Club
-1
-Llanerch Country Club
-1
+1902
+NY
+Total New York
+21
+MidAtl
 Oakmont Country Club
+10
+2025, 2016, 2007, 1994, 1983, 1973,
+1962, 1953, 1935, 1927
+PA
+Merion Golf Club
+5
+2013, 1981, 1971, 1950, 1934
+PA
+Philadelphia Cricket Club
+2
+1910, 1907
+PA
+Philadelphia Country Club
+1
+1939
+PA
+Total Pennsylvania
+18
+MidAtl
+Baltusrol Golf Club
+7
+1993, 1980, 1967, 1954, 1936,
+1915, 1903
+NJ
+Englewood Golf Club
+1
+1909
+NJ
+Total New Jersey
+8
+MidAtl
+Congressional Country Club
 3
-Pittsburgh Field Club
-1
-The Shawnee Inn & Golf Resort
-1
-PGA National Golf Club
-1
-Florida
-1
-South Atlantic
-13
-Atlanta Athletic Club
-3
-Georgia
-3
+2011, 1997, 1964
+MD
 Baltimore Country Club
 1
-Maryland
-2
-Congressional Country Club
+1899
+MD
+Columbia Country Club
 1
+1921
+MD
+Total Maryland
+5
+MidAtl
+Total Mid-Atlantic
+51
+NEast
+Total Northeast
+63
+USA
 Pinehurst Resort
-1
-North Carolina
 4
-Quail Hollow
-2
-Tanglewood Park
+2024, 2014, 2005, 1999
+NC
+Total North Carolina
+4
+SthAtl
+Atlanta Athletic Club
 1
-Kiawah Island Golf Resort
-2
-South Carolina
-2
-Hermitage Country Club
+1976
+GA
+Total Georgia
 1
-Virginia
-1
-Shoal Creek Golf and Country Club
-2
-Alabama
-2
-East South Central
-7
-Big Spring Country Club
-1
-Kentucky
+SthAtl
+Total South Atlantic
 5
-Valhalla Golf Club
-4
-Oak Tree Golf Club
-1
-Oklahoma
-7
-West South Central
-10
+South
+Total East South Central
+0
+South
 Southern Hills Country Club
-5
-Twin Hills Golf & Country Club
-1
-Cedar Crest Country Club
-1
-Texas
 3
-Dallas Athletic Club
+2001, 1977, 1958
+OK
+Total Oklahoma
+3
+WSC
+Champions Golf Club
 1
-Pecan Valley Golf Club
+1969
+TX
+Colonial Country Club
 1
-Flossmoor Country Club
+1941
+TX
+Northwood Club
 1
-Illinois
+1952
+TX
+Total Texas
+3
+WSC
+Total West South Central
 6
-East North Central
-29
-Kemper Lakes Golf Club
-1
+South
+Total South
+11
+USA
 Medinah Country Club
-2
+3
+1990, 1975, 1949
+IL
+Chicago Golf Club
+3
+1911, 1900, 1897
+IL
 Olympia Fields Country Club
 2
-Crooked Stick Golf Club
+2003, 1928
+IL
+North Shore Country Club
 1
-Indiana
-2
-French Lick Springs Resort
+1933
+IL
+Skokie Country Club
 1
-Birmingham Country Club
+1922
+IL
+Midlothian Country Club
 1
-Michigan
-6
-Meadowbrook Country Club
+1914
+IL
+Onwentsia Club
 1
-Oakland Hills Country Club
-3
-Plum Hollow Country Club
+1906
+IL
+Glen View Club
 1
-Canterbury Golf Club
-1
-Ohio
-11
-Columbus Country Club
-1
-Firestone Country Club
-3
+1904
+IL
+Total Illinois
+13
+ENC
 Inverness Club
+4
+1979, 1957, 1931, 1920
+OH
+Canterbury Golf Club
 2
-Miami Valley Golf Club
-1
-Moraine Country Club
-1
-NCR Country Club
-1
+1946, 1940
+OH
 Scioto Country Club
 1
-Blue Mound Golf & Country Club
-1
-Wisconsin
-4
-Whistling Straits
-3
+1926
+OH
+Total Ohio
+7
+ENC
+Oakland Hills Country Club
+6
+1996, 1985, 1961, 1951, 1937,
+1924
+MI
+Total Michigan
+6
+ENC
+Total East North Central
+26
+Midwest
 Hazeltine National Golf Club
 2
-Minnesota
-5
-West North Central
-8
-Keller Golf Course
-2
-Minneapolis Golf Club
+1991, 1970
+MN
+Interlachen Country Club
 1
+1930
+MN
+The Minikahda Club
+1
+1916
+MN
+Total Minnesota
+4
+WNC
 Bellerive Country Club
-2
-Missouri
-3
-Norwood Hills Country Club
 1
+1965
+MO
+St. Louis Country Club
+1
+1947
+MO
+Total Missouri
+2
+WNC
+Erin Hills
+1
+2017
+WI
+Total Wisconsin
+1
+WNC
+Total West North Central
+7
+Midwest
+Total Midwest
+33
+USA
 Cherry Hills Country Club
-2
-Colorado
 3
-Mountain
+1978, 1960, 1938
+CO
+Total Colorado
 3
-Columbine Country Club
-1
-Hillcrest Country Club
-1
-California
-5
-Pacific
-8
+Mtn
+Total Mountain
+3
+West
 Pebble Beach Golf Links
+6
+2019, 2010, 2000, 1992, 1982,
+1972
+CA
+Olympic Club
+5
+2012, 1998, 1987, 1966, 1955
+CA
+Torrey Pines Golf Course
+2
+2021, 2008
+CA
+Los Angeles Country Club
 1
+2023
+CA
 Riviera Country Club
-2
-TPC Harding Park
 1
-Portland Golf Club
+1948
+CA
+Total California
+15
+Pac
+Chambers Bay
 1
-Oregon
+2015
+WA
+Total Washington
 1
-Manito Golf and Country Club
-1
-Washington
-2
-Sahalee Country Club
-1
+Pac
+Total Pacific
+16
+West
+Total West
+19
+USA
+Total U.S. Opens
+126
+The 18th state to host the tournament was Washington in 2015, followed by the 19th state, Wisconsin , in 2017.
 Records
 [ edit ]
-Most wins: 5, Jack Nicklaus , Walter Hagen [ 31 ]
-Most runner-up finishes: 4, Jack Nicklaus [ 32 ]
-Oldest winner: Phil Mickelson in 2021 (50 years, 11 months) [ 33 ]
-Youngest winner: Gene Sarazen in 1922 (20 years, 174 days) [ 34 ]
-Greatest winning margin in the match play era: Paul Runyan beat Sam Snead 8 & 7 in 1938 [ 35 ]
-Greatest winning margin in the stroke play era: 8 strokes, Rory McIlroy in 2012 [ 36 ]
-Lowest absolute 72-hole score: 264, Brooks Koepka (69-63-66-66), 2018 [ 37 ]
-Lowest 72-hole score in relation to par: −20, Jason Day (68-67-66-67=268) in 2015 [ 38 ]
-This is the lowest score in relation to par at any major championship.
-Koepka's 2018 score was −16. The 2018 site, Bellerive Country Club, played to par 70, while the 2015 site, the Straits Course at Whistling Straits, played to par 72. (Bellerive played to par 71 when it hosted in 1992, and the Straits Course also played to par 72 when it hosted in 2004 and 2010.)
-Lowest 18-hole score: 62 – Xander Schauffele , 1st round, 2024 [ 39 ]
+Oldest champion: Hale Irwin in 1990 at 45 years, 15 days .
+Youngest champion: John McDermott in 1911 at 19 years, 315 days.
+Oldest player to make the cut: Sam Snead in 1973 at 61 years old. He tied for 29th place.
+Most victories: 4 by Willie Anderson 1901, 1903–1905; Bobby Jones 1923, 1926, 1929–30; Ben Hogan 1948, 1950–51, 1953; Jack Nicklaus 1962, 1967, 1972, 1980. NOTE: Hogan also won the 1942 Hale America National Open which was held jointly by the USGA, PGA and Chicago GA for the benefit of the Navy Relief Society and the USO.
+Most consecutive victories: 3 by Willie Anderson 1903–1905.
+Most consecutive victorious attempts: 3 by Ben Hogan 1948, 1950–51
+Most consecutive attempts in top 2: 5 by Bobby Jones 1922–1926
+Most consecutive attempts in top 5: 6 by Willie Anderson 1901–1906
+Most consecutive attempts in top 10: 16 by Ben Hogan 1940–1960 (next highest streak 7)
+Most runner-up finishes: 6, Phil Mickelson (1999, 2002, 2004, 2006, 2009, 2013)
+Most consecutive Opens started: 44 by Jack Nicklaus from 1957 to 2000.
+Largest margin of victory: 15 strokes by Tiger Woods , 2000. This is the all-time record for all majors.
+Lowest score for 36 holes: 130 – Martin Kaymer (65–65), rounds 1–2, 2014; Rickie Fowler (62-68), rounds 1-2, 2023.
+Lowest score for 54 holes: 199 – Rory McIlroy (65–66–68), rounds 1–3, 2011; Louis Oosthuizen (66-66-67), rounds 2–4, 2015.
+Lowest score for 72 holes: 268 – Rory McIlroy (65–66–68–69), rounds 1–4, 2011.
+Most strokes under par for 72 holes: 16 under (268) by Rory McIlroy , 2011; 16 under (272) by Brooks Koepka , 2017.
+Most strokes under par at any point in the tournament: 17 by Rory McIlroy , final round, 2011. [ 27 ]
+Lowest score for 18 holes: 62 – Rickie Fowler and Xander Schauffele , 1st round, 2023.
+Lowest score for 18 holes in relation to par: 9 under (63) – Justin Thomas , 3rd round, 2017.
+All four rounds under par (golfers who did not win the tournament in italics ): [ 28 ]
+Lee Trevino , 1968 (69–68–69–69, par 70)
+Tony Jacklin , 1970 (71–70–70–70, par 72)
+Lee Janzen , 1993 (67–67–69–69, par 70)
+Curtis Strange , 1994 (70–70–70–70, par 71)
+Rory McIlroy (65–66–68–69, par 71) and Robert Garrigus (70–70–68–70), 2011
+Brooks Koepka (67–70–68–67, par 72), Charley Hoffman (70–70–68–71), and Brandt Snedeker (70–69–70–71), 2017
+All four rounds under 70: Trevino, 1968; Janzen, 1993; McIlroy, 2011. [ 27 ]
 Most frequent venues:
-5 PGA Championships: Southern Hills Country Club – 1970, 1982, 1994, 2007, 2022
-4 PGA Championships: Oak Hill Country Club , East Course – 1980, 2003, 2013, 2023
-4 PGA Championships: Valhalla Golf Club – 1996, 2000, 2014, 2024
-3 PGA Championships: Atlanta Athletic Club , Highlands Course – 1981, 2001, 2011
-3 PGA Championships: Firestone Country Club , South Course – 1960, 1966, 1975
-3 PGA Championships: Oakland Hills Country Club , South Course – 1972, 1979, 2008
-3 PGA Championships: Oakmont Country Club – 1922, 1951, 1978
-3 PGA Championships: Whistling Straits , Straits Course – 2004, 2010, 2015
+10 Opens: Oakmont Country Club – 1927, 1935, 1953, 1962, 1973, 1983, 1994, 2007, 2016, 2025
+7 Opens: Baltusrol Golf Club – 1903, 1915, 1936, 1954, 1967, 1980, 1993
+6 Opens:
+Oakland Hills Country Club – 1924, 1937, 1951, 1961, 1985, 1996
+Pebble Beach Golf Links – 1972, 1982, 1992, 2000, 2010, 2019
+Winged Foot Golf Club – 1929, 1959, 1974, 1984, 2006, 2020
+Shinnecock Hills Golf Club – 1896, 1986, 1995, 2004, 2018, 2026
+5 Opens:
+Olympic Club – 1955, 1966, 1987, 1998, 2012
+Merion Golf Club – 1934, 1950, 1971, 1981, 2013
+4 Opens:
+Myopia Hunt Club – 1898, 1901, 1905, 1908
+Inverness Club – 1920, 1931, 1957, 1979
+The Country Club – 1913, 1963, 1988, 2022
+Pinehurst Resort – 1999, 2005, 2014, 2024
+There is an extensive records section on the official U.S. Open website. [ 29 ]
 Broadcasting
 [ edit ]
-Further information: List of PGA Championship broadcasters
-The PGA Championship is televised in the United States by CBS and ESPN . Beginning 2020, ESPN holds rights to early-round and weekend morning coverage, and will air supplemental coverage through its digital subscription service ESPN+ prior to weekday coverage and during weekend broadcast windows. CBS holds rights to weekend-afternoon coverage. Both contracts run through 2030, with ESPN's contract replacing a prior agreement with TNT . CBS has televised the PGA Championship since 1991, when it replaced ABC . [ 40 ] [ 41 ] [ 42 ] The ESPN telecasts are co-produced with CBS Sports , mirroring the broadcast arrangements used by ESPN for the Masters Tournament . [ 43 ]
+Main article: List of U.S. Open (golf) broadcasters
+Beginning with the 2020 tournament , NBC Sports holds domestic television rights (with coverage on NBC , USA Network and Peacock) , having taken over the remainder of the 12-year deal with the USGA signed by Fox Sports in 2013 that gave it exclusive rights to USGA championships from 2015 through 2026. With the postponed 2020 U.S. Open Championship presenting a significant scheduling challenge due to its other fall sports commitments, Fox had held discussions with the USGA over broadcasting the tournament on their cable network FS1 or partnering with NBC. Ultimately, the issues led the network to transfer the final seven years of its contract entirely. [ 30 ] [ 31 ] [ 32 ]
+In 2020 and 2021, early round NBC cable coverage was carried on Golf Channel . Beginning with the 2022 tournament this coverage was moved to USA Network, as part of an expansion of its sports programming amid the closure of NBCSN . [ 33 ] Golf Channel also presents rolling coverage of the sectional qualifiers, billed as Golf's Longest Day . [ 34 ] Beginning with the new contract, the final hour of network coverage for the first and second rounds moved exclusively to Peacock. In August 2025, NBCUniversal and its impending spin-off Versant renewed their rights to the U.S. Open and other USGA tournaments from 2027 through 2032. [ 35 ] [ 36 ] [ 37 ]
+Coverage was previously televised by NBC and ESPN through 2014 . NBC's first period as rightsholder began in 1995 ; ABC held the broadcast rights from 1966 through 1994 . [ 38 ]
+In Australia , from 2015 Fox Sports Australia is the exclusive broadcaster of the U.S. open until 2018. [ 39 ]
 Future sites
 [ edit ]
-Year Edition Course Location Dates Hosted
-2027 109th PGA Frisco [ 44 ] Frisco, Texas May 20–23 Never
-2028 110th Olympic Club [ 45 ] San Francisco, California May 18–21 Never
-2029 111th Baltusrol Golf Club Springfield, New Jersey May 17–20 2005 , 2016
-2030 112th Congressional Country Club [ 46 ] Bethesda, Maryland TBD 1976
-2031 113th Kiawah Island Golf Resort [ 47 ] Kiawah Island, South Carolina TBD 2012 , 2021
-2032 114th Southern Hills Country Club [ 48 ] Tulsa, Oklahoma TBD 1970 , 1982 , 1994 , 2007 , 2022
-2033 115th Bethpage State Park Black Course [ 49 ] Farmingdale, New York TBD 2019
-2034 116th PGA Frisco Frisco, Texas TBD 2027
-2035 117th Oak Hill Country Club [ 49 ] Pittsford, New York TBD 1980 , 2003 , 2013 , 2023
-Source: [ 50 ]
+Year
+Edition
+Course
+Location
+Dates
+Previous championships hosted
+2027 127th Pebble Beach Golf Links Pebble Beach, California Jun 17–20 1972 , 1982 , 1992 , 2000 , 2010 , 2019
+2028 128th Winged Foot Golf Club , West Course Mamaroneck, New York Jun 15–18 1929 , 1959 , 1974 , 1984 , 2006 , 2020
+2029 129th Pinehurst Resort , Course No. 2 Pinehurst, North Carolina Jun 14–17 1999 , 2005 , 2014 , 2024
+2030 130th Merion Golf Club , East Course Ardmore, Pennsylvania Jun 13–16 1934 , 1950 , 1971 , 1981 , 2013
+2031 131st Riviera Country Club Los Angeles, California Jun 12–15 1948
+2032 132nd Pebble Beach Golf Links Pebble Beach, California Jun 17–20 1972 , 1982 , 1992 , 2000 , 2010 , 2019 , 2027
+2033 133rd Oakmont Country Club Plum, Pennsylvania Jun 16–19 1927 , 1935 , 1953 , 1962 , 1973 , 1983 , 1994 , 2007 , 2016 , 2025
+2034 134th Oakland Hills Country Club , South Course Bloomfield Hills, Michigan Jun 15–18 1924 , 1937 , 1951 , 1961 , 1985 , 1996
+2035 135th Pinehurst Resort, Course No. 2 Pinehurst, North Carolina Jun 14–17 1999 , 2005 , 2014 , 2024 , 2029
+2036 136th Shinnecock Hills Golf Club Shinnecock Hills, New York Jun 12–15 1896 , 1986 , 1995 , 2004 , 2018 , 2026
+2037 137th Pebble Beach Golf Links Pebble Beach, California Jun 18–21 1972 , 1982 , 1992 , 2000 , 2010 , 2019 , 2027 , 2032
+2038 138th The Country Club Brookline, Massachusetts Jun 17–20 1913 , 1963 , 1988 , 2022
+2039 139th Los Angeles Country Club , North Course Los Angeles, California Jun 16–19 2023
+2040 140th Merion Golf Club, East Course Ardmore, Pennsylvania Jun 14–17 1934 , 1950 , 1971 , 1981 , 2013 , 2030
+2041 141st Pinehurst Resort, Course No. 2 Pinehurst, North Carolina Jun 13–16 1999 , 2005 , 2014 , 2024 , 2029 , 2035
+2042 142nd Oakmont Country Club Plum, Pennsylvania Jun 12–15 1927 , 1935 , 1953 , 1962 , 1973 , 1983 , 1994 , 2007 , 2016 , 2025 , 2033
+2043 143rd TBD TBD TBD TBD
+2044 144th Pebble Beach Golf Links Pebble Beach, California Jun 16–19 1972 , 1982 , 1992 , 2000 , 2010 , 2019 , 2027 , 2032 , 2037
+2045 145th Inverness Club Toledo, Ohio Jun 15–18 1920 , 1931 , 1957 , 1979
+2046 146th Baltusrol Golf Club , Lower Course Springfield, New Jersey Jun 14–17 1903 , 1915 , 1936 , 1954 , 1967 , 1980 , 1993
+2047 147th Pinehurst Resort, Course No. 2 Pinehurst, North Carolina Jun 13–16 1999 , 2005 , 2014 , 2024 , 2029 , 2035 , 2041
+2048 148th TBD TBD TBD TBD
+2049 149th Oakmont Country Club Plum, Pennsylvania Jun 17–20 1927 , 1935 , 1953 , 1962 , 1973 , 1983 , 1994 , 2007 , 2016 , 2025 , 2033 , 2042
+2050 150th Merion Golf Club, East Course Ardmore, Pennsylvania Jun 16–19 1934 , 1950 , 1971 , 1981 , 2013 , 2030 , 2040
+2051 151st Oakland Hills Country Club, South Course Bloomfield Hills, Michigan Jun 15–18 1924 , 1937 , 1951 , 1961 , 1985 , 1996 , 2034
+Sources: [ 40 ]
 See also
 [ edit ]
 Golf in the United States
+Open golf tournament
 Notes
 [ edit ]
-1 2 Scoring record for all major championships.
-1 2 3 4 The club has a Rochester postal address, but is located in the adjacent town of Pittsford .
-1 2 3 The course has a Kohler postal address, but is located in the unincorporated community of Haven .
-1 2 3 The club is in a portion of the postal area of Duluth that became part of the newly incorporated city of Johns Creek in 2006. Although the club continues to be served by the Duluth post office, it now states its postal address as Johns Creek.
-1 2 At that time, the club had a Louisville postal address, but was located in unincorporated Jefferson County . In 2003, the governments of Louisville and Jefferson County merged, putting the club within the political boundaries of Louisville.
-1 2 Pacific Palisades is a neighborhood in Los Angeles with its own postal identity.
-↑ The club has a St. Louis postal address, but is located in the suburb of Town and Country .
-1 2 These players were British born, but they were based in the United States when they won the PGA Championship, and they became U.S. citizens: Tommy Armour – Born in Scotland but moved to the U.S. in the early 1920s and became a U.S. citizen in 1942. Jock Hutchison – Born in Scotland. He became a U.S. citizen in 1920.
+1 2 3 4 5 The course straddles the border between Daly City and San Francisco ; the club's postal address is in San Francisco.
+1 2 Most of the course lies within the hamlet of Old Bethpage , but the clubhouse is in Farmingdale, and the park has a Farmingdale postal address. Both places are within the Town of Oyster Bay .
+1 2 3 The club has a Rochester postal address, but is located in the adjacent town of Pittsford .
+↑ The club is located in a portion of the Duluth postal area that became part of the newly incorporated city of Johns Creek in 2006. Although the club is still served by the Duluth post office, it now lists its mailing address as Johns Creek.
+↑ The club has a St. Louis postal address, but is located in the Missouri suburb of Town and Country .
+↑ Pacific Palisades is a neighborhood within the city of Los Angeles that has a unique postal identity.
 References
 [ edit ]
-↑ The Golf Book . Dorling Kindersley. 2008. p. 23. ISBN 978-1-4053-3936-0 . Retrieved September 10, 2020 .
-↑ Edmund, Nick (May 1993). Heineken World of Golf 93 . Stanley Paul. pp. 66– 68. ISBN 978-0-09-178100-2 .
-↑ Steel, Donald; Ryde, Peter; Wind, Herbert Warren (1975). The Encyclopedia of Golf . Viking Press. ISBN 978-0-670-29401-5 .
-1 2 Thakur, Pradeep (2010). Golf: Career Money Leaders . Lulu.com. p. 105. ISBN 978-0-557-77256-8 .
-↑ Wykagyl, 1898-1998 ; by Desmond Tollhurst and John Barban; pages 28-30
-↑ Wykagyl, 1898-1998 by Desmond Tollhurst and John Barban; pp. 1-2
-↑ "History of the PGA Championship" . PGA of America . Retrieved May 1, 2014 .
-↑ "Shootout at Shoal Creek" . Times Daily . Florence, Alabama. August 16, 1984. p. 14A.
-↑ "An overview of the event" . Toledo Blade . Ohio. 75th PGA Championship (insert). August 8, 1993. p. 8.
-↑ "Medal play in pro golf slated" . Time-News . Hendersonville, North Carolina. United Press. November 15, 1957. p. 8.
-↑ Barkow, Al (1974). Golf's Golden Grind: A History of the PGA Tour . Harcourt Brace Jovanovich. ISBN 978-0151908851 .
-↑ "2016 PGA Championship moving to July to accommodate Olympics" . Golf.com . Retrieved August 8, 2017 .
-↑ Shedloski, Dave (August 7, 2017). "The PGA Championship is moving to May and players are on board" . Golf Digest . Retrieved August 8, 2017 .
-↑ "P.G.A. Championship Will Move from August to May in 2019" . The New York Times . Reuters. August 8, 2017. ISSN 0362-4331 . Retrieved August 9, 2017 .
-↑ Herrington, Ryan (August 7, 2017). "The PGA Championship will be moving to May, sources say" . Golf Digest . Retrieved August 9, 2017 .
-↑ Shackelford, Geoff (June 26, 2014). "San Francisco's Harding Park to host 2020 PGA Championship" . Golf Digest . Retrieved April 11, 2016 .
-↑ "US PGA Championship round one - England's Horsfield & Rose in contention" . BBC Sport . May 18, 2021 . Retrieved May 20, 2021 .
-↑ Romine, Brentley (January 25, 2021). "PGA awards 2022 PGA Championship to Southern Hills, replacing Trump Bedminster" . Golf Channel . Retrieved January 26, 2021 .
-↑ Lavner, Ryan (August 7, 2013). "PGA ditches Glory's Last Shot at Tour's request" . Golf Channel . Retrieved August 8, 2017 .
-↑ "PGA explains new slogan, and why Oak Hill green speeds are a mystery" . Golf.com . Retrieved August 8, 2017 .
-↑ Wacker, Brian (July 31, 2016). "The PGA's decision to play lift, clean, and place is at odds with its own logic" . Golf Digest . Retrieved August 8, 2017 .
-↑ Spander, Art. "Meet Hiroshi Iwata, the Unknown Golfer Who Made History at the PGA Championship" . Bleacher Report . Retrieved August 8, 2017 .
-↑ Kelley, Brent (June 6, 2018). "The Wanamaker Trophy: Meet the PGA Championship's Prize" . LiveAbout.com .
-↑ "Tour golfers, PGA settle fuss over tourney control" . Spokesman-Review . Associated Press. December 14, 1968. p. 15.
-↑ "Pro golf struggle is settled; PGA forms tourney group" . Milwaukee Journal . December 14, 1968. p. 18. [ permanent dead link ]
-↑ "Dispute in U.S. settled" . Glasgow Herald . December 16, 1968. p. 5.
-↑ Bolton, Rob. "2023 Qualifiers for The Players and the majors" . PGA Tour . Retrieved April 29, 2023 .
-1 2 "PGA of America Adds New PGA Championship Exemption Category" . PGA of America. February 22, 2023 . Retrieved April 29, 2023 .
-↑ "PGA of America - PGA Championships - history - total purses and first prize money" . Archived from the original on October 4, 2011 . Retrieved August 2, 2011 .
-↑ "PGA Media Guide" . Archived from the original on January 23, 2013 . Retrieved July 26, 2007 .
-↑ Shifrin, Joshua (May 14, 2013). From the Links: Golf's Most Memorable Moments . Robson Press. ISBN 978-1-84954-587-7 .
-↑ Shaw, Mark (December 18, 2012). Jack Nicklaus: Golf's Greatest Champion . Simon and Schuster. ISBN 978-1-61321-389-6 .
-↑ Narey, Alex (May 11, 2023). The World's Greatest Golf Courses From Above: 34 Legendary Courses in High-Definition Satellite Photographs . Headline. p. 26. ISBN 978-1-80279-513-4 .
-↑ Thakur, Pradeep (2010). Golf: Career Money Leaders . Lulu.com. p. 107. ISBN 978-0-557-77530-9 .
-↑ Records, Guinness World (November 7, 2017). The Guinness Book of Superlatives: The Original Book of Fascinating Facts . Simon and Schuster. p. 1946. ISBN 978-1-945186-45-5 .
-↑ "USA PGA Championship: All you need to know" . William Hill News . May 10, 2023. Archived from the original on May 22, 2024 . Retrieved May 22, 2024 .
-↑ Michael, Weston (May 13, 2024). "What Is The Lowest Ever Score In The PGA Championship?" . Golf Monthly . Archived from the original on May 22, 2024 . Retrieved May 22, 2024 .
-↑ "A bit of luck for Bryson" . The Athletic . May 20, 2024 . Retrieved May 22, 2024 .
-↑ Morik, Ryan (May 21, 2024). "Xander Schauffele's wife says she was 'blacking out' while celebrating husband's PGA Championship win" . Fox News . Retrieved May 22, 2024 .
-↑ Ourand, John; Lombardo, John (October 10, 2018). "PGA Championship Leaving TNT For ESPN In '20, Re-Ups With CBS" . Sports Business Daily . Retrieved October 10, 2018 .
-↑ "NBC gets U.S. Open golf" . The New York Times . June 2, 1994 . Retrieved July 23, 2012 .
-↑ Stewart, Larry (July 21, 1995). "ABC getting a major chance with British Open coverage" . Los Angeles Times . Retrieved July 23, 2012 .
-↑ Kerschbaumer, Ken (August 6, 2020). "ESPN Tees Up Expansive PGA Championship Coverage" . Sports Video Group . Retrieved August 7, 2020 .
-↑ Stricklin, Art (December 5, 2018). "Texas to host majors, perhaps Ryder Cup with PGA of America's move to Lone Star State" . golf.com . Retrieved December 29, 2018 .
-↑ "Olympic Club to host PGA Championship in 2028, Ryder Cup in 2032" . ESPN . Associated Press. November 9, 2017.
-↑ "PGA to bring Ryder Cup, other top events to Congressional" . ESPN . Associated Press. September 18, 2018.
-↑ "The Ocean Course at Kiawah Island will host 2031 PGA Championship" . PGA of America. April 17, 2024.
-↑ "Southern Hills Country Club Selected to Host 2032 PGA Championship" . PGA of America. May 13, 2025.
-1 2 "PGA Championship is Heading Back to Bethpage Black & Oak Hill: New York State to Host 3 PGA of America Major Championships" . PGA of America. September 17, 2025.
-↑ "PGA Championship Future Venues" . PGA of America.
+↑ Schupak, Adam (February 1, 2021). " 'We do go in with a game plan': USGA's John Bodenhamer talks U.S. Open setup at Torrey Pines" . Golfweek . ...but it will provide us what we want to do at a U.S. Open and make a premium on driving.
+↑ Apstein, Stephanie (September 20, 2020). "Bryson DeChambeau Has Dedicated His Life to Winning His Way: 'And I'm not going to stop' " . Sports Illustrated . And our U.S. Open DNA is about placing a premium on accuracy off the teeing area.
+↑ "USGA boosts prize money to $22.5M at US Open" . Reuters . June 17, 2026.
+↑ Brent Kelley. "First Winner of US Open Golf Tournament" . About.com Sports . Archived from the original on March 5, 2016 . Retrieved June 19, 2013 .
+↑ "US Open Golf History | TicketCity Insider" . blog.ticketcity.com . Archived from the original on January 22, 2021 . Retrieved January 25, 2021 .
+↑ van der Westhuyzen, Jacques (June 18, 2020). "The three South African golfers who have triumphed at the US Open" . Independent Online .
+↑ "Retief Goosen" . Nicholls Spinal Injury Foundation . Retrieved January 31, 2024 .
+↑ "Michael Campbell reacts to 2005 'underwhelming' US Open victory" . Sky Sports . Retrieved January 31, 2024 .
+↑ "Decade later, Ogilvy basks in U.S. Open win" . ESPN.com . June 14, 2016 . Retrieved January 31, 2024 .
+↑ "Angel Cabrera plays first competitive round of golf since being released from jail" . GolfDigest.com . Retrieved January 31, 2024 .
+↑ Staff Writer. "Golf: McDowell becomes first European in 40 years to win U.S. Open" . The Columbus Dispatch . Retrieved January 31, 2024 .
+1 2 "112th U.S. Open Championship application form" (PDF) . USGA. Archived from the original (PDF) on May 25, 2013 . Retrieved June 11, 2012 .
+↑ "U.S. Open – Exemption List" . USGA. Archived from the original on July 14, 2016 . Retrieved February 24, 2015 .
+1 2 "U.S. Junior, Mid-Amateur Champs to Receive U.S. Open, Women's Open Exemptions" (Press release). USGA. October 5, 2017 . Retrieved October 13, 2017 .
+↑ "Currently Exempt Players for 126th U.S. Open" . February 18, 2026.
+↑ "USGA - Changes Made To Exemptions For 2012 USGA Championships" . USGA. February 23, 2012 . Retrieved June 12, 2013 .
+↑ "USGA Adds Korn Ferry Tour Exemption for U.S. Open" . USGA. January 10, 2022 . Retrieved January 10, 2022 .
+↑ "New Exemption Changes for U.S. Women's and U.S. Amateur" (Press release). USGA. August 5, 2019 . Retrieved November 20, 2019 .
+1 2 "U.S. Open to expand world-ranking use" . ESPN . Associated Press. February 5, 2011 . Retrieved February 5, 2011 .
+↑ "USGA Announces Changes To Exemption Categories" (Press release). USGA. February 5, 2011 . Retrieved January 12, 2012 .
+↑ "2012 U.S. Open Championship Media Guide" (PDF) . United States Golf Association . p. 31. Archived from the original (PDF) on May 22, 2013 . Retrieved June 19, 2015 .
+↑ "U.S. Open: Special Exemptions" . USGA. December 12, 2016.
+↑ Gray, Will (May 17, 2016). "Two-time champ Goosen gets U.S. Open exemption" . Golf Channel . Archived from the original on May 19, 2016 . Retrieved June 19, 2016 .
+↑ Herrington, Ryan (March 14, 2018). "USGA gives Ernie Els, Jim Furyk special exemptions into 2018 U.S. Open at Shinnecock Hills" . Golf Digest .
+↑ Schlabach, Mark (May 24, 2024). "Tiger Woods accepts special exemption to play in U.S. Open" . ESPN . Retrieved March 26, 2025 .
+↑ "U.S. Open abandons 18 holes for 2-hole playoff" . ESPN . Associated Press. February 26, 2018.
+1 2 "Rory McIlroy runs away with Open title" . ESPN . June 20, 2011 . Retrieved June 20, 2011 .
+↑ Murray, Scott (June 19, 2011). "US Open 2011 – day four as it happened" . The Guardian . Retrieved June 12, 2013 .
+↑ "U.S. Open History – Records" . USGA . Retrieved June 13, 2024 .
+↑ Lavner, Ryan (June 29, 2020). "NBC reacquires broadcast rights to USGA's full slate of championships" . Golf Channel .
+↑ Baysinger, Tim (August 7, 2013). "Fox Sports Reaches Rights Deal for Golf's U.S. Open" . Broadcasting & Cable . Retrieved August 7, 2013 .
+↑ "Fox reportedly asks out of USGA deal; U.S. Open will return to NBC" . Awful Announcing . June 29, 2020.
+↑ "NBC Sports to move some USGA, R&A golf programming to USA Network" . Golfweek . November 2, 2021 . Retrieved March 17, 2022 .
+↑ Lerner, Drew (June 2, 2025). "As networks cut back on-site presence, Golf Channel flips script on 'Golf's Longest Day' " . Awful Announcing . Retrieved June 2, 2025 .
+↑ "USGA strikes media rights deal with NBC and new company Versant through 2032" . GolfDigest.com . Retrieved August 13, 2025 .
+↑ "5 things to know from the USGA's new 6-year TV deal with NBC" . Golf . August 12, 2025 . Retrieved August 13, 2025 .
+↑ Carpenter, Josh (August 13, 2025). "USGA renews media deal with NBCU through 2032" . Sports Business Journal . Retrieved August 13, 2025 .
+↑ Rosaforte, Tim (June 27, 1994). "See Ya Later" . Sports Illustrated . p. 49 . Retrieved June 12, 2013 . {{ cite magazine }} : CS1 maint: deprecated archival service ( link )
+↑ Knox, David (April 9, 2015). "Fox Sports tees off with more Golf" . TV Tonight . Retrieved April 9, 2015 .
+↑ "United States Open: Future Sites" . Archived from the original on June 17, 2022 . Retrieved June 14, 2022 .
 External links
 [ edit ]
+Wikimedia Commons has media related to U.S. Open (golf) .
 Official website
-PGA Media Guide
-Coverage on PGA Tour's official site
-Coverage on the European Tour's official site
+United States Golf Association Archived 2021-08-08 at the Wayback Machine (USGA) – official website
+USGA photo store
 v
 t
 e
@@ -989,7 +1163,28 @@ Category
 v
 t
 e
-PGA Championships
+U.S. Open Championships
+1895
+1896
+1897
+1898
+1899
+1900
+1901
+1902
+1903
+1904
+1905
+1906
+1907
+1908
+1909
+1910
+1911
+1912
+1913
+1914
+1915
 1916
 1917
 1918
@@ -1101,6 +1296,193 @@ PGA Championships
 2024
 2025
 2026
+v
+t
+e
+U.S. Open Championship venues
+Atlanta Athletic Club
+1976
+Baltimore Country Club
+1899
+Baltusrol Golf Club
+1903
+1915
+1936
+1954
+1967
+1980
+1993
+Bellerive Country Club
+1965
+Bethpage Black Course
+2002
+2009
+Brae Burn Country Club
+1919
+Canterbury Golf Club
+1940
+1946
+Chambers Bay
+2015
+Champions Golf Club
+1969
+Cherry Hills Country Club
+1938
+1960
+1978
+Chicago Golf Club
+1897
+1900
+1911
+Colonial Country Club
+1941
+Columbia Country Club
+1921
+Congressional Country Club
+1964
+1997
+2011
+Country Club of Buffalo
+1912
+Englewood Golf Club
+1909
+Erin Hills
+2017
+Fresh Meadow Country Club
+1932
+Garden City Golf Club
+1902
+Glen View Club
+1904
+Hazeltine National Golf Club
+1970
+1991
+Interlachen Country Club
+1930
+Inverness Club
+1920
+1931
+1957
+1979
+Inwood Country Club
+1923
+Los Angeles Country Club
+2023
+Medinah Country Club
+1949
+1975
+1990
+Merion Golf Club
+1934
+1950
+1971
+1981
+2013
+2030
+Midlothian Country Club
+1914
+Myopia Hunt Club
+1898
+1901
+1905
+1908
+Newport Country Club
+1895
+North Shore Country Club
+1933
+Northwood Club
+1952
+Oak Hill Country Club
+1956
+1968
+1989
+Oakland Hills Country Club
+1924
+1937
+1951
+1961
+1985
+1996
+Oakmont Country Club
+1927
+1935
+1953
+1962
+1973
+1983
+1994
+2007
+2016
+2025
+Olympia Fields Country Club
+1928
+2003
+Olympic Club
+1955
+1966
+1987
+1998
+2012
+Onwentsia Club
+1906
+Pebble Beach Golf Links
+1972
+1982
+1992
+2000
+2010
+2019
+2027
+Philadelphia Country Club
+1939
+Philadelphia Cricket Club
+1907
+1910
+Pinehurst Resort
+1999
+2005
+2014
+2024
+2029
+Riviera Country Club
+1948
+Scioto Country Club
+1926
+Shinnecock Hills Golf Club
+1896
+1986
+1995
+2004
+2018
+2026
+Skokie Country Club
+1922
+Southern Hills Country Club
+1958
+1977
+2001
+St. Louis Country Club
+1947
+The Country Club
+1913
+1963
+1988
+2022
+The Minikahda Club
+1916
+Torrey Pines Golf Course
+2008
+2021
+Winged Foot Golf Club
+1929
+1959
+1974
+1984
+2006
+2020
+2028
+Worcester Country Club
+1925
 v
 t
 e
@@ -1237,25 +1619,29 @@ European Tour Qualifying School
 Olympic Games
 Former events
 (A) – co-sanctioned by the PGA Tour of Australasia ; (C) – co-sanctioned by the China Tour ; (I) – co-sanctioned by the Professional Golf Tour of India ; (J) – co-sanctioned by the Japan Golf Tour ; (K) – co-sanctioned by the Korean Tour ; (P) - co-sanctioned by the PGA Tour ; (S) - co-sanctioned by the Sunshine Tour .
-Retrieved from " https://en.wikipedia.org/w/index.php?title=PGA_Championship&oldid=1366969970 "
-Categories : PGA Championship
+Authority control databases
+International VIAF
+FAST
+National United States
+Israel
+Retrieved from " https://en.wikipedia.org/w/index.php?title=U.S._Open_(golf)&oldid=1377447875 "
+Categories : U.S. Open (golf)
 Men's major golf championships
+Recurring sporting events established in 1895
 Annual sporting events in the United States
-1916 establishments in New York (state)
-Recurring sporting events established in 1916
+1895 establishments in Rhode Island
 Hidden categories: Articles with short description
 Short description matches Wikidata
 Use American English from January 2026
 All Wikipedia articles written in American English
-Use mdy dates from September 2018
+Use mdy dates from January 2026
 Short description is different from Wikidata
-All articles with dead external links
-Articles with dead external links from July 2025
-Articles with permanently dead external links
-Articles containing potentially dated statements from 2023
-All articles containing potentially dated statements
-Official website different in Wikidata and Wikipedia
-This page was last edited on 31 July 2026, at 03:36 (UTC) .
+Articles needing additional references from October 2021
+All articles needing additional references
+CS1 maint: deprecated archival service
+Commons category link from Wikidata
+Webarchive template wayback links
+This page was last edited on 29 September 2026, at 12:34 (UTC) .
 Page was rendered with Parsoid .
 Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
 additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
@@ -1272,9 +1658,9 @@ Mobile view
 Search
 Search
 Toggle the table of contents
-PGA Championship
+U.S. Open (golf)
 23 languages
 Add topic
 
 --- embedded JSON ---
-{"@context":"https:\/\/schema.org","@type":"Article","name":"PGA Championship","url":"https:\/\/en.wikipedia.org\/wiki\/PGA_Championship","sameAs":"http:\/\/www.wikidata.org\/entity\/Q828160","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q828160","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2003-05-10T16:21:04Z","dateModified":"2026-07-31T03:36:18Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/5\/5d\/PGA_Championship.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"golf tournament in the United States"}
+{"@context":"https:\/\/schema.org","@type":"Article","name":"U.S. Open (golf)","url":"https:\/\/en.wikipedia.org\/wiki\/U.S._Open_(golf)","sameAs":"http:\/\/www.wikidata.org\/entity\/Q259776","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q259776","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2003-05-08T23:47:17Z","dateModified":"2026-09-29T12:34:04Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/7\/76\/US_Open_%28Golf%29_Logo.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"golf tournament held in the United States"}

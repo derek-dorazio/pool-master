@@ -1,7 +1,7 @@
 Source: https://en.wikipedia.org/wiki/2027_PGA_Tour
 Final URL: https://en.wikipedia.org/wiki/2027_PGA_Tour
 HTTP 200
-Fetched: 2026-10-19T07:20:58.792Z
+Fetched: 2026-10-19T07:23:37.409Z
 
 2027 PGA Tour - Wikipedia
 Jump to content

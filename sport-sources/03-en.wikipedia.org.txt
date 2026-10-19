@@ -1,9 +1,9 @@
-Source: https://en.wikipedia.org/wiki/2027_Masters_Tournament
-Final URL: https://en.wikipedia.org/wiki/2027_Masters_Tournament
+Source: https://en.wikipedia.org/wiki/PGA_Championship
+Final URL: https://en.wikipedia.org/wiki/PGA_Championship
 HTTP 200
-Fetched: 2026-10-19T07:20:58.858Z
+Fetched: 2026-10-19T07:23:37.501Z
 
-Masters Tournament - Wikipedia
+PGA Championship - Wikipedia
 Jump to content
 Main menu
 Main menu
@@ -41,143 +41,65 @@ hide
 History
 Toggle History subsection
 1.1
-Augusta National Golf Club
-1.2
-Early tournament years
-1.3
-1960s–1970s
-1.4
-1980s–2000s
-2
-Traditions, logistics, and rules
-Toggle Traditions, logistics, and rules subsection
-2.1
-Pre-tournament events
-2.1.1
-Augusta National Women's Amateur
-2.1.2
-Drive, Chip and Putt
-2.1.3
-Practice rounds
-2.1.4
-Amateur Dinner
-2.1.5
-Champions' Dinner
-2.1.6
-Par 3 Contest
-2.2
-Tournament
-2.2.1
-Opening tee shot
-2.2.2
-Caddies
-2.2.3
-Awards
-2.2.3.1
-Green jacket
-2.2.3.2
-Trophies
-2.2.4
-Player invitations
-2.3
-Experience and hospitality
-2.3.1
-Berckmans Place
-2.3.2
-Concessions
-2.3.3
-Map & Flag
-2.3.4
-Merchandise
-2.3.5
-Ticketing
-2.3.6
-Venue regulations and prohibited items
-2.4
-Post-tournament events
-3
 Format
-Toggle Format subsection
-3.1
-Planning
+1.2
+Location
+1.3
+Promotion
+2
+Trophy
+3
+Qualification
 4
-Course
-Toggle Course subsection
-4.1
-Course adjustments
-5
-Field
-Toggle Field subsection
-5.1
-Invitation categories (from 2026)
-5.2
-Changes since 2014
-6
-Most wins
-7
 Winners
-8
-Low amateurs
-9
+Toggle Winners subsection
+4.1
+Stroke play era winners
+4.2
+Match play era winners
+5
+Match play era details
+6
+Summary by course, state and region
+7
 Records
-10
+8
 Broadcasting
-Toggle Broadcasting subsection
-10.1
-United States television
-10.1.1
-Sponsorship
-10.2
-Radio coverage
-10.3
-International television
-10.4
-Other
+9
+Future sites
+10
+See also
 11
 Notes
 12
-Further reading
-13
 References
-14
+13
 External links
 Toggle the table of contents
-Masters Tournament
-35 languages
-Afrikaans
-العربية
-Asturianu
-বাংলা
+PGA Championship
+23 languages
 Čeština
-Cymraeg
 Dansk
 Deutsch
 Ελληνικά
 Español
-Eesti
 Euskara
 Suomi
 Français
-עברית
+Galego
 Magyar
 Bahasa Indonesia
 Italiano
 日本語
 한국어
-Lietuvių
 Nederlands
 Norsk bokmål
-Polski
 Português
 Русский
 Simple English
-Slovenčina
 Svenska
-ไทย
 Türkçe
 Українська
-Tiếng Việt
-吴语
 中文
 Edit links
 Article
@@ -212,860 +134,615 @@ Wikidata item
 Appearance
 move to sidebar
 hide
-Coordinates : 33°30′09″N 82°01′12″W ﻿ / ﻿ 33.5025°N 82.0200°W ﻿ / 33.5025; -82.0200
 From Wikipedia, the free encyclopedia
-(Redirected from 2027 Masters Tournament )
-Golf tournament held in Augusta, Georgia, United States
-"The Masters" redirects here. For other sports tournaments that may be referred to as "The Masters", see Master . For the C. P. Snow novel, see The Masters (novel) .
-{{cite web |url=http://www.sportsnetwork.com/merge/tsnform.aspx?c=sportsnetwork&page=golf-m/specialevents/masters/2014/file.aspx?f=preview |publisher=Sports Network |title=2014 Masters Preview |date=April 9, 2014 |access-date=April 14, 2014 |url-status=dead |archive-url=https://web.archive.org/web/20140415032109/http://www.sportsnetwork.com/merge/tsnform.aspx?c=sportsnetwork&page=golf-m%2Fspecialevents%2Fmasters%2F2014%2Ffile.aspx%3Ff%3Dpreview |archive-date=April 15, 2014}}</ref>"},"org":{"wt":"Augusta National Golf Club"},"tour":{"wt":"[[PGA Tour]]<br />[[European Tour]]<br />[[Japan Golf Tour]]"},"format":{"wt":"[[Stroke play]]"},"purse":{"wt":"{{currency|22,500,000|USD}}"},"month_played":{"wt":"April{{efn|An exception is the [[2020 Masters Tournament]], which was played in November after the suspension of the [[2019–20 PGA Tour]] due to the [[COVID-19 pandemic in the United States|COVID-19 pandemic]].}}"},"website":{"wt":"{{URL|https://www.masters.com/|masters.com}}"},"aggregate":{"wt":"268 [[Dustin Johnson]] ([[2020 Masters Tournament|2020]])"},"to_par":{"wt":"−20 ''as above''"},"current_champion":{"wt":"{{flagicon|NIR}} [[Rory McIlroy]] ([[2026 Masters Tournament|2026]])"},"current_tournament":{"wt":"2026 Masters Tournament"},"pushpin_map":{"wt":"USA#USA Georgia"},"pushpin_relief":{"wt":"yes"},"pushpin_label":{"wt":"Augusta National GC"},"pushpin_caption":{"wt":"Location in United States##Location in [[Georgia (U.S. state)|Georgia]]"},"coordinates":{"wt":"{{Coord|format=dms|display=inline}}"}},"i":0}}]}'>Golf tournament
-Masters Tournament
+Golf tournament in the United States
+This article is about the major golf championship held in the United States. For the European Tour Championship held at Wentworth Club, United Kingdom, see BMW PGA Championship . For the PGA Tour's championship event, see Tour Championship .
+[[European Tour]]<br>[[Japan Golf Tour]]"},"format":{"wt":"[[Stroke play]] ([[1958 PGA Championship|1958]]–present)<br>[[Match play]] ([[1916 PGA Championship|1916]]–[[1957 PGA Championship|1957]])"},"month_played":{"wt":"May (formerly August)"},"website":{"wt":"{{URL|https://www.pgachampionship.com/|pgachampionship.com}}"},"purse":{"wt":"{{currency|20,500,000|USD}}"},"aggregate":{"wt":"263{{efn|name=record|Scoring record for all major championships.}} [[Xander Schauffele]] ([[2024 PGA Championship|2024]])"},"to_par":{"wt":"−21{{efn|name=record}} [[Xander Schauffele]] ([[2024 PGA Championship|2024]])"},"current_champion":{"wt":"{{flagicon|ENG}} [[Aaron Rai]]"},"current_tournament":{"wt":"2026 PGA Championship"}},"i":0}}]}'>Golf tournament
+PGA Championship
 Tournament information
-Location Augusta, Georgia , U.S.
-Established 1934 ; 92 years ago ( 1934 )
-Course Augusta National Golf Club
-Par 72
-Length 7,555 yards (6,908 m) [ 1 ]
-Organized by Augusta National Golf Club
+Location multiple
+Established 1916
+Course multiple
+Organized by PGA of America
 Tours PGA Tour
 European Tour
 Japan Golf Tour
-Format Stroke play
-Prize fund US$ 22,500,000
-Month played April [ a ]
-Website masters.com
+Format Stroke play ( 1958 –present)
+Match play ( 1916 – 1957 )
+Prize fund US$ 20,500,000
+Month played May (formerly August)
+Website pgachampionship.com
 Tournament record score
-Aggregate 268 Dustin Johnson ( 2020 )
-To par −20 as above
+Aggregate 263 [ a ] Xander Schauffele ( 2024 )
+To par −21 [ a ] Xander Schauffele ( 2024 )
 Current champion
-Rory McIlroy ( 2026 )
+Aaron Rai
 Current tournament
-2026 Masters Tournament
-Location map
-Augusta National GC
-Location in United States
-Show map of the United States
-Augusta National GC
-Location in Georgia
-Show map of Georgia
-The Masters Tournament (usually referred to as simply the Masters , or as the U.S. Masters outside North America) [ 2 ] [ 3 ] is one of the four men's major championships in professional golf . Scheduled for the first full week in April, the Masters is the first major golf tournament of the year. Unlike the other major tournaments which change host venues with each tournament, the Masters is always held at the same host venue: Augusta National Golf Club , a private course in the city of Augusta, Georgia .
-Amateur golf champion Bobby Jones and investment banker Clifford Roberts founded the tournament. [ 4 ] After his grand slam in 1930, Jones acquired a former plant nursery and co-designed Augusta National with course architect Alister MacKenzie . [ 1 ] First played in 1934 as the " Augusta National Invitation Tournament ", {{cite news |url=https://news.google.com/newspapers?id=ArkoAAAAIBAJ&sjid=PWkDAAAAIBAJ&pg=4444%2C2969782 |newspaper=Pittsburgh-Post Gazette |agency=Associated Press |title=Jones vies with stars in comeback |date=March 22, 1934 |page=19}}</ref>"}},"i":0}}]}'> [ b ] the Masters is an official money event [ 6 ] on the PGA Tour , the European Tour , and the Japan Golf Tour . The field of players is smaller than those of the other major championships because it is an invitational event, held by the Augusta National Golf Club.
-The tournament has a number of traditions. Since the 1949 Masters , a green jacket (specifically Pantone 342C, "Augusta Green") [ 7 ] has been awarded to the champion, who must return it to the clubhouse one year after his victory, although it remains his personal property and is stored with other champions' jackets in a specially designated cloakroom. In most instances, only a first-time and reigning champion may remove his jacket from the club grounds. A golfer who wins the event multiple times uses the same green jacket awarded upon his initial win unless he needs to be re-fitted with a new jacket. [ 8 ] The Champions Dinner, inaugurated by Ben Hogan at the 1952 Masters , is held on the Tuesday before each Masters and is open only to past champions and certain board members of the Augusta National Golf Club. Beginning in 1963, distinguished golfers, usually past champions, have hit an honorary tee shot on the morning of the first round to commence play. These have included Fred McLeod , Jock Hutchinson , Gene Sarazen , Sam Snead , Byron Nelson , Arnold Palmer , Jack Nicklaus , Gary Player , Lee Elder , and Tom Watson . Since 1960, a semi-social contest on the Par 3 course has been played on Wednesday, the day before the first round.
-Nicklaus has the most Masters wins, with six between 1963 and 1986. Tiger Woods won five between 1997 and 2019. Palmer won four between 1958 and 1964. Five have won three titles at Augusta: Jimmy Demaret , Sam Snead , Gary Player , Nick Faldo , and Phil Mickelson . Gary Player, from South Africa , was the first non-American player to win the tournament, in 1961 ; the second was Seve Ballesteros of Spain , the champion in 1980 and 1983 .
-The Augusta National course first opened in 1933 and has been modified many times by different architects. Among the changes: greens have been reshaped and, on occasion, entirely re-designed, bunkers have been added, water hazards have been extended, new tee boxes have been built, hundreds of trees have been planted, and several mounds have been installed. [ 9 ]
+2026 PGA Championship
+The PGA Championship (often referred to as the US PGA Championship or USPGA outside the United States [ 1 ] [ 2 ] [ 3 ] ) is an annual golf tournament conducted by the Professional Golfers' Association of America . The PGA is one of the four men's major golf championships (the others being The Open , the Masters , and the U.S. Open ) and is the only one of the four that is exclusively for professional players.
+It was formerly played in mid-August on the third weekend before Labor Day weekend, serving as the fourth and final men's major of the golf season. Beginning in 2019, the tournament is played in May on the weekend before Memorial Day , as the season's second major following the Masters in April. It is an official money event on the PGA Tour , European Tour , and Japan Golf Tour , with a purse of $11 million for the 100th edition in 2018 .
+In line with the other majors, winning the PGA gains privileges that improve career security. PGA champions are automatically invited to play in the other three majors and The Players Championship for the next five years, and are eligible for the PGA Championship for life. They also earn a five-year exemption on the PGA Tour and a seven-year membership on the DP World Tour .
+The PGA Championship has been held at various venues. Some of the early sites are now quite obscure, but in recent years, the event has generally been played at a small group of celebrated courses.
 History
 [ edit ]
-Masters logo at the club entrance known as Founder's Circle
-Augusta National Golf Club
-[ edit ]
-Main article: Augusta National Golf Club
-The idea for Augusta National originated with Bobby Jones , who wanted to build a golf course after his retirement from the game. He sought advice from Clifford Roberts, who later became the chairman of the club. They came across a piece of land in Augusta, Georgia , of which Jones said: "Perfect! And to think this ground has been lying here all these years waiting for someone to come along and lay a golf course upon it." [ 10 ]
-The land had been an indigo plantation in the early nineteenth century and a plant nursery since 1857. [ 11 ] Jones hired Alister MacKenzie to help design the course, and work began in 1931. The course formally opened in 1933, but MacKenzie died before the first Masters Tournament was played. [ 12 ]
-Early tournament years
-[ edit ]
-After Clifford Roberts invited then-USGA tournament committee chairman Prescott Bush to ANGC in early 1933, Jones and Roberts strenuously petitioned the USGA to hold the U.S. Open at Augusta in 1934, but the USGA denied the petition, noting that the hot Georgia summers would create difficult playing conditions. [ 13 ] Indeed, the professional golf schedule would have needed to change, and to date no golf major had been held in the south. The club was deeply disappointed and had been seeking publicity as it was struggling financially and in debt, but Roberts took the rejection as an opportunity to found his own annual tournament. [ 9 ]
-Roberts told the PGA of his plan for a new tournament in late 1933. The official PGA schedule, in a small endnote, mentioned Augusta's tournament alongside three others: the 1934 Tournament of the Gardens Open , the 1934 North and South Open , and a tournament in Columbus, Georgia . [ 9 ] The fact that the new tournament would bring Jones out of retirement made the idea attractive to both Augusta and the PGA, which itself was facing hard times financially; Grantland Rice announced the news in a syndicated column.
-Due to Augusta National's financial hardships, the tournament was set to feature a small contingent of players. Initially the Augusta National Invitation field was composed largely of Bobby Jones' close associates. Due to the early calendar date of the Masters, it was not uncommon for professional golfers to be unable to attend because of jobs and prior commitments.
-The first "Augusta National Invitation Tournament", as the Masters was originally known, began on March 22, 1934, and was won by Horton Smith , who took the first prize of $1,500. (The club could not afford to pay the winnings, so 17 Augusta National members personally chipped in instead. [ 9 ] ) Roberts had borrowed chairs for spectators to use from two local funeral homes, and the printed program included advertisements given for free to the club's creditors. Tournament passes cost $2.00. [ 14 ] The tournament was played with current holes 10 through 18 played as the first nine, and 1 through 9 as the second nine, [ 15 ] then reversed permanently to its present layout for the 1935 tournament. [ 4 ] After the first tournament, around 20 new members joined ANGC, giving the club a much-needed financial lifeline.
-The present name, Masters Tournament , was officially adopted in 1939, but had been in use since the first tournament (newspapers sometimes called it the "Masters Open").
-Gene Sarazen hit the "shot heard 'round the world" in 1935, holing a shot from the fairway on the par 5 15th for a double eagle (albatross). [ 16 ] This tied Sarazen with Craig Wood , and in the ensuing 36-hole playoff, Sarazen was the victor by five strokes. [ 17 ] Roberts would later contend that Sarazen's shot had "put the Masters in business", but attendance fell in 1935 and 1936. Throughout the rest of the 1930s, the numbers of players who accepted tournament invitations fell despite an increase in sent invitations, falling to a nadir of 42 golfers at the 1938 Masters. The club was in an inconvenient location and the effects of the Depression were still lingering.
-The gallery for Sunday's final two rounds at the 1939 Masters was estimated at 10,000 spectators. [ 18 ]
-In 1940, Roberts stated that the Masters was one of the top tournaments in the United States, if not the biggest. He stated, "I am told that the Masters has outdistanced in attendance both the U.S. Amateur and the PGA ." [ 19 ] The tournament was not played from 1943 to 1945, due to World War II . To assist the war effort, cattle and turkeys were raised on the Augusta National grounds. [ 4 ]
-After the war, ticket sales were still a struggle: club member Jerry Franklin would plead with Augusta Chronicle owner William Morris Jr. to buy a group of tickets. [ 20 ]
-Byron Nelson won the first of two Masters titles in 1937. Jimmy Demaret won three times as did Sam Snead in the 1940s and 1950s. Ben Hogan won the 1951 and 1953 Masters and was runner-up on four occasions.
-The club raised ticket prices to $10 for the 1951 tournament ; spectators were not pleased. [ 21 ]
-1960s–1970s
-[ edit ]
-Through the 50s and into the 60s, the Masters was still not widely attended. Locals were able to buy tickets at the gate on the day of each round. The city held a "Masters hospitality week", featuring a parade, from 1957 through 1967. [ 20 ]
-In 1967, series badge prices rose to $15; by 1975, they were $30. [ 20 ]
-The "Big Three" of Arnold Palmer, Gary Player, and Jack Nicklaus dominated the Masters from 1960 through 1978, winning the event 11 times between them during that span. After winning by one stroke in 1958, [ 17 ] Palmer won by one stroke again in 1960 in memorable circumstances. Trailing Ken Venturi by one shot in the 1960 event, Palmer made birdies on the last two holes to prevail. Palmer would go on to win another two Masters in 1962 and 1964. [ 17 ] Palmer's caddie at Augusta each time was Nathaniel "Iron Man" Avery .
-Jack Nicklaus at the 2006 par 3 contest
-Nicklaus emerged in the early 1960s and served as a rival to the popular Palmer. Nicklaus won his first green jacket in 1963, defeating Tony Lema by one stroke. [ 22 ] Two years later, he shot a then-course record of 271 (17 under par) for his second Masters win, leading Bobby Jones to say that Nicklaus played "a game with which I am not familiar." [ 23 ] The next year, Nicklaus won his third green jacket in a grueling 18-hole playoff against Tommy Jacobs and Gay Brewer . [ 24 ] This made Nicklaus the first player to win consecutive Masters. He won again in 1972 by three strokes. [ 17 ] In 1975, Nicklaus won by one stroke in a close contest with Tom Weiskopf and Johnny Miller in one of the most exciting Masters to date. [ 25 ]
-Player became the first non-American to win the Masters in 1961 , beating Palmer, the defending champion, by one stroke when Palmer double-bogeyed the final hole. [ 17 ] In 1974, he won again by two strokes. [ 17 ] After not winning a tournament on the U.S. PGA tour for nearly four years, and at the age of 42, Player won his third and final Masters in 1978 by one stroke over three players. [ 17 ] Player is second in consecutive cuts made with 23 straight (tied with Fred Couples ), and has played in a record 52 Masters. [ 26 ] [ 27 ]
-A controversial ending to the Masters occurred in 1968. Argentine champion Roberto De Vicenzo signed his scorecard (attested by playing partner Tommy Aaron ) incorrectly recording him as making a par 4 instead of a birdie 3 on the 17th hole of the final round. According to the rules of golf, if a player signs a scorecard (thereby attesting to its veracity) that records a score on a hole higher than what he actually made on the hole, the player receives the higher score for that hole. This extra stroke cost De Vicenzo a chance to be in an 18-hole Monday playoff with Bob Goalby , who won the green jacket. De Vicenzo's mistake led to the famous quote, "What a stupid I am." [ 17 ] [ 28 ]
-In 1975 , Lee Elder became the first African American to play in the Masters, [ 29 ] doing so 15 years before Augusta National admitted its first black member, Ron Townsend, as a result of the Shoal Creek Controversy . [ 30 ]
-1980s–2000s
-[ edit ]
-A leaderboard at the Masters
-Non-Americans collected 11 victories in 20 years in the 1980s and 1990s, by far the strongest run they have had in any of the three majors played in the United States since the early days of the U.S. Open. The first European to win the Masters was Seve Ballesteros in 1980; badges at that point were $48. [ 20 ] Nicklaus became the oldest player to win the Masters in 1986 when he won for the sixth time at age 46. [ 17 ] [ 31 ]
-During this period, no golfer suffered more disappointment at the Masters than Greg Norman . In his first appearance at Augusta in 1981, he led during the second nine but ended up finishing fourth. In 1986, after birdieing holes 14 through 17 to tie Nicklaus for the lead, he badly pushed his 4-iron approach on 18 into the patrons surrounding the green and missed his par putt for a closing bogey. In 1987, Norman lost a sudden-death playoff when Larry Mize holed out a remarkable 45-yard pitch shot to birdie the second playoff hole. Mize thus became the first Augusta native to win the Masters. [ 32 ] In 1996, Norman tied the course record with an opening-round 63 and had a six-stroke lead over Nick Faldo entering the final round. However, he stumbled to a closing 78 while Faldo, his playing partner that day, carded a 67 to win by five shots for his third Masters championship. [ 33 ] Norman also led the 1999 Masters on the second nine of the final round, only to falter again and finish third behind winner José María Olazábal , who won his second green jacket. Norman finished in the top five at the Masters eight times, but never won.
-In 1993, the price of a four-day badge was raised to $100. [ 34 ]
-Two-time champion Ben Crenshaw captured an emotional Masters win in 1995, just days after the death of his lifelong teacher and mentor Harvey Penick . After making his final putt to win, he broke down sobbing at the hole and was consoled and embraced by his caddie Carl Jackson. In the post-tournament interview, Crenshaw said: "I had a 15th club in my bag," a reference to Penick. (The "15th club" reference is based on the golf rule that limits a player to carrying 14 clubs during a round.) Crenshaw first won at Augusta in 1984.
-In 1997, 21-year-old Tiger Woods became the youngest champion in Masters history, winning by 12 shots with an 18-under par 270 which broke the 72-hole record that had stood for 32 years. [ 4 ] In 2001, Woods completed his "Tiger Slam" by winning his fourth straight major championship at the Masters by two shots over David Duval . [ 17 ] He won again the following year, making him only the third player in history (after Nicklaus and Faldo) to win the tournament in consecutive years, [ 17 ] as well as in 2005 when he defeated Chris DiMarco in a playoff for his first major championship win in almost three years. [ 17 ]
-The cost of a four-day badge rose to $125 for the 2001 tournament . [ 34 ]
-In 2003, the Augusta National Golf Club was targeted by Martha Burk , who organized a failed protest at that year's Masters to pressure the club into accepting female members. Burk planned to protest at the front gates of Augusta National during the third day of the tournament, but her application for a permit to do so was denied. [ 35 ] A court appeal was dismissed. [ 36 ] In 2004, Burk stated that she had no further plans to protest against the club. [ 37 ] The club admitted its first two women members, Condoleezza Rice and Darla Moore , in 2012.
-Augusta National chairman Billy Payne himself made headlines in April 2010 when he commented at the annual pre-Masters press conference on Tiger Woods' off-the-course behavior . "It's not simply the degree of his conduct that is so egregious here," Payne said, in his opening speech. "It is the fact he disappointed all of us and more importantly our kids and grandkids." [ 38 ] [ 39 ] [ 40 ]
-In 2003, Mike Weir became the first Canadian to win a men's major championship and the first left-hander to win the Masters when he defeated Len Mattiace in a playoff. [ 17 ] The following year another left-hander, Phil Mickelson , won his first major championship by making a birdie on the final hole to beat Ernie Els by a stroke. [ 17 ] Mickelson also won the tournament in 2006 and 2010. In 2011, unheralded South African Charl Schwartzel birdied the final four holes to win by two strokes. In 2012, Bubba Watson won the tournament on the second playoff hole over Louis Oosthuizen . In 2013 Adam Scott won the Masters in a playoff over 2009 champion Ángel Cabrera , making him the first Australian to win the tournament. [ 41 ] Watson won the 2014 Masters by three strokes over Jordan Spieth and Jonas Blixt , his second Masters title in three years and the sixth for a left-hander in 12 years. In 2015, Spieth would become the second-youngest winner (behind Woods) in just his second Masters, equaling Woods' 72-hole scoring record. [ 42 ] In 2017, Sergio García beat Justin Rose in a playoff for his long-awaited first major title. In 2019, Tiger Woods captured his fifth Masters, his first win at Augusta National in 14 years and his first major title since 2008.
-In 2009, the price for a four-day badge rose to $200; it hit $250 in 2012, and $325 in 2015. [ 34 ]
-The 2020 Masters Tournament , originally scheduled to be played April 9–12, was postponed until November due to the coronavirus outbreak . [ 43 ] Dustin Johnson won the tournament by five strokes.
-In 2025, a monument in Augusta, Georgia was erected by artist Baruti Tucker to honor the black caddies at Augusta National Golf Club for the Masters Tournament. [ 44 ] Rory McIlroy won the 2025 Masters and completed the sixth grand slam in a playoff over Justin Rose . [ 45 ] The next year , McIlroy won again, becoming the fourth player to go back-to-back at the Masters.
-The price for a four-day badge to the Masters rose to $450 in 2023, and reached $525 for 2026. [ 34 ]
-Traditions, logistics, and rules
-[ edit ]
-Augusta National annual golf schedule
-Friday
-Saturday
-Sunday
-Monday
-Tuesday
-Wednesday
-Thursday
-Friday
-Saturday
-Sunday
-Augusta National Women's Amateur
-(final round)
-Drive, Chip and Putt
-Masters practice rounds
-Masters Tournament
-Amateur Dinner
-Champions' Dinner
-Par 3 Contest
-Pre-tournament events
-[ edit ]
-Augusta National Women's Amateur
-[ edit ]
-Main article: Augusta National Women's Amateur
-The Augusta National Women's Amateur (ANWA) is held the week before the Masters. The ANWA was established in 2019 by Augusta National chairman Fred Ridley . The winner of the Augusta National Women's Amateur is exempt from two women's golf majors. [ 46 ] [ 47 ]
-Drive, Chip and Putt
-[ edit ]
-In 2013, Augusta National partnered with the USGA and the PGA of America to establish "Drive, Chip and Putt" (DCP), a youth golf skills competition which was first held in 2014. The event was established as part of an effort to help promote the sport of golf among youth; the winners of local qualifiers in different age groups advance to the national finals, which have been held at Augusta National on the Sunday immediately preceding the Masters. The driving and chipping portions of the event are held on the course's practice range, and the putting portion has been played on the 18th hole. [ 48 ] [ 49 ] [ 50 ]
-Practice rounds
-[ edit ]
-Hole 16, Redbud, where spectators encourage players to skip the ball across the pond
-Practice rounds are held on the Monday, Tuesday, and Wednesday before the tournament begins on Thursday. [ 51 ] During the practice rounds, Redbud (hole 16) is well-known for spectators shouting "Skip it!" at players, encouraging the golfers to attempt to skip the ball across the pond. [ 52 ] [ 53 ]
-The three days of practice are the only times during which attendees are allowed to bring cameras onto the course. [ 54 ]
-Amateur Dinner
-[ edit ]
-First established in 1948, the Amateur Dinner is held on the Monday before the tournament, on the same day practice rounds begin. [ 55 ] The amateurs competing in the Masters are invited. [ 56 ]
-Champions' Dinner
-[ edit ]
-The Champions' Dinner is held each year on the Tuesday evening preceding Thursday's first round. The dinner was first held in 1952, hosted by defending champion Ben Hogan, to honor the past champions of the tournament. [ 57 ] At that time 15 tournaments had been played, and the number of past champions was 11. Officially known as the "Masters Club", it includes only past winners of the Masters, although selected members of the Augusta National Golf Club have been included as honorary members, usually the chairman.
-The defending champion, as host, selects the menu for the dinner. Frequently, Masters champions have served cuisine from their home regions prepared by the Masters chef. Notable examples have included haggis , served by Scotsman Sandy Lyle in 1989, [ 58 ] and bobotie , a South African dish, served at the behest of 2008 champion Trevor Immelman . Other examples include German Bernhard Langer 's 1986 Wiener schnitzel , Britain's Nick Faldo 's fish and chips , Canadian Mike Weir 's elk and wild boar , and Vijay Singh 's tom kha thale and chicken phanaeng . The 2011 dinner of Phil Mickelson was a Spanish-themed menu in hopes that Seve Ballesteros would attend, but he was too sick and died weeks later. [ 59 ]
-In 1998, Tiger Woods served cheeseburgers , chicken sandwiches , french fries and milkshakes . Woods was the youngest winner, and when asked about his food choices, he responded with "They said you could pick anything you want ... Hey, it's part of being young, that's what I eat." [ 60 ] Fuzzy Zoeller , the 1979 champion, created a media storm when he suggested that Woods refrain from serving collard greens and fried chicken , dishes commonly associated with African-American culture . [ 61 ]
-Par 3 Contest
-[ edit ]
-Main article: Masters Tournament Par 3 Contest
-The 9th hole on the Par 3 Course
-The Par 3 Contest was first introduced in 1960, and was won that year by Snead. Since then it has traditionally been played on the Wednesday before the tournament starts. The Par 3 Course was built in 1958. It is a nine-hole course, with a par of 27, and measures 1,060 yards (970 m) in length. [ 62 ]
-There have been 94 holes-in-one in the history of the contest, with a record nine occurring in 2016, during which Rickie Fowler and Justin Thomas scored back-to-back holes in one on the 4th hole, while playing in a group with reigning champion Jordan Spieth . [ 63 ] [ 64 ] Camilo Villegas became the first player to card two holes-in-one in the same round during the 2015 Par 3 Contest. This achievement was duplicated by Séamus Power , who scored back-to-back holes in one on holes 8 and 9 during the 2023 Par 3 Contest. [ 65 ] As of 2026 [ update ] , no Par 3 Contest winner has also won the Masters in the same year. [ 66 ] [ 67 ] There have been several repeat winners, including Pádraig Harrington , Sandy Lyle, Sam Snead, and Tom Watson. [ citation needed ]
-In this event, golfers may use their children as caddies, which helps to create a family-friendly atmosphere. In 2008, the event was televised for the first time by ESPN .
-The winner of the Par 3 Contest, which is played the day before the tournament begins, wins a crystal bowl. [ 68 ]
-Tournament
-[ edit ]
-Opening tee shot
-[ edit ]
-Since 1963, the custom in most years has been to start the tournament with an honorary opening tee shot at the first hole, [ 69 ] typically by one or more older players. For a number of years before 1963, Jock Hutchison and Fred McLeod had been the first pair to tee off, both being able to play as past major championship winners. In 1963 the eligibility rules were changed and they were no longer able to compete. The idea of honorary starters was introduced with Hutchison and McLeod being the first two. This twosome led off every tournament from 1963 until 1973 when poor health prevented Hutchison from swinging a club. McLeod continued on until his death in 1976. Byron Nelson and Gene Sarazen started in 1981 and were then joined by Sam Snead in 1984. This trio continued until 1999 when Sarazen died, while Nelson stopped in 2001. Snead hit his final opening tee shot in 2002, a little over a month before he died.
-In 2007, Arnold Palmer took over as the honorary starter. Palmer also had the honor in 2008 and 2009. [ 70 ] At the 2010 and 2011 Masters Tournaments , Jack Nicklaus joined Palmer as an honorary starter for the event. [ 71 ] In 2012, Gary Player joined them. Palmer announced in March 2016 that a lingering shoulder issue would prevent him from partaking in the 2016 tee shot. [ 72 ] Palmer was still in attendance for the ceremony. [ 73 ]
-Following Palmer's death in 2016, the 2017 ceremony featured tributes; his green jacket was draped over an empty white chair, while everyone in attendance wore "Arnie's Army" badges. [ 74 ] [ 75 ]
-In 2021 Lee Elder joined Nicklaus and Player as an honorary starter. He was invited to join them as he was the first African-American to take part in the Masters in 1975 . Despite bad health preventing Elder from hitting a shot, he was still present and received a standing ovation from the crowd.
-Two-time Masters champion Tom Watson joined Nicklaus and Player, starting in 2022. [ 76 ]
-Caddies
-[ edit ]
-Further information: Augusta National Golf Club § Caddies
-A caddie at the Masters (right) in white jumpsuit bearing player's name
-Until 1983 , all players in the Masters were required to use the services of an Augusta National Club caddie , [ 77 ] [ 78 ] [ 79 ] who by club tradition was always an African-American man. [ 30 ] Club co-founder Clifford Roberts is reputed to have said, "As long as I'm alive, golfers will be white, and caddies will be black." [ 80 ] Since 1983—six years after Roberts's death in 1977—players have been allowed the option of bringing their own caddie to the tournament.
-The Masters requires caddies to wear a uniform consisting of a white jumpsuit, a green Masters cap, and white tennis shoes. The surname, and sometimes first initial, of each player is found on the back of his caddie's uniform. The defending champion always receives caddie number "1": other golfers get their caddie numbers from the order in which they register for the tournament. The other majors and some PGA Tour events formerly had a similar policy concerning caddies well into the 1970s; [ 81 ] [ 82 ] [ 83 ] the U.S. Open first allowed players to use their own caddies in 1976 . [ 84 ] [ 85 ]
-Awards
-[ edit ]
-The total prize money for the 2025 Masters Tournament was $21,000,000, with $4,200,000 going to the winner. In the inaugural year of 1934, the winner Horton Smith received $1,500 out of a $5,000 purse. [ 86 ] After Nicklaus's first win in 1963, he received $20,000, while after his final victory in 1986 he won $144,000. [ 87 ] [ 88 ] In recent years the purse has grown quickly. Between 2001 and 2014, the winner's share grew by $612,000, and the purse grew by $3,400,000. [ 89 ] [ 86 ] [ 90 ]
-Green jacket
-[ edit ]
-Further information: Augusta National Golf Club § Green jacket
-In addition to a cash prize, the winner of the tournament is presented with a distinctive green jacket, formally awarded since 1949 and informally awarded to the champions from the years prior. The green sport coat is the official attire worn by members of Augusta National while on the club grounds; each Masters winner becomes an honorary member of the club. The recipient of the green jacket has it presented to him inside the Butler Cabin soon after the end of the tournament in a televised ceremony, and the presentation is then repeated outside near the 18th green in front of the patrons. Winners keep their jacket for the year after their victory, then return it to the club to wear whenever they are present on the club grounds. Sam Snead was the first Masters champion to be awarded the green jacket after he took his first Masters title in 1949.
-The green jacket is only allowed to be removed from the Augusta National grounds by the reigning champion, after which it must remain at the club. Exceptions to this rule include Gary Player, who in his joy of winning mistakenly took his jacket home to South Africa after his 1961 victory; [ 91 ] Seve Ballesteros who, in an interview with Peter Alliss from his home in Pedreña, showed one of his two green jackets in his trophy room; [ citation needed ] and Henry Picard , whose jacket was removed from the club before the tradition was well established, remained in his closet for a number of years, and is now on display at Canterbury Golf Club in Beachwood, Ohio , where he was the club professional for many years. [ 92 ] [ 93 ]
-By tradition, the winner of the previous year's Masters Tournament puts the jacket on the winner at the end of the tournament. In 1966 , Jack Nicklaus became the first player to win in consecutive years and he donned the jacket himself. [ 24 ] When Nick Faldo (in 1990), Tiger Woods (in 2002), and Rory McIlroy (in 2026) won in consecutive years, the chairman of Augusta National put the jacket on them.
-In addition to the green jacket, winners of the tournament receive a gold medal. In 2017, a green jacket that was found at a thrift store in 1994 was sold at auction for $139,000. [ 94 ]
-Trophies
-[ edit ]
-Winners also have their names engraved on the actual silver Masters trophy. The runner-up receives a silver medal, introduced in 1951. Beginning in 1978, a silver salver was added as an award for the runner-up. [ 4 ]
-In 1952, the Masters began presenting an award, known as the Silver Cup, to the lowest scoring amateur to make the cut. In 1954, they began presenting an amateur silver medal to the low amateur runner-up. [ 4 ]
-The original trophy weighs over 130 pounds (59 kg) and sits on a 4-foot-wide (1.2 m) base. It resides permanently at Augusta National and depicts the clubhouse. Winners instead receive a replica, which is significantly smaller, stands just 6.5 inches (17 cm) tall, and weighs 20 pounds (9.1 kg) , which they get to keep. The champion and the runner-up both have their names engraved on the permanent trophy. [ 95 ]
-There are several awards presented to players who perform exceptional feats during the tournament. The player who has the daily lowest score receives a crystal vase, while players who score a hole-in-one or a double eagle win a large crystal bowl. [ 96 ] For each eagle a player makes, they receive a pair of crystal goblets.
-The Double Eagle trophy was introduced in 1967 when Bruce Devlin holed out for double eagle on number 8. He was only the second to do so, and the first in 32 years, following Gene Sarazen on hole 15 in 1935. The trophy is a large crystal bowl with "Masters Tournament" engraved around the top. [ 97 ]
-Player invitations
-[ edit ]
-As with the other majors, winning the Masters gives a golfer several privileges which make his career more secure. Masters champions are automatically invited to play in the other three majors (the U.S. Open , The Open Championship , and the PGA Championship ) for the next five years (except for amateur winners, unless they turn pro within the five-year period), and earn a lifetime invitation to the Masters. They also receive membership on the PGA Tour for the following five seasons and invitations to The Players Championship for five years. [ 98 ]
-Because the tournament was established by an amateur champion, Bobby Jones , the Masters has a tradition of honoring amateur golf . It invites winners of the most prestigious amateur tournaments in the world. Also, the current U.S. Amateur champion always plays in the same group as the defending Masters champion for the first two days of the tournament.
-Amateurs in the field are welcome to stay in the "Crow's Nest" atop the Augusta National clubhouse during the tournament. The Crow's Nest is 1,200 square feet (110 m 2 ) with lodging space for five during the competition.
-While the tournament now has a wide range of qualifying criteria for international golfers, until 1987 the only methods of qualification for non-Americans were via "special international invitation", or by winning the tournament in a previous year.
-Experience and hospitality
-[ edit ]
-Berckmans Place
-[ edit ]
-Berckmans Place, sometimes called Berckmans or BP, [ 99 ] is a 90,000-square-foot (8,400 m 2 ) non-public shopping and dining complex built in 2012. It operates for one week each year, during the tournament. Entry passes for the week cost $10,000 (up from $6,000) [ 100 ] are sold only to corporations, and require Augusta National's approval; there is a 10-ticket limit per pass. [ 99 ] As in the rest of the club, neither cell phones nor photography are allowed. The price includes free dining at Berckmans' five full-service restaurants, each of which can seat hundreds of guests: Augusta's (a seafood restaurant), [ 101 ] Calamity Jane's, Ike's at the Pavilion, Isabella, and MacKenzie's Pub. Bathroom stalls are attended and cleaned after each use. [ 102 ] There is a pro shop [ 100 ] and four putting greens dubbed the "Putting Experience": three slightly smaller replicas of holes 7, 14, and 16; and a "composite course". [ 99 ] [ 100 ] [ 101 ] BP customers can use an exclusive parking lot and entryway (Gate 9). [ 99 ] The complex is located near hole 5. [ 103 ]
-Berckmans Place is named after Belgian Louis Mathieu Berckmans, whose family owned the land the club is built on from 1858 to 1910. [ 104 ]
-Concessions
-[ edit ]
-The food menu for attendees at the 2015 Masters
-Pimento cheese sandwiches have a long history at the Masters. [ 105 ] [ 106 ] They have been served as a concession since the 1940s. [ 107 ] [ 108 ] Minor controversy ensued in 2013 when the club switched food suppliers for the Masters and the new supplier was unable to duplicate the recipe used by the previous supplier, resulting in a sandwich with a markedly different taste. [ 109 ] Southern Living and Golf Digest called the sandwich "iconic" of the tournament. [ 110 ] [ 111 ] Sports Illustrated called the sandwich "legendary" and "more than a food option – it's a representation of the sport's history and its traditions". [ 108 ]
-The club introduced its own private label wheat ale beer called Crow's Nest in 2021, which is served in its own green cup and only sold during the Masters. The beer is not available during any other time of the year. [ 112 ] [ 113 ] The club's private-label cola is widely believed to be made by Coca-Cola . [ 114 ]
-Concessions at the Masters are renowned for their low prices compared to other sporting events in North America; the aforementioned pimento cheese sandwich is $1.50, no food item on the menu is more expensive than $3, and a pint of Crow's Nest sells for $6. [ 115 ]
-Map & Flag
-[ edit ]
-Augusta National opened its own "hospitality experience" in 2024 called Map & Flag. Located across Washington Street from the main property, the venue is only accessible with a $17,000 week-long pass. [ 116 ]
-Map & Flag is operated by Endeavor -owned On Location Experiences. [ 114 ]
-Merchandise
-[ edit ]
-Merchandise sold at the tournament has become a large business for Augusta National, bringing in an estimated $70 million in revenue. All items are only available in-person at the Masters, making the merchandise into a status symbol and creating a secondhand market. [ 117 ] [ 118 ] [ 119 ]
-Especially popular are the annual garden gnomes , first introduced in 2016 (then exclusive to Berckmans Place) and produced each year since with a new design (excluding 2017). [ 117 ] [ 120 ] [ 121 ] Interest in the gnomes as collector's items skyrocketed after the COVID-19 pandemic ; customers are limited to one gnome per person, as they resell on the secondary market for several times their retail value. [ 122 ] [ 123 ] [ 119 ] [ 124 ] Golf Digest reported that for the 2025 tournament, Augusta offered around 1,000 gnomes for sale each day, [ 122 ] and some reporting has indicated that the gnomes may be discontinued after 2026. [ 125 ] [ 122 ]
-Goodr manufactures sunglasses with a variety of Masters-exclusive designs that reference Augusta National. [ 126 ] The Masters has also produced an annual collectable commemorative pin for each year's tournament since at least the 1990s, which included a line of pins themed to the course's holes sold from 2001 through 2018. [ 127 ]
-Ticketing
-[ edit ]
-Although tickets (referred to as "badges") for the Masters are not expensive at face value compared with other high-level sporting events ( as of 2026 [ update ] , $525 for a four-day pass [ 34 ] ), they are very difficult to come by. Masters tickets are considered the second-hardest to obtain in sports, trailing only the Super Bowl . [ 128 ] Even the practice rounds can be difficult to gain entrance into. Practice rounds and daily tournament passes are sold in advance, through a selection process, only after receipt of an online application. All tickets are sold in advance and there are none sold at the gates. [ 129 ] Additionally, Georgia state law prohibits tickets from being bought, sold, or handed off within a 2,700-foot (820 m) boundary around the club. [ 130 ] [ 131 ]
-Since the first Masters, badges have displayed the ticket price, tournament dates, and ANGC logo. They were made from cardboard until 1953, when they switched to paper; all badges have been made of plastic since 1961. [ 132 ] In 2017, the club began including a color bar encoding the ticket number printed on the front. [ 133 ] [ 132 ] Badges each contain an RFID chip. [ 134 ]
-Open applications for practice rounds and individual daily tournament tickets have to be made nearly a year in advance and the successful applicants are chosen by random selection. Series badges for the actual tournament, that is a badge valid for all four tournament rounds, are made available and sold only to individuals of a patrons list, which is closed. A waiting list for the patrons list was opened in 1972 and closed in 1978. It was reopened in 2000 and subsequently closed once again. [ 135 ] [ 136 ] Individuals who are on the patron list are given the recurring opportunity to purchase series badges each year for life. According to Augusta National, after the death of a badge holder, a series badge account is transferable only to a surviving spouse and no other family members. [ 135 ] [ 137 ] [ 138 ]
-In 2008, as part of their Junior Pass Program, the Masters also began allowing children (between the ages of 8 and 16) to enter on tournament days for free if they are accompanied by the patron who is the original applicant of his or her series badge. The Junior Pass Program does not apply to individual daily tournament tickets, only to series badge patrons. [ 139 ] [ 131 ]
-The difficulty in acquiring Masters badges has made the tournament one of the largest events on the secondary resale ticket market. [ 140 ] Since a majority of the badges for the Masters are made available to the same group of patrons each year, these perennial ticket holders sometimes decide to sell their badges through large ticket marketplaces or third party ticket brokers, although they do so at their own detriment as this action is strictly prohibited in the ticket purchase agreement and ticket policy; those caught are banned from future tournaments. [ 141 ] Since 2025, ANGC has more strictly enforced its no-resale policy. [ 142 ]
-Augusta National has for decades made 100 series badges available to Fort Gordon , which holds a lottery for service members to buy tickets for a day. [ 143 ]
-Venue regulations and prohibited items
-[ edit ]
-{{cite news |url=https://www.businessinsider.com/why-masters-golf-tournament-bans-cell-phones |title=The Masters golf tournament bans cell phones and that rule is not going to change anytime soon |last=Gaines |first=Cork |date=April 7, 2023 |website=[[Business Insider]] |access-date=May 19, 2025}}</ref>"}},"i":0}}]}'>
-"I just don't think [cell phones are] appropriate. The noise is an irritation to not only the players, the dialing, the conversation; it's a distraction. And that's the way we have chosen to deal with it."
-—   Former Augusta National chairman Billy Payne about Masters Tournament and immersion [ 144 ]
-Patrons who have obtained a ticket to access Augusta National must comply with a strict policy regarding the use of electronic devices during the tournament. The organization clearly states that "the use of any device for phone calls, emails, text messaging, or to record and/or transmit voice, video or data is strictly prohibited," and that cameras are "strictly prohibited on Tournament days" but "are permitted for still photography and personal use only" on practice days, at the start of the competition week. Noise and music-producing devices (radios, TVs, speakers), flags, posters, and weapons are also forbidden. Breaking these rules may lead to ejection from the venue and permanent loss of tickets. [ 145 ] Complimentary phones are available throughout the course for spectators needing to make a call. These policies were established to reduce distractions and encourage patrons to carpe diem, ensuring smooth play and calm on the course while upholding the tournament's etiquette, atmosphere, and tradition. [ 146 ]
-Parking is provided to spectators for free. [ 147 ]
-Post-tournament events
-[ edit ]
-Augusta National holds a lottery for members of the press pool to play the course the Monday after the end of the Masters; the event is called the Monday Golf Outing. [ 148 ] [ 149 ]
+In 1894, with 41 golf courses operating in the United States, two unofficial national championships for amateur golfers were organized. One was held at Newport Country Club in Rhode Island , and the other at Saint Andrew's Golf Club in New York . In addition, and at the same time as the amateur event, Saint Andrew's conducted an Open championship for professional golfers. None of the championships were officially sanctioned by a governing body for American golf, causing considerable controversy among players and organizers. Later in 1894 this led to the formation of the United States Golf Association (USGA), which became the first formal golf organization in the country. After the formation of the USGA, golf quickly became a sport of national popularity and importance. [ 4 ]
+In February 1916, the Professional Golfers Association of America (PGA) was established in New York City . One month earlier, the wealthy department store owner Rodman Wanamaker hosted a luncheon with the leading golf professionals of the day at the Wykagyl Country Club in nearby New Rochelle . The attendees prepared the agenda for the formal organization of the PGA; [ 5 ] consequently, golf historians have dubbed Wykagyl "The Cradle of the PGA." [ 6 ] The new organization's first president was Robert White, one of Wykagyl's best-known golf professionals. [ 4 ]
+The first PGA Championship was held in October 1916 at Siwanoy Country Club in Bronxville, New York . [ 7 ] The winner, Jim Barnes , received $500 and a diamond-studded gold medal donated by Rodman Wanamaker. The 2016 winner, Jimmy Walker , earned $1.8 million. The champion is also awarded a replica of the Wanamaker Trophy, which was also donated by Wanamaker, to keep for one year, and a smaller-sized keeper replica Wanamaker Trophy. [ 8 ] [ 9 ]
 Format
 [ edit ]
-The Masters is the first major championship of the year. Since 1948 , its final round has been scheduled for the second Sunday of April, with several exceptions. It ended on the first Sunday four times ( 1952 , 1957 , 1958 , 1959 ) and the 1979 and 1984 tournaments ended on April 15, the month's third Sunday. [ 4 ] The first edition in 1934 was held in late March and the next ten were in early April, with only the 1942 event scheduled to end on the second Sunday. The 2020 event, postponed by the COVID-19 pandemic , was held from November 12 to 15, thus being the last major of the year.
-Similar to the other majors, the tournament consists of four rounds at 18 holes each, Thursday through Sunday (when there are no delays). The Masters has a relatively small field of contenders when compared with other golf tournaments, so the competitors play in groups of three for the first two rounds (36 holes) and the field is not split to start on the 1st and 10th tees unless weather shortens the available playing time. The tournament is unique in that it is the only major tournament conducted by a private club rather than a national golf organization like the PGA. [ 9 ]
-Originally, the Masters was the only tournament to use two-man pairings during the first two rounds. It was also the only event to re-pair based on the leaderboard before Friday's round, as most tournaments only do this on the weekend. This practice ended in the early 2000s when the Masters switched to the more standard three-man groups and the groups are now kept intact on Friday, with players sharing the same playing partners in both of the first two rounds. [ citation needed ]
-After 36 holes of play, a cut-off score is calculated to reduce the size of the field for the weekend rounds. In 2020, to "make the cut", players must be in the top 50 places (ties counting). [ 150 ] Before 1957 , there was no 36-hole cut and all of the invitees played four rounds, if desired. From 1957 to 1961, the top 40 scores (including ties) made the cut. From 1962 to 2012, it was the top 44 (and ties) or within 10 strokes of the lead. [ 27 ] From 2013 to 2019, it was the top 50 (and ties) or within 10 strokes of the lead. [ 151 ]
-Following the cut, an additional 36 holes are played over the final two days. Should the fourth round fail to produce a winner, all players tied for the lead enter a sudden-death playoff. Play begins on the 18th hole, followed by the adjacent 10th, repeating until one player wins. Adopted in 1976, the sudden-death playoff was originally formatted to start on the first hole, [ 152 ] but was not needed for the first three years. It was changed for 1979 to the inward (final) nine holes, starting at the tenth tee, where the television coverage began. [ 153 ] First employed that same year, the Masters' first sudden-death playoff, won by Fuzzy Zoeller , ended on the 11th green. The current arrangement, beginning at the 18th tee, was amended for 2004 and first used the following year. Through 2017, the eleven sudden-death playoffs have yet to advance past the second extra hole. The Masters is the only major tournament that currently uses a sudden-death playoff, which is used on most professional tour tournaments. [ 154 ] Earlier playoffs were 18 holes on the following day, except for the first in 1935 , which was 36 holes ( Gene Sarazen defeated Craig Wood ); the last 18-hole playoff was in 1970 when Billy Casper defeated Gene Littler , and none of the full-round playoffs went to additional holes.
-Planning
+The PGA Championship was originally a match play event in the early fall, but it varied from May to December. After World War II , the championship was usually in late May or late June, then moved to early July in 1953 and a few weeks later in 1954 , with the finals played on Tuesday. As a match play event (with a stroke play qualifier), it was not uncommon for the finalists to play over 200 holes in seven days. The 1957 event lost money, [ 10 ] and at the PGA meetings in November it was changed to stroke play , starting in 1958 , with the standard 72-hole format of 18 holes per day for four days, Thursday to Sunday. Network television broadcasters, preferring a large group of well-known contenders on the final day, pressured the PGA of America to make the format change. [ 11 ]
+During the 1960s, the PGA Championship was played the week after The Open Championship five times, making it virtually impossible for players to compete in both majors. In 1965 , the PGA was contested for the first time in August, and returned in 1969 , save for a one-year move to late February in 1971 , played in Florida . The 2016 event was moved to late July, two weeks after the Open Championship , to accommodate the 2016 Summer Olympics in August. [ 12 ]
+Before the 2017 edition, it was announced that the PGA Championship would be moved to May on the weekend before Memorial Day , beginning in 2019. The PGA Tour concurrently announced that it would move its Players Championship back to March the same year; it had been moved from March to May in 2007. The PGA of America cited the addition of golf to the Summer Olympics, as well as cooler weather enabling a wider array of options for host courses, as reasoning for the change. It was also believed that the PGA Tour wished to re-align its season so that the FedEx Cup Playoffs would not have to compete with the start of football season in late-August. [ 13 ] [ 14 ] [ 15 ]
+Location
 [ edit ]
-The Masters is planned by 24 committees made up of Augusta National members, which include: [ 9 ] [ 155 ] [ 156 ]
-Beautification Committee [ 9 ]
-Competition Committee [ 157 ]
-Concession Committee [ 156 ]
-Executive Committee [ 156 ]
-Finance Committee [ 156 ]
-Grounds Committee [ 156 ]
-Litter Control Committee [ 156 ]
-Local Operating Committee [ 156 ]
-Media Committee [ 155 ]
-Motion Picture Committee [ 156 ]
-Pin Placement Committee [ 158 ]
-Press Committee [ 156 ]
-Rules Committee [ 157 ]
-Tee Marking Committee [ 158 ]
-Television Committee [ 9 ]
-Tournament Improvements Committee [ 156 ]
-Course
+The PGA Championship has normally been played in the eastern half of the United States except eleven times, most recently in 2020 at TPC Harding Park in San Francisco . [ 16 ] It was the first for the Bay Area , returning to California after a quarter century . Prior to 2020, it was last played in the Pacific time zone in 1998 , at Sahalee east of Seattle . (The Mountain time zone has hosted three editions, all in suburban Denver , in 1941 , 1967 , and 1985 .) The 103rd PGA Championship was held at the Kiawah Island Golf Resort's Ocean Course in Kiawah Island, South Carolina, [ 17 ] and the 104th was held at Southern Hills Country Club in Tulsa, Oklahoma. [ 18 ]
+The state of New York has hosted the championship thirteen times, followed by Ohio (11) and Pennsylvania (9).
+Promotion
 [ edit ]
-The golf course was formerly a plant nursery and each hole is named after the tree or shrub with which it has become associated. [ 11 ]
-The 11th, 12th, and 13th holes have been referred to as Amen Corner . [ 159 ]
-The course layout in 2024 :
-Layout of Augusta National Golf Club
-Hole Name Yards Par Hole Name Yards Par
-1 Tea Olive 445 4 10 Camellia 495 4
-2 Pink Dogwood 585 5 11 White Dogwood 520 4
-3 Flowering Peach 350 4 12 Golden Bell 155 3
-4 Flowering Crab Apple 240 3 13 Azalea 545 5
-5 Magnolia 495 4 14 Chinese Fir 440 4
-6 Juniper 180 3 15 Firethorn 550 5
-7 Pampas 450 4 16 Redbud 170 3
-8 Yellow Jasmine 570 5 17 Nandina 440 4
-9 Carolina Cherry 460 4 18 Holly 465 4
-Out 3,775 36 In 3,780 36
-Source: [ 1 ] [ 160 ] Total 7,555 72
-Lengths of the course for the Masters at the start of each decade:
-2022 : 7,510 yards (6,870 m)
-2020 : 7,475 yards (6,835 m)
-2010 : 7,435 yards (6,799 m)
-2000 : 6,985 yards (6,387 m)
-1990 : 6,905 yards (6,314 m)
-1980 : 7,040 yards (6,437 m)
-1970 : 6,980 yards (6,383 m)
-1960 : 6,980 yards (6,383 m)
-1950 : 6,900 yards (6,309 m)
-1940 : 6,800 yards (6,218 m) [ 1 ]
-Course adjustments
+The tournament was previously promoted with the slogan "Glory's Last Shot". In 2013, the tagline was dropped in favor of "The Season's Final Major", as suggested by PGA Tour commissioner Tim Finchem while discussing the allowance of a one-week break in its schedule before the Ryder Cup . Finchem had argued that the slogan was not appropriate as it weakened the stature of events that occur after it, such as the PGA Tour's FedEx Cup playoffs. PGA of America CEO Pete Bevacqua explained that they had also had discussions with CBS, adding that "it was three entities that all quickly came to the same conclusion that, you know what, there's just not much in that tag line and we don't feel it's doing much for the PGA Championship, so let's not stick with it. Let's think what else is out there." [ 19 ] [ 20 ] For a time, the tournament used the slogan "This is Major" as a replacement. [ 21 ] [ 22 ]
+Trophy
 [ edit ]
-The course at Augusta National
-As with many other courses, Augusta National's championship setup was lengthened in recent years. In 2001 , the course measured 6,925 yards (6,332 m) and was extended to 7,270 yards (6,648 m) for 2002, and again in 2006 to 7,445 yards (6,808 m) ; 520 yards (475 m) longer than the 2001 course. [ 161 ] [ 162 ] The changes attracted many critics, including the most successful players in Masters history, Jack Nicklaus, Arnold Palmer, Gary Player and Tiger Woods. Woods claimed that the "shorter hitters are going to struggle". Augusta National chairman Hootie Johnson was unperturbed, stating, "We are comfortable with what we are doing with the golf course." After a practice round, Gary Player defended the changes, saying, "There have been a lot of criticisms, but I think unjustly so, now I've played it ... The guys are basically having to hit the same second shots that Jack Nicklaus had to hit (in his prime)". [ 163 ]
-The first hole was shortened by 10 yards (9 m) for the 2009 Masters Tournament . For the 2019 Masters Tournament , the fifth hole was lengthened by 40 yards (37 m) from 455 yards to 495 yards, with two new gaping bunkers on the left side of the fairway. [ 164 ] The length of the course is 7,475 yards (6,835 m) .
-Originally, the grass on the putting greens was wide-bladed Bermuda . The greens lost speed, especially during the late 1970s, after the introduction of a healthier strain of narrow-bladed Bermuda, which thrived and grew thicker. In 1978, the greens on the Par 3 course were reconstructed with bentgrass , a narrow-bladed species that could be mowed shorter, eliminating grain. [ 165 ] After this test run, the greens on the main course were replaced with bentgrass in time for the 1981 Masters. The bentgrass resulted in significantly faster putting surfaces, which has required a reduction in some of the contours of the greens over time. [ 165 ]
-Just before the 1975 tournament, the common beige sand in the bunkers was replaced with the now-signature white feldspar. It is a quartz derivative of the mining of feldspar and is shipped in from North Carolina . [ 166 ]
-Field
+The Wanamaker Trophy, named after businessman, golfer, and PGA of America founder Rodman Wanamaker , stands nearly 2.5 feet (75 cm) tall and weighs 27 pounds (12 kg) . The trophy was lost, briefly, for a few years until it showed up in 1930 in the cellar of L.A. Young and Company. Ironically, this cellar was in the factory which made the clubs for the man responsible for losing it, Walter Hagen . Hagen claimed to have trusted a taxi driver with the precious cargo, but it never returned to his hotel. There is a smaller replica trophy that the champion gets to keep permanently, but the original must be returned for the following years tournament. [ 23 ]
+Qualification
 [ edit ]
-The Masters has the smallest field of the major championships, with 85–100 players. Unlike other majors, there are no alternates or qualifying tournaments. It is an invitational event, with invitations largely issued on an automatic basis to players who meet published criteria. The top 50 players in the Official World Golf Ranking are all invited. [ 167 ]
-Past champions are always eligible, but since 2002 the Augusta National Golf Club has discouraged them from continuing to participate at an advanced age. Some will later become honorary starters. [ 168 ]
-Invitation categories (from 2026)
-[ edit ]
-See footnote. [ 169 ]
-Note: Categories 7–12 are honored only if the participants maintain their amateur status prior to the tournament.
-Masters Tournament Champions (lifetime)
-U.S. Open champions (five years)
-The Open champions (five years)
-PGA champions (five years)
-Winners of the Players Championship (three years)
-Current Olympic Gold Medalist (one year)
-Current U.S. Amateur champion and runner-up
-Current British Amateur champion
-Current Asia-Pacific Amateur champion
-Current Latin America Amateur champion
-Current U.S. Mid-Amateur champion
-Current NCAA Division I individual champion
-The first 12 players, including ties, in the previous year's Masters Tournament
-The first 4 players, including ties, in the previous year's U.S. Open
-The first 4 players, including ties, in the previous year's Open Championship
-The first 4 players, including ties, in the previous year's PGA Championship
-Winners of PGA Tour events that award at least a full-point allocation for the FedEx Cup, from one Masters Tournament to the next
-Those qualifying and eligible for the previous year's season-ending Tour Championship (top 30 in FedEx Cup prior to tournament)
-Winners of the most recent editions of the Scottish Open , Spanish Open , South African Open , Hong Kong Open , Australian Open , and Japan Open (one year each)
-The 50 leaders on the final Official World Golf Ranking for the previous calendar year
-The 50 leaders on the Official World Golf Ranking published during the week prior to the current Masters Tournament
-Most of the top current players will meet the criteria of multiple categories for invitation. The Masters Committee, at its discretion, can also invite any golfer not otherwise qualified, although in practice these invitations are mostly reserved for international players. [ 170 ]
-Changes since 2014
-[ edit ]
-Changes for the 2014 tournament include invitations now being awarded to the autumn events in the PGA Tour, which now begin the wraparound season, tightening of qualifications (top 12 plus ties from the Masters, top 4 from the U.S. Open, Open Championship, and PGA Championship), and the top 30 on the PGA Tour now referencing the season-ending points before the Tour Championship, not the former annual money list. [ 151 ] The 2015 Masters added the winner of the newly established Latin America Amateur Championship, which effectively replaced the exemption for the U.S. Amateur Public Links , which ended after the 2014 tournament. (The final Public Links champion played in the 2015 Masters.) [ 171 ]
-Prior to the start of the 2023 Masters Tournament, several changes to the criteria were announced to come into effect from 2024. An additional criterion was added for amateur golfers, for the reigning individual champion of the NCAA Division I Men's Golf Championship , [ 172 ] and PGA Tour criteria were modified to account for scheduling changes (previously only regular season and playoff events were included) and to clarify that players must remain eligible for the Tour Championship. [ 173 ] [ 174 ]
-Most wins
-[ edit ]
-The first winner of the Masters Tournament was Horton Smith in 1934, and he repeated in 1936. The player with the most Masters victories is Jack Nicklaus , who won six times between 1963 and 1986. Tiger Woods has five wins, followed by Arnold Palmer with four, and Jimmy Demaret , Gary Player , Sam Snead , Nick Faldo , and Phil Mickelson have three titles to their name. Player was the tournament's first overseas winner with his first victory in 1961. Two-time champions include Byron Nelson , Ben Hogan , Tom Watson , Seve Ballesteros , Bernhard Langer , Ben Crenshaw , José María Olazábal , Bubba Watson , Scottie Scheffler , and Rory McIlroy . [ 175 ]
+The PGA Championship was established for the purpose of providing a high-profile tournament specifically for professional golfers at a time when they were generally not held in high esteem in a sport that was largely run by wealthy amateurs. This origin is still reflected in the entry system for the Championship. It is the only major that does not explicitly invite leading amateurs to compete (it is possible for amateurs to get into the field, although the only viable ways are by winning one of the other major championships, or winning a PGA Tour event while playing on a sponsor's exemption), and the only one that reserves so many places, 20 of 156, for club professionals. These slots are determined by the top finishers in the PGA Professional Championship , which is held in late April.
+Since December 1968, the PGA Tour has been independent of the PGA of America . [ 24 ] [ 25 ] [ 26 ]
+The PGA Tour is an elite organization of tournament professionals , but the PGA Championship is still run by the PGA of America, which is mainly a body for club and teaching professionals. The PGA Championship is the only major that does not explicitly grant entry to the top 50 players in the Official World Golf Ranking , although special exemptions are commonly given to players in the top 100 (not just top 50) of the ranking who are not already qualified. [ 27 ]
+As of 2023 [ update ] , the qualification criteria are as follows: [ 28 ]
+Former PGA Champions.
+Winners of the last five U.S. Opens .
+Winners of the last five Masters .
+Winners of the last five Open Championships .
+Winners of the last three The Players Championships .
+Top 3 on the Official World Golf Ranking International Federation Ranking List (criterion added in 2023). [ 28 ]
+The current Senior PGA Champion .
+The low 15 scorers and ties in the previous PGA Championship.
+The 20 low scorers in the last PGA Professional Championship .
+The 70 leaders in PGA Championship points list (based on official money earned on the PGA Tour since the previous PGA Championship).
+Members of the most recent United States and European Ryder Cup Teams who are ranked the top 100 of the Official World Golf Ranking as of one week before the start of the tournament.
+Any tournament winner co-sponsored or approved by the PGA Tour since the previous PGA Championship .
+The PGA of America reserves the right to invite additional players not included in the categories listed above.
+The total field is a maximum of 156 players. Vacancies are filled by the first available player from the list of alternates (those below 70th place in official money standings).
 Winners
 [ edit ]
-Main article: List of Masters Tournament champions
-Plaque at Augusta National listing winners of the Masters, pictured in 2015
-Year Winner Score To par Margin of
-victory Runner(s)-up Winner's
-share ($)
-2026 Rory McIlroy (2) 276 −12 1 stroke Scottie Scheffler 4,500,000
-2025 Rory McIlroy 277 −11 Playoff Justin Rose 4,200,000
-2024 Scottie Scheffler (2) 277 −11 4 strokes Ludvig Åberg 3,600,000
-2023 Jon Rahm 276 −12 4 strokes Brooks Koepka
-Phil Mickelson 3,240,000
-2022 Scottie Scheffler 278 −10 3 strokes Rory McIlroy 2,700,000
-2021 Hideki Matsuyama 278 −10 1 stroke Will Zalatoris 2,070,000
-2020 Dustin Johnson 268 −20 5 strokes Im Sung-jae
-Cameron Smith 2,070,000
-2019 Tiger Woods (5) 275 −13 1 stroke Dustin Johnson
-Brooks Koepka
-Xander Schauffele 2,070,000
-2018 Patrick Reed 273 −15 1 stroke Rickie Fowler 1,980,000
-2017 Sergio García 279 −9 Playoff Justin Rose 1,980,000
-2016 Danny Willett 283 −5 3 strokes Jordan Spieth
-Lee Westwood 1,800,000
-2015 Jordan Spieth 270 −18 4 strokes Phil Mickelson
-Justin Rose 1,800,000
-2014 Bubba Watson (2) 280 −8 3 strokes Jonas Blixt
-Jordan Spieth 1,620,000
-2013 Adam Scott 279 −9 Playoff Ángel Cabrera 1,440,000
-2012 Bubba Watson 278 −10 Playoff Louis Oosthuizen 1,440,000
-2011 Charl Schwartzel 274 −14 2 strokes Jason Day
-Adam Scott 1,440,000
-2010 Phil Mickelson (3) 272 −16 3 strokes Lee Westwood 1,350,000
-2009 Ángel Cabrera 276 −12 Playoff Kenny Perry
-Chad Campbell 1,350,000
-2008 Trevor Immelman 280 −8 3 strokes Tiger Woods 1,350,000
-2007 Zach Johnson 289 +1 2 strokes Retief Goosen
-Rory Sabbatini
-Tiger Woods 1,305,000
-2006 Phil Mickelson (2) 281 −7 2 strokes Tim Clark 1,260,000
-2005 Tiger Woods (4) 276 −12 Playoff Chris DiMarco 1,260,000
-2004 Phil Mickelson 279 −9 1 stroke Ernie Els 1,117,000
-2003 Mike Weir 281 −7 Playoff Len Mattiace 1,080,000
-2002 Tiger Woods (3) 276 −12 3 strokes Retief Goosen 1,008,000
-2001 Tiger Woods (2) 272 −16 2 strokes David Duval 1,008,000
-2000 Vijay Singh 278 −10 3 strokes Ernie Els 828,000
-1999 José María Olazábal (2) 280 −8 2 strokes Davis Love III 720,000
-1998 Mark O'Meara 279 −9 1 stroke Fred Couples
-David Duval 576,000
-1997 Tiger Woods 270 −18 12 strokes Tom Kite 486,000
-1996 Nick Faldo (3) 276 −12 5 strokes Greg Norman 450,000
-1995 Ben Crenshaw (2) 274 −14 1 stroke Davis Love III 396,000
-1994 José María Olazábal 279 −9 2 strokes Tom Lehman 360,000
-1993 Bernhard Langer (2) 277 −11 4 strokes Chip Beck 306,000
-1992 Fred Couples 275 −13 2 strokes Raymond Floyd 270,000
-1991 Ian Woosnam 277 −11 1 stroke José María Olazábal 243,000
-1990 Nick Faldo (2) 278 −10 Playoff Raymond Floyd 225,000
-1989 Nick Faldo 283 −5 Playoff Scott Hoch 200,000
-1988 Sandy Lyle 281 −7 1 stroke Mark Calcavecchia 183,800
-1987 Larry Mize 285 −3 Playoff Seve Ballesteros
-Greg Norman 162,000
-1986 Jack Nicklaus (6) 279 −9 1 stroke Tom Kite
-Greg Norman 144,000
-1985 Bernhard Langer 282 −6 2 strokes Seve Ballesteros
-Raymond Floyd
-Curtis Strange 126,000
-1984 Ben Crenshaw 277 −11 2 strokes Tom Watson 108,000
-1983 Seve Ballesteros (2) 280 −8 4 strokes Ben Crenshaw
-Tom Kite 90,000
-1982 Craig Stadler 284 −4 Playoff Dan Pohl 64,000
-1981 Tom Watson (2) 280 −8 2 strokes Johnny Miller
-Jack Nicklaus 60,000
-1980 Seve Ballesteros 275 −13 4 strokes Gibby Gilbert
-Jack Newton 55,000
-1979 Fuzzy Zoeller 280 −8 Playoff Ed Sneed
-Tom Watson 50,000
-1978 Gary Player (3) 277 −11 1 stroke Rod Funseth
-Hubert Green
-Tom Watson 45,000
-1977 Tom Watson 276 −12 2 strokes Jack Nicklaus 40,000
-1976 Raymond Floyd 271 −17 8 strokes Ben Crenshaw 40,000
-1975 Jack Nicklaus (5) 276 −12 1 stroke Johnny Miller
-Tom Weiskopf 40,000
-1974 Gary Player (2) 278 −10 2 strokes Dave Stockton
-Tom Weiskopf 35,000
-1973 Tommy Aaron 283 −5 1 stroke J. C. Snead 30,000
-1972 Jack Nicklaus (4) 286 −2 3 strokes Bruce Crampton
-Bobby Mitchell
-Tom Weiskopf 25,000
-1971 Charles Coody 279 −9 2 strokes Johnny Miller
-Jack Nicklaus 25,000
-1970 Billy Casper 279 −9 Playoff Gene Littler 25,000
-1969 George Archer 281 −7 1 stroke Billy Casper
-George Knudson
-Tom Weiskopf 20,000
-1968 Bob Goalby 277 −11 1 stroke Roberto De Vicenzo 20,000
-1967 Gay Brewer 280 −8 1 stroke Bobby Nichols 20,000
-1966 Jack Nicklaus (3) 288 E Playoff Tommy Jacobs (2nd)
-Gay Brewer (3rd) 20,000
-1965 Jack Nicklaus (2) 271 −17 9 strokes Arnold Palmer
-Gary Player 20,000
-1964 Arnold Palmer (4) 276 −12 6 strokes Dave Marr
-Jack Nicklaus 20,000
-1963 Jack Nicklaus 286 −2 1 stroke Tony Lema 20,000
-1962 Arnold Palmer (3) 280 −8 Playoff Gary Player (2nd)
-Dow Finsterwald (3rd) 20,000
-1961 Gary Player 280 −8 1 stroke Charles Coe (a)
-Arnold Palmer 20,000
-1960 Arnold Palmer (2) 282 −6 1 stroke Ken Venturi 17,500
-1959 Art Wall Jr. 284 −4 1 stroke Cary Middlecoff 15,000
-1958 Arnold Palmer 284 −4 1 stroke Doug Ford
-Fred Hawkins 11,250
-1957 Doug Ford 283 −5 3 strokes Sam Snead 8,750
-1956 Jack Burke Jr. 289 +1 1 stroke Ken Venturi (a) 6,000
-1955 Cary Middlecoff 279 −9 7 strokes Ben Hogan 5,000
-1954 Sam Snead (3) 289 +1 Playoff Ben Hogan 5,000
-1953 Ben Hogan (2) 274 −14 5 strokes Ed Oliver 4,000
-1952 Sam Snead (2) 286 −2 4 strokes Jack Burke Jr. 4,000
-1951 Ben Hogan 280 −8 2 strokes Skee Riegel 3,000
-1950 Jimmy Demaret (3) 283 −5 2 strokes Jim Ferrier 2,400
-1949 Sam Snead 282 −6 3 strokes Johnny Bulla
-Lloyd Mangrum 2,750
-1948 Claude Harmon 279 −9 5 strokes Cary Middlecoff 2,500
-1947 Jimmy Demaret (2) 281 −7 2 strokes Byron Nelson
-Frank Stranahan (a) 2,500
-1946 Herman Keiser 282 −6 1 stroke Ben Hogan 2,500
-1943–45: Cancelled due to World War II
-1942 Byron Nelson (2) 280 −8 Playoff Ben Hogan 1,500
-1941 Craig Wood 280 −8 3 strokes Byron Nelson 1,500
-1940 Jimmy Demaret 280 −8 4 strokes Lloyd Mangrum 1,500
-1939 Ralph Guldahl 279 −9 1 stroke Sam Snead 1,500
-1938 Henry Picard 285 −3 2 strokes Harry Cooper
-Ralph Guldahl 1,500
-1937 Byron Nelson 283 −5 2 strokes Ralph Guldahl 1,500
-1936 Horton Smith (2) 285 −3 1 stroke Harry Cooper 1,500
-1935 Gene Sarazen 282 −6 Playoff Craig Wood 1,500
-1934 Horton Smith 284 −4 2 strokes Craig Wood 1,500
-Record for score, to par, and margin of victory
-In the "Runner(s)-up" column, the names are sorted alphabetically, based on the last name of that year's runner(s)-up.
-The sudden-death format was adopted in 1976 , first used in 1979 , and revised in 2004 . [ 176 ]
-None of the 11 sudden-death playoffs has advanced past the second hole; four were decided at the first hole , seven at the second.
-Playoffs prior to 1976 were full 18-hole rounds, except for 1935 , which was 36 holes.
-None of the six full-round playoffs were tied at the end of the round; the closest margin was one stroke in 1942 and 1954 .
-The 1962 playoff included three players: Arnold Palmer (68), Gary Player (71), and Dow Finsterwald (77).
-The 1966 playoff included three players: Jack Nicklaus (70), Tommy Jacobs (72), and Gay Brewer (78).
-Low amateurs
+Main article: List of PGA Championship champions
+Stroke play era winners
 [ edit ]
-In 1952, the Masters began presenting an award, known as the Silver Cup, to the lowest-scoring amateur to make the cut. In 1954 they began presenting an amateur silver medal to the low amateur runner-up. There have been seven players to win low amateur and then go on to win the Masters as a professional. These players are Cary Middlecoff , Jack Nicklaus , Ben Crenshaw , Phil Mickelson , Tiger Woods , Sergio García , and Hideki Matsuyama .
-Year Low amateur To par Place
-1934 Charlie Yates +9 T21
-1935 Lawson Little E 6
-1936 Johnny Dawson +6 T9
-1937 Charlie Yates (2) +13 T26
-1938 Tommy Suffern Tailer +10 T18
-1939 Chick Harbert
-Charlie Yates (3) +8 T18
-1940 Charlie Yates (4) +5 T17
-1941 Dick Chapman +9 T19
-1942 Bud Ward
-Charlie Yates (5) +16 T28
-1943–1945 Cancelled due to World War II
-1946 Cary Middlecoff +5 T12
-1947 Frank Stranahan −5 T2
-1948 Skee Riegel +5 T13
-1949 Charles Coe
-Johnny Dawson (2) +7 T16
-1950 Frank Stranahan (2) +9 T14
-1951 Charles Coe (2) +5 T12
-1952 Chuck Kocsis +9 T14
-1953 Frank Stranahan (3)
-Harvie Ward +3 T14
-1954 Billy Joe Patton +2 3
-1955 Harvie Ward (2) +2 T8
-1956 Ken Venturi +2 2
-1957 Harvie Ward (3) E 4
-1958 Billy Joe Patton (2) E 8
-1959 Charles Coe (3) E 6
-1960 Jack Nicklaus
-Billy Joe Patton (3) +5 T13
-1961 Charles Coe (4) −7 T2
-1962 Charles Coe (5) E T9
-1963 Labron Harris Jr. +10 T32
-1964 Deane Beman
-Gary Cowan +3 T25
-1965 Downing Gray +6 T31
-1966 Jimmy Grant +11 T28
-1967 Downing Gray (2) +9 T36
-1968 Vinny Giles E T22
-1969 Bruce Fleisher +12 44
-1970 Charles Coe (6) +4 T23
-1971 Steve Melnyk +4 T24
-1972 Ben Crenshaw +7 T19
-1973 Ben Crenshaw (2) +7 T24
-1974 None made the cut
-1975 George Burns +4 T30
-1976 Curtis Strange +3 T15
-1977 Bill Sander +11 49
-1978 Lindy Miller −2 T16
-1979 Bobby Clampett +2 T23
-1980 Jay Sigel +1 T26
-1981 Jay Sigel (2) +6 T35
-1982 Jodie Mudd +6 T20
-1983 Jim Hallet +9 T40
-1984 Rick Fehr E T25
-1985 Sam Randolph +2 T18
-1986 Sam Randolph (2) +5 T36
-1987 Bob Lewis +21 54
-1988 Jay Sigel (3) +12 T39
-1989 None made the cut
-1990 Chris Patton +9 T39
-1991 Phil Mickelson +2 T46
-1992 Manny Zerman +6 T59
-1993 None made the cut
-1994 John Harris +17 T50
-1995 Tiger Woods +5 T41
-1996 None made the cut
-1997 None made the cut
-1998 Matt Kuchar E T21
-1999 Sergio García +7 T38
-2000 David Gossett +15 T54
-2001 None made the cut
-2002 None made the cut
-2003 Ricky Barnes +3 21
-2004 Casey Wittenberg E T13
-2005 Ryan Moore −1 T13
-2006 None made the cut
-2007 None made the cut
-2008 None made the cut
-2009 None made the cut
-2010 Matteo Manassero +4 T36
-2011 Hideki Matsuyama −1 T27
-2012 Patrick Cantlay +7 T47
-2013 Guan Tianlang +12 58
-2014 Oliver Goss +10 49
-2015 None made the cut
-2016 Bryson DeChambeau +5 T21
-2017 Stewart Hagestad +6 T36
-2018 Doug Ghim +8 T50
-2019 Viktor Hovland −3 T32
-2020 Andy Ogletree −2 T34
-2021 None made the cut
-2022 None made the cut
-2023 Sam Bennett −2 T16
-2024 Neal Shipley +12 T53
-2025 None made the cut
-2026 None made the cut
-Records for to par and place
+Year
+Winner
+Score
+To par
+Margin of
+victory
+Runner(s)-up
+Winner's
+share ($)
+Venue
+Location
+2026 Aaron Rai 271 −9 3 strokes Jon Rahm
+Alex Smalley 3,690,000 Aronimink Golf Club Newtown Square, Pennsylvania
+2025 Scottie Scheffler 273 −11 5 strokes Bryson DeChambeau
+Harris English
+Davis Riley 3,420,000 Quail Hollow Club Charlotte, North Carolina
+2024 Xander Schauffele 263 −21 1 stroke Bryson DeChambeau 3,330,000 Valhalla Golf Club Louisville, Kentucky
+2023 Brooks Koepka (3) 271 −9 2 strokes Viktor Hovland
+Scottie Scheffler 3,150,000 Oak Hill Country Club
+(East Course) Rochester, New York [ b ]
+2022 Justin Thomas (2) 275 −5 Playoff Will Zalatoris 2,700,000 Southern Hills Country Club Tulsa, Oklahoma
+2021 Phil Mickelson (2) 282 −6 2 strokes Brooks Koepka
+Louis Oosthuizen 2,160,000 Kiawah Island Golf Resort
+(Ocean Course) Kiawah Island, South Carolina
+2020 Collin Morikawa 267 −13 2 strokes Paul Casey
+Dustin Johnson 1,980,000 TPC Harding Park San Francisco, California
+2019 Brooks Koepka (2) 272 −8 2 strokes Dustin Johnson 1,980,000 Bethpage State Park
+( Black Course ) Farmingdale, New York
+2018 Brooks Koepka 264 −16 2 strokes Tiger Woods 1,980,000 Bellerive Country Club Town and Country, Missouri
+2017 Justin Thomas 276 −8 2 strokes Francesco Molinari
+Louis Oosthuizen
+Patrick Reed 1,890,000 Quail Hollow Club Charlotte, North Carolina
+2016 Jimmy Walker 266 −14 1 stroke Jason Day 1,800,000 Baltusrol Golf Club
+(Lower Course) Springfield, New Jersey
+2015 Jason Day 268 −20 3 strokes Jordan Spieth 1,800,000 Whistling Straits
+(Straits Course) Kohler, Wisconsin [ c ]
+2014 Rory McIlroy (2) 268 −16 1 stroke Phil Mickelson 1,800,000 Valhalla Golf Club Louisville, Kentucky
+2013 Jason Dufner 270 −10 2 strokes Jim Furyk 1,445,000 Oak Hill Country Club
+(East Course) Rochester, New York [ b ]
+2012 Rory McIlroy 275 −13 8 strokes David Lynn 1,445,000 Kiawah Island Golf Resort
+(Ocean Course) Kiawah Island, South Carolina
+2011 Keegan Bradley 272 −8 Playoff Jason Dufner 1,445,000 Atlanta Athletic Club
+(Highlands Course) Johns Creek, Georgia [ d ]
+2010 Martin Kaymer 277 −11 Playoff Bubba Watson 1,350,000 Whistling Straits
+(Straits Course) Kohler, Wisconsin [ c ]
+2009 Yang Yong-eun 280 −8 3 strokes Tiger Woods 1,350,000 Hazeltine National Golf Club Chaska, Minnesota
+2008 Pádraig Harrington 277 −3 2 strokes Ben Curtis
+Sergio García 1,350,000 Oakland Hills Country Club
+(South Course) Bloomfield, Michigan
+2007 Tiger Woods (4) 272 −8 2 strokes Woody Austin 1,260,000 Southern Hills Country Club Tulsa, Oklahoma
+2006 Tiger Woods (3) 270 −18 5 strokes Shaun Micheel 1,224,000 Medinah Country Club
+(Course No. 3) Medinah, Illinois
+2005 Phil Mickelson 276 −4 1 stroke Thomas Bjørn
+Steve Elkington 1,170,000 Baltusrol Golf Club
+(Lower Course) Springfield, New Jersey
+2004 Vijay Singh (2) 280 −8 Playoff Chris DiMarco
+Justin Leonard 1,125,000 Whistling Straits
+(Straits Course) Kohler, Wisconsin [ c ]
+2003 Shaun Micheel 276 −4 2 strokes Chad Campbell 1,080,000 Oak Hill Country Club
+(East Course) Rochester, New York [ b ]
+2002 Rich Beem 278 −10 1 stroke Tiger Woods 990,000 Hazeltine National Golf Club Chaska, Minnesota
+2001 David Toms 265 −15 1 stroke Phil Mickelson 936,000 Atlanta Athletic Club
+(Highlands Course) Duluth, Georgia [ d ]
+2000 Tiger Woods (2) 270 −18 Playoff Bob May 900,000 Valhalla Golf Club Louisville, Kentucky [ e ]
+1999 Tiger Woods 277 −11 1 stroke Sergio García 630,000 Medinah Country Club
+(Course No. 3) Medinah, Illinois
+1998 Vijay Singh 271 −9 2 strokes Steve Stricker 540,000 Sahalee Country Club Sammamish, Washington
+1997 Davis Love III 269 −11 5 strokes Justin Leonard 470,000 Winged Foot Golf Club
+(West Course) Mamaroneck, New York
+1996 Mark Brooks 277 −11 Playoff Kenny Perry 430,000 Valhalla Golf Club Louisville, Kentucky [ e ]
+1995 Steve Elkington 267 −17 Playoff Colin Montgomerie 360,000 Riviera Country Club Pacific Palisades, California [ f ]
+1994 Nick Price (2) 269 −11 6 strokes Corey Pavin 310,000 Southern Hills Country Club Tulsa, Oklahoma
+1993 Paul Azinger 272 −12 Playoff Greg Norman 300,000 Inverness Club Toledo, Ohio
+1992 Nick Price 278 −6 3 strokes John Cook
+Nick Faldo
+Jim Gallagher Jr.
+Gene Sauers 280,000 Bellerive Country Club St. Louis, Missouri [ g ]
+1991 John Daly 276 −12 3 strokes Bruce Lietzke 230,000 Crooked Stick Golf Club Carmel, Indiana
+1990 Wayne Grady 282 −6 3 strokes Fred Couples 225,000 Shoal Creek Golf & Country Club Birmingham, Alabama
+1989 Payne Stewart 276 −12 1 stroke Andy Bean
+Mike Reid
+Curtis Strange 200,000 Kemper Lakes Golf Club Kildeer, Illinois
+1988 Jeff Sluman 272 −12 3 strokes Paul Azinger 160,000 Oak Tree Golf Club Edmond, Oklahoma
+1987 Larry Nelson (2) 287 −1 Playoff Lanny Wadkins 150,000 PGA National Resort & Spa Palm Beach Gardens, Florida
+1986 Bob Tway 276 −8 2 strokes Greg Norman 145,000 Inverness Club Toledo, Ohio
+1985 Hubert Green 278 −6 2 strokes Lee Trevino 125,000 Cherry Hills Country Club Cherry Hills Village, Colorado
+1984 Lee Trevino (2) 273 −15 4 strokes Gary Player
+Lanny Wadkins 125,000 Shoal Creek Golf & Country Club Birmingham, Alabama
+1983 Hal Sutton 274 −10 1 stroke Jack Nicklaus 100,000 Riviera Country Club Pacific Palisades, California [ f ]
+1982 Raymond Floyd (2) 272 −8 3 strokes Lanny Wadkins 65,000 Southern Hills Country Club Tulsa, Oklahoma
+1981 Larry Nelson 273 −7 4 strokes Fuzzy Zoeller 60,000 Atlanta Athletic Club
+(Highlands Course) Duluth, Georgia [ d ]
+1980 Jack Nicklaus (5) 274 −6 7 strokes Andy Bean 60,000 Oak Hill Country Club
+(East Course) Rochester, New York [ b ]
+1979 David Graham 272 −8 Playoff Ben Crenshaw 60,000 Oakland Hills Country Club
+(South Course) Bloomfield, Michigan
+1978 John Mahaffey 276 −8 Playoff Jerry Pate
+Tom Watson 50,000 Oakmont Country Club Plum, Pennsylvania
+1977 Lanny Wadkins 282 −6 Playoff Gene Littler 45,000 Pebble Beach Golf Links Pebble Beach, California
+1976 Dave Stockton (2) 281 +1 1 stroke Raymond Floyd
+Don January 45,000 Congressional Country Club
+(Blue Course) Bethesda, Maryland
+1975 Jack Nicklaus (4) 276 −4 2 strokes Bruce Crampton 45,000 Firestone Country Club
+(South Course) Akron, Ohio
+1974 Lee Trevino 276 −4 1 stroke Jack Nicklaus 45,000 Tanglewood Park
+(Championship Course) Clemmons, North Carolina
+1973 Jack Nicklaus (3) 277 −7 4 strokes Bruce Crampton 45,000 Canterbury Golf Club Beachwood, Ohio
+1972 Gary Player (2) 281 +1 2 strokes Tommy Aaron
+Jim Jamieson 45,000 Oakland Hills Country Club
+(South Course) Bloomfield Hills, Michigan
+1971 Jack Nicklaus (2) 281 −7 2 strokes Billy Casper 40,000 PGA National Golf Club Palm Beach Gardens, Florida
+1970 Dave Stockton 279 −1 2 strokes Bob Murphy
+Arnold Palmer 40,000 Southern Hills Country Club Tulsa, Oklahoma
+1969 Raymond Floyd 276 −8 1 stroke Gary Player 35,000 NCR Country Club
+(South Course) Dayton, Ohio
+1968 Julius Boros 281 +1 1 stroke Bob Charles
+Arnold Palmer 25,000 Pecan Valley Golf Club San Antonio, Texas
+1967 Don January 281 −7 Playoff Don Massengale 25,000 Columbine Country Club Columbine Valley, Colorado
+1966 Al Geiberger 280 E 4 strokes Dudley Wysong 25,000 Firestone Country Club
+(South Course) Akron, Ohio
+1965 Dave Marr 280 −4 2 strokes Billy Casper
+Jack Nicklaus 25,000 Laurel Valley Golf Club Ligonier, Pennsylvania
+1964 Bobby Nichols 271 −9 3 strokes Jack Nicklaus
+Arnold Palmer 18,000 Columbus Country Club Columbus, Ohio
+1963 Jack Nicklaus 279 −5 2 strokes Dave Ragan 13,000 Dallas Athletic Club
+(Blue Course) Dallas, Texas
+1962 Gary Player 278 −2 1 stroke Bob Goalby 13,000 Aronimink Golf Club Newtown Square, Pennsylvania
+1961 Jerry Barber 277 −3 Playoff Don January 11,000 Olympia Fields Country Club Olympia Fields, Illinois
+1960 Jay Hebert 281 +1 1 stroke Jim Ferrier 11,000 Firestone Country Club
+(South Course) Akron, Ohio
+1959 Bob Rosburg 277 −3 1 stroke Jerry Barber
+Doug Sanders 8,250 Minneapolis Golf Club St. Louis Park, Minnesota
+1958 Dow Finsterwald 276 −4 2 strokes Billy Casper 5,500 Llanerch Country Club Havertown, Pennsylvania
+Match play era winners
+[ edit ]
+Year Winner Score Runner-up Winners
+share ($) Venue Location
+1957 Lionel Hebert 2 and 1 Dow Finsterwald 8,000 Miami Valley Country Club Dayton, Ohio
+1956 Jack Burke Jr. 3 and 2 Ted Kroll 5,000 Blue Hill Country Club Canton, Massachusetts
+1955 Doug Ford 4 and 3 Cary Middlecoff 5,000 Meadowbrook Country Club Northville, Michigan
+1954 Chick Harbert 4 and 3 Walter Burkemo 5,000 Keller Golf Course Maplewood, Minnesota
+1953 Walter Burkemo 2 and 1 Felice Torza 5,000 Birmingham Country Club Birmingham, Michigan
+1952 Jim Turnesa 1 up Chick Harbert 3,500 Big Spring Country Club Louisville, Kentucky
+1951 Sam Snead (3) 7 and 6 Walter Burkemo 3,500 Oakmont Country Club Plum, Pennsylvania
+1950 Chandler Harper 4 and 3 Henry Williams Jr. 3,500 Scioto Country Club Columbus, Ohio
+1949 Sam Snead (2) 3 and 2 Johnny Palmer 3,500 Hermitage Country Club Richmond, Virginia
+1948 Ben Hogan (2) 7 and 6 Mike Turnesa 3,500 Norwood Hills Country Club St. Louis, Missouri
+1947 Jim Ferrier 2 and 1 Chick Harbert 3,500 Plum Hollow Country Club Southfield, Michigan
+1946 Ben Hogan 6 and 4 Ed Oliver 3,500 Portland Golf Club Portland, Oregon
+1945 Byron Nelson (2) 4 and 3 Sam Byrd 3,750 Moraine Country Club Kettering, Ohio
+1944 Bob Hamilton 1 up Byron Nelson 3,500 Manito Golf & Country Club Spokane, Washington
+1943: No tournament due to World War II
+1942 Sam Snead 2 and 1 Jim Turnesa 1,000 Seaview Country Club Atlantic City, New Jersey
+1941 Vic Ghezzi 38 holes Byron Nelson 1,100 Cherry Hills Country Club Cherry Hills Village, Colorado
+1940 Byron Nelson 1 up Sam Snead 1,100 Hershey Country Club
+(West Course) Hershey, Pennsylvania
+1939 Henry Picard 37 holes Byron Nelson 1,100 Pomonok Country Club Flushing, New York
+1938 Paul Runyan (2) 8 and 7 Sam Snead 1,100 The Shawnee Inn & Golf Resort Smithfield Township, Pennsylvania
+1937 Denny Shute (2) 37 holes Harold McSpaden 1,000 Pittsburgh Field Club O'Hara Township, Pennsylvania
+1936 Denny Shute 3 and 2 Jimmy Thomson 1,000 Pinehurst Resort
+(No. 2 Course) Pinehurst, North Carolina
+1935 Johnny Revolta 5 and 4 Tommy Armour 1,000 Twin Hills Golf & Country Club Oklahoma City, Oklahoma
+1934 Paul Runyan 38 holes Craig Wood 1,000 The Park Country Club Williamsville, New York
+1933 Gene Sarazen (3) 5 and 4 Willie Goggin 1,000 Blue Mound Golf & Country Club Wauwatosa, Wisconsin
+1932 Olin Dutra 4 and 3 Frank Walsh 1,000 Keller Golf Course Maplewood, Minnesota
+1931 Tom Creavy 2 and 1 Denny Shute 1,000 Wannamoisett Country Club Rumford, Rhode Island
+1930 Tommy Armour [ h ] 1 up Gene Sarazen Fresh Meadow Country Club Queens, New York
+1929 Leo Diegel (2) 6 and 4 Johnny Farrell Hillcrest Country Club Los Angeles, California
+1928 Leo Diegel 6 and 5 Al Espinosa Baltimore Country Club
+(East Course) Timonium, Maryland
+1927 Walter Hagen (5) 1 up Joe Turnesa Cedar Crest Dallas, Texas
+1926 Walter Hagen (4) 5 and 3 Leo Diegel Salisbury
+(Red Course) East Meadow, New York
+1925 Walter Hagen (3) 6 and 5 Bill Mehlhorn Olympia Fields Country Club Olympia Fields, Illinois
+1924 Walter Hagen (2) 2 up Jim Barnes French Lick Springs
+(Hill Course) French Lick, Indiana
+1923 Gene Sarazen (2) 38 holes Walter Hagen Pelham Country Club Pelham Manor, New York
+1922 Gene Sarazen 4 and 3 Emmet French 500 Oakmont Country Club Plum, Pennsylvania
+1921 Walter Hagen 3 and 2 Jim Barnes 500 Inwood Country Club Inwood, New York
+1920 Jock Hutchison [ h ] 1 up J. Douglas Edgar 500 Flossmoor Country Club Flossmoor, Illinois
+1919 Jim Barnes (2) 6 and 5 Fred McLeod 500 Engineers Country Club Roslyn Harbor, New York
+1917–18: No tournament due to World War I
+1916 Jim Barnes 1 up Jock Hutchison 500 Siwanoy Country Club Bronxville, New York
+Source: [ 29 ]
+Match play era details
+[ edit ]
+The table below lists the field sizes and qualification methods for the match play era. All rounds were played over 36 holes except as noted in the table. [ 30 ]
+Years Field size Qualification 18 hole rounds
+1916–21 32 sectional*
+1922 64 sectional 1st two rounds
+1923 64 sectional
+1924–34 32 36 hole qualifier
+1935–41 64 36 hole qualifier 1st two rounds
+1942–45 32 36 hole qualifier
+1946–55 64 36 hole qualifier 1st two rounds
+1956 128 sectional 1st four rounds
+1957 128 sectional 1st four rounds, consolation matches (3rd-8th place)
+* In 1921, the field consisted of the defending champion and the top 31 qualifiers from the 1921 U.S. Open .
+Summary by course, state and region
+[ edit ]
+Summary by course, state and region
+Course
+Number
+State
+Number
+Region
+Number
+Blue Hill Country Club
+1
+Massachusetts
+1
+New England
+2
+Wannamoisett Country Club
+1
+Rhode Island
+1
+Baltusrol Golf Club
+2
+New Jersey
+3
+Mid-Atlantic
+27
+Seaview Country Club
+1
+Bethpage Black Course
+1
+New York
+14
+Engineers Country Club
+1
+Fresh Meadow Country Club
+1
+Inwood Country Club
+1
+Oak Hill Country Club
+4
+Pelham Country Club
+1
+Pomonok Country Club
+1
+Salisbury Golf Club
+1
+Siwanoy Country Club
+1
+The Park Country Club
+1
+Winged Foot Golf Club
+1
+Aronimink Golf Club
+2
+Pennsylvania
+10
+Hershey Country Club
+1
+Laurel Valley Golf Club
+1
+Llanerch Country Club
+1
+Oakmont Country Club
+3
+Pittsburgh Field Club
+1
+The Shawnee Inn & Golf Resort
+1
+PGA National Golf Club
+1
+Florida
+1
+South Atlantic
+13
+Atlanta Athletic Club
+3
+Georgia
+3
+Baltimore Country Club
+1
+Maryland
+2
+Congressional Country Club
+1
+Pinehurst Resort
+1
+North Carolina
+4
+Quail Hollow
+2
+Tanglewood Park
+1
+Kiawah Island Golf Resort
+2
+South Carolina
+2
+Hermitage Country Club
+1
+Virginia
+1
+Shoal Creek Golf and Country Club
+2
+Alabama
+2
+East South Central
+7
+Big Spring Country Club
+1
+Kentucky
+5
+Valhalla Golf Club
+4
+Oak Tree Golf Club
+1
+Oklahoma
+7
+West South Central
+10
+Southern Hills Country Club
+5
+Twin Hills Golf & Country Club
+1
+Cedar Crest Country Club
+1
+Texas
+3
+Dallas Athletic Club
+1
+Pecan Valley Golf Club
+1
+Flossmoor Country Club
+1
+Illinois
+6
+East North Central
+29
+Kemper Lakes Golf Club
+1
+Medinah Country Club
+2
+Olympia Fields Country Club
+2
+Crooked Stick Golf Club
+1
+Indiana
+2
+French Lick Springs Resort
+1
+Birmingham Country Club
+1
+Michigan
+6
+Meadowbrook Country Club
+1
+Oakland Hills Country Club
+3
+Plum Hollow Country Club
+1
+Canterbury Golf Club
+1
+Ohio
+11
+Columbus Country Club
+1
+Firestone Country Club
+3
+Inverness Club
+2
+Miami Valley Golf Club
+1
+Moraine Country Club
+1
+NCR Country Club
+1
+Scioto Country Club
+1
+Blue Mound Golf & Country Club
+1
+Wisconsin
+4
+Whistling Straits
+3
+Hazeltine National Golf Club
+2
+Minnesota
+5
+West North Central
+8
+Keller Golf Course
+2
+Minneapolis Golf Club
+1
+Bellerive Country Club
+2
+Missouri
+3
+Norwood Hills Country Club
+1
+Cherry Hills Country Club
+2
+Colorado
+3
+Mountain
+3
+Columbine Country Club
+1
+Hillcrest Country Club
+1
+California
+5
+Pacific
+8
+Pebble Beach Golf Links
+1
+Riviera Country Club
+2
+TPC Harding Park
+1
+Portland Golf Club
+1
+Oregon
+1
+Manito Golf and Country Club
+1
+Washington
+2
+Sahalee Country Club
+1
 Records
 [ edit ]
-Jack Nicklaus has won the most Masters, with six wins
-Jack Nicklaus has won the most Masters (six) and was 46 years, 82 days old when he won in 1986, making him the oldest winner of the Masters. [ 31 ] Nicklaus is the record holder for the most top tens, with 22, and the most cuts made, with 37. [ 27 ] [ 177 ] The youngest winner of the Masters is Tiger Woods , who was 21 years, 104 days old when he won in 1997. In that year, Woods also broke the records for the widest winning margin (12 strokes), and the lowest winning score, with 270 (−18). Jordan Spieth tied his score record in 2015. Dustin Johnson broke the record in 2020 with a 268 (−20). [ 178 ]
-In 2013, Guan Tianlang became the youngest player to compete in the Masters, at age 14 years, 168 days on the opening day of the tournament; [ 179 ] the following day, he became the youngest to make the cut at the Masters or any men's major championship. [ 180 ]
-Justin Rose holds the record for the most times having led the tournament field after the first round, having done it 5 times. These were achieved in 2004 , 2007 , 2008 , 2021 and 2025 .
-In 2020, Australian Cameron Smith became the first golfer in Masters history to shoot all four rounds in the 60s (67, 68, 69, 69), finishing at 15 under par, en route to a tie for second-place finish with Sungjae Im .
-Gary Player holds the record for most appearances, with 52. Tiger Woods holds the record for consecutive cuts made with 24 between 1997 and 2024; he did not compete in 2014, 2016, 2017, and 2021. [ 181 ] In 2023, Fred Couples became the oldest player to make the cut, doing so at age 63 years, 186 days . [ 182 ]
-Nick Price and Greg Norman share the course record of 63, with their rounds coming in 1986 and 1996 respectively.
-The highest winning score of 289 (+1) has occurred three times: Sam Snead in 1954, Jack Burke Jr. in 1956, and Zach Johnson in 2007. Anthony Kim holds the record for most birdies in a round with 11 in 2009 during his second round. [ 178 ]
-There have been only four double eagles carded in the history of the Masters; the latest was by a contender in the fourth round in 2012. In the penultimate pairing with eventual champion Bubba Watson , Louis Oosthuizen 's 260-yard (238 m) downhill 4 iron from the fairway made the left side of the green at the par-5 second hole, called Pink Dogwood, rolled downhill, and in. [ 183 ] The other two occurrences of this feat after Sarazen's double eagle on the course's Fire Thorn hole in 1935: Bruce Devlin made double eagle from 248 yards (227 m) out with a 4-wood at the eighth hole (Yellow Jasmine) in the first round in 1967, while Jeff Maggert hit a 3-iron 222 yards (203 m) at the 13th hole (Azalea) in the fourth round in 1994. [ 184 ]
-Three players share the record for most runner-up finishes with four – Ben Hogan (1942, 1946, 1954, 1955), Tom Weiskopf (1969, 1972, 1974, 1975), and Jack Nicklaus (1964, 1971, 1977, 1981). Nicklaus and Tiger Woods are the only golfers to have won the Masters in three separate decades.
-The highest official score in a round was 95 by Charles Kunkle in 1956 and the highest unofficial score was 106 by Billy Casper in 2005 (he refused to hand in his scorecard to avoid holding the record). [ 185 ]
+Most wins: 5, Jack Nicklaus , Walter Hagen [ 31 ]
+Most runner-up finishes: 4, Jack Nicklaus [ 32 ]
+Oldest winner: Phil Mickelson in 2021 (50 years, 11 months) [ 33 ]
+Youngest winner: Gene Sarazen in 1922 (20 years, 174 days) [ 34 ]
+Greatest winning margin in the match play era: Paul Runyan beat Sam Snead 8 & 7 in 1938 [ 35 ]
+Greatest winning margin in the stroke play era: 8 strokes, Rory McIlroy in 2012 [ 36 ]
+Lowest absolute 72-hole score: 264, Brooks Koepka (69-63-66-66), 2018 [ 37 ]
+Lowest 72-hole score in relation to par: −20, Jason Day (68-67-66-67=268) in 2015 [ 38 ]
+This is the lowest score in relation to par at any major championship.
+Koepka's 2018 score was −16. The 2018 site, Bellerive Country Club, played to par 70, while the 2015 site, the Straits Course at Whistling Straits, played to par 72. (Bellerive played to par 71 when it hosted in 1992, and the Straits Course also played to par 72 when it hosted in 2004 and 2010.)
+Lowest 18-hole score: 62 – Xander Schauffele , 1st round, 2024 [ 39 ]
+Most frequent venues:
+5 PGA Championships: Southern Hills Country Club – 1970, 1982, 1994, 2007, 2022
+4 PGA Championships: Oak Hill Country Club , East Course – 1980, 2003, 2013, 2023
+4 PGA Championships: Valhalla Golf Club – 1996, 2000, 2014, 2024
+3 PGA Championships: Atlanta Athletic Club , Highlands Course – 1981, 2001, 2011
+3 PGA Championships: Firestone Country Club , South Course – 1960, 1966, 1975
+3 PGA Championships: Oakland Hills Country Club , South Course – 1972, 1979, 2008
+3 PGA Championships: Oakmont Country Club – 1922, 1951, 1978
+3 PGA Championships: Whistling Straits , Straits Course – 2004, 2010, 2015
 Broadcasting
 [ edit ]
-Main article: History of Masters Tournament broadcasting
-A sign at the Masters indicating an area for broadcast workers
-United States television
+Further information: List of PGA Championship broadcasters
+The PGA Championship is televised in the United States by CBS and ESPN . Beginning 2020, ESPN holds rights to early-round and weekend morning coverage, and will air supplemental coverage through its digital subscription service ESPN+ prior to weekday coverage and during weekend broadcast windows. CBS holds rights to weekend-afternoon coverage. Both contracts run through 2030, with ESPN's contract replacing a prior agreement with TNT . CBS has televised the PGA Championship since 1991, when it replaced ABC . [ 40 ] [ 41 ] [ 42 ] The ESPN telecasts are co-produced with CBS Sports , mirroring the broadcast arrangements used by ESPN for the Masters Tournament . [ 43 ]
+Future sites
 [ edit ]
-Network Years of broadcast
-CBS ( Paramount+ ) 1956 –present
-USA Network 1982 – 2007
-ESPN ( ESPN+ ) 2008 –present
-Amazon Prime Video 2026 –present
-NBC acquired the radio rights to the Masters from CBS in the 1940s, which also included television coverage, but never opted to televise the tournament. After years of pressure from Clifford Roberts to air the Masters on TV, NBC instead decided not to renew its contract. CBS then picked up the Masters again and broadcast the 1956 Masters Tournament on TV to 10 million viewers. [ 9 ]
-CBS has televised the Masters in the United States every year since 1956, [ 186 ] when it used six cameras and covered only the final four holes. Tournament coverage of the first eight holes did not begin until 1993 because of resistance from the tournament organizers, but by 2006, more than 50 cameras were used. Chairman Jack Stephens felt that the back nine was always more "compelling", increased coverage would increase the need for sponsorship spending, and that broadcasting the front nine of the course on television would cut down on attendance and television viewership for the tournament. [ 186 ] [ 187 ] [ 188 ] USA Network added first- and second-round coverage in 1982. [ 189 ] In 2008, ESPN replaced USA as broadcaster of early-round coverage. These broadcasts use the CBS Sports production staff and commentators, but with ESPN personality Scott Van Pelt (succeeding Mike Tirico , who replaced Bill Macatee 's similar role under USA Network) as studio host, as well as Curtis Strange as studio analyst. [ 190 ] [ 189 ] [ 191 ] CBS carries two 15-minute highlight programs in late night covering the first and second rounds, which airs after their affiliates' late night local newscasts .
-In 2005, CBS broadcast the tournament with high-definition fixed and handheld wired cameras, as well as standard-definition wireless handheld cameras. In 2006, a webcast called "Amen Corner Live" began providing coverage of all players passing through holes 11, 12, and 13 through all four rounds. [ 192 ] This was the first full tournament multi-hole webcast from a major championship. In 2007, CBS added "Masters Extra," an extra hour of full-field bonus coverage daily on the internet, preceding the television broadcasts. In 2008, CBS added full coverage of holes 15 and 16 live on the web. In 2011, "Masters Extra" was dropped after officials gave ESPN an extra hour each day on Thursday and Friday. In 2016, the Amen Corner feed was broadcast in 4K ultra high definition exclusively on DirecTV —as one of the first live U.S. sports telecasts in the format. [ 193 ] [ 194 ] A second channel of 4K coverage covering holes 15 and 16 was added in 2017, [ 195 ] and this coverage was produced with high-dynamic-range (HDR) color in 2018. [ 196 ] In 2025, Paramount+ began streaming two-hour blocks of third- and final-round coverage preceding CBS television coverage. [ 197 ] In 2026, Amazon Prime Video similarly began streaming two-hour blocks of early-round coverage preceding ESPN's television coverage. [ 198 ]
-While Augusta National Golf Club has consistently chosen CBS as its U.S. broadcast partner, it has done so in successive one-year contracts. [ 102 ] Former CBS Sports president Neal Pilson stated that their relationship had gotten to the point where the contracts could be negotiated in just hours. [ 186 ] Due to the lack of long-term contractual security, as well as the club's limited dependence on broadcast rights fees (owing to its affluent membership), it is widely held that CBS allows Augusta National greater control over the content of the broadcast, or at least performs some form of self-censorship , in order to maintain future rights. The club has insisted it does not make any demands with respect to the content of the broadcast. [ 199 ] [ 200 ] Despite this, announcers who have been deemed not to have acted with the decorum expected by the club have been removed, notably Jack Whitaker and Gary McCord , [ 199 ] and there also tends to be a lack of discussion of any controversy involving Augusta National, such as the 2003 Martha Burk protests. [ 200 ]
-The coverage itself carries a more formal style than other golf telecasts; announcers refer to the gallery as patrons rather than as spectators or fans . Gallery itself is also used. [ 201 ] The club also disallows promotions for other network programs, or other forms of sponsored features. [ 201 ] Significant restrictions have been placed on the tournament's broadcast hours compared to other major championships. Only in the 21st century did the tournament allow CBS to air 18-hole coverage of the leaders, a standard at the other three majors. [ 199 ] Since 1982, CBS has used "Augusta" by Dave Loggins as the event telecast's distinctive theme music. Loggins originally came up with the song during his first trip to the Augusta course in 1981. [ 202 ]
-Sponsorship
+Year Edition Course Location Dates Hosted
+2027 109th PGA Frisco [ 44 ] Frisco, Texas May 20–23 Never
+2028 110th Olympic Club [ 45 ] San Francisco, California May 18–21 Never
+2029 111th Baltusrol Golf Club Springfield, New Jersey May 17–20 2005 , 2016
+2030 112th Congressional Country Club [ 46 ] Bethesda, Maryland TBD 1976
+2031 113th Kiawah Island Golf Resort [ 47 ] Kiawah Island, South Carolina TBD 2012 , 2021
+2032 114th Southern Hills Country Club [ 48 ] Tulsa, Oklahoma TBD 1970 , 1982 , 1994 , 2007 , 2022
+2033 115th Bethpage State Park Black Course [ 49 ] Farmingdale, New York TBD 2019
+2034 116th PGA Frisco Frisco, Texas TBD 2027
+2035 117th Oak Hill Country Club [ 49 ] Pittsford, New York TBD 1980 , 2003 , 2013 , 2023
+Source: [ 50 ]
+See also
 [ edit ]
-The club mandates minimal commercial interruption, currently limited to four minutes per hour (as opposed to the usual 12 or more). This is subsidized by sponsorship packages to a small number of companies – as of 2025 [ update ] , these "Champion Partners" are AT&T , Bank of America , IBM , and Mercedes-Benz . [ 201 ] The club also sells separate sponsorship packages, which do not provide rights to air commercials on the U.S. telecasts, to three "Tournament Partners"; as of 2025, those companies are Delta Air Lines , Rolex , and UPS (the last of which replaced Mercedes-Benz upon that company's elevation to "Champion Partner" status). [ 203 ] [ 204 ]
-During CBS's first couple Masters TV broadcasts in 1956 and 1957, the network failed to attract a sponsor. In 1958, Augusta National brought on American Express as a sponsor through 1962, when it was replaced by Cluett Peabody & Company ; Cadillac took over in 1969. Travelers became a sponsor in 1959. (All of these companies, or their parent companies, were run by ANGC members.) These sponsors were encouraged to film commercials on the grounds of Augusta National. [ 9 ]
-AT&T (then SBC) and IBM sponsored the tournament from 2005, joined at first by ExxonMobil , which in 2014 was replaced as a global sponsor by Mercedes-Benz, [ 203 ] and joined by Bank of America in 2025. [ 204 ] In 2002, in the wake of calls to boycott tournament sponsors over the Martha Burk controversy, club chairman Hootie Johnson suspended all television sponsorship of the 2003 tournament. He argued that it was "unfair" to have the Masters' sponsors become involved with the controversy by means of association with the tournament , as their sponsorship is of the Masters and not Augusta National itself. CBS agreed to split production costs for the tournament with the club to make up for the lack of sponsorship. After the arrangement continued into 2004, the tournament reinstated sponsorships for 2005, with the new partners of ExxonMobil, IBM, and SBC. [ 205 ] [ 206 ]
-Radio coverage
-[ edit ]
-The first tournament in 1934, broadcast by CBS, was the first golf tournament aired nationally in the US; Roberts saw this as an advertising opportunity. [ 9 ] CBS declined to renew its contract in the early 1940s, and NBC took over radio broadcasts.
-Historically, network radio coverage of the Masters Tournament in the United States was provided for decades by Westwood One and its predecessors, including CBS News Radio and Dial Global . During Masters week, Westwood One syndicated live hole-by-hole coverage to affiliate stations, along with regular leaderboard updates and a nightly review program known as "The Masters Tonight". [ 207 ]
-Since 2021, SiriusXM has been the exclusive audio broadcaster of the Masters Tournament, producing and presenting live play-by-play audio coverage of all four rounds, pre-round and recap programming, and special event coverage on its PGA Tour Radio channel, which temporarily rebrands to "Masters Radio" for the week of the tournament. [ 208 ] [ 209 ]
-The current SiriusXM broadcast team features lead play-by-play announcers and on-course reporters covering the action around Augusta National Golf Club, and Masters Radio also includes related programming such as tournament specials and ancillary event coverage. [ 210 ]
-International television
-[ edit ]
-TV broadcast booths
-The first UK live coverage of the event was in 1984 when Channel 4 aired coverage of the closing moments of the 3rd and 4th rounds. Channel 4 repeated this level of coverage in 1985. The rights then transferred to the BBC which also initially only provided coverage of the 3rd and 4th rounds. With the 2007 launch of BBC HD , UK viewers were able to watch the championship in that format. BBC Sport held the exclusive TV and radio rights through to 2010. [ 211 ] The BBC's coverage airs without commercials because it is financed by a licence fee . From the 2011 Masters, Sky Sports began broadcasting all four days, as well as the par 3 contest in HD and, for the first time, in 3D. The BBC continued to air live coverage of the weekend rounds in parallel with Sky until 2019, when it was announced that Sky will hold exclusive rights to live coverage of all four rounds beginning 2020. The BBC will only hold rights to delayed highlights. With its loss of live rights to the Open Championship to Sky in 2016, it marks the first time since 1955 that the BBC no longer holds any rights to live professional golf. [ 212 ] [ 213 ] [ 214 ] although the Corporation continues to provide live radio commentary on BBC Radio 5 Live .
-In Ireland, Setanta Ireland previously showed all four rounds, and now since 2017 Eir Sport broadcast all four rounds live having previously broadcast the opening two rounds with RTÉ broadcasting the weekend coverage. [ 215 ] After Eir Sport's closure in 2021, Sky Sports will broadcast the event exclusively in Ireland for the first time, like in the UK. [ 216 ]
-In Canada , broadcast rights to the Masters are held by Bell Media , with coverage divided between TSN (cable), which carries live simulcasts and primetime encores of CBS and ESPN coverage for all four rounds, CTV (broadcast), which simulcasts CBS's coverage of the weekend rounds, and RDS , which carries French-language coverage. Prior to 2013, Canadian broadcast rights were held by a marketing company, Graham Sanborn Media, [ 217 ] which in turn bought time on the Global Television Network , TSN, and RDS (except for 2012 when French-language coverage aired on TVA and TVA Sports ) to air the broadcasts, also selling all of the advertising for the Canadian broadcasts. This was an unusual arrangement in Canadian sports broadcasting, as in most cases broadcasters acquire their rights directly from the event organizers or through partnerships with international rightsholders, such as ESPN International (ESPN owns a minority stake in TSN). In 2013, Global and TSN began selling advertising directly, and co-produced supplemental programs covering the tournament (while still carrying U.S. coverage for the tournament itself). [ 218 ] [ 219 ]
-On December 15, 2015, TSN parent company Bell Media announced that it had acquired exclusive Canadian rights to the tournament beginning 2016 under a multi-year deal. Broadcast television coverage moved to co-owned broadcast network CTV, while TSN uses its expanded five-channel service to carry supplemental feeds (including the Amen Corner feed and early coverage of each round) that were previously exclusive to digital platforms. [ 220 ] [ 221 ]
-In France , the Masters is broadcast live on Canal+ and Canal+ Sport .
-In 53 countries, including much of Latin America, broadcast rights for the entire tournament are held by the ESPN International networks. [ 222 ]
-Other
-[ edit ]
-The Masters has an app developed by IBM as a "365-day operation" for its development team. [ 223 ]
-In 2025, ANGC introduced Mornings @ The Masters , a 45-minute daily live-streamed show focused on culture and lifestyle, featuring influencers Hally Leadbetter and Roger Steele, co-produced with CBS Sports, and broadcast on YouTube . [ 224 ]
+Golf in the United States
 Notes
 [ edit ]
-↑ An exception is the 2020 Masters Tournament , which was played in November after the suspension of the 2019–20 PGA Tour due to the COVID-19 pandemic .
-↑ The tournament was officially renamed the 'Masters Tournament' in 1939 , although it was informally called 'the Masters' from the beginning. [ 5 ]
-Further reading
-[ edit ]
-Bantock, Jack (April 5, 2023). "For nearly 50 years, only Black men caddied The Masters. One day, they all but vanished" . CNN .
+1 2 Scoring record for all major championships.
+1 2 3 4 The club has a Rochester postal address, but is located in the adjacent town of Pittsford .
+1 2 3 The course has a Kohler postal address, but is located in the unincorporated community of Haven .
+1 2 3 The club is in a portion of the postal area of Duluth that became part of the newly incorporated city of Johns Creek in 2006. Although the club continues to be served by the Duluth post office, it now states its postal address as Johns Creek.
+1 2 At that time, the club had a Louisville postal address, but was located in unincorporated Jefferson County . In 2003, the governments of Louisville and Jefferson County merged, putting the club within the political boundaries of Louisville.
+1 2 Pacific Palisades is a neighborhood in Los Angeles with its own postal identity.
+↑ The club has a St. Louis postal address, but is located in the suburb of Town and Country .
+1 2 These players were British born, but they were based in the United States when they won the PGA Championship, and they became U.S. citizens: Tommy Armour – Born in Scotland but moved to the U.S. in the early 1920s and became a U.S. citizen in 1942. Jock Hutchison – Born in Scotland. He became a U.S. citizen in 1920.
 References
 [ edit ]
-1 2 3 4 "2014 Masters Preview" . Sports Network. April 9, 2014. Archived from the original on April 15, 2014 . Retrieved April 14, 2014 .
-↑ Bacon, Shane (July 16, 2012). "British Open or Open Championship? The debate stops now" . CBS Sports . Archived from the original on November 7, 2020 . Retrieved July 18, 2017 .
-↑ Ryan, Shane (July 14, 2015). "Americans: It's okay to call this major "The British Open," and don't let anyone tell you otherwise" . Golf Digest . Archived from the original on November 11, 2020 . Retrieved July 18, 2017 .
-1 2 3 4 5 6 7 "Masters Milestones" . Masters.org . Archived from the original on April 16, 2019 . Retrieved February 9, 2016 .
-↑ "Jones vies with stars in comeback" . Pittsburgh-Post Gazette . Associated Press. March 22, 1934. p. 19.
-↑ "Signature Events" . PGA TOUR, Inc . Retrieved April 4, 2026 .
-↑ Brodie Brazil (April 11, 2025). All 15 Rare PERKS for the Masters Champion . Retrieved April 14, 2025 – via YouTube.
-↑ Kelley, Brent. "Do Masters Champions Get to Keep the Green Jacket?" . About.com . Archived from the original on December 5, 2016 . Retrieved April 10, 2012 .
-1 2 3 4 5 6 7 8 9 10 11 Owen, David (1999). The Making of the Masters: Clifford Roberts, Augusta National, and Golf's Most Prestigious Tournament . Simon & Schuster. ISBN 978-0-684-85729-9 .
-↑
-Sampson, Curt (1999). The Masters: Golf, Money, and Power in Augusta, Georgia . New York City: Villard Books . p. 22. ISBN 0375753370 .
-1 2 Boyette, John (April 3, 2006). "Augusta National's natural beauty was born in nursery" . Augusta Chronicle . Archived from the original on August 21, 2014 . Retrieved August 27, 2012 .
-↑ "History of the Club" . Masters.org . Archived from the original on January 19, 2008 . Retrieved January 22, 2008 .
-↑ "The Augusta National Golf Club" . February 8, 2012. Archived from the original on March 27, 2011 . Retrieved April 8, 2012 .
-↑ Cunningham, Kevin (January 8, 2026). "Masters ticket prices are increasing for 2026. Here's how much" . Golf.com . Retrieved March 9, 2026 .
-↑ Although front and back are the terms more commonly used, for the Masters they are called the "first" and "second" nines
-↑ Boyette, John (April 10, 2002). "With 1 shot, Sarazen gave Masters fame" . The Augusta Chronicle . Archived from the original on April 7, 2008 . Retrieved April 13, 2008 .
-1 2 3 4 5 6 7 8 9 10 11 12 13 14 "Past Winners & Results" . Archived from the original on October 30, 2020 . Retrieved February 9, 2016 .
-↑ "Guldahl wins Augusta cup" . Spokesman-Review . Spokane, Washington. Associated Press. April 3, 1939. p. 8.
-↑ "Masters Declared Number One Event" . The Macon Telegraph and News . Macon, Georgia. Associated Press. March 17, 1940. p. 9 . Retrieved April 18, 2025 – via Newspapers.com.
-1 2 3 4 Michaux, Scott (April 1, 2021). "The Masters used to beg for patrons. Here's how and when that changed" . Golf.com .
-↑ Eubanks, Steve (1997). Augusta: Home of the Masters Tournament . Nashville, Tennessee: Rutledge Hill Press . ISBN 1558534695 .
-↑ "1963: Jack Nicklaus wins second pro Masters" . The Augusta Chronicle . March 22, 2012. Archived from the original on October 31, 2020 . Retrieved January 25, 2008 .
-↑ "1965: Nicklaus wins by nine to shatter Masters record" . The Augusta Chronicle . March 22, 2012. Archived from the original on October 31, 2020 . Retrieved October 7, 2014 .
-1 2 "1966: Jack Nicklaus first to win consecutive Masters" . The Augusta Chronicle . March 22, 2012. Archived from the original on October 31, 2020 . Retrieved October 7, 2014 .
-↑ "1975: Nicklaus wins fifth Masters as Elder breaks color barrier" . The Augusta Chronicle . March 23, 2012. Archived from the original on October 28, 2020 . Retrieved October 7, 2014 .
-↑ "Historical Records & Stats – Tournaments Entered" . Archived from the original on September 23, 2020 . Retrieved February 9, 2016 .
-1 2 3 "Historical Records & Stats – Cut Information" . Archived from the original on September 22, 2020 . Retrieved November 10, 2020 .
-↑ "World Golf Hall of Fame Profile: Roberto De Vicenzo" . World Golf Hall of Fame. Archived from the original on June 13, 2017 . Retrieved February 9, 2016 .
-↑ McDaniel, Pete (2000). "The trailblazer – Twenty-five years ago, Lee Elder became the first black golfer in the Masters" . Golf Digest . Vol. 51, no. 4. Archived from the original on February 7, 2008 . Retrieved January 29, 2008 .
-1 2 Diaz, Jaime (September 11, 1990). "Augusta National Admits First Black Member" . The New York Times . Archived from the original on February 24, 2009 . Retrieved November 20, 2008 .
-1 2 "Historical Records & Stats – Champions / Winning Statistics" . Archived from the original on April 16, 2019 . Retrieved February 9, 2016 .
-↑ Ballard, Sarah. "My, Oh Mize" . Sports Illustrated . Archived from the original on April 3, 2008 . Retrieved February 5, 2008 .
-↑ "Tournament Results: 1996" . Masters.org . Archived from the original on November 3, 2007 . Retrieved January 21, 2008 .
-1 2 3 4 5 Stutsman, Doug (January 6, 2026). "Masters badge price tops $500 for first time in tournament history" . Golfweek.usatoday.com .
-↑ Brown, Clifton (March 13, 2003). "City of Augusta Is Sued Over Protest at the Masters" . The New York Times . Archived from the original on February 24, 2009 . Retrieved November 23, 2008 .
-↑ "Court Rejects Burk Appeal" . The New York Times . October 4, 2003. Archived from the original on February 22, 2009 . Retrieved November 23, 2008 .
-↑ "To Burk, No Point Picketing Masters" . The New York Times . February 29, 2004. Archived from the original on February 24, 2009 . Retrieved November 23, 2008 .
-↑ Bondy, Filip (April 7, 2010). "Masters chairman Billy Payne rips Tiger Woods for 'disappointing all of us' " . Daily News . New York. Archived from the original on April 10, 2010 . Retrieved April 11, 2010 .
-↑ Svrluga, Barry (April 8, 2010). "Billy Payne disappointed in Tiger Woods's 'egregious' behavior" . The Washington Post . Archived from the original on February 16, 2011 . Retrieved May 12, 2010 .
-↑ "Billy Payne's remarks regarding Tiger Woods playing at Augusta" . Los Angeles Times . Archived from the original on April 11, 2010 . Retrieved May 12, 2010 .
-↑ Matthews, Chris (April 15, 2013). "As it happened: Scott wins US Masters" . TVNZ. Archived from the original on August 3, 2020 . Retrieved October 7, 2014 .
-↑ "Jordan Spieth, 21, leads Masters wire to wire for 1st major win" . ESPN . Associated Press. April 13, 2015. Archived from the original on April 20, 2016 . Retrieved April 13, 2015 .
-↑ Harig, Bob (March 13, 2020). "Augusta announces Masters will be postponed" . ESPN . Archived from the original on November 13, 2020 . Retrieved March 16, 2020 .
-↑ "New monument honors Black caddies of the Masters Tournament in Augusta" . WSB-TV . Cox Media Group. April 6, 2023 . Retrieved April 13, 2025 .
-↑ Spears, Dan. "2025 Masters Replay: Rory McIlroy's Masters quest finally ends in victory" . The Augusta Chronicle . Retrieved July 13, 2025 .
-↑ Herrington, Ryan (April 4, 2018). "Masters 2018: Augusta National Women's Amateur Championship to debut in 2019" . Golf Digest . Archived from the original on October 1, 2020 . Retrieved April 8, 2018 .
-↑ Romine, Brentley (January 28, 2019). "Six players, including Arizona's Yu-Sang Hou, complete Augusta National Women's Amateur field" . Golf Channel . Archived from the original on August 3, 2020 . Retrieved February 3, 2019 .
-↑ Hennessey, Stephen (April 4, 2014). "Inaugural Drive, Chip and Putt Championship has juniors living Augusta National dreams" . Golf Digest . Archived from the original on August 4, 2020 . Retrieved April 8, 2018 .
-↑ "Masters unveils drive, chip and putt contest" . USA Today . Associated Press. April 8, 2013. Archived from the original on October 31, 2020 . Retrieved April 8, 2018 .
-↑ Harig, Bob (April 1, 2018). "Drive, Chip & Putt winners crowned at Augusta" . ESPN . Archived from the original on November 29, 2020 . Retrieved April 8, 2018 .
-↑ Melton, Zephyr (April 7, 2025). "Masters practice round rained out? Here are 2 things patrons get" . Golf.com . Retrieved March 1, 2026 .
-↑ Anderson, Meredith (April 9, 2025). "This golf action is something the patrons don't want to skip" . WRDW .
-↑ Blinder, Alan (April 10, 2025). "The Masters: A Gesundheit Unlike Any Other" . The New York Times . Collin Morikawa skipped a ball across the pond on the 16th hole during a practice round on Tuesday.
-↑ Hall, Mike (April 5, 2025). "Can You Take A Camera To The Masters?" . Golf Monthly .
-↑ Davis, Jim (April 4, 2023). "The Masters Amateur Dinner" . Golf Heritage Society . Retrieved April 7, 2026 .
-↑ Dennis, Ryne (April 8, 2025). "Lardons, heirlooms and bordelaise sauce: Here's what was on Monday's Amateur Dinner menu" . The Augusta Chronicle .
-↑ "Frequently Asked Questions at the Masters" . Archived from the original on October 14, 2008 . Retrieved November 20, 2008 .
-↑ "Masters Club" . Masters.org . Archived from the original on January 9, 2008 . Retrieved January 25, 2008 .
-↑ "Masters Champions Dinner: Everything you need to know" . March 15, 2017. Archived from the original on May 4, 2019 . Retrieved April 19, 2017 .
-↑ Bonk, Thomas (April 7, 1998). "It's Food That's Fit for This Golf King" . Los Angeles Times . Archived from the original on September 20, 2020 . Retrieved April 13, 2020 .
-↑ Both, Andrew (April 4, 2016). "Feature: Zoeller's ex-caddie recalls how Woods broke the ice" . Reuters .
-↑ Uhles, Steven (April 9, 2008). "Par-3 Contest will be family show" . The Augusta Chronicle . Archived from the original on April 19, 2008 . Retrieved April 13, 2008 .
-↑ "Watch Justin Thomas and Rickie Fowler Make Back-to-Back Aces on the Same Hole" . Golf Digest .
-↑ "About The Par 3 Contest" . Masters Tournament . Archived from the original on May 19, 2020 . Retrieved April 17, 2020 .
-↑ "Seamus Power Completes Back to Back Hole in Ones Masters Par 3 Contest" . Sports Illustrated .
-↑ "Par 3 Contest" . Masters.org . Archived from the original on January 19, 2008 . Retrieved January 25, 2008 .
-↑ Kelley, Brent. "The Par-3 Contest at The Masters" . About.com . Archived from the original on June 16, 2008 . Retrieved January 25, 2008 .
-↑ "History: The Trophy Case" . Archived from the original on October 24, 2008 . Retrieved November 18, 2008 .
-↑ "The Masters Tournament: The Golf Event of 2024 and the Years to come" . ELMENS . Retrieved April 15, 2024 .
-↑ "Arnold Palmer to hit opening Masters tee shot" . Golf Today. Archived from the original on July 25, 2008 . Retrieved February 4, 2008 .
-↑ Gola, Hank (April 8, 2011). "Arnold Palmer, Jack Nicklaus kick off 2011 Masters as honorary starters with tee shots at Augusta" . New York Daily News . Archived from the original on April 14, 2011 . Retrieved April 8, 2011 .
-↑ Ferguson, Doug (March 16, 2016). "Palmer to skip opening tee shot at Masters" . Albany Times Union . Archived from the original on March 31, 2016 . Retrieved March 20, 2016 .
-↑ "Masters 2016: Arnold Palmer makes poignant appearance on 1st tee" . The Guardian . April 7, 2016. Archived from the original on April 10, 2017 . Retrieved April 9, 2017 .
-↑ "Gary Player and Jack Nicklaus join Masters tribute to Arnold Palmer" . The Guardian . April 6, 2017. Archived from the original on April 8, 2017 . Retrieved April 9, 2017 .
-↑ "Fit for a King: Arnold Palmer honored in moving tribute at Augusta National" . Golf.com . April 4, 2017. Archived from the original on April 14, 2019 . Retrieved April 9, 2017 .
-↑ "Tom Watson accepts invite to join Jack Nicklaus, Gary Player as honorary starters at the Masters" . ESPN . January 11, 2022 . Retrieved January 11, 2022 .
-↑ "Tour caddies at Augusta?" . Times-News . Hendersonville, North Carolina. November 12, 1982. p. 14. Archived from the original on February 26, 2017 . Retrieved September 21, 2016 .
-↑ Wade, Harless (April 6, 1983). "Tradition bagged at Masters" . Spokane Chronicle . Washington. p. C1. Archived from the original on February 26, 2017 . Retrieved September 21, 2016 .
-↑ Anderson, Dave (April 10, 1983). "New Masters caddies collide" . Sunday Star-News . Wilmington, North Carolina. p. 6D. Archived from the original on February 25, 2017 . Retrieved September 21, 2016 .
-↑ Reilly, Rick (April 21, 1997). "Strokes of Genius" . Sports Illustrated . Archived from the original on April 14, 2016 . Retrieved February 9, 2016 .
-↑ Loomis, Tom (April 6, 1973). "Chi Chi prefers own caddy" . Toledo Blade . Ohio. Associated Press. p. 30. Archived from the original on February 25, 2017 . Retrieved September 21, 2016 .
-↑ "Westchester winner may bypass events" . Victoria Advocate . Texas. Associated Press. August 26, 1974. p. 1B. Archived from the original on February 25, 2017 . Retrieved September 21, 2016 .
-↑ "Touring golf pros prefer their own caddies" . Reading Eagle . Pennsylvania. Associated Press. May 5, 1974. p. 76. Archived from the original on February 26, 2017 . Retrieved September 21, 2016 .
-↑ "Open golfers to pick own caddies in 1976" . Toledo Blade . Ohio. Associated Press. November 15, 1975. p. 17. Archived from the original on February 26, 2017 . Retrieved September 21, 2016 .
-↑ "Break for some" . Rome News-Tribune . Georgia. Associated Press. January 18, 1976. p. 3B. Archived from the original on February 26, 2017 . Retrieved September 21, 2016 .
-1 2 Westin, David (April 7, 2001). "Purse exceeds $1 Million" . The Augusta Chronicle . Archived from the original on October 25, 2008 . Retrieved November 28, 2008 .
-↑ Reilly, Rick (April 21, 1986). "Day Of Glory For A Golden Oldie" . Sports Illustrated . Archived from the original on July 10, 2017 . Retrieved February 9, 2016 .
-↑ Nicklaus, Jack ; Bowden, Ken (1974). Golf My Way . Heinemann. ISBN 0-434-51350-4 .
-↑ "$9,000,000 Masters Results" . The Sports Network. Archived from the original on April 15, 2014 . Retrieved April 14, 2014 .
-↑ "2014 Masters Prize Money Announced" . Augusta Chronicle . April 12, 2014. Archived from the original on April 13, 2014 . Retrieved April 13, 2014 .
-↑ Lukas, Paul. "The real story behind the green jacket" . ESPN . Archived from the original on February 22, 2009 . Retrieved November 18, 2008 .
-↑ Lispey, Rick (April 10, 1995). "Master Teacher: Nearly forgotten now, teaching pro Henry Picard was a big star when he won the 1938 Masters" . Sports Illustrated . Archived from the original on February 23, 2016 . Retrieved February 9, 2016 .
-↑ "Michael Kernicki hosts Major Championship at Canterbury Golf Club" . GolfGuide.com . Archived from the original on November 11, 2010 . Retrieved April 10, 2011 .
-↑ "Masters-style green jacket bought for $5 at Toronto thrift store sells for $139K" . Toronto Star . Associated Press. April 10, 2017. Archived from the original on November 8, 2020 . Retrieved April 11, 2017 .
-↑ "The Masters Trophy facts: Size, weight, history and more" . GolfNewsNet.com . September 19, 2016. Archived from the original on September 24, 2020 . Retrieved September 27, 2019 .
-↑ "Utah's Tony Finau moves into the Masters top 10 and earns some crystal with a 66" . The Salt Lake Tribune . Retrieved April 5, 2022 .
-↑ "Awards & Trophies" . Masters.com . Archived from the original on August 3, 2020 . Retrieved September 27, 2019 .
-↑ "Players – Qualifications for Invitation" . Archived from the original on May 29, 2008 . Retrieved November 20, 2008 .
-1 2 3 4 Van Sickle, Gary (April 23, 2013). "Augusta's Berckmans Place is the ultimate Masters VIP room" . Golf Magazine . Archived from the original on April 28, 2013.
-1 2 3 Mayo, Ashley (April 12, 2015). "This is what you get when you score the most exclusive Masters ticket" . Golf Digest . Retrieved June 17, 2019 .
-1 2 Greenstein, Teddy (April 4, 2016). "A peek inside Augusta National's Berckmans Place, where the VIPs frolic" . Chicago Tribune . Retrieved June 17, 2019 .
-1 2 Paumgarten, Nick (June 14, 2019). "Inside the Cultish Dreamworld of Augusta National" . The New Yorker . Archived from the original on June 15, 2019 . Retrieved June 16, 2019 .
-↑ Costa, Brian (April 10, 2019). "Augusta National Has Quietly Made a $200 Million Land Grab" . The Wall Street Journal . Retrieved June 18, 2019 .
-↑ Barwick, Robin (April 2, 2018). "Augusta National: Building Berckmans' Place" . Kingdom . Retrieved June 17, 2019 .
-↑ "Perfecting pimento: gourmet gives us our own recipe" . Golf Digest . Vol. 54, no. 4. 2003. Archived from the original on April 9, 2006.
-↑ "},"url":{"wt":"http://chronicle.augusta.com/stories/041402/fea_223-8719.000.shtml"},"access-date":{"wt":"1 July 2017"}},"i":0}}]}'/> "Augusta Georgia: Features:Pimiento cheese is soul food of the South 04/14/02" . Retrieved July 1, 2017 .
-↑ "The Rich, Creamy, Piquant History of the Masters' Pimento Cheese Sandwich" . InsideHook . Retrieved March 23, 2024 .
-1 2 Benson, Pat (March 18, 2024). "Under Armour Drops Pimento Cheese-Inspired Masters Collection" . Sports Illustrated . Retrieved March 23, 2024 .
-↑ Thompson, Wright (April 11, 2013). "A sandwich stumper at the Masters" . ESPN.com . Retrieved April 13, 2013 .
-↑ Overdeep, Meghan (March 5, 2024). "Augusta National's "Taste of the Masters" Hosting Kits Are Back" . Southern Living . Retrieved March 23, 2024 .
-↑ Hennessey, Stephen (April 10, 2022). "Masters 2022: I ate and graded every item on the Augusta National concession menu (again)" . Golf Digest . Retrieved June 18, 2024 .
-↑ Berhow, Josh (April 9, 2024). "The Masters has a 'mystery beer.' We tried to find its origin" . Golf.com . Retrieved February 15, 2026 .
-↑ Stutsman, Doug (April 5, 2021). "This Crow's Nest at the Masters is for those amateurs 21 and over" . The Augusta Chronicle . Retrieved February 15, 2026 .
-1 2 Rumsey, David; Roberts, Daniel (April 18, 2025). "Why The Masters Quietly Cracked Down on Ticket Resellers" . Front Office Sports . Retrieved March 9, 2026 .
-↑ "Masters concessions menu: Prices for food, drinks at Augusta National" . golfweek.usatoday.com . Retrieved August 31, 2026 .
-↑ Schupak, Adam (April 8, 2024). "Map & Flag, Augusta National's $17,000 per ticket and off-property hospitality venue, is real and spectacular" . USA Today Sports . Retrieved February 15, 2026 .
-1 2 Burack, Emily (April 12, 2025). "How Masters Merchandise Became the Ultimate Status Symbol in Golf" . Town and Country .
-↑ Vickers, Kim (April 11, 2025). "Patrons weigh in on reselling Masters merchandise" . WJBF .
-1 2 Reid, Philip (April 9, 2025). "Masters merchandise sees Augusta's tills take in $16,000 per minute on everything from caps to gnomes" . The Irish Times .
-↑ Jerram, Rob (April 7, 2025). "Inside Augusta's money machine: The purpose-built Masters shop that takes $1m every hour" . Today's Golfer.
-↑ Stafford, Ali (April 9, 2025). "The Masters merchandise: Patrons' experience at Augusta National and how gnomes became a must-have item" . Sky Sports .
-1 2 3 Ryan, Shane (March–April 2026). "Last Stand of the Masters Gnomes" . Golf Digest .
-↑ Herrington, Ryan (April 6, 2025). "Here's a first look at the 2025 Masters gnome, the crazy must-have merchandise item at Augusta National" . Golf Digest.
-↑ "Masters gnomes are out and about, and as popular as ever" . WRDW/WAGT . April 4, 2026.
-↑ Murray, Ewan (April 6, 2026). "Retirement gnome? Masters miniatures rumoured to have short future at Augusta" . The Guardian .
-↑ Stutsman, Doug (April 10, 2024). "Sunglasses are the new must-have scavenger-hunt item at Masters 2024 at Augusta National" . USA Today .
-↑ Stutsman, Doug (April 1, 2025). "Some of the best Masters collectibles include Arnie watch, Hogan Bridge opener, the gnomes" . USA Today .
-↑ Gaines, Cork. "Masters tickets are cheap for a major sporting event, but only the Super Bowl is harder to get into" . Insider . Retrieved March 15, 2023 .
-↑ "Masters Tournament Ticket Information" . Masters Tournament . Retrieved March 14, 2023 .
-↑ "2021 Georgia Code :: Title 43 - Professions and Businesses :: Chapter 4B - Georgia Athletic and Entertainment Commission :: Article 3 - Ticket Brokers :: § 43-4B-28. Resale by Ticket Brokers; Disclosure Requirements; Sale and Resale Restrictions; Refunds" . Justia Law . Retrieved March 14, 2023 .
-1 2 Gallas, John (March 23, 2022). "Want to go to the Masters Tournament? Here is what golf fans need to know" . The Augusta Chronicle . Retrieved March 15, 2023 .
-1 2 Kelly, Todd (April 7, 2023). "Photos: See all the Masters badges from 1934 to 2023" . Golfweek . Retrieved March 9, 2026 .
-↑ "How the Masters is secretly battling online resellers" . Edwards Golf . March 9, 2017.
-↑ "Privacy" . Augusta National Golf Club . Retrieved March 2, 2026 . Tickets provided by ANI contain Radio-frequency identification ('RFID') technology.
-1 2 Boyette, John (April 7, 2014). "Masters badges are prized possessions" . Augusta.com . Retrieved March 14, 2023 .
-↑ Michaux, Scott (April 1, 2021). "The Masters used to beg for patrons. Here's how and when that changed" . Golf . Retrieved March 15, 2023 .
-↑ "Tickets to Masters Change Hands Only After a Death" . Los Angeles Times . April 6, 1989 . Retrieved March 15, 2023 .
-↑ Gaines, Cork (April 6, 2022). "Masters tickets are cheap for a major sporting event, but only the Super Bowl is harder to get into" . Insider . Retrieved March 15, 2023 .
-↑ Boyette, John (March 7, 2012). "Junior Pass Program explained" . Augusta.com . Retrieved March 15, 2023 .
-↑ Deloca, Paul J. (2000). "Reviewed work: The Masters: Golf Money and Power in Augusta, Georgia, Curt Sampson". Journal of Sport History . 27 (2): 333– 335. JSTOR 43609580 .
-↑ "Masters Golf Tournament And Ticket Policies" . Masters Tournament . Retrieved March 15, 2023 .
-↑ Bull, Andy (April 8, 2026). "How Augusta National outwitted ticket resellers and kept door closed on Trump" . The Guardian . Retrieved April 12, 2026 .
-↑ Doick, Tai (May 8, 2019). "A HISTORY OF TRADITION: Augusta National supports Fort Gordon" . Fort Gordon Public Affairs Office.
-↑ Gaines, Cork (April 7, 2023). "The Masters golf tournament bans cell phones and that rule is not going to change anytime soon" . Business Insider . Retrieved May 19, 2025 .
-↑ "Prohibited Items" . Masters . Augusta National . Retrieved May 19, 2025 .
-↑ Dawson, Alan (April 11, 2024). "Mobile Phones are Banned at The Masters - Here's Why" . GiveMeSport . Retrieved May 19, 2025 .
-↑ "Masters Parking & Transportation" . Augusta, Georgia . Retrieved April 7, 2026 . Parking is free at Augusta National Golf Club, which has more than 8,500 parking spots.
-↑ Herzig, Gabby (April 16, 2025). "What's it like to play Augusta National the day after Rory's Masters win? I found out" . The Athletic .
-↑ Rumsey, David (April 20, 2025). "What's It Like to Play Augusta? A Day on the World's Most Famous Golf Course" . Front Office Sports.
-↑ Hoggard, Rex (November 9, 2020). "Masters changes 36-hole cut rules, 10-shot rule removed" . Golf Channel . Archived from the original on November 10, 2020 . Retrieved November 10, 2020 .
-1 2 Harig, Bob (April 10, 2013). "Masters tweaks qualifications" . ESPN . Archived from the original on April 13, 2013 . Retrieved April 16, 2013 .
-↑ "Masters goes to sudden death" . Sarasota Herald-Tribune . Florida. Associated Press. February 6, 1976. p. 2E. Archived from the original on February 26, 2017 . Retrieved April 11, 2016 .
-↑ "In sudden death, Masters playoff shifts to no. 10" . Observer-Reporter . Washington, Pennsylvania. Associated Press. April 11, 1979. p. D2. Archived from the original on February 26, 2017 . Retrieved April 11, 2016 .
-↑ The other three major tournaments, as well as The Players Championship, currently use a multi-hole aggregate playoff: three holes for The Players, the PGA Championship, and The Open, and two holes for the U.S. Open in case of a tie for the lead after 72 holes.
-1 2 Sirak, Ron (April 5, 2019). "What's it like to be a member at Augusta National?" . Golf Digest .
-1 2 3 4 5 6 7 8 9 10 Roberts, Clifford (1976). The Story of the Augusta National Golf Club . Garden City: Doubleday. ISBN 0385115431 .
-1 2 Hart, John (February 16, 2026). "Masters Tournament announces new Chairman of Rules and Competition Committees" . WJBF .
-1 2 Stutsman, Doug (April 6, 2025). " 'Who is Bill Lane?': Masters Tournament's second chairman a forgotten figure after early death" . The Augusta Chronicle . Retrieved March 2, 2026 .
-↑ Heyen, Billy (April 10, 2025). "What is Amen Corner at the Masters? Augusta's iconic 11th, 12th and 13th holes bring the drama" . The Sporting News . Retrieved April 14, 2025 .
-↑ "Course Tour: 2012 Masters" . PGA of America: Major Championships. Archived from the original on August 27, 2012 . Retrieved August 24, 2012 .
-↑ "Changes afoot at Augusta" . BBC Sport . August 7, 2001. Archived from the original on December 27, 2002 . Retrieved January 30, 2008 .
-↑ Spousta, Tom (June 29, 2005). "Augusta National plans to add length" . USA Today . Archived from the original on May 10, 2008 . Retrieved January 30, 2008 .
-↑ "Row over Augusta changes goes on" . BBC Sport . April 5, 2006. Archived from the original on April 12, 2006 . Retrieved January 21, 2008 .
-↑ Harig, Bob (January 31, 2019). "Augusta National lengthens fifth hole ahead of 2019 Masters" . ESPN . Archived from the original on February 1, 2019 . Retrieved January 31, 2019 .
-1 2 Westin, David (March 28, 2001). "Desire for faster greens led to use of Bentgrass" . CNNSI.com & The Augusta Chronicle . Archived from the original on April 25, 2009 . Retrieved January 21, 2008 .
-↑ "Golf Course Guide" . CBS Sports . Archived from the original on September 15, 2008 . Retrieved January 26, 2008 .
-↑ "2008 Tournament Invitees" . Masters.org . Archived from the original on April 8, 2008 . Retrieved April 9, 2008 .
-↑ Johnson, Martin (April 9, 2002). "The Masters: Augusta bows to change with a pompous flourish" . The Daily Telegraph . London. Archived from the original on April 6, 2012 . Retrieved March 25, 2012 .
-↑ "2026 Invitee List" . Masters.com . Retrieved June 9, 2026 .
-↑ "2009 Tournament Invitees" . Archived from the original on April 4, 2009 . Retrieved April 9, 2009 .
-↑ Harig, Bob (January 22, 2014). "Masters, Latin America team up" . ESPN . Archived from the original on January 25, 2014 . Retrieved January 25, 2014 .
-↑ Woodard, Adam (April 5, 2023). "Augusta National chairman Fred Ridley announces Masters, ANWA invitations for future NCAA champions" . Golfweek . Retrieved April 5, 2023 .
-↑ Lavner, Ryan (April 5, 2023). "Augusta National announces changes to qualifying criteria for 2024 Masters" . Golf Channel . Retrieved April 6, 2023 .
-↑ Myers, Alex (April 5, 2023). "Augusta National announces NCAA D-I champ now gets a Masters invite" . Golf Digest . Retrieved April 6, 2023 .
-↑ "Masters: Host Courses and Winners" . Archived from the original on November 6, 2020 . Retrieved November 28, 2008 .
-↑ "Masters playoff format is changed" . CNN . April 7, 2004. Archived from the original on December 13, 2013 . Retrieved April 9, 2013 .
-↑ "Top Finishers" . Masters.org . Archived from the original on March 12, 2016 . Retrieved February 9, 2016 .
-1 2 "Scoring Statistics" . Masters.org . Archived from the original on April 8, 2018 . Retrieved February 9, 2016 .
-↑ Harig, Bob (November 4, 2012). "Guan Tianlang, 14, headed to Masters" . ESPN . Archived from the original on March 4, 2016 . Retrieved November 4, 2012 .
-↑ "Tianlang Guan youngest to make cut" . ESPN . April 12, 2013. Archived from the original on May 22, 2016 . Retrieved April 12, 2013 .
-↑ "Tiger Woods sets all-time record for consecutive made cuts at Masters 2024" . Golfweek.usatoday.com . Retrieved June 9, 2026 .
-↑ Rogers, Paul (April 8, 2023). "Couples Makes Historic Cut as Some Major Names Miss" . Augusta National Golf Club . Retrieved April 8, 2023 .
-↑ Roberson, Doug (April 8, 2012). "Oosthuizen gives away souvenir after rare double-eagle" . Atlanta Journal-Constitution . Archived from the original on April 10, 2012.
-↑ "Masters Tournament" . PGA Tour. Archived from the original on October 10, 2014 . Retrieved October 7, 2014 .
-↑ Leighfield, Jonny (April 6, 2024). "Who Holds The Record For The Highest Single-Round Score Ever Seen At The Masters? (And Why It's Not Billy Casper)" . Golf Monthly .
-1 2 3 Sandomir, Richard (April 7, 1998). "CBS and the Masters Keep Business Simple" . The New York Times . Archived from the original on April 9, 2017 . Retrieved April 8, 2017 .
-↑ Freeman, Denne H. (April 10, 1997). "Augusta's front nine cloaked in secrecy" . Ocala Star-Banner . Associated Press. Archived from the original on February 26, 2017 . Retrieved April 6, 2013 .
-↑ Chase, Chris (April 10, 2014). "Why isn't the Masters on TV all day?" . USA Today . Archived from the original on April 13, 2014 . Retrieved April 10, 2014 .
-1 2 Sandomir, Richard (October 11, 2007). "ESPN Replaces USA as Early-Round Home of the Masters" . The New York Times . Archived from the original on April 9, 2017 . Retrieved April 8, 2017 .
-↑ "ESPN will show first two rounds of 2008 Masters tournament" . ESPN . October 10, 2007. Archived from the original on January 18, 2008 . Retrieved March 23, 2008 .
-↑ "2018 Masters broadcast will use shot tracer technology" . Augusta Chronicle . Archived from the original on April 7, 2018 . Retrieved April 6, 2018 .
-↑ "Get ready for Amen Corner live" . March 30, 2006. Archived from the original on October 13, 2012 . Retrieved December 23, 2008 .
-↑ "DirecTV's first live 4K show is the Masters golf tournament" . Engadget . Archived from the original on March 12, 2016 . Retrieved March 12, 2016 .
-↑ "The Masters in 4K: DirecTV, CBS Sports Tee Up First Live 4K UHD Broadcast in U.S." Sports Video Group . Archived from the original on March 12, 2016 . Retrieved March 12, 2016 .
-↑ "DirecTV doubles its live 4K broadcasts for this year's Masters" . Engadget . Archived from the original on April 16, 2017 . Retrieved April 15, 2017 .
-↑ Dachman, Jason Dachman. "AT&T/DirecTV Will Deliver The Masters in 4K HDR for the First Time" . Sports Video Group . Archived from the original on March 30, 2018 . Retrieved March 30, 2018 .
-↑ "The Masters adds two hours of weekend coverage on Paramount" . Associated Press. September 17, 2024 . Retrieved April 3, 2026 – via ESPN.com.
-↑ "Amazon Prime Video joins Masters coverage for first, second round" . ESPN . September 16, 2025 . Retrieved March 4, 2026 .
-1 2 3 " Hinds, Richard (April 5, 2007). "Why coverage of US Masters is so polite" . The Age . Melbourne. Archived from the original on November 3, 2007 . Retrieved January 21, 2008 .
-1 2 Martzke, Rudy (April 13, 2003). "CBS managed to get Masters right despite silence on protests" . USA Today . Archived from the original on February 8, 2008 . Retrieved January 21, 2008 .
-1 2 3 McDonald, Tim. "Is the Masters really the most prestigious sporting event in America?" . WorldGolf . Golf Channel . Archived from the original on May 26, 2011 . Retrieved December 23, 2008 .
-↑ "How The Masters Theme Song Came To Be" . Deadspin.com . April 7, 2012. Archived from the original on April 7, 2013 . Retrieved March 9, 2013 .
-1 2 "Mercedes, UPS Form New Partnerships with Masters Tournament" (Press release). Augusta National Golf Club. April 29, 2013. Archived from the original on March 12, 2014 . Retrieved May 18, 2013 .
-1 2 "The Masters Tournament Welcomes Bank of America as Champion Partner" (Press release). Bank of America. September 17, 2024 . Retrieved April 13, 2025 .
-↑ Stewart, Larry (August 28, 2004). "Masters Is Back to Commercials" . Los Angeles Times . ISSN 0458-3035 . Archived from the original on April 13, 2016 . Retrieved April 8, 2018 .
-↑ Yen, Yi-Wyn (April 8, 2003). "The Battle of Augusta Hootie vs. Martha: A Chronology of Developments in Golf's Most Famous Feud, Between Martha Burk, the Chairwoman of the National Council Of Women's Organizations (NCWO), and Hootie Johnson, the Chairman of Augusta National Golf Club" . Sports Illustrated . Archived from the original on April 9, 2018 . Retrieved April 8, 2018 .
-↑ "The Masters" . Archived from the original on October 26, 2020 . Retrieved February 9, 2016 .
-↑ "SiriusXM Is Now The Exclusive Audio Broadcaster Of The Masters Tournament" . SiriusXM Canada Blog . January 6, 2021 . Retrieved March 1, 2026 .
-↑ "SiriusXM Announces Coverage for 2025 Masters" . Siriusxm.ca (Press release). April 3, 2025 . Retrieved March 1, 2026 .
-↑ "Listen to the Live Radio Broadcast of the 2025 Masters" . SiriusXM . April 3, 2025 . Retrieved March 1, 2026 .
-↑ "BBC Sport keeps Masters contract" . BBC Sport . October 12, 2007. Archived from the original on October 24, 2007 . Retrieved January 31, 2008 .
-↑ Dams, Tim. "Sky Sports shuts BBC out of live golf with Masters deal" . Broadcast . Archived from the original on August 3, 2020 . Retrieved November 25, 2019 .
-↑ Streeter, Joe (November 20, 2019). "Sky Sports lands exclusive live UK Masters rights from 2020" . Insider Sport . Archived from the original on November 23, 2019 . Retrieved November 23, 2019 .
-↑ Corrigan, James (September 22, 2010). "Sky seizes share of the Masters from BBC" . The Independent . London. Archived from the original on May 21, 2017 . Retrieved September 4, 2017 .
-↑ "We are fully committed to providing a public service – without public funding" . Irish Independent . August 12, 2007. Archived from the original on February 22, 2009 . Retrieved December 23, 2008 .
-↑ "The Masters: Sky Sports announces multi-year extension of broadcast agreement with Augusta National" . Sky Sports . Retrieved April 8, 2022 .
-↑ Houston, William (April 10, 2008). "As usual, Woods is the star of Masters coverage" . The Globe and Mail . Toronto. Archived from the original on April 14, 2009 . Retrieved April 10, 2009 .
-↑ Maloney, Val (April 10, 2013). "TSN and Global partner to sell The Masters" . Media in Canada . Archived from the original on June 7, 2013 . Retrieved April 10, 2013 .
-↑ The Sports Network and Global Television Network (April 5, 2013). "TSN and Global Partner to Give Canadians Complete Coverage of The Masters" . Archived from the original on April 8, 2013 . Retrieved April 10, 2013 .
-↑ "Television wars continue as CTV takes Masters deal away from Global" . Yahoo! Sports Canada . Archived from the original on December 23, 2015 . Retrieved December 23, 2015 .
-↑ "CTV, TSN, and RDS announce exclusive, multi-year deal with The Masters" . TSN.ca . Bell Media. Archived from the original on December 23, 2015 . Retrieved December 23, 2015 .
-↑ Hall, Andy (March 31, 2017). "ESPN at the Masters Tournament" . ESPN (Press release). Archived from the original on April 2, 2017 . Retrieved May 30, 2017 .
-↑ Baker, Kendall (April 13, 2023). "How the Masters developed the best app in sports" . Retrieved March 4, 2026 .
-↑ Jourdan, Cameron (March 31, 2025). "Masters app expanding, will include live shot tracking of every shot at practice area" . Golfweek.usatoday.com . Retrieved March 4, 2026 .
+↑ The Golf Book . Dorling Kindersley. 2008. p. 23. ISBN 978-1-4053-3936-0 . Retrieved September 10, 2020 .
+↑ Edmund, Nick (May 1993). Heineken World of Golf 93 . Stanley Paul. pp. 66– 68. ISBN 978-0-09-178100-2 .
+↑ Steel, Donald; Ryde, Peter; Wind, Herbert Warren (1975). The Encyclopedia of Golf . Viking Press. ISBN 978-0-670-29401-5 .
+1 2 Thakur, Pradeep (2010). Golf: Career Money Leaders . Lulu.com. p. 105. ISBN 978-0-557-77256-8 .
+↑ Wykagyl, 1898-1998 ; by Desmond Tollhurst and John Barban; pages 28-30
+↑ Wykagyl, 1898-1998 by Desmond Tollhurst and John Barban; pp. 1-2
+↑ "History of the PGA Championship" . PGA of America . Retrieved May 1, 2014 .
+↑ "Shootout at Shoal Creek" . Times Daily . Florence, Alabama. August 16, 1984. p. 14A.
+↑ "An overview of the event" . Toledo Blade . Ohio. 75th PGA Championship (insert). August 8, 1993. p. 8.
+↑ "Medal play in pro golf slated" . Time-News . Hendersonville, North Carolina. United Press. November 15, 1957. p. 8.
+↑ Barkow, Al (1974). Golf's Golden Grind: A History of the PGA Tour . Harcourt Brace Jovanovich. ISBN 978-0151908851 .
+↑ "2016 PGA Championship moving to July to accommodate Olympics" . Golf.com . Retrieved August 8, 2017 .
+↑ Shedloski, Dave (August 7, 2017). "The PGA Championship is moving to May and players are on board" . Golf Digest . Retrieved August 8, 2017 .
+↑ "P.G.A. Championship Will Move from August to May in 2019" . The New York Times . Reuters. August 8, 2017. ISSN 0362-4331 . Retrieved August 9, 2017 .
+↑ Herrington, Ryan (August 7, 2017). "The PGA Championship will be moving to May, sources say" . Golf Digest . Retrieved August 9, 2017 .
+↑ Shackelford, Geoff (June 26, 2014). "San Francisco's Harding Park to host 2020 PGA Championship" . Golf Digest . Retrieved April 11, 2016 .
+↑ "US PGA Championship round one - England's Horsfield & Rose in contention" . BBC Sport . May 18, 2021 . Retrieved May 20, 2021 .
+↑ Romine, Brentley (January 25, 2021). "PGA awards 2022 PGA Championship to Southern Hills, replacing Trump Bedminster" . Golf Channel . Retrieved January 26, 2021 .
+↑ Lavner, Ryan (August 7, 2013). "PGA ditches Glory's Last Shot at Tour's request" . Golf Channel . Retrieved August 8, 2017 .
+↑ "PGA explains new slogan, and why Oak Hill green speeds are a mystery" . Golf.com . Retrieved August 8, 2017 .
+↑ Wacker, Brian (July 31, 2016). "The PGA's decision to play lift, clean, and place is at odds with its own logic" . Golf Digest . Retrieved August 8, 2017 .
+↑ Spander, Art. "Meet Hiroshi Iwata, the Unknown Golfer Who Made History at the PGA Championship" . Bleacher Report . Retrieved August 8, 2017 .
+↑ Kelley, Brent (June 6, 2018). "The Wanamaker Trophy: Meet the PGA Championship's Prize" . LiveAbout.com .
+↑ "Tour golfers, PGA settle fuss over tourney control" . Spokesman-Review . Associated Press. December 14, 1968. p. 15.
+↑ "Pro golf struggle is settled; PGA forms tourney group" . Milwaukee Journal . December 14, 1968. p. 18. [ permanent dead link ]
+↑ "Dispute in U.S. settled" . Glasgow Herald . December 16, 1968. p. 5.
+↑ Bolton, Rob. "2023 Qualifiers for The Players and the majors" . PGA Tour . Retrieved April 29, 2023 .
+1 2 "PGA of America Adds New PGA Championship Exemption Category" . PGA of America. February 22, 2023 . Retrieved April 29, 2023 .
+↑ "PGA of America - PGA Championships - history - total purses and first prize money" . Archived from the original on October 4, 2011 . Retrieved August 2, 2011 .
+↑ "PGA Media Guide" . Archived from the original on January 23, 2013 . Retrieved July 26, 2007 .
+↑ Shifrin, Joshua (May 14, 2013). From the Links: Golf's Most Memorable Moments . Robson Press. ISBN 978-1-84954-587-7 .
+↑ Shaw, Mark (December 18, 2012). Jack Nicklaus: Golf's Greatest Champion . Simon and Schuster. ISBN 978-1-61321-389-6 .
+↑ Narey, Alex (May 11, 2023). The World's Greatest Golf Courses From Above: 34 Legendary Courses in High-Definition Satellite Photographs . Headline. p. 26. ISBN 978-1-80279-513-4 .
+↑ Thakur, Pradeep (2010). Golf: Career Money Leaders . Lulu.com. p. 107. ISBN 978-0-557-77530-9 .
+↑ Records, Guinness World (November 7, 2017). The Guinness Book of Superlatives: The Original Book of Fascinating Facts . Simon and Schuster. p. 1946. ISBN 978-1-945186-45-5 .
+↑ "USA PGA Championship: All you need to know" . William Hill News . May 10, 2023. Archived from the original on May 22, 2024 . Retrieved May 22, 2024 .
+↑ Michael, Weston (May 13, 2024). "What Is The Lowest Ever Score In The PGA Championship?" . Golf Monthly . Archived from the original on May 22, 2024 . Retrieved May 22, 2024 .
+↑ "A bit of luck for Bryson" . The Athletic . May 20, 2024 . Retrieved May 22, 2024 .
+↑ Morik, Ryan (May 21, 2024). "Xander Schauffele's wife says she was 'blacking out' while celebrating husband's PGA Championship win" . Fox News . Retrieved May 22, 2024 .
+↑ Ourand, John; Lombardo, John (October 10, 2018). "PGA Championship Leaving TNT For ESPN In '20, Re-Ups With CBS" . Sports Business Daily . Retrieved October 10, 2018 .
+↑ "NBC gets U.S. Open golf" . The New York Times . June 2, 1994 . Retrieved July 23, 2012 .
+↑ Stewart, Larry (July 21, 1995). "ABC getting a major chance with British Open coverage" . Los Angeles Times . Retrieved July 23, 2012 .
+↑ Kerschbaumer, Ken (August 6, 2020). "ESPN Tees Up Expansive PGA Championship Coverage" . Sports Video Group . Retrieved August 7, 2020 .
+↑ Stricklin, Art (December 5, 2018). "Texas to host majors, perhaps Ryder Cup with PGA of America's move to Lone Star State" . golf.com . Retrieved December 29, 2018 .
+↑ "Olympic Club to host PGA Championship in 2028, Ryder Cup in 2032" . ESPN . Associated Press. November 9, 2017.
+↑ "PGA to bring Ryder Cup, other top events to Congressional" . ESPN . Associated Press. September 18, 2018.
+↑ "The Ocean Course at Kiawah Island will host 2031 PGA Championship" . PGA of America. April 17, 2024.
+↑ "Southern Hills Country Club Selected to Host 2032 PGA Championship" . PGA of America. May 13, 2025.
+1 2 "PGA Championship is Heading Back to Bethpage Black & Oak Hill: New York State to Host 3 PGA of America Major Championships" . PGA of America. September 17, 2025.
+↑ "PGA Championship Future Venues" . PGA of America.
 External links
 [ edit ]
-Wikimedia Commons has media related to Masters Tournament .
 Official website
-Augusta.com – coverage by The Augusta Chronicle
-Final Round broadcasts playlist on YouTube , posted by The Masters official channel
-33°30′09″N 82°01′12″W ﻿ / ﻿ 33.5025°N 82.0200°W ﻿ / 33.5025; -82.0200 [[Geographic coordinate system|Coordinates]]: {{#parsoid\u0000fragment:257}}<span class=\"plainlinks nourlexpansion\">[https://geohack.toolforge.org/geohack.php?pagename=Masters_Tournament&params=33.5025_N_82.02_W_type:event_region:US-GA <span class=\"geo-nondefault\"><span class=\"geo-dms\" title=\"Maps, aerial photos, and other data for this location\"><span class=\"latitude\">33°30′09″N</span> <span class=\"longitude\">82°01′12″W</span></span></span><span class=\"geo-multi-punct\">&#xfeff; / &#xfeff;</span><span class=\"geo-default\"><span class=\"geo-dec\" title=\"Maps, aerial photos, and other data for this location\">33.5025°N 82.0200°W</span><span style=\"display:none\">&#xfeff; / <span class=\"geo\">33.5025; -82.0200</span></span></span>]</span>[[Category:Pages using gadget WikiMiniAtlas]]</span>"}}'/>
+PGA Media Guide
+Coverage on PGA Tour's official site
+Coverage on the European Tour's official site
 v
 t
 e
@@ -1311,8 +988,25 @@ Category
 v
 t
 e
-Masters Tournaments
-Augusta National Golf Club
+PGA Championships
+1916
+1917
+1918
+1919
+1920
+1921
+1922
+1923
+1924
+1925
+1926
+1927
+1928
+1929
+1930
+1931
+1932
+1933
 1934
 1935
 1936
@@ -1406,10 +1100,6 @@ Augusta National Golf Club
 2024
 2025
 2026
-Broadcasting history
-Champions
-Eisenhower Tree
-Par 3 Contest
 v
 t
 e
@@ -1546,38 +1236,25 @@ European Tour Qualifying School
 Olympic Games
 Former events
 (A) – co-sanctioned by the PGA Tour of Australasia ; (C) – co-sanctioned by the China Tour ; (I) – co-sanctioned by the Professional Golf Tour of India ; (J) – co-sanctioned by the Japan Golf Tour ; (K) – co-sanctioned by the Korean Tour ; (P) - co-sanctioned by the PGA Tour ; (S) - co-sanctioned by the Sunshine Tour .
-Portal : Georgia (U.S. state)
-Authority control databases
-International VIAF
-National Catalonia
-Retrieved from " https://en.wikipedia.org/w/index.php?title=Masters_Tournament&oldid=1378223838 "
-Categories : Masters Tournament
+Retrieved from " https://en.wikipedia.org/w/index.php?title=PGA_Championship&oldid=1366969970 "
+Categories : PGA Championship
 Men's major golf championships
-Golf tournaments in Georgia (U.S. state)
 Annual sporting events in the United States
-April in sports
-Economy of Augusta, Georgia
-Tourist attractions in Augusta, Georgia
-Recurring sporting events established in 1934
-1934 establishments in Georgia (U.S. state)
-Culture of Georgia (U.S. state)
+1916 establishments in New York (state)
+Recurring sporting events established in 1916
 Hidden categories: Articles with short description
 Short description matches Wikidata
 Use American English from January 2026
 All Wikipedia articles written in American English
-Use mdy dates from November 2021
+Use mdy dates from September 2018
 Short description is different from Wikidata
-CS1: unfit URL
-Articles containing potentially dated statements from 2026
+All articles with dead external links
+Articles with dead external links from July 2025
+Articles with permanently dead external links
+Articles containing potentially dated statements from 2023
 All articles containing potentially dated statements
-All articles with unsourced statements
-Articles with unsourced statements from April 2026
-Articles with unsourced statements from April 2018
-Articles containing potentially dated statements from 2025
 Official website different in Wikidata and Wikipedia
-Pages using gadget WikiMiniAtlas
-Coordinates on Wikidata
-This page was last edited on 3 October 2026, at 15:33 (UTC) .
+This page was last edited on 31 July 2026, at 03:36 (UTC) .
 Page was rendered with Parsoid .
 Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
 additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
@@ -1594,9 +1271,9 @@ Mobile view
 Search
 Search
 Toggle the table of contents
-Masters Tournament
-35 languages
+PGA Championship
+23 languages
 Add topic
 
 --- embedded JSON ---
-{"@context":"https:\/\/schema.org","@type":"Article","name":"Masters Tournament","url":"https:\/\/en.wikipedia.org\/wiki\/Masters_Tournament","sameAs":"http:\/\/www.wikidata.org\/entity\/Q280275","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q280275","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2002-12-12T10:39:11Z","dateModified":"2026-10-03T15:33:52Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/2\/23\/Masters_Logo.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"golf tournament held in Augusta, Georgia, United States"}
+{"@context":"https:\/\/schema.org","@type":"Article","name":"PGA Championship","url":"https:\/\/en.wikipedia.org\/wiki\/PGA_Championship","sameAs":"http:\/\/www.wikidata.org\/entity\/Q828160","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q828160","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2003-05-10T16:21:04Z","dateModified":"2026-07-31T03:36:18Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/5\/5d\/PGA_Championship.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"golf tournament in the United States"}
