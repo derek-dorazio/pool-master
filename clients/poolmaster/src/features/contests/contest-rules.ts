@@ -77,9 +77,31 @@ export function describePickEmMode(mode: PickEmMode) {
     : 'Pick the winner of every game.';
 }
 
-/** A bracket contest's rules (#721): every game picked before the event starts, to the final. */
-export function describeBracketRules() {
-  return 'Fill in the whole bracket before the first game: pick the winner of every game, all the way to the final.';
+/** A round of a knockout event by its number, in the event's words: "Sweet 16", "Divisional Round". */
+export type RoundName = (roundNumber: number) => string;
+
+/** Until an event's round names are known, a round reads by its number. */
+const numberedRoundName: RoundName = (roundNumber) => `Round ${roundNumber}`;
+
+/** Whether a bracket starting at this round is a second-chance bracket (#721): any round after the first. */
+export function isSecondChanceBracket(startsAtRound: number) {
+  return startsAtRound > 1;
+}
+
+/**
+ * A bracket contest's rules (#721): every game picked to the final before the first game, or for
+ * a second-chance bracket, every game from its starting round on, before that round's first game.
+ * `startRoundName` is that round's name, or null for a full bracket.
+ */
+export function describeBracketRules(startRoundName: string | null = null) {
+  return startRoundName === null
+    ? 'Fill in the whole bracket before the first game: pick the winner of every game, all the way to the final.'
+    : `Second-chance bracket from the ${startRoundName}: pick the winner of every game from the ${startRoundName} on, all the way to the final, before its first game.`;
+}
+
+/** "Full bracket" or "From the Sweet 16": where a bracket starts, as its choice reads. */
+export function formatBracketStartLabel(startsAtRound: number, roundName: RoundName) {
+  return isSecondChanceBracket(startsAtRound) ? `From the ${roundName(startsAtRound)}` : 'Full bracket';
 }
 
 /** "Pick 6, best 4" or "Pick 6, all count": a roster size and the scores that count. */
@@ -92,13 +114,14 @@ function formatRosterLabel(verb: string, rosterSize: number, countedScores: numb
  * 4 scores count." Keyed by selection type, so each new way of picking adds its own arm here.
  * `tierCount` is the event's; an event with no tiers yet still reads sensibly. `participant` is
  * what the event's sport calls a competitor. `salaryCap` is the event's too, named in a budget
- * sentence when it is known.
+ * sentence when it is known. `roundName` names a second-chance bracket's starting round.
  */
 export function formatContestRules(
   configuration: ContestRules,
   tierCount: number,
   participant: SportNoun,
   salaryCap: number | null = null,
+  roundName: RoundName = numberedRoundName,
 ) {
   switch (configuration.selectionType) {
     case SelectionType.TIERED:
@@ -110,7 +133,7 @@ export function formatContestRules(
     case SelectionType.PICK_EM:
       return describePickEmMode(configuration.mode);
     case SelectionType.BRACKET:
-      return describeBracketRules();
+      return describeBracketRules(isSecondChanceBracket(configuration.startsAtRound) ? roundName(configuration.startsAtRound) : null);
   }
 }
 
@@ -149,13 +172,15 @@ export function formatPresetLabel(configuration: ContestRules, tierCount: number
     case SelectionType.PICK_EM:
       return formatPickEmModeName(configuration.mode);
     case SelectionType.BRACKET:
-      return formatSelectionTypeName(SelectionType.BRACKET);
+      return isSecondChanceBracket(configuration.startsAtRound) ? 'Second chance' : formatSelectionTypeName(SelectionType.BRACKET);
   }
 }
 
 /**
  * The name Create contest suggests from the event and the rules, such as "The Masters Pick 6" or
- * "The Masters Budget Pick 6", "The Masters Sweepstake" for a random draw, "NFL Week 1 Pick'em" or "March Madness Bracket", until the commissioner types their own.
+ * "The Masters Budget Pick 6", "The Masters Sweepstake" for a random draw, "NFL Week 1 Pick'em",
+ * "March Madness Bracket" or "March Madness Second-Chance Bracket", until the commissioner types
+ * their own.
  */
 export function suggestContestName(
   eventName: string,
@@ -177,6 +202,8 @@ export function suggestContestName(
     case SelectionType.PICK_EM:
       return `${eventName} Pick’em`;
     case SelectionType.BRACKET:
-      return `${eventName} Bracket`;
+      return configuration?.selectionType === SelectionType.BRACKET && isSecondChanceBracket(configuration.startsAtRound)
+        ? `${eventName} Second-Chance Bracket`
+        : `${eventName} Bracket`;
   }
 }

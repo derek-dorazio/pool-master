@@ -29,7 +29,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { parseRouteState } from '@/routes/route-state';
 import { BracketBoard } from './bracket-board';
 import { BracketSubmitPanel } from './bracket-entry-submit';
-import { buildBracketRounds, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
+import { buildBracketRounds, describeBracketClose, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { firstContestEvent } from './contest-events';
 import {
@@ -171,6 +171,8 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const entrySummary = contestEntriesQuery.data?.entries.find((entry) => entry.id === entryId) ?? null;
   const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
   const rounds = buildBracketRounds(gamePicks.games, roundLabel);
+  // A full bracket closes at the event's start; a second-chance one at its first round's first game.
+  const closesAt = describeBracketClose(rounds, eventStart);
   const isOpen = gamePicks.games.some((game) => !game.locked);
   const canPick = gamePicks.ownEntry && isOpen;
   // Another entry's picks come back hidden until its games are revealed.
@@ -215,7 +217,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
         badges={(
           <>
             <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
-              {isOpen ? `Open until the ${eventStart}` : contestStatusLabel(contest.status)}
+              {isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
             </StatusBadge>
             {picksHidden ? null : (
               <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[gamePicks.status]}>
@@ -245,14 +247,14 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
 
       {picksHidden ? (
         <Alert data-testid="bracket-picks-hidden">
-          {`This bracket stays hidden until the ${eventStart}. Every bracket is revealed then.`}
+          {`This bracket stays hidden until ${closesAt}. Every bracket is revealed then.`}
         </Alert>
       ) : (
         <>
           <Tile>
             <MetricGrid className="md:grid-cols-4">
               <MetricTile
-                helperText={gamePicks.ownEntry && isOpen ? `Picks lock at the ${eventStart}.` : 'Every pick is locked.'}
+                helperText={gamePicks.ownEntry && isOpen ? `Picks lock at ${closesAt}.` : 'Every pick is locked.'}
                 label="Picked"
                 value={<span data-testid="bracket-picked-count">{formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}</span>}
               />

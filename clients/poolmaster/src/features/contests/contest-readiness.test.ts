@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formatStartsIn, formatTimeUntil, getContestReadinessChecks } from './contest-readiness';
+import type { SportEventDto } from '@/lib/api';
+import { formatStartsIn, formatTimeUntil, getContestReadinessChecks, isKnockoutUnderWay } from './contest-readiness';
 import { buildSportEvent } from './test/contest-admin-fixtures';
 
 const NOW = new Date('2026-04-03T12:00:00.000Z');
@@ -41,5 +42,30 @@ describe('contest readiness', () => {
     expect(noGolfers.find((check) => check.id === 'field')).toMatchObject({ isMet: false, label: 'No golfers loaded yet' });
     const noTiers = getContestReadinessChecks(buildSportEvent({ tierCount: 0 }), NOW);
     expect(noTiers.find((check) => check.id === 'field')?.isMet).toBe(false);
+  });
+
+  it('counts a second-chance bracket\'s event being under way as met, naming the round the bracket starts at', () => {
+    const started = buildSportEvent({ sport: 'BASKETBALL', status: 'IN_PROGRESS', startDate: '2026-04-02T12:00:00.000Z' });
+    expect(getContestReadinessChecks(started, NOW, 'Sweet 16').find((check) => check.id === 'not-started')).toEqual({
+      id: 'not-started',
+      isMet: true,
+      label: 'Event under way · the bracket starts at the Sweet 16',
+    });
+    expect(getContestReadinessChecks(started, NOW).find((check) => check.id === 'not-started')?.isMet).toBe(false);
+  });
+});
+
+describe('a knockout under way', () => {
+  const UNDER_WAY: Partial<SportEventDto> = { status: 'IN_PROGRESS', readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false };
+
+  it('is a knockout in progress whose only bar to a contest is that it has started', () => {
+    expect(isKnockoutUnderWay(buildSportEvent({ sport: 'BASKETBALL', ...UNDER_WAY }))).toBe(true);
+  });
+
+  it('is not a contest-ready knockout, a golf event in progress, or a knockout under way that was never released or has no field', () => {
+    expect(isKnockoutUnderWay(buildSportEvent({ sport: 'BASKETBALL' }))).toBe(false);
+    expect(isKnockoutUnderWay(buildSportEvent({ sport: 'GOLF', ...UNDER_WAY }))).toBe(false);
+    expect(isKnockoutUnderWay(buildSportEvent({ sport: 'BASKETBALL', ...UNDER_WAY, readinessReasons: ['FIELD_NOT_LOADED', 'EVENT_STARTED'] }))).toBe(false);
+    expect(isKnockoutUnderWay(buildSportEvent({ sport: 'BASKETBALL', ...UNDER_WAY, status: 'COMPLETED' }))).toBe(false);
   });
 });

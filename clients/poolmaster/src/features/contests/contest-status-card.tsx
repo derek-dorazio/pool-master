@@ -49,18 +49,30 @@ function Stat({ label, testId, value }: { label: string; testId: string; value: 
   );
 }
 
+/**
+ * When a contest's entries close, for a sentence: its event's start, or a second-chance bracket's
+ * starting round's first game (#721).
+ */
+function entriesCloseAt(event: SportEventDto, secondChanceRoundName: string | null) {
+  return secondChanceRoundName === null
+    ? `the ${getSportDefinition(event.sport).vocabulary.eventStart}`
+    : `the first game of the ${secondChanceRoundName}`;
+}
+
 const inverseLinkClassName = 'border-inverse-border bg-transparent text-on-inverse hover:bg-on-inverse-hover';
 
 function NotOpenCard({
   contest,
   event,
   leagueCode,
+  secondChanceRoundName,
 }: {
   contest: ContestDto;
   event: SportEventDto;
   leagueCode: string;
+  secondChanceRoundName: string | null;
 }) {
-  const checks = getContestReadinessChecks(event);
+  const checks = getContestReadinessChecks(event, new Date(), secondChanceRoundName);
   const isReady = checks.every((check) => check.isMet);
 
   return (
@@ -82,7 +94,7 @@ function NotOpenCard({
         ))}
       </ul>
       <p className="text-sm text-on-inverse-muted">
-        Once it&apos;s open, members can enter until the {getSportDefinition(event.sport).vocabulary.eventStart}, and these settings can&apos;t change.
+        Once it&apos;s open, members can enter until {entriesCloseAt(event, secondChanceRoundName)}, and these settings can&apos;t change.
       </p>
       <div className="flex flex-wrap gap-3">
         <OpenContestAction contestId={contest.id} leagueId={contest.leagueId} />
@@ -119,11 +131,13 @@ function OpenCard({
   contestId,
   event,
   leagueCode,
+  secondChanceRoundName,
   teamCount,
 }: {
   contestId: string;
   event: SportEventDto;
   leagueCode: string;
+  secondChanceRoundName: string | null;
   teamCount: number;
 }) {
   const entered = useEnteredTeams(contestId).data;
@@ -137,13 +151,22 @@ function OpenCard({
         <div className="flex flex-wrap gap-2.5">
           <Stat label="Entries" testId="contest-stat-entries" value={entered.submittedEntryCount} />
           <Stat label="Yet to enter" testId="contest-stat-teams-to-go" value={Math.max(teamCount - entered.teamCount, 0)} />
-          <Stat label="Until close" testId="contest-stat-until-close" value={formatTimeUntil(event.startDate)} />
+          {/* A second-chance bracket closes at a round's first game, which this card does not read. */}
+          {secondChanceRoundName === null ? (
+            <Stat label="Until close" testId="contest-stat-until-close" value={formatTimeUntil(event.startDate)} />
+          ) : null}
         </div>
       ) : null}
-      <p className="text-sm text-on-inverse-muted">
-        Entries close at the {getSportDefinition(event.sport).vocabulary.eventStart}, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
-        The contest goes live then and is final when the event ends.
-      </p>
+      {secondChanceRoundName === null ? (
+        <p className="text-sm text-on-inverse-muted">
+          Entries close at the {getSportDefinition(event.sport).vocabulary.eventStart}, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
+          The contest goes live then and is final when the event ends.
+        </p>
+      ) : (
+        <p className="text-sm text-on-inverse-muted" data-testid="contest-second-chance-close">
+          Entries close at {entriesCloseAt(event, secondChanceRoundName)}. The contest goes live then and is final when the event ends.
+        </p>
+      )}
       <ViewInLeagueLink contestId={contestId} leagueCode={leagueCode} />
     </StatusCardFrame>
   );
@@ -287,20 +310,31 @@ export function ContestStatusCard({
   contest,
   event,
   leagueCode,
+  secondChanceRoundName = null,
   teamCount,
 }: {
   contest: ContestDto;
   event: SportEventDto;
   leagueCode: string;
+  /** A second-chance bracket's starting round by name (#721): its entries close at that round's first game. */
+  secondChanceRoundName?: string | null;
   teamCount: number;
 }) {
   switch (contest.status) {
     case ContestStatus.DRAFT:
-      return <NotOpenCard contest={contest} event={event} leagueCode={leagueCode} />;
+      return <NotOpenCard contest={contest} event={event} leagueCode={leagueCode} secondChanceRoundName={secondChanceRoundName} />;
     case ContestStatus.OPEN:
       return contest.selectionType === SelectionType.RANDOM_DRAW
         ? <DrawOpenCard contest={contest} event={event} leagueCode={leagueCode} />
-        : <OpenCard contestId={contest.id} event={event} leagueCode={leagueCode} teamCount={teamCount} />;
+        : (
+          <OpenCard
+            contestId={contest.id}
+            event={event}
+            leagueCode={leagueCode}
+            secondChanceRoundName={secondChanceRoundName}
+            teamCount={teamCount}
+          />
+        );
     case ContestStatus.ACTIVE:
       return <PlayedCard contestId={contest.id} isFinal={false} leagueCode={leagueCode} />;
     case ContestStatus.COMPLETED:

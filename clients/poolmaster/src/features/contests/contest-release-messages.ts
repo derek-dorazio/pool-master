@@ -25,5 +25,5 @@ export const CONTEST_RELEASE_CODE_MESSAGES: ErrorCodeMessages = {
     'More scores count than the draw deals each entry. Lower Scores that count, or deal more per entry.',
   [CONTEST_BRACKET_SINGLE_EVENT]: 'A bracket contest covers one tournament, so it can’t take another event.',
   [CONTEST_EVENT_NOT_A_BRACKET]:
-    'This event’s games can’t be filled in as a bracket yet: every first-round team must be set, and every game must lead to one final.',
+    'This event’s games can’t be filled in as a bracket yet: every team of the round the bracket starts at must be set, and every game must lead to one final.',
 };

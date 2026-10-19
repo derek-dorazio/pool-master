@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -8,6 +8,7 @@ import { CreateContestPage } from './create-contest-page';
 const {
   createContestMock,
   getLeagueByCodeMock,
+  getSportLeagueMock,
   listContestConfigTemplatesMock,
   listEventsMock,
   mockLogger,
@@ -26,6 +27,7 @@ const {
   return {
     createContestMock: vi.fn(),
     getLeagueByCodeMock: vi.fn(),
+    getSportLeagueMock: vi.fn(),
     listContestConfigTemplatesMock: vi.fn(),
     listEventsMock: vi.fn(),
     mockLogger: logger,
@@ -35,6 +37,7 @@ const {
 bindApiMocks({
   createContest: createContestMock,
   getLeagueByCode: getLeagueByCodeMock,
+  getSportLeague: getSportLeagueMock,
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listEvents: listEventsMock,
 });
@@ -241,33 +244,49 @@ function singleEvent(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** A contest-ready basketball tournament of three rounds, unless told otherwise. */
+function basketballEvent(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'bb-1',
+    sport: 'BASKETBALL',
+    name: 'March Madness',
+    venue: null,
+    status: 'SCHEDULED',
+    startDate: '2099-03-19T16:00:00.000Z',
+    participantCount: 8,
+    readinessStatus: 'CONTEST_ELIGIBLE',
+    readinessReasons: [],
+    contestEligible: true,
+    tierCount: 4,
+    rounds: 3,
+    sportLeagueId: 'ncaa-men',
+    ...overrides,
+  };
+}
+
+/** A six-round March Madness already under way: released with its field, only started. */
+const MARCH_MADNESS_UNDER_WAY = {
+  id: 'bb-live',
+  name: 'March Madness Live',
+  status: 'IN_PROGRESS',
+  startDate: '2026-03-19T16:00:00.000Z',
+  readinessStatus: 'EVENT_STARTED',
+  readinessReasons: ['EVENT_STARTED'],
+  contestEligible: false,
+  rounds: 6,
+} as const;
+
 /**
- * The golf reads, plus one contest-ready basketball tournament of three rounds with no presets of
- * its own, as the reads answer when Basketball is chosen.
+ * The golf reads, plus basketball's events (one contest-ready tournament of three rounds unless
+ * told otherwise) with no presets of their own and a sport league with no round names of its own,
+ * as the reads answer when Basketball is chosen.
  */
-function primeBasketballMocks() {
+function primeBasketballMocks(events: Array<Record<string, unknown>> = [basketballEvent()], roundNames: string[] = []) {
   primeCommonMocks();
+  getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'ncaa-men', name: 'NCAA Men', roundNames } } });
   const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
   listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'BASKETBALL'
-    ? Promise.resolve({
-      data: {
-        events: [{
-          id: 'bb-1',
-          sport: 'BASKETBALL',
-          name: 'March Madness',
-          venue: null,
-          status: 'SCHEDULED',
-          startDate: '2099-03-19T16:00:00.000Z',
-          participantCount: 8,
-          readinessStatus: 'CONTEST_ELIGIBLE',
-          readinessReasons: [],
-          contestEligible: true,
-          tierCount: 4,
-          rounds: 3,
-          sportLeagueId: 'ncaa-men',
-        }],
-      },
-    })
+    ? Promise.resolve({ data: { events } })
     : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
   const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
   listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'BASKETBALL'
@@ -290,6 +309,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
   afterEach(() => {
     createContestMock.mockReset();
     getLeagueByCodeMock.mockReset();
+    getSportLeagueMock.mockReset();
     listContestConfigTemplatesMock.mockReset();
     listEventsMock.mockReset();
     mockLogger.debug.mockReset();
@@ -554,6 +574,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
 
     expect(await screen.findByTestId('contest-bracket-rules')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('Full bracket');
     expect(screen.getByText('Points for a correct pick')).toBeInTheDocument();
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4' } });
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('March Madness Bracket'));
@@ -570,6 +591,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       selectionType: 'BRACKET',
       configuration: {
         selectionType: 'BRACKET',
+        startsAtRound: 1,
         maxEntriesPerSquad: 1,
         scoring: {
           participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
@@ -577,6 +599,106 @@ describe('Commissioner tools › Contests › Create contest', () => {
         },
       },
     });
+  });
+
+  it('offers a six-round bracket\'s full bracket and each later round but the final by its round names, and creates a second-chance bracket from the Sweet 16', async () => {
+    primeBasketballMocks([basketballEvent({ rounds: 6 })]);
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-second-chance' } } });
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+    await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
+    fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
+
+    const startsAt = await screen.findByTestId('contest-bracket-starts-at-round');
+    expect(within(startsAt).getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Full bracket',
+      'From the Second Round',
+      'From the Sweet 16',
+      'From the Elite Eight',
+      'From the Final Four',
+    ]);
+    fireEvent.change(startsAt, { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
+
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('March Madness Second-Chance Bracket'));
+    expect(screen.getByTestId('contest-bracket-rules')).toHaveTextContent(
+      'Second-chance bracket from the Sweet 16: pick the winner of every game from the Sweet 16 on, all the way to the final, before its first game.',
+    );
+    expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('Second-chance bracket from the Sweet 16');
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).toMatchObject({
+      name: 'March Madness Second-Chance Bracket',
+      selectionType: 'BRACKET',
+      configuration: { selectionType: 'BRACKET', startsAtRound: 3 },
+    });
+  });
+
+  it('names the starting rounds by the event\'s sport league\'s own round names where it has them', async () => {
+    primeBasketballMocks(
+      [basketballEvent({ rounds: 6 })],
+      ['First Round', 'Round of 32', 'Sweet Sixteen', 'Regional Final', 'National Semifinal', 'Title Game'],
+    );
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+    await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
+    fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
+
+    expect(await screen.findByRole('option', { name: 'From the Sweet Sixteen' })).toBeInTheDocument();
+    expect(getSportLeagueMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'ncaa-men' } }));
+  });
+
+  it('lists a knockout under way only for a bracket, offers only its later rounds, and creates a second-chance bracket from the second round', async () => {
+    primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)]);
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-second-chance' } } });
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+    expect(await screen.findByTestId('create-contest-no-events')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-event-bb-live')).toBeChecked());
+    expect(screen.getByTestId('contest-event-bb-live')).toHaveTextContent('Under way');
+    const startsAt = screen.getByTestId('contest-bracket-starts-at-round');
+    expect(startsAt).toHaveDisplayValue('From the Second Round');
+    expect(screen.queryByRole('option', { name: 'Full bracket' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).toMatchObject({
+      sportEventIds: ['bb-live'],
+      configuration: { selectionType: 'BRACKET', startsAtRound: 2 },
+    });
+  });
+
+  it('shows the server\'s own words when a second-chance bracket\'s starting round has already started', async () => {
+    primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)]);
+    createContestMock.mockResolvedValue({
+      error: {
+        error: {
+          code: 'SPORT_EVENT_ALREADY_STARTED',
+          message: 'The bracket\'s starting round has already started, so a bracket can no longer start there.',
+        },
+      },
+      status: 422,
+    });
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+    fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
+    await waitFor(() => expect(screen.getByTestId('contest-event-bb-live')).toBeChecked());
+    fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    expect(await screen.findByText('The bracket\'s starting round has already started, so a bracket can no longer start there.')).toBeInTheDocument();
   });
 
   it('says a bracket needs games that fill in as one when the server refuses the event with CONTEST_EVENT_NOT_A_BRACKET', async () => {

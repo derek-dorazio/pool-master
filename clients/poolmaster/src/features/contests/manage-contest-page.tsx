@@ -35,6 +35,8 @@ import { coversOneEvent, firstContestEvent } from './contest-events';
 import { countParticipants, formatContestRules, formatEntriesPerTeam, formatSelectionTypeName } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
+import { secondChanceRoundName } from './bracket-start-round';
+import { useEventRoundName } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useLeagueContestsQuery } from './use-league-contests-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
@@ -105,6 +107,8 @@ export function ManageContestPage() {
   const firstEventId = (contest ? firstContestEvent(contest)?.sportEventId : undefined)
     ?? managedContestQuery.data?.sportEvents.at(0)?.sportEventId;
   const eventQuery = useQuery(sportEventQueryOptions(firstEventId ?? ''));
+  // A bracket's rounds are named for where it starts (#721); other formats read no round names.
+  const roundName = useEventRoundName(contest?.selectionType === SelectionType.BRACKET ? eventQuery.data ?? null : null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const contestsPath = buildLeagueAdminContestsPath(leagueCode);
 
@@ -167,7 +171,11 @@ export function ManageContestPage() {
     managedContest.sportEvents.at(0)?.effectiveTiers.length ?? 0,
     getSportDefinition(event.sport).vocabulary.participant,
     configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null,
+    roundName,
   );
+  const bracketStartRoundName = configuration.selectionType === SelectionType.BRACKET
+    ? secondChanceRoundName(configuration.startsAtRound, roundName)
+    : null;
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
   const isMultiEvent = contest.sportEvents.length > 1;
   // Events can change until the contest is final; a random draw deals one event, once, and a
@@ -200,7 +208,13 @@ export function ManageContestPage() {
         testId="manage-contest-identity"
       />
 
-      <ContestStatusCard contest={contest} event={event} leagueCode={leagueCode} teamCount={activeTeamCount} />
+      <ContestStatusCard
+        contest={contest}
+        event={event}
+        leagueCode={leagueCode}
+        secondChanceRoundName={bracketStartRoundName}
+        teamCount={activeTeamCount}
+      />
 
       <SettingsSection
         action={isNotOpen ? (

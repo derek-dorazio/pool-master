@@ -26,6 +26,7 @@ import {
   Input,
   LoadingState,
 } from '@/features/shared/ui';
+import { bracketRoundCount, bracketStartRoundOptions } from './bracket-start-round';
 import { firstContestEvent } from './contest-events';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { formatSelectionTypeName } from './contest-rules';
@@ -35,6 +36,7 @@ import {
   toContestRulesValues,
   type ContestRulesValues,
 } from './contest-rules-form';
+import { useEventRoundName } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useLeagueContestsQuery } from './use-league-contests-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
@@ -47,6 +49,7 @@ const editContestFormSchema = z.object({
   picksPerEntry: z.string(),
   picksPerTier: z.string(),
   rosterSize: z.string(),
+  startsAtRound: z.string(),
   unlimitedEntries: z.boolean(),
 });
 
@@ -101,10 +104,24 @@ function EditContestForm({
     defaultValues: { contestName: contest.name, ...toContestRulesValues(configuration) },
   });
   const values = form.watch();
+  // A bracket starts at the full bracket or a later round; once its event is under way, only a
+  // later round, as a second-chance bracket (#721).
+  const roundName = useEventRoundName(selectionType === SelectionType.BRACKET ? event : null);
+  const bracketStartRounds = selectionType === SelectionType.BRACKET
+    ? bracketStartRoundOptions(bracketRoundCount(event), roundName, { isUnderWay: event.readinessReasons.includes('EVENT_STARTED') })
+    : [];
+  const parseRules = (submitted: EditContestFormValues) => {
+    const parsed = parseContestRules(submitted, selectionType, tierCount, participant);
+    if (parsed.error === null && bracketStartRounds.length
+      && !bracketStartRounds.some((option) => String(option.roundNumber) === submitted.startsAtRound)) {
+      return { configuration: null, error: 'Choose the round the bracket starts at.' } as const;
+    }
+    return parsed;
+  };
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (submitted: EditContestFormValues) => {
-      const parsed = parseContestRules(submitted, selectionType, tierCount, participant);
+      const parsed = parseRules(submitted);
       if (parsed.error !== null) {
         throw new Error(parsed.error);
       }
@@ -163,7 +180,7 @@ function EditContestForm({
       onSubmit={(submitEvent) => {
         setRulesError(null);
         void form.handleSubmit((submitted) => {
-          const parsed = parseContestRules(submitted, selectionType, tierCount, participant);
+          const parsed = parseRules(submitted);
           if (parsed.error !== null) {
             setRulesError(parsed.error);
             return;
@@ -191,6 +208,7 @@ function EditContestForm({
       <div className="space-y-3">
         <h3 className="text-base font-semibold">Rules</h3>
         <ContestRulesFields
+          bracketStartRounds={bracketStartRounds}
           onChange={(next: Partial<ContestRulesValues>) => {
             for (const [field, value] of Object.entries(next) as Array<[keyof ContestRulesValues, string | boolean]>) {
               form.setValue(field, value, { shouldDirty: true });

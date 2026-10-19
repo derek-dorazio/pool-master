@@ -1,7 +1,8 @@
 import type { ReactElement } from 'react';
 import { PickEmMode, RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, type SportNoun } from '@poolmaster/shared/domain';
-import { Checkbox, FormField, formatDollars, Input, SegmentedControl } from '@/features/shared/ui';
-import { describeBracketRules, describePickEmMode, formatPickEmModeName } from './contest-rules';
+import { Checkbox, FormField, formatDollars, Input, SegmentedControl, Select } from '@/features/shared/ui';
+import type { BracketStartRoundOption } from './bracket-start-round';
+import { describeBracketRules, describePickEmMode, formatPickEmModeName, isSecondChanceBracket } from './contest-rules';
 import { defaultCountedScoresFor, perEntryLabel, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
 function TieredRulesInputs({
@@ -182,7 +183,48 @@ function PickEmRulesInputs({
   );
 }
 
+/**
+ * The bracket input (#721): where the bracket starts, the full bracket or a later round for a
+ * second-chance bracket, among the rounds the event offers. Every game from there on is picked,
+ * and the round points below say what each is worth.
+ */
+function BracketRulesInputs({
+  onChange,
+  startRounds,
+  values,
+}: {
+  onChange: (next: Partial<ContestRulesValues>) => void;
+  startRounds: readonly BracketStartRoundOption[];
+  values: ContestRulesValues;
+}) {
+  const chosen = startRounds.find((option) => String(option.roundNumber) === values.startsAtRound) ?? null;
+  const startRoundName = chosen && isSecondChanceBracket(chosen.roundNumber) ? chosen.name : null;
+  return (
+    <div className="space-y-3">
+      {startRounds.length ? (
+        <FormField
+          helperText="A second-chance bracket is picked from a later round on, and closes at that round's first game."
+          label="Starts at"
+        >
+          <Select
+            data-testid="contest-bracket-starts-at-round"
+            onChange={(event) => onChange({ startsAtRound: event.target.value })}
+            value={chosen ? values.startsAtRound : ''}
+          >
+            {chosen ? null : <option disabled value="">Choose a round</option>}
+            {startRounds.map((option) => (
+              <option key={option.roundNumber} value={String(option.roundNumber)}>{option.label}</option>
+            ))}
+          </Select>
+        </FormField>
+      ) : null}
+      <p className="text-sm text-muted-foreground" data-testid="contest-bracket-rules">{describeBracketRules(startRoundName)}</p>
+    </div>
+  );
+}
+
 type RulesInputsProps = {
+  bracketStartRounds: readonly BracketStartRoundOption[];
   onChange: (next: Partial<ContestRulesValues>) => void;
   participant: SportNoun;
   salaryCap: number | null;
@@ -204,9 +246,8 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
   [SelectionType.PICK_EM]: ({ onChange, values }: RulesInputsProps) => (
     <PickEmRulesInputs onChange={onChange} values={values} />
   ),
-  // A bracket has no rules of its own (#721): every game is picked, and the round points below say what each is worth.
-  [SelectionType.BRACKET]: () => (
-    <p className="text-sm text-muted-foreground" data-testid="contest-bracket-rules">{describeBracketRules()}</p>
+  [SelectionType.BRACKET]: ({ bracketStartRounds, onChange, values }: RulesInputsProps) => (
+    <BracketRulesInputs onChange={onChange} startRounds={bracketStartRounds} values={values} />
   ),
 };
 
@@ -214,10 +255,11 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
  * The rules inputs for a contest's format: picks per tier and scores that count for a tiered
  * contest, golfers per entry and scores that count under the event's salary cap for a budget
  * one, golfers dealt per entry and scores that count for a random draw, the mode for a pick'em
- * contest, nothing more for a bracket, then entries per member with No limit. Create and Edit contest both use it, so a new format
+ * contest, where a bracket starts, then entries per member with No limit. Create and Edit contest both use it, so a new format
  * adds its fields here once.
  */
 export function ContestRulesFields({
+  bracketStartRounds = [],
   onChange,
   participant,
   salaryCap,
@@ -225,6 +267,8 @@ export function ContestRulesFields({
   tierCount,
   values,
 }: {
+  /** The rounds a bracket on the event can start at; only a bracket reads them. */
+  bracketStartRounds?: readonly BracketStartRoundOption[];
   onChange: (next: Partial<ContestRulesValues>) => void;
   /** What the event's sport calls a competitor: "golfer", "horse". */
   participant: SportNoun;
@@ -236,7 +280,7 @@ export function ContestRulesFields({
 }) {
   return (
     <div className="space-y-4">
-      {RULES_INPUTS[selectionType]({ onChange, participant, salaryCap, tierCount, values })}
+      {RULES_INPUTS[selectionType]({ bracketStartRounds, onChange, participant, salaryCap, tierCount, values })}
       <div className="grid gap-4 md:grid-cols-2">
         <FormField label="Entries per member">
           <Input

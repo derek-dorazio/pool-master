@@ -30,6 +30,9 @@ import {
   buildLeagueAdminContestsPath,
 } from '@/features/leagues/league-routing';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
+import { bracketRoundCount, bracketStartRoundOptions, hasSecondChanceRound } from './bracket-start-round';
+import { isKnockoutUnderWay } from './contest-readiness';
+import { useEventRoundName } from './use-bracket-round-label';
 import { hasWebEntryScreen, type WebEnterableSelectionType } from './contest-entry-screens';
 import {
   Alert,
@@ -92,7 +95,7 @@ const FORMAT_CHOICES: Record<CreatableSelectionType, { describe: (participant: S
   },
   [SelectionType.BRACKET]: {
     icon: Network,
-    describe: () => 'Fill in the whole bracket before it starts: pick the winner of every game, all the way to the final.',
+    describe: () => 'Pick the winner of every game, all the way to the final: the whole bracket before it starts, or a second-chance bracket from a later round.',
   },
 };
 
@@ -123,6 +126,7 @@ const createContestFormSchema = z.object({
   rosterSize: z.string(),
   roundValues: z.string(),
   scoringDefinitionId: ParticipantScoringDefinitionIdSchema,
+  startsAtRound: z.string(),
   selectedTemplateId: z.string(),
   selectionType: z.enum(creatableSelectionTypes),
   sport: z.custom<Sport>((value) => SUPPORTED_SPORTS.some((sport) => sport === value)),
@@ -156,6 +160,17 @@ function leagueDefaultFormatOf(templates: ContestConfigTemplateDto[]): Creatable
 
 function sortEventsBySoonest(events: SportEventDto[]) {
   return [...events].sort((left, right) => Date.parse(left.startDate) - Date.parse(right.startDate));
+}
+
+/**
+ * The events a contest of this format can be created on: the contest-ready ones and, for a
+ * bracket, a knockout under way with a later round to start a second-chance bracket at (#721).
+ */
+function contestEventsFor(events: readonly SportEventDto[], selectionType: CreatableSelectionType) {
+  return events.filter((event) => event.contestEligible
+    || (selectionType === SelectionType.BRACKET
+      && isKnockoutUnderWay(event)
+      && hasSecondChanceRound(bracketRoundCount(event))));
 }
 
 /**
@@ -215,11 +230,17 @@ export function CreateContestPage() {
     retry: false,
   });
 
-  const eligibleEvents = useMemo(
-    () => eventsQuery.data?.filter((event) => event.contestEligible) ?? [],
-    [eventsQuery.data],
+  const contestEvents = useMemo(
+    () => contestEventsFor(eventsQuery.data ?? [], selectionType),
+    [eventsQuery.data, selectionType],
   );
-  const selectedEvent = eligibleEvents.find((event) => event.id === sportEventId) ?? null;
+  const selectedEvent = contestEvents.find((event) => event.id === sportEventId) ?? null;
+  // A knockout under way takes only a second-chance bracket.
+  const isEventUnderWay = selectedEvent !== null && !selectedEvent.contestEligible;
+  const roundName = useEventRoundName(selectionType === SelectionType.BRACKET ? selectedEvent : null);
+  const bracketStartRounds = selectionType === SelectionType.BRACKET && selectedEvent
+    ? bracketStartRoundOptions(bracketRoundCount(selectedEvent), roundName, { isUnderWay: isEventUnderWay })
+    : [];
   // The chosen event's sport league: its own presets are offered beside the sport-wide ones, so
   // the presets wait for an event.
   const sportLeagueId = selectedEvent?.sportLeagueId;
@@ -254,6 +275,11 @@ export function CreateContestPage() {
   );
   const presets = useMemo(() => presetsFor(selectionType), [presetsFor, selectionType]);
   const parsedRules = parseContestRules(values, selectionType, tierCount, participant);
+  // A preset's full bracket is not offered on a knockout under way: a later round must be chosen.
+  const rulesError = parsedRules.error
+    ?? (bracketStartRounds.length && !bracketStartRounds.some((option) => String(option.roundNumber) === values.startsAtRound)
+      ? 'Choose the round the bracket starts at.'
+      : null);
   const parsedScoring = scoringSettingsUi.parse(values);
 
   // A preset's rules and, when it presets them, its scoring definition and settings. Without a
@@ -263,8 +289,11 @@ export function CreateContestPage() {
     const scoring: ContestScoringSettings | undefined = configuration.scoring;
     const definitionId = scoring?.participantScoringDefinitionId
       ?? getSportDefinition(current.sport).scoringDefinitions[0];
+    const rules = toContestRulesValues(configuration, current);
     return {
-      ...toContestRulesValues(configuration, current),
+      ...rules,
+      // A preset's full bracket cannot start on a knockout under way: the chosen later round stays.
+      ...(isEventUnderWay && rules.startsAtRound === '1' ? { startsAtRound: current.startsAtRound } : {}),
       scoringDefinitionId: definitionId,
       ...(scoring
         ? SCORING_SETTINGS_UI[definitionId].toValues(scoring, {
@@ -276,7 +305,7 @@ export function CreateContestPage() {
         })
         : {}),
     };
-  }, [form]);
+  }, [form, isEventUnderWay]);
 
   const selectPreset = useCallback((templateId: string) => {
     const template = presets.find((candidate) => candidate.id === templateId);
@@ -313,13 +342,18 @@ export function CreateContestPage() {
     });
   }, [form, setFormValues]);
 
-  // The soonest contest-ready event is chosen to start with.
+  // A knockout under way starts its second-chance bracket at the first round it offers.
+  const chooseEvent = useCallback((event: SportEventDto) => {
+    setFormValues(event.contestEligible ? { sportEventId: event.id } : { sportEventId: event.id, startsAtRound: '2' });
+  }, [setFormValues]);
+
+  // The soonest contest-ready event is chosen to start with, else a knockout under way.
   useEffect(() => {
-    const soonest = eligibleEvents.at(0);
-    if (soonest && !eligibleEvents.some((event) => event.id === sportEventId)) {
-      setFormValues({ sportEventId: soonest.id });
+    const soonest = contestEvents.find((event) => event.contestEligible) ?? contestEvents.at(0);
+    if (soonest && !contestEvents.some((event) => event.id === sportEventId)) {
+      chooseEvent(soonest);
     }
-  }, [eligibleEvents, setFormValues, sportEventId]);
+  }, [chooseEvent, contestEvents, sportEventId]);
 
   // A newly chosen sport or sport league starts on its default preset; while both stay, Custom
   // stays Custom. A sport league whose own default is another format starts on that format (the
@@ -391,7 +425,7 @@ export function CreateContestPage() {
       if (!league?.id) {
         throw new Error('League detail is still loading.');
       }
-      const event = eligibleEvents.find((candidate) => candidate.id === submitted.sportEventId);
+      const event = contestEvents.find((candidate) => candidate.id === submitted.sportEventId);
       if (!event) {
         throw new Error('Choose a contest-ready event for the contest.');
       }
@@ -496,7 +530,7 @@ export function CreateContestPage() {
       // The event's presets are still loading: a contest sent now would skip its default preset.
       isSubmitDisabled={!selectedEvent
         || templatesQuery.isPending
-        || parsedRules.error !== null
+        || rulesError !== null
         || parsedScoring.error !== null
         || (selectionType === SelectionType.BUDGET_PICK && isBudgetUnavailable)}
       onSubmit={(submitEvent) => {
@@ -512,7 +546,9 @@ export function CreateContestPage() {
       title="Create contest"
     >
       <SetupSection
-        lead={`Released events that haven't started. Entries close at the ${sportDefinition.vocabulary.eventStart}.`}
+        lead={selectionType === SelectionType.BRACKET
+          ? `Released events that haven't started, and ${sportDefinition.vocabulary.event.many} under way for a second-chance bracket. Entries close at the ${sportDefinition.vocabulary.eventStart}, or at a second-chance bracket's first game.`
+          : `Released events that haven't started. Entries close at the ${sportDefinition.vocabulary.eventStart}.`}
         step={1}
         testId="create-contest-event"
         title="Event"
@@ -526,12 +562,17 @@ export function CreateContestPage() {
           <Alert tone="danger">
             We couldn&apos;t load {sportDefinition.name.toLowerCase()} events. Try again in a moment.
           </Alert>
-        ) : !eligibleEvents.length ? (
+        ) : !contestEvents.length ? (
           <NoEligibleEventsAlert sport={sportDefinition} />
         ) : (
           <EventChoices
-            events={eligibleEvents}
-            onSelect={(eventId) => setFormValues({ sportEventId: eventId })}
+            events={contestEvents}
+            onSelect={(eventId) => {
+              const event = contestEvents.find((candidate) => candidate.id === eventId);
+              if (event) {
+                chooseEvent(event);
+              }
+            }}
             selectedEventId={sportEventId}
             sport={sportDefinition}
           />
@@ -579,6 +620,7 @@ export function CreateContestPage() {
 
       <SetupSection step={3} testId="create-contest-rules" title="Rules">
         <ContestRulesFields
+          bracketStartRounds={bracketStartRounds}
           onChange={(next) => setFormValues({ ...next, selectedTemplateId: '' })}
           participant={participant}
           salaryCap={salaryCap}
@@ -586,8 +628,8 @@ export function CreateContestPage() {
           tierCount={tierCount}
           values={values}
         />
-        {parsedRules.error !== null ? (
-          <p className="text-sm text-destructive" data-testid="contest-rules-error">{parsedRules.error}</p>
+        {rulesError !== null ? (
+          <p className="text-sm text-destructive" data-testid="contest-rules-error">{rulesError}</p>
         ) : null}
         {scoringSettingsUi.Fields ? (
           <scoringSettingsUi.Fields
@@ -620,7 +662,7 @@ export function CreateContestPage() {
             <div className="font-semibold">{`${contestName.trim() || 'Untitled contest'} · ${selectedEvent.name}`}</div>
             <div>
               {[
-                formatContestRules(parsedRules.configuration, tierCount, participant, salaryCap),
+                formatContestRules(parsedRules.configuration, tierCount, participant, salaryCap, roundName),
                 scoringSettingsUi.describe(parsedScoring.scoring),
                 `${formatEntriesPerTeamSentence(parsedRules.configuration.maxEntriesPerSquad)}.`,
               ].filter((sentence) => sentence !== null).join(' ')}
