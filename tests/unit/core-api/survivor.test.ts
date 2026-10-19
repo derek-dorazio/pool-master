@@ -371,6 +371,19 @@ describe('PredictionService — a survivor week', () => {
     expect(context.storedPicks('entry-alice')).toContain(g5.id);
   });
 
+  it('lets a pick on a game cancelled mid-week be replaced by a pick on a game still to kick off, freeing the cancelled team', async () => {
+    const context = beforeWeek3();
+    const { g5, g6 } = context.gamesByNumber;
+    await context.predictions.saveGamePicks({ ...context.input('Alice'), picks: [context.pickOf(g5, 'Raiders')] });
+    await context.predictions.submitGamePicks(context.input('Alice'));
+    // Bills v Raiders is called off after the week has started; Chiefs v Jets is still to kick off.
+    context.setNow(later(WEEK_3, 1));
+    context.cancel(g5);
+
+    await context.predictions.saveGamePicks({ ...context.input('Alice'), picks: [context.pickOf(g6, 'Jets')] });
+    expect(context.storedPicks('entry-alice')).toEqual(['game-1', 'game-4', g6.id]);
+  });
+
   it('hides the teams an entry has used from another team\'s members, as they could show picks not yet revealed', async () => {
     const context = beforeWeek3();
     const view = await context.predictions.getGamePicks({ ...context.input('Alice'), actorUserId: context.userOf('Bob') });
@@ -393,7 +406,8 @@ describe('ContestService.getSurvivorLeaderboard', () => {
       ['Dan', 'T2', false, 2, 1],
       ['Cara', '4', false, 1, 0],
     ]);
-    expect(board.weeks.map((week) => [week.weekNumber, week.started, week.aliveCount])).toEqual([[1, true, 4], [2, true, 3], [3, false, 0]]);
+    // Still in after each week: week 1's three survivors; in week 2 only Alice, her game still to play.
+    expect(board.weeks.map((week) => [week.weekNumber, week.started, week.aliveCount])).toEqual([[1, true, 3], [2, true, 1], [3, false, 0]]);
   });
 
   it('shows a picked team from its game\'s kickoff and each week\'s outcome, nothing for a week after the entry went out', async () => {
@@ -409,6 +423,22 @@ describe('ContestService.getSurvivorLeaderboard', () => {
     expect(weeksOf('Alice')).toEqual([[SurvivorWeekOutcome.SURVIVED, 'Bills'], [SurvivorWeekOutcome.PENDING, null], [null, null]]);
     expect(weeksOf('Bob')).toEqual([[SurvivorWeekOutcome.SURVIVED, 'Chiefs'], [SurvivorWeekOutcome.ELIMINATED, 'Jets'], [null, null]]);
     expect(weeksOf('Cara')).toEqual([[SurvivorWeekOutcome.ELIMINATED, 'Jets'], [null, null], [null, null]]);
+  });
+
+  it('names no team for a week the entry left in draft, even once that pick\'s game has kicked off', async () => {
+    const context = setup();
+    context.playWeek1();
+    context.playWeek2();
+    // After the Chiefs v Raiders kickoff, where Dan's unsubmitted week 2 pick is.
+    context.setNow(later(WEEK_2, 26));
+    const board = await context.leaderboard();
+    const dan = expectDefined(board.entries.find((entry) => entry.entryName === 'Dan'));
+
+    expect(dan.weeks.map((week) => [week.outcome, week.team])).toEqual([
+      [SurvivorWeekOutcome.SURVIVED, 'Bills'],
+      [SurvivorWeekOutcome.ELIMINATED, null],
+      [null, null],
+    ]);
   });
 
   it('refuses a contest that is not a survivor contest', async () => {
@@ -461,5 +491,29 @@ describe('ContestSettlementService — a survivor contest', () => {
       .sort((left, right) => String(left[0]).localeCompare(String(right[0])));
     expect(totals).toEqual([['entry-alice', 3, '1'], ['entry-bob', 1, 'T2'], ['entry-cara', 0, '4'], ['entry-dan', 1, 'T2']]);
     expect(expectDefined(context.world.contests.get(context.contest.id)).status).toBe(ContestStatus.COMPLETED);
+  });
+
+  it('ranks the settled season by the run, not the weekly snapshots, when a postponed week 1 game is played after week 2 settled', async () => {
+    const context = setup();
+    const { g1, g2, g3, g4 } = context.gamesByNumber;
+    // Bills v Jets is postponed: week 2 is played and settles while week 1 is still open.
+    context.play(g2, MatchSide.HOME);
+    context.play(g3, MatchSide.HOME);
+    context.play(g4, MatchSide.HOME);
+    await settle(context, context.week2.id, later(WEEK_2, 48));
+    // Then the Jets win it, putting out Alice and Dan in week 1, and week 1 settles.
+    context.play(g1, MatchSide.AWAY);
+    await settle(context, context.week1.id, later(WEEK_2, 72));
+    context.playWeek3();
+    await settle(context, context.week3.id, later(WEEK_3, 48));
+
+    // Week 2's snapshot froze a 1 for Alice, who the run puts out in week 1 with no week survived.
+    const totals = (await context.world.standingRepo().findByContest(context.contest.id))
+      .map((standing) => [standing.contestEntryId, standing.totalScore, standing.displayPosition])
+      .sort((left, right) => String(left[0]).localeCompare(String(right[0])));
+    expect(totals).toEqual([['entry-alice', 0, 'T3'], ['entry-bob', 1, 'T1'], ['entry-cara', 1, 'T1'], ['entry-dan', 0, 'T3']]);
+    const board = await context.leaderboard();
+    expect(board.entries.map((entry) => [entry.entryName, entry.weeksSurvived, entry.displayPosition]))
+      .toEqual([['Bob', 1, 'T1'], ['Cara', 1, 'T1'], ['Alice', 0, 'T3'], ['Dan', 0, 'T3']]);
   });
 });

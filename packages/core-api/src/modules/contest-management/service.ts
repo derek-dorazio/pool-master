@@ -741,8 +741,9 @@ export class ContestManagementService {
     }
     if (rules.selectionType === SelectionType.SURVIVOR) {
       // A survivor entry picks one team a week to win its game (#719): every week needs its games,
-      // with both teams known. No pick earns points, so the scoring rule stored is pick'em's and
-      // nothing reads it: the leaderboard and settlement count weeks survived.
+      // with both teams known. No pick earns points: the leaderboard and settlement count weeks
+      // survived. The rule is still stored because every contest carries one (a configuration's
+      // scoring is required), so a survivor contest keeps pick'em's one-point default.
       for (const each of sportEvents) {
         await this.assertEventHasGames(each.id);
         await this.assertEventGamesDecided(each.id);

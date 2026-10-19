@@ -10557,7 +10557,7 @@ export type SurvivorLeaderboardResponse = {
          */
         started: boolean;
         /**
-         * How many entries came into the week still in. None until it starts, and for a cancelled week.
+         * How many entries are still in after the week: those that survived it and those whose game is still to finish. 0 until it starts, and for a cancelled week.
          */
         aliveCount: number;
     }>;

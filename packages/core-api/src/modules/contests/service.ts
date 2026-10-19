@@ -46,6 +46,7 @@ import {
   LeagueRole,
   SportEventStatus,
   SquadMembershipStatus,
+  SurvivorWeekOutcome,
   PARTICIPANT_SCORING_DEFINITIONS,
 } from '@poolmaster/shared/domain';
 import { CONTEST_EVENT_NOT_IN_CONTEST, type ContestEntryDto, type ApiErrorCode } from '@poolmaster/shared/dto';
@@ -843,7 +844,10 @@ export class ContestService {
           return {
             sportEventId: event.id,
             outcome: run.weeks[index]?.outcome ?? null,
-            team: pick !== undefined && isRevealed(pick.sportEventMatchId) ? nameById.get(pick.participantId) ?? null : null,
+            // Only a submitted week's pick is shown: a draft one never counted, and the entry is out for not submitting.
+            team: pick !== undefined && contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED && isRevealed(pick.sportEventMatchId)
+              ? nameById.get(pick.participantId) ?? null
+              : null,
           };
         }),
       };
@@ -859,7 +863,11 @@ export class ContestService {
         status: event.status,
         started,
         aliveCount: started && !cancelled
-          ? season.entries.filter(({ run }) => (run.weeks[index]?.outcome ?? null) !== null).length
+          // Still in after the week: those who survived it, and those whose game is still to finish.
+          ? season.entries.filter(({ run }) => {
+            const outcome = run.weeks[index]?.outcome ?? null;
+            return outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.PENDING;
+          }).length
           : 0,
       })),
       entries,

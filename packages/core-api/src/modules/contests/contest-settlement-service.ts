@@ -18,6 +18,7 @@ import {
   buildMissedEventStanding,
   rankContestEntryStandings,
   rankContestTotals,
+  type ContestEntryTotal,
   resolveContestCountingRule,
   resolveContestScoringDefinition,
   type ParticipantScore,
@@ -366,9 +367,9 @@ export class ContestSettlementService {
    * Settles one week of a survivor contest (#719): each entry still in coming into the week is
    * frozen with 1 when it survived the week and 0 when it went out, survivors first. Entries out
    * before the week have no standing for it, and a cancelled week counts for nothing (#743). A
-   * week settles once. When the contest's last week settles, the weeks survived are summed and
-   * ranked into contest standings, entries out in the same week sharing a place, and the contest
-   * is COMPLETED.
+   * week settles once. When the contest's last week settles, the contest standings are ranked from
+   * the season's run, as the live board ranks it (entries still in first, then weeks survived,
+   * entries out in the same week sharing a place), and the contest is COMPLETED.
    */
   private async settleSurvivorWeek(
     contest: Contest,
@@ -411,8 +412,17 @@ export class ContestSettlementService {
     if (!(await this.allEventsFinished(contest))) {
       return { standingsUpserted: 0, completed: false };
     }
-    const weeks = new Set((await this.deps.eventStandings.findByContest(contest.id)).map((standing) => standing.sportEventId));
-    const standingsUpserted = await this.settleContestTotals(contest, weeks.size, 'HIGHER_IS_BETTER', completedAt);
+    // Ranked from the season's run, as the live board is, not from the weekly snapshots: a week
+    // settled before an earlier week's result was in froze an entry the run later puts out.
+    const season = await loadSurvivorSeason(this.deps, contest, completedAt);
+    const playedWeeks = season.weeks.filter((week) => !week.cancelled).length;
+    const standingsUpserted = await this.writeContestTotals(contest, season.entries.map(({ entry, run, position, displayPosition }) => ({
+      entryId: entry.id,
+      position,
+      displayPosition,
+      score: run.weeksSurvived,
+      scoredPickCount: run.weeks.filter(({ outcome }) => outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.ELIMINATED).length,
+    })), playedWeeks, completedAt, completedAt);
     const completed = await this.deps.contests.transitionStatus(contest.id, {
       from: SETTLEABLE,
       to: ContestStatus.COMPLETED,
@@ -430,8 +440,7 @@ export class ContestSettlementService {
   }
 
   /**
-   * The contest's settled total (#713): each entry's frozen event scores summed and ranked, the
-   * single writer of ContestEntryStanding (and so of its denormalized contestId). In a one-event
+   * The contest's settled total (#713): each entry's frozen event scores summed and ranked. In a one-event
    * contest the total is that event's standing. Answers how many standings it wrote.
    */
   private async settleContestTotals(
@@ -460,6 +469,17 @@ export class ContestSettlementService {
       .filter((value): value is Date => value !== null)
       .sort((left, right) => right.getTime() - left.getTime())
       .at(0) ?? completedAt;
+    return this.writeContestTotals(contest, totals, countingPickLimit, asOf, completedAt);
+  }
+
+  /** Writes the contest's ranked totals: the one writer of ContestEntryStanding. Answers how many it wrote. */
+  private async writeContestTotals(
+    contest: Contest,
+    totals: readonly Pick<ContestEntryTotal, 'entryId' | 'position' | 'displayPosition' | 'score' | 'scoredPickCount'>[],
+    countingPickLimit: number,
+    asOf: Date,
+    completedAt: Date,
+  ): Promise<number> {
     for (const total of totals) {
       await this.deps.standings.upsert({
         contestId: contest.id,

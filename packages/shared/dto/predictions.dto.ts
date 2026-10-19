@@ -169,7 +169,7 @@ export const SurvivorLeaderboardWeekDtoSchema = z.object({
   startDate: z.string().datetime().describe('The week\'s first kickoff.'),
   status: z.nativeEnum(SportEventStatus),
   started: z.boolean().describe('Whether the week\'s first game has kicked off: an entry not submitted by then is out.'),
-  aliveCount: z.number().int().describe('How many entries came into the week still in. None until it starts, and for a cancelled week.'),
+  aliveCount: z.number().int().describe('How many entries are still in after the week: those that survived it and those whose game is still to finish. 0 until it starts, and for a cancelled week.'),
 }).describe('One week of a survivor contest.');
 export type SurvivorLeaderboardWeekDto = z.infer<typeof SurvivorLeaderboardWeekDtoSchema>;
 

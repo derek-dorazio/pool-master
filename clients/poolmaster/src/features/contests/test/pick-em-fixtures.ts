@@ -217,7 +217,7 @@ export function survivorLeaderboardFixture(overrides: Partial<SurvivorLeaderboar
     contestId: 'contest-1',
     weeks: [
       { sportEventId: 'week-1', weekNumber: 1, name: 'Week 1', startDate: WEEK_1_START, status: 'COMPLETED', started: true, aliveCount: 2 },
-      { sportEventId: 'week-2', weekNumber: 2, name: 'Week 2', startDate: WEEK_2_START, status: 'IN_PROGRESS', started: true, aliveCount: 2 },
+      { sportEventId: 'week-2', weekNumber: 2, name: 'Week 2', startDate: WEEK_2_START, status: 'IN_PROGRESS', started: true, aliveCount: 1 },
     ],
     entries: [
       {

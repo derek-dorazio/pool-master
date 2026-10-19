@@ -96,7 +96,7 @@ describe('Survivor contest leaderboard', () => {
 
     const table = await screen.findByTestId('survivor-leaderboard-table');
     expect(within(table).getAllByRole('columnheader').map((header) => header.textContent.replace('↕', ''))).toEqual(
-      expect.arrayContaining(['Place', 'Entry', 'Status', 'Weeks survived', 'Week 1 (2 in)', 'Week 2 (2 in)']),
+      expect.arrayContaining(['Place', 'Entry', 'Status', 'Weeks survived', 'Week 1 (2 in)', 'Week 2 (1 in)']),
     );
     expect(screen.getByTestId('survivor-leaderboard-standing-entry-1')).toHaveTextContent('In');
     expect(screen.getByTestId('survivor-leaderboard-standing-entry-2')).toHaveTextContent('Out in week 2');
