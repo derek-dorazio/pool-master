@@ -217,8 +217,8 @@ export type ScoredContestEntryPickDto = z.infer<typeof ScoredContestEntryPickDto
 
 export const ContestEntryEventResultDtoSchema = z.object({
   sportEventId: z.string().describe('The event.'),
-  totalScore: z.number().int().nullable().describe('The entry\'s score in the event: the sum of its counting picks\' contest scores there. Null until a pick is scored.'),
-  position: z.number().int().nullable().describe('The entry\'s rank among the entries that submitted the event, 1 best; null while unscored.'),
+  totalScore: z.number().int().nullable().describe('The entry\'s score in the event: the sum of its counting picks\' contest scores there, or, for an event it missed, a missed lineup\'s score (golf: 80 strokes a round for each counted pick). Null until a pick is scored.'),
+  position: z.number().int().nullable().describe('The entry\'s rank in the event, 1 best; null while unscored. Once the event is settled, an entry that missed it ranks too, scored as a missed lineup (#714).'),
   displayPosition: z.string().nullable().describe('Position as shown, "T" prefixed for a tie.'),
 }).describe('An entry\'s result in one event of its contest (#713): one week\'s score, one major\'s.');
 export type ContestEntryEventResultDto = z.infer<typeof ContestEntryEventResultDtoSchema>;

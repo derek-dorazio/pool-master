@@ -87,6 +87,7 @@ async function cleanup(): Promise<void> {
   }
   const leagueIds = [...created.sportLeagueIds];
   if (leagueIds.length) {
+    await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
     await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
     await db.participantLeagueAffiliation.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
     await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
@@ -104,9 +105,15 @@ afterAll(async () => {
 
 /**
  * Builds the two tournaments and the contest over both, with each team's roster submitted for each
- * tournament. `tag` keeps each test's tour, golfers and league apart.
+ * tournament. `tag` keeps each test's tour, golfers and league apart. With `seriesTemplate` the
+ * contest is made from a template of the tour's own covering both tournaments' series, as the
+ * PGA TOUR's majors pool covers the majors, and the second tournament joins it on its release
+ * rather than by the commissioner adding it.
  */
-async function buildTwoTournamentContest(tag: string) {
+async function buildTwoTournamentContest(
+  tag: string,
+  { memberSkipsOpen = false, seriesTemplate = false }: { memberSkipsOpen?: boolean; seriesTemplate?: boolean } = {},
+) {
   const admin = await buildRegisteredUser({ displayName: 'Tour Director' });
   await promoteToRootAdmin(admin);
   const a = admin.client;
@@ -149,7 +156,6 @@ async function buildTwoTournamentContest(tag: string) {
     return { eventId, fieldRowOf, fieldRowIds: new Set(field.map((row) => row.id)) };
   };
   const open = await buildTournament('Harbour Open', '2099-05-07T12:00:00.000Z');
-  const classic = await buildTournament('Lakeside Classic', '2099-05-14T12:00:00.000Z');
 
   // --- The contest: created on the first tournament, the second added --------------------------
   const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Starter', leagueName: `Two Majors ${RUN}${tag}` });
@@ -162,7 +168,25 @@ async function buildTwoTournamentContest(tag: string) {
     client: commissioner.client,
     query: { sport: Sport.GOLF, contestFormat: ContestFormat.ROSTER, active: true },
   })).data).templates;
-  const tieredTemplate = expectDefined(templates.find((template) => template.isDefault), 'the golf default template');
+  const defaultTemplate = expectDefined(templates.find((template) => template.isDefault), 'the golf default template');
+  // Test data, as an admin's migration seeds the majors pool: the tour's own template naming the
+  // series each tournament takes the name of.
+  const tieredTemplate = seriesTemplate
+    ? await getFunctionalPrisma().contestConfigTemplate.create({
+      data: {
+        sport: Sport.GOLF,
+        sportLeagueId,
+        contestFormat: ContestFormat.ROSTER,
+        selectionType: SelectionType.TIERED,
+        templateKey: `two-majors-${RUN}${tag}`.replaceAll(' ', '-'),
+        name: `Two Majors pool ${RUN}${tag}`,
+        description: 'Both tournaments, each joining on its release',
+        sortOrder: 99,
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 },
+        eventSeriesNames: [`Harbour Open ${RUN}${tag}`, `Lakeside Classic ${RUN}${tag}`],
+      },
+    })
+    : defaultTemplate;
 
   const contest = await createContest({
     client: commissioner.client,
@@ -178,23 +202,27 @@ async function buildTwoTournamentContest(tag: string) {
   expect(contest.response.status).toBe(201);
   const contestId = expectDefined(contest.data).contest.id;
 
-  // The request names the later tournament first; the contest keeps its events in start order.
-  const replaced = await setContestSportEvents({
-    client: commissioner.client,
-    path: { id: league.id, contestId },
-    body: { sportEventIds: [classic.eventId, open.eventId] },
-  });
-  expect(replaced.response.status).toBe(200);
-  expect(expectMatchesSchema(ContestManagementResponseSchema, replaced.data).contest.sportEvents.map((event) => event.sportEventId)).toEqual([open.eventId, classic.eventId]);
+  const classic = await buildTournament('Lakeside Classic', '2099-05-14T12:00:00.000Z');
+  if (!seriesTemplate) {
+    // The request names the later tournament first; the contest keeps its events in start order.
+    const replaced = await setContestSportEvents({
+      client: commissioner.client,
+      path: { id: league.id, contestId },
+      body: { sportEventIds: [classic.eventId, open.eventId] },
+    });
+    expect(replaced.response.status).toBe(200);
+    expect(expectMatchesSchema(ContestManagementResponseSchema, replaced.data).contest.sportEvents.map((event) => event.sportEventId)).toEqual([open.eventId, classic.eventId]);
+  }
   expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
   const read = expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest;
   expect(read.sportEvents.map((event) => [event.sportEventId, event.sequence])).toEqual([[open.eventId, 1], [classic.eventId, 2]]);
 
   // --- Each team picks and submits a roster for each tournament ------------------------------
-  const enterWith = async (client: typeof a, lastTierPick: { open: string; classic: string }) => {
+  const enterWith = async (client: typeof a, lastTierPick: { open: string; classic: string }, skipsOpen = false) => {
     const entry = expectMatchesSchema(ContestEntryResponseSchema, (await enterContest({ client, path: { contestId } })).data).entry;
     expect(entry.events.map((event) => [event.sportEventId, event.status])).toEqual([[open.eventId, 'DRAFT'], [classic.eventId, 'DRAFT']]);
-    for (const [tournament, lastTier] of [[open, lastTierPick.open], [classic, lastTierPick.classic]] as const) {
+    const played = [[open, lastTierPick.open], [classic, lastTierPick.classic]] as const;
+    for (const [tournament, lastTier] of skipsOpen ? played.slice(1) : played) {
       for (const golfer of [...SHARED, lastTier]) {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId: entry.id, participantId: tournament.fieldRowOf(golfer) } });
         expect(pick.response.status).toBe(200);
@@ -207,13 +235,13 @@ async function buildTwoTournamentContest(tag: string) {
   };
   // The commissioner backs Fade in both; the member backs Gimme in both.
   const commissionerEntryId = await enterWith(commissioner.client, { open: 'Fade', classic: 'Fade' });
-  const memberEntryId = await enterWith(member.client, { open: 'Gimme', classic: 'Gimme' });
+  const memberEntryId = await enterWith(member.client, { open: 'Gimme', classic: 'Gimme' }, memberSkipsOpen);
 
-  // Each entry lists a status per tournament, both submitted.
+  // Each entry lists a status per tournament, each submitted unless the member skipped the first.
   const listed = expectMatchesSchema(ContestEntryListResponseSchema, (await listContestEntries({ client: commissioner.client, path: { contestId } })).data);
   expect(Object.fromEntries(listed.entries.map((entry) => [entry.id, entry.events.map((event) => [event.sportEventId, event.status])]))).toEqual({
     [commissionerEntryId]: [[open.eventId, 'SUBMITTED'], [classic.eventId, 'SUBMITTED']],
-    [memberEntryId]: [[open.eventId, 'SUBMITTED'], [classic.eventId, 'SUBMITTED']],
+    [memberEntryId]: [[open.eventId, memberSkipsOpen ? 'DRAFT' : 'SUBMITTED'], [classic.eventId, 'SUBMITTED']],
   });
 
   // Plays the tournament and posts every score, then completes it, or calls it off after the scores.
@@ -284,6 +312,56 @@ describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
       [commissionerEntryId]: { totalScore: -3, displayPosition: '2', events: { [open.eventId]: [-3, '1'], [classic.eventId]: [0, '2'] } },
     });
     expect(settled.entries.map((entry) => entry.entryId)).toEqual([memberEntryId, commissionerEntryId]);
+    const totals = await getFunctionalPrisma().contestEntryStanding.findMany({ where: { contestId } });
+    expect(Object.fromEntries(totals.map((standing) => [standing.contestEntryId, standing.totalScore])))
+      .toEqual({ [memberEntryId]: -6, [commissionerEntryId]: -3 });
+  }, 60_000);
+
+  // #714: an entry that misses a tournament scores there as if each of its four counted golfers
+  // shot 80 every round: 4 x (80 - 72) = +32 for the one round. Missing it never helps.
+  it('scores the tournament an entry skipped as four counted golfers at 80 a round, so winning the second still leaves it behind on the sum', async () => {
+    const { open, classic, contestId, member, commissionerEntryId, memberEntryId, playTournament, standingsOf } =
+      await buildTwoTournamentContest(' missed', { memberSkipsOpen: true });
+
+    await playTournament(open.eventId, OPEN_SCORES);
+
+    const eventStandings = await getFunctionalPrisma().contestEntryEventStanding.findMany({ where: { contestId } });
+    expect(Object.fromEntries(eventStandings.map((standing) => [standing.contestEntryId, [standing.sportEventId, standing.totalScore, standing.displayPosition, standing.scoredPickCount]])))
+      .toEqual({
+        [commissionerEntryId]: [open.eventId, -3, '1', 6],
+        [memberEntryId]: [open.eventId, 32, '2', 0],
+      });
+    // Midway, the member is on the board by the missed tournament alone, with no picks to show.
+    const midway = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId }, query: { sportEventId: open.eventId } })).data);
+    expect(standingsOf(midway.entries)).toEqual({
+      [commissionerEntryId]: { totalScore: -3, displayPosition: '1', events: { [open.eventId]: [-3, '1'] } },
+      [memberEntryId]: { totalScore: 32, displayPosition: '2', events: { [open.eventId]: [32, '2'] } },
+    });
+    expect(expectDefined(midway.entries.find((entry) => entry.entryId === memberEntryId)).picks).toEqual([]);
+
+    // Gimme's -6 wins the second for the member, but +32 - 6 = +26 trails the commissioner's -3.
+    await playTournament(classic.eventId, CLASSIC_SCORES);
+
+    expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
+    const settled = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId }, query: { sportEventId: classic.eventId } })).data);
+    expect(standingsOf(settled.entries)).toEqual({
+      [commissionerEntryId]: { totalScore: -3, displayPosition: '1', events: { [open.eventId]: [-3, '1'], [classic.eventId]: [0, '2'] } },
+      [memberEntryId]: { totalScore: 26, displayPosition: '2', events: { [open.eventId]: [32, '2'], [classic.eventId]: [-6, '1'] } },
+    });
+  }, 60_000);
+
+  // #714: a majors pool's later majors join it as each is released, with no commissioner step.
+  it('adds the second tournament to a contest made from a template covering its series as the tournament is released, and settles over both', async () => {
+    const { open, classic, contestId, member, commissionerEntryId, memberEntryId, playTournament } =
+      await buildTwoTournamentContest(' template', { seriesTemplate: true });
+
+    const read = expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest;
+    expect(read.sportEvents.map((event) => [event.sportEventId, event.sequence])).toEqual([[open.eventId, 1], [classic.eventId, 2]]);
+
+    await playTournament(open.eventId, OPEN_SCORES);
+    await playTournament(classic.eventId, CLASSIC_SCORES);
+
+    expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const totals = await getFunctionalPrisma().contestEntryStanding.findMany({ where: { contestId } });
     expect(Object.fromEntries(totals.map((standing) => [standing.contestEntryId, standing.totalScore])))
       .toEqual({ [memberEntryId]: -6, [commissionerEntryId]: -3 });

@@ -526,6 +526,64 @@ describe('ContestConfigTemplateRepository', () => {
   });
 });
 
+describe('ContestConfigurationRepository.findByTemplateEventSeries (#714)', () => {
+  const prefix = `itest-series-${randomUUID().slice(0, 8)}-`;
+  afterEach(async () => {
+    await cleanupTestData();
+    await getPrisma().contestConfigTemplate.deleteMany({ where: { templateKey: { startsWith: prefix } } });
+    await getPrisma().sportLeague.deleteMany({ where: { name: { startsWith: prefix } } });
+  });
+
+  async function createSeriesTemplate(key: string, sportLeagueId: string, eventSeriesNames: string[]) {
+    return getPrisma().contestConfigTemplate.create({
+      data: {
+        sport: Sport.GOLF,
+        sportLeagueId,
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        templateKey: `${prefix}${key}`,
+        name: `Series template ${key}`,
+        description: 'Integration template',
+        sortOrder: 0,
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
+        eventSeriesNames,
+      },
+    });
+  }
+
+  async function contestFromTemplate(leagueId: string, sportEventId: string, name: string, templateId: string) {
+    const contest = await createContest(leagueId, sportEventId, name, ContestStatus.OPEN);
+    return getPrisma().contestConfiguration.create({
+      data: {
+        contestId: contest.id,
+        templateId,
+        selectionType: 'TIERED',
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
+      },
+    });
+  }
+
+  it('finds the configurations of contests made from a template naming the series in the series\' own sport league, and no others', async () => {
+    const prisma = getPrisma();
+    const { league, event } = await createLeagueAndEvent();
+    const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+    const otherTour = await prisma.sportLeague.create({
+      data: { sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
+    });
+    const covering = await createSeriesTemplate('covering', series.sportLeagueId, ['Some Other Major', series.name]);
+    const otherLeague = await createSeriesTemplate('other-league', otherTour.id, [series.name]);
+    const otherSeries = await createSeriesTemplate('other-series', series.sportLeagueId, ['Some Other Major']);
+    const expected = await contestFromTemplate(league.id, event.id, 'Covered Pool', covering.id);
+    await contestFromTemplate(league.id, event.id, 'Other League Pool', otherLeague.id);
+    await contestFromTemplate(league.id, event.id, 'Other Series Pool', otherSeries.id);
+
+    const found = await new PrismaContestConfigurationRepository(prisma).findByTemplateEventSeries(series.id);
+
+    expect(found.map((configuration) => configuration.id)).toEqual([expected.id]);
+    await expect(new PrismaContestConfigurationRepository(prisma).findByTemplateEventSeries(randomUUID())).resolves.toEqual([]);
+  });
+});
+
 describe('ContestEntryRepository', () => {
   it('creates an entry a DRAFT in each of its contest\'s events, with no submit time', async () => {
     const { league, squads, event, suffix } = await createLeagueAndEvent();

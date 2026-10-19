@@ -9037,9 +9037,9 @@ export interface components {
         ContestEntryEventResultDto: {
             /** @description The event. */
             sportEventId: string;
-            /** @description The entry's score in the event: the sum of its counting picks' contest scores there. Null until a pick is scored. */
+            /** @description The entry's score in the event: the sum of its counting picks' contest scores there, or, for an event it missed, a missed lineup's score (golf: 80 strokes a round for each counted pick). Null until a pick is scored. */
             totalScore: number | null;
-            /** @description The entry's rank among the entries that submitted the event, 1 best; null while unscored. */
+            /** @description The entry's rank in the event, 1 best; null while unscored. Once the event is settled, an entry that missed it ranks too, scored as a missed lineup (#714). */
             position: number | null;
             /** @description Position as shown, "T" prefixed for a tie. */
             displayPosition: string | null;
@@ -9286,9 +9286,9 @@ export interface components {
             events: {
                 /** @description The event. */
                 sportEventId: string;
-                /** @description The entry's score in the event: the sum of its counting picks' contest scores there. Null until a pick is scored. */
+                /** @description The entry's score in the event: the sum of its counting picks' contest scores there, or, for an event it missed, a missed lineup's score (golf: 80 strokes a round for each counted pick). Null until a pick is scored. */
                 totalScore: number | null;
-                /** @description The entry's rank among the entries that submitted the event, 1 best; null while unscored. */
+                /** @description The entry's rank in the event, 1 best; null while unscored. Once the event is settled, an entry that missed it ranks too, scored as a missed lineup (#714). */
                 position: number | null;
                 /** @description Position as shown, "T" prefixed for a tie. */
                 displayPosition: string | null;
@@ -9595,9 +9595,9 @@ export interface components {
                 events: {
                     /** @description The event. */
                     sportEventId: string;
-                    /** @description The entry's score in the event: the sum of its counting picks' contest scores there. Null until a pick is scored. */
+                    /** @description The entry's score in the event: the sum of its counting picks' contest scores there, or, for an event it missed, a missed lineup's score (golf: 80 strokes a round for each counted pick). Null until a pick is scored. */
                     totalScore: number | null;
-                    /** @description The entry's rank among the entries that submitted the event, 1 best; null while unscored. */
+                    /** @description The entry's rank in the event, 1 best; null while unscored. Once the event is settled, an entry that missed it ranks too, scored as a missed lineup (#714). */
                     position: number | null;
                     /** @description Position as shown, "T" prefixed for a tie. */
                     displayPosition: string | null;

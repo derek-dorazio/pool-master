@@ -105,6 +105,7 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
 
   return {
     findByContest: jest.fn().mockImplementation(async () => ({ ...state })),
+    findByTemplateEventSeries: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockImplementation(async (configuration) => {
       Object.assign(state, configuration, {
         id: 'config-1',
@@ -141,6 +142,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
       picksPerTier: 1,
       countedScores: 4,
     },
+    eventSeriesNames: [],
     schemaVersion: 1,
     createdAt: new Date('2026-04-07T12:00:00.000Z'),
     updatedAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -1459,6 +1461,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       isDefault: false,
       active: true,
       configJson: { ...drawRules, scoring: WIN_PLACE_SHOW },
+      eventSeriesNames: [],
       schemaVersion: 1,
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -1616,6 +1619,7 @@ describe('ContestManagementService — a contest of several events', () => {
     status: SportEventStatus;
     sportLeagueId: string;
     salaryCap: number | null;
+    eventYear: number;
   }
 
   /** A reader over several events, each the default eligible PGA Tour event unless overridden. */
@@ -1629,6 +1633,7 @@ describe('ContestManagementService — a contest of several events', () => {
       loadedParticipantCount: 72,
       rounds: 4,
       salaryCap: null,
+      eventYear: 2026,
       ...event,
       startDate: new Date(event.startDate),
     }]));
@@ -1691,6 +1696,9 @@ describe('ContestManagementService — a contest of several events', () => {
       options.reader ?? multiEventReader(READER_EVENTS),
       () => CONTEST_MANAGEMENT_TEST_NOW,
     );
+    jest.mocked(configurationRepo.findByTemplateEventSeries).mockResolvedValue([
+      { id: 'config-1', contestId: 'contest-1', selectionType: SelectionType.TIERED, configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, maxEntriesPerSquad: 1, createdAt: new Date('2026-04-07T12:00:00.000Z'), updatedAt: new Date('2026-04-07T12:00:00.000Z') },
+    ]);
     return { service, contestRepo, configurationRepo };
   }
 
@@ -1840,6 +1848,57 @@ describe('ContestManagementService — a contest of several events', () => {
     await expect(service.setContestSportEvents('league-2', 'contest-1', [MASTERS, PGA]))
       .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+  });
+
+  describe('a released edition joining the contests made from a template covering its series (#714)', () => {
+    const PGA_EDITION = { id: PGA, eventSeriesId: 'series-pga-championship', eventYear: 2026 };
+    const startedMasters = multiEventReader([
+      { id: MASTERS, startDate: '2026-04-20T12:00:00.000Z', status: SportEventStatus.IN_PROGRESS },
+      { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
+    ]);
+
+    it('adds the released major to a live majors pool of its year, after the majors it already has', async () => {
+      const { service, contestRepo, configurationRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+
+      await expect(service.addReleasedEditionToTemplateContests(PGA_EDITION)).resolves.toEqual(['contest-1']);
+
+      expect(configurationRepo.findByTemplateEventSeries).toHaveBeenCalledWith('series-pga-championship');
+      expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA]);
+    });
+
+    it('leaves alone a pool that already has the major, a COMPLETED pool, and a pool of another year\'s majors', async () => {
+      for (const contest of [
+        { status: ContestStatus.ACTIVE, sportEventIds: [MASTERS, PGA] },
+        { status: ContestStatus.COMPLETED },
+        { status: ContestStatus.ACTIVE },
+      ]) {
+        const { service, contestRepo } = build({ reader: startedMasters, contest });
+        const edition = contest.status === ContestStatus.ACTIVE && !('sportEventIds' in contest)
+          ? { ...PGA_EDITION, eventYear: 2027 }
+          : PGA_EDITION;
+
+        await expect(service.addReleasedEditionToTemplateContests(edition)).resolves.toEqual([]);
+
+        expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+      }
+    });
+
+    it('skips a pool whose rules refuse the major (a random draw keeps one event) without failing the release', async () => {
+      const { service, contestRepo } = build({ reader: startedMasters, contest: { selectionType: SelectionType.RANDOM_DRAW } });
+
+      await expect(service.addReleasedEditionToTemplateContests(PGA_EDITION)).resolves.toEqual([]);
+
+      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    });
+
+    it('does nothing when no template covers the released event\'s series', async () => {
+      const { service, contestRepo, configurationRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+      jest.mocked(configurationRepo.findByTemplateEventSeries).mockResolvedValue([]);
+
+      await expect(service.addReleasedEditionToTemplateContests(PGA_EDITION)).resolves.toEqual([]);
+
+      expect(contestRepo.findById).not.toHaveBeenCalled();
+    });
   });
 });
 

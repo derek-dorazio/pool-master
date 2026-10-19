@@ -25,6 +25,7 @@ function template(overrides: Partial<ContestConfigTemplate>): ContestConfigTempl
     isDefault: false,
     active: true,
     configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
+    eventSeriesNames: [],
     schemaVersion: 1,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),

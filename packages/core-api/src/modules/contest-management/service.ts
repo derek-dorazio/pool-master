@@ -52,6 +52,7 @@ import type {
   TieredContestRules,
   TournamentFormat,
   Sport,
+  SportEvent,
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
@@ -82,6 +83,8 @@ export interface ContestCreateSportEventState {
   sport: Sport;
   /** The event's sport league, read through its series. */
   sportLeagueId: string;
+  /** The year the edition is branded with: a majors pool's events share one (#714). */
+  eventYear: number;
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
@@ -485,6 +488,49 @@ export class ContestManagementService {
       removedCount: removed.length,
     }, 'contest management set sport events completed');
     return this.getContest(contestId);
+  }
+
+  /**
+   * A released edition joins the contests made from a template covering its series (#714): a
+   * majors pool takes each major of its year as the major is released. A contest takes it while
+   * it can change its events (not finished, not drawn), when its events are all of the edition's
+   * year; a contest that already has it is left alone. One the contest's rules refuse (another
+   * salary cap, say) is logged and skipped, so one contest never stops the release or the rest.
+   * Answers the ids of the contests it joined.
+   */
+  async addReleasedEditionToTemplateContests(
+    sportEvent: Pick<SportEvent, 'id' | 'eventSeriesId' | 'eventYear'>,
+  ): Promise<string[]> {
+    const configurations = await this.contestConfigurationRepo.findByTemplateEventSeries(sportEvent.eventSeriesId);
+    const joined: string[] = [];
+    for (const configuration of configurations) {
+      const contest = await this.contestRepo.findById(configuration.contestId);
+      if (!contest || contest.status === ContestStatus.COMPLETED || contest.drawnAt !== undefined
+        || contest.sportEventIds.includes(sportEvent.id)) {
+        continue;
+      }
+      const current = await this.findContestSportEvents(contest);
+      if (current.some((event) => event.eventYear !== sportEvent.eventYear)) {
+        continue;
+      }
+      try {
+        await this.setContestSportEvents(contest.leagueId, contest.id, [...contest.sportEventIds, sportEvent.id]);
+        joined.push(contest.id);
+      } catch (error) {
+        if (!(error instanceof ContestManagementError)) {
+          throw error;
+        }
+        this.logger.warn({
+          contestId: contest.id,
+          sportEventId: sportEvent.id,
+          code: error.code,
+        }, 'contest management left a released edition out of a template contest its rules refuse');
+      }
+    }
+    if (joined.length > 0) {
+      this.logger.info({ sportEventId: sportEvent.id, contestIds: joined }, 'contest management added a released edition to its template contests');
+    }
+    return joined;
   }
 
   /** The contest's events, in its sequence order; each must still exist. */

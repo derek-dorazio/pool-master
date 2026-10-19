@@ -944,7 +944,7 @@ describe('ContestLeaderboardPage — a contest of two events', () => {
   const MASTERS = { sportEventId: 'event-1', sequence: 1, name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z', status: 'COMPLETED' };
   const PGA = { sportEventId: 'event-2', sequence: 2, name: 'PGA Championship', startDate: '2026-05-14T12:00:00.000Z', status: 'IN_PROGRESS' };
 
-  function primeTwoEventMocks() {
+  function primeTwoEventMocks({ pgaPosition = 3 }: { pgaPosition?: number } = {}) {
     const base = leaderboardResponse(-3).data;
     primeMocks({
       leaderboard: {
@@ -954,7 +954,7 @@ describe('ContestLeaderboardPage — a contest of two events', () => {
           ...base.entries[0],
           events: [
             { sportEventId: 'event-1', totalScore: -5, position: 1, displayPosition: 'T1' },
-            { sportEventId: 'event-2', totalScore: 2, position: 3, displayPosition: '3' },
+            { sportEventId: 'event-2', totalScore: 2, position: pgaPosition, displayPosition: String(pgaPosition) },
           ],
         }],
       },
@@ -974,6 +974,15 @@ describe('ContestLeaderboardPage — a contest of two events', () => {
       'The Masters: T1, -5 · PGA Championship: 3, +2',
     );
     expect(screen.getByTestId('contest-leaderboard-total-entry-1')).toHaveTextContent('-3');
+  });
+
+  it('marks the winner of a final event with a trophy, and no winner yet in an event still being played', async () => {
+    primeTwoEventMocks({ pgaPosition: 1 });
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-event-winner-event-1-entry-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-event-winner-event-2-entry-1')).not.toBeInTheDocument();
   });
 
   it('shows no per-event line for a contest of one event', async () => {

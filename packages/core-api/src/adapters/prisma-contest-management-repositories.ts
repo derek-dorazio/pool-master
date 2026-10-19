@@ -31,6 +31,18 @@ export class PrismaContestConfigurationRepository
     return row ? mapContestConfiguration(row) : null;
   }
 
+  async findByTemplateEventSeries(eventSeriesId: string): Promise<ContestConfiguration[]> {
+    const series = await this.prisma.eventSeries.findUnique({ where: { id: eventSeriesId } });
+    if (!series) {
+      return [];
+    }
+    const rows = await this.prisma.contestConfiguration.findMany({
+      where: { template: { sportLeagueId: series.sportLeagueId, eventSeriesNames: { has: series.name } } },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map(mapContestConfiguration);
+  }
+
   async create(
     configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ContestConfiguration> {
@@ -228,6 +240,7 @@ function mapContestConfigTemplate(row: {
   active: boolean;
   configJson: unknown;
   schemaVersion: number;
+  eventSeriesNames: string[];
   createdAt: Date;
   updatedAt: Date;
 }): ContestConfigTemplate {
@@ -246,6 +259,7 @@ function mapContestConfigTemplate(row: {
     active: row.active,
     configJson: ContestRulesWithEntryLimitSchema.parse(row.configJson),
     schemaVersion: row.schemaVersion,
+    eventSeriesNames: row.eventSeriesNames,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

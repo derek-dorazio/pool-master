@@ -122,6 +122,12 @@ export interface ContestConfigTemplate extends DomainEntity {
   active: boolean;
   configJson: ContestRulesWithEntryLimit;
   schemaVersion: number;
+  /**
+   * The event series a contest made from this template covers, by name in its sport league (#714:
+   * a majors pool's four majors). The contest takes each series' edition of its year as that
+   * edition is released for contests. Empty: the commissioner adds the contest's events.
+   */
+  eventSeriesNames: string[];
 }
 
 /**

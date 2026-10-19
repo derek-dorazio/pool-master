@@ -59,6 +59,7 @@ import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestSettlementService } from './modules/contests/wiring';
+import { createContestManagementService } from './modules/contest-management/wiring';
 import { scoringFamilyForSport } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
@@ -97,6 +98,7 @@ export function buildApp() {
     mailDelivery,
     appBaseUrl,
     contestSettlement,
+    releasedEditionContests: createContestManagementService(prisma, app.log),
   });
   const ingestionPersistence = new IngestionPersistence(prisma, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler(

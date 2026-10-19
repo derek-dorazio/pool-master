@@ -14,6 +14,7 @@ import {
 } from './bracket-standings';
 import {
   buildContestEntryStanding,
+  buildMissedEventStanding,
   rankContestEntryStandings,
   rankContestTotals,
   resolveContestCountingRule,
@@ -24,6 +25,8 @@ import {
   loadContestLeaderboardEntries,
   loadContestScoringConfiguration,
   loadEventField,
+  loadMissedEventEntries,
+  scoreMissedLineup,
   toParticipantScores,
 } from './contest-leaderboard-reads';
 import { FINISHED_EVENT_STATUSES } from './entry-window';
@@ -166,10 +169,19 @@ export class ContestSettlementService {
       const settledEvents = await this.deps.eventStandings.findByContest(contest.id);
       if (!cancelled && !settledEvents.some((standing) => standing.sportEventId === sportEventId)) {
         const entries = await loadContestLeaderboardEntries(this.deps, contest.id, sportEventId);
+        // In a contest of several events, an entry that missed this one is scored as a missed
+        // lineup (#714) and ranked with the rest, so skipping an event never helps its total.
+        const missed = await loadMissedEventEntries(this.deps, contest, new Set(entries.map((entry) => entry.id)));
+        const missedScore = missed.length > 0
+          ? scoreMissedLineup(field, sportEvent, scoring.scoring, countingRule.count)
+          : null;
         const rankedEntries = rankContestEntryStandings(
-          entries.map((entry) =>
-            buildContestEntryStanding(entry, scoreById, countingRule, scoringDefinition.direction),
-          ),
+          [
+            ...entries.map((entry) =>
+              buildContestEntryStanding(entry, scoreById, countingRule, scoringDefinition.direction),
+            ),
+            ...missed.map((entry) => buildMissedEventStanding(entry, missedScore, countingRule, scoringDefinition.direction)),
+          ],
           scoringDefinition.direction,
         );
         for (const entry of rankedEntries) {

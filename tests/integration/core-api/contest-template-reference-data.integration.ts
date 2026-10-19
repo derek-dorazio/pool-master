@@ -186,6 +186,37 @@ describe('Seeded contest templates and their sport leagues', () => {
   });
 });
 
+// The PGA TOUR's majors pool (#714): golf's default tiered rules, covering the four majors by the
+// names their series take.
+describe('Seeded PGA TOUR majors pool template', () => {
+  it('seeds one active majors template on the PGA TOUR, not its default, naming the four majors\' series, with golf\'s one-a-tier, best-four rules', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { eventSeriesNames: { isEmpty: false } },
+      include: { sportLeague: true },
+    });
+
+    expect(templates.map((template) => [
+      template.sportLeague?.name,
+      template.templateKey,
+      template.isDefault,
+      template.active,
+      template.eventSeriesNames,
+    ])).toEqual([[
+      'PGA TOUR',
+      'pga-tour-majors-tiered',
+      false,
+      true,
+      ['Masters Tournament', 'PGA Championship', 'U.S. Open', 'The Open Championship'],
+    ]]);
+    expect(ContestRulesWithEntryLimitSchema.parse(templates[0]?.configJson)).toEqual({
+      selectionType: SelectionType.TIERED,
+      picksPerTier: 1,
+      countedScores: 4,
+      maxEntriesPerSquad: 1,
+    });
+  });
+});
+
 // Cycling's tours and their Top 10 presets (#626), checked value by value.
 const CYCLING_TOP_10_POINTS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 

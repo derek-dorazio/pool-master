@@ -173,6 +173,31 @@ describe('EventLifecycleService release guard (#431)', () => {
     expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
   });
 
+  it('adds a released edition to the contests made from a template covering its series, and only on release (#714)', async () => {
+    const { sportEvents } = seededEvents({ status: SportEventStatus.DRAFT });
+    const releasedEditionContests = { addReleasedEditionToTemplateContests: jest.fn().mockResolvedValue([]) };
+    const service = new EventLifecycleService(
+      contestDeps(), sportEvents, fakeLogger(), undefined, undefined, undefined, releasedEditionContests,
+    );
+
+    await service.applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.SCHEDULED,
+      actor: { type: 'ROOT_ADMIN' },
+      release: true,
+    });
+    await service.applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.IN_PROGRESS,
+      actor: { type: 'SYSTEM' },
+    });
+
+    expect(releasedEditionContests.addReleasedEditionToTemplateContests).toHaveBeenCalledTimes(1);
+    expect(releasedEditionContests.addReleasedEditionToTemplateContests).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'sport-event-1', eventSeriesId: 'event-series-2', eventYear: 2026 }),
+    );
+  });
+
   it('refuses to start a draft that was never released (422 SPORT_EVENT_INVALID_TRANSITION)', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.DRAFT });
     const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger());

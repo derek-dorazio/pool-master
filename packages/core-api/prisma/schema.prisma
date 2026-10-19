@@ -809,6 +809,10 @@ model ContestConfigTemplate {
   active        Boolean             @default(true)
   configJson    Json                @map("config_json")
   schemaVersion Int                 @default(1) @map("schema_version")
+  /// The event series a contest made from this template covers (#714: the four majors), by name
+  /// in its sport league. A contest takes each series' edition of its year as it is released.
+  /// Empty: the commissioner adds the contest's events.
+  eventSeriesNames String[]         @default([]) @map("event_series_names")
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 

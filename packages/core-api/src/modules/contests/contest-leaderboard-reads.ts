@@ -7,9 +7,10 @@ import type {
   ContestConfigurationRepository,
   ContestEntryPickRepository,
   ContestEntryRepository,
+  ContestEntryWithSquad,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
-import type { ContestScoringSettings } from '@poolmaster/shared/domain';
+import type { Contest, ContestScoringSettings } from '@poolmaster/shared/domain';
 import type {
   SportEventParticipantService,
   SportEventParticipantView,
@@ -50,6 +51,16 @@ export function toParticipantScores(
   return scoringFamilyForSport(event.sport).scoreField(field, event, scoring);
 }
 
+/** What a lineup scores in an event its entry missed (#714), by the event's scoring family. */
+export function scoreMissedLineup(
+  field: readonly SportEventParticipantView[],
+  event: FieldScoringEvent,
+  scoring: ContestScoringSettings,
+  countingPickLimit: number,
+): number | null {
+  return scoringFamilyForSport(event.sport).scoreMissedLineup(field, event, scoring, countingPickLimit);
+}
+
 /**
  * The contest's counting and scoring configuration, or null when it has none. Each scoring
  * rule arrives read through its definition's settings schema; `resolveContestScoringDefinition`
@@ -71,6 +82,40 @@ export async function loadContestScoringConfiguration(
       scoring: rule.scoring,
       active: rule.active,
     })),
+  };
+}
+
+/**
+ * The entries of a contest of several events that did not submit a lineup for one of them (#714):
+ * each is scored for that event as a missed lineup once it finishes. A one-event contest has
+ * none: an entry that never submitted is simply not in it.
+ */
+export async function loadMissedEventEntries(
+  deps: Pick<ContestLeaderboardReadDeps, 'entries'>,
+  contest: Pick<Contest, 'id' | 'sportEventIds'>,
+  submittedEntryIds: ReadonlySet<string>,
+): Promise<ContestLeaderboardEntryInput[]> {
+  if (contest.sportEventIds.length < 2) {
+    return [];
+  }
+  const entries = await deps.entries.findByContestWithSquad(contest.id);
+  return entries
+    .filter((entry) => !submittedEntryIds.has(entry.id))
+    .map((entry) => toLeaderboardEntryInput(entry, []));
+}
+
+/** A contest entry as the leaderboard reads it: its name, its squad, and its picks in one event. */
+export function toLeaderboardEntryInput(
+  entry: ContestEntryWithSquad,
+  picks: ContestLeaderboardEntryInput['picks'],
+): ContestLeaderboardEntryInput {
+  return {
+    id: entry.id,
+    entryNumber: entry.entryNumber,
+    name: entry.name,
+    squadId: entry.squadId,
+    squad: { name: entry.squadName },
+    picks,
   };
 }
 
@@ -97,12 +142,5 @@ export async function loadContestLeaderboardEntries(
     });
     picksByEntry.set(pick.entryId, list);
   }
-  return entries.map((entry) => ({
-    id: entry.id,
-    entryNumber: entry.entryNumber,
-    name: entry.name,
-    squadId: entry.squadId,
-    squad: { name: entry.squadName },
-    picks: picksByEntry.get(entry.id) ?? [],
-  }));
+  return entries.map((entry) => toLeaderboardEntryInput(entry, picksByEntry.get(entry.id) ?? []));
 }

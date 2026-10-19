@@ -141,3 +141,23 @@ export function scoreGolferForContest(
   );
   return { score: unplayedRoundNumbers.length > 0 ? penalty : null, unplayedRoundNumbers };
 }
+
+/**
+ * A lineup that played no round (#714): each of its `pickCount` counting picks scores 80 strokes
+ * for every scheduled round, against that round's par, as a golfer who never teed off does once
+ * the event is complete. Null while the event has no scheduled rounds or a round's par is unknown,
+ * so a missed major is never scored lighter than it will be.
+ */
+export function scoreUnplayedLineup(context: UnplayedRoundContext, pickCount: number): number | null {
+  if (
+    context.scheduledRoundNumbers.length === 0
+    || context.scheduledRoundNumbers.some((roundNumber) => !context.parByRound.has(roundNumber))
+  ) {
+    return null;
+  }
+  const perGolfer = context.scheduledRoundNumbers.reduce(
+    (sum, roundNumber) => sum + UNPLAYED_ROUND_STROKES - (context.parByRound.get(roundNumber) ?? 0),
+    0,
+  );
+  return perGolfer * pickCount;
+}

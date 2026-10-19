@@ -81,6 +81,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
         startDate: event.startDate,
         sport: event.sport,
         sportLeagueId: event.sportLeagueId,
+        eventYear: event.eventYear,
         tournamentFormat: sport?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport),
         participantCount: event.participantCount ?? null,
         loadedParticipantCount: loaded.get(sportEventId) ?? 0,

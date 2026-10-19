@@ -8,7 +8,7 @@
 import { ScoringFamily } from '@poolmaster/shared/domain';
 import { createGolfScoreService } from '../../events/wiring';
 import type { ScoringFamilyModule } from '../scoring-family-module';
-import { buildUnplayedRoundContext, scoreGolferForContest } from './unplayed-rounds';
+import { buildUnplayedRoundContext, scoreGolferForContest, scoreUnplayedLineup } from './unplayed-rounds';
 
 export const strokePlayScoringFamily: ScoringFamilyModule = {
   scoreField(field, event) {
@@ -23,6 +23,10 @@ export const strokePlayScoringFamily: ScoringFamilyModule = {
         asOf: row.standing?.standing.asOf ?? null,
       };
     });
+  },
+
+  scoreMissedLineup(field, event, _scoring, countingPickLimit) {
+    return scoreUnplayedLineup(buildUnplayedRoundContext(field, event), countingPickLimit);
   },
 
   liveScores: {

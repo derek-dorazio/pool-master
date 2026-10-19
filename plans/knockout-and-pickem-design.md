@@ -918,9 +918,21 @@ the year is a filter on the picker, not a rule. Events can be added until the co
 `COMPLETED` and removed only until one of them starts (removal deletes that event's picks). A
 random draw covers one event, and a budget contest's events must share one salary cap. Per-event
 standings use the same `totalScore` column name as the contest standing. The contest total is
-the sum of the events an entry submitted; golf's "a missed major counts as even par" rule is
-left to #714. A cancelled event is not handled yet: a contest whose event is cancelled never
+the sum of the events an entry submitted; the missed-event rule was left to #714 (below). A cancelled event is not handled yet: a contest whose event is cancelled never
 reaches `COMPLETED`.
+
+*As built in #714 (golf majors pool):* an entry that did not submit an event of a contest of
+several events still gets that event's standing, scored as if each counted pick were an unplayed
+competitor: in golf, each of the counted golfers at 80 strokes a round over the event's rounds
+(four counted golfers over four par-72 rounds is +128), in a race the not-finished points for
+each counted pick, and nothing in a game-based event. So missing a major never helps. The
+leaderboard marks each event's winner with a trophy once the event is `COMPLETED`. A contest
+template can name event series (`eventSeriesNames`, by the name a series takes); a contest made
+from it takes each of those series' editions of its events' year as the edition is released, so
+the PGA TOUR's "Majors pool" template (the four majors, golf's one-a-tier, best-four rules) gets
+each major once its field is set, with no commissioner step. A contest that is finished, drawn,
+already has the edition, or holds another year's events is left alone, and one whose rules
+refuse the edition (another salary cap) is logged and skipped.
 
 *Rationale (Derek's):* a format setting on each event or on the sport could not describe a
 season of weeks, and a pool covering the regular season plus the playoffs needs several events

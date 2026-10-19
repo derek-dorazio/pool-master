@@ -78,6 +78,7 @@ import {
   loadContestLeaderboardEntries,
   loadContestScoringConfiguration,
   loadEventField,
+  toLeaderboardEntryInput,
   toParticipantScores,
 } from './contest-leaderboard-reads';
 import {
@@ -516,7 +517,9 @@ export class ContestService {
       // A cancelled event counts for nothing (#743): its picks still show, but no result of it
       // reaches an entry's events or its total.
       if (event.status === SportEventStatus.CANCELLED) continue;
-      const results = rows
+      // A settled event answers from its frozen standings, which also hold the entries that
+      // missed it (#714); a live one from the rows computed above.
+      const results = rows && settled.length === 0
         ? rows.map((row) => ({ entryId: row.entryId, score: row.score, position: row.position, displayPosition: row.displayPosition, scoredPickCount: row.scoredPickCount }))
         : settled.map((standing) => ({
           entryId: standing.contestEntryId,
@@ -532,6 +535,16 @@ export class ContestService {
     }
     if (!shown) {
       throw new Error(`Contest ${contestId} leaderboard lost its shown event ${shownEvent.id}`);
+    }
+    // An entry that missed every revealed event it has a standing for (#714) is on the board by
+    // that standing alone, with no picks.
+    const standingOnly = new Set(eventScores.map((score) => score.entryId).filter((entryId) => !entriesById.has(entryId)));
+    if (standingOnly.size > 0) {
+      for (const entry of await this.deps.entries.findByContestWithSquad(contestId)) {
+        if (standingOnly.has(entry.id)) {
+          entriesById.set(entry.id, toLeaderboardEntryInput(entry, []));
+        }
+      }
     }
     const shownRows = new Map(shown.rows.map((row) => [row.entryId, row]));
 
