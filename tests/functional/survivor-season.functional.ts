@@ -1,6 +1,7 @@
 import {
   acceptInvitation,
   addEventParticipants,
+  cancelEventMatch,
   applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
@@ -111,10 +112,10 @@ type Client = Awaited<ReturnType<typeof buildRegisteredUser>>['client'];
 type Side = 'home' | 'away';
 
 /** A released week on `sportLeagueId`: four unlinked games, Duke-Vermont, Houston-Texas, Purdue-Akron, Baylor-Colgate. */
-async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly string[], name: string, startDate: string) {
+async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly string[], name: string, startDate: string, run = RUN) {
   const event = await createEvent({
     client: a,
-    body: { sportLeagueId, eventYear: 2099, name: `${name} ${RUN}`, startDate, rounds: 1, autoLifecycleEnabled: false },
+    body: { sportLeagueId, eventYear: 2099, name: `${name} ${run}`, startDate, rounds: 1, autoLifecycleEnabled: false },
   });
   const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
   created.sportEventIds.add(eventId);
@@ -123,12 +124,12 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   expect((await applyEventParticipantUpload({
     client: a,
     path: { eventId },
-    body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
+    body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${run}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
   })).response.status).toBe(200);
   expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response.status).toBe(200);
   expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
   const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
-  const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === `${team} ${RUN}`), team).id;
+  const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === `${team} ${run}`), team).id;
 
   const loaded = await loadEventBracket({
     client: a,
@@ -165,7 +166,12 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
     });
     expect([recorded.error, recorded.response.status]).toEqual([undefined, 200]);
   };
-  return { eventId, gameId: (matchNumber: number) => game(matchNumber).id, pick, result };
+  /** The admin calls off game `matchNumber`, as for a postponed game. */
+  const cancel = async (matchNumber: number) => {
+    const cancelled = await cancelEventMatch({ client: a, path: { eventId, matchNumber } });
+    expect([cancelled.error, cancelled.response.status]).toEqual([undefined, 200]);
+  };
+  return { eventId, gameId: (matchNumber: number) => game(matchNumber).id, pick, result, cancel };
 }
 
 describe('SDK Functional: a survivor season (#719)', () => {
@@ -319,5 +325,68 @@ describe('SDK Functional: a survivor season (#719)', () => {
       [entries.cara, 1, '2'],
       [entries.bob, 0, '3'],
     ]);
+  });
+
+  it('lets a submitted pick on a game cancelled mid-week move to a later game that week, which then decides whether the entry survives', async () => {
+    const run = `${RUN}-cancelled`;
+    const db = getFunctionalPrisma();
+    await db.sport.upsert({
+      where: { sport: Sport.BASKETBALL },
+      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+      update: {},
+    });
+    const admin = await buildRegisteredUser({ displayName: 'Survivor Cancel Director' });
+    await promoteToRootAdmin(admin);
+    const a = admin.client;
+    const sportId = expectDefined(findSportRow(expectDefined((await listSports({ client: a })).data).sports, Sport.BASKETBALL)).id;
+    const conference = await createSportLeague({ client: a, body: { sport: Sport.BASKETBALL, name: `Survivor Conference ${run}` } });
+    const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
+    created.sportLeagueIds.add(sportLeagueId);
+    const teamIds: string[] = [];
+    for (const team of TEAMS) {
+      const participant = await createParticipant({ client: a, body: { sportId, participantType: 'TEAM', name: `${team} ${run}` } });
+      const id = expectDefined(participant.data).participant.id;
+      created.participantIds.add(id);
+      teamIds.push(id);
+    }
+    const week = await releasedWeek(a, sportLeagueId, teamIds, 'Survivor Cancel Week', '2099-10-01T17:00:00.000Z', run);
+
+    const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Survivor Cancel Commissioner', leagueName: `Survivor Cancel Pool ${run}` });
+    const contest = await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: {
+        name: `Survivor Cancel ${run}`,
+        sportEventIds: [week.eventId],
+        contestFormat: ContestFormat.PREDICTION,
+        selectionType: SelectionType.SURVIVOR,
+        configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 },
+      },
+    });
+    const contestId = expectDefined(contest.data, JSON.stringify(contest.error)).contest.id;
+    expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
+    const entryId = expectDefined((await enterContest({ client: commissioner.client, path: { contestId } })).data).entry.id;
+    const path = { contestId, entryId, sportEventId: week.eventId };
+
+    // The entry picks Purdue (game 3) and submits; the week kicks off with game 1.
+    await saveGamePicks({ client: commissioner.client, path, body: { picks: [week.pick(3, 'home')] } });
+    expect((await submitGamePicks({ client: commissioner.client, path })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
+    expect((await transitionEvent({ client: a, path: { eventId: week.eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
+    await week.result(1, 'home');
+
+    // Purdue's game is called off mid-week; the entry moves its pick to Baylor (game 4), still to play.
+    await week.cancel(3);
+    const moved = await saveGamePicks({ client: commissioner.client, path, body: { picks: [week.pick(4, 'home')] } });
+    expect([moved.error, moved.response.status]).toEqual([undefined, 200]);
+    const picks = expectMatchesSchema(GamePicksResponseSchema, moved.data);
+    expect([picks.status, picks.games.flatMap((game) => (game.pick ? [game.sportEventMatchId] : []))])
+      .toEqual([ContestEntryStatus.SUBMITTED, [week.gameId(4)]]);
+
+    // Baylor loses: the moved pick, not the cancelled one, decides the week, so the entry is out.
+    await week.result(2, 'home');
+    await week.result(4, 'away');
+    const read = await getSurvivorLeaderboard({ client: commissioner.client, path: { contestId } });
+    const entry = expectDefined(expectMatchesSchema(SurvivorLeaderboardResponseSchema, read.data).entries[0]);
+    expect([entry.alive, entry.eliminatedInWeek, entry.weeks.map((w) => w.outcome)]).toEqual([false, 1, [SurvivorWeekOutcome.ELIMINATED]]);
   });
 });
