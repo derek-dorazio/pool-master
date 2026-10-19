@@ -644,7 +644,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Enter a match\'s result',
-      description: 'Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team\'s event standing from the bracket (the champion 1, a team that lost ELIMINATED). '
+      description: 'Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team\'s event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. '
         + 'Re-sending a match\'s result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. '
         + '422 MATCH_RESULT_INVALID for one score without the other, or a winner without the higher score. '
         + `${MATCH_RESULT_LOCKED} 422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,

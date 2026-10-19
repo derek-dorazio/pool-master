@@ -29,6 +29,7 @@ import {
   ContestFormat,
   ContestStatus,
   MatchSide,
+  ParticipantStandingStatus,
   PickEmMode,
   PickOutcome,
   SelectionType,
@@ -243,6 +244,11 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
       });
       expect([recorded.error, recorded.response.status]).toEqual([undefined, 200]);
     }
+    // A week has no winner of its own (#768): every team's game is played, none is ranked.
+    const weekField = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
+    expect(weekField.map((row) => [row.standing?.position, row.standing?.displayPosition, row.standing?.status])).toEqual(
+      TEAMS.map(() => [null, null, ParticipantStandingStatus.COMPLETE]),
+    );
     const outcomes = async (client: Client, entryId: string) => expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client, path: path(entryId) })).data)
       .games.map((each) => [each.matchNumber, each.pick?.outcome, each.pick?.points]);
     expect(await outcomes(alice.client, entries.alice)).toEqual([
