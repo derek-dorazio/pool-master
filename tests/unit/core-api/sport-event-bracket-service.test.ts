@@ -245,6 +245,17 @@ describe('SportEventBracketService.updateMatch', () => {
     await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: 7 })).resolves.toMatchObject({ homeSpread: 7 });
   });
 
+  it('refuses (422 MATCH_SPREAD_REQUIRED) clearing a game\'s spread after release, even with no picks, keeping the spread', async () => {
+    const context = setup({ picks: picksOn() });
+    await context.service.loadBracket(context.event.id, bracketOf(context));
+    await context.service.updateMatch(context.event.id, 1, { homeSpread: -3 });
+    context.store.events[0].status = SportEventStatus.SCHEDULED;
+
+    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: null }))
+      .rejects.toMatchObject({ code: 'MATCH_SPREAD_REQUIRED', statusCode: 422 });
+    expect(context.store.matchRows.find((row) => row.matchNumber === 1)?.homeSpread).toBe(-3);
+  });
+
   it('refuses (409 MATCH_SPREAD_LOCKED) a spread change after release on a game with picks, keeping the spread, but still moves its time', async () => {
     const context = setup({ picks: picksOn('match-1') });
     await context.service.loadBracket(context.event.id, bracketOf(context));
