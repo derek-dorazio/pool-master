@@ -166,6 +166,7 @@ Questions:
 - **Q2.1** Are squares worth a small ticket for the Super Bowl (February 2027)? *Decided by Derek 2026-10-17:*
   yes as a later small ticket, deferred as #711; it needs only one match with quarter scores, but it is not
   pick'em, so it stays out of this epic's first slices.
+  Detailed design: `plans/super-bowl-squares.md` (2026-10-19).
 - **Q2.2** Prop pools: out of scope? *Decided by Derek 2026-10-17:* yes, deferred as #712 with an approach; free-form questions are a different
   product.
 
