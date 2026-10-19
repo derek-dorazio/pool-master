@@ -414,7 +414,14 @@ export class InMemoryContestWorld {
       setEventStatus: async (id, sportEventId, status: ContestEntryStatus, at) => {
         const existing = this.entries.get(id);
         if (!existing) throw new Error(`Record to update not found: entry ${id}`);
-        const event = { sportEventId, status, ...(status === 'SUBMITTED' && { submittedAt: at }) };
+        // As the adapter's upsert does, the row's tiebreaker is kept.
+        const kept = existing.events.find((row) => row.sportEventId === sportEventId)?.tiebreakerValue;
+        const event = {
+          sportEventId,
+          status,
+          ...(status === 'SUBMITTED' && { submittedAt: at }),
+          ...(kept !== undefined && { tiebreakerValue: kept }),
+        };
         const updated: ContestEntry = {
           ...existing,
           events: [...existing.events.filter((row) => row.sportEventId !== sportEventId), event],

@@ -15,6 +15,7 @@ import {
   SelectionType,
   UpsetBonusRule,
   contestEntryEventStatus,
+  contestEntryEventTiebreaker,
   type ContestEntry,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
@@ -104,7 +105,7 @@ function setup(options: { bracket?: SportEventMatch[]; seeds?: ReadonlyMap<strin
   return {
     world, games, service, input, alice, bob, contest,
     status: () => contestEntryEventStatus(entry(), sportEvent.id),
-    tiebreaker: () => entry().tiebreakerValue,
+    tiebreaker: () => contestEntryEventTiebreaker(entry(), sportEvent.id),
     storedPicks: () => [...games.predictions.values()]
       .map((row) => [row.sportEventMatchId, row.sportEventParticipantId] as const)
       .sort((left, right) => left[0].localeCompare(right[0], undefined, { numeric: true })),
@@ -214,7 +215,7 @@ describe('PredictionService on a bracket — filling it in', () => {
 });
 
 describe('PredictionService on a bracket — the tiebreaker and submitting', () => {
-  it('saves the tiebreaker with the picks onto the entry and shows it to the owner', async () => {
+  it('saves the tiebreaker with the picks onto the entry\'s row for the event and shows it to the owner', async () => {
     const context = setup();
     const view = await context.service.saveGamePicks({ ...context.input, picks: [], tiebreakerValue: 141 });
 

@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { ContestEntryStatus, ContestStatus, Sport } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, Sport, contestEntryEventStatus, contestEntryEventTiebreaker } from '@poolmaster/shared/domain';
 import {
   PrismaContestEntryMatchPredictionRepository,
   PrismaContestEntryRepository,
@@ -245,7 +245,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
   });
 });
 
-describe('PrismaContestEntryMatchPredictionRepository — several entries and the tiebreaker (#721)', () => {
+describe('PrismaContestEntryMatchPredictionRepository — several entries and the tiebreaker (#721, #717)', () => {
   /** A second entry in the same contest, on a new squad of its league. */
   async function secondEntry(contest: { id: string; leagueId: string }, name: string) {
     const prisma = getPrisma();
@@ -294,10 +294,10 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
     await expect(repos().predictions.findByEntriesAndEvent([], event.id)).resolves.toEqual([]);
   });
 
-  it('writes the tiebreaker onto the entry with the picks, leaves it alone when a save gives none, and clears it with null', async () => {
+  it('writes the tiebreaker onto the entry\'s row for the event with the picks, leaves it alone when a save gives none, and clears it with null', async () => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry } = await createPickEmEntry([event.id]);
-    const tiebreaker = async () => expectDefined(await repos().entries.findByIdWithSquad(entry.id)).tiebreakerValue ?? null;
+    const tiebreaker = async () => contestEntryEventTiebreaker(expectDefined(await repos().entries.findByIdWithSquad(entry.id)), event.id);
 
     await repos().predictions.save({
       contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT, saves: [homePick(game(1))], tiebreakerValue: 141,
@@ -309,6 +309,23 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
 
     await repos().predictions.save({ contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: LATER, saves: [], tiebreakerValue: null });
     expect(await tiebreaker()).toBeNull();
+    expect(expectDefined(await repos().entries.findByIdWithSquad(entry.id)).tiebreakerValue).toBeUndefined();
+  });
+
+  it('keeps each week\'s tiebreaker apart, and keeps it when the week\'s status changes', async () => {
+    const week1 = await createWeek('Week 1', AT);
+    const week2 = await createWeek('Week 2', LATER);
+    const { entry } = await createPickEmEntry([week1.event.id, week2.event.id]);
+    await repos().predictions.save({ contestEntryId: entry.id, sportEventId: week1.event.id, clearedMatchIds: [], eventStatus: null, at: AT, saves: [], tiebreakerValue: 41 });
+    await repos().predictions.save({ contestEntryId: entry.id, sportEventId: week2.event.id, clearedMatchIds: [], eventStatus: null, at: AT, saves: [], tiebreakerValue: 38 });
+    await repos().predictions.save({
+      contestEntryId: entry.id, sportEventId: week1.event.id, clearedMatchIds: [], eventStatus: ContestEntryStatus.SUBMITTED, at: LATER, saves: [],
+    });
+
+    const stored = expectDefined(await repos().entries.findByIdWithSquad(entry.id));
+    expect(contestEntryEventTiebreaker(stored, week1.event.id)).toBe(41);
+    expect(contestEntryEventTiebreaker(stored, week2.event.id)).toBe(38);
+    expect(contestEntryEventStatus(stored, week1.event.id)).toBe(ContestEntryStatus.SUBMITTED);
   });
 
   it('writes no tiebreaker when a pick of the same save breaks a database check', async () => {
@@ -320,7 +337,7 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
       saves: [{ ...homePick(game(1)), confidence: 0 }],
     })).rejects.toThrow();
 
-    expect(expectDefined(await repos().entries.findByIdWithSquad(entry.id)).tiebreakerValue ?? null).toBeNull();
+    expect(contestEntryEventTiebreaker(expectDefined(await repos().entries.findByIdWithSquad(entry.id)), event.id)).toBeNull();
   });
 });
 

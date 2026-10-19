@@ -115,10 +115,10 @@ async function expectRefused(promise: Promise<unknown>, code: string, statusCode
   expect(error).toMatchObject({ code, statusCode });
 }
 
-/** Saves a full, valid confidence week for Alice and submits it. */
+/** Saves a full, valid confidence week for Alice, with its tiebreaker, and submits it. */
 async function submitFullWeek(context: ReturnType<typeof setup>) {
   const { service, input, pick, games } = context;
-  await service.saveGamePicks({ ...input, picks: [pick(games.thursday, 3), pick(games.sunday, 2), pick(games.monday, 1)] });
+  await service.saveGamePicks({ ...input, picks: [pick(games.thursday, 3), pick(games.sunday, 2), pick(games.monday, 1)], tiebreakerValue: 41 });
   return service.submitGamePicks(input);
 }
 
@@ -237,13 +237,14 @@ describe('PredictionService.saveGamePicks — what a save is refused for', () =>
     );
   });
 
-  it('refuses a tiebreaker sent with pick\'em picks with 400 PREDICTION_TIEBREAKER_NOT_TAKEN, saving none of the picks', async () => {
+  it('saves a pick\'em week\'s tiebreaker on the entry\'s row for the week, naming the week\'s last game by kickoff as its game', async () => {
     const context = setup();
-    await expectRefused(
-      context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, 1)], tiebreakerValue: 45 }),
-      'PREDICTION_TIEBREAKER_NOT_TAKEN', 400,
-    );
-    expect(context.storedPicks()).toEqual([]);
+    const view = await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, 1)], tiebreakerValue: 45 });
+
+    // Sunday's game kicks off last: the Monday game has no time of its own, so it kicks off at the event's start.
+    expect(view).toMatchObject({ tiebreakerValue: 45, tiebreakerMatchId: context.games.sunday.id });
+    expect(expectDefined(context.world.entries.get('entry-alice')).events).toContainEqual(expect.objectContaining({ sportEventId: context.sportEvent.id, tiebreakerValue: 45 }));
+    expect(expectDefined(context.world.entries.get('entry-alice')).tiebreakerValue).toBeUndefined();
   });
 
   it('refuses any confidence value in a straight-up pool with 409 PREDICTION_CONFIDENCE_INVALID', async () => {
@@ -325,10 +326,23 @@ describe('PredictionService.submitGamePicks — submitting the week', () => {
     await context.service.saveGamePicks({
       ...context.input,
       picks: [context.pick(context.games.thursday, null), context.pick(context.games.sunday, null), context.pick(context.games.monday, null)],
+      tiebreakerValue: 38,
     });
     const view = await context.service.submitGamePicks(context.input);
     expect(view.mode).toBe(PickEmMode.STRAIGHT_UP);
     expect(view.status).toBe(ContestEntryStatus.SUBMITTED);
+  });
+
+  it('refuses a week with every game picked but no tiebreaker with 409 PREDICTION_TIEBREAKER_MISSING, leaving it in draft', async () => {
+    const context = setup();
+    await context.service.saveGamePicks({
+      ...context.input,
+      picks: [context.pick(context.games.thursday, 3), context.pick(context.games.sunday, 2), context.pick(context.games.monday, 1)],
+    });
+
+    expect((await context.service.getGamePicks(context.input)).canSubmit).toBe(false);
+    await expectRefused(context.service.submitGamePicks(context.input), 'PREDICTION_TIEBREAKER_MISSING', 409);
+    expect(context.weekStatus()).toBe(ContestEntryStatus.DRAFT);
   });
 
   it('changes nothing when a submitted week is submitted again, keeping its first submittedAt', async () => {
@@ -468,6 +482,22 @@ describe('PredictionService — after the week\'s first kickoff', () => {
     expect(context.weekStatus()).toBe(ContestEntryStatus.SUBMITTED);
   });
 
+  it('keeps the tiebreaker changeable after the first kickoff until its own game kicks off, then refuses it with 409 CONTEST_ENTRY_LOCKED', async () => {
+    const context = await kickedOff();
+    const changed = await context.service.saveGamePicks({ ...context.input, picks: [], tiebreakerValue: 47 });
+    expect(changed).toMatchObject({ tiebreakerValue: 47, status: ContestEntryStatus.SUBMITTED });
+
+    context.setNow(at(51));
+    await expectRefused(context.service.saveGamePicks({ ...context.input, picks: [], tiebreakerValue: 30 }), 'CONTEST_ENTRY_LOCKED', 409);
+    expect((await context.service.getGamePicks(context.input)).tiebreakerValue).toBe(47);
+  });
+
+  it('refuses taking the tiebreaker away from a submitted week after the first kickoff with 409 PREDICTION_TIEBREAKER_MISSING', async () => {
+    const context = await kickedOff();
+    await expectRefused(context.service.saveGamePicks({ ...context.input, picks: [], tiebreakerValue: null }), 'PREDICTION_TIEBREAKER_MISSING', 409);
+    expect(context.weekStatus()).toBe(ContestEntryStatus.SUBMITTED);
+  });
+
   it('refuses any change to a week left in draft at the first kickoff with 409 CONTEST_ENTRY_LOCKED', async () => {
     const context = setup();
     await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, 1)] });
@@ -501,17 +531,46 @@ describe('PredictionService.getGamePicks — what each viewer sees', () => {
     expect(other.pickedCount).toBe(0);
   });
 
-  it('reads a pick\'em week as PICK_EM in its mode, each game offering its own two teams, with no tiebreaker and no score yet', async () => {
+  it('reads a pick\'em week as PICK_EM in its mode, each game offering its own two teams, with no points yet and every confidence value still to win', async () => {
     const context = setup();
     await submitFullWeek(context);
 
     const view = await context.service.getGamePicks(context.input);
 
-    expect(view).toMatchObject({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, tiebreakerValue: null, points: null, maxPossiblePoints: null });
+    expect(view).toMatchObject({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, tiebreakerValue: 41, points: 0, maxPossiblePoints: 6 });
     const thursday = expectDefined(view.games.find((game) => game.match.id === context.games.thursday.id));
     expect(thursday.predictedHome).toEqual(thursday.home);
     expect(thursday.predictedAway).toEqual(thursday.away);
-    expect(thursday.pickScore).toBeNull();
+    expect(thursday.pickScore).toEqual({ outcome: 'PENDING', points: null });
+  });
+
+  it('scores each pick of a confidence week as its game is played: its value when correct, nothing on a loss or a tie', async () => {
+    const context = setup();
+    await submitFullWeek(context);
+    const { thursday, sunday, monday } = context.games;
+    context.week.putMatches([
+      { ...thursday, status: MatchStatus.COMPLETED, winnerSide: 'HOME', homeScore: 24, awayScore: 17 },
+      { ...monday, status: MatchStatus.COMPLETED, winnerSide: null, homeScore: 20, awayScore: 20 },
+    ]);
+
+    const view = await context.service.getGamePicks(context.input);
+    expect(view).toMatchObject({ points: 3, maxPossiblePoints: 5 });
+    expect(view.games.map((game) => [game.match.id, game.pickScore])).toEqual([
+      [thursday.id, { outcome: 'CORRECT', points: 3 }],
+      [sunday.id, { outcome: 'PENDING', points: null }],
+      [monday.id, { outcome: 'BUSTED', points: 0 }],
+    ]);
+  });
+
+  it('hides another team\'s tiebreaker until its game kicks off, then shows it', async () => {
+    const context = setup();
+    await submitFullWeek(context);
+    context.setContestStatus(ContestStatus.ACTIVE);
+    context.setNow(at(3));
+    expect((await context.service.getGamePicks({ ...context.input, actorUserId: context.bob.id })).tiebreakerValue).toBeNull();
+
+    context.setNow(at(51));
+    expect((await context.service.getGamePicks({ ...context.input, actorUserId: context.bob.id })).tiebreakerValue).toBe(41);
   });
 
   it('reveals to another team only the pick of a game that has kicked off once the contest is live', async () => {

@@ -48,8 +48,9 @@ import { standardEventPricing } from '../support/budget-pricing';
 // week is its two first-round games. A commissioner creates a CONFIDENCE pick'em contest on it
 // and opens it, and the commissioner's team and a member's team enter.
 //
-// The commissioner's team picks both games, is refused submitting an incomplete week and a week
-// with a repeated confidence value, then submits. The first game kicks off (its time and the
+// The commissioner's team picks both games, is refused submitting an incomplete week, a week
+// with a repeated confidence value and a week without its tiebreaker (the last game's total
+// points), then submits. The first game kicks off (its time and the
 // event's start move into the past and the event goes IN_PROGRESS): its pick locks and shows to
 // the member, the second game's stays open and hidden, a pick cannot be cleared, but it can be
 // swapped to the other team. The member's team, still in draft at the first kickoff, can no
@@ -96,7 +97,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: a pick\'em week (#716)', () => {
-  it('submits a confidence week only once complete with each value once, then locks and reveals each game at its own kickoff, refusing a clear and allowing a swap', async () => {
+  it('submits a confidence week only once complete with each value once and a tiebreaker, then locks and reveals each game at its own kickoff, refusing a clear and allowing a swap', async () => {
     const db = getFunctionalPrisma();
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
@@ -216,7 +217,12 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     expect((await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [pick(game2, 'away', 2)] } })).data?.canSubmit).toBe(false);
     expectFunctionalError(await submitGamePicks({ client: commissioner.client, path: week }), { status: 409, code: 'PREDICTION_CONFIDENCE_INVALID' });
 
-    expect((await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [pick(game2, 'away', 1)] } })).data?.canSubmit).toBe(true);
+    // Each value once, but no tiebreaker yet: still not submittable.
+    expect((await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [pick(game2, 'away', 1)] } })).data?.canSubmit).toBe(false);
+    expectFunctionalError(await submitGamePicks({ client: commissioner.client, path: week }), { status: 409, code: 'PREDICTION_TIEBREAKER_MISSING' });
+    // The tiebreaker is the week's last game by kickoff, the second game: its total points.
+    const withTiebreaker = expectDefined((await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [], tiebreakerValue: 141 } })).data);
+    expect([withTiebreaker.tiebreakerMatchId, withTiebreaker.tiebreakerValue, withTiebreaker.canSubmit]).toEqual([game2.id, 141, true]);
     const submitted = expectDefined((await submitGamePicks({ client: commissioner.client, path: week })).data);
     expect(submitted.status).toBe(ContestEntryStatus.SUBMITTED);
     expect(submitted.submittedAt).not.toBeNull();
