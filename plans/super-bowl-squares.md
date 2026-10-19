@@ -253,10 +253,12 @@ clearing is a delete, and an empty contest has no rows. The 100-box grid is draw
 The row and column are **grid positions**, not digits. The digit at a position is read from the
 draw, so claiming does not depend on the draw, and boxes can be claimed before the digits exist.
 
-- **Q3.3** Box cap per entry: a contest setting `maxSquaresPerEntry` (1 to 100) in the squares
-  selection config. **Recommendation: default 10**, and the commissioner can set it at setup and
-  change it until the draw. A lowered cap does not take away boxes already claimed; it only
-  stops new claims.
+- **Q3.3** Box cap: a contest setting `maxSquaresPerEntry` (1 to 100) in the squares selection
+  config. *Decided by Derek 2026-10-19:* **default 10 per squad**, carried by the seeded squares
+  contest template's config, so a new contest starts at 10; the commissioner can set it at setup
+  and change it until the draw. A squares contest takes one entry per squad, so the cap per entry
+  is the cap per squad. A lowered cap does not take away boxes already claimed; it only stops
+  new claims.
 - **Q3.4** Can the commissioner claim and clear boxes for others? **Recommendation: yes, until
   the draw**, for the member who paid cash and never opened the app. A member can clear only
   their own entry's boxes. Every claim and clear is logged with who did it.
