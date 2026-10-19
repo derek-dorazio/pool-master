@@ -61,7 +61,7 @@ so (the skill's cross-check step).
 | Sport · sport league | ESPN path | Second source, schedule | Field: primary · second | Field is set | Checked |
 |---|---|---|---|---|---|
 | Tennis · ATP, WTA (later) | `tennis/atp`, `tennis/wta` | atptour.com / wtatennis.com calendars; Wikipedia | Draw: the Slam's own site (ausopen.com) · ESPN | Draw the day or two before main draw starts | No |
-| Team sports for pick'em: NFL, college football, NBA, men's college basketball, MLB, NHL, soccer | `football/nfl`, `football/college-football`, `basketball/nba`, `basketball/mens-college-basketball`, `baseball/mlb`, `hockey/nhl`, `soccer/<league code>` | The league's own schedule page; Wikipedia | Teams come with each game in the ESPN feed | Fixed with the schedule | No |
+| Team sports for pick'em: college football, NBA, men's college basketball, MLB, NHL, soccer | `football/college-football`, `basketball/nba`, `basketball/mens-college-basketball`, `baseball/mlb`, `hockey/nhl`, `soccer/<league code>` | The league's own schedule page; Wikipedia | Teams come with each game in the ESPN feed | Fixed with the schedule | No |
 
 ## Rankings
 

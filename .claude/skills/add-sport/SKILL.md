@@ -25,7 +25,7 @@ Fill in a refinement table for the sport before any code, one row per decision:
 | Sport leagues | Which real-world leagues or tours run its events (one sport, many leagues: auto racing has F1, IndyCar and NASCAR) |
 | Event and field | What one event is, how big its field is, how many rounds or stages |
 | Seeding source | Ranking, seed lines or odds: what feeds tiers and budget prices, and how an admin gets it in before release |
-| Selection types | Which existing engines fit (tiered, budget) |
+| Selection types | Which existing selection types fit: roster picks (tiered, budget, random draw), and for a sport played in games the prediction types too (bracket, pick'em, survivor) |
 | Scoring rules and presets | How a participant scores, and any per-league presets |
 | Results source | Admin entry only, or a provider feed |
 | Vocabulary | Participant, round, knocked out, event start, as the audience says them |
@@ -52,8 +52,20 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.
 2. **Participant type.** Individual or team.
-3. **Selection types.** Which existing engines fit. A new selection type is separate work
-   through the selection-engine registry, not part of adding a sport.
+3. **Selection types.** List the ones the sport offers in its definition's `selectionTypes`;
+   contest create refuses any other. What fits follows the scoring family:
+   - Every sport: the roster picks, `TIERED`, `BUDGET_PICK` and `RANDOM_DRAW`.
+   - A sport played in games (head to head) can add the prediction types: `BRACKET`, a knockout
+     bracket pool, picked to the final before it starts (a second-chance bracket starts at a
+     later round, such as the Sweet 16); `PICK_EM`, the winner of every game of each week,
+     straight up or by confidence, optionally against the spread; and `SURVIVOR`, one team a
+     week, each team once. The validity matrix allows prediction contests only on events of
+     games.
+   - Any sport: a multi-event contest, one contest across many events whose entries submit
+     per event (a golf majors pool, an NFL season of weeks). It is a shape of contest, not a
+     selection type, so the sport adds nothing for it.
+   A new selection type is separate work through the selection-engine registry, not part of
+   adding a sport.
 4. **Results source.** A new provider follows `rules/architecture-rules.md` §3 *Provider and
    Adapter Registry Discipline*.
 5. **Vocabulary.** Check `rules/domain-model-concepts.md` §2 *Vocabulary* so product terms
@@ -116,7 +128,10 @@ In order:
    definition adds its contest-setup inputs to `SCORING_SETTINGS_UI`. Both are exhaustive
    records. Use the `add-frontend-feature` skill.
 9. **Tests.** The registry conformance suite covers the new definition automatically; make
-   sure it runs. Add integration coverage for any new query (`rules/testing-rules.md` §9
+   sure it runs. Add the sport's row to the sport x selection-type scenario suite
+   (`tests/functional/sport-selection-scenarios.functional.ts`): one played event from its
+   last-season test seed (step 11), which yields a journey per roster selection type, from
+   preset to settled board. Add integration coverage for any new query (`rules/testing-rules.md` §9
    *Integration Test Depth Requirement*), and one end-to-end journey: create event, seed field,
    create contest, enter, score, settle (`rules/testing-rules.md` §6 *Functional and Browser
    E2E Rules*). A slice with no UI yet proves it as an SDK functional journey; once the
@@ -138,13 +153,18 @@ In order:
     sport is three things, all in this PR: its row in `docs/SPORT-DATA-SOURCES.md` with each
     source checked by one fetch, its first season's schedule file, and a test slate per sport
     league in `test-slates/` so contests can be tried before a real field is out. Each sport
-    league also gets a test seed of its last season as played
-    (`rules/architecture-rules.md` §5 *Manual-testing seed data goes through the admin API*). The fetch
-    and load workflows themselves are shared by every sport and need no change.
-    A bracket sport differs on two of the three. Its field and pairings exist only once the
-    bracket is set (the NFL's at the end of the regular season), so there is no schedule file
-    to write ahead of it; and a slate fills a field but no bracket. Its test data is a test
-    seed of the last real bracket, played out (the `load-sport-data` skill, *Test slates*).
+    league also gets a test data file of its last season as played
+    (`rules/architecture-rules.md` §5 *Manual-testing seed data goes through the admin API*).
+    Every league goes through the same two workflows: "Fetch sport sources" gathers the
+    source pages (a cloud session cannot reach the source sites), and "Load sport data" applies
+    a file, the season's schedule once, then each event's field as it is set. Only the source
+    sites differ per league, so the workflows need no change for a new sport.
+    A knockout differs. Its field and pairings exist only once the bracket is set (the NFL
+    playoffs' at the end of the regular season), so there is no bracket to write ahead, and a
+    slate fills a field but no bracket; its test data is the last real bracket, played out. A
+    regular season of games is a schedule like any other: each week is an event with its
+    games, which link nowhere, written once the league publishes them (the NFL's in May); its
+    test data is last season's weeks as played (the `load-sport-data` skill, *Test slates*).
 
 ## Step 3 — reflect
 
@@ -211,6 +231,10 @@ down: a lesson that was true mid-series may not be by the end.
 - **Dating a test seed from a fixed day in a functional test.** Release refuses an event that
   has started by the server's clock, which a test cannot set, so a test seed moved forward from
   a fixed `now` stops releasing once real time passes it. Load a seed with today as `now`.
+- **Test cleanup that deletes sport reference rows.** Sports, their reference sport leagues
+  and contest templates come from migrations; a cleanup that empties them breaks every test
+  that runs after it, and a database that is not rebuilt between runs. Delete only the rows
+  the test made (`rules/testing-rules.md` §9A *Integration Test Isolation and Cleanup*).
 - **Adding catalog values "for later".** Add a sport, scoring definition or enum value only
   with the code that uses it. Unused values are dead code and get deleted.
 - **Hiding missing results with defaults.** An unscored participant is unranked, never a

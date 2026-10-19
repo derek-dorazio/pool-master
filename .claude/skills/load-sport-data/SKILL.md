@@ -20,14 +20,18 @@ risk). Made-up data belongs only in a test seed whose envelope says `testData: t
 
 ## Step 1 — scope the ask
 
-A season is loaded in two kinds of run, because fields do not exist until shortly before
-each event (a PGA TOUR field is set at the commitment deadline, 5 p.m. ET the Friday before):
+Every league goes through the same two workflows, "Fetch sport sources" and "Load sport
+data"; only its source sites differ. A season is loaded in two kinds of run, because a field
+does not exist until shortly before its event, set at a deadline each league names (a PGA
+TOUR field at the commitment deadline, 5 p.m. ET the Friday before; a race's entry list in
+race week):
 
 | Run | When | `contents` |
 |---|---|---|
 | Schedule | Once per season, early | `SCHEDULE` |
 | Field | When it is announced, then again on the Tuesday of event week for withdrawals and alternates | `PLAYERS`, `FIELDS` |
 | Bracket | With the field, for a sport played as a bracket (Selection Sunday for March Madness); again as game times are announced | `PLAYERS`, `FIELDS`, `BRACKET` |
+| Weeks | Once a season, when a league of weekly games publishes its schedule (the NFL's in May): each week is an event, its field every team and its games matches that link nowhere | `SCHEDULE`, `PLAYERS`, `FIELDS`, `BRACKET` |
 
 A field file carries the players its entries name (`FIELDS` always comes with `PLAYERS`),
 so an alternate the site has never seen is added. It leaves out `SCHEDULE`, so it can never
@@ -63,11 +67,13 @@ each game's time.
 Odds are not loaded: they move daily and differ by book, so two sources rarely agree. A horse
 race's field carries its morning line as order instead: runners favourite first, each with
 its place as `ranking`, so the field is seeded and tiered in market order
-(`docs/RACE-SETUP-PROCEDURES.md` *Load the race and its field*).
+(`docs/RACE-SETUP-PROCEDURES.md` *Load the race and its field*). Spreads are not loaded either:
+an admin sets each game's spread on the week's results page before a pool scored against the
+spread is created (`docs/SPORT-DATA-LOADING.md` *Seeded NFL regular-season weeks*).
 
 ## Step 4 — write the data file
 
-Write it next to `golf-2026.json` in `packages/core-api/scripts/seed-golf/`. The shape is
+Write it next to the other data files in `packages/core-api/scripts/seed-golf/`. The shape is
 `sport-data-file.ts` there; read it rather than copying an old file. Every sport uses the
 one event shape; par is golf's alone, and `startsAt` carries a race's post time once it is
 announced. The envelope:
@@ -82,8 +88,8 @@ announced. The envelope:
 }
 ```
 
-- Sport league names must match the site's (`PGA TOUR`, `LPGA Tour`), or the loader creates
-  a second league.
+- Sport league names must match the site's (`PGA TOUR`, `Formula 1`, `NFL`), or the loader
+  creates a second league.
 - A player's `key` becomes their external id, so keep one key per person for good:
   `<league>-<name slug>`, as the existing files do. Rankings are whole numbers.
 - A field's order is its seed order, unless an entry gives its `seed`: a bracket seed repeats
@@ -93,12 +99,13 @@ announced. The envelope:
   match's side. Give each match its `regionLabel` (March Madness region, NFL conference). A league
   that reseeds (the NFL) sets `bracketAdvancement: "RESEED_BY_SEED"` and leaves the games before
   a reseed with `advancesTo: null`. A First Four pairing is one field entry ("Texas / Xavier") with
-  `isPlayInPlace`; its game is not a match. The rules are `docs/EVENT-SETUP-PROCEDURES.md`
+  `isPlayInPlace`; its game is not a match. The rules are `docs/SPORT-DATA-LOADING.md`
   *Loading sport data*.
 - Leave a game time out until it is announced, rather than writing a placeholder. A time the
   file leaves out keeps the site's.
 - Name the file for people: sport and season, plus a word for a narrower file
-  (`golf-2027.json`, `golf-2027-pga-fields.json`). Nothing reads the name.
+  (`golf-2027.json`, `horse-racing-2027.json`, `auto-racing-2027-formula-1.json`). Nothing
+  reads the name.
 - List every page you used under `provenance.sources`.
 
 Validate it before pushing: the loader's parser refuses a file whose data strays outside its
@@ -120,7 +127,7 @@ scope, and the unit tests in `tests/unit/core-api/` show how to call it.
 
 When the ask is a test field rather than real data, use a test slate instead of gathering:
 one sport league's fixed player list, loaded into one event already on the site, named at
-run time. `docs/EVENT-SETUP-PROCEDURES.md` *Test slates* says how to run one. A new slate
+run time. `docs/SPORT-DATA-LOADING.md` *Test slates* says how to run one. A new slate
 is a file in `test-slates/` with `testData: true`, `contents` `PLAYERS` and `FIELDS`, one
 sport league and no events. Its players may come from memory or an old list, because it is
 test data: say so in its `provenance`, and never load it as a real field.
@@ -135,14 +142,25 @@ seeds), which the load sets after release, before any result. A bye is a team na
 into a later round's match, its other side filled by a link (the College Football Playoff's top
 four seeds in the quarterfinals). A match of a sport with periods (American football) may also
 carry `periodScores`, the score at the end of each period but the last, which the load enters
-before its result: the 2026 NFL seed's Super Bowl does, for squares pools.
+before its result: the 2026 NFL seed's Super Bowl does, for squares pools. A league of weekly
+games tries pick'em on last season's weeks as played: each week its own event, every game a
+match that links nowhere, with its real `result`
+(`american-football-2025-nfl-weeks-test.json`, `docs/SPORT-DATA-LOADING.md` *Seeded NFL
+regular-season weeks*).
 
 A racing sport's test seed is its last season's races as played: each field entry carries
 made-up `oddsToWin` and its real `raceResult` (status, finishing place, grid or post position,
 jockey), which the load enters just before release as the official result. List a race's field in
 grid or post order; a dead heat repeats a place and skips the next. A league's every race the
-sources have results for is worth loading: each is a separate event to try a contest on. `docs/EVENT-SETUP-PROCEDURES.md` *Seeded NFL playoffs*,
+sources have results for is worth loading: each is a separate event to try a contest on. `docs/SPORT-DATA-LOADING.md` *Seeded NFL playoffs*,
 *Seeded College Football Playoff* and *Seeded NBA and WNBA playoffs* say what a load of one does.
+
+Two options of "Load sport data" are for test data only, and the run refuses both unless the
+site is a QA or test environment. `all_test_data` loads every league's test data file (not the
+slates) in one run, in place of `file`; a file that fails is reported and the rest still load,
+so running again fills in what is missing. `with_participants` also loads test players with
+entries in a `<sport league> test pool` league (`NFL test pool`), so a contest can be looked at
+with entries already in it.
 
 ## Sources per sport
 

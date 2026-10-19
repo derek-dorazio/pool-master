@@ -444,7 +444,7 @@ What belongs here is what a gate failure means for a *test*:
   still unvalidated. If CI later finds a stale unit/integration/functional
   failure that the required local gate would have caught, that is a workflow
   failure, not a CI-only surprise.
-- DB-backed integration tests may need to run outside the Codex sandbox/container when they depend on a developer-local Postgres instance such as `localhost:5432`.
+- DB-backed integration tests may need to run outside the agent's sandbox/container when they depend on a developer-local Postgres instance such as `localhost:5432`.
 - In those cases, ask for permission and run the exact integration command outside the sandbox rather than treating the failure as an application defect.
 - If a DB-backed integration command fails with a local connection error in the sandbox but local database commands such as `prisma migrate deploy` or `psql` succeed, retry the exact test command outside the sandbox before assuming the failure is in application code.
 - Treat `poolmaster_test` as an always-disposable local test database. It is
@@ -1040,6 +1040,13 @@ Integration tests share a single Postgres database and run serially (`maxWorkers
 - Tests must not depend on execution order. If test B fails when test A is skipped, test B has a hidden dependency.
 - Use unique identifiers (timestamps, UUIDs) for all created records to avoid collisions.
 - Use explicit cleanup, unique identifiers, or transaction-based isolation as appropriate for the slice.
+- **Cleanup deletes only what the test created, never reference data.** The `sports` rows and
+  every other row a migration writes (`architecture-rules.md` §6 *Database Data: Reference,
+  Fixture, Test*) belong to the database, not the test. A cleanup that deleted the GOLF and
+  HORSE_RACING sport rows (#758) broke every later test that needed them, far from the cause.
+- **No test depends on today's date.** Build events with start dates relative to the clock the
+  test runs on (or a clock it controls), never fixed calendar dates that a later run outlives.
+  A seeded season is moved relative to the run day for the same reason.
 
 ### Cleanup Pattern
 
