@@ -749,9 +749,14 @@ Rules:
   - backend services that shape client-facing payloads
   Those slices are backend-impacting and must satisfy the full backend gate
   before push even if the user-facing feature is primarily in the webapp.
-- If a DB-backed backend gate fails only because the Codex sandbox cannot reach
-  the local database, rerun that exact command outside the sandbox before
-  pushing. Do not treat the sandbox failure as permission to skip the gate.
+- **The DB-backed lanes share one database.** Export `DATABASE_URL` before running
+  them, run them one at a time (functional, then integration and merged coverage),
+  and never two at once: concurrent lanes clean up each other's rows and fail in
+  ways CI never shows. Under load an integration setup can time out locally; rerun
+  that file alone before calling it a failure.
+- If a DB-backed gate fails only because the agent's sandbox cannot reach the
+  local database, rerun that exact command outside the sandbox before pushing.
+  Do not treat the sandbox failure as permission to skip the gate.
 - For repeated migration incidents in shared environments, stop after two failed
   repair attempts and inspect the real database/task state before pushing a
   third code tweak. Do not use CI as a blind migration experiment loop.

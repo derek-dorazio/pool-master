@@ -13,8 +13,10 @@ A cycling race (the Tour de France, a one-day Monument) does too, with the diffe
 
 So does a marathon (Boston, New York), with the differences in [Running](#running) at the end.
 
-Golf works differently, through a simulated score feed: see
-[`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md).
+Golf works differently, through a simulated score feed, and cancelling a race is the same as
+cancelling any event: see [`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md). To try
+racing contests on races already run, load a test seed
+([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md) *Seeded 2026 races*).
 
 Every step is a root-admin screen under `/manage` unless it says otherwise. Horse racing's
 pages sit under `/manage/sports/horse-racing/...`; in the side menu it is **Horse racing**
@@ -35,107 +37,45 @@ under *Sports*, and its three lists are **Races**, **Horses** and **Circuits**.
 
 ## Load the race and its field, don't type them
 
-Steps 1 to 4's circuit, horses, race and runners come from data files through the *Load sport
-data* workflow, the same way golf's schedules and fields do
-([`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md) *Loading sport data*; the
-`load-sport-data` skill gathers and writes the files). Only the screens from *Morning-line
-odds* on need an admin signed in.
+The circuit, horses, race and runners come from data files through the *Load sport data*
+workflow, the same way golf's schedules and fields do
+([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md) *Loading sport data*; the `load-sport-data`
+skill gathers and writes the files). Only the numbered steps below need an admin signed in.
 
-1. **The schedule.** `horse-racing-2027.json` (in `packages/core-api/scripts/seed-golf/`)
-   holds the 2027 US Thoroughbred races announced so far: the Pegasus World Cup and the three
-   Triple Crown races (the Preakness is on a Sunday in 2027). Run the workflow with it, dry
-   run first. It creates the **US Thoroughbred** circuit if the site has none and each race
-   as a **draft**, with *Races* `1` and automatic lifecycle **off**: no feed sends a
-   finishing order, so a race that completed itself would settle its contests on no result.
-2. **Post time.** Until the file gives one, a race starts at noon UTC on its day, which closes
-   picks early that morning. Once the track announces post time, add it to the race as
-   `startsAt` with its offset (`"2027-01-30T17:40:00-05:00"`) and run the file again: it moves
-   *Starts*, and so the release, contest and picks cutoff.
-3. **The field.** After the post-position draw, a field file (`contents` `PLAYERS` and
-   `FIELDS`) lists the runners **in morning-line order, favourite first**, each with its place
-   in that order as `ranking`. Horses the site has never seen are added. The file's order
-   becomes each horse's seed, so the field is seeded in market order and prices correctly
-   from seed alone; post position is entered with the result (step 7). Run it again after
-   scratches: a horse it no longer lists is marked scratched.
+- **The schedule.** `horse-racing-2027.json` (in `packages/core-api/scripts/seed-golf/`)
+  holds the 2027 US Thoroughbred races announced so far: the Pegasus World Cup and the three
+  Triple Crown races (the Preakness is on a Sunday in 2027). Run the workflow with it, dry
+  run first. It creates the **US Thoroughbred** circuit if the site has none and each race
+  as a **draft**, with *Races* `1` and automatic lifecycle **off**: no feed sends a
+  finishing order, so a race that completed itself would settle its contests on no result.
+- **Post time.** Until the file gives one, a race starts at noon UTC on its day, which closes
+  picks early that morning. Once the track announces post time, add it to the race as
+  `startsAt` with its offset (`"2027-01-30T17:40:00-05:00"`) and run the file again: it moves
+  *Starts*, and so the release, contest and picks cutoff. A late change on race day (a delayed
+  post) is the *Details* card's **Edit** on the race's page. The Workflow card's *Edit
+  schedule* only moves the dates on the *Races* list, not *Starts*, so it does not move the
+  cutoff.
+- **The field.** After the post-position draw, a field file (`contents` `PLAYERS` and
+  `FIELDS`) lists the runners **in morning-line order, favourite first**, each with its place
+  in that order as `ranking`. Horses the site has never seen are added. The file's order
+  becomes each horse's seed, so the field is seeded in market order and prices correctly
+  from seed alone; post position is entered with the result (step 4). Run it again after
+  scratches: a horse it no longer lists is marked scratched.
 
-Then carry on at *Tiers* in step 4: *Auto-assign tiers from ranking* tiers the field by
-morning line without typing any odds. Enter the odds as in *Morning-line odds* only if you
-want them shown or tiered from.
+A race no file covers can still be built on the same screens (*Races → New race*, then *Field
+→ Add more participants*). Untick *Move this race through Live and Completed automatically*
+when you create it, for the reason under *The schedule* above, and do not use *Seed field from circuit
+roster*: it adds every horse on the circuit's roster, not only this race's runners.
 
-Steps 1 to 4 below are the same work by hand, for a race no file covers.
+## 1. Odds, tiers, prices and release
 
-## 1. Create the US Thoroughbred circuit
-
-Once only, and only by hand: a schedule file creates it. *Horse racing → Circuits* (`/manage/sports/horse-racing/leagues`), then
-*New circuit*.
-
-| Field | Set it to |
-|---|---|
-| Circuit name | `US Thoroughbred` |
-| Match keyword | Leave blank (it filters a provider's catalog, and there is none) |
-
-Press *Create circuit*. Every US Thoroughbred race (Pegasus World Cup, Kentucky Derby,
-Preakness, Belmont, Breeders' Cup Classic) goes on this one circuit.
-
-## 2. Add the horses
-
-*Horse racing → Horses* (`/manage/sports/horse-racing/participants`), then *Add horse* for
-each runner. Only *Name* is required; *Short name*, *Nationality* and *External ID* are
-optional (leave External ID blank: there is no provider to match).
-
-A horse is created once and runs in many races, so check the list (*Find a horse*) before
-adding one.
-
-**Optional: put them on the circuit's roster.** On the circuit's page
-(`/manage/sports/horse-racing/leagues/:leagueId`), the *Roster* card's *Add horse* adds a
-horse to US Thoroughbred. A horse that is not on the roster still runs; the field grid
-just badges it *Guest*. The roster makes the next step quicker, because the field's add
-dialog can list it.
-
-## 3. Create the Pegasus World Cup
-
-*Horse racing → Races → New race* (`/manage/sports/horse-racing/events/new`), *Build manually*.
-
-| Field | Set it to |
-|---|---|
-| Name | `Pegasus World Cup` |
-| Venue, Location | `Gulfstream Park`, `Hallandale Beach, Florida` |
-| Starts | Post time, in your browser's local time. The race is late January 2027: **confirm the date and post time with Gulfstream Park when you create it.** Post time is the cutoff: the race can't be released, and contests can't be created or opened, once it has passed. Picks close then too |
-| Ends (optional) | Leave blank |
-| Races | `1` (the default for horse racing) |
-| Circuit | US Thoroughbred |
-| Event year | `2027` |
-| Move this race through Live and Completed automatically | **Untick it** (it starts ticked) |
-
-Press *Create race*. The race is saved as a **draft** that only admins can see.
-
-Turn automatic lifecycle off. With it on, a background job moves the race to In Progress at
-post time on its own; with *Ends* blank and no end time on the race it never completes the
-race, so you would still complete it by hand. Running the whole lifecycle by hand keeps the
-two steps together and lets you choose the moment. If you forget, the Workflow card's
-*Manage lifecycle manually* turns it off.
-
-**Post time is the race's *Starts*.** To change it (a delayed post, a date confirmed late),
-use the *Details* card's **Edit** on the race's page. The Workflow card's *Edit schedule*
-only moves the dates on the *Races* list (the race rounds), not *Starts*, so it does not move
-the release, contest or picks cutoff.
-
-## 4. Build the field
-
-### Add the runners
-
-*Field* (`/manage/sports/horse-racing/events/:id/field`), then *Add more participants*. Pick
-US Thoroughbred to browse its roster, or type at least two letters under *Search all horses*,
-tick each runner, and press *Add selected (n)*, then *Done*.
-
-Do not use *Seed field from circuit roster*: it adds every horse on the circuit's roster,
-not only this race's runners, and it derives seeds and odds from circuit rankings, which
-horses don't have.
+A loaded field is already ranked and seeded in morning-line order, so it tiers and prices
+without any odds. Enter the odds only if you want them shown or tiered from.
 
 ### Morning-line odds
 
 In the field grid, give every horse its morning-line odds in the **Odds** column, then press
-*Save changes*. Leave **Seed** blank.
+*Save changes*. Leave **Seed** as the field file set it, or blank on a field built by hand.
 
 - Enter odds as a number "to 1": 5-2 is `2.5`, 8-1 is `8`, 30-1 is `30`. Lower is shorter.
 - Odds set the tiers (next step) and the budget prices: *Auto-assign prices* prices from the
@@ -148,7 +88,7 @@ In the field grid, give every horse its morning-line odds in the **Odds** column
 ### Tiers
 
 *Tiers* (`/manage/sports/horse-racing/events/:id/tiers`), then *Auto-assign tiers from odds*
-and *Replace tier assignments*. A horse race starts with three tiers, and auto-assign fills
+(or *from ranking*, for a loaded field without odds) and *Replace tier assignments*. A horse race starts with three tiers, and auto-assign fills
 them three horses at a time from the favourite, the last tier taking everyone left: a
 12-runner field comes out 3/3/6. To move a horse to another tier, choose the tier in the select on
 its card, then *Save changes*.
@@ -167,7 +107,7 @@ still in it has a tier and a price, and no tier is empty ("Tier 3 has no horses"
 into it or delete it, since no entry could pick from it). Release moves the race to Scheduled, commissioners can
 pick it, and **tiers and prices lock for good**. Odds, seeds and scratches stay editable.
 
-## 5. Contests and entries
+## 2. Contests and entries
 
 As a commissioner of a test league (root admin is not needed):
 
@@ -191,7 +131,7 @@ As a commissioner of a test league (root admin is not needed):
    is final and can't be run again. It is refused when entries × horses per entry is more than
    the horses still in the field, so check the count after scratches.
 
-## 6. Scratches
+## 3. Scratches
 
 A horse withdrawn before the race is **scratched**. On *Field*, untick *In field* on its row
 (the reason reads *Scratched*) and press *Save changes*.
@@ -208,12 +148,12 @@ A horse withdrawn before the race is **scratched**. On *Field*, untick *In field
   draw stays with the entry it was dealt to (dealt picks are final) and scores the contest's
   *Points for not finishing* once the result is official, as in a paper sweep.
 - **At the gate, after post time:** leave the field alone and enter the horse as `DNS` in the
-  result (step 7).
+  result (step 4).
 
 A scratched horse needs no row in the result. Once the result is official it scores
 *Points for not finishing*, and the result card shows it as *Scratched*.
 
-## 7. Run the race and enter the result
+## 4. Run the race and enter the result
 
 ### At post time
 
@@ -263,7 +203,7 @@ Once the official result is in and checked, *Move to Completed* on the Workflow 
 settles every contest on the race and cannot be undone: a correction entered after it updates
 the race's result but not the settled standings.
 
-## 8. Check the settled leaderboard
+## 5. Check the settled leaderboard
 
 As a member or commissioner, open the contest's leaderboard
 (`/league/:leagueCode/contests/:contestId/leaderboard`). It shows "Final result, settled …",
@@ -274,36 +214,8 @@ Win / Place / Show preset an entry holding the winner and the third-placed horse
 ## Later races
 
 The circuit and the horses already exist, so a later race only needs its line in the schedule
-file and its field file (or, by hand, starts at step 3). Each race is its
-own event (a Derby-day undercard race is a separate race).
+file and its field file. Each race is its own event (a Derby-day undercard race is a separate race).
 
-## Seeded 2026 races
-
-To try racing contests without setting up a race, load a test seed of the 2026 season as run.
-Four files in `packages/core-api/scripts/seed-golf/` hold every league's 2026 races with their
-real finishing orders. The motor races, horse races and Tour de France carry the whole field;
-Milano-Sanremo, both Giros and the marathons carry only their leading ten finishers:
-
-| File | Sport leagues and races |
-|---|---|
-| `auto-racing-2026-test.json` | Formula 1 (17 Grands Prix, Australia to Singapore), NASCAR Cup Series (32 points races, the Daytona 500 to Charlotte in October), IndyCar (all 18 races, the Indianapolis 500 among them) |
-| `horse-racing-2026-test.json` | US Thoroughbred: the Kentucky Derby, Preakness Stakes and Belmont Stakes, with jockeys and post positions; the Derby's scratched horses did not start |
-| `cycling-2026-test.json` | UCI WorldTour: Milano-Sanremo, the Giro d'Italia and the Tour de France; UCI Women's WorldTour: the Giro d'Italia Women |
-| `running-2026-test.json` | World Marathon Majors men and women: Tokyo, Boston, London, Sydney, Berlin and Chicago |
-
-Load one with `mode` `apply` like any file. Because its envelope says `testData`:
-
-- **Dates moved forward by whole weeks**, post times with them, so the first race starts at
-  least a week after the run.
-- **Each race released**, with automatic lifecycle off, its field tiered by made-up odds and
-  priced. The finishing order goes in just before release, so a run that stops between the two
-  leaves a draft that the next run finishes.
-- **The official finishing order already entered**: every runner's place (or did not finish,
-  did not start), grid or post position, and jockey, as *The finishing order* in step 7 would.
-
-Then create a contest on a race, enter it, and move the race through *In Progress* and
-*Completed* from its Manage page: it settles on the finishing order already there. Running the
-file again skips everything.
 
 ## Auto racing
 
@@ -312,10 +224,10 @@ Car racing (NASCAR Cup Series, IndyCar, Formula 1) runs through the same steps u
 are **Races**, **Drivers** and **Series**. What differs:
 
 - **The series already exist.** **NASCAR Cup Series**, **IndyCar** and **Formula 1** are
-  created by migrations, because each one's points presets belong to it. Skip step 1 and choose
-  the series when creating the race. Do not create a second series of the same name.
-- **Drivers, not horses.** Add each driver once (*Auto racing → Drivers*); a driver who races
-  in both series (Indy 500 and NASCAR) is one driver. Withdrawing one before the race reads
+  created by migrations, because each one's points presets belong to it. A schedule file names
+  the series it loads into. Do not create a second series of the same name.
+- **Drivers, not horses.** A driver who races in both series (Indy 500 and NASCAR) is one
+  driver. Withdrawing one before the race reads
   *Withdrawn*, not *Scratched*.
 - **Starts is the green flag.** It is the cutoff for release, contests and picks.
 - **Five tiers of eight.** *Auto-assign tiers from odds* fills them eight drivers at a time
@@ -355,12 +267,12 @@ Road racing (UCI WorldTour, UCI Women's WorldTour) runs through the same steps u
 **Races**, **Riders** and **Tours**. What differs:
 
 - **The tours already exist.** **UCI WorldTour** and **UCI Women's WorldTour** are created by
-  the migration that adds cycling, because each one's presets belong to it. Skip step 1 and
-  choose the tour when creating the race. Do not create a second tour of the same name.
+  the migration that adds cycling, because each one's presets belong to it. A schedule file names
+  the tour it loads into. Do not create a second tour of the same name.
 - **One race, one result.** A Grand Tour is one race with one round, whatever its stage count:
   its result is the **final overall classification** (GC), entered once after the last stage.
   Stages are not entered and not scored. A one-day race has the same shape.
-- **Riders, not horses.** Add each rider once (*Cycling → Riders*). A rider who does not start
+- **Riders, not horses.** A rider who does not start
   is withdrawn from the field and reads *Withdrawn*. **Starts** is the start of the race (the
   first stage of a Grand Tour), the cutoff for release, contests and picks; copy reads
   "Entries close at the start".
@@ -391,11 +303,11 @@ Marathons (World Marathon Majors) run through the same steps under
 
 - **The series already exist.** **World Marathon Majors (men)** and **World Marathon Majors
   (women)** are created by the migration that adds running, because each one's presets belong
-  to it. Skip step 1 and choose the series when creating the race. Do not create a second series
-  of the same name.
+  to it. A schedule file names the series it loads into. Do not create a second series of the
+  same name.
 - **One race, one result.** A marathon is one race with one round. Its result is the official
   finishing order; gun and chip times are not entered.
-- **Elite field only.** Add each runner once (*Running → Runners*), and put only the elite
+- **Elite field only.** Put only the elite
   field on the race: 20 to 40 runners, never the mass start. A runner who does not start is
   withdrawn from the field and reads *Withdrawn*. **Starts** is the elite start, the cutoff for
   release, contests and picks; copy reads "Entries close at the start".

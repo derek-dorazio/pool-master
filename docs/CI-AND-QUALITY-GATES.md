@@ -849,7 +849,7 @@ usually faster than any targeted repair:
    migration history came back clean.
 4. **Re-run the latest `main` run's failed jobs**, so `deploy-qa` rolls the release out.
 5. Optionally, **Actions -> Load sport data -> Run workflow** with mode `apply` to load the
-   2026 tournaments for manual league and contest testing (`docs/EVENT-SETUP-PROCEDURES.md`, *Seeded 2026
+   2026 tournaments for manual league and contest testing (`docs/SPORT-DATA-LOADING.md`, *Seeded 2026
    tournaments*). A reset leaves none.
 
 The reset wipes every row, re-applies every migration — which restores the reference data,
@@ -885,7 +885,7 @@ release, and the mock contest feed provider has its own suite.
 - **Local commands:**
   - `npm run test:service:unit` (or `npm test`) — run the suite
   - `npm run test:coverage:service:unit` — run with coverage
-- **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit` with Jest's default Babel coverage provider; the coverage threshold below fails the job, and it is the only coverage gate in CI.
+- **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit` with Jest's default Babel coverage provider; the coverage threshold below fails the job. It is one of two coverage gates in CI; the other is the webapp unit suite's (`poolmaster-unit-tests`, §4 below).
 - **Required pre-push gate:** `npx jest --config tests/jest.config.js --forceExit` (per `AGENTS.md` Quality Gates).
 - **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 67.5% statements, 65.5% branches, 65.5% functions, 67.5% lines. These are regression floors, not aspirational targets, raised in #747 to about 3 points under the lower of two measurements: Babel (this job) 74.63 / 68.84 / 68.42 / 74.36, and V8 (the merged report, which reuses this config) 70.69 / 85.52 / 79.87 / 70.69.
 - **Database:** none. Pure unit tests must not touch Postgres; if a test needs a DB, it belongs in the integration suite.
@@ -1003,7 +1003,7 @@ release, and the mock contest feed provider has its own suite.
 | Webapp unit | 89% / 81.5% / 89.5% / 89% (stmts / branches / fns / lines) | `clients/poolmaster/vitest.config.ts` |
 | Webapp E2E | N/A | — |
 
-Both configured thresholds are intentionally **regression floors**, not targets. The backend one is measured with Babel statement counts, the method it was set against (#302), and must also clear the V8 run; the web one is V8, the only provider that suite uses. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
+Both configured thresholds are intentionally **regression floors**, not targets, and they only ratchet up: when a slice raises measured coverage, the floor may follow to about 3 points under the new measurement, and it is never lowered to let a slice through. The backend one is measured with Babel statement counts, the method it was set against (#302), and must also clear the V8 run; the web one is V8, the only provider that suite uses. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
 
 ## File reference
 

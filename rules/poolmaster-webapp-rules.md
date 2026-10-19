@@ -57,7 +57,7 @@ This line governs every permission decision here:
   actions sit on account surfaces only: the user's own on their user page, a root admin's on
   that user's page in Manage (Manage › Users).
 - **League membership *is* team ownership in that league.** There is no separate
-  "remove from league" operation — `domain-model-concepts.md` §3 *League Membership Is Team
+  "remove from league" operation — `domain-model-concepts.md` §3 *League Membership Is Squad
   Ownership*.
 
 ---

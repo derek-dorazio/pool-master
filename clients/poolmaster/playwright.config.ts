@@ -8,7 +8,7 @@ export default defineConfig({
   // HTML reporter copies them, so tracing can stay on against deployed environments.
   globalTeardown: './e2e/redact-artifacts.ts',
   // pool-master-303: no shared mutable fixtures left to race over (phase 1
-  // of plans/130 deleted them) — safe to parallelize.
+  // of the deleted plans/130 removed them) — safe to parallelize.
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   // Real-network/real-browser e2e gets one retry in CI, matching

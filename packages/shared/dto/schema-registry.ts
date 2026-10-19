@@ -9,7 +9,8 @@
  * every shape was published inline per-operation and `components.schemas` was empty.
  * hey-api had nothing named to emit, so the frontend's only handle on a response was
  * to index into the operation's response map — `GetLeagueResponses[200]['league']` —
- * and those derivations were copy-pasted until they drifted. See #192 / plans/143.
+ * and those derivations were copy-pasted until they drifted. See #192 and
+ * `rules/service-rules.md` §4 *DTOs, Mappers, and OpenAPI*.
  *
  * WHAT THIS IS NOT. `dto/json-schema.ts` inlines local `$ref`s on purpose: refs that
  * zod-to-json-schema emits INSIDE a path's schema cannot be followed by the

@@ -20,7 +20,7 @@
 # `with_participants` also loads test players, a league per sport league, contests on its next
 # events and a submitted entry from each player. Both are QA only: the loader reads the site's
 # environment first and refuses anything else. Like every load, both are safe to run again.
-# See docs/EVENT-SETUP-PROCEDURES.md, "Loading sport data".
+# See docs/SPORT-DATA-LOADING.md, "Loading sport data".
 name: Load sport data
 
 on:

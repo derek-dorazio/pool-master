@@ -1,7 +1,7 @@
 # PoolMaster
 
 Fantasy sports pool management platform. Create leagues, configure contests across any sport,
-draft squads, and compete on live leaderboards.
+enter them with a squad, make picks, and compete on live leaderboards.
 
 Sport-agnostic by design: sports are configured through the domain model rather than
 hard-coded sport logic. What is actually supported today is what the `Sport` enum and the
@@ -41,8 +41,9 @@ the one people read.
 | CI jobs, branch protection, and gate failures | [`docs/CI-AND-QUALITY-GATES.md`](docs/CI-AND-QUALITY-GATES.md) |
 | Runtime logs and how to query them | [`docs/LOGGING-OPERATIONS.md`](docs/LOGGING-OPERATIONS.md) |
 | Email providers by environment | [`docs/EMAIL-DELIVERY.md`](docs/EMAIL-DELIVERY.md) |
-| Setting up a made-up golf tournament and simulating a live round in QA | [`docs/EVENT-SETUP-PROCEDURES.md`](docs/EVENT-SETUP-PROCEDURES.md) |
-| Setting up a horse race, its field and contests, and entering its result | [`docs/RACE-SETUP-PROCEDURES.md`](docs/RACE-SETUP-PROCEDURES.md) |
+| Setting up an event by hand and running it through its lifecycle (a golf tournament on a simulated live round, a knockout bracket, cancelling an event) | [`docs/EVENT-SETUP-PROCEDURES.md`](docs/EVENT-SETUP-PROCEDURES.md) |
+| Setting up a race's odds, tiers and contests, and entering its result | [`docs/RACE-SETUP-PROCEDURES.md`](docs/RACE-SETUP-PROCEDURES.md) |
+| Loading schedules, fields and brackets from a data file, and the test seeds for trying contests | [`docs/SPORT-DATA-LOADING.md`](docs/SPORT-DATA-LOADING.md) |
 | Where each sport's real schedules and fields come from | [`docs/SPORT-DATA-SOURCES.md`](docs/SPORT-DATA-SOURCES.md) |
 | The backend modules | [`packages/README.md`](packages/README.md) |
 | The web app | [`clients/poolmaster/README.md`](clients/poolmaster/README.md) |

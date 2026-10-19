@@ -1040,6 +1040,13 @@ Integration tests share a single Postgres database and run serially (`maxWorkers
 - Tests must not depend on execution order. If test B fails when test A is skipped, test B has a hidden dependency.
 - Use unique identifiers (timestamps, UUIDs) for all created records to avoid collisions.
 - Use explicit cleanup, unique identifiers, or transaction-based isolation as appropriate for the slice.
+- **Cleanup deletes only what the test created, never reference data.** The `sports` rows and
+  every other row a migration writes (`architecture-rules.md` §6 *Database Data: Reference,
+  Fixture, Test*) belong to the database, not the test. A cleanup that deleted the GOLF and
+  HORSE_RACING sport rows (#758) broke every later test that needed them, far from the cause.
+- **No test depends on today's date.** Build events with start dates relative to the clock the
+  test runs on (or a clock it controls), never fixed calendar dates that a later run outlives.
+  A seeded season is moved relative to the run day for the same reason.
 
 ### Cleanup Pattern
 
