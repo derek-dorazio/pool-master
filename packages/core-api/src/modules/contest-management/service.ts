@@ -742,6 +742,11 @@ export class ContestManagementService {
     const scoring = this.resolveContestScoring(sportEvent, scoringInput);
     for (const each of sportEvents) {
       this.assertScoringFitsEvent(each, scoring);
+      // Knockout round points score how far a team went (#715): a regular-season week's games form
+      // no bracket, so there is no round to reach.
+      if (scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS') {
+        await this.assertEventIsKnockout(each.id);
+      }
     }
     switch (rules.selectionType) {
       case SelectionType.TIERED:
@@ -799,6 +804,18 @@ export class ContestManagementService {
     this.logger.warn({ sportEventId, startsAtRound, problem }, 'contest management rules refused a bracket event whose games do not fill in as a bracket');
     throw new ContestManagementError(
       `A bracket contest's event must be a knockout every game of which can be picked: ${problem}.`,
+      CONTEST_EVENT_NOT_A_BRACKET,
+    );
+  }
+
+  private async assertEventIsKnockout(sportEventId: string): Promise<void> {
+    const problem = await this.sportEventReader.findBracketProblem(sportEventId, 1);
+    if (problem === null) {
+      return;
+    }
+    this.logger.warn({ sportEventId, problem }, 'contest management scoring refused knockout round points on an event whose games form no bracket');
+    throw new ContestManagementError(
+      `Knockout round points score a knockout, but this event's games do not form one: ${problem}.`,
       CONTEST_EVENT_NOT_A_BRACKET,
     );
   }

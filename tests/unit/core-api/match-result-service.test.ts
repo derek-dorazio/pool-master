@@ -202,6 +202,79 @@ describe('MatchResultService.clearResult', () => {
   });
 });
 
+// #715: a postponed regular-season game is cancelled in its week and added to the week it moves to.
+describe('MatchResultService.cancelMatch', () => {
+  /** A released week of two games that form no bracket, as an NFL regular-season week is. */
+  async function week() {
+    const store = new InMemorySportEvents();
+    const sportRow = store.addSport(Sport.AMERICAN_FOOTBALL);
+    const event = store.addEvent({ sport: Sport.AMERICAN_FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
+    await store.roundRepo().createMany(event.id, [{ roundNumber: 1, scheduledDate: new Date('2027-09-12T17:00:00.000Z') }]);
+    const [bills, jets, chiefs, raiders] = ['Bills', 'Jets', 'Chiefs', 'Raiders'].map((name) =>
+      store.addToField(event.id, store.addParticipant(sportRow.id, name, { participantType: 'TEAM' }).id));
+    let sequence = 0;
+    await new SportEventBracketService({
+      sportEvents: store.sportEventRepo(),
+      sportLeagues: store.sportLeagueRepo(),
+      rounds: store.roundRepo(),
+      field: store.fieldRepo(),
+      participants: store.participantRepo(),
+      matches: store.matchRepo(),
+      newId: () => {
+        sequence += 1;
+        return `game-${sequence}`;
+      },
+    }).loadBracket(event.id, [
+      { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: bills.id, awaySportEventParticipantId: jets.id, isNeutralSite: false, scheduledDate: null, advancesTo: null },
+      { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: chiefs.id, awaySportEventParticipantId: raiders.id, isNeutralSite: false, scheduledDate: null, advancesTo: null },
+    ]);
+    event.status = SportEventStatus.SCHEDULED;
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+    return { store, service, event };
+  }
+
+  it('cancels a game of a released week that has not been played, leaving the week\'s other game as it was', async () => {
+    const { service, event } = await week();
+
+    const games = await service.cancelMatch(event.id, 1);
+
+    expect(games.map((game) => [game.matchNumber, game.status, game.winnerSide])).toEqual([
+      [1, MatchStatus.CANCELLED, null],
+      [2, MatchStatus.SCHEDULED, null],
+    ]);
+  });
+
+  it('changes nothing when the game is already cancelled', async () => {
+    const { service, event } = await week();
+    await service.cancelMatch(event.id, 1);
+
+    const games = await service.cancelMatch(event.id, 1);
+
+    expect(games.find((game) => game.matchNumber === 1)?.status).toBe(MatchStatus.CANCELLED);
+  });
+
+  it('refuses (409 MATCH_ALREADY_PLAYED) a game with a result: its result is cleared first', async () => {
+    const { service, event } = await week();
+    await service.recordResult(event.id, 1, homeWins);
+
+    await expect(service.cancelMatch(event.id, 1)).rejects.toMatchObject({ code: 'MATCH_ALREADY_PLAYED', statusCode: 409 });
+  });
+
+  it('refuses (422 MATCH_IN_BRACKET) a bracket game, which sends its winner on or takes a team from an earlier game', async () => {
+    const { service, event } = await setup();
+
+    await expect(service.cancelMatch(event.id, 1)).rejects.toMatchObject({ code: 'MATCH_IN_BRACKET', statusCode: 422 });
+    await expect(service.cancelMatch(event.id, 3)).rejects.toMatchObject({ code: 'MATCH_IN_BRACKET', statusCode: 422 });
+  });
+
+  it('refuses (409 SPORT_EVENT_NOT_RELEASED) a game of a draft week, whose games are still edited freely', async () => {
+    const { service, event } = await week();
+    event.status = SportEventStatus.DRAFT;
+
+    await expect(service.cancelMatch(event.id, 1)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED', statusCode: 409 });
+  });
+});
+
 describe('MatchResultService on a reseeded bracket', () => {
   // Seeds 1 and 2 on byes; the first-round games (3 v 6, 4 v 5) link nowhere, so the admin places
   // their winners into the second round by seed.

@@ -81,7 +81,8 @@ function describeSide(matchNumber: number, side: MatchSide): string {
  * Everything wrong with a bracket's shape, in words an admin can act on; empty when it can be
  * loaded. A side may be empty here (its team is not known yet), but never both named and filled
  * by an earlier match's winner. A bracket that `reseeds` may leave a match before its last round
- * without a link: its winner is placed when the next round is reseeded.
+ * without a link: its winner is placed when the next round is reseeded. Games none of which link
+ * anywhere are a set of games rather than a bracket (a week of NFL games), and have no final.
  */
 export function findBracketProblems(
   matches: readonly BracketMatchInput[],
@@ -137,6 +138,10 @@ export function findBracketProblems(
     }
   }
 
+  // Games that link nowhere form no bracket (an NFL regular-season week, #715): there is no final to find.
+  if (matches.every((match) => match.advancesTo === null)) {
+    return problems;
+  }
   const lastRound = Math.max(...matches.map((match) => match.roundNumber));
   const finals = matches.filter((match) => match.advancesTo === null && (context.reseeds !== true || match.roundNumber === lastRound));
   if (context.reseeds === true && finals.length !== 1) {

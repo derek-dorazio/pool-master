@@ -1528,7 +1528,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  function basketballService(rounds: number) {
+  function basketballService(rounds: number, bracketProblem: string | null = null) {
     const contestCoreRepo = createContestRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const service = new ContestManagementService(
@@ -1538,7 +1538,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       scoringRuleRepo,
       createSportEventTierServiceStub(),
       undefined,
-      createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.MATCHES, rounds }),
+      createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.MATCHES, rounds, bracketProblem }),
     );
     return { contestCoreRepo, scoringRuleRepo, service };
   }
@@ -1563,6 +1563,17 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       name: 'Bracket Pool',
       configuration: { ...drawRules, scoring: knockoutScoring([1, 2, 4, 8, 16, 32]) },
     }))).rejects.toMatchObject({ code: CONTEST_SCORING_ROUNDS_MISMATCH, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  // #715: a regular-season week's games form no bracket, so there are no rounds to score a team by.
+  it('refuses knockout round values on an event whose games form no bracket (a regular-season week) with 422 CONTEST_EVENT_NOT_A_BRACKET, writing nothing', async () => {
+    const { contestCoreRepo, service } = basketballService(1, 'its last round has 16 games, not one final');
+
+    await expect(service.createContest({ leagueId: 'league-1' }, raceRequest({
+      name: 'Week Pool',
+      configuration: { ...drawRules, scoring: knockoutScoring([1]) },
+    }))).rejects.toMatchObject({ code: CONTEST_EVENT_NOT_A_BRACKET, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 

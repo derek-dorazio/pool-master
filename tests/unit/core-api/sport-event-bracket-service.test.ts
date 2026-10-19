@@ -130,6 +130,19 @@ describe('findBracketProblems', () => {
     expect(problems).toEqual([]);
   });
 
+  it('accepts games none of which link anywhere, as a week of NFL games is, even in a league that reseeds', () => {
+    const week = [{ ...first, advancesTo: null }, { ...second, advancesTo: null }];
+
+    expect(findBracketProblems(week, context)).toEqual([]);
+    expect(findBracketProblems(week, { ...context, reseeds: true })).toEqual([]);
+  });
+
+  it('still checks the sides of games that link nowhere', () => {
+    const week = [{ ...first, advancesTo: null }, { ...second, advancesTo: null, homeSportEventParticipantId: ids.duke }];
+
+    expect(findBracketProblems(week, context)).toEqual(['match 2 home names the same field row as match 1 home']);
+  });
+
   it.each([
     ['a match number used twice', [first, { ...second, matchNumber: 1 }, final], 'match number 1 is used more than once'],
     ['a round the event does not have', [first, second, { ...final, roundNumber: 3 }], 'match 3 is in round 3, which the event does not have'],
