@@ -293,7 +293,7 @@ At settlement the contest writes `ContestEntryStanding` for each entry that hold
 
 - **Q3.7** Freeze the winning boxes at settlement? Settlement exists so a later score correction
   cannot quietly rewrite a finished result. Quarters won per entry is frozen in the standing,
-  but which box won which quarter is not. **Recommendation: yes, add a small
+  but which box won which quarter is not. *Decided by Derek 2026-10-19:* **yes, add a small
   `ContestSquaresWinner` table** (contest, period, row, column, entry or none), written by
   settlement only, which the Final leaderboard reads. The alternative is no table, and a score
   correction after Final would move the highlighted box on the grid while the standings stayed.
@@ -366,7 +366,7 @@ Three PRs under #711, in order. Each is a normal implement, review, merge cycle.
    football 4), the admin period endpoint and the period fields on the match results screen, and the data file `periodScores` with Super Bowl LX in the 2026
    test file. Useful on its own and unblocks the rest.
 2. **Squares contests, server side.** The enums, `ContestSquaresGame`, `ContestEntrySquare`,
-   `ContestSquaresDraw`, `ContestSquaresWinner` (if Q3.7 stands), the `MATCH_START` cutoff, the
+   `ContestSquaresDraw`, `ContestSquaresWinner`, the `MATCH_START` cutoff, the
    squares service and endpoints, settlement and the leaderboard reader, the template row, and the
    scenario test.
 3. **Squares screens.** Setup, the grid with claiming and commissioner tools, the draw, live and
