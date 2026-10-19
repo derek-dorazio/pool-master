@@ -1,0 +1,54 @@
+{
+  "fetchedAt": "2026-10-19T07:51:30.704Z",
+  "results": [
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=1&dates=2025",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=2&dates=2025",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=3&dates=2025",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://www.pro-football-reference.com/years/2025/week_1.htm",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "04-pro-football-reference.com.txt"
+    },
+    {
+      "url": "https://www.pro-football-reference.com/years/2025/week_2.htm",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "05-pro-football-reference.com.txt"
+    },
+    {
+      "url": "https://www.pro-football-reference.com/years/2025/week_3.htm",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 403,
+      "file": "06-pro-football-reference.com.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025_NFL_season",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-en.wikipedia.org.txt"
+    }
+  ]
+}
