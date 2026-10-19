@@ -211,12 +211,15 @@ export type PickEmMode = (typeof PickEmMode)[keyof typeof PickEmMode];
 
 /**
  * How one game pick stands against the results (#721). CORRECT: the team picked won its game in
- * that round. BUSTED: the team picked is out, so the pick can no longer come true. PENDING: the
- * game is still to be decided and the team picked is still in.
+ * that round, or covered the spread (#720). BUSTED: the team picked is out, or did not cover, so
+ * the pick can no longer come true. PUSH: against the spread, the game landed exactly on it, so
+ * the pick neither won nor lost (#720). PENDING: the game is still to be decided and the team
+ * picked is still in.
  */
 export const PickOutcome = {
   CORRECT: 'CORRECT',
   BUSTED: 'BUSTED',
+  PUSH: 'PUSH',
   PENDING: 'PENDING',
 } as const;
 export type PickOutcome = (typeof PickOutcome)[keyof typeof PickOutcome];

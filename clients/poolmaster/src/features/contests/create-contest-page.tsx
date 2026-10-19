@@ -128,6 +128,7 @@ const createContestFormSchema = z.object({
   countedScores: z.string(),
   didNotFinishPoints: z.string(),
   maxEntriesPerTeam: z.string(),
+  pickEmAgainstTheSpread: z.boolean(),
   pickEmMode: z.nativeEnum(PickEmMode),
   picksPerEntry: z.string(),
   picksPerTier: z.string(),

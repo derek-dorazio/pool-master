@@ -20,6 +20,7 @@
 import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  ContestEntryMatchPredictionRepository,
   ParticipantRepository,
   SportLeagueRepository,
   SportEventMatchPatch,
@@ -165,6 +166,8 @@ export interface SportEventBracketServiceDeps {
   field: SportEventParticipantRepository;
   participants: Pick<ParticipantRepository, 'findById'>;
   matches: SportEventMatchRepository;
+  /** Whether a game has picks: a released game's spread is fixed once it has (#720). */
+  predictions: Pick<ContestEntryMatchPredictionRepository, 'hasAnyOnMatch'>;
   newId?: () => string;
   logger?: FastifyBaseLogger;
 }
@@ -217,6 +220,8 @@ export class SportEventBracketService {
    * Edits one match. Its time and site can change at any point; its sides only until release
    * (409 SPORT_EVENT_BRACKET_LOCKED). A side an earlier match's winner fills, a side naming a
    * field row the bracket already has, or both sides naming one team is 422 BRACKET_INVALID.
+   * Its spread (#720) can change until release, and after it only while no entry has picked the
+   * game (409 MATCH_SPREAD_LOCKED).
    */
   async updateMatch(sportEventId: string, matchNumber: number, edit: BracketMatchEdit): Promise<SportEventMatch> {
     const event = await this.requireBracketEvent(sportEventId);
@@ -235,8 +240,12 @@ export class SportEventBracketService {
         throw new SportEventError(`Match ${matchNumber} cannot be changed: ${problems.join('; ')}.`, 'BRACKET_INVALID', 422);
       }
     }
+    const changesSpread = edit.homeSpread !== undefined && edit.homeSpread !== match.homeSpread;
+    if (changesSpread && event.status !== SportEventStatus.DRAFT) {
+      await this.assertSpreadUnpicked(event, match);
+    }
     await this.deps.matches.update(match.id, edit);
-    this.deps.logger?.info({ sportEventId, matchNumber, changesSides }, 'Updated bracket match');
+    this.deps.logger?.info({ sportEventId, matchNumber, changesSides, changesSpread }, 'Updated bracket match');
     const updated = (await this.deps.matches.findBySportEvent(sportEventId)).find((candidate) => candidate.id === match.id);
     return updated as SportEventMatch;
   }
@@ -463,6 +472,21 @@ export class SportEventBracketService {
   }
 
   /** Pairings are the admin's until release, as tiers and prices are. */
+  /**
+   * A released game's spread is corrected only while nobody has picked the game (#720, design
+   * Q5.9): a correction then changes no pick already made. 409 MATCH_SPREAD_LOCKED after that.
+   */
+  private async assertSpreadUnpicked(event: SportEvent, match: SportEventMatch): Promise<void> {
+    if (await this.deps.predictions.hasAnyOnMatch(match.id)) {
+      this.deps.logger?.warn({ sportEventId: event.id, matchNumber: match.matchNumber }, 'Refused a spread change on a game that has picks');
+      throw new SportEventError(
+        `Match ${match.matchNumber} already has picks, so its spread can no longer change.`,
+        'MATCH_SPREAD_LOCKED',
+        409,
+      );
+    }
+  }
+
   private assertPairingsEditable(event: SportEvent): void {
     if (event.status !== SportEventStatus.DRAFT) {
       this.deps.logger?.warn({ sportEventId: event.id, status: event.status }, 'Refused a bracket change on a released sport event');

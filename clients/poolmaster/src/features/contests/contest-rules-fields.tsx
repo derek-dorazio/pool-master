@@ -154,7 +154,9 @@ function RandomDrawRulesInputs({
 
 const PICK_EM_MODES = Object.values(PickEmMode);
 
-/** The pick'em input (#716): straight up, or ranked by confidence. Nothing else to set. */
+const AGAINST_THE_SPREAD_HINT = 'Pick the team that covers each game\'s spread. A game that lands exactly on the spread scores nothing.';
+
+/** The pick'em inputs (#716): straight up or ranked by confidence, and against the spread or not (#720). */
 function PickEmRulesInputs({
   onChange,
   values,
@@ -163,23 +165,37 @@ function PickEmRulesInputs({
   values: ContestRulesValues;
 }) {
   return (
-    <FormField helperText={describePickEmMode(values.pickEmMode)} label="Mode">
-      <SegmentedControl
-        aria-label="Mode"
-        onChange={(value) => {
-          const pickEmMode = PICK_EM_MODES.find((mode) => mode === value);
-          if (pickEmMode) {
-            onChange({ pickEmMode });
-          }
-        }}
-        options={PICK_EM_MODES.map((mode) => ({
-          label: formatPickEmModeName(mode),
-          testId: `contest-pick-em-mode-${mode}`,
-          value: mode,
-        }))}
-        value={values.pickEmMode}
-      />
-    </FormField>
+    <div className="space-y-4">
+      <FormField helperText={describePickEmMode(values.pickEmMode)} label="Mode">
+        <SegmentedControl
+          aria-label="Mode"
+          onChange={(value) => {
+            const pickEmMode = PICK_EM_MODES.find((mode) => mode === value);
+            if (pickEmMode) {
+              onChange({ pickEmMode });
+            }
+          }}
+          options={PICK_EM_MODES.map((mode) => ({
+            label: formatPickEmModeName(mode),
+            testId: `contest-pick-em-mode-${mode}`,
+            value: mode,
+          }))}
+          value={values.pickEmMode}
+        />
+      </FormField>
+      <div className="space-y-1 text-sm">
+        <label className="flex items-center gap-3 font-medium text-foreground">
+          <Checkbox
+            aria-describedby="contest-pick-em-against-the-spread-hint"
+            checked={values.pickEmAgainstTheSpread}
+            data-testid="contest-pick-em-against-the-spread"
+            onChange={(event) => onChange({ pickEmAgainstTheSpread: event.target.checked })}
+          />
+          <span>Against the spread</span>
+        </label>
+        <p className="text-muted-foreground" id="contest-pick-em-against-the-spread-hint">{AGAINST_THE_SPREAD_HINT}</p>
+      </div>
+    </div>
   );
 }
 

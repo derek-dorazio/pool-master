@@ -177,6 +177,18 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     });
   });
 
+  it('says whether any entry has picked a game, so a picked game\'s spread stays fixed (#720)', async () => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { entry } = await createPickEmEntry([event.id]);
+    await repos().predictions.save({
+      contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT,
+      saves: [{ sportEventMatchId: game(2).id, sportEventParticipantId: expectDefined(game(2).homeSportEventParticipantId), confidence: null }],
+    });
+
+    await expect(repos().predictions.hasAnyOnMatch(game(2).id)).resolves.toBe(true);
+    await expect(repos().predictions.hasAnyOnMatch(game(1).id)).resolves.toBe(false);
+  });
+
   it('clears only the games named, leaving the entry\'s other picks', async () => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry } = await createPickEmEntry([event.id]);

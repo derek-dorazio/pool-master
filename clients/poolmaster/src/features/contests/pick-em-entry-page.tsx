@@ -33,7 +33,7 @@ import { formatPickProgress, formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestHeader, ContestSubMenu } from './contest-header';
-import { formatPickEmModeName, formatSelectionTypeName } from './contest-rules';
+import { formatPickEmRulesName, formatSelectionTypeName } from './contest-rules';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
   CONTEST_ENTRY_STATUS_TONES,
@@ -267,7 +267,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         summary={(
           <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
             {contest.name}
-            {gamePicks.mode ? ` · ${formatPickEmModeName(gamePicks.mode)}` : ''}
+            {gamePicks.mode ? ` · ${formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })}` : ''}
             {isSurvivor ? ` · ${formatSelectionTypeName(gamePicks.selectionType)}` : ''}
             {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
           </p>

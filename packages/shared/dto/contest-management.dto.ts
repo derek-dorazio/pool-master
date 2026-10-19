@@ -158,6 +158,12 @@ export const CONTEST_EVENT_HAS_NO_GAMES = 'CONTEST_EVENT_HAS_NO_GAMES';
 /** Error code for a pick'em contest given an event with a game whose team is still undecided (#716). */
 export const CONTEST_EVENT_GAME_UNDECIDED = 'CONTEST_EVENT_GAME_UNDECIDED';
 
+/**
+ * Error code for a pick'em contest scored against the spread given a released event with a game
+ * still missing its spread (#720). A draft event's spreads are set before its release.
+ */
+export const CONTEST_EVENT_SPREAD_MISSING = 'CONTEST_EVENT_SPREAD_MISSING';
+
 /** Error code for a bracket contest given more than one event: a bracket is one knockout (#721). */
 export const CONTEST_BRACKET_SINGLE_EVENT = 'CONTEST_BRACKET_SINGLE_EVENT';
 

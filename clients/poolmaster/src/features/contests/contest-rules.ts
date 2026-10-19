@@ -28,6 +28,11 @@ export function formatPickEmModeName(mode: PickEmMode) {
   return PICK_EM_MODE_NAMES[mode];
 }
 
+/** A pick'em contest's name for how it plays: "Straight up", or "Confidence, against the spread" (#720). */
+export function formatPickEmRulesName({ mode, againstTheSpread }: { mode: PickEmMode; againstTheSpread: boolean }) {
+  return againstTheSpread ? `${formatPickEmModeName(mode)}, against the spread` : formatPickEmModeName(mode);
+}
+
 /** "1 golfer", "6 golfers": a count with its noun. */
 export function pluralize(count: number, singular: string, plural = `${singular}s`) {
   return `${count} ${count === 1 ? singular : plural}`;
@@ -76,6 +81,17 @@ export function describePickEmMode(mode: PickEmMode) {
   return mode === PickEmMode.CONFIDENCE
     ? 'Pick the winner of every game, then rank each week’s picks by confidence.'
     : 'Pick the winner of every game.';
+}
+
+/** A pick'em contest's rules: the winner of every game, or the team that covers when against the spread (#720). */
+export function describePickEmRules({ mode, againstTheSpread }: { mode: PickEmMode; againstTheSpread: boolean }) {
+  if (!againstTheSpread) {
+    return describePickEmMode(mode);
+  }
+  const pick = 'Pick the team that covers the spread in every game';
+  return mode === PickEmMode.CONFIDENCE
+    ? `${pick}, then rank each week’s picks by confidence. A game that lands exactly on the spread scores nothing.`
+    : `${pick}. A game that lands exactly on the spread scores nothing.`;
 }
 
 /** A survivor contest's rules (#719): one winner a week, each team once, out after a loss. */
@@ -137,7 +153,7 @@ export function formatContestRules(
     case SelectionType.RANDOM_DRAW:
       return formatRandomDrawRules(configuration, participant);
     case SelectionType.PICK_EM:
-      return describePickEmMode(configuration.mode);
+      return describePickEmRules(configuration);
     case SelectionType.BRACKET:
       return describeBracketRules(isSecondChanceBracket(configuration.startsAtRound) ? roundName(configuration.startsAtRound) : null);
     case SelectionType.SURVIVOR:
@@ -178,7 +194,7 @@ export function formatPresetLabel(configuration: ContestRules, tierCount: number
     case SelectionType.RANDOM_DRAW:
       return formatRosterLabel('Draw', configuration.picksPerEntry, configuration.countedScores);
     case SelectionType.PICK_EM:
-      return formatPickEmModeName(configuration.mode);
+      return formatPickEmRulesName(configuration);
     case SelectionType.BRACKET:
       return isSecondChanceBracket(configuration.startsAtRound) ? 'Second chance' : formatSelectionTypeName(SelectionType.BRACKET);
     case SelectionType.SURVIVOR:

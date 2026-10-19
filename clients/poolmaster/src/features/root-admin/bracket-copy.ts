@@ -58,5 +58,15 @@ export function bracketErrorMessages(
     EVENT_PARTICIPANT_ALREADY_ON_FIELD: `That ${team.one} is already in the ${vocabulary.event.one}.`,
     PLAY_IN_SLOT_ALREADY_PLAYED: `That place has already played a ${noun.one}, so its ${team.one} can't change.`,
     PARTICIPANT_NOT_FOUND: `That ${team.one} is no longer active. Pick another.`,
+    MATCH_SPREAD_LOCKED: `This ${noun.one} already has picks, so its spread can no longer change.`,
   };
+}
+
+/**
+ * Whether the event's games form no bracket (a week of NFL games, #715): none links to another
+ * and all are in one round. Only such a game can be cancelled, since a bracket can't lose one,
+ * and only such games carry a spread column (#720).
+ */
+export function formsNoBracket(bracket: readonly SportEventMatchDto[]): boolean {
+  return bracket.every((game) => game.advancesToMatchId === null && game.roundNumber === bracket[0]?.roundNumber);
 }

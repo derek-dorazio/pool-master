@@ -13,8 +13,8 @@ import { getPredictionEngine } from '../../../packages/core-api/src/modules/sele
 import { expectDefined } from '../../support/expect-defined';
 import { EIGHT_SEEDS, bracketPick, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 
-const STRAIGHT_UP = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP };
-const CONFIDENCE = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE };
+const STRAIGHT_UP = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false };
+const CONFIDENCE = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false };
 const GAMES = ['game-1', 'game-2', 'game-3'];
 
 function picks(...confidences: Array<number | null>) {

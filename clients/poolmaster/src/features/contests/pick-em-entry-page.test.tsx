@@ -251,6 +251,31 @@ describe('Pick\'em contest entry page', () => {
     expect(screen.queryByTestId('pick-em-not-submitted-warning')).not.toBeInTheDocument();
   });
 
+  it('shows each team\'s spread beside it in a pool scored against the spread, "PK" for a pick\'em game, and marks a game on the spread a push', async () => {
+    const games = week1Games({
+      1: { homeSpread: 0 },
+      2: { homeSpread: -3, locked: true, revealed: true, status: 'COMPLETED', pick: weekPick(NFL_TEAMS.chiefs, { outcome: 'PUSH', points: 0 }) },
+      3: { homeSpread: 6.5 },
+    });
+    primeMocks({ week: pickEmWeekFixture({ games, againstTheSpread: true }) });
+    renderPickEmEntry();
+
+    await screen.findByTestId('pick-em-games');
+    expect(screen.getByTestId(`pick-em-game-2-spread-${NFL_TEAMS.chiefs.sportEventParticipantId}`)).toHaveTextContent('-3');
+    expect(screen.getByTestId(`pick-em-game-2-spread-${NFL_TEAMS.bills.sportEventParticipantId}`)).toHaveTextContent('+3');
+    expect(screen.getByTestId(`pick-em-game-3-spread-${NFL_TEAMS.cowboys.sportEventParticipantId}`)).toHaveTextContent('-6.5');
+    expect(screen.getByTestId(`pick-em-game-1-spread-${NFL_TEAMS.packers.sportEventParticipantId}`)).toHaveTextContent('PK');
+    expect(screen.getByTestId('pick-em-game-2-outcome')).toHaveTextContent('Push');
+  });
+
+  it('shows no spreads in a pool picked straight up, even when the games have them', async () => {
+    primeMocks({ week: pickEmWeekFixture({ games: week1Games({ 2: { homeSpread: -3 } }) }) });
+    renderPickEmEntry();
+
+    await screen.findByTestId('pick-em-games');
+    expect(screen.queryByTestId(`pick-em-game-2-spread-${NFL_TEAMS.chiefs.sportEventParticipantId}`)).not.toBeInTheDocument();
+  });
+
   it('locks a draft week once its first game kicks off and says it scores nothing, with no picks or submit left to make', async () => {
     const missed = week1Games({ 2: { locked: true, revealed: true, status: 'IN_PROGRESS' } });
     primeMocks({ week: pickEmWeekFixture({ games: missed }) });

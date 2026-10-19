@@ -14,7 +14,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { formatPoints } from './bracket-layout';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
-import { formatPickEmModeName } from './contest-rules';
+import { formatPickEmRulesName } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
 import { fetchContestEntries } from './use-contest-entries';
 import { usePickEmLeaderboardQuery } from './use-contest-leaderboard';
@@ -180,7 +180,7 @@ export function PickEmLeaderboard({ contest, leagueCode: hintedLeagueCode }: { c
         ) : null}
         summary={(
           <p className="mt-2 text-sm text-muted-foreground" data-testid="pick-em-leaderboard-mode">
-            {formatPickEmModeName(board.mode)}
+            {formatPickEmRulesName(board)}
           </p>
         )}
         title={contest.name}

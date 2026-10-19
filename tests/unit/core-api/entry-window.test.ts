@@ -238,7 +238,7 @@ describe('contestCutoff — where a contest\'s window closes (#721)', () => {
   it('closes every contest but a later-round bracket at its event\'s start', () => {
     expect(contestCutoff(undefined)).toEqual({ kind: ContestCutoffKind.EVENT_START });
     expect(contestCutoff({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 })).toEqual({ kind: ContestCutoffKind.EVENT_START });
-    expect(contestCutoff({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE })).toEqual({ kind: ContestCutoffKind.EVENT_START });
+    expect(contestCutoff({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false })).toEqual({ kind: ContestCutoffKind.EVENT_START });
     expect(contestCutoff({ selectionType: SelectionType.BRACKET, startsAtRound: 1 })).toEqual({ kind: ContestCutoffKind.EVENT_START });
   });
 

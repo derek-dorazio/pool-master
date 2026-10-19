@@ -175,6 +175,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
       configuration: {
         selectionType: SelectionType.PICK_EM,
         mode: PickEmMode.CONFIDENCE,
+        againstTheSpread: false,
         maxEntriesPerSquad: 1,
         scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS' as const, config: { roundValues: [1, 2], upsetBonus: { rule: 'NONE' as const } } },
       },

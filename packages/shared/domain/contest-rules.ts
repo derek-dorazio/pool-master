@@ -62,7 +62,9 @@ export const PickEmContestRulesSchema = z.object({
   selectionType: z.literal(SelectionType.PICK_EM),
   mode: z.nativeEnum(PickEmMode)
     .describe('STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.'),
-}).describe("Pick'em rules: pick the winner of every game of each event.");
+  againstTheSpread: z.boolean()
+    .describe('Picks are scored against each game\'s spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.'),
+}).describe("Pick'em rules: pick the winner of every game of each event, or the team that covers when scored against the spread.");
 export type PickEmContestRules = z.infer<typeof PickEmContestRulesSchema>;
 
 export const BracketContestRulesSchema = z.object({

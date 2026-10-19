@@ -2,7 +2,7 @@ import { getSportDefinition, SportEventStatus } from '@poolmaster/shared/domain'
 import type { SportEventDto } from '@/lib/api';
 import { Alert, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { matchNoun } from './bracket-copy';
+import { formsNoBracket, matchNoun } from './bracket-copy';
 import { BracketMatchRow, type BracketContext } from './bracket-match-row';
 import { capitalize } from './manage-navigation';
 import { PlayInPlacesCard } from './play-in-places-card';
@@ -42,6 +42,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
     bracket,
     field: fieldQuery.data,
     fieldById: new Map(fieldQuery.data.map((entry) => [entry.id, entry])),
+    spreads: bracket.length > 0 && formsNoBracket(bracket),
   };
   const roundCount = Math.max(event.rounds ?? 0, ...bracket.map((match) => match.roundNumber));
   const roundNumbers = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
@@ -70,6 +71,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
                   <tr>
                     <th className="px-4 py-2">{capitalize(noun.one)}</th>
                     <th className="px-4 py-2">Pairing</th>
+                    {context.spreads ? <th className="px-4 py-2">Spread</th> : null}
                     <th className="px-4 py-2">Time</th>
                     <th className="px-4 py-2">Status</th>
                     <th className="px-4 py-2">{released ? 'Winner' : 'Edit'}</th>

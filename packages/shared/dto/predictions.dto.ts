@@ -42,8 +42,8 @@ export const GamePickDtoSchema = z.object({
   sportEventParticipantId: z.string().uuid().describe('The team picked to win.'),
   confidence: z.number().int().nullable().describe('The pick\'s confidence value; null in a straight-up pool, in a bracket, or until given.'),
   pickedAt: z.string().datetime(),
-  outcome: z.nativeEnum(PickOutcome).nullable().describe('How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round), BUSTED once it can no longer come true (a loss, a tie, or in a bracket its team out), else PENDING.'),
-  points: z.number().int().nullable().describe('What the pick earned when CORRECT: in a bracket its round\'s value plus any upset bonus, in a pick\'em pool 1 point straight up or its confidence value. 0 when BUSTED, null while PENDING or not scored.'),
+  outcome: z.nativeEnum(PickOutcome).nullable().describe('How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING.'),
+  points: z.number().int().nullable().describe('What the pick earned when CORRECT: in a bracket its round\'s value plus any upset bonus, in a pick\'em pool 1 point straight up or its confidence value. 0 when BUSTED or PUSH, null while PENDING or not scored.'),
 }).describe('An entry\'s pick on one game.');
 export type GamePickDto = z.infer<typeof GamePickDtoSchema>;
 
@@ -55,6 +55,7 @@ export const GamePickGameDtoSchema = z.object({
   status: z.nativeEnum(MatchStatus),
   isNeutralSite: z.boolean(),
   regionLabel: z.string().nullable().describe('The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none.'),
+  homeSpread: z.number().nullable().describe('The points spread from the home team\'s side (#720): -3.5 has the home team favoured by 3.5. Null until set.'),
   home: GamePickTeamDtoSchema.nullable().describe('The team really playing on this side; null until it is decided.'),
   away: GamePickTeamDtoSchema.nullable().describe('The team really playing on this side; null until it is decided.'),
   predictedHome: GamePickTeamDtoSchema.nullable().describe('The team the entry\'s own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team\'s entry, the real team until the game is revealed.'),
@@ -78,6 +79,7 @@ export const GamePicksResponseSchema = z.object({
   sportEventId: z.string().uuid(),
   selectionType: z.enum([SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR]),
   mode: z.nativeEnum(PickEmMode).nullable().describe('A pick\'em pool\'s mode; null in a bracket or survivor pool.'),
+  againstTheSpread: z.boolean().describe('Whether picks are scored against each game\'s spread: a pick names the team that covers. Only a pick\'em pool can be.'),
   survivor: GamePicksSurvivorDtoSchema.nullable().describe('A survivor pool\'s season for the entry; null in the other pools.'),
   status: z.nativeEnum(ContestEntryStatus).describe('The entry\'s status for this event: DRAFT while picking, SUBMITTED once every game is picked and submitted. Only a submitted event counts.'),
   submittedAt: z.string().datetime().nullable(),
@@ -157,6 +159,7 @@ export type PickEmLeaderboardEntryDto = z.infer<typeof PickEmLeaderboardEntryDto
 export const PickEmLeaderboardResponseSchema = z.object({
   contestId: z.string().uuid(),
   mode: z.nativeEnum(PickEmMode),
+  againstTheSpread: z.boolean().describe('Whether picks are scored against each game\'s spread.'),
   weeks: z.array(PickEmLeaderboardWeekDtoSchema).describe('The contest\'s weeks in its week order.'),
   entries: z.array(PickEmLeaderboardEntryDtoSchema).describe('The entries that submitted at least one week, best first.'),
 }).describe('A pick\'em contest\'s season leaderboard: the season total, each week\'s points and places, and the weekly winners.');

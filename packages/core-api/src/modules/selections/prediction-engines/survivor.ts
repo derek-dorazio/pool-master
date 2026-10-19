@@ -38,7 +38,7 @@ export const survivorPredictionEngine: PredictionEngine = {
   scorePicks({ games, predictions }) {
     // The week's pick is marked right or wrong as a straight-up pick is, 1 point when its team
     // wins: what the week screen shows. Who is still standing is the season read's.
-    return scoreGamePicks(games, predictions, PickEmMode.STRAIGHT_UP);
+    return scoreGamePicks(games, predictions, { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false });
   },
 
   acceptsConfidence({ confidence }) {

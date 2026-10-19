@@ -1202,6 +1202,9 @@ model SportEventMatch {
   /// The bracket region or conference the match is in ("East", "AFC"); null where the bracket
   /// has none. A reseeded round pairs the teams of one region (#722).
   regionLabel                 String?           @map("region_label") @db.VarChar(40)
+  /// The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5.
+  /// Null until set; half points at most. A pick'em contest scored against the spread reads it.
+  homeSpread                  Decimal?          @map("home_spread") @db.Decimal(4, 1)
   createdAt                   DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                   DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 

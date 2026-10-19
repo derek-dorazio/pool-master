@@ -186,4 +186,9 @@ export interface SportEventMatch extends DomainEntity {
   advancesToSide: MatchSide | null;
   /** The bracket region or conference ("East", "AFC"); null where the bracket has none. */
   regionLabel: string | null;
+  /**
+   * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5,
+   * +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
+   */
+  homeSpread: number | null;
 }

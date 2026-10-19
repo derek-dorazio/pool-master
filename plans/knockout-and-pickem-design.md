@@ -1315,6 +1315,20 @@ Each is one PR opened against main, after knockout.
    own leaderboard is `getSurvivorLeaderboard`. The rules are in `survivor.ts` in the
    head-to-head family, and `contests/survivor-standings.ts` is the one season read.
 6. **Against the spread** (#720): `homeSpread`, locked at week release.
+   *As built in #720:* against the spread is an on/off option on `PICK_EM` rules
+   (`againstTheSpread`), beside straight up or confidence, so it works with either mode.
+   `SportEventMatch.homeSpread` is the home team's spread in half points (`DECIMAL(4,1)`, a CHECK
+   refuses anything else), null until an admin sets it on the admin games screen. A pick covers
+   when `home score + home spread - away score` is above zero for the home team or below it for
+   the away team; exactly zero, or a played game with no spread or score, is `PickOutcome.PUSH`,
+   worth nothing in either mode. A contest against the spread is refused on a week with any
+   unspread game (`CONTEST_EVENT_SPREAD_MISSING`), so every spread is in before anyone picks.
+   Because a contest only takes released weeks, the release check Q5.8 describes would never
+   fire and was not built: the lock is per game instead, as Q5.9 decided. A released game's spread
+   changes only while nobody has picked it (`MATCH_SPREAD_LOCKED` after that). The week screen
+   shows each team's spread ("-3.5", "+3.5", "PK") only in a pool against the spread. The data
+   loader does not carry spreads: no public spread source has been agreed, and spreads move
+   until kickoff, so an admin enters them.
 7. **Bracket pools** (#721): pick every game of a knockout, scored with the knockout round values;
    also second-chance brackets (start at a later round) and "max possible points" (Q3.10),
    added by Derek 2026-10-17.

@@ -5,8 +5,9 @@ import type {
   ContestRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus, SelectionType, SportEventStatus, SurvivorWeekOutcome, type Contest, type PickEmMode, type SportEvent } from '@poolmaster/shared/domain';
-import { loadPickEmMode, loadPickEmWeekStandings, PickEmRulesMissingError } from './pick-em-standings';
+import { ContestStatus, SelectionType, SportEventStatus, SurvivorWeekOutcome, type Contest, type SportEvent } from '@poolmaster/shared/domain';
+import { loadPickEmScoring, loadPickEmWeekStandings, PickEmRulesMissingError } from './pick-em-standings';
+import type { GamePickScoring } from '../scoring-families/head-to-head/game-picks';
 import { loadSurvivorSeason, type SurvivorStandingsReadDeps } from './survivor-standings';
 import {
   BracketScoringUnavailableError,
@@ -318,9 +319,9 @@ export class ContestSettlementService {
     completedAt: Date,
   ): Promise<{ standingsUpserted: number; completed: boolean } | null> {
     const sportEventId = sportEvent.id;
-    let mode: PickEmMode;
+    let scoring: GamePickScoring;
     try {
-      mode = await loadPickEmMode(this.deps, contest.id);
+      scoring = await loadPickEmScoring(this.deps, contest.id);
     } catch (error) {
       if (!(error instanceof PickEmRulesMissingError)) throw error;
       this.logger.error({ contestId: contest.id, sportEventId }, 'Skipped pick\'em settlement because the contest carries no pick\'em rules');
@@ -328,7 +329,7 @@ export class ContestSettlementService {
     }
     const settledWeeks = await this.deps.eventStandings.findByContest(contest.id);
     if (sportEvent.status !== SportEventStatus.CANCELLED && !settledWeeks.some((standing) => standing.sportEventId === sportEventId)) {
-      const week = await loadPickEmWeekStandings(this.deps, contest.id, sportEvent, mode);
+      const week = await loadPickEmWeekStandings(this.deps, contest.id, sportEvent, scoring);
       for (const standing of week.entries) {
         await this.deps.eventStandings.upsert({
           contestId: contest.id,

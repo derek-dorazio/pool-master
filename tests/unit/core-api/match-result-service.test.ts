@@ -3,7 +3,7 @@ import { MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventSta
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { MatchResultService } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
-import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 
 // The admin's match results against an in-memory store (#699): what a result saves (the winner,
 // the next match's side, every team's standing), what it refuses, and the correction lock. The
@@ -31,6 +31,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     matches: store.matchRepo(),
+    ...NO_PICKS_ON_EVENT,
     newId: () => {
       sequence += 1;
       return `match-${sequence}`;
@@ -220,6 +221,7 @@ describe('MatchResultService.cancelMatch', () => {
       field: store.fieldRepo(),
       participants: store.participantRepo(),
       matches: store.matchRepo(),
+      ...NO_PICKS_ON_EVENT,
       newId: () => {
         sequence += 1;
         return `game-${sequence}`;
@@ -292,7 +294,7 @@ describe('MatchResultService on a reseeded bracket', () => {
       id: `m${matchNumber}`, sportEventId: event.id, roundNumber, matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null,
-      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null,
+      advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null,
       createdAt: AS_OF, updatedAt: AS_OF,
     });
     const [first, second, third, fourth, final] = finalFirst ? [3, 4, 5, 2, 1] : [1, 2, 3, 4, 5];

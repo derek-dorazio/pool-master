@@ -162,6 +162,20 @@ describe('PrismaSportEventMatchRepository', () => {
     expect(edited).toMatchObject({ scheduledDate: null, isNeutralSite: false, homeSportEventParticipantId: entryOf('Duke').id });
   });
 
+  it('stores a game\'s spread in half points and reads it back as a number, clearing it with null (#720)', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first, second] = await repos().matches.findBySportEvent(event.id);
+    expect([first.homeSpread, second.homeSpread]).toEqual([null, null]);
+
+    await repos().matches.update(first.id, { homeSpread: -3.5 });
+    await repos().matches.update(second.id, { homeSpread: 14 });
+    expect((await repos().matches.findBySportEvent(event.id)).slice(0, 2).map((match) => match.homeSpread)).toEqual([-3.5, 14]);
+
+    await repos().matches.update(first.id, { homeSpread: null });
+    expect((await repos().matches.findBySportEvent(event.id))[0]?.homeSpread).toBeNull();
+  });
+
   it('deletes the bracket with its event', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
@@ -284,6 +298,13 @@ describe('sport_event_matches database checks', () => {
 
     await expect(insertMatch(event, { homeScore: -1 })).rejects.toThrow(/sport_event_matches_scores_not_negative/);
     await expect(insertMatch(event, { matchNumber: 0 })).rejects.toThrow(/sport_event_matches_match_number_positive/);
+  });
+
+  it('refuses a spread that is not in half points, and takes one that is (#720)', async () => {
+    const { event } = await createBracketEvent();
+
+    await expect(insertMatch(event, { homeSpread: 3.2 })).rejects.toThrow(/sport_event_matches_home_spread_half_points_check/);
+    await expect(insertMatch(event, { homeSpread: -6.5 })).resolves.toMatchObject({ matchNumber: 1 });
   });
 
   it('refuses a match number used twice in one event, and two matches advancing to one side', async () => {

@@ -104,6 +104,7 @@ function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto,
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,
+    homeSpread: null,
     ...overrides,
   };
 }
@@ -287,6 +288,80 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       renderPage();
       expect(await screen.findByTestId('root-admin-bracket-winner-1-HOME')).toBeInTheDocument();
       expect(screen.queryByTestId('root-admin-bracket-cancel-1')).not.toBeInTheDocument();
+    });
+
+    // #720: a pool scored against the spread reads each game's spread from the home side.
+    it('shows each game\'s spread from the home team\'s side, and no spread column for a bracket', async () => {
+      seed([{ ...week[0], homeSpread: -3.5 }, week[1]]);
+      const { unmount } = renderPage();
+      expect(await screen.findByTestId('root-admin-bracket-spread-1')).toHaveTextContent('Duke -3.5');
+      expect(screen.getByTestId('root-admin-bracket-spread-2')).toHaveTextContent('No spread');
+      unmount();
+
+      seed([
+        { ...week[0], advancesToMatchId: 'm-3', advancesToSide: 'HOME' },
+        match({ id: 'm-3', matchNumber: 3, roundNumber: 2, awaySportEventParticipantId: 'sep-3' }),
+      ]);
+      renderPage();
+      expect(await screen.findByTestId('root-admin-bracket-winner-1-HOME')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-bracket-spread-1')).not.toBeInTheDocument();
+    });
+
+    it('saves a game\'s spread and reloads the games', async () => {
+      seed(week);
+      updateEventBracketMatchMock.mockResolvedValue({ data: { match: { ...week[1], homeSpread: 7 } } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-spread-edit-2'));
+      await userEvent.type(screen.getByTestId('root-admin-bracket-spread-input-2'), '7');
+      await userEvent.click(screen.getByTestId('root-admin-bracket-spread-save-2'));
+      expect(updateEventBracketMatchMock).toHaveBeenCalledWith(expect.objectContaining({
+        path: { eventId: 'evt-1', matchNumber: '2' },
+        body: { homeSpread: 7 },
+      }));
+      await waitFor(() => expect(getEventBracketMock).toHaveBeenCalledTimes(2));
+    });
+
+    it('clears a game\'s spread when the box is left empty', async () => {
+      seed([{ ...week[0], homeSpread: -3.5 }, week[1]]);
+      updateEventBracketMatchMock.mockResolvedValue({ data: { match: week[0] } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-spread-edit-1'));
+      await userEvent.clear(screen.getByTestId('root-admin-bracket-spread-input-1'));
+      await userEvent.click(screen.getByTestId('root-admin-bracket-spread-save-1'));
+      expect(updateEventBracketMatchMock).toHaveBeenCalledWith(expect.objectContaining({ body: { homeSpread: null } }));
+    });
+
+    it('refuses a spread that is not in half points before sending it', async () => {
+      seed(week);
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-spread-edit-1'));
+      await userEvent.type(screen.getByTestId('root-admin-bracket-spread-input-1'), '3.25');
+
+      expect(screen.getByTestId('root-admin-bracket-spread-save-1')).toBeDisabled();
+      expect(screen.getByText('Enter a spread in half points, such as -3.5 or 7, between -99.5 and 99.5.')).toBeInTheDocument();
+    });
+
+    it('explains in product copy that a game with picks keeps its spread', async () => {
+      seed(week);
+      updateEventBracketMatchMock.mockResolvedValue({ error: { error: { code: 'MATCH_SPREAD_LOCKED', message: 'Match 1 already has picks.' } } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-spread-edit-1'));
+      await userEvent.type(screen.getByTestId('root-admin-bracket-spread-input-1'), '-3');
+      await userEvent.click(screen.getByTestId('root-admin-bracket-spread-save-1'));
+
+      expect(await screen.findByTestId('root-admin-bracket-spread-error-1')).toHaveTextContent('This game already has picks, so its spread can no longer change.');
+    });
+
+    it('offers no spread change on a cancelled game, leaving the server to refuse a game with picks', async () => {
+      seed([{ ...week[0], status: 'COMPLETED', winnerSide: 'HOME', homeSpread: -3.5 }, { ...week[1], status: 'CANCELLED' }]);
+      renderPage();
+      expect(await screen.findByTestId('root-admin-bracket-spread-1')).toHaveTextContent('Duke -3.5');
+      expect(screen.getByTestId('root-admin-bracket-spread-edit-1')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-bracket-spread-edit-2')).not.toBeInTheDocument();
     });
   });
 

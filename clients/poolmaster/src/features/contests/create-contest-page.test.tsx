@@ -585,7 +585,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       sportEventIds: ['week-1'],
       contestFormat: 'PREDICTION',
       selectionType: 'PICK_EM',
-      configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE', maxEntriesPerSquad: 1 },
+      configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE', againstTheSpread: false, maxEntriesPerSquad: 1 },
     });
   });
 

@@ -4,12 +4,14 @@ import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
 import { Button, Chip, FormField, Input, Select, cn, formatDateTimeDisplay } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { describePickOutcome, parseBracketTiebreaker } from './bracket-layout';
-import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, type PickEmGame, type PickEmTeam } from './pick-em-week';
+import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, teamSpread, type PickEmGame, type PickEmTeam } from './pick-em-week';
 
 /** A survivor pick's mark (#719): its team won, or the entry is out. */
 const SURVIVOR_OUTCOME_LABELS: Record<PickOutcome, string> = {
   CORRECT: 'Survived',
   BUSTED: 'Out',
+  // A survivor pick is never scored against the spread, so never a push.
+  PUSH: 'Push',
   PENDING: 'Pending',
 };
 
@@ -37,11 +39,14 @@ function TeamChoice({
   isPicked,
   isUsed,
   onPick,
+  spread,
   team,
 }: {
   game: PickEmGame;
   isBusy: boolean;
   isPicked: boolean;
+  /** The team's spread, when the pool is scored against it (#720). */
+  spread: string | null;
   /** A survivor entry picked the team in another week, so cannot pick it again. */
   isUsed: boolean;
   onPick: (game: PickEmGame, team: PickEmTeam) => void;
@@ -62,14 +67,28 @@ function TeamChoice({
       size="sm"
       variant={isPicked ? 'subtle' : 'secondary'}
     >
-      <span className="truncate">{team.name}</span>
+      <TeamName game={game} spread={spread} team={team} />
       {isPicked ? <Check aria-label="Your pick" size={16} /> : null}
       {isUsed && !isPicked ? <span className="text-xs text-muted-foreground">Used</span> : null}
     </Button>
   );
 }
 
-function TeamLine({ game, isPicked, team }: { game: PickEmGame; isPicked: boolean; team: PickEmTeam }) {
+/** The team's name, with its spread beside it when the pool is scored against the spread (#720). */
+function TeamName({ game, spread, team }: { game: PickEmGame; spread: string | null; team: PickEmTeam }) {
+  return (
+    <span className="flex min-w-0 items-baseline gap-2">
+      <span className="truncate">{team.name}</span>
+      {spread === null ? null : (
+        <span className="shrink-0 text-xs tabular-nums text-muted-foreground" data-testid={`pick-em-game-${game.matchNumber}-spread-${team.sportEventParticipantId}`}>
+          {spread}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function TeamLine({ game, isPicked, spread, team }: { game: PickEmGame; isPicked: boolean; spread: string | null; team: PickEmTeam }) {
   return (
     <div
       className={cn(
@@ -79,7 +98,7 @@ function TeamLine({ game, isPicked, team }: { game: PickEmGame; isPicked: boolea
       data-picked={isPicked || undefined}
       data-testid={`pick-em-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
     >
-      <span className="truncate">{team.name}</span>
+      <TeamName game={game} spread={spread} team={team} />
       {isPicked ? <Check aria-label="Picked" size={16} /> : null}
     </div>
   );
@@ -230,6 +249,7 @@ function GameCard({
             );
           }
           const isPicked = !isHidden && team.sportEventParticipantId === pickedId;
+          const spread = teamSpread(gamePicks, game, team);
           return choosable ? (
             <TeamChoice
               game={game}
@@ -238,10 +258,11 @@ function GameCard({
               isUsed={isTeamUsed(gamePicks, team)}
               key={team.sportEventParticipantId}
               onPick={onPick}
+              spread={spread}
               team={team}
             />
           ) : (
-            <TeamLine game={game} isPicked={isPicked} key={team.sportEventParticipantId} team={team} />
+            <TeamLine game={game} isPicked={isPicked} key={team.sportEventParticipantId} spread={spread} team={team} />
           );
         })}
       </div>

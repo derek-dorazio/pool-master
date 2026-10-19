@@ -6,7 +6,7 @@ import {
   type BracketMatchInput,
 } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { expectDefined } from '../../support/expect-defined';
-import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 
 // A bracket's rules against an in-memory store: what loading refuses, what a match edit may
 // change before and after release, what release still needs, and the First Four's play-in places.
@@ -14,7 +14,11 @@ import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 
 const TEAMS = ['Duke', 'Vermont', 'Houston', 'Texas'] as const;
 
-function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT }: { sport?: Sport; status?: SportEventStatus } = {}) {
+function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, picks = NO_PICKS_ON_EVENT }: {
+  sport?: Sport;
+  status?: SportEventStatus;
+  picks?: typeof NO_PICKS_ON_EVENT;
+} = {}) {
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(sport);
   const sportLeague = store.addSportLeague(sportRow.id, 'NCAA Division I Men');
@@ -35,6 +39,7 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT }: { 
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     matches: store.matchRepo(),
+    ...picks,
     newId: () => {
       sequence += 1;
       return `match-${sequence}`;
@@ -50,6 +55,11 @@ function fourTeamBracket(ids: { duke: string; vermont: string; houston: string; 
     { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: ids.houston, awaySportEventParticipantId: ids.texas, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
     { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
   ];
+}
+
+/** The picks side for an event whose named games have picks (#720). */
+function picksOn(...pickedMatchIds: string[]): typeof NO_PICKS_ON_EVENT {
+  return { predictions: { hasAnyOnMatch: async (sportEventMatchId) => pickedMatchIds.includes(sportEventMatchId) } };
 }
 
 function bracketOf(context: ReturnType<typeof setup>): BracketMatchInput[] {
@@ -218,6 +228,36 @@ describe('SportEventBracketService.updateMatch', () => {
       .rejects.toMatchObject({ code: 'BRACKET_INVALID', statusCode: 422, message: expect.stringContaining(problem) });
   });
 
+  // #720: a game's spread, read from the home side by pools scored against the spread.
+  it('sets and clears a game\'s spread before release', async () => {
+    const context = setup();
+    await context.service.loadBracket(context.event.id, bracketOf(context));
+
+    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: -3.5 })).resolves.toMatchObject({ homeSpread: -3.5 });
+    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: null })).resolves.toMatchObject({ homeSpread: null });
+  });
+
+  it('changes a game\'s spread after release while no entry has picked the game', async () => {
+    const context = setup({ picks: picksOn() });
+    await context.service.loadBracket(context.event.id, bracketOf(context));
+    context.store.events[0].status = SportEventStatus.SCHEDULED;
+
+    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: 7 })).resolves.toMatchObject({ homeSpread: 7 });
+  });
+
+  it('refuses (409 MATCH_SPREAD_LOCKED) a spread change after release on a game with picks, keeping the spread, but still moves its time', async () => {
+    const context = setup({ picks: picksOn('match-1') });
+    await context.service.loadBracket(context.event.id, bracketOf(context));
+    await context.service.updateMatch(context.event.id, 1, { homeSpread: -3 });
+    context.store.events[0].status = SportEventStatus.SCHEDULED;
+
+    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: -4 }))
+      .rejects.toMatchObject({ code: 'MATCH_SPREAD_LOCKED', statusCode: 409 });
+    const tipOff = new Date('2027-03-18T19:10:00.000Z');
+    await expect(context.service.updateMatch(context.event.id, 1, { homeSpread: -3, scheduledDate: tipOff }))
+      .resolves.toMatchObject({ homeSpread: -3, scheduledDate: tipOff });
+  });
+
   it('refuses (404 BRACKET_MATCH_NOT_FOUND) a match number the bracket lacks', async () => {
     const context = setup();
     await context.service.loadBracket(context.event.id, bracketOf(context));
@@ -326,7 +366,7 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
       id: 'match-started', sportEventId: event.id, roundNumber: 1, matchNumber: 1,
       homeSportEventParticipantId: duke.id, awaySportEventParticipantId: slot.id, isNeutralSite: true,
       scheduledDate: null, status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: null, awayScore: null,
-      advancesToMatchId: null, advancesToSide: null, regionLabel: null, createdAt: new Date(), updatedAt: new Date(),
+      advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, createdAt: new Date(), updatedAt: new Date(),
     });
 
     await expect(service.fillPlayInSlot(event.id, slot.id, xavier.id))

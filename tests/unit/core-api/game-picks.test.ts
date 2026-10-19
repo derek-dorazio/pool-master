@@ -33,6 +33,7 @@ function game(matchNumber: number, overrides: Partial<SportEventMatch> = {}): Sp
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,
+    homeSpread: null,
     createdAt: T0,
     updatedAt: T0,
     ...overrides,
@@ -58,7 +59,7 @@ const WEEK = [
 
 describe('scoreGamePicks — a straight-up week', () => {
   it('earns 1 point for each correct pick and nothing for a lost game or a tie, with the game still to play as the only point left to win', () => {
-    const score = scoreGamePicks(WEEK, [pick(1, 'home'), pick(2, 'home'), pick(3, 'home'), pick(4, 'away')], PickEmMode.STRAIGHT_UP);
+    const score = scoreGamePicks(WEEK, [pick(1, 'home'), pick(2, 'home'), pick(3, 'home'), pick(4, 'away')], { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false });
 
     expect(score).toMatchObject({ points: 1, maxPossiblePoints: 2, correctPickCount: 1, decidedPickCount: 3 });
     expect([...score.picks]).toEqual([
@@ -72,7 +73,7 @@ describe('scoreGamePicks — a straight-up week', () => {
 
 describe('scoreGamePicks — a confidence week', () => {
   it('earns a correct pick its confidence value, so the most possible adds the values of the picks still pending', () => {
-    const score = scoreGamePicks(WEEK, [pick(1, 'home', 2), pick(2, 'away', 4), pick(3, 'away', 1), pick(4, 'home', 3)], PickEmMode.CONFIDENCE);
+    const score = scoreGamePicks(WEEK, [pick(1, 'home', 2), pick(2, 'away', 4), pick(3, 'away', 1), pick(4, 'home', 3)], { mode: PickEmMode.CONFIDENCE, againstTheSpread: false });
 
     expect(score).toMatchObject({ points: 6, maxPossiblePoints: 9, correctPickCount: 2 });
   });
@@ -80,10 +81,73 @@ describe('scoreGamePicks — a confidence week', () => {
   it('does not score or count a pick on a game no longer in the week, keeping the other picks\' values as submitted', () => {
     // Game 2 was cancelled after the week was submitted, so it is no longer one of the week's games.
     const week = WEEK.filter((each) => each.id !== 'game-2');
-    const score = scoreGamePicks(week, [pick(1, 'home', 2), pick(2, 'away', 4), pick(3, 'away', 1), pick(4, 'home', 3)], PickEmMode.CONFIDENCE);
+    const score = scoreGamePicks(week, [pick(1, 'home', 2), pick(2, 'away', 4), pick(3, 'away', 1), pick(4, 'home', 3)], { mode: PickEmMode.CONFIDENCE, againstTheSpread: false });
 
     expect(score).toMatchObject({ points: 2, maxPossiblePoints: 5, decidedPickCount: 2 });
     expect(score.picks.has('game-2')).toBe(false);
+  });
+});
+
+// #720: margin = home score + home spread - away score; above zero the home team covers.
+describe('scoreGamePicks — a week against the spread', () => {
+  const spread = (matchNumber: number, homeSpread: number | null, homeScore: number, awayScore: number) =>
+    game(matchNumber, {
+      status: MatchStatus.COMPLETED,
+      winnerSide: homeScore > awayScore ? MatchSide.HOME : homeScore < awayScore ? MatchSide.AWAY : null,
+      homeScore,
+      awayScore,
+      homeSpread,
+    });
+  // Game 1: home favoured by 3.5 wins by 3, so the away team covers.
+  // Game 2: home underdog at +6.5 loses by 4, so the home team covers.
+  // Game 3: home favoured by 3 wins by 3, landing on the spread: a push.
+  // Game 4: still to play.
+  const ATS_WEEK = [
+    spread(1, -3.5, 20, 17),
+    spread(2, 6.5, 10, 14),
+    spread(3, -3, 24, 21),
+    game(4, { homeSpread: -7, scheduledDate: MONDAY }),
+  ];
+
+  it('scores the team that covers the spread, not the winner, and a game landing on the spread as a push worth nothing', () => {
+    const score = scoreGamePicks(ATS_WEEK, [pick(1, 'home'), pick(2, 'home'), pick(3, 'home'), pick(4, 'away')], { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true });
+
+    expect(score).toMatchObject({ points: 1, maxPossiblePoints: 2, correctPickCount: 1, decidedPickCount: 3 });
+    expect([...score.picks]).toEqual([
+      ['game-1', { outcome: PickOutcome.BUSTED, points: 0 }],
+      ['game-2', { outcome: PickOutcome.CORRECT, points: 1 }],
+      ['game-3', { outcome: PickOutcome.PUSH, points: 0 }],
+      ['game-4', { outcome: PickOutcome.PENDING, points: null }],
+    ]);
+  });
+
+  it('pushes either side of a game landing on the spread', () => {
+    const score = scoreGamePicks([spread(3, -3, 24, 21)], [pick(3, 'away')], { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true });
+
+    expect(score.picks.get('game-3')).toEqual({ outcome: PickOutcome.PUSH, points: 0 });
+  });
+
+  it('earns a covering pick its confidence value in a confidence pool, a push earning nothing and counting nothing toward the most possible', () => {
+    const score = scoreGamePicks(ATS_WEEK, [pick(1, 'away', 4), pick(2, 'home', 1), pick(3, 'home', 3), pick(4, 'home', 2)], { mode: PickEmMode.CONFIDENCE, againstTheSpread: true });
+
+    expect(score).toMatchObject({ points: 5, maxPossiblePoints: 7, correctPickCount: 2 });
+  });
+
+  it('pushes a played game with no spread or no score, since no side can be said to cover', () => {
+    const noSpread = spread(1, null, 20, 17);
+    const noScore = game(2, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeSpread: -3 });
+    const score = scoreGamePicks([noSpread, noScore], [pick(1, 'home'), pick(2, 'home')], { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true });
+
+    expect([...score.picks.values()]).toEqual([
+      { outcome: PickOutcome.PUSH, points: 0 },
+      { outcome: PickOutcome.PUSH, points: 0 },
+    ]);
+  });
+
+  it('ignores the spread in a pool picked straight up', () => {
+    const score = scoreGamePicks(ATS_WEEK, [pick(1, 'home'), pick(3, 'home')], { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false });
+
+    expect(score).toMatchObject({ points: 2, correctPickCount: 2 });
   });
 });
 

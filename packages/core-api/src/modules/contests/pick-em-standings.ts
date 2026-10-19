@@ -10,12 +10,11 @@ import {
   SelectionType,
   SportEventStatus,
   contestEntryEventTiebreaker,
-  type PickEmMode,
   type SportEvent,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { rankPredictionStandings, type BracketScore } from '../scoring-families/head-to-head/bracket-picks';
-import { gameTotalPoints, scoreGamePicks, weekTiebreakerGame } from '../scoring-families/head-to-head/game-picks';
+import { gameTotalPoints, scoreGamePicks, weekTiebreakerGame, type GamePickScoring } from '../scoring-families/head-to-head/game-picks';
 import type { BracketStandingsReadDeps } from './bracket-standings';
 
 export type PickEmStandingsReadDeps = Pick<BracketStandingsReadDeps, 'configurations' | 'entries' | 'predictions' | 'matches'>;
@@ -48,16 +47,16 @@ export class PickEmRulesMissingError extends Error {
   }
 }
 
-/** The contest's pick'em mode, read from its stored rules. */
-export async function loadPickEmMode(
+/** How the contest scores its picks, read from its stored rules: its mode, and whether against the spread (#720). */
+export async function loadPickEmScoring(
   deps: Pick<PickEmStandingsReadDeps, 'configurations'>,
   contestId: string,
-): Promise<PickEmMode> {
+): Promise<GamePickScoring> {
   const rules = (await deps.configurations.findByContest(contestId))?.configJson;
   if (rules?.selectionType !== SelectionType.PICK_EM) {
     throw new PickEmRulesMissingError(contestId);
   }
-  return rules.mode;
+  return { mode: rules.mode, againstTheSpread: rules.againstTheSpread };
 }
 
 /** The week's games as they count (#743, #762): what both the week's standings and the season leaderboard read. */
@@ -90,7 +89,7 @@ export async function loadPickEmWeekStandings(
   deps: PickEmStandingsReadDeps,
   contestId: string,
   sportEvent: Pick<SportEvent, 'id' | 'status' | 'startDate'>,
-  mode: PickEmMode,
+  scoring: GamePickScoring,
   weekMatches?: readonly SportEventMatch[],
 ): Promise<PickEmWeekStandings> {
   const sportEventId = sportEvent.id;
@@ -110,7 +109,7 @@ export async function loadPickEmWeekStandings(
 
   const scored = entries.map((entry) => ({
     entry,
-    score: scoreGamePicks(games, picksByEntry.get(entry.id) ?? [], mode),
+    score: scoreGamePicks(games, picksByEntry.get(entry.id) ?? [], scoring),
     tiebreakerValue: contestEntryEventTiebreaker(entry, sportEventId),
   }));
   const ranks = new Map(rankPredictionStandings(

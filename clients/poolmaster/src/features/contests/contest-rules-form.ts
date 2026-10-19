@@ -22,6 +22,8 @@ export type EditableSelectionType = ContestConfigurationRequest['selectionType']
 export type ContestRulesValues = {
   countedScores: string;
   maxEntriesPerTeam: string;
+  /** A pick'em contest scored against each game's spread (#720). */
+  pickEmAgainstTheSpread: boolean;
   pickEmMode: PickEmMode;
   picksPerEntry: string;
   picksPerTier: string;
@@ -103,9 +105,13 @@ function parseRandomDrawRules(values: ContestRulesValues, participant: SportNoun
   return withEntryLimit(values, { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry, countedScores });
 }
 
-/** The pick'em rules (#716): only the mode, straight up or confidence. */
+/** The pick'em rules (#716): the mode, straight up or confidence, and whether against the spread (#720). */
 function parsePickEmRules(values: ContestRulesValues): RulesResult {
-  return withEntryLimit(values, { selectionType: SelectionType.PICK_EM, mode: values.pickEmMode });
+  return withEntryLimit(values, {
+    selectionType: SelectionType.PICK_EM,
+    mode: values.pickEmMode,
+    againstTheSpread: values.pickEmAgainstTheSpread,
+  });
 }
 
 /**
@@ -168,6 +174,7 @@ export function toContestRulesValues(
   const rules: ContestRulesValues = {
     countedScores: current.countedScores,
     maxEntriesPerTeam: current.maxEntriesPerTeam,
+    pickEmAgainstTheSpread: current.pickEmAgainstTheSpread,
     pickEmMode: current.pickEmMode,
     picksPerEntry: current.picksPerEntry,
     picksPerTier: current.picksPerTier,
@@ -187,7 +194,7 @@ export function toContestRulesValues(
     case SelectionType.RANDOM_DRAW:
       return { ...rules, ...entryLimit, countedScores: String(configuration.countedScores), picksPerEntry: String(configuration.picksPerEntry) };
     case SelectionType.PICK_EM:
-      return { ...rules, ...entryLimit, pickEmMode: configuration.mode };
+      return { ...rules, ...entryLimit, pickEmMode: configuration.mode, pickEmAgainstTheSpread: configuration.againstTheSpread };
     case SelectionType.BRACKET:
       return { ...rules, ...entryLimit, startsAtRound: String(configuration.startsAtRound) };
     case SelectionType.SURVIVOR:
@@ -199,6 +206,7 @@ export function toContestRulesValues(
 export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
   countedScores: '4',
   maxEntriesPerTeam: '1',
+  pickEmAgainstTheSpread: false,
   pickEmMode: PickEmMode.STRAIGHT_UP,
   picksPerEntry: '4',
   picksPerTier: '1',

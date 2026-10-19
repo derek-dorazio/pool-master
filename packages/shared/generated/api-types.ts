@@ -1897,7 +1897,7 @@ export interface paths {
         head?: never;
         /**
          * Edit one match of a sport event's bracket
-         * @description Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
+         * @description Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
          */
         patch: operations["updateEventBracketMatch"];
         trace?: never;
@@ -4806,6 +4806,8 @@ export interface components {
              * @enum {string}
              */
             mode: "STRAIGHT_UP" | "CONFIDENCE";
+            /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+            againstTheSpread: boolean;
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -5053,6 +5055,8 @@ export interface components {
                  * @enum {string}
                  */
                 mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                againstTheSpread: boolean;
                 /** @description Contest-configuration identifier. */
                 id: string;
                 /** @description Contest that owns the configuration. */
@@ -5279,6 +5283,8 @@ export interface components {
                  * @enum {string}
                  */
                 mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                againstTheSpread: boolean;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -5484,6 +5490,8 @@ export interface components {
                      * @enum {string}
                      */
                     mode: "STRAIGHT_UP" | "CONFIDENCE";
+                    /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                    againstTheSpread: boolean;
                     /** @description Contest-configuration identifier. */
                     id: string;
                     /** @description Contest that owns the configuration. */
@@ -5734,6 +5742,8 @@ export interface components {
                      * @enum {string}
                      */
                     mode: "STRAIGHT_UP" | "CONFIDENCE";
+                    /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                    againstTheSpread: boolean;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -6003,6 +6013,8 @@ export interface components {
                  * @enum {string}
                  */
                 mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                againstTheSpread: boolean;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -6304,6 +6316,8 @@ export interface components {
                      * @enum {string}
                      */
                     mode: "STRAIGHT_UP" | "CONFIDENCE";
+                    /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                    againstTheSpread: boolean;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -9153,6 +9167,8 @@ export interface components {
                  * @enum {string}
                  */
                 mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                againstTheSpread: boolean;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -10565,6 +10581,8 @@ export interface components {
             contestId: string;
             /** @enum {string} */
             mode: "STRAIGHT_UP" | "CONFIDENCE";
+            /** @description Whether picks are scored against each game's spread. */
+            againstTheSpread: boolean;
             /** @description The contest's weeks in its week order. */
             weeks: {
                 /** Format: uuid */
@@ -10670,6 +10688,8 @@ export interface components {
              * @enum {string|null}
              */
             mode: "STRAIGHT_UP" | "CONFIDENCE" | null;
+            /** @description Whether picks are scored against each game's spread: a pick names the team that covers. Only a pick'em pool can be. */
+            againstTheSpread: boolean;
             /** @description A survivor pool's season for the entry; null in the other pools. */
             survivor: {
                 /** @description The week number (1 for the contest's first week) that put the entry out: a loss, a tie, or a week not submitted by its first kickoff. Null while it is still in. An entry that is out picks no later week. */
@@ -10718,6 +10738,8 @@ export interface components {
                 isNeutralSite: boolean;
                 /** @description The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none. */
                 regionLabel: string | null;
+                /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set. */
+                homeSpread: number | null;
                 /** @description The team really playing on this side; null until it is decided. */
                 home: {
                     /**
@@ -10778,11 +10800,11 @@ export interface components {
                     /** Format: date-time */
                     pickedAt: string;
                     /**
-                     * @description How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round), BUSTED once it can no longer come true (a loss, a tie, or in a bracket its team out), else PENDING.
+                     * @description How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING.
                      * @enum {string|null}
                      */
-                    outcome: "CORRECT" | "BUSTED" | "PENDING" | null;
-                    /** @description What the pick earned when CORRECT: in a bracket its round's value plus any upset bonus, in a pick'em pool 1 point straight up or its confidence value. 0 when BUSTED, null while PENDING or not scored. */
+                    outcome: "CORRECT" | "BUSTED" | "PUSH" | "PENDING" | null;
+                    /** @description What the pick earned when CORRECT: in a bracket its round's value plus any upset bonus, in a pick'em pool 1 point straight up or its confidence value. 0 when BUSTED or PUSH, null while PENDING or not scored. */
                     points: number | null;
                 } | null;
             }[];
@@ -12688,6 +12710,8 @@ export interface components {
             advancesToSide: "HOME" | "AWAY" | null;
             /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
             regionLabel: string | null;
+            /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
+            homeSpread: number | null;
         };
         /** @description An event's bracket. */
         SportEventBracketResponse: {
@@ -12744,6 +12768,8 @@ export interface components {
                 advancesToSide: "HOME" | "AWAY" | null;
                 /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
                 regionLabel: string | null;
+                /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
+                homeSpread: number | null;
             }[];
         };
         /** @description One match of an event's bracket. */
@@ -12801,6 +12827,8 @@ export interface components {
                 advancesToSide: "HOME" | "AWAY" | null;
                 /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
                 regionLabel: string | null;
+                /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
+                homeSpread: number | null;
             };
         };
         /** @description The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side. */
@@ -12837,7 +12865,7 @@ export interface components {
                 regionLabel?: string | null;
             }[];
         };
-        /** @description One match edit. Its time and site can change at any point; its sides only until the event is released. */
+        /** @description One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game. */
         UpdateSportEventMatchRequest: {
             /**
              * Format: uuid
@@ -12855,6 +12883,8 @@ export interface components {
              * @description Omitted keeps it; null clears it.
              */
             scheduledDate?: string | null;
+            /** @description The points spread from the home team's side, in half points (-3.5: the home team favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game. */
+            homeSpread?: number | null;
         };
         /** @description The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing's participant is inactivated. */
         FillPlayInSlotRequest: {
@@ -16652,7 +16682,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
+            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -16950,7 +16980,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. */
+            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules. */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -41,6 +41,7 @@ function game(matchNumber: number, kickoff: string, away: Team, home: Team, over
     status: 'SCHEDULED',
     isNeutralSite: false,
     regionLabel: null,
+    homeSpread: null,
     home,
     away,
     predictedHome: home,
@@ -85,6 +86,7 @@ export function pickEmWeekFixture(overrides: Partial<GamePicksResponse> = {}): G
     sportEventId: 'week-1',
     selectionType: 'PICK_EM',
     mode: 'STRAIGHT_UP',
+    againstTheSpread: false,
     survivor: null,
     status: 'DRAFT',
     submittedAt: null,
@@ -160,6 +162,7 @@ export function pickEmLeaderboardFixture(overrides: Partial<PickEmLeaderboardRes
   return {
     contestId: 'contest-1',
     mode: 'STRAIGHT_UP',
+    againstTheSpread: false,
     weeks: [
       {
         sportEventId: 'week-1', name: 'Week 1', startDate: WEEK_1_START, status: 'COMPLETED',

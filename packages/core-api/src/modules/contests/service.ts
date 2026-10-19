@@ -61,7 +61,7 @@ import {
 import type { BracketLeaderboardEntryRow, BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
 import type { PickEmLeaderboardEntryRow, PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
 import { BracketScoringUnavailableError, loadBracketStandings } from './bracket-standings';
-import { loadPickEmMode, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
+import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
 import { loadSurvivorSeason } from './survivor-standings';
 import type { SurvivorLeaderboardModel } from '../../mappers/survivor-leaderboard.mapper';
 import {
@@ -688,7 +688,7 @@ export class ContestService {
         'CONTEST_FORMAT_MISMATCH',
       );
     }
-    const mode = await loadPickEmMode(this.deps, contestId);
+    const scoring = await loadPickEmScoring(this.deps, contestId);
     const now = this.now();
     const [events, entries, frozenWeeks] = await Promise.all([
       this.findContestEvents(contest),
@@ -717,7 +717,7 @@ export class ContestService {
           && !entries.some((entry) => contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED));
       // Only a week under way is scored live: a settled week answers from its frozen standings,
       // and one not started shows no points (#762).
-      const live = started && !settled ? await loadPickEmWeekStandings(this.deps, contestId, event, mode, weekMatches) : null;
+      const live = started && !settled ? await loadPickEmWeekStandings(this.deps, contestId, event, scoring, weekMatches) : null;
       const cells = new Map<string, { points: number | null; position: number | null; displayPosition: string | null }>(
         settled
           ? frozen.map((standing) => [standing.contestEntryId, {
@@ -781,7 +781,8 @@ export class ContestService {
 
     return {
       contestId,
-      mode,
+      mode: scoring.mode,
+      againstTheSpread: scoring.againstTheSpread,
       weeks: weeks.map(({ event, games, started, settled, winnerEntryIds }) => ({
         sportEventId: event.id,
         name: event.name,

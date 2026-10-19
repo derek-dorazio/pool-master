@@ -97,6 +97,7 @@ export class InMemoryGamePicks {
       advancesToMatchId: null,
       advancesToSide: null,
       regionLabel: null,
+      homeSpread: null,
       createdAt: T0,
       updatedAt: T0,
     };
@@ -189,6 +190,7 @@ export class InMemoryGamePicks {
           sportEventId: expectDefined(this.matches.get(row.sportEventMatchId)).sportEventId,
           participantId: expectDefined(this.field.get(row.sportEventParticipantId)).participantId,
         })),
+      hasAnyOnMatch: async (sportEventMatchId) => [...this.predictions.values()].some((row) => row.sportEventMatchId === sportEventMatchId),
       save: async ({ contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at: when }) => {
         if (saves.some((save) => save.confidence !== null && save.confidence < 1)) {
           throw new Error('violates check constraint contest_entry_match_predictions_confidence_check');

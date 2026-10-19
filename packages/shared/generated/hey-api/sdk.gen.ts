@@ -1452,7 +1452,7 @@ export const loadEventBracket = <ThrowOnError extends boolean = false>(options: 
 /**
  * Edit one match of a sport event's bracket
  *
- * Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
+ * Values left out keep what is stored. The time and site can change at any point; the sides only until release (409 SPORT_EVENT_BRACKET_LOCKED). The home spread can change until release, and after it only while no entry has picked the game (409 MATCH_SPREAD_LOCKED). 422 BRACKET_INVALID when a side would name a field row the event lacks or one another match names, a side an earlier match's winner fills, or both sides one team. 404 BRACKET_MATCH_NOT_FOUND for a match number the bracket lacks. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Root admin only.
  */
 export const updateEventBracketMatch = <ThrowOnError extends boolean = false>(options: Options<UpdateEventBracketMatchData, ThrowOnError>) => (options.client ?? client).patch<UpdateEventBracketMatchResponses, UpdateEventBracketMatchErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
