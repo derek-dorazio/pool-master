@@ -89,6 +89,20 @@ export function confidencePicks(games: readonly PickEmGame[], game: PickEmGame, 
   return picks;
 }
 
+/**
+ * The confidence values a game's pick may take: 1 to the week's game count, largest first, leaving out the values held
+ * by games that have kicked off, since those picks can no longer give their value up.
+ */
+export function confidenceOptions(gamePicks: Pick<GamePicksResponse, 'gameCount' | 'games'>, game: PickEmGame): number[] {
+  const { gameCount, games } = gamePicks;
+  const held = new Set(games.flatMap((other) => (
+    other.sportEventMatchId !== game.sportEventMatchId && other.locked && other.pick?.confidence != null
+      ? [other.pick.confidence]
+      : []
+  )));
+  return Array.from({ length: gameCount }, (_, index) => gameCount - index).filter((value) => !held.has(value));
+}
+
 /** What still keeps a confidence week from submitting: picks with no value, and values used twice. */
 function confidenceHint(gamePicks: GamePicksResponse): string | null {
   const values = gamePicks.games.flatMap((game) => (game.pick ? [game.pick.confidence] : []));

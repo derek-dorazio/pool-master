@@ -1902,6 +1902,15 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     }));
   });
 
+  it('refuses a pick\'em contest sent a scoring definition its sport does not offer with 422 CONTEST_SCORING_DEFINITION_NOT_ALLOWED, writing nothing', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 3 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({
+      configuration: { ...pickEmRules, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
+    }))).rejects.toMatchObject({ code: 'CONTEST_SCORING_DEFINITION_NOT_ALLOWED', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
   it('creates a pick\'em contest whose round table does not match the week\'s rounds, since a pick\'em contest never scores by round', async () => {
     const { contestCoreRepo, service } = pickEmService({ gameCount: 3, rounds: 1 });
 

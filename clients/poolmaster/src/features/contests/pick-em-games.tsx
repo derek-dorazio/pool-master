@@ -4,7 +4,7 @@ import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
 import { Button, Chip, FormField, Input, Select, cn, formatDateTimeDisplay } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { describePickOutcome, parseBracketTiebreaker } from './bracket-layout';
-import { describeMatchup, gameTeams, type PickEmGame, type PickEmTeam } from './pick-em-week';
+import { confidenceOptions, describeMatchup, gameTeams, type PickEmGame, type PickEmTeam } from './pick-em-week';
 
 /** The tiebreaker's draft and its save, owned by the page: the field sits on its game's card. */
 export interface PickEmTiebreaker {
@@ -69,13 +69,14 @@ function TeamLine({ game, isPicked, team }: { game: PickEmGame; isPicked: boolea
 function ConfidenceValue({
   canChange,
   game,
-  gameCount,
+  gamePicks,
   isBusy,
   onChange,
 }: {
   canChange: boolean;
   game: PickEmGame;
-  gameCount: number;
+  /** The week, for its game count and the values its games already kicked off hold. */
+  gamePicks: GamePicksResponse;
   isBusy: boolean;
   onChange: (game: PickEmGame, value: number | null) => void;
 }) {
@@ -96,7 +97,7 @@ function ConfidenceValue({
         value={value === null ? '' : String(value)}
       >
         <option value="">Choose a value</option>
-        {Array.from({ length: gameCount }, (_, index) => gameCount - index).map((option) => (
+        {confidenceOptions(gamePicks, game).map((option) => (
           <option key={option} value={option}>{option}</option>
         ))}
       </Select>
@@ -222,7 +223,7 @@ function GameCard({
         </p>
       ) : null}
       {gamePicks.mode === PickEmMode.CONFIDENCE && !isHidden ? (
-        <ConfidenceValue canChange={choosable} game={game} gameCount={gamePicks.gameCount} isBusy={isBusy} onChange={onConfidence} />
+        <ConfidenceValue canChange={choosable} game={game} gamePicks={gamePicks} isBusy={isBusy} onChange={onConfidence} />
       ) : null}
       {isTiebreakerGame && choosable ? (
         <TiebreakerField game={game} gamePicks={gamePicks} tiebreaker={tiebreaker} />

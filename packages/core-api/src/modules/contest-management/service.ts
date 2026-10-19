@@ -690,7 +690,7 @@ export class ContestManagementService {
       }
       return {
         configJson: { selectionType: rules.selectionType, mode: rules.mode },
-        scoring: resolvePickEmScoring(scoringInput),
+        scoring: this.resolvePickEmScoring(sportEvent, scoringInput),
       };
     }
     const scoring = this.resolveContestScoring(sportEvent, scoringInput);
@@ -837,6 +837,24 @@ export class ContestManagementService {
       );
     }
     return defaults;
+  }
+
+  /**
+   * A pick'em contest's stored scoring rule. A pick'em pool scores by its mode (#717): a correct
+   * pick is worth a point, or its confidence value, whatever rule the contest carries, so the
+   * commissioner sets no scoring table and the rule is never checked against a week's rounds. Every
+   * contest stores a rule: one sent is held to the definitions the sport offers, like any contest's
+   * (`resolveContestScoring`); one the contest already has is kept; otherwise the rule says what
+   * straight up scores, one point.
+   */
+  private resolvePickEmScoring(sportEvent: ContestCreateSportEventState, scoringInput: ContestScoringInput): ContestScoringSettings {
+    if (scoringInput.requested) {
+      return this.resolveContestScoring(sportEvent, { requested: scoringInput.requested });
+    }
+    return scoringInput.kept ?? {
+      participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+      config: { roundValues: [1], upsetBonus: { rule: UpsetBonusRule.NONE } },
+    };
   }
 
   /**
@@ -1054,20 +1072,6 @@ function defaultContestScoringSettings(
     default:
       return assertNever(participantScoringDefinitionId);
   }
-}
-
-/**
- * A pick'em contest's stored scoring rule. A pick'em pool scores by its mode (#717): a correct
- * pick is worth a point, or its confidence value, whatever rule the contest carries, so the
- * commissioner sets no scoring table and the rule is never checked against a week's rounds. Every
- * contest stores a rule, so one sent (or kept) is kept as it is, and otherwise the rule says what
- * straight up scores: one point.
- */
-function resolvePickEmScoring({ requested, kept }: ContestScoringInput): ContestScoringSettings {
-  return requested ?? kept ?? {
-    participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
-    config: { roundValues: [1], upsetBonus: { rule: UpsetBonusRule.NONE } },
-  };
 }
 
 /** What a contest's scoring is resolved from: the settings sent, and the ones it already has. */

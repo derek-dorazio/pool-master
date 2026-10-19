@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canChangeWeek,
+  confidenceOptions,
   confidencePicks,
   describeMatchup,
   firstKickoff,
@@ -60,6 +61,17 @@ describe('pick\'em week helpers', () => {
       { sportEventMatchId: 'match-3', sportEventParticipantId: id(NFL_TEAMS.eagles), confidence: 2 },
     ]);
     expect(confidencePicks(games, games[0], 1)).toEqual([]);
+  });
+
+  it('offers every confidence value largest first, leaving out the values on games that have kicked off', () => {
+    const games = week1Games({
+      1: { pick: weekPick(NFL_TEAMS.packers, { confidence: 1 }) },
+      2: { locked: true, pick: weekPick(NFL_TEAMS.chiefs, { confidence: 3 }) },
+      3: { pick: weekPick(NFL_TEAMS.eagles, { confidence: 2 }) },
+    });
+    const week = pickEmWeekFixture({ mode: 'CONFIDENCE', games });
+    expect(confidenceOptions(week, games[0])).toEqual([2, 1]);
+    expect(confidenceOptions(pickEmWeekFixture({ mode: 'CONFIDENCE' }), week1Games()[0])).toEqual([3, 2, 1]);
   });
 
   it('says what is left before a week can submit in the order to fix it: picks, then confidence values, then the tiebreaker', () => {
