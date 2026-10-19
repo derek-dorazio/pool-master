@@ -225,6 +225,22 @@ export function buildContestEntryStanding(
   };
 }
 
+/**
+ * An entry's standing in an event of its contest it missed (#714): no picks, scored as the lineup
+ * its family gives a missed event (`scoreMissedLineup`), so it ranks with the entries that played.
+ */
+export function buildMissedEventStanding(
+  entry: ContestLeaderboardEntryInput,
+  missedScore: number | null,
+  countingRule: ContestCountingRule,
+  direction: ScoreDirection,
+): ContestEntryStandingRow {
+  return {
+    ...buildContestEntryStanding({ ...entry, picks: [] }, new Map(), countingRule, direction),
+    score: missedScore,
+  };
+}
+
 export function rankContestEntryStandings(
   entries: ContestEntryStandingRow[],
   direction: ScoreDirection,

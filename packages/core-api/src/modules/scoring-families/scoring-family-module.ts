@@ -69,6 +69,20 @@ export interface ScoringFamilyModule {
   ): ParticipantScore[];
 
   /**
+   * What a lineup scores in an event its entry missed, in a contest of several events (#714): as
+   * if each of its `countingPickLimit` counting picks had no result at all. Golf scores each such
+   * pick 80 strokes a round, racing its "did not finish" value, a knockout nothing; so a missed
+   * event is never better than one played. Null while the event cannot say (a golf event with no
+   * known par yet), and the entry's event is then left unscored.
+   */
+  scoreMissedLineup(
+    field: readonly SportEventParticipantView[],
+    event: FieldScoringEvent,
+    scoring: ContestScoringSettings,
+    countingPickLimit: number,
+  ): number | null;
+
+  /**
    * The live-score category the family accepts and how it writes one, or null when it takes
    * no live scores (its results are entered by an admin). The score publisher skips a batch of
    * any other category.

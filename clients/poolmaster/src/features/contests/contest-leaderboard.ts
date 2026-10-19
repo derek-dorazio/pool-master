@@ -44,6 +44,8 @@ export interface LeaderboardPickRow {
 /** One event's result for an entry in a contest of several events (#713). */
 export interface LeaderboardEventResult {
   sportEventId: string;
+  /** 1 is the event's best: its winner, once the event is final. */
+  position: number | null;
   displayPosition: string | null;
   total: string | null;
 }
@@ -96,6 +98,7 @@ export function buildLeaderboardView(response: ContestLeaderboardResponse): Lead
     scoredPickCount: entry.scoredPickCount,
     events: entry.events.map((event) => ({
       sportEventId: event.sportEventId,
+      position: event.position,
       displayPosition: event.displayPosition,
       total: event.totalScore === null ? null : scoringDefinition.format(event.totalScore),
     })),

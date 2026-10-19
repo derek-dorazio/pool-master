@@ -1,6 +1,7 @@
 import {
   loadContestLeaderboardEntries,
   loadContestScoringConfiguration,
+  scoreMissedLineup,
   toParticipantScores,
 } from '../../../packages/core-api/src/modules/contests/contest-leaderboard-reads';
 import type { ContestScoringSettings } from '@poolmaster/shared/domain';
@@ -236,6 +237,39 @@ describe('contest scoring of unplayed rounds', () => {
 });
 
 type RoundTuple = [roundNumber: number, status: string, strokes: number, scoreToPar: number];
+
+// #714: in a contest of several events, a lineup an entry missed scores as if each counted pick
+// had no result, so missing an event is never better than playing it.
+describe('contest scoring of a missed lineup', () => {
+  const finisher = golfer('sep-a', 'COMPLETE', [
+    [1, 'COMPLETED', 70, -2],
+    [2, 'COMPLETED', 72, 0],
+    [3, 'COMPLETED', 71, -1],
+    [4, 'COMPLETED', 72, 0],
+  ]);
+
+  it('scores a missed golf lineup as 80 strokes a round for each counted golfer: three golfers over four par-72 rounds is +96', () => {
+    expect(scoreMissedLineup(field(finisher), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }), GOLF_SCORING, 3)).toBe(96);
+  });
+
+  it('takes the event\'s roundsPar for a missed golf lineup, so one golfer over four par-70 rounds is +40', () => {
+    expect(scoreMissedLineup(field(finisher), scoringEvent({ rounds: 4, roundsPar: 70, status: 'COMPLETED' }), GOLF_SCORING, 1)).toBe(40);
+  });
+
+  it('leaves a missed golf lineup unscored while a round\'s par is unknown, never scoring it lighter than it will be', () => {
+    expect(scoreMissedLineup(field(), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }), GOLF_SCORING, 3)).toBeNull();
+  });
+
+  it('scores a missed race lineup as each counted pick not finishing', () => {
+    const raceScoring: ContestScoringSettings = {
+      participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
+      config: { pointsTable: [10, 6, 3], didNotFinishPoints: 1 },
+    };
+    const race = { sport: 'HORSE_RACING', status: 'COMPLETED', rounds: null, roundsPar: null } as unknown as Parameters<typeof toParticipantScores>[1];
+
+    expect(scoreMissedLineup(field(), race, raceScoring, 2)).toBe(2);
+  });
+});
 
 function golfer(
   id: string,

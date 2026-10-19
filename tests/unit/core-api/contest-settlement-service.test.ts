@@ -44,7 +44,11 @@ function golfer(sportEventParticipantId: string, eventScoreToPar: number) {
       standing: { currentRound: 4, status: 'COMPLETE', asOf: T },
       golf: { eventScoreToPar, eventStrokes: 288 + eventScoreToPar, currentRoundThru: 18 },
     },
-    rounds: [],
+    // Four par-72 rounds, the event's to-par all in the first.
+    rounds: [1, 2, 3, 4].map((roundNumber) => ({
+      round: { roundNumber, status: 'COMPLETED' },
+      golf: { strokes: 72 + (roundNumber === 1 ? eventScoreToPar : 0), scoreToPar: roundNumber === 1 ? eventScoreToPar : 0, thru: 18 },
+    })),
     raceResult: null,
     matches: [],
     affiliatedWithSportLeague: true,
@@ -80,9 +84,11 @@ function world({
   configJson = { selectionType: 'TIERED', picksPerTier: 1, countedScores: 1 } as Record<string, unknown>,
   scoringRules = [parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {})],
 }: { configJson?: Record<string, unknown>; scoringRules?: ReturnType<typeof parseContestScoringSettings>[] } = {}) {
+  // Each major is four rounds of par 72, the par read off the golfers' finished rounds.
+  const course = { rounds: 4 };
   const events = new Map<string, SportEvent>([
-    [MASTERS, { id: MASTERS, sport: 'GOLF', status: SportEventStatus.SCHEDULED, startDate: new Date('2026-04-09T12:00:00.000Z') } as SportEvent],
-    [PGA, { id: PGA, sport: 'GOLF', status: SportEventStatus.SCHEDULED, startDate: new Date('2026-05-14T12:00:00.000Z') } as SportEvent],
+    [MASTERS, { id: MASTERS, sport: 'GOLF', status: SportEventStatus.SCHEDULED, startDate: new Date('2026-04-09T12:00:00.000Z'), ...course } as SportEvent],
+    [PGA, { id: PGA, sport: 'GOLF', status: SportEventStatus.SCHEDULED, startDate: new Date('2026-05-14T12:00:00.000Z'), ...course } as SportEvent],
   ]);
   let contest: Contest = buildContest({ id: 'majors', sportEventIds: [MASTERS, PGA], status: ContestStatus.ACTIVE });
   const fields = new Map([
@@ -243,7 +249,9 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
     expect(w.eventStandings).toEqual([]);
   });
 
-  it('leaves an entry that submitted only the second event out of the first event\'s standings, and totals it on that one event', async () => {
+  // #714: a missed event scores as a lineup whose every counted golfer played no round, 80 strokes
+  // a round, so skipping a major never beats playing it.
+  it('scores an entry that missed the first event as its counted golfer shooting 80 every round there, and totals it with that score', async () => {
     const w = world();
     w.entries[1] = entry('entry-b', 2, [PGA]);
     w.complete(MASTERS);
@@ -252,9 +260,10 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
 
     await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
 
-    expect(eventRows(w.eventStandings, MASTERS)).toEqual([['entry-a', -6, 1]]);
+    // One counted golfer, four rounds of 80 on a par 72: +32.
+    expect(eventRows(w.eventStandings, MASTERS)).toEqual([['entry-a', -6, 1], ['entry-b', 32, 2]]);
     expect(w.standings.map((row) => [row.contestEntryId, row.totalScore, row.position]))
-      .toEqual([['entry-b', -8, 1], ['entry-a', -4, 2]]);
+      .toEqual([['entry-a', -4, 1], ['entry-b', 24, 2]]);
   });
 });
 

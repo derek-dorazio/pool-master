@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import {
@@ -35,7 +36,7 @@ import {
   type LeaderboardView,
 } from './contest-leaderboard';
 import { fetchContestEntries } from './use-contest-entries';
-import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, SportEventStatus, getSportDefinition } from '@poolmaster/shared/domain';
 import { BracketLeaderboard } from './bracket-leaderboard';
 import { PickEmLeaderboard } from './pick-em-leaderboard';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
@@ -108,15 +109,15 @@ function leaderboardGridColumns(view: LeaderboardView) {
 
 function EntryBlock({
   entry,
-  eventNames,
+  contestEvents,
   gridTemplateColumns,
   isCollapsed,
   isMine,
   onToggle,
 }: {
   entry: LeaderboardEntryRow;
-  /** The contest's event names by id when it covers several, for the per-event line; else null. */
-  eventNames: ReadonlyMap<string, string> | null;
+  /** The contest's events by id when it covers several, for the per-event line; else null. */
+  contestEvents: ReadonlyMap<string, ContestDto['sportEvents'][number]> | null;
   gridTemplateColumns: string;
   isCollapsed: boolean;
   isMine: boolean;
@@ -161,11 +162,23 @@ function EntryBlock({
             {entry.squadName} · best {entry.countingPickLimit} of {entry.picks.length} count ·{' '}
             {entry.scoredPickCount} scored
           </span>
-          {eventNames && entry.events.length > 0 ? (
+          {contestEvents && entry.events.length > 0 ? (
             <span className="mt-1 block text-xs text-muted-foreground" data-testid={`contest-leaderboard-events-${entry.entryId}`}>
-              {entry.events
-                .map((event) => `${eventNames.get(event.sportEventId) ?? 'Event'}: ${event.displayPosition ?? NO_SCORE}, ${event.total ?? NO_SCORE}`)
-                .join(' · ')}
+              {entry.events.map((event, index) => (
+                <span key={event.sportEventId}>
+                  {index > 0 ? ' · ' : null}
+                  {`${contestEvents.get(event.sportEventId)?.name ?? 'Event'}: ${event.displayPosition ?? NO_SCORE}, ${event.total ?? NO_SCORE}`}
+                  {/* A final event's first place won it (#714): each major has its own winner. */}
+                  {event.position === 1 && contestEvents.get(event.sportEventId)?.status === SportEventStatus.COMPLETED ? (
+                    <Trophy
+                      aria-label="Event winner"
+                      className="ml-1 inline text-primary"
+                      data-testid={`contest-leaderboard-event-winner-${event.sportEventId}-${entry.entryId}`}
+                      size={12}
+                    />
+                  ) : null}
+                </span>
+              ))}
             </span>
           ) : null}
         </span>
@@ -360,8 +373,8 @@ export function ContestLeaderboardPage() {
   const participantNoun = getSportDefinition(leaderboardQuery.data.sport).vocabulary.participant;
   const gridTemplateColumns = leaderboardGridColumns(view);
   const isMultiEvent = contest.sportEvents.length > 1;
-  const eventNames = isMultiEvent
-    ? new Map(contest.sportEvents.map((sportEvent) => [sportEvent.sportEventId, sportEvent.name]))
+  const contestEvents = isMultiEvent
+    ? new Map(contest.sportEvents.map((sportEvent) => [sportEvent.sportEventId, sportEvent]))
     : null;
   // An event's picks are on the board once it has started (or the contest is final).
   const revealedEvents = contest.sportEvents.filter((sportEvent) => (
@@ -516,7 +529,7 @@ export function ContestLeaderboardPage() {
             pageEntries.map((entry) => (
               <EntryBlock
                 entry={entry}
-                eventNames={eventNames}
+                contestEvents={contestEvents}
                 gridTemplateColumns={gridTemplateColumns}
                 isCollapsed={collapsedEntryIds.has(entry.entryId)}
                 isMine={mySquadId !== null && entry.squadId === mySquadId}

@@ -25,5 +25,12 @@ export const finishPositionScoringFamily: ScoringFamilyModule = {
     }));
   },
 
+  scoreMissedLineup(_field, _event, scoring, countingPickLimit) {
+    // Each counting pick scores as a runner that did not finish.
+    return scoring.participantScoringDefinitionId === 'FINISH_POSITION_POINTS'
+      ? scoring.config.didNotFinishPoints * countingPickLimit
+      : null;
+  },
+
   liveScores: null,
 };
