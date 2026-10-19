@@ -1,0 +1,54 @@
+{
+  "fetchedAt": "2026-10-19T07:21:14.960Z",
+  "results": [
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard?dates=2027",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2027_PGA_Tour",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2027_Masters_Tournament",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2027_PGA_Championship",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2027_U.S._Open_(golf)",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2027_Open_Championship",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://www.pgatour.com/schedule",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-pgatour.com.txt"
+    }
+  ]
+}
