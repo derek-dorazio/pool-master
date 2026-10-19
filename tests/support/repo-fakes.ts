@@ -417,6 +417,7 @@ export function fakeContestConfigurationRepo(
 ): ContestConfigurationRepository {
   return {
     findByContest: one(),
+    findByTemplateEventSeries: many(),
     create: echoCreate('contest-configuration'),
     update: echoUpdate(),
     ...overrides,

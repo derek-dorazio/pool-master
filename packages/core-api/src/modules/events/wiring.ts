@@ -39,7 +39,7 @@ import { MatchResultService } from '../scoring-families/head-to-head/match-resul
 import { sportStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { sportStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
-import { EventLifecycleService, type FinishedSportEventSettlement } from './event-lifecycle-service';
+import { EventLifecycleService, type FinishedSportEventSettlement, type ReleasedEditionContests } from './event-lifecycle-service';
 import { SportEventService } from './service';
 import { SportEventBracketService } from './sport-event-bracket-service';
 import { SportEventParticipantService } from './sport-event-participant-service';
@@ -182,7 +182,8 @@ export function createSportEventServices(
 
 /**
  * The one place a sport event's status changes, with its contest side effects on ports (#247).
- * Settlement is passed in rather than built here: the contests module builds it from this one.
+ * Settlement and the template contests a release joins are passed in rather than built here: the
+ * contest modules build them from this one.
  */
 export function createEventLifecycleService(
   prisma: PrismaClient,
@@ -191,6 +192,7 @@ export function createEventLifecycleService(
     mailDelivery?: MailDeliveryProvider;
     appBaseUrl?: string;
     contestSettlement?: FinishedSportEventSettlement;
+    releasedEditionContests?: ReleasedEditionContests;
   } = {},
 ): EventLifecycleService {
   return new EventLifecycleService(
@@ -209,5 +211,6 @@ export function createEventLifecycleService(
     options.mailDelivery,
     options.appBaseUrl,
     options.contestSettlement,
+    options.releasedEditionContests,
   );
 }

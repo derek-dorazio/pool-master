@@ -51,6 +51,13 @@ export interface FinishedSportEventSettlement {
   ): Promise<unknown>;
 }
 
+/** The contests a released edition joins: those made from a template covering its series (#714). */
+export interface ReleasedEditionContests {
+  addReleasedEditionToTemplateContests(
+    sportEvent: Pick<SportEvent, 'id' | 'eventSeriesId' | 'eventYear'>,
+  ): Promise<unknown>;
+}
+
 /** Who drove the transition: an admin by hand, or the lifecycle scheduler. */
 export type SportEventStatusTransitionActor =
   | { type: 'ROOT_ADMIN' }
@@ -116,6 +123,7 @@ export class EventLifecycleService {
     private readonly mailDelivery?: MailDeliveryProvider,
     private readonly appBaseUrl = 'http://localhost:5173',
     private readonly contestSettlement?: FinishedSportEventSettlement,
+    private readonly releasedEditionContests?: ReleasedEditionContests,
   ) {}
 
   async applySportEventStatusTransition(
@@ -151,6 +159,10 @@ export class EventLifecycleService {
         : {}),
     });
 
+    // A released edition joins the contests made to cover its series, a majors pool's major (#714).
+    if (input.release && input.toStatus === SportEventStatus.SCHEDULED) {
+      await this.releasedEditionContests?.addReleasedEditionToTemplateContests(updated);
+    }
     if (input.toStatus === SportEventStatus.IN_PROGRESS) {
       await this.activateContestsPastCutoff(updated);
     }
