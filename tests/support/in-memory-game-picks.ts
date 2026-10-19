@@ -38,10 +38,14 @@ export class InMemoryGamePicks {
 
   constructor(private readonly world: InMemoryContestWorld) {}
 
-  /** A team in the event's field. `id` names the field row; by default it is numbered. */
-  addTeam(sportEventId: string, name: string, options: { id?: string; seedNumber?: number } = {}): SportEventParticipant {
+  /**
+   * A team in the event's field. `id` names the field row; by default it is numbered. `participantId`
+   * puts a team already in another event's field into this one, as each week's field holds the same
+   * teams; by default the team is new.
+   */
+  addTeam(sportEventId: string, name: string, options: { id?: string; seedNumber?: number; participantId?: string } = {}): SportEventParticipant {
     this.sequence += 1;
-    const participant = {
+    const participant = options.participantId !== undefined ? expectDefined(this.participants.get(options.participantId)) : {
       id: `participant-${this.sequence}`,
       sportId: 'sport-nfl',
       name,
@@ -67,10 +71,16 @@ export class InMemoryGamePicks {
     return row;
   }
 
-  /** A first-round game between two new teams. */
-  addGame(sportEventId: string, matchNumber: number, kickoff: Date | null, status: MatchStatus = MatchStatus.SCHEDULED): SportEventMatch {
-    const home = this.addTeam(sportEventId, `Home ${matchNumber}`);
-    const away = this.addTeam(sportEventId, `Away ${matchNumber}`);
+  /** A first-round game between two new teams, or between two teams already playing (`teams`, their participant ids). */
+  addGame(
+    sportEventId: string,
+    matchNumber: number,
+    kickoff: Date | null,
+    status: MatchStatus = MatchStatus.SCHEDULED,
+    teams?: { home: string; away: string },
+  ): SportEventMatch {
+    const home = this.addTeam(sportEventId, `Home ${matchNumber}`, { participantId: teams?.home });
+    const away = this.addTeam(sportEventId, `Away ${matchNumber}`, { participantId: teams?.away });
     const match: SportEventMatch = {
       id: `game-${matchNumber}`,
       sportEventId,
@@ -171,6 +181,14 @@ export class InMemoryGamePicks {
         .filter((row) => contestEntryIds.includes(row.contestEntryId) && this.inEvent(row, sportEventId))
         .sort((left, right) => this.matchNumberOf(left) - this.matchNumberOf(right)
           || left.contestEntryId.localeCompare(right.contestEntryId)),
+      findByEntriesAndEvents: async (contestEntryIds, sportEventIds) => [...this.predictions.values()]
+        .filter((row) => contestEntryIds.includes(row.contestEntryId)
+          && sportEventIds.some((sportEventId) => this.inEvent(row, sportEventId)))
+        .map((row) => ({
+          ...row,
+          sportEventId: expectDefined(this.matches.get(row.sportEventMatchId)).sportEventId,
+          participantId: expectDefined(this.field.get(row.sportEventParticipantId)).participantId,
+        })),
       save: async ({ contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at: when }) => {
         if (saves.some((save) => save.confidence !== null && save.confidence < 1)) {
           throw new Error('violates check constraint contest_entry_match_predictions_confidence_check');

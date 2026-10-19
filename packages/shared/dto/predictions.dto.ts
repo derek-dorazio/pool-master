@@ -4,7 +4,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { ContestEntryStatus, MatchStatus, PickEmMode, PickOutcome, SelectionType, SportEventStatus } from '../domain/enums';
+import { ContestEntryStatus, MatchStatus, PickEmMode, PickOutcome, SelectionType, SportEventStatus, SurvivorWeekOutcome } from '../domain/enums';
 
 // --- Requests ---
 
@@ -23,7 +23,7 @@ export const SaveGamePicksRequestSchema = z.object({
     .refine((picks) => new Set(picks.map((pick) => pick.sportEventMatchId)).size === picks.length, {
       message: 'Each game is picked at most once per request.',
     })
-    .describe('The picks to save, one per game; may be empty when only the tiebreaker changes. Each replaces the entry\'s pick on that game; the entry\'s other picks are kept, except that in a bracket a later pick that no longer follows from the entry\'s picks is cleared. Saved together or not at all, so two confidence values can be swapped, or a whole bracket filled, in one request.'),
+    .describe('The picks to save, one per game; may be empty when only the tiebreaker changes. Each replaces the entry\'s pick on that game; the entry\'s other picks are kept, except that in a bracket a later pick that no longer follows from the entry\'s picks is cleared, and in a survivor pool, which takes one pick, the entry\'s pick on another game is cleared. Saved together or not at all, so two confidence values can be swapped, or a whole bracket filled, in one request.'),
   tiebreakerValue: z.number().int().min(0).max(GAME_PICKS_TIEBREAKER_MAX).nullable().optional()
     .describe('The event\'s tiebreaker: the total points the entry expects in its tiebreaker game (`tiebreakerMatchId`: a bracket\'s final, a pick\'em week\'s last game), both teams together. Required before submit; null clears it, omitted leaves it as it is. Refused with 409 CONTEST_ENTRY_LOCKED once that game\'s pick has locked.'),
 }).describe('Request payload for saving an entry\'s picks on one event\'s games.');
@@ -65,13 +65,20 @@ export const GamePickGameDtoSchema = z.object({
 }).describe('One game of the event with the entry\'s pick on it.');
 export type GamePickGameDto = z.infer<typeof GamePickGameDtoSchema>;
 
+export const GamePicksSurvivorDtoSchema = z.object({
+  eliminatedInWeek: z.number().int().nullable().describe('The week number (1 for the contest\'s first week) that put the entry out: a loss, a tie, or a week not submitted by its first kickoff. Null while it is still in. An entry that is out picks no later week.'),
+  usedParticipantIds: z.array(z.string().uuid()).nullable().describe('The teams, by participant id, the entry picked in its other submitted weeks: it cannot pick them again. Null on another team\'s entry, as they could show picks not yet revealed.'),
+}).describe('A survivor entry\'s season as one week sees it.');
+export type GamePicksSurvivorDto = z.infer<typeof GamePicksSurvivorDtoSchema>;
+
 export const GamePicksResponseSchema = z.object({
   contestId: z.string().uuid(),
   entryId: z.string().uuid(),
   entryName: z.string(),
   sportEventId: z.string().uuid(),
-  selectionType: z.enum([SelectionType.PICK_EM, SelectionType.BRACKET]),
-  mode: z.nativeEnum(PickEmMode).nullable().describe('A pick\'em pool\'s mode; null in a bracket.'),
+  selectionType: z.enum([SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR]),
+  mode: z.nativeEnum(PickEmMode).nullable().describe('A pick\'em pool\'s mode; null in a bracket or survivor pool.'),
+  survivor: GamePicksSurvivorDtoSchema.nullable().describe('A survivor pool\'s season for the entry; null in the other pools.'),
   status: z.nativeEnum(ContestEntryStatus).describe('The entry\'s status for this event: DRAFT while picking, SUBMITTED once every game is picked and submitted. Only a submitted event counts.'),
   submittedAt: z.string().datetime().nullable(),
   ownEntry: z.boolean().describe('Whether the caller is on the entry\'s team, and so sees every pick on it.'),
@@ -155,7 +162,48 @@ export const PickEmLeaderboardResponseSchema = z.object({
 }).describe('A pick\'em contest\'s season leaderboard: the season total, each week\'s points and places, and the weekly winners.');
 export type PickEmLeaderboardResponse = z.infer<typeof PickEmLeaderboardResponseSchema>;
 
+export const SurvivorLeaderboardWeekDtoSchema = z.object({
+  sportEventId: z.string().uuid(),
+  weekNumber: z.number().int().describe('1 for the contest\'s first week, by start date.'),
+  name: z.string(),
+  startDate: z.string().datetime().describe('The week\'s first kickoff.'),
+  status: z.nativeEnum(SportEventStatus),
+  started: z.boolean().describe('Whether the week\'s first game has kicked off: an entry not submitted by then is out.'),
+  aliveCount: z.number().int().describe('How many entries came into the week still in. None until it starts, and for a cancelled week.'),
+}).describe('One week of a survivor contest.');
+export type SurvivorLeaderboardWeekDto = z.infer<typeof SurvivorLeaderboardWeekDtoSchema>;
+
+export const SurvivorLeaderboardEntryWeekDtoSchema = z.object({
+  sportEventId: z.string().uuid(),
+  outcome: z.nativeEnum(SurvivorWeekOutcome).nullable().describe('SURVIVED when the picked team won or its game was cancelled, ELIMINATED after a loss, a tie or a week not submitted by its first kickoff, PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.'),
+  team: z.string().nullable().describe('The team the entry picked, once its game has kicked off. Null before then, and with no pick.'),
+}).describe('One entry\'s week of a survivor contest.');
+export type SurvivorLeaderboardEntryWeekDto = z.infer<typeof SurvivorLeaderboardEntryWeekDtoSchema>;
+
+export const SurvivorLeaderboardEntryDtoSchema = z.object({
+  entryId: z.string().uuid(),
+  entryName: z.string(),
+  entryNumber: z.number().int(),
+  squadId: z.string().uuid(),
+  squadName: z.string(),
+  alive: z.boolean().describe('Whether the entry is still in.'),
+  eliminatedInWeek: z.number().int().nullable().describe('The week number that put the entry out; null while it is in.'),
+  weeksSurvived: z.number().int().describe('The weeks the entry survived: its score.'),
+  position: z.number().int().describe('The entry\'s place: entries still in first, then by weeks survived. Entries out in the same week share a place, as do entries still in at the end.'),
+  displayPosition: z.string().describe('The place as shown, "T2" when shared.'),
+  weeks: z.array(SurvivorLeaderboardEntryWeekDtoSchema).describe('The entry\'s result for each of the contest\'s weeks, in week order.'),
+}).describe('One entry\'s standing in a survivor contest.');
+export type SurvivorLeaderboardEntryDto = z.infer<typeof SurvivorLeaderboardEntryDtoSchema>;
+
+export const SurvivorLeaderboardResponseSchema = z.object({
+  contestId: z.string().uuid(),
+  weeks: z.array(SurvivorLeaderboardWeekDtoSchema).describe('The contest\'s weeks in week order.'),
+  entries: z.array(SurvivorLeaderboardEntryDtoSchema).describe('The entries that submitted at least one week, best first.'),
+}).describe('A survivor contest\'s leaderboard: who is still in, and when each entry went out.');
+export type SurvivorLeaderboardResponse = z.infer<typeof SurvivorLeaderboardResponseSchema>;
+
 registerSchema('SaveGamePicksRequest', SaveGamePicksRequestSchema);
+registerSchema('SurvivorLeaderboardResponse', SurvivorLeaderboardResponseSchema);
 registerSchema('PickEmLeaderboardResponse', PickEmLeaderboardResponseSchema);
 registerSchema('BracketLeaderboardResponse', BracketLeaderboardResponseSchema);
 registerSchema('GamePicksResponse', GamePicksResponseSchema);

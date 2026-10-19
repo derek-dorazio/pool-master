@@ -18,6 +18,7 @@ import type {
   LeagueMembershipRepository,
   LeagueRepository,
   ParticipantContestScoringRuleRepository,
+  ParticipantRepository,
   SportEventMatchRepository,
   SportEventRepository,
   SquadMembershipRepository,
@@ -60,6 +61,8 @@ import type { BracketLeaderboardEntryRow, BracketLeaderboardModel } from '../../
 import type { PickEmLeaderboardEntryRow, PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
 import { BracketScoringUnavailableError, loadBracketStandings } from './bracket-standings';
 import { loadPickEmMode, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
+import { loadSurvivorSeason } from './survivor-standings';
+import type { SurvivorLeaderboardModel } from '../../mappers/survivor-leaderboard.mapper';
 import {
   applySettledContestStandings,
   applySettledContestTotals,
@@ -84,7 +87,9 @@ import {
 import {
   ContestCutoffKind,
   areContestEntriesOpen,
+  PickWindow,
   areEventPicksRevealed,
+  areMatchPicksRevealed,
   contestCutoff,
   cutoffTiming,
   type EventTiming,
@@ -170,8 +175,10 @@ export interface ContestServiceDeps {
   scoringRules: ParticipantContestScoringRuleRepository;
   entries: ContestEntryRepository;
   picks: ContestEntryPickRepository;
-  predictions: Pick<ContestEntryMatchPredictionRepository, 'findByEntriesAndEvent'>;
+  predictions: Pick<ContestEntryMatchPredictionRepository, 'findByEntriesAndEvent' | 'findByEntriesAndEvents'>;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
+  /** A survivor leaderboard's picked teams' names (#719). */
+  participants: Pick<ParticipantRepository, 'findByIds'>;
   standings: ContestEntryStandingRepository;
   eventStandings: ContestEntryEventStandingRepository;
   memberships: LeagueMembershipRepository;
@@ -786,6 +793,76 @@ export class ContestService {
         winnerEntryIds,
       })),
       entries: rows,
+    };
+  }
+
+  /**
+   * A survivor contest's leaderboard (#719): each entry that submitted a week, whether it is still
+   * in or the week that put it out, and its weeks survived, entries still in first. Each week shows
+   * the entry's outcome and, once its game has kicked off, the team it picked. Read live from the
+   * results; a COMPLETED contest's places are the ones frozen at settlement.
+   */
+  async getSurvivorLeaderboard(contestId: string, requesterUserId: string): Promise<SurvivorLeaderboardModel> {
+    const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
+    if (contest.selectionType !== SelectionType.SURVIVOR) {
+      throw new ContestOperationError(
+        'Only a survivor contest has a survivor leaderboard.',
+        'CONTEST_FORMAT_MISMATCH',
+      );
+    }
+    const now = this.now();
+    const season = await loadSurvivorSeason(this.deps, contest, now);
+    const gameById = new Map(season.weeks.flatMap(({ event, games }) => games.map((game) => [game.id, { event, game }] as const)));
+    const isRevealed = (sportEventMatchId: string) => {
+      const found = gameById.get(sportEventMatchId);
+      return found !== undefined && areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, contest, found.event, found.game, now);
+    };
+    const revealedParticipantIds = new Set(season.entries.flatMap(({ picks }) =>
+      [...picks.values()].filter((pick) => isRevealed(pick.sportEventMatchId)).map((pick) => pick.participantId)));
+    const nameById = new Map((await this.deps.participants.findByIds([...revealedParticipantIds]))
+      .map((participant) => [participant.id, participant.name]));
+    const settled = contest.status === ContestStatus.COMPLETED
+      ? new Map((await this.deps.standings.findByContest(contestId)).map((standing) => [standing.contestEntryId, standing]))
+      : new Map<string, never>();
+
+    const entries = season.entries.map(({ entry, run, picks, alive, position, displayPosition }) => {
+      const frozen = settled.get(entry.id);
+      return {
+        entryId: entry.id,
+        entryName: entry.name,
+        entryNumber: entry.entryNumber,
+        squadId: entry.squadId,
+        squadName: entry.squadName,
+        alive,
+        eliminatedInWeek: run.eliminatedAt === null ? null : run.eliminatedAt + 1,
+        weeksSurvived: run.weeksSurvived,
+        position: frozen?.position ?? position,
+        displayPosition: frozen?.displayPosition ?? displayPosition,
+        weeks: season.weeks.map(({ event }, index) => {
+          const pick = picks.get(event.id);
+          return {
+            sportEventId: event.id,
+            outcome: run.weeks[index]?.outcome ?? null,
+            team: pick !== undefined && isRevealed(pick.sportEventMatchId) ? nameById.get(pick.participantId) ?? null : null,
+          };
+        }),
+      };
+    }).sort((left, right) => left.position - right.position || left.entryNumber - right.entryNumber || left.entryName.localeCompare(right.entryName));
+
+    return {
+      contestId,
+      weeks: season.weeks.map(({ event, weekNumber, started, cancelled }, index) => ({
+        sportEventId: event.id,
+        weekNumber,
+        name: event.name,
+        startDate: event.startDate,
+        status: event.status,
+        started,
+        aliveCount: started && !cancelled
+          ? season.entries.filter(({ run }) => (run.weeks[index]?.outcome ?? null) !== null).length
+          : 0,
+      })),
+      entries,
     };
   }
 

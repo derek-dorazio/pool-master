@@ -26,13 +26,34 @@ export const PredictionIssueKind = {
   CONFIDENCE_INVALID: 'CONFIDENCE_INVALID',
   /** No guess of the tiebreaker game's total points: a bracket's final (#721), a week's last game (#717). */
   TIEBREAKER_MISSING: 'TIEBREAKER_MISSING',
+  /** A survivor week (#719) has other than one pick. */
+  ONE_PICK_REQUIRED: 'ONE_PICK_REQUIRED',
+  /** A survivor pick names a team the entry picked in an earlier week. */
+  TEAM_ALREADY_USED: 'TEAM_ALREADY_USED',
+  /** A survivor entry is out, so it plays no later week. */
+  ENTRY_ELIMINATED: 'ENTRY_ELIMINATED',
 } as const;
 export type PredictionIssueKind = (typeof PredictionIssueKind)[keyof typeof PredictionIssueKind];
 
 export type PredictionIssue =
   | { kind: typeof PredictionIssueKind.WEEK_INCOMPLETE; pickedCount: number; gameCount: number }
   | { kind: typeof PredictionIssueKind.CONFIDENCE_INVALID }
-  | { kind: typeof PredictionIssueKind.TIEBREAKER_MISSING };
+  | { kind: typeof PredictionIssueKind.TIEBREAKER_MISSING }
+  | { kind: typeof PredictionIssueKind.ONE_PICK_REQUIRED; pickedCount: number }
+  | { kind: typeof PredictionIssueKind.TEAM_ALREADY_USED; sportEventParticipantId: string }
+  | { kind: typeof PredictionIssueKind.ENTRY_ELIMINATED };
+
+/**
+ * What the entry's earlier weeks leave it for this one (#719): the teams it has used, by
+ * participant, and whether it is already out. Read only for an engine that `readsEarlierWeeks`.
+ */
+export interface PredictionSeason {
+  usedParticipantIds: ReadonlySet<string>;
+  /** The week number (1 for the contest's first week) that put the entry out; null while it stands. */
+  eliminatedInWeek: number | null;
+  /** Each field row of this week's event, by id, to its participant. */
+  participantIdOf: ReadonlyMap<string, string>;
+}
 
 /** One pick as the week's rules read it. */
 export interface WeekPrediction {
@@ -51,6 +72,10 @@ export interface PredictionEngine {
   readonly selectionType: PredictionSelectionType;
   /** When a pick closes and is revealed to the league: at its game's kickoff, or at the event's start. */
   readonly pickWindow: PickWindow;
+  /** One pick per event (survivor) rather than one per game: a new pick replaces the entry's other one. */
+  readonly onePickPerEvent: boolean;
+  /** Whether the week's rules read the entry's earlier weeks of the contest (survivor's used teams and elimination). */
+  readonly readsEarlierWeeks: boolean;
 
   /**
    * The game whose total points the entry's tiebreaker guesses (#717): a bracket's final, a week's
@@ -99,5 +124,7 @@ export interface PredictionEngine {
     gameMatchIds: readonly string[];
     predictions: readonly WeekPrediction[];
     tiebreakerValue: number | null;
+    /** The entry's other weeks; null or left out for an engine that does not read them. */
+    season?: PredictionSeason | null;
   }): PredictionIssue[];
 }

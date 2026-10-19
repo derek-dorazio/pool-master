@@ -20,6 +20,7 @@ import {
 } from '../../mappers/contests.mapper';
 import { toBracketLeaderboardResponse } from '../../mappers/bracket-leaderboard.mapper';
 import { toPickEmLeaderboardResponse } from '../../mappers/pick-em-leaderboard.mapper';
+import { toSurvivorLeaderboardResponse } from '../../mappers/survivor-leaderboard.mapper';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import type { ContestService, ContestViewer } from './service';
@@ -58,6 +59,7 @@ export function createContestHandlers(contestService: ContestService) {
     getLeaderboard,
     getBracketLeaderboard,
     getPickEmLeaderboard,
+    getSurvivorLeaderboard,
     createMyEntry,
     deleteMyEntry,
     updateEntry,
@@ -259,6 +261,31 @@ export function createContestHandlers(contestService: ContestService) {
         return sendError(reply, 400, err.code, err.message);
       }
       logger.error({ contestId: request.params.contestId, userId, err }, 'pick\'em leaderboard route failed');
+      throw err;
+    }
+  }
+
+  async function getSurvivorLeaderboard(
+    request: FastifyRequest<{ Params: { contestId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = createRequestContextLogger(request);
+    const userId = request.authUser?.userId as string;
+    logger.debug({ contestId: request.params.contestId, userId }, 'survivor leaderboard route start');
+    try {
+      const leaderboard = await contestService.getSurvivorLeaderboard(request.params.contestId, userId);
+      logger.info({ contestId: request.params.contestId, userId, entryCount: leaderboard.entries.length, weekCount: leaderboard.weeks.length }, 'survivor leaderboard route completed');
+      return reply.send(toSurvivorLeaderboardResponse(leaderboard));
+    } catch (err) {
+      if (err instanceof ContestNotFoundError) {
+        logger.warn({ contestId: request.params.contestId, userId }, 'survivor leaderboard route missing contest');
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
+      }
+      if (err instanceof ContestOperationError) {
+        logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'survivor leaderboard route rejected');
+        return sendError(reply, 400, err.code, err.message);
+      }
+      logger.error({ contestId: request.params.contestId, userId, err }, 'survivor leaderboard route failed');
       throw err;
     }
   }

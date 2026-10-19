@@ -10,6 +10,7 @@ import {
   pickEmContestFixture,
   pickEmEntriesFixture,
   pickEmWeekFixture,
+  survivorWeekFixture,
   week1Games,
   weekPick,
 } from './test/pick-em-fixtures';
@@ -302,5 +303,71 @@ describe('Pick\'em contest entry page', () => {
 
     expect(await screen.findByTestId('pick-em-pick-error')).toHaveTextContent('That game has kicked off, so its pick is locked.');
     await waitFor(() => expect(getGamePicksMock).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('Survivor contest entry page', () => {
+  afterEach(() => {
+    for (const mock of [
+      getContestMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
+      listContestEntriesMock, saveGamePicksMock, submitGamePicksMock,
+    ]) {
+      mock.mockReset();
+    }
+  });
+
+  function primeSurvivor(week = survivorWeekFixture()) {
+    primeMocks({ week });
+    getContestMock.mockResolvedValue({ data: { contest: pickEmContestFixture({ selectionType: 'SURVIVOR' }) } });
+  }
+
+  it('asks for one winner, marks a team used in another week and refuses its tap, and shows no tiebreaker or points', async () => {
+    primeSurvivor();
+    renderPickEmEntry();
+
+    expect(await screen.findByTestId('contest-entry-builder-heading')).toHaveTextContent('Pick a winner');
+    const bills = team(2, NFL_TEAMS.bills.sportEventParticipantId);
+    expect(bills).toBeDisabled();
+    expect(bills).toHaveTextContent('Used');
+    expect(team(2, NFL_TEAMS.chiefs.sportEventParticipantId)).toBeEnabled();
+    expect(screen.getByTestId('survivor-pick')).toHaveTextContent('None yet');
+    expect(screen.getByTestId('pick-em-submit-hint')).toHaveTextContent('Pick one team to submit.');
+    expect(screen.queryByTestId('pick-em-tiebreaker')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('pick-em-points')).not.toBeInTheDocument();
+    expect(screen.getByTestId('pick-em-not-submitted-warning')).toHaveTextContent('An entry that hasn\'t submitted by then is out.');
+  });
+
+  it('saves the tapped team as the week\'s one pick and names it', async () => {
+    primeSurvivor();
+    saveGamePicksMock.mockResolvedValue({
+      data: survivorWeekFixture({ games: week1Games({ 3: { pick: weekPick(NFL_TEAMS.eagles) } }), canSubmit: true }),
+    });
+    renderPickEmEntry();
+
+    fireEvent.click(await screen.findByTestId(`pick-em-game-3-team-${NFL_TEAMS.eagles.sportEventParticipantId}`));
+
+    await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
+    expect(savedBody()).toEqual({ picks: [{ sportEventMatchId: 'match-3', sportEventParticipantId: NFL_TEAMS.eagles.sportEventParticipantId }] });
+    await waitFor(() => expect(screen.getByTestId('survivor-pick')).toHaveTextContent('Eagles'));
+    expect(screen.getByTestId('pick-em-submit')).toBeEnabled();
+  });
+
+  it('says an entry that is out went out and offers no pick or submit', async () => {
+    primeSurvivor(survivorWeekFixture({ survivor: { eliminatedInWeek: 1, usedParticipantIds: [] }, canSubmit: false }));
+    renderPickEmEntry();
+
+    expect(await screen.findByTestId('survivor-eliminated')).toHaveTextContent('This entry went out in week 1, so it picks no more weeks.');
+    expect(screen.getByTestId(`pick-em-game-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`).tagName).not.toBe('BUTTON');
+    expect(screen.queryByTestId('pick-em-submit-panel')).not.toBeInTheDocument();
+  });
+
+  it('shows a refused pick of a used team in product copy', async () => {
+    primeSurvivor(survivorWeekFixture({ survivor: { eliminatedInWeek: null, usedParticipantIds: [] } }));
+    saveGamePicksMock.mockResolvedValue({ error: { error: { code: 'PREDICTION_TEAM_ALREADY_USED', message: 'Team already used.' } } });
+    renderPickEmEntry();
+
+    fireEvent.click(await screen.findByTestId(`pick-em-game-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`));
+
+    expect(await screen.findByTestId('pick-em-pick-error')).toHaveTextContent('You picked that team in another week. Each team can be picked once.');
   });
 });

@@ -77,10 +77,10 @@ describe('contest-management dto schemas', () => {
   it('refuses a create whose selection type is not one of the enum\'s values', () => {
     expect(
       CreateContestRequestSchema.safeParse({
-        name: 'Survivor',
+        name: 'Last man standing',
         sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'PREDICTION',
-        selectionType: 'SURVIVOR',
+        selectionType: 'LAST_MAN_STANDING',
         templateId: '11111111-1111-4111-8111-111111111111',
       }).success,
     ).toBe(false);

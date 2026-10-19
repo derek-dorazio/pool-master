@@ -15,6 +15,7 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaParticipantContestScoringRuleRepository,
+  PrismaParticipantRepository,
   PrismaSportEventMatchRepository,
   PrismaSportEventRepository,
   PrismaSquadMembershipRepository,
@@ -27,11 +28,11 @@ import { ContestSettlementService } from './contest-settlement-service';
 import type { BracketStandingsReadDeps } from './bracket-standings';
 import { ContestService } from './service';
 
-/** The bracket and pick'em reads, plus the batched match read the pick'em season leaderboard takes (#762). */
+/** The bracket, pick'em and survivor reads, plus the batched match read the season leaderboards take (#762). */
 function createContestLeaderboardReadDeps(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
-): BracketStandingsReadDeps & { matches: PrismaSportEventMatchRepository } {
+): BracketStandingsReadDeps & { matches: PrismaSportEventMatchRepository; predictions: PrismaContestEntryMatchPredictionRepository } {
   return {
     eventParticipants: createSportEventParticipantService(prisma, logger),
     configurations: new PrismaContestConfigurationRepository(prisma),
@@ -59,6 +60,7 @@ export function createContestService(
     leagues: new PrismaLeagueRepository(prisma),
     users: new PrismaUserRepository(prisma),
     sportEvents: new PrismaSportEventRepository(prisma),
+    participants: new PrismaParticipantRepository(prisma),
     tiers: createSportEventTierService(prisma, logger),
     logger,
     mailDelivery: options?.mailDelivery,

@@ -254,9 +254,10 @@ describe('basketball', () => {
     expect(basketball.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 16 });
   });
 
-  it('offers the three roster selection types, pick\'em and bracket', () => {
+  it('offers the three roster selection types, pick\'em, bracket and survivor', () => {
     expect(basketball.selectionTypes).toEqual([
       SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET,
+      SelectionType.SURVIVOR,
     ]);
   });
 
@@ -306,9 +307,10 @@ describe('American football', () => {
     expect(americanFootball.roundLabel(5, 4)).toBe('Round 5');
   });
 
-  it('offers the three roster selection types, pick\'em and bracket', () => {
+  it('offers the three roster selection types, pick\'em, bracket and survivor', () => {
     expect(americanFootball.selectionTypes).toEqual([
       SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET,
+      SelectionType.SURVIVOR,
     ]);
   });
 

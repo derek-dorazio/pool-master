@@ -18,7 +18,9 @@
  *   followed from it.
  * - Every week is submitted with its tiebreaker (#717), a guess of its tiebreaker game's total
  *   points: a bracket's final, a pick'em week's last game. It is kept per event, and locks and is
- *   revealed with that game's pick.
+ *   revealed with that game's pick. A survivor week has none.
+ * - In survivor (#719) a week holds one pick, which replaces the entry's other one, of a team the
+ *   entry has not picked in another week it submitted. An entry that is out picks no later week.
  *
  * The shared parts are here; what varies by prediction type (its pick window, the values a pick
  * carries, what stops a week being submitted) is a `PredictionEngine`.
@@ -67,9 +69,12 @@ import {
   type PredictionEngine,
   type PicksScore,
   type PredictionIssue,
+  type PredictionSeason,
   type WeekPrediction,
 } from './prediction-engines/prediction-engine';
 import { selectionErrors, type SelectionError } from './selection-errors';
+import { loadSurvivorWeeks, survivorPicksByEntry, survivorWeeksOf } from '../contests/survivor-standings';
+import { survivorRun } from '../scoring-families/head-to-head/survivor';
 
 export interface PredictionServiceDeps {
   contests: Pick<ContestRepository, 'findById'>;
@@ -78,7 +83,7 @@ export interface PredictionServiceDeps {
   entries: Pick<ContestEntryRepository, 'findByIdWithSquad'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
   field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
   participants: Pick<ParticipantRepository, 'findByIds'>;
   predictions: ContestEntryMatchPredictionRepository;
@@ -132,8 +137,10 @@ export interface GamePicksView {
   entryName: string;
   sportEventId: string;
   selectionType: PredictionSelectionType;
-  /** A pick'em pool's mode; null in a bracket. */
+  /** A pick'em pool's mode; null in a bracket or survivor pool. */
   mode: PickEmMode | null;
+  /** A survivor entry's season (#719); null in the other pools. */
+  survivor: GamePicksSurvivorView | null;
   status: ContestEntryStatus;
   submittedAt: Date | null;
   ownEntry: boolean;
@@ -148,6 +155,13 @@ export interface GamePicksView {
   points: number | null;
   maxPossiblePoints: number | null;
   games: GamePickGame[];
+}
+
+export interface GamePicksSurvivorView {
+  /** The week number that put the entry out; null while it stands. */
+  eliminatedInWeek: number | null;
+  /** The teams, by participant, the entry picked in its other submitted weeks; null to anyone but its own team, as they would show picks not yet revealed. */
+  usedParticipantIds: string[] | null;
 }
 
 interface WeekContext {
@@ -168,6 +182,8 @@ interface WeekContext {
   /** The game whose total points the tiebreaker guesses, among `games`. */
   tiebreakerGame: SportEventMatch | null;
   predictions: ContestEntryMatchPrediction[];
+  /** The entry's other weeks, for an engine that reads them (survivor); else null. */
+  season: PredictionSeason | null;
   ownEntry: boolean;
   now: Date;
 }
@@ -196,6 +212,9 @@ export class PredictionService {
       throw selectionErrors.tiebreakerLocked(context.entry.id);
     }
 
+    if (context.engine.onePickPerEvent && input.picks.length > 1) {
+      throw selectionErrors.onePickRequired(context.entry.id, input.picks.length);
+    }
     const gamesById = new Map(context.games.map((game) => [game.id, game]));
     for (const pick of input.picks) {
       const game = gamesById.get(pick.sportEventMatchId);
@@ -213,6 +232,12 @@ export class PredictionService {
     ]);
     const refused = resolved.stranded.find((pick) => saved.has(pick.sportEventMatchId));
     if (refused) throw selectionErrors.teamNotInGame(refused.sportEventParticipantId, refused.sportEventMatchId);
+    for (const pick of input.picks) this.assertTeamUnused(context, pick.sportEventParticipantId);
+    // A pick a new one replaces (survivor's one pick a week) is cleared only while its game is open.
+    for (const pick of resolved.stranded) {
+      const game = gamesById.get(pick.sportEventMatchId);
+      if (game && !saved.has(game.id)) this.assertGameOpen(context, game);
+    }
     for (const pick of input.picks) {
       if (!context.engine.acceptsConfidence({
         configuration: context.configuration?.configJson,
@@ -274,6 +299,7 @@ export class PredictionService {
       return this.buildView(context);
     }
     this.assertContestTakesPicks(context);
+    this.assertNotEliminated(context);
     if (hasSportEventStarted(context.window, context.now)) {
       throw selectionErrors.weekNotSubmittedInTime(context.entry.id, context.sportEvent.id);
     }
@@ -346,6 +372,12 @@ export class PredictionService {
         );
       case PredictionIssueKind.TIEBREAKER_MISSING:
         return selectionErrors.tiebreakerMissing(context.entry.id);
+      case PredictionIssueKind.ONE_PICK_REQUIRED:
+        return selectionErrors.onePickRequired(context.entry.id, issue.pickedCount);
+      case PredictionIssueKind.TEAM_ALREADY_USED:
+        return selectionErrors.teamAlreadyUsed(context.entry.id, issue.sportEventParticipantId);
+      case PredictionIssueKind.ENTRY_ELIMINATED:
+        return selectionErrors.entryEliminated(context.entry.id, context.season?.eliminatedInWeek ?? 0);
     }
   }
 
@@ -355,7 +387,16 @@ export class PredictionService {
       gameMatchIds: context.games.map((game) => game.id),
       predictions,
       tiebreakerValue,
+      season: context.season,
     });
+  }
+
+  /** A survivor pick names a team the entry has not picked in another week it submitted. */
+  private assertTeamUnused(context: WeekContext, sportEventParticipantId: string): void {
+    const participantId = context.season?.participantIdOf.get(sportEventParticipantId);
+    if (participantId !== undefined && context.season?.usedParticipantIds.has(participantId) === true) {
+      throw selectionErrors.teamAlreadyUsed(context.entry.id, sportEventParticipantId);
+    }
   }
 
   /** The tiebreaker can change while its game's pick can: until a week's last game kicks off, until a bracket starts. */
@@ -390,12 +431,19 @@ export class PredictionService {
   private assertCanChange(context: WeekContext, actorUserId: string | undefined): void {
     this.assertOwner(context, actorUserId);
     this.assertContestTakesPicks(context);
+    this.assertNotEliminated(context);
     if (
       hasSportEventStarted(context.window, context.now)
       && contestEntryEventStatus(context.entry, context.sportEvent.id) !== ContestEntryStatus.SUBMITTED
     ) {
       throw selectionErrors.weekNotSubmittedInTime(context.entry.id, context.sportEvent.id);
     }
+  }
+
+  /** A survivor entry that is out picks no later week. */
+  private assertNotEliminated(context: WeekContext): void {
+    const weekNumber = context.season?.eliminatedInWeek ?? null;
+    if (weekNumber !== null) throw selectionErrors.entryEliminated(context.entry.id, weekNumber);
   }
 
   private assertGameOpen(context: WeekContext, game: SportEventMatch): void {
@@ -442,6 +490,7 @@ export class PredictionService {
       ? contestBracketGames(matches, rules.startsAtRound)
       : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
     const engine = getPredictionEngine(selectionType);
+    const now = this.now();
 
     return {
       contest,
@@ -457,8 +506,38 @@ export class PredictionService {
       games,
       tiebreakerGame: engine.tiebreakerGame({ games, eventStart: sportEvent.startDate }),
       predictions,
+      season: engine.readsEarlierWeeks ? await this.loadSeason(contest, entry, sportEventId, field, now) : null,
       ownEntry: actorUserId !== undefined && memberships.some((membership) => membership.userId === actorUserId),
-      now: this.now(),
+      now,
+    };
+  }
+
+  /**
+   * The entry's other weeks as a survivor week reads them: whether a week before this one put it
+   * out, and the teams it picked in the other weeks it submitted, earlier or later (a later week
+   * can be picked ahead), so no team is picked twice.
+   */
+  private async loadSeason(
+    contest: Contest,
+    entry: ContestEntry,
+    sportEventId: string,
+    field: readonly SportEventParticipant[],
+    now: Date,
+  ): Promise<PredictionSeason> {
+    const weeks = await loadSurvivorWeeks(this.deps, contest, now);
+    const index = weeks.findIndex((week) => week.event.id === sportEventId);
+    const others = weeks.filter((week) => week.event.id !== sportEventId);
+    const predictions = await this.deps.predictions.findByEntriesAndEvents([entry.id], others.map((week) => week.event.id));
+    const picks = survivorPicksByEntry(predictions).get(entry.id) ?? new Map<string, never>();
+    const earlier = survivorRun(survivorWeeksOf(entry, weeks.slice(0, index), picks));
+    const usedParticipantIds = new Set(earlier.usedParticipantIds);
+    for (const week of survivorWeeksOf(entry, weeks.slice(index + 1), picks)) {
+      if (!week.cancelled && week.submitted && week.pickedParticipantId !== null) usedParticipantIds.add(week.pickedParticipantId);
+    }
+    return {
+      usedParticipantIds,
+      eliminatedInWeek: earlier.eliminatedAt === null ? null : earlier.eliminatedAt + 1,
+      participantIdOf: new Map(field.map((row) => [row.id, row.participantId])),
     };
   }
 
@@ -520,6 +599,10 @@ export class PredictionService {
       sportEventId: sportEvent.id,
       selectionType: context.selectionType,
       mode: context.mode,
+      survivor: context.season === null ? null : {
+        eliminatedInWeek: context.season.eliminatedInWeek,
+        usedParticipantIds: ownEntry ? [...context.season.usedParticipantIds] : null,
+      },
       status,
       submittedAt: entry.events.find((event) => event.sportEventId === sportEvent.id)?.submittedAt ?? null,
       ownEntry,

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarCheck, ListOrdered, Network, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
+import { CalendarCheck, ListOrdered, Network, ShieldCheck, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -101,6 +101,10 @@ const FORMAT_CHOICES: Record<CreatableSelectionType, { describe: (participant: S
   [SelectionType.BRACKET]: {
     icon: Network,
     describe: () => 'Pick the winner of every game, all the way to the final: the whole bracket before it starts, or a second-chance bracket from a later round.',
+  },
+  [SelectionType.SURVIVOR]: {
+    icon: ShieldCheck,
+    describe: () => 'Pick one team to win each week, never the same team twice. A loss puts the entry out; the last ones standing win. Add the season\'s other weeks once the contest is created.',
   },
 };
 
@@ -554,7 +558,7 @@ export function CreateContestPage() {
       <SetupSection
         lead={selectionType === SelectionType.BRACKET
           ? `Released events that haven't started, and ${sportDefinition.vocabulary.event.many} under way for a second-chance bracket. Entries close at the ${sportDefinition.vocabulary.eventStart}, or at a second-chance bracket's first game.`
-          : selectionType === SelectionType.PICK_EM
+          : selectionType === SelectionType.PICK_EM || selectionType === SelectionType.SURVIVOR
             ? 'Released weeks that haven\'t started. Choose the first week of the contest; you add the rest of the season from its Events page. Each week closes at its first kickoff.'
             : `Released events that haven't started. Entries close at the ${sportDefinition.vocabulary.eventStart}.`}
         step={1}

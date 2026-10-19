@@ -1,9 +1,10 @@
-import { ContestEntryStatus, PickEmMode } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PickEmMode, SelectionType } from '@poolmaster/shared/domain';
 import type { GamePicksResponse, SaveGamePicksRequest } from '@/lib/api';
 
 /**
  * A pick'em week as its screen reads it (#718): which games the entry can still pick, what is
- * left before it can submit, and the picks a confidence change saves. The server decides every
+ * left before it can submit, and the picks a confidence change saves. A survivor week (#719) is
+ * read on the same screen: one pick, of a team the entry has not used. The server decides every
  * rule; these only shape its answer for the screen.
  */
 
@@ -37,13 +38,45 @@ export function tiebreakerGame(gamePicks: Pick<GamePicksResponse, 'games' | 'tie
 
 /**
  * Whether the entry's own week can still change. A submitted week takes changes on every game
- * that hasn't kicked off; a week still in draft at its first kickoff missed it, and is locked.
+ * that hasn't kicked off; a week still in draft at its first kickoff missed it, and is locked. A
+ * survivor entry that is out changes nothing.
  */
-export function canChangeWeek(gamePicks: Pick<GamePicksResponse, 'games' | 'ownEntry' | 'status'>): boolean {
-  if (!gamePicks.ownEntry || !gamePicks.games.some((game) => !game.locked)) {
+export function canChangeWeek(gamePicks: Pick<GamePicksResponse, 'games' | 'ownEntry' | 'selectionType' | 'status' | 'survivor'>): boolean {
+  if (!gamePicks.ownEntry || isEliminated(gamePicks) || !gamePicks.games.some((game) => !game.locked)) {
+    return false;
+  }
+  // A survivor week's one pick, once its game kicks off, is the week's: no other pick replaces it.
+  if (isSurvivorWeek(gamePicks) && gamePicks.games.some((game) => game.locked && game.pick !== null)) {
     return false;
   }
   return gamePicks.status === ContestEntryStatus.SUBMITTED || !gamePicks.games.some((game) => game.locked);
+}
+
+/** Whether the week is a survivor week (#719): one pick, of a team not used before. */
+export function isSurvivorWeek(gamePicks: Pick<GamePicksResponse, 'selectionType'>): boolean {
+  return gamePicks.selectionType === SelectionType.SURVIVOR;
+}
+
+/** A survivor entry that is out: it picks no later week. */
+export function isEliminated(gamePicks: Pick<GamePicksResponse, 'survivor'>): boolean {
+  return (gamePicks.survivor?.eliminatedInWeek ?? null) !== null;
+}
+
+/** Whether the survivor entry picked the team in another week it submitted, so cannot pick it again. */
+export function isTeamUsed(gamePicks: Pick<GamePicksResponse, 'survivor'>, team: PickEmTeam): boolean {
+  return gamePicks.survivor?.usedParticipantIds?.includes(team.participantId) ?? false;
+}
+
+/** The team a survivor week's pick names, or null with none shown. */
+export function survivorPickTeam(gamePicks: Pick<GamePicksResponse, 'games'>): PickEmTeam | null {
+  for (const game of gamePicks.games) {
+    const pickedId = game.pick?.sportEventParticipantId;
+    const team = gameTeams(game).find((candidate) => candidate !== null && candidate.sportEventParticipantId === pickedId);
+    if (team) {
+      return team;
+    }
+  }
+  return null;
 }
 
 /** The entry's own week, still in draft after its first kickoff: it scores nothing. */
@@ -118,6 +151,9 @@ function confidenceHint(gamePicks: GamePicksResponse): string | null {
 
 /** Why the week cannot be submitted yet, in the order the entry would fix it, or null. */
 export function weekSubmitHint(gamePicks: GamePicksResponse): string | null {
+  if (isSurvivorWeek(gamePicks)) {
+    return gamePicks.pickedCount === 0 ? 'Pick one team to submit.' : null;
+  }
   const stillToPick = gamePicks.gameCount - gamePicks.pickedCount;
   if (stillToPick > 0) {
     return `Pick every game to submit: ${stillToPick} still to pick.`;

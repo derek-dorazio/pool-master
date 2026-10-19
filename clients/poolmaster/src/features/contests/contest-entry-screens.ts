@@ -13,6 +13,8 @@ export const HAS_WEB_ENTRY_SCREEN = {
   [SelectionType.PICK_EM]: true,
   // A bracket entry fills in its bracket on the contest entry page (#721).
   [SelectionType.BRACKET]: true,
+  // A survivor entry picks one team a week on the pick'em week screen (#719).
+  [SelectionType.SURVIVOR]: true,
 } as const satisfies Record<SelectionType, boolean>;
 
 /** The selection types whose entries have a web screen to pick on. */

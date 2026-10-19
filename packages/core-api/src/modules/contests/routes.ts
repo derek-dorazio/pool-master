@@ -200,7 +200,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
         200: schemaRef('ContestLeaderboardResponse'),
         400: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_FORMAT_MISMATCH (a prediction contest: a bracket and a pick\'em pool have their own leaderboards, getBracketLeaderboard and getPickEmLeaderboard), CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event\'s picks are revealed yet, or not the asked-for one\'s), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule\'s settings are not valid for that definition).',
+          description: 'CONTEST_FORMAT_MISMATCH (a prediction contest: a bracket, a pick\'em pool and a survivor pool have their own leaderboards, getBracketLeaderboard, getPickEmLeaderboard and getSurvivorLeaderboard), CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event\'s picks are revealed yet, or not the asked-for one\'s), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule\'s settings are not valid for that definition).',
         },
         404: schemaRef('ErrorEnvelope'),
       },
@@ -251,6 +251,28 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
     },
     preHandler: requireContestLeagueMember,
     handler: handlers.getPickEmLeaderboard,
+  });
+
+  fastify.get('/:contestId/survivor-leaderboard', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Get a survivor contest leaderboard',
+      description:
+        'Returns a survivor contest\'s leaderboard (#719): each entry that submitted at least one week, whether it is still in or the week that put it out, and its weeks survived. An entry picks one team a week, each team once a season; it survives the week when that team wins or its game is cancelled, and goes out after a loss, a tie, or a week not submitted by its first kickoff. A cancelled week counts for nothing. Entries still in come first, then by weeks survived; entries out in the same week share a place. Each week shows the entry\'s outcome and, once its game has kicked off, the team it picked. Read live from the results; once the contest is COMPLETED, the places come from the standings frozen at settlement. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
+      operationId: 'getSurvivorLeaderboard',
+      response: {
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        200: schemaRef('SurvivorLeaderboardResponse'),
+        400: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'CONTEST_FORMAT_MISMATCH (not a survivor contest).',
+        },
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireContestLeagueMember,
+    handler: handlers.getSurvivorLeaderboard,
   });
 
   fastify.post('/:contestId/entries/me', {

@@ -52,8 +52,8 @@ Two readings of this chain have both been held at once, so it is worth stating p
 - **A contest's format says what an entry picks** (#716). A `ROSTER` contest's entries pick a
   lineup of field members (`ContestEntryPick`); a `PREDICTION` contest's entries pick the winner
   of each game of an event (`ContestEntryMatchPrediction`), naming the team, never "home" or
-  "away". The selection type decides the format: `PICK_EM` and `BRACKET` are `PREDICTION`,
-  every other type `ROSTER`.
+  "away". The selection type decides the format: `PICK_EM`, `BRACKET` and `SURVIVOR` are
+  `PREDICTION`, every other type `ROSTER`.
 - **A bracket is one knockout picked to its final** (`BRACKET`, #721). Its contest covers one
   event, and every pick is made before the event starts. A **second-chance bracket** starts at a
   later round (`startsAtRound`, the Sweet 16): it is picked from that round on, and its picks close,
@@ -66,6 +66,9 @@ Two readings of this chain have both been held at once, so it is worth stating p
   Every week needs one to submit. A roster contest's tiebreaker stays on the `ContestEntry`.
 - **A pick'em pick scores by the pool's mode** (#717), not by a scoring definition: 1 point
   straight up, its confidence value in a confidence pool, nothing for a loss or a tie.
+- **A survivor entry plays until it loses** (`SURVIVOR`, #719): one pick a week, each team once
+  a season (by participant, not field row), out after a loss, a tie or a week not submitted by
+  its first kickoff, and out for good. Its score is the weeks it survived; it has no tiebreaker.
 
 The tenant/global split is access rule A11 in `docs/DOMAIN-OPERATIONS.md`.
 

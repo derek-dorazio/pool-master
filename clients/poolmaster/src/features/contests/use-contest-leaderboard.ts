@@ -4,9 +4,11 @@ import {
   getBracketLeaderboard,
   getContestLeaderboard,
   getPickEmLeaderboard,
+  getSurvivorLeaderboard,
   type BracketLeaderboardResponse,
   type ContestLeaderboardResponse,
   type PickEmLeaderboardResponse,
+  type SurvivorLeaderboardResponse,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -79,6 +81,26 @@ export function usePickEmLeaderboardQuery(contestId: string, status: ContestStat
       const response = await getPickEmLeaderboard({ path: { contestId } });
       if (!response.data) {
         throwApiError(response.error, 'Pick\'em leaderboard response is missing data.');
+      }
+      return response.data;
+    },
+    enabled: Boolean(contestId),
+    retry: false,
+    refetchInterval: shouldPollContestEntries(status) ? CONTEST_POLL_INTERVAL_MS : false,
+  });
+}
+
+/**
+ * A survivor contest's leaderboard (#719): who is still in and when each entry went out, on the
+ * same cadence, so a week under way moves as its games are played.
+ */
+export function useSurvivorLeaderboardQuery(contestId: string, status: ContestStatus | null | undefined) {
+  return useQuery({
+    queryKey: QueryKeys.contests.survivorLeaderboard(contestId),
+    queryFn: async (): Promise<SurvivorLeaderboardResponse> => {
+      const response = await getSurvivorLeaderboard({ path: { contestId } });
+      if (!response.data) {
+        throwApiError(response.error, 'Survivor leaderboard response is missing data.');
       }
       return response.data;
     },

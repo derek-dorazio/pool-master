@@ -339,6 +339,7 @@ enum PrismaSelectionType {
   RANDOM_DRAW
   PICK_EM
   BRACKET
+  SURVIVOR
 }
 
 enum PrismaPrizePayoutType {

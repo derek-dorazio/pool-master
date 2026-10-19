@@ -167,6 +167,9 @@ describe('Seeded contest templates and their sport leagues', () => {
         case SelectionType.BRACKET:
           // A bracket preset picks every game to the final: no lineup, no counted scores.
           return [template.templateKey, rules.selectionType];
+        case SelectionType.SURVIVOR:
+          // A survivor preset picks one team a week: no lineup, no counted scores.
+          return [template.templateKey, rules.selectionType];
         default:
           return assertNever(rules, 'selection type');
       }
@@ -281,6 +284,9 @@ describe('Seeded cycling tours and their Top 10 templates', () => {
         case SelectionType.BRACKET:
           // A bracket preset picks every game to the final: no lineup, no counted scores.
           return [template.templateKey, rules.selectionType];
+        case SelectionType.SURVIVOR:
+          // A survivor preset picks one team a week: no lineup, no counted scores.
+          return [template.templateKey, rules.selectionType];
         default:
           return assertNever(rules, 'selection type');
       }
@@ -361,6 +367,9 @@ describe('Seeded running series and their Top 10 templates', () => {
           return [template.templateKey, rules.mode];
         case SelectionType.BRACKET:
           // A bracket preset picks every game to the final: no lineup, no counted scores.
+          return [template.templateKey, rules.selectionType];
+        case SelectionType.SURVIVOR:
+          // A survivor preset picks one team a week: no lineup, no counted scores.
           return [template.templateKey, rules.selectionType];
         default:
           return assertNever(rules, 'selection type');
@@ -523,13 +532,19 @@ describe('Every seeded contest template, whatever its sport', () => {
             return rules.picksPerEntry;
           case SelectionType.PICK_EM:
           case SelectionType.BRACKET:
+          case SelectionType.SURVIVOR:
             // A prediction preset holds no lineup and counts no scores: nothing to compare.
             return null;
           default:
             return assertNever(rules, 'selection type');
         }
       })();
-      if (held === null || rules.selectionType === SelectionType.PICK_EM || rules.selectionType === SelectionType.BRACKET) return [];
+      if (
+        held === null
+        || rules.selectionType === SelectionType.PICK_EM
+        || rules.selectionType === SelectionType.BRACKET
+        || rules.selectionType === SelectionType.SURVIVOR
+      ) return [];
       return rules.countedScores > held ? [`${template.templateKey}: counts ${rules.countedScores} of ${held}`] : [];
     });
 

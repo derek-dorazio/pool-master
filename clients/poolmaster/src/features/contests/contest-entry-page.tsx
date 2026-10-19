@@ -117,7 +117,8 @@ export function ContestEntryPage() {
   if (contestQuery.data?.selectionType === SelectionType.BRACKET) {
     return <BracketEntryPage contest={contestQuery.data} />;
   }
-  if (contestQuery.data?.selectionType === SelectionType.PICK_EM) {
+  // A survivor week is picked on the pick'em week screen (#719).
+  if (contestQuery.data?.selectionType === SelectionType.PICK_EM || contestQuery.data?.selectionType === SelectionType.SURVIVOR) {
     return <PickEmEntryPage contest={contestQuery.data} />;
   }
   return <RosterContestEntryPage />;

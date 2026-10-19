@@ -11,6 +11,7 @@ import {
   RandomDrawContestRulesSchema,
   PickEmContestRulesSchema,
   SelectionType,
+  SurvivorContestRulesSchema,
   Sport,
   TieredContestRulesSchema,
 } from '@poolmaster/shared/domain';
@@ -181,6 +182,7 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType
   RandomDrawContestRulesSchema.extend(persistedConfigurationFields),
   PickEmContestRulesSchema.extend(persistedConfigurationFields),
   BracketContestRulesSchema.extend(persistedConfigurationFields),
+  SurvivorContestRulesSchema.extend(persistedConfigurationFields),
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 

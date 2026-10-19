@@ -2047,6 +2047,34 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
       .rejects.toMatchObject({ code: 'CONTEST_FORMAT_NOT_ALLOWED', statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
+  it('creates a PREDICTION survivor contest on a week with games, storing only its selection type', async () => {
+    const { contestCoreRepo, contestConfigurationRepo, service } = pickEmService({ gameCount: 3 });
+
+    await service.createContest({ leagueId: 'league-1' }, pickEmRequest({
+      name: 'Office Survivor',
+      selectionType: SelectionType.SURVIVOR,
+      configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 },
+    }));
+
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType: SelectionType.SURVIVOR,
+    }));
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      selectionType: SelectionType.SURVIVOR,
+      configJson: { selectionType: SelectionType.SURVIVOR },
+    }));
+  });
+
+  it('refuses a survivor contest on a week with no games with 422 CONTEST_EVENT_HAS_NO_GAMES, writing nothing', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 0 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({
+      selectionType: SelectionType.SURVIVOR,
+      configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 },
+    }))).rejects.toMatchObject({ code: CONTEST_EVENT_HAS_NO_GAMES, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
 });
 
 // #721: a bracket contest is a PREDICTION contest on one knockout event whose every game can be picked.

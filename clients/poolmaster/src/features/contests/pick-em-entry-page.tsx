@@ -33,7 +33,7 @@ import { formatPickProgress, formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestHeader, ContestSubMenu } from './contest-header';
-import { formatPickEmModeName } from './contest-rules';
+import { formatPickEmModeName, formatSelectionTypeName } from './contest-rules';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
   CONTEST_ENTRY_STATUS_TONES,
@@ -47,7 +47,9 @@ import {
   canChangeWeek,
   confidencePicks,
   firstKickoff,
+  isSurvivorWeek,
   missedWeek,
+  survivorPickTeam,
   teamPick,
   weekSubmitHint,
   type PickEmGame,
@@ -66,6 +68,9 @@ const PICK_EM_CODE_MESSAGES: ErrorCodeMessages = {
   PREDICTION_GAME_STARTED: 'That game has kicked off, so its pick is locked.',
   PREDICTION_CLEAR_AFTER_FIRST_KICKOFF: 'The week has started, so a pick can be changed to the other team but not removed.',
   CONTEST_ENTRY_LOCKED: 'The games have kicked off, so this can no longer change.',
+  PREDICTION_ONE_PICK_REQUIRED: 'Pick one team to win this week.',
+  PREDICTION_TEAM_ALREADY_USED: 'You picked that team in another week. Each team can be picked once.',
+  PREDICTION_ENTRY_ELIMINATED: 'This entry is out, so it picks no more weeks.',
 };
 
 /** What the entry has scored, once anyone can see it; a dash before. */
@@ -78,6 +83,10 @@ function formatScore(points: number | null) {
  * weeks. The entry's own week takes a pick on each game, a confidence value in a confidence pool,
  * the tiebreaker on the week's last game, and a submit before the first kickoff; after that its
  * picks lock game by game. Another entry's week shows each pick from its game's kickoff.
+ *
+ * A survivor contest's week (#719) is the same screen with one pick: a tap picks the team, in
+ * place of the entry's other pick; teams used in another week can't be picked, there is no
+ * tiebreaker, and an entry that is out picks no more weeks.
  */
 export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const logger = getLogger().child({ feature: 'pick-em-entry-page' });
@@ -162,6 +171,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       QueryKeys.contestEntries.byContest(contestId),
       QueryKeys.contests.detail(contestId),
       QueryKeys.contests.pickEmLeaderboard(contestId),
+      QueryKeys.contests.survivorLeaderboard(contestId),
     ],
     onError: (error) => logRefusal('pickEm.submit.failed', error),
   });
@@ -196,6 +206,9 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const kickoff = firstKickoff(gamePicks.games);
   const statusLabel = CONTEST_ENTRY_STATUS_LABELS[gamePicks.status];
   const hint = isSubmitted ? null : weekSubmitHint(gamePicks);
+  const isSurvivor = isSurvivorWeek(gamePicks);
+  const eliminatedInWeek = gamePicks.survivor?.eliminatedInWeek ?? null;
+  const survivorTeam = isSurvivor ? survivorPickTeam(gamePicks) : null;
 
   const save = (body: SaveGamePicksRequest) => {
     saveMutation.reset();
@@ -255,6 +268,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
             {contest.name}
             {gamePicks.mode ? ` · ${formatPickEmModeName(gamePicks.mode)}` : ''}
+            {isSurvivor ? ` · ${formatSelectionTypeName(gamePicks.selectionType)}` : ''}
             {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
           </p>
         )}
@@ -271,18 +285,41 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         value={sportEventId}
       />
 
-      {canChange && !isSubmitted && kickoff ? (
-        <Alert data-testid="pick-em-not-submitted-warning" title="Not submitted yet" tone="warning">
-          {`Submit this week before the first kickoff, ${formatDateTimeDisplay(kickoff)}. A week that isn't submitted by then scores nothing.`}
+      {eliminatedInWeek !== null ? (
+        <Alert data-testid="survivor-eliminated" title="Out">
+          {`This entry went out in week ${eliminatedInWeek}, so it picks no more weeks.`}
         </Alert>
       ) : null}
-      {missedWeek(gamePicks) ? (
+      {canChange && !isSubmitted && kickoff ? (
+        <Alert data-testid="pick-em-not-submitted-warning" title="Not submitted yet" tone="warning">
+          {isSurvivor
+            ? `Submit this week before the first kickoff, ${formatDateTimeDisplay(kickoff)}. An entry that hasn't submitted by then is out.`
+            : `Submit this week before the first kickoff, ${formatDateTimeDisplay(kickoff)}. A week that isn't submitted by then scores nothing.`}
+        </Alert>
+      ) : null}
+      {missedWeek(gamePicks) && eliminatedInWeek === null ? (
         <Alert data-testid="pick-em-missed-week">
-          This week wasn&apos;t submitted before its first kickoff, so it scores nothing.
+          {isSurvivor
+            ? 'This week wasn\'t submitted before its first kickoff, so this entry is out.'
+            : 'This week wasn\'t submitted before its first kickoff, so it scores nothing.'}
         </Alert>
       ) : null}
 
       <Tile>
+        {isSurvivor ? (
+          <MetricGrid className="md:grid-cols-2">
+            <MetricTile
+              helperText={canChange ? 'Your pick locks at its game\'s kickoff.' : 'No pick can change now.'}
+              label="Your pick"
+              value={<span data-testid="survivor-pick">{survivorTeam?.name ?? 'None yet'}</span>}
+            />
+            <MetricTile
+              helperText={isSubmitted ? 'This week counts.' : 'Submit before the first kickoff to stay in.'}
+              label="Status"
+              value={<span data-testid="pick-em-status">{statusLabel}</span>}
+            />
+          </MetricGrid>
+        ) : (
         <MetricGrid className="md:grid-cols-4">
           <MetricTile
             helperText={canChange ? 'Each pick locks at its game\'s kickoff.' : 'No pick can change now.'}
@@ -305,17 +342,20 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
             value={<span data-testid="pick-em-max-possible">{formatScore(gamePicks.maxPossiblePoints)}</span>}
           />
         </MetricGrid>
+        )}
       </Tile>
 
       {pickError ? <Alert data-testid="pick-em-pick-error" tone="danger">{pickError}</Alert> : null}
 
       <Tile>
         <h3 className="mb-2 text-xl font-semibold" data-testid="contest-entry-builder-heading">
-          {canChange ? 'Pick each game' : 'Picks'}
+          {canChange ? (isSurvivor ? 'Pick a winner' : 'Pick each game') : 'Picks'}
         </h3>
         {canChange ? (
           <p className="mb-5 text-sm text-muted-foreground">
-            {gamePicks.mode === PickEmMode.CONFIDENCE
+            {isSurvivor
+              ? 'Tap the one team you think wins this week. If it loses or ties, the entry is out. A team you picked in another week can\'t be picked again.'
+              : gamePicks.mode === PickEmMode.CONFIDENCE
               ? `Tap the team you think wins each game, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value.`
               : 'Tap the team you think wins each game. Each correct pick scores 1 point.'}
           </p>
@@ -341,12 +381,14 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="text-xl font-semibold">Submit</h3>
             <span className="text-sm text-muted-foreground" data-testid="pick-em-progress">
-              {formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
+              {isSurvivor ? survivorTeam?.name ?? 'No pick yet' : formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
             </span>
           </div>
           {isSubmitted ? (
             <Alert data-testid="pick-em-submitted" title="Submitted" tone="success">
-              This week counts. You can still change a pick until its game kicks off.
+              {isSurvivor
+                ? 'This week counts. You can still change your pick until its game kicks off.'
+                : 'This week counts. You can still change a pick until its game kicks off.'}
             </Alert>
           ) : (
             <>
