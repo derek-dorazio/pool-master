@@ -106,7 +106,7 @@ afterAll(async () => {
  * Builds the two tournaments and the contest over both, with each team's roster submitted for each
  * tournament. `tag` keeps each test's tour, golfers and league apart.
  */
-async function buildTwoTournamentContest(tag: string) {
+async function buildTwoTournamentContest(tag: string, { memberSkipsOpen = false }: { memberSkipsOpen?: boolean } = {}) {
   const admin = await buildRegisteredUser({ displayName: 'Tour Director' });
   await promoteToRootAdmin(admin);
   const a = admin.client;
@@ -191,10 +191,11 @@ async function buildTwoTournamentContest(tag: string) {
   expect(read.sportEvents.map((event) => [event.sportEventId, event.sequence])).toEqual([[open.eventId, 1], [classic.eventId, 2]]);
 
   // --- Each team picks and submits a roster for each tournament ------------------------------
-  const enterWith = async (client: typeof a, lastTierPick: { open: string; classic: string }) => {
+  const enterWith = async (client: typeof a, lastTierPick: { open: string; classic: string }, skipsOpen = false) => {
     const entry = expectMatchesSchema(ContestEntryResponseSchema, (await enterContest({ client, path: { contestId } })).data).entry;
     expect(entry.events.map((event) => [event.sportEventId, event.status])).toEqual([[open.eventId, 'DRAFT'], [classic.eventId, 'DRAFT']]);
-    for (const [tournament, lastTier] of [[open, lastTierPick.open], [classic, lastTierPick.classic]] as const) {
+    const played = [[open, lastTierPick.open], [classic, lastTierPick.classic]] as const;
+    for (const [tournament, lastTier] of skipsOpen ? played.slice(1) : played) {
       for (const golfer of [...SHARED, lastTier]) {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId: entry.id, participantId: tournament.fieldRowOf(golfer) } });
         expect(pick.response.status).toBe(200);
@@ -207,13 +208,13 @@ async function buildTwoTournamentContest(tag: string) {
   };
   // The commissioner backs Fade in both; the member backs Gimme in both.
   const commissionerEntryId = await enterWith(commissioner.client, { open: 'Fade', classic: 'Fade' });
-  const memberEntryId = await enterWith(member.client, { open: 'Gimme', classic: 'Gimme' });
+  const memberEntryId = await enterWith(member.client, { open: 'Gimme', classic: 'Gimme' }, memberSkipsOpen);
 
-  // Each entry lists a status per tournament, both submitted.
+  // Each entry lists a status per tournament, each submitted unless the member skipped the first.
   const listed = expectMatchesSchema(ContestEntryListResponseSchema, (await listContestEntries({ client: commissioner.client, path: { contestId } })).data);
   expect(Object.fromEntries(listed.entries.map((entry) => [entry.id, entry.events.map((event) => [event.sportEventId, event.status])]))).toEqual({
     [commissionerEntryId]: [[open.eventId, 'SUBMITTED'], [classic.eventId, 'SUBMITTED']],
-    [memberEntryId]: [[open.eventId, 'SUBMITTED'], [classic.eventId, 'SUBMITTED']],
+    [memberEntryId]: [[open.eventId, memberSkipsOpen ? 'DRAFT' : 'SUBMITTED'], [classic.eventId, 'SUBMITTED']],
   });
 
   // Plays the tournament and posts every score, then completes it, or calls it off after the scores.
@@ -287,6 +288,39 @@ describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
     const totals = await getFunctionalPrisma().contestEntryStanding.findMany({ where: { contestId } });
     expect(Object.fromEntries(totals.map((standing) => [standing.contestEntryId, standing.totalScore])))
       .toEqual({ [memberEntryId]: -6, [commissionerEntryId]: -3 });
+  }, 60_000);
+
+  // #714: an entry that misses a tournament scores there as if each of its four counted golfers
+  // shot 80 every round: 4 x (80 - 72) = +32 for the one round. Missing it never helps.
+  it('scores the tournament an entry skipped as four counted golfers at 80 a round, so winning the second still leaves it behind on the sum', async () => {
+    const { open, classic, contestId, member, commissionerEntryId, memberEntryId, playTournament, standingsOf } =
+      await buildTwoTournamentContest(' missed', { memberSkipsOpen: true });
+
+    await playTournament(open.eventId, OPEN_SCORES);
+
+    const eventStandings = await getFunctionalPrisma().contestEntryEventStanding.findMany({ where: { contestId } });
+    expect(Object.fromEntries(eventStandings.map((standing) => [standing.contestEntryId, [standing.sportEventId, standing.totalScore, standing.displayPosition, standing.scoredPickCount]])))
+      .toEqual({
+        [commissionerEntryId]: [open.eventId, -3, '1', 6],
+        [memberEntryId]: [open.eventId, 32, '2', 0],
+      });
+    // Midway, the member is on the board by the missed tournament alone, with no picks to show.
+    const midway = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId }, query: { sportEventId: open.eventId } })).data);
+    expect(standingsOf(midway.entries)).toEqual({
+      [commissionerEntryId]: { totalScore: -3, displayPosition: '1', events: { [open.eventId]: [-3, '1'] } },
+      [memberEntryId]: { totalScore: 32, displayPosition: '2', events: { [open.eventId]: [32, '2'] } },
+    });
+    expect(expectDefined(midway.entries.find((entry) => entry.entryId === memberEntryId)).picks).toEqual([]);
+
+    // Gimme's -6 wins the second for the member, but +32 - 6 = +26 trails the commissioner's -3.
+    await playTournament(classic.eventId, CLASSIC_SCORES);
+
+    expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
+    const settled = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId }, query: { sportEventId: classic.eventId } })).data);
+    expect(standingsOf(settled.entries)).toEqual({
+      [commissionerEntryId]: { totalScore: -3, displayPosition: '1', events: { [open.eventId]: [-3, '1'], [classic.eventId]: [0, '2'] } },
+      [memberEntryId]: { totalScore: 26, displayPosition: '2', events: { [open.eventId]: [32, '2'], [classic.eventId]: [-6, '1'] } },
+    });
   }, 60_000);
 
   it('completes the contest on the first tournament alone when the second is called off after scores were posted, the second adding nothing to any total', async () => {
