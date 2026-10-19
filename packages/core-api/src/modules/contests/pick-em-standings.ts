@@ -12,6 +12,7 @@ import {
   contestEntryEventTiebreaker,
   type PickEmMode,
   type SportEvent,
+  type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { rankPredictionStandings, type BracketScore } from '../scoring-families/head-to-head/bracket-picks';
 import { gameTotalPoints, scoreGamePicks, weekTiebreakerGame } from '../scoring-families/head-to-head/game-picks';
@@ -59,23 +60,45 @@ export async function loadPickEmMode(
   return rules.mode;
 }
 
+/** The week's games as they count (#743, #762): what both the week's standings and the season leaderboard read. */
+export interface PickEmWeekGames {
+  eventCancelled: boolean;
+  /** Cancelled games left out; none when the week was cancelled. */
+  games: SportEventMatch[];
+  /** The tiebreaker game's combined score once it is played. */
+  tiebreakerTotalPoints: number | null;
+}
+
 /**
- * The contest's entries that submitted the week, scored and ranked. A cancelled game is not one of
- * the week's games, so its picks score nothing; a cancelled week counts for nothing (#743).
+ * The week's games out of its matches. A cancelled game is not one of the week's games, so its
+ * picks score nothing; a cancelled week counts for nothing (#743).
+ */
+export function pickEmWeekGames(
+  sportEvent: Pick<SportEvent, 'status' | 'startDate'>,
+  matches: readonly SportEventMatch[],
+): PickEmWeekGames {
+  const eventCancelled = sportEvent.status === SportEventStatus.CANCELLED;
+  const games = eventCancelled ? [] : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
+  return { eventCancelled, games, tiebreakerTotalPoints: gameTotalPoints(weekTiebreakerGame(games, sportEvent.startDate)) };
+}
+
+/**
+ * The contest's entries that submitted the week, scored against its games and ranked. A caller
+ * that already read the week's matches passes them in, so they are not read again.
  */
 export async function loadPickEmWeekStandings(
   deps: PickEmStandingsReadDeps,
   contestId: string,
   sportEvent: Pick<SportEvent, 'id' | 'status' | 'startDate'>,
   mode: PickEmMode,
+  weekMatches?: readonly SportEventMatch[],
 ): Promise<PickEmWeekStandings> {
   const sportEventId = sportEvent.id;
-  const eventCancelled = sportEvent.status === SportEventStatus.CANCELLED;
   const [entries, matches] = await Promise.all([
     deps.entries.findByContestWithSquad(contestId, { submittedFor: sportEventId }),
-    deps.matches.findBySportEvent(sportEventId),
+    weekMatches ?? deps.matches.findBySportEvent(sportEventId),
   ]);
-  const games = eventCancelled ? [] : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
+  const { eventCancelled, games, tiebreakerTotalPoints: tiebreakerTotal } = pickEmWeekGames(sportEvent, matches);
   const predictions = await deps.predictions.findByEntriesAndEvent(entries.map((entry) => entry.id), sportEventId);
 
   const picksByEntry = new Map<string, typeof predictions>();
@@ -90,7 +113,6 @@ export async function loadPickEmWeekStandings(
     score: scoreGamePicks(games, picksByEntry.get(entry.id) ?? [], mode),
     tiebreakerValue: contestEntryEventTiebreaker(entry, sportEventId),
   }));
-  const tiebreakerTotal = gameTotalPoints(weekTiebreakerGame(games, sportEvent.startDate));
   const ranks = new Map(rankPredictionStandings(
     scored.map(({ entry, score, tiebreakerValue }) => ({ entryId: entry.id, points: score.points, tiebreakerValue })),
     tiebreakerTotal,

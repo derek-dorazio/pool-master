@@ -196,7 +196,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
     entries: createMockEntryRepo(),
     picks: fakeContestEntryPickRepo(),
     predictions: { findByEntriesAndEvent: jest.fn().mockResolvedValue([]) },
-    matches: { findBySportEvent: jest.fn().mockResolvedValue([]) },
+    matches: { findBySportEvent: jest.fn().mockResolvedValue([]), findBySportEvents: jest.fn().mockResolvedValue([]) },
     standings: fakeContestEntryStandingRepo(),
     eventStandings: fakeContestEntryEventStandingRepo(),
     memberships: createMockMembershipRepo(),

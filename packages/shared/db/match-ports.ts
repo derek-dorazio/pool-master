@@ -66,6 +66,8 @@ export interface MatchResultApply {
 export interface SportEventMatchRepository {
   /** The event's matches in match-number order. */
   findBySportEvent(sportEventId: string): Promise<SportEventMatch[]>;
+  /** Several events' matches in one read (#762), each event's in match-number order. */
+  findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventMatch[]>;
   /** Replaces every match of the event with `matches`, all or none. Every round named must exist. */
   replaceBracket(sportEventId: string, matches: readonly SportEventMatchWrite[]): Promise<void>;
   update(id: string, patch: SportEventMatchPatch): Promise<void>;

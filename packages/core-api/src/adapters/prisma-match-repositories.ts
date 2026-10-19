@@ -18,10 +18,15 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
   constructor(private readonly prisma: PrismaClient) {}
 
   async findBySportEvent(sportEventId: string): Promise<SportEventMatch[]> {
+    return this.findBySportEvents([sportEventId]);
+  }
+
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventMatch[]> {
+    if (sportEventIds.length === 0) return [];
     const rows = await this.prisma.sportEventMatch.findMany({
-      where: { sportEventId },
+      where: { sportEventId: { in: [...sportEventIds] } },
       include: { sportEventRound: { select: { roundNumber: true } } },
-      orderBy: { matchNumber: 'asc' },
+      orderBy: [{ sportEventId: 'asc' }, { matchNumber: 'asc' }],
     });
     return rows.map(({ sportEventRound, sportEventRoundId: _roundId, ...row }) => ({
       ...row,

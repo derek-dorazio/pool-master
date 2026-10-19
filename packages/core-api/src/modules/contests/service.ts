@@ -29,6 +29,7 @@ import type {
   ContestEntry,
   LeagueMembership,
   SportEvent,
+  SportEventMatch,
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import {
@@ -58,7 +59,7 @@ import {
 import type { BracketLeaderboardEntryRow, BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
 import type { PickEmLeaderboardEntryRow, PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
 import { BracketScoringUnavailableError, loadBracketStandings } from './bracket-standings';
-import { loadPickEmMode, loadPickEmWeekStandings } from './pick-em-standings';
+import { loadPickEmMode, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
 import {
   applySettledContestStandings,
   applySettledContestTotals,
@@ -169,7 +170,7 @@ export interface ContestServiceDeps {
   entries: ContestEntryRepository;
   picks: ContestEntryPickRepository;
   predictions: Pick<ContestEntryMatchPredictionRepository, 'findByEntriesAndEvent'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
   standings: ContestEntryStandingRepository;
   eventStandings: ContestEntryEventStandingRepository;
   memberships: LeagueMembershipRepository;
@@ -674,16 +675,28 @@ export class ContestService {
       this.deps.eventStandings.findByContest(contestId),
     ]);
     const counted = entries.filter(hasSubmittedAnyEvent);
+    // Every week's games in one read (#762): a week's game count and tiebreaker total need no more.
+    const matchesByEvent = new Map<string, SportEventMatch[]>();
+    for (const match of await this.deps.matches.findBySportEvents(events.map((event) => event.id))) {
+      const weekMatches = matchesByEvent.get(match.sportEventId);
+      if (weekMatches) weekMatches.push(match);
+      else matchesByEvent.set(match.sportEventId, [match]);
+    }
 
     const weeks = await Promise.all(events.map(async (event) => {
-      const live = await loadPickEmWeekStandings(this.deps, contestId, event, mode);
+      const weekMatches = matchesByEvent.get(event.id) ?? [];
+      const games = pickEmWeekGames(event, weekMatches);
       const frozen = frozenWeeks.filter((standing) => standing.sportEventId === event.id);
       const started = areEventPicksRevealed(contest, event, now);
       // A week settles by freezing its submitted entries; a cancelled week, or a completed one no
       // entry submitted, has none to freeze and counts as settled as it stands.
       const settled = frozen.length > 0
-        || event.status === SportEventStatus.CANCELLED
-        || (event.status === SportEventStatus.COMPLETED && live.entries.length === 0);
+        || games.eventCancelled
+        || (event.status === SportEventStatus.COMPLETED
+          && !entries.some((entry) => contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED));
+      // Only a week under way is scored live: a settled week answers from its frozen standings,
+      // and one not started shows no points (#762).
+      const live = started && !settled ? await loadPickEmWeekStandings(this.deps, contestId, event, mode, weekMatches) : null;
       const cells = new Map<string, { points: number | null; position: number | null; displayPosition: string | null }>(
         settled
           ? frozen.map((standing) => [standing.contestEntryId, {
@@ -691,16 +704,14 @@ export class ContestService {
             position: standing.position,
             displayPosition: standing.displayPosition,
           }])
-          : started && !live.eventCancelled
-            ? live.entries.map((standing) => [standing.entry.id, {
-              points: standing.score.points,
-              position: standing.position,
-              displayPosition: standing.displayPosition,
-            }])
-            : [],
+          : (live?.entries ?? []).map((standing) => [standing.entry.id, {
+            points: standing.score.points,
+            position: standing.position,
+            displayPosition: standing.displayPosition,
+          }]),
       );
       const winnerEntryIds = settled ? frozen.filter((standing) => standing.position === 1).map((standing) => standing.contestEntryId) : [];
-      return { event, live, started, settled, cells, winnerEntryIds };
+      return { event, games, started, settled, cells, winnerEntryIds };
     }));
 
     const totals = new Map(rankContestTotals(
@@ -750,15 +761,15 @@ export class ContestService {
     return {
       contestId,
       mode,
-      weeks: weeks.map(({ event, live, started, settled, winnerEntryIds }) => ({
+      weeks: weeks.map(({ event, games, started, settled, winnerEntryIds }) => ({
         sportEventId: event.id,
         name: event.name,
         startDate: event.startDate,
         status: event.status,
         started,
         settled,
-        gameCount: live.gameCount,
-        tiebreakerTotalPoints: live.tiebreakerTotalPoints,
+        gameCount: games.games.length,
+        tiebreakerTotalPoints: games.tiebreakerTotalPoints,
         winnerEntryIds,
       })),
       entries: rows,

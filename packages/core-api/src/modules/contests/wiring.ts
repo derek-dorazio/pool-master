@@ -27,7 +27,11 @@ import { ContestSettlementService } from './contest-settlement-service';
 import type { BracketStandingsReadDeps } from './bracket-standings';
 import { ContestService } from './service';
 
-function createContestLeaderboardReadDeps(prisma: PrismaClient, logger?: FastifyBaseLogger): BracketStandingsReadDeps {
+/** The bracket and pick'em reads, plus the batched match read the pick'em season leaderboard takes (#762). */
+function createContestLeaderboardReadDeps(
+  prisma: PrismaClient,
+  logger?: FastifyBaseLogger,
+): BracketStandingsReadDeps & { matches: PrismaSportEventMatchRepository } {
   return {
     eventParticipants: createSportEventParticipantService(prisma, logger),
     configurations: new PrismaContestConfigurationRepository(prisma),
