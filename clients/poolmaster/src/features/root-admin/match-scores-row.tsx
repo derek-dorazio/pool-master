@@ -38,6 +38,8 @@ export function MatchScoresRow({
   const final: MomentScore = match.status === MatchStatus.COMPLETED && match.homeScore !== null && match.awayScore !== null
     ? { homeScore: match.homeScore, awayScore: match.awayScore }
     : null;
+  // A result entered with the winner buttons alone has a winner but no final score.
+  const winnerOnly = match.status === MatchStatus.COMPLETED && final === null;
 
   return (
     <tr className="align-top" data-testid={`root-admin-bracket-scores-${match.matchNumber}`}>
@@ -54,11 +56,21 @@ export function MatchScoresRow({
                 label={`End of ${periods.label.one} ${periodNumber}`}
                 match={match}
                 moment={periodNumber}
+                empty="Not entered"
                 saved={saved ? { homeScore: saved.homeScore, awayScore: saved.awayScore } : null}
               />
             );
           })}
-          <ScoreMoment away={away} context={context} home={home} label="Final, overtime included" match={match} moment="final" saved={final} />
+          <ScoreMoment
+            away={away}
+            context={context}
+            empty={winnerOnly ? 'Winner entered, no score' : 'Not entered'}
+            home={home}
+            label="Final, overtime included"
+            match={match}
+            moment="final"
+            saved={final}
+          />
         </div>
       </td>
     </tr>
@@ -73,6 +85,7 @@ function ScoreMoment({
   home,
   away,
   saved,
+  empty,
   context,
 }: {
   match: SportEventMatchDto;
@@ -81,6 +94,8 @@ function ScoreMoment({
   home: string;
   away: string;
   saved: MomentScore;
+  /** What the moment reads while it has no score. */
+  empty: string;
   context: BracketContext;
 }) {
   const [editing, setEditing] = useState(false);
@@ -165,7 +180,7 @@ function ScoreMoment({
       ) : (
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <span className={saved ? 'text-sm' : 'text-sm text-muted-foreground'} data-testid={`${testId}-value`}>
-            {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}` : 'Not entered'}
+            {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}` : empty}
           </span>
           <Button
             data-testid={`${testId}-edit`}

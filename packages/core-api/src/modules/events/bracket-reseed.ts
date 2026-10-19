@@ -61,7 +61,9 @@ export function roundPlacementBlocker(bracket: readonly SportEventMatch[], round
       reason: `match${unfinished.length === 1 ? '' : 'es'} ${unfinished.map((match) => match.matchNumber).join(', ')} of round ${roundNumber - 1} ${unfinished.length === 1 ? 'has' : 'have'} no result yet`,
     };
   }
-  const started = bracket.filter((match) => match.roundNumber === roundNumber && match.status !== MatchStatus.SCHEDULED);
+  // A game with a quarter score (#772) has started, though its status may still read SCHEDULED.
+  const started = bracket.filter((match) => match.roundNumber === roundNumber
+    && (match.status !== MatchStatus.SCHEDULED || match.periodScores.length > 0));
   if (started.length > 0) {
     return {
       code: 'BRACKET_ROUND_ALREADY_PLAYED',

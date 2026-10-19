@@ -226,7 +226,7 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
     await userEvent.click(await screen.findByTestId('root-admin-bracket-winner-1-AWAY'));
 
     expect(await screen.findByTestId('root-admin-bracket-error-1')).toHaveTextContent(
-      "This game's winner has already played game 3. Clear that result first.",
+      "This game's winner is already in game 3, which has a score. Clear game 3's score first.",
     );
   });
 
@@ -402,6 +402,13 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       expect(screen.getByTestId('root-admin-bracket-score-1-3-value')).toHaveTextContent('Not entered');
       expect(screen.queryByTestId('root-admin-bracket-score-1-4')).not.toBeInTheDocument();
       expect(screen.getByTestId('root-admin-bracket-score-1-final-value')).toHaveTextContent('Vermont 29, Duke 13');
+    });
+
+    it('says a game finished with its winner alone has a winner entered but no final score', async () => {
+      seed([superBowl({ status: 'COMPLETED', winnerSide: 'AWAY' })], { event: playoffs });
+      renderPage();
+
+      expect(await screen.findByTestId('root-admin-bracket-score-1-final-value')).toHaveTextContent('Winner entered, no score');
     });
 
     it('saves a quarter\'s score and clears one on request, reloading the games', async () => {

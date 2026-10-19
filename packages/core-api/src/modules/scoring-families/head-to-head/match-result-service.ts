@@ -358,10 +358,14 @@ export class MatchResultService {
 
   private assertNextMatchOpen(sportEventId: string, bracket: readonly SportEventMatch[], match: SportEventMatch): void {
     const next = bracket.find((candidate) => candidate.id === match.advancesToMatchId) ?? placementOf(bracket, match)?.match;
-    if (next?.status === MatchStatus.COMPLETED) {
-      this.deps.logger?.warn({ sportEventId, matchNumber: match.matchNumber, nextMatchNumber: next.matchNumber }, 'Refused a match result change after the next match was decided');
+    // A quarter score belongs to the two teams playing (#772), so a next match with one is locked
+    // as one with a result is: changing who plays it would leave the score on another pairing.
+    if (next && (next.status === MatchStatus.COMPLETED || next.periodScores.length > 0)) {
+      this.deps.logger?.warn({ sportEventId, matchNumber: match.matchNumber, nextMatchNumber: next.matchNumber }, 'Refused a match result change after the next match was decided or scored');
       throw new SportEventError(
-        `Match ${match.matchNumber}'s winner already played match ${next.matchNumber}, which has a result: clear match ${next.matchNumber}'s result first.`,
+        next.status === MatchStatus.COMPLETED
+          ? `Match ${match.matchNumber}'s winner already played match ${next.matchNumber}, which has a result: clear match ${next.matchNumber}'s result first.`
+          : `Match ${match.matchNumber}'s winner is playing match ${next.matchNumber}, which has scores entered: clear them first.`,
         'SPORT_EVENT_MATCH_RESULT_LOCKED',
         409,
       );

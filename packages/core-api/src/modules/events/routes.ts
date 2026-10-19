@@ -637,7 +637,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     required: ['eventId', 'matchNumber'],
     properties: { eventId: uuid, matchNumber: { type: 'integer', minimum: 1 } },
   } as const;
-  const MATCH_RESULT_LOCKED = '409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result: clear that result first.';
+  const MATCH_RESULT_LOCKED = '409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first.';
 
   fastify.put('/:eventId/bracket/matches/:matchNumber/result', {
     ...write,
@@ -724,7 +724,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
   });
 
   const ROUND_REFUSALS = '422 BRACKET_NOT_RESEEDED when the event\'s league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. '
-    + '409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started.';
+    + '409 BRACKET_ROUND_NOT_FINISHED while a match of the round before has no result; 409 BRACKET_ROUND_ALREADY_PLAYED once a match of the round has started or has a period score.';
 
   fastify.get('/:eventId/bracket/rounds/:roundNumber/reseed', {
     ...write,
