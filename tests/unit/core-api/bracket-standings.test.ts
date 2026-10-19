@@ -17,6 +17,7 @@ import {
   SelectionType,
   SportEventStatus,
   UpsetBonusRule,
+  contestEntryEventTiebreaker,
   parseContestScoringSettings,
   type ContestEntry,
   type ParticipantContestScoringRule,
@@ -85,8 +86,12 @@ function setup(options: { rules?: (configurationId: string) => ParticipantContes
     const squad = world.addSquad(league.id, name);
     const entry: ContestEntry = {
       id: `entry-${name.toLowerCase()}`, contestId: contest.id, squadId: squad.id, entryNumber, name,
-      events: [{ sportEventId: sportEvent.id, status: submitted ? ContestEntryStatus.SUBMITTED : ContestEntryStatus.DRAFT }],
-      tiebreakerValue, createdAt: T0, updatedAt: T0,
+      events: [{
+        sportEventId: sportEvent.id,
+        status: submitted ? ContestEntryStatus.SUBMITTED : ContestEntryStatus.DRAFT,
+        ...(tiebreakerValue !== null && { tiebreakerValue }),
+      }],
+      createdAt: T0, updatedAt: T0,
     };
     world.entries.set(entry.id, entry);
     for (const [matchNumber, team] of picks) {
@@ -368,6 +373,6 @@ describe('ContestService — roster reads and writes a prediction contest refuse
 
     expect(error).toBeInstanceOf(ContestEntryOperationError);
     expect(error).toMatchObject({ code: 'CONTEST_FORMAT_MISMATCH' });
-    expect(expectDefined(context.world.entries.get('entry-alice')).tiebreakerValue).toBe(140);
+    expect(contestEntryEventTiebreaker(expectDefined(context.world.entries.get('entry-alice')), context.sportEvent.id)).toBe(140);
   });
 });

@@ -24,7 +24,7 @@ export const PredictionIssueKind = {
   WEEK_INCOMPLETE: 'WEEK_INCOMPLETE',
   /** A confidence pool's values are not 1 to the week's game count, each used once. */
   CONFIDENCE_INVALID: 'CONFIDENCE_INVALID',
-  /** A bracket has no guess of the final's total points (#721). */
+  /** No guess of the tiebreaker game's total points: a bracket's final (#721), a week's last game (#717). */
   TIEBREAKER_MISSING: 'TIEBREAKER_MISSING',
 } as const;
 export type PredictionIssueKind = (typeof PredictionIssueKind)[keyof typeof PredictionIssueKind];
@@ -51,8 +51,13 @@ export interface PredictionEngine {
   readonly selectionType: PredictionSelectionType;
   /** When a pick closes and is revealed to the league: at its game's kickoff, or at the event's start. */
   readonly pickWindow: PickWindow;
-  /** Whether an entry gives a tiebreaker with its picks, and needs one to submit. */
-  readonly takesTiebreaker: boolean;
+
+  /**
+   * The game whose total points the entry's tiebreaker guesses (#717): a bracket's final, a week's
+   * last game by kickoff; null while there is none. The tiebreaker locks, and is revealed, with
+   * that game's pick, and every entry gives one to submit.
+   */
+  tiebreakerGame(input: { games: readonly SportEventMatch[]; eventStart: Date }): SportEventMatch | null;
 
   /**
    * The teams each game offers the entry, and which of its picks stand: the game's own two teams
@@ -78,9 +83,10 @@ export interface PredictionEngine {
 
   /**
    * How the entry's standing picks score against the games' results so far, under the contest's
-   * scoring; null where the type is not scored yet (weekly pools score with #717).
+   * rules and scoring; null where they cannot score it.
    */
   scorePicks(input: {
+    configuration: ContestSelectionConfig | undefined;
     games: readonly SportEventMatch[];
     predictions: readonly WeekPrediction[];
     seedOf: ReadonlyMap<string, number | null>;

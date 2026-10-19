@@ -4,7 +4,7 @@
  *
  * As the world does, each repository mirrors its Prisma adapter: the picks come back in game
  * order, a save is all or none and stamps the week's status, and the tiebreaker is written to the
- * entry in the same change. A defect in the adapter's query itself still needs a real-database test.
+ * entry's row for the event in the same change (#717). A defect in the adapter's query itself still needs a real-database test.
  *
  * Scaffolding only: no assertions and no test-specific data here.
  */
@@ -15,6 +15,7 @@ import type {
   SportEventParticipantRepository,
 } from '@poolmaster/shared/db';
 import {
+  ContestEntryStatus,
   MatchStatus,
   ParticipantStatus,
   type ContestEntryMatchPrediction,
@@ -184,11 +185,20 @@ export class InMemoryGamePicks {
             updatedAt: when,
           });
         }
-        if (tiebreakerValue !== undefined) {
-          await this.world.entryRepo().update(contestEntryId, { tiebreakerValue });
-        }
         if (eventStatus !== null) {
           await this.world.entryRepo().setEventStatus(contestEntryId, sportEventId, eventStatus, when);
+        }
+        if (tiebreakerValue !== undefined) {
+          // On the entry's row for the event, created as a draft when it has none.
+          const entry = expectDefined(this.world.entries.get(contestEntryId));
+          const row = entry.events.find((event) => event.sportEventId === sportEventId) ?? { sportEventId, status: ContestEntryStatus.DRAFT };
+          this.world.entries.set(contestEntryId, {
+            ...entry,
+            events: [
+              ...entry.events.filter((event) => event.sportEventId !== sportEventId),
+              { ...row, tiebreakerValue: tiebreakerValue ?? undefined },
+            ],
+          });
         }
       },
     };

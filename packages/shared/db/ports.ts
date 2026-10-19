@@ -399,7 +399,7 @@ export interface ContestEntryMatchPredictionSave {
   clearedMatchIds: readonly string[];
   /** The entry's status for the event after the change, when it changes; stamped as `setEventStatus` does. */
   eventStatus: ContestEntryStatus | null;
-  /** The entry's tiebreaker guess after the change, when it changes (a bracket's final total, #721). */
+  /** The entry's tiebreaker guess for the event after the change, when it changes (#717): kept on its row for the event. */
   tiebreakerValue?: number | null;
   at: Date;
 }

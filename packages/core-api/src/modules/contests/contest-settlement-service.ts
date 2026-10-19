@@ -5,7 +5,8 @@ import type {
   ContestRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { ContestFormat, ContestStatus, SelectionType, SportEventStatus, type Contest, type SportEvent } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, SportEventStatus, type Contest, type PickEmMode, type SportEvent } from '@poolmaster/shared/domain';
+import { loadPickEmMode, loadPickEmWeekStandings, PickEmRulesMissingError } from './pick-em-standings';
 import {
   BracketScoringUnavailableError,
   loadBracketStandings,
@@ -15,7 +16,6 @@ import {
   buildContestEntryStanding,
   rankContestEntryStandings,
   rankContestTotals,
-  type ContestCountingRule,
   resolveContestCountingRule,
   resolveContestScoringDefinition,
   type ParticipantScore,
@@ -124,10 +124,13 @@ export class ContestSettlementService {
         }
         continue;
       }
-      if (contest.contestFormat === ContestFormat.PREDICTION) {
-        // Weekly game picks are scored against the games' results, which settlement does not do
-        // yet (#717); the contest stays ACTIVE with its picks kept until it can.
-        this.logger.info({ contestId: contest.id, sportEventId }, 'Left a prediction contest unsettled: game picks are not scored yet');
+      if (contest.selectionType === SelectionType.PICK_EM) {
+        const settled = await this.settlePickEmWeek(contest, sportEvent, completedAt);
+        if (settled) {
+          contestsSettled++;
+          standingsUpserted += settled.standingsUpserted;
+          if (settled.completed) contestsCompleted++;
+        }
         continue;
       }
       const configuration = await loadContestScoringConfiguration(this.deps, contest.id);
@@ -194,7 +197,7 @@ export class ContestSettlementService {
         }, 'Settled one event of a contest whose other events are still to finish');
         continue;
       }
-      standingsUpserted += await this.settleContestTotals(contest, countingRule, scoringDefinition.direction, completedAt);
+      standingsUpserted += await this.settleContestTotals(contest, countingRule.count, scoringDefinition.direction, completedAt);
 
       const completed = await this.deps.contests.transitionStatus(contest.id, {
         from: SETTLEABLE,
@@ -278,6 +281,65 @@ export class ContestSettlementService {
     return { standingsUpserted: standings.entries.length, completed };
   }
 
+  /**
+   * Settles one week of a pick'em contest (#717): each submitted entry's points and place for the
+   * week, frozen as its event standing, where place 1 is the week's winner. A week settles once:
+   * a result corrected after it changes nothing. When the contest's last week settles, the season
+   * totals are summed and ranked into contest standings and the contest is COMPLETED. A cancelled
+   * week counts for nothing (#743). Answers what it wrote, or null when the contest's rules are not
+   * pick'em rules, which is skipped and logged.
+   */
+  private async settlePickEmWeek(
+    contest: Contest,
+    sportEvent: SportEvent,
+    completedAt: Date,
+  ): Promise<{ standingsUpserted: number; completed: boolean } | null> {
+    const sportEventId = sportEvent.id;
+    let mode: PickEmMode;
+    try {
+      mode = await loadPickEmMode(this.deps, contest.id);
+    } catch (error) {
+      if (!(error instanceof PickEmRulesMissingError)) throw error;
+      this.logger.error({ contestId: contest.id, sportEventId }, 'Skipped pick\'em settlement because the contest carries no pick\'em rules');
+      return null;
+    }
+    const settledWeeks = await this.deps.eventStandings.findByContest(contest.id);
+    if (sportEvent.status !== SportEventStatus.CANCELLED && !settledWeeks.some((standing) => standing.sportEventId === sportEventId)) {
+      const week = await loadPickEmWeekStandings(this.deps, contest.id, sportEvent, mode);
+      for (const standing of week.entries) {
+        await this.deps.eventStandings.upsert({
+          contestId: contest.id,
+          contestEntryId: standing.entry.id,
+          sportEventId,
+          position: standing.position,
+          displayPosition: standing.displayPosition,
+          // Every pick of the week counts: the limit is its game count, and a pick is scored once decided.
+          countingPickLimit: week.gameCount,
+          scoredPickCount: standing.score.decidedPickCount,
+          asOf: completedAt,
+          settledAt: completedAt,
+          totalScore: standing.score.points,
+        });
+      }
+      this.logger.info({ contestId: contest.id, sportEventId, entryCount: week.entries.length }, 'Settled one week of a pick\'em contest');
+    }
+    if (!(await this.allEventsFinished(contest))) {
+      return { standingsUpserted: 0, completed: false };
+    }
+    const weeks = await this.deps.eventStandings.findByContest(contest.id);
+    // The season counts every game of its settled weeks.
+    const gameCountByWeek = new Map(weeks.map((standing) => [standing.sportEventId, standing.countingPickLimit]));
+    const seasonGameCount = [...gameCountByWeek.values()].reduce((sum, count) => sum + count, 0);
+    const standingsUpserted = await this.settleContestTotals(contest, seasonGameCount, 'HIGHER_IS_BETTER', completedAt);
+    const completed = await this.deps.contests.transitionStatus(contest.id, {
+      from: SETTLEABLE,
+      to: ContestStatus.COMPLETED,
+      endsAt: completedAt,
+    });
+    this.logger.info({ contestId: contest.id, sportEventId, standingsUpserted, completed }, 'Settled a pick\'em contest\'s season after its last week');
+    return { standingsUpserted, completed };
+  }
+
   /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */
   private async allEventsFinished(contest: Contest): Promise<boolean> {
     const events = await this.deps.sportEvents.findByIds(contest.sportEventIds);
@@ -292,7 +354,7 @@ export class ContestSettlementService {
    */
   private async settleContestTotals(
     contest: Contest,
-    countingRule: ContestCountingRule,
+    countingPickLimit: number,
     direction: Parameters<typeof rankContestTotals>[2],
     completedAt: Date,
   ): Promise<number> {
@@ -322,7 +384,7 @@ export class ContestSettlementService {
         contestEntryId: total.entryId,
         position: total.position,
         displayPosition: total.displayPosition,
-        countingPickLimit: countingRule.count,
+        countingPickLimit,
         scoredPickCount: total.scoredPickCount,
         asOf,
         settledAt: completedAt,

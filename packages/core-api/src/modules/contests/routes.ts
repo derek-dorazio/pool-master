@@ -200,7 +200,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
         200: schemaRef('ContestLeaderboardResponse'),
         400: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_FORMAT_MISMATCH (a prediction contest: a bracket has its own leaderboard, getBracketLeaderboard), CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event\'s picks are revealed yet, or not the asked-for one\'s), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule\'s settings are not valid for that definition).',
+          description: 'CONTEST_FORMAT_MISMATCH (a prediction contest: a bracket and a pick\'em pool have their own leaderboards, getBracketLeaderboard and getPickEmLeaderboard), CONTEST_EVENT_NOT_IN_CONTEST (the asked-for event is not one the contest covers), CONTEST_LEADERBOARD_PICKS_HIDDEN (no event\'s picks are revealed yet, or not the asked-for one\'s), _EVENT_REQUIRED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule), _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know) or _SCORING_SETTINGS_INVALID (its rule\'s settings are not valid for that definition).',
         },
         404: schemaRef('ErrorEnvelope'),
       },
@@ -229,6 +229,28 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
     },
     preHandler: requireContestLeagueMember,
     handler: handlers.getBracketLeaderboard,
+  });
+
+  fastify.get('/:contestId/pick-em-leaderboard', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Get a pick\'em contest leaderboard',
+      description:
+        'Returns a pick\'em contest\'s season leaderboard (#717): each entry that submitted at least one week, with its season total and, for each week, its points and place. A correct pick earns 1 point straight up, or its confidence value in a confidence pool; a pick on a lost game, a tie or a cancelled game earns nothing, and a week still in draft at its first kickoff scores nothing. Entries level on a week\'s points are ordered, once the week\'s last game is played, by how close their tiebreaker was to that game\'s total points; entries still level share the place. A week under way is scored live from its played games. Once a week settles, its points and places are frozen and its first-place entries are its winners; a later result correction changes nothing. Once the contest is COMPLETED, the season totals and places come from the standings frozen at settlement. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
+      operationId: 'getPickEmLeaderboard',
+      response: {
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        200: schemaRef('PickEmLeaderboardResponse'),
+        400: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'CONTEST_FORMAT_MISMATCH (not a pick\'em contest).',
+        },
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireContestLeagueMember,
+    handler: handlers.getPickEmLeaderboard,
   });
 
   fastify.post('/:contestId/entries/me', {

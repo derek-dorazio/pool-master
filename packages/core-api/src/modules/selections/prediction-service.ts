@@ -15,7 +15,10 @@
  *   can be swapped to the other team, but not cleared, and confidence values must stay valid.
  * - In a bracket (#721) the whole event is one "week" picked before it starts, a later game offers
  *   the teams the entry's earlier picks put there, and changing a pick clears the later picks that
- *   followed from it. A bracket is submitted with its tiebreaker, the final's total points.
+ *   followed from it.
+ * - Every week is submitted with its tiebreaker (#717), a guess of its tiebreaker game's total
+ *   points: a bracket's final, a pick'em week's last game. It is kept per event, and locks and is
+ *   revealed with that game's pick.
  *
  * The shared parts are here; what varies by prediction type (its pick window, the values a pick
  * carries, what stops a week being submitted) is a `PredictionEngine`.
@@ -29,6 +32,7 @@ import {
   PickEmMode,
   SelectionType,
   contestEntryEventStatus,
+  contestEntryEventTiebreaker,
   isPredictionSelectionType,
   type Contest,
   type ContestConfiguration,
@@ -91,7 +95,7 @@ export interface GamePicksInput {
 
 export interface SaveGamePicksInput extends GamePicksInput {
   picks: readonly ContestEntryMatchPredictionWrite[];
-  /** A bracket's guess of the final's total points; undefined leaves it as it is. */
+  /** The week's tiebreaker, its tiebreaker game's total points; undefined leaves it as it is. */
   tiebreakerValue?: number | null;
 }
 
@@ -136,7 +140,9 @@ export interface GamePicksView {
   canSubmit: boolean;
   pickedCount: number;
   gameCount: number;
-  /** A bracket's tiebreaker, the final's total points; null when not given, hidden, or not taken. */
+  /** The game the tiebreaker guesses the total points of: a bracket's final, a week's last game; null while there is none. */
+  tiebreakerMatchId: string | null;
+  /** The entry's tiebreaker for the event; null when not given, or hidden until its game is revealed. */
   tiebreakerValue: number | null;
   /** Points so far and the most still possible; null while hidden or where the type is not scored yet. */
   points: number | null;
@@ -159,6 +165,8 @@ interface WeekContext {
   entry: ContestEntry & { squadName: string };
   /** The games the entry picks, in game-number order: cancelled games are not picked, and a bracket's start at its starting round. */
   games: SportEventMatch[];
+  /** The game whose total points the tiebreaker guesses, among `games`. */
+  tiebreakerGame: SportEventMatch | null;
   predictions: ContestEntryMatchPrediction[];
   ownEntry: boolean;
   now: Date;
@@ -184,9 +192,8 @@ export class PredictionService {
   async saveGamePicks(input: SaveGamePicksInput): Promise<GamePicksView> {
     const context = await this.loadWeek(input);
     this.assertCanChange(context, input.actorUserId);
-    if (input.tiebreakerValue !== undefined) {
-      if (!context.engine.takesTiebreaker) throw selectionErrors.tiebreakerNotTaken(context.contest.id);
-      if (hasSportEventStarted(context.window, context.now)) throw selectionErrors.tiebreakerLocked(context.entry.id);
+    if (input.tiebreakerValue !== undefined && !this.isTiebreakerOpen(context)) {
+      throw selectionErrors.tiebreakerLocked(context.entry.id);
     }
 
     const gamesById = new Map(context.games.map((game) => [game.id, game]));
@@ -271,7 +278,7 @@ export class PredictionService {
       throw selectionErrors.weekNotSubmittedInTime(context.entry.id, context.sportEvent.id);
     }
 
-    const issue = this.findWeekIssues(context, context.predictions, context.entry.tiebreakerValue ?? null).at(0);
+    const issue = this.findWeekIssues(context, context.predictions, contestEntryEventTiebreaker(context.entry, context.sportEvent.id)).at(0);
     if (issue) {
       this.deps.logger?.warn(
         { action: 'prediction.submit.refused', data: { entryId: context.entry.id, issue: issue.kind } },
@@ -305,7 +312,7 @@ export class PredictionService {
     change: { saves: readonly ContestEntryMatchPredictionWrite[]; clearedMatchIds: readonly string[]; tiebreakerValue?: number | null },
   ): Promise<void> {
     const submitted = contestEntryEventStatus(context.entry, context.sportEvent.id) === ContestEntryStatus.SUBMITTED;
-    const issue = this.findWeekIssues(context, after, change.tiebreakerValue === undefined ? context.entry.tiebreakerValue ?? null : change.tiebreakerValue).at(0);
+    const issue = this.findWeekIssues(context, after, change.tiebreakerValue === undefined ? contestEntryEventTiebreaker(context.entry, context.sportEvent.id) : change.tiebreakerValue).at(0);
     let eventStatus: ContestEntryStatus | null = null;
     if (submitted && issue) {
       if (hasSportEventStarted(context.window, context.now)) {
@@ -349,6 +356,18 @@ export class PredictionService {
       predictions,
       tiebreakerValue,
     });
+  }
+
+  /** The tiebreaker can change while its game's pick can: until a week's last game kicks off, until a bracket starts. */
+  private isTiebreakerOpen(context: WeekContext): boolean {
+    const game = context.tiebreakerGame;
+    return game !== null && areMatchPicksOpen(context.engine.pickWindow, context.contest, context.window, game, context.now);
+  }
+
+  /** Another team's tiebreaker shows once its game's picks are revealed. */
+  private isTiebreakerRevealed(context: WeekContext): boolean {
+    const game = context.tiebreakerGame;
+    return game !== null && areMatchPicksRevealed(context.engine.pickWindow, context.contest, context.window, game, context.now);
   }
 
   private resolvePicks<Pick extends WeekPrediction>(context: WeekContext, predictions: readonly Pick[]) {
@@ -422,11 +441,12 @@ export class PredictionService {
     const games = rules.selectionType === SelectionType.BRACKET
       ? contestBracketGames(matches, rules.startsAtRound)
       : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
+    const engine = getPredictionEngine(selectionType);
 
     return {
       contest,
       configuration,
-      engine: getPredictionEngine(selectionType),
+      engine,
       selectionType,
       mode: rules.selectionType === SelectionType.PICK_EM ? rules.mode : null,
       sportEvent,
@@ -435,6 +455,7 @@ export class PredictionService {
       seedOf: knockoutSeeds(field),
       entry,
       games,
+      tiebreakerGame: engine.tiebreakerGame({ games, eventStart: sportEvent.startDate }),
       predictions,
       ownEntry: actorUserId !== undefined && memberships.some((membership) => membership.userId === actorUserId),
       now: this.now(),
@@ -490,7 +511,7 @@ export class PredictionService {
       && status === ContestEntryStatus.DRAFT
       && (contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE)
       && !hasSportEventStarted(window, now)
-      && this.findWeekIssues(context, context.predictions, entry.tiebreakerValue ?? null).length === 0;
+      && this.findWeekIssues(context, context.predictions, contestEntryEventTiebreaker(entry, sportEvent.id)).length === 0;
 
     return {
       contestId: contest.id,
@@ -505,7 +526,8 @@ export class PredictionService {
       canSubmit,
       pickedCount: viewGames.filter((game) => game.pick !== null).length,
       gameCount: games.length,
-      tiebreakerValue: engine.takesTiebreaker && everyPickShown ? entry.tiebreakerValue ?? null : null,
+      tiebreakerMatchId: context.tiebreakerGame?.id ?? null,
+      tiebreakerValue: ownEntry || this.isTiebreakerRevealed(context) ? contestEntryEventTiebreaker(entry, sportEvent.id) : null,
       points: everyPickShown ? score?.points ?? null : null,
       maxPossiblePoints: everyPickShown ? score?.maxPossiblePoints ?? null : null,
       games: viewGames,
@@ -522,6 +544,7 @@ export class PredictionService {
       participantScoringRules: rules,
     });
     return context.engine.scorePicks({
+      configuration: context.configuration?.configJson,
       games: context.games,
       predictions,
       seedOf: context.seedOf,

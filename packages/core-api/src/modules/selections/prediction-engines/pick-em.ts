@@ -1,10 +1,12 @@
 /**
  * Pick'em (#716): pick the winner of every game of each week, straight up or ranked by
- * confidence. Each pick locks, and is revealed, at its own game's kickoff.
+ * confidence, with a guess of the week's last game's total points as the tiebreaker (#717). Each
+ * pick locks, and is revealed, at its own game's kickoff; game-picks.ts holds the scoring.
  */
 
 import { PickEmMode, SelectionType, type ContestSelectionConfig } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../contests/entry-window';
+import { scoreGamePicks, weekTiebreakerGame } from '../../scoring-families/head-to-head/game-picks';
 import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from './prediction-engine';
 
 /** The contest's pick'em mode, or undefined when its stored rules are not pick'em rules. */
@@ -15,8 +17,10 @@ function pickEmMode(configuration: ContestSelectionConfig | undefined): PickEmMo
 export const pickEmPredictionEngine: PredictionEngine = {
   selectionType: SelectionType.PICK_EM,
   pickWindow: PickWindow.UNTIL_MATCH_START,
-  // A weekly pool's tiebreaker is one per week, with its scoring (#717).
-  takesTiebreaker: false,
+
+  tiebreakerGame({ games, eventStart }) {
+    return weekTiebreakerGame(games, eventStart);
+  },
 
   resolvePicks({ games, predictions }) {
     const sides = new Map(games.map((game) => [game.id, {
@@ -35,8 +39,10 @@ export const pickEmPredictionEngine: PredictionEngine = {
     };
   },
 
-  scorePicks() {
-    return null;
+  scorePicks({ configuration, games, predictions }) {
+    // A pick'em pool scores by its mode (#717), whatever scoring definition its contest carries.
+    const mode = pickEmMode(configuration);
+    return mode === undefined ? null : scoreGamePicks(games, predictions, mode);
   },
 
   acceptsConfidence({ configuration, confidence, gameCount }) {
@@ -49,7 +55,7 @@ export const pickEmPredictionEngine: PredictionEngine = {
       && confidence <= gameCount;
   },
 
-  findWeekIssues({ configuration, gameMatchIds, predictions }) {
+  findWeekIssues({ configuration, gameMatchIds, predictions, tiebreakerValue }) {
     const issues: PredictionIssue[] = [];
     const games = new Set(gameMatchIds);
     const picked = predictions.filter((prediction) => games.has(prediction.sportEventMatchId));
@@ -65,6 +71,9 @@ export const pickEmPredictionEngine: PredictionEngine = {
       : values.every((value) => value === null);
     if (!confidenceValid) {
       issues.push({ kind: PredictionIssueKind.CONFIDENCE_INVALID });
+    }
+    if (tiebreakerValue === null) {
+      issues.push({ kind: PredictionIssueKind.TIEBREAKER_MISSING });
     }
     return issues;
   },

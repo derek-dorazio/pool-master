@@ -890,13 +890,16 @@ model ContestEntry {
 // week 6", "submit your Masters picks". One row per event of the contest, created with the entry
 // and when an event is added; only an event the entry submitted counts.
 model ContestEntryEvent {
-  id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestEntryId String                   @map("contest_entry_id") @db.Uuid
-  sportEventId   String                   @map("sport_event_id") @db.Uuid
-  status         PrismaContestEntryStatus @default(DRAFT)
-  submittedAt    DateTime?                @map("submitted_at") @db.Timestamptz
-  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+  id              String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestEntryId  String                   @map("contest_entry_id") @db.Uuid
+  sportEventId    String                   @map("sport_event_id") @db.Uuid
+  status          PrismaContestEntryStatus @default(DRAFT)
+  submittedAt     DateTime?                @map("submitted_at") @db.Timestamptz
+  /// A prediction contest's tiebreaker for the event (#717): the guessed total points of its
+  /// tiebreaker game (a pick'em week's last game, a bracket's final).
+  tiebreakerValue Int?                     @map("tiebreaker_value")
+  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
   contestEntry ContestEntry @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
   sportEvent   SportEvent   @relation(fields: [sportEventId], references: [id])

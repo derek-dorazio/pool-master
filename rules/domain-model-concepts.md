@@ -61,6 +61,11 @@ Two readings of this chain have both been held at once, so it is worth stating p
   picked to get there (in a reseeded round, its picked winners paired by seed), so changing a pick
   clears the later picks that followed from it. A correct pick scores its round's value under the
   knockout round points, as a knockout roster pool does.
+- **A prediction event's tiebreaker is per event** (#717), on `ContestEntryEvent`: one guess of
+  its tiebreaker game's total points, a bracket's final or a pick'em week's last game by kickoff.
+  Every week needs one to submit. A roster contest's tiebreaker stays on the `ContestEntry`.
+- **A pick'em pick scores by the pool's mode** (#717), not by a scoring definition: 1 point
+  straight up, its confidence value in a confidence pool, nothing for a loss or a tie.
 
 The tenant/global split is access rule A11 in `docs/DOMAIN-OPERATIONS.md`.
 
@@ -227,7 +232,7 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 | **correct a score** | Root admin enters the round's values directly; the server does not derive to-par |
 | **sync**, **link an event** | Events are always created and owned by an admin. Linking one to a provider event (`syncScope` `SCORES_ONLY`) lets the provider send its live scores, and lets an admin load or refresh its field from the provider. A sync never creates an event or changes its details or status |
 | **seed / load / refresh the field** | Seed adds golfers from the tour's affiliations. Load/refresh queues a provider field sync that adds golfers and replaces the ranking, odds, seed and withdrawal of every golfer the provider reports, admin-set values included. All act on `SportEventParticipant` rows |
-| **settle** | When an event completes, each contest on it freezes a `ContestEntryEventStanding` for every entry that submitted it. When the contest's last event has completed, each entry's total (the sum of its event results) is frozen as its `ContestEntryStanding` and the contest becomes `COMPLETED`. A later score correction does not change a settled result. Entries can tie |
+| **settle** | When an event completes, each contest on it freezes a `ContestEntryEventStanding` for every entry that submitted it. When the contest's last event has completed, each entry's total (the sum of its event results) is frozen as its `ContestEntryStanding` and the contest becomes `COMPLETED`. A later score correction does not change a settled result. Entries can tie. In a pick'em contest each week's settled place 1 is that **week's winner** (#717) |
 | **inactivate / delete a team** | §3 above |
 
 ### Not in the model

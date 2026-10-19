@@ -58,15 +58,16 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
           update: { sportEventParticipantId, confidence, pickedAt: at },
         });
       }
-      if (tiebreakerValue !== undefined) {
-        await tx.contestEntry.update({ where: { id: contestEntryId }, data: { tiebreakerValue } });
-      }
-      if (eventStatus !== null) {
-        const submittedAt = eventStatus === ContestEntryStatus.SUBMITTED ? at : null;
+      const statusChange = eventStatus === null
+        ? {}
+        : { status: eventStatus, submittedAt: eventStatus === ContestEntryStatus.SUBMITTED ? at : null };
+      // The event's tiebreaker rides on the entry's row for the event (#717).
+      const tiebreakerChange = tiebreakerValue === undefined ? {} : { tiebreakerValue };
+      if (eventStatus !== null || tiebreakerValue !== undefined) {
         await tx.contestEntryEvent.upsert({
           where: { contestEntryId_sportEventId: { contestEntryId, sportEventId } },
-          create: { contestEntryId, sportEventId, status: eventStatus, submittedAt },
-          update: { status: eventStatus, submittedAt },
+          create: { contestEntryId, sportEventId, ...statusChange, ...tiebreakerChange },
+          update: { ...statusChange, ...tiebreakerChange },
         });
       }
     });

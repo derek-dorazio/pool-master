@@ -15,7 +15,7 @@ import {
   contestBracketGames,
   finalTotalPoints,
   findBracketProblem,
-  rankBracketStandings,
+  rankPredictionStandings,
   resolveBracketPicks,
   scoreBracketPicks,
 } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/bracket-picks';
@@ -283,11 +283,11 @@ describe('finalTotalPoints', () => {
   });
 });
 
-describe('rankBracketStandings', () => {
+describe('rankPredictionStandings', () => {
   const standing = (entryId: string, points: number, tiebreakerValue: number | null) => ({ entryId, points, tiebreakerValue });
 
   it('ranks by points, most first, sharing a place between entries level on points while the final is unplayed', () => {
-    expect(rankBracketStandings([standing('b', 7, 140), standing('a', 10, 100), standing('c', 7, 155)], null)).toEqual([
+    expect(rankPredictionStandings([standing('b', 7, 140), standing('a', 10, 100), standing('c', 7, 155)], null)).toEqual([
       { entryId: 'a', position: 1, displayPosition: '1' },
       { entryId: 'b', position: 2, displayPosition: 'T2' },
       { entryId: 'c', position: 2, displayPosition: 'T2' },
@@ -295,7 +295,7 @@ describe('rankBracketStandings', () => {
   });
 
   it('puts the entry whose tiebreaker is closest to the final\'s total first among entries level on points', () => {
-    expect(rankBracketStandings([standing('b', 7, 140), standing('a', 10, 100), standing('c', 7, 155)], 150)).toEqual([
+    expect(rankPredictionStandings([standing('b', 7, 140), standing('a', 10, 100), standing('c', 7, 155)], 150)).toEqual([
       { entryId: 'a', position: 1, displayPosition: '1' },
       { entryId: 'c', position: 2, displayPosition: '2' },
       { entryId: 'b', position: 3, displayPosition: '3' },
@@ -303,18 +303,18 @@ describe('rankBracketStandings', () => {
   });
 
   it('never lets a closer tiebreaker lift an entry above one with more points', () => {
-    expect(rankBracketStandings([standing('close', 6, 150), standing('far', 7, 10)], 150).map((rank) => rank.entryId)).toEqual(['far', 'close']);
+    expect(rankPredictionStandings([standing('close', 6, 150), standing('far', 7, 10)], 150).map((rank) => rank.entryId)).toEqual(['far', 'close']);
   });
 
   it('ranks an entry with no tiebreaker after the level entries that gave one', () => {
-    expect(rankBracketStandings([standing('none', 7, null), standing('far', 7, 300)], 150)).toEqual([
+    expect(rankPredictionStandings([standing('none', 7, null), standing('far', 7, 300)], 150)).toEqual([
       { entryId: 'far', position: 1, displayPosition: '1' },
       { entryId: 'none', position: 2, displayPosition: '2' },
     ]);
   });
 
   it('shares a place between entries whose tiebreakers are equally close, over and under', () => {
-    expect(rankBracketStandings([standing('under', 7, 145), standing('over', 7, 155), standing('last', 2, 150)], 150)).toEqual([
+    expect(rankPredictionStandings([standing('under', 7, 145), standing('over', 7, 155), standing('last', 2, 150)], 150)).toEqual([
       { entryId: 'under', position: 1, displayPosition: 'T1' },
       { entryId: 'over', position: 1, displayPosition: 'T1' },
       { entryId: 'last', position: 3, displayPosition: '3' },

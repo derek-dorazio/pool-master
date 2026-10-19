@@ -13,6 +13,14 @@ export function contestEntryEventStatus(
   return entry.events.find((event) => event.sportEventId === sportEventId)?.status ?? ContestEntryStatus.DRAFT;
 }
 
+/** The entry's tiebreaker guess for one event of a prediction contest (#717); null until given. */
+export function contestEntryEventTiebreaker(
+  entry: Pick<ContestEntry, 'events'>,
+  sportEventId: string,
+): number | null {
+  return entry.events.find((event) => event.sportEventId === sportEventId)?.tiebreakerValue ?? null;
+}
+
 /** Whether the entry has submitted at least one event: what makes it count as an entry (#481). */
 export function hasSubmittedAnyEvent(entry: Pick<ContestEntry, 'events'>): boolean {
   return entry.events.some((event) => event.status === ContestEntryStatus.SUBMITTED);

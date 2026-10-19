@@ -1025,6 +1025,17 @@ for each event in progress, as does each match result entered. Round release (§
 second-chance bracket is refused until its starting round has all its teams, and after that round's
 first game. The event's round values score the rounds picked.
 
+*As built in #717 (pick'em scoring):* a pick'em pick scores by the pool's mode, whatever scoring
+definition the contest carries: 1 point straight up, its confidence value in a confidence pool,
+nothing for a loss or a tie (an NFL tie scores 0). A pick on a game cancelled after the week was
+submitted is not scored or counted, and the other confidence values are kept as submitted, not
+renumbered. The tiebreaker moved from the entry to `ContestEntryEvent.tiebreakerValue` for every
+prediction event (a bracket's guesses were moved by the migration): the guess of the tiebreaker
+game's total points, a bracket's final or a week's last game by kickoff. It is needed to submit,
+and locks and is revealed with that game's pick. Each completed week freezes its
+`ContestEntryEventStanding`s (place 1 wins the week); the contest's last week sums them into
+`ContestEntryStanding` and completes it. `getPickEmLeaderboard` is the season leaderboard.
+
 **Q5.5 What does `ACTIVE` mean for a pick'em contest?** *Decided by Derek 2026-10-17:* every
 week is its own mini workflow. Its event is set up, released, picked and submitted, then goes
 live and settles. The contest keeps the same four statuses as every contest. It is `ACTIVE`

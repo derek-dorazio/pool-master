@@ -946,12 +946,13 @@ describe('Contract verification (web)', () => {
       method: 'PUT',
       url,
       headers: owner.headers,
-      payload: { picks: [{ sportEventMatchId: game.id, sportEventParticipantId: away.id, confidence: 1 }] },
+      payload: { picks: [{ sportEventMatchId: game.id, sportEventParticipantId: away.id, confidence: 1 }], tiebreakerValue: 41 },
     });
     expect(saveRes.statusCode).toBe(200);
     const saved = GamePicksResponseSchema.safeParse(saveRes.json());
     expect(saved.success).toBe(true);
     expect(saved.data?.games[0]?.pick).toMatchObject({ sportEventParticipantId: away.id, confidence: 1 });
+    expect(saved.data).toMatchObject({ tiebreakerValue: 41, tiebreakerMatchId: game.id });
 
     const readRes = await getApp().inject({ method: 'GET', url, headers: owner.headers });
     expect(readRes.statusCode).toBe(200);
