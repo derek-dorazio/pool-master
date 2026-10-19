@@ -342,9 +342,10 @@ export function CreateContestPage() {
     });
   }, [form, setFormValues]);
 
-  // A knockout under way starts its second-chance bracket at the first round it offers.
+  // A contest-ready event takes the full bracket; a knockout under way starts its second-chance
+  // bracket at the first round it offers.
   const chooseEvent = useCallback((event: SportEventDto) => {
-    setFormValues(event.contestEligible ? { sportEventId: event.id } : { sportEventId: event.id, startsAtRound: '2' });
+    setFormValues({ sportEventId: event.id, startsAtRound: event.contestEligible ? '1' : '2' });
   }, [setFormValues]);
 
   // The soonest contest-ready event is chosen to start with, else a knockout under way.

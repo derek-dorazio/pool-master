@@ -642,16 +642,24 @@ describe('Commissioner tools › Contests › one second-chance bracket contest'
 });
 
 describe('Commissioner tools › Contests › one bracket contest › Edit', () => {
-  it('offers the full bracket and each later round but the final, and saves the starting round chosen', async () => {
+  it('offers a bracket whose event has not started only the full bracket, since its later rounds have no teams yet', async () => {
     primeBracketMocks(1);
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1/edit');
+
+    const startsAt = await screen.findByTestId('contest-bracket-starts-at-round');
+    expect(startsAt).toHaveDisplayValue('Full bracket');
+    expect(within(startsAt).getAllByRole('option').map((option) => option.textContent)).toEqual(['Full bracket']);
+  });
+
+  it('offers only the later rounds but the final once the bracket\'s event is under way, keeping the saved starting round, and saves the one chosen', async () => {
+    primeBracketMocks(3, { event: basketballEvent(UNDER_WAY) });
     updateContestConfigurationMock.mockResolvedValue(apiSuccess({ contest: bracketManagedContest(4) }));
     updateContestMock.mockResolvedValue(apiSuccess({ contest: bracketContest() }));
     renderAt('/league/BIGDAWGS/admin/contests/contest-1/edit');
 
     const startsAt = await screen.findByTestId('contest-bracket-starts-at-round');
-    expect(startsAt).toHaveDisplayValue('Full bracket');
+    expect(startsAt).toHaveDisplayValue('From the Sweet 16');
     expect(within(startsAt).getAllByRole('option').map((option) => option.textContent)).toEqual([
-      'Full bracket',
       'From the Second Round',
       'From the Sweet 16',
       'From the Elite Eight',
@@ -664,14 +672,5 @@ describe('Commissioner tools › Contests › one bracket contest › Edit', () 
     await waitFor(() => expect(updateContestConfigurationMock).toHaveBeenCalledWith(expect.objectContaining({
       body: { selectionType: 'BRACKET', startsAtRound: 4, maxEntriesPerSquad: 1 },
     })));
-  });
-
-  it('offers only the later rounds once the bracket\'s event is under way, keeping the saved starting round', async () => {
-    primeBracketMocks(3, { event: basketballEvent(UNDER_WAY) });
-    renderAt('/league/BIGDAWGS/admin/contests/contest-1/edit');
-
-    const startsAt = await screen.findByTestId('contest-bracket-starts-at-round');
-    expect(startsAt).toHaveDisplayValue('From the Sweet 16');
-    expect(screen.queryByRole('option', { name: 'Full bracket' })).not.toBeInTheDocument();
   });
 });

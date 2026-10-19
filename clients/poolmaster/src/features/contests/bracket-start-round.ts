@@ -25,26 +25,29 @@ export function hasSecondChanceRound(roundCount: number) {
 }
 
 /**
- * The rounds a bracket on an event can start at (#721): the full bracket, then each later round
- * up to the one before the final, since a bracket of the final alone is a single pick. An event
- * already under way offers only the later rounds, each a second-chance bracket; whether that
- * round is still ahead is the server's to say when the contest is created.
+ * The rounds a bracket on an event can start at (#721). An event that hasn't started offers only
+ * the full bracket: its later rounds have no teams yet, so the server refuses a bracket from one.
+ * An event already under way offers each later round up to the one before the final, each a
+ * second-chance bracket, since a bracket of the final alone is a single pick; whether that round
+ * is still ahead is the server's to say when the contest is created.
  */
 export function bracketStartRoundOptions(
   roundCount: number,
   roundName: RoundName,
   { isUnderWay }: { isUnderWay: boolean },
 ): BracketStartRoundOption[] {
-  const firstStart = isUnderWay ? 2 : 1;
-  // The full bracket is always a choice, even of a one-round event.
-  const lastStart = Math.max(Math.min(roundCount - 1, KNOCKOUT_ROUND_VALUES_MAX_ROUNDS), isUnderWay ? 0 : 1);
+  const option = (roundNumber: number): BracketStartRoundOption => ({
+    roundNumber,
+    name: roundName(roundNumber),
+    label: formatBracketStartLabel(roundNumber, roundName),
+  });
+  if (!isUnderWay) {
+    return [option(1)];
+  }
+  const lastStart = Math.min(roundCount - 1, KNOCKOUT_ROUND_VALUES_MAX_ROUNDS);
   const options: BracketStartRoundOption[] = [];
-  for (let roundNumber = firstStart; roundNumber <= lastStart; roundNumber += 1) {
-    options.push({
-      roundNumber,
-      name: roundName(roundNumber),
-      label: formatBracketStartLabel(roundNumber, roundName),
-    });
+  for (let roundNumber = 2; roundNumber <= lastStart; roundNumber += 1) {
+    options.push(option(roundNumber));
   }
   return options;
 }
