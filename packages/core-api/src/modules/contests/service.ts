@@ -679,7 +679,11 @@ export class ContestService {
       const live = await loadPickEmWeekStandings(this.deps, contestId, event, mode);
       const frozen = frozenWeeks.filter((standing) => standing.sportEventId === event.id);
       const started = areEventPicksRevealed(contest, event, now);
-      const settled = frozen.length > 0;
+      // A week settles by freezing its submitted entries; a cancelled week, or a completed one no
+      // entry submitted, has none to freeze and counts as settled as it stands.
+      const settled = frozen.length > 0
+        || event.status === SportEventStatus.CANCELLED
+        || (event.status === SportEventStatus.COMPLETED && live.entries.length === 0);
       const cells = new Map<string, { points: number | null; position: number | null; displayPosition: string | null }>(
         settled
           ? frozen.map((standing) => [standing.contestEntryId, {

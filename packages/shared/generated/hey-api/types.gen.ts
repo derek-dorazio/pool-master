@@ -10208,7 +10208,7 @@ export type PickEmLeaderboardResponse = {
          */
         started: boolean;
         /**
-         * Whether the week has settled: its points and places are frozen, and a later result correction changes nothing.
+         * Whether the week has settled: its points and places are frozen, and a later result correction changes nothing. A cancelled week, or a completed week no entry submitted, is settled with nothing frozen.
          */
         settled: boolean;
         /**

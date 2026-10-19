@@ -10231,7 +10231,7 @@ export interface components {
                 status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /** @description Whether the week's first game has kicked off: until then no entry has points for it. */
                 started: boolean;
-                /** @description Whether the week has settled: its points and places are frozen, and a later result correction changes nothing. */
+                /** @description Whether the week has settled: its points and places are frozen, and a later result correction changes nothing. A cancelled week, or a completed week no entry submitted, is settled with nothing frozen. */
                 settled: boolean;
                 /** @description The week's games, cancelled ones left out. None when the week was cancelled. */
                 gameCount: number;
