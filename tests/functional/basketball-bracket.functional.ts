@@ -158,7 +158,15 @@ describe('SDK Functional: Basketball bracket', () => {
       await loadEventBracket({
         client: a,
         path: { eventId },
-        body: { matches: firstRound.map((match) => ({ ...match, roundNumber: 2, advancesTo: null })) },
+        // Game 1 links nowhere while game 2 feeds a final, so two games end the bracket. (Games
+        // none of which link are a week's games, which load: #715.)
+        body: {
+          matches: [
+            { ...expectDefined(firstRound[0]), advancesTo: null },
+            expectDefined(firstRound[1]),
+            { matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesTo: null },
+          ],
+        },
       }),
       { status: 422, code: 'BRACKET_INVALID' },
     );
