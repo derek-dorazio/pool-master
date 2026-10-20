@@ -8,14 +8,15 @@ VALUES (gen_random_uuid(), 'BASEBALL', 'TEAM', 'MATCHES', NOW(), NOW())
 ON CONFLICT ("sport") DO NOTHING;
 
 -- Its sport league, reference data because its contest templates name it. The MLB postseason is
--- a fixed bracket of series, each one bracket match whose scores are the games won, in rounds of
--- its own names. Idempotent on the (sport_id, name) unique: an admin who already created the
--- league keeps their row, and gets the round names.
+-- a fixed bracket of series, each one bracket match whose scores are the games won. Its rounds
+-- read the sport's names (Wild Card Series to World Series), so it stores none of its own.
+-- Idempotent on the (sport_id, name) unique: an admin who already created the league keeps
+-- their row.
 INSERT INTO "sport_leagues" ("id", "sport_id", "name", "bracket_advancement", "round_names", "tier_count", "is_active", "created_at", "updated_at")
 SELECT gen_random_uuid(), s."id", league."name", 'FIXED', league."round_names", league."tier_count", TRUE, NOW(), NOW()
 FROM "sports" s
 CROSS JOIN (VALUES
-  ('MLB', ARRAY['Wild Card Series', 'Division Series', 'League Championship Series', 'World Series']::text[], NULL::int)
+  ('MLB', ARRAY[]::text[], NULL::int)
 ) AS league("name", "round_names", "tier_count")
 WHERE s."sport" = 'BASEBALL'
 ON CONFLICT ("sport_id", "name") DO UPDATE SET "round_names" = EXCLUDED."round_names", "tier_count" = EXCLUDED."tier_count";
