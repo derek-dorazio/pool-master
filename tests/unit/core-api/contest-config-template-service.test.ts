@@ -156,12 +156,12 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
     const { store, service } = templateStore([
       template({ id: 'indycar-tiered', sport: Sport.AUTO_RACING, sportLeagueId: 'indycar', isDefault: true }),
       template({ id: 'nascar-tiered', sport: Sport.AUTO_RACING, sportLeagueId: 'nascar', isDefault: true }),
-      template({ id: 'nascar-budget', sport: Sport.AUTO_RACING, sportLeagueId: 'nascar', selectionType: SelectionType.BUDGET_PICK }),
+      template({ id: 'nascar-tiered-big', sport: Sport.AUTO_RACING, sportLeagueId: 'nascar' }),
     ]);
 
-    await service.updateTemplate('nascar-budget', { isDefault: true });
+    await service.updateTemplate('nascar-tiered-big', { isDefault: true });
 
-    expect(store.get('nascar-budget')?.isDefault).toBe(true);
+    expect(store.get('nascar-tiered-big')?.isDefault).toBe(true);
     expect(store.get('nascar-tiered')?.isDefault).toBe(false);
     expect(store.get('indycar-tiered')?.isDefault).toBe(true);
   });
