@@ -44,7 +44,7 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
 1. **Scoring family.** Does an existing family already score this sport?
    - Stroke play: lowest total wins (golf).
    - Head to head: a bracket of matches, points per round won plus an optional seed upset
-     bonus (basketball, American football, hockey; tennis next). A league whose rounds the sport's names
+     bonus (basketball, American football, hockey, baseball; tennis next). A league whose rounds the sport's names
      do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's), and a league whose field the
      sport's default tiers do not fit sets its own tier count (`SportLeague.tierCount`: the
      College Football Playoff's six). Its matches are `SportEventMatch` rows in the event core, not family tables.
@@ -245,6 +245,10 @@ down: a lesson that was true mid-series may not be by the end.
 - **Scenario rows keyed by league name.** Two sports can share a league name ("NCAA Division I
   Men" plays basketball and hockey), so a functional suite whose test names or tags come from
   the league name runs two rows under one name. Key them by event name, or name the sport too.
+- **Squares on a league whose final is a series.** A series is one bracket match scored in
+  games won, so it has no single game for a grid. Leave squares out of such a sport's selection
+  types and its period layout off the definition, and add the league to the template checks'
+  series leagues, which otherwise expect a squares default (MLB, the NBA, the NHL).
 - **Adding catalog values "for later".** Add a sport, scoring definition or enum value only
   with the code that uses it. Unused values are dead code and get deleted.
 - **Hiding missing results with defaults.** An unscored participant is unranked, never a

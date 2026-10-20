@@ -436,6 +436,28 @@ describe('hockey-2026-ncaa-tournaments-test.json', () => {
   });
 });
 
+describe('baseball-2025-mlb-postseason-test.json', () => {
+  const file = readDataFile('baseball-2025-mlb-postseason-test.json', true);
+  const [postseason] = file.sportLeagues[0].events;
+  const matches = postseason.matches ?? [];
+
+  it('is a test seed of the 2025 MLB postseason, 12 teams seeded 1 to 6 in each league, the top two seeds waiting in the Division Series', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.BASEBALL, 2025, ['MLB']]);
+    expect(postseason.rounds).toBe(4);
+    for (let seed = 1; seed <= 6; seed += 1) expect(postseason.field.filter((entry) => entry.seed === seed)).toHaveLength(2);
+    expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
+    const seedOf = new Map(postseason.field.map((entry) => [entry.player, entry.seed]));
+    expect(matches.filter((match) => match.roundNumber === 2).map((match) => [seedOf.get(match.home ?? ''), match.away])).toEqual([[2, null], [1, null], [1, null], [2, null]]);
+    expect(matches.filter((match) => match.roundNumber < 4).every((match) => match.regionLabel === 'AL' || match.regionLabel === 'NL')).toBe(true);
+  });
+
+  it('plays each round as series scored in games won, the Dodgers beating Toronto 4-3 in the World Series', () => {
+    const toWin = { 1: 2, 2: 3, 3: 4, 4: 4 } as Record<number, number>;
+    expect(matches.every((match) => match.result !== undefined && Math.max(match.result.homeScore, match.result.awayScore) === toWin[match.roundNumber])).toBe(true);
+    expect(matches[10]).toMatchObject({ home: null, away: null, advancesTo: null, result: { winner: 'AWAY', homeScore: 3, awayScore: 4 } });
+  });
+});
+
 describe('2026 racing test seeds', () => {
   it.each([
     ['auto-racing-2026-test.json', Sport.AUTO_RACING, [['Formula 1', 17, 'Max Verstappen'], ['NASCAR Cup Series', 32, 'Chase Briscoe'], ['IndyCar', 18, 'Scott McLaughlin']]],

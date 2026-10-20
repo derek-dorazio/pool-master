@@ -1,6 +1,7 @@
 import { Sport, type SelectionType } from '../enums';
 import { americanFootballSportDefinition } from './american-football';
 import { autoRacingSportDefinition } from './auto-racing';
+import { baseballSportDefinition } from './baseball';
 import { basketballSportDefinition } from './basketball';
 import { cyclingSportDefinition } from './cycling';
 import { golfSportDefinition } from './golf';
@@ -23,6 +24,7 @@ export const SPORT_DEFINITIONS: Readonly<Record<Sport, SportDefinition>> = {
   [Sport.BASKETBALL]: basketballSportDefinition,
   [Sport.AMERICAN_FOOTBALL]: americanFootballSportDefinition,
   [Sport.HOCKEY]: hockeySportDefinition,
+  [Sport.BASEBALL]: baseballSportDefinition,
 };
 
 /** Every supported sport, in enum order. */

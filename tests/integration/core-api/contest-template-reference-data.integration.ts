@@ -744,9 +744,9 @@ const KNOCKOUT_SELECTION_TYPES: readonly SelectionType[] = [
 ];
 const WEEK_SELECTION_TYPES: readonly SelectionType[] = [SelectionType.PICK_EM, SelectionType.SURVIVOR, SelectionType.SQUARES];
 const LEAGUES_PLAYED_IN_WEEKS: readonly string[] = ['NFL'];
-// A playoff series is one match whose score is games won (NBA, WNBA, NHL, PWHL), so squares,
+// A playoff series is one match whose score is games won (NBA, WNBA, NHL, PWHL, MLB), so squares,
 // played on one game's score, has no template there.
-const LEAGUES_PLAYED_AS_SERIES: readonly string[] = ['NBA', 'WNBA', 'NHL', 'PWHL'];
+const LEAGUES_PLAYED_AS_SERIES: readonly string[] = ['NBA', 'WNBA', 'NHL', 'PWHL', 'MLB'];
 
 /** What Create contest calls each format, which every template's name starts with. */
 const FORMAT_NAMES: Record<SelectionType, string> = {
