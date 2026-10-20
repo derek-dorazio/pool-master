@@ -1,10 +1,10 @@
 import {
   acceptInvitation,
   addEventParticipants,
-  cancelEventMatch,
   applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
+  cancelEventMatch,
   createContest,
   createEvent,
   createParticipant,
@@ -375,14 +375,19 @@ describe('SDK Functional: a survivor season (#719)', () => {
     await week.result(1, 'home');
 
     // Purdue's game is called off mid-week; the entry moves its pick to Baylor (game 4), still to play.
+    // Game 3 never kicked off, so an ordinary swap would be allowed too: what this guards is that a
+    // cancelled game (which no longer counts as SCHEDULED) does not lock the pick on it.
     await week.cancel(3);
     const moved = await saveGamePicks({ client: commissioner.client, path, body: { picks: [week.pick(4, 'home')] } });
     expect([moved.error, moved.response.status]).toEqual([undefined, 200]);
+    // The games listed leave out the cancelled one, so this shows the new pick, not that the old one
+    // was cleared: the leaderboard below proves that.
     const picks = expectMatchesSchema(GamePicksResponseSchema, moved.data);
     expect([picks.status, picks.games.flatMap((game) => (game.pick ? [game.sportEventMatchId] : []))])
       .toEqual([ContestEntryStatus.SUBMITTED, [week.gameId(4)]]);
 
-    // Baylor loses: the moved pick, not the cancelled one, decides the week, so the entry is out.
+    // Baylor loses: the moved pick, not the cancelled one (which would survive), decides the week, so
+    // the entry is out.
     await week.result(2, 'home');
     await week.result(4, 'away');
     const read = await getSurvivorLeaderboard({ client: commissioner.client, path: { contestId } });
