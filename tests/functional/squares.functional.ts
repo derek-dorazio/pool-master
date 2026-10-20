@@ -216,12 +216,10 @@ describe('SDK Functional: Super Bowl squares', () => {
   });
 });
 
-// Each other league's squares preset on its own final (#785, #786): the College Football Playoff's
-// National Championship in quarters, and men's and women's March Madness, men's college basketball
-// played in two halves. Each test seed loads with every game played but the final; one entry holds
+// Each March Madness league's squares preset on its own final (#786): men's college basketball
+// played in two halves, women's in quarters. Each test seed loads with every game played but the final; one entry holds
 // the top row, the other the left column, and every scoring moment lands in the top row.
 const COLLEGE_FINALS = [
-  { sport: Sport.AMERICAN_FOOTBALL, file: 'american-football-2025-cfp-test.json', league: 'College Football Playoff', event: 'College Football Playoff', templateKey: 'cfp-squares', layout: MatchPeriodLayout.QUARTERS },
   { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', layout: MatchPeriodLayout.HALVES },
   { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', layout: MatchPeriodLayout.QUARTERS },
 ] as const;

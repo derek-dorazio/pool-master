@@ -480,8 +480,8 @@ describe('The seeded NFL league and its knockout templates', () => {
     }
   });
 
-  // Squares (#711): the NFL's one squares preset, the default for its own format.
-  it('seeds one squares template on the NFL, the College Football Playoff and men\'s and women\'s March Madness, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
+  // Squares (#711, #786): the NFL's and each March Madness league's squares preset, the default for its own format.
+  it('seeds one squares template on the NFL and men\'s and women\'s March Madness, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { contestFormat: ContestFormat.SQUARES },
       include: { sportLeague: true },
@@ -489,7 +489,6 @@ describe('The seeded NFL league and its knockout templates', () => {
     });
 
     expect(templates.map((template) => [template.templateKey, template.sport, template.selectionType, template.isDefault, template.sportLeague?.name])).toEqual([
-      ['cfp-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'College Football Playoff'],
       ['ncaa-men-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Men'],
       ['ncaa-women-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Women'],
       ['nfl-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'NFL'],
