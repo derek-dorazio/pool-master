@@ -8,12 +8,12 @@ import { z } from 'zod';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import type { CreateContestRequest } from '@poolmaster/shared/dto';
 import {
-  ContestFormat,
   ParticipantScoringDefinitionIdSchema,
   PickEmMode,
   SelectionType,
   SUPPORTED_SPORTS,
   contestFormatForSelectionType,
+  contestTemplateEventTypeOf,
   getSportDefinition,
   sportAllowsSelectionType,
   UpsetBonusRule,
@@ -43,7 +43,6 @@ import {
   FormField,
   FormPage,
   Input,
-  SegmentedControl,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -52,7 +51,6 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import {
   formatContestRules,
   formatEntriesPerTeamSentence,
-  formatPresetLabel,
   formatSelectionTypeName,
   suggestContestName,
 } from './contest-rules';
@@ -69,8 +67,6 @@ import {
   parseContestRules,
   toContestRulesValues,
 } from './contest-rules-form';
-
-const CUSTOM_PRESET = 'custom';
 
 /**
  * The ways of picking Create contest can offer: the ones the create contract accepts whose
@@ -169,12 +165,21 @@ function defaultPresetOf<Preset extends Pick<ContestConfigTemplateDto, 'isDefaul
 }
 
 /**
- * The format of the event's sport league's own default template, when it has one in a format the
- * page creates. A league has at most one default, so this is the format its races start on.
+ * The format an event's sport league starts on: the format of its first default by sort order
+ * among the ones the page creates and the event can take (#802: a league has a default for each
+ * format, and sorts the one to start on first, such as Formula 1's budget contest, #625). Null when
+ * the league has no default of its own, and the format chosen stays.
  */
-function leagueDefaultFormatOf(templates: ContestConfigTemplateDto[]): CreatableSelectionType | null {
-  const leagueDefault = templates.find((template) => template.isDefault && template.sportLeagueId !== null);
-  return leagueDefault && hasWebEntryScreen(leagueDefault.selectionType) ? leagueDefault.selectionType : null;
+function leagueStartingFormatOf(
+  templates: ContestConfigTemplateDto[],
+  isAvailable: (format: CreatableSelectionType) => boolean,
+): CreatableSelectionType | null {
+  const formats = templates
+    .filter((template) => template.isDefault && template.sportLeagueId !== null)
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((template) => template.selectionType)
+    .filter((format): format is CreatableSelectionType => hasWebEntryScreen(format) && isAvailable(format));
+  return formats.at(0) ?? null;
 }
 
 function sortEventsBySoonest(events: SportEventDto[]) {
@@ -229,10 +234,10 @@ export function CreateContestPage() {
   const { participant } = sportDefinition.vocabulary;
   const scoringSettingsUi = scoringSettingsUiFor(selectionType, scoringDefinitionId);
   const [isNameEdited, setIsNameEdited] = useState(false);
-  // The sport and sport league whose default preset was applied last: their default is applied
-  // when their presets arrive and again on switching back to them; while both stay, Custom stays
-  // Custom.
-  const defaultPresetAppliedFor = useRef<`${Sport}/${string}` | null>(null);
+  // The sport, sport league and kind of event whose default preset was applied last: their default
+  // is applied when their presets arrive and again on switching back to them; while all three
+  // stay, Custom stays Custom.
+  const defaultPresetAppliedFor = useRef<`${Sport}/${string}/${string}` | null>(null);
 
   const setFormValues = useCallback((next: Partial<CreateContestFormValues>) => {
     for (const [field, value] of Object.entries(next) as Array<[keyof CreateContestFormValues, CreateContestFormValues[keyof CreateContestFormValues]]>) {
@@ -272,12 +277,15 @@ export function CreateContestPage() {
   // The chosen event's sport league: its own presets are offered beside the sport-wide ones, so
   // the presets wait for an event.
   const sportLeagueId = selectedEvent?.sportLeagueId;
+  // A sport played as matches offers a week's templates on a week of games and a knockout's on a
+  // knockout (#802); every other sport's templates suit all its events.
+  const eventType = selectedEvent ? contestTemplateEventTypeOf(selectedEvent) ?? undefined : undefined;
 
   const templatesQuery = useQuery({
-    queryKey: QueryKeys.contestConfigTemplates.list({ sport, sportLeagueId, contestFormat: ContestFormat.ROSTER, active: true }),
+    queryKey: QueryKeys.contestConfigTemplates.list({ sport, sportLeagueId, eventType, active: true }),
     queryFn: async (): Promise<ContestConfigTemplateDto[]> => {
       const response = await listContestConfigTemplates({
-        query: { sport, sportLeagueId, contestFormat: ContestFormat.ROSTER, active: true },
+        query: { sport, sportLeagueId, eventType, active: true },
       });
       if (!response.data?.templates) {
         throwApiError(response.error, 'Contest template response is missing data.');
@@ -392,22 +400,23 @@ export function CreateContestPage() {
     }
   }, [chooseEvent, contestEvents, sportEventId]);
 
-  // A newly chosen sport or sport league starts on its default preset; while both stay, Custom
-  // stays Custom. A sport league whose own default is another format starts on that format (the
-  // Formula 1 default is a budget contest, #625), unless the sport does not offer it or the event
-  // has no prices for it yet.
+  // A newly chosen sport, sport league or kind of event starts on its default preset; while all
+  // three stay, Custom stays Custom. A sport league starts on the format its defaults sort first
+  // (the Formula 1 default is a budget contest, #625; an NFL week a pick'em, #802), unless the
+  // sport does not offer it or the event has no prices for it yet.
   useEffect(() => {
-    const presetsKey: `${Sport}/${string}` = `${sport}/${sportLeagueId ?? ''}`;
-    if (defaultPresetAppliedFor.current === presetsKey) {
+    const presetsKey: `${Sport}/${string}/${string}` = `${sport}/${sportLeagueId ?? ''}/${eventType ?? ''}`;
+    if (defaultPresetAppliedFor.current === presetsKey || templatesQuery.data === undefined) {
       return;
     }
-    const leagueDefaultFormat = leagueDefaultFormatOf(templatesQuery.data ?? []);
-    if (leagueDefaultFormat
-      && leagueDefaultFormat !== form.getValues('selectionType')
-      && sportAllowsSelectionType(getSportDefinition(sport), leagueDefaultFormat)
-      && !(leagueDefaultFormat === SelectionType.BUDGET_PICK && isBudgetUnavailable)) {
+    const startingFormat = leagueStartingFormatOf(
+      templatesQuery.data,
+      (format) => sportAllowsSelectionType(getSportDefinition(sport), format)
+        && !(format === SelectionType.BUDGET_PICK && isBudgetUnavailable),
+    );
+    if (startingFormat && startingFormat !== form.getValues('selectionType')) {
       defaultPresetAppliedFor.current = presetsKey;
-      selectFormat(leagueDefaultFormat);
+      selectFormat(startingFormat);
       return;
     }
     if (!presets.length) {
@@ -418,7 +427,7 @@ export function CreateContestPage() {
     if (defaultPreset) {
       selectPreset(defaultPreset.id);
     }
-  }, [form, isBudgetUnavailable, presets, selectFormat, selectPreset, sport, sportLeagueId, templatesQuery.data]);
+  }, [eventType, form, isBudgetUnavailable, presets, selectFormat, selectPreset, sport, sportLeagueId, templatesQuery.data]);
 
   // A tiered contest's "Scores that count" starts at the default for the chosen event's tiers. A
   // preset whose picks per tier the form still holds keeps its own count over the formula.
@@ -550,14 +559,6 @@ export function CreateContestPage() {
         fallback: 'We could not create that contest. Please try again.',
       })
       : null);
-  const presetOptions = [
-    ...presets.map((template) => ({
-      label: formatPresetLabel(template.configuration, tierCount),
-      testId: `contest-template-${template.templateKey}`,
-      value: template.id,
-    })),
-    { label: 'Custom', testId: 'contest-template-custom', value: CUSTOM_PRESET },
-  ];
 
   return (
     <FormPage
@@ -658,14 +659,34 @@ export function CreateContestPage() {
             );
           })}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="grid gap-2">
           <span className="text-sm text-muted-foreground">Start from</span>
-          <SegmentedControl
-            aria-label="Start from"
-            onChange={(value) => selectPreset(value === CUSTOM_PRESET ? '' : value)}
-            options={presetOptions}
-            value={selectedTemplateId || CUSTOM_PRESET}
-          />
+          {/* Each template by its own name and description (#802), then Custom for rules typed by hand. */}
+          <div aria-label="Start from" className="grid gap-2 md:grid-cols-2" role="radiogroup">
+            {presets.map((template) => (
+              <ChoiceCard
+                isSelected={template.id === selectedTemplateId}
+                key={template.id}
+                onSelect={() => selectPreset(template.id)}
+                testId={`contest-template-${template.templateKey}`}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{template.name}</span>
+                  <span className="block text-xs text-muted-foreground">{template.description}</span>
+                </span>
+              </ChoiceCard>
+            ))}
+            <ChoiceCard
+              isSelected={!selectedTemplateId}
+              onSelect={() => selectPreset('')}
+              testId="contest-template-custom"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">Custom</span>
+                <span className="block text-xs text-muted-foreground">Set every rule yourself.</span>
+              </span>
+            </ChoiceCard>
+          </div>
         </div>
       </SetupSection>
 

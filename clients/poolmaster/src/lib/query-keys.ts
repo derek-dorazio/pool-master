@@ -82,7 +82,7 @@ export const QueryKeys = {
    */
   contestConfigTemplates: {
     all: ['poolmaster', 'contest-config-templates'] as const,
-    list: (filters: { sport?: QueryKeyId; sportLeagueId?: QueryKeyId; contestFormat?: QueryKeyId; active?: boolean }) =>
+    list: (filters: { sport?: QueryKeyId; sportLeagueId?: QueryKeyId; eventType?: QueryKeyId; active?: boolean }) =>
       ['poolmaster', 'contest-config-templates', filters] as const,
   },
   contestEntries: {

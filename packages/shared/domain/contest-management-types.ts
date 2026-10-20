@@ -1,5 +1,6 @@
 import type {
   ContestFormat,
+  ContestTemplateEventType,
   ParticipantInactiveReason,
   SelectionType,
   Sport,
@@ -110,7 +111,8 @@ export interface ContestConfigTemplate extends DomainEntity {
    * Null means sport-wide: offered for every league of its sport.
    */
   sportLeagueId: string | null;
-  eventType?: string | null;
+  /** The kind of event the template is offered for (#802); null offers it for every event of its sport. */
+  eventType?: ContestTemplateEventType | null;
   contestFormat: ContestFormat;
   /** How an entry in a contest created from this template picks. */
   selectionType: SelectionType;

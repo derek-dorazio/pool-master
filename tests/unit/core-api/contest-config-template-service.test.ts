@@ -4,7 +4,7 @@
  */
 import type { ContestConfigTemplateRepository } from '@poolmaster/shared/db';
 import type { ContestConfigTemplate } from '@poolmaster/shared/domain';
-import { ContestFormat, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestTemplateEventType, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   ContestConfigTemplateNotFoundError,
   ContestConfigTemplateService,
@@ -63,15 +63,15 @@ function templateStore(rows: ContestConfigTemplate[]) {
 describe('ContestConfigTemplateService.listTemplates', () => {
   it('lists active templates for an event type together with the any-event-type ones, in sort order', async () => {
     const { service } = templateStore([
-      template({ id: 'major', eventType: 'MAJOR', sortOrder: 2, name: 'Major special' }),
+      template({ id: 'knockout', eventType: ContestTemplateEventType.KNOCKOUT, sortOrder: 2, name: 'Knockout special' }),
       template({ id: 'any', eventType: null, sortOrder: 1 }),
-      template({ id: 'other', eventType: 'OPPOSITE_FIELD', sortOrder: 0 }),
-      template({ id: 'retired', eventType: 'MAJOR', active: false }),
+      template({ id: 'other', eventType: ContestTemplateEventType.WEEK, sortOrder: 0 }),
+      template({ id: 'retired', eventType: ContestTemplateEventType.KNOCKOUT, active: false }),
     ]);
 
-    const listed = await service.listTemplates({ sport: Sport.GOLF, eventType: 'MAJOR', active: true });
+    const listed = await service.listTemplates({ sport: Sport.GOLF, eventType: ContestTemplateEventType.KNOCKOUT, active: true });
 
-    expect(listed.map((row) => row.id)).toEqual(['any', 'major']);
+    expect(listed.map((row) => row.id)).toEqual(['any', 'knockout']);
     expect(listed[0].configuration).toEqual({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 });
   });
 });
@@ -124,15 +124,31 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
     expect(store.get('old-default')?.isDefault).toBe(false);
   });
 
+  it('keeps another selection type\'s default when a default is set, so every way of picking starts on its own default', async () => {
+    const { store, service } = templateStore([
+      template({ id: 'tiered-default', selectionType: SelectionType.TIERED, isDefault: true }),
+      template({
+        id: 'budget',
+        selectionType: SelectionType.BUDGET_PICK,
+        configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 },
+      }),
+    ]);
+
+    await service.updateTemplate('budget', { isDefault: true });
+
+    expect(store.get('budget')?.isDefault).toBe(true);
+    expect(store.get('tiered-default')?.isDefault).toBe(true);
+  });
+
   it('keeps the any-event-type default when a default is set for one event type', async () => {
     const { store, service } = templateStore([
       template({ id: 'any-default', eventType: null, isDefault: true }),
-      template({ id: 'major', eventType: 'MAJOR' }),
+      template({ id: 'knockout', eventType: ContestTemplateEventType.KNOCKOUT }),
     ]);
 
-    await service.updateTemplate('major', { isDefault: true });
+    await service.updateTemplate('knockout', { isDefault: true });
 
-    expect(store.get('major')?.isDefault).toBe(true);
+    expect(store.get('knockout')?.isDefault).toBe(true);
     expect(store.get('any-default')?.isDefault).toBe(true);
   });
 

@@ -3357,9 +3357,9 @@ export type ContestConfigTemplateDto = {
      */
     sportLeagueId: string | null;
     /**
-     * Optional event-type scope for the template.
+     * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
      */
-    eventType?: string | null;
+    eventType?: 'KNOCKOUT' | 'WEEK' | null;
     /**
      * Contest type that may use the template.
      */
@@ -4063,9 +4063,9 @@ export type ListContestConfigTemplatesQuery = {
      */
     contestFormat?: 'ROSTER' | 'PREDICTION' | 'SQUARES';
     /**
-     * Templates for this event type, plus the ones that apply to any event type.
+     * Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.
      */
-    eventType?: string;
+    eventType?: 'KNOCKOUT' | 'WEEK';
     /**
      * Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.
      */
@@ -4090,9 +4090,9 @@ export type ContestConfigTemplateListResponse = {
          */
         sportLeagueId: string | null;
         /**
-         * Optional event-type scope for the template.
+         * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
          */
-        eventType?: string | null;
+        eventType?: 'KNOCKOUT' | 'WEEK' | null;
         /**
          * Contest type that may use the template.
          */
@@ -5009,9 +5009,9 @@ export type ContestConfigTemplateResponse = {
          */
         sportLeagueId: string | null;
         /**
-         * Optional event-type scope for the template.
+         * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
          */
-        eventType?: string | null;
+        eventType?: 'KNOCKOUT' | 'WEEK' | null;
         /**
          * Contest type that may use the template.
          */
@@ -18722,9 +18722,9 @@ export type ListContestConfigTemplatesData = {
          */
         contestFormat?: 'ROSTER' | 'PREDICTION' | 'SQUARES';
         /**
-         * Templates for this event type, plus the ones that apply to any event type.
+         * Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.
          */
-        eventType?: string;
+        eventType?: 'KNOCKOUT' | 'WEEK';
         /**
          * Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.
          */

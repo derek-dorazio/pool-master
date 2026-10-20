@@ -8,6 +8,7 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   ContestFormat,
+  ContestTemplateEventType,
   ParticipantContestScoringRule,
   ParticipantContestScoringRuleCreate,
   SelectionType,
@@ -111,7 +112,7 @@ export class PrismaContestConfigTemplateRepository
     sport?: ContestConfigTemplate['sport'];
     sportLeagueId?: string;
     contestFormat?: ContestConfigTemplate['contestFormat'];
-    eventType?: string | null;
+    eventType?: ContestTemplateEventType | null;
     active?: boolean;
   } = {}): Promise<ContestConfigTemplate[]> {
     const rows = await this.prisma.contestConfigTemplate.findMany({
@@ -229,7 +230,7 @@ function mapContestConfigTemplate(row: {
   id: string;
   sport: Sport;
   sportLeagueId: string | null;
-  eventType: string | null;
+  eventType: ContestTemplateEventType | null;
   contestFormat: ContestFormat;
   selectionType: SelectionType;
   templateKey: string;

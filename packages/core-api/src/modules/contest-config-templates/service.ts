@@ -107,15 +107,17 @@ export class ContestConfigTemplateService {
     };
 
     if (nextIsDefault) {
-      // The default is unique per exact event type and exact sport league: each series of a
-      // sport keeps its own default preset (#624). `list` also returns any-event-type and
-      // sport-wide templates, so the scope is narrowed back to the exact match here.
+      // The default is unique per selection type, exact event type and exact sport league: each
+      // series of a sport keeps its own default preset (#624), and each way of picking its own
+      // (#802). `list` also returns any-event-type and sport-wide templates, so the scope is
+      // narrowed back to the exact match here.
       const scopeTemplates = (await this.repository.list({
         sport: existing.sport,
         contestFormat: existing.contestFormat,
         eventType: existing.eventType ?? null,
         ...(existing.sportLeagueId ? { sportLeagueId: existing.sportLeagueId } : {}),
-      })).filter((template) => (template.eventType ?? null) === (existing.eventType ?? null)
+      })).filter((template) => template.selectionType === existing.selectionType
+        && (template.eventType ?? null) === (existing.eventType ?? null)
         && (template.sportLeagueId ?? null) === (existing.sportLeagueId ?? null));
 
       await Promise.all(

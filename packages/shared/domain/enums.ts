@@ -206,6 +206,18 @@ export const SelectionType = {
 export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
 
 /**
+ * The kind of event a contest template is offered for (#802), where a sport's events come in more
+ * than one kind. Only a sport played as matches has two: a KNOCKOUT (the playoffs, a tournament
+ * bracket) and a WEEK of a season's games (an NFL regular-season week). A template with none is
+ * offered for every event of its sport. Mirrors `PrismaContestTemplateEventType`.
+ */
+export const ContestTemplateEventType = {
+  KNOCKOUT: 'KNOCKOUT',
+  WEEK: 'WEEK',
+} as const;
+export type ContestTemplateEventType = (typeof ContestTemplateEventType)[keyof typeof ContestTemplateEventType];
+
+/**
  * How a pick'em contest is played (#716). STRAIGHT_UP: pick the winner of every game.
  * CONFIDENCE: also rank the week's picks, giving each game a value from 1 to the number of
  * games, each used once; the most confident pick carries the highest.

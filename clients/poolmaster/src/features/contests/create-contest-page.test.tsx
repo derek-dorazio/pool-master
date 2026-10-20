@@ -337,7 +337,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-event-event-1')).toHaveTextContent('144 golfers · 6 tiers');
     expect(screen.getByTestId('contest-format-TIERED')).toBeChecked();
     expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toBeChecked();
-    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Pick 6, best 4');
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Select one from each tier, 4 count');
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 6'));
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
       'Masters Tournament Pick 6 · Masters TournamentPick 1 golfer from each of 6 tiers. The best 4 scores count. 1 entry per member.',
@@ -402,7 +402,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     await waitForStartingChoices();
     const pick12 = screen.getByTestId('contest-template-golf-tiered-pick-12');
-    expect(pick12).toHaveTextContent('Pick 12, best 8');
+    expect(pick12).toHaveTextContent('Select two from each tier, 8 count');
     fireEvent.click(pick12);
 
     expect(screen.getByTestId('contest-tiered-picks-per-tier')).toHaveValue(2);
@@ -1033,8 +1033,8 @@ describe('Commissioner tools › Contests › Create contest › Random draw for
 
     expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toHaveTextContent('Random draw');
     expect(screen.getByTestId('contest-template-golf-random-draw-1')).toBeChecked();
-    expect(screen.getByTestId('contest-template-golf-random-draw-1')).toHaveAccessibleName('Draw 1, all count');
-    expect(screen.getByTestId('contest-template-golf-random-draw-3-best-2')).toHaveAccessibleName('Draw 3, best 2');
+    expect(screen.getByTestId('contest-template-golf-random-draw-1')).toHaveTextContent('Draw 1 golfer each');
+    expect(screen.getByTestId('contest-template-golf-random-draw-3-best-2')).toHaveTextContent('Draw 3 golfers each, 2 count');
     expect(screen.getByLabelText('Golfers per entry')).toHaveValue(1);
 
     fireEvent.click(screen.getByTestId('contest-template-golf-random-draw-3-best-2'));

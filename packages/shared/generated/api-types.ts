@@ -5259,8 +5259,11 @@ export interface components {
              * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
              */
             sportLeagueId: string | null;
-            /** @description Optional event-type scope for the template. */
-            eventType?: string | null;
+            /**
+             * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+             * @enum {string|null}
+             */
+            eventType?: "KNOCKOUT" | "WEEK" | null;
             /**
              * @description Contest type that may use the template.
              * @enum {string}
@@ -5747,8 +5750,11 @@ export interface components {
              * @enum {string}
              */
             contestFormat?: "ROSTER" | "PREDICTION" | "SQUARES";
-            /** @description Templates for this event type, plus the ones that apply to any event type. */
-            eventType?: string;
+            /**
+             * @description Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.
+             * @enum {string}
+             */
+            eventType?: "KNOCKOUT" | "WEEK";
             /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
             active?: boolean;
         };
@@ -5770,8 +5776,11 @@ export interface components {
                  * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
                  */
                 sportLeagueId: string | null;
-                /** @description Optional event-type scope for the template. */
-                eventType?: string | null;
+                /**
+                 * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+                 * @enum {string|null}
+                 */
+                eventType?: "KNOCKOUT" | "WEEK" | null;
                 /**
                  * @description Contest type that may use the template.
                  * @enum {string}
@@ -6426,8 +6435,11 @@ export interface components {
                  * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
                  */
                 sportLeagueId: string | null;
-                /** @description Optional event-type scope for the template. */
-                eventType?: string | null;
+                /**
+                 * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+                 * @enum {string|null}
+                 */
+                eventType?: "KNOCKOUT" | "WEEK" | null;
                 /**
                  * @description Contest type that may use the template.
                  * @enum {string}
@@ -18308,8 +18320,8 @@ export interface operations {
                 sportLeagueId?: string;
                 /** @description Only templates for this contest format. */
                 contestFormat?: "ROSTER" | "PREDICTION" | "SQUARES";
-                /** @description Templates for this event type, plus the ones that apply to any event type. */
-                eventType?: string;
+                /** @description Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches. */
+                eventType?: "KNOCKOUT" | "WEEK";
                 /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
                 active?: boolean;
             };

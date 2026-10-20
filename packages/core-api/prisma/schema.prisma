@@ -334,6 +334,13 @@ enum PrismaContestStatus {
   COMPLETED
 }
 
+/// The kind of event a contest template is offered for (#802). Mirrors the domain
+/// `ContestTemplateEventType`.
+enum PrismaContestTemplateEventType {
+  KNOCKOUT
+  WEEK
+}
+
 enum PrismaSelectionType {
   TIERED
   BUDGET_PICK
@@ -807,7 +814,9 @@ model ContestConfigTemplate {
   /// The sport league whose events this template is offered for — a league's own official
   /// preset (NASCAR, IndyCar, F1 points). Null offers it for every league of its sport.
   sportLeagueId    String?             @map("sport_league_id") @db.Uuid
-  eventType        String?             @map("event_type") @db.VarChar(100)
+  /// The kind of event the template is offered for (#802): KNOCKOUT or WEEK for a sport played as
+  /// matches. Null offers it for every event of its sport.
+  eventType        PrismaContestTemplateEventType? @map("event_type")
   contestFormat    PrismaContestFormat @map("contest_type")
   /// A `SelectionType` value: how an entry in a contest created from this template picks.
   selectionType    PrismaSelectionType @map("selection_type")

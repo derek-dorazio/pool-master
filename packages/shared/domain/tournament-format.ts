@@ -1,4 +1,4 @@
-import { type Sport, TournamentFormat } from './enums';
+import { ContestTemplateEventType, type Sport, TournamentFormat } from './enums';
 import { getSportDefinition } from './sports/registry';
 
 /**
@@ -17,4 +17,17 @@ const PLAYS_MATCHES: Readonly<Record<TournamentFormat, boolean>> = {
 /** Whether an event of this sport is played as matches between two sides, by its sport's tournament format. */
 export function sportPlaysMatches(sport: Sport): boolean {
   return PLAYS_MATCHES[getSportDefinition(sport).tournamentFormat];
+}
+
+/**
+ * The kind of event a contest template must be offered for (#802): a week of games for a match
+ * sport's event of one round, whose games form no bracket (#715), else a knockout; null for a
+ * sport whose events are all one kind. An event with no round count has its sport's default.
+ */
+export function contestTemplateEventTypeOf(event: { sport: Sport; rounds: number | null }): ContestTemplateEventType | null {
+  if (!sportPlaysMatches(event.sport)) {
+    return null;
+  }
+  const rounds = event.rounds ?? getSportDefinition(event.sport).defaultRounds;
+  return rounds === 1 ? ContestTemplateEventType.WEEK : ContestTemplateEventType.KNOCKOUT;
 }
