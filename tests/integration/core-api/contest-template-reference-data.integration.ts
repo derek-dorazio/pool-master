@@ -486,7 +486,7 @@ describe('The seeded NFL league and its knockout templates', () => {
   });
 
   // Squares (#711, #786): the NFL's, the College Football Playoff's and each March Madness league's squares preset, the default for its own format.
-  it('seeds one squares template on the NFL, the College Football Playoff and men\'s and women\'s March Madness, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
+  it('seeds one squares template on the NFL, the College Football Playoff, men\'s and women\'s March Madness and men\'s and women\'s college hockey, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { contestFormat: ContestFormat.SQUARES },
       include: { sportLeague: true },
@@ -495,7 +495,9 @@ describe('The seeded NFL league and its knockout templates', () => {
 
     expect(templates.map((template) => [template.templateKey, template.sport, template.selectionType, template.isDefault, template.sportLeague?.name])).toEqual([
       ['cfp-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'College Football Playoff'],
+      ['ncaa-men-hockey-squares', Sport.HOCKEY, SelectionType.SQUARES, true, 'NCAA Division I Men'],
       ['ncaa-men-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Men'],
+      ['ncaa-women-hockey-squares', Sport.HOCKEY, SelectionType.SQUARES, true, 'NCAA Division I Women'],
       ['ncaa-women-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Women'],
       ['nfl-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'NFL'],
     ]);
@@ -742,9 +744,9 @@ const KNOCKOUT_SELECTION_TYPES: readonly SelectionType[] = [
 ];
 const WEEK_SELECTION_TYPES: readonly SelectionType[] = [SelectionType.PICK_EM, SelectionType.SURVIVOR, SelectionType.SQUARES];
 const LEAGUES_PLAYED_IN_WEEKS: readonly string[] = ['NFL'];
-// A playoff series is one match whose score is games won (NBA, WNBA), so squares, played on one
-// game's score, has no template there.
-const LEAGUES_PLAYED_AS_SERIES: readonly string[] = ['NBA', 'WNBA'];
+// A playoff series is one match whose score is games won (NBA, WNBA, NHL, PWHL, MLB), so squares,
+// played on one game's score, has no template there.
+const LEAGUES_PLAYED_AS_SERIES: readonly string[] = ['NBA', 'WNBA', 'NHL', 'PWHL', 'MLB'];
 
 /** What Create contest calls each format, which every template's name starts with. */
 const FORMAT_NAMES: Record<SelectionType, string> = {
