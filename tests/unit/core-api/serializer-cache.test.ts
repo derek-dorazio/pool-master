@@ -51,6 +51,27 @@ describe('cachedSerializerFactory', () => {
     await app.close();
   });
 
+  it('shares compiled serializers across encapsulated plugins that reference the same shared schema', async () => {
+    const counter = countingFactory();
+    const app = Fastify({
+      logger: false,
+      ajv: FASTIFY_AJV_OPTIONS,
+      schemaController: { compilersFactory: { buildSerializer: cachedSerializerFactory(counter.factory) } },
+    });
+    app.addSchema({ $id: 'Item', ...ITEM_BODY });
+    for (const path of ['/a', '/b', '/c']) {
+      app.register((child, _options, done) => {
+        child.get(path, { schema: { response: { 200: { $ref: 'Item#' } } }, handler: () => ({ id: path, total: 1 }) });
+        done();
+      });
+    }
+    await app.ready();
+
+    expect(counter.builds()).toBe(1);
+    expect((await app.inject({ method: 'GET', url: '/c' })).body).toBe('{"id":"/c","total":1}');
+    await app.close();
+  });
+
   it('still serializes each route by its own schema, dropping fields the schema does not declare', async () => {
     const app = await appWithRoutes(cachedSerializerFactory(countingFactory().factory));
 
