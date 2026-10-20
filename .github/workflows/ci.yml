@@ -1450,12 +1450,13 @@ jobs:
                 # #808: CloudWatch refuses --order-by LastEventTime together with a name prefix, and
                 # the error went to /dev/null, so this lookup never found a stream. The prefix names
                 # one task's one stream, so no ordering is needed.
+                # stderr kept apart so a CLI warning never becomes part of the stream name.
                 if ! LOG_STREAM=$(aws logs describe-log-streams \
                   --log-group-name "$LOG_GROUP" \
                   --log-stream-name-prefix "${LOG_PREFIX}/core-api/${TASK_ID}" \
                   --query 'logStreams[0].logStreamName' \
-                  --output text 2>&1); then
-                  echo "(log stream lookup failed: ${LOG_STREAM})"
+                  --output text 2>/tmp/log-stream-lookup.err); then
+                  echo "(log stream lookup failed: $(cat /tmp/log-stream-lookup.err))"
                   LOG_STREAM=""
                 fi
 
