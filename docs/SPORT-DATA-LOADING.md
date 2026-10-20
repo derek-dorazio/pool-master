@@ -49,7 +49,9 @@ neutral site, its `scheduledAt` once announced, and `advancesTo` (the match and 
 moves on to; `null` for the final), and its `regionLabel` (the March Madness region or NFL
 conference) where it has one. A league that reseeds gives `bracketAdvancement`
 `RESEED_BY_SEED`, and its first-round games `advancesTo: null`; the run sets the rule on the
-sport league, new or existing. A field entry may give its bracket `seed` (1-16 in each
+sport league, new or existing. The server refuses a changed rule while any event of the league
+has its bracket loaded, so applying lists that change as a conflict and goes on; a dry run,
+which writes nothing, lists it as an update. A field entry may give its bracket `seed` (1-16 in each
 March Madness region) where the seed is not its place in the field, and `isPlayInPlace` for a
 First Four pairing. The run refuses a bracket the bracket endpoint would refuse, before any
 write.

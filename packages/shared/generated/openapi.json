@@ -14765,7 +14765,7 @@
               "FIXED",
               "RESEED_BY_SEED"
             ],
-            "description": "RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise."
+            "description": "RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted."
           }
         },
         "additionalProperties": false,
@@ -44490,7 +44490,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Setting currentEventYear is \"set as current\": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.",
+        "description": "Setting currentEventYear is \"set as current\": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -44534,6 +44534,16 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

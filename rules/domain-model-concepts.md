@@ -203,7 +203,8 @@ Shown By Its Name*.
   participant is inactivated. A side with no team is filled by an earlier match's winner; a team with a **bye** is named
   straight on a later round's match, with no earlier match feeding its side. A sport league whose
   `bracketAdvancement` is `RESEED_BY_SEED` **reseeds**: a round's winners go to no fixed match, and
-  the admin places them by seed within their region (the NFL's Divisional round).
+  the admin places them by seed within their region (the NFL's Divisional round). The rule holds
+  while any of the league's events has a bracket loaded, since the bracket's links were drawn for it.
 - **Active**: `isActive` on a league, squad, user or field member (present in normal views),
   and the contest status `ACTIVE` (its first event has started and it has not settled). Different things.
 

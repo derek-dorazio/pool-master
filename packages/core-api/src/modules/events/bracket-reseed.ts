@@ -44,6 +44,43 @@ export function reseededRounds(bracket: readonly SportEventMatch[]): Set<number>
     .map((match) => match.roundNumber + 1));
 }
 
+/** One region of a reseeded round whose open places do not match the winners still to come into it. */
+export interface ReseededPlaceGap {
+  roundNumber: number;
+  regionLabel: string | null;
+  /** Sides of the round's matches in the region that nothing names and no link fills. */
+  openPlaces: number;
+  /** Matches of the round before in the region that link nowhere: their winners are placed by seed. */
+  winnersToCome: number;
+}
+
+/**
+ * Every region of a reseeded round, before release, whose open places differ from the winners
+ * still to come from the round before: a bye team left out (more places) or a team too many named
+ * (fewer). It counts the round before's matches, not its named teams, since in a round after a
+ * reseeded round those are placed later too.
+ */
+export function findReseededPlaceGaps(bracket: readonly SportEventMatch[]): ReseededPlaceGap[] {
+  const fedSides = new Set(bracket
+    .filter((match) => match.advancesToMatchId !== null && match.advancesToSide !== null)
+    .map((match) => `${match.advancesToMatchId}/${match.advancesToSide}`));
+  const gaps: ReseededPlaceGap[] = [];
+  for (const roundNumber of [...reseededRounds(bracket)].sort((left, right) => left - right)) {
+    const round = bracket.filter((match) => match.roundNumber === roundNumber);
+    const unlinkedBefore = bracket.filter((match) => match.roundNumber === roundNumber - 1 && match.advancesToMatchId === null);
+    const regions = [...new Set([...round, ...unlinkedBefore].map((match) => match.regionLabel))];
+    for (const regionLabel of regions) {
+      const openPlaces = round
+        .filter((match) => match.regionLabel === regionLabel)
+        .flatMap((match) => SIDES.filter((side) => sideOf(match, side) === null && !fedSides.has(`${match.id}/${side}`)))
+        .length;
+      const winnersToCome = unlinkedBefore.filter((match) => match.regionLabel === regionLabel).length;
+      if (openPlaces !== winnersToCome) gaps.push({ roundNumber, regionLabel, openPlaces, winnersToCome });
+    }
+  }
+  return gaps;
+}
+
 /** "The best seed first": a team with no seed sorts after every seeded one. */
 function bySeed(left: EnteringTeam, right: EnteringTeam): number {
   return (left.seedNumber ?? Number.MAX_SAFE_INTEGER) - (right.seedNumber ?? Number.MAX_SAFE_INTEGER);

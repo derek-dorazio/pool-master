@@ -200,6 +200,9 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'tiers'] as const,
       bracket: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'bracket'] as const,
+      // Under the bracket, so a result that changes who is left refreshes the suggestion too.
+      reseedProposal: (eventId: QueryKeyId, roundNumber: number) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'bracket', 'reseed', roundNumber] as const,
       liveSimulation: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'live-simulation'] as const,
       participants: ['poolmaster', 'root-admin', 'manage-sport', 'participants'] as const,

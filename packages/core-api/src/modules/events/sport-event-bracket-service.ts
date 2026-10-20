@@ -32,6 +32,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   BracketAdvancement,
+  eventRoundLabel,
   getSportDefinition,
   MatchSide,
   MatchStatus,
@@ -42,7 +43,7 @@ import {
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
-import { findRoundMatchupProblems, proposeRoundMatchups, reseededRounds, roundPlacementBlocker, type RoundMatchup } from './bracket-reseed';
+import { findReseededPlaceGaps, findRoundMatchupProblems, proposeRoundMatchups, reseededRounds, roundPlacementBlocker, type RoundMatchup } from './bracket-reseed';
 
 /** Where a match's winner moves on to: the next match, by number, and the side it fills there. */
 export interface BracketAdvance {
@@ -262,8 +263,10 @@ export class SportEventBracketService {
   /**
    * What still stops the event's release on its bracket's account (design Q3.6), in words an
    * admin can act on: every side of every match named or filled by an earlier winner, every
-   * active field member in the bracket, and nobody withdrawn left in it. Empty for an event whose
-   * sport plays no bracket.
+   * active field member in the bracket, and nobody withdrawn left in it. A reseeded round's empty
+   * sides wait for the round before's winners, so in each of its regions there must be exactly one
+   * per match of the round before that links nowhere (a bye team left out shows here). Empty for an
+   * event whose sport plays no bracket.
    */
   async releaseBlockers(event: SportEvent): Promise<string[]> {
     if (!sportPlaysMatches(event.sport)) {
@@ -277,7 +280,9 @@ export class SportEventBracketService {
       return ['its bracket is not loaded'];
     }
     // A reseeded round's teams are placed after the round before it is played.
-    const placedLater = await this.reseeds(event) ? reseededRounds(bracket) : new Set<number>();
+    const sportLeague = await this.deps.sportLeagues.findById(event.sportLeagueId);
+    const reseeds = sportLeague?.bracketAdvancement === BracketAdvancement.RESEED_BY_SEED;
+    const placedLater = reseeds ? reseededRounds(bracket) : new Set<number>();
     const fed = new Set(bracket
       .filter((match) => match.advancesToMatchId !== null && match.advancesToSide !== null)
       .map((match) => `${match.advancesToMatchId}/${match.advancesToSide}`));
@@ -298,6 +303,14 @@ export class SportEventBracketService {
     const blockers: string[] = [];
     if (emptySides > 0) {
       blockers.push(`${emptySides} bracket place(s) have no ${participant.one} and no earlier match to fill them`);
+    }
+    if (reseeds) {
+      const roundCount = event.rounds ?? Math.max(...bracket.map((match) => match.roundNumber));
+      const roundLabel = (roundNumber: number): string => eventRoundLabel(event.sport, sportLeague.roundNames, roundNumber, roundCount);
+      for (const gap of findReseededPlaceGaps(bracket)) {
+        const where = gap.regionLabel === null ? roundLabel(gap.roundNumber) : `${roundLabel(gap.roundNumber)} in ${gap.regionLabel}`;
+        blockers.push(`${where} has ${gap.openPlaces} open place(s) for ${gap.winnersToCome} ${roundLabel(gap.roundNumber - 1)} winner(s) still to come`);
+      }
     }
     const missing = field.filter((entry) => entry.isActive && !named.has(entry.id)).length;
     if (missing > 0) {

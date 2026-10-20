@@ -142,6 +142,22 @@ describe('SportEventRepository — series and event year', () => {
     expect(await events.countBySportLeagues([pga.id, empty.id], { eventYear: 2025 })).toEqual(new Map([[pga.id, 1], [empty.id, 0]]));
   });
 
+  it('says a sport league has a loaded bracket when any edition of any of its series, in any year, has a match, and not when none has', async () => {
+    const [nfl, cfp, empty] = [await tour('NFL'), await tour('College Football Playoff'), await tour('Empty League')];
+    const series = new PrismaEventSeriesRepository(getPrisma());
+    const playoffs = await series.findOrCreate(nfl.id, 'NFL Playoffs');
+    await edition(playoffs.id, 2026, 'nfl-2026');
+    const played = await edition(playoffs.id, 2025, 'nfl-2025');
+    await edition((await series.findOrCreate(cfp.id, 'College Football Playoff')).id, 2026, 'cfp-2026');
+    const round = await getPrisma().sportEventRound.create({ data: { sportEventId: played.id, roundNumber: 1, scheduledDate: new Date('2026-01-10T18:00:00.000Z') } });
+    await getPrisma().sportEventMatch.create({ data: { sportEventId: played.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false } });
+    const events = new PrismaSportEventRepository(getPrisma());
+
+    await expect(events.sportLeagueHasLoadedBracket(nfl.id)).resolves.toBe(true);
+    await expect(events.sportLeagueHasLoadedBracket(cfp.id)).resolves.toBe(false);
+    await expect(events.sportLeagueHasLoadedBracket(empty.id)).resolves.toBe(false);
+  });
+
   // plans/147 decision 5 — @@unique([eventSeriesId, eventYear]) is what makes "there is one
   // 2026 Masters" an invariant. Proved against Postgres, below the service's 409 mapping.
   it('rejects a second edition of one series in one year, and allows the same series in another year', async () => {

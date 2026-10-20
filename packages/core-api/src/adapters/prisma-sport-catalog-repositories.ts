@@ -377,6 +377,14 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return counts;
   }
 
+  async sportLeagueHasLoadedBracket(sportLeagueId: string): Promise<boolean> {
+    const match = await this.prisma.sportEventMatch.findFirst({
+      where: { sportEvent: { eventSeries: { sportLeagueId } } },
+      select: { id: true },
+    });
+    return match !== null;
+  }
+
   async summarizeByProviders(providerIds: readonly string[]): Promise<Map<string, SportEventProviderSummary>> {
     const [active, latest] = await Promise.all([
       this.prisma.sportEvent.groupBy({

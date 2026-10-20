@@ -106,7 +106,11 @@ export class SportLeagueService {
    * EVENT_YEAR_HAS_NO_EVENTS for a year this sport league has no events in. It is one write
    * on the sport league row, so the sport league never has two current years.
    *
-   * 422 SPORT_LEAGUE_NOT_BRACKET for RESEED_BY_SEED on a sport not played as a bracket.
+   * 422 SPORT_LEAGUE_NOT_BRACKET for RESEED_BY_SEED on a sport not played as a bracket. 409
+   * SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED for a change of `bracketAdvancement` while any event of
+   * the sport league has a bracket loaded (#730): a loaded bracket's links were drawn for the rule
+   * it had, so switching a reseeded bracket to fixed would strand the winners of its unlinked
+   * games. Sending the rule the league already has changes nothing and is allowed.
    */
   async updateSportLeague(
     sportLeagueId: string,
@@ -116,6 +120,7 @@ export class SportLeagueService {
     if (updates.bracketAdvancement !== undefined) {
       const sportRow = await this.deps.sports.findById(sportLeague.sportId);
       if (sportRow) this.assertAdvancementFits(sportRow.sport, updates.bracketAdvancement);
+      if (updates.bracketAdvancement !== sportLeague.bracketAdvancement) await this.assertNoBracketLoaded(sportLeague);
     }
     if (updates.currentEventYear !== undefined) {
       const events = (await this.deps.sportEvents.countBySportLeagues([sportLeagueId], { eventYear: updates.currentEventYear }))
@@ -149,6 +154,21 @@ export class SportLeagueService {
         `A ${getSportDefinition(sport).name.toLowerCase()} sport league plays no bracket, so it cannot reseed one.`,
         'SPORT_LEAGUE_NOT_BRACKET',
         422,
+      );
+    }
+  }
+
+  /** A loaded bracket was drawn for the league's rule; the rule holds until no event has one. */
+  private async assertNoBracketLoaded(sportLeague: SportLeague): Promise<void> {
+    if (await this.deps.sportEvents.sportLeagueHasLoadedBracket(sportLeague.id)) {
+      this.deps.logger?.warn({
+        action: 'sportLeagueService.updateSportLeague.bracketAdvancementLocked',
+        data: { sportLeagueId: sportLeague.id, bracketAdvancement: sportLeague.bracketAdvancement },
+      }, 'Refused a bracket rule change on a sport league with a loaded bracket');
+      throw new SportCatalogError(
+        `${sportLeague.name} has an event with its bracket loaded, so how its bracket winners advance cannot change.`,
+        'SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED',
+        409,
       );
     }
   }

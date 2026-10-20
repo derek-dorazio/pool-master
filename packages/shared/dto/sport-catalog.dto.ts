@@ -80,7 +80,7 @@ export const UpdateSportLeagueRequestSchema = z.object({
   matchKeyword: z.string().nullable().optional().describe('null clears it.'),
   isActive: z.boolean().optional(),
   currentEventYear: z.number().int().optional().describe('Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.'),
-  bracketAdvancement: z.nativeEnum(BracketAdvancement).optional().describe('RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.'),
+  bracketAdvancement: z.nativeEnum(BracketAdvancement).optional().describe('RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted.'),
 }).describe('Changes to a sport league; omitted fields are left alone.');
 export type UpdateSportLeagueRequest = z.infer<typeof UpdateSportLeagueRequestSchema>;
 
