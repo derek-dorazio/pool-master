@@ -3,7 +3,7 @@
 **Tracking issue:** #711
 
 Written 2026-10-19 for Derek's ask: a detailed design and plan for squares, with the model
-changes and how they fit Poolmaster's existing model. Status: design agreed; quarter scores (#772) are built, squares contests on the server (#773) and the screens (#774) are next. It
+changes and how they fit Poolmaster's existing model. Status: built; quarter scores (#772), squares contests on the server (#773) and the screens (#774). It
 builds on the ticket's approach and checks it against main as of #771. Every question below was
 answered by Derek on 2026-10-19; the slices in section 6 are filed under #711.
 
@@ -341,6 +341,13 @@ squares GET carry `maxSquaresPerEntry`.
   owner or "No winner"), and the winning boxes outlined on the board.
 - **Admin match results:** under each game, a row of period score fields per side, saved one
   period at a time, next to the existing final result.
+
+As built (#774): the box limit sits with the contest rules, and a squares contest shows "One
+entry per member" in place of the entries-per-member fields. The contest's entry page and its
+leaderboard are the same board; the leaderboard adds the winners and each entry's quarters won
+and place. The board re-reads itself every few seconds while the contest is open or live, so
+another member's claim or the draw shows without a reload. A claim that loses a race to another
+member says the box was just taken and shows the board as it now is.
 
 ---
 

@@ -34,6 +34,7 @@ import {
 import { BudgetLineupBuilder, LockedBudgetLineup } from './contest-entry-budget';
 import { BracketEntryPage } from './bracket-entry-page';
 import { PickEmEntryPage } from './pick-em-entry-page';
+import { SquaresEntryPage } from './squares-pages';
 import { DrawEntryMetrics, DrawLineup } from './contest-entry-draw';
 import {
   buildPickedAtById,
@@ -104,7 +105,7 @@ function getNextIncompleteGroupId(selectionGroups: SelectionGroup[]) {
 
 /**
  * The contest entry page: a bracket contest's entries fill in a bracket (#721), a pick'em
- * contest's pick each week's games (#718); every roster contest's build a lineup in the selection
+ * contest's pick each week's games (#718), a squares contest's claim boxes on the grid (#711); every roster contest's build a lineup in the selection
  * room. The contest read says which, and is shared
  * with the page it opens through the contest's own key.
  */
@@ -120,6 +121,10 @@ export function ContestEntryPage() {
   // A survivor week is picked on the pick'em week screen (#719).
   if (contestQuery.data?.selectionType === SelectionType.PICK_EM || contestQuery.data?.selectionType === SelectionType.SURVIVOR) {
     return <PickEmEntryPage contest={contestQuery.data} />;
+  }
+  // A squares entry claims boxes on the grid (#711).
+  if (contestQuery.data?.selectionType === SelectionType.SQUARES) {
+    return <SquaresEntryPage contest={contestQuery.data} />;
   }
   return <RosterContestEntryPage />;
 }

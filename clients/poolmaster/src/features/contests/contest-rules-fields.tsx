@@ -286,7 +286,7 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
  * The rules inputs for a contest's format: picks per tier and scores that count for a tiered
  * contest, golfers per entry and scores that count under the event's salary cap for a budget
  * one, golfers dealt per entry and scores that count for a random draw, the mode for a pick'em
- * contest, where a bracket starts, a survivor contest's rules, then entries per member with No limit. Create and Edit contest both use it, so a new format
+ * contest, where a bracket starts, a survivor contest's rules, a squares contest's boxes per entry, then entries per member with No limit (a squares contest takes one). Create and Edit contest both use it, so a new format
  * adds its fields here once.
  */
 export function ContestRulesFields({
@@ -312,26 +312,31 @@ export function ContestRulesFields({
   return (
     <div className="space-y-4">
       {RULES_INPUTS[selectionType]({ bracketStartRounds, onChange, participant, salaryCap, tierCount, values })}
-      <div className="grid gap-4 md:grid-cols-2">
-        <FormField label="Entries per member">
-          <Input
-            data-testid="contest-max-entries"
-            disabled={values.unlimitedEntries}
-            min={1}
-            onChange={(event) => onChange({ maxEntriesPerTeam: event.target.value })}
-            type="number"
-            value={values.unlimitedEntries ? '' : values.maxEntriesPerTeam}
-          />
-        </FormField>
-        <label className="flex items-end gap-3 pb-3 text-sm font-medium text-foreground">
-          <Checkbox
-            checked={values.unlimitedEntries}
-            data-testid="contest-max-entries-unlimited"
-            onChange={(event) => onChange({ unlimitedEntries: event.target.checked })}
-          />
-          No limit
-        </label>
-      </div>
+      {selectionType === SelectionType.SQUARES ? (
+        // The box limit is per entry, so a squares contest takes one entry per member (#711).
+        <p className="text-sm text-muted-foreground" data-testid="contest-squares-one-entry">One entry per member, which holds their boxes.</p>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          <FormField label="Entries per member">
+            <Input
+              data-testid="contest-max-entries"
+              disabled={values.unlimitedEntries}
+              min={1}
+              onChange={(event) => onChange({ maxEntriesPerTeam: event.target.value })}
+              type="number"
+              value={values.unlimitedEntries ? '' : values.maxEntriesPerTeam}
+            />
+          </FormField>
+          <label className="flex items-end gap-3 pb-3 text-sm font-medium text-foreground">
+            <Checkbox
+              checked={values.unlimitedEntries}
+              data-testid="contest-max-entries-unlimited"
+              onChange={(event) => onChange({ unlimitedEntries: event.target.checked })}
+            />
+            No limit
+          </label>
+        </div>
+      )}
     </div>
   );
 }

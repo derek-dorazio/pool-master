@@ -39,6 +39,7 @@ import { fetchContestEntries } from './use-contest-entries';
 import { ContestStatus, SelectionType, SportEventStatus, getSportDefinition } from '@poolmaster/shared/domain';
 import { BracketLeaderboard } from './bracket-leaderboard';
 import { PickEmLeaderboard } from './pick-em-leaderboard';
+import { SquaresLeaderboard } from './squares-pages';
 import { SurvivorLeaderboard } from './survivor-leaderboard';
 import { useContestLeaderboardQuery } from './use-contest-leaderboard';
 import { ContestEventSwitcher } from './contest-event-switcher';
@@ -58,8 +59,8 @@ import { hasContestEventStarted } from './contest-events';
  * Once the contest is COMPLETED the same endpoint serves the standings frozen at settlement,
  * so there is no separate final mode to render. A bracket contest's board is its own
  * (`BracketLeaderboard`, #721), and so are a pick'em contest's season board (`PickEmLeaderboard`,
- * #718) and a survivor contest's (`SurvivorLeaderboard`, #719): an entry there is its picks of
- * games, not a lineup.
+ * #718), a survivor contest's (`SurvivorLeaderboard`, #719) and a squares contest's grid
+ * (`SquaresLeaderboard`, #711): an entry there is its picks of games or its boxes, not a lineup.
  */
 
 /** The leaderboard read a contest's board shows: a bracket's, a pick'em's and a survivor's are their own. */
@@ -296,8 +297,9 @@ export function ContestLeaderboardPage() {
   const isBracket = selectionType === SelectionType.BRACKET;
   const isPickEm = selectionType === SelectionType.PICK_EM;
   const isSurvivor = selectionType === SelectionType.SURVIVOR;
+  const isSquares = selectionType === SelectionType.SQUARES;
   const leaderboardQuery = useContestLeaderboardQuery(contestId, contestQuery.data?.status, {
-    enabled: contestQuery.data !== undefined && !isBracket && !isPickEm && !isSurvivor,
+    enabled: contestQuery.data !== undefined && !isBracket && !isPickEm && !isSurvivor && !isSquares,
     sportEventId: requestedEventId,
   });
   const contestEntriesQuery = useQuery({
@@ -344,6 +346,9 @@ export function ContestLeaderboardPage() {
   }
   if (contestQuery.data && isSurvivor) {
     return <SurvivorLeaderboard contest={contestQuery.data} leagueCode={leagueCode} />;
+  }
+  if (contestQuery.data && isSquares) {
+    return <SquaresLeaderboard contest={contestQuery.data} leagueCode={leagueCode} />;
   }
 
   if (leaderboardQuery.isLoading) {

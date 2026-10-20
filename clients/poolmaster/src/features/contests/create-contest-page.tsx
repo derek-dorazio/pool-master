@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarCheck, ListOrdered, Network, ShieldCheck, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
+import { CalendarCheck, Grid3x3, ListOrdered, Network, ShieldCheck, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -34,6 +34,8 @@ import { bracketRoundCount, bracketStartRoundOptions, hasSecondChanceRound } fro
 import { isKnockoutUnderWay } from './contest-readiness';
 import { useEventRoundName } from './use-bracket-round-label';
 import { hasWebEntryScreen, type WebEnterableSelectionType } from './contest-entry-screens';
+import { SquaresGamePicker } from './squares-game-picker';
+import { useSquaresGameChoices } from './use-squares-game-choices';
 import {
   Alert,
   ChoiceCard,
@@ -106,6 +108,10 @@ const FORMAT_CHOICES: Record<CreatableSelectionType, { describe: (participant: S
     icon: ShieldCheck,
     describe: () => 'Pick one team to win each week, never the same team twice. A loss puts the entry out; the last ones standing win. Add the season\'s other weeks once the contest is created.',
   },
+  [SelectionType.SQUARES]: {
+    icon: Grid3x3,
+    describe: () => 'A 10x10 grid on one game. Members claim boxes, you draw the numbers, and the box matching each team\'s last digit wins each quarter and the final score.',
+  },
 };
 
 /**
@@ -142,6 +148,8 @@ const createContestFormSchema = z.object({
   selectionType: z.enum(creatableSelectionTypes),
   sport: z.custom<Sport>((value) => SUPPORTED_SPORTS.some((sport) => sport === value)),
   sportEventId: z.string().min(1, 'Choose an event for the contest.'),
+  /** The game a squares contest is played on (#711); empty for every other format. */
+  sportEventMatchId: z.string(),
   unlimitedEntries: z.boolean(),
   upsetBonusMultiplier: z.string(),
   upsetBonusRule: z.enum([UpsetBonusRule.NONE, UpsetBonusRule.SEED_DIFFERENCE]),
@@ -176,12 +184,15 @@ function sortEventsBySoonest(events: SportEventDto[]) {
 /**
  * The events a contest of this format can be created on: the contest-ready ones and, for a
  * bracket, a knockout under way with a later round to start a second-chance bracket at (#721).
+ * A squares contest closes at its own game's kickoff, so an event under way still offers its
+ * games to come (#711): the Super Bowl is the last game of the playoffs.
  */
 function contestEventsFor(events: readonly SportEventDto[], selectionType: CreatableSelectionType) {
   return events.filter((event) => event.contestEligible
     || (selectionType === SelectionType.BRACKET
       && isKnockoutUnderWay(event)
-      && hasSecondChanceRound(bracketRoundCount(event))));
+      && hasSecondChanceRound(bracketRoundCount(event)))
+    || (selectionType === SelectionType.SQUARES && isKnockoutUnderWay(event)));
 }
 
 /**
@@ -207,12 +218,13 @@ export function CreateContestPage() {
       selectionType: SelectionType.TIERED,
       sport: SUPPORTED_SPORTS[0],
       sportEventId: '',
+      sportEventMatchId: '',
       ...DEFAULT_CONTEST_RULES,
       ...EMPTY_SCORING_SETTINGS_VALUES,
     },
   });
   const values = form.watch();
-  const { contestName, scoringDefinitionId, selectedTemplateId, selectionType, sport, sportEventId } = values;
+  const { contestName, scoringDefinitionId, selectedTemplateId, selectionType, sport, sportEventId, sportEventMatchId } = values;
   const sportDefinition = getSportDefinition(sport);
   const { participant } = sportDefinition.vocabulary;
   const scoringSettingsUi = scoringSettingsUiFor(selectionType, scoringDefinitionId);
@@ -252,6 +264,11 @@ export function CreateContestPage() {
   const bracketStartRounds = selectionType === SelectionType.BRACKET && selectedEvent
     ? bracketStartRoundOptions(bracketRoundCount(selectedEvent), roundName, { isUnderWay: isEventUnderWay })
     : [];
+  // A squares contest's games: read once a squares contest's event is chosen.
+  const [now] = useState(() => new Date());
+  const squaresGames = useSquaresGameChoices(selectionType === SelectionType.SQUARES ? selectedEvent : null, now);
+  const isSquaresGameMissing = selectionType === SelectionType.SQUARES
+    && !squaresGames.games.some((game) => game.id === sportEventMatchId);
   // The chosen event's sport league: its own presets are offered beside the sport-wide ones, so
   // the presets wait for an event.
   const sportLeagueId = selectedEvent?.sportLeagueId;
@@ -359,6 +376,14 @@ export function CreateContestPage() {
     setFormValues({ sportEventId: event.id, startsAtRound: event.contestEligible ? '1' : '2' });
   }, [setFormValues]);
 
+  // A squares contest starts on the first game offered: the event's final when it is to come.
+  const firstSquaresGameId = squaresGames.games.at(0)?.id;
+  useEffect(() => {
+    if (firstSquaresGameId && isSquaresGameMissing) {
+      setFormValues({ sportEventMatchId: firstSquaresGameId });
+    }
+  }, [firstSquaresGameId, isSquaresGameMissing, setFormValues]);
+
   // The soonest contest-ready event is chosen to start with, else a knockout under way.
   useEffect(() => {
     const soonest = contestEvents.find((event) => event.contestEligible) ?? contestEvents.at(0);
@@ -458,6 +483,7 @@ export function CreateContestPage() {
         sportEventIds: [event.id],
         contestFormat: contestFormatForSelectionType(submitted.selectionType),
         selectionType: submitted.selectionType,
+        ...(submitted.selectionType === SelectionType.SQUARES ? { sportEventMatchId: submitted.sportEventMatchId } : {}),
         ...(submitted.selectedTemplateId ? { templateId: submitted.selectedTemplateId } : {}),
         // A definition that takes settings sends them; one that takes none leaves the template's
         // preset or the sport's default to apply.
@@ -542,6 +568,7 @@ export function CreateContestPage() {
       // The event's presets are still loading: a contest sent now would skip its default preset.
       isSubmitDisabled={!selectedEvent
         || templatesQuery.isPending
+        || isSquaresGameMissing
         || rulesError !== null
         || parsedScoring.error !== null
         || (selectionType === SelectionType.BUDGET_PICK && isBudgetUnavailable)}
@@ -562,7 +589,9 @@ export function CreateContestPage() {
           ? `Released events that haven't started, and ${sportDefinition.vocabulary.event.many} under way for a second-chance bracket. Entries close at the ${sportDefinition.vocabulary.eventStart}, or at a second-chance bracket's first game.`
           : selectionType === SelectionType.PICK_EM || selectionType === SelectionType.SURVIVOR
             ? 'Released weeks that haven\'t started. Choose the first week of the contest; you add the rest of the season from its Events page. Each week closes at its first kickoff.'
-            : `Released events that haven't started. Entries close at the ${sportDefinition.vocabulary.eventStart}.`}
+            : selectionType === SelectionType.SQUARES
+              ? `Released ${sportDefinition.vocabulary.event.many} with a game still to kick off. Choose the game the grid is played on; boxes close at its kickoff.`
+              : `Released events that haven't started. Entries close at the ${sportDefinition.vocabulary.eventStart}.`}
         step={1}
         testId="create-contest-event"
         title="Event"
@@ -591,6 +620,14 @@ export function CreateContestPage() {
             sport={sportDefinition}
           />
         )}
+        {selectionType === SelectionType.SQUARES && selectedEvent ? (
+          <SquaresGamePicker
+            choices={squaresGames}
+            event={selectedEvent}
+            onChange={(next) => setFormValues({ sportEventMatchId: next })}
+            value={sportEventMatchId}
+          />
+        ) : null}
       </SetupSection>
 
       <SetupSection step={2} testId="create-contest-format" title="Format">

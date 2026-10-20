@@ -134,13 +134,16 @@ function parseSurvivorRules(values: ContestRulesValues): RulesResult {
   return withEntryLimit(values, { selectionType: SelectionType.SURVIVOR });
 }
 
-/** The squares rules (#711): how many boxes an entry may claim. */
+/**
+ * The squares rules (#711): how many boxes an entry may claim. A squares contest takes one entry
+ * per member, whatever the entry limit fields hold, since the box limit is per entry.
+ */
 function parseSquaresRules(values: ContestRulesValues): RulesResult {
   const maxSquaresPerEntry = parseWholeNumber(values.maxSquaresPerEntry);
   if (maxSquaresPerEntry === null || maxSquaresPerEntry > SQUARES_PER_ENTRY_MAX) {
     return { configuration: null, error: `Boxes per entry must be between 1 and ${SQUARES_PER_ENTRY_MAX}.` };
   }
-  return withEntryLimit(values, { selectionType: SelectionType.SQUARES, maxSquaresPerEntry });
+  return { configuration: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry, maxEntriesPerSquad: 1 }, error: null };
 }
 
 /**

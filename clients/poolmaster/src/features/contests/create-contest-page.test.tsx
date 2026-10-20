@@ -7,9 +7,11 @@ import { CreateContestPage } from './create-contest-page';
 
 const {
   createContestMock,
+  getEventBracketMock,
   getLeagueByCodeMock,
   getSportLeagueMock,
   listContestConfigTemplatesMock,
+  listEventParticipantsMock,
   listEventsMock,
   mockLogger,
 } = vi.hoisted(() => {
@@ -26,9 +28,11 @@ const {
 
   return {
     createContestMock: vi.fn(),
+    getEventBracketMock: vi.fn(),
     getLeagueByCodeMock: vi.fn(),
     getSportLeagueMock: vi.fn(),
     listContestConfigTemplatesMock: vi.fn(),
+    listEventParticipantsMock: vi.fn(),
     listEventsMock: vi.fn(),
     mockLogger: logger,
   };
@@ -36,9 +40,11 @@ const {
 
 bindApiMocks({
   createContest: createContestMock,
+  getEventBracket: getEventBracketMock,
   getLeagueByCode: getLeagueByCodeMock,
   getSportLeague: getSportLeagueMock,
   listContestConfigTemplates: listContestConfigTemplatesMock,
+  listEventParticipants: listEventParticipantsMock,
   listEvents: listEventsMock,
 });
 
@@ -1355,5 +1361,113 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
     fireEvent.click(screen.getByTestId('contest-event-nascar-race-1'));
     await waitFor(() => expect(screen.getByTestId('contest-template-nascar-cup-tiered-points')).toBeChecked());
     expect(screen.getByTestId('contest-format-TIERED')).toBeChecked();
+  });
+});
+
+describe('Commissioner tools › Contests › Create contest › Squares format', () => {
+  /** The NFL playoffs under way: the Super Bowl to come, a conference game to come, a divisional game played. */
+  const PLAYOFFS_UNDER_WAY = {
+    id: 'nfl-playoffs',
+    sport: 'AMERICAN_FOOTBALL',
+    name: 'NFL Playoffs',
+    venue: null,
+    status: 'IN_PROGRESS',
+    startDate: '2099-01-10T18:00:00.000Z',
+    participantCount: 14,
+    readinessStatus: 'EVENT_STARTED',
+    readinessReasons: ['EVENT_STARTED'],
+    contestEligible: false,
+    tierCount: 0,
+    rounds: 4,
+    sportLeagueId: 'nfl',
+  };
+  const game = (overrides: Record<string, unknown>) => ({
+    sportEventId: 'nfl-playoffs',
+    homeSportEventParticipantId: null,
+    awaySportEventParticipantId: null,
+    isNeutralSite: false,
+    status: 'SCHEDULED',
+    winnerSide: null,
+    homeScore: null,
+    awayScore: null,
+    advancesToMatchId: 'game-sb',
+    advancesToSide: 'HOME',
+    regionLabel: null,
+    homeSpread: null,
+    periodScores: [],
+    ...overrides,
+  });
+
+  function primeFootballMocks() {
+    primeCommonMocks();
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'nfl', name: 'NFL', roundNames: ['Wild Card', 'Divisional', 'Conference Championship', 'Super Bowl'] } } });
+    const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
+    listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'AMERICAN_FOOTBALL'
+      ? Promise.resolve({ data: { events: [PLAYOFFS_UNDER_WAY] } })
+      : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
+    const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
+    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'AMERICAN_FOOTBALL'
+      ? Promise.resolve({ data: { templates: [] } })
+      : golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } })));
+    getEventBracketMock.mockResolvedValue({
+      data: {
+        matches: [
+          game({ id: 'game-div', roundNumber: 2, matchNumber: 9, status: 'COMPLETED', scheduledDate: '2099-01-17T21:00:00.000Z', homeScore: 31, awayScore: 17 }),
+          game({ id: 'game-afc', roundNumber: 3, matchNumber: 11, scheduledDate: '2099-01-25T20:00:00.000Z', homeSportEventParticipantId: 'field-chiefs', awaySportEventParticipantId: 'field-bills' }),
+          game({ id: 'game-sb', roundNumber: 4, matchNumber: 13, isNeutralSite: true, scheduledDate: '2099-02-07T23:30:00.000Z', advancesToMatchId: null, advancesToSide: null }),
+        ],
+      },
+    });
+    listEventParticipantsMock.mockResolvedValue({
+      data: {
+        participants: [
+          { id: 'field-chiefs', participant: { name: 'Kansas City Chiefs' } },
+          { id: 'field-bills', participant: { name: 'Buffalo Bills' } },
+        ],
+      },
+    });
+  }
+
+  afterEach(() => {
+    for (const mock of [
+      createContestMock, getEventBracketMock, getLeagueByCodeMock, getSportLeagueMock,
+      listContestConfigTemplatesMock, listEventParticipantsMock, listEventsMock,
+    ]) {
+      mock.mockReset();
+    }
+  });
+
+  it('lists the playoffs under way for squares, offers its games still to kick off with the Super Bowl first, takes one entry per member, and creates the contest on the chosen game', async () => {
+    primeFootballMocks();
+    createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-squares' } } });
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-AMERICAN_FOOTBALL'));
+    fireEvent.click(await screen.findByTestId('contest-format-SQUARES'));
+    await waitFor(() => expect(screen.getByTestId('contest-event-nfl-playoffs')).toBeChecked());
+
+    const picker = await screen.findByTestId('contest-squares-game');
+    expect(within(picker).getAllByRole('option').map((option) => option.textContent)).toEqual([
+      expect.stringContaining('Super Bowl · To be decided vs To be decided'),
+      expect.stringContaining('Conference Championship · Buffalo Bills @ Kansas City Chiefs'),
+    ]);
+    await waitFor(() => expect(picker).toHaveValue('game-sb'));
+    expect(screen.getByTestId('contest-squares-boxes-per-entry')).toHaveValue(10);
+    expect(screen.getByTestId('contest-squares-one-entry')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-max-entries')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-scoring-round-values')).not.toBeInTheDocument();
+
+    fireEvent.change(picker, { target: { value: 'game-afc' } });
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    expect(submittedBody()).toMatchObject({
+      sportEventIds: ['nfl-playoffs'],
+      contestFormat: 'SQUARES',
+      selectionType: 'SQUARES',
+      sportEventMatchId: 'game-afc',
+      configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 },
+    });
   });
 });
