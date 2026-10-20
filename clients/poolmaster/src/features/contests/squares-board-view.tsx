@@ -48,19 +48,22 @@ export function SquaresBoardView({
   canManage,
   contest,
   myEntryIds,
+  shownEntryId = null,
 }: {
   /** Whether the viewer is a commissioner of the league (or a root admin). */
   canManage: boolean;
   contest: ContestDto;
   /** The viewer's own entries in the contest: one, or none before they enter. */
   myEntryIds: readonly string[];
+  /** The entry the page is showing, if any: a commissioner claims for it until they choose another. */
+  shownEntryId?: string | null;
 }) {
   const logger = getLogger().child({ feature: 'squares-board' });
   const queryClient = useQueryClient();
   const contestId = contest.id;
   const boardKey = QueryKeys.contests.squaresBoard(contestId);
   const boardQuery = useSquaresBoardQuery(contest);
-  // The entry a commissioner claims for; null is their own, or the first entry when they have none.
+  // The entry a commissioner claims for; null is the entry on screen, else their own, else the first entry.
   const [claimForEntryId, setClaimForEntryId] = useState<string | null>(null);
   const [isDrawConfirmOpen, setIsDrawConfirmOpen] = useState(false);
 
@@ -133,7 +136,11 @@ export function SquaresBoardView({
   const periods = sport?.matchPeriods ?? { count: board.periodCount, label: { one: 'period', many: 'periods' } };
   const myEntryId = myEntryIds.at(0) ?? null;
   const claimingEntryId = canManage
-    ? claimForEntryId ?? myEntryId ?? board.entries.at(0)?.contestEntryId ?? null
+    ? claimForEntryId
+      ?? board.entries.find((entry) => entry.contestEntryId === shownEntryId)?.contestEntryId
+      ?? myEntryId
+      ?? board.entries.at(0)?.contestEntryId
+      ?? null
     : myEntryId;
   const myBoxCount = board.boxes.filter((box) => box.contestEntryId === claimingEntryId).length;
   const claimingEntry = board.entries.find((entry) => entry.contestEntryId === claimingEntryId) ?? null;

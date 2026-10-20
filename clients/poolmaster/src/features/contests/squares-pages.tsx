@@ -78,7 +78,12 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
         title={entry?.name ?? contest.name}
         titleTestId="contest-entry-heading"
       />
-      <SquaresBoardView canManage={viewer.isCommissioner || viewer.isRootAdmin} contest={contest} myEntryIds={myEntryIds} />
+      <SquaresBoardView
+        canManage={viewer.isCommissioner || viewer.isRootAdmin}
+        contest={contest}
+        myEntryIds={myEntryIds}
+        shownEntryId={entryId}
+      />
     </section>
   );
 }
