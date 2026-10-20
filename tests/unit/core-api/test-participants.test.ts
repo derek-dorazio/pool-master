@@ -1,9 +1,10 @@
-import type { SelectionStateResponse } from '@poolmaster/shared/generated/hey-api';
-import { SelectionType, Sport } from '@poolmaster/shared/domain';
+import type { ContestConfigTemplateListResponse, SelectionStateResponse } from '@poolmaster/shared/generated/hey-api';
+import { ContestFormat, ContestTemplateEventType, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { formatLoadReport, LoadAction, LoadMode, LoadSubject } from '../../../packages/core-api/scripts/seed-golf/load-report';
 import type { SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { choosePicks, refuseUnlessTestTarget, testLeagueCode, testLeagueName } from '../../../packages/core-api/scripts/seed-golf/test-participants-data';
+import { chooseContestTemplate, choosePicks, refuseUnlessTestTarget, testLeagueCode, testLeagueName } from '../../../packages/core-api/scripts/seed-golf/test-participants-data';
 
+type Template = ContestConfigTemplateListResponse['templates'][number];
 type Group = NonNullable<SelectionStateResponse['selectionGroups']>[number];
 
 function row(id: string, price: number, extra: Partial<Group['participants'][number]> = {}): Group['participants'][number] {
@@ -89,5 +90,49 @@ describe('test participants: where and under what name', () => {
     ]);
     expect(report).toContain('| Entry | 1 | 0 | 0 | 0 |');
     expect(report).not.toContain('| Contest |');
+  });
+});
+
+describe('test participants: which template a test contest is built from', () => {
+  const NFL = '00000000-0000-4000-8000-000000000001';
+
+  function template(templateKey: string, fields: Partial<Template>): Template {
+    return {
+      id: `tpl-${templateKey}`, sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: NFL, eventType: ContestTemplateEventType.KNOCKOUT,
+      contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateKey, name: templateKey, description: templateKey,
+      sortOrder: 1, isDefault: false, active: true, schemaVersion: 1,
+      configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, maxEntriesPerSquad: 1 },
+      ...fields,
+    } as Template;
+  }
+
+  // The NFL's templates as seeded: roster ones for the playoffs, pick'em and survivor for a week, squares on any game.
+  const nflTemplates = [
+    template('nfl-tiered-doubling', { sortOrder: 1 }),
+    template('nfl-budget-doubling', { selectionType: SelectionType.BUDGET_PICK, sortOrder: 2, isDefault: true }),
+    template('nfl-random-draw-doubling', { selectionType: SelectionType.RANDOM_DRAW, sortOrder: 3, isDefault: true }),
+    template('nfl-pick-em-straight-up', { eventType: ContestTemplateEventType.WEEK, contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.PICK_EM, isDefault: true }),
+    template('nfl-survivor', { eventType: ContestTemplateEventType.WEEK, contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.SURVIVOR, sortOrder: 4, isDefault: true }),
+    template('nfl-squares', { eventType: null, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES, sortOrder: 10, isDefault: true }),
+  ];
+
+  it('builds no test contest on an NFL week, which offers no roster template, instead of borrowing a playoff template whose round values do not fit one round', () => {
+    const week = { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: NFL, rounds: 1 };
+
+    expect(chooseContestTemplate(nflTemplates, week)).toBeNull();
+  });
+
+  it('builds a playoff test contest from the league\'s default roster template, never a draw', () => {
+    const playoffs = { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: NFL, rounds: 4 };
+
+    expect(chooseContestTemplate(nflTemplates, playoffs)?.templateKey).toBe('nfl-budget-doubling');
+  });
+
+  it('prefers the sport league\'s own template to a sport-wide one for a sport whose events are all one kind', () => {
+    const golf = (templateKey: string, sportLeagueId: string | null, isDefault: boolean) =>
+      template(templateKey, { sport: Sport.GOLF, sportLeagueId, eventType: null, isDefault });
+    const tournament = { sport: Sport.GOLF, sportLeagueId: NFL, rounds: 4 };
+
+    expect(chooseContestTemplate([golf('golf-tiered-pick-6', null, true), golf('tour-tiered', NFL, false)], tournament)?.templateKey).toBe('tour-tiered');
   });
 });

@@ -17,7 +17,7 @@
  * alone. A contest whose event has started is never touched.
  */
 
-import { ContestEntryStatus, ContestFormat, ContestStatus, LeagueMembershipStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestFormat, ContestStatus, LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type { ContestConfigTemplateListResponse, ContestListResponse, SportEventListResponse } from '@poolmaster/shared/generated/hey-api';
 import {
@@ -43,7 +43,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from './load-report';
 import type { SportDataFile } from './sport-data-file';
-import { choosePicks, testLeagueCode, testLeagueName } from './test-participants-data';
+import { chooseContestTemplate, choosePicks, testLeagueCode, testLeagueName } from './test-participants-data';
 
 export { refuseUnlessTestTarget } from './test-participants-data';
 
@@ -238,12 +238,7 @@ class ParticipantLoader {
       client,
       query: { sport: event.sport, sportLeagueId: event.sportLeagueId, active: true },
     }), `List contest templates for ${event.name}`);
-    // A draw deals its picks to every entry at once and closes them, so the run picks for itself instead.
-    const pickable = templates.filter((template) => template.contestFormat === ContestFormat.ROSTER
-      && template.selectionType !== SelectionType.RANDOM_DRAW);
-    const ranked = [...pickable].sort((left, right) => Number(right.sportLeagueId !== null) - Number(left.sportLeagueId !== null)
-      || Number(right.isDefault) - Number(left.isDefault) || left.sortOrder - right.sortOrder);
-    const chosen = ranked.at(0);
+    const chosen = chooseContestTemplate(templates, event);
     if (!chosen) throw new Error(`No tiered or budget contest template for ${event.sport}.`);
     return chosen;
   }
