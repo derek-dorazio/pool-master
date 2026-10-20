@@ -210,7 +210,8 @@ down: a lesson that was true mid-series may not be by the end.
 - **League presets without their leagues.** A per-league template needs its league row, so the
   league is reference data even though admins normally create leagues
   (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Give each league's
-  templates their own keys and one default per league. The template's foreign key then keeps
+  templates their own keys and one default per format and kind of event, named and described
+  as `rules/ux-rules.md` §12 *League Pages and Commissioner Tools* (item 12) says. The template's foreign key then keeps
   those leagues through any test cleanup that empties sport leagues, and a test that counts
   sports or leagues sees them.
 - **A league that plays differently from the sport's layout.** The tier layout belongs to the

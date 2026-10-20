@@ -145,8 +145,9 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.BASKETBALL, sportLeagueId: nba.id, contestFormat: ContestFormat.ROSTER, active: true },
-    })).data).templates;
+      query: { sport: Sport.BASKETBALL, sportLeagueId: nba.id, active: true },
+    })).data).templates
+      .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     const tiered = expectDefined(templates.find((template) => template.isDefault), 'the NBA default');
     expect(tiered.templateKey).toBe('nba-tiered-doubling');
 

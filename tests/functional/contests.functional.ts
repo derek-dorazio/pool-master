@@ -245,7 +245,6 @@ describe('SDK Functional: Contests and Entries', () => {
       client: commissioner.client,
       query: {
         sport: Sport.GOLF,
-        contestFormat: ContestFormat.ROSTER,
         active: true,
       },
     });
@@ -356,7 +355,6 @@ describe('SDK Functional: Contests and Entries', () => {
       client: commissioner.client,
       query: {
         sport: Sport.GOLF,
-        contestFormat: ContestFormat.ROSTER,
         active: true,
       },
     });
@@ -471,7 +469,6 @@ describe('SDK Functional: Contests and Entries', () => {
       client: commissioner.client,
       query: {
         sport: Sport.GOLF,
-        contestFormat: ContestFormat.ROSTER,
         active: true,
       },
     });

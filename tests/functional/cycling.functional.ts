@@ -137,8 +137,9 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
     // The tour's templates come with the sport-wide ones, and never the women's tour's.
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.CYCLING, sportLeagueId: worldTour.id, contestFormat: ContestFormat.ROSTER, active: true },
-    })).data).templates;
+      query: { sport: Sport.CYCLING, sportLeagueId: worldTour.id, active: true },
+    })).data).templates
+      .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([
       'uci-worldtour-budget-top-10', 'uci-worldtour-random-draw-top-10', 'uci-worldtour-tiered-top-10',
     ]);

@@ -284,10 +284,14 @@ const MARCH_MADNESS_UNDER_WAY = {
 
 /**
  * The golf reads, plus basketball's events (one contest-ready tournament of three rounds unless
- * told otherwise) with no presets of their own and a sport league with no round names of its own,
- * as the reads answer when Basketball is chosen.
+ * told otherwise) with no presets of their own unless given, and a sport league with no round
+ * names of its own unless given, as the reads answer when Basketball is chosen.
  */
-function primeBasketballMocks(events: Array<Record<string, unknown>> = [basketballEvent()], roundNames: string[] = []) {
+function primeBasketballMocks(
+  events: Array<Record<string, unknown>> = [basketballEvent()],
+  roundNames: string[] = [],
+  templates: Array<Record<string, unknown>> = [],
+) {
   primeCommonMocks();
   getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'ncaa-men', name: 'NCAA Men', roundNames } } });
   const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
@@ -296,7 +300,7 @@ function primeBasketballMocks(events: Array<Record<string, unknown>> = [basketba
     : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
   const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
   listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'BASKETBALL'
-    ? Promise.resolve({ data: { templates: [] } })
+    ? Promise.resolve({ data: { templates } })
     : golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } })));
 }
 
@@ -337,7 +341,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-event-event-1')).toHaveTextContent('144 golfers · 6 tiers');
     expect(screen.getByTestId('contest-format-TIERED')).toBeChecked();
     expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toBeChecked();
-    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Pick 6, best 4');
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Select one from each tier, 4 count');
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Masters Tournament Pick 6'));
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
       'Masters Tournament Pick 6 · Masters TournamentPick 1 golfer from each of 6 tiers. The best 4 scores count. 1 entry per member.',
@@ -402,7 +406,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     await waitForStartingChoices();
     const pick12 = screen.getByTestId('contest-template-golf-tiered-pick-12');
-    expect(pick12).toHaveTextContent('Pick 12, best 8');
+    expect(pick12).toHaveTextContent('Select two from each tier, 8 count');
     fireEvent.click(pick12);
 
     expect(screen.getByTestId('contest-tiered-picks-per-tier')).toHaveValue(2);
@@ -747,6 +751,85 @@ describe('Commissioner tools › Contests › Create contest', () => {
     });
   });
 
+  describe('bracket setups the chosen event can start at', () => {
+    const bracketTemplate = (templateKey: string, name: string, startsAtRound: number, overrides: Record<string, unknown> = {}) => ({
+      id: `80200000-0000-4000-8000-0000000001${String(startsAtRound)}${String(templateKey.length)}`,
+      sport: 'BASKETBALL',
+      sportLeagueId: 'ncaa-men',
+      eventType: 'KNOCKOUT',
+      contestFormat: 'PREDICTION',
+      selectionType: 'BRACKET',
+      templateKey,
+      name,
+      description: `${name}.`,
+      sortOrder: 7,
+      isDefault: false,
+      active: true,
+      schemaVersion: 1,
+      configuration: { selectionType: 'BRACKET', startsAtRound, maxEntriesPerSquad: 1 },
+      ...overrides,
+    });
+    const BRACKET_TEMPLATES = [
+      bracketTemplate('ncaa-men-bracket-doubling', 'Bracket: every game, doubling points', 1, { isDefault: true }),
+      bracketTemplate('ncaa-men-bracket-doubling-upset-bonus', 'Bracket: every game, doubling + upset bonus', 1, { sortOrder: 8 }),
+      bracketTemplate('ncaa-men-bracket-second-chance-doubling', 'Bracket: second chance from the Sweet 16', 3, { sortOrder: 9 }),
+    ];
+
+    it('offers a knockout that has not started only its full-bracket setups, starting on the default with no round left to choose', async () => {
+      primeBasketballMocks([basketballEvent({ rounds: 6 })], [], BRACKET_TEMPLATES);
+      renderCreateContestPage();
+      await waitForStartingChoices();
+
+      fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+      fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
+
+      await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-doubling')).toBeChecked());
+      expect(screen.getByTestId('contest-template-ncaa-men-bracket-doubling-upset-bonus')).toBeInTheDocument();
+      expect(screen.queryByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).not.toBeInTheDocument();
+      expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('Full bracket');
+      expect(screen.queryByTestId('contest-rules-error')).not.toBeInTheDocument();
+    });
+
+    it('offers a knockout under way only its second-chance setups, starting on one at its own round, and creates it from that round', async () => {
+      primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)], [], BRACKET_TEMPLATES);
+      createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-second-chance' } } });
+      renderCreateContestPage();
+      await waitForStartingChoices();
+
+      fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+      fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
+
+      await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).toBeChecked());
+      expect(screen.queryByTestId('contest-template-ncaa-men-bracket-doubling')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('contest-template-ncaa-men-bracket-doubling-upset-bonus')).not.toBeInTheDocument();
+      expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Sweet 16');
+      expect(screen.queryByTestId('contest-rules-error')).not.toBeInTheDocument();
+      fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
+      fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+      await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+      expect(submittedBody()).toMatchObject({
+        sportEventIds: ['bb-live'],
+        configuration: { selectionType: 'BRACKET', startsAtRound: 3 },
+      });
+    });
+
+    it('moves to the second-chance setup when the commissioner switches from a knockout that has not started to one under way', async () => {
+      primeBasketballMocks([basketballEvent({ rounds: 6 }), basketballEvent(MARCH_MADNESS_UNDER_WAY)], [], BRACKET_TEMPLATES);
+      renderCreateContestPage();
+      await waitForStartingChoices();
+
+      fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+      fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
+      await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-doubling')).toBeChecked());
+      fireEvent.click(screen.getByTestId('contest-event-bb-live'));
+
+      await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).toBeChecked());
+      expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Sweet 16');
+      expect(screen.queryByTestId('contest-rules-error')).not.toBeInTheDocument();
+    });
+  });
+
   it('shows the server\'s own words when a second-chance bracket\'s starting round has already started', async () => {
     primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)]);
     createContestMock.mockResolvedValue({
@@ -1033,8 +1116,8 @@ describe('Commissioner tools › Contests › Create contest › Random draw for
 
     expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toHaveTextContent('Random draw');
     expect(screen.getByTestId('contest-template-golf-random-draw-1')).toBeChecked();
-    expect(screen.getByTestId('contest-template-golf-random-draw-1')).toHaveAccessibleName('Draw 1, all count');
-    expect(screen.getByTestId('contest-template-golf-random-draw-3-best-2')).toHaveAccessibleName('Draw 3, best 2');
+    expect(screen.getByTestId('contest-template-golf-random-draw-1')).toHaveTextContent('Draw 1 golfer each');
+    expect(screen.getByTestId('contest-template-golf-random-draw-3-best-2')).toHaveTextContent('Draw 3 golfers each, 2 count');
     expect(screen.getByLabelText('Golfers per entry')).toHaveValue(1);
 
     fireEvent.click(screen.getByTestId('contest-template-golf-random-draw-3-best-2'));
@@ -1469,5 +1552,131 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
       sportEventMatchId: 'game-afc',
       configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 },
     });
+  });
+});
+
+describe('Commissioner tools › Contests › Create contest › templates by name and kind of event', () => {
+  const NFL_WEEK = {
+    id: 'nfl-week-1',
+    sport: 'AMERICAN_FOOTBALL',
+    name: 'NFL Week 1',
+    venue: null,
+    status: 'SCHEDULED',
+    startDate: '2099-09-10T17:00:00.000Z',
+    participantCount: 32,
+    readinessStatus: 'CONTEST_ELIGIBLE',
+    readinessReasons: [],
+    contestEligible: true,
+    tierCount: 0,
+    rounds: 1,
+    sportLeagueId: 'nfl',
+  };
+  const nflTemplate = (overrides: Record<string, unknown>) => ({
+    sport: 'AMERICAN_FOOTBALL',
+    sportLeagueId: 'nfl',
+    active: true,
+    schemaVersion: 1,
+    ...overrides,
+  });
+  const WEEK_TEMPLATES = [
+    nflTemplate({
+      id: '80200000-0000-4000-8000-000000000001',
+      eventType: 'WEEK',
+      contestFormat: 'PREDICTION',
+      selectionType: 'PICK_EM',
+      templateKey: 'nfl-pick-em-straight-up',
+      name: 'Pick’em: every game, straight up',
+      description: 'Pick the winner of every game each week. Every right pick scores a point.',
+      sortOrder: 1,
+      isDefault: true,
+      configuration: { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP', againstTheSpread: false, maxEntriesPerSquad: 1 },
+    }),
+    nflTemplate({
+      id: '80200000-0000-4000-8000-000000000002',
+      eventType: 'WEEK',
+      contestFormat: 'PREDICTION',
+      selectionType: 'SURVIVOR',
+      templateKey: 'nfl-survivor',
+      name: 'Survivor: 1 team a week, each team once',
+      description: 'Pick one team to win each week, never the same team twice. A loss puts the entry out.',
+      sortOrder: 4,
+      isDefault: true,
+      configuration: { selectionType: 'SURVIVOR', maxEntriesPerSquad: 1 },
+    }),
+  ];
+  const KNOCKOUT_TEMPLATES = [
+    nflTemplate({
+      id: '80200000-0000-4000-8000-000000000003',
+      eventType: 'KNOCKOUT',
+      contestFormat: 'ROSTER',
+      selectionType: 'TIERED',
+      templateKey: 'nfl-tiered-doubling',
+      name: 'Tiered: 1 team per tier, doubling points',
+      description: 'Pick one team from each tier. A win scores 1 point on Wild Card weekend, doubling each round to 8 for the Super Bowl.',
+      sortOrder: 1,
+      isDefault: true,
+      configuration: {
+        selectionType: 'TIERED',
+        picksPerTier: 1,
+        countedScores: 7,
+        maxEntriesPerSquad: 1,
+        scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4, 8], upsetBonus: { rule: 'NONE' } } },
+      },
+    }),
+  ];
+
+  /** One NFL week to set a contest up on; the template list answers by the kind of event asked for. */
+  function primeNflWeekMocks() {
+    primeCommonMocks();
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'nfl', name: 'NFL', roundNames: [] } } });
+    const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
+    listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'AMERICAN_FOOTBALL'
+      ? Promise.resolve({ data: { events: [NFL_WEEK] } })
+      : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
+    const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
+    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string; eventType?: string } }): Promise<unknown> => {
+      if (options.query?.sport !== 'AMERICAN_FOOTBALL') {
+        return golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } });
+      }
+      return Promise.resolve({ data: { templates: options.query.eventType === 'WEEK' ? WEEK_TEMPLATES : KNOCKOUT_TEMPLATES } });
+    });
+  }
+
+  afterEach(() => {
+    for (const mock of [
+      createContestMock, getEventBracketMock, getLeagueByCodeMock, getSportLeagueMock,
+      listContestConfigTemplatesMock, listEventParticipantsMock, listEventsMock,
+    ]) {
+      mock.mockReset();
+    }
+  });
+
+  it('shows each template as a choice by its name, with its description under it', async () => {
+    primeCommonMocks();
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Select one from each tier, 4 count');
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Default golf tiered template');
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-12')).toHaveTextContent('Pick two golfers from each seeded tier.');
+  });
+
+  it('asks for a week\'s templates on an NFL week, starts it on the NFL\'s Pick\'em default, and offers survivor\'s default on switching', async () => {
+    primeNflWeekMocks();
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-AMERICAN_FOOTBALL'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-template-nfl-pick-em-straight-up')).toBeChecked());
+    expect(screen.getByTestId('contest-format-PICK_EM')).toBeChecked();
+    const queries = listContestConfigTemplatesMock.mock.calls.map(([options]) =>
+      (options as { query?: Record<string, unknown> }).query);
+    expect(queries).toContainEqual(expect.objectContaining({ sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'nfl', eventType: 'WEEK' }));
+    expect(screen.queryByTestId('contest-template-nfl-tiered-doubling')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-format-SURVIVOR'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-template-nfl-survivor')).toBeChecked());
   });
 });

@@ -141,8 +141,9 @@ describe('SDK Functional: College Football Playoff', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: cfp.id, contestFormat: ContestFormat.ROSTER, active: true },
-    })).data).templates;
+      query: { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: cfp.id, active: true },
+    })).data).templates
+      .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     const tiered = expectDefined(templates.find((template) => template.isDefault), 'the College Football Playoff default');
     expect(tiered.templateKey).toBe('cfp-tiered-doubling');
 

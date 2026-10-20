@@ -7447,7 +7447,12 @@
               "string",
               "null"
             ],
-            "description": "Optional event-type scope for the template."
+            "enum": [
+              "KNOCKOUT",
+              "WEEK",
+              null
+            ],
+            "description": "The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport."
           },
           "contestFormat": {
             "type": "string",
@@ -9278,18 +9283,13 @@
             "format": "uuid",
             "description": "Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league."
           },
-          "contestFormat": {
-            "type": "string",
-            "enum": [
-              "ROSTER",
-              "PREDICTION",
-              "SQUARES"
-            ],
-            "description": "Only templates for this contest format."
-          },
           "eventType": {
             "type": "string",
-            "description": "Templates for this event type, plus the ones that apply to any event type."
+            "enum": [
+              "KNOCKOUT",
+              "WEEK"
+            ],
+            "description": "Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches."
           },
           "active": {
             "type": "boolean",
@@ -9339,7 +9339,12 @@
                     "string",
                     "null"
                   ],
-                  "description": "Optional event-type scope for the template."
+                  "enum": [
+                    "KNOCKOUT",
+                    "WEEK",
+                    null
+                  ],
+                  "description": "The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport."
                 },
                 "contestFormat": {
                   "type": "string",
@@ -12011,7 +12016,12 @@
                   "string",
                   "null"
                 ],
-                "description": "Optional event-type scope for the template."
+                "enum": [
+                  "KNOCKOUT",
+                  "WEEK",
+                  null
+                ],
+                "description": "The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport."
               },
               "contestFormat": {
                 "type": "string",
@@ -40325,24 +40335,14 @@
             "schema": {
               "type": "string",
               "enum": [
-                "ROSTER",
-                "PREDICTION",
-                "SQUARES"
+                "KNOCKOUT",
+                "WEEK"
               ]
-            },
-            "in": "query",
-            "name": "contestFormat",
-            "required": false,
-            "description": "Only templates for this contest format."
-          },
-          {
-            "schema": {
-              "type": "string"
             },
             "in": "query",
             "name": "eventType",
             "required": false,
-            "description": "Templates for this event type, plus the ones that apply to any event type."
+            "description": "Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches."
           },
           {
             "schema": {

@@ -6,6 +6,7 @@ import {
   ContestRulesWithEntryLimitSchema,
   ContestStatus,
   ContestFormat,
+  ContestTemplateEventType,
   GolfCategoryKey,
   GolfCutRuleType,
   RandomDrawContestRulesSchema,
@@ -216,7 +217,7 @@ export const ContestConfigTemplateDtoSchema = z.object({
   sportLeagueId: z.string().uuid().nullable().describe(
     "Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.",
   ),
-  eventType: z.string().nullable().optional().describe('Optional event-type scope for the template.'),
+  eventType: z.nativeEnum(ContestTemplateEventType).nullable().optional().describe('The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season\'s games), for a sport played as matches. Null: every event of its sport.'),
   contestFormat: z.enum(contestFormatValues).describe('Contest type that may use the template.'),
   selectionType: z.enum(selectionTypeValues).describe('How an entry picks in a contest created from this template.'),
   templateKey: z.string().describe('Stable machine key for the template.'),
@@ -235,8 +236,7 @@ export const ListContestConfigTemplatesQuerySchema = z.object({
   sportLeagueId: z.string().uuid().optional().describe(
     "Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.",
   ),
-  contestFormat: z.enum(contestFormatValues).optional().describe('Only templates for this contest format.'),
-  eventType: z.string().optional().describe('Templates for this event type, plus the ones that apply to any event type.'),
+  eventType: z.nativeEnum(ContestTemplateEventType).optional().describe('Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event\'s kind for a sport played as matches.'),
   active: z.boolean().optional().describe('Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.'),
 }).describe('Filters for listing contest configuration templates. Every filter is optional.');
 export type ListContestConfigTemplatesQuery = z.infer<

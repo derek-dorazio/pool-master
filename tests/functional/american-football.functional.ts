@@ -128,8 +128,9 @@ describe('SDK Functional: American football', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: nfl.id, contestFormat: ContestFormat.ROSTER, active: true },
-    })).data).templates;
+      query: { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: nfl.id, active: true },
+    })).data).templates
+      .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([
       'nfl-budget-doubling', 'nfl-budget-doubling-upset-bonus',
       'nfl-random-draw-doubling', 'nfl-random-draw-doubling-upset-bonus',

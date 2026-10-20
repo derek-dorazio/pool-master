@@ -127,7 +127,7 @@ describe('SportEventRepository — series and event year', () => {
   }
 
   it('narrows by sport league through the series and by event year, reads the sport league back, and counts per sport league with zeros', async () => {
-    const [pga, lpga, empty] = [await tour('PGA Tour'), await tour('LPGA Tour'), await tour('Empty Tour')];
+    const [pga, lpga, empty] = [await tour('PGA Tour'), await tour('LPGA-style Tour'), await tour('Empty Tour')];
     const series = new PrismaEventSeriesRepository(getPrisma());
     const masters = await series.findOrCreate(pga.id, 'The Masters');
     const usOpen = await series.findOrCreate(lpga.id, 'U.S. Open');
