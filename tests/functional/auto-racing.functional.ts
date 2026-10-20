@@ -139,8 +139,9 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     // The series' templates come with the sport-wide ones, and never IndyCar's.
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AUTO_RACING, sportLeagueId: nascar.id, contestFormat: ContestFormat.ROSTER, active: true },
-    })).data).templates;
+      query: { sport: Sport.AUTO_RACING, sportLeagueId: nascar.id, active: true },
+    })).data).templates
+      .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([
       'nascar-cup-budget-points', 'nascar-cup-random-draw-points', 'nascar-cup-tiered-points',
     ]);
@@ -281,8 +282,9 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AUTO_RACING, sportLeagueId: formula1.id, contestFormat: ContestFormat.ROSTER, active: true },
-    })).data).templates;
+      query: { sport: Sport.AUTO_RACING, sportLeagueId: formula1.id, active: true },
+    })).data).templates
+      .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([
       'formula-1-budget-points', 'formula-1-random-draw-points', 'formula-1-tiered-points',
     ]);

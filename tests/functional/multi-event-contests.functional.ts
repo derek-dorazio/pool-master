@@ -166,8 +166,9 @@ async function buildTwoTournamentContest(
 
   const templates = expectDefined((await listContestConfigTemplates({
     client: commissioner.client,
-    query: { sport: Sport.GOLF, contestFormat: ContestFormat.ROSTER, active: true },
-  })).data).templates;
+    query: { sport: Sport.GOLF, active: true },
+  })).data).templates
+      .filter((template) => template.contestFormat === ContestFormat.ROSTER);
   const defaultTemplate = expectDefined(templates.find((template) => template.isDefault), 'the golf default template');
   // Test data, as an admin's migration seeds the majors pool: the tour's own template naming the
   // series each tournament takes the name of.

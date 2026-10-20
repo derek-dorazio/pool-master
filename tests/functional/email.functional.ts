@@ -223,9 +223,9 @@ describe('SDK Functional: system emails', () => {
     const event = await seedScheduledGolfEvent(`Email Open ${randomUUID().slice(0, 6)}`);
     const templates = await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.GOLF, contestFormat: ContestFormat.ROSTER, active: true },
+      query: { sport: Sport.GOLF, active: true },
     });
-    const template = templates.data?.templates.find((candidate) => candidate.isDefault);
+    const template = templates.data?.templates.find((candidate) => candidate.contestFormat === ContestFormat.ROSTER && candidate.isDefault);
     expect(template).toBeDefined();
     const contestName = `Email Contest ${randomUUID().slice(0, 6)}`;
     const created = await createContest({

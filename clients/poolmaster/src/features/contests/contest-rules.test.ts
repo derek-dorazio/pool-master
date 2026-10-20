@@ -5,7 +5,6 @@ import {
   formatContestRules,
   formatEntriesPerTeam,
   formatEntriesPerTeamSentence,
-  formatPresetLabel,
   formatSelectionTypeName,
   suggestContestName,
 } from './contest-rules';
@@ -116,10 +115,8 @@ describe('contest rules form', () => {
 describe('pick\'em rules', () => {
   const TEAM = getSportDefinition(Sport.AMERICAN_FOOTBALL).vocabulary.participant;
 
-  it('names pick\'em and its two modes in product words', () => {
+  it('names pick\'em in product words', () => {
     expect(formatSelectionTypeName(SelectionType.PICK_EM)).toBe('Pick’em');
-    expect(formatPresetLabel({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false }, 0)).toBe('Straight up');
-    expect(formatPresetLabel({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false }, 0)).toBe('Confidence');
   });
 
   it('reads a straight-up contest as picking every game\'s winner, and a confidence one as also ranking each week\'s picks', () => {
@@ -129,9 +126,7 @@ describe('pick\'em rules', () => {
       .toBe('Pick the winner of every game, then rank each week’s picks by confidence.');
   });
 
-  it('names and reads a pool scored against the spread as picking the team that covers, with a game on the spread scoring nothing', () => {
-    expect(formatPresetLabel({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true }, 0))
-      .toBe('Straight up, against the spread');
+  it('reads a pool scored against the spread as picking the team that covers, with a game on the spread scoring nothing', () => {
     expect(formatContestRules({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true }, 0, TEAM))
       .toBe('Pick the team that covers the spread in every game. A game that lands exactly on the spread scores nothing.');
     expect(formatContestRules({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: true }, 0, TEAM))
@@ -166,7 +161,6 @@ describe('survivor rules', () => {
 
   it('names survivor and reads its rules as one winner a week, each team once, out after a loss', () => {
     expect(formatSelectionTypeName(SelectionType.SURVIVOR)).toBe('Survivor');
-    expect(formatPresetLabel({ selectionType: SelectionType.SURVIVOR }, 0)).toBe('Survivor');
     expect(formatContestRules({ selectionType: SelectionType.SURVIVOR }, 0, TEAM)).toBe(
       'Pick one team to win each week, and never the same team twice. A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.',
     );
@@ -184,10 +178,8 @@ describe('survivor rules', () => {
 describe('squares rules', () => {
   const TEAM = getSportDefinition(Sport.AMERICAN_FOOTBALL).vocabulary.participant;
 
-  it('names squares, labels its preset and suggested name by the box limit, and reads its rules as boxes on a grid won by last digits', () => {
+  it('names squares and its suggested name, and reads its rules as boxes on a grid won by last digits', () => {
     expect(formatSelectionTypeName(SelectionType.SQUARES)).toBe('Squares');
-    expect(formatPresetLabel({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, 0)).toBe('10 boxes each');
-    expect(formatPresetLabel({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 1 }, 0)).toBe('1 box each');
     expect(suggestContestName('Super Bowl LXI', SelectionType.SQUARES, null, 0)).toBe('Super Bowl LXI Squares');
     expect(formatContestRules({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, 0, TEAM)).toBe(
       'Claim up to 10 boxes on a 10x10 grid. Once the numbers are drawn, the box matching the last digit of each team\'s score wins each quarter and the final score.',
@@ -210,7 +202,6 @@ describe('bracket rules', () => {
 
   it('names a full bracket contest Bracket and reads its rules as every game picked to the final before the first game', () => {
     expect(formatSelectionTypeName(SelectionType.BRACKET)).toBe('Bracket');
-    expect(formatPresetLabel({ selectionType: SelectionType.BRACKET, startsAtRound: 1 }, 0)).toBe('Bracket');
     expect(formatContestRules({ selectionType: SelectionType.BRACKET, startsAtRound: 1 }, 4, TEAM, null, MARCH_MADNESS_ROUND))
       .toBe('Fill in the whole bracket before the first game: pick the winner of every game, all the way to the final.');
   });
@@ -218,7 +209,6 @@ describe('bracket rules', () => {
   it('reads a bracket starting at round 3 of six as a second-chance bracket from the Sweet 16, closing at its first game', () => {
     expect(formatContestRules({ selectionType: SelectionType.BRACKET, startsAtRound: 3 }, 4, TEAM, null, MARCH_MADNESS_ROUND))
       .toBe('Second-chance bracket from the Sweet 16: pick the winner of every game from the Sweet 16 on, all the way to the final, before its first game.');
-    expect(formatPresetLabel({ selectionType: SelectionType.BRACKET, startsAtRound: 3 }, 0)).toBe('Second chance');
   });
 
   it('labels the starting-round choice Full bracket for round 1 and "From the" a later round\'s name', () => {
@@ -256,17 +246,6 @@ describe('bracket rules', () => {
 });
 
 describe('Create contest wording', () => {
-  it('labels a tiered preset by the golfers picked and the scores that count on the chosen event', () => {
-    expect(formatPresetLabel({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, 6)).toBe('Pick 6, best 4');
-    expect(formatPresetLabel({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 6 }, 6)).toBe('Pick 6, all count');
-    expect(formatPresetLabel({ selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 8 }, 0)).toBe('2 per tier, best 8');
-  });
-
-  it('labels a budget preset by its roster and the scores that count, whatever the event\'s tiers', () => {
-    expect(formatPresetLabel({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 }, 0)).toBe('Pick 6, best 4');
-    expect(formatPresetLabel({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 6 }, 6)).toBe('Pick 6, all count');
-  });
-
   it('suggests a name from the event and the golfers picked, or the format before the event has tiers', () => {
     expect(suggestContestName('The Masters', SelectionType.TIERED, { selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 8 }, 6)).toBe('The Masters Pick 12');
     expect(suggestContestName('The Masters', SelectionType.TIERED, { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, 0)).toBe('The Masters Tiered');

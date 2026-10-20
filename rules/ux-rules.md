@@ -263,3 +263,20 @@ administration area (root admin included), reusing the same shared components.
     (`formatContestRules`), never raw enums such as `TIERED · STROKE_PLAY`. An
     event's tiers read **Tier 1**, **Tier 2**, … from `tierNumber`, one per
     row with Tier 1 on top.
+12. **Contest templates name and sell each contest.** Create contest offers a
+    league's contest templates as choices by their own `name` and
+    `description`, so both are product copy. A name reads
+    `<Format>: <how you pick>, <how it scores>`, the format named as
+    `formatSelectionTypeName` names it ("Tiered: 1 golfer per tier, best 4
+    count", "Bracket: full bracket, doubling + upset bonus"), with digits, the
+    sport's own noun, under 60 characters and no full stop; a template covering
+    several events puts its scope after the format ("Tiered majors pool: …").
+    The description is one or two plain sentences of at most 220 characters,
+    how an entry picks and then how it scores, with no setup words (template,
+    preset, config). Every sport league has exactly one default for each format
+    it can host on each kind of event it plays (`ContestTemplateEventType`:
+    a knockout, or a week of a season's games), so setup never starts blank; a
+    variation is added only where there is something to vary (an upset bonus,
+    a second-chance bracket), never for its own sake. A league starts on the
+    format whose default sorts first. The seeded-template integration test
+    checks all of it.

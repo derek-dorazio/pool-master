@@ -2,6 +2,7 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   ContestEntryPick,
+  ContestTemplateEventType,
   ParticipantContestScoringRule,
   ParticipantContestScoringRuleCreate,
   ParticipantInactiveReason,
@@ -33,8 +34,7 @@ export interface ContestConfigTemplateRepository {
   list(input?: {
     sport?: ContestConfigTemplate['sport'];
     sportLeagueId?: string;
-    contestFormat?: ContestConfigTemplate['contestFormat'];
-    eventType?: string | null;
+    eventType?: ContestTemplateEventType | null;
     active?: boolean;
   }): Promise<ContestConfigTemplate[]>;
   update(

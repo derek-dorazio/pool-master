@@ -132,11 +132,6 @@ export function formatBracketStartLabel(startsAtRound: number, roundName: RoundN
   return isSecondChanceBracket(startsAtRound) ? `From the ${roundName(startsAtRound)}` : 'Full bracket';
 }
 
-/** "Pick 6, best 4" or "Pick 6, all count": a roster size and the scores that count. */
-function formatRosterLabel(verb: string, rosterSize: number, countedScores: number) {
-  return `${verb} ${rosterSize}, ${countedScores >= rosterSize ? 'all count' : `best ${countedScores}`}`;
-}
-
 /**
  * A contest's rules as one plain sentence, such as "Pick 1 golfer from each of 6 tiers. The best
  * 4 scores count." Keyed by selection type, so each new way of picking adds its own arm here.
@@ -180,36 +175,6 @@ export function formatEntriesPerTeamSentence(maxEntriesPerSquad: number | null |
     return 'No limit on entries per member';
   }
   return `${pluralize(maxEntriesPerSquad, 'entry', 'entries')} per member`;
-}
-
-/**
- * A preset's short label for the "Start from" choice, such as "Pick 6, best 4" on an event with
- * six tiers. Before the event has tiers it reads per tier: "1 per tier, best 4".
- */
-export function formatPresetLabel(configuration: ContestRules, tierCount: number) {
-  switch (configuration.selectionType) {
-    case SelectionType.TIERED: {
-      const pick = tierCount > 0
-        ? `Pick ${getTieredRosterSize(tierCount, configuration.picksPerTier)}`
-        : `${configuration.picksPerTier} per tier`;
-      const count = tierCount > 0 && configuration.countedScores >= getTieredRosterSize(tierCount, configuration.picksPerTier)
-        ? 'all count'
-        : `best ${configuration.countedScores}`;
-      return `${pick}, ${count}`;
-    }
-    case SelectionType.BUDGET_PICK:
-      return formatRosterLabel('Pick', configuration.rosterSize, configuration.countedScores);
-    case SelectionType.RANDOM_DRAW:
-      return formatRosterLabel('Draw', configuration.picksPerEntry, configuration.countedScores);
-    case SelectionType.PICK_EM:
-      return formatPickEmRulesName(configuration);
-    case SelectionType.BRACKET:
-      return isSecondChanceBracket(configuration.startsAtRound) ? 'Second chance' : formatSelectionTypeName(SelectionType.BRACKET);
-    case SelectionType.SURVIVOR:
-      return formatSelectionTypeName(SelectionType.SURVIVOR);
-    case SelectionType.SQUARES:
-      return `${pluralize(configuration.maxSquaresPerEntry, 'box', 'boxes')} each`;
-  }
 }
 
 /**

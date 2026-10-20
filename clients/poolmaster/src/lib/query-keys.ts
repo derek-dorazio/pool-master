@@ -1,3 +1,5 @@
+import type { ContestTemplateEventType } from '@poolmaster/shared/domain';
+
 type QueryKeyId = string | null | undefined;
 
 type SportEventListFilters = {
@@ -82,7 +84,7 @@ export const QueryKeys = {
    */
   contestConfigTemplates: {
     all: ['poolmaster', 'contest-config-templates'] as const,
-    list: (filters: { sport?: QueryKeyId; sportLeagueId?: QueryKeyId; contestFormat?: QueryKeyId; active?: boolean }) =>
+    list: (filters: { sport?: QueryKeyId; sportLeagueId?: QueryKeyId; eventType?: ContestTemplateEventType; active?: boolean }) =>
       ['poolmaster', 'contest-config-templates', filters] as const,
   },
   contestEntries: {
