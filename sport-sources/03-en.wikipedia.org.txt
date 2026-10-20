@@ -1,0 +1,1661 @@
+Source: https://en.wikipedia.org/w/index.php?title=2026_Stanley_Cup_playoffs&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Stanley_Cup_playoffs&action=raw
+HTTP 200
+Fetched: 2026-10-20T18:35:20.313Z
+
+{{Short description|NHL postseason tournament}}
+{{Use mdy dates|date=March 2026}}
+{{Infobox hockey tournament season
+| title = Stanley Cup playoffs
+| image = 2026 Stanley Cup playoffs logo.png
+| year = 2026
+| dates = April 18 – June 14, 2026
+| num_teams = 16
+| defending_champions = [[2025–26 Florida Panthers season|Florida Panthers]]
+(did not qualify)
+| winners = [[Carolina Hurricanes]]
+| second = [[Vegas Golden Knights]]
+| stat_leader_title = Scoring leader(s)
+| stat_leader_player = [[Mitch Marner]] (Golden Knights)
+| stat_leader_value = 29 points
+| award_title = [[Conn Smythe Trophy|MVP]]
+| award = [[Jordan Staal]] (Hurricanes)
+| prev_season = [[2025 Stanley Cup playoffs|2025]]
+| next_season = ''2027''
+}}
+The '''2026 Stanley Cup playoffs''' was the [[Stanley Cup playoffs|playoff tournament]] of the [[National Hockey League]] (NHL) for the [[2025–26 NHL season|2025–26 season]]. The playoffs began on April 18, 2026, and concluded on June 14, 2026, with the [[Carolina Hurricanes]] winning their second [[Stanley Cup]] in franchise history, defeating the [[Vegas Golden Knights]] four games to two in the [[2026 Stanley Cup Final|Stanley Cup Final]]. {{cite web |url=https://media.nhl.com/site/asset/public/ext/2025-26/2025-26KeyDates.pdf |title=2025–26 Key Dates |publisher=National Hockey League |date=September 9, 2025 |access-date=March 21, 2026}}
+The [[Colorado Avalanche]] qualified for the playoffs as the [[Presidents' Trophy]] winners with the most points (i.e., best record) during the regular season. The [[Buffalo Sabres]] ended their NHL-record 14-year playoff drought, clinching a playoff spot for the first time since [[2011 Stanley Cup playoffs|2011]]. The [[Anaheim Ducks]] qualified for the playoffs for the first time since [[2018 Stanley Cup playoffs|2018]], ending their seven-year playoff drought. The [[Philadelphia Flyers]] also ended their five-year playoff drought by making the playoffs for the first time since [[2020 Stanley Cup playoffs|2020]]. The [[Toronto Maple Leafs]] failed to qualify for the Stanley Cup playoffs for the first time since the [[2015–16 NHL season|2015–16 season]], ending what was the longest playoff streak in the NHL. The longest active playoff streak is now held jointly by the [[Colorado Avalanche]] and [[Tampa Bay Lightning]], who have qualified for the playoffs every year since 2018. Additionally, the two-time defending champion [[Florida Panthers]] failed to qualify for the playoffs, becoming the first defending champions to fail to qualify since the [[2014–15 Los Angeles Kings season|2014–15 Los Angeles Kings]], and the first two-time defending champions to miss the playoffs since the [[1969–70 Montreal Canadiens season|1969–70 Montreal Canadiens]]. {{cite web |last=Ganzi |first=Joey |date=2026-04-08 |title=Panthers Can Benefit From Missing the Playoffs This Season |url=https://www.yardbarker.com/nhl/articles/panthers_can_benefit_from_missing_the_playoffs_this_season/s1_16448_43702617 |access-date=2026-04-18 |website=Yardbarker |language=en}} The [[Winnipeg Jets]] also became the fifth defending Presidents' Trophy winner to fail to qualify for the playoffs. This is also the first time in league history that consecutive defending Presidents' Trophy winners failed to make the playoffs, as the New York Rangers failed to make the 2025 Stanley Cup Playoffs after winning the Presidents’ Trophy in 2024. The [[Utah Mammoth]] tied the [[Seattle Kraken]] as the second-fastest expansion team to clinch their first playoff berth, doing so in their second season, and for the first time since [[1965–66 NHL season#Playoffs|1966]], none of the [[New York metropolitan area]]-based teams (the [[New Jersey Devils]], [[New York Islanders]], and [[New York Rangers]]) qualified for the playoffs. {{cite web |last=Campbell |first=Ken |url=https://thehockeynews.com/news/latest-news/look-ma-no-playoff-teams-what-went-wrong-in-new-york-and-who-will-fix-it |title=Look, Ma, No Playoff Teams! What Went Wrong In New York And Who Will Fix It? |work=[[The Hockey News]] |date=April 13, 2026 |access-date=April 13, 2026}}
+For the first time since [[2019 Stanley Cup playoffs|2019]], following Tampa Bay's elimination in the first round, neither of the NHL's Florida-based teams made it to the Stanley Cup Final. The Carolina Hurricanes became the first team to have a 12–1 record going into the Final, and the fewest number of losses since the [[1975–76 Montreal Canadiens season|1975–76 Montreal Canadiens]]. {{cite news|url=https://nsjonline.com/article/2026/05/hurricanes-finish-off-canadiens-advance-to-stanley-cup-final-with-6-1-win/|title=Hurricanes finish off Canadiens, advance to Stanley Cup final with 6-1 win|date=May 30, 2026|newspaper=North State Journal|accessdate=May 29, 2026}}
+The Hurricanes finished the playoffs with a 16–3 record, the fewest amount of losses for a Stanley Cup winner since the [[1987–88 Edmonton Oilers season|1987–88 Edmonton Oilers]]. {{cite magazine|url=https://thehockeynews.com/news/latest-news/historic-16-3-carolina-hurricanes-shut-out-vegas-to-win-stanley-cup|title=Historic 16-3 Carolina Hurricanes Shut Out Vegas To Win Stanley Cup|last=Kennedy|first=Ryan|date=June 14, 2026|magazine=The Hockey News|accessdate=June 14, 2026}}
+==Playoff seeds==
+{{Further|Stanley Cup playoffs#Current format}}
+This was the eleventh year in which the top three teams in each division make the [[Stanley Cup playoffs|playoffs]], along with two [[Wild card (sports)|wild cards]] in each conference (for a total of eight playoff teams from each conference).
+The following teams qualified for the playoffs: {{cite web|url=https://www.nhl.com/standings/2026-04-17/wildcard|title=NHL Hockey Standings|website=NHL.com|access-date=April 18, 2026}}
+===Eastern Conference===
+====Atlantic Division====
+# [[2025–26 Buffalo Sabres season|Buffalo Sabres]], [[Atlantic Division (NHL)|Atlantic Division]] champions – 109 points
+# [[2025–26 Tampa Bay Lightning season|Tampa Bay Lightning]] – 106 points (40 {{abbr|RWs|Regulation Wins}})
+# [[2025–26 Montreal Canadiens season|Montreal Canadiens]] – 106 points (34 {{abbr|RWs|Regulation Wins}})
+====Metropolitan Division====
+# [[2025–26 Carolina Hurricanes season|Carolina Hurricanes]], [[Metropolitan Division]] champions, [[Eastern Conference (NHL)|Eastern Conference]] regular season champions – 113 points
+# [[2025–26 Pittsburgh Penguins season|Pittsburgh Penguins]] – 98 points (34 {{abbr|RWs|Regulation Wins}})
+# [[2025–26 Philadelphia Flyers season|Philadelphia Flyers]] – 98 points (27 {{abbr|RWs|Regulation Wins}})
+====Wild Cards====
+# [[2025–26 Boston Bruins season|Boston Bruins]] – 100 points
+# [[2025–26 Ottawa Senators season|Ottawa Senators]] – 99 points
+===Western Conference===
+====Central Division====
+# [[2025–26 Colorado Avalanche season|Colorado Avalanche]], [[Central Division (NHL)|Central Division]] champions, [[Western Conference (NHL)|Western Conference]] regular season champions, [[Presidents' Trophy]] winners – 121 points
+# [[2025–26 Dallas Stars season|Dallas Stars]] – 112 points
+# [[2025–26 Minnesota Wild season|Minnesota Wild]] – 104 points
+====Pacific Division====
+# [[2025–26 Vegas Golden Knights season|Vegas Golden Knights]], [[Pacific Division (NHL)|Pacific Division]] champions – 95 points
+# [[2025–26 Edmonton Oilers season|Edmonton Oilers]] – 93 points
+# [[2025–26 Anaheim Ducks season|Anaheim Ducks]] – 92 points
+====Wild Cards====
+# [[2025–26 Utah Mammoth season|Utah Mammoth]] – 92 points
+# [[2025–26 Los Angeles Kings season|Los Angeles Kings]] – 90 points
+==Playoff bracket==
+In each round, teams competed in a best-of-seven series following a 2–2–1–1–1 format (scores in the bracket indicate the number of games won in each best-of-seven series). The team with [[home advantage|home ice advantage]] plays at home for games one and two (and games five and seven, if necessary), and the other team plays at home for games three and four (and game six, if necessary). The top three teams in each division made the playoffs, along with two wild cards in each conference, for a total of eight teams from each conference.
+In the first round, the lower [[seed (sports)|seeded]] wild card in the conference played against the division winner with the best record while the other wild card played against the other division winner, and both wild cards were [[de facto]] #4 seeds. The other series matched the second and third-place teams from the divisions. In the first two rounds, home-ice advantage was awarded to the team with the better seed. Thereafter, it was awarded to the team that had the better regular season record.
+{{#invoke:transcludable section|main|section=Bracket|text=
+{{16TeamBracket |
+|RD1=[[2026 Stanley Cup playoffs#First round|First round]]
+|RD2=[[2026 Stanley Cup playoffs#Second round|Second round]]
+|RD3=[[2026 Stanley Cup playoffs#Conference finals|Conference finals]]
+|RD4=[[2026 Stanley Cup Final|Stanley Cup Final]]
+|RD2-group1='''[[Eastern Conference (NHL)|Eastern Conference]]'''
+|RD2-group2='''[[Western Conference (NHL)|Western Conference]]'''
+|RD1-seed1 =A1
+|RD1-team01 ='''Buffalo'''
+|RD1-score01 ='''4'''
+|RD1-seed2 =WC1
+|RD1-team02 =Boston
+|RD1-score02 =2
+|RD1-seed3 =A2
+|RD1-team03 =Tampa Bay
+|RD1-score03 =3
+|RD1-seed4 =A3
+|RD1-team04 ='''Montreal'''
+|RD1-score04 ='''4'''
+|RD1-seed5 =M1
+|RD1-team05 ='''Carolina'''
+|RD1-score05 ='''4'''
+|RD1-seed6 =WC2
+|RD1-team06 =Ottawa
+|RD1-score06 =0
+|RD1-seed7 =M2
+|RD1-team07 =Pittsburgh
+|RD1-score07 =2
+|RD1-seed8 =M3
+|RD1-team08 ='''Philadelphia'''
+|RD1-score08 ='''4'''
+|RD1-seed9 =C1
+|RD1-team09 ='''Colorado'''
+|RD1-score09 ='''4'''
+|RD1-seed10 =WC2
+|RD1-team10 =Los Angeles
+|RD1-score10 =0
+|RD1-seed11 =C2
+|RD1-team11 =Dallas
+|RD1-score11 =2
+|RD1-seed12 =C3
+|RD1-team12 ='''Minnesota'''
+|RD1-score12 ='''4'''
+|RD1-seed13 =P1
+|RD1-team13 ='''Vegas'''
+|RD1-score13 ='''4'''
+|RD1-seed14 =WC1
+|RD1-team14 =Utah
+|RD1-score14 =2
+|RD1-seed15 =P2
+|RD1-team15 =Edmonton
+|RD1-score15 =2
+|RD1-seed16 =P3
+|RD1-team16 ='''Anaheim'''
+|RD1-score16 ='''4'''
+|RD2-seed01 =A1
+|RD2-team01 =Buffalo
+|RD2-score01 =3
+|RD2-seed02 =A3
+|RD2-team02 ='''Montreal'''
+|RD2-score02 ='''4'''
+|RD2-seed03 =M1
+|RD2-team03 ='''Carolina'''
+|RD2-score03 ='''4'''
+|RD2-seed04 =M3
+|RD2-team04 =Philadelphia
+|RD2-score04 =0
+|RD2-seed05 =C1
+|RD2-team05 ='''Colorado'''
+|RD2-score05 ='''4'''
+|RD2-seed06 =C3
+|RD2-team06 =Minnesota
+|RD2-score06 =1
+|RD2-seed07 =P1
+|RD2-team07 ='''Vegas'''
+|RD2-score07 ='''4'''
+|RD2-seed08 =P3
+|RD2-team08 =Anaheim
+|RD2-score08 =2
+|RD3-seed01 = A3
+|RD3-team01 = Montreal
+|RD3-score01 = 1
+|RD3-seed02 = M1
+|RD3-team02 = '''Carolina'''
+|RD3-score02 = '''4'''
+|RD3-seed03 = C1
+|RD3-team03 = Colorado
+|RD3-score03 = 0
+|RD3-seed04 = P1
+|RD3-team04 = '''Vegas'''
+|RD3-score04 = '''4'''
+|RD4-seed01 = M1
+|RD4-team01 = '''Carolina'''
+|RD4-score01 = '''4'''
+|RD4-seed02 = P1
+|RD4-team02 = Vegas
+|RD4-score02 = 2
+}}}}
+;Legend
+* '''A1''', '''A2''', '''A3''' – The first, second, and third place teams from the [[Atlantic Division (NHL)|Atlantic Division]], respectively
+* '''M1''', '''M2''', '''M3''' – The first, second, and third place teams from the [[Metropolitan Division]], respectively
+* '''C1''', '''C2''', '''C3''' – The first, second, and third place teams from the [[Central Division (NHL)|Central Division]], respectively
+* '''P1''', '''P2''', '''P3''' – The first, second, and third place teams from the [[Pacific Division (NHL)|Pacific Division]], respectively
+* '''WC1''', '''WC2''' – The first and second place Wild Card teams, respectively
+==First round==
+===Eastern Conference first round===
+====(A1) Buffalo Sabres vs. (WC1) Boston Bruins====
+The Buffalo Sabres finished first in the Atlantic Division with 109 points. The Boston Bruins earned 100 points to finish as the first wild card in the Eastern Conference. This was the ninth playoff meeting between these two teams with Boston winning six of the eight previous series. They last met in the [[2010 Stanley Cup playoffs#(3) Buffalo Sabres vs. (6) Boston Bruins|2010 Eastern Conference quarterfinals]], which Boston won in six games. The Sabres qualified for the playoffs for the first time since [[2011 Stanley Cup playoffs|2011]]. Boston won three of the four games in the regular season series.
+The Sabres defeated the Bruins in six games. [[Tage Thompson]] scored two of the four Sabres goals in the third period of game one, coming back from a two-goal deficit to defeat Boston 4–3. {{cite web|url=https://www.nhl.com/news/boston-bruins-buffalo-sabres-game-1-recap-april-19-2026|title=Sabres rally with 4 goals late in 3rd, shock Bruins in Game 1 of East 1st Round|last=Engel|first=Heather|date=April 19, 2026|website=NHL.com|accessdate=April 19, 2026}} In game two, [[Viktor Arvidsson]] scored twice for Boston as the Bruins emerged victorious with a 4–2 victory. {{cite web|url=https://www.nhl.com/news/boston-bruins-buffalo-sabres-game-2-recap-april-21-2026|title=Arvidsson scores twice, Bruins hold off another late Sabres rally in Game 2|last=Engel|first=Heather|date=April 21, 2026|website=NHL.com|accessdate=April 21, 2026}} [[Alex Lyon (ice hockey)|Alex Lyon]] made 24 saves in game three, backstopping the Sabres to a 3–1 victory. {{cite web|url=https://www.nhl.com/news/buffalo-sabres-boston-bruins-game-3-recap-april-23-2026|title=Sabres edge Bruins in Game 3, take lead in Eastern 1st Round|last=McDonald|first=Joe|date=April 23, 2026|website=NHL.com|accessdate=April 23, 2026}} In game four, Lyon stopped 23 shots as six different players scored for the Sabres, defeating the Bruins 6–1 to take a 3–1 series lead. {{cite web|url=https://www.nhl.com/news/buffalo-sabres-boston-bruins-game-4-recap-april-26-2026|title=Sabres score 4 in 1st, win Game 4 of Eastern 1st Round to push Bruins to brink|last=McDonald|first=Joe|date=April 26, 2026|website=NHL.com|accessdate=April 26, 2026}} [[David Pastrňák]] kept the Bruins' season alive in game five, scoring the overtime goal to force a sixth game in a 2–1 affair. {{cite web|url=https://www.nhl.com/news/boston-bruins-buffalo-sabres-game-5-recap-april-28-2026|title=Bruins defeat Sabres in OT in Game 5, stay alive in Eastern 1st Round|last=Engel|first=Heather|date=April 28, 2026|website=NHL.com|accessdate=April 28, 2026}} In game six, Lyon made 25 saves and Tage Thompson assisted twice for the Sabres, sending Buffalo to the second round for the first time since [[2007 Stanley Cup playoffs|2007]] with a 4–1 triumph.
+{{NHLPlayoffs
+|team1=Buffalo Sabres
+|team2=Boston Bruins
+|stadium1=[[KeyBank Center]]
+|stadium2=[[TD Garden]]
+|homeright=yes
+|date1 =April 19
+|score1 =3–4
+|won1 =1
+|recap1 =www.nhl.com/news/boston-bruins-buffalo-sabres-game-1-recap-april-19-2026
+|1-1-1 =''No scoring''
+|1-1-2 =[[Morgan Geekie]] (1) – 10:52
+|1-2-1 =''No scoring''
+|1-2-2 =''No scoring''
+|1-3-1 =12:02 – [[Tage Thompson]] (1)
+15:44 – Tage Thompson (2)
+16:36 – [[Mattias Samuelsson]] (1)
+18:48 – ''en'' – [[Alex Tuch]] (1)
+|1-3-2 =[[Elias Lindholm]] (1) – 01:08
+[[David Pastrňák|David Pastrnak]] (1) – ''pp'' – 19:52
+|goalie1-1 =[[Ukko-Pekka Luukkonen]] 17 saves / 20 shots
+|goalie1-2 =[[Jeremy Swayman]] 34 saves / 37 shots
+|date2 =April 21
+|score2 =4–2
+|won2 =2
+|recap2 =www.nhl.com/news/boston-bruins-buffalo-sabres-game-2-recap-april-21-2026
+|2-1-1 =''No scoring''
+|2-1-2 =''No scoring''
+|2-2-1 =''No scoring''
+|2-2-2 =[[Viktor Arvidsson]] (1) – 04:54
+[[Morgan Geekie]] (2) – 16:29
+[[Pavel Zacha]] (1) – ''pp'' – 18:10
+|2-3-1 =13:54 – [[Bowen Byram]] (1)
+15:08 – [[Peyton Krebs]] (1)
+|2-3-2 =Viktor Arvidsson (2) – 00:16
+|goalie2-1 =[[Ukko-Pekka Luukkonen]] 15 saves / 19 shots
+[[Alex Lyon (ice hockey)|Alex Lyon]] 7 saves / 7 shots
+|goalie2-2 =[[Jeremy Swayman]] 34 saves / 36 shots
+|date3 =April 23
+|score3 =3–1
+|won3 =1
+|recap3 =www.nhl.com/news/buffalo-sabres-boston-bruins-game-3-recap-april-23-2026
+|3-1-1 =''No scoring''
+|3-1-2 =''No scoring''
+|3-2-1 =[[Bowen Byram]] (2) – 10:58
+|3-2-2 =02:36 – [[Tanner Jeannot]] (1)
+|3-3-1 =[[Alex Tuch]] (2) – 04:03
+[[Noah Östlund|Noah Ostlund]] (2) – ''en'' – 18:36
+|3-3-2 =''No scoring''
+|goalie3-1 =[[Alex Lyon (ice hockey)|Alex Lyon]] 24 saves / 25 shots
+|goalie3-2 =[[Jeremy Swayman]] 27 saves / 29 shots
+|date4 =April 26
+|score4 =6–1
+|ot4 =
+|won4 =1
+|recap4 =www.nhl.com/news/buffalo-sabres-boston-bruins-game-4-recap-april-26-2026
+|4-1-1 =[[Peyton Krebs]] (2) – 04:17
+[[Josh Doan]] (1) – 07:10
+[[Zach Benson]] (1) – 09:15
+[[Bowen Byram]] (3) – 14:23
+|4-1-2 =''No scoring''
+|4-2-1 =''No scoring''
+|4-2-2 =''No scoring''
+|4-3-1 =[[Beck Malenstyn]] (1) – 05:08
+[[Alex Tuch]] (3) – 06:32
+|4-3-2 =19:20 – ''sh'' – [[Sean Kuraly]] (1)
+|4-4-1 =
+|4-4-2 =
+|goalie4-1 =[[Alex Lyon (ice hockey)|Alex Lyon]] 23 saves / 24 shots
+|goalie4-2 =[[Jeremy Swayman]] 23 saves / 29 shots
+[[Joonas Korpisalo]] 6 saves / 6 shots
+|date5 =April 28
+|score5 =2–1
+|ot5 =1
+|won5 =2
+|recap5 =www.nhl.com/news/boston-bruins-buffalo-sabres-game-5-recap-april-28-2026
+|5-1-1 =03:35 – ''pp'' – [[Rasmus Dahlin]] (1)
+|5-1-2 =''No scoring''
+|5-2-1 =''No scoring''
+|5-2-2 =[[Elias Lindholm]] (2) – 09:22
+|5-3-1 =''No scoring''
+|5-3-2 =''No scoring''
+|5-4-1 =''No scoring''
+|5-4-2 =[[David Pastrnak]] (2) – 09:14
+|goalie5-1 =[[Alex Lyon (ice hockey)|Alex Lyon]] 27 saves / 29 shots
+|goalie5-2 =[[Jeremy Swayman]] 26 saves / 27 shots
+|date6 =May 1
+|score6 =4–1
+|ot6 =
+|won6 =1
+|recap6 =www.nhl.com/news/buffalo-sabres-boston-bruins-game-6-recap-may-1-2026
+|6-1-1 =[[Alex Tuch]] (4) – 03:25
+[[Mattias Samuelsson]] (2) – 12:26
+|6-1-2 =''No scoring''
+|6-2-1 =''No scoring''
+|6-2-2 =01:54 – [[David Pastrnak]] (3)
+|6-3-1 =[[Zach Benson]] (2) – 05:58
+[[Josh Norris]] (1) – ''en'' – 16:40
+|6-3-2 =''No scoring''
+|6-4-1 =
+|6-4-2 =
+|goalie6-1 =[[Alex Lyon (ice hockey)|Alex Lyon]] 25 saves / 26 shots
+|goalie6-2 =[[Jeremy Swayman]] 22 saves / 25 shots
+|series = Buffalo wins series 4–2
+}}
+====(A2) Tampa Bay Lightning vs. (A3) Montreal Canadiens====
+The Tampa Bay Lightning finished second in the Atlantic Division with 106 points. The Montreal Canadiens also earned 106 points to finish third in the Atlantic Division as Tampa Bay won the first tie-breaker of regulation wins. This was the fifth playoff meeting between these two teams with Tampa Bay winning three of the four previous series. They last met in the [[2021 Stanley Cup Final]], which Tampa Bay won in five games. These teams split their four-game regular season series.
+The Canadiens defeated the Lightning in seven games, with each game-winning goal scored in the third period or overtime. In addition, each game was decided by one goal, the first time in a seven-game series since [[2015 Stanley Cup playoffs|2015]] and the third overall. In game one, [[Juraj Slafkovský]]'s hat trick goal in overtime gave the Canadiens a 4–3 victory. {{cite web|url=https://www.nhl.com/news/montreal-canadiens-tampa-bay-lightning-game-1-recap-april-19-2026|title=Slafkovsky completes hat trick in OT, Canadiens defeat Lightning in Game 1 of Eastern 1st Round|last=Long|first=Corey|date=April 19, 2026|website=NHL.com|accessdate=April 19, 2026}} Game two also required overtime in which [[J. J. Moser]] scored for Tampa Bay to tie the series 1–1 with a 3–2 victory. {{cite web|url=https://www.nhl.com/news/montreal-canadiens-tampa-bay-lightning-game-2-recap-april-21-2026|title=Moser's OT goal lifts Lightning past Canadiens in Game 2|last=Long|first=Corey|date=April 21, 2026|website=NHL.com|accessdate=April 21, 2026}} In game three, [[Lane Hutson]] scored the overtime winner for the Canadiens, giving Montreal a 3–2 victory. {{cite web|url=https://www.nhl.com/news/tampa-bay-lightning-montreal-canadiens-game-3-recap-april-24-2026|title=Hutson OT goal lifts Canadiens past Lightning in Game 3 of Eastern 1st Round|last=Farrell|first=Sean|date=April 24, 2026|website=NHL.com|accessdate=April 25, 2026}} [[Brandon Hagel]] scored twice in game four, tying the series 2–2 for the Lightning with a 3–2 victory. {{cite web|url=https://www.nhl.com/news/tampa-bay-lightning-montreal-canadiens-game-4-recap-april-26-2026|title=Hagel scores twice in 3rd, Lightning rally in Game 4 against Canadiens|last=Farrell|first=Sean|date=April 26, 2026|website=NHL.com|accessdate=April 26, 2026}} In game five, [[Jakub Dobeš]] made 38 saves for the Canadiens in a 3–2 victory, taking a 3–2 series lead in the process. {{cite web|url=https://www.nhl.com/news/montreal-canadiens-tampa-bay-lightning-game-5-recap-april-29-2026|title=Canadiens win Game 5, push Lightning to brink in Eastern 1st Round|last=Long|first=Corey|date=April 29, 2026|website=NHL.com|accessdate=April 29, 2026}} The Lightning forced a seventh game as [[Andrei Vasilevskiy]] stopped all 30 shots he faced and [[Gage Goncalves]] scored in overtime in a 1–0 victory. {{cite web|url=https://www.nhl.com/news/tampa-bay-lightning-montreal-canadiens-game-6-recap-may-1-2026|title=Lightning edge Canadiens in OT, force Game 7 in Eastern 1st Round|last=Farrell|first=Sean|date=May 1, 2026|website=NHL.com|accessdate=May 3, 2026}} In game seven, [[Kaiden Guhle]] assisted twice and Dobeš made 28 saves to send Montreal to the second round with a 2–1 victory. {{cite web|url=https://www.nhl.com/news/montreal-canadiens-tampa-bay-lightning-game-7-recap-may-3-2026|title=Canadiens edge Lightning in Game 7 despite generating only 9 shots|last=Long|first=Corey|date=May 3, 2026|website=NHL.com|accessdate=May 3, 2026}} The Canadiens set an NHL record for the fewest shots on goal in a playoff win, registering only nine shots. {{cite web |url=https://www.sportsnet.ca/nhl/article/canadiens-fail-to-register-shot-in-second-period-of-game-7/ |title=Canadiens set record for fewest shots in playoff win |website=Sportsnet.Ca |date=May 3, 2026 |access-date=May 3, 2026}}
+{{NHLPlayoffs
+|team1=Tampa Bay Lightning
+|team2=Montreal Canadiens
+|stadium1=[[Benchmark International Arena]]
+|stadium2=[[Bell Centre]]
+|homeright=yes
+|date1 =April 19
+|score1 =4–3
+|ot1 =1
+|won1 =2
+|recap1 =www.nhl.com/news/montreal-canadiens-tampa-bay-lightning-game-1-recap-april-19-2026
+|1-1-1 =''No scoring''
+|1-1-2 =[[Josh Anderson (ice hockey)|Josh Anderson]] (1) – 13:24
+|1-2-1 =12:15 – ''pp'' – [[Darren Raddysh]] (1)
+12:44 – [[Brandon Hagel]] (1)
+|1-2-2 =[[Juraj Slafkovský|Juraj Slafkovsky]] (1) – ''pp'' – 19:36
+|1-3-1 =08:58 – ''pp'' – Brandon Hagel (2)
+|1-3-2 =Juraj Slafkovsky (2) – ''pp'' – 05:56
+|1-4-1 =''No scoring''
+|1-4-2 =Juraj Slafkovsky (3) – ''pp'' – 01:22
+|goalie1-1 =[[Andrei Vasilevskiy]] 15 saves / 19 shots
+|goalie1-2 =[[Jakub Dobeš|Jakub Dobes]] 20 saves / 23 shots
+|date2 =April 21
+|score2 =2–3
+|ot2 =1
+|won2 =1
+|recap2 =www.nhl.com/news/montreal-canadiens-tampa-bay-lightning-game-2-recap-april-21-2026
+|2-1-1 =08:40 – [[Brandon Hagel]] (3)
+|2-1-2 =[[Lane Hutson]] (1) – ''pp'' – 16:11
+|2-2-1 =''No scoring''
+|2-2-2 =[[Josh Anderson (ice hockey)|Josh Anderson]] (2) – 18:36
+|2-3-1 =12:33 – [[Nikita Kucherov]] (1)
+|2-3-2 =''No scoring''
+|2-4-1 =12:48 – [[J. J. Moser]] (1)
+|2-4-2 =''No scoring''
+|goalie2-1 =[[Andrei Vasilevskiy]] 25 saves / 27 shots
+|goalie2-2 =[[Jakub Dobeš|Jakub Dobes]] 31 saves / 34 shots
+|date3 =April 24
+|score3 =2–3
+|ot3 =1
+|won3 =2
+|recap3 =www.nhl.com/news/tampa-bay-lightning-montreal-canadiens-game-3-recap-april-24-2026
+|3-1-1 =[[Brayden Point]] (1) – ''pp'' – 07:42
+|3-1-2 =04:53 – [[Alexandre Texier]] (1)
+|3-2-1 =[[Brandon Hagel]] (4) – 04:47
+|3-2-2 =12:43 – [[Kirby Dach]] (1)
+|3-3-1 =''No scoring''
+|3-3-2 =''No scoring''
+|3-4-1 =''No scoring''
+|3-4-2 =02:09 – [[Lane Hutson]] (2)
+|goalie3-1 =[[Andrei Vasilevskiy]] 26 saves / 29 shots
+|goalie3-2 =[[Jakub Dobeš|Jakub Dobes]] 15 saves / 17 shots
+|date4 =April 26
+|score4 =3–2
+|won4 =1
+|recap4 =www.nhl.com/news/tampa-bay-lightning-montreal-canadiens-game-4-recap-april-26-2026
+|4-1-1 =''No scoring''
+|4-1-2 =''No scoring''
+|4-2-1 =[[Jake Guentzel]] (1) – 19:06
+|4-2-2 =10:06 – [[Zachary Bolduc]] (1)
+13:29 – ''pp'' – [[Cole Caufield]] (1)
+|4-3-1 =[[Brandon Hagel]] (5) – ''pp'' – 01:40
+Brandon Hagel (6) – 15:07
+|4-3-2 =''No scoring''
+|goalie4-1 =[[Andrei Vasilevskiy]] 16 saves / 18 shots
+|goalie4-2 =[[Jakub Dobeš|Jakub Dobes]] 17 saves / 20 shots
+|date5 =April 29
+|score5 =3–2
+|won5 =2
+|recap5 =www.nhl.com/news/montreal-canadiens-tampa-bay-lightning-game-5-recap-april-29-2026
+|5-1-1 =''No scoring''
+|5-1-2 =[[Brendan Gallagher]] (1) – 03:00
+|5-2-1 =06:49 – [[Dominic James (ice hockey)|Dominic James]] (1)
+17:23 – [[Jake Guentzel]] (2)
+|5-2-2 =[[Kirby Dach]] (2) – 07:00
+|5-3-1 =''No scoring''
+|5-3-2 =[[Alexandre Texier]] (2) – 01:06
+|goalie5-1 =[[Andrei Vasilevskiy]] 21 saves / 24 shots
+|goalie5-2 =[[Jakub Dobeš|Jakub Dobes]] 38 saves / 40 shots
+|date6 =May 1
+|score6 =1–0
+|ot6 =1
+|won6 =1
+|recap6 =www.nhl.com/news/tampa-bay-lightning-montreal-canadiens-game-6-recap-may-1-2026
+|6-1-1 =''No scoring''
+|6-1-2 =''No scoring''
+|6-2-1 =''No scoring''
+|6-2-2 =''No scoring''
+|6-3-1 =''No scoring''
+|6-3-2 =''No scoring''
+|6-4-1 =[[Gage Goncalves]] (1) – 09:03
+|6-4-2 =''No scoring''
+|goalie6-1 =[[Andrei Vasilevskiy]] 30 saves / 30 shots
+|goalie6-2 =[[Jakub Dobeš|Jakub Dobes]] 32 saves / 33 shots
+|date7 =May 3
+|score7 =2–1
+|ot7 =
+|won7 =2
+|recap7 =www.nhl.com/news/montreal-canadiens-tampa-bay-lightning-game-7-recap-may-3-2026
+|7-1-1 =''No scoring''
+|7-1-2 =[[Nick Suzuki]] (1) – 18:39
+|7-2-1 =13:27 – ''pp'' – [[Dominic James (ice hockey)|Dominic James]] (2)
+|7-2-2 =''No scoring''
+|7-3-1 =''No scoring''
+|7-3-2 =[[Alex Newhook]] (1) – 11:07
+|7-4-1 =
+|7-4-2 =
+|goalie7-1 =[[Andrei Vasilevskiy]] 7 saves / 9 shots
+|goalie7-2 =[[Jakub Dobeš|Jakub Dobes]] 28 saves / 29 shots
+|series = Montreal wins series 4–3
+}}
+====(M1) Carolina Hurricanes vs. (WC2) Ottawa Senators====
+The Carolina Hurricanes finished first in the Metropolitan Division and Eastern Conference earning 113 points. The Ottawa Senators earned 99 points to finish as the second wild card in the Eastern Conference. This was the first playoff meeting between these two teams. Carolina won two of the three games in the regular season series.
+The Hurricanes defeated the Senators in a four-game sweep. In game one, [[Frederik Andersen]] stopped all 22 shots he faced, backstopping the Hurricanes to a 2–0 shutout. {{cite web|url=https://www.nhl.com/news/ottawa-senators-carolina-hurricanes-game-1-recap-april-18-2026|title=Andersen stops 22, Hurricanes blank Senators in Game 1 of Eastern 1st Round|last=Dusterberg|first=Kurt|date=April 18, 2026|website=NHL.com|accessdate=April 18, 2026}} Game two required [[Overtime (ice hockey)|overtime]], wherein [[Mark Jankowski]] originally scored in the first overtime for the Hurricanes. However, the goal was overturned for being offside. [[Jordan Martinook]] was then given a penalty shot following the overturn, becoming the fifth player to be given a penalty shot in overtime. {{cite web|url=https://records.nhl.com/records/playoff-penalty-shots|title=Penalty Shots - Playoffs|website=records.NHL.com|accessdate=April 21, 2026}} He did not score on the penalty shot, but did score in the second overtime. {{cite web|url=https://www.nhl.com/news/ottawa-senators-carolina-hurricanes-game-2-recap-april-20-2026|title=Martinook's goal in 2OT lifts Hurricanes past Senators in Game 2|last=Dusterberg|first=Karl|date=April 20, 2026|website=NHL.com|accessdate=April 20, 2026}} The Hurricanes took a 3–0 series lead after game three with [[Taylor Hall]] assisting twice in Carolina's 2–1 victory. {{cite web|url=https://www.nhl.com/news/carolina-hurricanes-ottawa-senators-game-3-recap-april-23-2026|title=Hurricanes push Senators to brink with Game 3 win in Eastern 1st Round|last=Pierce|first=Zoe|date=April 23, 2026|website=NHL.com|accessdate=April 23, 2026}} In game four, [[Sebastian Aho]] scored twice and [[Logan Stankoven]] scored in his fourth consecutive game to send the Hurricanes to the second round for the sixth straight season with a 4–2 victory. {{cite web|url=https://www.nhl.com/news/carolina-hurricanes-ottawa-senators-game-4-recap-april-25-2026|title=Hurricanes win Game 4, sweep Senators in Eastern 1st Round|last=Pierce|first=Zoe|date=April 25, 2026|website=NHL.com|accessdate=April 25, 2026}}
+{{NHLPlayoffs
+|team1=Carolina Hurricanes
+|team2=Ottawa Senators
+|stadium1=[[Lenovo Center]]
+|stadium2=[[Canadian Tire Centre]]
+|homeright=yes
+|date1 =April 18
+|score1 =0–2
+|won1 =1
+|recap1 =www.nhl.com/news/ottawa-senators-carolina-hurricanes-game-1-recap-april-18-2026
+|1-1-1 =''No scoring''
+|1-1-2 =''No scoring''
+|1-2-1 =02:11 – [[Logan Stankoven]] (1)
+|1-2-2 =''No scoring''
+|1-3-1 =07:15 – [[Taylor Hall]] (1)
+|1-3-2 =''No scoring''
+|goalie1-1 =[[Frederik Andersen]] 22 saves / 22 shots
+|goalie1-2 =[[Linus Ullmark]] 27 saves / 29 shots
+|date2 =April 20
+|score2 =2–3
+|ot2 =2
+|won2 =1
+|recap2 =www.nhl.com/news/ottawa-senators-carolina-hurricanes-game-2-recap-april-20-2026
+|2-1-1 =06:31 – ''pp'' – [[Logan Stankoven]] (2)
+|2-1-2 =''No scoring''
+|2-2-1 =07:50 – [[Sebastian Aho]] (1)
+|2-2-2 =[[Drake Batherson]] (1) – 10:47
+[[Dylan Cozens]] (1) – 16:40
+|2-3-1 =''No scoring''
+|2-3-2 =''No scoring''
+|2-4-1 =13:53 – [[Jordan Martinook]] (1)
+|2-4-2 =''No scoring''
+|goalie2-1 =[[Frederik Andersen]] 37 saves / 39 shots
+|goalie2-2 =[[Linus Ullmark]] 46 saves / 49 shots
+|date3 =April 23
+|score3 =2–1
+|won3 =1
+|recap3 =www.nhl.com/news/carolina-hurricanes-ottawa-senators-game-3-recap-april-23-2026
+|3-1-1 =[[Logan Stankoven]] (3) – 05:13
+|3-1-2 =''No scoring''
+|3-2-1 =[[Jackson Blake]] (1) – 17:29
+|3-2-2 =16:06 – [[Drake Batherson]] (2)
+|3-3-1 =''No scoring''
+|3-3-2 =''No scoring''
+|goalie3-1 =[[Frederik Andersen]] 21 saves / 22 shots
+|goalie3-2 =[[Linus Ullmark]] 25 saves / 27 shots
+|date4 =April 25
+|score4 =4–2
+|won4 =1
+|recap4 =www.nhl.com/news/carolina-hurricanes-ottawa-senators-game-4-recap-april-25-2026
+|4-1-1 =''No scoring''
+|4-1-2 =''No scoring''
+|4-2-1 =[[Taylor Hall]] (2) – 15:15
+|4-2-2 =17:08 – ''pp'' – [[Drake Batherson]] (3)
+|4-3-1 =[[Logan Stankoven]] (4) – ''pp'' – 09:10
+[[Sebastian Aho]] (2) – ''en'' – 17:38
+Sebastien Aho (3) – ''en'' – 18:45
+|4-3-2 =18:11 – [[Dylan Cozens]] (2)
+|goalie4-1 =[[Frederik Andersen]] 25 saves / 27 shots
+|goalie4-2 =[[Linus Ullmark]] 26 saves / 28 shots
+|series = Carolina wins series 4–0
+}}
+====(M2) Pittsburgh Penguins vs. (M3) Philadelphia Flyers====
+The Pittsburgh Penguins finished second in the Metropolitan Division with 98 points. The Philadelphia Flyers also earned 98 points to finish third in the Metropolitan Division as Pittsburgh won the first tie-breaker of regulation wins. This was the eighth playoff meeting between these two [[Flyers–Penguins rivalry|intrastate rivals]], with Philadelphia winning four of the seven previous series. They last met in the [[2018 Stanley Cup playoffs#(M2) Pittsburgh Penguins vs. (M3) Philadelphia Flyers|2018 Eastern Conference first round]], which Pittsburgh won in six games. The Flyers qualified for the playoffs for the first time since [[2020 Stanley Cup playoffs|2020]]. These teams split their four-game regular season series.
+The Flyers defeated the Penguins in six games. [[Porter Martone]] scored the game-winning goal with 2:37 left in game one to give Philadelphia a 3–2 victory. {{cite web|url=https://www.nhl.com/news/philadelphia-flyers-pittsburgh-penguins-game-1-recap-april-18-2026|title=Sanheim breaks tie in 3rd, Flyers defeat Penguins in Game 1 of Eastern 1st Round|last=Crosby|first=Wes|date=April 18, 2026|website=NHL.com|accessdate=April 18, 2026}} In game two, [[Daniel Vladař]] stopped all 27 shots he faced against the Penguins, helping Philadelphia win 3–0. {{cite web|url=https://www.nhl.com/news/philadelphia-flyers-pittsburgh-penguins-game-2-recap-april-20-2026|title=Vladar makes 27 saves, Flyers shut out Penguins in Game 2 of East 1st round|last=Crosby|first=Wes|date=April 20, 2026|website=NHL.com|accessdate=April 20, 2026}} In game three, [[Trevor Zegras]] provided a goal and an assist in the Flyers' 5–2 victory, giving Philadelphia a 3–0 series lead. {{cite web|url=https://www.nhl.com/news/pittsburgh-penguins-philadelphia-flyers-game-3-recap-april-22-2026|title=Zegras, Flyers push Penguins to brink with Game 3 win in Eastern 1st Round|last=Kimelman|first=Adam|date=April 22, 2026|website=NHL.com|accessdate=April 22, 2026}} Pittsburgh avoided elimination in game four as both [[Sidney Crosby]] and [[Rickard Rakell]] provided a goal and an assist in a 4–2 Penguins victory. {{cite web|url=https://www.nhl.com/news/pittsburgh-penguins-philadelphia-flyers-game-4-recap-april-25-2026|title=Penguins stay alive with Game 4 win against Flyers in Eastern 1st Round|last=Kimelman|first=Adam|date=April 25, 2026|website=NHL.com|accessdate=April 27, 2026}} The Penguins continued to avoid elimination in game five as Crosby scored and assisted in Pittsburgh's 3–2 triumph. {{cite web|url=https://www.nhl.com/news/philadelphia-flyers-pittsburgh-penguins-game-5-recap-april-27-2026|title=Penguins stay alive with Game 5 win against Flyers in East 1st Round|last=Crosby|first=Wes|date=April 27, 2026|website=NHL.com|accessdate=April 27, 2026}} Game six remained scoreless into overtime, where [[Cam York]] scored for Philadelphia, advancing the Flyers to the second round. {{cite web|url=https://www.nhl.com/news/pittsburgh-penguins-philadelphia-flyers-game-6-recap-april-29-2026|title=Flyers win Game 6 in OT, eliminate Penguins in Eastern 1st Round |last=Kimelman|first=Adam|date=April 29, 2026|website=NHL.com|accessdate=April 30, 2026}}
+{{NHLPlayoffs
+|team1=Pittsburgh Penguins
+|team2=Philadelphia Flyers
+|stadium1=[[PPG Paints Arena]]
+|stadium2=[[Xfinity Mobile Arena]]
+|homeright=yes
+|date1 =April 18
+|score1 =3–2
+|won1 =2
+|recap1 =www.nhl.com/news/philadelphia-flyers-pittsburgh-penguins-game-1-recap-april-18-2026
+|1-1-1 =''No scoring''
+|1-1-2 =''No scoring''
+|1-2-1 =15:51 – [[Evgeni Malkin]] (1)
+|1-2-2 =[[Jamie Drysdale]] (1) – 09:19
+|1-3-1 =18:59 – [[Bryan Rust]] (1)
+|1-3-2 =[[Travis Sanheim]] (1) – 10:00
+[[Porter Martone]] (1) – 17:23
+|goalie1-1 =[[Stuart Skinner]] 17 saves / 20 shots
+|goalie1-2 =[[Daniel Vladař|Daniel Vladar]] 15 saves / 17 shots
+|date2 =April 20
+|score2 =3–0
+|won2 =2
+|recap2 =www.nhl.com/news/philadelphia-flyers-pittsburgh-penguins-game-2-recap-april-20-2026
+|2-1-1 =''No scoring''
+|2-1-2 =''No scoring''
+|2-2-1 =''No scoring''
+|2-2-2 =[[Porter Martone]] (2) – 13:39
+[[Garnet Hathaway]] (1) – ''sh'' – 17:43
+|2-3-1 =''No scoring''
+|2-3-2 =[[Luke Glendening]] (1) – ''en'' – 17:55
+|goalie2-1 =[[Stuart Skinner]] 21 saves / 23 shots
+|goalie2-2 =[[Daniel Vladař|Daniel Vladar]] 27 saves / 27 shots
+|date3 =April 22
+|score3 =2–5
+|won3 =2
+|recap3 =www.nhl.com/news/pittsburgh-penguins-phildelphia-flyers-game-3-recap-april-22-2026
+|3-1-1 =[[Evgeni Malkin]] (2) – ''pp'' – 04:18
+|3-1-2 =''No scoring''
+|3-2-1 =''No scoring''
+|3-2-2 =05:18 – ''pp'' – [[Trevor Zegras]] (1)
+09:06 – [[Rasmus Ristolainen]] (1)
+11:18 – [[Nick Seeler]] (1)
+|3-3-1 =[[Erik Karlsson]] (1) – ''pp'' – 09:39
+|3-3-2 =16:30 – ''pp'' – [[Noah Cates]] (1)
+18:48 – ''en'' – [[Owen Tippett]] (1)
+|goalie3-1 =[[Stuart Skinner]] 24 saves / 28 shots
+|goalie3-2 =[[Daniel Vladař|Daniel Vladar]] 27 saves / 29 shots
+|date4 =April 25
+|score4 =4–2
+|won4 =1
+|recap4 =www.nhl.com/news/pittsburgh-penguins-philadelphia-flyers-game-4-recap-april-25-2026
+|4-1-1 =[[Sidney Crosby]] (1) – ''pp'' – 14:24
+|4-1-2 =''No scoring''
+|4-2-1 =[[Rickard Rakell]] (1) – 01:03
+|4-2-2 =15:40 – [[Denver Barkey]] (1)
+|4-3-1 =[[Kris Letang]] (1) – 04:27
+[[Connor Dewar]] (1) – ''en'' – 19:03
+|4-3-2 =07:03 – [[Travis Konecny]] (1)
+|goalie4-1 =[[Artūrs Šilovs|Arturs Silovs]] 28 saves / 30 shots
+|goalie4-2 =[[Daniel Vladař|Daniel Vladar]] 17 saves / 20 shots
+|date5 =April 27
+|score5 =2–3
+|ot5 =
+|won5 =1
+|recap5 =www.nhl.com/news/philadelphia-flyers-pittsburgh-penguins-game-5-recap-april-27-2026
+|5-1-1 =02:45 – [[Elmer Söderblom]] (1)
+|5-1-2 =''No scoring''
+|5-2-1 =03:17 – [[Connor Dewar]] (2)
+17:12 – [[Kris Letang]] (2)
+|5-2-2 =[[Alex Bump]] (1) – 03:29
+[[Travis Sanheim]] (2) – 15:03
+|5-3-1 =''No scoring''
+|5-3-2 =''No scoring''
+|goalie5-1 =[[Artūrs Šilovs|Arturs Silovs]] 18 saves / 20 shots
+|goalie5-2 =[[Daniel Vladař|Daniel Vladar]] 18 saves / 21 shots
+|date6 =April 29
+|score6 =0–1
+|ot6 =1
+|won6 =2
+|recap6 =www.nhl.com/news/pittsburgh-penguins-philadelphia-flyers-game-6-recap-april-29-2026
+|6-1-1 =''No scoring''
+|6-1-2 =''No scoring''
+|6-2-1 =''No scoring''
+|6-2-2 =''No scoring''
+|6-3-1 =''No scoring''
+|6-3-2 =''No scoring''
+|6-4-1 =''No scoring''
+|6-4-2 =17:32 – [[Cam York]] (1)
+|goalie6-1 =[[Artūrs Šilovs|Arturs Silovs]] 31 saves / 32 shots
+|goalie6-2 =[[Daniel Vladař|Daniel Vladar]] 42 saves / 42 shots
+|series = Philadelphia wins series 4–2
+}}
+===Western Conference first round===
+====(C1) Colorado Avalanche vs. (WC2) Los Angeles Kings====
+The Colorado Avalanche earned the [[Presidents' Trophy]] as the NHL's best regular season team with 121 points. The Los Angeles Kings earned 90 points to finish as the second wild card in the Western Conference. This was the third playoff meeting between these two teams with Colorado winning both previous series. They last met in the [[2002 Stanley Cup playoffs#(2) Colorado Avalanche vs. (7) Los Angeles Kings|2002 Western Conference quarterfinals]], which Colorado won in seven games. Colorado won all three games in the regular season series.
+The Avalanche defeated the Kings in a four-game sweep. [[Scott Wedgewood]] made 24 saves in game one as the Avalanche defeated the Kings 2–1. {{cite web|url=https://www.nhl.com/news/los-angeles-kings-colorado-avalanche-game-1-recap-april-19-2026|title=Wedgewood stops 24, Avalanche hold off Kings in Game 1 of Western 1st Round|last=Boulding|first=Ryan|date=April 19, 2026|website=NHL.com|accessdate=April 19, 2026}} [[Nicolas Roy]] scored the overtime-winning goal for the Avalanche in game two, defeating the Kings 2–1. {{cite web|url=https://www.nhl.com/news/los-angeles-kings-colorado-avalanche-game-2-recap-april-21-2026|title=Roy scores in OT, Avalanche rally past Kings in Game 2 of West 1st Round|last=Boulding|first=Ryan|date=April 21, 2026|website=NHL.com|accessdate=April 21, 2026}} In game three, [[Artturi Lehkonen]] provided a goal and [[Assist (ice hockey)|assist]] for the Avalanche, taking a 3–0 series lead with a 4–2 victory. {{cite web|url=https://www.nhl.com/news/colorado-avalanche-los-angeles-kings-game-3-recap-april-23-2026|title=Avalanche win Game 3, on verge of sweep against Kings in West 1st Round|last=Greenspan|first=Dan|date=April 23, 2026|website=NHL.com|accessdate=April 23, 2026}} In game four, [[Nathan MacKinnon]] scored twice and provided an assist in a 5–1 victory, advancing the Avalanche to the second round. {{cite web|url=https://www.nhl.com/news/colorado-avalanche-los-angeles-kings-game-4-recap-april-26-2026|title=Avalanche win Game 4, sweep Kings in Western Conference 1st Round|last=Greenspan|first=Dan|date=April 26, 2026|website=NHL.com|accessdate=April 26, 2026}}
+{{NHLPlayoffs
+|team1=Colorado Avalanche
+|team2=Los Angeles Kings
+|stadium1=[[Ball Arena]]
+|stadium2=[[Crypto.com Arena]]
+|homeright=yes
+|date1 =April 19
+|score1 =1–2
+|won1 =1
+|recap1 =www.nhl.com/news/los-angeles-kings-colorado-avalanche-game-1-recap-april-19-2026
+|1-1-1 =''No scoring''
+|1-1-2 =''No scoring''
+|1-2-1 =15:29 – [[Artturi Lehkonen]] (1)
+|1-2-2 =''No scoring''
+|1-3-1 =05:50 – [[Logan O'Connor]] (1)
+|1-3-2 =[[Artemi Panarin]] (1) – ''pp'' – 17:38
+|goalie1-1 =[[Scott Wedgewood]] 24 saves / 25 shots
+|goalie1-2 =[[Anton Forsberg]] 28 saves / 30 shots
+|date2 =April 21
+|score2 =1–2
+|ot2 =1
+|won2 =1
+|recap2 =www.nhl.com/news/los-angeles-kings-colorado-avalanche-game-2-recap-april-21-2026
+|2-1-1 =''No scoring''
+|2-1-2 =''No scoring''
+|2-2-1 =''No scoring''
+|2-2-2 =''No scoring''
+|2-3-1 =16:25 – [[Gabriel Landeskog]] (1)
+|2-3-2 =[[Artemi Panarin]] (2) – ''pp'' – 13:04
+|2-4-1 =07:44 – [[Nicolas Roy]] (1)
+|2-4-2 =''No scoring''
+|goalie2-1 =[[Scott Wedgewood]] 24 saves / 25 shots
+|goalie2-2 =[[Anton Forsberg]] 34 saves / 36 shots
+|date3 =April 23
+|score3 =4–2
+|won3 =1
+|recap3 =www.nhl.com/news/colorado-avalanche-los-angeles-kings-game-3-recap-april-23-2026
+|3-1-1 =[[Gabriel Landeskog]] (2) – 05:29
+|3-1-2 =''No scoring''
+|3-2-1 =[[Cale Makar]] (1) – 12:12
+|3-2-2 =05:55 – ''pp'' – [[Trevor Moore (ice hockey)|Trevor Moore]] (1)
+|3-3-1 =[[Artturi Lehkonen]] (2) – ''sh'' – 07:39
+[[Brock Nelson]] (1) – ''en'' – 17:42
+|3-3-2 =15:57 – ''pp'' – [[Adrian Kempe]] (1)
+|goalie3-1 =[[Scott Wedgewood]] 24 saves / 26 shots
+|goalie3-2 =[[Anton Forsberg]] 19 saves / 22 shots
+|date4 =April 26
+|score4 =5–1
+|won4 =1
+|recap4 =www.nhl.com/news/colorado-avalanche-los-angeles-kings-game-4-recap-april-26-2026
+|4-1-1 =[[Nathan MacKinnon]] (1) – ''pp'' – 13:13
+|4-1-2 =''No scoring''
+|4-2-1 =[[Cale Makar]] (2) – 05:48
+|4-2-2 =13:43 – [[Joel Edmundson]] (1)
+|4-3-1 =[[Nicolas Roy]] (2) – 03:13
+[[Devon Toews]] (1) – 06:01
+[[Nathan MacKinnon]] (2) – ''en'' – 14:22
+|4-3-2 =''No scoring''
+|goalie4-1 =[[Scott Wedgewood]] 24 saves / 25 shots
+|goalie4-2 =[[Anton Forsberg]] 27 saves / 31 shots
+|series = Colorado wins series 4–0
+}}
+====(C2) Dallas Stars vs. (C3) Minnesota Wild====
+The Dallas Stars finished second in the Central Division with 112 points. The Minnesota Wild earned 104 points to finish third in the Central. This was the third playoff meeting between these two teams with Dallas winning both previous series. They last met in the [[2023 Stanley Cup playoffs#(C2) Dallas Stars vs. (C3) Minnesota Wild|2023 Western Conference first round]], which Dallas won in six games. These teams split their four games in the regular season.
+The Wild defeated the Stars in six games. [[Joel Eriksson Ek]] and [[Matt Boldy]] both scored twice and provided an assist in Minnesota's 6–1 rout of game one. {{cite web|url=https://www.nhl.com/news/minnesota-wild-dallas-stars-game-1-recap-april-18-2026|title=Boldy, Eriksson Ek help Wild cruise past Stars in Game 1 of Western 1st Round|last=Baird|first=Taylor|date=April 18, 2026|website=NHL.com|accessdate=April 18, 2026}} In game two, [[Wyatt Johnston]] scored twice for the Stars, who tied the series 1–1 with a 4–2 victory. {{cite web|url=https://www.nhl.com/news/minnesota-wild-dallas-stars-game-2-recap-april-20-2026|title=Johnston scores twice, Stars hold off Wild in Game 2 to even West 1st Round|last=Baird|first=Taylor|date=April 20, 2026|website=NHL.com|accessdate=April 20, 2026}} Game three required double overtime, where Johnston scored for the Stars in a 4–3 victory. {{cite web|url=https://www.nhl.com/news/dallas-stars-minnesota-wild-game-3-recap-april-22-2026|title=Johnston scores on power play, Stars defeat Wild in 2OT in Game 3|last=Morreale|first=Mike G.|date=April 22, 2026|website=NHL.com|accessdate=April 22, 2026}} Game four also required overtime; this time Boldy scored for the Wild, tying the series with a 3–2 triumph. {{cite web|url=https://www.nhl.com/news/dallas-stars-minnesota-wild-game-4-recap-april-25-2026|title=Boldy has OT winner with 29 seconds left, Wild take Game 4 to even series with Stars|last=Morreale|first=Mike G.|date=April 25, 2026|website=NHL.com|accessdate=April 25, 2026}} [[Kirill Kaprizov]] scored and provided two assists for the Wild in game five, giving the Wild a 3–2 series lead with a 4–2 win. {{cite web|url=https://www.nhl.com/news/minnesota-wild-dallas-stars-game-5-recap-april-28-2026|title=Wild win Game 5, push Stars to brink in Western 1st Round|last=Baird|first=Taylor|date=April 28, 2026|website=NHL.com|accessdate=April 28, 2026}} [[Quinn Hughes]] and Matt Boldy both scored two goals for the Wild in game six, advancing Minnesota with a 5–2 victory to the second round for the first time since [[2015 Stanley Cup playoffs|2015]]. {{cite web|url=https://www.nhl.com/news/dallas-stars-minnesota-wild-game-6-recap-april-30-2026|title=Hughes scores winner in 3rd period, Wild eliminate Stars in Western 1st Round|last=Morreale|first=Mike G|date=April 30, 2026|website=NHL.com|accessdate=April 30, 2026}}
+{{NHLPlayoffs
+|team1=Dallas Stars
+|team2=Minnesota Wild
+|stadium1=[[American Airlines Center]]
+|stadium2=[[Grand Casino Arena]]
+|homeright=yes
+|date1 =April 18
+|score1 =6–1
+|won1 =2
+|recap1 =www.nhl.com/news/minnesota-wild-dallas-stars-game-1-recap-april-18-2026
+|1-1-1 =''No scoring''
+|1-1-2 =[[Joel Eriksson Ek]] (1) – ''pp'' – 05:35
+|1-2-1 =15:10 – ''pp'' – [[Jason Robertson]] (1)
+|1-2-2 =[[Kirill Kaprizov]] (1) – 00:56
+[[Ryan Hartman]] (1) – 03:28
+[[Matt Boldy]] (1) – 06:30
+|1-3-1 =''No scoring''
+|1-3-2 =Joel Eriksson Ek (2) – ''pp'' – 08:13
+Matt Boldy (2) – ''en'' – 16:52
+|goalie1-1 =[[Jake Oettinger]] 23 saves / 28 shots
+|goalie1-2 =[[Jesper Wallstedt]] 27 saves / 28 shots
+|date2 =April 20
+|score2 =2–4
+|won2 =1
+|recap2 =www.nhl.com/news/minnesota-wild-dallas-stars-game-2-recap-april-20-2026
+|2-1-1 =08:58 – [[Wyatt Johnston]] (1)
+|2-1-2 =[[Brock Faber]] (1) – 11:33
+|2-2-1 =04:02 – ''pp'' – [[Matt Duchene]] (1)
+|2-2-2 =''No scoring''
+|2-3-1 =07:09 – [[Jason Robertson]] (2)
+19:10 – ''pp-en'' – Wyatt Johnston (2)
+|2-3-2 =Brock Faber (2) – 09:47
+|goalie2-1 =[[Jake Oettinger]] 28 saves / 30 shots
+|goalie2-2 =[[Jesper Wallstedt]] 28 saves / 31 shots
+|date3 =April 22
+|score3 =4–3
+|ot3 =2
+|won3 =1
+|recap3 =www.nhl.com/news/dallas-stars-minnesota-wild-game-3-recap-april-22-2026
+|3-1-1 =[[Mikko Rantanen]] (1) – ''pp'' – 01:25
+[[Jason Robertson]] (3) – 13:48
+|3-1-2 =18:20 – [[Marcus Johansson (ice hockey, born 1990)|Marcus Johansson]] (1)
+|3-2-1 =''No scoring''
+|3-2-2 =05:00 – [[Joel Eriksson Ek]] (3)
+17:25 – [[Michael McCarron]] (1)
+|3-3-1 =[[Matt Duchene]] (2) – ''pp'' – 10:18
+|3-3-2 =''No scoring''
+|3-4-1 =[[Wyatt Johnston]] (3) – ''pp'' – 12:08
+|3-4-2 =''No scoring''
+|goalie3-1 =[[Jake Oettinger]] 28 saves / 31 shots
+|goalie3-2 =[[Jesper Wallstedt]] 32 saves / 36 shots
+|date4 =April 25
+|score4 =2–3
+|ot4 =1
+|won4 =2
+|recap4 =www.nhl.com/news/dallas-stars-minnesota-wild-game-4-recap-april-25-2026
+|4-1-1 =[[Jason Robertson]] (4) – ''pp'' – 12:08
+|4-1-2 =13:52 – [[Brock Faber]] (3)
+|4-2-1 =[[Miro Heiskanen]] (1) – ''pp'' – 19:25
+|4-2-2 =''No scoring''
+|4-3-1 =''No scoring''
+|4-3-2 =14:40 – [[Marcus Foligno]] (1)
+|4-4-1 =''No scoring''
+|4-4-2 =19:29 – [[Matt Boldy]] (3)
+|goalie4-1 =[[Jake Oettinger]] 40 saves / 43 shots
+|goalie4-2 =[[Jesper Wallstedt]] 43 saves / 45 shots
+|date5 =April 28
+|score5 =4–2
+|won5 =2
+|recap5 =www.nhl.com/news/minnesota-wild-dallas-stars-game-5-recap-april-28-2026
+|5-1-1 =08:58 – ''pp'' – [[Miro Heiskanen]] (2)
+|5-1-2 =[[Mats Zuccarello]] (1) – 03:51
+|5-2-1 =''No scoring''
+|5-2-2 =[[Matt Boldy]] (4) – ''pp'' – 19:28
+|5-3-1 =16:39 – [[Jason Robertson]] (5)
+|5-3-2 =[[Michael McCarron]] (2) – 07:47
+[[Kirill Kaprizov]] (2) – 18:00
+|goalie5-1 =[[Jake Oettinger]] 24 saves / 28 shots
+|goalie5-2 =[[Jesper Wallstedt]] 20 saves / 22 shots
+|date6 =April 30
+|score6 =2–5
+|won6 =2
+|recap6 =www.nhl.com/news/dallas-stars-minnesota-wild-game-6-recap-april-30-2026
+|6-1-1 =''No scoring''
+|6-1-2 =06:23 – [[Quinn Hughes]] (1)
+|6-2-1 =[[Wyatt Johnston]] (4) – ''pp'' – 07:01
+[[Mavrik Bourque]] (1) – 16:08
+|6-2-2 =17:00 – [[Vladimir Tarasenko]] (1)
+|6-3-1 =''No scoring''
+|6-3-2 =10:38 – Quinn Hughes (2)
+18:29 – ''en'' – [[Matt Boldy]] (5)
+19:45 – ''en'' – Matt Boldy (6)
+|goalie6-1 =[[Jake Oettinger]] 16 saves / 19 shots
+|goalie6-2 =[[Jesper Wallstedt]] 21 saves / 23 shots
+|series = Minnesota wins series 4–2
+}}
+====(P1) Vegas Golden Knights vs. (WC1) Utah Mammoth====
+The Vegas Golden Knights finished first in the Pacific Division with 95 points. The Utah Mammoth earned 92 points to finish as the first wild card in the Western Conference. This is the first playoff meeting between these two teams and the first playoff series for the Mammoth. Utah won two of the three games in the regular season series.
+The Golden Knights defeated the Mammoth in six games. In game one, [[Carter Hart]] made 31 saves for the Golden Knights, who defeated the Mammoth 4–2. {{cite web|url=https://www.nhl.com/news/utah-mammoth-vegas-golden-knights-game-1-recap-april-19-2026|title=Golden Knights rally in 3rd, defeat Mammoth in Game 1 of West 1st Round|last=Delos Santos|first=Paul|date=April 20, 2026|website=NHL.com|accessdate=April 20, 2026}} [[Kailer Yamamoto]] provided two assists in Utah's 3–2 victory in game two, tying the series 1–1 and giving the Mammoth their first playoff victory. {{cite web|url=https://www.nhl.com/news/utah-mammoth-vegas-golden-knights-game-2-recap-april-21-2026|title=Cooley breaks tie late in 3rd, Mammoth edge Golden Knights in Game 2 to even West 1st Round|last=Delos Santos|first=Paul|date=April 21, 2026|website=NHL.com|accessdate=April 21, 2026}} In game three, [[Lawson Crouse]] scored twice giving Utah their first home playoff victory with a 4–2 triumph. {{cite web|url=https://www.nhl.com/news/vegas-golden-knights-utah-mammoth-game-3-recap-april-24-2026|title=Crouse scores twice, Mammoth defeat Golden Knights in Game 3 of West 1st Round|last=Komma|first=Matt|date=April 24, 2026|website=NHL.com|accessdate=April 25, 2026}} In game four, [[Jack Eichel]]'s goal for Vegas was overturned in overtime due to an offside call. However, the Golden Knights tied the series 2–2 on [[Shea Theodore]]'s overtime goal, earned in a 5–4 victory. {{cite web|url=https://www.nhl.com/news/vegas-golden-knights-utah-mammoth-game-4-recap-april-27-2026|title=Theodore's OT goal gives Golden Knights win against Mammoth in Game 4|last=Komma|first=Matt|date=April 28, 2026|website=NHL.com|accessdate=April 28, 2026}} Game five also required overtime, which favored Vegas as [[Brett Howden]] scored shorthanded to give the Golden Knights a 3–2 series lead with a 5–4 win. {{cite web|url=https://www.nhl.com/news/utah-mammoth-vegas-golden-knights-game-5-recap-april-29-2026|title=Golden Knights win in 2OT, push Mammoth to brink in Game 5 of West 1st Round|last=Delos Reyes|first=Paul|date=April 29, 2026|website=NHL.com|accessdate=April 30, 2026}} In game six, [[Mitch Marner]] scored twice for Vegas as the Golden Knights defeated the Mammoth 5–1 to advance to the second round. {{cite web|url=https://www.nhl.com/news/vegas-golden-knights-utah-mammoth-game-6-recap-may-1-2026|title=Marner scores twice, Golden Knights eliminate Mammoth in Game 6|last=Komma|first=Matt|date=May 1, 2026|website=NHL.com|accessdate=May 1, 2026}}
+{{NHLPlayoffs
+|team1=Vegas Golden Knights
+|team2=Utah Mammoth
+|stadium1=[[T-Mobile Arena]]
+|stadium2=[[Delta Center]]
+|homeright=yes
+|date1 =April 19
+|score1 =2–4
+|won1 =1
+|recap1 =www.nhl.com/news/utah-mammoth-vegas-golden-knights-game-1-recap-april-19-2026
+|1-1-1 =''No scoring''
+|1-1-2 =[[Logan Cooley]] (1) – 19:49
+|1-2-1 =03:44 – [[Colton Sissons]] (1)
+|1-2-2 =[[Kevin Stenlund]] (1) – 05:07
+|1-3-1 =05:33 – ''pp'' – [[Mark Stone]] (1)
+07:20 – [[Nic Dowd]] (1)
+18:21 – ''en'' – [[Ivan Barbashev]] (1)
+|1-3-2 =''No scoring''
+|goalie1-1 =[[Carter Hart]] 31 saves / 33 shots
+|goalie1-2 =[[Karel Vejmelka]] 27 saves / 30 shots
+|date2 =April 21
+|score2 =3–2
+|won2 =2
+|recap2 =www.nhl.com/news/utah-mammoth-vegas-golden-knights-game-2-recap-april-21-2026
+|2-1-1 =11:42 – ''pp'' – [[Mark Stone]] (2)
+|2-1-2 =[[MacKenzie Weegar]] (1) – ''own'' – 16:59
+|2-2-1 =15:58 – [[Ivan Barbashev]] (2)
+|2-2-2 =[[Dylan Guenther]] (1) – 14:56
+|2-3-1 =''No scoring''
+|2-3-2 =[[Logan Cooley]] (2) – 14:00
+|goalie2-1 =[[Carter Hart]] 27 saves / 29 shots
+|goalie2-2 =[[Karel Vejmelka]] 19 saves / 21 shots
+|date3 =April 24
+|score3 =2–4
+|won3 =2
+|recap3 =www.nhl.com/news/vegas-golden-knights-utah-mammoth-game-3-recap-april-24-2026
+|3-1-1 =''No scoring''
+|3-1-2 =12:59 – [[MacKenzie Weegar]] (2)
+17:45 – ''pp'' – [[Dylan Guenther]] (2)
+|3-2-1 =[[Jack Eichel]] (1) – 13:20
+|3-2-2 =04:06 – [[Lawson Crouse]] (1)
+09:48 – Lawson Crouse (2)
+|3-3-1 =[[Nic Dowd]] (2) – 16:52
+|3-3-2 =''No scoring''
+|goalie3-1 =[[Carter Hart]] 8 saves / 12 shots
+|goalie3-2 =[[Karel Vejmelka]] 30 saves / 32 shots
+|date4 =April 27
+|score4 =5–4
+|ot4 =1
+|won4 =1
+|recap4 =www.nhl.com/news/vegas-golden-knights-utah-mammoth-game-4-recap-april-27-2026
+|4-1-1 =[[Pavel Dorofeyev]] (1) – 01:12
+[[Brett Howden]] (1) – ''sh'' – 18:38
+|4-1-2 =''No scoring''
+|4-2-1 =[[Cole Smith (ice hockey)|Cole Smith]] – 03:26
+|4-2-2 =08:04 – [[Nick Schmaltz]] (1)
+08:33 – [[Ian Cole]] (1)
+|4-3-1 =Brett Howden (2) – 10:25
+|4-3-2 =01:45 – [[Michael Carcone]] (1)
+05:10 – [[Clayton Keller]] (1)
+|4-4-1 =[[Shea Theodore]] (1) – 19:08
+|4-4-2 =''No scoring''
+|goalie4-1 =[[Carter Hart]] 27 saves / 31 shots
+|goalie4-2 =[[Karel Vejmelka]] 31 saves / 36 shots
+|date5 =April 29
+|score5 =4–5
+|ot5 =2
+|won5 =1
+|recap5 =www.nhl.com/news/utah-mammoth-vegas-golden-knights-game-5-recap-april-29-2026
+|5-1-1 =19:19 – ''pp'' – [[Pavel Dorofeyev]] (2)
+|5-1-2 =[[John Marino]] (1) – 17:11
+|5-2-1 =15:37 – Pavel Dorofeyev (3)
+17:17 – [[Shea Theodore]] (2)
+|5-2-2 =[[Lawson Crouse]] (3) – 10:40
+|5-3-1 =19:47 – Pavel Dorofeyev (4)
+|5-3-2 =[[Dylan Guenther]] (3) – 05:54
+[[Michael Carcone]] (2) – 12:42
+|5-4-1 =05:28 – ''sh'' – [[Brett Howden]] (3)
+|5-4-2 =''No scoring''
+|goalie5-1 =[[Carter Hart]] 34 saves / 38 shots
+|goalie5-2 =[[Karel Vejmelka]] 31 saves / 36 shots
+|date6 =May 1
+|score6 =5–1
+|won6 =1
+|recap6 =www.nhl.com/news/vegas-golden-knights-utah-mammoth-game-6-recap-may-1-2026
+|6-1-1 =[[Brett Howden]] (4) – 15:02
+|6-1-2 =''No scoring''
+|6-2-1 =[[Mitch Marner]] (1) – 19:15
+|6-2-2 =''No scoring''
+|6-3-1 =[[Colton Sissons]] (2) – 09:39
+Mitch Marner (2) – ''pp'' – 12:09
+[[Cole Smith (ice hockey)|Cole Smith]] (2) – ''en'' – 16:24
+|6-3-2 =07:41 – [[Kailer Yamamoto]] (1)
+|goalie6-1 =[[Carter Hart]] 22 saves / 23 shots
+|goalie6-2 =[[Karel Vejmelka]] 21 saves / 26 shots
+|series = Vegas wins series 4–2
+}}
+====(P2) Edmonton Oilers vs. (P3) Anaheim Ducks====
+The Edmonton Oilers finished second in the Pacific Division with 93 points. The Anaheim Ducks earned 92 points to finish third in the Pacific. This was the third playoff meeting between these two teams with both teams splitting the two previous series. They last met in the [[2017 Stanley Cup playoffs#(P1) Anaheim Ducks vs. (P2) Edmonton Oilers|2017 Western Conference second round]], which Anaheim won in seven games. The Ducks qualified for the playoffs for the first time since [[2018 Stanley Cup playoffs|2018]]. Edmonton won two of the three games in the regular season series.
+The Ducks defeated the Oilers in six games. [[Kasperi Kapanen]] spoiled the Ducks' comeback in game one, scoring with 1:54 left in the game to make it 4–3 for the Oilers. {{cite web|url=https://www.nhl.com/news/anaheim-ducks-edmonton-oilers-game-1-recap-april-20-2026|title=Kapanen scores 2nd goal late, Oilers rally past Ducks in Game 1|last=Moddejonge|first=Gerry|date=April 20, 2026|website=NHL.com|accessdate=April 20, 2026}} In game two, [[Jackson LaCombe]] provided three assists for the Ducks, defeating the Oilers 6–4. {{cite web|url=https://www.nhl.com/news/anaheim-ducks-edmonton-oilers-game-2-recap-april-22-2026|title=Gauthier breaks tie late in 3rd, Ducks edge Oilers in Game 2 to even West 1st Round|last=Moddejonge|first=Gerry|date=April 22, 2026|website=NHL.com|accessdate=April 22, 2026}} [[Mikael Granlund]] scored a goal and assisted thrice in game three, giving the Ducks a 7–4 victory. {{cite web|url=https://www.nhl.com/news/edmonton-oilers-anaheim-ducks-game-3-recap-april-24-2026|title=Ducks score 4 in 3rd period, pull away from Oilers in Game 3 of Western 1st Round|last=Arritt|first=Dan|date=April 25, 2026|website=NHL.com|accessdate=April 25, 2026}} In game four, the Ducks came back from a two-goal deficit to force overtime. In overtime, [[Ryan Poehling]] initially scored the winning goal, but a controversial call on the goal required video review to confirm whether the puck had crossed the goal line. After the video review, Poehling's goal stood and the Ducks took a 3–1 series lead with a 4–3 victory. {{cite web|url=https://www.nhl.com/news/edmonton-oilers-anaheim-ducks-game-4-recap-april-26-2026|title=Ducks rally to win Game 4 in OT, push Oilers to brink in West 1st Round|last=Arritt|first=Dan|date=April 26, 2026|website=NHL.com|accessdate=April 28, 2026}} {{cite news|url=https://www.sfchronicle.com/sports/article/nhl-commissioner-bettman-backs-ruling-that-22231090.php|title=NHL Commissioner Bettman backs ruling that allowed Ducks' OT goal to stand in Game 4 win vs. Oilers|via=Associated Press|date=April 28, 2026|newspaper=San Francisco Chronicle|accessdate=April 28, 2026}} The Oilers avoided in elimination in game five as [[Leon Draisaitl]] scored twice in a 4–1 affair. {{cite web|url=https://www.nhl.com/news/anaheim-ducks-edmonton-oilers-game-5-recap-april-28-2026|title=Draisaitl scores twice, Oilers stave off elimination with Game 5 win against Ducks|last=Moddejonge|first=Gerry|date=April 28, 2026|website=NHL.com|accessdate=April 30, 2026}} [[Troy Terry]] and [[Chris Kreider]] provided a goal and two assists in game six, giving Anaheim a 5–2 victory and its first playoff series win since [[2017 Stanley Cup playoffs|2017]]. {{cite web|url=https://www.nhl.com/news/edmonton-oilers-anaheim-ducks-game-6-recap-april-30-2026|title=Ducks win Game 6, eliminate Oilers in Western 1st Round|last=Arritt|first=Dan|date=April 30, 2026|website=NHL.com|accessdate=April 30, 2026}}
+{{NHLPlayoffs
+|team1=Edmonton Oilers
+|team2=Anaheim Ducks
+|stadium1=[[Rogers Place]]
+|stadium2=[[Honda Center]]
+|homeright=yes
+|date1 =April 20
+|score1 =3–4
+|won1 =1
+|recap1 =www.nhl.com/news/anaheim-ducks-edmonton-oilers-game-1-recap-april-20-2026
+|1-1-1 =17:21 – [[Jason Dickinson]] (1)
+18:21 – [[Kasperi Kapanen]] (1)
+|1-1-2 =''No scoring''
+|1-2-1 =''No scoring''
+|1-2-2 =[[Troy Terry]] (1) – 00:19
+[[Leo Carlsson]] (1) – 04:38
+Troy Terry (2) – ''pp'' – 14:29
+|1-3-1 =11:30 – Jason Dickinson (2)
+18:06 – Kasperi Kapanen (2)
+|1-3-2 =''No scoring''
+|goalie1-1 =[[Connor Ingram]] 25 saves / 28 shots
+|goalie1-2 =[[Lukáš Dostál|Lukas Dostal]] 30 saves / 34 shots
+|date2 =April 22
+|score2 =6–4
+|won2 =2
+|recap2 =www.nhl.com/news/anaheim-ducks-edmonton-oilers-game-2-recap-april-22-2026
+|2-1-1 =08:58 – [[Leon Draisaitl]] (1)
+|2-1-2 =[[Cutter Gauthier]] (1) – ''pp'' – 12:48
+|2-2-1 =11:46 – [[Connor Murphy]] (1)
+17:48 – [[Zach Hyman]] (1)
+|2-2-2 =[[Jacob Trouba]] (1) – 02:44
+[[Alex Killorn]] (1) – ''pp'' – 05:35
+[[Ryan Poehling]] (1) – ''sh'' – 15:50
+|2-3-1 =13:51 – [[Josh Samanski]] (1)
+|2-3-2 =Cutter Gauthier (2) – 15:08
+Ryan Poehling (2) – ''en'' – 18:50
+|goalie2-1 =[[Connor Ingram]] 22 saves / 27 shots
+|goalie2-2 =[[Lukáš Dostál|Lukas Dostal]] 33 saves / 37 shots
+|date3 =April 24
+|score3 =4–7
+|tv3 =[[NHL on TNT|TNT]], [[NHL on TNT|TruTV]], [[Hockey Night in Canada|CBC]], [[NHL on Sportsnet|SN]]
+|won3 =2
+|recap3 =www.nhl.com/news/edmonton-oilers-anaheim-ducks-game-3-recap-april-24-2026
+|3-1-1 =[[Vasily Podkolzin]] (1) – 13:12
+|3-1-2 =16:18 – [[Mason McTavish]] (1)
+17:45 – ''pp'' – [[Mikael Granlund]] (1)
+|3-2-1 =[[Kasperi Kapanen]] (3) – 03:57
+[[Ryan Nugent-Hopkins]] (1) – 05:39
+|3-2-2 =12:37 – [[Alex Killorn]] (2)
+|3-3-1 =[[Connor McDavid]] (1) – ''pp'' – 08:36
+|3-3-2 =02:53 – [[Beckett Sennecke]] (1)
+03:35 – [[Leo Carlsson]] (2)
+16:57 – [[Jeffrey Viel]] (1)
+18:27 – ''en'' – [[Jackson LaCombe]] (1)
+|goalie3-1 =[[Connor Ingram]] 32 saves / 39 shots
+|goalie3-2 =[[Lukáš Dostál|Lukas Dostal]] 20 saves / 24 shots
+|date4 =April 26
+|score4 =3–4
+|ot4 =1
+|won4 =2
+|recap4 =www.nhl.com/news/edmonton-oilers-anaheim-ducks-game-4-recap-april-26-2026
+|4-1-1 =[[Kaspari Kapanen]] (4) – 00:38
+[[Ryan Nugent-Hopkins]] (2) – 06:32
+|4-1-2 =''No scoring''
+|4-2-1 =''No scoring''
+|4-2-2 =07:36 – [[Cutter Gauthier]] (3)
+18:43 – [[Mikael Granlund]] (2)
+|4-3-1 =[[Evan Bouchard]] (1) – 03:27
+|4-3-2 =13:31 – [[Jeffrey Viel]] (2)
+|4-4-1 =''No scoring''
+|4-4-2 =02:29 – [[Ryan Poehling]] (3)
+|goalie4-1 =[[Tristan Jarry]] 34 saves / 38 shots
+|goalie4-2 =[[Lukáš Dostál|Lukas Dostal]] 24 saves / 27 shots
+|date5 =April 28
+|score5 =1–4
+|won5 =1
+|recap5 =www.nhl.com/news/anaheim-ducks-edmonton-oilers-game-5-recap-april-28-2026
+|5-1-1 =00:38 – [[Vasily Podkolzin]] (2)
+08:33 – [[Zach Hyman]] (2)
+10:13 – [[Leon Draisaitl]] (2)
+|5-1-2 =''No scoring''
+|5-2-1 =10:24 – ''pp'' – Leon Draisaitl (3)
+|5-2-2 =[[Alex Killorn]] (3) – ''pp'' – 08:26
+|5-3-1 =''No scoring''
+|5-3-2 =''No scoring''
+|goalie5-1 =[[Connor Ingram]] 29 saves / 30 shots
+|goalie5-2 =[[Lukáš Dostál|Lukas Dostal]] 6 saves / 9 shots
+[[Ville Husso]] 10 saves / 11 shots
+|date6 =April 30
+|score6 =2–5
+|won6 =2
+|recap6 =www.nhl.com/news/edmonton-oilers-anaheim-ducks-game-6-recap-april-30-2026
+|6-1-1 =[[Connor Murphy]] (2) – 15:14
+|6-1-2 =09:56 – [[Ryan Poehling]] (4)
+13:43 – [[Chris Kreider]] (1)
+16:50 – ''pp'' – [[Cutter Gauthier]] (4)
+|6-2-1 =''No scoring''
+|6-2-2 =19:13 – [[Troy Terry]] (3)
+|6-3-1 =[[Vasily Podkolzin]] (3) – 01:13
+|6-3-2 =17:26 – [[Leo Carlsson]] (3)
+|goalie6-1 =[[Connor Ingram]] 26 saves / 30 shots
+|goalie6-2 =[[Lukáš Dostál|Lukas Dostal]] 25 saves / 27 shots
+|series = Anaheim wins series 4–2
+}}
+==Second round==
+===Eastern Conference second round===
+====(A1) Buffalo Sabres vs. (A3) Montreal Canadiens====
+This was the eighth playoff meeting between these two teams with Montreal winning four of the seven previous series. They last met in the [[1998 Stanley Cup playoffs#(6) Buffalo Sabres vs. (7) Montreal Canadiens|1998 Eastern Conference semifinals]], which Buffalo won in a four-game sweep. These teams split their four-game regular season series.
+The Canadiens defeated the Sabres in seven games. In game one, [[Josh Doan]] and [[Ryan McLeod]] both provided a goal and an assist for the Sabres, defeating the Canadiens 4–2. {{cite web|url=https://www.nhl.com/news/montreal-canadiens-buffalo-sabres-game-1-recap-may-6-2026|title=Doan, McLeod spark Sabres to win against Canadiens in Game 1 of Eastern 2nd Round|last=Engel|first=Heather|date=May 6, 2026|website=NHL.com|accessdate=May 6, 2026}} [[Alex Newhook]] scored twice and [[Jakub Dobeš]] made 29 saves for the Canadiens, defeating the Sabres 5–1. {{cite web|url=https://www.nhl.com/news/montreal-canadiens-buffalo-sabres-game-2-recap-may-8-2026|title=Newhook, Canadiens ease past Sabres in Game 2, even Eastern 2nd Round|last=Engel|first=Heather|date=May 8, 2026|website=NHL.com|accessdate=May 8, 2026}} Newhook scored twice again in game three as the Canadiens routed the Sabres 6–2. {{cite web|url=https://www.nhl.com/news/buffalo-sabres-montreal-canadiens-game-3-recap-may-10-2026|title=Newhook scores twice again, Canadiens defeat Sabres in Game 3|last=Farrell|first=Sean|date=May 10, 2026|website=NHL.com|accessdate=May 12, 2026}} In game four, [[Tage Thompson]] provided a goal and an assist to give the Sabres a 3–2 victory, tying the series 2–2. {{cite web|url=https://www.nhl.com/news/buffalo-sabres-montreal-canadiens-game-4-recap-may-12-2026|title=Sabres edge Canadiens in Game 4 to even Eastern 2nd Round|last=Farrell|first=Sean|date=May 12, 2026|website=NHL.com|accessdate=May 12, 2026}} [[Nick Suzuki]] scored a goal and two assists and [[Juraj Slafkovský]] assisted thrice in game five, helping Montreal secure a 6–3 victory and a 3–2 series lead. {{cite web|url=https://www.nhl.com/news/montreal-canadiens-buffalo-sabres-game-5-recap-may-14-2026|title=Canadiens defeat Sabres in Game 5, on verge of Eastern Conference Final|last=Engel|first=Heather|date=May 14, 2026|website=NHL.com|accessdate=May 15, 2026}} Buffalo came back from a two-goal deficit in game six, scoring seven unanswered goals en route to an 8–3 victory and forcing a seventh game. {{cite web|url=https://www.nhl.com/news/buffalo-sabres-montreal-canadiens-game-6-recap-may-16-2026|title=Sabres score 7 straight, surge past Canadiens to force Game 7 in East 2nd Round|last=Farrell|first=Sean|date=May 16, 2026|website=NHL.com|accessdate=May 16, 2026}} In game seven, the Sabres forced overtime after being down 2–0. In overtime, [[Alex Newhook]] scored to give Montreal a 3–2 victory, and a conference final berth.
+{{NHLPlayoffs
+|team1=Buffalo Sabres
+|team2=Montreal Canadiens
+|stadium1=[[KeyBank Center]]
+|stadium2=[[Bell Centre]]
+|homeright=yes
+|date1 =May 6
+|score1 =2–4
+|won1 =1
+|recap1 =www.nhl.com/news/montreal-canadiens-buffalo-sabres-game-1-recap-may-6-2026
+|1-1-1 =04:31 – [[Josh Doan]] (2)
+13:26 – ''pp'' – [[Ryan McLeod]] (1)
+|1-1-2 =[[Nick Suzuki]] (2) – ''pp'' – 19:16
+|1-2-1 =03:32 – [[Jordan Greenway]] (1)
+09:01 – ''pp'' – [[Bowen Byram]] (4)
+|1-2-2 =[[Kirby Dach]] (3) – 16:31
+|1-3-1 =''No scoring''
+|1-3-2 =''No scoring''
+|goalie1-1 =[[Alex Lyon (ice hockey)|Alex Lyon]] 26 saves / 28 shots
+|goalie1-2 =[[Jakub Dobeš|Jakub Dobes]] 12 saves / 16 shots
+|date2 =May 8
+|score2 =5–1
+|won2 =2
+|recap2 =www.nhl.com/news/montreal-canadiens-buffalo-sabres-game-2-recap-may-8-2026
+|2-1-1 =''No scoring''
+|2-1-2 =[[Alex Newhook]] (2) – 01:36
+[[Mike Matheson]] (1) – 04:27
+|2-2-1 =19:21 – [[Zach Benson]] (3)
+|2-2-2 =Alex Newhook (3) – 04:47
+|2-3-1 =''No scoring''
+|2-3-2 =[[Alexandre Carrier]] (1) – 03:54
+[[Nick Suzuki]] (3) – ''en'' – 15:59
+|goalie2-1 =[[Alex Lyon (ice hockey)|Alex Lyon]] 23 saves / 27 shots
+|goalie2-2 =[[Jakub Dobeš|Jakub Dobes]] 29 saves / 30 shots
+|date3 = May 10
+|score3 =2–6
+|won3 =2
+|recap3 =www.nhl.com/news/buffalo-sabres-montreal-canadiens-game-3-recap-may-10-2026
+|3-1-1 =[[Tage Thompson]] (3) – 00:53
+|3-1-2 =15:31 – [[Alex Newhook]] (4)
+|3-2-1 =[[Rasmus Dahlin]] (2) – 14:46
+|3-2-2 =06:05 – ''pp'' – [[Cole Caufield]] (2)
+10:43 – [[Zachary Bolduc]] (2)
+12:17 – ''pp'' – [[Juraj Slafkovský]] (4)
+|3-3-1 =''No scoring''
+|3-3-2 =08:46 – [[Kirby Dach]] (4)
+15:14 – ''awd, en'' – Alex Newhook (5)
+|goalie3-1 =[[Alex Lyon (ice hockey)|Alex Lyon]] 31 saves / 36 shots
+|goalie3-2 =[[Jakub Dobeš|Jakub Dobes]] 26 saves / 28 shots
+|date4 =May 12
+|score4 =3–2
+|won4 =1
+|recap4 =www.nhl.com/news/buffalo-sabres-montreal-canadiens-game-4-recap-may-12-2026
+|4-1-1 =[[Mattias Samuelsson]] (3) – 06:32
+|4-1-2 =10:08 – [[Alex Newhook]] (6)
+19:47 – ''pp'' – [[Cole Caufield]] (3)
+|4-2-1 =[[Tage Thompson]] (4) – ''pp'' – 07:00
+|4-2-2 =''No scoring''
+|4-3-1 =[[Zach Benson]] (4) – ''pp'' – 04:41
+|4-3-2 =''No scoring''
+|goalie4-1 =[[Ukko-Pekka Luukkonen]] 28 saves / 30 shots
+|goalie4-2 =[[Jakub Dobeš]] 19 saves / 22 shots
+|date5 =May 14
+|score5 =6–3
+|tv5 =[[NHL on TNT|TNT]], [[NHL on TNT|TruTV]]
+|ot5 =
+|won5 =2
+|recap5 =www.nhl.com/news/montreal-canadiens-buffalo-sabres-game-5-recap-may-14-2026
+|5-1-1 =02:00 – [[Jason Zucker]] (1)
+07:45 – [[Josh Doan]] (3)
+10:15 – [[Konsta Helenius]] (1)
+|5-1-2 =[[Cole Caufield]] (4) – 06:31
+[[Alexandre Texier]] (3) – 07:54
+|5-2-1 =''No scoring''
+|5-2-2 =[[Josh Anderson (ice hockey)|Josh Anderson]] (3) – 08:01
+[[Jake Evans (ice hockey)|Jake Evans]] (1) – 16:12
+[[Nick Suzuki]] (4) – ''pp'' – 17:33
+|5-3-1 =''No scoring''
+|5-3-2 =[[Ivan Demidov]] (1) – ''pp'' – 03:32
+|5-4-1 =
+|5-4-2 =
+|goalie5-1 =[[Ukko-Pekka Luukkonen]] 18 saves / 23 shots
+[[Alex Lyon (ice hockey)|Alex Lyon]] 2 saves / 3 shots
+|goalie5-2 =[[Jakub Dobeš|Jakub Dobes]] 33 saves / 36 shots
+|date6 =May 16
+|score6 =8–3
+|won6 =1
+|recap6 =www.nhl.com/news/buffalo-sabres-montreal-canadiens-game-6-recap-may-16-2026
+|6-1-1 =[[Rasmus Dahlin]] (3) – 00:32
+[[Jason Zucker]] (2) – ''pp'' – 13:56
+|6-1-2 =01:40 – [[Arber Xhekaj]] (1)
+08:12 – ''pp'' – [[Ivan Demidov]] (2)
+10:14 – ''sh'' – [[Jake Evans (ice hockey)|Jake Evans]] (2)
+|6-2-1 =[[Zach Benson]] (5) – 01:00
+[[Jack Quinn (ice hockey)|Jack Quinn]] (1) – ''pp'' – 10:54
+[[Konsta Helenius]] (2) – 12:59
+|6-2-2 =''No scoring''
+|6-3-1 =Jack Quinn (2) – ''pp'' – 09:58
+[[Tage Thompson]] (5) – ''en'' – 14:12
+[[Zach Metsa]] (1) – ''pp'' – 17:49
+|6-3-2 =''No scoring''
+|goalie6-1 = [[Alex Lyon (ice hockey)|Alex Lyon]] 1 save / 4 shots
+[[Ukko-Pekka Luukkonen]] 18 saves / 18 shots
+|goalie6-2 = [[Jakub Dobeš|Jakub Dobes]] 27 saves / 33 shots
+[[Jacob Fowler]] 1 save / 2 shots
+|date7 =May 18
+|score7 =3–2
+|tv7 =[[NHL on ESPN|ESPN]]
+|ot7 =1
+|won7 =2
+|recap7 =www.nhl.com/news/montreal-canadiens-buffalo-sabres-game-7-recap-may-18-2026
+|7-1-1 =''No scoring''
+|7-1-2 =[[Phillip Danault]] (1) – 04:30
+[[Zachary Bolduc]] (3) – ''pp'' – 14:29
+|7-2-1 =13:19 – [[Jordan Greenway]] (2)
+|7-2-2 =''No scoring''
+|7-3-1 =06:27 – [[Rasmus Dahlin]] (4)
+|7-3-2 =''No scoring''
+|7-4-1 =''No scoring''
+|7-4-2 =[[Alex Newhook]] (7) – 11:22
+|goalie7-1 = [[Ukko-Pekka Luukkonen]] 22 saves / 25 shots
+|goalie7-2 = [[Jakub Dobeš|Jakub Dobes]] 37 saves / 39 shots
+|series = Montreal wins series 4–3
+}}
+====(M1) Carolina Hurricanes vs. (M3) Philadelphia Flyers====
+This was the first playoff meeting between these two teams. Carolina won three of the four games in the regular season series.
+The Hurricanes defeated the Flyers in a four-game sweep. In game one, [[Logan Stankoven]] continued his goal-scoring streak, scoring twice while [[Frederik Andersen]] stopped all 19 shots to defeat the Flyers 3–0. {{cite web|url=https://www.nhl.com/news/philadelphia-flyers-carolina-hurricanes-game-1-recap-may-2-2026|title=Stankoven scores 2 more, Hurricanes blank Flyers in Game 1 of Eastern 2nd Round|last=Dusterberg|first=Kurt|date=May 3, 2026|website=NHL.com|accessdate=May 3, 2026}} The Hurricanes came back from a two-goal deficit in game two as [[Taylor Hall]] scored in overtime to give Carolina a 2–0 series lead. {{cite web|url=https://www.nhl.com/news/philadelphia-flyers-carolina-hurricanes-game-2-recap-may-4-2026|title=Hall's goal in OT lifts Hurricanes past Flyers in Game 2 of Eastern 2nd Round|last=Dusterberg|first=Kurt|date=May 4, 2026|website=NHL.com|accessdate=May 4, 2026}} In game three, [[Andrei Svechnikov]] scored a goal and provided an assist, giving Carolina a 3–0 series lead with a 4–1 victory. {{cite web|url=https://www.nhl.com/news/carolina-hurricanes-philadelphia-flyers-game-3-recap-may-7-2026|title=Hurricanes defeat Flyers in Game 3, on verge of Eastern Conference Final|last=Kimelman|first=Adam|date=May 7, 2026|website=NHL.com|accessdate=May 7, 2026}} Game four was tied 2–2 going into overtime, wherein, [[Jackson Blake]] scored his second goal of the game, sending Carolina to the conference final with a 3–2 victory. {{cite web|url=https://www.nhl.com/news/carolina-hurricanes-philadelphia-flyers-game-4-recap-may-9-2026|title=Blake scores in OT, Hurricanes complete sweep of Flyers in East 2nd Round|last=Arritt|first=Dan|date=May 9, 2026|website=NHL.com|accessdate=May 9, 2026}} Carolina became the first team to have back-to-back series sweeps since the [[1992 Stanley Cup playoffs#Stanley Cup Finals|1992 Chicago Blackhawks and Pittsburgh Penguins]]. Carolina is also the first team since the [[1985 Stanley Cup playoffs#(S1) Edmonton Oilers vs. (N2) Chicago Black Hawks|1985 Edmonton Oilers]] to start the playoffs 8–0 and the first to do so since the four-round, best-of-seven format was introduced in [[1987 Stanley Cup playoffs|1987]]. {{cite web|url=https://www.espn.com/nhl/story/_/id/48726573/carolina-hurricanes-improve-8-0-postseason-ot-win|title=Hurricanes sweep Flyers, improve to 8-0 in playoffs with OT win|last=Wyshnyski|first=Greg|date=May 9, 2026|website=ESPN.com|accessdate=May 10, 2026}}
+{{NHLPlayoffs
+|team1=Carolina Hurricanes
+|team2=Philadelphia Flyers
+|stadium1=[[Lenovo Center]]
+|stadium2=[[Xfinity Mobile Arena]]
+|homeright=yes
+|date1 =May 2
+|score1 =0–3
+|won1 =1
+|recap1 =www.nhl.com/news/philadelphia-flyers-carolina-hurricanes-game-1-recap-may-2-2026
+|1-1-1 =01:31 – [[Logan Stankoven]] (5)
+07:30 – [[Jackson Blake]] (2)
+|1-1-2 =''No scoring''
+|1-2-1 =16:16 – Logan Stankoven (6)
+|1-2-2 =''No scoring''
+|1-3-1 =''No scoring''
+|1-3-2 =''No scoring''
+|goalie1-1 =[[Frederik Andersen]] 19 saves / 19 shots
+|goalie1-2 =[[Daniel Vladař|Daniel Vladar]] 20 saves / 23 shots
+|date2 =May 4
+|score2 =2–3
+|ot2 =1
+|won2 =1
+|recap2 =www.nhl.com/news/philadelphia-flyers-carolina-hurricanes-game-2-recap-may-4-2026
+|2-1-1 =10:21 – ''pp'' – [[Nikolaj Ehlers]] (1)
+|2-1-2 =[[Jamie Drysdale]] (2) – ''pp'' – 04:02
+[[Sean Couturier]] (1) – 04:41
+|2-2-1 =''No scoring''
+|2-2-2 =''No scoring''
+|2-3-1 =11:21 – [[Seth Jarvis]] (1)
+|2-3-2 =''No scoring''
+|2-4-1 =18:54 – [[Taylor Hall]] (3)
+|2-4-2 =''No scoring''
+|goalie2-1 =[[Frederik Andersen]] 34 saves / 36 shots
+|goalie2-2 =[[Daniel Vladař|Daniel Vladar]] 39 saves / 42 shots
+|date3 =May 7
+|score3 =4–1
+|tv3 =[[NHL on TNT|TNT]], [[NHL on TNT|TruTV]], [[Hockey Night in Canada|CBC]], [[NHL on Sportsnet|SN]]
+|won3 =1
+|recap3 =www.nhl.com/news/carolina-hurricanes-philadelphia-flyers-game-3-recap-may-7-2026
+|3-1-1 =[[Jordan Staal]] (1) – ''pp'' –17:27
+|3-1-2 =''No scoring''
+|3-2-1 =[[Jalen Chatfield]] (1) – ''sh'' – 15:59
+|3-2-2 =02:31 – [[Trevor Zegras]] (2)
+|3-3-1 =[[Andrei Svechnikov]] (1) – ''pp'' – 03:52
+[[Nikolaj Ehlers]] (2) – 07:08
+|3-3-2 =''No scoring''
+|goalie3-1 =[[Frederik Andersen]] 18 saves / 19 shots
+|goalie3-2 =[[Daniel Vladař|Daniel Vladar]] 26 saves / 30 shots
+|date4 =May 9
+|score4 =3–2
+|ot4 =1
+|won4 =1
+|recap4 =www.nhl.com/news/carolina-hurricanes-philadelphia-flyers-game-4-recap-may-9-2026
+|4-1-1 =''No scoring''
+|4-1-2 =07:50 – [[Tyson Foerster]] (1)
+|4-2-1 =[[Jackson Blake]] (3) – 12:35
+|4-2-2 =''No scoring''
+|4-3-1 =[[Logan Stankoven]] (7) – 04:13
+|4-3-2 =05:52 – [[Alex Bump]] (2)
+|4-4-1 =Jackson Blake (4) – 05:28
+|4-4-2 =''No scoring''
+|goalie4-1 =[[Frederik Andersen]] 15 saves / 17 shots
+|goalie4-2 =[[Daniel Vladař|Daniel Vladar]] 37 saves / 40 shots
+|series = Carolina wins series 4–0
+}}
+===Western Conference second round===
+====(C1) Colorado Avalanche vs. (C3) Minnesota Wild====
+This was the fourth playoff meeting between these two teams, with Minnesota winning two of the three previous series. They last met in the [[2014 Stanley Cup playoffs#(C1) Colorado Avalanche vs. (WC1) Minnesota Wild|2014 Western Conference first round]], which Minnesota won in seven games. These teams split their four-game regular-season series.
+The Avalanche defeated the Wild in five games. Game one was a high-scoring affair as [[Cale Makar]], [[Devon Toews]], and [[Martin Nečas]] each had three or more points for the Avalanche while [[Quinn Hughes]] had three for the Wild. During the game, the Wild came back from a three-goal deficit to briefly take the lead 5–4, but the Avalanche scored five more goals to emerge victorious 9–6. {{cite web|url=https://www.nhl.com/news/minnesota-wild-colorado-avalanche-game-1-recap-may-3-2026|title=Avalanche outlast Wild in high-scoring Game 1 of Western 2nd Round|last=Boulding|first=Ryan|date=May 3, 2026|website=NHL.com|accessdate=May 3, 2026}} In game two, [[Nathan MacKinnon]] scored a goal and assisted twice for the Avalanche as they defeated the Wild 5–2. {{cite web|url=https://www.nhl.com/news/minnesota-wild-colorado-avalanche-game-2-recap-may-5-2026|title=MacKinnon has 3 points, Avalanche defeat Wild in Game 2 of Western 2nd Round|last=Boulding|first=Ryan|date=May 5, 2026|website=NHL.com|accessdate=May 5, 2026}} [[Kirill Kaprizov]] had three points and [[Jesper Wallstedt]] made 35 saves in game three for the Wild, defeating the Avalanche 5–1. {{cite web|url=https://www.nhl.com/news/colorado-avalanche-minnesota-wild-game-3-recap-may-9-2026|title=Kaprizov has 3 points, Wild defeat Avalanche in Game 3 of Western 2nd Round|last=Myers|first=Tracey|date=May 9, 2026|website=NHL.com|accessdate=May 10, 2026}} In game four, the Avalanche recovered from an early 1–0 deficit defeating Minnesota 5–2 to take a 3–1 series lead. {{cite web|url=https://www.nhl.com/news/colorado-avalanche-minnesota-wild-game-4-recap-may-11-2026|title=Avalanche top Wild in Game 4, on verge of Western Conference Final|last=Myers|first=Tracey|date=May 11, 2026|website=NHL.com|accessdate=May 12, 2026}} The Avalanche came back from a 3–0 deficit in game five, scoring in overtime on [[Brett Kulak]], sending Colorado to the conference final with a 4–3 victory. {{cite web|url=https://www.nhl.com/news/minnesota-wild-colorado-avalanche-game-5-recap-may-13-2026|title=Kulak scores in OT to cap 4-goal comeback, Avalanche advance to Western Conference Final|last=Boulding|first=Ryan|date=May 13, 2026|website=NHL.com|accessdate=May 13, 2026}}
+{{NHLPlayoffs
+|team1=Colorado Avalanche
+|team2=Minnesota Wild
+|stadium1=[[Ball Arena]]
+|stadium2=[[Grand Casino Arena]]
+|homeright=yes
+|date1 =May 3
+|score1 =6–9
+|won1 =1
+|recap1 =www.nhl.com/news/minnesota-wild-colorado-avalanche-game-1-recap-may-3-2026
+|1-1-1 =11:12 – [[Sam Malinski]] (1)
+12:04 – [[Jack Drury]] (1)
+13:13 – ''pp'' – [[Artturi Lehkonen]] (3)
+|1-1-2 =[[Marcus Johansson (ice hockey, born 1990)|Marcus Johansson]] (2) – 15:02
+[[Ryan Hartman]] (2) – 16:04
+|1-2-1 =04:16 – [[Nick Blankenburg]] (1)
+18:04 – [[Devon Toews]] (2)
+|1-2-2 =[[Vladimir Tarasenko]] (2) – 06:45
+[[Quinn Hughes]] (3) – 12:43
+[[Marcus Foligno]] (2) – ''sh'' – 16:55
+|1-3-1 =03:21 – [[Cale Makar]] (3)
+05:42 – [[Nazem Kadri]] (1)
+17:06 – Cale Makar (4)
+17:52 – ''en'' – [[Nathan MacKinnon]] (3)
+|1-3-2 =[[Mats Zuccarello]] (2) – 16:01
+|goalie1-1 =[[Scott Wedgewood]] 30 saves / 36 shots
+|goalie1-2 =[[Jesper Wallstedt]] 34 saves / 42 shots
+|date2 =May 5
+|score2 =2–5
+|won2 =1
+|recap2 =www.nhl.com/news/minnesota-wild-colorado-avalanche-game-2-recap-may-5-2026
+|2-1-1 =02:51 – [[Martin Nečas|Martin Necas]] (1)
+|2-1-2 =[[Kirill Kaprizov]] (3) – 02:57
+|2-2-1 =08:24 – ''pp'' – [[Gabriel Landeskog]] (3)
+01:24 – [[Nicolas Roy]] (3)
+|2-2-2 =''No scoring''
+|2-3-1 =13:18 – ''pp'' – [[Nathan MacKinnon]] (4)
+19:55 – ''en'' – [[Valeri Nichushkin]] (1)
+|2-3-2 =[[Marcus Johansson (ice hockey, born 1990)|Marcus Johansson]] (3) – 14:33
+|goalie2-1 =[[Scott Wedgewood]] 29 saves / 31 shots
+|goalie2-2 =[[Filip Gustavsson]] 18 saves / 22 shots
+|date3 =May 9
+|score3 =1–5
+|won3 =2
+|recap3 =www.nhl.com/news/colorado-avalanche-minnesota-wild-game-3-recap-may-9-2026
+|3-1-1 =''No scoring''
+|3-1-2 =15:11 – [[Kirill Kaprizov]] (4)
+16:44 – ''pp'' – [[Quinn Hughes]] (4)
+|3-2-1 =[[Nathan MacKinnon]] (5) – 13:11
+|3-2-2 =04:21 – ''pp'' – [[Ryan Hartman]] (3)
+13:31 – [[Brock Faber]] (4)
+|3-3-1 =''No scoring''
+|3-3-2 =19:54 – ''en'' – [[Matt Boldy]] (7)
+|goalie3-1 =[[Scott Wedgewood]] 9 saves / 12 shots
+[[Mackenzie Blackwood]] 12 saves / 13 shots
+|goalie3-2 =[[Jesper Wallstedt]] 35 saves / 36 shots
+|date4 =May 11
+|score4 =5–2
+|won4 =1
+|recap4 =www.nhl.com/news/colorado-avalanche-minnesota-wild-game-4-recap-may-11-2026
+|4-1-1 =''No scoring''
+|4-1-2 =09:46 – ''pp'' – [[Danila Yurov]] (1)
+|4-2-1 =[[Nazem Kadri]] (2) – ''pp'' – 06:08
+|4-2-2 =''No scoring''
+|4-3-1 =[[Ross Colton]] (1) – 06:56
+[[Parker Kelly]] (1) – 11:32
+[[Nathan MacKinnon]] (6) – ''en'' – 19:27
+[[Brock Nelson]] (2) – ''en'' – 19:52
+|4-3-2 =09:15 – [[Nico Sturm]] (1)
+|goalie4-1 =[[Mackenzie Blackwood]] 19 saves / 21 shots
+|goalie4-2 =[[Jesper Wallstedt]] 29 saves / 32 shots
+|date5 =May 13
+|score5 =3–4
+|tv5 =[[NHL on TNT|TNT]], [[NHL on TNT|TruTV]]
+|ot5 =1
+|won5 =1
+|recap5 =www.nhl.com/news/minnesota-wild-colorado-avalanche-game-5-recap-may-13-2026
+|5-1-1 =''No scoring''
+|5-1-2 =[[Marcus Johansson (ice hockey, born 1990)|Marcus Johansson]] (4) – 00:34
+[[Nick Foligno]] (1) – 11:03
+Nick Foligno (2) – 15:56
+|5-2-1 =11:00 – [[Parker Kelly]] (2)
+|5-2-2 =''No scoring''
+|5-3-1 =16:27 – [[Jack Drury]] (2)
+18:37 – [[Nathan MacKinnon]] (7)
+|5-3-2 =''No scoring''
+|5-4-1 =03:52 – [[Brett Kulak]] (1)
+|5-4-2 =''No scoring''
+|goalie5-1 =[[Mackenzie Blackwood]] 10 saves / 13 shots
+[[Scott Wedgewood]] 7 saves / 7 shots
+|goalie5-2 =[[Jesper Wallstedt]] 30 saves / 34 shots
+|series = Colorado wins series 4–1
+}}
+====(P1) Vegas Golden Knights vs. (P3) Anaheim Ducks====
+This was the first playoff meeting between these two teams. Anaheim won all three games in the regular season series.
+The Golden Knights defeated the Ducks in six games. [[Carter Hart]] made 33 saves for the Golden Knights in game one, backstopping Vegas to a 3–1 victory. {{cite web|url=https://www.nhl.com/news/anaheim-ducks-vegas-golden-knights-game-1-recap-may-4-2026|title=Barbashev gets go-ahead goal in 3rd, Golden Knights edge Ducks in Game 1|last=Delos Santos|first=Paul|date=May 4, 2026|website=NHL.com|accessdate=May 4, 2026}} In game two, [[Lukáš Dostál]] made 21 saves for the Ducks, tying the series with a 3–1 victory. {{cite web|url=https://www.nhl.com/news/anaheim-ducks-vegas-golden-knights-game-2-recap-may-6-2026|title=Dostal makes 21 saves, Ducks defeat Golden Knights in Game 2 of West 2nd Round|last=Delos Santos|first=Paul|date=May 6, 2026|website=NHL.com|accessdate=May 6, 2026}} [[Mitch Marner]] had a hat trick in game three for the Golden Knights, defeating the Ducks 6–2. {{cite web|url=https://www.nhl.com/news/vegas-golden-knights-anaheim-ducks-game-3-recap-may-8-2026|title=Marner has natural hat trick, Golden Knights top Ducks in Game 3 of West 2nd Round|last=Arritt|first=Dan|date=May 8, 2026|website=NHL.com|accessdate=May 8, 2026}} In game four, [[Cutter Gauthier]] assisted thrice for the Ducks, tying the series 2–2 with a 4–3 victory. {{cite web|url=https://www.nhl.com/news/vegas-golden-knights-anaheim-ducks-game-4-recap-may-10-2026|title=Ducks edge Golden Knights in Game 4, even Western 2nd Round|last=Arritt|first=Dan|date=May 10, 2026|website=NHL.com|accessdate=May 12, 2026}} [[Pavel Dorofeyev]] scored twice, including the overtime-winning goal in game five for the Golden Knights, defeating the Ducks 3–2 to take a 3–2 series lead. {{cite web|url=https://www.nhl.com/news/anaheim-ducks-vegas-golden-knights-game-5-recap-may-12-2026|title=Golden Knights edge Ducks in OT in Game 5, on verge of Western Conference Final|last=Delos Santos|first=Paul|date=May 12, 2026|website=NHL.com|accessdate=May 12, 2026}} In game six, Dorofeyev scored twice and Hart made 31 saves for Golden Knights, sending Vegas to the conference final with a 5–1 victory.
+{{NHLPlayoffs
+|team1=Vegas Golden Knights
+|team2=Anaheim Ducks
+|stadium1=[[T-Mobile Arena]]
+|stadium2=[[Honda Center]]
+|homeright=yes
+|date1 =May 4
+|score1 =1–3
+|won1 =1
+|recap1 =www.nhl.com/news/anaheim-ducks-vegas-golden-knights-game-1-recap-may-4-2026
+|1-1-1 =03:14 – [[Brett Howden]] (5)
+|1-1-2 =''No scoring''
+|1-2-1 =''No scoring''
+|1-2-2 =''No scoring''
+|1-3-1 =15:02 – [[Ivan Barbashev]] (3)
+19:54 – ''en'' – [[Mitch Marner]] (3)
+|1-3-2 =[[Mikael Granlund]] (3) – 13:37
+|goalie1-1 =[[Carter Hart]] 33 saves / 34 shots
+|goalie1-2 =[[Lukáš Dostál|Lukas Dostal]] 19 saves / 21 shots
+|date2 =May 6
+|score2 =3–1
+|won2 =2
+|recap2 =www.nhl.com/news/anaheim-ducks-vegas-golden-knights-game-2-recap-may-6-2026
+|2-1-1 =''No scoring''
+|2-1-2 =''No scoring''
+|2-2-1 =''No scoring''
+|2-2-2 =[[Beckett Sennecke]] (2) – 11:23
+|2-3-1 =19:53 – ''pp'' – [[Mark Stone]] (3)
+|2-3-2 =[[Leo Carlsson]] (4) – 06:36
+[[Jansen Harkins]] (1) – ''en'' – 16:30
+|goalie2-1 =[[Carter Hart]] 25 saves / 27 shots
+|goalie2-2 =[[Lukáš Dostál|Lukas Dostal]] 21 saves / 22 shots
+|date3 =May 8
+|score3 =6–2
+|won3 =1
+|recap3 =www.nhl.com/news/vegas-golden-knights-anaheim-ducks-game-3-recap-may-8-2026
+|3-1-1 =[[Shea Theodore]] (3) – 01:06
+[[Brayden McNabb]] (1) – ''sh'' – 12:13
+[[Mitch Marner]] (4) – ''pp'' – 19:55
+|3-1-2 =''No scoring''
+|3-2-1 =Mitch Marner (5) – 09:19
+Mitch Marner (6) – 17:56
+|3-2-2 =''No scoring''
+|3-3-1 =[[Brett Howden]] (5) – ''en'' – 18:04
+|3-3-2 =06:30 – [[Beckett Sennecke]] (3)
+15:09 – [[Chris Kreider]] (2)
+|goalie3-1 =[[Carter Hart]] 31 saves / 33 shots
+|goalie3-2 =[[Lukáš Dostál|Lukas Dostal]] 5 saves / 8 shots
+[[Ville Husso]] 17 saves / 19 shots
+|date4 =May 10
+|score4 =3–4
+|won4 =2
+|recap4 =www.nhl.com/news/vegas-golden-knights-anaheim-ducks-game-4-recap-may-10-2026
+|4-1-1 =[[Pavel Dorofeyev]] (5) – ''pp'' – 10:22
+|4-1-2 =08:43 – ''pp'' – [[Beckett Sennecke]] (4)
+15:25 – [[Mikael Granlund]] (4)
+|4-2-1 =[[Brett Howden]] (7) – 04:04
+|4-2-2 =17:58 – ''pp'' – [[Alex Killorn]] (4)
+|4-3-1 =[[Tomáš Hertl|Tomas Hertl]] (1) – 18:56
+|4-3-2 =03:43 – [[Ian Moore (ice hockey)|Ian Moore]] (1)
+|goalie4-1 =[[Carter Hart]] 19 saves / 23 shots
+|goalie4-2 =[[Lukáš Dostál|Lukas Dostal]] 18 saves / 21 shots
+|date5 =May 12
+|score5 =2–3
+|ot5 =1
+|won5 =1
+|recap5 =www.nhl.com/news/anaheim-ducks-vegas-golden-knights-game-5-recap-may-12-2026
+|5-1-1 =16:13 – ''pp'' – [[Pavel Dorofeyev]] (6)
+|5-1-2 =[[Beckett Sennecke]] (5) – ''pp'' – 12:36
+|5-2-1 =''No scoring''
+|5-2-2 =''No scoring''
+|5-3-1 =04:48 – [[Tomáš Hertl|Tomas Hertl]] (2)
+|5-3-2 =[[Olen Zellweger]] (1) – 16:55
+|5-4-1 =04:10 – Pavel Dorofeyev (7)
+|5-4-2 =''No scoring''
+|goalie5-1 =[[Carter Hart]] 34 saves / 36 shots
+|goalie5-2 =[[Lukáš Dostál|Lukas Dostal]] 29 saves / 32 shots
+|date6 =May 14
+|score6 =5–1
+|won6 =1
+|recap6 =www.nhl.com/news/vegas-golden-knights-anaheim-ducks-game-6-recap-may-14-2026
+|6-1-1 =[[Mitch Marner]] (7) – 01:02
+[[Brett Howden]] (8) – ''sh'' – 08:30
+[[Shea Theodore]] (4) – ''pp'' – 17:19
+|6-1-2 =''No scoring''
+|6-2-1 =''No scoring''
+|6-2-2 =12:46 – [[Mikael Granlund]] (5)
+|6-3-1 =[[Pavel Dorofeyev]] (8) – 02:52
+Pavel Dorofeyev (9) – 13:30
+|goalie6-1 =[[Carter Hart]] 31 saves / 32 shots
+|goalie6-2 =[[Lukáš Dostál|Lukas Dostal]] 16 saves / 21 shots
+|series = Vegas wins series 4–2
+}}
+==Conference finals==
+{{Main|NHL conference finals}}
+===Eastern Conference final===
+====(M1) Carolina Hurricanes vs. (A3) Montreal Canadiens====
+This was the eighth playoff meeting between these two teams, with Montreal winning five of the seven previous series. They last met in the [[2006 Stanley Cup playoffs#(2) Carolina Hurricanes vs. (7) Montreal Canadiens|2006 Eastern Conference quarterfinals]], which Carolina won in six games. Carolina made their second consecutive and seventh overall conference finals appearance. Carolina lost the [[2025 Stanley Cup playoffs#Eastern Conference final|previous year's]] Eastern Conference final against the [[Florida Panthers]], in five games. This was Montreal's ninth appearance in the semifinal/conference finals since the league began using a 16-team or greater playoff format in [[1979–80 NHL season|1980]]. Their most recent appearance was in the [[2021 Stanley Cup playoffs#(1) Vegas Golden Knights vs. (4) Montreal Canadiens|2021 semifinals]], which Montreal won against the [[Vegas Golden Knights]] in six games. Montreal won all three games in the regular season series.
+Carolina defeated the Canadiens in five games. [[Juraj Slafkovský]] scored twice in Montreal's 6–2 rout of Carolina in game one, with the Canadiens scoring four goals in the first period. {{cite web|url=https://www.nhl.com/news/montreal-canadiens-carolina-hurricanes-game-1-recap-may-21-2026|title=Canadiens score 4 in 1st period, defeat Hurricanes in Game 1 of East Final|last=Dusterberg|first=Kurt|date=May 21, 2026|website=NHL.com|accessdate=May 25, 2026}} The Hurricanes then tied the series in game two with [[Nikolaj Ehlers]]'s overtime goal, his second goal of the game, winning 3–2. {{cite web|url=https://www.nhl.com/news/montreal-canadiens-carolina-hurricanes-game-2-recap-may-23-2026|title=Ehlers scores in OT, Hurricanes top Canadiens in Game 2 to even East Final|last=Dusterberg|first=Kurt|date=May 23, 2026|website=NHL.com|accessdate=May 25, 2026}} In game three, [[Andrei Svechnikov]] scored for Carolina in overtime, giving the Hurricanes a 3–2 victory. {{cite web|url=https://www.nhl.com/news/carolina-hurricanes-montreal-canadiens-game-3-recap-may-25-2026|title=Svechnikov's OT goal lifts Hurricanes past Canadiens in Game 3 of East Final|last=Farrell|first=Sean|date=May 25, 2026|website=NHL.com|accessdate=May 25, 2026}} The Hurricanes shut out the Canadiens 4–0 in game four with [[Frederik Andersen]] stopping all 18 shots he faced. {{cite web|url=https://www.nhl.com/news/carolina-hurricanes-montreal-canadiens-game-4-recap-may-27-2026|title=Hurricanes shut out Canadiens in Game 4, move 1 win from Stanley Cup Final|last=Farrell|first=Sean|date=May 27, 2026|website=NHL.com|accessdate=May 29, 2026}} In game five, [[Logan Stankoven]] provided a goal and two assists for the Hurricanes, defeating Montreal 6–1 to advance to the Stanley Cup Final. {{cite web|url=https://www.nhl.com/news/montreal-canadiens-carolina-hurricanes-game-5-recap-may-29-2026|title=Hurricanes cruise past Canadiens in Game 5 to reach Stanley Cup Final|last=Dusterberg|first=Kurt|date=May 29, 2026|website=NHL.com|accessdate=May 29, 2026}}
+{{NHLPlayoffs
+|team1=Carolina Hurricanes
+|team2=Montreal Canadiens
+|stadium1=[[Lenovo Center]]
+|stadium2=[[Bell Centre]]
+|homeright=yes
+|date1 =May 21
+|score1 =6–2
+|won1 =2
+|recap1 =www.nhl.com/news/montreal-canadiens-carolina-hurricanes-game-1-recap-may-21-2026
+|1-1-1 =00:33 – [[Seth Jarvis]] (2)
+|1-1-2 =[[Cole Caufield]] (5) – 01:00
+[[Phillip Danault]] (2) – 04:04
+[[Alexandre Texier]] (4) – 08:11
+[[Ivan Demidov]] (3) – 11:32
+|1-2-1 =02:46 – [[Eric Robinson (ice hockey)|Eric Robinson]] (1)
+|1-2-2 =''No scoring''
+|1-3-1 =''No scoring''
+|1-3-2 =[[Juraj Slafkovský|Juraj Slafkovsky]] (5) – 07:05
+Juraj Slafkovsky (6) – ''en'' – 17:32
+|goalie1-1 =[[Frederik Andersen]] 16 saves / 21 shots
+|goalie1-2 =[[Jakub Dobeš|Jakub Dobes]] 26 saves / 28 shots
+|date2 =May 23
+|score2 =2–3
+|tv2 =[[NHL on TNT|TNT]], [[NHL on TNT|TruTV]], [[Hockey Night in Canada|CBC]], [[NHL on Sportsnet|SN]]
+|ot2 =1
+|won2 =1
+|recap2 =www.nhl.com/news/montreal-canadiens-carolina-hurricanes-game-2-recap-may-23-2026
+|2-1-1 =02:33 – [[Eric Robinson (ice hockey)|Eric Robinson]] (2)
+|2-1-2 =[[Josh Anderson (ice hockey)|Josh Anderson]] (4) – 11:11
+|2-2-1 =17:03 – [[Nikolaj Ehlers]] (3)
+|2-3-2 =Josh Anderson (5) – 12:51
+|2-4-1 =03:29 – Nikolaj Ehlers (4)
+|goalie2-1 =[[Frederik Andersen]] 10 saves / 12 shots
+|goalie2-2 =[[Jakub Dobeš|Jakub Dobes]] 23 saves / 26 shots
+|date3 =May 25
+|score3 =3–2
+|ot3 =1
+|won3 =1
+|recap3 =www.nhl.com/news/carolina-hurricanes-montreal-canadiens-game-3-recap-may-25-2026
+|3-1-1 =[[Shayne Gostisbehere]] (1) – 08:24
+[[Taylor Hall]] (4) – 16:22
+|3-1-2 =15:28 – [[Mike Matheson]] (2)
+|3-2-1 =''No scoring''
+|3-2-2 =04:43 – ''pp'' – [[Lane Hutson]] (3)
+|3-3-1 =''No scoring''
+|3-3-2 =''No scoring''
+|3-4-1 =[[Andrei Svechnikov]] (2) – 14:06
+|3-4-2 =''No scoring''
+|goalie3-1 =[[Frederik Andersen]] 11 saves / 13 shots
+|goalie3-2 =[[Jakub Dobeš|Jakub Dobes]] 36 saves / 39 shots
+|date4 =May 27
+|score4 =4–0
+|tv4 =[[NHL on TNT|TNT]], [[NHL on TNT|TruTV]], [[Hockey Night in Canada|CBC]], [[NHL on Sportsnet|SN]]
+|won4 =1
+|recap4 =www.nhl.com/news/carolina-hurricanes-montreal-canadiens-game-4-recap-may-27-2026
+|4-1-1 =[[Sebastian Aho]] (4) – ''pp'' – 14:59
+[[Jordan Staal]] (2) – 16:07
+[[Logan Stankoven]] (8) – 17:46
+|4-3-1 =[[Andrei Svechnikov]] (3) – ''en'' – 18:06
+|goalie4-1 =[[Frederik Andersen]] 18 saves / 18 shots
+|goalie4-2 =[[Jakub Dobeš|Jakub Dobes]] 40 saves / 43 shots
+|date5 =May 29
+|score5 =1–6
+|tv5 =[[NHL on TNT|TNT]], [[NHL on TNT|TruTV]], [[Hockey Night in Canada|CBC]], [[NHL on Sportsnet|SN]]
+|won5 =1
+|recap5 =www.nhl.com/news/montreal-canadiens-carolina-hurricanes-game-5-recap-may-29-2026
+|5-1-1 =09:17 – [[Taylor Hall]] (5)
+15:12 – [[Logan Stankoven]] (9)
+16:52 – [[Eric Robinson (ice hockey)|Eric Robinson]] (3)
+|5-1-2 =''No scoring''
+|5-2-1 =07:19 – [[Jackson Blake]] (5)
+18:02 – ''pp'' – [[Shayne Gostisbehere]] (3)
+|5-2-2 =''No scoring''
+|5-3-1 =16:19 – ''en'' – [[Seth Jarvis]] (3)
+|5-3-2 =[[Cole Caufield]] (6) – ''pp'' – 10:50
+|goalie5-1 =[[Frederik Andersen]] 23 saves / 24 shots
+|goalie5-2 =[[Jakub Dobeš|Jakub Dobes]] 24 saves / 29 shots
+|series = Carolina wins series 4–1
+}}
+===Western Conference final===
+====(C1) Colorado Avalanche vs. (P1) Vegas Golden Knights====
+This was the second playoff series between these two teams. Their only previous series was in the [[2021 Stanley Cup playoffs#(W1) Colorado Avalanche vs. (W2) Vegas Golden Knights|2021 West Division second round]], which Vegas won in six games. This was Vegas's fifth semifinals/conference finals appearance. Their last appearance was in [[2023 Stanley Cup playoffs#(P1) Vegas Golden Knights vs. (C2) Dallas Stars|2023]] against the [[Dallas Stars]], which Vegas won in six games. This was Colorado's tenth appearance in the conference final. They last made the conference final in [[2022 Stanley Cup playoffs#Western Conference final|2022]], which Colorado won against the [[Edmonton Oilers]] in a four-game sweep. Colorado won two of the three games in this year's regular season series.
+The Golden Knights defeated the Avalanche in a four-game sweep. In game one, [[Carter Hart]] made 36 saves for the Golden Knights, holding off the Avalanche for a 4–2 victory. {{cite web|url=https://www.nhl.com/news/vegas-golden-knights-colorado-avalanche-game-1-recap-may-20-2026|title=Golden Knights hold off Avalanche in Game 1 of Western Final|last=Boulding|first=Ryan|date=May 20, 2026|website=NHL.com|accessdate=May 25, 2026}} [[Ivan Barbashev]] scored twice and provided an assist for the Golden Knights as Hart made 30 saves in game two, backstopping Vegas to a 3–1 victory. {{cite web|url=https://www.nhl.com/news/vegas-golden-knights-colorado-avalanche-game-2-recap-may-22-2026|title=Golden Knights rally past Avalanche to win Game 2, extend West Final lead|last=Boulding|first=Ryan|date=May 22, 2026|website=NHL.com|accessdate=May 25, 2026}} The Golden Knights came back from a three-goal deficit in game three, taking a 3–0 series lead with a 5–3 triumph. {{cite web|url=https://www.nhl.com/news/colorado-avalanche-vegas-golden-knights-game-3-recap-may-24-2026|title=Golden Knights erase 3-goal deficit, on verge of sweeping Avalanche in Western Final|last=Delos Santos|first=Paul|date=May 24, 2026|website=NHL.com|accessdate=May 25, 2026}} In game four, Vegas held off the Avalanche in the third period, giving them a 2–1 victory, and a Stanley Cup Final berth. With the series victory, the Golden Knights became the first team to record a sweep over a [[Presidents' Trophy]]-winning team since the [[Columbus Blue Jackets]] in [[2019 Tampa Bay Lightning–Columbus Blue Jackets playoff series|2019]]. {{cite web |date=2026-05-27 |title=Golden Knights sweep Avalanche, advance to Stanley Cup Final {{!}} NHL.com |url=https://www.nhl.com/news/colorado-avalanche-vegas-golden-knights-game-4-recap-may-26-2026 |access-date=2026-05-27 |website=www.nhl.com |language=en}} This was the only series of the playoffs not to have a game go into overtime.
+{{NHLPlayoffs
+|team1=Colorado Avalanche
+|team2=Vegas Golden Knights
+|stadium1=[[Ball Arena]]
+|stadium2=[[T-Mobile Arena]]
+|homeright=yes
+|date1 =May 20
+|score1 =4–2
+|won1 =2
+|recap1 =www.nhl.com/news/vegas-golden-knights-colorado-avalanche-game-1-recap-may-20-2026
+|1-1-1 =''No scoring''
+|1-1-2 =''No scoring''
+|1-2-1 =''No scoring''
+|1-2-2 =[[Dylan Coghlan]] (1) – 12:29
+[[Pavel Dorofeyev]] (10) – ''pp'' – 15:02
+|1-3-1 =05:53 – [[Valeri Nichushkin]] (2)
+17:39 – ''pp'' – [[Gabriel Landeskog]] (4)
+|1-3-2 =[[Brett Howden]] (9) – 01:34
+[[Nic Dowd]] (3) – ''en'' – 19:15
+|goalie1-1 =[[Scott Wedgewood]] 24 saves / 27 shots
+|goalie1-2 =[[Carter Hart]] 36 saves / 38 shots
+|date2 =May 22
+|score2 =3–1
+|won2 =2
+|recap2 =www.nhl.com/news/vegas-golden-knights-colorado-avalanche-game-2-recap-may-22-2026
+|2-1-1 =16:59 – [[Ross Colton]] (2)
+|2-1-2 =''No scoring''
+|2-2-1 =''No scoring''
+|2-2-2 =''No scoring''
+|2-3-1 =''No scoring''
+|2-3-2 =[[Jack Eichel]] (2) – 09:15
+[[Ivan Barbashev]] (4) – 11:22
+Ivan Barbashev (5) – ''en'' – 18:57
+|goalie2-1 =[[Scott Wedgewood]] 22 saves / 24 shots
+|goalie2-2 =[[Carter Hart]] 30 saves / 31 shots
+|date3 =May 24
+|score3 =3–5
+|tv3 =[[NHL on ESPN|ESPN]], [[Hockey Night in Canada|CBC]], [[NHL on Sportsnet|SN]]
+|won3 =2
+|recap3 =www.nhl.com/news/colorado-avalanche-vegas-golden-knights-game-3-recap-may-24-2026
+|3-1-1 =[[Gabriel Landeskog]] (5) – 03:21
+[[Nazem Kadri]] (3) – 07:03
+[[Jack Drury]] (3) – ''sh'' – 13:15
+|3-2-2 =00:19 – ''pp'' – [[Mark Stone]] (4)
+04:05 – [[William Karlsson]] (1)
+12:46 – [[Keegan Kolesar]] (1)
+|3-3-2 =08:21 – [[Tomáš Hertl|Tomas Hertl]] (3)
+19:01 – ''en'' – [[Brett Howden]] (10)
+|goalie3-1 =[[Scott Wedgewood]] 18 saves / 22 shots
+|goalie3-2 =[[Carter Hart]] 32 saves / 35 shots
+|date4 =May 26
+|score4 =1–2
+|won4 =2
+|recap4 =www.nhl.com/news/colorado-avalanche-vegas-golden-knights-game-4-recap-may-26-2026
+|4-1-1 =''No scoring''
+|4-1-2 =04:42 – [[Mark Stone]] (5)
+|4-2-1 =''No scoring''
+|4-2-2 =''No scoring''
+|4-3-1 =[[Gabriel Landeskog]] (6) – 17:57
+|4-3-2 =14:15 – [[Cole Smith (ice hockey)|Cole Smith]] (3)
+|goalie4-1 =[[Mackenzie Blackwood]] 24 saves / 26 shots
+|goalie4-2 =[[Carter Hart]] 20 saves / 21 shots
+|series = Vegas wins series 4–0
+}}
+==Stanley Cup Final==
+{{Main|2026 Stanley Cup Final}}
+This was the first playoff meeting between these two teams. This is the third Final appearance for both teams; Carolina won their most recent appearance against the [[Edmonton Oilers]] in {{scfy|2006}}, and Vegas won their most recent appearance against the [[Florida Panthers]] in {{scfy|2023}}. Vegas won both games in the regular season series.
+{{NHLPlayoffs
+|team1=Carolina Hurricanes
+|team2=Vegas Golden Knights
+|stadium1=[[Lenovo Center]]
+|stadium2=[[T-Mobile Arena]]
+|homeright=yes
+|date1 =June 2
+|score1 =5–4
+|won1 =2
+|recap1 =www.nhl.com/news/vegas-golden-knights-carolina-hurricanes-game-1-recap-june-2-2026
+|1-1-1 =00:25 – [[Nikolaj Ehlers]] (5)
+12:08 – Nikolaj Ehlers (6)
+|1-1-2 =[[Shea Theodore]] (5) – 13:28
+|1-2-1 =12:42 – [[Jordan Staal]] (3)
+|1-2-2 =[[Ivan Barbashev]] (6) – 00:30
+[[William Karlsson]] (2) – 04:35
+|1-3-1 =11:19 – [[Shayne Gostisbehere]] (3)
+|1-3-2 =[[Brett Howden]] (11) – 01:21
+[[Tomáš Hertl|Tomas Hertl]] (4) – 16:36
+|goalie1-1 =[[Frederik Andersen]] 18 saves / 23 shots
+|goalie1-2 =[[Carter Hart]] 25 saves / 29 shots
+|date2 =June 4
+|score2 =3–4
+|ot2 =1
+|won2 =1
+|recap2 =www.nhl.com/news/vegas-golden-knights-carolina-hurricanes-game-2-recap-june-4-2026
+|2-1-1 =''No scoring''
+|2-1-2 =[[Brett Howden]] (12) – 13:33
+|2-2-1 =''No scoring''
+|2-2-2 =Brett Howden (13) – 07:23
+|2-3-1 =10:20 – [[Logan Stankoven]] (10)
+12:46 – [[Mark Jankowski]] (1)
+15:25 – ''pp'' – [[Jordan Staal]] (4)
+|2-3-2 =[[Mark Stone]] (6) – 18:39
+|2-4-1 =03:56 – [[Seth Jarvis]] (4)
+|2-4-2 =''No scoring''
+|goalie2-1 =[[Frederik Andersen]] 23 saves / 26 shots
+|goalie2-2 =[[Carter Hart]] 22 saves / 26 shots
+|date3 =June 6
+|score3 =4–5
+|ot3 =2
+|won3 =2
+|recap3 =www.nhl.com/news/carolina-hurricanes-vegas-golden-knights-game-3-recap-june-6-2026
+|3-1-1 =''No scoring''
+|3-1-2 =''No scoring''
+|3-2-1 =''No scoring''
+|3-2-2 =10:26 – ''pp'' – [[Tomáš Hertl|Tomas Hertl]] (5)
+10:42 – [[Mitch Marner]] (8)
+14:32 – Mitch Marner (9)
+16:52 – Mitch Marner (10)
+|3-3-1 =[[Jordan Martinook]] (2) – 07:03
+[[Taylor Hall]] (6) – 07:29
+[[Jordan Staal]] (5) – 07:42
+[[Andrei Svechnikov]] (4) – ''pp'' – 18:18
+|3-3-2 =''No scoring''
+|3-4-1 =''No scoring''
+|3-4-2 =05:38 – [[Shea Theodore]] (6)
+|goalie3-1 =[[Frederik Andersen]] 12 saves / 16 shots
+[[Brandon Bussi]] 18 saves / 19 shots
+|goalie3-2 =[[Carter Hart]] 29 saves / 33 shots
+|date4 =June 9
+|score4 =5–3
+|won4 =1
+|recap4 =www.nhl.com/news/carolina-hurricanes-vegas-golden-knights-game-4-recap-june-9-2026
+|4-1-1 =[[Logan Stankoven]] (11) – 01:06
+[[Jackson Blake]] (6) – 03:28
+[[Jordan Staal]] (6) – ''pp'' – 12:48
+|4-1-2 =07:22 – [[Mark Stone]] (7)
+|4-2-1 =''No scoring''
+|4-2-2 =04:22 – [[William Karlsson]] (3)
+17:08 – [[Brett Howden]] (14)
+|4-3-1 =Jordan Staal (7) – 06:32
+[[Nikolaj Ehlers]] (7) – ''en'' – 19:05
+|4-3-2 =''No scoring''
+|goalie4-1 =[[Brandon Bussi]] 18 saves / 21 shots
+|goalie4-2 =[[Carter Hart]] 23 saves / 27 shots
+|date5 =June 11
+|score5 =2–4
+|won5 =1
+|recap5 =www.nhl.com/news/vegas-golden-knights-carolina-hurricanes-game-5-recap-june-11-2026
+|5-1-1 =11:46 – [[Jordan Staal]] (8)
+|5-1-2 =[[Pavel Dorofeyev]] (11) – ''pp'' – 06:52
+|5-2-1 =11:58 – ''pp'' – [[Andrei Svechnikov]] (5)
+17:51 – [[Sebastian Aho]] (5)
+|5-2-2 =''No scoring''
+|5-3-1 =11:08 – ''pp'' – Andrei Svechnikov (6)
+|5-3-2 =Pavel Dorofeyev (12) – 13:49
+|goalie5-1 =[[Brandon Bussi]] 23 saves / 25 shots
+|goalie5-2 =[[Carter Hart]] 20 saves / 24 shots
+|date6 =June 14
+|score6 =3–0
+|won6 =1
+|recap6 =www.nhl.com/news/carolina-hurricanes-vegas-golden-knights-stanley-cup-final-game-6-recap-june-14-2026
+|6-1-1 =[[Taylor Hall]] (7) – 03:47
+|6-1-2 =''No scoring''
+|6-2-1 =[[Jackson Blake]] (7) – 13:31
+|6-2-2 =''No scoring''
+|6-3-1 =[[Nikolaj Ehlers]] (8) – ''en'' – 18:52
+|6-3-2 =''No scoring''
+|goalie6-1 =[[Brandon Bussi]] 22 saves / 22 shots
+|goalie6-2 =[[Carter Hart]] 20 saves / 22 shots
+|series = Carolina wins series 4–2
+}}
+==Player statistics==
+===Skaters===
+These were the top ten skaters based on points, following the conclusion of games played on June 14, 2026. {{cite web|url=https://www.nhl.com/stats/skaters?reportType=season&seasonFrom=20252026&seasonTo=20252026&gameType=3&sort=points,goals,plusMinus&page=0&pageSize=50|title=NHL Stats - NHL.com|publisher=NHL Enterprises, L. P.|access-date=April 18, 2026 |date=April 18, 2026}}
+{| style="padding:3px; border-spacing:0; text-align:center;" class="wikitable sortable"
+|-
+! style="width:12em" | Player
+! style="width:12em" | Team
+! style="width:4em" | {{abbr|GP|Games played}}
+! style="width:4em" | {{abbr|G|Goals}}
+! style="width:4em" | {{abbr|A|Assists}}
+! style="width:4em" | {{abbr|Pts|Points}}
+! data-sort-type="number" style="width:4em" | {{abbr|+/–|Plus/minus}}
+! style="width:4em" | {{abbr|PIM|Penalties in minutes}}
+|-
+| align=left|{{sortname|Mitch|Marner}} ||align=left|[[Vegas Golden Knights]] || 22 || 10 || 19 || 29 || +11 || 6
+|-
+| align=left|{{sortname|Jack|Eichel}} ||align=left|Vegas Golden Knights || 22 || 2 || 20 || 22 || +4 || 16
+|-
+| align=left|{{sortname|Jackson|Blake}} ||align=left|[[Carolina Hurricanes]] || 19 || 7 || 13 || 20 || +8 || 24
+|-
+| align=left|{{sortname|Taylor|Hall}} ||align=left|Carolina Hurricanes || 19 || 7 || 12 || 19 || +14 || 14
+|-
+| align=left|{{sortname|Brett|Howden}} ||align=left|Vegas Golden Knights || 22 || 14 || 4 || 18 || +11 || 6
+|-
+| align=left|{{sortname|Nikolaj|Ehlers}} ||align=left|Carolina Hurricanes || 18 || 8 || 10 || 18 || +9 || 6
+|-
+| align=left|{{sortname|Shea|Theodore}} ||align=left|Vegas Golden Knights || 22 || 6 || 12 || 18 || +10 || 10
+|-
+| align=left|{{sortname|Pavel|Dorofeyev}} ||align=left|Vegas Golden Knights || 22 || 12 || 4 || 16 || +2 || 0
+|-
+| align=left|{{sortname|Logan|Stankoven}} ||align=left|Carolina Hurricanes || 19 || 11 || 5 || 16 || +8 || 8
+|-
+| align=left|{{sortname|Nick|Suzuki}} ||align=left|[[Montreal Canadiens]] || 19 || 4 || 12 || 16 || –8 || 6
+|}
+===Goaltenders===
+This is a combined table of the top 5 goaltenders based on [[goals against average]] and the goaltenders based on [[save percentage]], with at least 420 minutes played, following the conclusion of games played on June 14, 2026. The table is sorted by GAA, and the criteria for inclusion are bolded. {{cite web |url=https://www.nhl.com/stats/goalies?reportType=season&seasonFrom=20252026&seasonTo=20252026&gameType=3&filter=timeOnIce,gte,420&sort=a_goalsAgainstAverage,savePct&page=0&pageSize=50|title=NHL Stats - NHL.com |publisher=NHL Enterprises, L. P. |access-date=April 20, 2026 |date=April 20, 2026}}
+{| style="padding:3px; border-spacing:0; text-align:center;" class="wikitable sortable"
+|-
+! style="width:12em" | Player
+! style="width:12em" | Team
+! style="width:4em" | {{abbr|GP|Games Played}}
+! style="width:4em" | {{abbr|W|Wins}}
+! style="width:4em" | {{abbr|L|Losses}}
+! style="width:5em" | {{abbr|SA|Shots Against}}
+! style="width:4em" | {{abbr|GA|Goals Against}}
+! style="width:5em" | {{abbr|GAA|Goals Against Average}}
+! style="width:5em" | {{abbr|SV%|Save Percentage}}
+! style="width:4em" | {{abbr|SO|Shutouts}}
+! style="width:5em" | {{abbr|TOI|Time On Ice (Minutes:Seconds)}}
+|-
+|align=left|{{sortname|Frederik|Andersen}} ||align=left|[[Carolina Hurricanes]] || 16 || 13 || 2 || 354 || 32 || '''1.89''' || '''.910''' || 3 || 1014:18
+|-
+|align=left|{{sortname|Daniel|Vladar|Daniel Vladař}} ||align=left|[[Philadelphia Flyers]] || 10 || 4 || 6 || 294 || 23 || '''2.18''' || '''.922''' || 2 || 633:20
+|-
+|align=left|{{sortname|Andrei|Vasilevskiy}} ||align=left|[[Tampa Bay Lightning]] || 7 || 3 || 4 || 156 || 16 || '''2.18''' || .897 || 1 || 439:45
+|-
+|align=left|{{sortname|Scott|Wedgewood}} ||align=left|[[Colorado Avalanche]] || 11 || 7 || 4 || 260 || 25 || '''2.47''' || .904 || 0 || 606:07
+|-
+|align=left|{{sortname|Carter|Hart}} ||align=left|[[Vegas Golden Knights]] || 22 || 14 || 8 || 637 || 59 || '''2.56''' || '''.909''' || 0 || 1380:19
+|-
+|align=left|{{sortname|Jakub|Dobes|Jakub Dobeš}} ||align=left|[[Montreal Canadiens]] || 19 || 9 || 10 || 564 || 52 || 2.66 || '''.908''' || 0 || 1173:11
+|-
+|align=left|{{sortname|Jesper|Wallstedt}} ||align=left|[[Minnesota Wild]] || 10 || 5 || 5 || 329 || 30 || 2.77 || '''.909''' || 0 || 650:55
+|}
+==Media==
+===Canada===
+This was the 12th and final postseason of the league's Canadian national broadcast rights deal with [[Rogers Sports & Media]] before a new 12-season contract begins next season (2026–27). {{cite web|last=Rosen|first=Dan|title=NHL, Rogers announce landmark 12-year deal|url=https://www.nhl.com/news/nhl-rogers-announce-landmark-12-year-deal/c-693152|access-date=August 24, 2019|website=NHL.com|date=November 26, 2013|archive-date=June 20, 2019|archive-url=https://web.archive.org/web/20190620135912/https://www.nhl.com/news/nhl-rogers-announce-landmark-12-year-deal/c-693152|url-status=dead}} {{cite web|title=NHL, Rogers announce 12-year national rights media deal|url=https://www.nhl.com/news/nhl-rogers-announce-12-year-rights-deal|access-date=April 2, 2025|date=April 2, 2025|archive-date=April 2, 2025|archive-url=https://web.archive.org/web/20250402231513/https://www.nhl.com/news/nhl-rogers-announce-12-year-rights-deal|url-status=live}} Shortly after the 2026 Stanley Cup Final concluded, the [[Canadian Broadcasting Corporation|CBC]] announced that it would no longer sublicense NHL games from Rogers, making game six the last NHL game to air on [[CBC Television]]. {{cite web |date=June 16, 2026|title=CBC will no longer show NHL games as sublicense with rights-holder Rogers Sportsnet ends|url=https://www.cbc.ca/sports/cbc-nhl-hockey-night-in-canada-ends-9.7236977|access-date=June 16, 2026|website=CBC Sports}}
+Games aired across [[NHL on Sportsnet|Sportsnet]], [[Sportsnet One|SN1]], [[Sportsnet 360|SN360]], and CBC under the ''[[Hockey Night in Canada]]'' brand. For first and second-round U.S.–U.S. games not on CBC, Sportsnet used some the U.S. feed instead of producing their own telecast. The 2026 Stanley Cup Final was simulcast on both CBC and Sportsnet. {{cite press release|title=Sportsnet Announces 2026 Stanley Cup Playoffs First Round Coverage Details, Beginning April 18|url=https://www.rogerssportsandmedia.com/the-latest/sportsnet-announces-2026-stanley-cup-playoffs-first-round-coverage-details-beginning-april-18/|website=Rogers Sports and Media|date=April 17, 2026}}
+[[Sportsnet+]] streamed all games.
+===United States===
+This was the fifth season of the league's seven-year U.S. national broadcast rights deals with the [[NHL on ESPN|ESPN family of networks]] and [[NHL on TNT|TNT Sports]]. {{cite news|title=NHL moving to Turner Sports is $1 billion risk-reward for hockey|work=CNBC|url=https://www.cnbc.com/2021/04/27/turner-sports-nhl-announce-seven-year-deal-for-broadcast-rights.html|access-date=April 27, 2021|date=April 27, 2021|archive-date=November 4, 2022|archive-url=https://web.archive.org/web/20221104084621/https://www.cnbc.com/2021/04/27/turner-sports-nhl-announce-seven-year-deal-for-broadcast-rights.html|url-status=live}}
+First- and second-round games were split between ESPN-produced telecasts (either on ESPN, [[NHL on ABC|ABC]], or [[ESPN2]]) and TNT Sports-produced telecasts (either on TNT or [[TBS (American TV channel)|TBS]], with selected simulcasts on [[TruTV]]). Each U.S. team's regional broadcaster also televised local coverage of first-round games. {{cite press release|title=2026 Stanley Cup Playoffs presented by GEICO begin Saturday on ESPN|url=https://espnpressroom.com/us/press-releases/2026/04/2026-stanley-cup-playoffs-presented-by-geico-begin-saturday-on-espn/|website=ESPN Press Room|date=April 18, 2026}} {{cite press release |title=TNT Sports Announces Commentators for 2026 Stanley Cup Playoffs Presented by GEICO First Round Games on Sunday, April 19 |url=https://press.wbd.com/us/media-release/tnt-sports-announces-commentators-2026-stanley-cup-playoffs-presented-geico-first |website=wbd.com |date=April 18, 2026}}
+ESPN/ABC had the first choice of which conference final series to air, choosing the Western Conference finals this season. As a result, TNT Sports broadcast the Eastern Conference finals. {{cite web |title=Conference Final schedule scenarios announced | url=https://www.nhl.com/news/start-times-for-conference-final-scenarios-announced |website=www.nhl.com |access-date=May 14, 2026}} As per the alternating rotation, ABC has coverage of the 2026 Stanley Cup Final.
+All ESPN games streamed on the [[ESPN app]]'s unlimited tier, while TNT games streamed on [[HBO Max]].
+==Notes==
+{{notelist}}
+==References==
+{{reflist}}
+==External links==
+* [https://www.nhl.com/stanley-cup-playoffs/2026 Stanley Cup playoffs]{{dead link|date=July 2026|bot=medic}}{{cbignore|bot=medic}}
+{{s-start}}
+{{succession box |before=[[2025 Stanley Cup playoffs]] |title=Stanley Cup playoffs |years=2026 |after=2027 Stanley Cup playoffs}}
+{{s-end}}
+{{2025–26 NHL season by team}}
+{{Stanley Cup playoffs}}
+[[Category:Stanley Cup playoffs]]
+[[Category:2026 Stanley Cup| Playoffs]]
+[[Category:2025–26 in American ice hockey]]
+[[Category:2025–26 in Canadian ice hockey]]

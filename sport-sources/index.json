@@ -1,0 +1,131 @@
+{
+  "fetchedAt": "2026-10-20T18:35:22.000Z",
+  "results": [
+    {
+      "url": "https://api-web.nhle.com/v1/playoff-bracket/2026",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-api-web.nhle.com.txt"
+    },
+    {
+      "url": "https://api-web.nhle.com/v1/playoff-series/carousel/20252026/",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-api-web.nhle.com.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_Stanley_Cup_playoffs&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260418",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260419",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260420",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_men%27s_ice_hockey_tournament&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "08-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_NCAA_National_Collegiate_women%27s_ice_hockey_tournament&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "09-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/scoreboard?dates=20260326",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "10-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/scoreboard?dates=20260327",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "11-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/scoreboard?dates=20260409",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "12-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/scoreboard?dates=20260411",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "13-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/womens-college-hockey/scoreboard?dates=20260313",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "14-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/womens-college-hockey/scoreboard?dates=20260320",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "15-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/womens-college-hockey/scoreboard?dates=20260322",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "16-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2026_PWHL_playoffs&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "17-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2025%E2%80%9326_PWHL_season&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "18-en.wikipedia.org.txt"
+    }
+  ]
+}

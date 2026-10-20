@@ -1,0 +1,2466 @@
+Source: https://en.wikipedia.org/w/index.php?title=2025%E2%80%9326_PWHL_season&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2025%E2%80%9326_PWHL_season&action=raw
+HTTP 200
+Fetched: 2026-10-20T18:35:22.000Z
+
+{{Use mdy dates|date=June 2025}}
+{{Infobox sports season
+| title = 2025–26 PWHL season
+| color = #33058D; border-top:#33058D 5px solid; border-bottom:#33058D 5px solid
+| color_text = #FFFFFF
+| logo = File:PWHL logo.svg
+| league = [[Professional Women's Hockey League]]
+| sport = [[Ice hockey]]
+| duration = November 21, 2025 – April 25, 2026
+| no_of_games = 30 per team
+| no_of_teams = 8
+| attendance =
+| TV = [[Canadian Broadcasting Corporation|CBC]]/[[Ici Radio-Canada Télé|Radio-Canada]], [[The Sports Network|TSN]]/[[Réseau des sports|RDS]], [[Sportsnet]], [[Amazon Prime Video|Prime Video]], [[NESN]], [[FanDuel Sports Network North|FDSN North]], [[MSG Network|MSG]], [[KZJO]]
+| draft = Draft
+| draft_link = 2025 PWHL Draft
+| top_pick = [[Kristýna Kaltounková]]
+| picked_by = [[New York Sirens]]
+| season = Regular season
+| season_champ_name =
+| season_champs = [[Montreal Victoire]]
+| MVP = [[Aerin Frankel]] ([[Boston Fleet]])
+| MVP_link =
+| top_scorer = [[Kelly Pannek]] ([[Minnesota Frost]])
+| top_scorer_link =
+| playoffs = Playoffs
+| playoffs_link = 2026 Walter Cup playoffs
+| finals = [[2026 Walter Cup Finals|Walter Cup]]
+| finals_link =
+| finals_champ = [[Montreal Victoire]]
+| finals_runner-up = [[Ottawa Charge]]
+| playoffs_MVP = [[Marie-Philip Poulin]] ([[Montreal Victoire|Victoire]])
+| playoffs_MVP_link = Ilana Kloss Playoff Most Valuable Player
+| prevseason_link = 2024–25 PWHL season
+| prevseason_year = 2024–25
+| nextseason_year = 2026–27
+| nextseason_link = 2026–27 PWHL season
+| seasonslist =
+| seasonslistnames = PWHL
+}}
+The '''2025–26 PWHL season''' was the third season of operation of the [[Professional Women's Hockey League]]. The league expanded to eight teams with the addition of the [[Seattle Torrent]] and the [[Vancouver Goldeneyes]]. The regular season began on November 21, 2025. The [[2026 Walter Cup playoffs|Walter Cup playoffs]] began on April 30 and ended on May 20, 2026, with the [[Montreal Victoire]] winning their first [[Walter Cup]].
+== League business ==
+* On April 15, 2025, the PWHL announced that the [[2025 PWHL Draft]] would be held June 24 at the [[Rideau Carleton Raceway|Hard Rock Hotel & Casino]] in [[Ottawa]]. {{cite web |url=https://www.thepwhl.com/en/news/2025/april/15/2025-pwhl-draft-to-be-held-june-24-in-ottawa |title=2025 PWHL Draft To Be Held June 24 In Ottawa |website=[[Professional Women's Hockey League]] |date=April 15, 2025 |access-date=June 1, 2025 |quote=Hard Rock Hotel & Casino will be Official Host}}
+* On April 23, 2025, the PWHL announced that their seventh team and first expansion franchise would be located in [[Vancouver]], and begin play in the 2025–26 season. The [[Vancouver Goldeneyes]] would play their home games out of the [[Pacific Coliseum]], which was the home arena of the NHL's [[Vancouver Canucks]] from 1970 to 1995. {{cite news |url=https://www.cbc.ca/sports/hockey/pwhl/pwhl-expansion-vancouver-1.7516319 |title=Vancouver announced as newest PWHL franchise for 2025-26 season |work=[[CBC Sports]] |last=Donkin |first=Karissa |date=April 23, 2025 |access-date=July 23, 2025}}
+* On April 30, 2025, the PWHL announced that their eighth team and second expansion franchise would be located in [[Seattle]], and begin play in the 2025–26 season. The [[Seattle Torrent]] would play their home games out of [[Climate Pledge Arena]], which is the home arena of the NHL's [[Seattle Kraken]] and the WNBA's [[Seattle Storm]]. {{cite news |url=https://www.cbc.ca/sports/hockey/pwhl/pwhl-seattle-announcement-2025-1.7522028 |title=PWHL continues West Coast expansion, adding franchise in Seattle |work=CBC Sports |last=Donkin |first=Karissa |date=April 30, 2025 |access-date=July 23, 2025}}
+===Front office changes===
+{| class="wikitable"
+|+ {{sronly|Front office changes}}
+! scope="colgroup" colspan="4" | Off–season
+|-
+! scope="col" | Team
+! scope="col" | Previous general manager
+! scope="col" | New general manager
+! scope="col" | Notes
+|-
+! scope="row" | [[Seattle Torrent]]
+| {{N/A}}
+| [[Meghan Turner]]
+| On May 21, 2025, the PWHL named Meghan Turner as general manager for the Seattle team. She was previously an assistant general manager for the [[Boston Fleet]]. {{cite web |url=https://www.thepwhl.com/en/news/2025/may/21/meghan-turner-named-general-manager-of-pwhl-seattle |title=Meghan Turner Named General Manager of PWHL Seattle |date=May 21, 2025 |website=Professional Women's Hockey League |access-date=May 21, 2025}} {{cite news |url=https://www.espn.com/nhl/story/_/id/45258610/meghan-turner-named-gm-pwhl-seattle-expansion-franchise |title=Meghan Turner named GM of PWHL Seattle expansion franchise |agency=Associated Press |date=May 21, 2025 |work=ESPN |access-date=May 21, 2025}}
+|-
+! scope="row" | [[Vancouver Goldeneyes]]
+| {{N/A}}
+| [[Cara Gardner Morey]]
+| On May 23, 2025, PWHL Vancouver announced that [[Cara Gardner Morey]] would be appointed as the club's first general manager. {{cite web |url=https://www.thepwhl.com/en/news/2025/may/23/pwhl-vancouver-names-cara-gardner-morey-as-general-manager |title=PWHL Vancouver Names Cara Gardner Morey as General Manager |date=May 23, 2025 |website=Professional Women's Hockey League |access-date=June 1, 2025}}
+|}
+===Coaching changes===
+{| class="wikitable"
+|+ {{sronly|Coaching changes}}
+! scope="colgroup" colspan="4" | Off–season
+|-
+! scope="col" | Team
+! scope="col" | Previous head coach
+! scope="col" | New head coach
+! scope="col" | Notes
+|-
+! scope="row" | [[Seattle Torrent]]
+| {{N/A}}
+| [[Steve O'Rourke (ice hockey)|Steve O'Rourke]]
+| On June 20, 2025, PWHL Seattle named O'Rourke their first head coach. He most recently served as the head coach for the [[Oshawa Generals]] of the [[Ontario Hockey League]]. {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-seattle-names-steve-o-rourke-first-head-coach-in-franchise-history |title=PWHL Seattle Names Steve O'Rourke First Head Coach In Franchise History |last=Kennedy |first=Ian |date=June 20, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=June 20, 2025}}
+|-
+! scope="row" | [[Vancouver Goldeneyes]]
+| {{N/A}}
+| [[Brian Idalski]]
+| On June 23, 2025, PWHL Vancouver named Idalski as their first head coach. He most recently served as head coach for the [[St. Cloud State Huskies women's ice hockey]] program in the NCAA, and coached the [[China women's national ice hockey team]] at the [[2022 Winter Olympics]]. {{cite web |url=https://www.thepwhl.com/en/news/2025/june/23/pwhl-vancouver-names-brian-idalski-as-first-ever-head-coach |title=PWHL Vancouver names Brian Idalski as first ever head coach |date=June 23, 2025 |website=Professional Women's Hockey League |access-date=June 23, 2025}}
+|-
+! scope="row" | [[Boston Fleet]]
+| {{nowrap|[[Courtney Birchard-Kessel]]}}
+| [[Kris Sparre]]
+| On June 23, 2025, Kessel was named head coach of the NCAA's [[Princeton Tigers women's ice hockey]] program, stepping away from the Fleet. She previously served as an assistant coach for the Tigers under [[Cara Morey]], who relinquished her role to become the inaugural general manager of [[PWHL Vancouver]]. {{cite news |url=https://www.espn.com/college-sports/story/_/id/45569050/courtney-kessel-leaves-pwhl-boston-fleet-coach-princeton |title=Courtney Kessel leaves PWHL's Boston Fleet to coach Princeton |agency=Associated Press |date=June 23, 2025 |work=ESPN |access-date=June 23, 2025}} On July 23, Sparre was named by the Fleet as their new head coach. He most recently served as an assistant coach for the [[San Diego Gulls]], the [[American Hockey League]] affiliate of the NHL's [[Anaheim Ducks]]. {{cite web |url=https://www.thepwhl.com/en/news/2025/july/23/boston-fleet-name-kris-sparre-as-head-coach |title=Boston Fleet name Kris Sparre as head coach |date=July 23, 2025 |website=Professional Women's Hockey League |access-date=July 23, 2025}}
+|-
+|}
+==Preseason==
+===Preseason schedule===
+The PWHL preseason schedule was announced on October 8, 2025. Preseason camps were held in New Jersey, Montreal, Vancouver, and Ottawa. Each camp hosted two teams, each playing two games. {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-releases-preseason-schedule-and-important-dates |title=PWHL Releases Preseason Schedule and Important Dates |last=Kennedy |first=Ian |date=October 8, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+''All times in [[Eastern Time Zone|Eastern Time]].''
+{{Game log start |style="background:#FFFFFF; border-top:#000 4px solid; border-bottom:#000 4px solid;"}}
+{{Game log section start|hide=y |title=Pre-season camp |style=background:inherit; border-top:#000 4px solid; border-bottom:#000 4px solid; |Date |Time |Visitor |Score |Home |OT |Notes |Box score/recap}}
+|-
+| November 13 || 3:00 || {{Game-won}}|'''[[2025–26 Minnesota Frost season|Minnesota]]''' || 5–2 || [[2025–26 New York Sirens season|New York]] || || @ [[Richard J. Codey Arena|Codey Arena]]
+| {{cite web |date=November 13, 2025 |title=Minnesota @ New York (Preseason) |url=https://www.thepwhl.com/en/stats/game-center/330 |access-date=November 13, 2025 |website=ThePWHL.com }}
+|-
+| November 14 || 12:00 || Minnesota || 2–6 || {{Game-won}}|'''New York''' || || @ Codey Arena
+| {{cite web |date=November 14, 2025 |title=Minnesota @ New York (Preseason) |url=https://www.thepwhl.com/en/stats/game-center/331 |access-date=November 14, 2025 |website=ThePWHL.com }}
+|-
+| November 15 || 7:30 || [[2025–26 Boston Fleet season|Boston]] || 2–3 || {{Game-won}}|'''[[2025–26 Montreal Victoire season|Montreal]]''' || OT || @ [[Verdun Auditorium]]
+| {{cite web |date=November 15, 2025 |title=Boston @ Montreal (Preseason) |url=https://www.thepwhl.com/en/stats/game-center/332 |access-date=November 15, 2025 |website=ThePWHL.com }}
+|-
+| November 15 || 10:00 || [[2025–26 Seattle Torrent season|Seattle]] || 0–3 || {{Game-won}}|'''[[2025–26 Vancouver Goldeneyes season|Vancouver]]''' || || @ [[Pacific Coliseum]]
+| {{cite web |date=November 15, 2025 |title=Seattle @ Vancouver (Preseason) |url=https://www.thepwhl.com/en/stats/game-center/333 |access-date=November 16, 2025 |website=ThePWHL.com }}
+|-
+| November 16 || 1:00 || {{Game-won}}|'''[[2025–26 Toronto Sceptres season|Toronto]]''' || 3–2 || [[2025–26 Ottawa Charge season|Ottawa]] || OT || @ [[TD Place Arena]]
+| {{cite web |date=November 16, 2025 |title=Toronto @ Ottawa (Preseason) |url=https://www.thepwhl.com/en/stats/game-center/334 |access-date=November 16, 2025 |website=ThePWHL.com }}
+|-
+| November 16 || 8:00 || {{Game-won}}|'''Seattle''' || 4–2 || Vancouver || || @ Pacific Coliseum
+| {{cite web |date=November 16, 2025 |title=Seattle @ Vancouver (Preseason) |url=https://www.thepwhl.com/en/stats/game-center/335 |access-date=November 16, 2025 |website=ThePWHL.com }}
+|-
+| November 17 || 1:00 || {{Game-won}}|'''Toronto''' || 3–0 || Ottawa || || @ TD Place Arena
+| {{cite web |date=November 17, 2025 |title=Toronto @ Ottawa (Preseason) |url=https://www.thepwhl.com/en/stats/game-center/336 |access-date=November 17, 2025 |website=ThePWHL.com }}
+|-
+| November 17 || 2:00 || Boston || 2–3 || {{Game-won}}|'''Montreal''' || || @ Verdun Auditorium
+| {{cite web |date=November 17, 2025 |title=Boston @ Montreal (Preseason) |url=https://www.thepwhl.com/en/stats/game-center/337 |access-date=November 17, 2025 |website=ThePWHL.com }}
+{{Game log section end}}
+{{Game log end}}
+==Regular season==
+===Standings===
+{{2025–26 PWHL season standings}}
+===Schedule===
+The regular season schedule was announced on October 1, 2025. The season began on November 21, 2025 and ended on April 25, 2026 with each team playing 30 games. {{cite news |url=https://www.nhl.com/news/pwhl-to-start-2025-26-season-on-november-21 |title=PWHL release 2025-26 schedule, to begin play on Nov. 21 |date=October 1, 2025 |first=Anna |last=Kulesa |publisher=NHL |access-date=October 1, 2025}}
+''All times in [[Eastern Time Zone|Eastern Time]].'' {{cite web |title=2025–26 Regular Season Schedule |url=https://www.thepwhl.com/en/stats/schedule/all-teams/8/11?league=1 |access-date=October 5, 2025 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]]}}
+{{Game log start |style="background:#FFFFFF; border-top:#000 4px solid; border-bottom:#000 4px solid;"}}
+{{Game log section start |hide=y |title=November |style=background:inherit; border-top:#000 4px solid; border-bottom:#000 4px solid; |Date |Time |Visitor |Score |Home |OT |Notes |Box score/recap}}
+|-
+| November 21 || 7:00 ||{{Game-won}}|'''[[2025–26 Toronto Sceptres season|Toronto]]''' || 2–1 || [[2025–26 Minnesota Frost season|Minnesota]] || ||
+| {{cite web |date=November 21, 2025 |title=Toronto – Minnesota – November 21, 2025 |url=https://www.thepwhl.com/en/stats/game-center/210 |access-date=November 21, 2025 |website=ThePWHL.com }}
+|-
+| November 21 || 10:00 || [[2025–26 Seattle Torrent season|Seattle]] || 3–4 ||{{Game-won}}|'''[[2025–26 Vancouver Goldeneyes season|Vancouver]]''' || OT ||
+| {{cite web |date=November 21, 2025 |title=Seattle – Vancouver – November 21, 2025 |url=https://www.thepwhl.com/en/stats/game-center/211 |access-date=November 21, 2025 |website=ThePWHL.com }}
+|-
+| November 22 || 7:00 ||{{Game-won}}|'''[[2025–26 New York Sirens season|New York]]''' || 4–0 || [[2025–26 Ottawa Charge season|Ottawa]] || || '''[[Kayle Osborne]]''' recorded shutout (1)
+'''[[Taylor Girard]]''' recorded hat-trick (1)
+| {{cite web |date=November 22, 2025 |title=New York – Ottawa – November 22, 2025 |url=https://www.thepwhl.com/en/stats/game-center/212 |access-date=November 22, 2025 |website=ThePWHL.com }}
+|-
+| November 23 || 1:00 || [[2025–26 Montreal Victoire season|Montreal]] || 0–2 || {{Game-won}}|'''[[2025–26 Boston Fleet season|Boston]]''' || || '''[[Aerin Frankel]]''' recorded shutout (1)
+| {{cite web |date=November 23, 2025 |title=Montreal – Boston – November 23, 2025 |url=https://www.thepwhl.com/en/stats/game-center/213 |access-date=November 23, 2025 |website=ThePWHL.com }}
+|-
+| November 25 || 7:00 || New York || 0–4 ||{{Game-won}}|'''Montreal''' || || '''[[Ann-Renée Desbiens]]''' recorded shutout (1)
+| {{cite web |date=November 25, 2025 |title=New York – Montreal – November 25, 2025 |url=https://www.thepwhl.com/en/stats/game-center/214 |access-date=November 25, 2025 |website=ThePWHL.com }}
+|-
+| November 26 || 7:00 || Vancouver || 1–5 || {{Game-won}}|'''Ottawa''' || ||
+| {{cite web |date=November 26, 2025 |title=Vancouver – Ottawa – November 26, 2025 |url=https://www.thepwhl.com/en/stats/game-center/215 |access-date=November 26, 2025 |website=ThePWHL.com }}
+|-
+| November 28 || 4:00 || {{Game-won}}|'''Minnesota''' || 3–0 || Seattle || || '''[[Nicole Hensley]]''' recorded shutout (1)
+New '''US attendance record''': 16,014
+| {{cite web |date=November 28, 2025 |title=Minnesota – Seattle – November 28, 2025 |url=https://www.thepwhl.com/en/stats/game-center/216 |access-date=November 28, 2025 |website=ThePWHL.com }}
+|-
+| November 29 || 12:00 || Vancouver || 1–5 || {{Game-won}}|'''New York''' || ||
+| {{cite web |date=November 29, 2025 |title=Vancouver – New York – November 29, 2025 |url=https://www.thepwhl.com/en/stats/game-center/217 |access-date=November 29, 2025 |website=ThePWHL.com }}
+|-
+| November 29 || 2:00 || {{Game-won}}|'''Boston''' || 3–1 || Toronto || ||
+| {{cite web |date=November 29, 2025 |title=Boston – Toronto – November 29, 2025 |url=https://www.thepwhl.com/en/stats/game-center/218 |access-date=November 29, 2025 |website=ThePWHL.com }}
+{{Game log section end}}
+{{Game log section start |hide=y |title=December |style=background:inherit; border-top:#000 4px solid; border-bottom:#000 4px solid; |Date |Time |Visitor |Score |Home |OT |Notes |Box score/recap}}
+|-
+| December 2 || 7:00 || {{Game-won}}|'''[[2025–26 Minnesota Frost season|Minnesota]]''' || 5–1 || [[2025–26 Ottawa Charge season|Ottawa]] || || '''[[Kendall Coyne Schofield]]''' recorded hat-trick (1)
+| {{cite web |date=December 2, 2025 |title=Minnesota – Ottawa – December 2, 2025 |url=https://www.thepwhl.com/en/stats/game-center/219 |access-date=December 2, 2025 |website=ThePWHL.com }}
+|-
+| December 3 || 7:00 || [[2025–26 Vancouver Goldeneyes season|Vancouver]] || 0–2 || {{Game-won}}|'''[[2025–26 Boston Fleet season|Boston]]''' || || '''[[Aerin Frankel]]''' recorded shutout (2)
+| {{cite web |date=December 3, 2025 |title=Vancouver – Boston – December 3, 2025 |url=https://www.thepwhl.com/en/stats/game-center/220 |access-date=December 3, 2025 |website=ThePWHL.com }}
+|-
+| December 3 || 10:00 || [[2025–26 New York Sirens season|New York]] || 1–2 || {{Game-won}}|'''[[2025–26 Seattle Torrent season|Seattle]]''' || ||
+| {{cite web |date=December 3, 2025 |title=New York – Seattle – December 3, 2025 |url=https://www.thepwhl.com/en/stats/game-center/221 |access-date=December 4, 2025 |website=ThePWHL.com }}
+|-
+| December 4 || 7:00 || Ottawa || 1–3 || {{Game-won}}|'''[[2025–26 Toronto Sceptres season|Toronto]]''' || ||
+| {{cite web |date=December 4, 2025 |title=Ottawa – Toronto – December 4, 2025 |url=https://www.thepwhl.com/en/stats/game-center/222 |access-date=December 4, 2025 |website=ThePWHL.com }}
+|-
+| December 6 || 3:00 || New York || 0–4 || {{Game-won}}|'''Vancouver''' || || '''[[Emerance Maschmeyer]]''' recorded shutout (1)
+| {{cite web |date=December 6, 2025 |title=New York – Vancouver – December 6, 2025 |url=https://www.thepwhl.com/en/stats/game-center/223 |access-date=December 6, 2025 |website=ThePWHL.com }}
+|-
+| December 7 || 12:00 || Toronto || 1–3 || {{Game-won}}|'''[[2025–26 Montreal Victoire season|Montreal]]''' || ||
+| {{cite web |date=December 7, 2025 |title=Toronto – Montreal – December 7, 2025 |url=https://www.thepwhl.com/en/stats/game-center/224 |access-date=December 7, 2025 |website=ThePWHL.com }}
+|-
+| December 7 || 3:00 || Minnesota || 1–4 || {{Game-won}}|'''Boston''' || ||
+| {{cite web |date=December 7, 2025 |title=Minnesota – Boston – December 7, 2025 |url=https://www.thepwhl.com/en/stats/game-center/225 |access-date=December 19, 2025 |website=ThePWHL.com }}
+|-
+| December 16 || 10:00 || Ottawa ||1–2 || {{Game-won}} | '''Vancouver''' || ||
+| {{cite web |date=December 16, 2025 |title=Ottawa – Vancouver – December 16, 2025 |url=https://www.thepwhl.com/en/stats/game-center/226 |access-date=December 19, 2025 |website=ThePWHL.com }}
+|-
+| December 17 || 7:00 || {{Game-won}} | '''Boston''' || 2–0 || New York || || '''Aerin Frankel''' recorded shutout (3)
+| {{cite web |date=December 17, 2025 |title=Boston – New York– December 17, 2025 |url=https://www.thepwhl.com/en/stats/game-center/228 |access-date=December 17, 2025 |website=ThePWHL.com }}
+|-
+| December 17 || 7:30 || {{Game-won}} | '''Montreal''' || 2–1 || Toronto || SO || @ [[Scotiabank Centre]]
+| {{cite web |date=December 17, 2025 |title=Montreal – Toronto – December 17, 2025 |url=https://www.thepwhl.com/en/stats/game-center/227 |access-date=December 17, 2025 |website=ThePWHL.com }}
+|-
+| December 17 || 10:00 || Ottawa || 1–4 || {{Game-won}} | '''Seattle''' || ||
+| {{cite web |date=December 17, 2025 |title=Ottawa – Seattle – December 17, 2025 |url=https://www.thepwhl.com/en/stats/game-center/229 |access-date=December 18, 2025 |website=ThePWHL.com }}
+|-
+| December 19 || 8:00 || Boston || 2–5 || {{Game-won}} | '''Minnesota''' || ||
+| {{cite web |date=December 19, 2025 |title=Boston – Minnesota – December 19, 2025 |url=https://www.thepwhl.com/en/stats/game-center/230 |access-date=December 19, 2025 |website=ThePWHL.com }}
+|-
+| December 20 || 3:00 || {{Game-won}} | '''Montreal''' || 4–2 || Vancouver || ||
+| {{cite web |date=December 20, 2025 |title=Montreal – Vancouver – December 20, 2025 |url=https://www.thepwhl.com/en/stats/game-center/231 |access-date=December 20, 2025 |website=ThePWHL.com }}
+|-
+| December 21 || 12:00 || {{Game-won}} | '''Toronto''' || 4–3 || New York || ||
+| {{cite web |date=December 21, 2025 |title=Toronto – New York – December 21, 2025 |url=https://www.thepwhl.com/en/stats/game-center/232 |access-date=December 21, 2025 |website=ThePWHL.com }}
+|-
+| December 21 || 2:00 || {{Game-won}} | '''Ottawa''' || 3–2 || Minnesota || OT || @ [[Allstate Arena]]
+| {{cite web |date=December 21, 2025 |title=Ottawa – Minnesota – December 21, 2025 |url=https://www.thepwhl.com/en/stats/game-center/233 |access-date=December 21, 2025 |website=ThePWHL.com }}
+|-
+| December 21 || 5:00 || {{Game-won}} | '''Boston''' || 3–1 || Seattle || ||
+| {{cite web |date=December 21, 2025 |title=Boston – Seattle – December 21, 2025 |url=https://www.thepwhl.com/en/stats/game-center/234 |access-date=December 21, 2025 |website=ThePWHL.com }}
+|-
+| December 23 || 7:00 || {{Game-won}} | '''Ottawa''' || 4–3 || Toronto || OT ||
+| {{cite web |date=December 23, 2025 |title=Ottawa – Toronto – December 23, 2025 |url=https://www.thepwhl.com/en/stats/game-center/235 |access-date=December 23, 2025 |website=ThePWHL.com }}
+|-
+| December 23 || 10:00 || Montreal || 1–2 || {{Game-won}} | '''Seattle''' || ||
+| {{cite web |date=December 23, 2025 |title=Montreal – Seattle – December 23, 2025 |url=https://www.thepwhl.com/en/stats/game-center/236 |access-date=December 23, 2025 |website=ThePWHL.com }}
+|-
+| December 27 || 12:00 || Boston || 2–3 || {{Game-won}} | '''Ottawa''' || SO ||
+| {{cite web |date=December 27, 2025 |title=Boston – Ottawa – December 27, 2025 |url=https://www.thepwhl.com/en/stats/game-center/237 |access-date=December 27, 2025 |website=ThePWHL.com }}
+|-
+| December 27 || 2:00 ||{{Game-won}} |'''Toronto''' || 2–1 || Montreal || || @ [[Bell Centre]]
+| {{cite web |date=December 27, 2025 |title=Toronto – Montreal – December 27, 2025 |url=https://www.thepwhl.com/en/stats/game-center/238 |access-date=December 27, 2025 |website=ThePWHL.com }}
+|-
+| December 27 || 3:00 || {{Game-won}} |'''Minnesota''' || 2–1 || Vancouver || OT || @ [[Rogers Place]]
+| {{cite web |date=December 27, 2025 |title=Minnesota – Vancouver – December 27, 2025 |url=https://www.thepwhl.com/en/stats/game-center/239 |access-date=December 27, 2025 |website=ThePWHL.com }}
+|-
+| December 28 || 6:00 || Seattle || 3–4 || {{Game-won}} | '''New York''' || || @ [[American Airlines Center]]
+'''[[Casey O'Brien]]''' recorded hat-trick (1)
+| {{cite web |date=December 28, 2025 |title=Seattle – New York – December 28, 2025 |url=https://www.thepwhl.com/en/stats/game-center/240 |access-date=December 28, 2025 |website=ThePWHL.com }}
+|-
+| December 30 || 7:00 || {{Game-won}} | '''Minnesota''' || 5–1 || Toronto || ||
+| {{cite web |date=December 30, 2025 |title=Minnesota – Toronto – December 30, 2025 |url=https://www.thepwhl.com/en/stats/game-center/241 |access-date=December 30, 2025 |website=ThePWHL.com }}
+|-
+| December 31 || 1:00 || Vancouver || 0–2 || {{Game-won}} | '''New York''' || || '''[[Kayle Osborne]]''' recorded shutout (2)
+| {{cite web |date=December 31, 2025 |title=Vancouver – New York – December 31, 2025 |url=https://www.thepwhl.com/en/stats/game-center/242 |access-date=December 31, 2025 |website=ThePWHL.com }}
+{{Game log section end}}
+{{Game log section start |hide=y |title=January |style=background:inherit; border-top:#000 4px solid; border-bottom:#000 4px solid; |Date |Time |Visitor |Score |Home |OT |Notes |Box score/recap}}
+|-
+| January 2 || 1:00 || [[2025–26 Montreal Victoire season|Montreal]] || 3–4 || {{Game-won}} | '''[[2025–26 New York Sirens season|New York]]''' || ||
+| {{cite web |date=January 2, 2026 |title=Montreal – New York – January 2, 2026 |url=https://www.thepwhl.com/en/stats/game-center/243 |access-date=January 2, 2026 |website=ThePWHL.com }}
+|-
+| January 3 || 1:00 || [[2025–26 Minnesota Frost season|Minnesota]] || 2–5 ||{{Game-won}} | '''[[2025–26 Ottawa Charge season|Ottawa]]''' || ||
+| {{cite web |date=January 3, 2026 |title=Minnesota – Ottawa – January 3, 2026 |url=https://www.thepwhl.com/en/stats/game-center/244 |access-date=January 3, 2026 |website=ThePWHL.com }}
+|-
+| January 3 || 2:00 || {{Game-won}} | '''[[2025–26 Seattle Torrent season|Seattle]]''' || 3–2 || [[2025–26 Toronto Sceptres season|Toronto]] || SO || @ [[TD Coliseum]]
+| {{cite web |date=January 3, 2026 |title=Seattle – Toronto – January 3, 2026 |url=https://www.thepwhl.com/en/stats/game-center/245 |access-date=January 3, 2026 |website=ThePWHL.com }}
+|-
+| January 3 || 7:00 || {{Game-won}} | '''[[2025–26 Vancouver Goldeneyes season|Vancouver]]''' || 4–3 || [[2025–26 Boston Fleet season|Boston]] || || @ [[Little Caesars Arena]]
+| {{cite web |date=January 3, 2026 |title=Vancouver – Boston – January 3, 2026 |url=https://www.thepwhl.com/en/stats/game-center/246 |access-date=January 3, 2026 |website=ThePWHL.com }}
+|-
+| January 4 || 2:00 || Minnesota || 2–3 || {{Game-won}} | '''Montreal''' || OT ||
+| {{cite web |date=January 4, 2026 |title=Minnesota – Montreal – January 4, 2026 |url=https://www.thepwhl.com/en/stats/game-center/247 |access-date=January 4, 2026 |website=ThePWHL.com }}
+|-
+| January 6 || 7:00 || {{Game-won}} | '''New York''' || 2–0 || Toronto || || '''[[Kayle Osborne]]''' recorded shutout (3)
+| {{cite web |date=January 6, 2026 |title=New York – Toronto – January 6, 2026 |url=https://www.thepwhl.com/en/stats/game-center/248 |access-date=January 6, 2026 |website=ThePWHL.com }}
+|-
+| January 7 || 7:00 || Seattle || 1–2 || {{Game-won}} | '''Boston''' || ||
+| {{cite web |date=January 7, 2026 |title=Seattle – Boston – January 7, 2026 |url=https://www.thepwhl.com/en/stats/game-center/250 |access-date=January 8, 2026 |website=ThePWHL.com }}
+|-
+| January 9 || 7:00 || Vancouver || 2–4 || {{Game-won}} | '''Ottawa''' || ||
+| {{cite web |date=January 9, 2026 |title=Vancouver – Ottawa – January 9, 2026 |url=https://www.thepwhl.com/en/stats/game-center/249 |access-date=January 9, 2026 |website=ThePWHL.com }}
+|-
+| January 11 || 1:00 || {{Game-won}} | '''Ottawa''' || 2–1 || Boston || SO || @ [[Scotiabank Centre]]
+| {{cite web |date=January 11, 2026 |title=Ottawa – Boston – January 11, 2026 |url=https://www.thepwhl.com/en/stats/game-center/251 |access-date=January 11, 2026 |website=ThePWHL.com }}
+|-
+| January 11 || 2:00 || Vancouver || 0–1 || {{Game-won}} | '''Montreal''' || || @ [[Videotron Centre]]
+'''[[Ann-Renée Desbiens]]''' recorded shutout (2)
+| {{cite web |date=January 11, 2026 |title=Vancouver – Montreal – January 11, 2026 |url=https://www.thepwhl.com/en/stats/game-center/253 |access-date=January 11, 2026 |website=ThePWHL.com }}
+|-
+| January 11 || 2:00 || Seattle || 2–6 || {{Game-won}} | '''Minnesota''' || ||
+| {{cite web |date=January 11, 2026 |title=Seattle – Minnesota – January 11, 2026 |url=https://www.thepwhl.com/en/stats/game-center/252 |access-date=January 11, 2026 |website=ThePWHL.com }}
+|-
+| January 13 || 7:00 || Ottawa || 1–2 || {{Game-won}} | '''Montreal''' || ||
+| {{cite web |date=January 13, 2026 |title=Ottawa – Montreal – January 13, 2026 |url=https://www.thepwhl.com/en/stats/game-center/254 |access-date=January 13, 2026 |website=ThePWHL.com }}
+|-
+| January 14 || 7:00 || Toronto || 1–2 || {{Game-won}} | '''Boston''' || ||
+| {{cite web |date=January 14, 2026 |title=Toronto – Boston – January 14, 2026 |url=https://www.thepwhl.com/en/stats/game-center/255 |access-date=January 14, 2026 |website=ThePWHL.com }}
+|-
+| January 16 || 7:00 || {{Game-won}} | '''Minnesota''' || 3–2 || New York || OT ||
+| {{cite web |date=January 16, 2026 |title=Minnesota – New York – January 16, 2026 |url=https://www.thepwhl.com/en/stats/game-center/256 |access-date=January 16, 2026 |website=ThePWHL.com }}
+|-
+| January 17 || 3:00 || Vancouver || 1–2 || {{Game-won}} | '''Toronto''' || OT || @ [[Scotiabank Arena]]
+| {{cite web |date=January 17, 2026 |title=Vancouver – Toronto – January 17, 2026 |url=https://www.thepwhl.com/en/stats/game-center/257 |access-date=January 17, 2026 |website=ThePWHL.com }}
+|-
+| January 18 || 2:00 || Montreal || 1–2 || {{Game-won}} | '''New York''' || || @ [[Capital One Arena]]
+New '''US attendance record''': 17,228
+| {{cite web |date=January 18, 2026 |title=Montreal – New York – January 18, 2026 |url=https://www.thepwhl.com/en/stats/game-center/258 |access-date=January 18, 2026 |website=ThePWHL.com }}
+|-
+| January 18 || 10:00 || {{Game-won}} | '''Boston''' || 2–1|| Seattle || SO ||
+| {{cite web |date=January 18, 2026 |title=Boston – Seattle – January 18, 2026 |url=https://www.thepwhl.com/en/stats/game-center/259 |access-date=January 19, 2026 |website=ThePWHL.com }}
+|-
+| January 20 || 7:00 || {{Game-won}} | '''Ottawa''' || 4–3 || New York || OT ||
+| {{cite web |date=January 20, 2026 |title=Ottawa – New York – January 20, 2026 |url=https://www.thepwhl.com/en/stats/game-center/260 |access-date=January 20, 2026 |website=ThePWHL.com }}
+|-
+| January 20 || 10:00 || Toronto || 4–6 || {{Game-won}} | '''Seattle''' || ||
+| {{cite web |date=January 20, 2026 |title=Toronto – Seattle – January 20, 2026 |url=https://www.thepwhl.com/en/stats/game-center/261 |access-date=January 20, 2026 |website=ThePWHL.com }}
+|-
+| January 21 || 7:00 || {{Game-won}} | '''Montreal''' || 2–1 || Minnesota || OT ||
+| {{cite web |date=January 21, 2026 |title=Montreal – Minnesota – January 21, 2026 |url=https://www.thepwhl.com/en/stats/game-center/262 |access-date=January 22, 2026 |website=ThePWHL.com }}
+|-
+| January 22 || 10:00 || Toronto || 0–5 || {{Game-won}} | '''Vancouver''' || || '''[[Kristen Campbell]]''' recorded shutout (1)
+| {{cite web |date=January 22, 2026 |title=Toronto – Vancouver – January 22, 2026 |url=https://www.thepwhl.com/en/stats/game-center/263 |access-date=January 22, 2026 |website=ThePWHL.com }}
+|-
+| January 24 || 2:00 || Ottawa || 1–3 || {{Game-won}} | '''Montreal''' || ||
+| {{cite web |date=January 24, 2026 |title=Ottawa – Montreal – January 24, 2026 |url=https://www.thepwhl.com/en/stats/game-center/264 |access-date=January 24, 2026 |website=ThePWHL.com }}
+|-
+| January 25 || 3:00 || New York || 2–6 || {{Game-won}} | '''Minnesota''' || ||
+| {{cite web |date=January 25, 2026 |title=New York – Minnesota – January 25, 2026 |url=https://www.thepwhl.com/en/stats/game-center/265 |access-date=January 25, 2026 |website=ThePWHL.com }}
+|-
+| January 25 || 6:00 || {{Game-won}} | '''Vancouver''' || 3–1 || Seattle || || @ [[Ball Arena]]
+| {{cite web |date=January 25, 2026 |title=Vancouver – Seattle – January 25, 2026 |url=https://www.thepwhl.com/en/stats/game-center/266 |access-date=January 25, 2026 |website=ThePWHL.com }}
+|-
+| January 28 || 6:30 || Toronto || 0–3 || {{Game-won}} | '''Montreal''' || || '''Ann-Renée Desbiens''' recorded shutout (3)
+| {{cite web |date=January 28, 2026 |title=Toronto – Montreal – January 28, 2026 |url=https://www.thepwhl.com/en/stats/game-center/267 |access-date=January 28, 2026 |website=ThePWHL.com }}
+|-
+| January 28 || 7:00 || New York || 3–4 || {{Game-won}} | '''Boston''' || SO ||
+| {{cite web |date=January 28, 2026 |title=New York – Boston – January 28, 2026 |url=https://www.thepwhl.com/en/stats/game-center/269 |access-date=January 28, 2026 |website=ThePWHL.com }}
+|-
+| January 28 || 7:00 || Seattle || 2–4 || {{Game-won}} | '''Ottawa''' || ||
+| {{cite web |date=January 28, 2026 |title=Seattle – Ottawa – January 28, 2026 |url=https://www.thepwhl.com/en/stats/game-center/268 |access-date=January 28, 2026 |website=ThePWHL.com }}
+|-
+| January 28 || 9:00 || Vancouver || 1–4 || {{Game-won}} | '''Minnesota''' || ||
+| {{cite web |date=January 28, 2026 |title=Vancouver – Minnesota – January 28, 2026 |url=https://www.thepwhl.com/en/stats/game-center/270 |access-date=January 28, 2026 |website=ThePWHL.com }}
+{{Game log section end}}
+{{Game log section start |hide=y |title=February |style=background:inherit; border-top:#000 4px solid; border-bottom:#000 4px solid; |Date |Time |Visitor |Score |Home |OT |Notes |Box score/recap}}
+|-
+| February 26 || 7:00 || {{Game-won}} | '''[[2025–26 Montreal Victoire season|Montreal]]''' || 4–1 || [[2025–26 New York Sirens season|New York]] || ||
+| {{cite web |date=February 26, 2026 |title=Montreal – New York – February 26, 2026 |url=https://www.thepwhl.com/en/stats/game-center/271 |access-date=February 27, 2026 |website=ThePWHL.com }}
+|-
+| February 27 || 10:00 || {{Game-won}} | '''[[2025–26 Toronto Sceptres season|Toronto]]''' || 5–2 || [[2025–26 Seattle Torrent season|Seattle]] || || New '''US attendance record''': 17,335
+| {{cite web |date=February 27, 2026 |title=Toronto – Seattle – February 27, 2026 |url=https://www.thepwhl.com/en/stats/game-center/272 |access-date=February 28, 2026 |website=ThePWHL.com }}
+|-
+| February 28 || 2:00 || {{Game-won}} | '''[[2025–26 Boston Fleet season|Boston]]''' || 3–2 || [[2025–26 Ottawa Charge season|Ottawa]] || SO ||
+| {{cite web |date=February 28, 2026 |title=Boston – Ottawa – February 28, 2026 |url=https://www.thepwhl.com/en/stats/game-center/273 |access-date=February 28, 2026 |website=ThePWHL.com }}
+{{Game log section end}}
+{{Game log section start |hide=y |title=March |style=background:inherit; border-top:#000 4px solid; border-bottom:#000 4px solid; |Date |Time |Visitor |Score |Home |OT |Notes |Box score/recap}}
+|-
+| March 1 || 1:00 || [[2025–26 Minnesota Frost season|Minnesota]] || 0–4 || {{Game-won}} | '''[[2025–26 Montreal Victoire season|Montreal]]''' || || '''[[Ann-Renée Desbiens]]''' recorded shutout (4)
+| {{cite web |date=March 1, 2026 |title=Minnesota – Montreal – March 1, 2026 |url=https://www.thepwhl.com/en/stats/game-center/274 |access-date=March 1, 2026 |website=ThePWHL.com }}
+|-
+| March 1 || 4:00 || {{Game-won}} | '''[[2025–26 Toronto Sceptres season|Toronto]]''' || 2–1 || [[2025–26 Vancouver Goldeneyes season|Vancouver]] || ||
+| {{cite web |date=March 1, 2026 |title=Toronto – Vancouver – March 1, 2026 |url=https://www.thepwhl.com/en/stats/game-center/275 |access-date=March 1, 2026 |website=ThePWHL.com }}
+|-
+| March 3 || 7:00 || {{Game-won}} | '''Montreal''' || 4–3 || Toronto || SO ||
+| {{cite web |date=March 3, 2026 |title=Montreal – Toronto – March 3, 2026 |url=https://www.thepwhl.com/en/stats/game-center/276 |access-date=March 3, 2026 |website=ThePWHL.com }}
+|-
+| March 4 || 7:00 || [[2025–26 Seattle Torrent season|Seattle]] || 3–4 || {{Game-won}} | '''[[2025–26 Ottawa Charge season|Ottawa]]''' || ||
+| {{cite web |date=March 4, 2026 |title=Seattle – Ottawa – March 4, 2026 |url=https://www.thepwhl.com/en/stats/game-center/277 |access-date=March 5, 2026 |website=ThePWHL.com }}
+|-
+| March 5 || 7:00 || {{Game-won}} | '''[[2025–26 Boston Fleet season|Boston]]''' || 1–0 || [[2025–26 New York Sirens season|New York]] || || '''[[Aerin Frankel]]''' recorded shutout (4)
+| {{cite web |date=March 5, 2026 |title=Boston – New York – March 5, 2026 |url=https://www.thepwhl.com/en/stats/game-center/278 |access-date=March 6, 2026 |website=ThePWHL.com }}
+|-
+| March 8 || 12:00 || {{Game-won}} | '''Minnesota''' || 3–2 || Toronto || OT ||
+| {{cite web |date=March 8, 2026 |title=Minnesota – Toronto – March 8, 2026 |url=https://www.thepwhl.com/en/stats/game-center/280 |access-date=March 8, 2026 |website=ThePWHL.com }}
+|-
+| March 8 || 12:00 || Ottawa || 2–6 || {{Game-won}} | '''New York''' || ||
+| {{cite web |date=March 8, 2026 |title=Ottawa – New York – March 8, 2026 |url=https://www.thepwhl.com/en/stats/game-center/279 |access-date=March 8, 2026 |website=ThePWHL.com }}
+|-
+| March 10 || 10:00 || {{Game-won}} | '''Boston''' || 2–1 || Vancouver || OT ||
+| {{cite web |date=March 10, 2026 |title=Boston – Vancouver – March 10, 2026 |url=https://www.thepwhl.com/en/stats/game-center/281 |access-date=March 11, 2026 |website=ThePWHL.com }}
+|-
+| March 11 || 10:00 || Boston || 2–3 || {{Game-won}} | '''Seattle''' || ||
+| {{cite web |date=March 11, 2026 |title=Boston – Seattle – March 11, 2026 |url=https://www.thepwhl.com/en/stats/game-center/283 |access-date=March 13, 2026 |website=ThePWHL.com }}
+|-
+| March 13 || 8:00 || Seattle || 1–4 || {{Game-won}} | '''Minnesota''' || ||
+| {{cite web |date=March 13, 2026 |title=Seattle – Minnesota – March 13, 2026 |url=https://www.thepwhl.com/en/stats/game-center/284 |access-date=March 13, 2026 |website=ThePWHL.com }}
+|-
+| March 14 || 3:00 || {{Game-won}} | '''Ottawa''' || 3–2 || Vancouver || OT ||
+| {{cite web |date=March 14, 2026 |title=Ottawa – Vancouver – March 14, 2026 |url=https://www.thepwhl.com/en/stats/game-center/285 |access-date=March 14, 2026 |website=ThePWHL.com }}
+|-
+| March 15 || 1:00 || Seattle || 0–2 || {{Game-won}} | '''Toronto''' || || '''[[Raygan Kirk]]''' recorded shutout (1)
+| {{cite web |date=March 15, 2026 |title=Seattle – Toronto – March 15, 2026 |url=https://www.thepwhl.com/en/stats/game-center/287 |access-date=March 15, 2026 |website=ThePWHL.com }}
+|-
+| March 15 || 1:00 || {{Game-won}} | '''Boston''' || 4–3 || Montreal || OT ||
+| {{cite web |date=March 15, 2026 |title=Boston – Montreal – March 15, 2026 |url=https://www.thepwhl.com/en/stats/game-center/286 |access-date=March 15, 2026 |website=ThePWHL.com }}
+|-
+| March 15 || 4:00 || New York || 3–4 || {{Game-won}} | '''Minnesota''' || || @ [[Ball Arena]]
+| {{cite web |date=March 15, 2026 |title=New York – Minnesota – March 15, 2026 |url=https://www.thepwhl.com/en/stats/game-center/288 |access-date=March 15, 2026 |website=ThePWHL.com }}
+|-
+| March 17 || 7:00 || {{Game-won}} | '''Toronto''' || 2–0 || Boston || || '''Raygan Kirk''' recorded shutout (2)
+| {{cite web |date=March 17, 2026 |title=Toronto – Boston – March 17, 2026 |url=https://www.thepwhl.com/en/stats/game-center/289 |access-date=March 17, 2026 |website=ThePWHL.com }}
+|-
+| March 18 || 7:00 || Ottawa || 0–5 || {{Game-won}} | '''Minnesota''' || || '''[[Maddie Rooney]]''' recorded shutout (1)
+| {{cite web |date=March 18, 2026 |title=Ottawa – Minnesota – March 18, 2026 |url=https://www.thepwhl.com/en/stats/game-center/290 |access-date=March 18, 2026 |website=ThePWHL.com }}
+|-
+| March 18 || 10:00 || New York || 2–5 || {{Game-won}} | '''Vancouver''' || ||
+| {{cite web |date=March 18, 2026 |title=New York – Vancouver – March 18, 2026 |url=https://www.thepwhl.com/en/stats/game-center/291 |access-date=March 19, 2026 |website=ThePWHL.com }}
+|-
+| March 19 || 7:00 || Seattle || 1–4 || {{Game-won}} | '''Montreal''' || ||
+| {{cite web |date=March 19, 2026 |title=Seattle – Montreal – March 19, 2026 |url=https://www.thepwhl.com/en/stats/game-center/292 |access-date=March 19, 2026 |website=ThePWHL.com }}
+|-
+| March 21 || 3:00 || {{Game-won}} | '''Minnesota''' || 3–1 || Vancouver || ||
+| {{cite web |date=March 21, 2026 |title=Minnesota – Vancouver – March 21, 2026 |url=https://www.thepwhl.com/en/stats/game-center/293 |access-date=March 21, 2026 |website=ThePWHL.com }}
+|-
+| March 21 || 4:00 || Seattle || 0–3 || {{Game-won}} | '''Boston''' || || '''Aerin Frankel''' recorded shutout (5)
+| {{cite web |date=March 21, 2026 |title=Seattle – Boston – March 21, 2026 |url=https://www.thepwhl.com/en/stats/game-center/294 |access-date=March 21, 2026 |website=ThePWHL.com }}
+|-
+| March 22 || 7:00 || Montreal || 1–2 ||{{Game-won}}|'''Ottawa''' || OT || @ [[Canada Life Centre]]
+| {{cite web |date=March 22, 2026 |title=Montreal – Ottawa – March 22, 2026 |url=https://www.thepwhl.com/en/stats/game-center/295 |access-date=March 22, 2026 |website=ThePWHL.com }}
+|-
+| March 24 || 7:00 || Vancouver || 0–2 || {{Game-won}} | '''Boston''' || || '''Aerin Frankel''' recorded shutout (6)
+| {{cite web |date=March 24, 2026 |title=Vancouver – Boston – March 24, 2026 |url=https://www.thepwhl.com/en/stats/game-center/296 |access-date=March 24, 2026 |website=ThePWHL.com }}
+|-
+| March 25 || 7:00 || {{Game-won}} | '''Montreal''' || 3–0 || Minnesota || || '''Ann-Renée Desbiens''' recorded shutout (5)
+| {{cite web |date=March 25, 2026 |title=Montreal – Minnesota – March 25, 2026 |url=https://www.thepwhl.com/en/stats/game-center/297 |access-date=March 25, 2026 |website=ThePWHL.com }}
+|-
+| March 25 || 8:00 || New York || 1–4 || {{Game-won}} | '''Seattle''' || || @ [[Allstate Arena]]
+| {{cite web |date=March 25, 2026 |title=New York – Seattle – March 25, 2026 |url=https://www.thepwhl.com/en/stats/game-center/298 |access-date=March 25, 2026 |website=ThePWHL.com }}
+|-
+| March 27 || 7:00 || {{Game-won}} | '''Boston''' || 4–0 || Toronto || ||'''Aerin Frankel''' recorded shutout (7)
+| {{cite web |date=March 27, 2026 |title=Boston – Toronto – March 27, 2026 |url=https://www.thepwhl.com/en/stats/game-center/299 |access-date=March 28, 2026 |website=ThePWHL.com }}
+|-
+| March 28 || 1:00 || New York || 1–3 || {{Game-won}} | '''Montreal''' || || @ [[Little Caesars Arena]]
+| {{cite web |date=March 28, 2026 |title=New York – Montreal – March 28, 2026 |url=https://www.thepwhl.com/en/stats/game-center/300 |access-date=March 28, 2026 |website=ThePWHL.com }}
+|-
+| March 29 || 1:00 || {{Game-won}} | '''Vancouver''' || 3–2 || Toronto || ||
+| {{cite web |date=March 29, 2026 |title=Vancouver – Toronto – March 29, 2026 |url=https://www.thepwhl.com/en/stats/game-center/301 |access-date=March 29, 2026 |website=ThePWHL.com }}
+|-
+| March 29 || 4:00 || {{Game-won}} | '''Boston''' || 4–2 || Minnesota || || '''Boston''' clinched playoff spot
+| {{cite web |date=March 29, 2026 |title=Boston – Minnesota – March 29, 2026 |url=https://www.thepwhl.com/en/stats/game-center/302 |access-date=March 29, 2026 |website=ThePWHL.com }}
+|-
+| March 29 || 7:00 || {{Game-won}} | '''Ottawa''' || 2–0 || Seattle || || '''[[Gwyneth Philips]]''' recorded shutout (1)
+| {{cite web |date=March 29, 2026 |title=Ottawa – Seattle – March 29, 2026 |url=https://www.thepwhl.com/en/stats/game-center/303 |access-date=March 29, 2026 |website=ThePWHL.com }}
+{{Game log section end}}
+{{Game log section start |hide=y |title=April |style=background:inherit; border-top:#000 4px solid; border-bottom:#000 4px solid; |Date |Time |Visitor |Score |Home |OT |Notes |Box score/recap}}
+|-
+| April 1 || 7:00 || [[2025–26 Vancouver Goldeneyes season|Vancouver]] || 0–3 || {{Game-won}} | '''[[2025–26 Montreal Victoire season|Montreal]]''' || || '''[[Ann-Renée Desbiens]]''' recorded shutout (6)
+'''Montreal''' clinched playoff spot
+| {{cite web |date=April 1, 2026 |title=Vancouver – Montreal – April 1, 2026 |url=https://www.thepwhl.com/en/stats/game-center/305 |access-date=April 1, 2026 |website=ThePWHL.com }}
+|-
+| April 1 || 7:00 || [[2025–26 Minnesota Frost season|Minnesota]] || 3–4 || {{Game-won}} | '''[[2025–26 New York Sirens season|New York]]''' || OT || '''[[Sarah Fillier]]''' recorded hat-trick (1)
+| {{cite web |date=April 1, 2026 |title=Minnesota – New York – April 1, 2026 |url=https://www.thepwhl.com/en/stats/game-center/304 |access-date=April 1, 2026 |website=ThePWHL.com }}
+|-
+| April 1 || 9:30 || {{Game-won}} | '''[[2025–26 Toronto Sceptres season|Toronto]]''' || 2–1 || [[2025–26 Ottawa Charge season|Ottawa]] || || @ [[Scotiabank Saddledome]]
+| {{cite web |date=April 1, 2026 |title=Toronto – Ottawa – April 1, 2026 |url=https://www.thepwhl.com/en/stats/game-center/306 |access-date= April 2, 2026 |website=ThePWHL.com }}
+|-
+| April 3 || 7:00 || {{Game-won}} | '''Montreal''' || 3–0 || Ottawa || || @ [[Canadian Tire Centre]]
+| {{cite web |date=April 3, 2026 |title=Montreal – Ottawa – April 3, 2026 |url=https://www.thepwhl.com/en/stats/game-center/282 |access-date= April 4, 2026 |website=ThePWHL.com }}
+|-
+| April 4 || 2:00 || Vancouver || 5–6 || {{Game-won}} | '''Minnesota''' || || '''Minnesota''' clinched playoff spot
+| {{cite web |date=April 4, 2026 |title=Vancouver – Minnesota – April 4, 2026 |url=https://www.thepwhl.com/en/stats/game-center/307 |access-date=April 4, 2026 |website=ThePWHL.com }}
+|-
+| April 4 || 8:00 || [[2025–26 Seattle Torrent season|Seattle]] || 1–2 || {{Game-won}} | '''New York''' || SO || @ [[Madison Square Garden]]
+New '''US attendance record''': 18,006
+| {{cite web |date=April 4, 2026 |title=Seattle – New York – April 4, 2026 |url=https://www.thepwhl.com/en/stats/game-center/308 |access-date=April 4, 2026 |website=ThePWHL.com }}
+|-
+| April 7 || 7:00 || Seattle || 1–4 || {{Game-won}} | '''Montreal''' || ||
+| {{cite web |date=April 7, 2026 |title=Seattle – Montreal – April 7, 2026 |url=https://www.thepwhl.com/en/stats/game-center/309 |access-date=April 7, 2026 |website=ThePWHL.com }}
+|-
+| April 7 || 9:30 || {{Game-won}} | '''[[2025–26 Boston Fleet season|Boston]]''' || 5–1 || Vancouver || || @ [[Rogers Place]]
+| {{cite web |date=April 7, 2026 |title=Boston – Vancouver – April 7, 2026 |url=https://www.thepwhl.com/en/stats/game-center/310 |access-date= April 8, 2026|website=ThePWHL.com }}
+|-
+| April 8 || 7:00 || {{Game-won}} | '''Seattle''' || 5–3 || Ottawa || ||
+| {{cite web |date=April 8, 2026 |title=Seattle – Ottawa – April 8, 2026 |url=https://www.thepwhl.com/en/stats/game-center/311 |access-date=April 8, 2026 |website=ThePWHL.com }}
+|-
+| April 11 || 1:00 || New York || 1–4 || {{Game-won}} | '''Minnesota''' || ||
+| {{cite web |date=April 11, 2026 |title=New York – Minnesota – April 11, 2026 |url=https://www.thepwhl.com/en/stats/game-center/312 |access-date=April 11, 2026 |website=ThePWHL.com }}
+|-
+| April 11 || 2:00 || {{Game-won}} | '''Ottawa''' || 2–0 || Toronto || || '''[[Gwyneth Philips]]''' recorded shutout (2)
+| {{cite web |date=April 11, 2026 |title=Ottawa – Toronto – April 11, 2026 |url=https://www.thepwhl.com/en/stats/game-center/313 |access-date=April 11, 2026 |website=ThePWHL.com }}
+|-
+| April 11 || 7:00 || {{Game-won}} | '''Montreal''' || 1–0 || Boston || || @ [[TD Garden]]
+'''Ann-Renée Desbiens''' recorded shutout (7)
+| {{cite web |date=April 11, 2026 |title=Montreal – Boston – April 11, 2026 |url=https://www.thepwhl.com/en/stats/game-center/314 |access-date=April 11, 2026 |website=ThePWHL.com }}
+|-
+| April 14 || 10:00 || Seattle || 1–4 || {{Game-won}} | '''Vancouver''' || || '''Seattle''' eliminated from playoffs
+| {{cite web |date=April 14, 2026 |title=Seattle – Vancouver – April 14, 2026 |url=https://www.thepwhl.com/en/stats/game-center/315 |access-date= |website=ThePWHL.com }}
+|-
+| April 15 || 7:00 || Toronto || 2–3 || {{Game-won}} | '''New York''' || ||
+| {{cite web |date=April 15, 2026 |title=Toronto – New York – April 15, 2026 |url=https://www.thepwhl.com/en/stats/game-center/316 |access-date= |website=ThePWHL.com }}
+|-
+| April 15 || 7:00 || Minnesota || 2–3 || {{Game-won}} | '''Boston''' || ||
+| {{cite web |date=April 15, 2026 |title=Minnesota – Boston – April 15, 2026 |url=https://www.thepwhl.com/en/stats/game-center/317 |access-date= |website=ThePWHL.com }}
+|-
+| April 17 || 7:00 || Boston || 2–3 || {{Game-won}} | '''Montreal''' || OT ||
+| {{cite web |date=April 17, 2026 |title=Boston – Montreal – April 17, 2026 |url=https://www.thepwhl.com/en/stats/game-center/318 |access-date=April 17, 2026 |website=ThePWHL.com }}
+|-
+| April 18 || 2:00 || New York || 1–5 || {{Game-won}} | '''Ottawa''' || ||
+| {{cite web |date=April 18, 2026 |title=New York – Ottawa – April 18, 2026 |url=https://www.thepwhl.com/en/stats/game-center/319 |access-date= |website=ThePWHL.com }}
+|-
+| April 18 || 5:00 || {{Game-won}} | '''Vancouver''' || 6–5 || Seattle || OT || '''Vancouver''' eliminated from playoffs
+| {{cite web |date=April 18, 2026 |title=Vancouver – Seattle – April 18, 2026 |url=https://www.thepwhl.com/en/stats/game-center/320 |access-date= |website=ThePWHL.com }}
+|-
+| April 19 || 1:30 || {{Game-won}} | '''Toronto''' || 2–0 || Minnesota || || '''[[Raygan Kirk]]''' recorded shutout (3)
+| {{cite web |date=April 19, 2026 |title=Toronto – Minnesota – April 19, 2026 |url=https://www.thepwhl.com/en/stats/game-center/321 |access-date=April 19, 2026 |website=ThePWHL.com }}
+|-
+| April 21 || 7:00 || {{Game-won}} | '''New York''' || 1–0 || Toronto || OT || '''[[Kayle Osborne]]''' recorded shutout (4)
+'''New York''' eliminated from playoffs
+| {{cite web |date=April 21, 2026 |title=New York – Toronto – April 21, 2026 |url=https://www.thepwhl.com/en/stats/game-center/322 |access-date=April 21, 2026 |website=ThePWHL.com }}
+|-
+| April 21 || 10:00 || Montreal || 3–4 || {{Game-won}} | '''Vancouver''' || || '''[[Hayley Scamurra]]''' recorded hat-trick (1)
+| {{cite web |date=April 21, 2026 |title=Montreal – Vancouver – April 21, 2026 |url=https://www.thepwhl.com/en/stats/game-center/323 |access-date=April 22, 2026 |website=ThePWHL.com }}
+|-
+| April 22 || 7:00 || {{Game-won}} | '''Ottawa''' || 2–1 || Boston || OT ||
+| {{cite web |date=April 22, 2026 |title=Ottawa – Boston – April 22, 2026 |url=https://www.thepwhl.com/en/stats/game-center/324 |access-date=April 22, 2026 |website=ThePWHL.com }}
+|-
+| April 22 || 10:00 || Minnesota || 4–5 || {{Game-won}} | '''Seattle''' || ||
+| {{cite web |date=April 22, 2026 |title=Minnesota – Seattle – April 22, 2026 |url=https://www.thepwhl.com/en/stats/game-center/325 |access-date=April 22, 2026 |website=ThePWHL.com }}
+|-
+| April 25 || 2:00 || Toronto || 0–3 || {{Game-won}} | '''Ottawa''' || || '''Gwyneth Philips''' recorded shutout (3)
+'''Ottawa''' clinched playoff spot
+'''Toronto''' eliminated from playoffs
+| {{cite web |date=April 25, 2026 |title=Toronto – Ottawa – April 25, 2026 |url=https://www.thepwhl.com/en/stats/game-center/328 |access-date=April 25, 2026 |website=ThePWHL.com }}
+|-
+| April 25 || 12:00 || New York || 0–4 || {{Game-won}} | '''Boston''' || || '''[[Aerin Frankel]]''' recorded shutout (8)
+| {{cite web |date=April 25, 2026 |title=New York – Boston – April 25, 2026 |url=https://www.thepwhl.com/en/stats/game-center/329 |access-date=April 25, 2026 |website=ThePWHL.com }}
+|-
+| April 25 || 7:00 || Minnesota || 3–4 || {{Game-won}} | '''Vancouver''' || OT ||
+| {{cite web |date=April 25, 2026 |title=Minnesota – Vancouver – April 25, 2026 |url=https://www.thepwhl.com/en/stats/game-center/327 |access-date=April 25, 2026 |website=ThePWHL.com }}
+|-
+| April 25 || 10:00 || {{Game-won}} | '''Montreal''' || 2–1 || Seattle || SO || '''Montreal''' clinched first place
+| {{cite web |date=April 25, 2026 |title=Montreal – Seattle – April 25, 2026 |url=https://www.thepwhl.com/en/stats/game-center/326 |access-date=April 26, 2026 |website=ThePWHL.com }}
+{{Game log section end}}
+{{Game log end}}
+===Statistics===
+====Scoring leaders====
+The following players led the league in regular season points at the conclusion of the regular season. {{cite web |url=https://www.thepwhl.com/en/stats/player-stats/0/8?sort=points |title=Skater Stats |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=April 26, 2026}}
+{{Hockey season stats note |type=player |minimal=yes}}
+{| class="wikitable sortable" style="text-align: center"
+! scope="col" style="width: 12em;" | Player
+! scope="col" style="width: 13em;" | Team
+! scope="col" style="width: 4em;" | {{abbr|GP|Games played}}
+! scope="col" style="width: 4em;" | {{abbr|G|Goals}}
+! scope="col" style="width: 4em;" | {{abbr|A|Assists}}
+! scope="col" style="width: 4em;" | {{abbr|Pts|Points}}
+! scope="col" data-sort-type="number" style="width: 4em;" | {{abbr|+/–|Plus/minus}}
+! scope="col" style="width: 4em;" | {{abbr|PIM|Penalties in minutes}}
+|-
+! scope="row" style="text-align:left;" | {{sortname|Kelly|Pannek}}
+| style="text-align:left;" | [[Minnesota Frost|Minnesota]]
+| 30
+| 16
+| 17
+! 33
+| +13
+| 6
+|-
+! scope="row" style="text-align:left;" | {{sortname|Taylor|Heise}}
+| style="text-align:left;" | [[Minnesota Frost|Minnesota]]
+| 30
+| 13
+| 17
+! 30
+| +18
+| 12
+|-
+! scope="row" style="text-align:left;" | {{sortname|Britta|Curl-Salemme}}
+| style="text-align:left;" | [[Minnesota Frost|Minnesota]]
+| 30
+| 11
+| 18
+! 29
+| +7
+| 22
+|-
+! scope="row" style="text-align:left;" | {{sortname|Brianne|Jenner}}
+| style="text-align:left;" | [[Ottawa Charge|Ottawa]]
+| 30
+| 12
+| 14
+! 26
+| +2
+| 8
+|-
+! scope="row" style="text-align:left;" | {{sortname|Rebecca|Leslie}}
+| style="text-align:left;" | [[Ottawa Charge|Ottawa]]
+| 30
+| 14
+| 9
+! 23
+| +2
+| 10
+|-
+! scope="row" style="text-align:left;" | {{sortname|Jessie|Eldridge}}
+| style="text-align:left;" | [[Seattle Torrent|Seattle]] / [[Boston Fleet|Boston]]
+| 30
+| 14
+| 9
+! 23
+| -1
+| 4
+|-
+! scope="row" style="text-align:left;" | {{sortname|Grace|Zumwinkle}}
+| style="text-align:left;" | [[Minnesota Frost|Minnesota]]
+| 29
+| 13
+| 10
+! 23
+| +5
+| 6
+|-
+! scope="row" style="text-align:left;" | {{sortname|Kendall|Coyne Schofield}}
+| style="text-align:left;" | [[Minnesota Frost|Minnesota]]
+| 23
+| 12
+| 11
+! 23
+| +22
+| 0
+|-
+! scope="row" style="text-align:left;" | {{sortname|Sarah|Fillier}}
+| style="text-align:left;" | [[New York Sirens|New York]]
+| 29
+| 9
+| 14
+! 23
+| -5
+| 14
+|-
+! scope="row" style="text-align:left;" | {{sortname|Abby|Roque}}
+| style="text-align:left;" | [[Montreal Victoire|Montreal]]
+| 29
+| 8
+| 14
+! 22
+| +10
+| 31
+|-
+! scope="row" style="text-align:left;" | {{sortname|Casey|O'Brien}}
+| style="text-align:left;" | [[New York Sirens|New York]]
+| 28
+| 7
+| 15
+! 22
+| -7
+| 2
+|-
+! scope="row" style="text-align:left;" | {{sortname|Megan|Keller}}
+| style="text-align:left;" | [[Boston Fleet|Boston]]
+| 30
+| 7
+| 15
+! 22
+| +10
+| 8
+|-
+! scope="row" style="text-align:left;" | {{sortname|Laura|Stacey}}
+| style="text-align:left;" | [[Montreal Victoire|Montreal]]
+| 30
+| 7
+| 15
+! 22
+| +16
+| 12
+|}
+====Leading goaltenders====
+The following goaltenders led the league in regular season [[goals against average]] at the conclusion of the regular season. {{cite web |url=https://www.thepwhl.com/en/stats/player-stats/all-teams/8?sort=points&playertype=goalie&qualified=qualified&rookie=no&statstype=standard&page=1&league=1 |title=Goalie Stats |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=April 26, 2026}}
+''Minimum 240 minutes''
+{{Hockey season stats note |type=goalie |minimal=yes |exclude_ties=yes}}
+{| class="wikitable sortable" style="text-align: center"
+|-
+! scope="col" style="width: 12em;" | Player
+! scope="col" style="width: 10em;" | Team
+! scope="col" style="width: 3.5em;" | {{abbr|GP|Games played}}
+! scope="col" style="width: 6em;" | {{abbr|TOI|Time on ice}}
+! scope="col" style="width: 3.5em;" | {{abbr|W|Wins}}
+! scope="col" style="width: 3.5em;" | {{abbr|L|Losses}}
+! scope="col" style="width: 3.5em;" | {{abbr|OTL|Overtime/shootout losses}}
+! scope="col" style="width: 4em;" | {{abbr|GA|Goals against}}
+! scope="col" style="width: 3.5em;" | {{abbr|SO|Shutouts}}
+! scope="col" style="width: 4em;" | {{abbr|SV%|Save percentage}}
+! scope="col" style="width: 4em;" | {{Abbr|GAA|Goals against average}}
+|-
+! scope="row" style="text-align:left;" | {{sortname|Ann-Renée|Desbiens}}
+| style="text-align:left;" | [[Montreal Victoire|Montreal]]
+| 25 || {{tts|1509:26}} || 19 || 4 || 2 || 28 || 7 || .955
+! 1.11
+|-
+! scope="row" style="text-align:left;" | {{sortname|Aerin|Frankel}}
+| style="text-align:left;" | [[Boston Fleet|Boston]]
+| 26 || {{tts|1583:12}} || 19 || 4 || 3 || 31 || 8 || .953
+! 1.17
+|-
+! scope="row" style="text-align:left;" | {{sortname|Raygan|Kirk}}
+| style="text-align:left;" | [[Toronto Sceptres|Toronto]]
+| 23 || {{tts|1349:09}} || 8 || 8 || 6 || 42 || 3 || .934
+! 1.88
+|-
+! scope="row" style="text-align:left;" | {{sortname|Maddie|Rooney}}
+| style="text-align:left;" | [[Minnesota Frost|Minnesota]]
+| 16 || {{tts|971:39}} || 9 || 5 || 2 || 33 || 1 || .921
+! 2.04
+|-
+! scope="row" style="text-align:left;" | {{sortname|Gwyneth|Philips}}
+| style="text-align:left;" | [[Ottawa Charge|Ottawa]]
+| 28 || {{tts|1643:15}} || 16 || 11 || 1 || 58 || 3 || .931
+! 2.12
+|}
+===Attendance===
+''At the conclusion of the regular season''
+{| class="wikitable sortable" style="text-align: center"
+|+
+|-
+! scope="col" | Home team
+! scope="col" | Home games
+! scope="col" | Average attendance
+! scope="col" | Total attendance {{cite web |title=2025–26 Regular Season |url=https://www.thepwhl.com/en/stats/schedule |access-date=November 22, 2025 |work=thepwhl.com |publisher=[[Professional Women's Hockey League]]}}
+|-
+! scope="row" | [[2025–26 Seattle Torrent season|Seattle]]
+| 13
+! {{#invoke:Math|precision_format|{{average|10276|11023|9389|8622|16014|12774|10160|17335|13350|16586|12719|11982|17151|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|10276|11023|9389|8622|16014|12774|10160|17335|13350|16586|12719|11982|17151|round=0}}|0}}
+|-
+! scope="row" | [[2025–26 Vancouver Goldeneyes season|Vancouver]]
+| 13
+! {{#invoke:Math|precision_format|{{average|12127|9502|14958|9250|14006|13264|9731|11201|9296|10366|10094|10946|11310|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|12127|9502|14958|9250|14006|13264|9731|11201|9296|10366|10094|10946|11310|round=0}}|0}}
+|-
+! scope="row" | [[2025–26 Montreal Victoire season|Montreal]]
+| 13
+! {{#invoke:Math|precision_format|{{average|8018|8391|8113|18107|10172|7408|10172|10172|10172|10033|9176|9247|10172|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|8018|8391|8113|18107|10172|7408|10172|10172|10172|10033|9176|9247|10172|round=0}}|0}}
+|-
+! scope="row" | [[2025–26 Toronto Sceptres season|Toronto]]
+| 13
+! {{#invoke:Math|precision_format|{{average|17856|8108|7715|8277|8318|7924|8671|8604|8270|8636|8631|8716|8685|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|17856|8108|7715|8277|8318|7924|8671|8604|8270|8636|8631|8716|8685|round=0}}|0}}
+|-
+! scope="row" | [[2025–26 Minnesota Frost season|Minnesota]]
+| 13
+! {{#invoke:Math|precision_format|{{average|5249|7216|9138|9787|6113|7752|11120|6673|6803|9925|8392|9159|8530|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|5249|7216|9138|9787|6113|7752|11120|6673|6803|9925|8392|9159|8530|round=0}}|0}}
+|-
+! scope="row" | [[2025–26 Ottawa Charge season|Ottawa]]
+| 13
+! {{#invoke:Math|precision_format|{{average|6787|7889|8235|5507|7371|5174|8497|8572|6997|17114|6644|8605|8306|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|6787|7889|8235|5507|7371|5174|8497|8572|6997|17114|6644|8605|8306|round=0}}|0}}
+|-
+! scope="row" | [[2025–26 Boston Fleet season|Boston]]
+| 13
+! {{#invoke:Math|precision_format|{{average|4697|5166|3516|5338|6003|3372|6095|6164|4178|17850|4170|5215|6120|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|4697|5166|3516|5338|6003|3372|6095|6164|4178|17850|4170|5215|6120|round=0}}|0}}
+|-
+! scope="row" | [[2025–26 New York Sirens season|New York]]
+| 13
+! {{#invoke:Math|precision_format|{{average|4244|3513|2735|1884|3517|3517|2759|3488|3765|8264|4265|18006|6273|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|4244|3513|2735|1884|3517|3517|2759|3488|3765|8264|4265|18006|6273|round=0}}|0}}
+|-
+! scope="row" | Neutral sites
+| 16
+! {{#invoke:Math|precision_format|{{average|16012|9624|8514|7238|10438|10264|10452|14624|17228|11612|15512|15225|10006|15938|16150|10794|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|16012|9624|8514|7238|10438|10264|10452|14624|17228|11612|15512|15225|10006|15938|16150|10794|round=0}}|0}}
+|- class="sortbottom" style="background-color: #e0e0e0;"
+| '''League'''
+| '''120'''
+| '''{{#invoke:Math|precision_format|{{average|10276|11023|9389|8622|16014|12774|10160|17335|13350|16586|12719|11982|17151|12127|9502|14958|9250|14006|13264|9731|11201|9296|10366|10094|10946|11310|8018|8391|8113|18107|10172|7408|10172|10172|10172|10033|9176|9247|10172|17856|8108|7715|8277|8318|7924|8671|8604|8270|8636|8631|8716|8685|5249|7216|9138|9787|6113|7752|11120|6673|6803|9925|8392|9159|8530|6787|7889|8235|5507|7371|5174|8497|8572|6997|17114|6644|8605|8306|4697|5166|3516|5338|6003|3372|6095|6164|4178|17850|4170|5215|6120|4244|3513|2735|1884|3517|3517|2759|3488|3765|8264|4265|18006|6273|16012|9624|8514|7238|10438|10264|10452|14624|17228|11612|15512|15225|10006|15938|16150|10794|round=0}}|0}} '''
+| '''{{#invoke:Math|precision_format|{{sum|10276|11023|9389|8622|16014|12774|10160|17335|13350|16586|12719|11982|17151|12127|9502|14958|9250|14006|13264|9731|11201|9296|10366|10094|10946|11310|8018|8391|8113|18107|10172|7408|10172|10172|10172|10033|9176|9247|10172|17856|8108|7715|8277|8318|7924|8671|8604|8270|8636|8631|8716|8685|5249|7216|9138|9787|6113|7752|11120|6673|6803|9925|8392|9159|8530|6787|7889|8235|5507|7371|5174|8497|8572|6997|17114|6644|8605|8306|4697|5166|3516|5338|6003|3372|6095|6164|4178|17850|4170|5215|6120|4244|3513|2735|1884|3517|3517|2759|3488|3765|8264|4265|18006|6273|16012|9624|8514|7238|10438|10264|10452|14624|17228|11612|15512|15225|10006|15938|16150|10794}}|0}}'''
+|}
+===Supplemental discipline===
+====Suspensions====
+{| class="wikitable sortable" style="border:0;"
+|-
+! Date of incident
+! Offender
+! Team
+! Offense
+! Length
+|-
+! {{dts|December 28, 2025}}
+| {{sortname|Aneta|Tejralová}}
+| [[Seattle Torrent]]
+| [[Penalty (ice hockey)#Illegal check to the head|Illegal check to the head]] of [[Sarah Fillier]]. {{cite web |url=https://thehockeynews.com/womens/pwhl/sources-aneta-tejralova-suspended-for-head-shot-to-sarah-fillier |title=Sources: Aneta Tejralova Suspended For Head Shot To Sarah Fillier |last=Kennedy |first=Ian |date=December 30, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=December 30, 2025 |quote=Aneta Tejralova has received supplemental discipline for her head check to Sarah Fillier during the first period of Seattle's loss to New York.}} {{cite web |url=https://www.thepwhl.com/en/news/2025/december/31/pwhl-player-safety-committee-disciplinary-action-dec-31-2025 |title=PWHL Player Safety Committee Disciplinary Action: Dec. 31, 2025 |date=December 31, 2025 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=January 1, 2026}}
+| data-sort-value="2" | 2 games
+|-
+! {{dts|January 13, 2026}}
+| {{sortname|Abby|Roque}}
+| [[Montreal Victoire]]
+| Illegal check to the head of [[Abby Boreen]]. {{cite web |url=https://thehockeynews.com/womens/pwhl/abby-roque-receives-one-game-suspension-for-hit |title=Abby Roque Receives One Game Suspension For Hit |last=Kennedy |first=Ian |date=January 13, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=January 13, 2026 |quote=Montreal Victoire forward Abby Roque will not play tonight as she has been assessed a one game suspension from the PWHL's Player Safety Committee.}} {{cite web |url=https://www.thepwhl.com/en/news/2026/january/13/pwhl-player-safety-committee-disciplinary-action-jan-13-2026 |title=PWHL Player Safety Committee Disciplinary Action: Jan. 13, 2026 |date=January 13, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=January 13, 2026 |quote=Montréal’s Abby Roque Suspended One Game}}
+| data-sort-value="1" | 1 game
+|-
+! {{dts|January 19, 2026}}
+| {{sortname|Taylor|Girard}}
+| [[New York Sirens]]
+| Leaving the bench to join a fight against the [[Montreal Victoire]]. {{cite web |url=https://www.thepwhl.com/en/news/2026/january/19/pwhl-player-safety-committee-disciplinary-action-jan-19-2026 |title=PWHL Player Safety Committee Disciplinary Action: Jan. 19, 2026 |date=January 19, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=January 19, 2026}} {{cite web |url=https://thehockeynews.com/womens/pwhl/girard-handed-longest-suspension-in-pwhl-history |title=Girard Handed Longest Suspension in PWHL History |last=Kennedy |first=Ian |date=January 19, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=January 19, 2026 |quote=New York Sirens forward Taylor Girard has been handed the longest suspension in PWHL history for her actions at the end of the PWHL Takeover Tour game in Washington, D.C.}}
+| data-sort-value="4" | 4 games
+|-
+! {{dts|March 18, 2026}}
+| {{sortname|Peyton|Anderson}}
+| [[Minnesota Frost]]
+| Illegal check to the head of [[Paetyn Levis]]. {{cite web |url=https://www.thepwhl.com/en/news/2026/march/18/pwhl-player-safety-committee-disciplinary-action-mar-18-2026 |title=PWHL Player Safety Committee Disciplinary Action: Mar. 18, 2026 |date=March 18, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=March 18, 2026}}
+| data-sort-value="1" | 1 game
+|-
+! {{dts|March 27, 2026}}
+| {{sortname|Clara|Van Wieren}}
+| [[Toronto Sceptres]]
+| [[Boarding (ice hockey)|Boarding]] against [[Sophie Shirley]]. {{cite web |url=https://www.thepwhl.com/en/news/2026/march/29/pwhl-player-safety-committee-disciplinary-action-mar-29-2026 |title=PWHL Player Safety Committee Disciplinary Action: Mar. 29, 2026 |date=March 29, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=March 29, 2026}} {{cite web |url=https://thehockeynews.com/womens/pwhl/van-wieren-suspended-for-hit-on-shirley-mackinnon-fined |title=Van Wieren Suspended For Hit on Shirley, MacKinnon Fined |last=Kennedy |first=Ian |date=March 29, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=March 29, 2026 |quote=Toronto's Clara Van Wieren was suspended one game for a hit against Sophie Shirley, while Boston Fleet defender Rylind MacKinnon was fined $500 for her retaliation toward Van Wieren.}}
+| data-sort-value="1" | 1 game
+|-
+! {{dts|April 5, 2026}}
+| {{sortname|Emmy|Fecteau}}
+| New York Sirens
+| Illegal check to the head of [[Mikyla Grant-Mentis]]. {{cite web |url=https://www.thepwhl.com/en/news/2026/april/07/pwhl-player-safety-committee-disciplinary-action-apr-7-2026 |title=PWHL Player Safety Committee Disciplinary Action: Apr. 7, 2026 |date=April 7, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=April 7, 2026}} {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-hands-one-game-suspension-to-emmy-fecteau-for-illegal-hit-on-mikyla-grant-mentis |title=PWHL Hands One-Game Suspension To Emmy Fecteau For Illegal Hit On Mikyla Grant-Mentis |last=Kennedy |first=Ian |date=April 7, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=April 7, 2026 |quote=The PWHL has suspended New York Sirens forward Emmy Fecteau one game for an illegal hit against Seattle's Mikyla Grant-Mentis.}}
+| data-sort-value="1" | 1 game
+|-
+! {{dts|April 11, 2026}}
+| {{sortname|Micah|Zandee-Hart}}
+| New York Sirens
+| Illegal check to the head of [[Katy Knoll]]. {{cite web |url=https://www.thepwhl.com/en/news/2026/april/14/pwhl-player-safety-committee-disciplinary-action-apr-14-2026 |title=PWHL Player Safety Committee Disciplinary Action: Apr. 14, 2026 |date=April 14, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=April 14, 2026 |quote=New York's Micah Zandee-Hart Suspended One Game; Boston's Ella Huber Fined $250}} {{cite web |url=https://thehockeynews.com/womens/pwhl/zandee-hart-suspended-huber-fined-in-most-recent-round-of-pwhl-supplemental-discipline |title=Zandee-Hart Suspended, Huber Fined In Most Recent Round Of PWHL Supplemental Discipline |last=Kennedy |first=Ian |date=April 14, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=April 14, 2026 |quote=New York Sirens captain Micah Zandee-Hart will miss the team's final home game of the season after being suspended, while Ella Huber received a fine from the PWHL's Player Safety Committee.}}
+| data-sort-value="1" | 1 game
+|-
+! colspan="4" style="text-align:right; border:0; background:#fff;" | Total:
+! 11 games
+|}
+====Fines====
+{| class="wikitable sortable" style="border:0;"
+|-
+! scope="col" | Date of incident
+! scope="col" | Offender
+! scope="col" | Team
+! scope="col" | Offense
+! scope="col" | Amount
+|-
+! {{dts|November 25, 2025}}
+| {{sortname|Micah|Zandee-Hart}}
+| [[New York Sirens]]
+| [[Cross-checking]] against [[Gabbie Hughes]]. {{cite web |url=https://www.thepwhl.com/en/news/2025/november/25/pwhl-player-safety-committee-disciplinary-action-nov-25-2025 |title=PWHL Player Safety Committee Disciplinary Action: Nov. 25, 2025 |date=November 25, 2025 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=November 25, 2025}}
+| style="text-align:right;" data-sort-value="25000" | $250.00
+|-
+! {{dts|March 18, 2026}}
+| {{sortname|Britta|Curl-Salemme}}
+| [[Minnesota Frost]]
+| Cross-checking against the New York Sirens.
+| style="text-align:right;" data-sort-value="25000" | $250.00
+|-
+! {{dts|March 18, 2026}}
+| {{sortname|Maggie|Flaherty|dab=ice hockey}}
+| [[Montreal Victoire]]
+| Illegal body check against the [[Boston Fleet]].
+| style="text-align:right;" data-sort-value="25000" | $250.00
+|-
+! {{dts|March 18, 2026}}
+| {{sortname|Loren|Gabel}}
+| Boston Fleet
+| Interference while on the bench.
+| style="text-align:right;" data-sort-value="25000" | $250.00
+|-
+! {{dts|March 22, 2026}}
+| {{sortname|Rebecca|Leslie}}
+| [[Ottawa Charge]]
+| [[Boarding (ice hockey)|Boarding]] against [[Amanda Boulier]]. {{cite web |url=https://www.thepwhl.com/en/news/2026/march/24/pwhl-player-safety-committee-disciplinary-action-mar-24-2026 |title=PWHL Player Safety Committee Disciplinary Action: Mar. 24, 2026 |date=March 24, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=March 24, 2026}} {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-hands-rebecca-leslie-a-500-fan-for-boarding-call |title=PWHL Hands Rebecca Leslie a $500 Fan[sic] For Boarding Call |last=Kennedy |first=Ian |date=March 24, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=March 24, 2026 |quote=Ottawa Charge forward Rebecca Leslie has been handed supplemental discipline being fined $500 by the league.}}
+| style="text-align:right;" data-sort-value="50000" | $500.00
+|-
+! {{dts|March 27, 2026}}
+| {{sortname|Rylind|MacKinnon}}
+| Boston Fleet
+| Cross-checking against [[Clara Van Wieren]].
+| style="text-align:right;" data-sort-value="50000" | $500.00
+|-
+! {{dts|April 11, 2026}}
+| {{sortname|Ella|Huber}}
+| Boston Fleet
+| Cross-checking against [[Hayley Scamurra]].
+| style="text-align:right;" data-sort-value="25000" | $250.00
+|-
+! colspan="4" style="text-align:right; border:0; background:#fff;" |Total:
+! style="text-align:right;" | $2,250.00
+|}
+==Awards and honors==
+{{See also|List of 2025–26 PWHL Player of the Week Awards}}
+== Playoffs ==
+{{main|2026 Walter Cup playoffs}}
+=== Bracket ===
+In each round, teams compete in a best-of-five series following a 2–2–1 format. The team with [[home advantage|home ice advantage]] plays at home for games one and two (and game five, if necessary), and the other team is at home for games three and four. The top four teams make the playoffs.
+In the first round, by virtue of finishing first in the regular season standings, the [[Montreal Victoire]] have earned the right to chose their first round opponent.
+{{#section:2026 PWHL Walter Cup playoffs|2026-playoff-bracket}}
+==Transactions==
+===Draft===
+{{Main|2025 PWHL Draft}}
+The 2025 PWHL Draft was held on June 24, 2025. [[Colgate Raiders women's ice hockey|Colgate University]] forward [[Kristýna Kaltounková]] was selected first overall by the [[New York Sirens]], becoming the highest drafted player from the [[Czech Republic]] and the first European to be granted the top pick. {{cite web |url=https://www.cbc.ca/sports/hockey/pwhl/pwhl-draft-2025-draft-1.7569984 |title=New York Sirens pick Czech forward Kristýna Kaltounková 1st overall in PWHL draft |last=Donkin |first=Karissa |date=June 24, 2025 |website=[[CBC Sports]] |access-date=June 30, 2025}}
+Due to the additions of the [[Vancouver Goldeneyes|Vancouver]] and [[Seattle Torrent|Seattle]] teams, an [[expansion draft]] was held on June 9, 2025. {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-unveils-expansion-draft-rules |title=PWHL Unveils Expansion Draft Rules |last=Kennedy |first=Ian |date=May 19, 2025 |website=[[The Hockey News]] |access-date=June 5, 2025}}
+{| class="wikitable sortable"
+|+ Drafted prospect signings
+! scope="col" | Date
+! scope="col" | Player
+! scope="col" | Team
+! scope="col" | Draft
+! scope="col" | Term
+! scope="col" | Ref
+|-
+! scope="rowgroup" | July 9, 2025
+| {{Sortname|Kendall|Cooper}}
+| [[Minnesota Frost]]
+| First round, sixth overall ([[2025 PWHL Draft|2025]])
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/09/minnesota-frost-sign-first-round-draft-choice-kendall-cooper-to-a-two-year-contract|title=Minnesota Frost sign first round draft choice Kendall Cooper to a two-year contract |website= Professional Women's Hockey League |date=July 9, 2025 |access-date=July 10, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/frost-first-out-of-the-gate-signing-2025-draft-pick-kendall-cooper |title=Frost First Out Of The Gate Signing 2025 Draft Pick Kendall Cooper |last=Kennedy |first=Ian |date=July 9, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" | July 11, 2025
+| {{Sortname|Sarah|Wozniewicz}}
+| [[Ottawa Charge]]
+| Third round, 21st overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/11/ottawa-charge-sign-third-round-pick-sarah-wozniewicz |title=Ottawa Charge sign third round pick Sarah Wozniewicz |website= Professional Women's Hockey League |date=July 11, 2025 |access-date=July 11, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/the-ottawa-charge-sign-third-round-pick-sarah-wozniewicz |title=The Ottawa Charge Sign Third-Round Pick Sarah Wozniewicz |last=Sinclair |first=Chris |date=July 11, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" rowspan="3"| July 14, 2025
+| {{Sortname|Anna|Shokhina}}
+| Ottawa Charge
+| Second round, 13th overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/july/14/ottawa-charge-sign-all-three-international-draft-picks |title=Ottawa Charge sign all three international draft picks |website= Professional Women's Hockey League |date=July 14, 2025 |access-date=July 14, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/shokhina-leads-trio-of-new-signings-for-the-ottawa-charge |title=Shokhina Leads Trip of New Signings for the Ottawa Charge |last=Sinclair |first=Chris |date=July 14, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+| {{sortname|Sanni|Ahola}}
+| Ottawa Charge
+| Fifth round, 37th overall (2025)
+| One year
+|
+|-
+| {{sortname|Fanuza|Kadirova}}
+| Ottawa Charge
+| Sixth round, 45th overall (2025)
+| One year
+|
+|-
+! scope="rowgroup" | July 15, 2025
+| {{Sortname|Jenna|Buglioni}}
+| [[Seattle Torrent]]
+| First round, eighth overall (2025)
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/15/first-round-draft-pick-jenna-buglioni-signs-two-year-deal-with-pwhl-seattle |title=First round draft pick Jenna Buglioni signs two year deal with PWHL Seattle |website= Professional Women's Hockey League |date=July 15, 2025 |access-date=July 15, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/seattle-signs-first-round-pick-jenna-buglioni-to-a-two-year-deal |title=Seattle Signs First-Round Pick Jenna Buglioni To A Two-Year Deal |last=Kennedy |first=Ian |date=July 15, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" | July 16, 2025
+| {{Sortname|Hannah|Murphy}}
+| Seattle Torrent
+| Second round, 15th overall (2025)
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/16/draft-pick-hannah-murphy-signs-two-year-deal-with-pwhl-seattle |title=Draft pick Hannah Murphy signs two-year deal with PWHL Seattle |website= Professional Women's Hockey League |date=July 16, 2025 |access-date=July 16, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/seattle-locks-in-rookie-goalie-hannah-murphy-for-two-seasons |title=Seattle Locks In Rookie Goalie Hannah Murphy For Two Seasons |last=Kennedy |first=Ian |date=July 16, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" | July 17, 2025
+| {{Sortname|Abby|Hustler}}
+| Minnesota Frost
+| Second round, 14th overall (2025)
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/17/minnesota-frost-sign-second-round-draft-choice-abby-hustler-to-a-two-year-contract |title=Minnesota Frost sign second round draft choice Abby Hustler to a two-year contract |website= Professional Women's Hockey League |date=July 17, 2025 |access-date=July 17, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/minnesota-frost-sign-second-round-pick-abby-hustler-to-a-two-year-deal |title=Minnesota Frost Sign Second Round Pick Abby Hustler To A Two-Year Deal |last=Kennedy |first=Ian |date=July 17, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" | July 25, 2025
+| {{Sortname|Rory|Guilday}}
+| Ottawa Charge
+| First round, fifth overall (2025)
+| Three years
+| {{cite web |url= https://www.thepwhl.com/en/news/2025/july/24/ottawa-charge-secure-first-round-pick-rory-guilday-for-three-years |title=Ottawa Charge secure first round pick Rory Guilday for three years |website= Professional Women's Hockey League |date=July 25, 2025 |access-date=July 25, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/ottawa-charge-sign-first-round-pick-rory-guilday-to-three-year-deal |title=Ottawa Charge Sign First-Round Pick Rory Guilday to Three-Year Deal |last=Sinclair |first=Chris |date=July 25, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" | July 29, 2025
+| {{Sortname|Anna|Segedi}}
+| Minnesota Frost
+| Third round, 22nd overall (2025)
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/29/minnesota-frost-sign-third-round-draft-choice-anna-segedi-to-a-two-year-contract |title=Minnesota Frost sign third round draft choice Anna Segedi to a two-year contract |website= Professional Women's Hockey League |date=July 29, 2025 |access-date=July 29, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/frost-sign-third-round-pick-anna-segedi-to-a-two-year-deal |title=Frost Sign Third Round Pick Anna Segedi To A Two-Year Deal |last=Kennedy |first=Ian |date=July 29, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" | August 12, 2025
+| {{Sortname|Emma|Gentry}}
+| [[Toronto Sceptres]]
+| Second round, 11th overall (2025)
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/august/12/toronto-sceptres-sign-emma-gentry-to-two-year-deal |title=Toronto Sceptres sign Emma Gentry to two-year deal |website= Professional Women's Hockey League |date=August 12, 2025 |access-date=August 12, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/sceptres-sign-emma-gentry-to-two-year-contract |title=Sceptres Sign Emma Gentry To Two-Year Contract |last=Kennedy |first=Ian |date=August 12, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" | August 13, 2025
+| {{Sortname|Ella|Huber}}
+| [[Boston Fleet]]
+| Second round, 10th overall (2025)
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/august/13/boston-signs-second-round-pick-ella-huber|title=Boston signs second round pick Ella Huber |website= Professional Women's Hockey League |date=August 13, 2025 |access-date=August 13, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/fleet-sign-ella-huber-to-two-year-deal |title=Fleet Sign Ella Huber To Two-Year Deal |last=Kennedy |first=Ian |date=August 13, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" | August 20, 2025
+| {{Sortname|Haley|Winn}}
+| Boston Fleet
+| First round, second overall (2025)
+| Three years
+| {{cite web |url= https://www.thepwhl.com/en/news/2025/august/20/fleet-bolster-blue-line-sign-haley-winn-through-2027-28 |title=Fleet bolster blue line, sign Haley Winn through 2027-28|website= Professional Women's Hockey League |date=August 20, 2025 |access-date=August 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/boston-signs-second-overall-pick-haley-winn-to-three-year-deal |title=Boston Signs Second Overall Pick Haley Winn To Three-Year Deal |last=Kennedy |first=Ian |date=August 20, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" | September 8, 2025
+| {{Sortname|Kristýna|Kaltounková}}
+| [[New York Sirens]]
+| First round, first overall (2025)
+| Three years
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2025/september/08/new-york-sirens-ink-2025-first-overall-pick-kristyna-kaltounkova-for-three-years |title=New York Sirens Ink 2025 First Overall Pick Kristyna KaltounKova For Three Years |date=September 8, 2025 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=October 8, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/sirens-sign-first-overall-pick-kristyna-kaltounkova-to-three-year-contract |last=Kennedy |first=Ian |title=Sirens Sign First Overall Pick Kristýna Kaltounková To Three-Year Contract |website=TheHockeyNews.com |publisher=[[The Hockey News]] |date=September 8, 2025 |access-date=September 8, 2025}}
+|-
+! scope="rowgroup" | September 12, 2025
+| {{Sortname|Anne|Cherkowski}}
+| New York Sirens
+| Second round, 13th overall (2025)
+| Three years
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2025/september/11/new-york-signs-second-round-pick-anne-cherkowski-to-three-year-deal |title=New York signs second round pick Anne Cherkowski to three-year deal |website= Professional Women's Hockey League |date=September 12, 2025 |access-date=September 12, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/anne-cherkowski-signs-three-year-deal-with-new-york |title=Anne Cherkowski Signs Three-Year Deal With New York |last=Kennedy |first=Ian |date=September 12, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 8, 2025}}
+|-
+! scope="rowgroup" rowspan="2" | October 6, 2025
+| {{Sortname|Dayle|Ross}}
+| New York Sirens
+| Fourth round, 25th overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2025/october/05/new-york-sirens-sign-fourth-round-pick-dayle-ross |title=
+New York Sirens sign fourth round pick Dayle Ross |website= Professional Women's Hockey League |date=October 6, 2025 |access-date=October 6, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/new-york-sirens-sign-fourth-round-pick-dayle-ross |title=New York Sirens Sign Fourth Round Pick Dayle Ross |last=Kennedy |first=Ian |date=October 6, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 7, 2025}}
+|-
+| {{Sortname|Michelle|Karvinen}}
+| [[Vancouver Goldeneyes]]
+| First round, Seventh overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/vancouver/news/2025/october/05/pwhl-vancouver-signs-first-round-pick-michelle-karvinen |title=
+PWHL Vancouver signs first round pick Michelle Karvinen |website= Professional Women's Hockey League |date=October 6, 2025 |access-date=October 6, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-vancouver-signs-first-round-draft-pick-michelle-karvinen |title=PWHL Vancouver Signs First-Round Draft Pick Michelle Karvinen |last=Cheung |first=Izzy |date=October 6, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 7, 2025}}
+|-
+! scope="rowgroup" | October 10, 2025
+| {{Sortname|Nicole|Gosling}}
+| [[Montreal Victoire]]
+| First round, Fourth overall (2025)
+| Three years
+| {{cite web |url=https://www.thepwhl.com/en/teams/montreal-victoire/news/2025/october/10/MONTREAL-VICTOIRE-SIGN-FIRST-ROUND-DRAFT-PICK-NICOLE-GOSLING |title=Montreal Victoire sign first round pick Nicole Gosling |website= Professional Women's Hockey League |date=October 10, 2025 |access-date=October 10, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/montreal-victoire-inks-first-round-pick-nicole-gosling-to-three-year-contract |title=Montreal Victoire Inks First-Round Pick Nicole Gosling To Three-Year Contract |last=Hains |first=Karine |date=October 10, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 12, 2025}}
+|-
+! scope="rowgroup" | October 22, 2025
+| {{Sortname|Callie|Shanahan}}
+| New York Sirens
+| Fourth round, 28th overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2025/october/21/new-york-sirens-sign-fourth-round-pick-callie-shanahan-to-one-year-deal |title=New York Sirens sign fourth round pick Callie Shanahan to one-year deal |website= Professional Women's Hockey League |date=October 22, 2025 |access-date=October 23, 2025}}
+|-
+! scope="rowgroup" rowspan="3" | October 28, 2025
+| {{sortname|Nina|Jobst-Smith}}
+| Vancouver Goldeneyes
+| Third round, 19th overall (2025)
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/teams/vancouver/news/2025/october/28/pwhl-vancouver-signs-draft-picks-nina-jobst-smith-brianna-brooks-and-madison-samoskevich |title=PWHL Vancouver Signs Draft Picks Nina Jobst-Smith, Brianna Brooks and Madison Samoskevich |author=PWHL Vancouver Staff |date=October 28, 2025 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=October 28, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/vancouver-signs-trio-of-draft-picks-headlined-by-jobst-smith |title=Vancouver Signs Trio Of Draft Picks Headlined By Jobst-Smith |last=Kennedy |first=Ian |date=October 28, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 28, 2025 |quote=PWHL Vancouver signed a trio of draft picks including Nina Jobst-Smith, Brianna Brooks, and Madison Samoskevich.}}
+|-
+| {{sortname|Brianna|Brooks}}
+| Vancouver Goldeneyes
+| Fourth round, 32nd overall (2025)
+| One year
+|
+|-
+| {{sortname|Madison|Samoskevich|Maddy Samoskevich}}
+| Vancouver Goldeneyes
+| Fifth round, 39th overall (2025)
+| One year
+|
+|-
+! scope="rowgroup" rowspan="4" | November 18, 2025
+| {{sortname|Casey|O'Brien}}
+| New York Sirens
+| First round, 3rd overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2025/november/18/new-york-sirens-sign-third-overall-pick-casey-o-brien-to-a-one-year-contract |title=New York Sirens Sign Third Overall Pick Casey O'Brien to a One-Year Contract |author=New York Sirens Staff |date=November 18, 2025 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=November 18, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/new-york-sirens-sign-casey-o-brien-and-remaining-draft-picks |title=New York Sirens Sign Casey O'Brien And Remaining Draft Picks |last=Kennedy |first=Ian |date=November 18, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=November 18, 2025 |quote=The New York Sirens have signed four players, including third overall pick Casey O'Brien.}}
+|-
+| {{sortname|Maddi|Wheeler}}
+| New York Sirens
+| Fourth round, 27th overall (2025)
+| One year
+|
+|-
+| {{sortname|Anna|Bargman}}
+| New York Sirens
+| Fifth round, 33rd overall (2025)
+| One year
+|
+|-
+| {{sortname|Kaley|Doyle}}
+| New York Sirens
+| Sixth round, 41st overall (2025)
+| One year
+|
+|-
+! scope="rowgroup" rowspan="20" | November 20, 2025
+| {{Sortname|Natálie|Mlýnková}}
+| Montreal Victoire
+| Second round, 12th overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/montreal-victoire/news/2025/november/20/montr-al-victoire-announce-2025-26-roster |title=Montreal Victoire announce 2025-26 roster |website=Professional Women's Hockey League |date=November 20, 2025 |access-date=November 20, 2025 |archive-url=https://web.archive.org/web/20251120190306/https://www.thepwhl.com/en/teams/montreal-victoire/news/2025/november/20/montr-al-victoire-announce-2025-26-roster |archive-date=November 20, 2025 |url-status=dead}} {{cite web |url=https://www.sportsnet.ca/pwhl/article/all-eight-pwhl-teams-announce-regular-season-rosters/ |title=All eight PWHL teams announce regular season rosters |website=[[Sportsnet]] |date=November 20, 2025 |access-date=November 20, 2025}}
+|-
+| {{sortname|Skylar|Irving}}
+| Montreal Victoire
+| Third round, 20th overall (2025)
+| One year
+|
+|-
+| {{sortname|Tamara|Giaquinto}}
+| Montreal Victoire
+| Sixth round, 44th overall (2025)
+| Reserve player contract
+|
+|-
+| {{sortname|Maya|Labad}}
+| Montreal Victoire
+| Fifth round, 36th overall (2025)
+| Reserve player contract
+|
+|-
+| {{Sortname|Kiara|Zanon}}
+| Toronto Sceptres
+| Second round, 16th overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2025/november/20/toronto-sceptres-announce-2025-26-roster |title=Toronto Sceptres announce 2025-26 roster |website= Professional Women's Hockey League |date=November 20, 2025 |access-date=November 20, 2025}}
+|-
+| {{sortname|Clara|Van Wieren}}
+| Toronto Sceptres
+| Third round, 23rd overall (2025)
+| One year
+|
+|-
+| {{sortname|Sara|Hjalmarsson}}
+| Toronto Sceptres
+| Fifth round, 35th overall (2025)
+| One year
+|
+|-
+| {{sortname|Hanna|Baskin}}
+| Toronto Sceptres
+| Sixth round, 43rd overall (2025)
+| Reserve player contract
+|
+|-
+| {{Sortname|Peyton|Hemp}}
+| Ottawa Charge
+| Fourth round, 29th overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/november/20/ottawa-charge-announce-2025-26-roster |title=Ottawa Charge announce 2025-26 roster |website= Professional Women's Hockey League |date=November 20, 2025 |access-date=November 20, 2025}}
+|-
+| {{sortname|Olivia|Wallin}}
+| Ottawa Charge
+| Sixth round, 47th overall (2025)
+| Reserve player contract
+|
+|-
+| {{Sortname|Lily|Delianedis}}
+| Seattle Torrent
+| Third round, 24th overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/seattle-torrent/news/2025/november/20/seattle-torrent-announce-2025-26-roster |title=Seattle Torrent announce 2025-26 roster |website= Professional Women's Hockey League |date=November 20, 2025 |access-date=November 21, 2025}}
+|-
+| {{sortname|Lyndie|Lobdell}}
+| Seattle Torrent
+| Fifth round, 40th overall (2025)
+| One year
+|
+|-
+| {{sortname|Jada|Habisch}}
+| Seattle Torrent
+| Fourth round, 31st overall (2025)
+| Reserve player contract
+|
+|-
+| {{Sortname|Vanessa|Upson}}
+| Minnesota Frost
+| Fifth round, 38th overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/minnesota-frost/news/2025/november/20/minnesota-frost-announce-2025-26-roster |title=Minnesota Frost announce 2025-26 roster |website= Professional Women's Hockey League |date=November 20, 2025 |access-date=November 21, 2025}}
+|-
+| {{sortname|Brooke|Becker}}
+| Minnesota Frost
+| Sixth round, 46th overall (2025)
+| One year
+|
+|-
+| {{sortname|Ava|Rinker}}
+| Minnesota Frost
+| Fourth round, 30th overall (2025)
+| Reserve player contract
+|
+|-
+| {{Sortname|Olivia|Mobley}}
+| Boston Fleet
+| Third round, 18th overall (2025)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/boston-fleet/news/2025/november/20/boston-fleet-announce-2025-26-roster |title=Boston Fleet announce 2025-26 roster |website= Professional Women's Hockey League |date=November 20, 2025 |access-date=November 21, 2025}}
+|-
+| {{sortname|Riley|Brengman}}
+| Boston Fleet
+| Fourth round, 26th overall (2025)
+| One year
+|
+|-
+| {{sortname|Abby|Newhook}}
+| Boston Fleet
+| Fifth round, 34th overall (2025)
+| One year
+|
+|-
+| {{sortname|Amanda|Thiele}}
+| Boston Fleet
+| Sixth round, 42nd overall (2025)
+| One year
+|
+|}
+===Free agency===
+The [[Free agent|free agency]] period began on June 16, 2025 at 9:00 am ET, with a pause between June 27 and July 8. {{cite web |url=https://www.cbc.ca/sports/hockey/pwhl/pwhl-free-agency-preview-2025-1.7560724 |title=PWHL free agency preview: What each team needs this off-season |last=Donkin |first=Karissa |date=June 13, 2025 |website=[[CBC Sports]] |access-date=July 14, 2025}} Prior to the start of the free agency period, there was an exclusive signing window from June 4–8 for the Seattle and Vancouver expansion teams.
+{| class="wikitable sortable"
+|+ Free agent signings
+! scope="col" | Date
+! scope="col" | Player
+! scope="col" | New team
+! scope="col" | Previous team
+! scope="col" | Term
+! scope="col" | Ref
+|-
+! scope="rowgroup" rowspan="2" | June 4, 2025{{efn|name=esw|Expansion team exclusive signing window.}}
+| {{Sortname|Claire|Thompson|dab=ice hockey}}
+| [[Vancouver Goldeneyes]]
+| [[Minnesota Frost]]
+| One year
+| {{cite web |url= https://www.thepwhl.com/en/news/2025/june/04/pwhl-vancouver-signs-claire-thompson-to-one-year-contract |title=PWHL Vancouver signs Claire Thompson to one-year contract |website= Professional Women's Hockey League |date=June 4, 2025 |access-date=June 5, 2025}} {{cite web |url=https://www.sportsnet.ca/pwhl/article/report-pwhl-vancouver-signing-frosts-sophie-jacques-claire-thompson/ |title=PWHL Vancouver signing Frost's Jacques [sic], Thompson as first players |author=Canadian Press |date=June 4, 2025 |website=sportsnet.ca |publisher=[[Rogers Sports & Media]] |access-date=October 9, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/sources-pwhl-vancouver-first-out-of-the-gates-signing-claire-thompson-and-sophie-jaques |title=Sources: PWHL Vancouver First Out Of The Gates Signing Claire Thompson and Sophie Jaques |last=Kennedy |first=Ian |date=June 4, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{Sortname|Sophie|Jaques}}
+| Vancouver Goldeneyes
+| Minnesota Frost
+| Three years
+| {{cite web |url= https://www.thepwhl.com/en/news/2025/june/04/pwhl-vancouver-signs-sophie-jaques-to-three-year-contract |title=PWHL Vancouver signs Sophie Jaques to three-year contract |website=Professional Women's Hockey League|date=June 4, 2025 |access-date=June 5, 2025}}
+|-
+! scope="rowgroup" rowspan="6" | June 5, 2025{{efn|name=esw}}
+| {{Sortname|Hilary|Knight}}
+| [[Seattle Torrent]]
+| [[Boston Fleet]]
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/04/pwhl-seattle-signs-hilary-knight-to-one-year-contract |title=PWHL Seattle signs Hilary Knight to one-year contract |website= Professional Women's Hockey League |date=June 5, 2025 |access-date=June 5, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/hilary-knight-inks-one-year-deal-with-pwhl-s-newest-team-in-seattle |title=Hilary Knight Inks One-Year Deal With PWHL's Newest Team In Seattle |last=Kennedy |first=Ian |date=June 4, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{Sortname|Emerance|Maschmeyer}}
+| Vancouver Goldeneyes
+| [[Ottawa Charge]]
+| Two years
+| {{cite web |url= https://www.thepwhl.com/en/news/2025/june/05/pwhl-vancouver-signs-emerance-maschmeyer-to-two-year-contract |title=PWHL Vancouver signs Emerance Maschmeyer to two-year contract |website= Professional Women's Hockey League |date=June 5, 2025 |access-date=June 5, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-vancouver-announces-signing-of-emerance-maschmeyer-including-contract-extension |title=PWHL Vancouver Announces Signing Of Emerance Maschmeyer Including Contract Extension |last=Kennedy |first=Ian |date=June 5, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{Sortname|Danielle|Serdachny}}
+| Seattle Torrent
+| Ottawa Charge
+| Two years
+| {{cite web |url= https://www.thepwhl.com/en/news/2025/june/05/pwhl-seattle-signs-danielle-serdachny-to-two-year-contract |title=PWHL Seattle signs Danielle Serdachny to two-year contract |website=Professional Women's Hockey League |date=June 5, 2025 |access-date=June 5, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/seattle-officially-announces-two-year-deal-for-danielle-serdachny |title=Seattle Officially Announces Two Year Deal For Danielle Serdachny |last=Kennedy |first=Ian |date=June 5, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{Sortname|Cayla|Barnes}}
+| Seattle Torrent
+| [[Montreal Victoire]]
+| Three years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/05/pwhl-seattle-signs-cayla-barnes-to-three-year-contract |title=PWHL Seattle signs Cayla Barnes to three-year contract |website=Professional Women's Hockey League |date=June 5, 2025 |access-date=June 5, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/sources-seattle-signs-cayla-barnes-as-first-defender |title=Seattle Signs Cayla Barnes As First Defender |last=Kennedy |first=Ian |date=June 5, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{Sortname|Sarah|Nurse}}
+| Vancouver Goldeneyes
+| [[Toronto Sceptres]]
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/05/pwhl-vancouver-signs-sarah-nurse-to-one-year-contract |title=PWHL Vancouver signs Sarah Nurse to one-year contract |website=Professional Women's Hockey League |date=June 5, 2025 |access-date=June 5, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/vancouver-adds-one-of-the-sport-s-biggest-stars-in-sarah-nurse |title=Vancouver Adds "One Of The Sport's Biggest Stars" In Sarah Nurse |last=Kennedy |first=Ian |date=June 5, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{Sortname|Jennifer|Gardiner}}
+| Vancouver Goldeneyes
+| Montreal Victoire
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/05/jenn-gardiner-signs-with-hometown-pwhl-vancouver |title=Jenn Gardiner signs with hometown PWHL Vancouver |website=Professional Women's Hockey League |date=June 5, 2025 |access-date=June 5, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/jennifer-gardiner-signs-with-hometown-pwhl-vancouver |title=Jennifer Gardiner Signs With Hometown PWHL Vancouver |last=Kennedy |first=Ian |date=June 5, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="rowgroup" rowspan="2" | June 6, 2025{{efn|name=esw}}
+| {{Sortname|Alex|Carpenter}}
+| Seattle Torrent
+| [[New York Sirens]]
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/06/pwhl-seattle-signs-alex-carpenter-to-one-year-contract |title=PWHL Seattle signs Alex Carpenter to one-year contract |website=Professional Women's Hockey League |date=June 6, 2025 |access-date=June 6, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/seattle-signs-alex-carpenter-in-exclusive-window |title=Seattle Signs Alex Carpenter In Exclusive Window |last=Kennedy |first=Ian |date=June 6, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{Sortname|Corinne|Schroeder}}
+| Seattle Torrent
+| New York Sirens
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/06/pwhl-seattle-signs-corinne-schroeder-to-two-year-contract |title=PWHL Seattle signs Corinne Schroeder to two-year contract |website=Professional Women's Hockey League |date=June 6, 2025 |access-date=June 6, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-seattle-signs-corinne-schroeder-securing-their-crease |title=PWHL Seattle Signs Corinne Schroeder Securing Their Crease |last=Kennedy |first=Ian |date=June 6, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="row" | June 16, 2025
+| {{sortname|Hannah|Miller|dab=ice hockey}}
+| Vancouver Goldeneyes
+| Toronto Sceptres
+| Three years
+| {{cite web |url=https://www.thepwhl.com/en/teams/vancouver/news/2025/june/16/hannah-miller-signs-three-year-deal-with-hometown-pwhl-vancouver |title=Hannah Miller signs three-year deal with hometown PWHL Vancouver |website=Professional Women's Hockey League |date=June 16, 2025 |access-date=June 16, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/miller-makes-it-official-signing-three-year-deal-with-pwhl-vancouver |title=Miller Makes It Official Signing Three-Year Deal With PWHL Vancouver |last=Kennedy |first=Ian |date=June 16, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}} {{cite web |url=https://www.sportsnet.ca/pwhl/article/pwhl-free-agency-tracker-latest-signings-trades/ |title=PWHL Free Agency Tracker: Latest signings, trades |author=Sportsnet Staff |date=June 23, 2025 |website=Sportsnet.ca |publisher=[[Rogers Sports & Media]] |access-date=October 9, 2025}}
+|-
+! scope="rowgroup" rowspan="10" | June 17, 2025
+| {{Sortname|Michela|Cava}}
+| Vancouver Goldeneyes
+| Minnesota Frost
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/17/pwhl-vancouver-signs-forwards-michela-cava-and-tereza-vanisova |title=PWHL Vancouver signs forwards Michela Cava and Tereza Vanišová |website=Professional Women's Hockey League |date=June 17, 2025 |access-date=June 17, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/michela-cava-signs-with-pwhl-vancouver-vanisova-officially-announced |title=Michela Cava Signs With PWHL Vancouver, Vanisova Officially Announced |last=Kennedy |first=Ian |date=June 17, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Tereza|Vanišová}}
+| Vancouver Goldeneyes
+| Ottawa Charge
+| Two years
+|
+|-
+| {{Sortname|Elaine|Chuli}}
+| Toronto Sceptres
+| Montreal Victoire
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2025/june/17/elaine-chuli-and-claire-dalton-join-toronto-sceptres-on-one-year-deals|title=Elaine Chuli and Claire Dalton join Toronto Sceptres on one-year deals |website=Professional Women's Hockey League |date=June 17, 2025 |access-date=June 17, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/toronto-sceptres-sign-elaine-chuli-and-claire-dalton |title=Toronto Sceptres Sign Elaine Chuli and Claire Dalton |last=Kennedy |first=Ian |date=June 17, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{Sortname|Claire|Dalton}}
+| Toronto Sceptres
+| Montreal Victoire
+| One year
+|
+|-
+| {{Sortname|Shiann|Darkangelo}}
+| Montreal Victoire
+| Ottawa Charge
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/teams/montreal-victoire/news/2025/june/17/montr-al-signs-forward-shiann-darkangelo|title=Montréal signs forward Shiann Darkangelo |website=Professional Women's Hockey League |date=June 17, 2025 |access-date=June 17, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/darkangelo-signs-a-two-year-contract-with-the-montreal-victoire |title=Darkangelo Signs A Two-Year Contract With The Montreal Victoire |last=Kennedy |first=Ian |date=June 17, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Mariah|Keopple}}
+| Seattle Torrent
+| Montreal Victoire
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/17/mariah-keopple-signs-one-year-deal-with-pwhl-seattle |title=Mariah Keopple Signs One-Year Deal With PWHL Seattle |date=June 17, 2025 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=October 9, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/mariah-keopple-next-to-head-west-signs-with-seattle |title=Mariah Keopple next to head west, signs with Seattle |last=Kennedy |first=Ian |date=June 17, 2025 |website=The Hockey News |access-date=June 17, 2025}}
+|-
+| {{sortname|Mellissa|Channell-Watkins}}
+| Vancouver Goldeneyes
+| Minnesota Frost
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/17/pwhl-vancouver-signs-defenders-mellissa-channell-watkins-and-emma-greco|title=PWHL Vancouver signs defenders Mellissa Channell-Watkins and Emma Greco |website=Professional Women's Hockey League |date=June 17, 2025 |access-date=June 17, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-free-agency-recapping-a-jam-packed-day-two-and-looking-ahead-to-day-three |title=PWHL Free Agency: Recapping A Jam Packed Day Two, And Looking Ahead To Day Three |last=Kennedy |first=Ian |date=June 18, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Emma|Greco}}
+| Vancouver Goldeneyes
+| Boston Fleet
+| Two years
+|
+|-
+| {{sortname|Hayley|Scamurra}}
+| Montreal Victoire
+| Toronto Sceptres
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/17/montr-al-signe-l-attaquante-hayley-scamurra |title=Montréal signs forward Hayley Scamurra |website=Professional Women's Hockey League |date=June 17, 2025 |access-date=June 17, 2025}}
+|-
+| {{sortname|Lexie|Adzija}}
+| Seattle Torrent
+| Boston Fleet
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/17/lexie-adzija-signs-two-year-deal-with-pwhl-seattle |title=Lexie Adzija signs two-year deal with PWHL Seattle |website=Professional Women's Hockey League |date=June 17, 2025 |access-date=June 17, 2025}}
+|-
+! scope="rowgroup" rowspan="4" | June 18, 2025
+| {{sortname|Natalie|Snodgrass}}
+| Seattle Torrent
+| Ottawa Charge
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/18/natalie-snodgrass-signs-one-year-deal-with-pwhl-seattle |title=Natalie Snodgrass signs one-year deal with PWHL Seattle |website=Professional Women's Hockey League |date=June 18, 2025 |access-date=June 18, 2025}}
+|-
+| {{sortname|Jincy|Roese}}
+| New York Sirens
+| Ottawa Charge
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/18/new-york-sirens-sign-defender-jincy-roese-to-one-year-contract |title=New York Sirens sign defender Jincy Roese to one-year contract |website=Professional Women's Hockey League |date=June 18, 2025 |access-date=June 18, 2025}}
+|-
+| {{sortname|Chloé|Aurard}}
+| Boston Fleet
+| New York Sirens
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/18/fleet-continue-adding-offense-signing-chlo-aurard-and-liz-schepers |title=Fleet continue adding offense, signing Chloé Aurard and Liz Schepers |website=Professional Women's Hockey League |date=June 18, 2025 |access-date=June 18, 2025}}
+|-
+| {{sortname|Liz|Schepers}}
+| Boston Fleet
+| Minnesota Frost
+| Two years
+|
+|-
+! scope="rowgroup" rowspan="2" | June 19, 2025
+| {{sortname|Élizabeth|Giguère}}
+| Ottawa Charge
+| New York Sirens
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/june/19/ottawa-charge-sign-former-patty-kazmaier-award-winner-lizabeth-gigu-re |title=Ottawa Charge sign former Patty Kazmaier Award winner Élizabeth Giguère |website=Professional Women's Hockey League |date=June 19, 2025 |access-date=June 19, 2025}}
+|-
+| {{sortname|Jessica|DiGirolamo}}
+| Montreal Victoire
+| Boston Fleet
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/19/la-victoire-ajoute-jessica-digirolamo-sa-ligne-bleue |title=Montréal adds Jessica DiGirolamo to blue line |website=Professional Women's Hockey League |date=June 19, 2025 |access-date=June 19, 2025}}
+|-
+! scope="rowgroup" rowspan="10" | June 20, 2025
+| {{sortname|Mikyla|Grant-Mentis}}
+| Seattle Torrent
+| Montreal Victoire
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/20/mikyla-grant-mentis-signs-two-year-deal-with-pwhl-seattle|title=Mikyla Grant-Mentis signs two-year deal with PWHL Seattle |website=Professional Women's Hockey League |date=June 20, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Maggie|Flaherty|dab=ice hockey}}
+| Montreal Victoire
+| Minnesota Frost
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/20/montr-al-ajoute-la-double-championne-de-la-coupe-walter-maggie-flaherty-sa-formation |title=Montréal adds two-time Walter Cup champion Maggie Flaherty to roster |website=Professional Women's Hockey League |date=June 20, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Zoe|Boyd}}
+| Boston Fleet
+| Ottawa Charge
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/20/fleet-sign-zoe-boyd-rylind-mackinnon-and-abbey-levy |title=Fleet sign Zoe Boyd, Rylind MacKinnon and Abbey Levy |website=Professional Women's Hockey League |date=June 20, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Rylind|MacKinnon}}
+| Boston Fleet
+| Toronto Sceptres
+| One year
+|
+|-
+| {{sortname|Abbey|Levy}}
+| Boston Fleet
+| New York Sirens
+| One year
+| {{cite web |url=https://thehockeynews.com/womens/pwhl/peslarova-leaves-pwhl-officially-signs-with-brynas |title=Peslarova Leaves PWHL, Officially signs With Brynas |last=Kennedy |first=Ian |date=July 2, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Sidney|Morin}}
+| Minnesota Frost
+| Boston Fleet
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/20/minnesota-frost-sign-defender-sidney-morin-to-a-two-year-contract |title=Minnesota Frost sign defender Sidney Morin to a two-year contract |website=Professional Women's Hockey League |date=June 20, 2025 |access-date=June 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-draft-minnesota-frost-needs-targets-and-trends |title=PWHL Draft: Minnesota Frost Needs, Targets, and Trends |last=Kennedy |first=Ian |date=June 18, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Jade|Downie-Landry}}
+| Montreal Victoire
+| New York Sirens
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/20/l-attaquante-jade-downie-landry-rentre-au-bercail |title=Forward Jade Downie-Landry returns home to Montréal |website=Professional Women's Hockey League |date=June 20, 2025 |access-date=June 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/jade-downie-landry-lands-at-home-in-montreal |title=Jade Downie-Landry Lands At Home In Montreal |last=Kennedy |first=Ian |date=June 20, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Gabby|Rosenthal}}
+| Vancouver Goldeneyes{{efn|name=rfa|Restricted free agent selected in expansion draft.}}
+| New York Sirens
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/20/pwhl-vancouver-signs-forward-gabby-rosenthal |title=PWHL Vancouver signs forward Gabby Rosenthal |website=Professional Women's Hockey League |date=June 20, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Brooke|Hobson}}
+| Ottawa Charge
+| New York Sirens
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/june/20/ottawa-charge-sign-veteran-defender-brooke-hobson |title=Ottawa Charge sign veteran defender Brooke Hobson |website=Professional Women's Hockey League |date=June 20, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Laura|Kluge}}
+| Boston Fleet
+| Toronto Sceptres
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/20/fleet-sign-forward-laura-kluge |title=Fleet sign forward Laura Kluge |website=Professional Women's Hockey League |date=June 20, 2025 |access-date=June 20, 2025}}
+|-
+! scope="rowgroup" rowspan="2" | June 21, 2025
+| {{sortname|Savannah|Norcross}}
+| New York Sirens
+| [[Luleå HF/MSSK|Luleå HF]] ([[Swedish Women's Hockey League|SDHL]])
+| One year
+| {{cite web |url= https://www.thepwhl.com/en/news/2025/june/20/savannah-norcross-returns-to-new-york-signing-one-year-contract |title=Savannah Norcross returns to New York signing one-year contract |website=Professional Women's Hockey League |date=June 21, 2025 |access-date=June 21, 2025}}
+|-
+| {{sortname|Emma|Bergesen}}
+| Ottawa Charge
+| [[SDE Hockey]] (SDHL)
+| One year
+| {{cite web |url= https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/june/21/ottawa-charge-sign-norwegian-defender-emma-bergesen |title=Ottawa Charge sign Norwegian defender Emma Bergesen |website=Professional Women's Hockey League |date=June 21, 2025 |access-date=June 21, 2025}}
+|-
+! scope="row" | June 23, 2025
+| {{sortname|Clair|DeGeorge}}
+| Toronto Sceptres
+| Montreal Victoire
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/23/toronto-sceptres-and-clair-degeorge-agree-to-one-year-deal |title=Toronto Sceptres and Clair DeGeorge agree to one-year deal |website=Professional Women's Hockey League |date=June 23, 2025 |access-date=June 23, 2025}}
+|-
+! scope="row" | July 9, 2025
+| {{sortname|Carly|Jackson}}
+| Seattle Torrent
+| Toronto Sceptres
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/09/carly-cj-jackson-signs-one-year-deal-with-pwhl-seattle |title=Carly "CJ" Jackson signs one year deal with PWHL Seattle |website=Professional Women's Hockey League |date=July 9, 2025 |access-date=July 10, 2025}}
+|-
+! scope="row" | July 10, 2025
+| {{sortname|Anna|Wilgren}}
+| Seattle Torrent{{efn|name=rfa}}
+| Montreal Victoire
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/10/anna-wilgren-signs-one-year-deal-with-pwhl-seattle |title=Anna Wilgren signs one-year deal with PWHL Seattle |website=Professional Women's Hockey League |date=July 10, 2025 |access-date=July 10, 2025}}
+|-
+! scope="row" | July 11, 2025
+| {{sortname|Brooke|McQuigge}}
+| Vancouver Goldeneyes{{efn|name=rfa}}
+| Minnesota Frost
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/11/pwhl-vancouver-signs-forward-brooke-mcquigge |title=PWHL Vancouver signs forward Brooke McQuigge |website=Professional Women's Hockey League |date=July 11, 2025 |access-date=July 11, 2025}}
+|-
+! scope="rowgroup" rowspan="23" | November 20, 2025
+| {{sortname|Megan|Warrener}}
+| Montreal Victoire
+| [[UConn Huskies women's ice hockey|University of Connecticut]] ([[Hockey East|HE]])
+| One year
+|
+|-
+| {{sortname|Claire|Vekich}}
+| Montreal Victoire
+| [[Minnesota State Mavericks women's ice hockey|Minnesota State University]] ([[Western Collegiate Hockey Association|WCHA]])
+| Reserve player contract
+|
+|-
+| {{sortname|Jessie|McPherson}}
+| Toronto Sceptres
+| Minnesota State University (WCHA)
+| Two years
+|
+|-
+| {{sortname|Kristin|Della Rovere}}
+| Toronto Sceptres
+| [[EVB Eagles Südtirol]] ([[European Women's Hockey League|EWHL]]/[[Italian Hockey League Women|IHLW]])
+| Reserve player contract
+|
+|-
+| {{sortname|Lauren|Messier}}
+| Toronto Sceptres
+| [[Dartmouth Big Green women's ice hockey|Dartmouth College]] ([[ECAC Hockey|ECAC]])
+| Reserve player contract
+|
+|-
+| {{Sortname|Katie|Chan}}
+| Vancouver Goldeneyes
+| [[Färjestad BK (women)|Färjestad BK]] (SDHL)
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/vancouver-goldeneyes/news/2025/november/20/vancouver-goldeneyes-announce-2025-26-roster |title=Vancouver Goldeneyes announce 2025-26 roster|website= Professional Women's Hockey League |date=November 20, 2025 |access-date=November 21, 2025}}
+|-
+| {{sortname|Kimberly|Newell}}
+| Vancouver Goldeneyes
+| [[Shenzhen KRS|KRS Vanke Rays]] ([[Zhenskaya Hockey League|ZhHL]])
+| One year
+|
+|-
+| {{sortname|Brianna|Brooks}}
+| Vancouver Goldeneyes
+| Vancouver Goldeneyes{{efn|Initially signed to a one year standard player agreement that was terminated after being cut from training camp.}}
+| Reserve player contract
+|
+|-
+| {{sortname|Darcie|Lappan}}
+| Vancouver Goldeneyes
+| [[Modo Hockey (women)|MoDo Hockey]] (SDHL)
+| Reserve player contract{{efn|Subsequently signed a standard player agreement following training camp to fill in for [[Nina Jobst-Smith]] who is on [[Injured reserve list|LTIR]]. Length of contract has not been specified.}}
+|
+|-
+| {{sortname|Malia|Schneider}}
+| Vancouver Goldeneyes
+| SDE Hockey (SDHL)
+| Reserve player contract
+|
+|-
+| {{sortname|Kate|Reilly}}
+| Ottawa Charge
+| [[Quinnipiac Bobcats women's ice hockey|Quinnipiac University]] (ECAC)
+| One year
+|
+|-
+| {{sortname|Kendra|Woodland}}
+| Ottawa Charge
+| [[UNB Reds women's ice hockey|University of New Brunswick]] ([[Atlantic University Sport|AUS]])
+| One year
+|
+|-
+| {{sortname|Vita|Poniatovskaia}}
+| Ottawa Charge
+| [[Yale Bulldogs women's ice hockey|Yale University]] (ECAC)
+| Reserve player contract
+|
+|-
+| {{Sortname|Brooke|Bryant}}
+| Seattle Torrent
+| Minnesota Frost
+| One year
+|
+|-
+| {{sortname|Marah|Wagner}}
+| Seattle Torrent
+| [[Skellefteå AIK (women)|Skellefteå AIK]] (SDHL)
+| One year
+|
+|-
+| {{sortname|Sydney|Langseth}}
+| Seattle Torrent
+| Minnesota State University (WCHA)
+| Reserve player contract
+|
+|-
+| {{sortname|Emily|Zumwinkle}}
+| Seattle Torrent
+| [[Ohio State Buckeyes women's ice hockey|Ohio State University]] (WCHA)
+| Reserve player contract
+|
+|-
+| {{sortname|Madison|Bizal}}
+| Minnesota Frost
+| SDE Hockey (SDHL)
+| One year
+|
+|-
+| {{sortname|Peyton|Anderson}}
+| Minnesota Frost
+| [[Northeastern Huskies women's ice hockey|Northeastern University]] (HE)
+| One year
+|
+|-
+| {{sortname|Élizabeth|Giguère}}
+| Minnesota Frost
+| Ottawa Charge
+| Reserve player contract
+|
+|-
+| {{Sortname|Loren|Gabel}}
+| Boston Fleet
+| Boston Fleet{{efn|name=gabel|Initially signed to a one year contract extension that was terminated and replaced with a reserve player contract.}}
+| Reserve player contract
+|
+|-
+| {{sortname|Mia|Biotti}}
+| Boston Fleet
+| [[Harvard Crimson women's ice hockey|Harvard University]] (ECAC)
+| Reserve player contract
+|
+|-
+| {{Sortname|Nicole|Vallario}}
+| New York Sirens
+| [[EV Zug Women's Team]] ([[Women's League (Switzerland)|SWHL A]])
+| Reserve player contract{{efn|Signed a standard player agreement following training camp to fill in for [[Dayle Ross]] who is on [[Injured reserve list|LTIR]]. Length of contract has not been specified.}}
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2025/november/20/new-york-sirens-announce-2025-26-roster |title=New York Sirens announce 2025-26 roster |website= Professional Women's Hockey League |date=November 20, 2025 |access-date=November 21, 2025}}
+|-
+! scope="row" | November 24, 2025
+| {{sortname|Reece|Hunt}}
+| Ottawa Charge
+| Luleå HF (SDHL)
+| Reserve player contract
+| {{cite web |url= https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/november/24/ottawa-charge-sign-reece-hunt-to-a-reserve-player-contract |title=Ottawa Charge sign Reece Hunt to a reserve player contract |website= Professional Women's Hockey League |date=November 24, 2025 |access-date=November 24, 2025}}
+|-
+! scope="row" | January 6, 2026
+| {{sortname|Sarah|Coe|dab=ice hockey}}
+| Ottawa Charge
+| [[RIT Tigers women's ice hockey|Rochester Institute of Technology]] ([[Atlantic Hockey America|AHA]])
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2026/january/06/charge-sign-goaltender-sarah-coe-place-sanni-ahola-on-ltir |title=Charge sign goaltender Sarah Coe, place Sanni Ahola on LTIR |website=Professional Women's Hockey League |date=January 6, 2026 |access-date=January 6, 2026}} {{cite web |url=https://thehockeynews.com/womens/pwhl/ottawa-charge-sign-goaltender-sarah-coe-place-sanni-ahola-on-ltir |title=Ottawa Charge Sign Goaltender Sarah Coe, Place Sanni Ahola on LTIR |last=Sinclair |first=Chris |date=January 6, 2026 |publisher=The Hockey News |access-date=January 6, 2026}}
+|-
+! scope="row" | February 3, 2026
+| {{sortname|Maggy|Burbidge}}
+| Ottawa Charge
+| [[HC Fribourg-Gottéron Ladies]] (SWHL A)
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/news/2026/february/03/ottawa-charge-sign-maggy-burbidge-to-a-reserve-player-contract |title=Ottawa Charge sign Maggy Burbidge to a reserve player contract |website=Professional Women's Hockey League |date=February 3, 2026 |access-date=February 15, 2026}}
+|-
+! scope="row" | March 13, 2026
+| {{sortname|Kaitlyn|Ross}}
+| Ottawa Charge
+| [[Mount Royal Cougars women's ice hockey|Mount Royal University]] ([[Canada West Universities Athletic Association|CW]])
+| Reserve player contract{{efn|To be released at the conclusion of 10 day contract.}}
+|
+|-
+! scope="row" | March 22, 2026
+| {{sortname|Gabrielle|David}}
+| Seattle Torrent
+| SDE Hockey (SDHL)
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/news/2026/march/22/torrent-place-grant-mentis-on-ltir-sign-gabrielle-david |title=Torrent place Grant-Mentis on LTIR, sign Gabrielle David |website=Professional Women's Hockey League |date=March 22, 2026 |access-date=April 15, 2026}}
+|-
+! scope="rowgroup" rowspan=2 | March 24, 2026
+| {{sortname|Samantha|Isbell}}
+| Montreal Victoire
+| Ottawa Charge
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/news/teams/montreal-victoire/equipes/victoire-de-montreal/2026/march/24/MONTREAL-VICTOIRE-ADD-SAMANTHA-ISBELL-TO-RESERVE-PLAYER-LIST |title=Montreal Victoire add Samantha Isbell to reserve player list |website=Professional Women's Hockey League |date=March 24, 2026 |access-date=April 15, 2026}}
+|-
+| {{sortname|Nadia|Mattivi}}
+| Montreal Victoire
+| Luleå HF (SDHL)
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/news/teams/montreal-victoire/2026/march/24/la-victoire-embauche-la-capitaine-de-l-quipe-nationale-italienne-nadia-mattivi |title=Victoire sign Italian national team captain Nadia Mattivi |website=Professional Women's Hockey League |date=March 24, 2026 |access-date=April 15, 2026}}
+|-
+! scope="row" | March 26, 2026
+| {{sortname|Sam|Cogan}}
+| Minnesota Frost
+| SDE Hockey (SDHL)
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/minnesota-frost/news/2026/march/26/frost-sign-forward-sam-cogan-to-a-reserve-player-contract |title=Frost sign forward Sam Cogan to a reserve player contract |website=Professional Women's Hockey League |date=March 26, 2026 |access-date=April 15, 2026}}
+|-
+! scope="row" | March 27, 2026
+| {{sortname|Alexie|Guay}}
+| Ottawa Charge
+| Färjestad BK (SDHL)
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2026/march/26/charge-place-hobson-on-ltir-sign-poniatovskaia-and-guay |title=Charge place Hobson on LTIR, sign Poniatovskaia and Guay |website=Professional Women's Hockey League |date=March 27, 2026 |access-date=April 15, 2026}}
+|-
+! scope="row" | March 28, 2026
+| {{sortname|Anneke|Rankila}}
+| Toronto Sceptres
+| SDE Hockey (SDHL)
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2026/march/28/rankila-returns-to-toronto-s-reserve-roster |title=Rankila returns to Toronto's reserve roster |website=Professional Women's Hockey League |date=March 28, 2026 |access-date=March 29, 2026}}
+|-
+! scope="row" | March 30, 2026
+| {{sortname|Sini|Karjalainen}}
+| Vancouver Goldeneyes
+| Skellefteå AIK (SDHL)
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/vancouver-goldeneyes/news/2026/march/30/goldeneyes-sign-olympian-sini-karjalainen-to-a-reserve-player-contract |title=Goldeneyes sign Olympian Sini Karjalainen to a reserve player contract |website=Professional Women's Hockey League |date=March 30, 2026 |access-date=April 15, 2026}}
+|-
+! scope="rowgroup" rowspan="3" | March 31, 2026
+| {{sortname|Noemi|Neubauerová}}
+| Boston Fleet
+| EV Zug Women's Team (SWHL A)
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/boston-fleet/news/2026/march/31/fleet-sign-olympian-noemi-neubauerov-to-reserve-player-contract |title=Fleet sign Olympian Noemi Neubauerová to reserve player contract |website=Professional Women's Hockey League |date=March 31, 2026 |access-date=April 15, 2026}}
+|-
+| {{sortname|Sarah|Bujold}}
+| New York Sirens
+| Luleå HF (SDHL)
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2026/march/31/sirens-announce-roster-moves-before-deadline |title=Sirens announce roster moves before deadline |website=Professional Women's Hockey League |date=March 31, 2026 |access-date=April 15, 2026}}
+|-
+| {{sortname|Kira|Juodikis}}
+| New York Sirens
+| {{interlanguage link|ZSC Lions Frauen|de}} (SWHL A)
+| Reserve player contract
+|
+|}
+===Contract extensions/terminations===
+{| class="wikitable sortable"
+|+ Player contract extensions
+! scope="col" | Date
+! scope="col" | Player
+! scope="col" | Team
+! scope="col" | Term
+! scope="col" | Ref
+|-
+! scope="rowgroup" rowspan="2" | June 16, 2025
+| {{sortname|Kati|Tabin}}
+| [[Montreal Victoire]]
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/teams/montreal-victoire/news/2025/june/16/montreal-victoire-re-sign-defender-kati-tabin-to-a-two-year-deal |title=Montréal Victoire re-sign defender Kati Tabin to a two-year deal |website=Professional Women's Hockey League |date=June 16, 2025 |access-date=June 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/montreal-re-signs-defender-kati-tabin-to-a-two-year-deal |title=Montreal Re-Signs Defender Kati Tabin To A Two-Year Deal |last=Kennedy |first=Ian |date=June 16, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Natalie|Buchbinder}}
+| [[Minnesota Frost]]
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/teams/minnesota-frost/news/2025/june/16/minnesota-frost-re-sign-defender-natalie-buchbinder-to-a-two-year-contract |title=Minnesota Frost re-sign defender Natalie Buchbinder to a two-year contract |website=Professional Women's Hockey League |date=June 16, 2025 |access-date=June 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-free-agency-buchbinder-cava-keopple-and-vanisova |title=PWHL Free Agency: Buchbinder, Cava, Keopple, and Vanisova |last=Kennedy |first=Ian |date=June 16, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="rowgroup" rowspan="6" | June 17, 2025
+| {{sortname|Susanna|Tapani}}
+| [[Boston Fleet]]
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/boston-fleet/news/2025/june/17/fleet-announce-contract-extension-for-susanna-tapani |title=Fleet announce contract extension for Susanna Tapani |website=Professional Women's Hockey League |date=June 17, 2025 |access-date=June 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/tapani-re-signs-with-boston-fleet |title=Tapani Re-Signs With Boston Fleet |last=Kennedy |first=Ian |date=June 17, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Natalie|Spooner}}
+| [[Toronto Sceptres]]
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/17/toronto-sceptres-reach-contract-extensions-with-natalie-spooner-and-jesse-compher |title=Toronto Sceptres reach contract extension with Natalie Spooner and Jesse Compher |website=Professional Women's Hockey League |date=June 17, 2025 |access-date=June 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/spooner-and-compher-return-to-toronto-on-two-year-deals |title=Spooner and Compher Return To Toronto On Two-Year Deals |last=Kennedy |first=Ian |date=June 17, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Jesse|Compher}}
+| Toronto Sceptres
+| Two years
+|
+|-
+| {{sortname|Maddie|Rooney}}
+| Minnesota Frost
+| Three years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/17/minnesota-frost-sign-goaltender-maddie-rooney-to-a-three-year-contract |title=Minnesota Frost sign goaltender Maddie Rooney to a three-year contract |website=Professional Women's Hockey League |date=June 17, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Jill|Saulnier}}
+| Boston Fleet
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/17/fleet-reach-contract-extentions-with-saulnier-and-schafzahl |title=Fleet reach contract extentions with Saulnier and Schafzahl |website=Professional Women's Hockey League |date=June 17, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Theresa|Schafzahl}}
+| Boston Fleet
+| One year
+|
+|-
+! scope="rowgroup" rowspan="4" | June 18, 2025
+| {{sortname|Taylor|Girard}}
+| [[New York Sirens]]
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/18/new-york-sirens-re-sign-forward-taylor-girard-to-a-one-year-contract |title=New York Sirens re-sign forward Taylor Girard to a one-year contract |website=Professional Women's Hockey League |date=June 18, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Maggie|Connors}}
+| Toronto Sceptres
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/18/toronto-sceptres-and-maggie-connors-reach-contract-extension |title=Toronto Sceptres and Maggie Connors reach contract extension |website=Professional Women's Hockey League |date=June 18, 2025 |access-date=June 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/maggie-connors-returns-to-sceptres-on-a-one-year-deal |title=Maggie Connors Returns To Sceptres On A One-Year Deal |last=Kennedy |first=Ian |date=June 18, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Rebecca|Leslie}}
+| [[Ottawa Charge]]
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/june/18/ottawa-charge-re-sign-forwards-rebecca-leslie-and-taylor-house |title=Ottawa Charge re-sign forwards Rebecca Leslie and Taylor House |website=Professional Women's Hockey League |date=June 18, 2025 |access-date=June 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/ottawa-charge-make-first-offseason-additions-re-signing-rebecca-leslie-and-taylor-house |title=Ottawa Charge Make First Offseason Additions Re-Signing Rebecca Leslie And Taylor House |last=Kennedy |first=Ian |date=June 18, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Taylor|House|dab=ice hockey}}
+| Ottawa Charge
+| One year
+|
+|-
+! scope="rowgroup" rowspan="3" | June 19, 2025
+| {{sortname|Sandra|Abstreiter}}
+| Montreal Victoire
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/19/sandra-abstreiter-de-retour-montr-al |title=Sandra Abstreiter to remain in Montréal |website=Professional Women's Hockey League |date=June 19, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Kali|Flanagan}}
+| Toronto Sceptres
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/19/toronto-sceptres-and-kali-flanagan-reach-contract-extension |title=Toronto Sceptres and Kali Flanagan reach contract extension |website=Professional Women's Hockey League |date=June 19, 2025 |access-date=June 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/toronto-sceptres-re-sign-defender-kali-flanagan |title=Toronto Sceptres Re-Sign Defender Kali Flanagan |last=Kennedy |first=Ian |date=June 16, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Catherine|Dubois}}
+| Montreal Victoire
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/19/catherine-dubois-poursuit-son-aventure-avec-la-victoire |title=Catherine Dubois returns to Montréal Victoire for season three |website=Professional Women's Hockey League |date=June 19, 2025 |access-date=June 20, 2025}}
+|-
+! scope="rowgroup" rowspan="3" | June 20, 2025
+| {{sortname|Jessica|Kondas}}
+| Toronto Sceptres
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/20/toronto-sceptres-sign-jess-kondas-to-one-year-deal |title=Toronto Sceptres sign Jess Kondas to one-year deal |website=Professional Women's Hockey League |date=June 20, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Lauren|Bernard}}
+| New York Sirens
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/20/new-york-re-signs-lauren-bernard-and-kayla-vespa-to-one-year-contracts |title=New York re-signs Lauren Bernard and Kayla Vespa to one-year contracts |website=Professional Women's Hockey League |date=June 20, 2025 |access-date=June 20, 2025}}
+|-
+| {{sortname|Kayla|Vespa}}
+| New York Sirens
+| One year
+|
+|-
+! scope="rowgroup" rowspan="2" | June 22, 2025
+| {{sortname|Mae|Batherson}}
+| Minnesota Frost
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/22/minnesota-frost-re-sign-mae-batherson-and-claire-butorac |title=Minnesota Frost re-sign Mae Batherson and Claire Butorac |website=Professional Women's Hockey League |date=June 22, 2025 |access-date=June 22, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/minnesota-re-signs-playoff-standout-katy-knoll-to-one-year-deal |title=Minnesota Re-Signs Playoff Standout Katy Knoll To One-Year Deal |last=Kennedy |first=Ian |date=June 27, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Claire|Butorac}}
+| Minnesota Frost
+| One year
+|
+|-
+! scope="rowgroup" rowspan="2" | June 27, 2025
+| {{sortname|Katy|Knoll}}
+| Minnesota Frost
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/27/minnesota-frost-re-sign-forward-katy-knoll-to-one-year-contract |title=Minnesota Frost re-sign forward Katy Knoll to one-year contract |website=Professional Women's Hockey League |date=June 27, 2025 |access-date=June 28, 2025}}
+|-
+| {{sortname|Hadley|Hartmetz}}
+| Boston Fleet
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/27/fleet-reach-contract-extension-with-hadley-hartmetz |title=Fleet reach contract extension with Hadley Hartmetz |website=Professional Women's Hockey League |date=June 27, 2025 |access-date=June 28, 2025}}
+|-
+! scope="row" | July 8, 2025
+| {{sortname|Kaitlin|Willoughby}}
+| Montreal Victoire
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/08/MONTREAL-VICTOIRE-BRING-BACK-FORWARD-KAITLIN-WILLOUGHBY-FOR-2025-26-SEASON |title=Montréal Victoire Bring Back Forward Kaitlin Willoughby For 2025–26 Season |date=July 8, 2025 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=July 8, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/pwhl-signing-roundup-here-s-what-s-happening |title=PWHL Signing Roundup: Here's What's Happening |last=Kennedy |first=Ian |date=July 11, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="row" | July 9, 2025
+| {{sortname|Allyson|Simpson}}
+| New York Sirens
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/09/new-york-signs-defender-allyson-simpson-to-a-two-year-extension|title=New York signs defender Allyson Simpson to a two-year extension |website=Professional Women's Hockey League |date=July 9, 2025 |access-date=July 10, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/ally-simpson-signs-a-two-year-extension-with-the-new-york-sirens |title=Ally Simpson Signs A Two-Year Extension With The New York Sirens |last=Kennedy |first=Ian |date=July 9, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="rowgroup" rowspan="5" | July 10, 2025
+| {{sortname|Anna|Meixner}}
+| Ottawa Charge
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/july/10/ottawa-charge-ink-four-returning-players|title=Ottawa Charge ink four returning players |website=Professional Women's Hockey League |date=July 10, 2025 |access-date=July 10, 2025}}
+|-
+| {{sortname|Samantha|Isbell}}
+| Ottawa Charge
+| One year
+|
+|-
+| {{sortname|Logan|Angers}}
+| Ottawa Charge
+| One year
+|
+|-
+| {{sortname|Jessica|Adolfsson}}
+| Ottawa Charge
+| One year
+|
+|-
+| {{sortname|Sarah|Fillier}}
+| New York Sirens
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/10/pwhl-rookie-of-the-year-sarah-fillier-signs-a-two-year-extension-with-new-york |title=PWHL Rookie of the Year Sarah Fillier signs a two-year extension with New York |website=Professional Women's Hockey League |date=July 10, 2025 |access-date=July 10, 2025}}
+|-
+! scope="row" | July 11, 2025
+| {{sortname|Stephanie|Markowski}}
+| Ottawa Charge
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/july/11/charge-get-stephanie-markowski-back-on-defense |title=Charge get Stephanie Markowski back on defense |website=Professional Women's Hockey League |date=July 11, 2025 |access-date=July 11, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/ottawa-charge-re-sign-stephanie-markowski-to-one-year-deal |title=Ottawa Charge Re-Sign Stephanie Markowski to One-Year Deal |last=Sinclair |first=Chris |date=July 11, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="row" | July 14, 2025
+| {{sortname|Shay|Maloney}}
+| Boston Fleet
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/14/fleet-re-sign-forward-shay-maloney |title=Fleet re-sign forward Shay Maloney |website=Professional Women's Hockey League |date=July 14, 2025 |access-date=July 14, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/boston-fleet-lock-in-shay-maloney-on-a-two-year-contract |title=Boston Fleet Lock In Shay Maloney On A Two-Year Contract |last=Kennedy |first=Ian |date=July 14, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="row" | July 17, 2025
+| {{sortname|Marlène|Boissonnault}}
+| Minnesota Frost
+| One year
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/18/minnesota-frost-sign-goaltender-marl-ne-boissonnault-to-a-one-year-contract |title=Minnesota Frost sign goaltender Marlène Boissonnault to a one-year contract |website=Professional Women's Hockey League |date=July 18, 2025 |access-date=July 18, 2025}}
+|-
+! scope="row" | July 21, 2025
+| {{sortname|Alexandra|Labelle}}
+| Montreal Victoire
+| One year
+| {{cite web |url= https://www.thepwhl.com/en/news/2025/july/18/MONTREAL-VICTOIRE-EXTEND-FORWARD-ALEXANDRA-LABELLE |title=Montreal Victoire extend forward Alexandra Labelle |website=Professional Women's Hockey League |date=July 21, 2025 |access-date=July 21, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/victoire-sign-pwhl-veteran-alexandra-labelle-to-a-one-year-deal |title=Victoire Sign PWHL Veteran Alexandra Labelle To A One-Year Deal |last=Kennedy |first=Ian |date=July 21, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="row" | July 23, 2025
+| {{sortname|Anna|Kjellbin}}
+| Toronto Sceptres
+| Two years
+| {{cite web |url=https://thehockeynews.com/womens/pwhl/toronto-signs-defender-anna-kjellbin-to-a-new-deal |title=Toronto Signs Defender Anna Kjellbin To A New Deal |last=Kennedy |first=Ian |date=July 23, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=July 23, 2025}}
+|-
+! scope="rowgroup" rowspan="2" | July 24, 2025
+| {{sortname|Mannon|McMahon}}
+| Ottawa Charge
+| One year
+| {{cite web |url= https://www.thepwhl.com/en/news/2025/july/24/ottawa-charge-sign-mcmahon-to-a-one-year-extension |title=Ottawa Charge sign McMahon to a one-year extension |date=July 24, 2025 |website= Professional Women's Hockey League |access-date=July 24, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/ottawa-charge-re-sign-forward-mannon-mcmahon-to-one-year-deal |title=Ottawa Charge Re-Sign Forward Mannon McMahon to One-Year Deal |last=Sinclair |first=Chris |date=July 24, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Loren|Gabel}}
+| Boston Fleet
+| One year
+| {{cite web |url= https://www.thepwhl.com/en/news/2025/july/24/fleet-lock-in-loren-gabel-with-new-deal-on-her-birthday |title=Fleet lock in Loren Gabel with new deal on her birthday |date=July 24, 2025 |website= Professional Women's Hockey League |access-date=July 24, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/fleet-bring-back-top-remaining-free-agent-loren-gabel |title=Fleet Bring Back Top Remaining Free Agent Loren Gabel |last=Kennedy |first=Ian |date=July 24, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="row" | July 27, 2025
+| {{sortname|Gwyneth|Philips}}
+| Ottawa Charge
+| Two years{{efn|name=ext|Extension will come into effect for the 2026–27 season.}}
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/july/27/ottawa-charge-extend-playoff-mvp-gwyneth-philips-through-2027-28 |title=Ottawa Charge extend playoff MVP Gwyneth Philips through 2027-28 |website=Professional Women's Hockey League |date=July 27, 2025 |access-date=July 28, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/ottawa-charge-extend-starter-gwyneth-philips-with-two-year-contract |title=Ottawa Charge Extend Starter Gwyneth Philips with Two-Year Contract |last=Sinclair |first=Chris |date=July 28, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="rowgroup" rowspan="3" | August 4, 2025
+| {{sortname|Aerin|Frankel}}
+| Boston Fleet
+| Two years{{efn|name=ext}}
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/august/04/fleet-anchor-frankel-keller-and-m-ller-through-2027-28 |title=Fleet anchor Frankel, Keller and Müller through 2027-28 |website=Professional Women's Hockey League |date=August 4, 2025 |access-date=August 4, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/boston-fleet-extend-frankel-keller-and-muller-through-2027-28 |title=Boston Fleet Extend Frankel, Keller, and Müller Through 2027–28 |last=Kennedy |first=Ian |date=August 4, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+| {{sortname|Megan|Keller}}
+| Boston Fleet
+| Two years{{efn|name=ext}}
+|
+|-
+| {{sortname|Alina|Müller}}
+| Boston Fleet
+| Two years{{efn|name=ext}}
+|
+|-
+! scope="row" | August 6, 2025
+| {{sortname|Dominique|Petrie}}
+| Minnesota Frost
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/august/06/minnesota-frost-re-sign-forward-dominique-petrie-to-a-two-year-contract |title=Minnesota Frost re-sign forward Dominique Petrie to a two-year contract |website=Professional Women's Hockey League |date=August 6, 2025 |access-date=August 6, 2025}}
+|-
+! scope="row" | August 7, 2025
+| {{sortname|Emily|Clark|dab=ice hockey}}
+| Ottawa Charge
+| Two years{{efn|name=ext}}
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/august/06/ottawa-charge-extend-playoff-top-scorer-emily-clark-through-2027-28 |title=Ottawa Charge extend playoff top scorer Emily Clark through 2027-28 |website=Professional Women's Hockey League |date=August 7, 2025 |access-date=August 7, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/ottawa-charge-extend-emily-clark-through-2027-28 |title=Ottawa Charge Extend Emily Clark Through 2027–28 |last=Kennedy |first=Ian |date=August 7, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="row" | August 14, 2025
+| {{sortname|Ashton|Bell}}
+| [[Vancouver Goldeneyes]]
+| Two years{{efn|name=ext}}
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/august/13/pwhl-vancouver-signs-defender-ashton-bell-to-a-two-year-extension |title=PWHL Vancouver signs defender Ashton Bell to a two-year extension |website=Professional Women's Hockey League |date=August 14, 2025 |access-date=August 20, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/vancouver-extends-ashton-bell-for-two-more-seasons |title=Vancouver Extends Ashton Bell For Two More Seasons |last=Kennedy |first=Ian |date= |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="row" | September 22, 2025
+| {{sortname|Maja|Nylén Persson}}
+| New York Sirens
+| Three years{{efn |name=persson |This three-year contract represents a one-year extension (through the 2027–28 season) to the original three-year contract she signed after being drafted last year.}}
+| {{cite web |url=https://thehockeynews.com/womens/pwhl/sirens-ink-nylen-persson-to-contract-extension-through-2027-28 |title=Sirens Ink Nylen Persson To Contract Extension Through 2027–28 |last=Kennedy |first=Ian |date=September 22, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=September 22, 2025}}
+|-
+! scope="row" | October 6, 2025
+| {{sortname|Britta|Curl-Salemme}}
+| Minnesota Frost
+| Two years
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/october/06/minnesota-frost-sign-forward-britta-curl-salemme-to-a-two-year-contract-extension |title=Minnesota Frost sign forward Britta Curl-Salemme to a two-year contract extension |website=Professional Women's Hockey League |date=October 6, 2025 |access-date=October 6, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/minnesota-frost-sign-britta-curl-salemme-to-two-year-extension |title=Minnesota Frost Sign Britta Curl-Salemme To Two-Year Extension |last=Kennedy |first=Ian |date=October 6, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="rowgroup" rowspan="3" | October 23, 2025
+| {{sortname|Marie-Philip|Poulin}}
+| Montreal Victoire
+| Two years{{efn|name=ext}}
+| {{cite web |url=https://www.thepwhl.com/en/teams/montreal-victoire/news/2025/october/23/lMONTREAL-VICTOIRE-EXTENDS-CONTRACTS-FOR-THREE-FOUNDATIONAL-PLAYERS |title=Montreal Victoire extends contracts for three foundational players |website=Professional Women's Hockey League |date=October 23, 2025 |access-date=October 23, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/victoire-sign-foundational-players-poulin-desbiens-and-stacey-to-extensions |title=Victoire Sign Foundational Players Poulin, Desbiens, And Stacey To Extensions |last=Kennedy |first=Ian |date=October 23, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 23, 2025 |quote=The Montreal Victoire signed Marie-Philip Poulin, Ann-Renee Desbiens, and Laura Stacey to two-year extensions through the 2027-28 PWHL season.}}
+|-
+| {{sortname|Ann-Renée|Desbiens}}
+| Montreal Victoire
+| Two years{{efn|name=ext}}
+|
+|-
+| {{sortname|Laura|Stacey}}
+| Montreal Victoire
+| Two years{{efn|name=ext}}
+|
+|-
+! scope="row" | November 5, 2025
+| {{sortname|Micah|Zandee-Hart}}
+| New York Sirens
+| One year{{efn|name=ext}}
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2025/november/05/new-york-sirens-sign-team-captain-micah-zandee-hart-to-contract-extension-through-2026-27 |title=New York Sirens Sign Team Captain Micah Zandee-Hart To Contract Extension Through 2026–27 |date=November 5, 2025 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=November 5, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/sirens-extend-captain-micah-zandee-hart-through-2026-27-season |title=Sirens Extend Captain Micah Zandee-Hart Through 2026–27 Season |last=Kennedy |first=Ian |date=November 5, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=November 5, 2025 |quote=The New York Sirens have signed captain Micah Zandee-Hart to a one-year contract extension keeping her with the Sirens through the 2026-27 season.}}
+|-
+! scope="rowgroup" rowspan="2" | November 18, 2025
+| {{sortname|Jaime|Bourbonnais}}
+| New York Sirens
+| One year{{efn|name=ext}}
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2025/november/17/new-york-sirens-announce-contract-extensions-for-jaime-bourbonnais-and-kayle-osborne |title=New York Sirens Announce Contract Extensions For Jaime Bourbonnais and Kayle Osborne |author=New York Sirens |date=November 18, 2025 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=November 18, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/new-york-signs-bourbonnais-osborne-to-contract-extensions |title=New York Signs Bourbonnais, Osborne To Contract Extensions |last=Kennedy |first=Ian |date=November 18, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=November 18, 2025 |quote=The New York Sirens have signed defender Jaime Bourbonnais and goaltender Kayle Osborne to contract extensions beyond their current deals.}}
+|-
+| {{sortname|Kayle|Osborne}}
+| New York Sirens
+| One year{{efn |name=ext-2027 |Extension will come into effect for the 2027–28 season.}}
+|
+|-
+! scope="row" | November 19, 2025
+| {{sortname|Ella|Shelton}}
+| Toronto Sceptres
+| One year{{efn|name=ext}}
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2025/november/19/sceptres-sign-shelton-to-one-year-extension |title=Sceptres sign Shelton to one-year extension |date=November 19, 2025 |website=Professional Women's Hockey League |access-date=November 19, 2025}}
+|-
+! scope="rowgroup" rowspan="5"| November 20, 2025
+| {{sortname|Kelly-Ann|Nadeau}}
+| Montreal Victoire
+| Reserve player contract{{efn|Was a reserve player for the [[2024–25 Montreal Victoire season]]. Signed a standard player agreement following training camp to fill in for [[Lina Ljungblom]] who is on [[Injured reserve list|LTIR]]. Length of contract has not been specified.}}
+|
+|-
+| {{sortname|Alexa|Vasko}}
+| Ottawa Charge
+| One year
+|
+|-
+| {{sortname|Kaitlyn|O'Donohoe}}
+| Minnesota Frost
+| Reserve player contract{{efn|Was a reserve player for the [[2024–25 Minnesota Frost season]].}}
+|
+|-
+| {{sortname|Olivia|Zafuto}}
+| Boston Fleet
+| Reserve player contract{{efn|Was a reserve player for the [[2024–25 Boston Fleet season]].}}
+|
+|-
+| {{Sortname|Olivia|Knowles}}
+| New York Sirens
+| Reserve player contract{{efn|Was a reserve player for the [[2024–25 New York Sirens season]].}}
+|
+|-
+! scope="rowgroup" rowspan="2" | November 25, 2025
+| {{sortname|Gabbie|Hughes}}
+| Ottawa Charge
+| One year{{efn|name=ext}}
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/november/25/ottawa-charge-announce-contract-extensions-for-gabbie-hughes-and-ronja-savolainen |title=Ottawa Charge announce contract extensions for Gabbie Hughes and Ronja Savolainen |date=November 25, 2025 |website= Professional Women's Hockey League |access-date=November 25, 2025}}
+|-
+| {{sortname|Ronja|Savolainen}}
+| Ottawa Charge
+| One year{{efn |name=ext-2027}}
+|
+|}
+{| class="wikitable sortable"
+|+ Player contract terminations
+! scope="col" | Date
+! scope="col" | Player
+! scope="col" | Team
+! scope="col" | Term remaining
+! scope="col" | Ref
+|-
+! scope="row" | July 27, 2025
+| {{sortname|Noora|Tulus}}
+| [[New York Sirens]]
+| One year
+| {{Cite web |date=July 27, 2025 |title=Sista pusselbiten klar – välkommen, Noora Tulus |url=https://www.brynas.se/article/3a8at02-1ekad/view |access-date=July 27, 2025 |website=[[Brynäs IF (women)|Brynäs IF]] |language=sv}} {{cite web |url=https://thehockeynews.com/womens/pwhl/tulus-pwhl-mutually-agree-to-terminate-contract |title=Tulus, PWHL Mutually Agree To Terminate Contract |last=Kennedy |first=Ian |date=July 27, 2025 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=October 9, 2025}}
+|-
+! scope="rowgroup" rowspan="6" | November 19, 2025
+| {{sortname|Chloé|Aurard}}
+| [[Boston Fleet]]
+| One year{{efn|name=camp|Released from preseason/training camp.}}
+| {{cite web |url=https://www.thepwhl.com/en/teams/boston-fleet/news/2025/november/19/fleet-announce-training-camp-roster-updates |title=Boston Fleet announce training camp roster updates |website=Professional Women's Hockey League |date=November 19, 2025 |access-date=November 19, 2025}} {{cite web |url=https://thehockeynews.com/womens/pwhl/full-list-of-pwhl-free-agents-following-training-camp-cuts |title=Full list of PWHL free agents following training camp cuts |last=Kennedy |first=Ian |website=The Hockey News |date=November 19, 2025 |access-date=November 19, 2025}}
+|-
+| {{sortname|Élizabeth|Giguère}}
+| [[Ottawa Charge]]
+| One year{{efn|name=camp}}
+|
+|-
+| {{sortname|Emma|Bergesen}}
+| Ottawa Charge
+| One year{{efn|name=camp}}
+|
+|-
+| {{sortname|Jessica|Adolfsson}}
+| Ottawa Charge
+| One year{{efn|name=camp}}
+|
+|-
+| {{sortname|Logan|Angers}}
+| Ottawa Charge
+| One year{{efn|name=camp}}
+|
+|-
+| {{sortname|Brianna|Brooks}}
+| [[Vancouver Goldeneyes]]
+| One year{{efn|name=camp}}
+|
+|-
+! scope="rowgroup" | November 20, 2025
+| {{Sortname|Loren|Gabel}}
+| Boston Fleet
+| One year{{efn|name=gabel}}
+|
+|-
+! scope="row" | January 4, 2026
+| {{sortname|Claire|Vekich}}
+| [[Montreal Victoire]]
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/montreal-victoire/equipes/victoire-de-montreal/news/2026/january/04/LINA-LJUNGBLOM-RETURNS-TO-ACTIVE-ROSTER |title=Lina Ljungblom returns to active roster |website=Professional Women's Hockey League |date=January 4, 2026 |access-date=January 4, 2026}}
+|-
+! scope="row" | January 9, 2026
+| {{sortname|Sarah|Coe|dab=ice hockey}}
+| Ottawa Charge
+| Reserve player contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2026/january/09/charge-s-ahola-activated-from-the-ltir |title=Charge's Ahola activated from the LTIR |website=Professional Women's Hockey League |date=January 9, 2026 |access-date=January 9, 2026}}
+|-
+! scope="row" | January 30, 2026
+| {{sortname|Samantha|Isbell}}
+| Ottawa Charge
+|
+|}
+===Trades===
+{| cellspacing=0 class="wikitable"
+|-
+! Date !! colspan=2 |Details !! {{Refh}}
+|-
+! scope="row" rowspan="3" | June 24, 2025
+| valign="top"| To [[New York Sirens]] First round pick – [[2025 PWHL Draft]]
+(#3 – [[Casey O'Brien]])
+Fourth round pick – 2025 PWHL Draft
+(#27 – [[Maddi Wheeler]])
+| valign="top"| To [[Toronto Sceptres]] [[Ella Shelton]]
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/24/toronto-sceptres-and-new-york-sirens-complete-trade-at-pwhl-draft |title=Toronto Sceptres and New York Sirens complete trade at PWHL Draft |website=Professional Women's Hockey League |date=June 24, 2025 |access-date=June 24, 2025}}
+|-
+| valign="top"| To [[Vancouver Goldeneyes]] [[Kristen Campbell]]
+Third round pick – 2025 PWHL Draft
+(#19 – [[Nina Jobst-Smith]])
+| valign="top"| To Toronto Sceptres Second round pick – 2025 PWHL Draft
+(#16 – [[Kiara Zanon]])
+Third round pick – 2025 PWHL Draft
+(#23 – [[Clara Van Wieren]])
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/24/pwhl-vancouver-and-toronto-sceptres-complete-trade-at-pwhl-draft |title=PWHL Vancouver and Toronto Sceptres complete trade at PWHL Draft |website=Professional Women's Hockey League |date=June 24, 2025 |access-date=June 24, 2025}}
+|-
+| valign="top"| To New York Sirens [[Kristin O'Neill]]
+Fourth round pick – 2025 PWHL Draft
+(#28 – [[Callie Shanahan]])
+| valign="top"| To [[Montreal Victoire]]
+[[Abby Roque]]
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/june/24/new-york-sirens-trade-abby-roque-to-montr-al-receives-forward-kristin-o-neill |title=New York Sirens trade Abby Roque to Montréal - Receive forward Kristin O'Neill |website=Professional Women's Hockey League |date=June 24, 2025 |access-date=June 24, 2025}}
+|-
+! scope="row" | November 19, 2025
+| valign="top"| To [[Minnesota Frost]] [[Denisa Křížová]]
+| valign="top"| To Vancouver Goldeneyes [[Anna Segedi]]
+| {{cite web |url=https://www.thepwhl.com/en/news/2025/november/19/minnesota-frost-and-vancouver-goldeneyes-complete-trade |title=Minnesota Frost and Vancouver Goldeneyes complete trade |website=Professional Women's Hockey League |date=November 19, 2025 |access-date=November 19, 2025}}
+|-
+! scope="row" | January 18, 2026
+| valign="top"| To [[Ottawa Charge]] [[Michela Cava]]
+[[Brooke McQuigge]]
+[[Emma Greco]]
+| valign="top"| To Vancouver Goldeneyes [[Mannon McMahon]]
+[[Anna Meixner]]
+[[Anna Shokhina]]
+| {{cite web |url= https://www.thepwhl.com/en/news/2026/january/18/ottawa-charge-and-vancouver-goldeneyes-complete-six-player-trade|title=Ottawa Charge and Vancouver Goldeneyes complete six player trade |website=Professional Women's Hockey League |date=January 18, 2026|access-date=January 18, 2026}} {{cite web |url=https://www.theicegarden.com/trade-alert-charge-and-goldeneyes-swap-six-players/ |title=Trade Alert: Charge and Goldeneyes Swap Six Players |last=Côté |first=Elisha |date=January 18, 2026 |website=TheIceGarden.com |access-date=January 19, 2026 |quote=The deal sends forwards Anna Meixner, Anna Shokhina and Mannon McMahon to Vancouver in exchange for Michela Cava, Brooke McQuigge, and defender Emma Greco.}}
+|-
+! scope="row" | March 16, 2026
+| valign="top"| To [[Boston Fleet]] [[Jessie Eldridge]]
+| valign="top"| To [[Seattle Torrent]] [[Theresa Schafzahl]]
+| {{cite web |url= https://www.thepwhl.com/en/news/2026/march/16/boston-fleet-and-seattle-torrent-complete-trade |title=Boston Fleet and Seattle Torrent Complete Trade |website=Professional Women's Hockey League |date=March 16, 2026 |access-date=March 16, 2026}} {{cite web |url=https://thehockeynews.com/womens/pwhl/fleet-acquire-jessie-eldridge-from-seattle-in-exchange-for-thereza-schafzahl |title=Fleet Acquire Jessie Eldridge From Seattle In Exchange For Thereza Schafzahl |last=Kennedy |first=Ian |date=March 16, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=March 16, 2026 |quote=The Boston Fleet have acquired forward Jessie Eldridge from the Seattle Torrent in exchange for forward Theresa Schafzahl.}}
+|-
+! scope="row" | March 17, 2026
+| valign="top"| To New York Sirens [[Clair DeGeorge]]
+| valign="top"| To Toronto Sceptres Future considerations
+| {{cite web |url=https://thehockeynews.com/womens/pwhl/sceptres-and-sirens-complete-deal-degeorge-to-new-york |title=Sceptres And Sirens Complete Deal: DeGeorge To New York |last=Benwell |first=C |date=March 17, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=March 17, 2026 |quote=Sirens acquire DeGeorge for their playoff push. Sceptres gain crucial roster flexibility as both teams vie for a playoff spot.}} {{cite web |url=https://www.msn.com/en-ca/sports/hockey/report-sirens-acquire-clair-degeorge-from-sceptres-for-future-considerations/ar-AA1YRZPd |title=Report: Sirens acquire Clair DeGeorge from Sceptres for future considerations |last=Kuehl |first=Tyler |date=March 17, 2026 |website=MSN.com |publisher=[[MSN]] |access-date=March 29, 2026}}
+|-
+! scope="row" | March 30, 2026
+| valign="top" | To New York Sirens Denisa Křížová
+| valian="top" | To Minnesota Frost [[Jincy Roese]]
+| {{cite web |url=https://www.thepwhl.com/en/news/2026/march/30/minnesota-frost-and-new-york-sirens-complete-trade |title=Minnesota Frost and New York Sirens Complete Trade |date=March 30, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=March 30, 2026 |quote=Frost acquire defender Jincy Roese from Sirens in exchange for forward Denisa Křížová}} {{cite web |url=https://thehockeynews.com/womens/pwhl/minnesota-acquires-jincy-roese-from-new-york-for-denisa-krizova |title=Minnesota Acquires Jince Roese From New York For Denisa Krizova |last=Kennedy |first=Ian |date=March 30, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=March 30, 2026 |quote=The Minnesota Frost have acquired Jincy Roese from the New York Sirens in exchange for Denisa Křížová.}}
+|}
+===Retirements===
+{| class="wikitable sortable"
+|+ Player retirements
+! scope="col" | Date
+! scope="col" | Player
+! scope="col" | Team(s)
+! scope="col" | Ref
+|-
+! scope="row" | June 1, 2025
+| {{sortname|Victoria|Bach}}
+| [[Toronto Sceptres]] (2023–24), [[Ottawa Charge]] (2024–25)
+| {{cite web |url=https://thehockeynews.com/womens/pwhl/victoria-bach-announces-her-retirement-from-hockey |title=Victoria Bach Announces Her Retirement From Hockey |last=Kennedy |first=Ian |date=June 1, 2025 |website= [[The Hockey News]] |access-date=June 1, 2025}}
+|-
+! scope="row" | August 5, 2025
+| {{sortname|Jillian|Dempsey}}
+| [[Montreal Victoire]] (2023–24), [[Boston Fleet]] (2024–25)
+| {{cite web |url= https://www.tsn.ca/pwhl/boston-fleet-forward-jillian-dempsey-retires-at-age-34-1.2343003 |title= Fleet's Dempsey announces retirement |date=August 5, 2025 |website= [[The Sports Network]] |access-date=August 5, 2025}}
+|-
+! scope="row" | September 2, 2025
+| {{sortname|Amanda|Pelkey}}
+| Boston Fleet (2023–25)
+| {{cite web |url=https://thehockeynews.com/womens/pwhl/boston-fleet-forward-and-olympic-gold-medalist-amanda-pelkey-retires-after-10-pro-seasons |title=Boston Fleet Forward and Olympic Gold Medalist Amanda Pelkey Retires After 10 Pro Seasons |last=Kennedy |first=Ian |date=September 2, 2025 |website=The Hockey News |access-date=September 2, 2025}}
+|}
+===Reserve activations===
+{| class="wikitable sortable"
+|+ Reserve player activations
+! scope="col" | Date
+! scope="col" | Activated player
+! scope="col" | Team
+! scope="col" | Absent player
+! scope="col" | Notes
+! scope="col" | Ref
+|-
+! scope="rowgroup" rowspan="3" | November 20, 2025
+| {{sortname|Kelly-Ann|Nadeau}}
+| [[Montreal Victoire]]
+| {{sortname|Lina|Ljungblom}}
+| [[Injured reserve list|LTIR]]
+|
+|-
+| {{sortname|Darcie|Lappan}}
+| [[Vancouver Goldeneyes]]
+| {{sortname|Nina|Jobst-Smith}}
+| LTIR
+|
+|-
+| {{sortname|Nicole|Vallario}}
+| [[New York Sirens]]
+| {{sortname|Dayle|Ross}}
+| LTIR
+|
+|-
+! scope="rowgroup" | November 22, 2025
+| {{sortname|Maya|Labad}}
+| Montreal Victoire
+| {{sortname|Jade|Downie-Landry}}
+| LTIR
+| {{cite web |url=https://www.dailyfaceoff.com/news/montreal-victoire-place-jade-downie-landry-on-ltir |title=Montreal Victoire place Jade Downie-Landry on LTIR |first=Hunter |last=Crowther |website=Daily Faceoff |date=November 22, 2025 |access-date=November 22, 2025}}
+|-
+! scope="rowgroup" | November 23, 2025
+| {{sortname|Olivia|Zafuto}}
+| [[Boston Fleet]]
+| {{sortname|Zoe|Boyd}}
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/boston-fleet/news/2025/november/23/fleet-sign-zafuto-to-10-day-contract |title=Fleet sign Zafuto to 10 day contract |website=Professional Women's Hockey League |date=November 23, 2025 |access-date=November 23, 2025}}
+|-
+! scope="rowgroup" | November 29, 2025
+| {{sortname|Lauren|Messier}}
+| [[Toronto Sceptres]]
+| {{sortname|Daryl|Watts}}
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2025/november/29/sceptres-sign-lauren-messier-to-10-day-contract |title=Sceptres sign Lauren Messier to 10 day contract |website=Professional Women's Hockey League |date=November 29, 2025 |access-date=November 29, 2025}}
+|-
+! scope="rowgroup" | December 5, 2025
+| {{sortname|Malia|Schneider}}
+| Vancouver Goldeneyes
+| {{sortname|Sarah|Nurse}}
+| LTIR
+| {{cite web |url=https://www.tsn.ca/pwhl/article/goldeneyes-place-nurse-on-ltir-sign-schneider/ |title=Goldeneyes place Nurse on LTIR, sign Schneider |website=[[The Sports Network]] |date=December 5, 2025 |access-date=December 5, 2025}}
+|-
+! scope="rowgroup" | December 15, 2025
+| {{sortname|Olivia|Wallin}}
+| [[Ottawa Charge]]
+| {{sortname|Gabbie|Hughes}}
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2025/december/15/charge-sign-olivia-wallin-to-10-day-contract |title=Charge sign Olivia Wallin to 10 day contract |website=Professional Women's Hockey League |date=December 15, 2025 |access-date=December 15, 2025}}
+|-
+! scope="rowgroup" | December 18, 2025
+| {{sortname|Olivia|Knowles}}{{efn|This transaction returns Nicole Vallario to the reserve player roster.}}
+| New York Sirens
+| {{sortname|Dayle|Ross|nolink=1}}
+| LTIR
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2025/december/18/new-york-sirens-activate-defender-olivia-knowles |title=New York Sirens activate defender Olivia Knowles |website=Professional Women's Hockey League |date=December 18, 2025 |access-date=December 19, 2025}}
+|-
+! scope="rowgroup" | December 27, 2025
+| {{sortname|Hanna|Baskin}}
+| Toronto Sceptres
+| {{sortname|Allie|Munroe}}
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2025/december/27/sceptres-sign-hanna-baskin-to-10-day-contract |title=Sceptres sign Hanna Baskin to 10-day contract |website=Professional Women's Hockey League |date=December 27, 2025 |access-date=December 27, 2025}}
+|-
+! scope="rowgroup" | January 2, 2026
+| {{sortname|Hanna|Baskin|nolink=1}}
+| Toronto Sceptres
+| {{sortname|Allie|Munroe|nolink=1}}
+| LTIR
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2026/january/02/sceptres-place-munroe-on-ltir-sign-baskin-to-spa |title=Sceptres place Munroe on LTIR, sign Baskin to SPA |website=Professional Women's Hockey League |date=January 2, 2026 |access-date=January 3, 2026}}
+|-
+! scope="rowgroup" | January 3, 2026
+| {{sortname|Mia|Biotti}}
+| Boston Fleet
+| N/A
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2026/january/02/sceptres-place-munroe-on-ltir-sign-baskin-to-spa |title=Sceptres place Munroe on LTIR, sign Baskin to SPA |website=Professional Women's Hockey League |date=January 3, 2026 |access-date=January 3, 2026}}
+|-
+! scope="rowgroup" | January 4, 2026
+| {{sortname|Tamara|Giaquinto}}
+| Montreal Victoire
+| {{sortname|Erin|Ambrose}}
+| 10 day contract
+|
+|-
+! scope="row" | January 6, 2026
+| {{sortname|Sarah|Coe|dab=ice hockey}}
+| Ottawa Charge
+| {{sortname|Sanni|Ahola}}
+| LTIR
+|
+|-
+! scope="rowgroup" | January 8, 2026
+| {{sortname|Kaitlyn|O'Donohoe}}
+| [[Minnesota Frost]]
+| {{sortname|Dominique|Petrie}}
+| LTIR
+| {{cite web |url=https://www.thepwhl.com/en/teams/minnesota-frost/news/2026/january/08/frost-sign-forward-kaitlyn-o-donohoe-place-dominique-petrie-on-ltir |title=Frost sign forward Kaitlyn O'Donohoe, place Dominique Petrie on LTIR |website=Professional Women's Hockey League |date=January 8, 2026 |access-date=January 9, 2026}}
+|-
+! scope="rowgroup" | January 22, 2026
+| {{sortname|Malia|Schneider|nolink=1}}
+| Vancouver Goldeneyes
+| N/A
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/vancouver-goldeneyes/news/2026/january/22/goldeneyes-sign-malia-schneider-to-10-day-contract |title=Goldeneyes sign Malia Schneider to 10 day contract |website=Professional Women's Hockey League |date=January 22, 2026 |access-date=January 24, 2026}}
+|-
+! scope="rowgroup" | January 30, 2026
+| {{sortname|Olivia|Wallin|nolink=1}}
+| Ottawa Charge
+| {{sortname|Samantha|Isbell}}
+| Contract termination
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2026/january/30/charge-sign-olivia-wallin-to-standard-player-agreement |title=Charge sign Olivia Wallin to Standard Player Agreement |website=Professional Women's Hockey League |date=January 30, 2026 |access-date=February 15, 2026}}
+|-
+! scope="rowgroup" rowspan=2 | February 26, 2026
+| {{sortname|Tamara|Giaquinto|nolink=1}}
+| Montreal Victoire
+| {{sortname|Erin|Ambrose|nolink=1}}
+| LTIR
+| {{cite web |url=https://www.thepwhl.com/en/teams/montreal-victoire/news/2026/february/26VICTOIRE-ELEVATE-GIAQUINTO-AND-NADEAU-TO-ACTIVE-ROSTER-PLACE-AMBROSE-ON-LTIR-AND-LIST-POULIN-DAY-TO-DAY |title=Victoire elevate Giaquinto and Nadeau to active roster, place Ambrose on LTIR and list Poulin day-to-day |website=Professional Women's Hockey League |date=February 26, 2026 |access-date=March 14, 2026}}
+|-
+| {{sortname|Kelly-Ann|Nadeau|nolink=1}}
+| Montreal Victoire
+| {{sortname|Marie-Philip|Poulin}}
+| 10 day contract
+|
+|-
+! scope="rowgroup" rowspan=3 | February 27, 2026
+| {{sortname|Olivia|Zafuto|nolink=1}}
+| Boston Fleet
+| {{sortname|Olivia|Mobley}}
+| LTIR
+| {{cite web |url=https://www.thepwhl.com/en/teams/boston-fleet/news/2026/february/27/fleet-sign-olivia-zafuto-place-olivia-mobley-on-ltir |title=Fleet sign Olivia Zafuto, place Olivia Mobley on LTIR |website=Professional Women's Hockey League |date=February 27, 2026 |access-date=March 14, 2026}}
+|-
+| {{sortname|Lauren|Messier|nolink=1}}
+| Toronto Sceptres
+| {{sortname|Emma|Gentry}}
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2026/february/27/toronto-signs-lauren-messier-to-10-day-contract |title=Toronto signs Lauren Messier to 10 day contract |website=Professional Women's Hockey League |date=February 27, 2026 |access-date=March 14, 2026}}
+|-
+| {{sortname|Élizabeth|Giguère}}
+| Minnesota Frost
+| {{sortname|Kendall|Coyne Schofield}}
+| LTIR
+| {{cite web |url=https://www.thepwhl.com/en/news/2026/february/27/frost-sign-forward-lizabeth-gigu-re-place-kendall-coyne-schofield-on-ltir |title=Frost sign forward Élizabeth Giguère, place Kendall Coyne Schofield on LTIR |website=Professional Women's Hockey League |date=February 27, 2026 |access-date=March 14, 2026}}
+|-
+! scope="rowgroup" | February 28, 2026
+| {{sortname|Sydney|Langseth}}
+| [[Seattle Torrent]]
+| {{sortname|Hilary|Knight}}
+| LTIR
+| {{cite web |url=https://www.thepwhl.com/en/news/2026/february/27/torrent-place-knight-on-ltir-sign-langseth |title=Torrent place Knight on LTIR, sign Langseth |website=Professional Women's Hockey League |date=February 28, 2026 |access-date=March 14, 2026}}
+|-
+! scope="rowgroup" | March 1, 2026
+| {{sortname|Brianna|Brooks}}
+| Vancouver Goldeneyes
+| N/A
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/vancouver-goldeneyes/news/2026/march/01/goldeneyes-sign-brianna-brooks-to-10-day-contract |title=Goldeneyes sign Brianna Brooks to 10 day contract |website=Professional Women's Hockey League |date=March 1, 2026 |access-date=March 14, 2026}}
+|-
+! scope="rowgroup" | March 10, 2026
+| {{sortname|Jada|Habisch}}
+| Seattle Torrent
+| {{sortname|Hannah|Bilka}}
+| LTIR
+| {{cite web |url=https://www.thepwhl.com/en/news/2026/march/10/torrent-place-bilka-on-ltir-sign-habisch |title=Torrent place Bilka on LTIR, sign Habisch |website=Professional Women's Hockey League |date=March 10, 2026 |access-date=March 14, 2026}}
+|-
+! scope="rowgroup" | March 13, 2026
+| {{sortname|Kaitlyn|Ross}}
+| Ottawa Charge
+| {{sortname|Sanni|Ahola|nolink=1}}
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/ottawa-charge/news/2026/march/13/charge-sign-goaltender-kaitlyn-ross-to-10-day-contract |title=Charge sign goaltender Kaitlyn Ross to 10 day contract |website=Professional Women's Hockey League |date=March 13, 2026 |access-date=March 14, 2026}}
+|-
+! scope="rowgroup" rowspan=2 | March 18, 2026
+| {{sortname|Kristin|Della Rovere}}
+| Toronto Sceptres
+| {{sortname|Clair|DeGeorge}}
+| Player traded
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2026/march/18/toronto-sceptres-sign-della-rovere-release-degeorge |title=Toronto Sceptres sign Della Rovere, release DeGeorge |website=Professional Women's Hockey League |date=March 18, 2026 |access-date=April 15, 2026}}
+|-
+| {{sortname|Nicole|Vallario|nolink=1}}
+| New York Sirens
+| {{sortname|Taylor|Girard}}
+| 10 day contract/LTIR
+| {{cite web |url=https://www.thepwhl.com/en/teams/new-york-sirens/news/2026/march/18/sirens-announce-a-trio-of-roster-moves |title=Sirens announce a trio of roster moves |website=Professional Women's Hockey League |date=March 18, 2026 |access-date=April 15, 2026}}
+|-
+! scope="rowgroup" | March 27, 2026
+| {{sortname|Vita|Poniatovskaia}}
+| Ottawa Charge
+| {{sortname|Brooke|Hobson}}
+| LTIR
+|
+|-
+! scope="rowgroup" | March 31, 2026
+| {{sortname|Nicole|Vallario|nolink=1}}
+| New York Sirens
+| {{sortname|Kristýna|Kaltounková}}
+| LTIR
+|
+|-
+! scope="rowgroup" | April 3, 2026
+| {{sortname|Brooke|Bryant}}
+| Seattle Torrent
+| N/A
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/news/2026/april/03/torrent-sign-forward-brooke-bryant-to-10-day-contract |title=Torrent sign forward Brooke Bryant to 10-day contract |website=Professional Women's Hockey League |date=April 3, 2026 |access-date=April 15, 2026}}
+|-
+! scope="rowgroup" | April 4, 2026
+| {{sortname|Sam|Cogan}}
+| Minnesota Frost
+| N/A
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/minnesota-frost/news/2026/april/04/frost-sign-forward-sam-cogan-to-10-day-contract |title=Frost sign forward Sam Cogan to 10-day contract |website=Professional Women's Hockey League |date=April 4, 2026 |access-date=April 15, 2026}}
+|-
+! scope="rowgroup" | April 8, 2026
+| {{sortname|Hanna|Baskin|nolink=1}}
+| Toronto Sceptres
+| {{sortname|Allie|Munroe|nolink=1}}
+| LTIR
+| {{cite web |url=https://www.thepwhl.com/en/teams/toronto-sceptres/news/2026/april/08/sceptres-move-munroe-to-ltir-sign-baskin |title=Sceptres move Munroe to LTIR, sign Baskin |website=Professional Women's Hockey League |date=April 8, 2026 |access-date=April 15, 2026}}
+|-
+! scope="rowgroup" rowspan=3 | April 15, 2026
+| {{sortname|Noemi|Neubauerová}}
+| Boston Fleet
+| N/A
+| 10 day contract
+| {{cite web |url=https://www.thepwhl.com/en/teams/boston-fleet/news/2026/april/15/fleet-sign-neubauerov-to-10-day-contract |title=Fleet sign Neubauerov to 10 day contract |website=Professional Women's Hockey League |date=April 15, 2026 |access-date=April 15, 2026}}
+|-
+| {{sortname|Sam|Cogan|nolink=1}}
+| Minnesota Frost
+| {{sortname|Natalie|Buchbinder}}
+| LTIR
+| {{cite web |url=https://www.thepwhl.com/en/teams/minnesota-frost/news/2026/april/15/frost-place-natalie-buchbinder-on-ltir-sign-forward-sam-cogan |title=Frost Place Natalie Buchbinder on LTIR, Sign Forward Sam Cogan |author=Minnesota Frost Staff |date=April 15, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=April 28, 2026}}
+|-
+| {{sortname|Kaitlyn|O'Donohoe|nolink=1}}
+| Minnesota Frost
+| N/A
+| 10 day contract
+|
+|}
+==Broadcast rights==
+Source: {{cite web |title=PWHL Announces 2025–26 Broadcast Schedule |url=https://www.thepwhl.com/en/news/2025/november/18/pwhl-announces-2025-26-broadcast-schedule |date=November 18, 2025 |access-date=November 18, 2025 |website=ThePWHL.com}}
+===Canada===
+====English====
+For the 2025–26 season, games in Canada were broadcast in English across [[The Sports Network|TSN]], [[Sportsnet]], [[Sports on Prime Video|Prime Video]], and [[CBC Television|CBC]]. TSN broadcast 54 regular season games, along with one PWHL Playoff semifinal and all games from the PWHL Finals. Prime Video broadcast 19 games, along with the other PWHL Playoff semifinal. Sportsnet broadcast 30 regular season games, while CBC or [[CBC Gem]] broadcast 17 games.
+====French====
+In Canada, all games featuring the Montréal Victoire will also be broadcast in French. These games are split between [[Réseau des sports|RDS]], [[Ici Radio-Canada Télé|Ici Télé]] and Prime Video. RDS broadcast 17 games, along with one PWHL Playoff semifinal and all games from the PWHL Finals. Prime Video broadcast six games, along with the other PWHL Playoff semifinal. ICI TÉLÉ or ICI TOU.TV broadcast seven games.
+===United States===
+====Local====
+Locally, [[Boston Fleet]] games were broadcast on [[NESN]], with select games simulcast on [[WSBK-TV]]. [[Minnesota Frost]] games were broadcast on [[FanDuel Sports Network North]], with select games simulcast on [[KMSP-TV]]. [[New York Sirens]] games were broadcast on [[MSG Network]], with select games simulcast on [[WWOR-TV]]. Seattle Torrent games are primarily broadcast on [[KZJO]], with six games airing instead on [[KONG (TV)|KONG]].
+====National====
+Nationally, all games in the United States were broadcast on [[YouTube]]. In addition, some games were shown out-of-market on select [[FanDuel Sports Network]] stations, [[SportsNet Pittsburgh]], select [[Gray Broadcast Sports Networks]] stations, and select [[Scripps Sports]] stations.
+In March 2026, the PWHL reached a test agreement with U.S. [[broadcast network|network]] [[Ion Television]], which already owned the rights to several leading women's sports properties. This represented the circuit's first true national TV exposure in the country. It entailed the broadcasting of a regular season game {{cite web | url =https://www.reuters.com/sports/sirens-victoire-play-pwhls-first-game-televised-nationally-us--flm-2026-03-12/ |title =Sirens, Victoire to play in PWHL's first game televised nationally in US |author= |date =March 12, 2026 |website =reuters.com |access-date =July 1, 2025}} {{cite web | url =https://nypost.com/2026/03/28/sports/ions-push-into-pwhl-another-big-win-for-womens-sports-coverage/ |title =ION's push into PWHL another big win for women’s sports coverage |last1 =Lehman |first1 =Jonathan |date =March 28, 2026 |work =[[New York Post]] |access-date =July 1, 2025}} and the entire Walter Cup Finals. {{cite web | url =https://usatoday.com/story/sports/hockey/2026/03/18/pwhl-finals-national-tv-where-to-watch/89207992007/ |title =PWHL's Walter Cup Finals will air on national TV, a first for league |last1 =Armour |first1 =Nancy |date =March 18, 2026 |work =USA Today |access-date =July 1, 2025}} {{cite web | url =https://www.theixsports.com/the-ice-garden/pwhl/pwhl-walter-cup-finals-to-air-on-ion-in-usa/ |title =PWHL Walter Cup Finals to air on ION in USA |last1 =Burgess |first1 =Melissa |date =March 18, 2026 |website =theicegarden.com |via=theixsports.com |access-date =July 1, 2025}} The league's U.S. national TV debut, a March 28 game between Montreal and New York, drew 133,000 viewers. {{cite web | url =https://www.advanced-television.com/2026/06/04/nielsen-viewership-growth-across-nba-nhl-indycar-golf-in-us/ |title =Nielsen: Viewership growth across NBA, NHL, IndyCar, golf in US |author= |date =June 4, 2026 |website =advanced-television.com |access-date =July 1, 2025}}
+===International===
+In Czechia and Slovakia, games were broadcast on [[Nova Sport (Czech Republic and Slovakia)|Nova Sport]]. Outside of Canada, Czechia, and Slovakia, games were broadcast on the PWHL [[YouTube]] channel and thepwhl.com.
+==Notes==
+{{notelist}}
+==References==
+{{reflist}}
+===Recaps===
+{{reflist|group="Recap"}}
+==External links==
+* {{Official website|https://www.thepwhl.com/}}
+{{2025–26 PWHL season by team}}
+{{Professional Women's Hockey League}}
+{{Professional Women's Hockey seasons}}
+{{DEFAULTSORT:2025-26 PWHL season}}
+[[Category:2025–26 in American ice hockey by league|1]]
+[[Category:2025–26 in Canadian ice hockey by league|PWHL]]
+[[Category:2025–26 in women's ice hockey leagues|PWHL]]
+[[Category:PWHL seasons]]
+[[Category:2025–26 PWHL season| ]]
+[[Category:2025–26 in American women's ice hockey]]
+[[Category:2025–26 in Canadian women's ice hockey]]
