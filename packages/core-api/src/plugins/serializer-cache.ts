@@ -8,14 +8,35 @@
  * deploys failed.
  *
  * Most routes share their response schemas (the error bodies above all), so this factory keys
- * each compiled serializer by its schema and reuses it. A serializer is a pure function of its
- * schema and the external schemas the factory was given, so sharing one changes no response.
+ * each compiled serializer by its schema and the shared schemas it was built against, and reuses
+ * it. A serializer is a pure function of those, so sharing one changes no response.
  */
 import type { FastifyServerOptions } from 'fastify';
-import { SerializerSelector, type SerializerFactory } from '@fastify/fast-json-stringify-compiler';
+import { SerializerSelector, type Serializer, type SerializerFactory } from '@fastify/fast-json-stringify-compiler';
 
 export function cachedSerializerFactory(build: SerializerFactory = SerializerSelector()): SerializerFactory {
-  return build;
+  // Fastify asks for a fresh compiler in every encapsulated plugin, each with the same shared
+  // components, so the cache outlives one compiler: keyed first by what the compiler was given.
+  const compilers = new Map<string, Map<string, Serializer>>();
+  return (externalSchemas, options) => {
+    const compile = build(externalSchemas, options);
+    const compilerKey = JSON.stringify([externalSchemas, options]);
+    let compiled = compilers.get(compilerKey);
+    if (compiled === undefined) {
+      compiled = new Map();
+      compilers.set(compilerKey, compiled);
+    }
+    const cache = compiled;
+    return (route) => {
+      const key = JSON.stringify(route.schema);
+      let serializer = cache.get(key);
+      if (serializer === undefined) {
+        serializer = compile(route);
+        cache.set(key, serializer);
+      }
+      return serializer;
+    };
+  };
 }
 
 /** The schema controller every core-api Fastify instance is built with. */
