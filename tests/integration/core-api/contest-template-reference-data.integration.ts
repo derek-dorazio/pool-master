@@ -434,7 +434,9 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
   });
 
   it('presets round values 1, 2, 4, 8, 16 and 32 on every roster and bracket template, with no upset bonus on Doubling and the seed difference times 1 on Doubling + upset bonus', async () => {
-    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' } } });
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' }, selectionType: { not: SelectionType.SURVIVOR } },
+    });
 
     expect(templates).toHaveLength(18);
     for (const template of templates) {
@@ -728,6 +730,7 @@ const KNOCKOUT_SELECTION_TYPES: readonly SelectionType[] = [
   SelectionType.BUDGET_PICK,
   SelectionType.RANDOM_DRAW,
   SelectionType.BRACKET,
+  SelectionType.SURVIVOR,
   SelectionType.SQUARES,
 ];
 const WEEK_SELECTION_TYPES: readonly SelectionType[] = [SelectionType.PICK_EM, SelectionType.SURVIVOR];

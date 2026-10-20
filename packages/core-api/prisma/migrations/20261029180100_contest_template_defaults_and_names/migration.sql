@@ -9,7 +9,8 @@
 -- 3. Budget and Random draw get a default of their own in every league (Tiered had the only one,
 --    Budget in Formula 1). The default sorts ahead of its variations.
 -- 4. New templates: brackets (full, full with the upset bonus, and second chance) for every knockout
---    league, NFL pick'em (straight up, confidence, against the spread) and survivor for its weeks,
+--    league, survivor on every playoff bracket, NFL pick'em (straight up, confidence, against the
+--    spread) and survivor for its weeks,
 --    College Football Playoff squares, and an LPGA Tour majors pool on the LPGA Tour, seeded here
 --    as reference data like every other league.
 
@@ -185,6 +186,29 @@ FROM (VALUES
 ) AS v("template_key", "selection_type", "name", "description", "sort_order", "is_default", "config_json")
 JOIN "sports" s ON s."sport" = 'AMERICAN_FOOTBALL'
 JOIN "sport_leagues" l ON l."sport_id" = s."id" AND l."name" = 'NFL'
+ON CONFLICT ("sport", "event_type", "contest_type", "selection_type", "template_key") DO NOTHING;
+
+-- 4b2. Survivor on a playoff bracket (#804): each round is a survivor week, for every knockout
+-- league. Like a week's survivor, it scores by its own rules.
+INSERT INTO "contest_config_templates" (
+  "id", "sport", "sport_league_id", "event_type", "contest_type", "selection_type", "template_key",
+  "name", "description", "sort_order", "is_default", "active", "config_json", "schema_version", "updated_at"
+)
+SELECT
+  gen_random_uuid(), s."sport", l."id", 'KNOCKOUT', 'PREDICTION', 'SURVIVOR', v."key_prefix" || '-playoff-survivor',
+  'Survivor: 1 team a round, each team once',
+  'Pick one team to win in each round, never the same team twice. A loss puts the entry out; the last ones standing win.',
+  11, TRUE, TRUE, '{ "selectionType": "SURVIVOR", "maxEntriesPerSquad": 1 }'::jsonb, 1, NOW()
+FROM (VALUES
+  ('BASKETBALL', 'NCAA Division I Men', 'ncaa-men'),
+  ('BASKETBALL', 'NCAA Division I Women', 'ncaa-women'),
+  ('BASKETBALL', 'NBA', 'nba'),
+  ('BASKETBALL', 'WNBA', 'wnba'),
+  ('AMERICAN_FOOTBALL', 'NFL', 'nfl'),
+  ('AMERICAN_FOOTBALL', 'College Football Playoff', 'cfp')
+) AS v("sport", "league", "key_prefix")
+JOIN "sports" s ON s."sport"::text = v."sport"
+JOIN "sport_leagues" l ON l."sport_id" = s."id" AND l."name" = v."league"
 ON CONFLICT ("sport", "event_type", "contest_type", "selection_type", "template_key") DO NOTHING;
 
 -- 4c. College Football Playoff squares, as the NFL's: the national championship is its last game.
