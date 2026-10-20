@@ -300,6 +300,24 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     expect(standings).toEqual(expect.arrayContaining([[context.alice.id, '1', 2], [context.bob.id, '2', 1]]));
   });
 
+  it('waits for every quarter\'s score when the result goes in first, then settles with all four winners once the last quarter is entered', async () => {
+    const context = setup({ status: ContestStatus.ACTIVE });
+    context.squares.addBox(context.contest.id, context.alice.id, 0, 7);
+    context.squares.addBox(context.contest.id, context.bob.id, 3, 4);
+    context.drawInOrder();
+    context.updateGame({ status: MatchStatus.COMPLETED, homeScore: 27, awayScore: 20, periodScores: [period(1, 7, 0), period(2, 14, 3)] });
+
+    await expect(context.settlement.settleFinishedGame(context.superBowl.id, context.game.id, { completedAt: later(KICKOFF, 4) })).resolves.toBe(0);
+    expect(context.contestStatus()).toBe(ContestStatus.ACTIVE);
+    expect(context.squares.winners.has(context.contest.id)).toBe(false);
+
+    context.updateGame({ periodScores: [period(1, 7, 0), period(2, 14, 3), period(3, 21, 13)] });
+    await expect(context.settlement.settleFinishedGame(context.superBowl.id, context.game.id, { completedAt: later(KICKOFF, 5) })).resolves.toBe(1);
+
+    expect(context.contestStatus()).toBe(ContestStatus.COMPLETED);
+    expect((context.squares.winners.get(context.contest.id) ?? []).map((winner) => winner.periodNumber)).toEqual([1, 2, 3, 4]);
+  });
+
   it('shares a place between entries that won the same number of quarters', async () => {
     const context = setup({ status: ContestStatus.ACTIVE });
     context.squares.addBox(context.contest.id, context.alice.id, 0, 7);

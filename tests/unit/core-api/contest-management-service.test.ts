@@ -32,6 +32,7 @@ import {
   CONTEST_SCORING_SETTINGS_REQUIRED,
   CONTEST_SQUARES_GAME_INVALID,
   CONTEST_SQUARES_GAME_REQUIRED,
+  CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD,
   CONTEST_SQUARES_SINGLE_EVENT,
   type CreateContestRequest,
 } from '@poolmaster/shared/dto';
@@ -2424,6 +2425,33 @@ describe('ContestManagementService squares rules (#711)', () => {
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
       maxEntriesPerSquad: 1,
     }));
+  });
+
+  it.each([
+    { name: 'two entries per squad', maxEntriesPerSquad: 2 },
+    { name: 'no entry limit', maxEntriesPerSquad: null },
+  ])('refuses a squares contest allowing $name with CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, since the box limit is a squad\'s, writing nothing', async ({ maxEntriesPerSquad }) => {
+    const { contestCoreRepo, service } = squaresService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest({
+      configuration: { selectionType: SelectionType.SQUARES, maxEntriesPerSquad, maxSquaresPerEntry: 10 },
+    }))).rejects.toMatchObject({ code: CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a draft squares contest\'s settings changed to more than one entry per squad with CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, storing nothing', async () => {
+    const { contestCoreRepo, contestConfigurationRepo, service } = squaresService();
+    await service.createContest({ leagueId: 'league-1' }, squaresRequest());
+    (contestCoreRepo.findById as jest.Mock).mockResolvedValue({
+      ...(await contestCoreRepo.findById('contest-1')),
+      contestFormat: ContestFormat.SQUARES,
+      selectionType: SelectionType.SQUARES,
+      squaresGameMatchId: GAME_ID,
+    });
+
+    await expect(service.updateContestConfiguration('contest-1', { selectionType: SelectionType.SQUARES, maxEntriesPerSquad: 2, maxSquaresPerEntry: 10 }))
+      .rejects.toMatchObject({ code: CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, statusCode: 422 });
+    expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
   });
 
   it('refuses a squares contest sent no game with CONTEST_SQUARES_GAME_REQUIRED, writing nothing', async () => {

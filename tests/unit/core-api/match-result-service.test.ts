@@ -342,6 +342,25 @@ describe('MatchResultService period scores', () => {
     expect(games.find((game) => game.matchNumber === 1)?.periodScores).toEqual([{ periodNumber: 3, homeScore: 17, awayScore: 3 }]);
   });
 
+  it('asks the lifecycle to settle the squares contests on a finished game when a quarter\'s score is entered after its result, and not before it', async () => {
+    const { store, event } = await week();
+    const settleContestsForFinishedGame = jest.fn<EventLifecycleService['settleContestsForFinishedGame']>(async () => undefined);
+    const service = new MatchResultService({
+      sportEvents: store.sportEventRepo(),
+      matches: store.matchRepo(),
+      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), settleContestsForFinishedGame },
+      now: () => AS_OF,
+    });
+    await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
+    expect(settleContestsForFinishedGame).not.toHaveBeenCalled();
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 24, awayScore: 10 });
+    settleContestsForFinishedGame.mockClear();
+
+    await service.recordPeriodScore(event.id, 1, 3, { homeScore: 17, awayScore: 3 });
+
+    expect(settleContestsForFinishedGame).toHaveBeenCalledWith(expect.objectContaining({ id: event.id }), 'game-1', AS_OF);
+  });
+
   it('clears a quarter\'s score, and changes nothing for a quarter not entered', async () => {
     const { service, event } = await week();
     await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });

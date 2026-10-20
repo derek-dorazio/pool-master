@@ -186,6 +186,9 @@ export const CONTEST_SQUARES_GAME_INVALID = 'CONTEST_SQUARES_GAME_INVALID';
 /** Error code for a squares contest given more than one event: it is played on one game (#711). */
 export const CONTEST_SQUARES_SINGLE_EVENT = 'CONTEST_SQUARES_SINGLE_EVENT';
 
+/** Error code for a squares contest allowing other than one entry per squad (#711, design Q3.3): its box limit is the squad's. */
+export const CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD = 'CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD';
+
 /** Error code for naming an event the contest does not cover (#713). */
 export const CONTEST_EVENT_NOT_IN_CONTEST = 'CONTEST_EVENT_NOT_IN_CONTEST';
 
