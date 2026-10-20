@@ -397,21 +397,27 @@ unprefixed.
 ## 11. Open-Ended Additive Substrate Design
 
 Schema designs must accommodate future variants (new sports, new contest
-types, new event formats) by **additive table creation**, not by altering
-existing tables.
+types, new event formats) without reshaping what exists, and without a new
+table set for every variant.
 
-- Adding a new sport: create per-category detail tables, create per-(category
-  × contestType) contribution tables, add a Sport row, add scoring rule
-  functions. **No alterations to existing tables.**
-- Adding a new contest type within an existing sport: create the per-(category
-  × contestType) contribution table for the new combo. **No alterations to
-  existing tables.**
-- Adding a new variant within an existing axis: a new row in an existing table
-  is fine; a new nullable column on an existing table to support a new variant
-  is the smell to avoid.
+- **One model when the shape is the same.** Before adding a table, check
+  whether an existing one already holds that shape: a playoff series is one
+  `SportEventMatch` scored by games won, an NFL week reuses the bracket's
+  matches, every family's settled total is the one
+  `ContestEntryStanding.totalScore`. A per-sport or per-variant copy of an
+  existing shape is the smell; consolidate instead.
+- **A new shape goes with its scoring family, not its sport.** A family owns
+  one set of result tables shared by every sport in it
+  (`architecture-rules.md` §4 *Service Topology*, the sport registry and
+  scoring families). Adding a sport to an existing family adds a registry
+  entry and data, not tables.
+- **Adding a variant within an existing axis** is a new row or enum member.
+  A new nullable column on an existing table that only one variant fills is
+  the smell to avoid.
 
-The substrate test is: "can the next sport / contest type / variant ship
-without altering any existing table?" If no, the design is too coupled to
+The substrate test is: "can the next sport / contest type / variant ship by
+reusing an existing shape or adding its family's own tables, without
+altering what other variants use?" If no, the design is too coupled to
 today's variants.
 
 ---

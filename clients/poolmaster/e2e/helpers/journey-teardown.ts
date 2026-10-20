@@ -3,7 +3,8 @@ import { adminApiHeaders, attempt, expectOk, type AuthHeaders, type Log } from '
 import type { AdminCredentials } from './admin-session';
 
 /**
- * #84, #280 — the golden journey's teardown (plans/130 §"Teardown"). One attempt's whole object
+ * #84, #280 — the golden journey's teardown (plans/130 §"Teardown", deleted:
+ * `git show 392c725:plans/130-e2e-browser-suite-evaluation.md`). One attempt's whole object
  * graph, removed through the API with the admin token, in dependency order:
  *
  *   league (its contest, entry, squads, memberships and invite link go with it)

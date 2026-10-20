@@ -1,5 +1,5 @@
 // #300 — classifies a PR's changed files into the CI areas they can affect, so jobs that cannot
-// be affected are skipped. See plans/146-ci-path-filtered-jobs.md.
+// be affected are skipped. See docs/CI-AND-QUALITY-GATES.md.
 //
 // The whole design rests on one asymmetry: running a suite needlessly costs a few minutes, while
 // skipping one that was needed puts a defect on main with a green check beside it. So every rule

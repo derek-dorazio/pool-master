@@ -38,7 +38,7 @@ env:
 
 jobs:
   # #300 — which areas this change can affect, so jobs that cannot be affected are skipped.
-  # Narrative and the reasoning behind every rule: plans/146-ci-path-filtered-jobs.md.
+  # The reasoning behind every rule: docs/CI-AND-QUALITY-GATES.md (the `changes` job).
   #
   # This job ALWAYS runs, on pull requests and on pushes alike. It must, for two reasons: a job
   # that `needs:` a skipped job is itself skipped, so skipping this one would cascade into
@@ -146,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [all-contract-gates, changes]
-    # #300 — see plans/146. A documentation-only change cannot break lint or typecheck.
+    # #300 — see docs/CI-AND-QUALITY-GATES.md. A documentation-only change cannot break lint or typecheck.
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
@@ -193,8 +193,8 @@ jobs:
   # merged unit + integration + FAPI report is .github/workflows/coverage.yml, run on
   # demand: V8 coverage, which the merge needs, more than doubles integration time.
 
-  # No database. The coverage threshold in tests/jest.config.js is enforced here and is
-  # the only coverage gate in CI. Jest's default provider (Babel) — see the config.
+  # No database. The coverage threshold in tests/jest.config.js is enforced here; the
+  # webapp's is enforced in poolmaster-unit-tests. Jest's default provider (Babel) — see the config.
   service-unit-tests:
     name: service-unit-tests
     runs-on: ubuntu-latest
@@ -632,7 +632,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     needs: [all-contract-gates, changes]
-    # #300 — see plans/146. Gated on `code`, not `client`: it runs the whole stack, core-api included.
+    # #300 — see docs/CI-AND-QUALITY-GATES.md. Gated on `code`, not `client`: it runs the whole stack, core-api included.
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
@@ -1657,8 +1657,8 @@ jobs:
         run: scripts/ci-install-playwright-chromium.sh
       # Only the @smoke specs. Since #84 and #280 that includes the journey's
       # acts 1-3, which write a run-named golf catalog, league, contest, entry
-      # and two users to QA and tear them down in afterAll (plans/130 "Owner
-      # ruling"). Act 4 is untagged and does not run here. Traces stay on; the config's
+      # and two users to QA and tear them down in afterAll (deleted plans/130 "Owner
+      # ruling": `git show 392c725:plans/130-e2e-browser-suite-evaluation.md`). Act 4 is untagged and does not run here. Traces stay on; the config's
       # globalTeardown (e2e/redact-artifacts.ts) scrubs credentials and
       # session tokens from them before the report is built and uploaded.
       - name: Run PoolMaster browser E2E smoke
