@@ -2,7 +2,7 @@ import type { IngestionScheduleConfig } from '@/lib/api';
 import type { SyncSport } from './root-admin-sync-utils';
 
 // Re-exported so the root-admin config pages keep importing these from one place;
-// the shapes themselves are the generated named components (see plans/143).
+// the shapes themselves are the generated named components (`rules/service-rules.md` §4).
 export type { IngestionScheduleConfig };
 
 export const INGESTION_POLICY_FIELDS = [

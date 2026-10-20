@@ -47,7 +47,7 @@ The deploy stages (`deploy-publish-images`, `deploy-migrate-qa`, `deploy-qa`,
 
 ### Why the gated jobs carry `!cancelled()`
 
-A path-filter job called `changes` classifies which areas a pull request touches,
+A path-filter job called `changes` classifies which areas a change touches,
 and eight jobs read its outputs. Their conditions all begin with `!cancelled() &&
 needs.all-contract-gates.result == 'success'`, which looks redundant and is not
 (#350).
@@ -60,12 +60,11 @@ eight gated jobs and, transitively, the entire deploy chain. The run reported
 `failure` having tested nothing and deployed nothing, which reads like a test
 failure rather than a pipeline that did not run.
 
-On a push to `main` the path filter is never consulted: every condition
-short-circuits on `github.event_name != 'pull_request'`, and
-`ci-changed-areas.mjs` with no file list reports *"no file list; running
-everything"*. So gating main on `changes` bought nothing. The explicit
-`needs.all-contract-gates.result == 'success'` keeps the contract gates blocking,
-so this is deliberately **not** `always()`.
+Each condition reads `needs.changes.outputs.<area> != 'false'`, not `== 'true'`
+(#778). A `changes` that never finished leaves its outputs empty, so the job runs
+rather than skips: the same fail-toward-running rule the classifier follows. The
+explicit `needs.all-contract-gates.result == 'success'` keeps the contract gates
+blocking, so this is deliberately **not** `always()`.
 
 ### Job timeouts
 
@@ -79,7 +78,7 @@ with a ten-minute floor:
 | `changes`, `all-contract-gates`, `service-lint-typecheck`, `service-unit-tests`, `schema-migration-drift`, `service-build`, `service-mock-provider-build`, health-issue jobs | under 2 min | 10 |
 | `poolmaster-unit-tests` | 2 min | 15 |
 | `service-image-smoke` | not yet measured | 15 |
-| `service-integration-tests (1/2)`, `(2/2)` shards, `service-functional-api-tests` | 2.5–4 min | 20 |
+| `service-integration-tests (1/4)`–`(4/4)` and `service-functional-api-tests (1/2)`, `(2/2)` shards | 3–5 min (7 each before #778 split them further) | 20 |
 | `poolmaster-browser-e2e-local` | 4–9 min | 25 |
 | `poolmaster-build` | 1–12 min | 30 |
 | `deploy-publish-images` | 4–5 min | 20 |
@@ -303,7 +302,7 @@ coverage.yml workflow* below.
 
 ### Path filtering: jobs a change cannot affect are skipped (#300)
 
-`changes` always runs and classifies the pull request's changed files, via
+`changes` always runs and classifies the changed files, via
 `scripts/ci-changed-areas.mjs`. The code jobs carry a job-level `if:` on its
 outputs, so a change that cannot affect a suite does not run it. A
 documentation-only PR runs `all-contract-gates` and `changes` and nothing else.
@@ -316,10 +315,19 @@ documentation-only PR runs `all-contract-gates` and `changes` and nothing else.
 
 Three properties hold this together, and each is load-bearing:
 
-**Filtering is pull-request-only.** Every condition is
-`github.event_name != 'pull_request' || …`, so a push to `main` runs the full set
-regardless of paths. main's run gates `deploy-publish-images`; filtering there
-would mean deploying code whose tests never ran.
+**On `main` it is all-or-nothing (#778).** main's run gates
+`deploy-publish-images`, so it never runs part of the suites: `changes` runs the
+classifier with `--all-or-nothing`, and any push that is not documentation-only
+runs every job. A documentation-only push skips the code jobs, and because the
+deploy chain needs them, it skips the QA deploy too; it no longer holds main's one
+run slot for 23 minutes. The health-issue reporters read that all-skipped run as
+inconclusive and leave their issues as they are.
+
+main's file list is the diff from the **last successful main run**, not from the
+previous commit. A run that was replaced while pending (see the concurrency
+section) or that failed never succeeded, so its commits stay in the next run's
+diff, and that run tests and deploys them. If the base can't be found, or isn't an
+ancestor of the pushed commit, the list is empty and everything runs.
 
 **It is a job-level `if:`, never `on.pull_request.paths`.** A workflow filtered at
 the trigger level produces no check run, and a required check with no check run
@@ -849,7 +857,7 @@ usually faster than any targeted repair:
    migration history came back clean.
 4. **Re-run the latest `main` run's failed jobs**, so `deploy-qa` rolls the release out.
 5. Optionally, **Actions -> Load sport data -> Run workflow** with mode `apply` to load the
-   2026 tournaments for manual league and contest testing (`docs/EVENT-SETUP-PROCEDURES.md`, *Seeded 2026
+   2026 tournaments for manual league and contest testing (`docs/SPORT-DATA-LOADING.md`, *Seeded 2026
    tournaments*). A reset leaves none.
 
 The reset wipes every row, re-applies every migration — which restores the reference data,
@@ -885,7 +893,7 @@ release, and the mock contest feed provider has its own suite.
 - **Local commands:**
   - `npm run test:service:unit` (or `npm test`) — run the suite
   - `npm run test:coverage:service:unit` — run with coverage
-- **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit` with Jest's default Babel coverage provider; the coverage threshold below fails the job, and it is the only coverage gate in CI.
+- **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit` with Jest's default Babel coverage provider; the coverage threshold below fails the job. It is one of two coverage gates in CI; the other is the webapp unit suite's (`poolmaster-unit-tests`, §4 below).
 - **Required pre-push gate:** `npx jest --config tests/jest.config.js --forceExit` (per `AGENTS.md` Quality Gates).
 - **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 67.5% statements, 65.5% branches, 65.5% functions, 67.5% lines. These are regression floors, not aspirational targets, raised in #747 to about 3 points under the lower of two measurements: Babel (this job) 74.63 / 68.84 / 68.42 / 74.36, and V8 (the merged report, which reuses this config) 70.69 / 85.52 / 79.87 / 70.69.
 - **Database:** none. Pure unit tests must not touch Postgres; if a test needs a DB, it belongs in the integration suite.
@@ -902,8 +910,9 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:service:integration` — run the suite (requires `DATABASE_URL` and a fresh DB)
   - `npm run test:service:integration:fresh` — reset DB then run
   - `npm run test:coverage:service:integration` — coverage variant
-- **CI job:** two shards, `service-integration-tests (1/2)` and `(2/2)`, each with its own Postgres service container, run `npm run test:integration -- --shard=k/2` with no coverage (#302, #295). Jest shards by file, so every integration file must pass whichever other files share its shard (§9A isolation). A small `service-integration-tests` job turns the two shard results into the one verdict branch protection and `deploy-publish-images` depend on; it skips when the shards skip.
-- **Reproduce one shard locally:** `npm run test:integration -- --shard=1/2` (not the `test:service:integration` alias, which drops the flag: npm reads it as its own config).
+- **CI job:** four shards, `service-integration-tests (1/4)` to `(4/4)`, each with its own Postgres service container, run `npm run test:integration -- --shard=k/4` with no coverage (#302, #295, #778). Jest shards by file, so every integration file must pass whichever other files share its shard (§9A isolation). A small `service-integration-tests` job turns the shard results into the one verdict branch protection and `deploy-publish-images` depend on; it skips when the shards skip.
+- **No type-checking at test time:** `tests/tsconfig.json` sets `isolatedModules`, so ts-jest compiles each file on its own without type-checking, which makes the integration and functional suites about a fifth faster (#778). `npm run typecheck:tests`, a required CI step and pre-push gate, type-checks the same files, and with the flag it also refuses the patterns that can't be compiled file by file. Run it alongside a suite locally.
+- **Reproduce one shard locally:** `npm run test:integration -- --shard=1/4` (not the `test:service:integration` alias, which drops the flag: npm reads it as its own config).
 - **Required pre-push gate:** `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:integration`.
 - **Coverage policy:** **No threshold** in `tests/integration/jest.config.js`, and no coverage in CI. Integration coverage is collected only for the merged report in `coverage.yml`.
 - **Database setup:** `npm run db:test:reset` recreates the test DB (empty schema, every migration applied); `npm run db:test:migrate` applies pending migrations only.
@@ -922,7 +931,7 @@ release, and the mock contest feed provider has its own suite.
   - `npm run test:service:functional-api` — run the suite (requires `DATABASE_URL`)
   - `npm run test:service:functional-api:fresh` — reset DB then run
   - `npm run test:coverage:service:functional-api` — coverage variant
-- **CI job:** `service-functional-api-tests` (its own Postgres service container). Runs `npm run test:service:functional-api` with no coverage (#302).
+- **CI job:** two shards, `service-functional-api-tests (1/2)` and `(2/2)`, each with its own Postgres service container and its own server, run `npm run test:service:functional-api -- --shard=k/2` with no coverage (#302, #778). As with integration, every file must pass in either shard, and a `service-functional-api-tests` job turns the shard results into the one required verdict.
 - **Required pre-push gate:** `DATABASE_URL=... npm run test:service:functional-api` (per `AGENTS.md` Quality Gates).
 - **Coverage policy:** No threshold, and no coverage in CI. FAPI coverage is collected only for the merged report in `coverage.yml`.
 
@@ -1003,7 +1012,7 @@ release, and the mock contest feed provider has its own suite.
 | Webapp unit | 89% / 81.5% / 89.5% / 89% (stmts / branches / fns / lines) | `clients/poolmaster/vitest.config.ts` |
 | Webapp E2E | N/A | — |
 
-Both configured thresholds are intentionally **regression floors**, not targets. The backend one is measured with Babel statement counts, the method it was set against (#302), and must also clear the V8 run; the web one is V8, the only provider that suite uses. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
+Both configured thresholds are intentionally **regression floors**, not targets, and they only ratchet up: when a slice raises measured coverage, the floor may follow to about 3 points under the new measurement, and it is never lowered to let a slice through. The backend one is measured with Babel statement counts, the method it was set against (#302), and must also clear the V8 run; the web one is V8, the only provider that suite uses. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
 
 ## File reference
 

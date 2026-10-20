@@ -154,7 +154,7 @@ for (const file of walk(ROUTES_ROOT)) {
 if (structural.length > 0) {
   console.error(`Found ${structural.length} structural problem(s) with named components:\n`);
   for (const line of structural) console.error(`  ${line}\n`);
-  console.error('See plans/143 (#192).');
+  console.error('See rules/service-rules.md §4 (#192).');
   process.exit(1);
 }
 
@@ -167,7 +167,7 @@ if (findings.length > 0) {
   }
   console.error('A half-converted module publishes one shape inline and $refs it everywhere');
   console.error('else, so the frontend gets a named type for part of it and a response-map');
-  console.error('derivation for the rest. See plans/143 (#192).');
+  console.error('derivation for the rest. See rules/service-rules.md §4 (#192).');
   process.exit(1);
 }
 

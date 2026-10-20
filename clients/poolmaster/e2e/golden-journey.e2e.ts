@@ -11,7 +11,8 @@ import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
 
 /**
- * #84, #280 — the golden journey (plans/130 §"Phase 2 — the journey suite"): the root admin
+ * #84, #280 — the golden journey (plans/130 §"Phase 2 — the journey suite", deleted:
+ * `git show 392c725:plans/130-e2e-browser-suite-evaluation.md`): the root admin
  * builds a golf catalog (act 1), a brand-new commissioner runs a league and a contest on it
  * (act 2), a brand-new member joins by invite link and enters (act 3), the root admin scores the
  * event and reads every role's writes back (act 4), further rounds of scores move the contest

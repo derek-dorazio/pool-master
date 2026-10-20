@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 // pool-master-303: the browser e2e fixture suite this test used to also
 // cover (clients/poolmaster/e2e/fixture-state.ts, fixtures.ts) was deleted
-// in plans/130-e2e-browser-suite-evaluation.md's phase 1 — it depended on
+// in phase 1 of the deleted plans/130 (`git show 392c725:plans/130-e2e-browser-suite-evaluation.md`) — it depended on
 // pre-existing, shared, mutated-in-place QA data, which is exactly what
 // that plan removed. bootstrap-users.mjs itself is unrelated and still
 // live (see .github/workflows/create-test-users.yml), so this file now

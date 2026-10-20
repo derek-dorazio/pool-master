@@ -245,8 +245,8 @@ filling them in rather than by finding guards scattered through the code:
   when it is in the registry; the `Sport` enum and the validity matrices are not a write
   permission (§2 *Validity / Compatibility Matrices Source of Truth*).
 - **The sport's scoring family** holds what is behaviour: how results are stored, scored and
-  shown. Several sports share a family (golf is stroke play; tennis and March Madness are
-  knockout advancement; races are finish position), and each family owns one set of result
+  shown. Several sports share a family (golf is stroke play; basketball and American football
+  are head to head; races are finish position), and each family owns one set of result
   extension tables beside the cross-sport event core. Never one table set per sport. An
   entry's settled total is not one of them: it is one integer in every family, read through
   the contest's scoring definition, so it lives on `ContestEntryStanding.totalScore` and a
@@ -428,7 +428,7 @@ those differences were decisions — they are what happens when "who is asking" 
 
 Three kinds of row get confused with each other, and the confusion is expensive: the first QA
 reset wiped the `sports` table, nothing restored it, and every golf admin screen went dead —
-`golfSportQueryOptions` throws "The golf sport is not set up." with no GOLF row. The row had
+the golf sport query threw "The golf sport is not set up." with no GOLF row. The row had
 existed in each environment by a different accident, and in QA by nothing but the assumption
 that it was already there.
 
@@ -515,9 +515,15 @@ code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`
 
 ### Manual-testing seed data goes through the admin API
 
-- `packages/core-api/scripts/seed-golf/` is the pattern: data files (`golf-2026.json`) and a
-  script that writes them with the generated SDK as a root admin, so every rule the Manage
-  screens apply applies to it too and nothing writes the database behind the service.
+- `packages/core-api/scripts/seed-golf/` holds every sport's data files (the folder name
+  predates the other sports) and the script that writes them with the generated SDK as a root
+  admin, so every rule the Manage screens apply applies to it too and nothing writes the
+  database behind the service.
+- **Every sport league goes through the same pipeline**: the *Fetch sport sources* workflow
+  gathers the source pages, a data file is written from them, and the one *Load sport data*
+  workflow applies it (the season's schedule, then each event's field). Only the source sites
+  differ per league (`docs/SPORT-DATA-SOURCES.md`). A league never gets its own loader or its
+  own workflow.
 - It runs only when someone asks: `npm run seed:golf` locally, the *Load sport data*
   workflow on QA. Never from a migration, a deploy, a reset, or a Prisma seed.
 - A data file carries its scope in an envelope (schema version, sport, season, sport
