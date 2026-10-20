@@ -2090,7 +2090,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport league
-         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.
+         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. Root admin only.
          */
         patch: operations["updateSportLeague"];
         trace?: never;
@@ -7404,7 +7404,7 @@ export interface components {
             /** @description Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in. */
             currentEventYear?: number;
             /**
-             * @description RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
+             * @description RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted.
              * @enum {string}
              */
             bracketAdvancement?: "FIXED" | "RESEED_BY_SEED";
@@ -21539,6 +21539,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -318,6 +318,77 @@ describe('SportEventBracketService.releaseBlockers', () => {
   });
 });
 
+describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
+  /**
+   * One NFL-style conference whose bracket reseeds twice: seeds 1 and 2 on byes into the
+   * Divisional round, 3 v 6 and 4 v 5 on Wild Card weekend, then a Conference Championship. No
+   * Wild Card or Divisional game links anywhere: both later rounds are placed by seed.
+   */
+  async function conferenceSetup(divisional: (seed: (number: number) => string) => Array<[string | null, string | null]>, seedCount = 6) {
+    const store = new InMemorySportEvents();
+    const sportRow = store.addSport(Sport.AMERICAN_FOOTBALL);
+    const sportLeague = store.addSportLeague(sportRow.id, 'NFL');
+    Object.assign(sportLeague, {
+      bracketAdvancement: BracketAdvancement.RESEED_BY_SEED,
+      roundNames: ['Wild Card', 'Divisional', 'Conference Championship'],
+    });
+    const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: Sport.AMERICAN_FOOTBALL, status: SportEventStatus.DRAFT, rounds: 3 });
+    await store.roundRepo().createMany(event.id, [1, 2, 3].map((roundNumber) => ({
+      roundNumber, scheduledDate: new Date(Date.UTC(2027, 0, 7 * roundNumber)),
+    })));
+    const seeds = Array.from({ length: seedCount }, (_, index) => index + 1).map((seedNumber) => {
+      const team = store.addParticipant(sportRow.id, `Seed ${seedNumber}`, { participantType: 'TEAM' });
+      return store.addToField(event.id, team.id, { seedNumber });
+    });
+    const seed = (number: number): string => expectDefined(seeds[number - 1]).id;
+    const service = new SportEventBracketService({
+      sportEvents: store.sportEventRepo(),
+      sportLeagues: store.sportLeagueRepo(),
+      rounds: store.roundRepo(),
+      field: store.fieldRepo(),
+      participants: store.participantRepo(),
+      matches: store.matchRepo(),
+      ...NO_PICKS_ON_EVENT,
+    });
+    const game = (matchNumber: number, roundNumber: number, home: string | null, away: string | null): BracketMatchInput => ({
+      matchNumber, roundNumber, homeSportEventParticipantId: home, awaySportEventParticipantId: away,
+      isNeutralSite: false, scheduledDate: null, advancesTo: null, regionLabel: 'AFC',
+    });
+    const [first, second] = divisional(seed);
+    await service.loadBracket(event.id, [
+      game(1, 1, seed(3), seed(6)),
+      game(2, 1, seed(4), seed(5)),
+      game(3, 2, ...expectDefined(first)),
+      game(4, 2, ...expectDefined(second)),
+      game(5, 3, null, null),
+    ]);
+    return { store, service, event, seed };
+  }
+
+  it('lets a reseeded bracket release when each reseeded round has one open place per winner still to come, a round after a reseeded round included', async () => {
+    const context = await conferenceSetup((seed) => [[seed(1), null], [seed(2), null]]);
+
+    await expect(context.service.releaseBlockers(context.event)).resolves.toEqual([]);
+  });
+
+  it('blocks release, naming the round and conference, when a reseeded round leaves a bye team\'s place empty and the field leaves the team out too', async () => {
+    const context = await conferenceSetup((seed) => [[null, null], [seed(2), null]]);
+    context.store.field = context.store.field.filter((entry) => entry.id !== context.seed(1));
+
+    await expect(context.service.releaseBlockers(context.event)).resolves.toEqual([
+      'Divisional in AFC has 3 open place(s) for 2 Wild Card winner(s) still to come',
+    ]);
+  });
+
+  it('blocks release, naming the round and conference, when a reseeded round names a team too many and leaves too few places for the winners to come', async () => {
+    const context = await conferenceSetup((seed) => [[seed(1), seed(7)], [seed(2), null]], 7);
+
+    await expect(context.service.releaseBlockers(context.event)).resolves.toEqual([
+      'Divisional in AFC has 1 open place(s) for 2 Wild Card winner(s) still to come',
+    ]);
+  });
+});
+
 describe('SportEventBracketService.fillPlayInSlot', () => {
   function withPlayInPlace() {
     const context = setup({ status: SportEventStatus.SCHEDULED });

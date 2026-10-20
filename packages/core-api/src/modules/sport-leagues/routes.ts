@@ -78,11 +78,13 @@ export function sportLeaguesModule(fastify: FastifyInstance): void {
       summary: 'Update a sport league',
       description: 'Setting currentEventYear is "set as current": one write, so the sport league never has two current years, '
         + 'and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). '
-        + '422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.',
+        + '422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. '
+        + '409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: '
+        + 'the loaded bracket\'s links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. Root admin only.',
       operationId: 'updateSportLeague',
       params: SPORT_LEAGUE_PARAMS,
       body: schemaRef('UpdateSportLeagueRequest'),
-      response: { 200: schemaRef('SportLeagueResponse'), ...errors(403, 404, 422) },
+      response: { 200: schemaRef('SportLeagueResponse'), ...errors(403, 404, 409, 422) },
     },
     handler: handler.updateSportLeague,
   });

@@ -339,16 +339,23 @@ class Loader {
     const existing = sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase());
     if (existing) {
       const changed = bracketAdvancement !== undefined && existing.bracketAdvancement !== bracketAdvancement;
-      this.report({
-        sportLeague: name,
-        subject: LoadSubject.SPORT_LEAGUE,
-        action: changed ? LoadAction.UPDATE : LoadAction.SKIP,
-        name,
-        detail: changed ? `bracket advancement ${existing.bracketAdvancement} -> ${bracketAdvancement}` : null,
-      });
-      if (changed && this.apply) {
-        await must(updateSportLeague({ client, path: { sportLeagueId: existing.id }, body: { bracketAdvancement } }), `Update sport league ${name}`);
+      const change = `bracket advancement ${existing.bracketAdvancement} -> ${bracketAdvancement}`;
+      const row = { sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, name };
+      if (!changed) {
+        this.report({ ...row, action: LoadAction.SKIP, detail: null });
+        return existing.id;
       }
+      // The server refuses the change while an event of the league has its bracket loaded (#730).
+      // A dry run cannot know that without the write, so it reports the change it would ask for.
+      if (this.apply) {
+        const result = await updateSportLeague({ client, path: { sportLeagueId: existing.id }, body: { bracketAdvancement } });
+        if (result.error?.error.code === 'SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED') {
+          this.report({ ...row, action: LoadAction.CONFLICT, detail: `${change} not changed: an event of the league has its bracket loaded` });
+          return existing.id;
+        }
+        await must(Promise.resolve(result), `Update sport league ${name}`);
+      }
+      this.report({ ...row, action: LoadAction.UPDATE, detail: change });
       return existing.id;
     }
     this.report({ sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.ADD, name, detail: null });

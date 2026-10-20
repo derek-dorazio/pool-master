@@ -6310,7 +6310,7 @@ export type UpdateSportLeagueRequest = {
      */
     currentEventYear?: number;
     /**
-     * RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
+     * RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted.
      */
     bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
 };
@@ -20819,6 +20819,10 @@ export type UpdateSportLeagueErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
