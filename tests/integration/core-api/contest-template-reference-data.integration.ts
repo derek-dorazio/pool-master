@@ -10,6 +10,7 @@ import {
   getTieredRosterSize,
   isRosterSelectionType,
   sportAllowsSelectionType,
+  sportPlaysMatches,
 } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
@@ -702,5 +703,103 @@ describe('The seeded College Football Playoff league and its knockout templates'
       });
       if (rules.selectionType === SelectionType.TIERED) expect(rules.countedScores).toBe(6);
     }
+  });
+});
+
+// Create contest starts every format on a template (#802): a sport league offers exactly one
+// default for each format it can host, on each kind of event it plays, so a commissioner never
+// starts from blank rules. A sport played as matches holds two kinds of event: a knockout (the
+// playoffs, a tournament bracket), and a week of a season's games, which only the leagues below
+// play. Every other sport's events are all one kind, so its templates name none.
+const KNOCKOUT_SELECTION_TYPES: readonly SelectionType[] = [
+  SelectionType.TIERED,
+  SelectionType.BUDGET_PICK,
+  SelectionType.RANDOM_DRAW,
+  SelectionType.BRACKET,
+  SelectionType.SQUARES,
+];
+const WEEK_SELECTION_TYPES: readonly SelectionType[] = [SelectionType.PICK_EM, SelectionType.SURVIVOR];
+const LEAGUES_PLAYED_IN_WEEKS: readonly string[] = ['NFL'];
+
+/** What Create contest calls each format, which every template's name starts with. */
+const FORMAT_NAMES: Record<SelectionType, string> = {
+  TIERED: 'Tiered',
+  BUDGET_PICK: 'Budget',
+  RANDOM_DRAW: 'Random draw',
+  PICK_EM: 'Pick’em',
+  BRACKET: 'Bracket',
+  SURVIVOR: 'Survivor',
+  SQUARES: 'Squares',
+};
+
+describe('Every seeded sport league\'s default templates and their names (#802)', () => {
+  it('offers each sport league, and each sport with no league seeded, exactly one default for every format it hosts on each kind of event it plays', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { active: true } });
+    const leagues = await getPrisma().sportLeague.findMany({ include: { sport: true }, orderBy: { name: 'asc' } });
+    const scopes = [
+      ...leagues.filter((league) => SCORED_SPORTS.includes(league.sport.sport))
+        .map((league) => ({ name: league.name, sport: league.sport.sport, sportLeagueId: league.id as string | null })),
+      ...SCORED_SPORTS.filter((sport) => !leagues.some((league) => league.sport.sport === sport))
+        .map((sport) => ({ name: `${sport} (sport-wide)`, sport, sportLeagueId: null as string | null })),
+    ];
+
+    const problems = scopes.flatMap(({ name, sport, sportLeagueId }) => {
+      const definition = getSportDefinition(sport);
+      const kinds: Array<{ eventType: string | null; selectionTypes: readonly SelectionType[] }> = sportPlaysMatches(sport)
+        ? [
+          { eventType: 'KNOCKOUT', selectionTypes: KNOCKOUT_SELECTION_TYPES },
+          ...(LEAGUES_PLAYED_IN_WEEKS.includes(name) ? [{ eventType: 'WEEK', selectionTypes: WEEK_SELECTION_TYPES }] : []),
+        ]
+        : [{ eventType: null, selectionTypes: definition.selectionTypes }];
+      return kinds.flatMap(({ eventType, selectionTypes }) => selectionTypes
+        .filter((selectionType) => sportAllowsSelectionType(definition, selectionType))
+        .flatMap((selectionType) => {
+          // What Create contest lists for an event of this kind: the league's own templates and the
+          // sport-wide ones, for this kind of event or for any.
+          const defaults = templates.filter((template) => template.sport === sport
+            && template.selectionType === selectionType
+            && template.isDefault
+            && (template.sportLeagueId === null || template.sportLeagueId === sportLeagueId)
+            && (template.eventType === null || template.eventType === eventType));
+          return defaults.length === 1
+            ? []
+            : [`${name} ${eventType ?? 'any event'} ${selectionType}: ${defaults.length} defaults`];
+        }));
+    });
+
+    expect(scopes.map(({ name }) => name)).toEqual(expect.arrayContaining(['NFL', 'NBA', 'Formula 1']));
+    expect(problems).toEqual([]);
+  });
+
+  it('names every template "<Format>: <how you pick>, <how it scores>" in its own format\'s words, under 60 characters with no full stop', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { active: true }, orderBy: { templateKey: 'asc' } });
+
+    const problems = templates.flatMap((template) => {
+      const format = FORMAT_NAMES[template.selectionType];
+      const found: string[] = [];
+      if (!new RegExp(`^${format}( majors pool)?: \\S`).test(template.name)) found.push(`${template.templateKey}: "${template.name}" does not start "${format}: "`);
+      if (template.name.length >= 60) found.push(`${template.templateKey}: name is ${template.name.length} characters`);
+      if (template.name.endsWith('.')) found.push(`${template.templateKey}: name ends with a full stop`);
+      return found;
+    });
+
+    expect(problems).toEqual([]);
+  });
+
+  it('describes every template in one or two plain sentences of at most 220 characters, with no setup jargon', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { active: true }, orderBy: { templateKey: 'asc' } });
+
+    const problems = templates.flatMap((template) => {
+      const { description, templateKey } = template;
+      const sentences = description.split(/(?<=[.!?])\s+/).filter((sentence) => sentence.length > 0);
+      const found: string[] = [];
+      if (description.length > 220) found.push(`${templateKey}: description is ${description.length} characters`);
+      if (sentences.length > 2) found.push(`${templateKey}: description has ${sentences.length} sentences`);
+      if (!description.endsWith('.')) found.push(`${templateKey}: description does not end with a full stop`);
+      if (/\b(template|preset|config|entry total)\b/i.test(description)) found.push(`${templateKey}: description uses setup jargon`);
+      return found;
+    });
+
+    expect(problems).toEqual([]);
   });
 });

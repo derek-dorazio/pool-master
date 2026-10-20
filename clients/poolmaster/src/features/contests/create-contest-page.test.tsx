@@ -1471,3 +1471,129 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     });
   });
 });
+
+describe('Commissioner tools › Contests › Create contest › templates by name and kind of event', () => {
+  const NFL_WEEK = {
+    id: 'nfl-week-1',
+    sport: 'AMERICAN_FOOTBALL',
+    name: 'NFL Week 1',
+    venue: null,
+    status: 'SCHEDULED',
+    startDate: '2099-09-10T17:00:00.000Z',
+    participantCount: 32,
+    readinessStatus: 'CONTEST_ELIGIBLE',
+    readinessReasons: [],
+    contestEligible: true,
+    tierCount: 0,
+    rounds: 1,
+    sportLeagueId: 'nfl',
+  };
+  const nflTemplate = (overrides: Record<string, unknown>) => ({
+    sport: 'AMERICAN_FOOTBALL',
+    sportLeagueId: 'nfl',
+    active: true,
+    schemaVersion: 1,
+    ...overrides,
+  });
+  const WEEK_TEMPLATES = [
+    nflTemplate({
+      id: '80200000-0000-4000-8000-000000000001',
+      eventType: 'WEEK',
+      contestFormat: 'PREDICTION',
+      selectionType: 'PICK_EM',
+      templateKey: 'nfl-pick-em-straight-up',
+      name: 'Pick’em: every game, straight up',
+      description: 'Pick the winner of every game each week. Every right pick scores a point.',
+      sortOrder: 1,
+      isDefault: true,
+      configuration: { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP', againstTheSpread: false, maxEntriesPerSquad: 1 },
+    }),
+    nflTemplate({
+      id: '80200000-0000-4000-8000-000000000002',
+      eventType: 'WEEK',
+      contestFormat: 'PREDICTION',
+      selectionType: 'SURVIVOR',
+      templateKey: 'nfl-survivor',
+      name: 'Survivor: 1 team a week, each team once',
+      description: 'Pick one team to win each week, never the same team twice. A loss puts the entry out.',
+      sortOrder: 4,
+      isDefault: true,
+      configuration: { selectionType: 'SURVIVOR', maxEntriesPerSquad: 1 },
+    }),
+  ];
+  const KNOCKOUT_TEMPLATES = [
+    nflTemplate({
+      id: '80200000-0000-4000-8000-000000000003',
+      eventType: 'KNOCKOUT',
+      contestFormat: 'ROSTER',
+      selectionType: 'TIERED',
+      templateKey: 'nfl-tiered-doubling',
+      name: 'Tiered: 1 team per tier, doubling points',
+      description: 'Pick one team from each tier. A win scores 1 point on Wild Card weekend, doubling each round to 8 for the Super Bowl.',
+      sortOrder: 1,
+      isDefault: true,
+      configuration: {
+        selectionType: 'TIERED',
+        picksPerTier: 1,
+        countedScores: 7,
+        maxEntriesPerSquad: 1,
+        scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4, 8], upsetBonus: { rule: 'NONE' } } },
+      },
+    }),
+  ];
+
+  /** One NFL week to set a contest up on; the template list answers by the kind of event asked for. */
+  function primeNflWeekMocks() {
+    primeCommonMocks();
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'nfl', name: 'NFL', roundNames: [] } } });
+    const golfEvents = listEventsMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
+    listEventsMock.mockImplementation((options: { query?: { sport?: string } }): Promise<unknown> => (options.query?.sport === 'AMERICAN_FOOTBALL'
+      ? Promise.resolve({ data: { events: [NFL_WEEK] } })
+      : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
+    const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
+    listContestConfigTemplatesMock.mockImplementation((options: { query?: { sport?: string; eventType?: string } }): Promise<unknown> => {
+      if (options.query?.sport !== 'AMERICAN_FOOTBALL') {
+        return golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } });
+      }
+      return Promise.resolve({ data: { templates: options.query.eventType === 'WEEK' ? WEEK_TEMPLATES : KNOCKOUT_TEMPLATES } });
+    });
+  }
+
+  afterEach(() => {
+    for (const mock of [
+      createContestMock, getEventBracketMock, getLeagueByCodeMock, getSportLeagueMock,
+      listContestConfigTemplatesMock, listEventParticipantsMock, listEventsMock,
+    ]) {
+      mock.mockReset();
+    }
+  });
+
+  it('shows each template as a choice by its name, with its description under it', async () => {
+    primeCommonMocks();
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Select one from each tier, 4 count');
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Default golf tiered template');
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-12')).toHaveTextContent('Pick two golfers from each seeded tier.');
+  });
+
+  it('asks for a week\'s templates on an NFL week, starts it on the NFL\'s Pick\'em default, and offers survivor\'s default on switching', async () => {
+    primeNflWeekMocks();
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-AMERICAN_FOOTBALL'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-template-nfl-pick-em-straight-up')).toBeChecked());
+    expect(screen.getByTestId('contest-format-PICK_EM')).toBeChecked();
+    const queries = listContestConfigTemplatesMock.mock.calls.map(([options]) =>
+      (options as { query?: Record<string, unknown> }).query);
+    expect(queries).toContainEqual(expect.objectContaining({ sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'nfl', eventType: 'WEEK' }));
+    expect(screen.queryByTestId('contest-template-nfl-tiered-doubling')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-format-SURVIVOR'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-template-nfl-survivor')).toBeChecked());
+  });
+});
