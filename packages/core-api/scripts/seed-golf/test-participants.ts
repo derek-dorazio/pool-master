@@ -17,7 +17,7 @@
  * alone. A contest whose event has started is never touched.
  */
 
-import { ContestEntryStatus, ContestFormat, ContestStatus, LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestFormat, ContestStatus, ContestTemplateEventType, contestTemplateEventTypeOf, LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type { ContestConfigTemplateListResponse, ContestListResponse, SportEventListResponse } from '@poolmaster/shared/generated/hey-api';
 import {
@@ -218,8 +218,12 @@ class ParticipantLoader {
       } else {
         const template = await this.template(client, event);
         if (!template) {
-          // A week of games is picked game by game (#816): the run makes roster picks only.
-          row(LoadSubject.CONTEST, LoadAction.SKIP, contestName, 'no tiered or budget contest is offered on this event');
+          // A week of games is picked game by game (#816), and the run makes roster picks only, so
+          // it has no contest to build there. Any other event without one is missing its templates.
+          if (contestTemplateEventTypeOf(event) !== ContestTemplateEventType.WEEK) {
+            throw new Error(`No tiered or budget contest template for ${event.name} (${event.sport}).`);
+          }
+          row(LoadSubject.CONTEST, LoadAction.SKIP, contestName, 'a week of games is picked game by game, so it has no tiered or budget contest');
           continue;
         }
         row(LoadSubject.CONTEST, LoadAction.ADD, contestName, 'created from the default template and opened');

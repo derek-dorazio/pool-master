@@ -5,7 +5,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { contestTemplateEventTypeOf, ContestFormat, getSportDefinition, SelectionType, type Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, getSportDefinition, isTemplateOfferedOn, SelectionType, type Sport } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateListResponse, SelectionStateResponse, SportEventListResponse } from '@poolmaster/shared/generated/hey-api';
 import { AppEnvironment } from '../../src/core/config';
 
@@ -50,10 +50,7 @@ export function testLeagueName(sport: Sport, sportLeagueName: string): string {
  * is picked game by game, so it has no roster template.
  */
 export function chooseContestTemplate(templates: readonly Template[], event: Pick<StoredEvent, 'sport' | 'sportLeagueId' | 'rounds'>): Template | null {
-  const eventType = contestTemplateEventTypeOf(event);
-  const pickable = templates.filter((template) => template.sport === event.sport
-    && (template.sportLeagueId === null || template.sportLeagueId === event.sportLeagueId)
-    && ((template.eventType ?? null) === null || template.eventType === eventType)
+  const pickable = templates.filter((template) => isTemplateOfferedOn(template, event)
     && template.contestFormat === ContestFormat.ROSTER
     && template.selectionType !== SelectionType.RANDOM_DRAW);
   const ranked = [...pickable].sort((left, right) => Number(right.sportLeagueId !== null) - Number(left.sportLeagueId !== null)
