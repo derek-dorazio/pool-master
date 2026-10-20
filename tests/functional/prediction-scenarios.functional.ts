@@ -7,6 +7,7 @@ import {
   getContest,
   getEventBracket,
   getGamePicks,
+  getPickEmLeaderboard,
   getSurvivorLeaderboard,
   listEventParticipants,
   listEvents,
@@ -16,10 +17,11 @@ import {
   submitGamePicks,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestEntryStatus, ContestFormat, ContestStatus, MatchSide, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestFormat, ContestStatus, MatchSide, PickEmMode, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   BracketLeaderboardResponseSchema,
   GamePicksResponseSchema,
+  PickEmLeaderboardResponseSchema,
   SportEventBracketResponseSchema,
   SurvivorLeaderboardResponseSchema,
   type GamePicksResponse,
@@ -51,6 +53,9 @@ import { enterSeedRound, oneEventOf, placeSeedRound, playedSeedEvent } from '../
 // - Survivor: one entry picks, in each round, a winner it has not used that goes out in the next
 //   round (the champion in the final), so it survives every round; the other picks a first-round
 //   loser and is out in week 1.
+//
+// A straight-up pick'em pool runs on week 1 of the 2025 NFL season the same way: one entry picks
+// every real winner, the other every home team, and each scores a point for each game it called.
 
 const RUN = `playoff-scenario-${Date.now()}`;
 
@@ -75,7 +80,7 @@ const LEAGUES: readonly PlayoffLeague[] = [
  * league and year that starts within a few days for the file's event renamed, so the played copy
  * and the two contests' copies must never share a year, nor share one with another suite.
  */
-const SEASON = { played: 2095, [SelectionType.BRACKET]: 2096, [SelectionType.SURVIVOR]: 2097 } as const;
+const SEASON = { played: 2095, [SelectionType.BRACKET]: 2096, [SelectionType.SURVIVOR]: 2097, [SelectionType.PICK_EM]: 2098 } as const;
 
 const PREDICTION_TYPES = [SelectionType.BRACKET, SelectionType.SURVIVOR] as const;
 const ROWS = LEAGUES.flatMap((league) => PREDICTION_TYPES.map((selectionType) => ({ ...league, selectionType })));
@@ -280,6 +285,71 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
     },
     180_000,
   );
+});
+
+describe('SDK Functional: a pick\'em pool on the NFL weeks test seed', () => {
+  it('scores a point for each game an entry called on week 1 as played: every point to the entry that picked the winners, the home teams\' wins to the other', async () => {
+    const week: PlayoffLeague = { sport: Sport.AMERICAN_FOOTBALL, file: 'american-football-2025-nfl-weeks-test.json', league: 'NFL', event: 'NFL Week 1' };
+    const tag = `${RUN}-nfl-week-1-pick-em`;
+    const { eventId, field } = await loadCopy(week, tag, SEASON[SelectionType.PICK_EM], true);
+    const seed = playedSeedEvent(week.file, week.league, week.event);
+    const nameOfRow = (rowId: string) => expectDefined(field.find((each) => each.id === rowId), rowId).participant.name;
+    const players = new Map(oneEventOf(week.file, week.league, week.event)(tag, SEASON[SelectionType.PICK_EM]).sportLeagues[0].players
+      .map((player) => [player.key.replace(`${tag}-`, ''), player.name]));
+    const matches = seed.matches ?? [];
+    const winnerName = (matchNumber: number) => {
+      const match = expectDefined(matches.find((each) => each.matchNumber === matchNumber));
+      return players.get(expectDefined(expectDefined(match.result).winner === MatchSide.HOME ? match.home : match.away));
+    };
+    const last = expectDefined(matches.at(-1));
+    const lastTotal = expectDefined(last.result).homeScore + expectDefined(last.result).awayScore;
+    const homeWins = matches.filter((match) => expectDefined(match.result).winner === MatchSide.HOME).length;
+
+    const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Pick\'em Scenario Perfect', leagueName: `Pick'em Scenario ${tag}` });
+    const other = await buildRegisteredUser({ displayName: 'Pick\'em Scenario Home' });
+    const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
+    await acceptInvitation({ client: other.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
+    const contest = await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: {
+        name: `Pick'em Scenario ${tag}`,
+        sportEventIds: [eventId],
+        contestFormat: ContestFormat.PREDICTION,
+        selectionType: SelectionType.PICK_EM,
+        configuration: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false, maxEntriesPerSquad: 1 },
+      },
+    });
+    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    const contestId = expectDefined(contest.data).contest.id;
+    expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
+
+    const pickWeek = async (client: RegisteredUserContext['client'], choose: (game: GamePicksResponse['games'][number]) => string, tiebreakerValue: number) => {
+      const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
+      const path = { contestId, entryId, sportEventId: eventId };
+      const games = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client, path })).data).games;
+      expect(games).toHaveLength(matches.length);
+      const picks = games.map((game) => ({ sportEventMatchId: game.sportEventMatchId, sportEventParticipantId: choose(game), confidence: null }));
+      expect((await saveGamePicks({ client, path, body: { picks, tiebreakerValue } })).error).toBeUndefined();
+      expect((await submitGamePicks({ client, path })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
+      return entryId;
+    };
+    const winnerRow = (game: GamePicksResponse['games'][number]) => expectDefined(
+      [game.home, game.away].find((team) => team !== null && nameOfRow(team.sportEventParticipantId) === winnerName(game.matchNumber)),
+      `game ${game.matchNumber}'s winner`,
+    ).sportEventParticipantId;
+    const perfect = await pickWeek(commissioner.client, winnerRow, lastTotal);
+    const rival = await pickWeek(other.client, (game) => expectDefined(game.home).sportEventParticipantId, 0);
+
+    await playOut(eventId, seed, 1);
+
+    const board = expectMatchesSchema(PickEmLeaderboardResponseSchema, (await getPickEmLeaderboard({ client: other.client, path: { contestId } })).data);
+    expect(board.entries.map((entry) => [entry.entryId, entry.displayPosition, entry.totalPoints])).toEqual([
+      [perfect, '1', matches.length],
+      [rival, '2', homeWins],
+    ]);
+    await expectSettled(contestId, other.client, [[perfect, matches.length], [rival, homeWins]]);
+  }, 120_000);
 });
 
 /** Starts the event, enters each round's real results (placing a reseeded round first), and completes it. */
