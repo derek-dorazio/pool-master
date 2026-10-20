@@ -1,4 +1,4 @@
-import { MatchSide, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { ErrorCodeMessages } from '@/lib/errors';
 
@@ -63,7 +63,52 @@ export function bracketErrorMessages(
     MATCH_PERIOD_INVALID: `This ${noun.one}'s score at that point can't be entered here.`,
     MATCH_CANCELLED: `This ${noun.one} was cancelled, so it has no score.`,
     MATCH_SPREAD_REQUIRED: `The ${vocabulary.event.one} has been released, so this ${noun.one}'s spread can be changed but not cleared.`,
+    BRACKET_NOT_RESEEDED: `This round's ${team.many} come from the ${noun.many} before it, so it isn't reseeded.`,
+    BRACKET_ROUND_NOT_FINISHED: `Every ${noun.one} of the round before needs a result before this round's ${noun.many} are set.`,
+    BRACKET_ROUND_ALREADY_PLAYED: `A ${noun.one} of this round has started, so its ${noun.many} can no longer change.`,
   };
+}
+
+/**
+ * A reseeded round's refusals (#722, #785): the bracket's, with BRACKET_INVALID worded for what
+ * was asked. A suggestion is refused when the teams left don't fit the round; a save when the
+ * admin's matchups break the round's rules.
+ */
+export function reseedErrorMessages(vocabulary: SportVocabulary, action: 'suggest' | 'save'): ErrorCodeMessages {
+  const noun = matchNoun(vocabulary);
+  const team = vocabulary.participant;
+  return {
+    ...bracketErrorMessages(vocabulary),
+    BRACKET_INVALID: action === 'suggest'
+      ? `The ${team.many} left don't fit this round's ${noun.many}. Check the results of the round before.`
+      : `These ${noun.many} could not be saved. Each ${team.one} left plays once, against a ${team.one} from its own side of the bracket, and a ${team.one} with a bye keeps its place.`,
+  };
+}
+
+/**
+ * The rounds whose teams are placed by seed rather than by the links of the round before, in
+ * order: each after a round with a match that links nowhere, below the last round. The same rule
+ * the server applies before it will propose or set a round's matchups.
+ */
+export function reseededRounds(bracket: readonly SportEventMatchDto[]): number[] {
+  const lastRound = Math.max(0, ...bracket.map((match) => match.roundNumber));
+  const rounds = new Set(bracket
+    .filter((match) => match.advancesToMatchId === null && match.roundNumber < lastRound)
+    .map((match) => match.roundNumber + 1));
+  return [...rounds].sort((left, right) => left - right);
+}
+
+/** Whether a round has begun: a match is no longer scheduled, or has a period's score (#772). */
+export function roundStarted(bracket: readonly SportEventMatchDto[], roundNumber: number): boolean {
+  return bracket.some((match) => match.roundNumber === roundNumber
+    && (match.status !== MatchStatus.SCHEDULED || match.periodScores.length > 0));
+}
+
+/** The matches of the round before this one that have no result yet, in match-number order. */
+export function unfinishedBefore(bracket: readonly SportEventMatchDto[], roundNumber: number): SportEventMatchDto[] {
+  return bracket
+    .filter((match) => match.roundNumber === roundNumber - 1 && match.status !== MatchStatus.COMPLETED)
+    .sort((left, right) => left.matchNumber - right.matchNumber);
 }
 
 /**

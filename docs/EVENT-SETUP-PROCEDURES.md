@@ -253,11 +253,14 @@ teams; a larger field would change its round count and need presets to match.
 before it, and names only its byes. The NFL's Wild Card and Divisional games both link nowhere,
 so the Divisional round and the conference championships are each placed by seed; the
 conference winners link to the Super Bowl. Release lets those rounds wait. Once every game of
-the round before has a result, ask the server for the reseed (`proposeEventRoundMatchups`): in
-each conference the best seed left hosts the worst. Set it, or a pairing of your own that keeps each team in its conference and each bye
-in place, with `setEventRoundMatchups`, before the round starts. A first-round result corrected
-after that moves the team it placed, until that team has played. The Bracket tab does not have a
-reseed button yet, so the two calls go through the API.
+the round before has a result, the Bracket tab's *Reseeded rounds* card offers *Suggest games*
+for that round (`proposeEventRoundMatchups`): in each conference the best seed left hosts the
+worst, and each game's home and away team is filled in. Change any side to a pairing of your own
+that keeps each team in its conference and each bye in place, then *Save games*
+(`setEventRoundMatchups`), which sets every game of the round at once. Until the round before is
+finished the card names the games still without a result; once a game of the round has started,
+the round is no longer offered. A first-round result corrected after that moves the team it
+placed, until that team has played.
 
 ## Cancelling an event or a game
 
