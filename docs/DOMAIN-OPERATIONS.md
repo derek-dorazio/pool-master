@@ -340,8 +340,9 @@ of the contest: the template is where it came from, not what it is.
   `rootAdmin` to `authenticated`, never to anonymous. The one exception is the
   `ContestConfigTemplate` list (#803). Its rows are product copy, names and descriptions written
   to advertise each contest, and the signed-out How to Play page shows them, so a visitor can see
-  what PoolMaster runs before signing up. It was opened for that reason, not because it is global;
-  the other global objects stay `authenticated`.
+  what PoolMaster runs before signing up. Retired (inactive) templates are public too: they are
+  the same kind of copy, with nothing about a league or a user. It was opened for that reason, not
+  because it is global; the other global objects stay `authenticated`.
 - **Global is not a field-level exemption.** A11 decides which *rows* a caller may read.
   Whether a particular column should be visible stays §13: admin-only fields are annotated on
   the canonical DTO, not enforced. If a field on a global object turns out to be genuinely

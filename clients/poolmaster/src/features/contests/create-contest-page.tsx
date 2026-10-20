@@ -31,7 +31,7 @@ import {
 } from '@/features/leagues/league-routing';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { bracketRoundCount, bracketStartRoundOptions } from './bracket-start-round';
-import { contestEventsFor, contestEventsForTemplate } from './contest-template-events';
+import { canEventStartRules, contestEventsFor, contestEventsForTemplate } from './contest-template-events';
 import { SELECTION_TYPE_ICONS } from './selection-type-icons';
 import { useActiveContestTemplatesQuery } from './use-active-contest-templates-query';
 import { sportEventsQueryOptions } from './sport-events-query';
@@ -242,7 +242,7 @@ export function CreateContestPage() {
   const requestedTemplateQuery = useActiveContestTemplatesQuery({ enabled: auth.isAuthenticated && requestedTemplateId !== null });
   const requestedTemplate = requestedTemplateQuery.data?.find((template) => template.id === requestedTemplateId
     && isCreatableSelectionType(template.selectionType)) ?? null;
-  const requestedTemplateProgress = useRef<'sport' | 'event' | 'applied'>('sport');
+  const requestedTemplateProgress = useRef<'sport' | 'event' | 'settled'>('sport');
 
   const eventsQuery = useQuery(sportEventsQueryOptions(sport, auth.isAuthenticated));
 
@@ -251,6 +251,11 @@ export function CreateContestPage() {
     [eventsQuery.data, selectionType],
   );
   const selectedEvent = contestEvents.find((event) => event.id === sportEventId) ?? null;
+  // The events that can start a requested template, whatever format the page is on.
+  const requestedEvents = useMemo(
+    () => (requestedTemplate ? contestEventsForTemplate(eventsQuery.data ?? [], requestedTemplate) : []),
+    [eventsQuery.data, requestedTemplate],
+  );
   // A knockout under way takes only a second-chance bracket.
   const isEventUnderWay = selectedEvent !== null && !selectedEvent.contestEligible;
   const roundName = useEventRoundName(selectionType === SelectionType.BRACKET ? selectedEvent : null);
@@ -287,15 +292,6 @@ export function CreateContestPage() {
   // The event's salary cap, which every budget contest on it plays under; null until it is priced.
   const salaryCap = selectedEvent?.pricing?.salaryCap ?? null;
   const isBudgetUnavailable = selectedEvent !== null && salaryCap === null;
-  // The rounds a bracket on the chosen event can start at: the first before it starts, a later one
-  // once it is under way.
-  const startableRounds = useMemo(
-    () => (selectedEvent
-      ? bracketStartRoundOptions(bracketRoundCount(selectedEvent), String, { isUnderWay: isEventUnderWay })
-        .map((option) => option.roundNumber)
-      : []),
-    [isEventUnderWay, selectedEvent],
-  );
   // Each format's presets: the templates whose rules are that format's, and for a bracket only the
   // ones the chosen event can start at (#802): a full bracket before the first game, a second
   // chance once it is under way.
@@ -303,11 +299,11 @@ export function CreateContestPage() {
     (format: CreatableSelectionType) => (templatesQuery.data ?? []).flatMap((template) => {
       const { configuration } = template;
       return template.selectionType === format && configuration.selectionType === format
-        && (configuration.selectionType !== SelectionType.BRACKET || startableRounds.includes(configuration.startsAtRound))
+        && (selectedEvent === null ? configuration.selectionType !== SelectionType.BRACKET : canEventStartRules(configuration, selectedEvent))
         ? [{ ...template, configuration }]
         : [];
     }),
-    [startableRounds, templatesQuery.data],
+    [selectedEvent, templatesQuery.data],
   );
   const presets = useMemo(() => presetsFor(selectionType), [presetsFor, selectionType]);
   const parsedRules = parseContestRules(values, selectionType, tierCount, participant);
@@ -403,21 +399,19 @@ export function CreateContestPage() {
   }, [form, requestedTemplate, selectSport, setFormValues]);
 
   // The soonest contest-ready event is chosen to start with, else a knockout under way. Until a
-  // requested template is applied, the soonest event it is offered on, when it has one.
+  // requested template is settled, the soonest event that can start it, when it has one.
   useEffect(() => {
-    const requestedEvents = requestedTemplate && requestedTemplateProgress.current === 'event'
-      ? contestEventsForTemplate(contestEvents, requestedTemplate)
-      : [];
+    const pendingEvents = requestedTemplateProgress.current === 'event' ? requestedEvents : [];
     const current = contestEvents.find((event) => event.id === sportEventId);
-    if (current && (!requestedEvents.length || requestedEvents.includes(current))) {
+    if (current && (!pendingEvents.length || pendingEvents.includes(current))) {
       return;
     }
-    const choices = requestedEvents.length ? requestedEvents : contestEvents;
+    const choices = pendingEvents.length ? pendingEvents : contestEvents;
     const soonest = choices.find((event) => event.contestEligible) ?? choices.at(0);
     if (soonest) {
       chooseEvent(soonest);
     }
-  }, [chooseEvent, contestEvents, requestedTemplate, sportEventId]);
+  }, [chooseEvent, contestEvents, requestedEvents, sportEventId]);
 
   // A newly chosen sport, sport league or kind of event starts on its default preset; while all
   // three stay, Custom stays Custom. A sport league starts on the format its defaults sort first
@@ -450,21 +444,24 @@ export function CreateContestPage() {
     }
   }, [eventType, form, isBudgetUnavailable, presets, selectFormat, selectPreset, selectedEvent, sport, sportLeagueId, templatesQuery.data]);
 
-  // A requested template is applied once its event's templates arrive, over the league's default
-  // the effect above may have started on.
+  // A requested template is settled once, when the templates of the event it starts on arrive: it
+  // is applied over the league's default the effect above may have started on. With no event that
+  // can start it, such as a second chance before its tournament, the page keeps that default.
   useEffect(() => {
     if (!requestedTemplate || requestedTemplateProgress.current !== 'event' || templatesQuery.data === undefined
+      || sport !== requestedTemplate.sport || eventsQuery.data === undefined || selectedEvent === null
+      || (requestedEvents.length > 0 && !requestedEvents.includes(selectedEvent))
       || !isCreatableSelectionType(requestedTemplate.selectionType)) {
       return;
     }
+    requestedTemplateProgress.current = 'settled';
     const preset = presetsFor(requestedTemplate.selectionType).find((template) => template.id === requestedTemplate.id);
     if (!preset) {
       return;
     }
-    requestedTemplateProgress.current = 'applied';
     defaultPresetAppliedFor.current = `${sport}/${sportLeagueId ?? ''}/${eventType ?? ''}`;
     setFormValues({ selectionType: requestedTemplate.selectionType, selectedTemplateId: preset.id, ...presetValues(preset.configuration) });
-  }, [eventType, presetValues, presetsFor, requestedTemplate, setFormValues, sport, sportLeagueId, templatesQuery.data]);
+  }, [eventType, eventsQuery.data, presetValues, presetsFor, requestedEvents, requestedTemplate, selectedEvent, setFormValues, sport, sportLeagueId, templatesQuery.data]);
 
   // A preset the chosen event cannot start, such as a full bracket once the event is under way,
   // gives way to the format's default among the presets it can (#802), or to Custom.
