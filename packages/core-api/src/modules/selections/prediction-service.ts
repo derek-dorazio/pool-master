@@ -215,14 +215,21 @@ export class PredictionService {
       throw selectionErrors.tiebreakerLocked(context.entry.id);
     }
 
-    if (context.engine.onePickPerEvent && input.picks.length > 1) {
-      throw selectionErrors.onePickRequired(context.entry.id, input.picks.length);
-    }
     const gamesById = new Map(context.games.map((game) => [game.id, game]));
+    if (context.engine.onePickPerRound) {
+      const perRound = new Map<number, number>();
+      for (const pick of input.picks) {
+        const round = gamesById.get(pick.sportEventMatchId)?.roundNumber ?? 0;
+        perRound.set(round, (perRound.get(round) ?? 0) + 1);
+      }
+      const crowded = [...perRound.values()].find((count) => count > 1);
+      if (crowded !== undefined) throw selectionErrors.onePickRequired(context.entry.id, crowded);
+    }
     for (const pick of input.picks) {
       const game = gamesById.get(pick.sportEventMatchId);
       if (!game) throw selectionErrors.gameNotFound(pick.sportEventMatchId, context.sportEvent.id);
       this.assertGameOpen(context, game);
+      this.assertNotEliminated(context, game.roundNumber);
     }
 
     // A saved pick must name a team its game offers the entry, its earlier picks included; a pick
@@ -235,7 +242,7 @@ export class PredictionService {
     ]);
     const refused = resolved.stranded.find((pick) => saved.has(pick.sportEventMatchId));
     if (refused) throw selectionErrors.teamNotInGame(refused.sportEventParticipantId, refused.sportEventMatchId);
-    for (const pick of input.picks) this.assertTeamUnused(context, pick.sportEventParticipantId);
+    for (const pick of input.picks) this.assertTeamUnused(context, pick, resolved.kept);
     // A pick a new one replaces (survivor's one pick a week) is cleared only while its game is open.
     for (const pick of resolved.stranded) {
       const game = gamesById.get(pick.sportEventMatchId);
@@ -272,6 +279,7 @@ export class PredictionService {
     const game = context.games.find((candidate) => candidate.id === input.sportEventMatchId);
     if (!game) throw selectionErrors.gameNotFound(input.sportEventMatchId, context.sportEvent.id);
     this.assertGameOpen(context, game);
+    this.assertNotEliminated(context, game.roundNumber);
     if (!context.predictions.some((prediction) => prediction.sportEventMatchId === game.id)) {
       return this.buildView(context);
     }
@@ -302,7 +310,7 @@ export class PredictionService {
       return this.buildView(context);
     }
     this.assertContestTakesPicks(context);
-    this.assertNotEliminated(context);
+    this.assertNotEliminated(context, null);
     if (hasSportEventStarted(context.window, context.now)) {
       throw selectionErrors.weekNotSubmittedInTime(context.entry.id, context.sportEvent.id);
     }
@@ -394,10 +402,17 @@ export class PredictionService {
     });
   }
 
-  /** A survivor pick names a team the entry has not picked in another week it submitted. */
-  private assertTeamUnused(context: WeekContext, sportEventParticipantId: string): void {
-    const participantId = context.season?.participantIdOf.get(sportEventParticipantId);
-    if (participantId !== undefined && context.season?.usedParticipantIds.has(participantId) === true) {
+  /**
+   * A survivor pick names a team the entry has not picked in another week it submitted, nor in
+   * another round of this event (#785) among the picks that stand after the change.
+   */
+  private assertTeamUnused(context: WeekContext, pick: WeekPrediction, standing: readonly WeekPrediction[]): void {
+    if (context.season === null) return;
+    const { sportEventParticipantId } = pick;
+    const participantId = context.season.participantIdOf.get(sportEventParticipantId);
+    const usedInAnotherRound = standing.some((other) => other.sportEventMatchId !== pick.sportEventMatchId
+      && other.sportEventParticipantId === sportEventParticipantId);
+    if (usedInAnotherRound || (participantId !== undefined && context.season.usedParticipantIds.has(participantId))) {
       throw selectionErrors.teamAlreadyUsed(context.entry.id, sportEventParticipantId);
     }
   }
@@ -434,7 +449,7 @@ export class PredictionService {
   private assertCanChange(context: WeekContext, actorUserId: string | undefined): void {
     this.assertOwner(context, actorUserId);
     this.assertContestTakesPicks(context);
-    this.assertNotEliminated(context);
+    this.assertNotEliminated(context, null);
     if (
       hasSportEventStarted(context.window, context.now)
       && contestEntryEventStatus(context.entry, context.sportEvent.id) !== ContestEntryStatus.SUBMITTED
@@ -443,10 +458,16 @@ export class PredictionService {
     }
   }
 
-  /** A survivor entry that is out picks no later week. */
-  private assertNotEliminated(context: WeekContext): void {
-    const weekNumber = context.season?.eliminatedInWeek ?? null;
-    if (weekNumber !== null) throw selectionErrors.entryEliminated(context.entry.id, weekNumber);
+  /**
+   * A survivor entry that is out picks no later week: none of this event's, when it went out
+   * before the event, and in a playoff (#785) no round after the one that put it out. `roundNumber`
+   * is the round being picked; null checks the event's first.
+   */
+  private assertNotEliminated(context: WeekContext, roundNumber: number | null): void {
+    const season = context.season;
+    if (season === null || season.eliminatedInWeek === null) return;
+    const weekNumber = roundNumber === null ? season.firstWeekNumber : season.weekNumberOfRound.get(roundNumber) ?? season.firstWeekNumber;
+    if (season.eliminatedInWeek < weekNumber) throw selectionErrors.entryEliminated(context.entry.id, season.eliminatedInWeek);
   }
 
   private assertGameOpen(context: WeekContext, game: SportEventMatch): void {
@@ -520,9 +541,10 @@ export class PredictionService {
   }
 
   /**
-   * The entry's other weeks as a survivor week reads them: whether a week before this one put it
-   * out, and the teams it picked in the other weeks it submitted, earlier or later (a later week
-   * can be picked ahead), so no team is picked twice.
+   * The entry's season as a survivor week reads it: the week that put it out, if any, and the
+   * teams it picked in the other events it submitted, earlier or later (a later week can be picked
+   * ahead), so no team is picked twice. In a playoff (#785) the event's rounds are weeks of their
+   * own: a round after the one that put the entry out takes no pick.
    */
   private async loadSeason(
     contest: Contest,
@@ -532,19 +554,26 @@ export class PredictionService {
     now: Date,
   ): Promise<PredictionSeason> {
     const weeks = await loadSurvivorWeeks(this.deps, contest, now);
-    const index = weeks.findIndex((week) => week.event.id === sportEventId);
-    const others = weeks.filter((week) => week.event.id !== sportEventId);
-    const predictions = await this.deps.predictions.findByEntriesAndEvents([entry.id], others.map((week) => week.event.id));
-    const picks = survivorPicksByEntry(predictions).get(entry.id) ?? new Map<string, never>();
-    const earlier = survivorRun(survivorWeeksOf(entry, weeks.slice(0, index), picks));
-    const usedParticipantIds = new Set(earlier.usedParticipantIds);
-    for (const week of survivorWeeksOf(entry, weeks.slice(index + 1), picks)) {
-      if (!week.cancelled && week.submitted && week.pickedParticipantId !== null) usedParticipantIds.add(week.pickedParticipantId);
+    const predictions = await this.deps.predictions.findByEntriesAndEvents([entry.id], contest.sportEventIds);
+    const picks = survivorPicksByEntry(predictions, weeks).get(entry.id) ?? new Map<string, never>();
+    const entryWeeks = survivorWeeksOf(entry, weeks, picks);
+    const run = survivorRun(entryWeeks);
+    const usedParticipantIds = new Set<string>();
+    for (const week of entryWeeks) {
+      if (week.sportEventId !== sportEventId && !week.cancelled && week.submitted && week.pickedParticipantId !== null) {
+        usedParticipantIds.add(week.pickedParticipantId);
+      }
     }
+    const ownWeeks = weeks.filter((week) => week.event.id === sportEventId);
+    const first = ownWeeks.at(0);
     return {
       usedParticipantIds,
-      eliminatedInWeek: earlier.eliminatedAt === null ? null : earlier.eliminatedAt + 1,
+      eliminatedInWeek: run.eliminatedAt === null ? null : run.eliminatedAt + 1,
       participantIdOf: new Map(field.map((row) => [row.id, row.participantId])),
+      roundOf: new Map(ownWeeks.flatMap((week) => week.games.map((game) => [game.id, week.roundNumber] as const))),
+      firstRoundNumber: first?.roundNumber ?? 1,
+      weekNumberOfRound: new Map(ownWeeks.map((week) => [week.roundNumber, week.weekNumber])),
+      firstWeekNumber: first?.weekNumber ?? 1,
     };
   }
 
@@ -608,7 +637,7 @@ export class PredictionService {
       mode: context.mode,
       againstTheSpread: context.againstTheSpread,
       survivor: context.season === null ? null : {
-        eliminatedInWeek: context.season.eliminatedInWeek,
+        eliminatedInWeek: this.eliminatedBeforeLastRound(context.season),
         usedParticipantIds: ownEntry ? [...context.season.usedParticipantIds] : null,
       },
       status,
@@ -623,6 +652,15 @@ export class PredictionService {
       maxPossiblePoints: everyPickShown ? score?.maxPossiblePoints ?? null : null,
       games: viewGames,
     };
+  }
+
+  /**
+   * The week that put the entry out, as the event's view shows it: one before the event's last
+   * round, so a playoff shows the round it went out in, and a week's own loss shows from the next week on.
+   */
+  private eliminatedBeforeLastRound(season: PredictionSeason): number | null {
+    const lastWeek = Math.max(season.firstWeekNumber, ...season.weekNumberOfRound.values());
+    return season.eliminatedInWeek !== null && season.eliminatedInWeek < lastWeek ? season.eliminatedInWeek : null;
   }
 
   /** The entry's standing picks scored against the results so far, under the contest's scoring. */

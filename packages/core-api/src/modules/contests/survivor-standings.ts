@@ -24,6 +24,7 @@ import {
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { hasSportEventStarted } from '../events/operational-timing';
+import { ContestCutoffKind, cutoffTiming } from './entry-window';
 import { survivorRun, type SurvivorRun, type SurvivorWeek } from '../scoring-families/head-to-head/survivor';
 
 export interface SurvivorStandingsReadDeps {
@@ -33,12 +34,23 @@ export interface SurvivorStandingsReadDeps {
   matches: Pick<SportEventMatchRepository, 'findBySportEvents'>;
 }
 
-/** One week of the season: its event, its place in the season and its games, cancelled ones included. */
+/**
+ * One week of the season: a round of one of its events, its place in the season and the round's
+ * games, cancelled ones included. A regular-season week is an event of one round; a playoff
+ * bracket's rounds are each a week (#785).
+ */
 export interface SurvivorSeasonWeek {
   event: SportEvent;
+  roundNumber: number;
+  /** The event's rounds, for its round labels. */
+  roundCount: number;
   /** 1 for the contest's first week. */
   weekNumber: number;
-  /** Whether its first game has kicked off: picks lock then, and a week not started decides nothing. */
+  /**
+   * Whether its first game has kicked off: picks lock then, and a week not started decides
+   * nothing. An event's first round starts with the event, so its submit closes then; a later
+   * round at its own first game.
+   */
   started: boolean;
   /** A cancelled week counts for nothing (#743): nobody is out for it. */
   cancelled: boolean;
@@ -48,7 +60,7 @@ export interface SurvivorSeasonWeek {
 export interface SurvivorEntryStanding {
   entry: ContestEntryWithSquad;
   run: SurvivorRun;
-  /** The entry's pick in each week, by event. */
+  /** The entry's pick in each week, by week key (`survivorWeekKey`). */
   picks: Map<string, ContestEntrySeasonPrediction>;
   /** Still standing: entries out in the same week share a place, below every entry still in. */
   alive: boolean;
@@ -62,7 +74,12 @@ export interface SurvivorSeasonStandings {
   entries: SurvivorEntryStanding[];
 }
 
-/** The contest's weeks, in start order, with their games. */
+/** A week's key: its event and round. */
+export function survivorWeekKey(week: { sportEventId: string; roundNumber: number }): string {
+  return `${week.sportEventId}:${week.roundNumber}`;
+}
+
+/** The contest's weeks, in start order, with their games: each event's rounds in round order. */
 export async function loadSurvivorWeeks(
   deps: Pick<SurvivorStandingsReadDeps, 'sportEvents' | 'matches'>,
   contest: Pick<Contest, 'sportEventIds'>,
@@ -72,15 +89,25 @@ export async function loadSurvivorWeeks(
     deps.sportEvents.findByIds(contest.sportEventIds),
     deps.matches.findBySportEvents(contest.sportEventIds),
   ]);
-  return [...events]
-    .sort((left, right) => left.startDate.getTime() - right.startDate.getTime() || left.id.localeCompare(right.id))
-    .map((event, index) => ({
+  const ordered = [...events]
+    .sort((left, right) => left.startDate.getTime() - right.startDate.getTime() || left.id.localeCompare(right.id));
+  const weeks: Omit<SurvivorSeasonWeek, 'weekNumber'>[] = ordered.flatMap((event) => {
+    const games = matches.filter((match) => match.sportEventId === event.id);
+    const roundNumbers = [...new Set(games.map((match) => match.roundNumber))].sort((left, right) => left - right);
+    const firstRound = roundNumbers.at(0) ?? 1;
+    const cancelled = event.status === SportEventStatus.CANCELLED;
+    return (roundNumbers.length > 0 ? roundNumbers : [firstRound]).map((roundNumber) => ({
       event,
-      weekNumber: index + 1,
-      started: hasSportEventStarted(event, now),
-      cancelled: event.status === SportEventStatus.CANCELLED,
-      games: matches.filter((match) => match.sportEventId === event.id),
+      roundNumber,
+      roundCount: Math.max(event.rounds ?? 0, roundNumbers.at(-1) ?? 1),
+      started: roundNumber === firstRound
+        ? hasSportEventStarted(event, now)
+        : hasSportEventStarted(cutoffTiming({ kind: ContestCutoffKind.ROUND_START, roundNumber }, event, games), now),
+      cancelled,
+      games: games.filter((match) => match.roundNumber === roundNumber),
     }));
+  });
+  return weeks.map((week, index) => ({ ...week, weekNumber: index + 1 }));
 }
 
 /** The entry's weeks as its run reads them, from its picks across the season. */
@@ -89,10 +116,11 @@ export function survivorWeeksOf(
   weeks: readonly SurvivorSeasonWeek[],
   picks: ReadonlyMap<string, ContestEntrySeasonPrediction>,
 ): SurvivorWeek[] {
-  return weeks.map(({ event, started, cancelled, games }) => {
-    const pick = picks.get(event.id) ?? null;
+  return weeks.map(({ event, roundNumber, started, cancelled, games }) => {
+    const pick = picks.get(survivorWeekKey({ sportEventId: event.id, roundNumber })) ?? null;
     return {
       sportEventId: event.id,
+      roundNumber,
       started,
       cancelled,
       submitted: contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED,
@@ -103,12 +131,18 @@ export function survivorWeeksOf(
   });
 }
 
-/** Each entry's pick per event: a survivor week holds one. */
-export function survivorPicksByEntry(predictions: readonly ContestEntrySeasonPrediction[]): Map<string, Map<string, ContestEntrySeasonPrediction>> {
+/** Each entry's pick per week, by week key: a survivor week holds one. A pick on a game no week has is left out. */
+export function survivorPicksByEntry(
+  predictions: readonly ContestEntrySeasonPrediction[],
+  weeks: readonly SurvivorSeasonWeek[],
+): Map<string, Map<string, ContestEntrySeasonPrediction>> {
+  const weekOfGame = new Map(weeks.flatMap((week) => week.games.map((game) => [game.id, survivorWeekKey({ sportEventId: week.event.id, roundNumber: week.roundNumber })] as const)));
   const byEntry = new Map<string, Map<string, ContestEntrySeasonPrediction>>();
   for (const prediction of predictions) {
+    const key = weekOfGame.get(prediction.sportEventMatchId);
+    if (key === undefined) continue;
     const picks = byEntry.get(prediction.contestEntryId) ?? new Map<string, ContestEntrySeasonPrediction>();
-    picks.set(prediction.sportEventId, prediction);
+    picks.set(key, prediction);
     byEntry.set(prediction.contestEntryId, picks);
   }
   return byEntry;
@@ -129,7 +163,7 @@ export async function loadSurvivorSeason(
   ]);
   const counted = entries.filter(hasSubmittedAnyEvent);
   const predictions = await deps.predictions.findByEntriesAndEvents(counted.map((entry) => entry.id), contest.sportEventIds);
-  const picksByEntry = survivorPicksByEntry(predictions);
+  const picksByEntry = survivorPicksByEntry(predictions, weeks);
 
   const runs = counted.map((entry) => {
     const picks = picksByEntry.get(entry.id) ?? new Map<string, ContestEntrySeasonPrediction>();

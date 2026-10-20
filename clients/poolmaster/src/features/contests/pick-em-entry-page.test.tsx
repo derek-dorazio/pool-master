@@ -10,6 +10,8 @@ import {
   pickEmContestFixture,
   pickEmEntriesFixture,
   pickEmWeekFixture,
+  playoffSurvivorContestFixture,
+  playoffSurvivorFixture,
   survivorWeekFixture,
   week1Games,
   weekPick,
@@ -393,6 +395,58 @@ describe('Survivor contest entry page', () => {
 
     fireEvent.click(await screen.findByTestId(`pick-em-game-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`));
 
-    expect(await screen.findByTestId('pick-em-pick-error')).toHaveTextContent('You picked that team in another week. Each team can be picked once.');
+    expect(await screen.findByTestId('pick-em-pick-error')).toHaveTextContent('You picked that team in another week or round. Each team can be picked once.');
+  });
+});
+
+describe('Playoff survivor entry page', () => {
+  afterEach(() => {
+    for (const mock of [
+      getContestMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
+      listContestEntriesMock, saveGamePicksMock, submitGamePicksMock,
+    ]) {
+      mock.mockReset();
+    }
+  });
+
+  function primePlayoff(week = playoffSurvivorFixture()) {
+    primeMocks({ week });
+    getContestMock.mockResolvedValue({ data: { contest: playoffSurvivorContestFixture() } });
+  }
+
+  it('opens on the round still to be picked, named as the bracket names it, marks the earlier round\'s team used and warns that the round needs a pick', async () => {
+    primePlayoff();
+    renderPickEmEntry();
+
+    const switcher = await screen.findByTestId('survivor-round-switcher');
+    expect(within(switcher).getAllByRole('option').map((option) => option.textContent)).toEqual(['Conference Championship', 'Super Bowl']);
+    expect(switcher).toHaveValue('2');
+    const bills = team(2, NFL_TEAMS.bills.sportEventParticipantId);
+    expect(bills).toBeDisabled();
+    expect(bills).toHaveTextContent('Used');
+    expect(team(2, NFL_TEAMS.eagles.sportEventParticipantId)).toBeEnabled();
+    expect(screen.queryByTestId('pick-em-game-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('survivor-pick')).toHaveTextContent('None yet');
+    expect(screen.getByTestId('survivor-round-needs-pick')).toHaveTextContent('Pick a team before this round\'s first game, or the entry is out.');
+  });
+
+  it('shows an earlier round\'s pick, locked, on switching to it', async () => {
+    primePlayoff();
+    renderPickEmEntry();
+
+    fireEvent.change(await screen.findByTestId('survivor-round-switcher'), { target: { value: '1' } });
+
+    expect(await screen.findByTestId('pick-em-game-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('pick-em-game-2')).not.toBeInTheDocument();
+    expect(screen.getByTestId('survivor-pick')).toHaveTextContent('Bills');
+    expect(screen.getByTestId('contest-entry-builder-heading')).toHaveTextContent('Picks');
+  });
+
+  it('says which round put an entry out', async () => {
+    primePlayoff(playoffSurvivorFixture({ survivor: { eliminatedInWeek: 1, usedParticipantIds: [] } }));
+    renderPickEmEntry();
+
+    expect(await screen.findByTestId('survivor-eliminated'))
+      .toHaveTextContent('This entry went out in the Conference Championship, so it picks no more rounds.');
   });
 });

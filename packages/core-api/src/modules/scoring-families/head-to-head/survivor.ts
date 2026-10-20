@@ -1,11 +1,14 @@
 /**
  * Survivor (#719, plans/knockout-and-pickem-design.md §5.5): one entry's season of weekly picks,
- * read in week order. The pure rules, all here:
+ * read in week order. A "week" is one round of one of the contest's events: a regular-season week
+ * is an event of one round, and a playoff bracket's rounds are each a week of their own (#785), so
+ * a playoff survivor pool picks one team per round. The pure rules, all here:
  *
  * - **Each week** the entry picks one team to win. It survives the week when that team wins, and
  *   when its game is cancelled (the entry did nothing wrong).
  * - **It is out** after a loss, a tie (no winner, as in pick'em), or a week that started with no
- *   submitted pick. Once out it plays no later week, whatever it picked there.
+ *   submitted pick. Once out it plays no later week, whatever it picked there. A playoff round
+ *   that starts with no pick puts the entry out too, as does running out of unused teams.
  * - **Each team once:** a team picked in a week the entry submitted is used for the rest of the
  *   season, by its participant, since each week has its own field rows.
  * - **The score** is the weeks survived: entries out in the same week tie, and entries still
@@ -16,11 +19,13 @@ import { MatchSide, MatchStatus, SurvivorWeekOutcome, type SportEventMatch } fro
 /** One week of the entry's season, as its read sees it. */
 export interface SurvivorWeek {
   sportEventId: string;
+  /** The round of the event the week is: 1 for a regular-season week, which has one. */
+  roundNumber: number;
   /** Whether the week's first game has kicked off: a week not started decides nothing yet. */
   started: boolean;
   /** The week was cancelled: it counts for nothing, so nobody is out for it. */
   cancelled: boolean;
-  /** Whether the entry submitted the week. */
+  /** Whether the entry submitted the week's event: a playoff is submitted once, for all its rounds. */
   submitted: boolean;
   /** The week's games, cancelled ones included: a pick on a cancelled game survives. */
   games: readonly SportEventMatch[];
@@ -33,6 +38,7 @@ export interface SurvivorWeek {
 /** The entry's outcome for one week, or null for a week it no longer plays or that decides nothing. */
 export interface SurvivorWeekResult {
   sportEventId: string;
+  roundNumber: number;
   outcome: SurvivorWeekOutcome | null;
 }
 
@@ -69,7 +75,7 @@ export function survivorRun(weeks: readonly SurvivorWeek[]): SurvivorRun {
   let weeksSurvived = 0;
   for (const week of weeks) {
     if (eliminatedAt !== null || week.cancelled) {
-      results.push({ sportEventId: week.sportEventId, outcome: null });
+      results.push({ sportEventId: week.sportEventId, roundNumber: week.roundNumber, outcome: null });
       continue;
     }
     if (week.submitted && week.pickedParticipantId !== null) {
@@ -85,7 +91,7 @@ export function survivorRun(weeks: readonly SurvivorWeek[]): SurvivorRun {
     }
     if (outcome === SurvivorWeekOutcome.SURVIVED) weeksSurvived += 1;
     if (outcome === SurvivorWeekOutcome.ELIMINATED) eliminatedAt = results.length;
-    results.push({ sportEventId: week.sportEventId, outcome });
+    results.push({ sportEventId: week.sportEventId, roundNumber: week.roundNumber, outcome });
   }
   return { weeks: results, eliminatedAt, weeksSurvived, usedParticipantIds };
 }
