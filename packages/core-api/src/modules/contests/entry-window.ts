@@ -24,7 +24,7 @@ import { hasSportEventStarted } from '../events/operational-timing';
 
 export type EventTiming = { status: SportEventStatus; startDate: Date };
 /** A game's timing: its status, its kickoff, and any period scores, which only a game under way has (#772). */
-type MatchTiming = { status: MatchStatus; scheduledDate: Date | null; periodScores?: readonly unknown[] };
+type MatchTiming = { status: MatchStatus; scheduledDate: Date | null; periodScores?: readonly { periodNumber: number }[] };
 type RoundMatchTiming = MatchTiming & { id: string; roundNumber: number };
 
 /**

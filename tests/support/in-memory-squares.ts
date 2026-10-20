@@ -8,6 +8,7 @@ import type {
   ContestEntrySquareClaim,
   ContestEntrySquareClaimResult,
   ContestEntrySquareClearResult,
+  ContestEntrySquareKey,
   ContestSquaresDrawWrite,
   ContestSquaresRepository,
 } from '@poolmaster/shared/db';
@@ -45,7 +46,7 @@ export class InMemorySquares {
     return {
       findSquares: (contestId) => Promise.resolve(this.boxesOf(contestId)),
       claim: (claim) => Promise.resolve(this.claim(claim)),
-      clear: (contestId, rowIndex, columnIndex) => Promise.resolve(this.clear(contestId, rowIndex, columnIndex)),
+      clear: (box) => Promise.resolve(this.clear(box)),
       findDraw: (contestId) => Promise.resolve(this.draws.get(contestId) ?? null),
       recordDraw: (draw) => Promise.resolve(this.recordDraw(draw)),
       findWinners: (contestId) => Promise.resolve([...(this.winners.get(contestId) ?? [])]),
@@ -73,9 +74,12 @@ export class InMemorySquares {
     return 'claimed';
   }
 
-  private clear(contestId: string, rowIndex: number, columnIndex: number): ContestEntrySquareClearResult {
-    if (this.draws.has(contestId)) return 'drawn';
-    return this.boxes.delete(boxKey(contestId, rowIndex, columnIndex)) ? 'cleared' : 'empty';
+  private clear(box: ContestEntrySquareKey): ContestEntrySquareClearResult {
+    if (this.draws.has(box.contestId)) return 'drawn';
+    const key = boxKey(box.contestId, box.rowIndex, box.columnIndex);
+    if (this.boxes.get(key)?.contestEntryId !== box.contestEntryId) return 'empty';
+    this.boxes.delete(key);
+    return 'cleared';
   }
 
   private recordDraw(draw: ContestSquaresDrawWrite): 'drawn' | 'alreadyDrawn' {

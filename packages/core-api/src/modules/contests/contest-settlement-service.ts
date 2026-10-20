@@ -13,6 +13,7 @@ import {
   SportEventStatus,
   SurvivorWeekOutcome,
   getSportDefinition,
+  hasEverySquaresScoringMoment,
   squaresScoringMoments,
   squaresWinners,
   type Contest,
@@ -284,7 +285,7 @@ export class ContestSettlementService {
       .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGameMatchId === sportEventMatchId);
     let completed = 0;
     for (const contest of contests) {
-      const settled = await this.settleSquaresContest(contest, sportEvent, input?.completedAt ?? new Date());
+      const settled = await this.settleSquaresContest(contest, sportEvent, input?.completedAt ?? new Date(), { waitForEveryPeriod: true });
       if (settled.completed) completed++;
     }
     return completed;
@@ -294,12 +295,15 @@ export class ContestSettlementService {
    * Settles a squares contest (#711): each scoring moment's winning box is frozen (design Q3.7),
    * and each entry holding a box is placed by the moments it won, ties shared. A game not played to
    * a result (cancelled, or its event finished without it), or a grid whose numbers were never
-   * drawn, ends the contest Final with no winners and no standings (#743).
+   * drawn, ends the contest Final with no winners and no standings (#743). With
+   * `waitForEveryPeriod`, a drawn game whose result is in but a quarter's score is not stays as it
+   * is, so the contest settles once that score is entered, with all four winners.
    */
   private async settleSquaresContest(
     contest: Contest,
     sportEvent: SportEvent,
     completedAt: Date,
+    options?: { waitForEveryPeriod?: boolean },
   ): Promise<{ standingsUpserted: number; completed: boolean }> {
     const [games, draw] = await Promise.all([
       this.deps.matches.findBySportEvent(sportEvent.id),
@@ -309,8 +313,18 @@ export class ContestSettlementService {
     const periodCount = getSportDefinition(sportEvent.sport).matchPeriods?.count;
     let standingsUpserted = 0;
     if (game?.status === MatchStatus.COMPLETED && draw && periodCount !== undefined) {
+      const moments = squaresScoringMoments(game, periodCount);
+      if (options?.waitForEveryPeriod === true && !hasEverySquaresScoringMoment(moments, periodCount)) {
+        this.logger.info({
+          contestId: contest.id,
+          sportEventId: sportEvent.id,
+          sportEventMatchId: contest.squaresGameMatchId,
+          scoredPeriods: moments.map((moment) => moment.periodNumber),
+        }, 'Squares contest waits for every quarter score before settling');
+        return { standingsUpserted: 0, completed: false };
+      }
       const boxes = await this.deps.squares.findSquares(contest.id);
-      const winners = squaresWinners(draw, squaresScoringMoments(game, periodCount), boxes);
+      const winners = squaresWinners(draw, moments, boxes);
       await this.deps.squares.replaceWinners(contest.id, winners.map((winner) => ({ ...winner, contestId: contest.id, settledAt: completedAt })));
       const holders = [...new Set(boxes.map((box) => box.contestEntryId))];
       const won = (entryId: string) => winners.filter((winner) => winner.contestEntryId === entryId).length;

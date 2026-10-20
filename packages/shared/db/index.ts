@@ -106,6 +106,7 @@ export type {
   ContestEntrySquareClaim,
   ContestEntrySquareClaimResult,
   ContestEntrySquareClearResult,
+  ContestEntrySquareKey,
   ContestSquaresDrawWrite,
   ContestSquaresRepository,
 } from './squares-ports';

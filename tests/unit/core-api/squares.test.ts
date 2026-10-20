@@ -323,7 +323,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     context.squares.addBox(context.contest.id, context.alice.id, 0, 7);
     context.squares.addBox(context.contest.id, context.bob.id, 0, 0);
     context.drawInOrder();
-    context.updateGame({ status: MatchStatus.COMPLETED, homeScore: 10, awayScore: 0, periodScores: [period(1, 7, 0)] });
+    context.updateGame({ status: MatchStatus.COMPLETED, homeScore: 20, awayScore: 0, periodScores: [period(1, 7, 0), period(2, 10, 0), period(3, 17, 0)] });
     await context.settlement.settleFinishedGame(context.superBowl.id, context.game.id, { completedAt: later(KICKOFF, 4) });
     const positions = [...context.world.standings.values()].map((standing) => standing.displayPosition);
     expect(positions).toEqual(['T1', 'T1']);

@@ -7,6 +7,7 @@ import type {
   ContestEntrySquareClaim,
   ContestEntrySquareClaimResult,
   ContestEntrySquareClearResult,
+  ContestEntrySquareKey,
   ContestSquaresDrawWrite,
   ContestSquaresRepository,
 } from '@poolmaster/shared/db';
@@ -56,11 +57,12 @@ export class PrismaSquaresRepository implements ContestSquaresRepository {
     }
   }
 
-  async clear(contestId: string, rowIndex: number, columnIndex: number): Promise<ContestEntrySquareClearResult> {
+  async clear(box: ContestEntrySquareKey): Promise<ContestEntrySquareClearResult> {
+    const { contestId, contestEntryId, rowIndex, columnIndex } = box;
     return this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, contestId);
       if (await tx.contestSquaresDraw.count({ where: { contestId } }) > 0) return 'drawn';
-      const { count } = await tx.contestEntrySquare.deleteMany({ where: { contestId, rowIndex, columnIndex } });
+      const { count } = await tx.contestEntrySquare.deleteMany({ where: { contestId, contestEntryId, rowIndex, columnIndex } });
       return count > 0 ? 'cleared' : 'empty';
     });
   }

@@ -279,8 +279,13 @@ export class MatchResultService {
     await this.deps.matches.savePeriodScore(match.id, { periodNumber, ...input });
     this.deps.logger?.info({ sportEventId, matchNumber, periodNumber }, 'Saved a period score');
     // A scored period means the game is under way: a squares contest on it goes live (#711).
+    const now = this.deps.now?.() ?? new Date();
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
-      await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, this.deps.now?.() ?? new Date());
+      await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, now);
+    }
+    // A quarter entered after the result may be the last one a squares contest waits for.
+    if (match.status === MatchStatus.COMPLETED) {
+      await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, now);
     }
     return this.deps.matches.findBySportEvent(sportEventId);
   }

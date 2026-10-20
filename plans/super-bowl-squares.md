@@ -42,7 +42,7 @@ answered by Derek on 2026-10-19; the slices in section 6 are filed under #711.
    the columns and shows them on the grid. Claiming is closed from then on.
 4. The game is played. As the admin enters the score at the end of each quarter, the winning box
    for that quarter lights up on the grid and in a winners list (Q1, Halftime, Q3, Final).
-5. When the game's result is entered, the contest settles and goes Final.
+5. When the game's result and every quarter's score are in, the contest settles and goes Final.
 
 Payout amounts stay outside Poolmaster, as for every pool.
 

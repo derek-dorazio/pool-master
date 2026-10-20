@@ -17,6 +17,9 @@ export interface ContestEntrySquareClaim {
  */
 export type ContestEntrySquareClaimResult = 'claimed' | 'taken' | 'limitReached' | 'drawn';
 
+/** One claimed box: which contest, which entry holds it, and where it is on the grid. */
+export type ContestEntrySquareKey = Pick<ContestEntrySquare, 'contestId' | 'contestEntryId' | 'rowIndex' | 'columnIndex'>;
+
 /** How clearing a box ended: refused once the digits are drawn, or nothing there to clear. */
 export type ContestEntrySquareClearResult = 'cleared' | 'empty' | 'drawn';
 
@@ -32,8 +35,11 @@ export interface ContestSquaresRepository {
   findSquares(contestId: string): Promise<ContestEntrySquare[]>;
   /** Claims an empty box for the entry, under the contest row lock. */
   claim(claim: ContestEntrySquareClaim): Promise<ContestEntrySquareClaimResult>;
-  /** Clears a claimed box, under the contest row lock. */
-  clear(contestId: string, rowIndex: number, columnIndex: number): Promise<ContestEntrySquareClearResult>;
+  /**
+   * Clears a claimed box, under the contest row lock. Only the holder read before is cleared: a box
+   * cleared and claimed again by another entry in between answers empty.
+   */
+  clear(box: ContestEntrySquareKey): Promise<ContestEntrySquareClearResult>;
   findDraw(contestId: string): Promise<ContestSquaresDraw | null>;
   /**
    * Records the digits and submits, for its event, every entry holding a box, in one transaction

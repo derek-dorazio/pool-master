@@ -197,7 +197,7 @@ export class SquaresService {
       throw squaresErrors.notYourBox();
     }
     this.assertClaimsOpen(context);
-    const result = await this.deps.squares.clear(contestId, rowIndex, columnIndex);
+    const result = await this.deps.squares.clear(box);
     if (result === 'drawn') throw squaresErrors.claimingClosed();
     if (result === 'empty') throw squaresErrors.boxNotClaimed();
     this.deps.logger?.info(

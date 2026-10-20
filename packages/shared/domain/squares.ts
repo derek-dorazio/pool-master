@@ -73,6 +73,14 @@ export function squaresScoringMoments(
 }
 
 /**
+ * Whether every scoring moment of a decided game is in: a score for each quarter before the last,
+ * and the final. A squares contest waits for all of them before it settles (#711).
+ */
+export function hasEverySquaresScoringMoment(moments: readonly SquaresScoringMoment[], periodCount: number): boolean {
+  return new Set(moments.map((moment) => moment.periodNumber)).size === periodCount;
+}
+
+/**
  * Each scoring moment's winning box: the row whose digit is the away score's last digit, the column
  * whose digit is the home score's, and the entry holding that box, if any (design Q3.6).
  */

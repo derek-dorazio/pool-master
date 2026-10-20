@@ -38,6 +38,7 @@ import {
   CONTEST_SCORING_SETTINGS_REQUIRED,
   CONTEST_SELECTION_TYPE_NOT_ALLOWED,
   CONTEST_SQUARES_GAME_INVALID,
+  CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD,
   CONTEST_SQUARES_GAME_REQUIRED,
   CONTEST_SQUARES_SINGLE_EVENT,
 } from '@poolmaster/shared/dto';
@@ -203,6 +204,7 @@ export class ContestManagementService {
     }
     const { selectionType } = input;
     assertRulesMatchSelectionType(resolvedConfiguration.configuration, selectionType);
+    this.assertOneEntryPerSquadForSquares(selectionType, resolvedConfiguration.configuration.maxEntriesPerSquad);
     this.assertEventCountFitsSelectionType(selectionType, sportEvents.length);
     const { configJson, scoring } = await this.resolveContestRules(
       sportEvents,
@@ -335,6 +337,7 @@ export class ContestManagementService {
       );
     }
     assertRulesMatchSelectionType(input, configuration.selectionType);
+    this.assertOneEntryPerSquadForSquares(configuration.selectionType, input.maxEntriesPerSquad);
     // A rules change that does not send scoring keeps the contest's (its points table, say).
     const { configJson, scoring } = await this.resolveContestRules(await this.findContestSportEvents(contest), input, {
       requested: input.scoring,
@@ -655,6 +658,19 @@ export class ContestManagementService {
         CONTEST_SQUARES_GAME_INVALID,
       );
     }
+  }
+
+  /**
+   * A squares contest takes one entry per squad (#711, design Q3.3): the box limit is per entry, so
+   * a second entry would double a squad's boxes. Any other entry limit, or none, is refused.
+   */
+  private assertOneEntryPerSquadForSquares(selectionType: SelectionType, maxEntriesPerSquad: number | null | undefined): void {
+    if (selectionType !== SelectionType.SQUARES || maxEntriesPerSquad === 1) return;
+    this.logger.warn({ selectionType, maxEntriesPerSquad }, 'contest management refused a squares contest that allows more than one entry per squad');
+    throw new ContestManagementError(
+      'A squares contest takes one entry per squad.',
+      CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD,
+    );
   }
 
   /**

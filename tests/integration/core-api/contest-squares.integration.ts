@@ -156,13 +156,16 @@ describe('PrismaSquaresRepository claiming and clearing', () => {
     expect(await squares.findSquares(fixture.contestId)).toHaveLength(2);
   });
 
-  it('clears a held box, and answers empty for a box nobody holds', async () => {
+  it('clears a held box only for its holder, and answers empty for a box nobody holds', async () => {
     const fixture = await seedSquaresContest();
     const squares = new PrismaSquaresRepository(getPrisma());
-    await squares.claim(claimOf(fixture, fixture.entryIds[0], 2, 2));
+    const [holder, other] = fixture.entryIds;
+    await squares.claim(claimOf(fixture, holder, 2, 2));
+    const box = { contestId: fixture.contestId, rowIndex: 2, columnIndex: 2 };
 
-    expect(await squares.clear(fixture.contestId, 2, 2)).toBe('cleared');
-    expect(await squares.clear(fixture.contestId, 2, 2)).toBe('empty');
+    expect(await squares.clear({ ...box, contestEntryId: other })).toBe('empty');
+    expect(await squares.clear({ ...box, contestEntryId: holder })).toBe('cleared');
+    expect(await squares.clear({ ...box, contestEntryId: holder })).toBe('empty');
     expect(await squares.findSquares(fixture.contestId)).toEqual([]);
   });
 
@@ -224,7 +227,7 @@ describe('PrismaSquaresRepository recording the draw', () => {
     await squares.recordDraw(drawOf(fixture));
 
     expect(await squares.claim(claimOf(fixture, fixture.entryIds[0], 2, 2))).toBe('drawn');
-    expect(await squares.clear(fixture.contestId, 1, 1)).toBe('drawn');
+    expect(await squares.clear({ contestId: fixture.contestId, contestEntryId: fixture.entryIds[0], rowIndex: 1, columnIndex: 1 })).toBe('drawn');
     expect(await squares.findSquares(fixture.contestId)).toHaveLength(1);
   });
 
