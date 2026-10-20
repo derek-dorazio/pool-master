@@ -3,15 +3,18 @@ import {
   canChangeWeek,
   confidenceOptions,
   confidencePicks,
+  currentWeekRound,
   describeMatchup,
   firstKickoff,
+  isPlayoffSurvivor,
   isTeamUsed,
   missedWeek,
+  roundWeek,
   survivorPickTeam,
   tiebreakerGame,
   weekSubmitHint,
 } from './pick-em-week';
-import { NFL_TEAMS, WEEK_1_START, pickEmWeekFixture, survivorWeekFixture, week1Games, weekPick } from './test/pick-em-fixtures';
+import { NFL_TEAMS, WEEK_1_START, pickEmWeekFixture, playoffSurvivorFixture, survivorWeekFixture, week1Games, weekPick } from './test/pick-em-fixtures';
 
 const id = (team: { sportEventParticipantId: string }) => team.sportEventParticipantId;
 
@@ -111,5 +114,32 @@ describe('survivor week helpers', () => {
     const kickedOff = week1Games({ 2: { locked: true, pick: weekPick(NFL_TEAMS.chiefs) } });
     expect(canChangeWeek(survivorWeekFixture({ status: 'SUBMITTED', games: kickedOff }))).toBe(false);
     expect(canChangeWeek(pickEmWeekFixture({ status: 'SUBMITTED', games: kickedOff }))).toBe(true);
+  });
+});
+
+describe('playoff survivor helpers', () => {
+  it('reads a survivor event with several rounds as a playoff, and a one-round week as a regular week', () => {
+    expect(isPlayoffSurvivor(playoffSurvivorFixture())).toBe(true);
+    expect(isPlayoffSurvivor(survivorWeekFixture())).toBe(false);
+  });
+
+  it('opens on the first round with a game still to kick off, and on the last round once every game has', () => {
+    const playoff = playoffSurvivorFixture();
+    expect(currentWeekRound(playoff)).toBe(2);
+    expect(currentWeekRound({ games: playoff.games.map((game) => ({ ...game, locked: true })) })).toBe(2);
+    expect(currentWeekRound({ games: playoff.games.map((game) => ({ ...game, locked: false })) })).toBe(1);
+  });
+
+  it('shows one round as its own week, counting its picks and marking teams picked in other rounds as used', () => {
+    const round2 = roundWeek(playoffSurvivorFixture(), 2);
+    expect(round2.games.map((game) => game.sportEventMatchId)).toEqual(['match-2', 'match-3']);
+    expect(round2.gameCount).toBe(2);
+    expect(round2.pickedCount).toBe(0);
+    expect(isTeamUsed(round2, NFL_TEAMS.bills)).toBe(true);
+    expect(isTeamUsed(round2, NFL_TEAMS.bears)).toBe(false);
+
+    const round1 = roundWeek(playoffSurvivorFixture(), 1);
+    expect(round1.pickedCount).toBe(1);
+    expect(isTeamUsed(round1, NFL_TEAMS.bills)).toBe(false);
   });
 });

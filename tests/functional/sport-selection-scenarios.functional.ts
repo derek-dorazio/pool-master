@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import {
   acceptInvitation,
   createContest,
@@ -39,6 +37,7 @@ import {
   parseSportDataFile,
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
+import { inSeason, oneEventOf } from '../support/sport-test-seed';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
@@ -60,50 +59,12 @@ import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 // end to end. Pick'em and multi-event rows join the table when those contest types land.
 
 const RUN = `scenario-${Date.now()}`;
-const SEED_DIR = join(__dirname, '../../packages/core-api/scripts/seed-golf');
 const SELECTION_TYPES = [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW] as const;
 
 interface SportScenario {
   sport: Sport;
   /** The one-event seed this row loads, its players and event tagged with `tag`, in `season`. */
   seed: (tag: string, season: number) => SportDataFile;
-}
-
-/** One sport league's one event from a test seed file, with only that event's players. */
-function oneEventOf(fileName: string, leagueName: string, eventName: string): SportScenario['seed'] {
-  return (tag, season) => {
-    const file = parseSportDataFile(JSON.parse(readFileSync(join(SEED_DIR, fileName), 'utf8')) as unknown, { allowTestData: true });
-    const league = expectDefined(file.sportLeagues.find((row) => row.name === leagueName), leagueName);
-    const event = expectDefined(league.events.find((row) => row.name === eventName), eventName);
-    const tagged = (key: string) => `${tag}-${key}`;
-    const inField = new Set(event.field.flatMap((entry) => [entry.player, ...(entry.playInWinner === undefined ? [] : [entry.playInWinner])]));
-    league.players = league.players.filter((player) => inField.has(player.key)).map((player) => ({ ...player, key: tagged(player.key) }));
-    event.name = `${event.name} ${tag}`;
-    for (const entry of event.field) {
-      entry.player = tagged(entry.player);
-      if (entry.playInWinner !== undefined) entry.playInWinner = tagged(entry.playInWinner);
-    }
-    for (const match of event.matches ?? []) {
-      match.home = match.home === null ? null : tagged(match.home);
-      match.away = match.away === null ? null : tagged(match.away);
-    }
-    league.events = [event];
-    file.sportLeagues = [league];
-    file.scope.sportLeagues = [league.name];
-    return inSeason(file, season);
-  };
-}
-
-/**
- * The file moved whole years into `season`: every date and time of its events shifted by the same
- * number of years, so each event keeps its own calendar, and parsed again so the loader's checks
- * still hold.
- */
-function inSeason(file: SportDataFile, season: number): SportDataFile {
-  const years = season - file.scope.season;
-  const sportLeagues = JSON.stringify(file.sportLeagues)
-    .replace(/"(\d{4})-(\d{2}-\d{2})/g, (_match, year: string, rest: string) => `"${Number(year) + years}-${rest}`);
-  return parseSportDataFile({ ...file, scope: { ...file.scope, season }, sportLeagues: JSON.parse(sportLeagues) as unknown }, { allowTestData: true });
 }
 
 /**

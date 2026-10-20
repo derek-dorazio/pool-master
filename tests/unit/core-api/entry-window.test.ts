@@ -16,6 +16,7 @@ import {
   currentContestEvent,
   cutoffTiming,
   hasMatchStarted,
+  hasRoundMatchStarted,
 } from '../../../packages/core-api/src/modules/contests/entry-window';
 
 const NOW = new Date('2026-05-10T12:00:00.000Z');
@@ -124,8 +125,10 @@ describe('currentContestEvent — the event a contest\'s pages open on', () => {
 });
 
 // A week of pick'em (#716): each game's pick locks, and is revealed, at that game's own kickoff.
-function game(kickoffOffsetHours: number | null, status: MatchStatus = MatchStatus.SCHEDULED) {
+function game(kickoffOffsetHours: number | null, status: MatchStatus = MatchStatus.SCHEDULED, roundNumber = 1) {
   return {
+    id: `game-${roundNumber}-${kickoffOffsetHours ?? 'untimed'}`,
+    roundNumber,
     status,
     scheduledDate: kickoffOffsetHours === null ? null : new Date(NOW.getTime() + kickoffOffsetHours * HOUR),
   };
@@ -156,47 +159,63 @@ describe('hasMatchStarted — a game\'s kickoff', () => {
   );
 });
 
+describe('hasRoundMatchStarted — a game picked round by round', () => {
+  it('starts an untimed game of a later round only when it moves on, not at its event\'s start (#785)', () => {
+    expect(hasRoundMatchStarted(game(null, MatchStatus.SCHEDULED, 2), weekUnderway, 1, NOW)).toBe(false);
+    expect(hasRoundMatchStarted(game(null, MatchStatus.IN_PROGRESS, 2), weekUnderway, 1, NOW)).toBe(true);
+  });
+
+  it('starts a timed later-round game at its time, and an untimed opening-round game at its event\'s start', () => {
+    expect(hasRoundMatchStarted(game(-1, MatchStatus.SCHEDULED, 2), weekAhead, 1, NOW)).toBe(true);
+    expect(hasRoundMatchStarted(game(null), weekUnderway, 1, NOW)).toBe(true);
+  });
+
+  it('keeps an untimed later-round game\'s pick open while the event is under way', () => {
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, { status: ContestStatus.ACTIVE }, weekUnderway, game(null, MatchStatus.SCHEDULED, 2), 1, NOW)).toBe(true);
+  });
+});
+
 describe('areMatchPicksOpen — changing one game\'s pick', () => {
   const open = { status: ContestStatus.OPEN };
   const active = { status: ContestStatus.ACTIVE };
 
   it('locks a game\'s pick at its own kickoff while a later game of the same week stays open', () => {
-    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, thursdayGame, NOW)).toBe(false);
-    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, sundayGame, NOW)).toBe(true);
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, thursdayGame, 1, NOW)).toBe(false);
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, sundayGame, 1, NOW)).toBe(true);
   });
 
   it('locks a game with no scheduled time at its event\'s start', () => {
-    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, game(null), NOW)).toBe(false);
-    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, open, weekAhead, game(null), NOW)).toBe(true);
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, weekUnderway, game(null), 1, NOW)).toBe(false);
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, open, weekAhead, game(null), 1, NOW)).toBe(true);
   });
 
   it('locks a game whose status moved on before its scheduled kickoff', () => {
-    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, open, weekAhead, game(50, MatchStatus.IN_PROGRESS), NOW)).toBe(false);
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, open, weekAhead, game(50, MatchStatus.IN_PROGRESS), 1, NOW)).toBe(false);
   });
 
   it.each([SportEventStatus.COMPLETED, SportEventStatus.CANCELLED])(
     'locks every game of a %s event, even one whose kickoff is still to come',
     (status) => {
-      expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, event('week-6', -2, status), sundayGame, NOW)).toBe(false);
+      expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, active, event('week-6', -2, status), sundayGame, 1, NOW)).toBe(false);
     },
   );
 
   it.each([ContestStatus.DRAFT, ContestStatus.COMPLETED])(
     'takes no game pick on a %s contest',
     (status) => {
-      expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, { status }, weekAhead, sundayGame, NOW)).toBe(false);
+      expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, { status }, weekAhead, sundayGame, 1, NOW)).toBe(false);
     },
   );
 
   it('takes no game pick on a drawn contest', () => {
-    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, { status: ContestStatus.OPEN, drawnAt: NOW }, weekAhead, sundayGame, NOW)).toBe(false);
+    expect(areMatchPicksOpen(PickWindow.UNTIL_MATCH_START, { status: ContestStatus.OPEN, drawnAt: NOW }, weekAhead, sundayGame, 1, NOW)).toBe(false);
   });
 
   it('under an event-start window, locks every game at the event\'s start whatever its own kickoff', () => {
-    expect(areMatchPicksOpen(PickWindow.UNTIL_EVENT_START, active, weekUnderway, sundayGame, NOW))
+    expect(areMatchPicksOpen(PickWindow.UNTIL_EVENT_START, active, weekUnderway, sundayGame, 1, NOW))
       .toBe(areEventPicksOpen(active, weekUnderway, NOW));
-    expect(areMatchPicksOpen(PickWindow.UNTIL_EVENT_START, active, weekUnderway, sundayGame, NOW)).toBe(false);
-    expect(areMatchPicksOpen(PickWindow.UNTIL_EVENT_START, open, weekAhead, game(-1), NOW)).toBe(true);
+    expect(areMatchPicksOpen(PickWindow.UNTIL_EVENT_START, active, weekUnderway, sundayGame, 1, NOW)).toBe(false);
+    expect(areMatchPicksOpen(PickWindow.UNTIL_EVENT_START, open, weekAhead, game(-1), 1, NOW)).toBe(true);
   });
 });
 
@@ -204,33 +223,33 @@ describe('areMatchPicksRevealed — who may see one game\'s pick', () => {
   const active = { status: ContestStatus.ACTIVE };
 
   it('reveals a game\'s pick at its own kickoff, while a later game\'s pick stays hidden', () => {
-    expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, active, weekUnderway, thursdayGame, NOW)).toBe(true);
-    expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, active, weekUnderway, sundayGame, NOW)).toBe(false);
+    expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, active, weekUnderway, thursdayGame, 1, NOW)).toBe(true);
+    expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, active, weekUnderway, sundayGame, 1, NOW)).toBe(false);
   });
 
   it.each([ContestStatus.DRAFT, ContestStatus.OPEN])(
     'reveals no pick on a %s contest, even of a game that has kicked off',
     (status) => {
-      expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, { status }, weekUnderway, thursdayGame, NOW)).toBe(false);
+      expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, { status }, weekUnderway, thursdayGame, 1, NOW)).toBe(false);
     },
   );
 
   it('reveals every pick of a COMPLETED contest', () => {
-    expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, { status: ContestStatus.COMPLETED }, weekAhead, sundayGame, NOW)).toBe(true);
+    expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, { status: ContestStatus.COMPLETED }, weekAhead, sundayGame, 1, NOW)).toBe(true);
   });
 
   it.each([SportEventStatus.COMPLETED, SportEventStatus.CANCELLED])(
     'reveals every pick of a %s event on a live contest',
     (status) => {
-      expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, active, event('week-6', -2, status), sundayGame, NOW)).toBe(true);
+      expect(areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, active, event('week-6', -2, status), sundayGame, 1, NOW)).toBe(true);
     },
   );
 
   it('under an event-start window, reveals a game\'s pick with its event\'s, whatever its own kickoff', () => {
-    expect(areMatchPicksRevealed(PickWindow.UNTIL_EVENT_START, active, weekUnderway, sundayGame, NOW))
+    expect(areMatchPicksRevealed(PickWindow.UNTIL_EVENT_START, active, weekUnderway, sundayGame, 1, NOW))
       .toBe(areEventPicksRevealed(active, weekUnderway, NOW));
-    expect(areMatchPicksRevealed(PickWindow.UNTIL_EVENT_START, active, weekUnderway, sundayGame, NOW)).toBe(true);
-    expect(areMatchPicksRevealed(PickWindow.UNTIL_EVENT_START, active, weekAhead, game(-1), NOW)).toBe(false);
+    expect(areMatchPicksRevealed(PickWindow.UNTIL_EVENT_START, active, weekUnderway, sundayGame, 1, NOW)).toBe(true);
+    expect(areMatchPicksRevealed(PickWindow.UNTIL_EVENT_START, active, weekAhead, game(-1), 1, NOW)).toBe(false);
   });
 });
 

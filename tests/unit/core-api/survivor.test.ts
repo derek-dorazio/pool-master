@@ -197,7 +197,7 @@ async function settle(context: Context, sportEventId: string, completedAt: Date)
 }
 
 function survivorWeek(overrides: Partial<SurvivorWeek> & Pick<SurvivorWeek, 'sportEventId'>): SurvivorWeek {
-  return { started: true, cancelled: false, submitted: true, games: [], pick: null, pickedParticipantId: null, ...overrides };
+  return { roundNumber: 1, started: true, cancelled: false, submitted: true, games: [], pick: null, pickedParticipantId: null, ...overrides };
 }
 
 function game(id: string, overrides: Partial<SportEventMatch> = {}): SportEventMatch {
@@ -272,7 +272,16 @@ describe('survivorPredictionEngine', () => {
   });
 
   it('refuses a week with no pick or two, a team used in another week, and any week of an entry that is out', () => {
-    const season = { usedParticipantIds: new Set(['bills']), eliminatedInWeek: null, participantIdOf: new Map([['a-home', 'bills'], ['b-home', 'chiefs']]) };
+    // The week under test is week 3 of the contest, one round of games a and b.
+    const season = {
+      usedParticipantIds: new Set(['bills']),
+      eliminatedInWeek: null,
+      participantIdOf: new Map([['a-home', 'bills'], ['b-home', 'chiefs']]),
+      roundOf: new Map([['a', 1], ['b', 1]]),
+      firstRoundNumber: 1,
+      weekNumberOfRound: new Map([[1, 3]]),
+      firstWeekNumber: 3,
+    };
     const issues = (predictions: Array<{ sportEventMatchId: string; sportEventParticipantId: string }>, eliminatedInWeek: number | null = null) =>
       survivorPredictionEngine.findWeekIssues({
         configuration: { selectionType: SelectionType.SURVIVOR },

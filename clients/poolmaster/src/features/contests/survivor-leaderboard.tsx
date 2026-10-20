@@ -14,6 +14,7 @@ import { ContestHeader, ContestSubMenu } from './contest-header';
 import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
 import { describeSurvivorRules, pluralize } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
+import { useBracketRoundLabel } from './use-bracket-round-label';
 import { fetchContestEntries } from './use-contest-entries';
 import { useSurvivorLeaderboardQuery } from './use-contest-leaderboard';
 
@@ -35,26 +36,42 @@ const OUTCOME_TONES: Record<SurvivorWeekOutcome, NonNullable<StatusBadgeProps['t
   PENDING: 'neutral',
 };
 
-/** "In" for an entry still standing, else "Out in week 3". */
-function formatSurvivorStanding(entry: Pick<SurvivorRow, 'alive' | 'eliminatedInWeek'>): string {
-  return entry.alive || entry.eliminatedInWeek === null ? 'In' : `Out in week ${entry.eliminatedInWeek}`;
+/** What a week is called on the board: its event's name, or a playoff round's name (#785). */
+type WeekName = (week: Pick<SurvivorWeek, 'name' | 'roundCount' | 'roundNumber'>) => string;
+
+/**
+ * A week's key on the board: its event, and its round when the event is a playoff of several
+ * rounds (#785), each of which is a week.
+ */
+function weekKey(week: Pick<SurvivorWeek, 'roundCount' | 'roundNumber' | 'sportEventId'>): string {
+  return week.roundCount > 1 ? `${week.sportEventId}-round-${week.roundNumber}` : week.sportEventId;
+}
+
+/** "In" for an entry still standing, else "Out in week 3", or in a playoff "Out in Divisional". */
+function formatSurvivorStanding(entry: Pick<SurvivorRow, 'alive' | 'eliminatedInWeek'>, weeks: readonly SurvivorWeek[], weekName: WeekName): string {
+  if (entry.alive || entry.eliminatedInWeek === null) {
+    return 'In';
+  }
+  const week = weeks.find((candidate) => candidate.weekNumber === entry.eliminatedInWeek);
+  return week && week.roundCount > 1 ? `Out in ${weekName(week)}` : `Out in week ${entry.eliminatedInWeek}`;
 }
 
 /** A week's column heading: its name, with how it stands once it is under way. */
-function weekHeading(week: SurvivorWeek): string {
+function weekHeading(week: SurvivorWeek, weekName: WeekName): string {
+  const name = weekName(week);
   if (week.status === SportEventStatus.CANCELLED) {
-    return `${week.name} (cancelled)`;
+    return `${name} (cancelled)`;
   }
-  return week.started ? `${week.name} (${week.aliveCount} in)` : week.name;
+  return week.started ? `${name} (${week.aliveCount} in)` : name;
 }
 
 /** One entry's cell for one week: the team it picked once shown, and how the week went for it. */
-function WeekCell({ entryId, week }: { entryId: string; week: SurvivorRow['weeks'][number] }) {
+function WeekCell({ entryId, week, weekId }: { entryId: string; week: SurvivorRow['weeks'][number]; weekId: string }) {
   if (week.outcome === null && week.team === null) {
-    return <span data-testid={`survivor-leaderboard-week-${week.sportEventId}-${entryId}`}>—</span>;
+    return <span data-testid={`survivor-leaderboard-week-${weekId}-${entryId}`}>—</span>;
   }
   return (
-    <span className="inline-flex flex-wrap items-center gap-1.5" data-testid={`survivor-leaderboard-week-${week.sportEventId}-${entryId}`}>
+    <span className="inline-flex flex-wrap items-center gap-1.5" data-testid={`survivor-leaderboard-week-${weekId}-${entryId}`}>
       {/* A pending week has a pick, kept hidden until its game kicks off; a week lost with no team named had none. */}
       {week.team ?? (week.outcome === SurvivorWeekOutcome.PENDING ? 'Shown at kickoff' : 'No pick')}
       {week.outcome ? <Chip tone={OUTCOME_TONES[week.outcome]}>{OUTCOME_LABELS[week.outcome]}</Chip> : null}
@@ -68,7 +85,10 @@ function survivorColumns(
   leagueCode: string | null,
   mySquadId: string | null,
   weeks: readonly SurvivorWeek[],
+  weekName: WeekName,
 ): ColumnDef<SurvivorRow>[] {
+  const cellOf = (row: SurvivorRow, week: SurvivorWeek) =>
+    row.weeks.find((cell) => cell.sportEventId === week.sportEventId && cell.roundNumber === week.roundNumber);
   return [
     {
       id: 'place',
@@ -109,10 +129,10 @@ function survivorColumns(
     {
       id: 'standing',
       header: 'Status',
-      accessorFn: (row) => formatSurvivorStanding(row),
+      accessorFn: (row) => formatSurvivorStanding(row, weeks, weekName),
       cell: ({ row }) => (
         <Chip data-testid={`survivor-leaderboard-standing-${row.original.entryId}`} tone={row.original.alive ? 'success' : 'neutral'}>
-          {formatSurvivorStanding(row.original)}
+          {formatSurvivorStanding(row.original, weeks, weekName)}
         </Chip>
       ),
     },
@@ -127,12 +147,12 @@ function survivorColumns(
       ),
     },
     ...weeks.map((week): ColumnDef<SurvivorRow> => ({
-      id: `week-${week.sportEventId}`,
-      header: weekHeading(week),
-      accessorFn: (row) => row.weeks.find((cell) => cell.sportEventId === week.sportEventId)?.outcome ?? null,
+      id: `week-${weekKey(week)}`,
+      header: weekHeading(week, weekName),
+      accessorFn: (row) => cellOf(row, week)?.outcome ?? null,
       cell: ({ row }) => {
-        const cell = row.original.weeks.find((candidate) => candidate.sportEventId === week.sportEventId);
-        return cell ? <WeekCell entryId={row.original.entryId} week={cell} /> : '—';
+        const cell = cellOf(row.original, week);
+        return cell ? <WeekCell entryId={row.original.entryId} week={cell} weekId={weekKey(week)} /> : '—';
       },
     })),
   ];
@@ -141,7 +161,8 @@ function survivorColumns(
 /**
  * A survivor contest's leaderboard (#719): place, the entry and its group, whether it is still in
  * or the week it went out, its weeks survived, and a column for every week with the team it picked
- * (shown from that game's kickoff) and how the week went. Polled while the contest is live, so
+ * (shown from that game's kickoff) and how the week went. On a playoff bracket (#785) each round
+ * is a column of its own, named as the bracket names it. Polled while the contest is live, so
  * entries drop out as the results come in.
  */
 export function SurvivorLeaderboard({ contest, leagueCode: hintedLeagueCode }: { contest: ContestDto; leagueCode: string | null }) {
@@ -154,6 +175,10 @@ export function SurvivorLeaderboard({ contest, leagueCode: hintedLeagueCode }: {
     retry: false,
   });
   const { league, viewer } = useLeagueContextById(contest.leagueId);
+  // A playoff's rounds (#785) are named as its bracket names them.
+  const playoffEventId = leaderboardQuery.data?.weeks.find((week) => week.roundCount > 1)?.sportEventId ?? '';
+  const roundLabel = useBracketRoundLabel(contest.sport, playoffEventId);
+  const weekName: WeekName = (week) => (week.roundCount > 1 ? roundLabel(week.roundNumber, week.roundCount) : week.name);
   const leagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
 
   useEffect(() => {
@@ -223,7 +248,7 @@ export function SurvivorLeaderboard({ contest, leagueCode: hintedLeagueCode }: {
 
       <Tile>
         <DataGrid
-          columns={survivorColumns(contestId, leagueCode, mySquadId, board.weeks)}
+          columns={survivorColumns(contestId, leagueCode, mySquadId, board.weeks, weekName)}
           data={board.entries}
           emptyMessage="No entry has submitted a week yet."
           getRowId={(row) => row.entryId}

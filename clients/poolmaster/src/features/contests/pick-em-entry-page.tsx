@@ -16,10 +16,12 @@ import {
   Alert,
   Button,
   ErrorState,
+  FormField,
   LinkButton,
   LoadingState,
   MetricGrid,
   MetricTile,
+  Select,
   StatusBadge,
   Tile,
   formatDateTimeDisplay,
@@ -46,15 +48,20 @@ import { PickEmGames } from './pick-em-games';
 import {
   canChangeWeek,
   confidencePicks,
+  currentWeekRound,
   firstKickoff,
+  isPlayoffSurvivor,
   isSurvivorWeek,
   missedWeek,
+  roundWeek,
   survivorPickTeam,
   teamPick,
+  weekRounds,
   weekSubmitHint,
   type PickEmGame,
   type PickEmTeam,
 } from './pick-em-week';
+import { useBracketRoundLabel } from './use-bracket-round-label';
 import { fetchContestEntries } from './use-contest-entries';
 
 /**
@@ -68,9 +75,9 @@ const PICK_EM_CODE_MESSAGES: ErrorCodeMessages = {
   PREDICTION_GAME_STARTED: 'That game has kicked off, so its pick is locked.',
   PREDICTION_CLEAR_AFTER_FIRST_KICKOFF: 'The week has started, so a pick can be changed to the other team but not removed.',
   CONTEST_ENTRY_LOCKED: 'The games have kicked off, so this can no longer change.',
-  PREDICTION_ONE_PICK_REQUIRED: 'Pick one team to win this week.',
-  PREDICTION_TEAM_ALREADY_USED: 'You picked that team in another week. Each team can be picked once.',
-  PREDICTION_ENTRY_ELIMINATED: 'This entry is out, so it picks no more weeks.',
+  PREDICTION_ONE_PICK_REQUIRED: 'Pick one team to win this week, or in a playoff, this round.',
+  PREDICTION_TEAM_ALREADY_USED: 'You picked that team in another week or round. Each team can be picked once.',
+  PREDICTION_ENTRY_ELIMINATED: 'This entry is out, so it picks no more.',
 };
 
 /** What the entry has scored, once anyone can see it; a dash before. */
@@ -86,7 +93,8 @@ function formatScore(points: number | null) {
  *
  * A survivor contest's week (#719) is the same screen with one pick: a tap picks the team, in
  * place of the entry's other pick; teams used in another week can't be picked, there is no
- * tiebreaker, and an entry that is out picks no more weeks.
+ * tiebreaker, and an entry that is out picks no more weeks. On a playoff bracket (#785) each
+ * round is a week: a round switcher shows one round at a time, read as its own week.
  */
 export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const logger = getLogger().child({ feature: 'pick-em-entry-page' });
@@ -102,6 +110,9 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   // Null until the member types: the field shows the saved tiebreaker until then, so a refetch
   // never overwrites what is being typed (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
   const [tiebreakerDraft, setTiebreakerDraft] = useState<string | null>(null);
+  // A playoff survivor pool's round on screen (#785), until the member switches: the one being picked.
+  const [requestedRound, setRequestedRound] = useState<number | null>(null);
+  const roundLabel = useBracketRoundLabel(contest.sport, sportEventId);
 
   const gamePicksQuery = useQuery({
     queryKey: gamePicksKey,
@@ -180,6 +191,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     saveMutation.reset();
     submitMutation.reset();
     setTiebreakerDraft(null);
+    setRequestedRound(null);
     setRequestedEventId(next);
   };
 
@@ -196,7 +208,15 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     );
   }
 
-  const gamePicks = gamePicksQuery.data;
+  const eventPicks = gamePicksQuery.data;
+  const isPlayoff = isPlayoffSurvivor(eventPicks);
+  const rounds = weekRounds(eventPicks);
+  const roundCount = rounds.at(-1) ?? 1;
+  const round = requestedRound !== null && rounds.includes(requestedRound) ? requestedRound : currentWeekRound(eventPicks);
+  // A playoff round reads as a week of its own; any other event is one week.
+  const gamePicks = isPlayoff ? roundWeek(eventPicks, round) : eventPicks;
+  /** What one pick covers: a week, or a playoff's round. */
+  const period = isPlayoff ? 'round' : 'week';
   const backLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
   const backToContestPath = backLeagueCode ? buildLeagueContestPath(backLeagueCode, contestId) : `/contests/${contestId}`;
   const entrySummary = contestEntriesQuery.data?.entries.find((entry) => entry.id === entryId) ?? null;
@@ -208,6 +228,10 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const hint = isSubmitted ? null : weekSubmitHint(gamePicks);
   const isSurvivor = isSurvivorWeek(gamePicks);
   const eliminatedInWeek = gamePicks.survivor?.eliminatedInWeek ?? null;
+  // A contest of one playoff event counts its weeks by the event's rounds.
+  const eliminatedRound = isPlayoff && contest.sportEvents.length === 1 && eliminatedInWeek !== null ? rounds.at(eliminatedInWeek - 1) ?? null : null;
+  const eliminatedIn = eliminatedRound !== null ? `the ${roundLabel(eliminatedRound, roundCount)}` : `week ${eliminatedInWeek ?? ''}`;
+  const roundNeedsPick = isPlayoff && round !== rounds.at(0) && canChangeWeek(gamePicks) && gamePicks.pickedCount === 0;
   const survivorTeam = isSurvivor ? survivorPickTeam(gamePicks) : null;
 
   const save = (body: SaveGamePicksRequest) => {
@@ -284,10 +308,19 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         testId="pick-em-week-switcher"
         value={sportEventId}
       />
+      {isPlayoff ? (
+        <FormField className="max-w-md" label="Round">
+          <Select data-testid="survivor-round-switcher" onChange={(event) => setRequestedRound(Number(event.target.value))} value={String(round)}>
+            {rounds.map((roundNumber) => (
+              <option key={roundNumber} value={roundNumber}>{roundLabel(roundNumber, roundCount)}</option>
+            ))}
+          </Select>
+        </FormField>
+      ) : null}
 
       {eliminatedInWeek !== null ? (
         <Alert data-testid="survivor-eliminated" title="Out">
-          {`This entry went out in week ${eliminatedInWeek}, so it picks no more weeks.`}
+          {`This entry went out in ${eliminatedIn}, so it picks no more ${period}s.`}
         </Alert>
       ) : null}
       {canChange && !isSubmitted && kickoff ? (
@@ -295,6 +328,11 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           {isSurvivor
             ? `Submit this week before the first kickoff, ${formatDateTimeDisplay(kickoff)}. An entry that hasn't submitted by then is out.`
             : `Submit this week before the first kickoff, ${formatDateTimeDisplay(kickoff)}. A week that isn't submitted by then scores nothing.`}
+        </Alert>
+      ) : null}
+      {roundNeedsPick ? (
+        <Alert data-testid="survivor-round-needs-pick" title="No pick yet" tone="warning">
+          Pick a team before this round&apos;s first game, or the entry is out.
         </Alert>
       ) : null}
       {missedWeek(gamePicks) && eliminatedInWeek === null ? (
@@ -314,7 +352,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
               value={<span data-testid="survivor-pick">{survivorTeam?.name ?? 'None yet'}</span>}
             />
             <MetricTile
-              helperText={isSubmitted ? 'This week counts.' : 'Submit before the first kickoff to stay in.'}
+              helperText={isSubmitted ? `This ${isPlayoff ? 'entry' : 'week'} counts.` : 'Submit before the first kickoff to stay in.'}
               label="Status"
               value={<span data-testid="pick-em-status">{statusLabel}</span>}
             />
@@ -354,7 +392,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         {canChange ? (
           <p className="mb-5 text-sm text-muted-foreground">
             {isSurvivor
-              ? 'Tap the one team you think wins this week. If it loses or ties, the entry is out. A team you picked in another week can\'t be picked again.'
+              ? `Tap the one team you think wins this ${period}. If it loses or ties, the entry is out. A team you picked in another ${period} can't be picked again.`
               : gamePicks.mode === PickEmMode.CONFIDENCE
               ? `Tap the team you think wins each game, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value.`
               : 'Tap the team you think wins each game. Each correct pick scores 1 point.'}
@@ -387,7 +425,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           {isSubmitted ? (
             <Alert data-testid="pick-em-submitted" title="Submitted" tone="success">
               {isSurvivor
-                ? 'This week counts. You can still change your pick until its game kicks off.'
+                ? `This ${isPlayoff ? 'entry' : 'week'} counts. You can still change your pick until its game kicks off.`
                 : 'This week counts. You can still change a pick until its game kicks off.'}
             </Alert>
           ) : (
@@ -401,7 +439,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
                   submitMutation.mutate();
                 }}
               >
-                {submitMutation.isPending ? 'Submitting...' : 'Submit week'}
+                {submitMutation.isPending ? 'Submitting...' : isPlayoff ? 'Submit entry' : 'Submit week'}
               </Button>
             </>
           )}

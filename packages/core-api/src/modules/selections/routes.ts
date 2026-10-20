@@ -50,7 +50,7 @@ const gamePickParams = {
 } as const;
 
 /** What saving or submitting a survivor week (#719) answers beyond any game-pick route's refusals. */
-const SURVIVOR_PICK_REFUSALS = 'In a survivor contest (#719): 409 PREDICTION_ONE_PICK_REQUIRED unless the week holds exactly one pick; 409 PREDICTION_TEAM_ALREADY_USED for a team the entry picked in another submitted week; 409 PREDICTION_ENTRY_ELIMINATED once the entry is out.';
+const SURVIVOR_PICK_REFUSALS = 'In a survivor contest (#719): 409 PREDICTION_ONE_PICK_REQUIRED unless the week holds exactly one pick; 409 PREDICTION_TEAM_ALREADY_USED for a team the entry picked in another submitted week; 409 PREDICTION_ENTRY_ELIMINATED once the entry is out. On a playoff bracket (#785) each round is a week: the event is submitted once with its first round\'s one pick, each later round holds at most one pick (a new one replaces the entry\'s pick in that round), no team is picked in two rounds, and an entry out in one round picks no later round.';
 
 /** What every game-pick route answers for a contest, event, entry or game it can't serve (#716). */
 const GAME_PICK_REFUSALS = '404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.';

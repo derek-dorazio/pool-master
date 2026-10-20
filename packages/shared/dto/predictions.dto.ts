@@ -168,16 +168,19 @@ export type PickEmLeaderboardResponse = z.infer<typeof PickEmLeaderboardResponse
 export const SurvivorLeaderboardWeekDtoSchema = z.object({
   sportEventId: z.string().uuid(),
   weekNumber: z.number().int().describe('1 for the contest\'s first week, by start date.'),
-  name: z.string(),
+  roundNumber: z.number().int().describe('The round of the event the week is (#785): 1 for a regular-season week, which is an event of one round; each round of a playoff bracket is a week of its own.'),
+  roundCount: z.number().int().describe('The event\'s number of rounds, for the round\'s name: 1 for a regular-season week.'),
+  name: z.string().describe('The event\'s name; a playoff round is named by its round number and the event\'s round names.'),
   startDate: z.string().datetime().describe('The week\'s first kickoff.'),
   status: z.nativeEnum(SportEventStatus),
   started: z.boolean().describe('Whether the week\'s first game has kicked off: an entry not submitted by then is out.'),
   aliveCount: z.number().int().describe('How many entries are still in after the week: those that survived it and those whose game is still to finish. 0 until it starts, and for a cancelled week.'),
-}).describe('One week of a survivor contest.');
+}).describe('One week of a survivor contest: a regular-season week, or one round of a playoff bracket.');
 export type SurvivorLeaderboardWeekDto = z.infer<typeof SurvivorLeaderboardWeekDtoSchema>;
 
 export const SurvivorLeaderboardEntryWeekDtoSchema = z.object({
   sportEventId: z.string().uuid(),
+  roundNumber: z.number().int().describe('The round of the event the week is, as on the contest\'s weeks.'),
   outcome: z.nativeEnum(SurvivorWeekOutcome).nullable().describe('SURVIVED when the picked team won or its game was cancelled, ELIMINATED after a loss, a tie or a week not submitted by its first kickoff, PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.'),
   team: z.string().nullable().describe('The team the entry picked, once its game has kicked off. Null before then, and with no pick.'),
 }).describe('One entry\'s week of a survivor contest.');

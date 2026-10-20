@@ -5,7 +5,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { ContestLeaderboardPage } from './contest-leaderboard-page';
 import { bracketLeagueContextFixture } from './test/bracket-fixtures';
-import { pickEmContestFixture, pickEmEntriesFixture, survivorLeaderboardFixture } from './test/pick-em-fixtures';
+import {
+  pickEmContestFixture,
+  pickEmEntriesFixture,
+  playoffSurvivorContestFixture,
+  playoffSurvivorLeaderboardFixture,
+  survivorLeaderboardFixture,
+} from './test/pick-em-fixtures';
 
 const {
   getSurvivorLeaderboardMock,
@@ -76,8 +82,11 @@ function renderLeaderboard() {
   );
 }
 
-function primeMocks(board = survivorLeaderboardFixture()) {
-  getContestMock.mockResolvedValue({ data: { contest: pickEmContestFixture({ status: 'ACTIVE', selectionType: 'SURVIVOR' }) } });
+function primeMocks(
+  board = survivorLeaderboardFixture(),
+  contest = pickEmContestFixture({ status: 'ACTIVE', selectionType: 'SURVIVOR' }),
+) {
+  getContestMock.mockResolvedValue({ data: { contest } });
   getSurvivorLeaderboardMock.mockResolvedValue({ data: board });
   listContestEntriesMock.mockResolvedValue({ data: pickEmEntriesFixture({ picksRevealed: true }) });
   getLeagueMock.mockResolvedValue({ data: bracketLeagueContextFixture() });
@@ -114,5 +123,17 @@ describe('Survivor contest leaderboard', () => {
     expect(screen.getByTestId('survivor-leaderboard-week-week-1-entry-1')).toHaveTextContent('ChiefsSurvived');
     expect(screen.getByTestId('survivor-leaderboard-week-week-2-entry-2')).toHaveTextContent('BearsOut');
     expect(screen.getByTestId('survivor-leaderboard-week-week-2-entry-1')).toHaveTextContent('Shown at kickoffPending');
+  });
+
+  it('heads a playoff survivor pool by its round names and says the round an entry went out in', async () => {
+    primeMocks(playoffSurvivorLeaderboardFixture(), playoffSurvivorContestFixture());
+    renderLeaderboard();
+
+    const table = await screen.findByTestId('survivor-leaderboard-table');
+    expect(within(table).getAllByRole('columnheader').map((header) => header.textContent.replace('↕', ''))).toEqual(
+      expect.arrayContaining(['Conference Championship (1 in)', 'Super Bowl']),
+    );
+    expect(screen.getByTestId('survivor-leaderboard-standing-entry-2')).toHaveTextContent('Out in Conference Championship');
+    expect(screen.getByTestId('survivor-leaderboard-week-playoffs-round-1-entry-1')).toHaveTextContent('BillsSurvived');
   });
 });

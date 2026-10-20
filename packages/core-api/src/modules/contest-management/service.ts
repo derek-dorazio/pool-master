@@ -108,8 +108,11 @@ export interface ContestCreateSportEventReader {
   findActiveFieldPrices(sportEventId: string): Promise<number[]>;
   /** How many games the event has to pick, cancelled games left out (#716). */
   countGames(sportEventId: string): Promise<number>;
-  /** How many of those games still have a team to be decided. */
-  countUndecidedGames(sportEventId: string): Promise<number>;
+  /**
+   * How many of those games still have a team to be decided: in every round, or with
+   * `openingRoundOnly` in the event's first round, as a playoff survivor pool needs (#785).
+   */
+  countUndecidedGames(sportEventId: string, options?: { openingRoundOnly: boolean }): Promise<number>;
   /** How many of those games have no spread yet (#720). */
   countGamesWithoutSpread(sportEventId: string): Promise<number>;
   /** Why the event's games from `startsAtRound` on cannot be filled in as a bracket, or null when they can (#721). */
@@ -826,12 +829,14 @@ export class ContestManagementService {
     }
     if (rules.selectionType === SelectionType.SURVIVOR) {
       // A survivor entry picks one team a week to win its game (#719): every week needs its games,
-      // with both teams known. No pick earns points: the leaderboard and settlement count weeks
-      // survived. The rule is still stored because every contest carries one (a configuration's
-      // scoring is required), so a survivor contest keeps pick'em's one-point default.
+      // with both teams known. A playoff's rounds are each a week (#785), so only its first round's
+      // teams must be known: the later rounds' come from the results. No pick earns points: the
+      // leaderboard and settlement count weeks survived. The rule is still stored because every
+      // contest carries one (a configuration's scoring is required), so a survivor contest keeps
+      // pick'em's one-point default.
       for (const each of sportEvents) {
         await this.assertEventHasGames(each.id);
-        await this.assertEventGamesDecided(each.id);
+        await this.assertEventGamesDecided(each.id, { openingRoundOnly: true });
       }
       return {
         configJson: { selectionType: rules.selectionType },
@@ -939,8 +944,8 @@ export class ContestManagementService {
   }
 
   /** A pick names one of a game's two teams, so a week with a team still to be decided could never be submitted. */
-  private async assertEventGamesDecided(sportEventId: string): Promise<void> {
-    const undecided = await this.sportEventReader.countUndecidedGames(sportEventId);
+  private async assertEventGamesDecided(sportEventId: string, options?: { openingRoundOnly: boolean }): Promise<void> {
+    const undecided = await this.sportEventReader.countUndecidedGames(sportEventId, options);
     if (undecided === 0) {
       return;
     }

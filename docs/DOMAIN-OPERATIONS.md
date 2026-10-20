@@ -890,6 +890,14 @@ week, 0 for one that went out in it, and nothing for an entry already out; when 
 finishes, the weeks survived are summed into `ContestEntryStanding` and the contest is
 `COMPLETED`. Entries out in the same week share a place. A survivor week has no tiebreaker.
 
+A survivor pool on a playoff bracket (#785) picks each round as a week of its own
+(`survivorWeekKey`: event and round). The event is submitted once, with exactly one pick in its
+first round; each later round takes at most one pick, saved any time before that round's first
+game (`cutoffTiming` with `ROUND_START`), a new pick replacing the old one in the round. A team is
+used once across every round and week. A round that starts with no pick puts the entry out, so an
+entry left with no unused team in a round is out. Only the opening round's games must have both
+teams when the contest is created. The event's standing is the rounds it survived.
+
 Every prediction event takes a tiebreaker (#717): a guess of its tiebreaker game's total points,
 a bracket's final or a pick'em week's last game by kickoff (`tiebreakerMatchId`). It is kept per
 event on `ContestEntryEvent.tiebreakerValue`, saved with the picks (the entry update refuses

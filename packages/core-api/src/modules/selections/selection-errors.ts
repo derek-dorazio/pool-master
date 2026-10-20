@@ -312,10 +312,10 @@ export const selectionErrors = {
       409,
     ),
 
-  /** A survivor week (#719) is submitted with exactly one pick. */
+  /** A survivor week (#719) is submitted with exactly one pick; a playoff round (#785) holds one. */
   onePickRequired: (entryId: string, pickedCount: number) =>
     new SelectionError(
-      `Entry ${entryId} picks one team a week in a survivor pool: it has ${pickedCount}`,
+      `Entry ${entryId} picks one team a week (or playoff round) in a survivor pool: it has ${pickedCount}`,
       'PREDICTION_ONE_PICK_REQUIRED',
       409,
     ),
@@ -323,7 +323,7 @@ export const selectionErrors = {
   /** A survivor entry (#719) picks each team once a season. */
   teamAlreadyUsed: (entryId: string, sportEventParticipantId: string) =>
     new SelectionError(
-      `Entry ${entryId} picked team ${sportEventParticipantId} in another week: a survivor entry picks each team once a season`,
+      `Entry ${entryId} picked team ${sportEventParticipantId} in another week or round: a survivor entry picks each team once`,
       'PREDICTION_TEAM_ALREADY_USED',
       409,
     ),

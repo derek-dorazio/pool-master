@@ -24,7 +24,7 @@ function pickEmScoring(configuration: ContestSelectionConfig | undefined): GameP
 export const pickEmPredictionEngine: PredictionEngine = {
   selectionType: SelectionType.PICK_EM,
   pickWindow: PickWindow.UNTIL_MATCH_START,
-  onePickPerEvent: false,
+  onePickPerRound: false,
   readsEarlierWeeks: false,
 
   tiebreakerGame({ games, eventStart }) {

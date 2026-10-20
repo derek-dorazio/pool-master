@@ -219,27 +219,91 @@ export function survivorLeaderboardFixture(overrides: Partial<SurvivorLeaderboar
   return {
     contestId: 'contest-1',
     weeks: [
-      { sportEventId: 'week-1', weekNumber: 1, name: 'Week 1', startDate: WEEK_1_START, status: 'COMPLETED', started: true, aliveCount: 2 },
-      { sportEventId: 'week-2', weekNumber: 2, name: 'Week 2', startDate: WEEK_2_START, status: 'IN_PROGRESS', started: true, aliveCount: 1 },
+      { sportEventId: 'week-1', weekNumber: 1, roundNumber: 1, roundCount: 1, name: 'Week 1', startDate: WEEK_1_START, status: 'COMPLETED', started: true, aliveCount: 2 },
+      { sportEventId: 'week-2', weekNumber: 2, roundNumber: 1, roundCount: 1, name: 'Week 2', startDate: WEEK_2_START, status: 'IN_PROGRESS', started: true, aliveCount: 1 },
     ],
     entries: [
       {
         entryId: 'entry-1', entryName: 'Morgan’s Picks', entryNumber: 1, squadId: 'squad-1', squadName: 'Morgan’s Madness',
         alive: true, eliminatedInWeek: null, weeksSurvived: 1, position: 1, displayPosition: '1',
         weeks: [
-          { sportEventId: 'week-1', outcome: 'SURVIVED', team: 'Chiefs' },
-          { sportEventId: 'week-2', outcome: 'PENDING', team: null },
+          { sportEventId: 'week-1', roundNumber: 1, outcome: 'SURVIVED', team: 'Chiefs' },
+          { sportEventId: 'week-2', roundNumber: 1, outcome: 'PENDING', team: null },
         ],
       },
       {
         entryId: 'entry-2', entryName: 'Chalk All The Way', entryNumber: 1, squadId: 'squad-2', squadName: 'Derek’s Great Golf Guys',
         alive: false, eliminatedInWeek: 2, weeksSurvived: 1, position: 2, displayPosition: '2',
         weeks: [
-          { sportEventId: 'week-1', outcome: 'SURVIVED', team: 'Bills' },
-          { sportEventId: 'week-2', outcome: 'ELIMINATED', team: 'Bears' },
+          { sportEventId: 'week-1', roundNumber: 1, outcome: 'SURVIVED', team: 'Bills' },
+          { sportEventId: 'week-2', roundNumber: 1, outcome: 'ELIMINATED', team: 'Bears' },
         ],
       },
     ],
     ...overrides,
   };
+}
+
+/**
+ * A playoff survivor pool (#785) on a two-round bracket, each round a week: the Bills beat the
+ * Chiefs in round 1, the entry's pick there; round 2's two games are still to kick off and
+ * unpicked. The entry submitted the playoffs with its round 1 pick.
+ */
+export function playoffSurvivorFixture(overrides: Partial<GamePicksResponse> = {}): GamePicksResponse {
+  const [, billsAtChiefs] = week1Games();
+  const games: Game[] = [
+    { ...billsAtChiefs, matchNumber: 1, sportEventMatchId: 'match-1', status: 'COMPLETED', locked: true, revealed: true, pick: weekPick(NFL_TEAMS.bills, { outcome: 'CORRECT' }) },
+    game(2, WEEK_2_START, NFL_TEAMS.bills, NFL_TEAMS.eagles, { roundNumber: 2 }),
+    game(3, WEEK_2_START, NFL_TEAMS.bears, NFL_TEAMS.packers, { roundNumber: 2 }),
+  ];
+  return survivorWeekFixture({
+    sportEventId: 'playoffs',
+    status: 'SUBMITTED',
+    submittedAt: '2099-09-01T12:00:00.000Z',
+    survivor: { eliminatedInWeek: null, usedParticipantIds: [] },
+    games,
+    ...overrides,
+  });
+}
+
+/** A survivor contest on one playoff event (#785). */
+export function playoffSurvivorContestFixture(overrides: Partial<ContestDto> = {}): ContestDto {
+  return pickEmContestFixture({
+    selectionType: 'SURVIVOR',
+    status: 'ACTIVE',
+    sportEvents: [{ sportEventId: 'playoffs', sequence: 1, name: 'Playoffs', startDate: WEEK_1_START, status: 'IN_PROGRESS' }],
+    ...overrides,
+  });
+}
+
+/**
+ * A playoff survivor board (#785) after round 1 of two: Morgan's Picks survived it on the Bills;
+ * Chalk All The Way went out on the Chiefs.
+ */
+export function playoffSurvivorLeaderboardFixture(): SurvivorLeaderboardResponse {
+  const week = (roundNumber: number, aliveCount: number, started: boolean) => ({
+    sportEventId: 'playoffs', weekNumber: roundNumber, roundNumber, roundCount: 2, name: 'Playoffs',
+    startDate: WEEK_1_START, status: 'IN_PROGRESS' as const, started, aliveCount,
+  });
+  return survivorLeaderboardFixture({
+    weeks: [week(1, 1, true), week(2, 0, false)],
+    entries: [
+      {
+        entryId: 'entry-1', entryName: 'Morgan’s Picks', entryNumber: 1, squadId: 'squad-1', squadName: 'Morgan’s Madness',
+        alive: true, eliminatedInWeek: null, weeksSurvived: 1, position: 1, displayPosition: '1',
+        weeks: [
+          { sportEventId: 'playoffs', roundNumber: 1, outcome: 'SURVIVED', team: 'Bills' },
+          { sportEventId: 'playoffs', roundNumber: 2, outcome: null, team: null },
+        ],
+      },
+      {
+        entryId: 'entry-2', entryName: 'Chalk All The Way', entryNumber: 1, squadId: 'squad-2', squadName: 'Derek’s Great Golf Guys',
+        alive: false, eliminatedInWeek: 1, weeksSurvived: 0, position: 2, displayPosition: '2',
+        weeks: [
+          { sportEventId: 'playoffs', roundNumber: 1, outcome: 'ELIMINATED', team: 'Chiefs' },
+          { sportEventId: 'playoffs', roundNumber: 2, outcome: null, team: null },
+        ],
+      },
+    ],
+  });
 }

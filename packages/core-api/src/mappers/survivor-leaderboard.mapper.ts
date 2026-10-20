@@ -9,6 +9,9 @@ import type { SurvivorLeaderboardResponse } from '@poolmaster/shared/dto';
 export interface SurvivorLeaderboardWeekRow {
   sportEventId: string;
   weekNumber: number;
+  /** The round of the event the week is; 1 for a regular-season week. */
+  roundNumber: number;
+  roundCount: number;
   name: string;
   startDate: Date;
   status: SportEventStatus;
@@ -18,6 +21,7 @@ export interface SurvivorLeaderboardWeekRow {
 
 export interface SurvivorLeaderboardEntryWeekRow {
   sportEventId: string;
+  roundNumber: number;
   outcome: SurvivorWeekOutcome | null;
   team: string | null;
 }
