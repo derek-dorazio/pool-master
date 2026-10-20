@@ -56,7 +56,8 @@ import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 // its own copy of the event, tagged with this run and the selection type, so the rows never share
 // a field or a contest. League presets are each checked on their own by the preset invariant in
 // contest-template-reference-data.integration; this suite proves one preset per sport and type
-// end to end. Pick'em and multi-event rows join the table when those contest types land.
+// end to end. The prediction types run on the playoff seeds in playoff-prediction-scenarios (bracket and
+// survivor on every playoff league), squares in squares, and pick'em on the NFL weeks seed in nfl-week.
 
 const RUN = `scenario-${Date.now()}`;
 const SELECTION_TYPES = [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW] as const;
