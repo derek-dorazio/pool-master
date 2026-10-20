@@ -12,4 +12,6 @@ export const SPORT_BLURBS: Record<Sport, string> = {
   RUNNING: 'Pick runners for the World Marathon Majors and score where they finish.',
   BASKETBALL: 'March Madness and playoff brackets, survivor pools, and squares on the big games.',
   AMERICAN_FOOTBALL: 'Weekly pick\'em and survivor, playoff brackets, and squares on the big game.',
+  HOCKEY: 'NHL, PWHL and college playoff brackets, survivor pools, and squares on the big games.',
+  BASEBALL: 'MLB postseason brackets and survivor pools, from the Wild Card round to the World Series.',
 };
