@@ -121,8 +121,13 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
   }
 }
 
+/** Whether the contest is drawn: a random draw has dealt (#601), or squares' digits are drawn (#711). */
 async function isContestDrawn(tx: Prisma.TransactionClient, contestId: string): Promise<boolean> {
-  return (await tx.contestDraw.count({ where: { contestId } })) > 0;
+  const [deals, digits] = await Promise.all([
+    tx.contestDraw.count({ where: { contestId } }),
+    tx.contestSquaresDraw.count({ where: { contestId } }),
+  ]);
+  return deals + digits > 0;
 }
 
 function mapToEntry(row: {

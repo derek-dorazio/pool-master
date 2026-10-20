@@ -39,7 +39,7 @@ import {
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
-import { fakeParticipantContestScoringRuleRepo } from '../../support/repo-fakes';
+import { fakeParticipantContestScoringRuleRepo, fakeSquaresRepo } from '../../support/repo-fakes';
 
 const T0 = new Date('2027-03-01T00:00:00.000Z');
 /** The bracket tips off at noon on 18 March; the test's clock is set either side of it. */
@@ -116,7 +116,7 @@ function setup(options: { rules?: (configurationId: string) => ParticipantContes
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo() });
+  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo() });
 
   return {
     world, games, contest, sportEvent, viewer, deps, contestService, settlement,

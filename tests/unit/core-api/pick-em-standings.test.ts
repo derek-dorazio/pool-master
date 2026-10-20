@@ -27,6 +27,7 @@ import { ContestOperationError, ContestService } from '../../../packages/core-ap
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
+import { fakeSquaresRepo } from '../../support/repo-fakes';
 
 const T0 = new Date('2026-09-01T00:00:00.000Z');
 const WEEK_1 = new Date('2026-09-10T20:00:00.000Z');
@@ -111,7 +112,7 @@ function setup() {
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo() });
+  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo() });
 
   const play = (game: SportEventMatch, winner: MatchSide | null, homeScore: number, awayScore: number) => {
     games.putMatches([{ ...expectDefined(games.matches.get(game.id)), status: MatchStatus.COMPLETED, winnerSide: winner, homeScore, awayScore }]);

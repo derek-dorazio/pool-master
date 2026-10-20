@@ -63,6 +63,8 @@ export const QueryKeys = {
     /** A pick'em contest's season leaderboard (#718): its own read, every week at once. */
     pickEmLeaderboard: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'pick-em-leaderboard'] as const,
     survivorLeaderboard: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'survivor-leaderboard'] as const,
+    /** A squares contest's board (#711): its boxes, numbers and winners. */
+    squaresBoard: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'squares-board'] as const,
   },
   managedContests: {
     all: ['poolmaster', 'managed-contest'] as const,

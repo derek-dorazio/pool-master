@@ -181,6 +181,29 @@ describe('survivor rules', () => {
   });
 });
 
+describe('squares rules', () => {
+  const TEAM = getSportDefinition(Sport.AMERICAN_FOOTBALL).vocabulary.participant;
+
+  it('names squares, labels its preset and suggested name by the box limit, and reads its rules as boxes on a grid won by last digits', () => {
+    expect(formatSelectionTypeName(SelectionType.SQUARES)).toBe('Squares');
+    expect(formatPresetLabel({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, 0)).toBe('10 boxes each');
+    expect(formatPresetLabel({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 1 }, 0)).toBe('1 box each');
+    expect(suggestContestName('Super Bowl LXI', SelectionType.SQUARES, null, 0)).toBe('Super Bowl LXI Squares');
+    expect(formatContestRules({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, 0, TEAM)).toBe(
+      'Claim up to 10 boxes on a 10x10 grid. Once the numbers are drawn, the box matching the last digit of each team\'s score wins each quarter and the final score.',
+    );
+  });
+
+  it('turns the rules fields into squares rules with the box limit, and refuses a limit past the grid', () => {
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxSquaresPerEntry: '5' }, SelectionType.SQUARES, 0, TEAM))
+      .toEqual({ configuration: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 5, maxEntriesPerSquad: 1 }, error: null });
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxSquaresPerEntry: '101' }, SelectionType.SQUARES, 0, TEAM))
+      .toEqual({ configuration: null, error: 'Boxes per entry must be between 1 and 100.' });
+    expect(toContestRulesValues({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 4, maxEntriesPerSquad: 1 }, DEFAULT_CONTEST_RULES))
+      .toEqual({ ...DEFAULT_CONTEST_RULES, maxSquaresPerEntry: '4' });
+  });
+});
+
 describe('bracket rules', () => {
   const TEAM = getSportDefinition(Sport.BASKETBALL).vocabulary.participant;
   const MARCH_MADNESS_ROUND = (roundNumber: number) => getSportDefinition(Sport.BASKETBALL).roundLabel(roundNumber, 6);

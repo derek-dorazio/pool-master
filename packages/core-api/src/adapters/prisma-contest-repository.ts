@@ -14,8 +14,8 @@ import type { Contest, ContestFormat, ContestStatus, SelectionType, Sport } from
 import { lockContestRow } from './contest-row-lock';
 
 /**
- * What every contest read joins: its events in sequence order with their sport (#713), and its
- * draw when it has one (#601).
+ * What every contest read joins: its events in sequence order with their sport (#713), its draw
+ * when it has one (#601), and a squares contest's game and digits draw (#711).
  */
 const CONTEST_INCLUDE = {
   sportEvents: {
@@ -23,6 +23,8 @@ const CONTEST_INCLUDE = {
     orderBy: { sequence: 'asc' },
   },
   draw: { select: { drawnAt: true } },
+  squaresGame: { select: { sportEventMatchId: true } },
+  squaresDraw: { select: { drawnAt: true } },
 } as const;
 
 export class PrismaContestRepository implements ContestRepository {
@@ -76,6 +78,9 @@ export class PrismaContestRepository implements ContestRepository {
         sportEvents: {
           create: contest.sportEventIds.map((sportEventId, index) => ({ sportEventId, sequence: index + 1 })),
         },
+        ...(contest.squaresGameMatchId !== undefined && {
+          squaresGame: { create: { sportEventMatchId: contest.squaresGameMatchId } },
+        }),
       },
       include: CONTEST_INCLUDE,
     });
@@ -167,6 +172,8 @@ function mapToContest(row: {
   contestFormat: ContestFormat;
   selectionType: SelectionType;
   draw?: { drawnAt: Date } | null;
+  squaresGame?: { sportEventMatchId: string } | null;
+  squaresDraw?: { drawnAt: Date } | null;
   startsAt: Date | null;
   endsAt: Date | null;
   createdAt: Date;
@@ -184,7 +191,9 @@ function mapToContest(row: {
     sport: row.sportEvents.at(0)?.sportEvent.sport,
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
-    drawnAt: row.draw?.drawnAt ?? undefined,
+    // A contest has at most one of the two draws: a random draw's deal or squares' digits.
+    drawnAt: row.draw?.drawnAt ?? row.squaresDraw?.drawnAt ?? undefined,
+    squaresGameMatchId: row.squaresGame?.sportEventMatchId ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

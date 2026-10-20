@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { PickEmMode, RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, type SportNoun } from '@poolmaster/shared/domain';
+import { PickEmMode, RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SQUARES_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, type SportNoun } from '@poolmaster/shared/domain';
 import { Checkbox, FormField, formatDollars, Input, SegmentedControl, Select } from '@/features/shared/ui';
 import type { BracketStartRoundOption } from './bracket-start-round';
 import { describeBracketRules, describePickEmMode, describeSurvivorRules, formatPickEmModeName, isSecondChanceBracket } from './contest-rules';
@@ -267,6 +267,18 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
   ),
   [SelectionType.SURVIVOR]: () => (
     <p className="text-sm text-muted-foreground" data-testid="contest-survivor-rules">{describeSurvivorRules()}</p>
+  ),
+  [SelectionType.SQUARES]: ({ onChange, values }: RulesInputsProps) => (
+    <FormField helperText="Boxes nobody claims stay empty, and a quarter won by an empty box has no winner." label="Boxes per entry">
+      <Input
+        data-testid="contest-squares-boxes-per-entry"
+        max={SQUARES_PER_ENTRY_MAX}
+        min={1}
+        onChange={(event) => onChange({ maxSquaresPerEntry: event.target.value })}
+        type="number"
+        value={values.maxSquaresPerEntry}
+      />
+    </FormField>
   ),
 };
 

@@ -17,7 +17,9 @@ import {
   PrismaSportEventMatchRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
+  PrismaContestEntryStandingRepository,
   PrismaSquadMembershipRepository,
+  PrismaSquaresRepository,
 } from '../../adapters';
 import { ContestEntryPickService } from '../contest-entry-picks';
 import { createContestService } from '../contests/wiring';
@@ -25,6 +27,7 @@ import type { MailDeliveryProvider } from '../email';
 import { createSportEventTierService } from '../events/wiring';
 import { PredictionService } from './prediction-service';
 import { SelectionService } from './service';
+import { SquaresService } from './squares-service';
 
 export function createSelectionService(
   prisma: PrismaClient,
@@ -62,6 +65,23 @@ export function createPredictionService(prisma: PrismaClient, logger: FastifyBas
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
     predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
+    logger,
+  });
+}
+
+export function createSquaresService(prisma: PrismaClient, logger: FastifyBaseLogger): SquaresService {
+  return new SquaresService({
+    contests: new PrismaContestRepository(prisma),
+    configurations: new PrismaContestConfigurationRepository(prisma),
+    entries: new PrismaContestEntryRepository(prisma),
+    memberships: new PrismaLeagueMembershipRepository(prisma),
+    squadMemberships: new PrismaSquadMembershipRepository(prisma),
+    sportEvents: new PrismaSportEventRepository(prisma),
+    matches: new PrismaSportEventMatchRepository(prisma),
+    field: new PrismaSportEventParticipantRepository(prisma),
+    participants: new PrismaParticipantRepository(prisma),
+    squares: new PrismaSquaresRepository(prisma),
+    standings: new PrismaContestEntryStandingRepository(prisma),
     logger,
   });
 }

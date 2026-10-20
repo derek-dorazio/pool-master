@@ -49,6 +49,12 @@ export interface FinishedSportEventSettlement {
     sportEventId: string,
     input?: { completedAt?: Date },
   ): Promise<unknown>;
+  /** Settles the squares contests on one game once it has a result or is cancelled (#711). */
+  settleFinishedGame(
+    sportEventId: string,
+    sportEventMatchId: string,
+    input?: { completedAt?: Date },
+  ): Promise<unknown>;
 }
 
 /** The contests a released edition joins: those made from a template covering its series (#714). */
@@ -182,6 +188,14 @@ export class EventLifecycleService {
     };
   }
 
+  /**
+   * A game's result is in, or it was cancelled (#711): the squares contests played on it settle
+   * now, while its event may still have weeks to run.
+   */
+  async settleContestsForFinishedGame(sportEvent: SportEvent, sportEventMatchId: string, now: Date = new Date()): Promise<void> {
+    await this.contestSettlement?.settleFinishedGame(sportEvent.id, sportEventMatchId, { completedAt: now });
+  }
+
   private async settleContestsForFinishedEvent(
     sportEvent: SportEvent,
   ): Promise<void> {
@@ -199,8 +213,8 @@ export class EventLifecycleService {
 
   /**
    * The event's OPEN contests go live at their cutoff (#721): every contest when the event starts,
-   * and a second-chance bracket at its starting round's first game, which comes while the event is
-   * under way, so the lifecycle scheduler asks again on each sweep of an event in progress.
+   * a second-chance bracket at its starting round's first game, and a squares contest at its
+   * game's kickoff (#711), each of which comes while the event is under way, so the lifecycle scheduler asks again on each sweep of an event in progress.
    */
   async activateContestsPastCutoff(
     sportEvent: SportEvent,
@@ -210,8 +224,8 @@ export class EventLifecycleService {
     let games: SportEventMatch[] | undefined;
 
     for (const contest of candidates) {
-      const cutoff = contest.selectionType === SelectionType.BRACKET
-        ? contestCutoff((await this.contestDeps.configurations.findByContest(contest.id))?.configJson)
+      const cutoff = contest.selectionType === SelectionType.BRACKET || contest.selectionType === SelectionType.SQUARES
+        ? contestCutoff((await this.contestDeps.configurations.findByContest(contest.id))?.configJson, contest.squaresGameMatchId)
         : { kind: ContestCutoffKind.EVENT_START } as const;
       const window: EventTiming = cutoff.kind === ContestCutoffKind.EVENT_START
         ? sportEvent

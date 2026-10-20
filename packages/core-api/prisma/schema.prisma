@@ -320,6 +320,7 @@ enum RaceResultStatus {
 enum PrismaContestFormat {
   ROSTER
   PREDICTION
+  SQUARES
 }
 
 // #186: the lifecycle and discriminator columns below were free text until each
@@ -340,6 +341,7 @@ enum PrismaSelectionType {
   PICK_EM
   BRACKET
   SURVIVOR
+  SQUARES
 }
 
 enum PrismaPrizePayoutType {
@@ -415,8 +417,10 @@ model User {
   squadOwnerInvitationsSent     SquadOwnerInvitation[] @relation("SquadOwnerInvitedBy")
   squadOwnerInvitationsAccepted SquadOwnerInvitation[] @relation("SquadOwnerAcceptedBy")
 
-  contestDraws  ContestDraw[]
-  refreshTokens RefreshToken[]
+  contestDraws   ContestDraw[]
+  squaresClaimed ContestEntrySquare[]
+  squaresDrawn   ContestSquaresDraw[]
+  refreshTokens  RefreshToken[]
 
   @@map("users")
 }
@@ -747,6 +751,10 @@ model Contest {
   entryStandings      ContestEntryStanding[]
   entryEventStandings ContestEntryEventStanding[]
   draw                ContestDraw?
+  squaresGame         ContestSquaresGame?
+  squares             ContestEntrySquare[]
+  squaresDraw         ContestSquaresDraw?
+  squaresWinners      ContestSquaresWinner[]
 
   @@index([leagueId])
   @@index([status])
@@ -794,29 +802,29 @@ model ContestConfiguration {
 }
 
 model ContestConfigTemplate {
-  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sport         PrismaSport
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sport            PrismaSport
   /// The sport league whose events this template is offered for — a league's own official
   /// preset (NASCAR, IndyCar, F1 points). Null offers it for every league of its sport.
-  sportLeagueId String?             @map("sport_league_id") @db.Uuid
-  eventType     String?             @map("event_type") @db.VarChar(100)
-  contestFormat PrismaContestFormat @map("contest_type")
+  sportLeagueId    String?             @map("sport_league_id") @db.Uuid
+  eventType        String?             @map("event_type") @db.VarChar(100)
+  contestFormat    PrismaContestFormat @map("contest_type")
   /// A `SelectionType` value: how an entry in a contest created from this template picks.
-  selectionType PrismaSelectionType @map("selection_type")
-  templateKey   String              @map("template_key") @db.VarChar(100)
-  name          String              @db.VarChar(120)
-  description   String              @db.VarChar(500)
-  sortOrder     Int                 @map("sort_order")
-  isDefault     Boolean             @default(false) @map("is_default")
-  active        Boolean             @default(true)
-  configJson    Json                @map("config_json")
-  schemaVersion Int                 @default(1) @map("schema_version")
+  selectionType    PrismaSelectionType @map("selection_type")
+  templateKey      String              @map("template_key") @db.VarChar(100)
+  name             String              @db.VarChar(120)
+  description      String              @db.VarChar(500)
+  sortOrder        Int                 @map("sort_order")
+  isDefault        Boolean             @default(false) @map("is_default")
+  active           Boolean             @default(true)
+  configJson       Json                @map("config_json")
+  schemaVersion    Int                 @default(1) @map("schema_version")
   /// The event series a contest made from this template covers (#714: the four majors), by name
   /// in its sport league. A contest takes each series' edition of its year as it is released.
   /// Empty: the commissioner adds the contest's events.
-  eventSeriesNames String[]         @default([]) @map("event_series_names")
-  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+  eventSeriesNames String[]            @default([]) @map("event_series_names")
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
   sportLeague    SportLeague?           @relation(fields: [sportLeagueId], references: [id], onDelete: Restrict)
   configurations ContestConfiguration[]
@@ -887,8 +895,12 @@ model ContestEntry {
   predictions    ContestEntryMatchPrediction[]
   standing       ContestEntryStanding?
   eventStandings ContestEntryEventStanding[]
+  squares        ContestEntrySquare[]
+  squaresWon     ContestSquaresWinner[]
 
   @@unique([contestId, squadId, entryNumber])
+  // The key a claimed box's (contest, entry) foreign key names, so a box's entry is its contest's.
+  @@unique([id, contestId])
   @@map("contest_entries")
 }
 
@@ -1023,6 +1035,84 @@ model ContestDraw {
   drawnBy User?   @relation(fields: [drawnByUserId], references: [id], onDelete: SetNull)
 
   @@map("contest_draws")
+}
+
+/// The one game a squares contest is played on (#711): one of the contest's event's matches,
+/// chosen at setup and changeable while the contest is a draft. Its kickoff closes the contest.
+model ContestSquaresGame {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId         String   @unique @map("contest_id") @db.Uuid
+  sportEventMatchId String   @map("sport_event_match_id") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contest         Contest         @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  sportEventMatch SportEventMatch @relation(fields: [sportEventMatchId], references: [id], onDelete: Restrict)
+
+  @@index([sportEventMatchId])
+  @@map("contest_squares_games")
+}
+
+/// One claimed box of a squares grid (#711): a grid position, not a digit, so a box can be
+/// claimed before the digits are drawn. Only claimed boxes have a row; the reader draws the other
+/// boxes of the 10x10 grid empty. The unique key on (contest, row, column) is what stops two
+/// people taking one box at once; `contestId` is the entry's, kept in step by the composite key.
+model ContestEntrySquare {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId       String   @map("contest_id") @db.Uuid
+  contestEntryId  String   @map("contest_entry_id") @db.Uuid
+  rowIndex        Int      @map("row_index")
+  columnIndex     Int      @map("column_index")
+  claimedByUserId String?  @map("claimed_by_user_id") @db.Uuid
+  claimedAt       DateTime @default(now()) @map("claimed_at") @db.Timestamptz
+
+  contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  contestEntry ContestEntry @relation(fields: [contestEntryId, contestId], references: [id, contestId], onDelete: Cascade)
+  claimedBy    User?        @relation(fields: [claimedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([contestId, rowIndex, columnIndex])
+  @@index([contestEntryId])
+  @@map("contest_entry_squares")
+}
+
+/// A squares contest's digits (#711): 0 to 9 shuffled once for the rows (the away team) and once
+/// for the columns (the home team), replayable from the seed. Its existence closes claiming, as a
+/// random draw's closes entries; the unique key stops two presses drawing twice.
+model ContestSquaresDraw {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId     String   @unique @map("contest_id") @db.Uuid
+  seed          String   @db.VarChar(64)
+  rowDigits     Int[]    @map("row_digits")
+  columnDigits  Int[]    @map("column_digits")
+  drawnByUserId String?  @map("drawn_by_user_id") @db.Uuid
+  drawnAt       DateTime @default(now()) @map("drawn_at") @db.Timestamptz
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  drawnBy User?   @relation(fields: [drawnByUserId], references: [id], onDelete: SetNull)
+
+  @@map("contest_squares_draws")
+}
+
+/// Each scoring moment's winning box, frozen when a squares contest settles (#711, design Q3.7),
+/// so a score correction after Final cannot move it. `periodNumber` runs 1 to the game's period
+/// count, the last being the final score, overtime included. No entry when nobody held the box.
+model ContestSquaresWinner {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId      String   @map("contest_id") @db.Uuid
+  periodNumber   Int      @map("period_number")
+  homeScore      Int      @map("home_score")
+  awayScore      Int      @map("away_score")
+  rowIndex       Int      @map("row_index")
+  columnIndex    Int      @map("column_index")
+  contestEntryId String?  @map("contest_entry_id") @db.Uuid
+  settledAt      DateTime @map("settled_at") @db.Timestamptz
+
+  contest      Contest       @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  contestEntry ContestEntry? @relation(fields: [contestEntryId], references: [id], onDelete: SetNull)
+
+  @@unique([contestId, periodNumber])
+  @@index([contestEntryId])
+  @@map("contest_squares_winners")
 }
 
 /// A pick on a contest entry — references a SportEventParticipant.
@@ -1216,6 +1306,7 @@ model SportEventMatch {
   fedBy           SportEventMatch[]             @relation("SportEventMatchAdvancesTo")
   predictions     ContestEntryMatchPrediction[]
   periodScores    SportEventMatchPeriodScore[]
+  squaresGames    ContestSquaresGame[]
 
   @@unique([sportEventId, matchNumber])
   // Two matches cannot feed the same side of the next one.

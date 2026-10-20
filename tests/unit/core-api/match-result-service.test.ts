@@ -97,7 +97,7 @@ describe('MatchResultService.recordResult', () => {
   it('asks the lifecycle to start the contests whose cutoff the result passed, with the service clock, on an event under way', async () => {
     const { store, event } = await setup();
     const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
-    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, now: () => AS_OF });
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff, settleContestsForFinishedGame: jest.fn<EventLifecycleService['settleContestsForFinishedGame']>(async () => undefined) }, now: () => AS_OF });
 
     await service.recordResult(event.id, 1, homeWins);
 
@@ -107,11 +107,26 @@ describe('MatchResultService.recordResult', () => {
   it('starts no contest for a result on an event that is not under way', async () => {
     const { store, event } = await setup({ status: SportEventStatus.SCHEDULED });
     const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
-    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, now: () => AS_OF });
+    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff, settleContestsForFinishedGame: jest.fn<EventLifecycleService['settleContestsForFinishedGame']>(async () => undefined) }, now: () => AS_OF });
 
     await service.recordResult(event.id, 1, homeWins);
 
     expect(activateContestsPastCutoff).not.toHaveBeenCalled();
+  });
+
+  it('asks the lifecycle to settle the squares contests on the game once its result is in, whatever the event\'s status', async () => {
+    const { store, event } = await setup({ status: SportEventStatus.SCHEDULED });
+    const settleContestsForFinishedGame = jest.fn<EventLifecycleService['settleContestsForFinishedGame']>(async () => undefined);
+    const service = new MatchResultService({
+      sportEvents: store.sportEventRepo(),
+      matches: store.matchRepo(),
+      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), settleContestsForFinishedGame },
+      now: () => AS_OF,
+    });
+
+    await service.recordResult(event.id, 1, homeWins);
+
+    expect(settleContestsForFinishedGame).toHaveBeenCalledWith(expect.objectContaining({ id: event.id }), 'match-1', AS_OF);
   });
 
   it('accepts a result with no scores', async () => {

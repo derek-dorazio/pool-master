@@ -71,6 +71,8 @@ function leaderboardKeyFor(contestId: string, selectionType: SelectionType) {
       return QueryKeys.contests.pickEmLeaderboard(contestId);
     case SelectionType.SURVIVOR:
       return QueryKeys.contests.survivorLeaderboard(contestId);
+    case SelectionType.SQUARES:
+      return QueryKeys.contests.squaresBoard(contestId);
     case SelectionType.TIERED:
     case SelectionType.BUDGET_PICK:
     case SelectionType.RANDOM_DRAW:

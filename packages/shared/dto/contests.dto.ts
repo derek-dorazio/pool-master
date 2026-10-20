@@ -31,13 +31,14 @@ export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100).describe('Contest name shown to commissioners and members.'),
   sportEventIds: z.array(z.string().uuid()).min(1).describe('The events the contest covers (#713): one for a golf or race contest, several for a majors pool or a season. All from one sport league, each released, with its field loaded and not yet started. The contest keeps them in start-date order, whatever order they are sent in.'),
   contestFormat: z.nativeEnum(ContestFormat).describe(
-    'ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). It must be the format the selection type plays (PICK_EM and BRACKET are PREDICTION, every other type ROSTER) and one the event\'s tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise.',
+    'ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). SQUARES: entries claim boxes of a grid on one game (#711). It must be the format the selection type plays (PICK_EM, BRACKET and SURVIVOR are PREDICTION, SQUARES is SQUARES, every other type ROSTER) and one the event\'s tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise.',
   ),
   selectionType: z.nativeEnum(SelectionType).describe(
     'How an entry picks: the selection types with typed rules. It must match the template\'s selection type when a template is named, and the configuration\'s.',
   ),
   templateId: z.string().uuid().optional().describe('Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.'),
   configuration: ContestConfigurationRequestSchema.optional().describe('The contest configuration. With a template, replaces the template\'s configuration; without one, is the configuration.'),
+  sportEventMatchId: z.string().uuid().optional().describe('A squares contest\'s game (#711): one of its event\'s games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.'),
 }).refine(
   (request) => request.templateId !== undefined || request.configuration !== undefined,
   { message: 'Name a template, supply a configuration, or both.', params: { code: CONTEST_CONFIGURATION_REQUIRED } },

@@ -29,7 +29,7 @@ export const americanFootballSportDefinition: SportDefinition = {
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
   defaultTierLayout: { tierCount: 7, tierSize: 2 },
-  selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR],
+  selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   matchPeriods: { count: 4, label: { one: 'quarter', many: 'quarters' } },
   vocabulary: {

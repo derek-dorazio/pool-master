@@ -11,6 +11,7 @@ export * from './sport-catalog-types';
 export * from './sport-rows';
 export * from './tournament-format';
 export * from './sports';
+export * from './squares';
 export { assertNever } from './assert-never';
 export {
   compareScores,
