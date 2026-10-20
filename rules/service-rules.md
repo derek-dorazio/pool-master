@@ -338,6 +338,7 @@ Rules:
 - Do not add local frontend interfaces to paper over backend schema gaps.
 - Do not use `as unknown as` in app code to force a generated response into shape.
 - Do not put a union branch whose required fields are a subset of the fields another branch's payload carries ahead of that branch in a body schema. Fastify validates with `removeAdditional`, so in an `anyOf` the first branch whose required fields all match strips every field it does not list before later branches are tried. A branch that needs only its discriminator (survivor contest rules) goes last. `tests/unit/shared/openapi-union-branch-order.test.ts` scans every `anyOf` in the published `openapi.json` and fails on such an order.
+- Build every core-api Fastify instance with `FASTIFY_SCHEMA_CONTROLLER` (`packages/core-api/src/plugins/serializer-cache.ts`) alongside `FASTIFY_AJV_OPTIONS`. Each response serializer build re-checks every registered component, so without the cache boot time grows with routes × components; on QA's small task that made deploys miss the health-check window (#808).
 
 ---
 
