@@ -59,7 +59,7 @@ import type {
   SquadMembershipRepository,
 } from '@poolmaster/shared/db';
 import { resolveContestScoringDefinition } from '../contests/contest-leaderboard-calculator';
-import { areMatchPicksOpen, areMatchPicksRevealed, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
+import { areMatchPicksOpen, areMatchPicksRevealed, contestCutoff, cutoffTiming, openingRoundNumber, type EventTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
 import { contestBracketGames, type PredictedSides, type ScoredBracketPick } from '../scoring-families/head-to-head/bracket-picks';
 import { hasSportEventStarted } from '../events/operational-timing';
@@ -176,6 +176,8 @@ interface WeekContext {
   sportEvent: SportEvent;
   /** The timing the contest's window runs on: the event's, or its starting round's for a second-chance bracket (#721). */
   window: EventTiming;
+  /** The event's opening round: a later round's game with no time yet has not kicked off (#785). */
+  openingRound: number;
   /** The event's field, and each row's seed as a reseeded bracket and the upset bonus read it. */
   field: SportEventParticipant[];
   seedOf: Map<string, number | null>;
@@ -420,13 +422,13 @@ export class PredictionService {
   /** The tiebreaker can change while its game's pick can: until a week's last game kicks off, until a bracket starts. */
   private isTiebreakerOpen(context: WeekContext): boolean {
     const game = context.tiebreakerGame;
-    return game !== null && areMatchPicksOpen(context.engine.pickWindow, context.contest, context.window, game, context.now);
+    return game !== null && areMatchPicksOpen(context.engine.pickWindow, context.contest, context.window, game, context.openingRound, context.now);
   }
 
   /** Another team's tiebreaker shows once its game's picks are revealed. */
   private isTiebreakerRevealed(context: WeekContext): boolean {
     const game = context.tiebreakerGame;
-    return game !== null && areMatchPicksRevealed(context.engine.pickWindow, context.contest, context.window, game, context.now);
+    return game !== null && areMatchPicksRevealed(context.engine.pickWindow, context.contest, context.window, game, context.openingRound, context.now);
   }
 
   private resolvePicks<Pick extends WeekPrediction>(context: WeekContext, predictions: readonly Pick[]) {
@@ -471,7 +473,7 @@ export class PredictionService {
   }
 
   private assertGameOpen(context: WeekContext, game: SportEventMatch): void {
-    if (!areMatchPicksOpen(context.engine.pickWindow, context.contest, context.window, game, context.now)) {
+    if (!areMatchPicksOpen(context.engine.pickWindow, context.contest, context.window, game, context.openingRound, context.now)) {
       this.deps.logger?.warn(
         { action: 'prediction.gameStarted', data: { entryId: context.entry.id, sportEventMatchId: game.id } },
         'Refused a pick change on a game that has started',
@@ -528,6 +530,7 @@ export class PredictionService {
       againstTheSpread: rules.selectionType === SelectionType.PICK_EM && rules.againstTheSpread,
       sportEvent,
       window: cutoffTiming(contestCutoff(rules), sportEvent, matches),
+      openingRound: openingRoundNumber(matches),
       field,
       seedOf: knockoutSeeds(field),
       entry,
@@ -587,7 +590,7 @@ export class PredictionService {
   }
 
   private async buildView(context: WeekContext): Promise<GamePicksView> {
-    const { contest, engine, sportEvent, window, entry, games, now, ownEntry, field } = context;
+    const { contest, engine, sportEvent, window, openingRound, entry, games, now, ownEntry, field } = context;
     const participants = await this.deps.participants.findByIds(field.map((row) => row.participantId));
     const nameByParticipantId = new Map(participants.map((participant) => [participant.id, participant.name]));
     const teamByFieldId = new Map(field.map((row) => [row.id, {
@@ -602,7 +605,7 @@ export class PredictionService {
 
     const status = contestEntryEventStatus(entry, sportEvent.id);
     const viewGames = games.map((match): GamePickGame => {
-      const revealed = areMatchPicksRevealed(engine.pickWindow, contest, window, match, now);
+      const revealed = areMatchPicksRevealed(engine.pickWindow, contest, window, match, openingRound, now);
       const shown = ownEntry || revealed;
       const prediction = predictionByMatchId.get(match.id) ?? null;
       // Another team's predicted sides would show its picks, so until they are revealed it sees the game's own.
@@ -615,7 +618,7 @@ export class PredictionService {
         away: team(match.awaySportEventParticipantId),
         predictedHome: team(sides.home),
         predictedAway: team(sides.away),
-        locked: !areMatchPicksOpen(engine.pickWindow, contest, window, match, now),
+        locked: !areMatchPicksOpen(engine.pickWindow, contest, window, match, openingRound, now),
         revealed,
         pick: shown ? prediction : null,
         pickScore: shown && prediction !== null ? score?.picks.get(match.id) ?? null : null,
@@ -637,7 +640,7 @@ export class PredictionService {
       mode: context.mode,
       againstTheSpread: context.againstTheSpread,
       survivor: context.season === null ? null : {
-        eliminatedInWeek: this.eliminatedBeforeLastRound(context.season),
+        eliminatedInWeek: this.eliminatedInWeekShown(context.season),
         usedParticipantIds: ownEntry ? [...context.season.usedParticipantIds] : null,
       },
       status,
@@ -655,10 +658,11 @@ export class PredictionService {
   }
 
   /**
-   * The week that put the entry out, as the event's view shows it: one before the event's last
-   * round, so a playoff shows the round it went out in, and a week's own loss shows from the next week on.
+   * The week that put the entry out, as the event's view shows it: only a week before the event's
+   * last round, so a playoff shows the round it went out in, and a week's own loss shows from the
+   * next week on. Null when no week of this event is closed off by it.
    */
-  private eliminatedBeforeLastRound(season: PredictionSeason): number | null {
+  private eliminatedInWeekShown(season: PredictionSeason): number | null {
     const lastWeek = Math.max(season.firstWeekNumber, ...season.weekNumberOfRound.values());
     return season.eliminatedInWeek !== null && season.eliminatedInWeek < lastWeek ? season.eliminatedInWeek : null;
   }

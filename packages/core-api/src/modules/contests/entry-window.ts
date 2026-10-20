@@ -188,14 +188,33 @@ export function hasMatchStarted(match: MatchTiming, sportEvent: EventTiming, now
 }
 
 /**
+ * Whether a game picked game by game has kicked off. As `hasMatchStarted`, except that an untimed
+ * game of a round after the event's opening round has no kickoff yet (#785): its time comes once
+ * the round before is played, so until it is set, or the game moves on, the game has not started.
+ */
+export function hasRoundMatchStarted(match: RoundMatchTiming, sportEvent: EventTiming, openingRoundNumber: number, now: Date): boolean {
+  if (match.scheduledDate === null && match.roundNumber > openingRoundNumber) {
+    return hasGameMovedOn(match);
+  }
+  return hasMatchStarted(match, sportEvent, now);
+}
+
+/** The event's opening round: the lowest round any of its games is played in, 1 for an event with none. */
+export function openingRoundNumber(games: readonly Pick<RoundMatchTiming, 'roundNumber'>[]): number {
+  return games.length > 0 ? Math.min(...games.map((game) => game.roundNumber)) : 1;
+}
+
+/**
  * Whether a pick on one game can change (#716), under the engine's pick window: until the event
- * starts, or until that game kicks off while the contest takes picks and the event is not over.
+ * starts, or until that game kicks off while the contest takes picks and the event is not over
+ * (`hasRoundMatchStarted`: a later round's game waits on its time).
  */
 export function areMatchPicksOpen(
   pickWindow: PickWindow,
   contest: Pick<Contest, 'status' | 'drawnAt'>,
   sportEvent: EventTiming,
-  match: MatchTiming,
+  match: RoundMatchTiming,
+  openingRound: number,
   now: Date,
 ): boolean {
   switch (pickWindow) {
@@ -205,7 +224,7 @@ export function areMatchPicksOpen(
       if (!PICKING_STATUSES.includes(contest.status) || contest.drawnAt !== undefined) {
         return false;
       }
-      return !FINISHED_EVENT_STATUSES.includes(sportEvent.status) && !hasMatchStarted(match, sportEvent, now);
+      return !FINISHED_EVENT_STATUSES.includes(sportEvent.status) && !hasRoundMatchStarted(match, sportEvent, openingRound, now);
   }
 }
 
@@ -218,7 +237,8 @@ export function areMatchPicksRevealed(
   pickWindow: PickWindow,
   contest: Pick<Contest, 'status' | 'drawnAt'>,
   sportEvent: EventTiming,
-  match: MatchTiming,
+  match: RoundMatchTiming,
+  openingRound: number,
   now: Date,
 ): boolean {
   switch (pickWindow) {
@@ -230,6 +250,6 @@ export function areMatchPicksRevealed(
       }
       return contest.status === ContestStatus.COMPLETED
         || FINISHED_EVENT_STATUSES.includes(sportEvent.status)
-        || hasMatchStarted(match, sportEvent, now);
+        || hasRoundMatchStarted(match, sportEvent, openingRound, now);
   }
 }

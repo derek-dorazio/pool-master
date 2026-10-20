@@ -817,10 +817,13 @@ export class ContestService {
     }
     const now = this.now();
     const season = await loadSurvivorSeason(this.deps, contest, now);
+    const openingRoundOf = new Map<string, number>();
+    for (const { event, roundNumber } of season.weeks) openingRoundOf.set(event.id, Math.min(openingRoundOf.get(event.id) ?? roundNumber, roundNumber));
     const gameById = new Map(season.weeks.flatMap(({ event, games }) => games.map((game) => [game.id, { event, game }] as const)));
     const isRevealed = (sportEventMatchId: string) => {
       const found = gameById.get(sportEventMatchId);
-      return found !== undefined && areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, contest, found.event, found.game, now);
+      return found !== undefined
+        && areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, contest, found.event, found.game, openingRoundOf.get(found.event.id) ?? found.game.roundNumber, now);
     };
     const revealedParticipantIds = new Set(season.entries.flatMap(({ picks }) =>
       [...picks.values()].filter((pick) => isRevealed(pick.sportEventMatchId)).map((pick) => pick.participantId)));

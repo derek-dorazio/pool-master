@@ -246,7 +246,7 @@ describe('Playoff survivor rounds whose games have no time yet', () => {
     await context.playRound1();
 
     const view = await context.save('Alice', 5, 'T1');
-    expect(view.games.filter((game) => game.roundNumber === 2).map((game) => game.locked)).toEqual([false, false]);
+    expect(view.games.filter((game) => game.match.roundNumber === 2).map((game) => game.locked)).toEqual([false, false]);
     expect(context.storedPicks('Alice')).toEqual(['game-2', 'game-5']);
     const rows = Object.fromEntries((await context.leaderboard()).entries.map((entry) => [entry.entryName, [entry.alive, entry.eliminatedInWeek]]));
     expect(rows).toEqual({ Alice: [true, null], Bob: [true, null], Dan: [true, null], Cara: [false, 1] });
