@@ -129,6 +129,21 @@ describe('SDK Functional: Super Bowl squares', () => {
     });
     expect(contest.response.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
+    // Rules sent as the configuration, as Create contest sends them, are taken as they are: the
+    // request's rules union must not strip the box limit while it tries the other selection types.
+    const configured = await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: {
+        name: `Configured Squares ${RUN}`,
+        sportEventIds: [event.id],
+        sportEventMatchId: superBowl.id,
+        contestFormat: ContestFormat.SQUARES,
+        selectionType: SelectionType.SQUARES,
+        configuration: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 7, maxEntriesPerSquad: 1 },
+      },
+    });
+    expect([configured.response.status, configured.error?.error.message]).toEqual([201, undefined]);
     // A draft is the commissioner's alone.
     expect((await getSquaresBoard({ client: alice.client, path: { contestId } })).response.status).toBe(404);
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);

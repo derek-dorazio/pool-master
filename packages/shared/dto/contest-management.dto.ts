@@ -204,8 +204,9 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType
   RandomDrawContestRulesSchema.extend(persistedConfigurationFields),
   PickEmContestRulesSchema.extend(persistedConfigurationFields),
   BracketContestRulesSchema.extend(persistedConfigurationFields),
-  SurvivorContestRulesSchema.extend(persistedConfigurationFields),
   SquaresContestRulesSchema.extend(persistedConfigurationFields),
+  // Last, as in every rules union: see the note above `ContestRulesSchema`.
+  SurvivorContestRulesSchema.extend(persistedConfigurationFields),
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 

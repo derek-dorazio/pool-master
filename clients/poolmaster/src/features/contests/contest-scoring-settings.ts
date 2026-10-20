@@ -192,9 +192,12 @@ export const SCORING_SETTINGS_UI: Readonly<Record<ParticipantScoringDefinitionId
 
 /**
  * The scoring settings Create contest offers a contest of this selection type. A pick'em pool
- * scores by its mode alone (1 point, or the pick's confidence value), so it takes none; every
- * other type takes its scoring definition's.
+ * scores by its mode alone (1 point, or the pick's confidence value), and a squares pool by the
+ * quarters its boxes win (#711), so they take none; every other type takes its scoring
+ * definition's.
  */
 export function scoringSettingsUiFor(selectionType: SelectionType, definitionId: ParticipantScoringDefinitionId): ScoringSettingsUi {
-  return selectionType === SelectionType.PICK_EM ? noSettingsUi : SCORING_SETTINGS_UI[definitionId];
+  return selectionType === SelectionType.PICK_EM || selectionType === SelectionType.SQUARES
+    ? noSettingsUi
+    : SCORING_SETTINGS_UI[definitionId];
 }

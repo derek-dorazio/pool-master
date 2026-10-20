@@ -337,6 +337,7 @@ Rules:
 - Do not omit response schemas because “the frontend already knows.”
 - Do not add local frontend interfaces to paper over backend schema gaps.
 - Do not use `as unknown as` in app code to force a generated response into shape.
+- Do not put a union branch whose required fields are a subset of the fields another branch's payload carries ahead of that branch in a body schema. Fastify validates with `removeAdditional`, so in an `anyOf` the first branch whose required fields all match strips every field it does not list before later branches are tried. A branch that needs only its discriminator (survivor contest rules) goes last.
 
 ---
 

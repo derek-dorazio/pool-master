@@ -15,8 +15,8 @@ export const HAS_WEB_ENTRY_SCREEN = {
   [SelectionType.BRACKET]: true,
   // A survivor entry picks one team a week on the pick'em week screen (#719).
   [SelectionType.SURVIVOR]: true,
-  // A squares entry claims boxes on the grid, whose screen comes with #774.
-  [SelectionType.SQUARES]: false,
+  // A squares entry claims boxes on the grid (#711).
+  [SelectionType.SQUARES]: true,
 } as const satisfies Record<SelectionType, boolean>;
 
 /** The selection types whose entries have a web screen to pick on. */

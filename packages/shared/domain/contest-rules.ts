@@ -92,6 +92,13 @@ export const SquaresContestRulesSchema = z.object({
 }).describe('Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment\'s last digits wins it.');
 export type SquaresContestRules = z.infer<typeof SquaresContestRulesSchema>;
 
+/**
+ * Every union of the selection types' rules lists survivor last. Survivor's rules require nothing
+ * but `selectionType`, and the API validates a union as an `anyOf` with Fastify's
+ * `removeAdditional`: a branch whose required fields all match goes on to strip every field it
+ * does not know, so a survivor branch tried before another type removes that type's rules (a
+ * squares contest's box limit) before its own branch is reached (#711).
+ */
 /** The rules a commissioner chooses, and a template presets. */
 export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
   TieredContestRulesSchema,
@@ -99,8 +106,9 @@ export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
   RandomDrawContestRulesSchema,
   PickEmContestRulesSchema,
   BracketContestRulesSchema,
-  SurvivorContestRulesSchema,
   SquaresContestRulesSchema,
+  // Last: see the note above.
+  SurvivorContestRulesSchema,
 ]);
 export type ContestRules = z.infer<typeof ContestRulesSchema>;
 
@@ -117,8 +125,9 @@ export const ContestSelectionConfigSchema = z.discriminatedUnion('selectionType'
   RandomDrawContestRulesSchema,
   PickEmContestRulesSchema,
   BracketContestRulesSchema,
-  SurvivorContestRulesSchema,
   SquaresContestRulesSchema,
+  // Last: see the note above `ContestRulesSchema`.
+  SurvivorContestRulesSchema,
 ]);
 export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema>;
 
@@ -141,8 +150,9 @@ export const ContestRulesWithEntryLimitSchema = z.discriminatedUnion('selectionT
   RandomDrawContestRulesSchema.extend(withEntryLimit),
   PickEmContestRulesSchema.extend(withEntryLimit),
   BracketContestRulesSchema.extend(withEntryLimit),
-  SurvivorContestRulesSchema.extend(withEntryLimit),
   SquaresContestRulesSchema.extend(withEntryLimit),
+  // Last: see the note above `ContestRulesSchema`.
+  SurvivorContestRulesSchema.extend(withEntryLimit),
 ]);
 export type ContestRulesWithEntryLimit = z.infer<typeof ContestRulesWithEntryLimitSchema>;
 
