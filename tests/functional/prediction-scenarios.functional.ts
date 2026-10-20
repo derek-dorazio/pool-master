@@ -77,6 +77,7 @@ const LEAGUES: readonly PlayoffLeague[] = [
   { sport: Sport.HOCKEY, file: 'hockey-2026-pwhl-playoffs-test.json', league: 'PWHL', event: 'Walter Cup Playoffs' },
   { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Ice Hockey Tournament' },
   { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Ice Hockey Tournament' },
+  { sport: Sport.BASEBALL, file: 'baseball-2025-mlb-postseason-test.json', league: 'MLB', event: 'MLB Postseason' },
 ];
 
 /**

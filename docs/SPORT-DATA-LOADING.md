@@ -281,6 +281,15 @@ and the odds are made up. Each loads as the March Madness seed does: dates moved
 event released and tiered by odds, each first-round place given the team that won it, and every
 result entered round by round.
 
+## Seeded baseball postseason
+
+`baseball-2025-mlb-postseason-test.json` holds the 2025 MLB postseason as it went, the last one
+finished, in the MLB sport league the migrations create: 12 teams seeded 1 to 6 in each league,
+the top two on byes into the Division Series, every round a series scored in games won. The Los
+Angeles Dodgers beat the Toronto Blue Jays 4-3 in the World Series. Seeds, pairings, series
+scores and each series' Game 1 first pitch are real, and the odds are made up. It loads as the
+hockey seeds do.
+
 ## Seeded 2026 races
 
 To try racing contests without setting up a race, load a test seed of the 2026 season as run.

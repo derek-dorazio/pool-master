@@ -67,23 +67,23 @@ describe('Sport and SportLeague repositories', () => {
     await expect(sports.findById(golf.id)).resolves.toMatchObject({ id: golf.id, sport: Sport.GOLF, participantType: 'INDIVIDUAL' });
     await expect(sports.findById(randomUUID())).resolves.toBeNull();
     // Every sport the migrations seed survives the cleanup, as reference data. The sport enum orders
-    // them, so hockey, added last, lists last.
+    // them, so baseball, added last, lists last.
     const allSports = await sports.findAll();
     expect(allSports.map((row) => row.sport)).toEqual([
       Sport.GOLF, Sport.HORSE_RACING, Sport.AUTO_RACING, Sport.CYCLING, Sport.RUNNING, Sport.BASKETBALL, Sport.AMERICAN_FOOTBALL,
-      Sport.HOCKEY,
+      Sport.HOCKEY, Sport.BASEBALL,
     ]);
     expect(allSports[0].id).toBe(golf.id);
   });
 
   // #715 renamed KNOCKOUT_BRACKET to MATCHES in place, so the sports rows seeded with it carry the new value.
-  it('stores each seeded sport\'s tournament format as its sport definition gives it, basketball, American football and hockey as MATCHES', async () => {
+  it('stores each seeded sport\'s tournament format as its sport definition gives it, basketball, American football, hockey and baseball as MATCHES', async () => {
     const sports = await new PrismaSportRepository(getPrisma()).findAll();
 
     expect(sports.map((row) => [row.sport, row.tournamentFormat]))
       .toEqual(sports.map((row) => [row.sport, getSportDefinition(row.sport).tournamentFormat]));
     expect(sports.filter((row) => row.tournamentFormat === TournamentFormat.MATCHES).map((row) => row.sport).sort())
-      .toEqual([Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL, Sport.HOCKEY]);
+      .toEqual([Sport.AMERICAN_FOOTBALL, Sport.BASEBALL, Sport.BASKETBALL, Sport.HOCKEY]);
   });
 
   it('finds a sport by its sport value and lists sport leagues filtered by sport and activity, ordered by name', async () => {

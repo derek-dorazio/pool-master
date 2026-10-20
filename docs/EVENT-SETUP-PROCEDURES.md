@@ -258,6 +258,13 @@ site; the women's seeds five teams, and the six others play a first round for th
 quarterfinal places, which are play-in places until it is played. The PWHL starts on two tiers,
 the others on four. Only the college title games, single games, take squares pools.
 
+Baseball (#789) has one sport league, the MLB postseason, a fixed bracket of 12 teams in four
+rounds of series: best-of-three Wild Card Series at the better seed's park, best-of-five
+Division Series, best-of-seven League Championship Series and World Series. Each league's
+teams are seeded 1 to 6, and the top two seeds are placed straight into the Division Series,
+as the CFP's byes are (a bye scores nothing). Each series is one game of the bracket, scored in
+games won, so baseball takes no squares pools. It starts on four tiers of three.
+
 **Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
 `RESEED_BY_SEED`) loads each round that is placed by seed with no next game in the round
 before it, and names only its byes. The NFL's Wild Card and Divisional games both link nowhere,

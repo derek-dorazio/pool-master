@@ -114,6 +114,7 @@ const SPORTS: readonly SportScenario[] = [
   { sport: Sport.BASKETBALL, seed: oneEventOf('basketball-2025-nba-playoffs-test.json', 'NBA', 'NBA Playoffs') },
   { sport: Sport.AMERICAN_FOOTBALL, seed: oneEventOf('american-football-2026-nfl-playoffs-test.json', 'NFL', 'NFL Playoffs') },
   { sport: Sport.HOCKEY, seed: oneEventOf('hockey-2026-nhl-playoffs-test.json', 'NHL', 'Stanley Cup Playoffs') },
+  { sport: Sport.BASEBALL, seed: oneEventOf('baseball-2025-mlb-postseason-test.json', 'MLB', 'MLB Postseason') },
 ];
 
 /**

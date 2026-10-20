@@ -360,6 +360,41 @@ describe('hockey', () => {
   });
 });
 
+describe('baseball', () => {
+  const baseball = getSportDefinition(Sport.BASEBALL);
+
+  it('is a team sport played as a knockout bracket, scored head to head by knockout round points, keeping no score by period', () => {
+    expect(baseball.name).toBe('Baseball');
+    expect(baseball.participantType).toBe('TEAM');
+    expect(baseball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
+    expect(baseball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
+    expect(baseball.matchPeriodLayout).toBeUndefined();
+    expect(sportPlaysMatches(Sport.BASEBALL)).toBe(true);
+  });
+
+  it('gives a new postseason four rounds and four tiers of three, for a 12-team bracket', () => {
+    expect(baseball.defaultRounds).toBe(4);
+    expect(baseball.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 3 });
+  });
+
+  it('labels a four-round postseason Wild Card Series through World Series, and a stored round past the count Round N', () => {
+    expect([1, 2, 3, 4].map((roundNumber) => baseball.roundLabel(roundNumber, 4))).toEqual([
+      'Wild Card Series', 'Division Series', 'League Championship Series', 'World Series',
+    ]);
+    expect(baseball.roundLabel(5, 4)).toBe('Round 5');
+  });
+
+  it('offers the three roster selection types, bracket and survivor, and no squares or pick\'em, since every round is a series', () => {
+    expect(baseball.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR]);
+  });
+
+  it('calls the event the postseason, a match a series, and the moment entries close the first pitch', () => {
+    expect(baseball.vocabulary.event).toEqual({ one: 'postseason', many: 'postseasons' });
+    expect(baseball.vocabulary.match).toEqual({ one: 'series', many: 'series' });
+    expect(baseball.vocabulary.eventStart).toBe('first pitch');
+  });
+});
+
 describe('sportPlaysMatches', () => {
   it('is true only for a sport whose tournament format is a knockout bracket', () => {
     for (const definition of definitions) {
