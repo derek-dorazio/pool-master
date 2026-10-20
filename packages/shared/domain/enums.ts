@@ -138,6 +138,17 @@ export const BracketAdvancement = {
 export type BracketAdvancement = (typeof BracketAdvancement)[keyof typeof BracketAdvancement];
 
 /**
+ * The periods one game of a sport league is played in (#786): QUARTERS for American football, the
+ * NBA, the WNBA and women's college basketball; HALVES for men's college basketball. A sport league
+ * with none set plays its sport's layout (`SportDefinition.matchPeriodLayout`).
+ */
+export const MatchPeriodLayout = {
+  QUARTERS: 'QUARTERS',
+  HALVES: 'HALVES',
+} as const;
+export type MatchPeriodLayout = (typeof MatchPeriodLayout)[keyof typeof MatchPeriodLayout];
+
+/**
  * How one field member's race ended (#622): the finish-position family's result status. Only a
  * FINISHED runner has a finishing place; every other status scores the contest's "did not
  * finish" points. A horse scratched before the start is WITHDRAWN on the field, not here.

@@ -1,5 +1,5 @@
 import { expect, jest } from '@jest/globals';
-import { MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchPeriodLayout, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { MatchResultService } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
@@ -391,14 +391,19 @@ describe('MatchResultService period scores', () => {
       .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
   });
 
-  it('refuses (422 MATCH_PERIOD_INVALID) the last quarter, whose score is the final result, and a sport whose games keep no score by period', async () => {
+  it('refuses (422 MATCH_PERIOD_INVALID) the last quarter, whose score is the final result, and the last half of a league that plays halves', async () => {
     const football = await week();
     await expect(football.service.recordPeriodScore(football.event.id, 1, 4, { homeScore: 7, awayScore: 0 }))
       .rejects.toMatchObject({ code: 'MATCH_PERIOD_INVALID', statusCode: 422 });
 
-    const basketball = await setup();
-    await expect(basketball.service.recordPeriodScore(basketball.event.id, 1, 1, { homeScore: 40, awayScore: 38 }))
+    const college = await setup();
+    college.event.matchPeriodLayout = MatchPeriodLayout.HALVES;
+    await college.service.recordPeriodScore(college.event.id, 1, 1, { homeScore: 40, awayScore: 38 });
+    await expect(college.service.recordPeriodScore(college.event.id, 1, 2, { homeScore: 70, awayScore: 66 }))
       .rejects.toMatchObject({ code: 'MATCH_PERIOD_INVALID', statusCode: 422 });
+
+    const quarters = await setup();
+    await quarters.service.recordPeriodScore(quarters.event.id, 1, 3, { homeScore: 60, awayScore: 58 });
   });
 
   it('refuses (409 MATCH_CANCELLED) a cancelled game, and (409 SPORT_EVENT_NOT_RELEASED) a game of a draft week', async () => {

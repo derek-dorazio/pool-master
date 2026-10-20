@@ -1,7 +1,9 @@
 import {
+  MATCH_PERIOD_LAYOUTS,
+  MatchPeriodLayout,
   MatchStatus,
   SQUARES_GRID_SIZE,
-  type SportMatchPeriods,
+  assertNever,
 } from '@poolmaster/shared/domain';
 import type {
   SportEventMatchDto,
@@ -36,19 +38,22 @@ export function winningPeriodsByPlace(winners: readonly SquaresWinnerDto[]): Rea
 }
 
 /**
- * What a scoring moment is called (design §1): American football's four are Q1, Halftime, Q3 and
- * Final; any other sport's are its own period word, numbered, and the last is Final, which
+ * What a scoring moment is called (design §1), by the game's period layout: a quarters game's are
+ * Q1, Halftime, Q3 and Final, a halves game's Halftime and Final. The last is Final, which
  * includes overtime.
  */
-export function squaresMomentLabel(periodNumber: number, periods: Pick<SportMatchPeriods, 'count' | 'label'>) {
-  if (periodNumber >= periods.count) {
+export function squaresMomentLabel(periodNumber: number, layout: MatchPeriodLayout) {
+  if (periodNumber >= MATCH_PERIOD_LAYOUTS[layout].count) {
     return 'Final';
   }
-  if (periods.count === 4 && periods.label.one === 'quarter') {
-    return ['Q1', 'Halftime', 'Q3'][periodNumber - 1] ?? `Q${periodNumber}`;
+  switch (layout) {
+    case MatchPeriodLayout.QUARTERS:
+      return ['Q1', 'Halftime', 'Q3'][periodNumber - 1] ?? `Q${periodNumber}`;
+    case MatchPeriodLayout.HALVES:
+      return 'Halftime';
+    default:
+      return assertNever(layout, 'match period layout');
   }
-  const word = periods.label.one;
-  return `${word.charAt(0).toUpperCase()}${word.slice(1)} ${periodNumber}`;
 }
 
 /** "4 of 10 boxes claimed": how many of its boxes an entry holds. */
@@ -69,12 +74,12 @@ export type SquaresMomentRow = {
 };
 
 /** Every scoring moment of the game in order, each with its winner once scored. */
-export function squaresMomentRows(board: Pick<SquaresBoardResponse, 'periodCount' | 'winners'>, periods: Pick<SportMatchPeriods, 'count' | 'label'>): SquaresMomentRow[] {
-  return Array.from({ length: board.periodCount }, (_, index) => {
+export function squaresMomentRows(board: Pick<SquaresBoardResponse, 'winners' | 'periodLayout'>): SquaresMomentRow[] {
+  return Array.from({ length: MATCH_PERIOD_LAYOUTS[board.periodLayout].count }, (_, index) => {
     const periodNumber = index + 1;
     return {
       periodNumber,
-      label: squaresMomentLabel(periodNumber, periods),
+      label: squaresMomentLabel(periodNumber, board.periodLayout),
       winner: board.winners.find((winner) => winner.periodNumber === periodNumber) ?? null,
     };
   });

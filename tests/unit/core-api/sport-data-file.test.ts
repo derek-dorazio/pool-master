@@ -420,12 +420,12 @@ describe('sport data bracket', () => {
     expect(problemsOf(file)).toEqual(['NCAA Men, Tournament: carries match results, which only test data may.']);
   });
 
-  it('refuses period scores in a real file, and on a sport whose games keep no score by period', () => {
+  it('refuses period scores in a real file, and on a match with no result', () => {
     const real = bracketFile();
     real.sportLeagues[0].events[0].matches[0].periodScores = [{ periodNumber: 1, homeScore: 30, awayScore: 28 }];
     expect(problemsOf(real)).toEqual([
       'NCAA Men, Tournament: carries period scores, which only test data may.',
-      'NCAA Men, Tournament: match 1 carries period scores, but its sport keeps no score by period.',
+      'NCAA Men, Tournament: match 1 carries period scores but no result, and they are entered with its result.',
     ]);
   });
 

@@ -6108,6 +6108,10 @@ export type SportLeagueDto = {
      */
     roundNames: Array<string>;
     /**
+     * The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
+     */
+    matchPeriodLayout: 'QUARTERS' | 'HALVES' | null;
+    /**
      * Participants currently affiliated with the sport league.
      */
     affiliationCount: number;
@@ -6180,6 +6184,10 @@ export type SportLeagueListResponse = {
          */
         roundNames: Array<string>;
         /**
+         * The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
+         */
+        matchPeriodLayout: 'QUARTERS' | 'HALVES' | null;
+        /**
          * Participants currently affiliated with the sport league.
          */
         affiliationCount: number;
@@ -6238,6 +6246,10 @@ export type SportLeagueResponse = {
          * What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request.
          */
         roundNames: Array<string>;
+        /**
+         * The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
+         */
+        matchPeriodLayout: 'QUARTERS' | 'HALVES' | null;
         /**
          * Participants currently affiliated with the sport league.
          */
@@ -14736,9 +14748,9 @@ export type SquaresBoardResponse = {
      */
     maxSquaresPerEntry: number;
     /**
-     * How many scoring moments the game has: its sport's period count, the last being the final score.
+     * The periods the game is played in, its sport league's (QUARTERS, or HALVES for men's college basketball): a scoring moment ends each period, the last being the final score.
      */
-    periodCount: number;
+    periodLayout: 'QUARTERS' | 'HALVES';
     /**
      * The game the contest is played on, with its score at the end of each period and its final result.
      */

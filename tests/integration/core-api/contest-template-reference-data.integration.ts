@@ -435,7 +435,7 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
 
   it('presets round values 1, 2, 4, 8, 16 and 32 on every roster and bracket template, with no upset bonus on Doubling and the seed difference times 1 on Doubling + upset bonus', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' }, selectionType: { not: SelectionType.SURVIVOR } },
+      where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' }, selectionType: { notIn: [SelectionType.SURVIVOR, SelectionType.SQUARES] } },
     });
 
     expect(templates).toHaveLength(18);
@@ -485,23 +485,29 @@ describe('The seeded NFL league and its knockout templates', () => {
     }
   });
 
-  // Squares (#711): the NFL's one squares preset, the default for its own format.
-  it('seeds one squares template on the NFL and one on the College Football Playoff, ten boxes per entry and one entry per squad, each its league\'s squares default', async () => {
+  // Squares (#711, #786): the NFL's, the College Football Playoff's and each March Madness league's squares preset, the default for its own format.
+  it('seeds one squares template on the NFL, the College Football Playoff and men\'s and women\'s March Madness, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AMERICAN_FOOTBALL, contestFormat: ContestFormat.SQUARES },
+      where: { contestFormat: ContestFormat.SQUARES },
       include: { sportLeague: true },
       orderBy: { templateKey: 'asc' },
     });
 
-    expect(templates.map((template) => [template.templateKey, template.selectionType, template.isDefault, template.sportLeague?.name]))
-      .toEqual([
-        ['cfp-squares', SelectionType.SQUARES, true, 'College Football Playoff'],
-        ['nfl-squares', SelectionType.SQUARES, true, 'NFL'],
-      ]);
+    expect(templates.map((template) => [template.templateKey, template.sport, template.selectionType, template.isDefault, template.sportLeague?.name])).toEqual([
+      ['cfp-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'College Football Playoff'],
+      ['ncaa-men-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Men'],
+      ['ncaa-women-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Women'],
+      ['nfl-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'NFL'],
+    ]);
     for (const template of templates) {
       expect(ContestRulesWithEntryLimitSchema.parse(template.configJson))
         .toEqual({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 });
     }
+  });
+
+  it('plays men\'s college basketball in two halves and leaves every other seeded sport league on its sport\'s periods (#786)', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({ where: { matchPeriodLayout: { not: null } }, select: { name: true, matchPeriodLayout: true } });
+    expect(leagues).toEqual([{ name: 'NCAA Division I Men', matchPeriodLayout: 'HALVES' }]);
   });
 });
 
@@ -736,6 +742,9 @@ const KNOCKOUT_SELECTION_TYPES: readonly SelectionType[] = [
 ];
 const WEEK_SELECTION_TYPES: readonly SelectionType[] = [SelectionType.PICK_EM, SelectionType.SURVIVOR, SelectionType.SQUARES];
 const LEAGUES_PLAYED_IN_WEEKS: readonly string[] = ['NFL'];
+// A playoff series is one match whose score is games won (NBA, WNBA), so squares, played on one
+// game's score, has no template there.
+const LEAGUES_PLAYED_AS_SERIES: readonly string[] = ['NBA', 'WNBA'];
 
 /** What Create contest calls each format, which every template's name starts with. */
 const FORMAT_NAMES: Record<SelectionType, string> = {
@@ -769,6 +778,7 @@ describe('Every seeded sport league\'s default templates and their names (#802)'
         : [{ eventType: null, selectionTypes: definition.selectionTypes }];
       return kinds.flatMap(({ eventType, selectionTypes }) => selectionTypes
         .filter((selectionType) => sportAllowsSelectionType(definition, selectionType))
+        .filter((selectionType) => !(selectionType === SelectionType.SQUARES && LEAGUES_PLAYED_AS_SERIES.includes(name)))
         .flatMap((selectionType) => {
           // What Create contest lists for an event of this kind: the league's own templates and the
           // sport-wide ones, for this kind of event or for any.

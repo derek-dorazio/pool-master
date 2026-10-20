@@ -394,7 +394,8 @@ Slices 2 and 3 can share one PR if the review stays small enough; the plan assum
 - Payouts and prize amounts (outside Poolmaster, as always).
 - Auto-filling empty boxes, re-drawing digits per quarter (a variant some pools use), and a
   "reverse" winner (swapped digits). Each can be a small later setting.
-- Basketball squares (March Madness final): the model supports it once basketball gets
-  `matchPeriods`; NCAA men's basketball plays two halves, so a league-level period count would
-  come with it. Not needed for February.
+- Basketball squares (March Madness final): built with #786. Periods are a layout per sport
+  (`SportDefinition.matchPeriodLayout`) that a sport league can override
+  (`SportLeague.matchPeriodLayout`: men's college basketball plays two halves). The NBA and WNBA
+  get no squares preset, since their playoff games are series, one match each.
 - Live score feeds for quarter scores: the admin enters them, as for every head-to-head result.

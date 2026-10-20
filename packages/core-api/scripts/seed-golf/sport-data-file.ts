@@ -25,7 +25,7 @@
  */
 
 import { z } from 'zod';
-import { BracketAdvancement, getSportDefinition, MatchSide, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { BracketAdvancement, getSportDefinition, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import { findBracketProblems } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -372,7 +372,8 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
 
 /** What is wrong with the matches' period scores: a sport without periods, the last period or past it, or a period twice or out of order. */
 function periodScoreProblems(sport: string, matches: readonly SportDataMatch[]): string[] {
-  const periods = isSport(sport) ? getSportDefinition(sport).matchPeriods : undefined;
+  // The sport's layout: a sport league that plays fewer periods (#786) has its own checked by the server as the scores go in.
+  const periods = isSport(sport) ? matchPeriodsOf(sport, null) : undefined;
   return matches.flatMap((match) => {
     const scores = match.periodScores ?? [];
     if (scores.length === 0) return [];

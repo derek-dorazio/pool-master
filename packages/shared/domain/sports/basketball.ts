@@ -1,4 +1,4 @@
-import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
+import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
 
@@ -29,8 +29,11 @@ export const basketballSportDefinition: SportDefinition = {
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 6,
   defaultTierLayout: { tierCount: 4, tierSize: 16 },
-  selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR],
+  selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
+  // Quarters, as the NBA, the WNBA and women's college basketball play; men's college basketball
+  // plays halves (its sport league's `matchPeriodLayout`).
+  matchPeriodLayout: MatchPeriodLayout.QUARTERS,
   vocabulary: {
     participant: { one: 'team', many: 'teams' },
     event: { one: 'tournament', many: 'tournaments' },

@@ -1,6 +1,7 @@
 import type {
   ContestFormat,
   ContestTemplateEventType,
+  MatchPeriodLayout,
   ParticipantInactiveReason,
   SelectionType,
   Sport,
@@ -45,6 +46,12 @@ export interface SportEvent extends DomainEntity {
   eventYear: number;
   /** The series' sport league, read through the series — never stored on the event (plans/147 decision 7). */
   sportLeagueId: string;
+  /**
+   * The series' sport league's period layout when it is not its sport's (#786: men's college
+   * basketball's halves), read through the series like `sportLeagueId`; absent plays the sport's.
+   * Read through `matchPeriodsOf`.
+   */
+  matchPeriodLayout?: MatchPeriodLayout;
   syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;
