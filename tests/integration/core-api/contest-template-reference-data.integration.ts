@@ -724,7 +724,8 @@ describe('The seeded College Football Playoff league and its knockout templates'
 // default for each format it can host, on each kind of event it plays, so a commissioner never
 // starts from blank rules. A sport played as matches holds two kinds of event: a knockout (the
 // playoffs, a tournament bracket), and a week of a season's games, which only the leagues below
-// play. Every other sport's events are all one kind, so its templates name none.
+// play. Squares is played on any one game, a week's or the playoffs', so its template names no kind
+// of event. Every other sport's events are all one kind, so its templates name none.
 const KNOCKOUT_SELECTION_TYPES: readonly SelectionType[] = [
   SelectionType.TIERED,
   SelectionType.BUDGET_PICK,
@@ -733,7 +734,7 @@ const KNOCKOUT_SELECTION_TYPES: readonly SelectionType[] = [
   SelectionType.SURVIVOR,
   SelectionType.SQUARES,
 ];
-const WEEK_SELECTION_TYPES: readonly SelectionType[] = [SelectionType.PICK_EM, SelectionType.SURVIVOR];
+const WEEK_SELECTION_TYPES: readonly SelectionType[] = [SelectionType.PICK_EM, SelectionType.SURVIVOR, SelectionType.SQUARES];
 const LEAGUES_PLAYED_IN_WEEKS: readonly string[] = ['NFL'];
 
 /** What Create contest calls each format, which every template's name starts with. */
