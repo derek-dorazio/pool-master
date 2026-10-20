@@ -1,0 +1,765 @@
+Source: https://en.wikipedia.org/w/index.php?title=2025_Major_League_Baseball_postseason&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2025_Major_League_Baseball_postseason&action=raw
+HTTP 200
+Fetched: 2026-10-20T18:38:57.871Z
+
+{{Short description|2025 Major League Baseball playoffs}}
+{{Use mdy dates|date=August 2025}}
+{{Infobox international baseball tournament
+| title = Major League Baseball postseason
+| image = 2025_MLB_Postseason_Logo.png
+| year = 2025
+| dates = September 30 – November 2, 2025
+| num_teams = 12
+| champion_other = [[2025 Los Angeles Dodgers season|Los Angeles Dodgers]] (9th title)
+| second_other = [[2025 Toronto Blue Jays season|Toronto Blue Jays]]
+| mvp = [[Yoshinobu Yamamoto]] ([[2025 Los Angeles Dodgers season|LAD]])
+| prevseason = [[2024 Major League Baseball postseason|2024]]
+| attendance = 2,102,123
+| games = 47
+| nextseason = [[2026 Major League Baseball postseason|2026]]
+| most_hr_hitter = [[Vladimir Guerrero Jr.]] ([[2025 Toronto Blue Jays season|TOR]]) & [[Shohei Ohtani]] ([[2025 Los Angeles Dodgers season|LAD]])
+| most_hr = 8
+| most_sb_runner = [[Randy Arozarena]] ([[2025 Seattle Mariners season|SEA]])
+| most_sb = 5
+| most_k_pitcher = [[Blake Snell]] ([[2025 Los Angeles Dodgers season|LAD]])
+| most_k = 41
+}}
+The '''2025 Major League Baseball postseason''' was the playoff tournament of [[Major League Baseball]] (MLB) for the [[2025 Major League Baseball season|2025 season]]. In each of the two leagues—[[National League (baseball)|National]] and [[American League|American]]—the three division winners and three wild card teams (the remaining teams with the best win-loss records) qualified for the postseason, for a total of twelve teams. First was the best-of-three-games [[Wild Card Series]], with the two division winners with the best records in each league getting a [[bye (sports)|bye]]. Next was the best-of-five-games [[Division Series]]. The victors advanced to the best-of-seven-games [[League Championship Series]] to determine the [[Pennant (sports)#Baseball|pennant]] winners, the champions of each league. These two teams played against each other in the [[2025 World Series]], which began on October 24. {{Cite web |last=Anderson |first=R.J. |title=2025 MLB playoff schedule: Dates set for full postseason, including World Series start |url=https://www.cbssports.com/mlb/news/2025-mlb-playoff-schedule-dates-set-for-full-postseason-including-world-series-start/ |work=CBS Sport |date=August 12, 2025 |access-date=August 29, 2025}}
+In the [[American League]], the [[Toronto Blue Jays]] returned for the fourth time in the last six years ([[2020 Toronto Blue Jays season|2020]], [[2022 Toronto Blue Jays season|2022]]–[[2023 Toronto Blue Jays season|2023]], 2025). Joining them were the [[New York Yankees]], who made their eighth appearance in the last nine years ([[2017 New York Yankees season|2017]]–[[2022 New York Yankees season|2022]], [[2024 New York Yankees season|2024]]–2025). The [[Seattle Mariners]] returned for the second time in the last four years ([[2022 Seattle Mariners season|2022]], 2025), and was their first postseason appearance as a division champion since [[2001 Major League Baseball postseason|2001]], ending the second-longest division title drought in the majors. {{Cite web |last=Kramer |first=Daniel |title=Party like it's 2001! Mariners clinch first AL West crown in 24 years |url=https://www.mlb.com/news/mariners-win-2025-al-west-division-title |website=[[MLB.com]] |date=September 25, 2025 |accessdate=September 25, 2025}} {{Cite web|url=https://calltothepen.com/2023/05/05/last-season-mlb-team-won-divisional-title-since-1994/|last=Tapp|first=Jerry|title=The last season each MLB team won a divisional title (since 1994)|work=Call To The Pen|date=May 25, 2023|accessdate=September 25, 2025}} Also returning were the [[Boston Red Sox]], who made their first appearance since [[2021 Major League Baseball postseason|2021]] and the sixth in the last thirteen years ([[2013 Boston Red Sox season|2013]], [[2016 Boston Red Sox season|2016]]–[[2018 Boston Red Sox season|2018]], 2021, 2025). {{Cite web |last=Browne |first=Ian |title=Rafaela launches walk-off triple as Red Sox punch playoff ticket |url=https://www.mlb.com/news/red-sox-clinch-2025-playoff-berth |website=MLB.com |date=September 26, 2026 |access-date=September 26, 2025}} The [[Detroit Tigers]] made their second consecutive postseason appearance ([[2024 Detroit Tigers season|2024]]–2025) {{Cite web |last=Beck |first=Jason |title=Tigers punch playoff ticket, still in hunt for division title |url=https://www.mlb.com/news/tigers-clinch-2025-playoff-berth |website=MLB.com |date=September 27, 2025 |access-date=September 27, 2025}} , and the [[Cleveland Guardians]] returned for the eighth time in the last thirteen years ([[2013 Cleveland Indians season|2013]], [[2016 Cleveland Indians season|2016]]–[[2018 Cleveland Indians season|2018]], [[2020 Cleveland Indians season|2020]], [[2022 Cleveland Guardians season|2022]], [[2024 Cleveland Guardians season|2024]]–2025). {{Cite web |last=Stebbins |first=Tim |title=Walk-off HBP (!) sends Guardians to postseason, punctuating remarkable run |url=https://www.mlb.com/news/guardians-clinch-2025-postseason-berth |date=September 27, 2025 |access-date=September 27, 2025}}
+In the [[National League (baseball)|National League]], the [[Milwaukee Brewers]] clinched their seventh postseason berth in the last eight years ([[2018 Milwaukee Brewers season|2018]]–[[2021 Milwaukee Brewers season|2021]], [[2023 Milwaukee Brewers season|2023]]–2025). Joining them were the [[Philadelphia Phillies]], who returned for the fourth year in a row ([[2022 Philadelphia Phillies season|2022]]–2025). The [[Chicago Cubs]] made their first postseason appearance since [[2020 Chicago Cubs season|2020]] and their sixth appearance in the last eleven years ([[2015 Chicago Cubs season|2015]]–[[2018 Chicago Cubs season|2018]], 2020, 2025). Also returning were the [[Los Angeles Dodgers]], who made their thirteenth straight appearance ([[2013 Los Angeles Dodgers season|2013]]–2025), tying the New York Yankees for the second longest postseason appearance streak in MLB history (the Yankees previously made thirteen straight appearances from [[1995 Major League Baseball postseason|1995]] to [[2007 Major League Baseball postseason|2007]]). Next up were the [[San Diego Padres]], who returned for the fourth time in the last six years ([[2020 San Diego Padres season|2020]], [[2022 San Diego Padres season|2022]], [[2024 San Diego Padres season|2024]]–2025), {{Cite web |title=MLB playoff tracker 2025: Clinching scenarios, bracket, schedule |url=https://www.espn.com/mlb/story/_/id/46081635/mlb-2025-playoff-tracker-clinch-scenarios-postseason-bracket-schedule |website=ESPN.com |date=September 14, 2025 |accessdate=September 14, 2025}} and lastly were the [[Cincinnati Reds]], who made their first postseason berth since [[2020 Cincinnati Reds season|2020]] (and first in a full season since [[2013 Cincinnati Reds season|2013]]), marking the first time since then that both teams from [[Ohio]] made it to the postseason.
+This was the first edition of the postseason since [[2016 Major League Baseball postseason|2016]] to not feature the [[Houston Astros]], who previously made eight straight appearances from [[2017 Major League Baseball postseason|2017]] to [[2024 Major League Baseball postseason|2024]], and the first since [[2014 Major League Baseball postseason|2014]] to not feature either team from [[Texas]]. {{Cite web|last=Baer|first=Jack|title=Astros eliminated from playoff contention, will miss postseason for first time since 2016|url=https://sports.yahoo.com/mlb/breaking-news/article/astros-eliminated-from-playoff-contention-will-miss-postseason-for-first-time-since-2016-015830325.html|work=Yahoo Sports|date=September 27, 2025|access-date=September 28, 2025}} This was also the first postseason since [[2017 Major League Baseball postseason|2017]] to not feature the [[Atlanta Braves]], who previously made seven straight appearances from [[2018 Major League Baseball postseason|2018]] to 2024.
+The postseason began on September 30, 2025, and ended on November 2, 2025, with the [[Los Angeles Dodgers]] defeating the [[Toronto Blue Jays]] in the World Series. The Dodgers repeated as World Series champions and won their ninth championship. They became the eighth franchise in MLB history to win back-to-back titles. {{Cite web|last=Adler|first=David|title=Every back-to-back World Series champ|url=https://www.mlb.com/news/back-to-back-world-series-champions-c297636124|website=MLB.com|date=6 November 2021|accessdate=3 November 2025}}
+The 2025 postseason was one of the most competitive in recent MLB history, with only two sweeps occurring across the entire bracket. Two Division Series, as well as the ALCS and World Series, all went to winner-take-all elimination games. It was also the first time during the Wild Card Series era (post-2021) that three of the four series went to a decisive Game 3. {{Cite web |title=2025 Postseason History |url=https://www.mlb.com/postseason/history/2025 |access-date=2026-01-05 |website=MLB.com |language=en}}
+==Teams==
+{{CSS crop
+|Location=right
+|Description=[[File:Red pog.svg|10px]] American League Teams [[File:Blue pog.svg|10px]] National League Teams
+|bSize=480
+|cWidth=430
+|cHeight=250
+|oLeft=30
+|oTop=10
+|Content=
+{{Location map+ | USA
+| width = 450
+| caption =
+| places =
+{{Location map~ | USA
+| lat_deg = 43.64
+| lon_deg = -79.39
+| mark = Red pog.svg
+| label_size = 80
+| position = top
+| label = '''[[Toronto Blue Jays|Blue Jays]]'''}}
+{{Location map~ | USA
+| lat_deg = 47.59
+| lon_deg = -122.33
+| mark = Red pog.svg
+| label_size = 80
+| position = bottom
+| label = '''[[Seattle Mariners|Mariners]]'''}}
+{{Location map~ | USA
+| lat_deg = 41.50
+| lon_deg = -81.69
+| mark = Red pog.svg
+| label_size = 80
+| position = bottom
+| label = '''[[Cleveland Guardians|Guardians]]'''}}
+{{Location map~ | USA
+| lat_deg = 40.83
+| lon_deg = -73.93
+| mark = Red pog.svg
+| label_size = 80
+| position = top
+| label = '''[[New York Yankees|Yankees]]'''}}
+{{Location map~ | USA
+| lat_deg = 42.35
+| lon_deg = -71.10
+| mark = Red pog.svg
+| label_size = 80
+| position = top
+| label = '''[[Boston Red Sox|Red Sox]]'''}}
+{{Location map~ | USA
+| lat_deg = 42.34
+| lon_deg = -83.05
+| mark = Red pog.svg
+| label_size = 80
+| position = top
+| label = '''[[Detroit Tigers|Tigers]]'''}}
+{{Location map~ | USA
+| lat_deg = 43.03
+| lon_deg = -87.97
+| mark = Blue pog.svg
+| label_size = 80
+| position = left
+| label = '''[[Milwaukee Brewers|Brewers]]'''}}
+{{Location map~ | USA
+| lat_deg = 39.91
+| lon_deg = -75.17
+| mark = Blue pog.svg
+| label_size = 80
+| position = bottom
+| label = '''[[Philadelphia Phillies|Phillies]]'''}}
+{{Location map~ | USA
+| lat_deg = 34.07
+| lon_deg = -118.24
+| mark = Blue pog.svg
+| label_size = 80
+| position = top
+| label = '''[[Los Angeles Dodgers|Dodgers]]'''}}
+{{Location map~ | USA
+| lat_deg = 41.95
+| lon_deg = -87.66
+| mark = Blue pog.svg
+| label_size = 80
+| position = bottom
+| label = '''[[Chicago Cubs|Cubs]]'''}}
+{{Location map~ | USA
+| lat_deg = 32.71
+| lon_deg = -117.16
+| mark = Blue pog.svg
+| label_size = 80
+| position = bottom
+| label = '''[[San Diego Padres|Padres]]'''}}
+{{Location map~ | USA
+| lat_deg = 39.10
+| lon_deg = -84.51
+| mark = Blue pog.svg
+| label_size = 80
+| position = bottom
+| label = '''[[Cincinnati Reds|Reds]]'''}}
+}}
+}}
+The following teams qualified for the postseason:
+===American League===
+#[[2025 Toronto Blue Jays season|Toronto Blue Jays]] – 94–68, [[American League East|AL East]] champions ([[2025 Toronto Blue Jays season#Record vs. opponents|8–5 head-to-head vs. NYY]]) {{cite web|last=Matheson|first=Keegan|title=Blue Jays headed back to postseason with sights set on East crown|url=https://www.mlb.com/bluejays/news/blue-jays-clinch-postseason-berth-2025|website=MLB.com|date=September 21, 2025|access-date=September 21, 2025}}
+#[[2025 Seattle Mariners season|Seattle Mariners]] – 90–72, [[American League West|AL West]] champions {{Cite web |last=Kramer |first=Daniel |title=Mariners seize the moment, come from behind to clinch playoff berth |url=https://www.mlb.com/news/mariners-clinch-2025-playoff-berth |website=MLB.com |date=September 23, 2025 |access-date=September 23, 2025}} {{Cite web |last1=Axisa |first1=Mike |first2=R.J. |last2=Anderson|title=Mariners clinch AL West: Seattle holds off Astros, secures division title for first time since 2001 |url=https://www.cbssports.com/mlb/news/mariners-clinch-al-west-seattle-holds-off-astros-secures-division-title-for-first-time-since-2001/ |website=cbssports.com |date=September 24, 2025 |access-date=September 24, 2025}} {{Cite web |last=Stecker |first=Brent |title=Mariners clinch top-2 seed in playoffs, spot in ALDS |url=https://sports.mynorthwest.com/mlb/seattle-mariners/seattle-mariners-clinch-top-2-seed-playoffs/1823414 |website=sports.mynorthwest.com |date=September 25, 2025 |access-date=September 25, 2025}}
+#[[2025 Cleveland Guardians season|Cleveland Guardians]] – 88–74, [[American League Central|AL Central]] champions
+#[[2025 New York Yankees season|New York Yankees]] – 94–68 ([[2025 New York Yankees season#Record vs. opponents|5–8 head-to-head vs. TOR]]) {{Cite web |last=Bryan |first=Hoch |title=Yankees walk off and into playoffs for 8th trip in past 9 seasons |url=https://www.mlb.com/yankees/news/yankees-clinch-2025-playoff-berth |website=MLB.com |date=September 23, 2025 |access-date=September 23, 2025}}
+#[[2025 Boston Red Sox season|Boston Red Sox]] – 89–73
+#[[2025 Detroit Tigers season|Detroit Tigers]] – 87–75
+===National League===
+#[[2025 Milwaukee Brewers season|Milwaukee Brewers]] – 97–65, [[National League Central|NL Central]] champions {{Cite web |last=McCalvy |first=Adam |title=MLB-best Crew first to punch ticket to postseason |url=https://www.mlb.com/brewers/news/brewers-clinch-2025-postseason-berth |website=MLB.com| date=September 13, 2025 |access-date=September 13, 2025}} {{Cite web |last=McCalvy |first=Adam |title=Brew up a clinch! Crew wins 3rd straight NL Central title |url=https://www.mlb.com/brewers/news/brewers-cardinals-nl-central-race |website=MLB.com |date=September 21, 2025 |access-date=September 21, 2025}}
+#[[2025 Philadelphia Phillies season|Philadelphia Phillies]] – 96–66, [[National League East|NL East]] champions {{Cite web |last=Casella |first=Paul |title=Phillies secure playoff spot but miss out on clinching NL East at home |url=https://www.mlb.com/phillies/news/phillies-lose-to-royals-as-they-miss-chance-to-clinch-nl-east |website=MLB.com |date=September 14, 2025 |access-date=September 14, 2025}} {{Cite web |last=Zolecki |first=Todd |title=Clutch moments from Harper, Realmuto clinch Phillies' 2nd consecutive NL East title |url=https://www.mlb.com/phillies/news/phillies-beat-dodgers-in-extra-innings-to-clinch-nl-east |website=MLB.com |date=September 15, 2025 |access-date=September 16, 2025}} {{Cite web |last=Zolecki |first=Todd |date=September 24, 2025 |title=Phillies clinch first-round bye after setting single-game club record for HRs |url=https://www.mlb.com/news/phillies-clinch-first-round-bye-in-2025-playoffs |access-date=2025-09-24 |website=MLB.com}}
+#[[2025 Los Angeles Dodgers season|Los Angeles Dodgers]] – 93–69, [[National League West|NL West]] champions {{Cite web |last=Chen |first=Sonja |title=They're back! Dodgers headed to 13th straight postseason |url=https://www.mlb.com/dodgers/news/dodgers-clinch-spot-in-2025-mlb-postseason |website=MLB.com |date=September 19, 2025 |access-date=September 19, 2025}} {{Cite web |title=Shohei's 54th HR ties personal, team record with LA on verge of clinch |url=https://www.mlb.com/news/shohei-ohtani-career-dodgers-home-run-record-2025|author=Chen, Sonja|date=September 25, 2025|website=mlb.com}}
+#[[2025 Chicago Cubs season|Chicago Cubs]] – 92–70 {{Cite web|last=Aldrich|first=Will|title=Cubs secure first trip to postseason since 2020|url=https://www.mlb.com/cubs/news/cubs-clinch-2025-postseason-berth|website=MLB.com|date=September 17, 2025|access-date=September 17, 2025}}
+#[[2025 San Diego Padres season|San Diego Padres]] – 90–72 {{Cite web |last=Cassavell |first=AJ |title=Padres walk off into October, return to postseason for 4th time in 6 years |url=https://www.mlb.com/news/padres-clinch-2025-postseason-berth |date=September 22, 2025 |access-date=September 23, 2025}}
+#[[2025 Cincinnati Reds season|Cincinnati Reds]] – 83–79 {{Cite web |last=Sheldon |first=Mark |title=Reds clinch final NL Wild Card, set to play Dodgers |url=https://www.mlb.com/news/reds-clinch-2025-playoff-berth |website=MLB.com |date=September 28, 2025 |access-date=September 28, 2025}}
+==Playoff bracket==
+{{12TeamBracket
+| RD1=Wild Card Series
+([[2025 American League Wild Card Series|ALWCS]], [[2025 National League Wild Card Series|NLWCS]])
+| RD2=Division Series
+([[2025 American League Division Series|ALDS]], [[2025 National League Division Series|NLDS]])
+| RD3=Championship Series
+([[2025 American League Championship Series|ALCS]], [[2025 National League Championship Series|NLCS]])
+| RD4=[[2025 World Series|World Series]]
+| RD2-group1 = [[American League]]
+| RD2-group2 = [[National League (baseball)|National League]]
+| RD1-seed1=4
+| RD1-team1='''NY Yankees'''
+| RD1-score1='''2'''
+| RD1-seed2=5
+| RD1-team2=Boston
+| RD1-score2=1
+| RD1-seed3=3
+| RD1-team3=Cleveland
+| RD1-score3=1
+| RD1-seed4=6
+| RD1-team4='''Detroit'''
+| RD1-score4='''2'''
+| RD1-seed5=4
+| RD1-team5='''{{nowrap|Chicago Cubs}}'''
+| RD1-score5='''2'''
+| RD1-seed6=5
+| RD1-team6={{nowrap|San Diego}}
+| RD1-score6=1
+| RD1-seed7=3
+| RD1-team7='''{{nowrap|LA Dodgers}}'''
+| RD1-score7='''2'''
+| RD1-seed8=6
+| RD1-team8={{nowrap|Cincinnati}}
+| RD1-score8=0
+| RD2-seed1=1
+| RD2-team1='''Toronto'''
+| RD2-score1='''3'''
+| RD2-seed2=4
+| RD2-team2=NY Yankees
+| RD2-score2=1
+| RD2-seed3=2
+| RD2-team3='''Seattle'''
+| RD2-score3='''3'''
+| RD2-seed4=6
+| RD2-team4=Detroit
+| RD2-score4=2
+| RD2-seed5=1
+| RD2-team5='''Milwaukee'''
+| RD2-score5='''3'''
+| RD2-seed6=4
+| RD2-team6={{nowrap|Chicago Cubs}}
+| RD2-score6=2
+| RD2-seed7=2
+| RD2-team7=Philadelphia
+| RD2-score7=1
+| RD2-seed8=3
+| RD2-team8='''{{nowrap|LA Dodgers}}'''
+| RD2-score8='''3'''
+| RD3-seed1=1
+| RD3-team1='''Toronto'''
+| RD3-score1='''4'''
+| RD3-seed2=2
+| RD3-team2=Seattle
+| RD3-score2=3
+| RD3-seed3=1
+| RD3-team3=Milwaukee
+| RD3-score3=0
+| RD3-seed4=3
+| RD3-team4='''{{nowrap|LA Dodgers}}'''
+| RD3-score4='''4'''
+| RD4-seed1=AL1
+| RD4-team1=Toronto
+| RD4-score1=3
+| RD4-seed2=NL3
+| RD4-team2='''{{nowrap|LA Dodgers}}'''
+| RD4-score2='''4'''
+}}
+==American League Wild Card Series==
+{{Main|2025 American League Wild Card Series}}
+===(3) Cleveland Guardians vs. (6) Detroit Tigers===
+{{See also|Guardians–Tigers rivalry}}
+{{MLB Playoff Summary
+| summary =
+| winner = Detroit
+| leader =
+| score = 2–1
+| date1 = September 30
+| score1 = '''Detroit Tigers''' – 2, Cleveland Guardians – 1
+| loc1 = [[Progressive Field]]
+| time1 = 2:34
+| att1 = 26,186
+| ref1 = {{cite web|title=Tigers 2, Guardians 1 Final|url=https://www.mlb.com/gameday/tigers-vs-guardians/2025/09/30/813072/final/box|website=MLB.com|date=September 30, 2025|access-date=September 30, 2025}}
+| date2 = October 1
+| score2 = Detroit Tigers – 1, '''Cleveland Guardians''' – 6
+| loc2 = Progressive Field
+| time2 = 3:12
+| att2 = 26,669
+| ref2 = {{cite web|title=Tigers 1, Guardians 6 Final|url=https://www.mlb.com/gameday/tigers-vs-guardians/2025/10/01/813071/final/box|website=MLB.com|date=October 1, 2025|access-date=October 1, 2025}}
+| date3 = October 2
+| score3 = '''Detroit Tigers''' – 6, Cleveland Guardians – 3
+| loc3 = Progressive Field
+| time3 = 2:50
+| att3 = 29,891
+| ref3 = {{cite web|title=Tigers 6, at Guardians 3 Final|url=https://www.mlb.com/gameday/tigers-vs-guardians/2025/10/02/813073/final/box|website=MLB.com|date=October 2, 2025|access-date=October 2, 2025}}
+}}
+This was the second postseason meeting in the history of the [[Guardians–Tigers rivalry]]. They last met in the ALDS [[2024 American League Division Series#Cleveland vs. Detroit|the previous year]], which the Guardians won in five games. This time, the Tigers returned the favor, defeating the Guardians in three games to advance to the ALDS for the second straight year.
+[[Tarik Skubal]] pitched {{fraction|7|2|3}} solid innings as the Tigers took Game 1. Game 2 remained tied through seven, then the Guardians put up five unanswered runs in the bottom of the eighth to even the series, capped off by a three-run home run by [[Bo Naylor]]. In Game 3, after the Guardians tied the score in the bottom of the fourth, [[Dillon Dingler]] hit a solo homer in the top of the sixth to put the Tigers ahead for good, and then the Tigers put up four more insurance runs in the top of the seventh to win 6–3 and advance. This was the Tigers’ first postseason victory over a team from their current division since winning the American League pennant in [[1984 ALCS|1984]].
+===(4) New York Yankees vs. (5) Boston Red Sox===
+{{See also|Yankees–Red Sox rivalry}}
+{{MLB Playoff Summary
+| summary =
+| winner = New York
+| leader =
+| score = 2–1
+| date1 = September 30
+| score1 = '''Boston Red Sox''' – 3, New York Yankees – 1
+| loc1 = [[Yankee Stadium]]
+| time1 = 3:04
+| att1 = 47,027
+| ref1 = {{cite web|title=Red Sox 3, Yankees 1 Final|url=https://www.mlb.com/gameday/red-sox-vs-yankees/2025/09/30/813074/final|website=MLB.com|date=September 30, 2025|access-date=September 30, 2025}}
+| date2 = October 1
+| score2 = Boston Red Sox – 3, '''New York Yankees''' – 4
+| loc2 = Yankee Stadium
+| time2 = 2:50
+| att2 = 47,993
+| ref2 = {{cite web|title=Yankees 4, Red Sox 3 Final|url=https://www.mlb.com/gameday/red-sox-vs-yankees/2025/10/01/813070/final/box|website=MLB.com|date=October 1, 2025|access-date=October 1, 2025}}
+| date3 = October 2
+| score3 = Boston Red Sox – 0, '''New York Yankees''' – 4
+| loc3 = Yankee Stadium
+| time3 = 2:30
+| att3 = 48,833
+| ref3 = {{cite web|title=Yankees 4, Red Sox 0 Final|url=https://www.mlb.com/gameday/red-sox-vs-yankees/2025/10/02/813065/final/box|website=MLB.com|date=October 2, 2025|access-date=October 2, 2025}}
+}}
+This was the sixth postseason meeting in the history of the [[Yankees–Red Sox rivalry]] ([[1999 American League Championship Series|1999]], [[2003 American League Championship Series|2003]], [[2004 American League Championship Series|2004]], [[2018 American League Division Series|2018]], [[2021 American League Wild Card Game|2021]]). The Red Sox won the previous three meetings (2004, 2018, 2021). The Yankees defeated the Red Sox in three games to advance to the ALDS for the seventh time in nine years, marking their first postseason victory over the Red Sox since [[2003 ALCS|2003]].
+[[Garrett Crochet]] pitched {{fraction|7|2|3}} solid innings as the Red Sox won Game 1. Game 2 remained tied after seven innings, until [[Austin Wells]] hit a two-out RBI single to put the Yankees ahead for good as they evened the series. In Game 3, [[Cam Schlittler]] pitched eight innings of shutout ball as the Yankees won 4–0 to advance, defeating their archrival in the postseason for the first time in 22 years. The Yankees became the first team to win their wildcard series, in its current three-game format, after losing the first game of the series. {{Cite web |last=Bourque |first=Delilah |date=2025-10-03 |title=Yankees Make MLB History With Wild Card Victory |url=https://www.si.com/mlb/yankees/news/new-york-yankees-mlb-history-wild-card-victory-red-sox |access-date=2025-10-08 |website=New York Yankees On SI |language=en-US}}
+With the win by the Yankees, the playoff history between these two teams is tied at three series wins each.
+==National League Wild Card Series==
+{{Main|2025 National League Wild Card Series}}
+===(3) Los Angeles Dodgers vs. (6) Cincinnati Reds===
+{{MLB Playoff Summary
+| summary =
+| winner = Los Angeles
+| leader =
+| score = 2–0
+| date1 = September 30
+| score1 = Cincinnati Reds – 5, '''Los Angeles Dodgers''' – 10
+| loc1 = [[Dodger Stadium]]
+| time1 = 3:08
+| att1 = 50,555
+| ref1 = {{cite web|title=Reds 5, Dodgers 10 Final|url=https://www.mlb.com/gameday/reds-vs-dodgers/2025/09/30/813069/final|website=MLB.com|date=September 30, 2025|access-date=October 1, 2025}}
+| date2 = October 1
+| score2 = Cincinnati Reds – 4, '''Los Angeles Dodgers''' – 8
+| loc2 = Dodger Stadium
+| time2 = 3:01
+| att2 = 50,465
+| ref2 = {{cite web|title=Reds 4, Dodgers 8 Final|url=https://www.mlb.com/gameday/reds-vs-dodgers/2025/10/01/813068/final|website=MLB.com|date=October 1, 2025|access-date=October 2, 2025}}
+}}
+This was the second postseason meeting between the Reds and Dodgers. They last met in the NLDS in [[1995 NLDS#Cincinnati vs. Los Angeles|1995]], which the Reds won in a sweep. On the 30th anniversary of their previous postseason meeting, the Dodgers returned the favor, sweeping the Reds to advance to the NLDS for the 13th year in a row.
+[[Shohei Ohtani]] and [[Teoscar Hernández]] both hit two home runs each as the Dodgers blew out the Reds in Game 1. The Dodgers became the fifth team to have two players hit multiple home runs in one postseason game. {{cite tweet|title=The Dodgers are the 5th team in postseason history with 2 players|url=https://x.com/SlangsOnSports/status/1973221677367488816|number=1973221677367488816|user=SlangsOnSports|website=X.com|access-date=October 2, 2025}} [[Yoshinobu Yamamoto]] pitched {{fraction|6|2|3}} solid innings and the Dodger offense once again overwhelmed the Reds in an 8–4 win to complete the sweep. This was the only Wild Card series of the 2025 postseason that was a sweep.
+With the series loss, the Reds extended their playoff game losing streak to eight games, dating back to the [[2012 NLDS#Cincinnati vs. San Francisco|2012 NLDS]], and the [[National League Central|NL Central]] moved to 0–10 in postseason series since [[2019 Major League Baseball postseason|2019]].
+===(4) Chicago Cubs vs. (5) San Diego Padres===
+{{MLB Playoff Summary
+| summary =
+| winner = Chicago
+| leader =
+| score = 2–1
+| date1 = September 30
+| score1 = San Diego Padres – 1, '''Chicago Cubs''' – 3
+| loc1 = [[Wrigley Field]]
+| time1 = 2:25
+| att1 = 39,114
+| ref1 = {{cite web|title=Padres 1, Cubs 3 Final Score|url=https://www.mlb.com/gameday/padres-vs-cubs/2025/09/30/813066/final/box|website=MLB.com|date=September 30, 2025|access-date=September 30, 2025}}
+| date2 = October 1
+| score2 = '''San Diego Padres''' – 3, Chicago Cubs – 0
+| loc2 = Wrigley Field
+| time2 = 2:54
+| att2 = 41,083
+| ref2 = {{cite web|title=Padres 3, Cubs 0 Final Score|url=https://www.mlb.com/gameday/padres-vs-cubs/2025/10/01/813064/final/box|website=MLB.com|date=October 1, 2025|access-date=October 1, 2025}}
+| date3 = October 2
+| score3 = San Diego Padres – 1, '''Chicago Cubs''' – 3
+| loc3 = Wrigley Field
+| time3 = 3:00
+| att3 = 40,895
+| ref3 = {{cite web|title=Padres 1, Cubs 3 Final Score|url=https://www.mlb.com/gameday/padres-vs-cubs/2025/10/02/813059/final|website=MLB.com|date=October 2, 2025|access-date=October 2, 2025}}
+}}
+This was the second postseason meeting between the Cubs and Padres. They last met in the NLCS in [[1984 NLCS|1984]], which the Padres won in five games before falling in the World Series. This time, the Cubs returned the favor, defeating the Padres in three games to advance to the NLDS for the first time since [[2017 NLDS|2017]].
+In Game 1, the Cubs won 3–1 while using six different pitchers throughout the game. In Game 2, a two-run homer by [[Manny Machado]] in the top of the fifth helped secure a shutout victory for the Padres as they evened the series. However, history would not repeat itself, as Cubs reliever [[Andrew Kittredge]] stopped a rally by the Padres in the top of the ninth to secure the series win for the Cubs. This was the first playoff series win by the Cubs since 2017.
+The Cubs’ victory ended a streak of ten straight postseason series losses for the NL Central dating back to the [[2019 NLCS]].
+==American League Division Series==
+{{Main|2025 American League Division Series}}
+===(1) Toronto Blue Jays vs. (4) New York Yankees===
+{{MLB Playoff Summary
+| summary =
+| winner = Toronto
+| leader =
+| score = 3–1
+| date1 = October 4
+| score1 = New York Yankees – 1, '''Toronto Blue Jays''' – 10
+| loc1 = [[Rogers Centre]]
+| time1 = 3:06
+| att1 = 44,655
+| ref1 = {{cite web|title=Blue Jays 10, Yankees 1 Final Score|url=https://www.mlb.com/gameday/yankees-vs-blue-jays/2025/10/04/813063/final/box|website=MLB.com|date=October 4, 2025|access-date=October 4, 2025}}
+| date2 = October 5
+| score2 = New York Yankees – 7, '''Toronto Blue Jays''' – 13
+| loc2 = Rogers Centre
+| time2 = 3:04
+| att2 = 44,764
+| ref2 = {{cite web|title=Blue Jays 13, Yankees 7 Final Score|url=https://www.mlb.com/gameday/yankees-vs-blue-jays/2025/10/05/813062/final/box|website=MLB.com|date=October 5, 2025|access-date=October 5, 2025}}
+| date3 = October 7
+| score3 = Toronto Blue Jays – 6, '''New York Yankees''' – 9
+| loc3 = [[Yankee Stadium]]
+| time3 = 3:29
+| att3 = 47,399
+| ref3 = {{cite web|title=Yankees 9, Blue Jays 6 Final Score|url=https://www.mlb.com/gameday/blue-jays-vs-yankees/2025/10/07/813061/final/box|website=MLB.com|date=October 7, 2025|access-date=October 7, 2025}}
+| date4 = October 8
+| score4 = '''Toronto Blue Jays''' – 5, New York Yankees – 2
+| loc4 = Yankee Stadium
+| time4 = 3:22
+| att4 = 47,823
+| ref4 = {{cite web|title=Blue Jays at Yankees Preview|url=https://www.mlb.com/gameday/blue-jays-vs-yankees/2025/10/08/813060/preview|website=MLB.com|date=October 8, 2025|access-date=October 8, 2025}}
+}}
+The Yankees and Blue Jays finished the 2025 season with identical regular-season records of 94–68, with Toronto winning the tiebreaker due to winning eight out of 13 regular-season games between the two teams. The Blue Jays handily defeated the defending American League champion Yankees in four games to advance to the ALCS for the first time since [[2016 ALCS|2016]].
+The series started disastrously for the Yankees, as the Blue Jays' offense overwhelmed the Yankees’ pitching staff in back-to-back blowout wins in Games 1 and 2 to take a 2–0 series lead headed to the Bronx, with the most notable moment being [[Vladimir Guerrero Jr.]] hitting the first postseason grand slam for the Blue Jays in Game 2. The Yankees overcame a 6–1 Blue Jays lead by scoring eight unanswered runs to take Game 3, in part thanks to a three-run homer by [[Aaron Judge]] in the bottom of the fourth and a solo homer in the bottom of the fifth from [[Jazz Chisholm Jr.]]. However, that was all the Yankees could manage as the Blue Jays took Game 4 by three runs despite using eight different pitchers. This was the first postseason series win by the Blue Jays since [[2016 ALDS#Texas vs. Toronto|2016]].
+===(2) Seattle Mariners vs. (6) Detroit Tigers===
+{{MLB Playoff Summary
+| summary =
+| winner = Seattle
+| leader =
+| score = 3–2
+| date1 = October 4
+| score1 = '''Detroit Tigers''' – 3, Seattle Mariners – 2 {{small|(11)}}
+| loc1 = [[T-Mobile Park]]
+| time1 = 3:21
+| att1 = 47,290
+| ref1 = {{cite web|title=Tigers 3, Mariners 2 Final|url=https://www.mlb.com/gameday/tigers-vs-mariners/2025/10/04/813058/final/box|website=MLB.com|date=October 4, 2025|access-date=October 4, 2025}}
+| date2 = October 5
+| score2 = Detroit Tigers – 2, '''Seattle Mariners''' – 3
+| loc2 = T-Mobile Park
+| time2 = 2:46
+| att2 = 47,371
+| ref2 = {{cite web|title=Mariners 3, Tigers 2 Final|url=https://www.mlb.com/gameday/tigers-vs-mariners/2025/10/05/813057/final/box|website=MLB.com|date=October 5, 2025|access-date=October 5, 2025}}
+| date3 = October 7
+| score3 = '''Seattle Mariners''' – 8, Detroit Tigers – 4
+| loc3 = [[Comerica Park]]
+| time3 = 2:57 {{small|(2:53 delay)}}
+| att3 = 41,525
+| ref3 = {{cite web|title=Mariners 8, Tigers 4 Final Score|url=https://www.mlb.com/gameday/mariners-vs-tigers/2025/10/07/813056/final/box|website=MLB.com|date=October 7, 2025|access-date=October 7, 2025}}
+| date4 = October 8
+| score4 = Seattle Mariners – 3, '''Detroit Tigers''' – 9
+| loc4 = Comerica Park
+| time4 = 2:55
+| att4 = 37,069
+| ref4 = {{cite web|title=Tigers 9, Mariners 3 Final Score|url=https://www.mlb.com/gameday/mariners-vs-tigers/2025/10/08/813055/final/box|website=MLB.com|date=October 8, 2025|access-date=October 8, 2025}}
+| date5 = October 10
+| score5 = Detroit Tigers – 2, '''Seattle Mariners''' – 3 {{small|(15)}}
+| loc5 = T-Mobile Park
+| time5 = 4:58
+| att5 = 47,025
+| ref5 = {{cite web|title=Mariners 3, Tigers 2 Final Score|url=https://www.mlb.com/gameday/tigers-vs-mariners/2025/10/10/813054/final/box|website=MLB.com|date=October 10, 2025|access-date=October 11, 2025}}
+}}
+In one of the closest and most grueling playoff series in postseason history, the Mariners narrowly defeated the Tigers in five games to return to the ALCS for the first time since [[2001 ALCS|2001]].
+Game 1 was the first of two extra-inning contests. A two-run homer by [[Kerry Carpenter]] gave the Tigers the lead in the top of the fifth inning, then [[Julio Rodríguez]] tied the game in the bottom of the sixth with an RBI single, which ended up forcing extras. In the top of the eleventh, [[Zach McKinstry]]'s RBI single put the Tigers in the lead for good, and [[Keider Montero]] shut down the Mariners in the bottom of the inning. In Game 2, [[Jorge Polanco]] hit two solo home runs off [[Tarik Skubal]], but [[Spencer Torkelson]] hit a two-run RBI double in the top of the eighth to tie the game. Rodríguez put the Mariners back in the lead in the bottom of the eighth with an RBI single to even the series headed to Detroit. Seattle won their first LDS game since [[2001 ALDS#Cleveland vs. Seattle|2001]]. In Game 3, [[Eugenio Suárez]], [[J. P. Crawford]], and [[Cal Raleigh]] all homered for the Mariners as they won by four runs to take the series lead. In Game 4, [[Riley Greene]], [[Javier Báez]], and [[Gleyber Torres]] all homered for the Tigers as they blew out the Mariners to force a decisive fifth game back in Seattle.
+Game 5 was the most memorable contest of the series. After Carpenter gave the Tigers the lead with yet another two-run homer in the top of the sixth, [[Leo Rivas]] tied the game in the bottom of the seventh with an RBI single, forcing extras. After seven scoreless innings, the Tigers’ pitching staff ultimately ran out of gas as the Mariners prevailed in the bottom of the fifteenth with Polanco's bases-loaded [[Walk-off hit|walk-off single]]. Game 5 was the longest winner-take-all postseason game in MLB history, in both innings and elapsed time. {{Cite web |last=Goodwill |first=Kameron |title=Recap: Mariners walk it off in 15th inning, Tigers lose ALDS Game 5 in heartbreaking fashion |url=https://www.detroitnews.com/story/sports/mlb/tigers/2025/10/10/live-updates-detroit-tigers-at-seattle-mariners-alds-game-5/86606608007/ |access-date=October 12, 2025 |website=The Detroit News}} {{Cite web |title=2025 AL Division Series - Seattle Mariners over Detroit Tigers (3-2) |url=https://www.baseball-reference.com/postseason/2025_ALDS2.shtml |access-date=October 14, 2025 |website=[[Baseball Reference]]}}
+==National League Division Series==
+{{Main|2025 National League Division Series}}
+===(1) Milwaukee Brewers vs. (4) Chicago Cubs===
+{{See also|Brewers–Cubs rivalry}}
+{{MLB Playoff Summary
+| summary =
+| winner =Milwaukee
+| leader =
+| score = 3–2
+| date1 = October 4
+| score1 = Chicago Cubs – 3, '''Milwaukee Brewers''' – 9
+| loc1 = [[American Family Field]]
+| time1 = 3:05
+| att1 = 42,678
+| ref1 = {{cite web|title=Cubs 3, Brewers 9 Final Score|url=https://www.mlb.com/gameday/cubs-vs-brewers/2025/10/04/813047/final/box|website=MLB.com|date=October 4, 2025|access-date=October 4, 2025}}
+| date2 = October 6
+| score2 = Chicago Cubs – 3, '''Milwaukee Brewers''' – 7
+| loc2 = American Family Field
+| time2 = 2:57
+| att2 = 42,787
+| ref2 = {{cite web|title=Brewers 7, Cubs 3 Final Score|url=https://www.mlb.com/gameday/cubs-vs-brewers/2025/10/06/813048/final/box|website=MLB.com|date=October 6, 2025|access-date=October 6, 2025}}
+| date3 = October 8
+| score3 = Milwaukee Brewers – 3, '''Chicago Cubs''' – 4
+| loc3 = [[Wrigley Field]]
+| time3 = 3:13
+| att3 = 40,737
+| ref3 = {{cite web|title=Cubs 4, Brewers 3 Final Score|url=https://www.mlb.com/gameday/brewers-vs-cubs/2025/10/08/813049/final/box|website=MLB.com|date=October 8, 2025|access-date=October 8, 2025}}
+| date4 = October 9
+| score4 = Milwaukee Brewers – 0, '''Chicago Cubs''' – 6
+| loc4 = Wrigley Field
+| time4 = 3:03
+| att4 = 41,770
+| ref4 = {{cite web|title=Cubs 6, Brewers 0 Final Sxore|url=https://www.mlb.com/gameday/brewers-vs-cubs/2025/10/09/813050/final/box|website=MLB.com|date=October 9, 2025|access-date=October 9, 2025}}
+| date5 = October 11
+| score5 = Chicago Cubs – 1, '''Milwaukee Brewers''' – 3
+| loc5 = American Family Field
+| time5 = 2:36
+| att5 = 42,743
+| ref5 = {{cite web|title=Brewers 3, Cubs 1 Final Score|url=https://www.mlb.com/gameday/cubs-vs-brewers/2025/10/11/813046/final/box|website=MLB.com|date=October 11, 2025|access-date=October 11, 2025}}
+}}
+This was the first postseason meeting in the history of the [[Brewers–Cubs rivalry]], also known as the [[Interstate 94|I-94]] Rivalry. The Brewers defeated the Cubs in five games to return to the NLCS for the first time since [[2018 NLCS|2018]].
+In Game 1, the Brewers put on an offensive showing with nine runs in the first two innings in a blowout win. In Game 2, the Cubs jumped out to a 3–0 lead in the top of the first, but after a game-tying three-run home run by [[Andrew Vaughn]] in the bottom of the first, the Brewers put up four more unanswered runs to take a 2–0 series lead headed to Chicago. There, the Cubs responded. After [[Michael Busch (baseball)|Michael Busch]]’s game-tying homer in the bottom of the first, the Cubs put up three more runs and their bullpen stopped a late Brewers rally to win Game 3. In Game 4, a three-run homer by [[Ian Happ]] gave the Cubs a lead they wouldn't relinquish as they shut out the Brewers to force a decisive fifth game back in Milwaukee. In Game 5, after [[Seiya Suzuki]] tied the game for the Cubs with a solo homer, Vaughn hit his second homer of the series in the bottom of the fourth to put the Brewers in the lead for good, securing their spot in the NLCS.
+===(2) Philadelphia Phillies vs. (3) Los Angeles Dodgers===
+{{MLB Playoff Summary
+| summary =
+| winner =Los Angeles
+| leader = Los Angeles
+| score = 3–1
+| date1 = October 4
+| score1 = '''Los Angeles Dodgers''' – 5, Philadelphia Phillies – 3
+| loc1 = [[Citizens Bank Park]]
+| time1 = 3:00
+| att1 = 45,777
+| ref1 = {{cite web|title=Dodgers 5, Phillies 3 Final Score|url=https://www.mlb.com/gameday/dodgers-vs-phillies/2025/10/04/813051/final/box|website=MLB.com|date=October 4, 2025|access-date=October 4, 2025}}
+| date2 = October 6
+| score2 = '''Los Angeles Dodgers''' – 4, Philadelphia Phillies – 3
+| loc2 = Citizens Bank Park
+| time2 = 3:07
+| att2 = 45,653
+| ref2 = {{cite web|title=Dodgers 4, Phillies 3 Final Score|url=https://www.mlb.com/gameday/dodgers-vs-phillies/2025/10/06/813052/final/box|website=MLB.com|date=October 6, 2025|access-date=October 6, 2025}}
+| date3 = October 8
+| score3 = '''Philadelphia Phillies''' – 8, Los Angeles Dodgers – 2
+| loc3 = [[Dodger Stadium]]
+| time3 = 2:54
+| att3 = 53,689
+| ref3 = {{cite web|title=Phillies 8, Dodger 2 Final Score|url=https://www.mlb.com/gameday/phillies-vs-dodgers/2025/10/08/813041/final/box|website=MLB.com|date=October 8, 2025|access-date=October 8, 2025}}
+| date4 = October 9
+| score4 = Philadelphia Phillies – 1, '''Los Angeles Dodgers''' – 2 {{small|(11)}}
+| loc4 = Dodger Stadium
+| time4 = 3:30
+| att4 = 50,563
+| ref4 = {{cite web|title=Dodgers 2, Phillies 1 Final Score|url=https://www.mlb.com/gameday/phillies-vs-dodgers/2025/10/08/813041/final/box|website=MLB.com|date=October 9, 2025|access-date=October 9, 2025}}
+}}
+This was the sixth postseason meeting between the Phillies and Dodgers ([[1977 National League Championship Series|1977]], [[1978 National League Championship Series|1978]], [[1983 National League Championship Series|1983]], [[2008 National League Championship Series|2008]], [[2009 National League Championship Series|2009]]), and their first meeting outside of the NLCS. The Phillies won the most recent three meetings (1983, 2008, 2009). The Dodgers defeated the Phillies in four games to reach the NLCS for the tenth time in seventeen years.
+In Game 1, the Phillies led 3–2 after six innings, then a three-run homer from [[Teoscar Hernández]] in the top of the seventh put the Dodgers in the lead for good, stealing a road win. Game 2 was a [[pitchers' duel]] between [[Blake Snell]] and [[Jesús Luzardo]], won by the former as the Dodgers took a 2–0 series lead headed to Los Angeles. In Game 3, the Phillies blew out the Dodgers to get on the board in the series. Game 4 was another pitchers' duel, which extended into extras, and after the Dodgers loaded the bases with two outs, pinch runner [[Hyeseong Kim]] scored on a walk-off error by Philadelphia's [[Orion Kerkering]] in the bottom of the eleventh to seal the series win.
+This series was a repeat of the 1978 NLCS between both teams: just like in that series, the Dodgers stole the first two games on the road in Philadelphia, then the Phillies took Game 3 in a rout, and then the Dodgers won Game 4 in extra innings. With the win by the Dodgers, the playoff history between these two teams is tied at three series wins each.
+==American League Championship Series==
+{{Main|2025 American League Championship Series}}
+===(1) Toronto Blue Jays vs. (2) Seattle Mariners===
+{{MLB Playoff Summary
+| summary =
+| winner = Toronto
+| leader =
+| score = 4–3
+| date1 = October 12
+| score1 = '''Seattle Mariners''' – 3, Toronto Blue Jays – 1
+| loc1 = [[Rogers Centre]]
+| time1 = 2:48
+| att1 = 44,474
+| ref1 = {{cite web|title=Mariners 3, Blue Jays 1 Final Score|url=https://www.mlb.com/gameday/mariners-vs-blue-jays/2025/10/12/813040/final/box|website=MLB.com|date=October 12, 2025|access-date=October 12, 2025}}
+| date2 = October 13
+| score2 = '''Seattle Mariners''' – 10, Toronto Blue Jays – 3
+| loc2 = Rogers Centre
+| time2 = 3:28
+| att2 = 44,814
+| ref2 = {{cite web|title=Mariners 10, Blue Jays 3 Final Score|url=https://www.mlb.com/gameday/mariners-vs-blue-jays/2025/10/13/813044/final/box|website=MLB.com|date=October 13, 2025|access-date=October 13, 2025}}
+| date3 = October 15
+| score3 = '''Toronto Blue Jays''' – 13, Seattle Mariners – 4
+| loc3 = [[T-Mobile Park]]
+| time3 = 2:49
+| att3 = 46,471
+| ref3 = {{cite web|title=Blue Jays 13, Mariners 4 Final Score|url=https://www.mlb.com/gameday/blue-jays-vs-mariners/2025/10/15/813043/final/box|website=MLB.com|date=October 15, 2025|access-date=October 15, 2025}}
+| date4 = October 16
+| score4 = '''Toronto Blue Jays''' – 8, Seattle Mariners – 2
+| loc4 = T-Mobile Park
+| time4 = 2:54
+| att4 = 46,981
+| ref4 = {{cite web|title=Blue Jays 8, Mariners 2 Final Score|url=https://www.mlb.com/gameday/blue-jays-vs-mariners/2025/10/16/813035/final/box|website=MLB.com|date=October 16, 2025|access-date=October 16, 2025}}
+| date5 = October 17
+| score5 = Toronto Blue Jays – 2, '''Seattle Mariners''' – 6
+| loc5 = T-Mobile Park
+| time5 = 3:00
+| att5 = 46,758
+| ref5 = {{cite web|title=Mariners 6, Blue Jays 2 Final Score|url=https://www.mlb.com/gameday/blue-jays-vs-mariners/2025/10/17/813039/final/box|website=MLB.com|date=October 17, 2025|access-date=October 17, 2025}}
+| date6 = October 19
+| score6 = Seattle Mariners – 2, '''Toronto Blue Jays''' – 6
+| loc6 = Rogers Centre
+| time6 = 2:51
+| att6 = 44,764
+| ref6 = {{cite web|title=Blue Jays 6, Mariners 2 Final Score|url=https://www.mlb.com/gameday/mariners-vs-blue-jays/2025/10/19/813038/final/box|website=MLB.com|date=October 19, 2025|access-date=October 19, 2025}}
+| date7 = October 20
+| score7 = Seattle Mariners – 3, '''Toronto Blue Jays''' – 4
+| loc7 = Rogers Centre
+| time7 = 2:50
+| att7 = 44,770
+| ref7 = {{cite web|title=Blue Jays 4, Mariners 3 Final Score|url=https://www.mlb.com/gameday/mariners-vs-blue-jays/2025/10/20/813037/final/box|website=MLB.com|date=October 20, 2025|access-date=October 20, 2025}}
+}}
+This was the second postseason meeting between the Blue Jays and Mariners, the two [[1977 Major League Baseball expansion|AL expansion teams of 1977]]. They first met in the Wild Card series in [[2022 American League Wild Card Series#Toronto vs. Seattle|2022]], which the Mariners won in a sweep in Toronto. The Blue Jays overcame a two-games-to-none series deficit to defeat the Mariners in seven games, returning to the World Series for the first time since [[1993 World Series|1993]].
+The Mariners continued their postseason winning streak at [[Rogers Centre]] to start the series. After a [[George Springer]] leadoff home run, the Mariners responded with three unanswered runs, which consisted of a home run by [[Cal Raleigh]] and two [[Jorge Polanco]] RBI singles for a 3–1 win in Game 1. {{Cite web |last=Castillo |first=Jorge |title=Miller sets tone for 'resilient' Mariners in G1 win |url=https://www.espn.com/mlb/story/_/id/46578125/mariners-shut-blue-jays-bats-steal-game-1-alcs |website=ESPN |date=October 13, 2025 |access-date=October 14, 2025}} The next day, [[Julio Rodríguez]], Polanco, and Naylor all hit multi-run home runs as the offense overcame [[Logan Gilbert]]'s three-inning, three-run start as the Mariners blew out the Blue Jays to take a 2–0 series lead headed to Seattle. {{Cite web |last=Clemens |first=Ben |date=October 14, 2025 |title=Gilbert's Gutsy Game and a Trio of Home Runs Give Mariners 2-0 ALCS Lead |url=https://blogs.fangraphs.com/gilberts-gutsy-game-and-a-trio-of-home-runs-give-mariners-2-0-alcs-lead/ |website=[[FanGraphs]] |access-date=October 14, 2025}} Things then took a turn for the worse for the Mariners, as the Blue Jays’ offense overwhelmed the Mariners pitching staff in back-to-back blowout wins to even the series at two. In Game 5, the Blue Jays took a 2–1 lead in the top of the sixth and were six outs away from taking the series lead, but then the Mariners put up five unanswered runs in the bottom of the eighth, capped off by a [[Grand slam (baseball)|grand slam]] from [[Eugenio Suárez]], to take a 3–2 series lead headed back to Toronto. In Game 6, home runs from [[Vladimir Guerrero Jr.]] and [[Addison Barger]] would help secure a 6-2 Blue Jays win as they forced a seventh game. In Seattle's first-ever Game 7, the Mariners led 3–1 in the bottom of the seventh and were eight outs away from winning their first AL pennant, but then Springer hit a three-run home run to put the Blue Jays in the lead for good, securing their first pennant in 32 years. This was the first Game 7 ever won by the Blue Jays in franchise history, and they became the first team to win a league pennant after losing the first two games at home.
+Along with the [[Edmonton Oilers]] winning the [[2025 Stanley Cup playoffs#Western Conference final|NHL Western Conference title]], 2025 marked the first year since 1993 in which multiple Canadian teams were playing for a championship in the four major leagues, as the Blue Jays and the [[Montreal Canadiens]] previously won both the [[1993 World Series|World Series]] and [[1993 Stanley Cup Final|Stanley Cup]] respectively that year.
+With the loss, the Mariners fell to 0–4 in the ALCS, having previously lost in [[1995 ALCS|1995]], [[2000 ALCS|2000]], and [[2001 ALCS|2001]].
+==National League Championship Series==
+{{Main|2025 National League Championship Series}}
+===(1) Milwaukee Brewers vs. (3) Los Angeles Dodgers===
+{{MLB Playoff Summary
+| summary =
+| winner = Los Angeles
+| leader =
+| score = 4–0
+| date1 = October 13
+| score1 = '''Los Angeles Dodgers''' – 2, Milwaukee Brewers – 1
+| loc1 = [[American Family Field]]
+| time1 = 2:53
+| att1 = 41,737
+| ref1 = {{cite web|title=Dodgers 2, Brewers 1 Final Score|url=https://www.mlb.com/gameday/dodgers-vs-brewers/2025/10/13/813036/final/box|website=MLB.com|date=October 13, 2025|access-date=October 13, 2025}}
+| date2 = October 14
+| score2 = '''Los Angeles Dodgers''' – 5, Milwaukee Brewers – 1
+| loc2 = American Family Field
+| time2 = 2:51
+| att2 = 41,427
+| ref2 = {{cite web|title=Dodgers at Brewers Live|url=https://www.mlb.com/gameday/dodgers-vs-brewers/2025/10/14/813034/final/box|website=MLB.com|date=October 14, 2025|access-date=October 14, 2025}}
+| date3 = October 16
+| score3 = Milwaukee Brewers – 1, '''Los Angeles Dodgers''' – 3
+| loc3 = [[Dodger Stadium]]
+| time3 = 2:48
+| att3 = 51,251
+| ref3 = {{cite web|title=Dodgers 3, Brewers 1 Final Score|url=https://www.mlb.com/gameday/brewers-vs-dodgers/2025/10/16/813033/final/box|website=MLB.com|date=October 16, 2025|access-date=October 16, 2025}}
+| date4 = October 17
+| score4 = Milwaukee Brewers – 1, '''Los Angeles Dodgers''' – 5
+| loc4 = Dodger Stadium
+| time4 = 2:41
+| att4 = 52,883
+| ref4 = {{cite web|title=Dodgers 5, Brewers 1 Final Score|url=https://www.mlb.com/gameday/brewers-vs-dodgers/2025/10/17/813031/final/box|website=MLB.com|date=October 17, 2025|access-date=October 17, 2025}}
+}}
+This was the third postseason meeting between the Dodgers and Brewers (2018, [[2020 National League Wild Card Series#Los Angeles vs. Milwaukee|2020]]), and a rematch of the [[2018 NLCS]], which the Dodgers won in seven games before falling in the World Series. The Dodgers swept the overall top seed Brewers to return to the World Series for the second year in a row and fifth time in nine years.
+[[Blake Snell]] pitched eight innings of shutout ball and struck out ten batters as the Dodgers took Game 1. {{Cite web |title=Snell spectacular and Dodgers barely hold on in 9th to beat Brewers 2-1 in NLCS opener |url=https://www.espn.com/mlb/recap/_/gameId/401809290 |website=ESPN.com |date=October 14, 2025 |access-date=October 17, 2025}} Game 1 was also notable for the Brewers pulling off the first 8-6-2 double play in postseason history despite the loss. {{Cite web |last=Rogers |first=Jesse |title=Brewers pull off 8-6-2 double play vs. Dodgers in NLCS Game 1 |url=https://www.espn.com/mlb/story/_/id/46588442/brewers-pull-wild-double-play-vs-dodgers-nlcs-game-1 |website=ESPN.com |date=October 13, 2025 |access-date=October 17, 2025}} In Game 2, [[Yoshinobu Yamamoto]] pitched a complete game as the Dodgers took a 2–0 series lead headed to Los Angeles. It was the first complete game in the postseason for the Dodgers since [[José Lima]] did it in the third game of the NLDS in [[2004 National League Division Series|2004]] and the first postseason complete game overall since [[Justin Verlander]] in Game 2 of the ALCS in [[2017 American League Championship Series|2017]]. Yamamoto was also the first Japanese pitcher to throw a complete game in the MLB postseason. {{Cite web |title=Yoshinobu Yamamoto pitches Dodgers to 2-0 NLCS lead vs. Brewers |url=https://africa.espn.com/mlb/story/_/id/46599864/yoshinobu-yamamoto-pitches-complete-game-dodgers-win-game-2-nlcs-vs-brewers |website=ESPN.com |date=October 14, 2025 |access-date=October 14, 2025}} {{Cite web |last1=Stephen |first1=Eric |title=Yoshinobu Yamamoto throws first MLB postseason complete game by Japanese pitcher |url=https://www.truebluela.com/los-angeles-dodgers-news-notes/105915/dodgers-yoshinobu-yamamoto-complete-game-japan |website=True Blue LA |date=October 15, 2025 |access-date=October 15, 2025}} Game 3 remained tied until the sixth inning, when [[Tommy Edman]] put the Dodgers back in the lead for good with an RBI single, and then [[Freddie Freeman]] added an insurance run off a throwing error by [[Abner Uribe]] as the Dodgers took a commanding three games to none series lead. In Game 4, [[Shohei Ohtani]] carried the Dodgers to the pennant with three home runs, and pitching six shutout innings with ten strikeouts, completing the sweep.
+With the win, the Dodgers improved their postseason record against the Brewers to 3–0, and it marked the first time since the 1970s that the Dodgers won at least three NL pennants in a single decade ([[1974 NLCS|1974]], [[1977 NLCS|1977]], [[1978 NLCS|1978]]).
+Both teams met in the NLCS once again [[2026 NLCS|the next year]], where the Brewers returned the favor and swept the Dodgers.
+==2025 World Series==
+{{Main|2025 World Series}}
+===(AL1) Toronto Blue Jays vs. (NL3) Los Angeles Dodgers===
+{{MLB Playoff Summary
+| summary =
+| winner = Los Angeles
+| leader =
+| score = 4–3
+| date1 = October 24
+| score1 = Los Angeles Dodgers – 4, '''Toronto Blue Jays''' – 11
+| loc1 = [[Rogers Centre]]
+| time1 = 3:13
+| att1 = 44,353
+| ref1 = {{cite web|title=Blue Jays 11, Dodgers 4 Final Score|url=https://www.mlb.com/gameday/dodgers-vs-blue-jays/2025/10/24/813027/final/box|website=MLB.com|date=October 24, 2025|access-date=October 24, 2025}}
+| date2 = October 25
+| score2 = '''Los Angeles Dodgers''' – 5, Toronto Blue Jays – 1
+| loc2 = Rogers Centre
+| time2 = 2:36
+| att2 = 44,607
+| ref2 = {{cite web|title=Dodgers 5, Blue Jays 1 Final Score|url=https://www.mlb.com/gameday/dodgers-vs-blue-jays/2025/10/25/813026/final/box|website=MLB.com|date=October 25, 2025|access-date=October 25, 2025}}
+| date3 = October 27
+| score3 = Toronto Blue Jays – 5, '''Los Angeles Dodgers''' – 6 {{small|(18)}}
+| loc3 = [[Dodger Stadium]]
+| time3 = 6:39
+| att3 = 52,654
+| ref3 = {{cite web|title=Dodgers 6, Blue Jays 5 Final Score|url=https://www.mlb.com/gameday/blue-jays-vs-dodgers/2025/10/27/813032/final/box|website=MLB.com|date=October 27, 2025|access-date=October 27, 2025}}
+| date4 = October 28
+| score4 = '''Toronto Blue Jays''' – 6, Los Angeles Dodgers – 2
+| loc4 = Dodger Stadium
+| time4 = 2:54
+| att4 = 52,552
+| ref4 = {{cite web|title=Blue Jays 6, Dodgers 2 Final Score|url=https://www.mlb.com/gameday/blue-jays-vs-dodgers/2025/10/28/813023/final/box|website=MLB.com|date=October 28, 2025|access-date=October 28, 2025}}
+| date5 = October 29
+| score5 = '''Toronto Blue Jays''' – 6, Los Angeles Dodgers – 1
+| loc5 = Dodger Stadium
+| time5 = 3:02
+| att5 = 52,175
+| ref5 = {{cite web|title=Blue Jays 6, Dodgers 1 Final Score|url=https://www.mlb.com/gameday/blue-jays-vs-dodgers/2025/10/29/813022/final/box|website=MLB.com|date=October 29, 2025|access-date=October 29, 2025}}
+| date6 = October 31
+| score6 = '''Los Angeles Dodgers''' – 3, Toronto Blue Jays – 1
+| loc6 = Rogers Centre
+| time6 = 3:02
+| att6 = 44,710
+| ref6 = {{cite web|title=Dodgers 3, Blue Jays 1 Final Score|url=https://www.mlb.com/gameday/dodgers-vs-blue-jays/2025/10/31/813025/final/box|website=MLB.com|date=October 31, 2025|access-date=October 31, 2025}}
+| date7 = November 1
+| score7 = '''Los Angeles Dodgers''' – 5, Toronto Blue Jays – 4 {{small|(11)}}
+| loc7 = Rogers Centre
+| time7 = 4:07
+| att7 = 44,713
+| ref7 = {{cite web|title=Dodgers 5, Blue Jays 4 Final Score|url=https://www.mlb.com/gameday/dodgers-vs-blue-jays/2025/11/01/813024/final/box|website=MLB.com|date=November 1, 2025|access-date=November 1, 2025}}
+}}
+This World Series marked the first meeting between teams from Toronto and Los Angeles in a postseason series since the [[1993 Stanley Cup playoffs#Clarence Campbell Conference final|1993 Stanley Cup playoffs]]. {{Cite web|url=https://jaysjournal.com/game-7-world-series-loss-another-addition-to-toronto-s-painful-sports-history-01k91g0xn39b|last=Ferraro|first=Jake|title=Game 7 World Series loss another addition to Toronto's painful sports history|website=Jays Journal|quote=Wayne Gretzky's controversial goal in 1993 lives forever in the minds of Maple Leafs fans and, ironically, was also a win for LA over Toronto.|date=November 2, 2025|accessdate=November 3, 2025}} In one of the closest and most grueling World Series ever played, the Dodgers narrowly defeated the Blue Jays in seven games to repeat as World Series champions, winning their ninth championship in franchise history.
+In the first World Series game in Toronto in 32 years, the Blue Jays' offense chased [[Blake Snell]] from the mound in a Game 1 blowout win. Game 1 was also notable for [[Addison Barger]]’s pinch-hit grand slam in the bottom of the sixth, which was the first in World Series history. {{cite web|last=Matheson |first=Keegan |title=Grand moment! Barger belts first pinch-hit slam in World Series history|url=https://www.mlb.com/news/addison-barger-grand-slam-blue-jays-9-runs-6th-inning-world-series-game-1 |website=[[MLB.com]]|date=October 25, 2025|accessdate=October 25, 2025}} In Game 2, [[Yoshinobu Yamamoto]] pitched his second complete game of the postseason as the Dodgers prevailed by four runs to even the series headed to Los Angeles. Yamamoto became the first pitcher to throw multiple complete games in the same postseason since [[Madison Bumgarner]] in [[2014 Major League Baseball postseason|2014]], the first to do it in back-to-back games since [[Curt Schilling]] in [[2001 Major League Baseball postseason|2001]], and the first to throw a complete game in the World Series since [[Johnny Cueto]] in [[2015 World Series|2015]]. {{Cite web|last=Castrovince|first=Anthony|title=Yamamoto's gem, pair of solo shots carry Dodgers in Game 2|url=https://www.mlb.com/dodgers/news/dodgers-win-world-series-game-2-2025|website=[[MLB.com]]|date=October 25, 2025|accessdate=October 25, 2025}}
+Game 3 was the most notable contest of the series. It was a long extra-innings grind which went eighteen innings, tying with Game 4 of the [[2005 National League Division Series#Atlanta vs. Houston|2005 NLDS]] (Atlanta vs. Houston), Game 2 of the [[2014 National League Division Series#Washington vs. San Francisco|2014 NLDS]] (Washington vs. San Francisco), Game 3 of the [[2018 World Series#Game 3|2018 World Series]] (which also featured the Dodgers), and Game 3 of the [[2022 American League Division Series#Houston vs. Seattle|2022 ALDS]] (Houston vs. Seattle) as [[Extra innings|the longest postseason games in MLB history in terms of innings]]. {{cite web|url=https://www.mlb.com/dodgers/news/dodgers-win-world-series-game-3-2025|title=Freeman does it again! Ends epic 18-inning game with walk-off HR |website=MLB.com |last=Castrovince |first=Anthony |date=October 28, 2025 |access-date=October 28, 2025}} After [[Shohei Ohtani]] forced extras with his second home run of the game in the bottom of the seventh, the game remained scoreless through the next ten and a half innings until the Dodgers prevailed off a [[Freddie Freeman]] walk-off solo homer in the bottom of the eighteenth. With his walk-off home run, Freeman was the first player to accomplish this feat in consecutive World Series, after his grand-slam walk-off in Game 1 of the [[2024 World Series]]. {{Cite web |last=Cassaval |first=AJ |title=5 takeaways from an epic Game 3 and a first look at Game 4 |url=https://www.mlb.com/news/takeaways-18-inning-world-series-game-3-2025 |website=MLB.com |access-date=October 28, 2025 |language=en}} Game 3 would ultimately be [[Clayton Kershaw]]’s final postseason game. {{Cite web|url= https://www.baseball-reference.com/players/gl.fcgi?id=kershcl01&t=p&post=1|title=Clayton Kershaw 2025 Pitching stats|website=Baseball Reference|accessdate=November 3, 2025}}
+In Game 4, the Dodgers jumped out to an early lead, but it was quickly erased by a two-run homer by [[Vladimir Guerrero Jr.]] in the top of the second, which put the Blue Jays in the lead for good as they evened the series at two. In Game 5, [[Trey Yesavage]] pitched seven solid innings, and the Blue Jays' offense once again gave Snell trouble as they won 6–1 to take a 3–2 series lead headed back to Toronto. In Game 6, Yamamoto pitched six innings, allowing five hits and one run, and [[Mookie Betts]] got out of his postseason dry spell with a two-run RBI single in the top of the third as the Dodgers won to force a decisive seventh game. In Toronto's first ever World Series Game 7, the Blue Jays led 4–3 in the top of the ninth and were two outs away from their third title, but then [[Miguel Rojas (baseball)|Miguel Rojas]] hit a solo homer to tie the game, forcing the first extra inning Game 7 since [[2016 World Series#Game 7|2016]]. After a scoreless ninth and tenth, a solo homer from [[Will Smith (catcher)|Will Smith]] in the top of the eleventh put the Dodgers in the lead for good, and then Yamamoto earned his third win of the series in the bottom of the inning. This was the fifth consecutive World Series Game 7 to be won by the road team.
+Yamamoto won World Series MVP, becoming the first Japanese-born player to accomplish such a feat since [[Hideki Matsui]] in [[2009 World Series|2009]]. {{Cite web |last=Anderson |first=R.J. |title=Yoshinobu Yamamoto named World Series MVP: Dodgers ace joins Randy Johnson with rare Game 7 feat |url=https://www.cbssports.com/mlb/news/yoshinobu-yamamoto-world-series-mvp-dodgers/ |website=[[CBS Sports]] |date=November 2, 2025 |access-date=November 2, 2025}} With the win, the Dodgers tied the [[Boston Red Sox]] and the [[Athletics (baseball)|Athletics]] for the third most World Series championships. The Dodgers became the first team to win back-to-back titles since the [[New York Yankees]] did so in [[1999 World Series|1999]] and [[2000 World Series|2000]] (as part of a World Series three-peat from [[1998 World Series|1998]] to 2000), and they became the first National League team to repeat as World Series champions overall since the [[Cincinnati Reds]] did so in [[1975 World Series|1975]] and [[1976 World Series|1976]]. The Dodgers also became the first team to win the World Series after sweeping the LCS, but with their opponent winning the pennant in a winner-take-all game since the [[Detroit Tigers]] did so in [[1984 World Series|1984]], and were the first to do it since the LCS moved to a seven-game series in [[1985 Major League Baseball postseason|1985]]. {{Cite web |last=Langs |first=Sarah |title=Here's why history is on Toronto's side |url=https://www.mlb.com/news/world-series-history-when-game-7-winner-faces-team-that-sweeps |website=[[MLB.com]] |date=October 21, 2025 |access-date=November 2, 2025}}
+This was Toronto's first defeat in the World Series. Previously, they had won in their first two appearances in [[1992 World Series|1992]] and [[1993 World Series|1993]]. This marked the first time a Toronto-based team lost in a championship round of the four major North American leagues since the [[1960 Stanley Cup Final]]. {{Cite news |date=November 2, 2025|title=Congrats on the loss, Toronto. It was a masterpiece |url=https://www.theglobeandmail.com/sports/article-blue-jays-vs-dodgers-world-series-game-7-results-analysis-toronto/ |access-date=February 25, 2026|work=The Globe and Mail |language=en-CA}}
+==Broadcasting==
+===Television coverage===
+====United States====
+Coverage of the four Wild Card Series were produced by [[ESPN Major League Baseball|ESPN]], with [[Major League Baseball on ABC|ABC]] aired two National League games and one American League game, and ESPN aired the remaining games (five American League games and three National League games). {{cite web|last=Feuz|first=Alex|title=2025 MLB Wild Card Series Exclusively on ESPN Networks Starts September 30|url=https://espnpressroom.com/us/press-releases/2025/09/2025-mlb-wild-card-series-exclusively-on-espn-networks-starts-september-30/|work=ESPN Press Room|date=September 28, 2025|access-date=September 30, 2025}} {{cite web |title=Complete 2025 postseason schedule and updated bracket|url=https://www.mlb.com/news/2025-mlb-playoff-and-world-series-schedule |website=MLB.com|date=September 30, 2025|access-date=September 30, 2025}} {{cite web|last=Giannotto|first=Mark|title=MLB playoffs schedule: Dates for 2025 World Series, every AL and NL postseason round|url=https://www.usatoday.com/story/sports/mlb/2025/08/12/mlb-playoffs-schedule-world-series-dates-2025/85627246007/|work=USA Today|date=August 12, 2025|access-date=August 29, 2025}}
+[[Major League Baseball on TBS|TNT Sports]] (TBS and [[TruTV]]) aired the [[2025 National League Division Series|National League Division Series]] and [[2025 National League Championship Series|National League Championship Series]].
+[[MLB on Fox|Fox Sports]] (Fox, FS1, or FS2) aired the [[2025 American League Division Series|American League Division Series]] and the [[2025 American League Championship Series|American League Championship Series]]. Due to a rain delay, Game 3 of the Tigers/Mariners series aired instead on [[MLB Network]] and [[Fox Sports 2|FS2]]. {{cite web|last=Romo|first=Christian|title=What channel is Tigers-Mariners today? Game 3 of ALDS moved to FS2 because of rain delay|url=https://www.freep.com/story/sports/mlb/tigers/2025/10/07/tigers-mariners-tv-channel-today-game-3-fs2/86572083007/|work=Detroit Free Press|date=October 7, 2025|access-date=October 7, 2025}} The [[2025 World Series|World Series]] will be broadcast exclusively on Fox for the 26th consecutive year.
+Spanish language broadcasts was available on [[ESPN Deportes]] for ESPN's games, [[Fox Deportes]] for Fox Sports' games, and [[UniMás]] for TNT Sports' games. Along with Fox Deportes, [[Univision]] also aired Game 1 of the World Series. {{cite web|title=TelevisaUnivision Announces the 2025 Major League Baseball Spanish-Language Special Programming Schedule|url=https://corporate.televisaunivision.com/press/2025/03/20/televisaunivision-announces-the-2025-major-league-baseball-spanish-language-special-programming-schedule/|work=TelevisaUnivision|date=March 20, 2025|access-date=October 3, 2025}}
+====Canada====
+[[Toronto Blue Jays on Sportsnet|Sportsnet]] broadcast all Toronto Blue Jays games, and simulcast the U.S. feeds of all the other postseason series in English, with [[TVA Sports]] covering the AL postseason and World Series, and rival [[Réseau des sports|RDS]] covering the NL postseason games in French. {{cite web|title=Blue Jays earn bye with playoff field finalized, wild-card schedule announced|url=https://www.sportsnet.ca/mlb/article/blue-jays-earn-bye-with-playoff-field-finalized-wild-card-schedule-announced/|work=Sportsnet|date=September 29, 2025|access-date=September 30, 2025}} {{cite web|url=https://www.mlb.com/news/blue-jays-vs-yankees-alds-game-4-starting-lineups-pitching-matchup|title=LIVE: Blue Jays-Yankees ALDS Game 4 (FS1)|date=October 8, 2025|author1=Hoch, Bryan|author2=Matheson, Keegan|website=mlb.com}}
+====Japan====
+[[NHK]] broadcast all Los Angeles Dodgers games, and some other games including all World Series games (regardless participation of the Dodgers) through its [[NHK BS]], [[NHK General TV]], and/or [[NHK BSP4K]] channels. {{Cite web|date=September 29, 2025|url= https://www.nhk.jp/g/ts/5Z1243GRLV/blog/bl/pAbpWVnQV2/bp/pJ9zNOmL4v/|title=ポストシーズン日程と放送予定＜ナショナル・リーグ＞|trans-title=Postseason calendar and broadcast schedule |publisher=NHK|access-date=October 8, 2025}} {{Cite web|date=September 29, 2025|url= https://www.nhk.jp/g/ts/5Z1243GRLV/blog/bl/pAbpWVnQV2/bp/pBzRNDWVEB/ |title=ポストシーズン日程と放送予定＜アメリカン・リーグ＞|trans-title=Postseason calendar and broadcast schedule |publisher=NHK|access-date=October 8, 2025}} [[J Sports]] also broadcast some postseason games. {{Cite web|url= https://www.jsports.co.jp/baseball/mlb/postseason/|title=MLBポストシーズン|trans-title=MLB postseason|publisher=J Sports|accessdate=October 9, 2025}}
+===Streaming===
+====United States====
+All ESPN-produced games (including games on ABC) were available on the [[ESPN (streaming service)|ESPN app]]. All of TNT Sports' games then will be available on [[HBO Max]], and all of Fox Sports' games will be available on [[Fox One]]. Additionally, ESPN/ABC, TNT Sports', and Fox Sports' games were streamed on their respective apps.
+====Canada====
+All games were available on [[Sportsnet+]].
+===Radio===
+[[ESPN Radio]] aired the entire MLB postseason. Spanish language broadcasts were available on [[Univision Radio]].
+===Most watched playoff games===
+{{small|All times [[Eastern Time Zone|Eastern]]. Note that this only includes viewership numbers on networks within the United States.}}
+{| class="wikitable sortable" style="text-align:center"
+|-
+! Rank || Round || Date || Game || colspan="3" class="unsortable" |Matchup || data-sort-type="number" |TV network(s) || data-sort-type="number" |Streaming || data-sort-type="number" | Viewers (millions)
+|-
+| 1
+| rowspan=5|[[2025 World Series|World Series]]
+| Tuesday, October 28, 8:00 p.m.
+| Game 4
+| [[2025 Los Angeles Dodgers season|Los Angeles Dodgers]]
+| 2–6
+| '''[[2025 Toronto Blue Jays season|Toronto Blue Jays]]'''
+| rowspan="6"|[[MLB on Fox|Fox]]
+| rowspan="6'|[[Fox One]]
+| 14.520 {{cite news|last=Pucci|first=Douglas|title=Tuesday Ratings: MLB World Series on Fox Platforms Rises with Game 4|url=https://programminginsider.com/tuesday-ratings-mlb-world-series-on-fox-platforms-rises-with-game-4/|work=Programming Insider|date=October 30, 2025|access-date=October 31, 2025|archive-url=https://web.archive.org/web/20251031140823/https://programminginsider.com/tuesday-ratings-mlb-world-series-on-fox-platforms-rises-with-game-4/|archive-date=October 31, 2025|url-status=dead}}
+|-
+| 2
+| Wednesday, October 29, 8:00 p.m.
+| Game 5
+| '''[[2025 Toronto Blue Jays season|Toronto Blue Jays]]'''
+| 6-1
+| [[2025 Los Angeles Dodgers season|Los Angeles Dodgers]]
+| 14.292 {{cite news|last=Pucci|first=Douglas|title=Wednesday Ratings: MLB World Series a Domestic and International Success|url=https://programminginsider.com/wednesday-ratings-mlb-world-series-a-domestic-and-international-success/|work=Programming Insider|date=October 31, 2025|access-date=November 1, 2025|archive-url=https://web.archive.org/web/20260412114542/https://programminginsider.com/wednesday-ratings-mlb-world-series-a-domestic-and-international-success/|archive-date=April 12, 2026|url-status=dead}}
+|-
+| 3
+| Friday, October 24, 8:00 p.m.
+| Game 1
+| [[2025 Los Angeles Dodgers season|Los Angeles Dodgers]]
+| 4–11
+| '''[[2025 Toronto Blue Jays season|Toronto Blue Jays]]'''
+| 12.499 {{cite news|last=Pucci|first=Douglas|title=Friday Ratings: MLB World Series on Fox Platforms Score Second-Largest Start in Seven Years|url=https://programminginsider.com/friday-ratings-mlb-world-series-on-fox-platforms-score-second-largest-start-in-seven-years/|work=Programming Insider|date=October 28, 2025|access-date=October 29, 2025}} {{Dead link|date=October 2026 |bot=InternetArchiveBot }}
+|-
+| 4
+| Saturday, October 25, 8:00 p.m.
+| Game 2
+| '''[[2025 Los Angeles Dodgers season|Los Angeles Dodgers]]'''
+| 5-1
+| [[2025 Toronto Blue Jays season|Toronto Blue Jays]]
+| 11.399 {{cite news|last=Pucci|first=Douglas|title=Saturday Ratings: MLB World Series on Fox Platforms Continues to Outpace Most Recent Fall Classics|url=https://programminginsider.com/saturday-ratings-mlb-world-series-on-fox-platforms-continues-to-outpace-most-recent-fall-classics/|work=Programming Insider|date=October 28, 2025|access-date=October 29, 2025}}
+|-
+| 5
+| Monday, October 27, 8:00 p.m.
+| Game 3
+| [[2025 Toronto Blue Jays season|Toronto Blue Jays]]
+| 5–6
+{{Small|(18)}}
+| '''[[2025 Los Angeles Dodgers season|Los Angeles Dodgers]]'''
+| 11.157 {{cite news|last=Pucci|first=Douglas|title=Monday Ratings: 11.4 Million Tune in to 18-Inning Third Game of MLB World Series on Fox Platforms|url=https://programminginsider.com/monday-ratings-11-4-million-tune-in-to-18-inning-third-game-of-mlb-world-series-on-fox-platforms/|work=Programming Insider|date=October 29, 2025|access-date=October 30, 2025}}
+|-
+| 6
+| [[2025 American League Division Series|ALDS]]
+| Friday, October 10, 8:08 p.m.
+| Game 5
+| [[2025 Detroit Tigers season|Detroit Tigers]]
+| 2–3
+{{Small|(15)}}
+| '''[[2025 Seattle Mariners season|Seattle Mariners]]'''
+| 8.591 {{Cite web|title=Audience Analysis: Red River Rivalry best in years; NFL helps lift NHRA to record|url=https://www.sportsbusinessjournal.com/Articles/2025/10/16/audience-analysis-red-river-rivalry-best-in-years-nfl-helps-lift-nhra-to-record/|website=Sports Business Journal|last=Karp|first=Austin|date=October 16, 2025|access-date=October 16, 2025}}
+|-
+| 7
+| rowspan=3|[[2025 American League Wild Card Series#New York vs. Boston|ALWC]]
+| Thursday, October 2, 8:08 p.m.
+| Game 3
+| [[2025 Boston Red Sox season|Boston Red Sox]]
+| 0–4
+| '''[[2025 New York Yankees season|New York Yankees]]'''
+| rowspan="3"|[[ESPN Major League Baseball|ESPN]]
+| rowspan="3'|[[ESPN (streaming service)|ESPN Unlimited]]
+| 7.440 {{Cite web|title=Audience Analysis: NFL regular season at best mark since 2010|url=https://www.sportsbusinessjournal.com/Articles/2025/10/09/audience-analysis-nfl-regular-season-at-best-mark-since-2010/|website=Sports Business Journal|last=Karp|first=Austin|date=October 9, 2025|access-date=October 9, 2025}}
+|-
+| 8
+| Wednesday, October 1, 6:08 p.m.
+| Game 2
+| [[2025 Boston Red Sox season|Boston Red Sox]]
+| 3–4
+| '''[[2025 New York Yankees season|New York Yankees]]'''
+| 6.759
+|-
+| 9
+| Tuesday, September 30, 6:08 p.m.
+| Game 1
+| '''[[2025 Boston Red Sox season|Boston Red Sox]]'''
+| 3–1
+| [[2025 New York Yankees season|New York Yankees]]
+| 6.518
+|-
+| 10
+| [[2025 National League Championship Series|NLCS]]
+| Tuesday, October 14, 8:08 p.m.
+| Game 2
+| '''[[2025 Los Angeles Dodgers season|Los Angeles Dodgers]]'''
+| 5–1
+| [[2025 Milwaukee Brewers season|Milwaukee Brewers]]
+| [[MLB on TBS|TBS]], [[TruTV]]
+| [[HBO Max]]
+| 6.051
+|}
+In Canada, Game 7 of the ALCS attracted an average of 6 million viewers on Sportsnet, [[CityTV]] and Sportsnet+. {{cite web|last=Houpt|first=Simon|title=Jays' ALCS Game 7 win sets viewership record, Sportsnet says|url=https://www.theglobeandmail.com/sports/baseball/article-jays-alcs-game-7-win-sets-viewership-record-sportsnet-says/|website=The Globe and Mail|date=October 21, 2025|access-date=October 23, 2025}} Sportsnet reported an average of 7.5 million viewers across the World Series. The Game 7 telecast was one of the [[List of most watched television broadcasts in Canada|most-watched television broadcasts in Canadian history]], with an average of 11.6 million viewers across Sportsnet and TVA Sports, {{Cite web |title=World Series Game 7 most-watched MLB game globally in 34 years |url=https://www.mlb.com/news/world-series-game-7-viewership-is-best-since-1991 |access-date=2025-11-11 |website=MLB.com |language=en}} a peak average viewership of 14 million on Sportsnet during the bottom of the ninth inning, and an estimated 18.5 million watching all or part of the game (representing approximately 45% of the country's population). {{cite web|url=https://brioux.tv/blog/2025/11/03/ten-million-canadians-watch-blue-jays-come-oh-so-close-in-game-7-classic/|title=Over Ten Million Canadians watch Blue Jays come oh so close in Game 7 classic|first=Bill|last=Brioux|work=Brioux.tv|date=November 3, 2025|access-date=November 5, 2025}} {{Cite web |date=2025-11-03 |title=Game 7 most-watched Rogers broadcast ever |url=https://broadcastdialogue.com/game-7-most-watched-rogers-broadcast-ever/ |access-date=2025-11-11 |website=Broadcast Dialogue |language=en-US}} {{cite web|url=https://www.thestar.com/business/jays-vs-dodgers-world-series-finale-was-largest-international-broadcast-operation-in-the-history-of/article_c8cc8f1b-7625-4fe9-97b2-5e6cb5dbda5a.html|title=Jays vs. Dodgers World Series finale was largest international broadcast operation in the history of the sport, MLB says|first=Jake|last=Edmiston|work=[[Toronto Star]]|date=November 4, 2025|access-date=November 5, 2025}} In Japan, Game 6 of the World Series was seen by an average of 13.1 million viewers on [[NHK General TV]], and Game 7 was seen by an average of 12 million viewers on [[NHK BS]].
+==Notes==
+{{notelist}}
+==References==
+{{reflist}}
+==External links==
+*[https://www.baseball-reference.com/leagues/majors/2025-standings.shtml/ Major League Baseball Standings and Expanded Standings – 2025]
+{{2025 MLB Playoffs navbox}}
+{{Major League Baseball postseason|state=collapsed}}
+{{DEFAULTSORT:2025 Major League Baseball Season}}
+[[Category:2025 Major League Baseball season| ]]
+[[Category:Major League Baseball postseason]]

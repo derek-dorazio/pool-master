@@ -1,9 +1,0 @@
-Source: https://en.wikipedia.org/w/index.php?title=2026_PWHL_playoffs&action=raw
-Final URL: https://en.wikipedia.org/w/index.php?title=2026_PWHL_playoffs&action=raw
-HTTP 200
-Fetched: 2026-10-20T18:35:21.858Z
-
-#REDIRECT [[2026 Walter Cup playoffs]]
-{{Redirect category shell|
-{{R from move}}
-}}

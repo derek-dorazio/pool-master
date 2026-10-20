@@ -1,0 +1,412 @@
+Source: https://en.wikipedia.org/w/index.php?title=2026_Walter_Cup_playoffs&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_Walter_Cup_playoffs&action=raw
+HTTP 200
+Fetched: 2026-10-20T18:38:57.439Z
+
+{{Short description|Women's hockey postseason tournament}}
+{{Use mdy dates|date=May 2025}}
+{{Infobox hockey tournament season
+| title = Walter Cup playoffs
+| image =
+| year = 2026
+| dates = April 30 – May 20
+| num_teams = 4
+| defending_champions = [[Minnesota Frost]]
+| winners = [[Montreal Victoire]] (1st)
+| second = [[Ottawa Charge]]
+| stat_leader_title = Scoring leader(s)
+| stat_leader_player =
+| stat_leader_value =
+| award_title = [[Ilana Kloss Playoff Most Valuable Player|MVP]]
+| award = [[Marie-Philip Poulin]] (Victoire)
+| prev_season = [[2025 PWHL playoffs|2025]]
+| next_season = ''2027''
+}}
+The '''2026 Walter Cup playoffs''' was the playoff tournament of the [[Professional Women's Hockey League]] (PWHL) for the [[2025–26 PWHL season|2025–26 season]]. The playoffs began on April 30, 2026, and concluded with the PWHL Finals on May 20, 2026, with the [[Minnesota Frost|Montreal Victoire]] winning their first [[Walter Cup]]. {{cite news|title=PWHL Playoffs Will Open April 30 In Boston, May 2 In Montreal|url=https://thehockeynews.com/womens/pwhl/pwhl-playoffs-will-open-april-30-in-boston-may-2-in-montreal|website=The Hockey News}}
+The [[Boston Fleet]] were the first team to make the playoffs, when they did so on March 29 in a 4–2 win over the [[Minnesota Frost]]. In doing so, they became the fastest team in league history to clinch a playoff spot, having accomplished the feat in their 24th game of the season. {{cite news|title=Fleet Fastest Team In PWHL History To Clinch A Playoff Spot As Race Heats Up |url=https://thehockeynews.com/womens/pwhl/fleet-fastest-team-in-pwhl-pwhl-history-to-clinch-a-playoff-spot-as-race-heats-up|website=The Hockey News}} Three days later, the [[Montreal Victoire]] were the second team to qualify for the playoffs, after a 3–0 win over the [[Vancouver Goldeneyes]]. {{cite news|title=Montreal Victoire Secure Playoff Spot, Set New League Record |url=https://thehockeynews.com/womens/pwhl/montreal-victoire-secure-playoff-spot-set-new-league-record|website=The Hockey News}} On April 4, the Minnesota Frost clinched a spot after defeating the Goldeneyes, 6–5. {{cite news|title=Frost clinch PWHL playoff spot with 6–5 victory over Vancouver Goldeneyes|url=https://www.cbc.ca/sports/hockey/pwhl/minnesota-frost-clinch-pwhl-playoff-spot-9.7153470|website=CBC Sports}}
+The [[Ottawa Charge]] qualified for the fourth and final playoff spot in their last regular season game, defeating the [[Toronto Sceptres]], 3–0 on April 25. The Sceptres would have earned the playoff spot instead had they won the game in regulation. {{cite news|title=Philips makes 41 saves as Charge shut out Sceptres to clinch final PWHL playoff spot|url=https://www.cbc.ca/sports/hockey/pwhl/pwhl-ottawa-charge-toronto-sceptres-april-25-9.7172902|website=CBC Sports}} It was the first time in league history that Toronto had missed the playoffs. {{cite news|title=Dissecting The Sceptres' First Season Outside The PWHL Playoffs|url=https://thehockeynews.com/womens/pwhl/dissecting-the-sceptres-first-season-outside-the-pwhl-playoffs|website=The Hockey News}} Montreal secured first place in their final game of the season, also on April 25, a 2–1 shootout victory against the [[Seattle Torrent]]. They finished the season tied with the [[Boston Fleet]] at 62 points, but held the tiebreaker over Boston. {{cite news|title=Ljungblom's shootout goal helps Victoire beat Torrent 2-1, secure top seed in PWHL playoffs|url=https://www.ctvnews.ca/montreal/article/ljungbloms-shootout-goal-helps-victoire-beat-torrent-2-1-secure-top-seed-in-pwhl-playoffs/|website=CTV}}
+==Playoff bracket==
+On April 26, 2026, by virtue of finishing first overall, the [[Montreal Victoire]] chose the [[Minnesota Frost]] as their first-round opponent. {{cite web |url=https://www.thepwhl.com/en/news/2026/april/26/2026-pwhl-walter-cup-playoff-matchups |title=2026 PWHL Walter Cup Playoff Matchups |date=April 26, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=April 26, 2026}} {{cite web |url=https://thehockeynews.com/womens/pwhl/montreal-chooses-back-to-back-walter-cup-champion-minnesota-frost-as-first-round-opponent-boston-will-face-ottawa |title=Montreal Chooses Back-To-Back Walter Cup Champion Minnesota Frost As First Round Opponent, Boston Will Face Ottawa |last=Kennedy |first=Ian |date=April 26, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=April 26, 2026 |quote=The Montreal Victoire broke the script selecting the back-to-back Walter Cup champion Minnesota Frost as their opening round opponent for the 2026 PWHL playoffs, meaning the Boston Fleet will take on the Ottawa Charge.}}
+{{#invoke:RoundN | main | columns=2 | score-boxes=5 | style=font-size:90% | RD1=Semi-finals | RD2=[[2026 Walter Cup finals|Finals]]
+| April 30–May 10, [[Tsongas Center]] and [[Canadian Tire Centre]]
+| [[Boston Fleet]] | '''2''' | 1 | 1 | 3 | –
+| '''[[Ottawa Charge]]''' | 1 | '''3''' | '''2''' | '''4**''' | –
+| May 2–12, [[Place Bell]] and [[Grand Casino Arena]]
+| '''[[Montreal Victoire]]''' | 4 | '''1***''' | '''2''' | 1 | '''2'''
+| [[Minnesota Frost]] | '''5*''' | 0 | 1 | '''3''' | 1
+| May 14–20, [[Place Bell]] and [[Canadian Tire Centre]]
+| [[Ottawa Charge]] | 2 | 1 | '''2''' | 0 | –
+| '''[[Montreal Victoire]]''' | '''3*''' | '''2'''* | 1 | '''4''' | –
+}}
+: * - Denotes overtime period(s)
+=== Semi-finals ===
+==== Montreal (1) vs. Minnesota (3) ====
+Montreal finished first overall in the league with a record of 16-6-2-6, earning 62 points. Minnesota finished third overall with 50 points and a record of 13-3-5-9. Montreal won all four games against Minnesota in the regular season, two of which were in overtime. {{Cite news |date=April 25, 2026 |title=Montréal Victoire select defending champion Minnesota Frost as 1st-round PWHL playoff opponent |url=https://www.cbc.ca/sports/hockey/pwhl/victoire-select-defending-champion-frost-as-1st-round-pwhl-playoff-opponent-9.7178125 |access-date=June 26, 2026 |work=CBC}}
+The Minnesota Frost took the series lead in Game 1 with a 5-4 win after [[Jincy Roese]] scored 4:30 into overtime. It was the third straight year that Montreal lost game one of their first round series on home ice. [[Katy Knoll]], [[Kendall Coyne Schofield]], [[Grace Zumwinkle]], and [[Sidney Morin]] scored the other goals for Minnesota, while [[Shiann Darkangelo]] gave the Victoire their first goal. The Victoire's other three goals were all scored by [[Laura Stacey]], marking the first playoff hat trick in league history. {{cite news|url=https://www.cbc.ca/sports/hockey/pwhl/montreal-victoire-minnesota-frost-game-1-9.7185758|title=Roese scores in OT to offset Stacey's historic hat trick as Frost steal Game 1 from Victoire|website=CBC Sports}} Minnesota's [[Britta Curl-Salemme]] was suspended for one game due to an illegal check to the head against [[Kaitlin Willoughby]] and fined $250 due to pulling [[Abby Roque]]'s facial protector, which caused Roque to fall to the ice. {{cite news|url=https://www.cbc.ca/sports/hockey/pwhl/pwhl-suspends-minnesota-frost-britta-curl-salemme-1-game-9.7186939|title=PWHL suspends Frost's Curl-Salemme after pair of incidents in Minnesota victory over Montreal|website=CBC Sports}}
+In Game 2, Montreal's [[Marie-Philip Poulin]] scored the only goal of the game at the 4:02 mark in triple overtime to give Montreal the 1–0 win. [[Ann-Renée Desbiens]] recorded her first career playoff shutout, stopping all 38 Minnesota shots. [[Maddie Rooney]] made 51 saves in the loss for Minnesota. It was Minnesota's seventh straight playoff game to go to overtime, and it was the third playoff game in league history with only one goal scored. {{cite news|url=https://www.cbc.ca/sports/hockey/pwhl/pwhl-playoffs-montreal-victoire-minnesota-frost-may5-9.7188085|title=Marie-Philip Poulin adds to her legend, scores in 3OT to lift Victoire over Frost|website=CBC Sports}}
+In Game 3, Minnesota took the early lead thanks to a goal by [[Sidney Morin]] 3:22 into the first period, her second goal of the playoffs and in the entire season. Ultimately, however, the game resulted in a 2-1 Montreal win thanks to goals scored by [[Maggie Flaherty (ice hockey)|Maggie Flaherty]] and [[Hayley Scamurra]] 24 seconds apart in the second period, giving the Victoire a series lead of 2-1. {{cite news|url=https://www.cbc.ca/sports/hockey/pwhl/montreal-victoire-minnesota-frost-game-3-recap-9.7192164|title=Flaherty, Scamurra score 24 seconds apart as Victoire melt Frost, inch closer to Walter Cup Finals|website=CBC Sports}}
+In Game 4, Montreal took a late lead at 1:13 of the third period thanks to a goal by [[Maureen Murphy (ice hockey)|Maureen Murphy]]. This was answered by two goals from Minnesota's [[Sidney Morin]]. An empty netter from [[Kelly Pannek]] secured Minnesota's 3-1 win over Montreal, forcing a game 5 and continuing the Frost's 5-0 franchise record in playoff elimination games. {{cite news|url=https://www.sportsnet.ca/pwhl/article/morin-scores-twice-in-third-period-to-help-frost-beat-victoire-to-force-game-5/|title=Morin scores twice in third period to help Frost beat Victoire to force Game 5|website=Sportsnet}}
+Game 5 was originally scheduled to be played on Monday, May 11th, at 7:00 pm. However, at 3:40 pm on May 11, the league announced that the game had been postponed until Tuesday, May 12th due to multiple illnesses on the Victoire. {{cite web |url=https://www.thepwhl.com/en/news/2026/may/11/game-5-of-pwhl-walter-cup-playoffs-between-minnesota-and-montreal-rescheduled-for-may-12 |title=Game 5 of PWHL Walter Cup Playoffs Between Minnesota and Montréal Rescheduled for May 12 |date=May 11, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=May 11, 2026}} {{cite web |url=https://thehockeynews.com/womens/pwhl/deciding-game-5-cancelled-due-to-ilness-no-make-up-date-announced |title=Deciding Game 5 Postponed Due To Illness, Rescheduled For Tomorrow |last=Laprade |first=Pat |date=May 11, 2026 |website=TheHockeyNews.com |publisher=[[The Hockey News]] |access-date=May 11, 2026 |quote=Game five between Montreal and Minnesota has been postponed due to illness and player safety with the game now rescheduled for Tuesday.}} In Game 5, Montreal clinched the series with a 2–1 win thanks to [[Marie-Philip Poulin]]'s game-winning goal at 3:06 in the third. It was the first time in franchise history that the Minnesota Frost had lost a game while facing elimination, having won the previous six times. [[Sam Cogan]] was the goal scorer for Minnesota, while [[Catherine Dubois]] scored the other Montreal goal. {{cite news|url=https://www.cbc.ca/sports/hockey/pwhl/montreal-victoire-minnesota-frost-game5-may12-9.7196942|title=Victoire outlast Frost to clinch series, setting up all-Canadian Walter Cup final with Charge|website=CBC Sports}}
+{{NHLPlayoffs
+|team1 = Montreal Victoire
+|team2 = Minnesota Frost
+|stadium1 = [[Place Bell]]
+|stadium2 = [[Grand Casino Arena]]
+|homeright=yes
+|date1 = May 2
+|score1 = 5–4
+|tv1 =
+|ot1 = 1
+|won1 = 2
+|recap1 = www.thepwhl.com/en/stats/game-center/340
+|1-1-1 = ''No scoring''
+|1-1-2 = [[Katy Knoll]] (1) – 8:36
+[[Kendall Coyne Schofield]] (1) – ''pp'' – 16:16
+|1-2-1 = 2:46 – [[Shiann Darkangelo]] (1)
+17:49 – [[Laura Stacey]] (1)
+|1-2-2 = [[Grace Zumwinkle]] (1) – 18:35
+|1-3-1 = 2:58 – ''pp'' – Laura Stacey (2)
+4:46 – ''pp'' – Laura Stacey (3)
+|1-3-2 = [[Sidney Morin]] (1) – ''sh'' – 3:46
+|1-4-1 = ''No scoring''
+|1-4-2 = [[Jincy Roese]] (1) – 4:30
+|goalie1-1 = [[Ann-Renée Desbiens]] 24 saves / 29 shots
+|goalie1-2 = [[Maddie Rooney]] 21 saves / 25 shots
+|date2 = May 5
+|score2 = 0–1
+|tv2 =
+|ot2 = 3
+|won2 = 1
+|recap2 = www.thepwhl.com/en/stats/game-center/341
+|2-1-1 = ''No scoring''
+|2-1-2 = ''No scoring''
+|2-2-1 = ''No scoring''
+|2-2-2 = ''No scoring''
+|2-3-1 = ''No scoring''
+|2-3-2 = ''No scoring''
+|2-4-1 = 4:02 – [[Marie-Philip Poulin]] (1)
+|2-4-2 = ''No scoring''
+|goalie2-1 = [[Ann-Renée Desbiens]] 38 saves / 38 shots
+|goalie2-2 = [[Maddie Rooney]] 51 saves / 52 shots
+|date3 = May 7
+|score3 = 2–1
+|tv3 =
+|won3 = 1
+|recap3 = www.thepwhl.com/en/stats/game-center/342
+|3-1-1 = ''No scoring''
+|3-1-2 = 3:22 – [[Sidney Morin]] (2)
+|3-2-1 = [[Maggie Flaherty (ice hockey)|Maggie Flaherty]] (1) – 4:36
+[[Hayley Scamurra]] (1) – 5:00
+|3-2-2 = ''No scoring''
+|3-3-1 = ''No scoring''
+|3-3-2 = ''No scoring''
+|goalie3-1 = [[Ann-Renée Desbiens]] 27 saves / 28 shots
+|goalie3-2 = [[Maddie Rooney]] 17 saves / 19 shots
+|date4 = May 8
+|score4 = 1–3
+|tv4 =
+|won4 = 2
+|recap4 = www.thepwhl.com/en/stats/game-center/345
+|4-1-1 = ''No scoring''
+|4-1-2 = ''No scoring''
+|4-2-1 = ''No scoring''
+|4-2-2 = ''No scoring''
+|4-3-1 = [[Maureen Murphy (ice hockey)|Maureen Murphy]] (1) – 1:13
+|4-3-2 = 8:05 – [[Sidney Morin]] (3)
+12:01 – ''pp'' – Sidney Morin (4)
+18:43 – ''en'' – [[Kelly Pannek]] (1)
+|goalie4-1 = [[Ann-Renée Desbiens]] 28 saves / 30 shots
+|goalie4-2 = [[Maddie Rooney]] 29 saves / 30 shots
+|date5 = May 12
+|score5 = 1–2
+|tv5 =
+|won5 = 1
+|recap5 = www.thepwhl.com/en/stats/game-center/347
+|5-1-1 = 12:18 – [[Catherine Dubois]] (1)
+|5-1-2 = ''No scoring''
+|5-2-1 = ''No scoring''
+|5-2-2 = [[Samantha Cogan]] (1) – 8:15
+|5-3-1 = 3:06 – [[Marie-Philip Poulin]] (2)
+|5-3-2 = ''No scoring''
+|5-4-1 =
+|5-4-2 =
+|goalie5-1 = [[Ann-Renée Desbiens]] 25 saves / 26 shots
+|goalie5-2 = [[Maddie Rooney]] 15 saves / 17 shots
+| series = Montreal won series 3–2
+}}
+==== Boston (2) vs. Ottawa (4) ====
+Boston finished in second place in the league, earning 62 points in the standings with a record of 16-5-4-5. Ottawa finished fourth with 44 points and a record of 9-8-1-12. Ottawa beat Boston three times in the regular season, twice in a shootout, and once in overtime. Boston beat Ottawa once, in a shootout.
+In Game 1, Boston took the early series lead with a 2–1 win. The game was characterized by the amount of penalties taken, with a total of 25 minutes for both teams, including 3 penalties in the first ten minutes. [[Jocelyne Larocque]] opened the scoring for Ottawa, tipping a shot from [[Rory Guilday]] at the 18 minute mark. Boston's [[Alina Müller]] scored the equalizer at 17:56 of the second, with [[Jamie Lee Rattray]] scoring the go ahead for the Fleet soon after. Her goal proved to be the decider. {{cite news|url=https://thehockeynews.com/womens/pwhl/game-one-between-the-boston-fleet-and-ottawa-charge-showcased-the-pwhls-physicality|title=Game One Between The Boston Fleet And Ottawa Charge Showcased The PWHL's Physicality|website=The Hockey News}}
+In Game 2, Ottawa evened up the series at one game apiece, beating Boston 3–1. [[Ronja Savolainen]] opened up the scoring for the Charge with a wrist shot from inside the blue line with 6:44 to go in the first. [[Fanuza Kadirova]] doubled the goals for Ottawa 1:52 into the second period with a one-timer from the right circle, beating [[Aerin Frankel]] on her glove side. [[Megan Keller]] scored for Boston with just 10 seconds to go in the second. With Frankel pulled for an extra attacker, [[Gabbie Hughes]] scored on the empty net to give Ottawa the insurance marker. [[Gwyneth Philips]] made 30 saves in the winning effort. {{cite news|url=https://www.cbc.ca/sports/hockey/pwhl/ottawa-charge-boston-fleet-game-2-recap-9.7185713|title=Gwyneth Philips stops 30 shots as Charge defeat Fleet to tie semifinal series 1-1|website=CBC Sports}}
+In Game 3, Ottawa took the series lead thanks to a goal scored by [[Ronja Savolainen]] with 29 seconds left in the third period, breaking a 1–1 tie. The goal was scored when Savolainen shot the puck off the back boards, which bounced back onto Boston's goaltender [[Aerin Frankel]]'s skate and into the net. The game was played in front of 13,112 fans, setting a PWHL playoff record. {{cite news|url=https://www.tsn.ca/pwhl/article/savolainen-nets-winner-to-lift-charge-past-fleet-to-take-series-lead/|title=Savolainen nets winner to lift Charge past Fleet to take series lead|website=TSN}} [[Fanuza Kadirova]] scored the other goal for Ottawa. [[Gwyneth Philips]] made 36 saves for the Charge, leading all playoff goaltenders with a 1.34 goals against average and a .958 save percentage. {{cite news|url=https://thehockeynews.com/womens/pwhl/gwyneth-philips-has-another-brilliant-playoff-performance-as-the-charge-take-series-lead-against-the-fleet|title=Gwyneth Philips Has Another Brilliant Playoff Performance As The Charge Take Series Lead Against The Fleet|website=The Hockey News}}
+[[File:Ottawa_Charge_celebration,_game_4_2026_PWHL_semifinals.jpg|thumb|Members of the Charge celebrate after Ottawa's game 4 overtime winning goal]]
+Ottawa won the series in game 4, beating the Fleet 4–3 in double overtime and sending the Charge to their second straight PWHL finals. [[Michela Cava]] scored the winning goal for the Charge at the 1:12 mark in the second extra frame, redirecting a shot by [[Kateřina Mrázová (ice hockey)|Kateřina Mrázová]]. Ottawa scored the opening goal in the first period at the 6:38 mark when [[Fanuza Kadirova]] shot a one-timer which was tipped by [[Sarah Wozniewicz]]. Ottawa took a 2–0 lead early in the second when [[Brianne Jenner]] made a shot from behind the goal line that deflected off of [[Rebecca Leslie]]'s skate and into the net. After a review, it was confirmed as a good goal. The Fleet came roaring back with three goals in just 1 minute and 33 seconds span in the second period thanks to goals by [[Shay Maloney]], [[Megan Keller]] and [[Sophie Shirley]]. It marked the first time in 10 games where Ottawa allowed more than two goals in a game. {{cite news|url=https://ottawacitizen.com/sports/double-overtime-win-ottawa-charge|title=Takeaways: Double-overtime win sends Ottawa Charge to second straight Walter Cup final|website=Ottawa Citizen}} However, Ottawa tied the game up at the 12:12 mark of the second period when Boston goalie [[Aerin Frankel]] bobbled a shot by Fanuza Kadirova, which was scooped up by [[Brooke Hobson]] to tie the game for Ottawa. The game then saw two straight score-less periods before Cava netted the winner. {{cite news|url=https://ottawa.citynews.ca/2026/05/10/ottawa-charge-headed-to-pwhl-final-after-2ot-win-against-boston/|title=Ottawa Charge headed to PWHL final after 2OT win against Boston|website=City News}}
+{{NHLPlayoffs
+| team1 = Boston Fleet
+| team2 = Ottawa Charge
+| stadium1 = [[Tsongas Center]]
+| stadium2 = [[Canadian Tire Centre]]
+| homeright = yes
+| date1 = April 30
+| score1 = 1–2
+| recap1 = www.thepwhl.com/en/stats/game-center/338
+| tv1 =
+| won1 = 1
+| 1-1-1 = ''No scoring''
+| 1-1-2 = [[Jocelyne Larocque]] (1) – ''pp'' – 18:06
+| 1-2-1 = 17:56 – [[Alina Müller]] (1)
+19:27 – [[Jamie Lee Rattray]] (1)
+| 1-2-2 = ''No scoring''
+| 1-3-1 = ''No scoring''
+| 1-3-2 = ''No scoring''
+| goalie1-1 = [[Aerin Frankel]] 17 saves / 18 shots
+| goalie1-2 = [[Gwyneth Philips]] 26 saves / 28 shots
+| date2 = May 2
+| score2 = 3–1
+| recap2 = www.thepwhl.com/en/stats/game-center/339
+| tv2 =
+| won2 = 2
+| 2-1-1 = ''No scoring''
+| 2-1-2 = [[Ronja Savolainen]] (1) – 13:16
+| 2-2-1 = 19:50 – [[Megan Keller]] (1)
+| 2-2-2 = [[Fanuza Kadirova]] (1) – 1:54
+| 2-3-1 =''No scoring''
+| 2-3-2 = [[Gabbie Hughes]] (1) – ''en'' – 18:30
+| goalie2-1 = [[Aerin Frankel]] 18 saves / 20 shots
+| goalie2-2 = [[Gwyneth Philips]] 30 saves / 31 shots
+| date3 = May 8
+| score3 = 1–2
+| recap3 = www.thepwhl.com/en/stats/game-center/343
+| tv3 =
+| won3 = 2
+| 3-1-1 =''No scoring''
+| 3-1-2 = 13:33 – [[Fanuza Kadirova]] (2)
+| 3-2-1 = [[Liz Schepers]] (1) – 5:11
+| 3-2-2 =''No scoring''
+| 3-3-1 =''No scoring''
+| 3-3-2 = 19:31 – [[Ronja Savolainen]] (2)
+| goalie3-1 = [[Aerin Frankel]] 20 saves / 22 shots
+| goalie3-2 = [[Gwyneth Philips]] 36 saves / 37 shots
+| date4 = May 10
+| score4 = 3–4
+| recap4 = www.thepwhl.com/en/stats/game-center/344
+| ot4 = 2
+| tv4 =
+| won4 = 2
+| 4-1-1 = ''No scoring''
+| 4-1-2 = 6:38 – ''pp'' – [[Sarah Wozniewicz]] (1)
+| 4-2-1 = [[Shay Maloney]] (1) – 5:19
+[[Megan Keller]] (2) – ''pp'' – 6:00
+[[Sophie Shirley]] (1) – 6:52
+| 4-2-2 = 3:25 – [[Rebecca Leslie]] (1)
+12:12 – [[Brooke Hobson]] (1)
+| 4-3-1 = ''No scoring''
+| 4-3-2 = ''No scoring''
+| 4-4-1 = ''No scoring''
+| 4-4-2 = 1:12 – [[Michela Cava]] (1)
+| goalie4-1 = [[Aerin Frankel]] 29 saves / 33 shots
+| goalie4-2 = [[Gwyneth Philips]] 43 saves / 46 shots
+| series = Ottawa won series 3–1
+}}
+=== Finals ===
+{{Main|2026 Walter Cup Finals}}
+This was the first all-Canadian final in PWHL history, and the first to not include Minnesota, who won the previous two championships. It was the second straight year for the Charge to make it to the final, while it was the first finals appearance for the Victoire. Montreal won three of the four regular season matchups, with Ottawa winning the other game in overtime. {{Cite web |date=May 12, 2026 |title=PWHL sets schedule for 2026 Walter Cup Final |url=https://www.dailyfaceoff.com/news/pwhl-sets-schedule-2026-walter-cup-final-ottawa-charge-montreal-victoire |access-date=June 26, 2026 |website=Daily Faceoff}}
+{{NHLPlayoffs
+| team1 = Montreal Victoire
+| team2 = Ottawa Charge
+| stadium1 = [[Place Bell]]
+| stadium2 = [[Canadian Tire Centre]]
+| homeright = yes
+| date1 = May 14
+| score1 = 2–3
+| recap1 = www.thepwhl.com/en/stats/game-center/350
+| won1 = 1
+| ot1 = 1
+| 1-1-1 = ''No scoring''
+| 1-1-2 = ''No scoring''
+| 1-2-1 = ''No scoring''
+| 1-2-2 = [[Rebecca Leslie]] (2) – 16:56
+| 1-3-1 = 12:12 – [[Abby Roque]] (1)
+19:57 – [[Nicole Gosling]] (1)
+| 1-3-2 = Rebecca Leslie (3) – 15:56
+| 1-4-1 = 2:29 – Abby Roque (2)
+| 1-4-2 = ''No scoring''
+| goalie1-1 = [[Ann-Renée Desbiens]] 23 saves / 25 shots
+| goalie1-2 = [[Gwyneth Philips]] 23 saves / 26 shots
+| date2 = May 16
+| score2 = 1–2
+| recap2 = www.thepwhl.com/en/stats/game-center/351
+| ot2 = 1
+| won2 = 1
+| 2-1-1 = ''No scoring''
+| 2-1-2 = [[Sarah Wozniewicz]] (2) – 8:38
+| 2-2-1 = 0:32 – [[Kati Tabin]] (1)
+| 2-2-2 = ''No scoring''
+| 2-3-1 = ''No scoring''
+| 2-3-2 = ''No scoring''
+| 2-4-1 = 14:12 – [[Maggie Flaherty (ice hockey)|Maggie Flaherty]] (2)
+|2-4-2 = ''No scoring''
+| goalie2-1 = [[Ann-Renée Desbiens]] 20 saves / 21 shots
+| goalie2-2 = [[Gwyneth Philips]] 27 saves / 29 shots
+| date3 = May 18
+| score3 = 1–2
+| recap3 = www.thepwhl.com/en/stats/game-center/348
+| won3 = 2
+| 3-1-1 = ''No scoring''
+| 3-1-2 = ''No scoring''
+| 3-2-1 = ''No scoring''
+| 3-2-2 = ''No scoring''
+| 3-3-1 = [[Hayley Scamurra]] (2) – 7:32
+| 3-3-2 = 14:30 – [[Peyton Hemp]] (1)
+19:04 – [[Rebecca Leslie]] (4)
+| goalie3-1 =[[Ann-Renée Desbiens]] 26 saves / 28 shots
+| goalie3-2 =[[Gwyneth Philips]] 27 saves / 28 shots
+| date4 = May 20
+| score4 = 4–0
+| recap4 = www.thepwhl.com/en/stats/game-center/349
+| won4 = 1
+| 4-1-1 = ''No scoring''
+| 4-1-2 = ''No scoring''
+| 4-2-1 =[[Abby Roque]] (3) – 3:49
+| 4-2-2 = ''No scoring''
+| 4-3-1 =[[Abby Roque]] (4) – 9:58
+[[Maggie Flaherty (ice hockey)|Maggie Flaherty]] (3) – 13:54
+[[Lina Ljungblom]] (1) – 15:44
+| 4-3-2 = ''No scoring''
+| goalie4-1 =[[Ann-Renée Desbiens]] 23 saves / 23 shots
+| goalie4-2 =[[Gwyneth Philips]] 12 saves / 16 shots
+| series = Montreal won series 3–1
+}}
+===Player statistics===
+====Scoring leaders====
+{| class="wikitable sortable" style="text-align: center"
+! style="width: 12em;" | Player
+! style="width: 13em;" | Team
+! style="width: 4em;" | {{abbr|GP|Games played}}
+! style="width: 4em;" | {{abbr|G|Goals}}
+! style="width: 4em;" | {{abbr|A|Assists}}
+! style="width: 4em;" | {{abbr|Pts|Points}}
+! data-sort-type="number" style="width: 4em;" | {{abbr|+/–|Plus/minus}}
+! style="width: 4em;" | {{abbr|PIM|Penalties in minutes}}
+|-
+|style="text-align:left;"| {{sortname|Abby|Roque}}
+|style="text-align:left;"| [[Montreal Victoire]] || 9 || 4 || 4 || '''8''' || +2 || 6
+|-
+|style="text-align:left;"| {{sortname|Marie-Philip|Poulin}}
+|style="text-align:left;"| [[Montreal Victoire]] || 9 || 2 || 6 || '''8''' || +1 || 6
+|-
+|style="text-align:left;"| {{sortname|Laura|Stacey}}
+|style="text-align:left;"| [[Montreal Victoire]] || 9 || 3 || 4 || '''7''' || 0 || 8
+|-
+|style="text-align:left;"| {{sortname|Rebecca|Leslie}}
+|style="text-align:left;"| [[Ottawa Charge]] || 8 || 4 || 2 || '''6''' || -1 || 2
+|-
+|style="text-align:left;"| {{sortname|Fanuza|Kadirova}}
+|style="text-align:left;"| [[Ottawa Charge]] || 8 || 2 || 3 || '''5''' || +3 || 2
+|-
+|style="text-align:left;"| {{sortname|Sidney|Morin}}
+|style="text-align:left;"| [[Minnesota Frost]] || 5 || 4 || 0 || '''4''' || +2 || 2
+|-
+|style="text-align:left;"| {{sortname|Maggie|Flaherty|dab=ice hockey}}
+|style="text-align:left;"| Montreal Victoire || 9 || 3 || 1 || '''4''' || +3 || 8
+|-
+|style="text-align:left;"| {{sortname|Sarah|Wozniewicz}}
+|style="text-align:left;"| Ottawa Charge || 8 || 2 || 2 || '''4''' || +2 || 2
+|-
+|style="text-align:left;"| {{sortname|Ronja|Savolainen}}
+|style="text-align:left;"| Ottawa Charge || 8 || 2 || 2 || '''4''' || -2 || 4
+|-
+|style="text-align:left;"| {{sortname|Hayley|Scamurra}}
+|style="text-align:left;"| Montreal Victoire || 9 || 2 || 2 || '''4''' || +4 || 0
+|}
+====Leading goaltenders====
+{| class="wikitable sortable" style="text-align: center"
+|-
+! style="width: 12em;" | Player
+! style="width: 10em;" | Team
+! style="width: 3.5em;" | {{abbr|GP|Games played}}
+! style="width: 6em;" | {{abbr|TOI|Time on ice}}
+! style="width: 3.5em;" | {{abbr|W|Wins}}
+! style="width: 3.5em;" | {{abbr|L|Losses}}
+! style="width: 3.5em;" | {{abbr|OTL|Overtime losses}}
+! style="width: 4em;" | {{abbr|GA|Goals against}}
+! style="width: 3.5em;" | {{abbr|SO|Shutouts}}
+! style="width: 4em;" | {{abbr|SV%|Save percentage}}
+! style="width: 4em;" | {{Abbr|GAA|Goals against average}}
+|-
+|style="text-align:left;"| {{sortname|Ann-Renée|Desbiens}}
+|style="text-align:left;"| [[Montreal Victoire]]
+| 9 || {{tts|600:53}} || 6 || 2 || 1 || 14 || 2 || .944
+! 1.40
+|-
+|style="text-align:left;"| {{sortname|Maddie|Rooney}}
+|style="text-align:left;"| [[Minnesota Frost]]
+| 5 || {{tts|344:14}} || 2 || 2 || 1 || 10 || 0 || .930
+! 1.74
+|-
+|style="text-align:left;"| {{sortname|Gwyneth|Philips}}
+|style="text-align:left;"| [[Ottawa Charge]]
+| 8 || {{tts|512:33}} || 4 || 2 || 2 || 17 || 0 || .929
+! 1.99
+|-
+|style="text-align:left;"| {{sortname|Aerin|Frankel}}
+|style="text-align:left;"| [[Boston Fleet]]
+| 4 || {{tts|258:55}} || 1 || 3 || 0 || 9 || 0 || .903
+! 2.09
+|}
+===Attendance===
+{| class="wikitable sortable"
+|+ {{sronly|Playoff attendance}}
+|-
+! Home team !! Home games !! Average attendance !! Total attendance
+|-
+|-
+|Ottawa
+| 4
+|{{#invoke:Math|precision_format|{{average|13112|11297|16894|12362|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|13112|11297|16894|12362}}|0}}
+|-
+|Montreal
+| 5
+| {{#invoke:Math|precision_format|{{average|9364|7530|6104|5062|9232|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|9364|7530|6104|5062|9232}}|0}}
+|-
+|Minnesota
+| 2
+| {{#invoke:Math|precision_format|{{average|6516|5312|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|6516|5312}}|0}}
+|-
+| Boston
+| 2
+| {{#invoke:Math|precision_format|{{average|6017|4285|round=0}}|0}}
+| {{#invoke:Math|precision_format|{{sum|6017|4285}}|0}}
+|-
+|- class="sortbottom"
+|'''League'''
+|'''13'''
+|'''{{#invoke:Math|precision_format|{{average|6017|4285|9364|7530|6516|13112|5312|11297|6104|5062|9232|16894|12362|round=0}}|0}} '''
+|'''{{#invoke:Math|precision_format|{{sum|6017|4285|9364|7530|6516|13112|5312|11297|6104|5062|9232|16894|12362}}|0}}'''
+|}
+==Media==
+The Boston–Ottawa semifinal series aired on [[The Sports Network|TSN]] in Canada, and [[NESN]] in the United States, while the Minnesota–Montreal semifinal series aired on [[Prime Video]] in Canada and [[WFTC|FOX 9+]] in the United States. The finals were aired on TSN in English and [[Réseau des sports|RDS]] in French, and on [[Ion Television]] in the United States. {{cite web |url=https://www.thepwhl.com/en/news/2026/april/26/2026-pwhl-walter-cup-playoff-matchups |title=2026 PWHL Walter Cup Playoff Matchups |date=April 26, 2026 |website=ThePWHL.com |publisher=[[Professional Women's Hockey League]] |access-date=May 12, 2026}}
+==References==
+{{reflist|30em}}
+{{2025–26 PWHL season by team}}
+{{PWHL playoffs}}
+[[Category:2025–26 in American women's ice hockey]]
+[[Category:2025–26 in Canadian women's ice hockey]]
+[[Category:2025–26 PWHL season]]
+[[Category:Walter Cup]]
+[[Category:2026 in Montreal|PWHL playoffs]]
+[[Category:2026 in Ottawa|PWHL playoffs]]
+[[Category:2026 in sports in Ontario|PWHL playoffs]]
+[[Category:2026 in sports in Quebec|PWHL playoffs]]
+[[Category:2026 in sports in Massachusetts|PWHL playoffs]]
+[[Category:2026 in sports in Minnesota|PWHL playoffs]]
+[[Category:May 2026 sports events in Canada|Walter Cup playoffs]]
+[[Category:April 2026 sports events in the United States|Walter Cup playoffs]]
+[[Category:May 2026 sports events in the United States|Walter Cup playoffs]]
+[[Category:Montreal Victoire]]
+[[Category:Boston Fleet]]
+[[Category:Minnesota Frost]]
+[[Category:Ottawa Charge]]

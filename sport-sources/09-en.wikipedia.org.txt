@@ -1,6 +1,0 @@
-Source: https://en.wikipedia.org/w/index.php?title=2026_NCAA_National_Collegiate_women%27s_ice_hockey_tournament&action=raw
-Final URL: https://en.wikipedia.org/w/index.php?title=2026_NCAA_National_Collegiate_women%27s_ice_hockey_tournament&action=raw
-HTTP 200
-Fetched: 2026-10-20T18:35:21.100Z
-
-#REDIRECT [[2026 NCAA Division I women's ice hockey tournament]]
