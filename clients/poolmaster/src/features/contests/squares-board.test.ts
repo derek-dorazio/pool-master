@@ -10,9 +10,10 @@ import {
 import { squaresGameFixture } from './test/squares-fixtures';
 
 describe('squares board helpers', () => {
-  it('names a quarters game\'s scoring moments Q1, Halftime, Q3 and Final, and a halves game\'s Halftime and Final', () => {
+  it('names a quarters game\'s scoring moments Q1, Halftime, Q3 and Final, a halves game\'s Halftime and Final, and a hockey game\'s 1st period, 2nd period and Final', () => {
     expect([1, 2, 3, 4].map((period) => squaresMomentLabel(period, 'QUARTERS'))).toEqual(['Q1', 'Halftime', 'Q3', 'Final']);
     expect([1, 2].map((period) => squaresMomentLabel(period, 'HALVES'))).toEqual(['Halftime', 'Final']);
+    expect([1, 2, 3].map((period) => squaresMomentLabel(period, 'THREE_PERIODS'))).toEqual(['1st period', '2nd period', 'Final']);
   });
 
   it('lists every scoring moment in order with its winner once scored and none before', () => {

@@ -95,7 +95,7 @@ Two options on *Load sport data* are for QA only. The run reads the site's envir
 - **`with_participants`** also loads the pool side of each test file: six test players
   (`qa-avery-adams` to `qa-finley-fox`, `@example.com` addresses that take no mail, all with
   the password in `test-participants.ts`), and for each sport league a league named
-  "*sport league* test pool". The E2E root admin creates it and is its commissioner; each
+  "*sport league* *sport* test pool" (the sport in the name, since two sports can share a league name). The E2E root admin creates it and is its commissioner; each
   player joins with an invite link, which gives them their squad. Each of the league's next
   three events open for entries gets a contest from the sport league's default tiered or
   budget template (never a random draw, which deals the picks itself), opened, and every
@@ -258,6 +258,28 @@ up by seed. Load it with `mode` `apply` like any file. Because its envelope says
   men's title; UCLA beat South Carolina 79-51 for the women's.
 
 Test a contest on either as for the NFL seed above. Running the file again skips everything.
+
+## Seeded hockey playoffs
+
+Three test seeds hold the 2026 hockey playoffs as they went, one event each, in the four hockey
+sport leagues the migrations create:
+
+- `hockey-2026-nhl-playoffs-test.json`: the Stanley Cup playoffs, 16 teams in four rounds of
+  series, seeded 1 to 3 in each division with both wild cards 4. The Carolina Hurricanes beat
+  the Vegas Golden Knights 4-2 in the Stanley Cup Final.
+- `hockey-2026-pwhl-playoffs-test.json`: the Walter Cup playoffs, four teams in best-of-five
+  semifinals and a final. The Montreal Victoire beat the Ottawa Charge 3-1.
+- `hockey-2026-ncaa-tournaments-test.json`: the NCAA Division I men's tournament, 16 teams in
+  four regions (Albany, Loveland, Sioux Falls, Worcester), and the women's, five seeded teams
+  and three quarterfinal places filled from a first round. Denver beat Wisconsin 2-1 for the
+  men's title, and Wisconsin beat Ohio State 3-2 for the women's; both title games carry their
+  first two periods' scores, for squares pools.
+
+A series is one game of the bracket, scored in games won, as the NBA's. Seeds, pairings, scores
+and first-round puck drops are real; later rounds' Game 1 times are an assumed 7 p.m. Eastern,
+and the odds are made up. Each loads as the March Madness seed does: dates moved forward, the
+event released and tiered by odds, each first-round place given the team that won it, and every
+result entered round by round.
 
 ## Seeded 2026 races
 

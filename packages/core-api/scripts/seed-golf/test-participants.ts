@@ -168,8 +168,8 @@ class ParticipantLoader {
 
   private async loadLeague(sportLeagueName: string, fileEvents: ReadonlySet<string>): Promise<void> {
     const client = await this.options.getClient();
-    const code = testLeagueCode(sportLeagueName);
-    const name = testLeagueName(sportLeagueName);
+    const code = testLeagueCode(this.file.scope.sport, sportLeagueName);
+    const name = testLeagueName(this.file.scope.sport, sportLeagueName);
     const row = (subject: LoadSubject, action: LoadAction, rowName: string, detail: string | null = null): void => {
       this.report({ sportLeague: sportLeagueName, subject, action, name: rowName, detail });
     };

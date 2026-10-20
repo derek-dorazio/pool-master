@@ -6,6 +6,7 @@ import type { SportMatchPeriods } from './sport-definition';
 export const MATCH_PERIOD_LAYOUTS: Readonly<Record<MatchPeriodLayout, SportMatchPeriods>> = {
   [MatchPeriodLayout.QUARTERS]: { count: 4, label: { one: 'quarter', many: 'quarters' } },
   [MatchPeriodLayout.HALVES]: { count: 2, label: { one: 'half', many: 'halves' } },
+  [MatchPeriodLayout.THREE_PERIODS]: { count: 3, label: { one: 'period', many: 'periods' } },
 };
 
 /**

@@ -1,0 +1,529 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "HOCKEY",
+    "season": 2026,
+    "sportLeagues": [
+      "NHL"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-20",
+    "gatheredBy": "load-sport-data, the 2026 Stanley Cup playoffs as played: pairings, division seeds and every series' games won from the NHL's playoff bracket feed, cross-checked against Wikipedia's 2026 Stanley Cup playoffs page, which agrees on every series. A series is one match, its scores the games each side won. Seeds are the NHL's own: the division's first, second and third places are seeds 1-3 and both wild cards are 4. Ranking is regular-season points. Each first-round series' Game 1 puck drop is ESPN's; later rounds' Game 1 dates are Wikipedia's, at an assumed 7 p.m. Eastern. The team with home ice hosts. Odds to win are made up.",
+    "sources": [
+      {
+        "name": "NHL playoff bracket, 2026",
+        "url": "https://api-web.nhle.com/v1/playoff-bracket/2026"
+      },
+      {
+        "name": "NHL playoff series carousel, 2025-26",
+        "url": "https://api-web.nhle.com/v1/playoff-series/carousel/20252026/"
+      },
+      {
+        "name": "2026 Stanley Cup playoffs (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_Stanley_Cup_playoffs"
+      },
+      {
+        "name": "ESPN NHL scoreboard, 20260418",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260418"
+      },
+      {
+        "name": "ESPN NHL scoreboard, 20260419",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260419"
+      },
+      {
+        "name": "ESPN NHL scoreboard, 20260420",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260420"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "NHL",
+      "players": [
+        {
+          "key": "nhl-colorado-avalanche",
+          "name": "Colorado Avalanche",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "nhl-carolina-hurricanes",
+          "name": "Carolina Hurricanes",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "nhl-dallas-stars",
+          "name": "Dallas Stars",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "nhl-buffalo-sabres",
+          "name": "Buffalo Sabres",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "nhl-tampa-bay-lightning",
+          "name": "Tampa Bay Lightning",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "nhl-montreal-canadiens",
+          "name": "Montreal Canadiens",
+          "countryCode": "CA",
+          "ranking": 6
+        },
+        {
+          "key": "nhl-minnesota-wild",
+          "name": "Minnesota Wild",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "nhl-boston-bruins",
+          "name": "Boston Bruins",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "nhl-ottawa-senators",
+          "name": "Ottawa Senators",
+          "countryCode": "CA",
+          "ranking": 9
+        },
+        {
+          "key": "nhl-pittsburgh-penguins",
+          "name": "Pittsburgh Penguins",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "nhl-philadelphia-flyers",
+          "name": "Philadelphia Flyers",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "nhl-vegas-golden-knights",
+          "name": "Vegas Golden Knights",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "nhl-edmonton-oilers",
+          "name": "Edmonton Oilers",
+          "countryCode": "CA",
+          "ranking": 13
+        },
+        {
+          "key": "nhl-anaheim-ducks",
+          "name": "Anaheim Ducks",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "nhl-utah-mammoth",
+          "name": "Utah Mammoth",
+          "countryCode": "US",
+          "ranking": 15
+        },
+        {
+          "key": "nhl-los-angeles-kings",
+          "name": "Los Angeles Kings",
+          "countryCode": "US",
+          "ranking": 16
+        }
+      ],
+      "events": [
+        {
+          "key": "nhl-playoffs-2026",
+          "name": "Stanley Cup Playoffs",
+          "startDate": "2026-04-18",
+          "endDate": "2026-06-14",
+          "venue": null,
+          "location": "United States and Canada",
+          "rounds": 4,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nhl-buffalo-sabres",
+              "ranking": 4,
+              "seed": 1,
+              "oddsToWin": 10.0
+            },
+            {
+              "player": "nhl-tampa-bay-lightning",
+              "ranking": 5,
+              "seed": 2,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "nhl-montreal-canadiens",
+              "ranking": 6,
+              "seed": 3,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "nhl-boston-bruins",
+              "ranking": 8,
+              "seed": 4,
+              "oddsToWin": 18.0
+            },
+            {
+              "player": "nhl-carolina-hurricanes",
+              "ranking": 2,
+              "seed": 1,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "nhl-pittsburgh-penguins",
+              "ranking": 10,
+              "seed": 2,
+              "oddsToWin": 22.0
+            },
+            {
+              "player": "nhl-philadelphia-flyers",
+              "ranking": 11,
+              "seed": 3,
+              "oddsToWin": 24.0
+            },
+            {
+              "player": "nhl-ottawa-senators",
+              "ranking": 9,
+              "seed": 4,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "nhl-colorado-avalanche",
+              "ranking": 1,
+              "seed": 1,
+              "oddsToWin": 4.0
+            },
+            {
+              "player": "nhl-dallas-stars",
+              "ranking": 3,
+              "seed": 2,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "nhl-minnesota-wild",
+              "ranking": 7,
+              "seed": 3,
+              "oddsToWin": 16.0
+            },
+            {
+              "player": "nhl-los-angeles-kings",
+              "ranking": 16,
+              "seed": 4,
+              "oddsToWin": 34.0
+            },
+            {
+              "player": "nhl-vegas-golden-knights",
+              "ranking": 12,
+              "seed": 1,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "nhl-edmonton-oilers",
+              "ranking": 13,
+              "seed": 2,
+              "oddsToWin": 28.0
+            },
+            {
+              "player": "nhl-anaheim-ducks",
+              "ranking": 14,
+              "seed": 3,
+              "oddsToWin": 30.0
+            },
+            {
+              "player": "nhl-utah-mammoth",
+              "ranking": 15,
+              "seed": 4,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nhl-buffalo-sabres",
+              "away": "nhl-boston-bruins",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-19T23:30:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 2
+              }
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nhl-tampa-bay-lightning",
+              "away": "nhl-montreal-canadiens",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-19T21:45:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "AWAY"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nhl-carolina-hurricanes",
+              "away": "nhl-ottawa-senators",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-18T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nhl-pittsburgh-penguins",
+              "away": "nhl-philadelphia-flyers",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-19T00:00:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "AWAY"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "nhl-colorado-avalanche",
+              "away": "nhl-los-angeles-kings",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-19T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "nhl-dallas-stars",
+              "away": "nhl-minnesota-wild",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-18T21:30:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "nhl-vegas-golden-knights",
+              "away": "nhl-utah-mammoth",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-20T02:22:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 2
+              }
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "nhl-edmonton-oilers",
+              "away": "nhl-anaheim-ducks",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-21T02:22:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-05-06T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "AWAY"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-05-02T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-05-03T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "HOME"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-05-04T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 2
+              }
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-05-21T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "HOME"
+              },
+              "regionLabel": "East",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-05-20T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "AWAY"
+              },
+              "regionLabel": "West",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-06-02T23:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

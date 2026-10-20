@@ -1,8 +1,8 @@
 import type { SelectionStateResponse } from '@poolmaster/shared/generated/hey-api';
-import { SelectionType } from '@poolmaster/shared/domain';
+import { SelectionType, Sport } from '@poolmaster/shared/domain';
 import { formatLoadReport, LoadAction, LoadMode, LoadSubject } from '../../../packages/core-api/scripts/seed-golf/load-report';
 import type { SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { choosePicks, refuseUnlessTestTarget, testLeagueCode } from '../../../packages/core-api/scripts/seed-golf/test-participants-data';
+import { choosePicks, refuseUnlessTestTarget, testLeagueCode, testLeagueName } from '../../../packages/core-api/scripts/seed-golf/test-participants-data';
 
 type Group = NonNullable<SelectionStateResponse['selectionGroups']>[number];
 
@@ -60,12 +60,18 @@ describe('test participants: where and under what name', () => {
   });
 
   it('gives each sport league its own stable league code, even when their names start alike', () => {
-    const men = testLeagueCode('World Marathon Majors (men)');
-    const women = testLeagueCode('World Marathon Majors (women)');
+    const men = testLeagueCode(Sport.RUNNING, 'World Marathon Majors (men)');
+    const women = testLeagueCode(Sport.RUNNING, 'World Marathon Majors (women)');
 
     expect(men).toMatch(/^[A-Z0-9]{3,16}$/);
     expect(men).not.toBe(women);
-    expect(testLeagueCode('World Marathon Majors (men)')).toBe(men);
+    expect(testLeagueCode(Sport.RUNNING, 'World Marathon Majors (men)')).toBe(men);
+  });
+
+  it('keeps college basketball and college hockey in separate test pools though their leagues share a name', () => {
+    expect(testLeagueCode(Sport.HOCKEY, 'NCAA Division I Men')).not.toBe(testLeagueCode(Sport.BASKETBALL, 'NCAA Division I Men'));
+    expect(testLeagueName(Sport.HOCKEY, 'NCAA Division I Men')).toBe('NCAA Division I Men Hockey test pool');
+    expect(testLeagueName(Sport.BASKETBALL, 'NCAA Division I Men')).toBe('NCAA Division I Men Basketball test pool');
   });
 
   it('shows test participant rows in the report only on a run that loads them', () => {

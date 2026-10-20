@@ -39,8 +39,8 @@ export function winningPeriodsByPlace(winners: readonly SquaresWinnerDto[]): Rea
 
 /**
  * What a scoring moment is called (design §1), by the game's period layout: a quarters game's are
- * Q1, Halftime, Q3 and Final, a halves game's Halftime and Final. The last is Final, which
- * includes overtime.
+ * Q1, Halftime, Q3 and Final, a halves game's Halftime and Final, a hockey game's 1st period, 2nd
+ * period and Final. The last is Final, which includes overtime.
  */
 export function squaresMomentLabel(periodNumber: number, layout: MatchPeriodLayout) {
   if (periodNumber >= MATCH_PERIOD_LAYOUTS[layout].count) {
@@ -51,6 +51,8 @@ export function squaresMomentLabel(periodNumber: number, layout: MatchPeriodLayo
       return ['Q1', 'Halftime', 'Q3'][periodNumber - 1] ?? `Q${periodNumber}`;
     case MatchPeriodLayout.HALVES:
       return 'Halftime';
+    case MatchPeriodLayout.THREE_PERIODS:
+      return ['1st period', '2nd period'][periodNumber - 1] ?? `Period ${periodNumber}`;
     default:
       return assertNever(layout, 'match period layout');
   }

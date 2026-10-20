@@ -44,7 +44,7 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
 1. **Scoring family.** Does an existing family already score this sport?
    - Stroke play: lowest total wins (golf).
    - Head to head: a bracket of matches, points per round won plus an optional seed upset
-     bonus (basketball, American football; tennis next). A league whose rounds the sport's names
+     bonus (basketball, American football, hockey; tennis next). A league whose rounds the sport's names
      do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's), and a league whose field the
      sport's default tiers do not fit sets its own tier count (`SportLeague.tierCount`: the
      College Football Playoff's six). Its matches are `SportEventMatch` rows in the event core, not family tables.
@@ -236,6 +236,15 @@ down: a lesson that was true mid-series may not be by the end.
   and contest templates come from migrations; a cleanup that empties them breaks every test
   that runs after it, and a database that is not rebuilt between runs. Delete only the rows
   the test made (`rules/testing-rules.md` §9A *Integration Test Isolation and Cleanup*).
+- **Copying an older sport's reference migration.** The sports row's tournament format is
+  `MATCHES` for a sport played in games; the American football migration's `KNOCKOUT_BRACKET`
+  was renamed since, and Postgres refuses it. A league that reads the sport's round names stores
+  an empty `round_names` array, never null (the column is not null). A new period layout
+  (hockey's three periods) is a Postgres enum value too: add it in the enum migration beside the
+  sport, and its squares moment labels where the compiler points.
+- **Scenario rows keyed by league name.** Two sports can share a league name ("NCAA Division I
+  Men" plays basketball and hockey), so a functional suite whose test names or tags come from
+  the league name runs two rows under one name. Key them by event name, or name the sport too.
 - **Adding catalog values "for later".** Add a sport, scoring definition or enum value only
   with the code that uses it. Unused values are dead code and get deleted.
 - **Hiding missing results with defaults.** An unscored participant is unranked, never a
