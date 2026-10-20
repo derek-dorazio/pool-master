@@ -142,6 +142,11 @@ export interface SportEventRepository {
   /** Events per sport league, through their series, for each id asked about (0 where none). */
   countBySportLeagues(sportLeagueIds: readonly string[], filters?: { eventYear?: number }): Promise<Map<string, number>>;
   /**
+   * Whether any event of the sport league, through its series and in any year, has a bracket
+   * loaded: at least one match. While one has, the league's bracket rule cannot change (#730).
+   */
+  sportLeagueHasLoadedBracket(sportLeagueId: string): Promise<boolean>;
+  /**
    * Per provider asked about: its `SCHEDULED` or `IN_PROGRESS` events, and when any of its
    * events last changed (null where it has none).
    */

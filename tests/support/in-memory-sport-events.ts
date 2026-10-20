@@ -314,6 +314,9 @@ export class InMemorySportEvents {
       countBySportLeagues: async (ids, filters = {}) => count(ids, (id) => this.events.filter((row) => (
         row.sportLeagueId === id && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
       )).length),
+      sportLeagueHasLoadedBracket: async (sportLeagueId) => this.matchRows.some((match) => (
+        this.events.some((event) => event.id === match.sportEventId && event.sportLeagueId === sportLeagueId)
+      )),
       summarizeByProviders: async (providerIds) => new Map(providerIds.map((providerId) => {
         const events = this.events.filter((row) => row.providerId === providerId);
         const changed = events.map((row) => row.updatedAt.getTime());
