@@ -256,10 +256,10 @@ describe('basketball', () => {
     expect(basketball.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 16 });
   });
 
-  it('offers the three roster selection types, pick\'em, bracket and survivor', () => {
+  it('offers the three roster selection types, pick\'em, bracket, survivor and squares', () => {
     expect(basketball.selectionTypes).toEqual([
       SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET,
-      SelectionType.SURVIVOR,
+      SelectionType.SURVIVOR, SelectionType.SQUARES,
     ]);
   });
 

@@ -7248,6 +7248,11 @@ export interface components {
             bracketAdvancement: "FIXED" | "RESEED_BY_SEED";
             /** @description What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request. */
             roundNames: string[];
+            /**
+             * @description The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
+             * @enum {string|null}
+             */
+            matchPeriodLayout: "QUARTERS" | "HALVES" | null;
             /** @description Participants currently affiliated with the sport league. */
             affiliationCount: number;
             /** @description Events on record for the sport league, across every series and year. */
@@ -7302,6 +7307,11 @@ export interface components {
                 bracketAdvancement: "FIXED" | "RESEED_BY_SEED";
                 /** @description What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request. */
                 roundNames: string[];
+                /**
+                 * @description The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
+                 * @enum {string|null}
+                 */
+                matchPeriodLayout: "QUARTERS" | "HALVES" | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -7347,6 +7357,11 @@ export interface components {
                 bracketAdvancement: "FIXED" | "RESEED_BY_SEED";
                 /** @description What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request. */
                 roundNames: string[];
+                /**
+                 * @description The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
+                 * @enum {string|null}
+                 */
+                matchPeriodLayout: "QUARTERS" | "HALVES" | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -13432,8 +13447,11 @@ export interface components {
             contestStatus: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
             /** @description How many boxes one entry may claim. */
             maxSquaresPerEntry: number;
-            /** @description How many scoring moments the game has: its sport's period count, the last being the final score. */
-            periodCount: number;
+            /**
+             * @description The periods the game is played in, its sport league's (QUARTERS, or HALVES for men's college basketball): a scoring moment ends each period, the last being the final score.
+             * @enum {string}
+             */
+            periodLayout: "QUARTERS" | "HALVES";
             /** @description The game the contest is played on, with its score at the end of each period and its final result. */
             game: {
                 /** Format: uuid */

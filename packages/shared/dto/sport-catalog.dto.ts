@@ -10,7 +10,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { BracketAdvancement, ParticipantType, Sport, TournamentFormat } from '../domain/enums';
+import { BracketAdvancement, MatchPeriodLayout, ParticipantType, Sport, TournamentFormat } from '../domain/enums';
 import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 
@@ -42,6 +42,7 @@ export const SportLeagueDtoSchema = z.object({
   isActive: z.boolean().describe('Whether the sport league is in use; a read filter, not a write lock.'),
   bracketAdvancement: z.nativeEnum(BracketAdvancement).describe('How the sport league\'s bracket winners reach their next match: FIXED by each match\'s link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.'),
   roundNames: z.array(z.string()).describe('What the sport league calls its bracket\'s rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport\'s round names are used. Set with the league\'s reference data, never by a request.'),
+  matchPeriodLayout: z.nativeEnum(MatchPeriodLayout).nullable().describe('The periods the sport league\'s games are played in, when not its sport\'s: HALVES for men\'s college basketball. Null plays the sport\'s layout. Set with the league\'s reference data, never by a request.'),
   affiliationCount: z.number().int().describe('Participants currently affiliated with the sport league.'),
   sportEventCount: z.number().int().describe('Events on record for the sport league, across every series and year.'),
   createdAt: DateTimeSchema,

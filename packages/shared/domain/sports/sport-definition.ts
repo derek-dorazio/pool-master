@@ -1,5 +1,5 @@
 import type { ParticipantScoringDefinitionId } from '../contest-scoring';
-import type { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
+import type { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import type { ScoringFamily } from './scoring-family';
 
 /** A noun in its singular and plural, as the audience says it. */
@@ -102,10 +102,12 @@ export interface SportDefinition {
   vocabulary: SportVocabulary;
   /**
    * The periods a game is played in, for a sport that plays matches and keeps a score at the end
-   * of each one (American football's quarters). Absent for every other sport: its games take no
-   * period scores, and squares pools (#711) are not offered on it.
+   * of each one (American football's quarters). A sport league may play another layout
+   * (`SportLeague.matchPeriodLayout`: men's college basketball's halves); read both through
+   * `matchPeriodsOf`. Absent for every other sport: its games take no period scores, and squares
+   * pools (#711) are not offered on it.
    */
-  matchPeriods?: SportMatchPeriods;
+  matchPeriodLayout?: MatchPeriodLayout;
   /** How one round is labelled: "Round 2" for golf, "Quarterfinal" for tennis. */
   roundLabel: (roundNumber: number, roundCount: number) => string;
 }

@@ -4,7 +4,7 @@
  * One read serves the claim screen and the live and Final board.
  */
 import { z } from 'zod';
-import { ContestStatus, SQUARES_GRID_SIZE, SQUARES_PER_ENTRY_MAX } from '@poolmaster/shared/domain';
+import { ContestStatus, MatchPeriodLayout, SQUARES_GRID_SIZE, SQUARES_PER_ENTRY_MAX } from '@poolmaster/shared/domain';
 import { SportEventMatchDtoSchema } from './bracket.dto';
 import { registerSchema } from './schema-registry';
 
@@ -62,7 +62,7 @@ export const SquaresBoardResponseSchema = z.object({
   contestId: z.string().uuid(),
   contestStatus: z.nativeEnum(ContestStatus),
   maxSquaresPerEntry: z.number().int().min(1).max(SQUARES_PER_ENTRY_MAX).describe('How many boxes one entry may claim.'),
-  periodCount: z.number().int().min(1).describe('How many scoring moments the game has: its sport\'s period count, the last being the final score.'),
+  periodLayout: z.nativeEnum(MatchPeriodLayout).describe('The periods the game is played in, its sport league\'s (QUARTERS, or HALVES for men\'s college basketball): a scoring moment ends each period, the last being the final score.'),
   game: SportEventMatchDtoSchema.describe('The game the contest is played on, with its score at the end of each period and its final result.'),
   homeTeamName: z.string().nullable().describe('The home team, across the top; null until it is known.'),
   awayTeamName: z.string().nullable().describe('The away team, down the side; null until it is known.'),

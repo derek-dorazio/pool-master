@@ -107,7 +107,7 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, currentEventYear: null, isActive: true });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, matchPeriodLayout: null, currentEventYear: null, isActive: true });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -169,7 +169,7 @@ export class InMemorySportEvents {
       )),
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, currentEventYear: null, isActive: true });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, matchPeriodLayout: null, currentEventYear: null, isActive: true });
         this.sportLeagues.push(created);
         return created;
       },

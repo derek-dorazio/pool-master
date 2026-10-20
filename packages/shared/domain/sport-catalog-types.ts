@@ -6,7 +6,7 @@
  */
 
 import type { DomainEntity, Participant } from './types';
-import type { BracketAdvancement, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantStandingStatus, RaceResultStatus, ValuationSource } from './enums';
+import type { BracketAdvancement, MatchPeriodLayout, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantStandingStatus, RaceResultStatus, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {
@@ -32,6 +32,12 @@ export interface SportLeague extends DomainEntity {
    * the College Football Playoff's six). Reference data, set where the league is seeded.
    */
   tierCount: number | null;
+  /**
+   * The periods its games are played in, when not its sport's (#786: men's college basketball's
+   * halves); null plays the sport's layout. Read through `matchPeriodsOf`. Reference data, set
+   * where the league is seeded.
+   */
+  matchPeriodLayout: MatchPeriodLayout | null;
 }
 
 /**

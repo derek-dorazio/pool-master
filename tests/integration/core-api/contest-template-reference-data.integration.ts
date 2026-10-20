@@ -402,7 +402,7 @@ const DOUBLING_ROUND_VALUES = [1, 2, 4, 8, 16, 32];
 describe('Seeded NCAA basketball leagues and their knockout templates', () => {
   it('seeds both NCAA Division I leagues with a Doubling and a Doubling + upset bonus template for each selection type, the tiered Doubling one the default', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' } },
+      where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' }, contestFormat: ContestFormat.ROSTER },
       include: { sportLeague: { include: { sport: true } } },
       orderBy: [{ templateKey: 'asc' }],
     });
@@ -431,7 +431,7 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
   });
 
   it('presets round values 1, 2, 4, 8, 16 and 32, with no upset bonus on Doubling and the seed difference times 1 on Doubling + upset bonus', async () => {
-    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' } } });
+    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' }, contestFormat: ContestFormat.ROSTER } });
 
     expect(templates).toHaveLength(12);
     for (const template of templates) {
@@ -480,17 +480,28 @@ describe('The seeded NFL league and its knockout templates', () => {
     }
   });
 
-  // Squares (#711): the NFL's one squares preset, the default for its own format.
-  it('seeds the NFL one squares template, ten boxes per entry and one entry per squad, the default squares preset', async () => {
+  // Squares (#711, #786): the NFL's and each March Madness league's squares preset, the default for its own format.
+  it('seeds one squares template on the NFL and men\'s and women\'s March Madness, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AMERICAN_FOOTBALL, contestFormat: ContestFormat.SQUARES },
+      where: { contestFormat: ContestFormat.SQUARES },
       include: { sportLeague: true },
+      orderBy: { templateKey: 'asc' },
     });
 
-    expect(templates.map((template) => [template.templateKey, template.selectionType, template.isDefault, template.sportLeague?.name]))
-      .toEqual([['nfl-squares', SelectionType.SQUARES, true, 'NFL']]);
-    expect(ContestRulesWithEntryLimitSchema.parse(templates[0]?.configJson))
-      .toEqual({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 });
+    expect(templates.map((template) => [template.templateKey, template.sport, template.selectionType, template.isDefault, template.sportLeague?.name])).toEqual([
+      ['ncaa-men-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Men'],
+      ['ncaa-women-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Women'],
+      ['nfl-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'NFL'],
+    ]);
+    for (const template of templates) {
+      expect(ContestRulesWithEntryLimitSchema.parse(template.configJson))
+        .toEqual({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 });
+    }
+  });
+
+  it('plays men\'s college basketball in two halves and leaves every other seeded sport league on its sport\'s periods (#786)', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({ where: { matchPeriodLayout: { not: null } }, select: { name: true, matchPeriodLayout: true } });
+    expect(leagues).toEqual([{ name: 'NCAA Division I Men', matchPeriodLayout: 'HALVES' }]);
   });
 });
 
@@ -679,7 +690,7 @@ describe('The seeded College Football Playoff league and its knockout templates'
 
   it('gives the College Football Playoff a Doubling and a Doubling + upset bonus template per selection type on round values 1, 2, 4, 8, the tiered Doubling one the default, picking one team from each of six tiers', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AMERICAN_FOOTBALL, sportLeague: { name: 'College Football Playoff' } },
+      where: { sport: Sport.AMERICAN_FOOTBALL, sportLeague: { name: 'College Football Playoff' }, contestFormat: ContestFormat.ROSTER },
       orderBy: [{ templateKey: 'asc' }],
     });
 

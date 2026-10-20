@@ -1,4 +1,4 @@
-import { eventRoundLabel, findSportRow, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import { eventRoundLabel, findSportRow, getSportDefinition, matchPeriodsOf, type Sport, type SportMatchPeriods } from '@poolmaster/shared/domain';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getParticipant, listEvents, listParticipants, listSportLeagues, listSports } from '@/lib/api';
 import type { ParticipantDto, SportEventDto, SportLeagueDto } from '@/lib/api';
@@ -35,6 +35,18 @@ export function useEventRoundLabel(event: Pick<SportEventDto, 'sport' | 'sportLe
   const leaguesQuery = useSportLeaguesQuery(event.sport);
   const roundNames = leaguesQuery.data?.find((league) => league.id === event.sportLeagueId)?.roundNames ?? [];
   return (roundNumber, roundCount) => eventRoundLabel(event.sport, roundNames, roundNumber, roundCount);
+}
+
+/**
+ * The periods the event's games are played in: its sport league's own layout, else its sport's
+ * (#786: men's college basketball plays halves). Undefined while the sport leagues load, and for
+ * a sport whose games keep no score by period.
+ */
+export function useEventMatchPeriods(event: Pick<SportEventDto, 'sport' | 'sportLeagueId'>): SportMatchPeriods | undefined {
+  const leaguesQuery = useSportLeaguesQuery(event.sport);
+  if (!leaguesQuery.data) return undefined;
+  const league = leaguesQuery.data.find((candidate) => candidate.id === event.sportLeagueId);
+  return matchPeriodsOf(event.sport, league?.matchPeriodLayout ?? null);
 }
 
 /** One golf tour's tournaments, every event year, earliest start first. */

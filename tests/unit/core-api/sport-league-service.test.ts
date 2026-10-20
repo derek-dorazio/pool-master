@@ -25,6 +25,7 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     bracketAdvancement: BracketAdvancement.FIXED,
     roundNames: [],
     tierCount: null,
+    matchPeriodLayout: null,
     currentEventYear: null,
     isActive: true,
     createdAt: new Date('2026-01-01'),

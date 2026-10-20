@@ -14392,6 +14392,18 @@
             },
             "description": "What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request."
           },
+          "matchPeriodLayout": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "QUARTERS",
+              "HALVES",
+              null
+            ],
+            "description": "The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request."
+          },
           "affiliationCount": {
             "type": "integer",
             "description": "Participants currently affiliated with the sport league."
@@ -14420,6 +14432,7 @@
           "isActive",
           "bracketAdvancement",
           "roundNames",
+          "matchPeriodLayout",
           "affiliationCount",
           "sportEventCount",
           "createdAt",
@@ -14507,6 +14520,18 @@
                   },
                   "description": "What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request."
                 },
+                "matchPeriodLayout": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "QUARTERS",
+                    "HALVES",
+                    null
+                  ],
+                  "description": "The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request."
+                },
                 "affiliationCount": {
                   "type": "integer",
                   "description": "Participants currently affiliated with the sport league."
@@ -14535,6 +14560,7 @@
                 "isActive",
                 "bracketAdvancement",
                 "roundNames",
+                "matchPeriodLayout",
                 "affiliationCount",
                 "sportEventCount",
                 "createdAt",
@@ -14605,6 +14631,18 @@
                 },
                 "description": "What the sport league calls its bracket's rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport's round names are used. Set with the league's reference data, never by a request."
               },
+              "matchPeriodLayout": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "QUARTERS",
+                  "HALVES",
+                  null
+                ],
+                "description": "The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request."
+              },
               "affiliationCount": {
                 "type": "integer",
                 "description": "Participants currently affiliated with the sport league."
@@ -14633,6 +14671,7 @@
               "isActive",
               "bracketAdvancement",
               "roundNames",
+              "matchPeriodLayout",
               "affiliationCount",
               "sportEventCount",
               "createdAt",
@@ -32245,10 +32284,13 @@
             "maximum": 100,
             "description": "How many boxes one entry may claim."
           },
-          "periodCount": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "How many scoring moments the game has: its sport's period count, the last being the final score."
+          "periodLayout": {
+            "type": "string",
+            "enum": [
+              "QUARTERS",
+              "HALVES"
+            ],
+            "description": "The periods the game is played in, its sport league's (QUARTERS, or HALVES for men's college basketball): a scoring moment ends each period, the last being the final score."
           },
           "game": {
             "type": "object",
@@ -32630,7 +32672,7 @@
           "contestId",
           "contestStatus",
           "maxSquaresPerEntry",
-          "periodCount",
+          "periodLayout",
           "game",
           "homeTeamName",
           "awayTeamName",
