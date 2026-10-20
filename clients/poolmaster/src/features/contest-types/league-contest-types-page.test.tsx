@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -149,6 +149,54 @@ describe('League › Contest types', () => {
     expect(await screen.findByTestId('contest-type-no-events-nfl-tiered-doubling')).toHaveTextContent('No upcoming events yet');
     expect(screen.getByTestId('contest-type-no-events-nba-tiered-doubling')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-type-create-nfl-tiered-doubling-upset-bonus')).not.toBeInTheDocument();
+  });
+
+  describe('a commissioner\'s bracket links, which open only where the event can start that bracket', () => {
+    const NCAA_MEN = '80300000-0000-4000-8000-000000000003';
+    const BRACKETS = [
+      template('ncaa-men-bracket-doubling', {
+        id: 'tpl-full-bracket', sport: 'BASKETBALL', sportLeagueId: NCAA_MEN, contestFormat: 'PREDICTION', selectionType: 'BRACKET',
+        configuration: { selectionType: 'BRACKET', startsAtRound: 1, maxEntriesPerSquad: 1 },
+      }),
+      template('ncaa-men-bracket-second-chance', {
+        id: 'tpl-second-chance', sport: 'BASKETBALL', sportLeagueId: NCAA_MEN, contestFormat: 'PREDICTION', selectionType: 'BRACKET',
+        isDefault: false, sortOrder: 2, configuration: { selectionType: 'BRACKET', startsAtRound: 3, maxEntriesPerSquad: 1 },
+      }),
+    ];
+    const MARCH_MADNESS = {
+      ...NFL_WEEK, id: 'march-madness', sport: 'BASKETBALL', name: 'March Madness', participantCount: 64, rounds: 6, sportLeagueId: NCAA_MEN,
+    };
+    const MARCH_MADNESS_UNDER_WAY = {
+      ...MARCH_MADNESS, status: 'IN_PROGRESS', readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false,
+    };
+
+    function primeBrackets(event: Record<string, unknown>) {
+      primeMocks('COMMISSIONER');
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BRACKETS } });
+      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [{ id: NCAA_MEN, name: 'NCAA Men' }] } });
+      listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => Promise.resolve({
+        data: { events: options.query?.sport === 'BASKETBALL' ? [event] : [] },
+      }));
+    }
+
+    it('links the full bracket before the tournament starts, but not its second-chance variation', async () => {
+      primeBrackets(MARCH_MADNESS);
+      renderPage();
+
+      expect(await screen.findByTestId('contest-type-create-ncaa-men-bracket-doubling')).toHaveTextContent('Create this contest');
+      expect(screen.getByTestId('contest-type-ncaa-men-bracket-doubling-variations')).toHaveTextContent('ncaa-men-bracket-second-chance name');
+      // Its link stands while the events load, and goes once they show no event can start it.
+      await waitFor(() => expect(screen.queryByTestId('contest-type-create-ncaa-men-bracket-second-chance')).not.toBeInTheDocument());
+      expect(screen.getByTestId('contest-type-create-ncaa-men-bracket-doubling')).toBeInTheDocument();
+    });
+
+    it('links the second chance once the tournament is under way and says the full bracket has no event left', async () => {
+      primeBrackets(MARCH_MADNESS_UNDER_WAY);
+      renderPage();
+
+      expect(await screen.findByTestId('contest-type-no-events-ncaa-men-bracket-doubling')).toHaveTextContent('No upcoming events yet');
+      expect(screen.getByTestId('contest-type-create-ncaa-men-bracket-second-chance')).toBeInTheDocument();
+    });
   });
 
   it('says the contest types could not be loaded when the template list fails, rather than showing an empty menu', async () => {
