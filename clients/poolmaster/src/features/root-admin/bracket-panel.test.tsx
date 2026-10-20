@@ -465,7 +465,8 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
     });
 
     it('scores a game of a sport league played in halves by its first half and its final, and offers no scores for a draft', async () => {
-      seed([superBowl()], { matchPeriodLayout: 'HALVES' });
+      const collegeFinal = match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2' });
+      seed([collegeFinal], { matchPeriodLayout: 'HALVES' });
       const { unmount } = renderPage();
       expect(await screen.findByTestId('root-admin-bracket-score-1-1-edit')).toBeInTheDocument();
       expect(screen.queryByTestId('root-admin-bracket-score-1-2-edit')).not.toBeInTheDocument();
