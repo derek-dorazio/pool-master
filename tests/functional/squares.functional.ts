@@ -258,8 +258,8 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
       await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
       const preset = expectDefined(expectDefined((await listContestConfigTemplates({
         client: commissioner.client,
-        query: { sport: row.sport, sportLeagueId: sportLeague.id, contestFormat: ContestFormat.SQUARES, active: true },
-      })).data).templates.find((template) => template.sportLeagueId === sportLeague.id), `${row.league}'s squares preset`);
+        query: { sport: row.sport, sportLeagueId: sportLeague.id, active: true },
+      })).data).templates.find((template) => template.contestFormat === ContestFormat.SQUARES && template.sportLeagueId === sportLeague.id), `${row.league}'s squares preset`);
       expect([preset.templateKey, preset.isDefault]).toEqual([row.templateKey, true]);
       const contest = await createContest({
         client: commissioner.client,

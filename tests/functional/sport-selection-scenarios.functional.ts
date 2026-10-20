@@ -241,7 +241,7 @@ describe('SDK Functional: one journey per sport and selection type', () => {
         client: commissioner.client,
         query: { sport, sportLeagueId: sportLeague.id, active: true },
       })).data).templates
-      .filter((template) => template.contestFormat === ContestFormat.ROSTER)
+        .filter((template) => template.contestFormat === ContestFormat.ROSTER)
         .filter((template) => template.selectionType === selectionType)
         .sort((left, right) => Number(right.sportLeagueId === sportLeague.id) - Number(left.sportLeagueId === sportLeague.id) || left.sortOrder - right.sortOrder);
       const preset = expectDefined(templates.at(0), `a ${selectionType} preset for ${sportLeague.name}`);
