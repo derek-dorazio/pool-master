@@ -2914,7 +2914,11 @@ export type ContestConfigurationRequest = {
         };
     };
 } | {
-    selectionType: 'SURVIVOR';
+    selectionType: 'SQUARES';
+    /**
+     * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
+     */
+    maxSquaresPerEntry: number;
     /**
      * Maximum entries a Team may create. Null means unlimited.
      */
@@ -2967,11 +2971,7 @@ export type ContestConfigurationRequest = {
         };
     };
 } | {
-    selectionType: 'SQUARES';
-    /**
-     * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
-     */
-    maxSquaresPerEntry: number;
+    selectionType: 'SURVIVOR';
     /**
      * Maximum entries a Team may create. Null means unlimited.
      */
@@ -3290,7 +3290,11 @@ export type ContestManagementDetailDto = {
          */
         maxEntriesPerSquad?: number | null;
     } | {
-        selectionType: 'SURVIVOR';
+        selectionType: 'SQUARES';
+        /**
+         * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
+         */
+        maxSquaresPerEntry: number;
         /**
          * Contest-configuration identifier.
          */
@@ -3304,11 +3308,7 @@ export type ContestManagementDetailDto = {
          */
         maxEntriesPerSquad?: number | null;
     } | {
-        selectionType: 'SQUARES';
-        /**
-         * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
-         */
-        maxSquaresPerEntry: number;
+        selectionType: 'SURVIVOR';
         /**
          * Contest-configuration identifier.
          */
@@ -3701,7 +3701,11 @@ export type ContestConfigTemplateDto = {
             };
         };
     } | {
-        selectionType: 'SURVIVOR';
+        selectionType: 'SQUARES';
+        /**
+         * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
+         */
+        maxSquaresPerEntry: number;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -3754,11 +3758,7 @@ export type ContestConfigTemplateDto = {
             };
         };
     } | {
-        selectionType: 'SQUARES';
-        /**
-         * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
-         */
-        maxSquaresPerEntry: number;
+        selectionType: 'SURVIVOR';
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -3995,7 +3995,11 @@ export type ContestManagementResponse = {
              */
             maxEntriesPerSquad?: number | null;
         } | {
-            selectionType: 'SURVIVOR';
+            selectionType: 'SQUARES';
+            /**
+             * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
+             */
+            maxSquaresPerEntry: number;
             /**
              * Contest-configuration identifier.
              */
@@ -4009,11 +4013,7 @@ export type ContestManagementResponse = {
              */
             maxEntriesPerSquad?: number | null;
         } | {
-            selectionType: 'SQUARES';
-            /**
-             * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
-             */
-            maxSquaresPerEntry: number;
+            selectionType: 'SURVIVOR';
             /**
              * Contest-configuration identifier.
              */
@@ -4434,7 +4434,11 @@ export type ContestConfigTemplateListResponse = {
                 };
             };
         } | {
-            selectionType: 'SURVIVOR';
+            selectionType: 'SQUARES';
+            /**
+             * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
+             */
+            maxSquaresPerEntry: number;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -4487,11 +4491,7 @@ export type ContestConfigTemplateListResponse = {
                 };
             };
         } | {
-            selectionType: 'SQUARES';
-            /**
-             * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
-             */
-            maxSquaresPerEntry: number;
+            selectionType: 'SURVIVOR';
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -4876,7 +4876,11 @@ export type UpdateContestConfigTemplateRequest = {
             };
         };
     } | {
-        selectionType: 'SURVIVOR';
+        selectionType: 'SQUARES';
+        /**
+         * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
+         */
+        maxSquaresPerEntry: number;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -4929,11 +4933,7 @@ export type UpdateContestConfigTemplateRequest = {
             };
         };
     } | {
-        selectionType: 'SQUARES';
-        /**
-         * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
-         */
-        maxSquaresPerEntry: number;
+        selectionType: 'SURVIVOR';
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -5353,7 +5353,11 @@ export type ContestConfigTemplateResponse = {
                 };
             };
         } | {
-            selectionType: 'SURVIVOR';
+            selectionType: 'SQUARES';
+            /**
+             * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
+             */
+            maxSquaresPerEntry: number;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -5406,11 +5410,7 @@ export type ContestConfigTemplateResponse = {
                 };
             };
         } | {
-            selectionType: 'SQUARES';
-            /**
-             * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
-             */
-            maxSquaresPerEntry: number;
+            selectionType: 'SURVIVOR';
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -9148,7 +9148,11 @@ export type CreateContestRequest = {
             };
         };
     } | {
-        selectionType: 'SURVIVOR';
+        selectionType: 'SQUARES';
+        /**
+         * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
+         */
+        maxSquaresPerEntry: number;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -9201,11 +9205,7 @@ export type CreateContestRequest = {
             };
         };
     } | {
-        selectionType: 'SQUARES';
-        /**
-         * How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.
-         */
-        maxSquaresPerEntry: number;
+        selectionType: 'SURVIVOR';
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
