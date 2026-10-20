@@ -12,7 +12,13 @@
 // to speed up would become the only ones that cannot merge. A job skipped by `if:` does produce a
 // check run, with conclusion `skipped`, which branch protection treats as satisfied.
 //
-// CLI: node scripts/ci-changed-areas.mjs <file-list-path>
+// On a push to main the classification is all-or-nothing (#778): a documentation-only push skips
+// the code jobs, and with them the QA deploy, and any other push runs every job. main's run is the
+// release, so it never runs only part of the suites. The workflow builds main's file list against
+// the last successful main run rather than the previous commit, so a commit whose own run was
+// replaced or failed is still in the list and still gets tested and deployed.
+//
+// CLI: node scripts/ci-changed-areas.mjs <file-list-path> [--all-or-nothing]
 // Writes `code=`, `service=` and `client=` lines to $GITHUB_OUTPUT, and a human summary to stdout.
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -86,7 +92,15 @@ const isClient = (file) => matches(file, CLIENT_PREFIXES, []);
  * An empty list means we could not determine what changed, which is not the same as "nothing
  * changed" — it runs everything.
  */
-export function classifyChanges(files) {
+export function classifyChanges(files, { allOrNothing = false } = {}) {
+  const result = classifyFiles(files);
+  if (allOrNothing && result.code) {
+    return { ...result, service: true, client: true };
+  }
+  return result;
+}
+
+function classifyFiles(files) {
   if (!files || files.length === 0) {
     return { code: true, service: true, client: true, reason: 'no file list; running everything' };
   }
@@ -122,13 +136,14 @@ export function classifyChanges(files) {
 }
 
 function main(argv) {
-  const listPath = argv[0];
+  const allOrNothing = argv.includes('--all-or-nothing');
+  const listPath = argv.find((a) => !a.startsWith('--'));
   let files = [];
   if (listPath && fs.existsSync(listPath)) {
     files = fs.readFileSync(listPath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
   }
 
-  const { code, service, client, reason } = classifyChanges(files);
+  const { code, service, client, reason } = classifyChanges(files, { allOrNothing });
 
   console.log(`${files.length} changed file(s); ${reason}`);
   console.log(`  code=${code} service=${service} client=${client}`);

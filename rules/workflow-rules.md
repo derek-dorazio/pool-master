@@ -700,6 +700,9 @@ Required local pre-push commands:
 8. `npm run rules:check`
 9. `npm run api:check`
 10. `npm run api:validate`
+11. `npm run typecheck:tests`: item 1 compiles `packages/` only, and the test suites compile
+    without type-checking (`tests/tsconfig.json` sets `isolatedModules`), so this is the one
+    local command that catches a type error in `tests/`.
 
 `npm run api:refresh` is not on the list: it is the *fix* for a stale generated SDK, not a
 gate. Run it when `api:check` fails, then commit what it regenerates.

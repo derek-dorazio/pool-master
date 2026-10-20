@@ -8,6 +8,11 @@
     // relative to this file instead.
     "moduleResolution": "Bundler",
     "esModuleInterop": true,
+    // #778 — ts-jest reads this and compiles each file on its own without type-checking, which
+    // makes the suites about a fifth faster. Type errors are still caught: typecheck:tests
+    // checks this whole program in CI, and with this flag it also refuses the patterns that
+    // can't be compiled one file at a time (const enums, re-exported types without `type`).
+    "isolatedModules": true,
     // The generated hey-api fetch client is DOM-typed (BodyInit, RequestInit).
     // Tests import through it, so the tests program needs the DOM lib.
     "lib": ["ES2022", "DOM"],

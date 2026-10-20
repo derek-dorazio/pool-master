@@ -96,3 +96,36 @@ describe('ci-changed-areas (#300)', () => {
     }
   });
 });
+
+// #778 — a push to main is all-or-nothing: only a documentation-only push skips anything.
+describe('ci-changed-areas on a push to main (#778)', () => {
+  const areas = (r) => ({ code: r.code, service: r.service, client: r.client });
+
+  it('skips every code job, and so the deploy, for a documentation-only push', () => {
+    const r = classifyChanges(['plans/super-bowl-squares.md', 'docs/CI-AND-QUALITY-GATES.md'],
+      { allOrNothing: true });
+    assert.deepEqual(areas(r), { code: false, service: false, client: false });
+  });
+
+  it('runs the client suites too for a service-only push, because main never runs part of the suites', () => {
+    const r = classifyChanges(['packages/core-api/src/modules/contests/service.ts'],
+      { allOrNothing: true });
+    assert.deepEqual(areas(r), { code: true, service: true, client: true });
+  });
+
+  it('runs the service suites too for a client-only push', () => {
+    const r = classifyChanges(['clients/poolmaster/src/main.tsx'], { allOrNothing: true });
+    assert.deepEqual(areas(r), { code: true, service: true, client: true });
+  });
+
+  it('runs everything when a docs push also carries code from an earlier, untested commit', () => {
+    const r = classifyChanges(['plans/super-bowl-squares.md', 'tests/integration/helpers.ts'],
+      { allOrNothing: true });
+    assert.deepEqual(areas(r), { code: true, service: true, client: true });
+  });
+
+  it('runs everything when the file list could not be built', () => {
+    assert.deepEqual(areas(classifyChanges([], { allOrNothing: true })),
+      { code: true, service: true, client: true });
+  });
+});
