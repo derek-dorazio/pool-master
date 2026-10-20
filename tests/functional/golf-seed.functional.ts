@@ -556,26 +556,27 @@ describe('Loading a real basketball bracket through the admin API', () => {
     await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY });
   });
 
-  it('sets the league\'s reseed rule and each match\'s region from the file, reloading a draft\'s bracket when a region changes', async () => {
+  it('reports a reseed rule change on a league whose bracket is loaded as a conflict and leaves the rule, but still reloads a draft\'s bracket when a region changes', async () => {
     const reseeding = file((event) => {
       event.matches = baseMatches().map((match) => ({ ...match, regionLabel: 'East' }));
     });
     reseeding.sportLeagues[0].bracketAdvancement = BracketAdvancement.RESEED_BY_SEED;
 
     expect(changes(await loadSportData(parsed(reseeding), { getClient, now: NOW, mode: LoadMode.APPLY }))).toEqual([
-      { sportLeague: conference, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.UPDATE, name: conference, detail: 'bracket advancement FIXED -> RESEED_BY_SEED' },
+      {
+        sportLeague: conference, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.CONFLICT, name: conference,
+        detail: 'bracket advancement FIXED -> RESEED_BY_SEED not changed: an event of the league has its bracket loaded',
+      },
       bracketRow(LoadAction.UPDATE, 'matches 1, 2, 3 changed; bracket loaded whole again'),
     ]);
-    expect(expectDefined(await leagueNamed(conference, Sport.BASKETBALL)).bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
+    expect(expectDefined(await leagueNamed(conference, Sport.BASKETBALL)).bracketAdvancement).toBe(BracketAdvancement.FIXED);
     const { matches } = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: (await storedEvent()).id } })).data);
     expect(matches.map((match) => match.regionLabel)).toEqual(['East', 'East', 'East']);
-    expect(changes(await loadSportData(parsed(reseeding), { getClient, now: NOW, mode: LoadMode.APPLY }))).toEqual([]);
 
-    // Back to a fixed league with no regions, for the release below.
-    const fixed = file();
-    fixed.sportLeagues[0].bracketAdvancement = BracketAdvancement.FIXED;
-    await loadSportData(parsed(fixed), { getClient, now: NOW, mode: LoadMode.APPLY });
-    expect(expectDefined(await leagueNamed(conference, Sport.BASKETBALL)).bracketAdvancement).toBe(BracketAdvancement.FIXED);
+    // Back to no regions, for the release below.
+    await loadSportData(parsed(file()), { getClient, now: NOW, mode: LoadMode.APPLY });
+    const reloaded = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: (await storedEvent()).id } })).data);
+    expect(reloaded.matches.map((match) => match.regionLabel)).toEqual([null, null, null]);
   });
 
   it('after release changes only a match time, leaves a filled play-in place alone, and reports a changed pairing or field as a conflict', async () => {
@@ -631,6 +632,27 @@ describe('Loading a real basketball bracket through the admin API', () => {
       detail: `SCHEDULED, so the field is locked with its bracket: 1 withdrawn (${teamName('Vermont')})`,
     });
     expect((await fieldOf(eventId)).get(teamName('Vermont'))).toMatchObject({ isActive: true });
+  });
+});
+
+describe('Setting a sport league\'s bracket rule from a sport data file', () => {
+  const league = `Rule League ${RUN}`;
+  const getClient = () => Promise.resolve(admin.client);
+  const ruleFile = (bracketAdvancement: BracketAdvancement): SportDataFile => ({
+    schemaVersion: 1,
+    scope: { sport: Sport.BASKETBALL, season: 2027, sportLeagues: [league], contents: [SportDataContent.SCHEDULE] },
+    testData: false,
+    provenance: provenance(),
+    sportLeagues: [{ name: league, bracketAdvancement, players: [], events: [] }],
+  });
+
+  it('changes the bracket rule of a league none of whose events has a bracket loaded', async () => {
+    await loadSportData(parsed(ruleFile(BracketAdvancement.FIXED)), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    expect(changes(await loadSportData(parsed(ruleFile(BracketAdvancement.RESEED_BY_SEED)), { getClient, now: NOW, mode: LoadMode.APPLY }))).toEqual([
+      { sportLeague: league, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.UPDATE, name: league, detail: 'bracket advancement FIXED -> RESEED_BY_SEED' },
+    ]);
+    expect(expectDefined(await leagueNamed(league, Sport.BASKETBALL)).bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
   });
 });
 
