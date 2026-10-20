@@ -74,12 +74,19 @@ export function bracketErrorMessages(
  * was asked. A suggestion is refused when the teams left don't fit the round; a save when the
  * admin's matchups break the round's rules.
  */
-export function reseedErrorMessages(vocabulary: SportVocabulary, action: 'suggest' | 'save'): ErrorCodeMessages {
+/** What the admin asked of a reseeded round: the server's suggestion, or saving its games. */
+export const ReseedAction = {
+  SUGGEST: 'SUGGEST',
+  SAVE: 'SAVE',
+} as const;
+export type ReseedAction = (typeof ReseedAction)[keyof typeof ReseedAction];
+
+export function reseedErrorMessages(vocabulary: SportVocabulary, action: ReseedAction): ErrorCodeMessages {
   const noun = matchNoun(vocabulary);
   const team = vocabulary.participant;
   return {
     ...bracketErrorMessages(vocabulary),
-    BRACKET_INVALID: action === 'suggest'
+    BRACKET_INVALID: action === ReseedAction.SUGGEST
       ? `The ${team.many} left don't fit this round's ${noun.many}. Check the results of the round before.`
       : `These ${noun.many} could not be saved. Each ${team.one} left plays once, against a ${team.one} from its own side of the bracket, and a ${team.one} with a bye keeps its place.`,
   };

@@ -324,7 +324,7 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
    * Divisional round, 3 v 6 and 4 v 5 on Wild Card weekend, then a Conference Championship. No
    * Wild Card or Divisional game links anywhere: both later rounds are placed by seed.
    */
-  async function conferenceSetup(divisional: (seed: (number: number) => string) => Array<[string | null, string | null]>) {
+  async function conferenceSetup(divisional: (seed: (number: number) => string) => Array<[string | null, string | null]>, seedCount = 6) {
     const store = new InMemorySportEvents();
     const sportRow = store.addSport(Sport.AMERICAN_FOOTBALL);
     const sportLeague = store.addSportLeague(sportRow.id, 'NFL');
@@ -336,7 +336,7 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
     await store.roundRepo().createMany(event.id, [1, 2, 3].map((roundNumber) => ({
       roundNumber, scheduledDate: new Date(Date.UTC(2027, 0, 7 * roundNumber)),
     })));
-    const seeds = [1, 2, 3, 4, 5, 6].map((seedNumber) => {
+    const seeds = Array.from({ length: seedCount }, (_, index) => index + 1).map((seedNumber) => {
       const team = store.addParticipant(sportRow.id, `Seed ${seedNumber}`, { participantType: 'TEAM' });
       return store.addToField(event.id, team.id, { seedNumber });
     });
@@ -377,6 +377,14 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
 
     await expect(context.service.releaseBlockers(context.event)).resolves.toEqual([
       'Divisional in AFC has 3 open place(s) for 2 Wild Card winner(s) still to come',
+    ]);
+  });
+
+  it('blocks release, naming the round and conference, when a reseeded round names a team too many and leaves too few places for the winners to come', async () => {
+    const context = await conferenceSetup((seed) => [[seed(1), seed(7)], [seed(2), null]], 7);
+
+    await expect(context.service.releaseBlockers(context.event)).resolves.toEqual([
+      'Divisional in AFC has 1 open place(s) for 2 Wild Card winner(s) still to come',
     ]);
   });
 });

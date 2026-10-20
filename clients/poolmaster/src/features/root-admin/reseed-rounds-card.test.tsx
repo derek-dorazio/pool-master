@@ -196,6 +196,14 @@ describe('Reseeded rounds on the NFL playoffs results page', () => {
     expect(screen.queryByTestId('root-admin-reseed')).not.toBeInTheDocument();
   });
 
+  it('shows no reseed card for cancelled playoffs, whose later rounds will not be played', async () => {
+    seed(bracket(), { event: { ...playoffs, status: 'CANCELLED' } });
+    renderPage();
+
+    await findLoadedDivisionalRound();
+    expect(screen.queryByTestId('root-admin-reseed')).not.toBeInTheDocument();
+  });
+
   it('holds back the suggestion and names the Wild Card game still without a result', async () => {
     seed(bracket({ wildCard: 'one-left' }));
     renderPage();

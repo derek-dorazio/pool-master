@@ -8,7 +8,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { describeEntry, matchNoun, reseededRounds, reseedErrorMessages, roundStarted, unfinishedBefore } from './bracket-copy';
+import { describeEntry, matchNoun, ReseedAction, reseededRounds, reseedErrorMessages, roundStarted, unfinishedBefore } from './bracket-copy';
 import type { BracketContext } from './bracket-match-row';
 import { capitalize } from './manage-navigation';
 import { useSportLeaguesQuery } from './use-sport-catalog';
@@ -42,7 +42,9 @@ export function ReseedRoundsCard({
 }) {
   const leaguesQuery = useSportLeaguesQuery(event.sport);
   const league = leaguesQuery.data?.find((candidate) => candidate.id === event.sportLeagueId);
-  if (event.status === SportEventStatus.DRAFT || league?.bracketAdvancement !== BracketAdvancement.RESEED_BY_SEED) {
+  // Only a released event still being played places rounds: not a draft, a cancelled or a finished one.
+  const underWay = event.status === SportEventStatus.SCHEDULED || event.status === SportEventStatus.IN_PROGRESS;
+  if (!underWay || league?.bracketAdvancement !== BracketAdvancement.RESEED_BY_SEED) {
     return null;
   }
   const rounds = reseededRounds(context.bracket).filter((roundNumber) => !roundStarted(context.bracket, roundNumber));
@@ -183,7 +185,7 @@ function ReseedRound({
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <p className="text-sm text-destructive" data-testid={`root-admin-reseed-error-${roundNumber}`} role="alert">
             {extractErrorMessage(proposalQuery.error, {
-              codeMessages: reseedErrorMessages(vocabulary, 'suggest'),
+              codeMessages: reseedErrorMessages(vocabulary, ReseedAction.SUGGEST),
               fallback: `The ${noun.many} could not be suggested. Try again.`,
             })}
           </p>
@@ -248,7 +250,7 @@ function ReseedRound({
           {mutation.isError ? (
             <p className="text-sm text-destructive" data-testid={`root-admin-reseed-save-error-${roundNumber}`} role="alert">
               {extractErrorMessage(mutation.error, {
-                codeMessages: reseedErrorMessages(vocabulary, 'save'),
+                codeMessages: reseedErrorMessages(vocabulary, ReseedAction.SAVE),
                 fallback: `The ${noun.many} could not be saved. Try again.`,
               })}
             </p>
