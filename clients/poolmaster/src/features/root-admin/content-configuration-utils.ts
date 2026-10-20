@@ -1,4 +1,4 @@
-import { SelectionType, isPredictionSelectionType, type RosterSelectionType, type SportVocabulary } from '@poolmaster/shared/domain';
+import { SelectionType, isRosterSelectionType, type RosterSelectionType, type SportVocabulary } from '@poolmaster/shared/domain';
 import { capitalize } from './manage-navigation';
 import type { ContestConfigTemplateDto } from '@/lib/api';
 
@@ -10,7 +10,7 @@ export type RosterTemplateConfiguration = Extract<ContestConfigTemplate['configu
 export function isRosterTemplateConfiguration(
   configuration: ContestConfigTemplate['configuration'],
 ): configuration is RosterTemplateConfiguration {
-  return !isPredictionSelectionType(configuration.selectionType);
+  return isRosterSelectionType(configuration.selectionType);
 }
 
 export function cloneContestTemplate(template: ContestConfigTemplate): ContestConfigTemplate {

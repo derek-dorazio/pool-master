@@ -20,6 +20,7 @@ import {
   PrismaSportEventRepository,
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
+  PrismaSquaresRepository,
   PrismaUserRepository,
 } from '../../adapters';
 import type { MailDeliveryProvider } from '../email';
@@ -78,6 +79,7 @@ export function createContestSettlementService(
     contests: new PrismaContestRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
     eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
+    squares: new PrismaSquaresRepository(prisma),
     logger,
   });
 }

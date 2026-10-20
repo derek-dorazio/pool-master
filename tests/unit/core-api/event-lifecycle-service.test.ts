@@ -249,7 +249,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z treats a same-status call as a no-op, never rejecting it', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED, endDate: new Date('2026-05-31T22:00:00.000Z') });
     const contests = contestDeps();
-    const contestSettlement = { settleFinishedSportEvent: jest.fn().mockResolvedValue(undefined) };
+    const contestSettlement = { settleFinishedSportEvent: jest.fn().mockResolvedValue(undefined), settleFinishedGame: jest.fn().mockResolvedValue(0) };
     const service = new EventLifecycleService(
       contests,
       sportEvents,
@@ -339,6 +339,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-eux.6 triggers Golf contest settlement from completed schedule events', async () => {
     const settlement = {
       settleFinishedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
+      settleFinishedGame: jest.fn().mockResolvedValue(0),
     };
     const eventEndDate = new Date('2026-05-31T22:00:00.000Z');
     const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS, endDate: eventEndDate });
@@ -366,6 +367,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('settles the contests of an event when it is cancelled, at the cancellation rather than its future start', async () => {
     const settlement = {
       settleFinishedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
+      settleFinishedGame: jest.fn().mockResolvedValue(0),
     };
     const startDate = new Date('2099-05-28T12:00:00.000Z');
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED, startDate });

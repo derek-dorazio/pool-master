@@ -3,7 +3,7 @@
 **Tracking issue:** #711
 
 Written 2026-10-19 for Derek's ask: a detailed design and plan for squares, with the model
-changes and how they fit Poolmaster's existing model. Status: design agreed; no code yet. It
+changes and how they fit Poolmaster's existing model. Status: design agreed; quarter scores (#772) are built, squares contests on the server (#773) and the screens (#774) are next. It
 builds on the ticket's approach and checks it against main as of #771. Every question below was
 answered by Derek on 2026-10-19; the slices in section 6 are filed under #711.
 
@@ -42,7 +42,7 @@ answered by Derek on 2026-10-19; the slices in section 6 are filed under #711.
    the columns and shows them on the grid. Claiming is closed from then on.
 4. The game is played. As the admin enters the score at the end of each quarter, the winning box
    for that quarter lights up on the grid and in a winners list (Q1, Halftime, Q3, Final).
-5. When the game's result is entered, the contest settles and goes Final.
+5. When the game's result and every quarter's score are in, the contest settles and goes Final.
 
 Payout amounts stay outside Poolmaster, as for every pool.
 
@@ -372,7 +372,9 @@ Three PRs under #711, in order. Each is a normal implement, review, merge cycle.
 2. **Squares contests, server side (#773).** The enums, `ContestSquaresGame`, `ContestEntrySquare`,
    `ContestSquaresDraw`, `ContestSquaresWinner`, the `MATCH_START` cutoff, the
    squares service and endpoints, settlement and the leaderboard reader, the template row, and the
-   scenario test.
+   scenario test. As built, the board read is the leaderboard (each entry's boxes, quarters won and place), so
+   there is no separate leaderboard route. A contest's game is fixed at create; once it is open,
+   only the box limit can change, until the draw. A game with a quarter's score counts as kicked off.
 3. **Squares screens (#774).** Setup, the grid with claiming and commissioner tools, the draw, live and
    Final winners, and the browser test.
 

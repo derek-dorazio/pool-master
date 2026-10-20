@@ -21,6 +21,8 @@ import { ContestScoringSettingsSchema, KNOCKOUT_ROUND_VALUES_MAX_ROUNDS } from '
  *   every game before the event starts, and a correct pick scores its round's value.
  * - **Survivor:** a prediction contest (#719). Each week the entry picks one team to win, never one
  *   it picked in an earlier week; a loss, a tie or a week left unsubmitted puts it out.
+ * - **Squares:** a squares contest on one game (#711). The entry claims up to `maxSquaresPerEntry`
+ *   boxes of a 10x10 grid; nothing is picked or scored by a definition.
  *
  * In each roster type, the best `countedScores` golfer scores count toward the entry's total.
  */
@@ -79,6 +81,17 @@ export const SurvivorContestRulesSchema = z.object({
 }).describe('Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win.');
 export type SurvivorContestRules = z.infer<typeof SurvivorContestRulesSchema>;
 
+/** The most boxes one squares entry may hold: the whole grid. */
+export const SQUARES_GRID_SIZE = 10;
+export const SQUARES_PER_ENTRY_MAX = SQUARES_GRID_SIZE * SQUARES_GRID_SIZE;
+
+export const SquaresContestRulesSchema = z.object({
+  selectionType: z.literal(SelectionType.SQUARES),
+  maxSquaresPerEntry: z.number().int().min(1).max(SQUARES_PER_ENTRY_MAX)
+    .describe('How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.'),
+}).describe('Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment\'s last digits wins it.');
+export type SquaresContestRules = z.infer<typeof SquaresContestRulesSchema>;
+
 /** The rules a commissioner chooses, and a template presets. */
 export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
   TieredContestRulesSchema,
@@ -87,6 +100,7 @@ export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
   PickEmContestRulesSchema,
   BracketContestRulesSchema,
   SurvivorContestRulesSchema,
+  SquaresContestRulesSchema,
 ]);
 export type ContestRules = z.infer<typeof ContestRulesSchema>;
 
@@ -104,6 +118,7 @@ export const ContestSelectionConfigSchema = z.discriminatedUnion('selectionType'
   PickEmContestRulesSchema,
   BracketContestRulesSchema,
   SurvivorContestRulesSchema,
+  SquaresContestRulesSchema,
 ]);
 export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema>;
 
@@ -127,6 +142,7 @@ export const ContestRulesWithEntryLimitSchema = z.discriminatedUnion('selectionT
   PickEmContestRulesSchema.extend(withEntryLimit),
   BracketContestRulesSchema.extend(withEntryLimit),
   SurvivorContestRulesSchema.extend(withEntryLimit),
+  SquaresContestRulesSchema.extend(withEntryLimit),
 ]);
 export type ContestRulesWithEntryLimit = z.infer<typeof ContestRulesWithEntryLimitSchema>;
 

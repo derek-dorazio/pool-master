@@ -37,6 +37,10 @@ import {
   CONTEST_SCORING_ROUNDS_MISMATCH,
   CONTEST_SCORING_SETTINGS_REQUIRED,
   CONTEST_SELECTION_TYPE_NOT_ALLOWED,
+  CONTEST_SQUARES_GAME_INVALID,
+  CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD,
+  CONTEST_SQUARES_GAME_REQUIRED,
+  CONTEST_SQUARES_SINGLE_EVENT,
 } from '@poolmaster/shared/dto';
 import type {
   BudgetContestConfig,
@@ -57,6 +61,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
+  MatchStatus,
   SelectionType,
   assertNever,
   canFillBudgetRoster,
@@ -109,6 +114,8 @@ export interface ContestCreateSportEventReader {
   countGamesWithoutSpread(sportEventId: string): Promise<number>;
   /** Why the event's games from `startsAtRound` on cannot be filled in as a bracket, or null when they can (#721). */
   findBracketProblem(sportEventId: string, startsAtRound: number): Promise<string | null>;
+  /** The status of one of the event's games, or null when the game is not the event's (#711). */
+  findGameStatus(sportEventId: string, sportEventMatchId: string): Promise<MatchStatus | null>;
   /** When a contest with this cutoff closes on the event (#721): at its start, or at its starting round's first game. */
   findCutoffTiming(sportEvent: ContestCreateSportEventState, cutoff: ContestCutoff): Promise<EventTiming>;
 }
@@ -157,7 +164,11 @@ export class ContestManagementService {
       input,
       this.contestConfigTemplateRepo,
     );
-    const sportEvents = await this.assertSportEventsContestEligible(input.sportEventIds, contestCutoff(resolvedConfiguration.configuration));
+    await this.assertSquaresGame(input);
+    const sportEvents = await this.assertSportEventsContestEligible(
+      input.sportEventIds,
+      contestCutoff(resolvedConfiguration.configuration, input.sportEventMatchId),
+    );
     const sportEvent = this.assertOneSportLeague(sportEvents);
     const templateLeagueId = resolvedConfiguration.template?.sportLeagueId ?? null;
     if (templateLeagueId !== null && templateLeagueId !== sportEvent.sportLeagueId) {
@@ -193,6 +204,7 @@ export class ContestManagementService {
     }
     const { selectionType } = input;
     assertRulesMatchSelectionType(resolvedConfiguration.configuration, selectionType);
+    this.assertOneEntryPerSquadForSquares(selectionType, resolvedConfiguration.configuration.maxEntriesPerSquad);
     this.assertEventCountFitsSelectionType(selectionType, sportEvents.length);
     const { configJson, scoring } = await this.resolveContestRules(
       sportEvents,
@@ -208,6 +220,7 @@ export class ContestManagementService {
       status: ContestStatus.DRAFT,
       contestFormat: input.contestFormat,
       selectionType,
+      squaresGameMatchId: input.sportEventMatchId,
     });
 
     const configuration = await this.contestConfigurationRepo.create({
@@ -302,8 +315,20 @@ export class ContestManagementService {
     }
     // Only a draft's configuration can change (#117). Once the contest is open to the league,
     // members enter against these rules, so they are locked for good: nothing returns a contest
-    // to DRAFT.
-    if (contest.status !== ContestStatus.DRAFT) {
+    // to DRAFT. The one exception is squares' box limit, which changes until the digits are drawn
+    // (#711, design Q3.3): it limits claims still to come, and takes no box away.
+    const squaresBoxLimitOnly = contest.selectionType === SelectionType.SQUARES
+      && contest.status === ContestStatus.OPEN
+      && contest.drawnAt === undefined;
+    if (squaresBoxLimitOnly && (input.maxEntriesPerSquad ?? null) !== (configuration.maxEntriesPerSquad ?? null)) {
+      this.logger.warn({ contestId }, 'contest management update configuration refused an entry limit change on an open squares contest');
+      throw new ContestManagementError(
+        'This contest is open to the league, so only its box limit can change, until the numbers are drawn.',
+        CONTEST_CONFIGURATION_LOCKED,
+        409,
+      );
+    }
+    if (contest.status !== ContestStatus.DRAFT && !squaresBoxLimitOnly) {
       this.logger.warn({ contestId, status: contest.status }, 'contest management update configuration refused for a contest that is not a draft');
       throw new ContestManagementError(
         'This contest is open to the league, so its settings are locked.',
@@ -312,6 +337,7 @@ export class ContestManagementService {
       );
     }
     assertRulesMatchSelectionType(input, configuration.selectionType);
+    this.assertOneEntryPerSquadForSquares(configuration.selectionType, input.maxEntriesPerSquad);
     // A rules change that does not send scoring keeps the contest's (its points table, say).
     const { configJson, scoring } = await this.resolveContestRules(await this.findContestSportEvents(contest), input, {
       requested: input.scoring,
@@ -374,7 +400,7 @@ export class ContestManagementService {
     }
 
     const sportEvents = await this.findContestSportEvents(contest);
-    await this.assertCutoffAhead(contestId, sportEvents, contestCutoff(configuration.configJson));
+    await this.assertCutoffAhead(contestId, sportEvents, contestCutoff(configuration.configJson, contest.squaresGameMatchId));
     // The events may have changed since the rules were saved: their tiers, or which golfers are
     // still in the field. Rules nobody could enter are refused here too.
     await this.resolveContestRules(sportEvents, ensureTypedConfiguration(configuration), {
@@ -455,7 +481,7 @@ export class ContestManagementService {
     const kept = current.filter((sportEvent) => requestedIds.includes(sportEvent.id));
     const added = await this.assertSportEventsContestEligible(
       requestedIds.filter((sportEventId) => !current.some((sportEvent) => sportEvent.id === sportEventId)),
-      contestCutoff(configuration.configJson),
+      contestCutoff(configuration.configJson, contest.squaresGameMatchId),
     );
     const sportEvents = [...kept, ...added];
     // The contest's league is its first event's; the new list must keep to it.
@@ -606,8 +632,51 @@ export class ContestManagementService {
   }
 
   /**
+   * A squares contest is played on one game of its event (#711), named at create: it must be one
+   * of the event's games and not cancelled; whether it has kicked off is the contest's cutoff,
+   * checked with the event. Only a squares contest names a game.
+   */
+  private async assertSquaresGame(input: CreateContestRequest): Promise<void> {
+    const gameId = input.sportEventMatchId;
+    if (input.selectionType !== SelectionType.SQUARES) {
+      if (gameId !== undefined) {
+        this.logger.warn({ selectionType: input.selectionType, sportEventMatchId: gameId }, 'contest management create refused a game for a contest that is not squares');
+        throw new ContestManagementError('Only a squares contest is played on one game.', CONTEST_SQUARES_GAME_INVALID);
+      }
+      return;
+    }
+    if (gameId === undefined) {
+      this.logger.warn({ sportEventIds: input.sportEventIds }, 'contest management create refused a squares contest without its game');
+      throw new ContestManagementError('Choose the game the squares contest is played on.', CONTEST_SQUARES_GAME_REQUIRED);
+    }
+    const statuses = await Promise.all(input.sportEventIds.map((sportEventId) => this.sportEventReader.findGameStatus(sportEventId, gameId)));
+    const status = statuses.find((each) => each !== null) ?? null;
+    if (status === null || status === MatchStatus.CANCELLED) {
+      this.logger.warn({ sportEventIds: input.sportEventIds, sportEventMatchId: gameId, status }, 'contest management create refused a squares game that is not the event\'s or is cancelled');
+      throw new ContestManagementError(
+        status === null ? 'That game is not one of the event\'s games.' : 'That game was cancelled, so a squares contest can\'t be played on it.',
+        CONTEST_SQUARES_GAME_INVALID,
+      );
+    }
+  }
+
+  /**
+   * A squares contest takes one entry per squad (#711, design Q3.3): the box limit is per entry, so
+   * a second entry would double a squad's boxes. Any other entry limit, or none, is refused.
+   */
+  private assertOneEntryPerSquadForSquares(selectionType: SelectionType, maxEntriesPerSquad: number | null | undefined): void {
+    if (selectionType !== SelectionType.SQUARES || maxEntriesPerSquad === 1) return;
+    this.logger.warn({ selectionType, maxEntriesPerSquad }, 'contest management refused a squares contest that allows more than one entry per squad');
+    throw new ContestManagementError(
+      'A squares contest takes one entry per squad.',
+      CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD,
+    );
+  }
+
+  /**
    * A random draw deals one event's field (#601), so its contest covers exactly one (#713); so does
-   * a bracket, which is one knockout picked to its final (#721).
+   * a bracket, which is one knockout picked to its final (#721), and squares, played on one of its
+   * event's games (#711).
    */
   private assertEventCountFitsSelectionType(selectionType: SelectionType, eventCount: number): void {
     if (selectionType === SelectionType.RANDOM_DRAW && eventCount > 1) {
@@ -622,6 +691,13 @@ export class ContestManagementService {
       throw new ContestManagementError(
         'A bracket contest covers one event: its knockout, picked to the final.',
         CONTEST_BRACKET_SINGLE_EVENT,
+      );
+    }
+    if (selectionType === SelectionType.SQUARES && eventCount > 1) {
+      this.logger.warn({ selectionType, eventCount }, 'contest management events refused: squares covers one event');
+      throw new ContestManagementError(
+        'A squares contest covers one event: it is played on one of its games.',
+        CONTEST_SQUARES_SINGLE_EVENT,
       );
     }
   }
@@ -697,7 +773,9 @@ export class ContestManagementService {
       throw new ContestManagementError(
         cutoff.kind === ContestCutoffKind.ROUND_START
           ? 'The bracket\'s starting round has already started, so a bracket can no longer start there.'
-          : 'Selected sporting event has already started, so contests can no longer be created on it.',
+          : cutoff.kind === ContestCutoffKind.MATCH_START
+            ? 'That game has already kicked off, so a squares contest can no longer be played on it.'
+            : 'Selected sporting event has already started, so contests can no longer be created on it.',
         'SPORT_EVENT_ALREADY_STARTED',
       );
     }
@@ -757,6 +835,14 @@ export class ContestManagementService {
       }
       return {
         configJson: { selectionType: rules.selectionType },
+        scoring: this.resolvePickEmScoring(sportEvent, scoringInput),
+      };
+    }
+    if (rules.selectionType === SelectionType.SQUARES) {
+      // A squares box wins by the game's score, not by a pick (#711): no scoring definition applies.
+      // Every contest still stores a rule, so squares keeps pick'em's one-point default, as survivor does.
+      return {
+        configJson: { selectionType: rules.selectionType, maxSquaresPerEntry: rules.maxSquaresPerEntry },
         scoring: this.resolvePickEmScoring(sportEvent, scoringInput),
       };
     }

@@ -52,8 +52,9 @@ Two readings of this chain have both been held at once, so it is worth stating p
 - **A contest's format says what an entry picks** (#716). A `ROSTER` contest's entries pick a
   lineup of field members (`ContestEntryPick`); a `PREDICTION` contest's entries pick the winner
   of each game of an event (`ContestEntryMatchPrediction`), naming the team, never "home" or
-  "away". The selection type decides the format: `PICK_EM`, `BRACKET` and `SURVIVOR` are
-  `PREDICTION`, every other type `ROSTER`.
+  "away". A `SQUARES` contest's entries claim boxes of a grid on one game (#711). The selection
+  type decides the format: `PICK_EM`, `BRACKET` and `SURVIVOR` are `PREDICTION`, `SQUARES` is
+  `SQUARES`, every other type `ROSTER`.
 - **A bracket is one knockout picked to its final** (`BRACKET`, #721). Its contest covers one
   event, and every pick is made before the event starts. A **second-chance bracket** starts at a
   later round (`startsAtRound`, the Sweet 16): it is picked from that round on, and its picks close,
@@ -87,6 +88,12 @@ Two readings of this chain have both been held at once, so it is worth stating p
 - **A week of games is not a knockout** (#768). An event whose matches form no bracket (an NFL
   regular-season week) ranks no team and crowns no champion: each team's standing is neutral,
   complete once its game is played or cancelled.
+- **A squares contest is a 10x10 grid on one game** (`SQUARES`, #711): entries claim boxes up to
+  the contest's limit, then the commissioner draws the digits 0 to 9 along each side (away team's
+  rows, home team's columns). Each quarter's end and the final score, overtime included, wins the
+  box matching both scores' last digits; an unclaimed box means no winner. It closes at its
+  game's kickoff, not its event's start, and settles with its game, not its event. Its score is
+  the quarters won, ties shared; it has no picks and no tiebreaker.
 
 The tenant/global split is access rule A11 in `docs/DOMAIN-OPERATIONS.md`.
 
@@ -138,6 +145,7 @@ Shown By Its Name*.
 | `ContestEntryEvent` | entry status (submitted, not submitted) | An entry's draft/submitted status for one event of its contest | The entry itself |
 | `ContestEntryPick` | pick, lineup | One field member chosen on one entry. The entry's picks for an event are its lineup for that event | A `SportEventParticipant`, which it points at |
 | `ContestEntryMatchPrediction` | game pick, pick | A prediction contest entry's pick of one game's winner, with a confidence value in a confidence pool | A `ContestEntryPick`, a roster contest's lineup pick |
+| `ContestSquaresGame`, `ContestEntrySquare`, `ContestSquaresDraw`, `ContestSquaresWinner` | squares game, box, numbers, winner | A squares contest's one game (#711); one claimed box of its grid, held by an entry; its drawn digits (`rowDigits` the away team's, `columnDigits` the home team's, with the seed); and, frozen at settlement, each scoring moment's winning box and entry, or none | A pick (`ContestEntryPick`, `ContestEntryMatchPrediction`): a box picks no team |
 | `ContestEntryEventStanding` | event result | An entry's result in one event, frozen when that event settles | `ContestEntryStanding`, the contest total |
 | `ContestEntryStanding` | standings, final result | An entry's contest total (the sum of its event results), frozen when the contest settles | `SportEventParticipantStanding`, a field member's position in the event |
 

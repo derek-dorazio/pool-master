@@ -19,7 +19,8 @@ import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaContestRepository, PrismaLeagueMembershipRepository } from '../../adapters';
 import { leagueOfContest, requireCommissionerForContest, requireMemberOfLeague } from '../leagues/permissions';
 import { createSelectionHandlers } from './handler';
-import { createPredictionService, createSelectionService } from './wiring';
+import { createPredictionService, createSelectionService, createSquaresService } from './wiring';
+import { createSquaresHandlers } from './squares-handler';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 
 const contestIdParams = {
@@ -63,6 +64,19 @@ const contestEntryEventParams = {
     sportEventId: { type: 'string', format: 'uuid' },
   },
 } as const;
+
+const squaresBoxParams = {
+  type: 'object',
+  required: ['contestId', 'rowIndex', 'columnIndex'],
+  properties: {
+    contestId: { type: 'string', format: 'uuid' },
+    rowIndex: { type: 'integer', minimum: 0, maximum: 9 },
+    columnIndex: { type: 'integer', minimum: 0, maximum: 9 },
+  },
+} as const;
+
+/** What every squares route answers for a contest it can't serve (#711). */
+const SQUARES_REFUSALS = '404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.';
 
 export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
@@ -210,5 +224,78 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
     },
     preHandler: requireCommissionerForContest(contestRepo, membershipRepo),
     handler: handlers.runContestDraw,
+  });
+
+  // --- Squares (#711) ---------------------------------------------------------------
+
+  const squares = createSquaresHandlers(createSquaresService(prisma, fastify.log));
+
+  fastify.get('/:contestId/squares', {
+    schema: {
+      tags: ['Selections'],
+      summary: 'Read a squares contest\'s grid',
+      description:
+        `The grid of a squares contest (#711): each claimed box and its entry, the digits once drawn, the game with its score at the end of each period and its final result, each scoring moment's winning box (frozen once the contest is Final), and each entry's boxes and wins. Any member of the contest's league may read it. ${SQUARES_REFUSALS}`,
+      operationId: 'getSquaresBoard',
+      params: contestIdParams,
+      response: {
+        200: schemaRef('SquaresBoardResponse'),
+        ...selectionErrorResponses(400, 401, 403, 404, 409),
+      },
+    },
+    preHandler: requireContestLeagueMember,
+    handler: squares.getSquaresBoard,
+  });
+
+  fastify.put('/:contestId/squares/:rowIndex/:columnIndex', {
+    schema: {
+      tags: ['Selections'],
+      summary: 'Claim a box of a squares grid',
+      description:
+        `Claims an empty box for an entry and returns the grid. A member claims for their own squad's entry; the commissioner (or a root admin) for any entry: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_ENTRY_NOT_FOUND for an entry not in the contest. 409 SQUARES_CLAIMING_CLOSED unless the contest is OPEN, its numbers are not drawn and its game has not kicked off; SQUARES_BOX_TAKEN when someone holds the box; SQUARES_BOX_LIMIT_REACHED when the entry holds the contest's box limit. ${SQUARES_REFUSALS}`,
+      operationId: 'claimSquaresBox',
+      params: squaresBoxParams,
+      body: schemaRef('ClaimSquaresBoxRequest'),
+      response: {
+        200: schemaRef('SquaresBoardResponse'),
+        ...selectionErrorResponses(400, 401, 403, 404, 409),
+      },
+    },
+    preHandler: requireContestLeagueMember,
+    handler: squares.claimSquaresBox,
+  });
+
+  fastify.delete('/:contestId/squares/:rowIndex/:columnIndex', {
+    schema: {
+      tags: ['Selections'],
+      summary: 'Clear a box of a squares grid',
+      description:
+        `Clears a claimed box and returns the grid. Its holder's squad may clear it, and the commissioner (or a root admin) any box: 403 ENTRY_ACCESS_DENIED otherwise. 404 SQUARES_BOX_NOT_CLAIMED when nobody holds it. 409 SQUARES_CLAIMING_CLOSED under the same window as claiming. ${SQUARES_REFUSALS}`,
+      operationId: 'clearSquaresBox',
+      params: squaresBoxParams,
+      response: {
+        200: schemaRef('SquaresBoardResponse'),
+        ...selectionErrorResponses(400, 401, 403, 404, 409),
+      },
+    },
+    preHandler: requireContestLeagueMember,
+    handler: squares.clearSquaresBox,
+  });
+
+  fastify.post('/:contestId/squares/draw', {
+    schema: {
+      tags: ['Selections'],
+      summary: 'Draw a squares contest\'s numbers',
+      description:
+        `Draws the digits 0 to 9 along each side of the grid, at random, and returns the grid. Commissioner of the contest's league only (root admins bypass): 403 otherwise. Claiming closes for good; every entry holding a box is submitted, and boxes nobody claimed stay empty. The seed is kept so the draw can be replayed. 409 SQUARES_ALREADY_DRAWN once drawn; SQUARES_DRAW_CLOSED unless the contest is OPEN or live and the game's first period score is not entered. ${SQUARES_REFUSALS}`,
+      operationId: 'drawSquaresNumbers',
+      params: contestIdParams,
+      response: {
+        200: schemaRef('SquaresBoardResponse'),
+        ...selectionErrorResponses(400, 401, 403, 404, 409),
+      },
+    },
+    preHandler: requireCommissionerForContest(contestRepo, membershipRepo),
+    handler: squares.drawSquaresNumbers,
   });
 }

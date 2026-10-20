@@ -204,6 +204,11 @@ export interface Contest extends DomainEntity {
    * on the contest takes no entry changes and its picks are public.
    */
   drawnAt?: Date;
+  /**
+   * A squares contest's one game (#711), a match of its event: its kickoff closes the contest.
+   * Absent for every other contest. The squares digits' draw sets `drawnAt` too.
+   */
+  squaresGameMatchId?: string;
 }
 
 /** Tier definition used for tiered contest-selection modes. */

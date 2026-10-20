@@ -27,6 +27,7 @@ import {
   fakeContestRepo,
   fakeParticipantContestScoringRuleRepo,
   fakeSportEventRepo,
+  fakeSquaresRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 
@@ -106,6 +107,7 @@ function world({
   const standings: ContestEntryStandingResult[] = [];
 
   const service = new ContestSettlementService({
+    squares: fakeSquaresRepo(),
     sportEvents: fakeSportEventRepo({
       findById: mockFn<SportEventRepository['findById']>(async (id) => events.get(id) ?? null),
       findByIds: mockFn<SportEventRepository['findByIds']>(async (ids) => ids.flatMap((id) => events.get(id) ?? [])),

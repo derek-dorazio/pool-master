@@ -12,6 +12,7 @@ const SELECTION_TYPE_NAMES: Record<SelectionType, string> = {
   PICK_EM: 'Pick’em',
   BRACKET: 'Bracket',
   SURVIVOR: 'Survivor',
+  SQUARES: 'Squares',
 };
 
 export function formatSelectionTypeName(selectionType: SelectionType) {
@@ -99,6 +100,11 @@ export function describeSurvivorRules() {
   return 'Pick one team to win each week, and never the same team twice. A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.';
 }
 
+/** A squares contest's rules (#711) as a sentence. */
+export function describeSquaresRules(maxSquaresPerEntry: number) {
+  return `Claim up to ${pluralize(maxSquaresPerEntry, 'box', 'boxes')} on a 10x10 grid. Once the numbers are drawn, the box matching the last digit of each team's score wins each quarter and the final score.`;
+}
+
 /** A round of a knockout event by its number, in the event's words: "Sweet 16", "Divisional Round". */
 export type RoundName = (roundNumber: number) => string;
 
@@ -158,6 +164,8 @@ export function formatContestRules(
       return describeBracketRules(isSecondChanceBracket(configuration.startsAtRound) ? roundName(configuration.startsAtRound) : null);
     case SelectionType.SURVIVOR:
       return describeSurvivorRules();
+    case SelectionType.SQUARES:
+      return describeSquaresRules(configuration.maxSquaresPerEntry);
   }
 }
 
@@ -199,6 +207,8 @@ export function formatPresetLabel(configuration: ContestRules, tierCount: number
       return isSecondChanceBracket(configuration.startsAtRound) ? 'Second chance' : formatSelectionTypeName(SelectionType.BRACKET);
     case SelectionType.SURVIVOR:
       return formatSelectionTypeName(SelectionType.SURVIVOR);
+    case SelectionType.SQUARES:
+      return `${pluralize(configuration.maxSquaresPerEntry, 'box', 'boxes')} each`;
   }
 }
 
@@ -233,5 +243,7 @@ export function suggestContestName(
         : `${eventName} Bracket`;
     case SelectionType.SURVIVOR:
       return `${eventName} Survivor`;
+    case SelectionType.SQUARES:
+      return `${eventName} Squares`;
   }
 }

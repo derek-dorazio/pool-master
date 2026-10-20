@@ -96,9 +96,10 @@ export function dealRandomDraw(input: {
 
 /**
  * A Fisher-Yates shuffle driven by a keyed stream of SHA-256 blocks, so it is the same on
- * every replay and every machine. Each swap index is drawn without modulo bias.
+ * every replay and every machine. Each swap index is drawn without modulo bias. Squares shuffles
+ * its digits with it too (#711).
  */
-function seededShuffle(items: string[], key: string): string[] {
+export function seededShuffle(items: string[], key: string): string[] {
   const random = seededIntegers(key);
   for (let index = items.length - 1; index > 0; index -= 1) {
     const swapIndex = random(index + 1);

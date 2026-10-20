@@ -8,7 +8,7 @@ import {
   assertNever,
   getSportDefinition,
   getTieredRosterSize,
-  isPredictionSelectionType,
+  isRosterSelectionType,
   sportAllowsSelectionType,
 } from '@poolmaster/shared/domain';
 import {
@@ -170,6 +170,9 @@ describe('Seeded contest templates and their sport leagues', () => {
         case SelectionType.SURVIVOR:
           // A survivor preset picks one team a week: no lineup, no counted scores.
           return [template.templateKey, rules.selectionType];
+        case SelectionType.SQUARES:
+          // A squares preset claims boxes of a grid: no lineup, no counted scores.
+          return [template.templateKey, rules.maxSquaresPerEntry];
         default:
           return assertNever(rules, 'selection type');
       }
@@ -287,6 +290,9 @@ describe('Seeded cycling tours and their Top 10 templates', () => {
         case SelectionType.SURVIVOR:
           // A survivor preset picks one team a week: no lineup, no counted scores.
           return [template.templateKey, rules.selectionType];
+        case SelectionType.SQUARES:
+          // A squares preset claims boxes of a grid: no lineup, no counted scores.
+          return [template.templateKey, rules.maxSquaresPerEntry];
         default:
           return assertNever(rules, 'selection type');
       }
@@ -371,6 +377,9 @@ describe('Seeded running series and their Top 10 templates', () => {
         case SelectionType.SURVIVOR:
           // A survivor preset picks one team a week: no lineup, no counted scores.
           return [template.templateKey, rules.selectionType];
+        case SelectionType.SQUARES:
+          // A squares preset claims boxes of a grid: no lineup, no counted scores.
+          return [template.templateKey, rules.maxSquaresPerEntry];
         default:
           return assertNever(rules, 'selection type');
       }
@@ -446,7 +455,7 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
 describe('The seeded NFL league and its knockout templates', () => {
   it('seeds the NFL, which reseeds, with a Doubling and a Doubling + upset bonus template per selection type on round values 1, 2, 4, 8, the tiered Doubling one the default', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AMERICAN_FOOTBALL, templateKey: { startsWith: 'nfl-' } },
+      where: { sport: Sport.AMERICAN_FOOTBALL, templateKey: { startsWith: 'nfl-' }, contestFormat: ContestFormat.ROSTER },
       include: { sportLeague: true },
       orderBy: [{ templateKey: 'asc' }],
     });
@@ -469,6 +478,19 @@ describe('The seeded NFL league and its knockout templates', () => {
         },
       });
     }
+  });
+
+  // Squares (#711): the NFL's one squares preset, the default for its own format.
+  it('seeds the NFL one squares template, ten boxes per entry and one entry per squad, the default squares preset', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.AMERICAN_FOOTBALL, contestFormat: ContestFormat.SQUARES },
+      include: { sportLeague: true },
+    });
+
+    expect(templates.map((template) => [template.templateKey, template.selectionType, template.isDefault, template.sportLeague?.name]))
+      .toEqual([['nfl-squares', SelectionType.SQUARES, true, 'NFL']]);
+    expect(ContestRulesWithEntryLimitSchema.parse(templates[0]?.configJson))
+      .toEqual({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 });
   });
 });
 
@@ -508,7 +530,8 @@ describe('Every seeded contest template, whatever its sport', () => {
       // With no preset, the sport's first definition is used with its default settings, which
       // only a definition that takes none has.
       const [defaultDefinitionId] = definition.scoringDefinitions;
-      if (!rules.scoring && !PARTICIPANT_SCORING_SETTINGS_SCHEMAS[defaultDefinitionId].safeParse({}).success) {
+      // A squares contest scores by the quarters its boxes win, not by a scoring definition.
+      if (rules.selectionType !== SelectionType.SQUARES && !rules.scoring && !PARTICIPANT_SCORING_SETTINGS_SCHEMAS[defaultDefinitionId].safeParse({}).success) {
         found.push(`${template.templateKey}: no scoring preset, and ${defaultDefinitionId} needs settings`);
       }
       return found;
@@ -533,7 +556,8 @@ describe('Every seeded contest template, whatever its sport', () => {
           case SelectionType.PICK_EM:
           case SelectionType.BRACKET:
           case SelectionType.SURVIVOR:
-            // A prediction preset holds no lineup and counts no scores: nothing to compare.
+          case SelectionType.SQUARES:
+            // A prediction or squares preset holds no lineup and counts no scores: nothing to compare.
             return null;
           default:
             return assertNever(rules, 'selection type');
@@ -544,6 +568,7 @@ describe('Every seeded contest template, whatever its sport', () => {
         || rules.selectionType === SelectionType.PICK_EM
         || rules.selectionType === SelectionType.BRACKET
         || rules.selectionType === SelectionType.SURVIVOR
+        || rules.selectionType === SelectionType.SQUARES
       ) return [];
       return rules.countedScores > held ? [`${template.templateKey}: counts ${rules.countedScores} of ${held}`] : [];
     });
@@ -579,7 +604,7 @@ describe('Every seeded contest template, whatever its sport', () => {
     const problems = scopes.flatMap(({ name, sport, offered }) => [
       ...(offered.some((template) => template.isDefault) ? [] : [`${name}: no default preset`]),
       ...getSportDefinition(sport).selectionTypes
-        .filter((selectionType) => !isPredictionSelectionType(selectionType))
+        .filter((selectionType) => isRosterSelectionType(selectionType))
         .filter((selectionType) => !offered.some((template) => template.selectionType === selectionType))
         .map((selectionType) => `${name}: no ${selectionType} preset`),
     ]);

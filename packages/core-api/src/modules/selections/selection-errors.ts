@@ -51,6 +51,14 @@ export const selectionErrors = {
       409,
     ),
 
+  /** A squares contest's entries claim boxes of its grid, and pick neither a lineup nor games (#711). */
+  contestTakesSquares: (contestId: string) =>
+    new SelectionError(
+      `Contest ${contestId} is a squares contest; its entries claim boxes of its grid, not picks`,
+      'CONTEST_FORMAT_MISMATCH',
+      409,
+    ),
+
   entryNotFound: (entryId: string, contestId: string) =>
     new SelectionError(
       `Entry ${entryId} was not found for contest ${contestId}`,

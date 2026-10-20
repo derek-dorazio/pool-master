@@ -289,7 +289,8 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(configurationResponse.data?.contest.id).toBe(contestId);
     expect(configurationResponse.data?.contest.templateId).toBe(defaultTemplate?.id);
     const templateRules = expectDefined(defaultTemplate).configuration;
-    if (templateRules.selectionType === SelectionType.PICK_EM || templateRules.selectionType === SelectionType.BRACKET || templateRules.selectionType === SelectionType.SURVIVOR) {
+    if (templateRules.selectionType === SelectionType.PICK_EM || templateRules.selectionType === SelectionType.BRACKET || templateRules.selectionType === SelectionType.SURVIVOR
+      || templateRules.selectionType === SelectionType.SQUARES) {
       throw new Error('the default golf template is a roster template');
     }
     expect(configurationResponse.data?.contest.configuration).toMatchObject({

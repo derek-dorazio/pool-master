@@ -267,13 +267,14 @@ export class ContestService {
 
   /**
    * Each event's timing as the contest's window runs on it (#721): the event's own, or, for a
-   * second-chance bracket, its starting round's first game. Only a bracket reads its rules for it.
+   * second-chance bracket, its starting round's first game, and for squares its game's kickoff
+   * (#711). Only those two read their rules for it.
    */
   private async findContestWindows<Event extends SportEvent>(contest: Contest, events: readonly Event[]): Promise<Array<{ event: Event; window: EventTiming }>> {
-    if (contest.selectionType !== SelectionType.BRACKET) {
+    if (contest.selectionType !== SelectionType.BRACKET && contest.selectionType !== SelectionType.SQUARES) {
       return events.map((event) => ({ event, window: event }));
     }
-    const cutoff = contestCutoff((await this.deps.configurations.findByContest(contest.id))?.configJson);
+    const cutoff = contestCutoff((await this.deps.configurations.findByContest(contest.id))?.configJson, contest.squaresGameMatchId);
     if (cutoff.kind === ContestCutoffKind.EVENT_START) {
       return events.map((event) => ({ event, window: event }));
     }
@@ -476,9 +477,11 @@ export class ContestService {
       );
     }
 
-    if (contest.contestFormat === ContestFormat.PREDICTION) {
+    if (contest.contestFormat !== ContestFormat.ROSTER) {
       throw new ContestOperationError(
-        'A prediction contest\'s entries pick games, not a lineup: a bracket and a pick\'em pool each have their own leaderboard.',
+        contest.contestFormat === ContestFormat.SQUARES
+          ? 'A squares contest\'s entries claim boxes, not a lineup: its grid is its leaderboard.'
+          : 'A prediction contest\'s entries pick games, not a lineup: a bracket and a pick\'em pool each have their own leaderboard.',
         'CONTEST_FORMAT_MISMATCH',
       );
     }
@@ -1040,10 +1043,12 @@ export class ContestService {
 
     if (updates.tiebreakerValue !== undefined) {
       // A bracket's tiebreaker rides with its picks, where its status is kept (#721).
-      if (context.contest.contestFormat === ContestFormat.PREDICTION) {
-        this.logger.warn({ contestId, entryId, userId }, 'contest entry update refused a prediction contest tiebreaker');
+      if (context.contest.contestFormat !== ContestFormat.ROSTER) {
+        this.logger.warn({ contestId, entryId, userId }, 'contest entry update refused a tiebreaker outside a roster contest');
         throw new ContestEntryOperationError(
-          'A prediction contest\'s tiebreaker is saved with its game picks.',
+          context.contest.contestFormat === ContestFormat.SQUARES
+            ? 'A squares contest has no tiebreaker: its boxes win by the game\'s score.'
+            : 'A prediction contest\'s tiebreaker is saved with its game picks.',
           'CONTEST_FORMAT_MISMATCH',
         );
       }

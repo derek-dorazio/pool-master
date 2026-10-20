@@ -468,6 +468,9 @@ export class PredictionService {
     const contest = await this.deps.contests.findById(contestId);
     if (!contest) throw selectionErrors.contestNotFound(contestId);
     const { selectionType } = contest;
+    if (selectionType === SelectionType.SQUARES) {
+      throw selectionErrors.contestTakesSquares(contestId);
+    }
     if (!isPredictionSelectionType(selectionType)) {
       throw selectionErrors.contestTakesRosterPicks(contestId);
     }

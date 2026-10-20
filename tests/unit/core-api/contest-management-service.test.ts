@@ -30,6 +30,10 @@ import {
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
   CONTEST_SCORING_ROUNDS_MISMATCH,
   CONTEST_SCORING_SETTINGS_REQUIRED,
+  CONTEST_SQUARES_GAME_INVALID,
+  CONTEST_SQUARES_GAME_REQUIRED,
+  CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD,
+  CONTEST_SQUARES_SINGLE_EVENT,
   type CreateContestRequest,
 } from '@poolmaster/shared/dto';
 import type {
@@ -243,6 +247,7 @@ function createSportEventReader(overrides?: Partial<{
   countGamesWithoutSpread: jest.Mock;
   findBracketProblem: jest.Mock;
   findCutoffTiming: jest.Mock;
+  findGameStatus: jest.Mock;
 } {
   return {
     findActiveFieldPrices: jest.fn().mockResolvedValue(overrides?.activeFieldPrices ?? []),
@@ -252,6 +257,7 @@ function createSportEventReader(overrides?: Partial<{
     findBracketProblem: jest.fn().mockResolvedValue(overrides?.bracketProblem ?? null),
     // The event's own timing for an ordinary contest; a later round's start would read its games, of which this event has none.
     findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
+    findGameStatus: jest.fn().mockResolvedValue(null),
     findById: jest.fn().mockResolvedValue({
       id: '11111111-1111-1111-1111-111111111111',
       status: overrides?.status ?? SportEventStatus.SCHEDULED,
@@ -1660,6 +1666,7 @@ describe('ContestManagementService — a contest of several events', () => {
       countGamesWithoutSpread: jest.fn().mockResolvedValue(0),
       findBracketProblem: jest.fn().mockResolvedValue(null),
       findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
+      findGameStatus: jest.fn().mockResolvedValue(null),
     };
   }
 
@@ -2362,5 +2369,137 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
 
     expect(await refusal(context.service.openContest('league-1', contestId))).toMatchObject({ code: CONTEST_EVENT_ALREADY_STARTED, statusCode: 409 });
     expect(expectDefined(context.world.contests.get(contestId)).status).toBe(ContestStatus.DRAFT);
+  });
+});
+
+describe('ContestManagementService squares rules (#711)', () => {
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  const EVENT_ID = '11111111-1111-1111-1111-111111111111';
+  const GAME_ID = '22222222-2222-2222-2222-222222222222';
+  const squaresRequest = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
+    name: 'Super Bowl Squares',
+    sportEventIds: [EVENT_ID],
+    sportEventMatchId: GAME_ID,
+    contestFormat: 'SQUARES',
+    selectionType: SelectionType.SQUARES,
+    configuration: { selectionType: SelectionType.SQUARES, maxEntriesPerSquad: 1, maxSquaresPerEntry: 10 },
+    ...overrides,
+  });
+
+  function squaresService(gameStatus: MatchStatus | null = MatchStatus.SCHEDULED) {
+    const contestCoreRepo = createContestRepo();
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const reader = createSportEventReader({ sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4, gameCount: 1 });
+    reader.findGameStatus.mockImplementation(async (sportEventId: string, sportEventMatchId: string) =>
+      sportEventId === EVENT_ID && sportEventMatchId === GAME_ID ? gameStatus : null);
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      contestConfigurationRepo,
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      reader,
+    );
+    return { contestCoreRepo, contestConfigurationRepo, reader, service };
+  }
+
+  it('creates a squares contest on one of the event\'s games, storing the game and the box limit per entry', async () => {
+    const { contestCoreRepo, contestConfigurationRepo, service } = squaresService();
+
+    await service.createContest({ leagueId: 'league-1' }, squaresRequest());
+
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      contestFormat: ContestFormat.SQUARES,
+      selectionType: SelectionType.SQUARES,
+      squaresGameMatchId: GAME_ID,
+    }));
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
+      maxEntriesPerSquad: 1,
+    }));
+  });
+
+  it.each([
+    { name: 'two entries per squad', maxEntriesPerSquad: 2 },
+    { name: 'no entry limit', maxEntriesPerSquad: null },
+  ])('refuses a squares contest allowing $name with CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, since the box limit is a squad\'s, writing nothing', async ({ maxEntriesPerSquad }) => {
+    const { contestCoreRepo, service } = squaresService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest({
+      configuration: { selectionType: SelectionType.SQUARES, maxEntriesPerSquad, maxSquaresPerEntry: 10 },
+    }))).rejects.toMatchObject({ code: CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a draft squares contest\'s settings changed to more than one entry per squad with CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, storing nothing', async () => {
+    const { contestCoreRepo, contestConfigurationRepo, service } = squaresService();
+    await service.createContest({ leagueId: 'league-1' }, squaresRequest());
+    (contestCoreRepo.findById as jest.Mock).mockResolvedValue({
+      ...(await contestCoreRepo.findById('contest-1')),
+      contestFormat: ContestFormat.SQUARES,
+      selectionType: SelectionType.SQUARES,
+      squaresGameMatchId: GAME_ID,
+    });
+
+    await expect(service.updateContestConfiguration('contest-1', { selectionType: SelectionType.SQUARES, maxEntriesPerSquad: 2, maxSquaresPerEntry: 10 }))
+      .rejects.toMatchObject({ code: CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, statusCode: 422 });
+    expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses a squares contest sent no game with CONTEST_SQUARES_GAME_REQUIRED, writing nothing', async () => {
+    const { contestCoreRepo, service } = squaresService();
+    const withoutGame = { ...squaresRequest(), sportEventMatchId: undefined };
+
+    await expect(service.createContest({ leagueId: 'league-1' }, withoutGame))
+      .rejects.toMatchObject({ code: CONTEST_SQUARES_GAME_REQUIRED });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { name: 'a game that is not the event\'s', status: null },
+    { name: 'a cancelled game', status: MatchStatus.CANCELLED },
+  ])('refuses a squares contest on $name with CONTEST_SQUARES_GAME_INVALID, writing nothing', async ({ status }) => {
+    const { contestCoreRepo, service } = squaresService(status);
+
+    await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
+      .rejects.toMatchObject({ code: CONTEST_SQUARES_GAME_INVALID });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a game sent for a contest that is not squares with CONTEST_SQUARES_GAME_INVALID', async () => {
+    const { contestCoreRepo, service } = squaresService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest({
+      contestFormat: 'PREDICTION',
+      selectionType: SelectionType.PICK_EM,
+      configuration: { selectionType: SelectionType.PICK_EM, maxEntriesPerSquad: 1, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
+    }))).rejects.toMatchObject({ code: CONTEST_SQUARES_GAME_INVALID });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a squares contest over more than one event with CONTEST_SQUARES_SINGLE_EVENT', async () => {
+    const { contestCoreRepo, service } = squaresService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest({ sportEventIds: [EVENT_ID, '33333333-3333-3333-3333-333333333333'] })))
+      .rejects.toMatchObject({ code: CONTEST_SQUARES_SINGLE_EVENT });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a squares contest whose game has kicked off with SPORT_EVENT_ALREADY_STARTED, though its event started long before', async () => {
+    const { contestCoreRepo, reader, service } = squaresService(MatchStatus.IN_PROGRESS);
+    reader.findCutoffTiming.mockImplementation(async (sportEvent: Parameters<ContestCreateSportEventReader['findCutoffTiming']>[0], cutoff: Parameters<ContestCreateSportEventReader['findCutoffTiming']>[1]) =>
+      cutoffTiming(cutoff, sportEvent, [{ id: GAME_ID, roundNumber: 4, status: MatchStatus.IN_PROGRESS, scheduledDate: null }]));
+
+    await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED' });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 });

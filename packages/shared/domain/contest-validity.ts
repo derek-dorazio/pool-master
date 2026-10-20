@@ -4,12 +4,13 @@ import { getSportDefinition } from './sports/registry';
 export const VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT = {
   [TournamentFormat.STROKE_PLAY_TOURNAMENT]: [ContestFormat.ROSTER],
   [TournamentFormat.RACE]: [ContestFormat.ROSTER],
-  [TournamentFormat.MATCHES]: [ContestFormat.ROSTER, ContestFormat.PREDICTION],
+  [TournamentFormat.MATCHES]: [ContestFormat.ROSTER, ContestFormat.PREDICTION, ContestFormat.SQUARES],
 } as const satisfies Record<TournamentFormat, readonly ContestFormat[]>;
 
 /**
  * The contest format each selection type plays (#716): a roster type picks field members, a
- * prediction type picks the winners of games. A contest's two values always agree.
+ * prediction type picks the winners of games, and squares (#711) claims boxes of a grid on one
+ * game. A contest's two values always agree.
  */
 export const CONTEST_FORMAT_BY_SELECTION_TYPE = {
   [SelectionType.TIERED]: ContestFormat.ROSTER,
@@ -18,6 +19,7 @@ export const CONTEST_FORMAT_BY_SELECTION_TYPE = {
   [SelectionType.PICK_EM]: ContestFormat.PREDICTION,
   [SelectionType.BRACKET]: ContestFormat.PREDICTION,
   [SelectionType.SURVIVOR]: ContestFormat.PREDICTION,
+  [SelectionType.SQUARES]: ContestFormat.SQUARES,
 } as const satisfies Record<SelectionType, ContestFormat>;
 
 /** The selection types that pick field members. */
@@ -25,7 +27,9 @@ export type RosterSelectionType = {
   [Type in SelectionType]: (typeof CONTEST_FORMAT_BY_SELECTION_TYPE)[Type] extends typeof ContestFormat.ROSTER ? Type : never
 }[SelectionType];
 /** The selection types that pick the winners of games. */
-export type PredictionSelectionType = Exclude<SelectionType, RosterSelectionType>;
+export type PredictionSelectionType = {
+  [Type in SelectionType]: (typeof CONTEST_FORMAT_BY_SELECTION_TYPE)[Type] extends typeof ContestFormat.PREDICTION ? Type : never
+}[SelectionType];
 
 export function contestFormatForSelectionType(selectionType: SelectionType): ContestFormat {
   return CONTEST_FORMAT_BY_SELECTION_TYPE[selectionType];
@@ -33,6 +37,11 @@ export function contestFormatForSelectionType(selectionType: SelectionType): Con
 
 export function isPredictionSelectionType(selectionType: SelectionType): selectionType is PredictionSelectionType {
   return contestFormatForSelectionType(selectionType) === ContestFormat.PREDICTION;
+}
+
+/** Whether the selection type picks a lineup from the field: neither a prediction type nor squares. */
+export function isRosterSelectionType(selectionType: SelectionType): selectionType is RosterSelectionType {
+  return contestFormatForSelectionType(selectionType) === ContestFormat.ROSTER;
 }
 
 export function getValidContestFormatsForTournamentFormat(

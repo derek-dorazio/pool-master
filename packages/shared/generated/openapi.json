@@ -6617,6 +6617,183 @@
             ],
             "additionalProperties": false,
             "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "selectionType": {
+                "type": "string",
+                "enum": [
+                  "SQUARES"
+                ]
+              },
+              "maxSquaresPerEntry": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
+              },
+              "maxEntriesPerSquad": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "description": "Maximum entries a Team may create. Null means unlimited."
+              },
+              "scoring": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "GOLF_RELATIVE_TO_PAR_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "FINISH_POSITION_POINTS"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "pointsTable": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "minItems": 1,
+                            "maxItems": 50,
+                            "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                          },
+                          "didNotFinishPoints": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                          }
+                        },
+                        "required": [
+                          "pointsTable",
+                          "didNotFinishPoints"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "KNOCKOUT_ROUND_POINTS"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "roundValues": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "minItems": 1,
+                            "maxItems": 8,
+                            "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                          },
+                          "upsetBonus": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "rule": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SEED_DIFFERENCE"
+                                    ]
+                                  },
+                                  "multiplier": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                  }
+                                },
+                                "required": [
+                                  "rule",
+                                  "multiplier"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "rule": {
+                                    "type": "string",
+                                    "enum": [
+                                      "NONE"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "rule"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ],
+                            "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                          }
+                        },
+                        "required": [
+                          "roundValues",
+                          "upsetBonus"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  }
+                ],
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+              }
+            },
+            "required": [
+              "selectionType",
+              "maxSquaresPerEntry"
+            ],
+            "additionalProperties": false,
+            "description": "Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment's last digits wins it."
           }
         ],
         "description": "Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest's."
@@ -7151,6 +7328,47 @@
                 ],
                 "additionalProperties": false,
                 "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "SQUARES"
+                    ]
+                  },
+                  "maxSquaresPerEntry": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Contest-configuration identifier."
+                  },
+                  "contestId": {
+                    "type": "string",
+                    "description": "Contest that owns the configuration."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "maxSquaresPerEntry",
+                  "id",
+                  "contestId"
+                ],
+                "additionalProperties": false,
+                "description": "Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment's last digits wins it."
               }
             ],
             "description": "Current commissioner-managed contest configuration."
@@ -7234,7 +7452,8 @@
             "type": "string",
             "enum": [
               "ROSTER",
-              "PREDICTION"
+              "PREDICTION",
+              "SQUARES"
             ],
             "description": "Contest type that may use the template."
           },
@@ -7246,7 +7465,8 @@
               "RANDOM_DRAW",
               "PICK_EM",
               "BRACKET",
-              "SURVIVOR"
+              "SURVIVOR",
+              "SQUARES"
             ],
             "description": "How an entry picks in a contest created from this template."
           },
@@ -8358,6 +8578,183 @@
                 ],
                 "additionalProperties": false,
                 "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "SQUARES"
+                    ]
+                  },
+                  "maxSquaresPerEntry": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "maxSquaresPerEntry"
+                ],
+                "additionalProperties": false,
+                "description": "Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment's last digits wins it."
               }
             ],
             "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -8767,6 +9164,47 @@
                     ],
                     "additionalProperties": false,
                     "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "SQUARES"
+                        ]
+                      },
+                      "maxSquaresPerEntry": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100,
+                        "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
+                      },
+                      "id": {
+                        "type": "string",
+                        "description": "Contest-configuration identifier."
+                      },
+                      "contestId": {
+                        "type": "string",
+                        "description": "Contest that owns the configuration."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "maxSquaresPerEntry",
+                      "id",
+                      "contestId"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment's last digits wins it."
                   }
                 ],
                 "description": "Current commissioner-managed contest configuration."
@@ -8842,7 +9280,8 @@
             "type": "string",
             "enum": [
               "ROSTER",
-              "PREDICTION"
+              "PREDICTION",
+              "SQUARES"
             ],
             "description": "Only templates for this contest format."
           },
@@ -8903,7 +9342,8 @@
                   "type": "string",
                   "enum": [
                     "ROSTER",
-                    "PREDICTION"
+                    "PREDICTION",
+                    "SQUARES"
                   ],
                   "description": "Contest type that may use the template."
                 },
@@ -8915,7 +9355,8 @@
                     "RANDOM_DRAW",
                     "PICK_EM",
                     "BRACKET",
-                    "SURVIVOR"
+                    "SURVIVOR",
+                    "SQUARES"
                   ],
                   "description": "How an entry picks in a contest created from this template."
                 },
@@ -10027,6 +10468,183 @@
                       ],
                       "additionalProperties": false,
                       "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "selectionType": {
+                          "type": "string",
+                          "enum": [
+                            "SQUARES"
+                          ]
+                        },
+                        "maxSquaresPerEntry": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100,
+                          "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
+                        },
+                        "maxEntriesPerSquad": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "description": "Maximum entries a Team may create. Null means unlimited."
+                        },
+                        "scoring": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GOLF_RELATIVE_TO_PAR_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "FINISH_POSITION_POINTS"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {
+                                    "pointsTable": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "minItems": 1,
+                                      "maxItems": 50,
+                                      "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                                    },
+                                    "didNotFinishPoints": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                                    }
+                                  },
+                                  "required": [
+                                    "pointsTable",
+                                    "didNotFinishPoints"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "KNOCKOUT_ROUND_POINTS"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {
+                                    "roundValues": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "minItems": 1,
+                                      "maxItems": 8,
+                                      "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                                    },
+                                    "upsetBonus": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "rule": {
+                                              "type": "string",
+                                              "enum": [
+                                                "SEED_DIFFERENCE"
+                                              ]
+                                            },
+                                            "multiplier": {
+                                              "type": "integer",
+                                              "minimum": 1,
+                                              "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                            }
+                                          },
+                                          "required": [
+                                            "rule",
+                                            "multiplier"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "rule": {
+                                              "type": "string",
+                                              "enum": [
+                                                "NONE"
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "rule"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ],
+                                      "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                                    }
+                                  },
+                                  "required": [
+                                    "roundValues",
+                                    "upsetBonus"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ],
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+                        }
+                      },
+                      "required": [
+                        "selectionType",
+                        "maxSquaresPerEntry"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment's last digits wins it."
                     }
                   ],
                   "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -11167,6 +11785,183 @@
                 ],
                 "additionalProperties": false,
                 "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "SQUARES"
+                    ]
+                  },
+                  "maxSquaresPerEntry": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "maxSquaresPerEntry"
+                ],
+                "additionalProperties": false,
+                "description": "Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment's last digits wins it."
               }
             ],
             "description": "Updated persisted configuration payload copied into future contests when this template is selected."
@@ -11218,7 +12013,8 @@
                 "type": "string",
                 "enum": [
                   "ROSTER",
-                  "PREDICTION"
+                  "PREDICTION",
+                  "SQUARES"
                 ],
                 "description": "Contest type that may use the template."
               },
@@ -11230,7 +12026,8 @@
                   "RANDOM_DRAW",
                   "PICK_EM",
                   "BRACKET",
-                  "SURVIVOR"
+                  "SURVIVOR",
+                  "SQUARES"
                 ],
                 "description": "How an entry picks in a contest created from this template."
               },
@@ -12342,6 +13139,183 @@
                     ],
                     "additionalProperties": false,
                     "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "SQUARES"
+                        ]
+                      },
+                      "maxSquaresPerEntry": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100,
+                        "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      },
+                      "scoring": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "GOLF_RELATIVE_TO_PAR_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "FINISH_POSITION_POINTS"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {
+                                  "pointsTable": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 50,
+                                    "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                                  },
+                                  "didNotFinishPoints": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                                  }
+                                },
+                                "required": [
+                                  "pointsTable",
+                                  "didNotFinishPoints"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "KNOCKOUT_ROUND_POINTS"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {
+                                  "roundValues": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 8,
+                                    "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                                  },
+                                  "upsetBonus": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "rule": {
+                                            "type": "string",
+                                            "enum": [
+                                              "SEED_DIFFERENCE"
+                                            ]
+                                          },
+                                          "multiplier": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                          }
+                                        },
+                                        "required": [
+                                          "rule",
+                                          "multiplier"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "rule": {
+                                            "type": "string",
+                                            "enum": [
+                                              "NONE"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "rule"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ],
+                                    "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                                  }
+                                },
+                                "required": [
+                                  "roundValues",
+                                  "upsetBonus"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ],
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "maxSquaresPerEntry"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment's last digits wins it."
                   }
                 ],
                 "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -18929,9 +19903,10 @@
             "type": "string",
             "enum": [
               "ROSTER",
-              "PREDICTION"
+              "PREDICTION",
+              "SQUARES"
             ],
-            "description": "ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). It must be the format the selection type plays (PICK_EM and BRACKET are PREDICTION, every other type ROSTER) and one the event's tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise."
+            "description": "ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). SQUARES: entries claim boxes of a grid on one game (#711). It must be the format the selection type plays (PICK_EM, BRACKET and SURVIVOR are PREDICTION, SQUARES is SQUARES, every other type ROSTER) and one the event's tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise."
           },
           "selectionType": {
             "type": "string",
@@ -18941,7 +19916,8 @@
               "RANDOM_DRAW",
               "PICK_EM",
               "BRACKET",
-              "SURVIVOR"
+              "SURVIVOR",
+              "SQUARES"
             ],
             "description": "How an entry picks: the selection types with typed rules. It must match the template's selection type when a template is named, and the configuration's."
           },
@@ -20030,9 +21006,191 @@
                 ],
                 "additionalProperties": false,
                 "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "selectionType": {
+                    "type": "string",
+                    "enum": [
+                      "SQUARES"
+                    ]
+                  },
+                  "maxSquaresPerEntry": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "scoring": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_RELATIVE_TO_PAR_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "FINISH_POSITION_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "pointsTable": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 50,
+                                "description": "Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]."
+                              },
+                              "didNotFinishPoints": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0."
+                              }
+                            },
+                            "required": [
+                              "pointsTable",
+                              "didNotFinishPoints"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Finish-position points settings: the contest's points table and its \"did not finish\" value."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "KNOCKOUT_ROUND_POINTS"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "roundValues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "minItems": 1,
+                                "maxItems": 8,
+                                "description": "Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]."
+                              },
+                              "upsetBonus": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SEED_DIFFERENCE"
+                                        ]
+                                      },
+                                      "multiplier": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus."
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "multiplier"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string",
+                                        "enum": [
+                                          "NONE"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "rule"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed."
+                              }
+                            },
+                            "required": [
+                              "roundValues",
+                              "upsetBonus"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ],
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
+                  }
+                },
+                "required": [
+                  "selectionType",
+                  "maxSquaresPerEntry"
+                ],
+                "additionalProperties": false,
+                "description": "Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment's last digits wins it."
               }
             ],
             "description": "The contest configuration. With a template, replaces the template's configuration; without one, is the configuration."
+          },
+          "sportEventMatchId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "A squares contest's game (#711): one of its event's games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started."
           }
         },
         "required": [
@@ -20254,7 +21412,8 @@
             "type": "string",
             "enum": [
               "ROSTER",
-              "PREDICTION"
+              "PREDICTION",
+              "SQUARES"
             ]
           },
           "selectionType": {
@@ -20265,7 +21424,8 @@
               "RANDOM_DRAW",
               "PICK_EM",
               "BRACKET",
-              "SURVIVOR"
+              "SURVIVOR",
+              "SQUARES"
             ]
           },
           "leagueId": {
@@ -20555,7 +21715,8 @@
             "type": "string",
             "enum": [
               "ROSTER",
-              "PREDICTION"
+              "PREDICTION",
+              "SQUARES"
             ],
             "description": "Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns."
           },
@@ -22027,7 +23188,8 @@
                 "type": "string",
                 "enum": [
                   "ROSTER",
-                  "PREDICTION"
+                  "PREDICTION",
+                  "SQUARES"
                 ]
               },
               "selectionType": {
@@ -22038,7 +23200,8 @@
                   "RANDOM_DRAW",
                   "PICK_EM",
                   "BRACKET",
-                  "SURVIVOR"
+                  "SURVIVOR",
+                  "SQUARES"
                 ]
               },
               "leagueId": {
@@ -22189,7 +23352,8 @@
                   "type": "string",
                   "enum": [
                     "ROSTER",
-                    "PREDICTION"
+                    "PREDICTION",
+                    "SQUARES"
                   ]
                 },
                 "selectionType": {
@@ -22200,7 +23364,8 @@
                     "RANDOM_DRAW",
                     "PICK_EM",
                     "BRACKET",
-                    "SURVIVOR"
+                    "SURVIVOR",
+                    "SQUARES"
                   ]
                 },
                 "leagueId": {
@@ -23002,7 +24167,8 @@
               "RANDOM_DRAW",
               "PICK_EM",
               "BRACKET",
-              "SURVIVOR"
+              "SURVIVOR",
+              "SQUARES"
             ]
           },
           "drawnAt": {
@@ -23381,7 +24547,8 @@
               "RANDOM_DRAW",
               "PICK_EM",
               "BRACKET",
-              "SURVIVOR"
+              "SURVIVOR",
+              "SQUARES"
             ]
           },
           "drawnAt": {
@@ -30872,6 +32039,609 @@
         ],
         "additionalProperties": false,
         "description": "A reseeded round's teams, all at once. Every team left in the round plays once, in its own region, and a team holding its place (a bye, a linked winner) keeps it."
+      },
+      "SquaresBoxDto": {
+        "type": "object",
+        "properties": {
+          "rowIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9,
+            "description": "The row position, 0 at the top. Rows are the away team's."
+          },
+          "columnIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9,
+            "description": "The column position, 0 at the left. Columns are the home team's."
+          },
+          "contestEntryId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The entry holding the box."
+          },
+          "entryName": {
+            "type": "string",
+            "description": "The entry's name, which is its squad's."
+          }
+        },
+        "required": [
+          "rowIndex",
+          "columnIndex",
+          "contestEntryId",
+          "entryName"
+        ],
+        "additionalProperties": false,
+        "description": "A claimed box of the grid. A box not listed is empty."
+      },
+      "SquaresDigitsDto": {
+        "type": "object",
+        "properties": {
+          "rowDigits": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            },
+            "minItems": 10,
+            "maxItems": 10,
+            "description": "The away team's last digit at each row position, top first."
+          },
+          "columnDigits": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            },
+            "minItems": 10,
+            "maxItems": 10,
+            "description": "The home team's last digit at each column position, left first."
+          },
+          "drawnAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the digits were drawn: claiming closed then."
+          }
+        },
+        "required": [
+          "rowDigits",
+          "columnDigits",
+          "drawnAt"
+        ],
+        "additionalProperties": false,
+        "description": "The digits drawn along the two sides of the grid."
+      },
+      "SquaresWinnerDto": {
+        "type": "object",
+        "properties": {
+          "periodNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The scoring moment: 1 to the game's period count, the last being the final score, overtime included."
+          },
+          "homeScore": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "awayScore": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rowIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9,
+            "description": "The winning box's row: where the away score's last digit is."
+          },
+          "columnIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9,
+            "description": "The winning box's column: where the home score's last digit is."
+          },
+          "contestEntryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The entry holding the winning box; null when nobody claimed it (\"No winner\")."
+          },
+          "entryName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "That entry's name; null with no entry."
+          }
+        },
+        "required": [
+          "periodNumber",
+          "homeScore",
+          "awayScore",
+          "rowIndex",
+          "columnIndex",
+          "contestEntryId",
+          "entryName"
+        ],
+        "additionalProperties": false,
+        "description": "One scoring moment's winning box."
+      },
+      "SquaresEntryDto": {
+        "type": "object",
+        "properties": {
+          "contestEntryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entryName": {
+            "type": "string"
+          },
+          "boxCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many boxes the entry holds."
+          },
+          "periodsWon": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many scoring moments its boxes won so far."
+          },
+          "displayPosition": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its settled place, \"T1\" when shared; null until the contest is Final."
+          }
+        },
+        "required": [
+          "contestEntryId",
+          "entryName",
+          "boxCount",
+          "periodsWon",
+          "displayPosition"
+        ],
+        "additionalProperties": false,
+        "description": "One entry of the contest with its boxes and wins."
+      },
+      "SquaresBoardResponse": {
+        "type": "object",
+        "properties": {
+          "contestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contestStatus": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "OPEN",
+              "ACTIVE",
+              "COMPLETED"
+            ]
+          },
+          "maxSquaresPerEntry": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "How many boxes one entry may claim."
+          },
+          "periodCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many scoring moments the game has: its sport's period count, the last being the final score."
+          },
+          "game": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "sportEventId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "roundNumber": {
+                "type": "integer",
+                "description": "The round the match is played in; its label comes from the sport definition's round labels."
+              },
+              "matchNumber": {
+                "type": "integer",
+                "description": "Unique within the event: the bracket slot and the display order."
+              },
+              "homeSportEventParticipantId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "The field row on the home side; null until it is decided, such as a later round waiting on its feeder match."
+              },
+              "awaySportEventParticipantId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "The field row on the away side; null until it is decided."
+              },
+              "isNeutralSite": {
+                "type": "boolean",
+                "description": "True when neither side is at home: screens then say \"vs\" rather than \"@\"."
+              },
+              "scheduledDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "Tip-off or kickoff; null until it is announced."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SCHEDULED",
+                  "IN_PROGRESS",
+                  "COMPLETED",
+                  "CANCELLED"
+                ],
+                "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played."
+              },
+              "winnerSide": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "HOME",
+                  "AWAY",
+                  null
+                ],
+                "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has."
+              },
+              "homeScore": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "The home side's score; in a series, games won."
+              },
+              "awayScore": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "The away side's score; in a series, games won."
+              },
+              "advancesToMatchId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "The match the winner moves on to; null for the final."
+              },
+              "advancesToSide": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "HOME",
+                  "AWAY",
+                  null
+                ],
+                "description": "The side of that match the winner fills; null for the final."
+              },
+              "regionLabel": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The region or conference the match is played in (\"AFC\", \"East\"); null when the bracket has none. In a reseeded round each team stays in its region."
+              },
+              "homeSpread": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it."
+              },
+              "periodScores": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "periodNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "1 for the first period (quarter, in American football); never the last, whose score is the match's final result."
+                    },
+                    "homeScore": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "The home side's score at the end of the period, earlier periods included, as the scoreboard shows it."
+                    },
+                    "awayScore": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "The away side's score at the end of the period, earlier periods included."
+                    }
+                  },
+                  "required": [
+                    "periodNumber",
+                    "homeScore",
+                    "awayScore"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Both sides' score at the end of one period of a game (#772)."
+                },
+                "description": "The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore."
+              }
+            },
+            "required": [
+              "id",
+              "sportEventId",
+              "roundNumber",
+              "matchNumber",
+              "homeSportEventParticipantId",
+              "awaySportEventParticipantId",
+              "isNeutralSite",
+              "scheduledDate",
+              "status",
+              "winnerSide",
+              "homeScore",
+              "awayScore",
+              "advancesToMatchId",
+              "advancesToSide",
+              "regionLabel",
+              "homeSpread",
+              "periodScores"
+            ],
+            "additionalProperties": false,
+            "description": "The game the contest is played on, with its score at the end of each period and its final result."
+          },
+          "homeTeamName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The home team, across the top; null until it is known."
+          },
+          "awayTeamName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The away team, down the side; null until it is known."
+          },
+          "claimsOpen": {
+            "type": "boolean",
+            "description": "Whether boxes can be claimed and cleared now: the contest is OPEN, its digits are not drawn and the game has not kicked off."
+          },
+          "drawOpen": {
+            "type": "boolean",
+            "description": "Whether the digits can be drawn now: not drawn yet, the contest OPEN or live, and the first period's score not in."
+          },
+          "boxes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rowIndex": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9,
+                  "description": "The row position, 0 at the top. Rows are the away team's."
+                },
+                "columnIndex": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9,
+                  "description": "The column position, 0 at the left. Columns are the home team's."
+                },
+                "contestEntryId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The entry holding the box."
+                },
+                "entryName": {
+                  "type": "string",
+                  "description": "The entry's name, which is its squad's."
+                }
+              },
+              "required": [
+                "rowIndex",
+                "columnIndex",
+                "contestEntryId",
+                "entryName"
+              ],
+              "additionalProperties": false,
+              "description": "A claimed box of the grid. A box not listed is empty."
+            },
+            "description": "Every claimed box, by row then column."
+          },
+          "digits": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "rowDigits": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9
+                },
+                "minItems": 10,
+                "maxItems": 10,
+                "description": "The away team's last digit at each row position, top first."
+              },
+              "columnDigits": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9
+                },
+                "minItems": 10,
+                "maxItems": 10,
+                "description": "The home team's last digit at each column position, left first."
+              },
+              "drawnAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the digits were drawn: claiming closed then."
+              }
+            },
+            "required": [
+              "rowDigits",
+              "columnDigits",
+              "drawnAt"
+            ],
+            "additionalProperties": false,
+            "description": "The digits; null until they are drawn."
+          },
+          "winners": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "periodNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The scoring moment: 1 to the game's period count, the last being the final score, overtime included."
+                },
+                "homeScore": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "awayScore": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "rowIndex": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9,
+                  "description": "The winning box's row: where the away score's last digit is."
+                },
+                "columnIndex": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9,
+                  "description": "The winning box's column: where the home score's last digit is."
+                },
+                "contestEntryId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "The entry holding the winning box; null when nobody claimed it (\"No winner\")."
+                },
+                "entryName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "That entry's name; null with no entry."
+                }
+              },
+              "required": [
+                "periodNumber",
+                "homeScore",
+                "awayScore",
+                "rowIndex",
+                "columnIndex",
+                "contestEntryId",
+                "entryName"
+              ],
+              "additionalProperties": false,
+              "description": "One scoring moment's winning box."
+            },
+            "description": "Each scoring moment's winning box so far, by period: empty until the digits are drawn. Frozen once the contest is Final."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "contestEntryId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "entryName": {
+                  "type": "string"
+                },
+                "boxCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "How many boxes the entry holds."
+                },
+                "periodsWon": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "How many scoring moments its boxes won so far."
+                },
+                "displayPosition": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Its settled place, \"T1\" when shared; null until the contest is Final."
+                }
+              },
+              "required": [
+                "contestEntryId",
+                "entryName",
+                "boxCount",
+                "periodsWon",
+                "displayPosition"
+              ],
+              "additionalProperties": false,
+              "description": "One entry of the contest with its boxes and wins."
+            },
+            "description": "The contest's entries, by place once Final, else by name."
+          }
+        },
+        "required": [
+          "contestId",
+          "contestStatus",
+          "maxSquaresPerEntry",
+          "periodCount",
+          "game",
+          "homeTeamName",
+          "awayTeamName",
+          "claimsOpen",
+          "drawOpen",
+          "boxes",
+          "digits",
+          "winners",
+          "entries"
+        ],
+        "additionalProperties": false,
+        "description": "A squares contest's grid."
+      },
+      "ClaimSquaresBoxRequest": {
+        "type": "object",
+        "properties": {
+          "contestEntryId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The entry the box is claimed for: the caller's own, or any entry when the caller is the commissioner."
+          }
+        },
+        "required": [
+          "contestEntryId"
+        ],
+        "additionalProperties": false,
+        "description": "Claim one box of the grid."
       },
       "EventSyncRequest": {
         "type": "object",
@@ -38428,7 +40198,8 @@
               "type": "string",
               "enum": [
                 "ROSTER",
-                "PREDICTION"
+                "PREDICTION",
+                "SQUARES"
               ]
             },
             "in": "query",
@@ -45213,6 +46984,386 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SelectionStateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/selections/{contestId}/squares": {
+      "get": {
+        "operationId": "getSquaresBoard",
+        "summary": "Read a squares contest's grid",
+        "tags": [
+          "Selections"
+        ],
+        "description": "The grid of a squares contest (#711): each claimed box and its entry, the digits once drawn, the game with its score at the end of each period and its final result, each scoring moment's winning box (frozen once the contest is Final), and each entry's boxes and wins. Any member of the contest's league may read it. 404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A squares contest's grid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquaresBoardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/selections/{contestId}/squares/{rowIndex}/{columnIndex}": {
+      "put": {
+        "operationId": "claimSquaresBox",
+        "summary": "Claim a box of a squares grid",
+        "tags": [
+          "Selections"
+        ],
+        "description": "Claims an empty box for an entry and returns the grid. A member claims for their own squad's entry; the commissioner (or a root admin) for any entry: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_ENTRY_NOT_FOUND for an entry not in the contest. 409 SQUARES_CLAIMING_CLOSED unless the contest is OPEN, its numbers are not drawn and its game has not kicked off; SQUARES_BOX_TAKEN when someone holds the box; SQUARES_BOX_LIMIT_REACHED when the entry holds the contest's box limit. 404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimSquaresBoxRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            },
+            "in": "path",
+            "name": "rowIndex",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            },
+            "in": "path",
+            "name": "columnIndex",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A squares contest's grid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquaresBoardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "clearSquaresBox",
+        "summary": "Clear a box of a squares grid",
+        "tags": [
+          "Selections"
+        ],
+        "description": "Clears a claimed box and returns the grid. Its holder's squad may clear it, and the commissioner (or a root admin) any box: 403 ENTRY_ACCESS_DENIED otherwise. 404 SQUARES_BOX_NOT_CLAIMED when nobody holds it. 409 SQUARES_CLAIMING_CLOSED under the same window as claiming. 404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            },
+            "in": "path",
+            "name": "rowIndex",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            },
+            "in": "path",
+            "name": "columnIndex",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A squares contest's grid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquaresBoardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/selections/{contestId}/squares/draw": {
+      "post": {
+        "operationId": "drawSquaresNumbers",
+        "summary": "Draw a squares contest's numbers",
+        "tags": [
+          "Selections"
+        ],
+        "description": "Draws the digits 0 to 9 along each side of the grid, at random, and returns the grid. Commissioner of the contest's league only (root admins bypass): 403 otherwise. Claiming closes for good; every entry holding a box is submitted, and boxes nobody claimed stay empty. The seed is kept so the draw can be replayed. 409 SQUARES_ALREADY_DRAWN once drawn; SQUARES_DRAW_CLOSED unless the contest is OPEN or live and the game's first period score is not entered. 404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A squares contest's grid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquaresBoardResponse"
                 }
               }
             }

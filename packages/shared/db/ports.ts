@@ -339,7 +339,7 @@ export interface ContestStatusTransition {
 /** A new contest; `sportEventIds` are its events in sequence order. */
 export type ContestCreate = Pick<
   Contest,
-  'leagueId' | 'sportEventIds' | 'name' | 'status' | 'contestFormat' | 'selectionType'
+  'leagueId' | 'sportEventIds' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'squaresGameMatchId'
 >;
 
 /** What can change on a contest row itself; its events change through `replaceSportEvents`. */

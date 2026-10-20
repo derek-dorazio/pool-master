@@ -102,3 +102,11 @@ export type {
   SportRepository,
   TierAssignment,
 } from './sport-catalog-ports';
+export type {
+  ContestEntrySquareClaim,
+  ContestEntrySquareClaimResult,
+  ContestEntrySquareClearResult,
+  ContestEntrySquareKey,
+  ContestSquaresDrawWrite,
+  ContestSquaresRepository,
+} from './squares-ports';

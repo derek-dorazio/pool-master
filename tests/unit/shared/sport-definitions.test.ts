@@ -33,6 +33,8 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
   it('allows only selection types that have an engine, each listed once', () => {
     expect(new Set(definition.selectionTypes).size).toBe(definition.selectionTypes.length);
     for (const selectionType of definition.selectionTypes) {
+      // Squares (#711) has no engine: its own service claims boxes and draws the digits.
+      if (selectionType === SelectionType.SQUARES) continue;
       const engine = isPredictionSelectionType(selectionType)
         ? getPredictionEngine(selectionType)
         : getSelectionEngine(selectionType);
@@ -307,10 +309,10 @@ describe('American football', () => {
     expect(americanFootball.roundLabel(5, 4)).toBe('Round 5');
   });
 
-  it('offers the three roster selection types, pick\'em, bracket and survivor', () => {
+  it('offers the three roster selection types, pick\'em, bracket, survivor and squares', () => {
     expect(americanFootball.selectionTypes).toEqual([
       SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET,
-      SelectionType.SURVIVOR,
+      SelectionType.SURVIVOR, SelectionType.SQUARES,
     ]);
   });
 

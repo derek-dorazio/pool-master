@@ -43,3 +43,4 @@ export {
 export { PrismaSportEventMatchRepository } from './prisma-match-repositories';
 export { PrismaSportEventParticipantRaceResultRepository } from './prisma-race-repositories';
 export { lockContestRow, lockContestRows } from './contest-row-lock';
+export { PrismaSquaresRepository } from './prisma-squares-repository';

@@ -2687,6 +2687,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/selections/{contestId}/squares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a squares contest's grid
+         * @description The grid of a squares contest (#711): each claimed box and its entry, the digits once drawn, the game with its score at the end of each period and its final result, each scoring moment's winning box (frozen once the contest is Final), and each entry's boxes and wins. Any member of the contest's league may read it. 404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.
+         */
+        get: operations["getSquaresBoard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/selections/{contestId}/squares/{rowIndex}/{columnIndex}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Claim a box of a squares grid
+         * @description Claims an empty box for an entry and returns the grid. A member claims for their own squad's entry; the commissioner (or a root admin) for any entry: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_ENTRY_NOT_FOUND for an entry not in the contest. 409 SQUARES_CLAIMING_CLOSED unless the contest is OPEN, its numbers are not drawn and its game has not kicked off; SQUARES_BOX_TAKEN when someone holds the box; SQUARES_BOX_LIMIT_REACHED when the entry holds the contest's box limit. 404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.
+         */
+        put: operations["claimSquaresBox"];
+        post?: never;
+        /**
+         * Clear a box of a squares grid
+         * @description Clears a claimed box and returns the grid. Its holder's squad may clear it, and the commissioner (or a root admin) any box: 403 ENTRY_ACCESS_DENIED otherwise. 404 SQUARES_BOX_NOT_CLAIMED when nobody holds it. 409 SQUARES_CLAIMING_CLOSED under the same window as claiming. 404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.
+         */
+        delete: operations["clearSquaresBox"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/selections/{contestId}/squares/draw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Draw a squares contest's numbers
+         * @description Draws the digits 0 to 9 along each side of the grid, at random, and returns the grid. Commissioner of the contest's league only (root admins bypass): 403 otherwise. Claiming closes for good; every entry holding a box is submitted, and boxes nobody claimed stay empty. The seed is kept so the draw can be replayed. 409 SQUARES_ALREADY_DRAWN once drawn; SQUARES_DRAW_CLOSED unless the contest is OPEN or live and the game's first period score is not entered. 404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.
+         */
+        post: operations["drawSquaresNumbers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4948,6 +5012,47 @@ export interface components {
                     };
                 };
             };
+        } | {
+            /** @enum {string} */
+            selectionType: "SQUARES";
+            /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+            maxSquaresPerEntry: number;
+            /** @description Maximum entries a Team may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                config: Record<string, never>;
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
+            };
         };
         /** @description One inherited event tier and its participant assignments. */
         EffectiveTierDto: {
@@ -5107,6 +5212,17 @@ export interface components {
                 contestId: string;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "SQUARES";
+                /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                maxSquaresPerEntry: number;
+                /** @description Contest-configuration identifier. */
+                id: string;
+                /** @description Contest that owns the configuration. */
+                contestId: string;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
             };
             /**
              * Format: date-time
@@ -5149,12 +5265,12 @@ export interface components {
              * @description Contest type that may use the template.
              * @enum {string}
              */
-            contestFormat: "ROSTER" | "PREDICTION";
+            contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
             /**
              * @description How an entry picks in a contest created from this template.
              * @enum {string}
              */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
             /** @description Stable machine key for the template. */
             templateKey: string;
             /** @description Commissioner-facing template label. */
@@ -5425,6 +5541,47 @@ export interface components {
                         };
                     };
                 };
+            } | {
+                /** @enum {string} */
+                selectionType: "SQUARES";
+                /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                maxSquaresPerEntry: number;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
             };
         };
         /** @description Managed-contest detail response. */
@@ -5542,6 +5699,17 @@ export interface components {
                     contestId: string;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SQUARES";
+                    /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                    maxSquaresPerEntry: number;
+                    /** @description Contest-configuration identifier. */
+                    id: string;
+                    /** @description Contest that owns the configuration. */
+                    contestId: string;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
                 };
                 /**
                  * Format: date-time
@@ -5578,7 +5746,7 @@ export interface components {
              * @description Only templates for this contest format.
              * @enum {string}
              */
-            contestFormat?: "ROSTER" | "PREDICTION";
+            contestFormat?: "ROSTER" | "PREDICTION" | "SQUARES";
             /** @description Templates for this event type, plus the ones that apply to any event type. */
             eventType?: string;
             /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
@@ -5608,12 +5776,12 @@ export interface components {
                  * @description Contest type that may use the template.
                  * @enum {string}
                  */
-                contestFormat: "ROSTER" | "PREDICTION";
+                contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
                 /**
                  * @description How an entry picks in a contest created from this template.
                  * @enum {string}
                  */
-                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
                 /** @description Stable machine key for the template. */
                 templateKey: string;
                 /** @description Commissioner-facing template label. */
@@ -5848,6 +6016,47 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SQUARES";
+                    /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                    maxSquaresPerEntry: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -6155,6 +6364,47 @@ export interface components {
                         };
                     };
                 };
+            } | {
+                /** @enum {string} */
+                selectionType: "SQUARES";
+                /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                maxSquaresPerEntry: number;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
             };
         };
         /** @description A single contest configuration template. */
@@ -6182,12 +6432,12 @@ export interface components {
                  * @description Contest type that may use the template.
                  * @enum {string}
                  */
-                contestFormat: "ROSTER" | "PREDICTION";
+                contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
                 /**
                  * @description How an entry picks in a contest created from this template.
                  * @enum {string}
                  */
-                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
                 /** @description Stable machine key for the template. */
                 templateKey: string;
                 /** @description Commissioner-facing template label. */
@@ -6422,6 +6672,47 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SQUARES";
+                    /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                    maxSquaresPerEntry: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -9039,15 +9330,15 @@ export interface components {
             /** @description The events the contest covers (#713): one for a golf or race contest, several for a majors pool or a season. All from one sport league, each released, with its field loaded and not yet started. The contest keeps them in start-date order, whatever order they are sent in. */
             sportEventIds: string[];
             /**
-             * @description ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). It must be the format the selection type plays (PICK_EM and BRACKET are PREDICTION, every other type ROSTER) and one the event's tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise.
+             * @description ROSTER: entries pick a lineup from the field. PREDICTION: entries pick the winners of games (#716). SQUARES: entries claim boxes of a grid on one game (#711). It must be the format the selection type plays (PICK_EM, BRACKET and SURVIVOR are PREDICTION, SQUARES is SQUARES, every other type ROSTER) and one the event's tournament format allows: 422 CONTEST_FORMAT_NOT_ALLOWED otherwise.
              * @enum {string}
              */
-            contestFormat: "ROSTER" | "PREDICTION";
+            contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
             /**
              * @description How an entry picks: the selection types with typed rules. It must match the template's selection type when a template is named, and the configuration's.
              * @enum {string}
              */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
             /**
              * Format: uuid
              * @description Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.
@@ -9309,7 +9600,53 @@ export interface components {
                         };
                     };
                 };
+            } | {
+                /** @enum {string} */
+                selectionType: "SQUARES";
+                /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                maxSquaresPerEntry: number;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    config: Record<string, never>;
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
             };
+            /**
+             * Format: uuid
+             * @description A squares contest's game (#711): one of its event's games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.
+             */
+            sportEventMatchId?: string;
         };
         /** @description Patch payload for updating editable contest metadata. */
         UpdateContestRequest: {
@@ -9391,9 +9728,9 @@ export interface components {
             /** @enum {string} */
             status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
             /** @enum {string} */
-            contestFormat: "ROSTER" | "PREDICTION";
+            contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
             /** @enum {string} */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
             leagueId: string;
             /** @description The events the contest covers, in sequence order (#713). One for a golf or race contest. */
             sportEvents: {
@@ -9499,7 +9836,7 @@ export interface components {
              * @description Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.
              * @enum {string}
              */
-            contestFormat: "ROSTER" | "PREDICTION";
+            contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
             /** @description Unused: no built contest format sets it, so it is always null. Removal is tracked in #632. */
             period: number | null;
             /** @description Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632. */
@@ -9991,9 +10328,9 @@ export interface components {
                 /** @enum {string} */
                 status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
                 /** @enum {string} */
-                contestFormat: "ROSTER" | "PREDICTION";
+                contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
                 /** @enum {string} */
-                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
                 leagueId: string;
                 /** @description The events the contest covers, in sequence order (#713). One for a golf or race contest. */
                 sportEvents: {
@@ -10041,9 +10378,9 @@ export interface components {
                 /** @enum {string} */
                 status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
                 /** @enum {string} */
-                contestFormat: "ROSTER" | "PREDICTION";
+                contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
                 /** @enum {string} */
-                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR";
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
                 leagueId: string;
                 /** @description The events the contest covers, in sequence order (#713). One for a golf or race contest. */
                 sportEvents: {
@@ -10328,7 +10665,7 @@ export interface components {
             /** @description Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started. */
             acceptsPicks: boolean;
             /** @enum {string} */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
             /**
              * Format: date-time
              * @description When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
@@ -10430,7 +10767,7 @@ export interface components {
             /** @description Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started. */
             acceptsPicks: boolean;
             /** @enum {string} */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR";
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
             /**
              * Format: date-time
              * @description When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
@@ -13023,6 +13360,210 @@ export interface components {
                  */
                 awaySportEventParticipantId: string;
             }[];
+        };
+        /** @description A claimed box of the grid. A box not listed is empty. */
+        SquaresBoxDto: {
+            /** @description The row position, 0 at the top. Rows are the away team's. */
+            rowIndex: number;
+            /** @description The column position, 0 at the left. Columns are the home team's. */
+            columnIndex: number;
+            /**
+             * Format: uuid
+             * @description The entry holding the box.
+             */
+            contestEntryId: string;
+            /** @description The entry's name, which is its squad's. */
+            entryName: string;
+        };
+        /** @description The digits drawn along the two sides of the grid. */
+        SquaresDigitsDto: {
+            /** @description The away team's last digit at each row position, top first. */
+            rowDigits: number[];
+            /** @description The home team's last digit at each column position, left first. */
+            columnDigits: number[];
+            /**
+             * Format: date-time
+             * @description When the digits were drawn: claiming closed then.
+             */
+            drawnAt: string;
+        };
+        /** @description One scoring moment's winning box. */
+        SquaresWinnerDto: {
+            /** @description The scoring moment: 1 to the game's period count, the last being the final score, overtime included. */
+            periodNumber: number;
+            homeScore: number;
+            awayScore: number;
+            /** @description The winning box's row: where the away score's last digit is. */
+            rowIndex: number;
+            /** @description The winning box's column: where the home score's last digit is. */
+            columnIndex: number;
+            /**
+             * Format: uuid
+             * @description The entry holding the winning box; null when nobody claimed it ("No winner").
+             */
+            contestEntryId: string | null;
+            /** @description That entry's name; null with no entry. */
+            entryName: string | null;
+        };
+        /** @description One entry of the contest with its boxes and wins. */
+        SquaresEntryDto: {
+            /** Format: uuid */
+            contestEntryId: string;
+            entryName: string;
+            /** @description How many boxes the entry holds. */
+            boxCount: number;
+            /** @description How many scoring moments its boxes won so far. */
+            periodsWon: number;
+            /** @description Its settled place, "T1" when shared; null until the contest is Final. */
+            displayPosition: string | null;
+        };
+        /** @description A squares contest's grid. */
+        SquaresBoardResponse: {
+            /** Format: uuid */
+            contestId: string;
+            /** @enum {string} */
+            contestStatus: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+            /** @description How many boxes one entry may claim. */
+            maxSquaresPerEntry: number;
+            /** @description How many scoring moments the game has: its sport's period count, the last being the final score. */
+            periodCount: number;
+            /** @description The game the contest is played on, with its score at the end of each period and its final result. */
+            game: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                sportEventId: string;
+                /** @description The round the match is played in; its label comes from the sport definition's round labels. */
+                roundNumber: number;
+                /** @description Unique within the event: the bracket slot and the display order. */
+                matchNumber: number;
+                /**
+                 * Format: uuid
+                 * @description The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.
+                 */
+                homeSportEventParticipantId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The field row on the away side; null until it is decided.
+                 */
+                awaySportEventParticipantId: string | null;
+                /** @description True when neither side is at home: screens then say "vs" rather than "@". */
+                isNeutralSite: boolean;
+                /**
+                 * Format: date-time
+                 * @description Tip-off or kickoff; null until it is announced.
+                 */
+                scheduledDate: string | null;
+                /**
+                 * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
+                 * @enum {string}
+                 */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                /**
+                 * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has.
+                 * @enum {string|null}
+                 */
+                winnerSide: "HOME" | "AWAY" | null;
+                /** @description The home side's score; in a series, games won. */
+                homeScore: number | null;
+                /** @description The away side's score; in a series, games won. */
+                awayScore: number | null;
+                /**
+                 * Format: uuid
+                 * @description The match the winner moves on to; null for the final.
+                 */
+                advancesToMatchId: string | null;
+                /**
+                 * @description The side of that match the winner fills; null for the final.
+                 * @enum {string|null}
+                 */
+                advancesToSide: "HOME" | "AWAY" | null;
+                /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
+                regionLabel: string | null;
+                /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it. */
+                homeSpread: number | null;
+                /** @description The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore. */
+                periodScores: {
+                    /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
+                    periodNumber: number;
+                    /** @description The home side's score at the end of the period, earlier periods included, as the scoreboard shows it. */
+                    homeScore: number;
+                    /** @description The away side's score at the end of the period, earlier periods included. */
+                    awayScore: number;
+                }[];
+            };
+            /** @description The home team, across the top; null until it is known. */
+            homeTeamName: string | null;
+            /** @description The away team, down the side; null until it is known. */
+            awayTeamName: string | null;
+            /** @description Whether boxes can be claimed and cleared now: the contest is OPEN, its digits are not drawn and the game has not kicked off. */
+            claimsOpen: boolean;
+            /** @description Whether the digits can be drawn now: not drawn yet, the contest OPEN or live, and the first period's score not in. */
+            drawOpen: boolean;
+            /** @description Every claimed box, by row then column. */
+            boxes: {
+                /** @description The row position, 0 at the top. Rows are the away team's. */
+                rowIndex: number;
+                /** @description The column position, 0 at the left. Columns are the home team's. */
+                columnIndex: number;
+                /**
+                 * Format: uuid
+                 * @description The entry holding the box.
+                 */
+                contestEntryId: string;
+                /** @description The entry's name, which is its squad's. */
+                entryName: string;
+            }[];
+            /** @description The digits; null until they are drawn. */
+            digits: {
+                /** @description The away team's last digit at each row position, top first. */
+                rowDigits: number[];
+                /** @description The home team's last digit at each column position, left first. */
+                columnDigits: number[];
+                /**
+                 * Format: date-time
+                 * @description When the digits were drawn: claiming closed then.
+                 */
+                drawnAt: string;
+            } | null;
+            /** @description Each scoring moment's winning box so far, by period: empty until the digits are drawn. Frozen once the contest is Final. */
+            winners: {
+                /** @description The scoring moment: 1 to the game's period count, the last being the final score, overtime included. */
+                periodNumber: number;
+                homeScore: number;
+                awayScore: number;
+                /** @description The winning box's row: where the away score's last digit is. */
+                rowIndex: number;
+                /** @description The winning box's column: where the home score's last digit is. */
+                columnIndex: number;
+                /**
+                 * Format: uuid
+                 * @description The entry holding the winning box; null when nobody claimed it ("No winner").
+                 */
+                contestEntryId: string | null;
+                /** @description That entry's name; null with no entry. */
+                entryName: string | null;
+            }[];
+            /** @description The contest's entries, by place once Final, else by name. */
+            entries: {
+                /** Format: uuid */
+                contestEntryId: string;
+                entryName: string;
+                /** @description How many boxes the entry holds. */
+                boxCount: number;
+                /** @description How many scoring moments its boxes won so far. */
+                periodsWon: number;
+                /** @description Its settled place, "T1" when shared; null until the contest is Final. */
+                displayPosition: string | null;
+            }[];
+        };
+        /** @description Claim one box of the grid. */
+        ClaimSquaresBoxRequest: {
+            /**
+             * Format: uuid
+             * @description The entry the box is claimed for: the caller's own, or any entry when the caller is the commissioner.
+             */
+            contestEntryId: string;
         };
         /** @description Feed-aware event sync request. */
         EventSyncRequest: {
@@ -17766,7 +18307,7 @@ export interface operations {
                 /** @description Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league. */
                 sportLeagueId?: string;
                 /** @description Only templates for this contest format. */
-                contestFormat?: "ROSTER" | "PREDICTION";
+                contestFormat?: "ROSTER" | "PREDICTION" | "SQUARES";
                 /** @description Templates for this event type, plus the ones that apply to any event type. */
                 eventType?: string;
                 /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
@@ -22757,6 +23298,282 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SelectionStateResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getSquaresBoard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A squares contest's grid. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SquaresBoardResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    claimSquaresBox: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+                rowIndex: number;
+                columnIndex: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClaimSquaresBoxRequest"];
+            };
+        };
+        responses: {
+            /** @description A squares contest's grid. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SquaresBoardResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    clearSquaresBox: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+                rowIndex: number;
+                columnIndex: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A squares contest's grid. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SquaresBoardResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    drawSquaresNumbers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A squares contest's grid. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SquaresBoardResponse"];
                 };
             };
             /** @description Standard API error envelope. */

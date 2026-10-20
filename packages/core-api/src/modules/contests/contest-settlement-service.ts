@@ -3,9 +3,22 @@ import type {
   ContestEntryEventStandingRepository,
   ContestEntryStandingRepository,
   ContestRepository,
+  ContestSquaresRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus, SelectionType, SportEventStatus, SurvivorWeekOutcome, type Contest, type SportEvent } from '@poolmaster/shared/domain';
+import {
+  ContestStatus,
+  MatchStatus,
+  SelectionType,
+  SportEventStatus,
+  SurvivorWeekOutcome,
+  getSportDefinition,
+  hasEverySquaresScoringMoment,
+  squaresScoringMoments,
+  squaresWinners,
+  type Contest,
+  type SportEvent,
+} from '@poolmaster/shared/domain';
 import { loadPickEmScoring, loadPickEmWeekStandings, PickEmRulesMissingError } from './pick-em-standings';
 import type { GamePickScoring } from '../scoring-families/head-to-head/game-picks';
 import { loadSurvivorSeason, type SurvivorStandingsReadDeps } from './survivor-standings';
@@ -79,6 +92,7 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   contests: ContestRepository;
   standings: ContestEntryStandingRepository;
   eventStandings: ContestEntryEventStandingRepository;
+  squares: Pick<ContestSquaresRepository, 'findSquares' | 'findDraw' | 'replaceWinners'>;
   logger?: LifecycleLogger;
 }
 
@@ -134,6 +148,15 @@ export class ContestSettlementService {
       }
       if (contest.selectionType === SelectionType.SURVIVOR) {
         const settled = await this.settleSurvivorWeek(contest, sportEvent, completedAt);
+        contestsSettled++;
+        standingsUpserted += settled.standingsUpserted;
+        if (settled.completed) contestsCompleted++;
+        continue;
+      }
+      if (contest.selectionType === SelectionType.SQUARES) {
+        // Its game normally settles it first (`settleFinishedGame`); an event finished without
+        // that game's result leaves it Final with no scores.
+        const settled = await this.settleSquaresContest(contest, sportEvent, completedAt);
         contestsSettled++;
         standingsUpserted += settled.standingsUpserted;
         if (settled.completed) contestsCompleted++;
@@ -248,6 +271,100 @@ export class ContestSettlementService {
       contestsCompleted,
       standingsUpserted,
     };
+  }
+
+  /**
+   * Settles the squares contests played on one game (#711) once the game is decided: its result is
+   * in, or it was cancelled. They settle with their game, not with its event, which may run on for
+   * weeks (the Super Bowl is the last game of the NFL playoffs). Answers how many it completed.
+   */
+  async settleFinishedGame(sportEventId: string, sportEventMatchId: string, input?: { completedAt?: Date }): Promise<number> {
+    const sportEvent = await this.deps.sportEvents.findById(sportEventId);
+    if (!sportEvent) return 0;
+    const contests = (await this.deps.contests.findBySportEvent(sportEventId, { excludeStatuses: NOT_SETTLED }))
+      .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGameMatchId === sportEventMatchId);
+    let completed = 0;
+    for (const contest of contests) {
+      const settled = await this.settleSquaresContest(contest, sportEvent, input?.completedAt ?? new Date(), { waitForEveryPeriod: true });
+      if (settled.completed) completed++;
+    }
+    return completed;
+  }
+
+  /**
+   * Settles a squares contest (#711): each scoring moment's winning box is frozen (design Q3.7),
+   * and each entry holding a box is placed by the moments it won, ties shared. A game not played to
+   * a result (cancelled, or its event finished without it), or a grid whose numbers were never
+   * drawn, ends the contest Final with no winners and no standings (#743). With
+   * `waitForEveryPeriod`, a drawn game whose result is in but a quarter's score is not stays as it
+   * is, so the contest settles once that score is entered, with all four winners.
+   */
+  private async settleSquaresContest(
+    contest: Contest,
+    sportEvent: SportEvent,
+    completedAt: Date,
+    options?: { waitForEveryPeriod?: boolean },
+  ): Promise<{ standingsUpserted: number; completed: boolean }> {
+    const [games, draw] = await Promise.all([
+      this.deps.matches.findBySportEvent(sportEvent.id),
+      this.deps.squares.findDraw(contest.id),
+    ]);
+    const game = games.find((candidate) => candidate.id === contest.squaresGameMatchId);
+    const periodCount = getSportDefinition(sportEvent.sport).matchPeriods?.count;
+    let standingsUpserted = 0;
+    if (game?.status === MatchStatus.COMPLETED && draw && periodCount !== undefined) {
+      const moments = squaresScoringMoments(game, periodCount);
+      if (options?.waitForEveryPeriod === true && !hasEverySquaresScoringMoment(moments, periodCount)) {
+        this.logger.info({
+          contestId: contest.id,
+          sportEventId: sportEvent.id,
+          sportEventMatchId: contest.squaresGameMatchId,
+          scoredPeriods: moments.map((moment) => moment.periodNumber),
+        }, 'Squares contest waits for every quarter score before settling');
+        return { standingsUpserted: 0, completed: false };
+      }
+      const boxes = await this.deps.squares.findSquares(contest.id);
+      const winners = squaresWinners(draw, moments, boxes);
+      await this.deps.squares.replaceWinners(contest.id, winners.map((winner) => ({ ...winner, contestId: contest.id, settledAt: completedAt })));
+      const holders = [...new Set(boxes.map((box) => box.contestEntryId))];
+      const won = (entryId: string) => winners.filter((winner) => winner.contestEntryId === entryId).length;
+      for (const entryId of holders) {
+        const score = won(entryId);
+        const position = 1 + holders.filter((other) => won(other) > score).length;
+        const sharing = holders.filter((other) => won(other) === score).length;
+        const boxCount = boxes.filter((box) => box.contestEntryId === entryId).length;
+        const frozen = {
+          contestId: contest.id,
+          contestEntryId: entryId,
+          position,
+          displayPosition: sharing > 1 ? `T${position}` : String(position),
+          // No pick is scored: the closest meaning of the two pick counts is the boxes held.
+          countingPickLimit: boxCount,
+          scoredPickCount: boxCount,
+          asOf: completedAt,
+          settledAt: completedAt,
+          totalScore: score,
+        };
+        await this.deps.eventStandings.upsert({ ...frozen, sportEventId: sportEvent.id });
+        await this.deps.standings.upsert(frozen);
+      }
+      standingsUpserted = holders.length;
+    }
+    const completed = await this.deps.contests.transitionStatus(contest.id, {
+      from: SETTLEABLE,
+      to: ContestStatus.COMPLETED,
+      endsAt: completedAt,
+    });
+    this.logger.info({
+      contestId: contest.id,
+      sportEventId: sportEvent.id,
+      sportEventMatchId: contest.squaresGameMatchId,
+      gameStatus: game?.status,
+      drawn: draw !== null,
+      standingsUpserted,
+      completed,
+    }, 'Settled a squares contest');
+    return { standingsUpserted, completed };
   }
 
   /**

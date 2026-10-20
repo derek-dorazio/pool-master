@@ -3,6 +3,7 @@ import {
   KNOCKOUT_ROUND_VALUES_MAX_ROUNDS,
   PickEmMode,
   RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
+  SQUARES_PER_ENTRY_MAX,
   SelectionType,
   getDefaultCountedScores,
   getTieredRosterSize,
@@ -28,6 +29,8 @@ export type ContestRulesValues = {
   picksPerEntry: string;
   picksPerTier: string;
   rosterSize: string;
+  /** How many boxes a squares entry may claim (#711). */
+  maxSquaresPerEntry: string;
   /** A bracket's starting round: "1" for the full bracket, a later round for a second chance. */
   startsAtRound: string;
   unlimitedEntries: boolean;
@@ -131,6 +134,15 @@ function parseSurvivorRules(values: ContestRulesValues): RulesResult {
   return withEntryLimit(values, { selectionType: SelectionType.SURVIVOR });
 }
 
+/** The squares rules (#711): how many boxes an entry may claim. */
+function parseSquaresRules(values: ContestRulesValues): RulesResult {
+  const maxSquaresPerEntry = parseWholeNumber(values.maxSquaresPerEntry);
+  if (maxSquaresPerEntry === null || maxSquaresPerEntry > SQUARES_PER_ENTRY_MAX) {
+    return { configuration: null, error: `Boxes per entry must be between 1 and ${SQUARES_PER_ENTRY_MAX}.` };
+  }
+  return withEntryLimit(values, { selectionType: SelectionType.SQUARES, maxSquaresPerEntry });
+}
+
 /**
  * The configuration the rules fields describe for a format, or the first thing wrong with them
  * in the words the form shows.
@@ -154,6 +166,8 @@ export function parseContestRules(
       return parseBracketRules(values);
     case SelectionType.SURVIVOR:
       return parseSurvivorRules(values);
+    case SelectionType.SQUARES:
+      return parseSquaresRules(values);
   }
 }
 
@@ -179,6 +193,7 @@ export function toContestRulesValues(
     picksPerEntry: current.picksPerEntry,
     picksPerTier: current.picksPerTier,
     rosterSize: current.rosterSize,
+    maxSquaresPerEntry: current.maxSquaresPerEntry,
     startsAtRound: current.startsAtRound,
     unlimitedEntries: current.unlimitedEntries,
   };
@@ -199,6 +214,8 @@ export function toContestRulesValues(
       return { ...rules, ...entryLimit, startsAtRound: String(configuration.startsAtRound) };
     case SelectionType.SURVIVOR:
       return { ...rules, ...entryLimit };
+    case SelectionType.SQUARES:
+      return { ...rules, ...entryLimit, maxSquaresPerEntry: String(configuration.maxSquaresPerEntry) };
   }
 }
 
@@ -211,6 +228,8 @@ export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
   picksPerEntry: '4',
   picksPerTier: '1',
   rosterSize: '6',
+  // A squares contest's preset holds 10 boxes per entry (design Q3.3).
+  maxSquaresPerEntry: '10',
   // A bracket starts as the full bracket.
   startsAtRound: '1',
   unlimitedEntries: false,

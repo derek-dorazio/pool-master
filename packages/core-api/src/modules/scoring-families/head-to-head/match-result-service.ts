@@ -62,9 +62,10 @@ export interface MatchResultServiceDeps {
   /**
    * Starts the event's contests whose cutoff a result shows has passed (#721): a result in a
    * second-chance bracket's starting round puts it live even where the scheduler leaves the event
-   * to an admin.
+   * to an admin, as a period score does for a squares contest on that game (#711). A game's result
+   * or cancellation settles the squares contests played on it.
    */
-  contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff'>;
+  contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff' | 'settleContestsForFinishedGame'>;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -180,9 +181,11 @@ export class MatchResultService {
     const sideFill = this.advance(bracket, match, winnerId);
     await this.write(sportEventId, bracket, result, sideFill);
     this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, winnerChanges }, 'Saved a match result');
+    const now = this.deps.now?.() ?? new Date();
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
-      await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, this.deps.now?.() ?? new Date());
+      await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, now);
     }
+    await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, now);
     return this.deps.matches.findBySportEvent(sportEventId);
   }
 
@@ -214,7 +217,7 @@ export class MatchResultService {
    * an earlier game, or sits among games of several rounds), since a bracket cannot lose a game.
    */
   async cancelMatch(sportEventId: string, matchNumber: number): Promise<SportEventMatch[]> {
-    await this.requireReleasedBracketEvent(sportEventId);
+    const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = this.requireMatch(sportEventId, bracket, matchNumber);
     if (match.status === MatchStatus.CANCELLED) {
@@ -240,6 +243,8 @@ export class MatchResultService {
     const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null };
     await this.write(sportEventId, bracket, result, null);
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cancelled a game');
+    // A squares contest on the game ends Final with no scores (#711, #743).
+    await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, this.deps.now?.() ?? new Date());
     return this.deps.matches.findBySportEvent(sportEventId);
   }
 
@@ -253,7 +258,7 @@ export class MatchResultService {
    * for a score below an earlier period's or above a later one's or the final score.
    */
   async recordPeriodScore(sportEventId: string, matchNumber: number, periodNumber: number, input: PeriodScoreInput): Promise<SportEventMatch[]> {
-    const { match, periods } = await this.requirePeriod(sportEventId, matchNumber, periodNumber);
+    const { sportEvent, match, periods } = await this.requirePeriod(sportEventId, matchNumber, periodNumber);
     if (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null) {
       this.deps.logger?.warn({ sportEventId, matchNumber, periodNumber }, 'Refused a period score for a game whose teams are not both known');
       throw new SportEventError(
@@ -273,6 +278,15 @@ export class MatchResultService {
     }
     await this.deps.matches.savePeriodScore(match.id, { periodNumber, ...input });
     this.deps.logger?.info({ sportEventId, matchNumber, periodNumber }, 'Saved a period score');
+    // A scored period means the game is under way: a squares contest on it goes live (#711).
+    const now = this.deps.now?.() ?? new Date();
+    if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
+      await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, now);
+    }
+    // A quarter entered after the result may be the last one a squares contest waits for.
+    if (match.status === MatchStatus.COMPLETED) {
+      await this.deps.contestActivation?.settleContestsForFinishedGame(sportEvent, match.id, now);
+    }
     return this.deps.matches.findBySportEvent(sportEventId);
   }
 
@@ -295,7 +309,7 @@ export class MatchResultService {
     sportEventId: string,
     matchNumber: number,
     periodNumber: number,
-  ): Promise<{ match: SportEventMatch; periods: SportMatchPeriods }> {
+  ): Promise<{ sportEvent: SportEvent; match: SportEventMatch; periods: SportMatchPeriods }> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
     const periods = getSportDefinition(sportEvent.sport).matchPeriods;
     if (!periods) {
@@ -319,7 +333,7 @@ export class MatchResultService {
       this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused a period score for a cancelled game');
       throw new SportEventError(`Match ${matchNumber} was cancelled, so it has no score.`, 'MATCH_CANCELLED', 409);
     }
-    return { match, periods };
+    return { sportEvent, match, periods };
   }
 
   /**

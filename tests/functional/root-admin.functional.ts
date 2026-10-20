@@ -469,6 +469,7 @@ describe('SDK Functional: Root Admin', () => {
       template.configuration.selectionType === SelectionType.PICK_EM
       || template.configuration.selectionType === SelectionType.BRACKET
       || template.configuration.selectionType === SelectionType.SURVIVOR
+      || template.configuration.selectionType === SelectionType.SQUARES
     ) {
       throw new Error('Expected a golf template to be a roster template');
     }

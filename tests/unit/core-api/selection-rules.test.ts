@@ -1,4 +1,4 @@
-import { SelectionStatus, SelectionType, Sport, isPredictionSelectionType } from '@poolmaster/shared/domain';
+import { SelectionStatus, SelectionType, Sport, isPredictionSelectionType, isRosterSelectionType } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -417,7 +417,7 @@ describe('#324 draft rules — contest shape', () => {
   it('narrows a roster contest\'s selection type to its roster engine, and reads OPEN as LIVE', () => {
     const contest = { selectionType: SelectionType.TIERED, status: 'OPEN' } as Contest;
     const { selectionType } = contest;
-    if (isPredictionSelectionType(selectionType)) {
+    if (!isRosterSelectionType(selectionType)) {
       throw new Error('a TIERED contest must be a roster contest');
     }
 

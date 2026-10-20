@@ -12,6 +12,7 @@ import {
   PickEmContestRulesSchema,
   SelectionType,
   SurvivorContestRulesSchema,
+  SquaresContestRulesSchema,
   Sport,
   TieredContestRulesSchema,
 } from '@poolmaster/shared/domain';
@@ -173,6 +174,21 @@ export const CONTEST_BRACKET_SINGLE_EVENT = 'CONTEST_BRACKET_SINGLE_EVENT';
  */
 export const CONTEST_EVENT_NOT_A_BRACKET = 'CONTEST_EVENT_NOT_A_BRACKET';
 
+/** Error code for a squares contest created without its game (#711). */
+export const CONTEST_SQUARES_GAME_REQUIRED = 'CONTEST_SQUARES_GAME_REQUIRED';
+
+/**
+ * Error code for a squares game that cannot be played on (#711): not a game of the contest's event,
+ * or cancelled. A game named for a contest of another selection type is refused with it too.
+ */
+export const CONTEST_SQUARES_GAME_INVALID = 'CONTEST_SQUARES_GAME_INVALID';
+
+/** Error code for a squares contest given more than one event: it is played on one game (#711). */
+export const CONTEST_SQUARES_SINGLE_EVENT = 'CONTEST_SQUARES_SINGLE_EVENT';
+
+/** Error code for a squares contest allowing other than one entry per squad (#711, design Q3.3): its box limit is the squad's. */
+export const CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD = 'CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD';
+
 /** Error code for naming an event the contest does not cover (#713). */
 export const CONTEST_EVENT_NOT_IN_CONTEST = 'CONTEST_EVENT_NOT_IN_CONTEST';
 
@@ -189,6 +205,7 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType
   PickEmContestRulesSchema.extend(persistedConfigurationFields),
   BracketContestRulesSchema.extend(persistedConfigurationFields),
   SurvivorContestRulesSchema.extend(persistedConfigurationFields),
+  SquaresContestRulesSchema.extend(persistedConfigurationFields),
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 

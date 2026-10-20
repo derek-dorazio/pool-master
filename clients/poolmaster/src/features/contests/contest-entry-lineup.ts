@@ -1,4 +1,4 @@
-import { SelectionType, isPredictionSelectionType, toCents, type RosterSelectionType } from '@poolmaster/shared/domain';
+import { SelectionType, isRosterSelectionType, toCents, type RosterSelectionType } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
 import { formatDollars } from '@/features/shared/ui';
 import type { SelectionGroup } from './contest-entry-selection';
@@ -147,7 +147,7 @@ export const LINEUP_RULES: Record<RosterSelectionType, LineupRules> = {
  * pick the winners of games rather than a lineup from the field.
  */
 export function lineupRulesFor(selectionType: SelectionType): LineupRules | null {
-  return isPredictionSelectionType(selectionType) ? null : LINEUP_RULES[selectionType];
+  return isRosterSelectionType(selectionType) ? LINEUP_RULES[selectionType] : null;
 }
 
 /**

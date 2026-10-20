@@ -251,6 +251,7 @@ describe('cutoffTiming — the timing a contest\'s window runs on (#721)', () =>
   const ROUND_TWO = { kind: ContestCutoffKind.ROUND_START, roundNumber: 2 } as const;
   const underWay = event('regional', -48, SportEventStatus.IN_PROGRESS);
   const game = (roundNumber: number, startOffsetHours: number | null, status: MatchStatus = MatchStatus.SCHEDULED) => ({
+    id: `game-${roundNumber}-${startOffsetHours ?? 'untimed'}`,
     roundNumber,
     status,
     scheduledDate: startOffsetHours === null ? null : new Date(NOW.getTime() + startOffsetHours * HOUR),
@@ -302,5 +303,49 @@ describe('cutoffTiming — the timing a contest\'s window runs on (#721)', () =>
     const finished = event('regional', -48, status);
 
     expect(cutoffTiming(ROUND_TWO, finished, [game(2, 5)])).toBe(finished);
+  });
+});
+
+describe('cutoffTiming — a squares contest closes at its one game\'s kickoff (#711)', () => {
+  const playoffs = event('playoffs', -24 * 14, SportEventStatus.IN_PROGRESS);
+  const game = (id: string, startOffsetHours: number | null, status: MatchStatus = MatchStatus.SCHEDULED) => ({
+    id,
+    roundNumber: 4,
+    status,
+    scheduledDate: startOffsetHours === null ? null : new Date(NOW.getTime() + startOffsetHours * HOUR),
+  });
+  const SUPER_BOWL = { kind: ContestCutoffKind.MATCH_START, sportEventMatchId: 'super-bowl' } as const;
+
+  it('closes a squares contest at its game\'s kickoff, and every other contest as before', () => {
+    expect(contestCutoff({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, 'super-bowl')).toEqual(SUPER_BOWL);
+    expect(contestCutoff({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, 'super-bowl')).toEqual({ kind: ContestCutoffKind.EVENT_START });
+  });
+
+  it('is not yet started, at the game\'s kickoff, while the playoffs are under way and the game is still to play', () => {
+    const timing = cutoffTiming(SUPER_BOWL, playoffs, [game('conference', -24, MatchStatus.COMPLETED), game('super-bowl', 6)]);
+
+    expect(timing).toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 6 * HOUR) });
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], NOW)).toBe(true);
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], new Date(NOW.getTime() + 6 * HOUR))).toBe(false);
+  });
+
+  it.each([MatchStatus.IN_PROGRESS, MatchStatus.CANCELLED])('is started once the game is %s, though its kickoff time has not passed', (status) => {
+    expect(cutoffTiming(SUPER_BOWL, playoffs, [game('super-bowl', 6, status)]).status).toBe(SportEventStatus.IN_PROGRESS);
+  });
+
+  it('is started once a quarter\'s score is in, though the game is still SCHEDULED and its kickoff time has not passed', () => {
+    const scored = { ...game('super-bowl', 6), periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 0 }] };
+
+    expect(cutoffTiming(SUPER_BOWL, playoffs, [scored]).status).toBe(SportEventStatus.IN_PROGRESS);
+    expect(hasMatchStarted(scored, playoffs, NOW)).toBe(true);
+  });
+
+  it('times a game with no time of its own at the event\'s start', () => {
+    expect(cutoffTiming(SUPER_BOWL, playoffs, [game('super-bowl', null)]).startDate).toEqual(playoffs.startDate);
+  });
+
+  it('keeps a finished event finished, whatever its game says', () => {
+    const finished = event('playoffs', -48, SportEventStatus.COMPLETED);
+    expect(cutoffTiming(SUPER_BOWL, finished, [game('super-bowl', 6)])).toBe(finished);
   });
 });

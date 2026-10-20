@@ -58,6 +58,7 @@ import type {
   ContestEntryRepository,
   ContestEntryStandingRepository,
   ContestRepository,
+  ContestSquaresRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
@@ -446,3 +447,16 @@ export function fakeParticipantContestScoringRuleRepo(
   };
 }
 
+
+export function fakeSquaresRepo(overrides: Partial<ContestSquaresRepository> = {}): ContestSquaresRepository {
+  return {
+    findSquares: many(),
+    claim: jest.fn().mockResolvedValue('claimed'),
+    clear: jest.fn().mockResolvedValue('cleared'),
+    findDraw: one(),
+    recordDraw: jest.fn().mockResolvedValue('drawn'),
+    findWinners: many(),
+    replaceWinners: nothing(),
+    ...overrides,
+  };
+}

@@ -35,6 +35,7 @@ import { SelectionError } from '../../../packages/core-api/src/modules/selection
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
+import { fakeSquaresRepo } from '../../support/repo-fakes';
 
 const HOUR = 60 * 60 * 1000;
 const T0 = new Date('2026-09-01T00:00:00.000Z');
@@ -139,7 +140,7 @@ function setup() {
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo() });
+  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo() });
   const predictions = new PredictionService({
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),

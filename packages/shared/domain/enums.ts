@@ -84,6 +84,8 @@ export type PoolType = (typeof PoolType)[keyof typeof PoolType];
 export const ContestFormat = {
   ROSTER: 'ROSTER',
   PREDICTION: 'PREDICTION',
+  /** A 10x10 grid on one game (#711): entries claim boxes, the digits are drawn, and each scoring moment's box wins. */
+  SQUARES: 'SQUARES',
 } as const;
 export type ContestFormat = (typeof ContestFormat)[keyof typeof ContestFormat];
 
@@ -195,6 +197,11 @@ export const SelectionType = {
    * loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win.
    */
   SURVIVOR: 'SURVIVOR',
+  /**
+   * Claim boxes of a 10x10 grid on one game (#711): a SQUARES contest. The digits 0 to 9 are
+   * drawn along each side, and the box at each scoring moment's last digits wins it.
+   */
+  SQUARES: 'SQUARES',
 } as const;
 export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
 
