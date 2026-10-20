@@ -46,7 +46,8 @@ const later = (when: Date, hours: number) => new Date(when.getTime() + hours * H
 type Team = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6' | 'T7' | 'T8';
 type Name = 'Alice' | 'Bob' | 'Cara' | 'Dan';
 
-function setup() {
+/** `untimedLaterRounds`: the later rounds' games have no time yet, as before their round is set. */
+function setup(options: { untimedLaterRounds?: boolean } = {}) {
   const world = new InMemoryContestWorld();
   const games = new InMemoryGamePicks(world);
   const league = world.addLeague();
@@ -64,7 +65,7 @@ function setup() {
     id: `game-${matchNumber}`,
     matchNumber,
     roundNumber,
-    scheduledDate: kickoff,
+    scheduledDate: options.untimedLaterRounds === true ? null : kickoff,
     homeSportEventParticipantId: null,
     awaySportEventParticipantId: null,
   });
@@ -236,6 +237,19 @@ describe('PredictionService — a playoff survivor pool, each round a week', () 
     await expectRefused(context.save('Cara', 5, 'T1'), 'PREDICTION_ENTRY_ELIMINATED', 409);
     const view = await context.predictions.getGamePicks(context.input('Cara'));
     expect(view.survivor?.eliminatedInWeek).toBe(1);
+  });
+});
+
+describe('Playoff survivor rounds whose games have no time yet', () => {
+  it('keeps a later round open while its games have no time: no entry goes out at the playoffs\' start, and the round takes its pick once its teams are placed', async () => {
+    const context = setup({ untimedLaterRounds: true });
+    await context.playRound1();
+
+    const view = await context.save('Alice', 5, 'T1');
+    expect(view.games.filter((game) => game.roundNumber === 2).map((game) => game.locked)).toEqual([false, false]);
+    expect(context.storedPicks('Alice')).toEqual(['game-2', 'game-5']);
+    const rows = Object.fromEntries((await context.leaderboard()).entries.map((entry) => [entry.entryName, [entry.alive, entry.eliminatedInWeek]]));
+    expect(rows).toEqual({ Alice: [true, null], Bob: [true, null], Dan: [true, null], Cara: [false, 1] });
   });
 });
 
