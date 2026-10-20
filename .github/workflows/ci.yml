@@ -51,6 +51,10 @@ jobs:
     name: changes
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      # Finding the last successful main run (#778).
+      actions: read
     outputs:
       code: ${{ steps.classify.outputs.code }}
       service: ${{ steps.classify.outputs.service }}
@@ -71,9 +75,28 @@ jobs:
           echo "merge base: $MERGE_BASE"
           git diff --name-only "$MERGE_BASE" HEAD > changed-files.txt
           wc -l < changed-files.txt
+      # #778 — a push to main is diffed against the last main run that passed, not the previous
+      # commit. A run replaced while pending, or one that failed, never passed, so its commits
+      # stay in this diff and are tested and deployed by this run. When the base can't be found,
+      # the empty list runs everything.
+      - name: List the files changed since the last successful main run
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASE=$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?branch=main&event=push&status=success&per_page=1" \
+            --jq '.workflow_runs[0].head_sha // empty' || true)
+          echo "last successful main run: ${BASE:-none}"
+          if [ -n "$BASE" ] && git merge-base --is-ancestor "$BASE" HEAD; then
+            git diff --name-only "$BASE" HEAD > changed-files.txt
+          else
+            : > changed-files.txt
+          fi
+          wc -l < changed-files.txt
       - name: Classify the changed areas
         id: classify
-        run: node scripts/ci-changed-areas.mjs changed-files.txt
+        # On main, only a documentation-only push skips anything (#778).
+        run: node scripts/ci-changed-areas.mjs changed-files.txt ${{ github.event_name == 'push' && '--all-or-nothing' || '' }}
 
   # Repo-wide gates: the published contract and the model/rule guards. Scope is the
   # whole repository, so this blocks both service and web work.
@@ -128,11 +151,11 @@ jobs:
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
     # minutes without being assigned a runner while siblings in the same run got one
     # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
-    # chain -- the run reported failure having tested nothing and deployed nothing. On a
-    # push to main the path filter is not consulted at all, so gating on it there was
-    # pure liability. `all-contract-gates` stays a real gate.
+    # chain -- the run reported failure having tested nothing and deployed nothing. A
+    # `changes` that did not finish leaves its outputs empty, and `!= 'false'` runs the job
+    # rather than skipping it (#778). `all-contract-gates` stays a real gate.
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
-        && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true') }}
+        && needs.changes.outputs.code != 'false' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -181,11 +204,11 @@ jobs:
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
     # minutes without being assigned a runner while siblings in the same run got one
     # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
-    # chain -- the run reported failure having tested nothing and deployed nothing. On a
-    # push to main the path filter is not consulted at all, so gating on it there was
-    # pure liability. `all-contract-gates` stays a real gate.
+    # chain -- the run reported failure having tested nothing and deployed nothing. A
+    # `changes` that did not finish leaves its outputs empty, and `!= 'false'` runs the job
+    # rather than skipping it (#778). `all-contract-gates` stays a real gate.
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
-        && (github.event_name != 'pull_request' || needs.changes.outputs.service == 'true') }}
+        && needs.changes.outputs.service != 'false' }}
     env:
       # Required at bootstrap with no fallback (#134, core/config.ts). The test
       # helpers set it too, but CI is explicit so a suite that bootstraps outside
@@ -210,29 +233,30 @@ jobs:
         run: node scripts/write-coverage-summary.mjs "Service Unit Coverage" "Unit=coverage/service-unit/coverage-summary.json"
 
   # #295 -- the integration suite was the one job holding deploy-publish-images (about 5 min,
-  # serial against one database), so it runs as two shards, each with its own Postgres.
+  # serial against one database), so it runs as shards, each with its own Postgres: two from
+  # #295, four since #778, when each of the two had grown to about 7 min.
   # `jest --shard` splits by test file; every file must pass alone in either shard, which is
   # the isolation rules/testing-rules.md §9A already requires. `service-integration-tests`
   # below is the single verdict for branch protection and the deploy chain.
   service-integration-test-shards:
-    name: service-integration-tests (${{ matrix.shard }}/2)
+    name: service-integration-tests (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3, 4]
     needs: [all-contract-gates, changes]
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
     # minutes without being assigned a runner while siblings in the same run got one
     # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
-    # chain -- the run reported failure having tested nothing and deployed nothing. On a
-    # push to main the path filter is not consulted at all, so gating on it there was
-    # pure liability. `all-contract-gates` stays a real gate.
+    # chain -- the run reported failure having tested nothing and deployed nothing. A
+    # `changes` that did not finish leaves its outputs empty, and `!= 'false'` runs the job
+    # rather than skipping it (#778). `all-contract-gates` stays a real gate.
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
-        && (github.event_name != 'pull_request' || needs.changes.outputs.service == 'true') }}
+        && needs.changes.outputs.service != 'false' }}
     services:
       postgres:
         image: postgres:16
@@ -268,7 +292,7 @@ jobs:
         run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 
       - name: Run service integration tests
-        run: npm run test:integration -- --shard=${{ matrix.shard }}/2
+        run: npm run test:integration -- --shard=${{ matrix.shard }}/4
 
   # The required check and deploy-publish-images' dependency keep this name, so sharding
   # changed neither. It skips whenever the shards skip, which branch protection counts as
@@ -306,11 +330,11 @@ jobs:
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
     # minutes without being assigned a runner while siblings in the same run got one
     # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
-    # chain -- the run reported failure having tested nothing and deployed nothing. On a
-    # push to main the path filter is not consulted at all, so gating on it there was
-    # pure liability. `all-contract-gates` stays a real gate.
+    # chain -- the run reported failure having tested nothing and deployed nothing. A
+    # `changes` that did not finish leaves its outputs empty, and `!= 'false'` runs the job
+    # rather than skipping it (#778). `all-contract-gates` stays a real gate.
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
-        && (github.event_name != 'pull_request' || needs.changes.outputs.service == 'true') }}
+        && needs.changes.outputs.service != 'false' }}
     services:
       postgres:
         image: postgres:16
@@ -340,21 +364,27 @@ jobs:
       - name: Check schema.prisma against the migration history
         run: npm run db:drift:check
 
-  service-functional-api-tests:
-    name: service-functional-api-tests
+  # #778 -- two shards, for the same reason and in the same way as the integration suite: each
+  # shard runs its own server against its own Postgres, and every file must pass in either.
+  service-functional-api-test-shards:
+    name: service-functional-api-tests (${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     needs: [all-contract-gates, changes]
     # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
     # succeed is skipped by default unless its `if` uses a status function, and `changes`
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
     # minutes without being assigned a runner while siblings in the same run got one
     # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
-    # chain -- the run reported failure having tested nothing and deployed nothing. On a
-    # push to main the path filter is not consulted at all, so gating on it there was
-    # pure liability. `all-contract-gates` stays a real gate.
+    # chain -- the run reported failure having tested nothing and deployed nothing. A
+    # `changes` that did not finish leaves its outputs empty, and `!= 'false'` runs the job
+    # rather than skipping it (#778). `all-contract-gates` stays a real gate.
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
-        && (github.event_name != 'pull_request' || needs.changes.outputs.service == 'true') }}
+        && needs.changes.outputs.service != 'false' }}
     services:
       postgres:
         image: postgres:16
@@ -390,7 +420,21 @@ jobs:
         run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 
       - name: Run service functional API tests
-        run: npm run test:service:functional-api
+        run: npm run test:service:functional-api -- --shard=${{ matrix.shard }}/2
+
+  # The required check and deploy-publish-images' dependency keep this name, as with
+  # service-integration-tests above.
+  service-functional-api-tests:
+    name: service-functional-api-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [service-functional-api-test-shards]
+    if: ${{ !cancelled() && needs.service-functional-api-test-shards.result != 'skipped' }}
+    steps:
+      - name: Require every shard to pass
+        run: |
+          echo "Shards: ${{ needs.service-functional-api-test-shards.result }}"
+          test "${{ needs.service-functional-api-test-shards.result }}" = success
 
   # =========================================================================
   # PoolMaster Webapp Unit Tests + Coverage (Vitest)
@@ -405,11 +449,11 @@ jobs:
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
     # minutes without being assigned a runner while siblings in the same run got one
     # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
-    # chain -- the run reported failure having tested nothing and deployed nothing. On a
-    # push to main the path filter is not consulted at all, so gating on it there was
-    # pure liability. `all-contract-gates` stays a real gate.
+    # chain -- the run reported failure having tested nothing and deployed nothing. A
+    # `changes` that did not finish leaves its outputs empty, and `!= 'false'` runs the job
+    # rather than skipping it (#778). `all-contract-gates` stays a real gate.
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
-        && (github.event_name != 'pull_request' || needs.changes.outputs.client == 'true') }}
+        && needs.changes.outputs.client != 'false' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -556,11 +600,11 @@ jobs:
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
     # minutes without being assigned a runner while siblings in the same run got one
     # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
-    # chain -- the run reported failure having tested nothing and deployed nothing. On a
-    # push to main the path filter is not consulted at all, so gating on it there was
-    # pure liability. `all-contract-gates` stays a real gate.
+    # chain -- the run reported failure having tested nothing and deployed nothing. A
+    # `changes` that did not finish leaves its outputs empty, and `!= 'false'` runs the job
+    # rather than skipping it (#778). `all-contract-gates` stays a real gate.
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
-        && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true') }}
+        && needs.changes.outputs.code != 'false' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -593,11 +637,11 @@ jobs:
     # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
     # minutes without being assigned a runner while siblings in the same run got one
     # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
-    # chain -- the run reported failure having tested nothing and deployed nothing. On a
-    # push to main the path filter is not consulted at all, so gating on it there was
-    # pure liability. `all-contract-gates` stays a real gate.
+    # chain -- the run reported failure having tested nothing and deployed nothing. A
+    # `changes` that did not finish leaves its outputs empty, and `!= 'false'` runs the job
+    # rather than skipping it (#778). `all-contract-gates` stays a real gate.
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
-        && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true') }}
+        && needs.changes.outputs.code != 'false' }}
     services:
       postgres:
         image: postgres:16
@@ -1675,14 +1719,13 @@ jobs:
             --jobs "deploy-publish-images,deploy-migrate-qa,deploy-qa,poolmaster-browser-e2e" \
             --managed-note "This issue is managed by the \`deploy-health-issue\` CI job: it is commented on, with log excerpts, for every further failed deploy and closed automatically by the next successful one."
 
-  # The other half of #191: a red *build* job on main surfaces nowhere either. Path filtering is
-  # PR-only, so every one of these runs on every main push, which keeps the verdict clean — a
-  # skipped job would read as inconclusive and stop the issue ever closing. Deliberately a
+  # The other half of #191: a red *build* job on main surfaces nowhere either. Every one of these
+  # runs on every main push except a documentation-only one (#778), whose skipped jobs read as
+  # inconclusive: the issue is left as it is until the next push with code. Deliberately a
   # separate issue from the deploy one: they fail for unrelated reasons and clear independently.
   #
-  # `changes` is watched here even though it is not a quality gate. It gates every other job,
-  # so when it fails they all skip — and an all-skipped set reads as inconclusive, which would
-  # make the most upstream failure in the workflow the one that reports nothing at all.
+  # `changes` is watched here even though it is not a quality gate. When it fails the jobs it
+  # gates still run, so without it here its own failure would be the one that reports nothing.
   #
   # Between the two reporters, every job in this workflow is watched. coverage.yml is a
   # separate workflow and is not: a failure there still surfaces only on its run page.
@@ -1697,6 +1740,7 @@ jobs:
       - service-unit-tests
       - service-integration-test-shards
       - service-integration-tests
+      - service-functional-api-test-shards
       - service-functional-api-tests
       - schema-migration-drift
       - service-build
@@ -1720,5 +1764,5 @@ jobs:
         run: |
           node scripts/ci-failure-report.mjs \
             --title "CI is failing on main" \
-            --jobs "changes,all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests (1/2),service-integration-tests (2/2),service-integration-tests,service-functional-api-tests,service-build,service-image-smoke,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
+            --jobs "changes,all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests (1/4),service-integration-tests (2/4),service-integration-tests (3/4),service-integration-tests (4/4),service-integration-tests,service-functional-api-tests (1/2),service-functional-api-tests (2/2),service-functional-api-tests,service-build,service-image-smoke,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
             --managed-note "This issue is managed by the \`main-ci-health-issue\` CI job: it is commented on, with log excerpts, for every further failed build on main and closed automatically by the next green one."
