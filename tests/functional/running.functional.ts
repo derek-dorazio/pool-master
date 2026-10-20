@@ -151,8 +151,9 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
     // The series' templates come with the sport-wide ones, and never the women's series'.
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.RUNNING, sportLeagueId: majorsMen.id, contestFormat: ContestFormat.ROSTER, active: true },
-    })).data).templates;
+      query: { sport: Sport.RUNNING, sportLeagueId: majorsMen.id, active: true },
+    })).data).templates
+      .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([
       'wmm-men-budget-top-10', 'wmm-men-random-draw-top-10', 'wmm-men-tiered-top-10',
     ]);

@@ -132,7 +132,6 @@ export function formatBracketStartLabel(startsAtRound: number, roundName: RoundN
   return isSecondChanceBracket(startsAtRound) ? `From the ${roundName(startsAtRound)}` : 'Full bracket';
 }
 
-/** "Pick 6, best 4" or "Pick 6, all count": a roster size and the scores that count. */
 /**
  * A contest's rules as one plain sentence, such as "Pick 1 golfer from each of 6 tiers. The best
  * 4 scores count." Keyed by selection type, so each new way of picking adds its own arm here.

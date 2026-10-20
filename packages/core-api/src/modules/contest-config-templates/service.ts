@@ -50,7 +50,6 @@ export class ContestConfigTemplateService {
     this.logger.debug({
       sport: query.sport ?? null,
       sportLeagueId: query.sportLeagueId ?? null,
-      contestFormat: query.contestFormat ?? null,
       eventType: query.eventType ?? null,
       active: query.active ?? null,
     }, 'contest template list start');
@@ -58,7 +57,6 @@ export class ContestConfigTemplateService {
     const templates = await this.repository.list({
       sport: query.sport,
       sportLeagueId: query.sportLeagueId,
-      contestFormat: query.contestFormat,
       eventType: query.eventType,
       active: query.active,
     });
@@ -113,7 +111,6 @@ export class ContestConfigTemplateService {
       // narrowed back to the exact match here.
       const scopeTemplates = (await this.repository.list({
         sport: existing.sport,
-        contestFormat: existing.contestFormat,
         eventType: existing.eventType ?? null,
         ...(existing.sportLeagueId ? { sportLeagueId: existing.sportLeagueId } : {}),
       })).filter((template) => template.selectionType === existing.selectionType

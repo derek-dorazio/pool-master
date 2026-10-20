@@ -299,19 +299,31 @@ export function CreateContestPage() {
   // The event's salary cap, which every budget contest on it plays under; null until it is priced.
   const salaryCap = selectedEvent?.pricing?.salaryCap ?? null;
   const isBudgetUnavailable = selectedEvent !== null && salaryCap === null;
-  // Each format's presets: the templates whose rules are that format's.
+  // The rounds a bracket on the chosen event can start at: the first before it starts, a later one
+  // once it is under way.
+  const startableRounds = useMemo(
+    () => (selectedEvent
+      ? bracketStartRoundOptions(bracketRoundCount(selectedEvent), String, { isUnderWay: isEventUnderWay })
+        .map((option) => option.roundNumber)
+      : []),
+    [isEventUnderWay, selectedEvent],
+  );
+  // Each format's presets: the templates whose rules are that format's, and for a bracket only the
+  // ones the chosen event can start at (#802): a full bracket before the first game, a second
+  // chance once it is under way.
   const presetsFor = useCallback(
     (format: CreatableSelectionType) => (templatesQuery.data ?? []).flatMap((template) => {
       const { configuration } = template;
       return template.selectionType === format && configuration.selectionType === format
+        && (configuration.selectionType !== SelectionType.BRACKET || startableRounds.includes(configuration.startsAtRound))
         ? [{ ...template, configuration }]
         : [];
     }),
-    [templatesQuery.data],
+    [startableRounds, templatesQuery.data],
   );
   const presets = useMemo(() => presetsFor(selectionType), [presetsFor, selectionType]);
   const parsedRules = parseContestRules(values, selectionType, tierCount, participant);
-  // A preset's full bracket is not offered on a knockout under way: a later round must be chosen.
+  // A full bracket typed by hand cannot start on a knockout under way: a later round must be chosen.
   const rulesError = parsedRules.error
     ?? (bracketStartRounds.length && !bracketStartRounds.some((option) => String(option.roundNumber) === values.startsAtRound)
       ? 'Choose the round the bracket starts at.'
@@ -328,8 +340,6 @@ export function CreateContestPage() {
     const rules = toContestRulesValues(configuration, current);
     return {
       ...rules,
-      // A preset's full bracket cannot start on a knockout under way: the chosen later round stays.
-      ...(isEventUnderWay && rules.startsAtRound === '1' ? { startsAtRound: current.startsAtRound } : {}),
       scoringDefinitionId: definitionId,
       ...(scoring
         ? SCORING_SETTINGS_UI[definitionId].toValues(scoring, {
@@ -341,7 +351,7 @@ export function CreateContestPage() {
         })
         : {}),
     };
-  }, [form, isEventUnderWay]);
+  }, [form]);
 
   const selectPreset = useCallback((templateId: string) => {
     const template = presets.find((candidate) => candidate.id === templateId);
@@ -403,7 +413,8 @@ export function CreateContestPage() {
   // A newly chosen sport, sport league or kind of event starts on its default preset; while all
   // three stay, Custom stays Custom. A sport league starts on the format its defaults sort first
   // (the Formula 1 default is a budget contest, #625; an NFL week a pick'em, #802), unless the
-  // sport does not offer it or the event has no prices for it yet.
+  // sport does not offer it, the event has no prices for it yet, or the event cannot take it (a
+  // knockout under way takes only a second-chance bracket or squares).
   useEffect(() => {
     const presetsKey: `${Sport}/${string}/${string}` = `${sport}/${sportLeagueId ?? ''}/${eventType ?? ''}`;
     if (defaultPresetAppliedFor.current === presetsKey || templatesQuery.data === undefined) {
@@ -412,7 +423,8 @@ export function CreateContestPage() {
     const startingFormat = leagueStartingFormatOf(
       templatesQuery.data,
       (format) => sportAllowsSelectionType(getSportDefinition(sport), format)
-        && !(format === SelectionType.BUDGET_PICK && isBudgetUnavailable),
+        && !(format === SelectionType.BUDGET_PICK && isBudgetUnavailable)
+        && (selectedEvent === null || contestEventsFor([selectedEvent], format).length > 0),
     );
     if (startingFormat && startingFormat !== form.getValues('selectionType')) {
       defaultPresetAppliedFor.current = presetsKey;
@@ -427,7 +439,19 @@ export function CreateContestPage() {
     if (defaultPreset) {
       selectPreset(defaultPreset.id);
     }
-  }, [eventType, form, isBudgetUnavailable, presets, selectFormat, selectPreset, sport, sportLeagueId, templatesQuery.data]);
+  }, [eventType, form, isBudgetUnavailable, presets, selectFormat, selectPreset, selectedEvent, sport, sportLeagueId, templatesQuery.data]);
+
+  // A preset the chosen event cannot start, such as a full bracket once the event is under way,
+  // gives way to the format's default among the presets it can (#802), or to Custom.
+  useEffect(() => {
+    const templateId = form.getValues('selectedTemplateId');
+    const offered = presetsFor(form.getValues('selectionType'));
+    if (!templateId || templatesQuery.data === undefined || offered.some((template) => template.id === templateId)) {
+      return;
+    }
+    const preset = defaultPresetOf(offered);
+    setFormValues({ selectedTemplateId: preset?.id ?? '', ...(preset ? presetValues(preset.configuration) : {}) });
+  }, [form, presetValues, presetsFor, selectedTemplateId, setFormValues, templatesQuery.data]);
 
   // A tiered contest's "Scores that count" starts at the default for the chosen event's tiers. A
   // preset whose picks per tier the form still holds keeps its own count over the formula.

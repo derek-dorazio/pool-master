@@ -236,7 +236,6 @@ export const ListContestConfigTemplatesQuerySchema = z.object({
   sportLeagueId: z.string().uuid().optional().describe(
     "Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.",
   ),
-  contestFormat: z.enum(contestFormatValues).optional().describe('Only templates for this contest format.'),
   eventType: z.nativeEnum(ContestTemplateEventType).optional().describe('Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event\'s kind for a sport played as matches.'),
   active: z.boolean().optional().describe('Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.'),
 }).describe('Filters for listing contest configuration templates. Every filter is optional.');

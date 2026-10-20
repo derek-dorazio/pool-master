@@ -34,7 +34,6 @@ export interface ContestConfigTemplateRepository {
   list(input?: {
     sport?: ContestConfigTemplate['sport'];
     sportLeagueId?: string;
-    contestFormat?: ContestConfigTemplate['contestFormat'];
     eventType?: ContestTemplateEventType | null;
     active?: boolean;
   }): Promise<ContestConfigTemplate[]>;

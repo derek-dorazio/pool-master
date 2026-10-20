@@ -5746,11 +5746,6 @@ export interface components {
              */
             sportLeagueId?: string;
             /**
-             * @description Only templates for this contest format.
-             * @enum {string}
-             */
-            contestFormat?: "ROSTER" | "PREDICTION" | "SQUARES";
-            /**
              * @description Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.
              * @enum {string}
              */
@@ -18325,8 +18320,6 @@ export interface operations {
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL";
                 /** @description Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league. */
                 sportLeagueId?: string;
-                /** @description Only templates for this contest format. */
-                contestFormat?: "ROSTER" | "PREDICTION" | "SQUARES";
                 /** @description Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches. */
                 eventType?: "KNOCKOUT" | "WEEK";
                 /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */

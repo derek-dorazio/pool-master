@@ -3,7 +3,8 @@
 -- the format named as Create contest names it; descriptions are one or two plain sentences.
 --
 -- 1. A match sport's templates say which kind of event they are for: the existing ones and the new
---    brackets and squares are for a KNOCKOUT, pick'em and survivor for a WEEK of a season's games.
+--    brackets are for a KNOCKOUT, pick'em and survivor for a WEEK of a season's games. Squares is
+--    played on any one game, a week's or the playoffs', so its templates name none.
 -- 2. Every template is renamed and redescribed to the convention. Template keys stay, so a contest
 --    made from one keeps its link.
 -- 3. Budget and Random draw get a default of their own in every league (Tiered had the only one,
@@ -17,7 +18,7 @@
 -- 1. Kinds of event.
 UPDATE "contest_config_templates"
 SET "event_type" = 'KNOCKOUT', "updated_at" = NOW()
-WHERE "sport" IN ('BASKETBALL', 'AMERICAN_FOOTBALL') AND "event_type" IS NULL;
+WHERE "sport" IN ('BASKETBALL', 'AMERICAN_FOOTBALL') AND "event_type" IS NULL AND "selection_type" <> 'SQUARES';
 
 -- 2. Names and descriptions.
 UPDATE "contest_config_templates" t
@@ -217,7 +218,7 @@ INSERT INTO "contest_config_templates" (
   "name", "description", "sort_order", "is_default", "active", "config_json", "schema_version", "updated_at"
 )
 SELECT
-  gen_random_uuid(), 'AMERICAN_FOOTBALL', l."id", 'KNOCKOUT', 'SQUARES', 'SQUARES', 'cfp-squares',
+  gen_random_uuid(), 'AMERICAN_FOOTBALL', l."id", NULL, 'SQUARES', 'SQUARES', 'cfp-squares',
   'Squares: 10 boxes each, every quarter', 'A 10x10 grid on one game: claim up to 10 boxes, then the digits are drawn. The box matching each team''s last digit wins each quarter and the final score.', 10, TRUE, TRUE,
   '{ "selectionType": "SQUARES", "maxSquaresPerEntry": 10, "maxEntriesPerSquad": 1 }'::jsonb, 1, NOW()
 FROM "sport_leagues" l

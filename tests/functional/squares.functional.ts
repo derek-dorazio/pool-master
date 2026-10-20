@@ -111,8 +111,9 @@ describe('SDK Functional: Super Bowl squares', () => {
     }
     const [preset] = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: nfl.id, contestFormat: ContestFormat.SQUARES, active: true },
-    })).data).templates;
+      query: { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: nfl.id, active: true },
+    })).data).templates
+      .filter((template) => template.contestFormat === ContestFormat.SQUARES);
     expect([preset.templateKey, preset.isDefault]).toEqual(['nfl-squares', true]);
 
     const contest = await createContest({

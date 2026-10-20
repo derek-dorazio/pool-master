@@ -155,8 +155,9 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.HORSE_RACING, contestFormat: ContestFormat.ROSTER, active: true },
-    })).data).templates;
+      query: { sport: Sport.HORSE_RACING, active: true },
+    })).data).templates
+      .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     const drawTemplate = expectDefined(templates.find((template) => template.selectionType === SelectionType.RANDOM_DRAW), 'the random-draw template');
     const contest = await createContest({
       client: commissioner.client,

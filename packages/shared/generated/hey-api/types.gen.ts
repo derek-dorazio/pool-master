@@ -4059,10 +4059,6 @@ export type ListContestConfigTemplatesQuery = {
      */
     sportLeagueId?: string;
     /**
-     * Only templates for this contest format.
-     */
-    contestFormat?: 'ROSTER' | 'PREDICTION' | 'SQUARES';
-    /**
      * Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.
      */
     eventType?: 'KNOCKOUT' | 'WEEK';
@@ -18732,10 +18728,6 @@ export type ListContestConfigTemplatesData = {
          * Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
          */
         sportLeagueId?: string;
-        /**
-         * Only templates for this contest format.
-         */
-        contestFormat?: 'ROSTER' | 'PREDICTION' | 'SQUARES';
         /**
          * Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.
          */

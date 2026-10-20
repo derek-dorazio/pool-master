@@ -9281,15 +9281,6 @@
             "format": "uuid",
             "description": "Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league."
           },
-          "contestFormat": {
-            "type": "string",
-            "enum": [
-              "ROSTER",
-              "PREDICTION",
-              "SQUARES"
-            ],
-            "description": "Only templates for this contest format."
-          },
           "eventType": {
             "type": "string",
             "enum": [
@@ -40227,20 +40218,6 @@
             "name": "sportLeagueId",
             "required": false,
             "description": "Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ROSTER",
-                "PREDICTION",
-                "SQUARES"
-              ]
-            },
-            "in": "query",
-            "name": "contestFormat",
-            "required": false,
-            "description": "Only templates for this contest format."
           },
           {
             "schema": {

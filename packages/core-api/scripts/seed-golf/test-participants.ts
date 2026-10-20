@@ -236,10 +236,11 @@ class ParticipantLoader {
   private async template(client: Client, event: StoredEvent): Promise<Template> {
     const { templates } = await must(listContestConfigTemplates({
       client,
-      query: { sport: event.sport, sportLeagueId: event.sportLeagueId, contestFormat: ContestFormat.ROSTER, active: true },
+      query: { sport: event.sport, sportLeagueId: event.sportLeagueId, active: true },
     }), `List contest templates for ${event.name}`);
     // A draw deals its picks to every entry at once and closes them, so the run picks for itself instead.
-    const pickable = templates.filter((template) => template.selectionType !== SelectionType.RANDOM_DRAW);
+    const pickable = templates.filter((template) => template.contestFormat === ContestFormat.ROSTER
+      && template.selectionType !== SelectionType.RANDOM_DRAW);
     const ranked = [...pickable].sort((left, right) => Number(right.sportLeagueId !== null) - Number(left.sportLeagueId !== null)
       || Number(right.isDefault) - Number(left.isDefault) || left.sortOrder - right.sortOrder);
     const chosen = ranked.at(0);
