@@ -1,0 +1,843 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "HOCKEY",
+    "season": 2026,
+    "sportLeagues": [
+      "NCAA Division I Men",
+      "NCAA Division I Women"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-20",
+    "gatheredBy": "load-sport-data, the 2026 NCAA Division I men's and women's ice hockey tournaments as played: regions, seeds, pairings, every game's score and the title games' period scores from Wikipedia's tournament pages, cross-checked against the ESPN college hockey scoreboards, which agree on every game they carry (the men's regional finals are Wikipedia's alone). Puck drops (scheduledAt) are ESPN's where it has the game, else Wikipedia's Eastern times. Men's ranking is the overall seed and its seed the regional one; every men's game and both Frozen Fours are at neutral sites. The women's tournament seeds five teams: the six others play a first round for three quarterfinal places, each a play-in place named for its pairing whose winner is its playInWinner, seeded 6-8 by the seed it meets. Women's quarterfinals are at the better seed's rink. Odds to win are made up by ranking.",
+    "sources": [
+      {
+        "name": "2026 NCAA Division I men's ice hockey tournament (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_NCAA_Division_I_men%27s_ice_hockey_tournament"
+      },
+      {
+        "name": "2026 NCAA Division I women's ice hockey tournament (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2026_NCAA_Division_I_women%27s_ice_hockey_tournament"
+      },
+      {
+        "name": "ESPN men's college hockey scoreboard, 20260326",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/scoreboard?dates=20260326"
+      },
+      {
+        "name": "ESPN men's college hockey scoreboard, 20260327",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/scoreboard?dates=20260327"
+      },
+      {
+        "name": "ESPN men's college hockey scoreboard, 20260409",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/scoreboard?dates=20260409"
+      },
+      {
+        "name": "ESPN men's college hockey scoreboard, 20260411",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/scoreboard?dates=20260411"
+      },
+      {
+        "name": "ESPN women's college hockey scoreboard, 20260312",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/womens-college-hockey/scoreboard?dates=20260312"
+      },
+      {
+        "name": "ESPN women's college hockey scoreboard, 20260314",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/womens-college-hockey/scoreboard?dates=20260314"
+      },
+      {
+        "name": "ESPN women's college hockey scoreboard, 20260320",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/womens-college-hockey/scoreboard?dates=20260320"
+      },
+      {
+        "name": "ESPN women's college hockey scoreboard, 20260322",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/womens-college-hockey/scoreboard?dates=20260322"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "NCAA Division I Men",
+      "players": [
+        {
+          "key": "ncaamh-michigan-wolverines",
+          "name": "Michigan Wolverines",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "ncaamh-north-dakota-fighting-hawks",
+          "name": "North Dakota Fighting Hawks",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "ncaamh-michigan-state-spartans",
+          "name": "Michigan State Spartans",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "ncaamh-western-michigan-broncos",
+          "name": "Western Michigan Broncos",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "ncaamh-denver-pioneers",
+          "name": "Denver Pioneers",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "ncaamh-dartmouth-big-green",
+          "name": "Dartmouth Big Green",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "ncaamh-providence-friars",
+          "name": "Providence Friars",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "ncaamh-minnesota-duluth-bulldogs",
+          "name": "Minnesota Duluth Bulldogs",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "ncaamh-penn-state-nittany-lions",
+          "name": "Penn State Nittany Lions",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "ncaamh-quinnipiac-bobcats",
+          "name": "Quinnipiac Bobcats",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "ncaamh-cornell-big-red",
+          "name": "Cornell Big Red",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "ncaamh-wisconsin-badgers",
+          "name": "Wisconsin Badgers",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "ncaamh-minnesota-state-mavericks",
+          "name": "Minnesota State Mavericks",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "ncaamh-uconn-huskies",
+          "name": "UConn Huskies",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "ncaamh-merrimack-warriors",
+          "name": "Merrimack Warriors",
+          "countryCode": "US",
+          "ranking": 15
+        },
+        {
+          "key": "ncaamh-bentley-falcons",
+          "name": "Bentley Falcons",
+          "countryCode": "US",
+          "ranking": 16
+        }
+      ],
+      "events": [
+        {
+          "key": "ncaamh-tournament-2026",
+          "name": "NCAA Men's Ice Hockey Tournament",
+          "startDate": "2026-03-26",
+          "endDate": "2026-04-11",
+          "venue": null,
+          "location": "United States",
+          "rounds": 4,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "ncaamh-michigan-wolverines",
+              "ranking": 1,
+              "seed": 1,
+              "oddsToWin": 4.0
+            },
+            {
+              "player": "ncaamh-north-dakota-fighting-hawks",
+              "ranking": 2,
+              "seed": 1,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "ncaamh-michigan-state-spartans",
+              "ranking": 3,
+              "seed": 1,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "ncaamh-western-michigan-broncos",
+              "ranking": 4,
+              "seed": 1,
+              "oddsToWin": 10.0
+            },
+            {
+              "player": "ncaamh-denver-pioneers",
+              "ranking": 5,
+              "seed": 2,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "ncaamh-dartmouth-big-green",
+              "ranking": 6,
+              "seed": 2,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "ncaamh-providence-friars",
+              "ranking": 7,
+              "seed": 2,
+              "oddsToWin": 16.0
+            },
+            {
+              "player": "ncaamh-minnesota-duluth-bulldogs",
+              "ranking": 8,
+              "seed": 2,
+              "oddsToWin": 18.0
+            },
+            {
+              "player": "ncaamh-penn-state-nittany-lions",
+              "ranking": 9,
+              "seed": 3,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "ncaamh-quinnipiac-bobcats",
+              "ranking": 10,
+              "seed": 3,
+              "oddsToWin": 22.0
+            },
+            {
+              "player": "ncaamh-cornell-big-red",
+              "ranking": 11,
+              "seed": 3,
+              "oddsToWin": 24.0
+            },
+            {
+              "player": "ncaamh-wisconsin-badgers",
+              "ranking": 12,
+              "seed": 3,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "ncaamh-minnesota-state-mavericks",
+              "ranking": 13,
+              "seed": 4,
+              "oddsToWin": 28.0
+            },
+            {
+              "player": "ncaamh-uconn-huskies",
+              "ranking": 14,
+              "seed": 4,
+              "oddsToWin": 30.0
+            },
+            {
+              "player": "ncaamh-merrimack-warriors",
+              "ranking": 15,
+              "seed": 4,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "ncaamh-bentley-falcons",
+              "ranking": 16,
+              "seed": 4,
+              "oddsToWin": 34.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "ncaamh-michigan-wolverines",
+              "away": "ncaamh-bentley-falcons",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T21:30:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "HOME"
+              },
+              "regionLabel": "Albany",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "ncaamh-minnesota-duluth-bulldogs",
+              "away": "ncaamh-penn-state-nittany-lions",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T01:00:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "AWAY"
+              },
+              "regionLabel": "Albany",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "ncaamh-western-michigan-broncos",
+              "away": "ncaamh-minnesota-state-mavericks",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T18:30:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "HOME"
+              },
+              "regionLabel": "Loveland",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "ncaamh-denver-pioneers",
+              "away": "ncaamh-cornell-big-red",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T22:00:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "AWAY"
+              },
+              "regionLabel": "Loveland",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "ncaamh-north-dakota-fighting-hawks",
+              "away": "ncaamh-merrimack-warriors",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-27T00:55:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "HOME"
+              },
+              "regionLabel": "Sioux Falls",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "ncaamh-providence-friars",
+              "away": "ncaamh-quinnipiac-bobcats",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-26T21:00:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "AWAY"
+              },
+              "regionLabel": "Sioux Falls",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 5
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "ncaamh-michigan-state-spartans",
+              "away": "ncaamh-uconn-huskies",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-26T17:30:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "HOME"
+              },
+              "regionLabel": "Worcester",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "ncaamh-dartmouth-big-green",
+              "away": "ncaamh-wisconsin-badgers",
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-26T21:30:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "AWAY"
+              },
+              "regionLabel": "Worcester",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 5
+              }
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-29T21:30:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "HOME"
+              },
+              "regionLabel": "Albany",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 3
+              }
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-29T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "AWAY"
+              },
+              "regionLabel": "Loveland",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 6
+              }
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "HOME"
+              },
+              "regionLabel": "Sioux Falls",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-28T20:30:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "AWAY"
+              },
+              "regionLabel": "Worcester",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-04-10T00:30:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-04-09T21:00:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              }
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-04-11T21:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                },
+                {
+                  "periodNumber": 2,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "NCAA Division I Women",
+      "players": [
+        {
+          "key": "ncaawh-ohio-state-buckeyes",
+          "name": "Ohio State Buckeyes",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "ncaawh-wisconsin-badgers",
+          "name": "Wisconsin Badgers",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "ncaawh-penn-state-nittany-lions",
+          "name": "Penn State Nittany Lions",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "ncaawh-minnesota-golden-gophers",
+          "name": "Minnesota Golden Gophers",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "ncaawh-northeastern-huskies",
+          "name": "Northeastern Huskies",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "ncaawh-princeton-uconn-first-round",
+          "name": "Princeton / UConn (first round)",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "ncaawh-franklin-pierce-quinnipiac-first-round",
+          "name": "Franklin Pierce / Quinnipiac (first round)",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "ncaawh-minnesota-duluth-yale-first-round",
+          "name": "Minnesota Duluth / Yale (first round)",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "ncaawh-yale-bulldogs",
+          "name": "Yale Bulldogs",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "ncaawh-uconn-huskies",
+          "name": "UConn Huskies",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "ncaawh-quinnipiac-bobcats",
+          "name": "Quinnipiac Bobcats",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "ncaawh-minnesota-duluth-bulldogs",
+          "name": "Minnesota Duluth Bulldogs",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "ncaawh-princeton-tigers",
+          "name": "Princeton Tigers",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "ncaawh-franklin-pierce-ravens",
+          "name": "Franklin Pierce Ravens",
+          "countryCode": "US",
+          "ranking": 14
+        }
+      ],
+      "events": [
+        {
+          "key": "ncaawh-tournament-2026",
+          "name": "NCAA Women's Ice Hockey Tournament",
+          "startDate": "2026-03-12",
+          "endDate": "2026-03-22",
+          "venue": null,
+          "location": "United States",
+          "rounds": 3,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "ncaawh-ohio-state-buckeyes",
+              "ranking": 1,
+              "seed": 1,
+              "oddsToWin": 4.0
+            },
+            {
+              "player": "ncaawh-wisconsin-badgers",
+              "ranking": 2,
+              "seed": 2,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "ncaawh-penn-state-nittany-lions",
+              "ranking": 3,
+              "seed": 3,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "ncaawh-minnesota-golden-gophers",
+              "ranking": 4,
+              "seed": 4,
+              "oddsToWin": 10.0
+            },
+            {
+              "player": "ncaawh-northeastern-huskies",
+              "ranking": 5,
+              "seed": 5,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "ncaawh-princeton-uconn-first-round",
+              "ranking": 6,
+              "seed": 6,
+              "isPlayInPlace": true,
+              "oddsToWin": 14.0,
+              "playInWinner": "ncaawh-uconn-huskies"
+            },
+            {
+              "player": "ncaawh-franklin-pierce-quinnipiac-first-round",
+              "ranking": 7,
+              "seed": 7,
+              "isPlayInPlace": true,
+              "oddsToWin": 16.0,
+              "playInWinner": "ncaawh-quinnipiac-bobcats"
+            },
+            {
+              "player": "ncaawh-minnesota-duluth-yale-first-round",
+              "ranking": 8,
+              "seed": 8,
+              "isPlayInPlace": true,
+              "oddsToWin": 18.0,
+              "playInWinner": "ncaawh-yale-bulldogs"
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "ncaawh-ohio-state-buckeyes",
+              "away": "ncaawh-minnesota-duluth-yale-first-round",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-14T22:00:00Z",
+              "advancesTo": {
+                "matchNumber": 5,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 6,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "ncaawh-minnesota-golden-gophers",
+              "away": "ncaawh-northeastern-huskies",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-14T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 5,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "ncaawh-penn-state-nittany-lions",
+              "away": "ncaawh-princeton-uconn-first-round",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-14T18:00:00Z",
+              "advancesTo": {
+                "matchNumber": 6,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "ncaawh-wisconsin-badgers",
+              "away": "ncaawh-franklin-pierce-quinnipiac-first-round",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-14T18:00:00Z",
+              "advancesTo": {
+                "matchNumber": 6,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 6,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 7,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-20T23:30:00Z",
+              "advancesTo": {
+                "matchNumber": 7,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-03-22T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 2
+                },
+                {
+                  "periodNumber": 2,
+                  "homeScore": 0,
+                  "awayScore": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

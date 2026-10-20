@@ -5,7 +5,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { SelectionType } from '@poolmaster/shared/domain';
+import { getSportDefinition, SelectionType, type Sport } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@poolmaster/shared/generated/hey-api';
 import { AppEnvironment } from '../../src/core/config';
 
@@ -25,15 +25,19 @@ export function refuseUnlessTestTarget(environment: string, what: string): void 
   }
 }
 
-/** A league code from the sport league's name: stable across runs, unique per sport league. */
-export function testLeagueCode(sportLeagueName: string): string {
+/**
+ * A league code from the sport and the sport league's name: stable across runs, unique per
+ * sport league. The sport is part of it because two sports can each have a league of the same
+ * name (college basketball and college hockey both have "NCAA Division I Men").
+ */
+export function testLeagueCode(sport: Sport, sportLeagueName: string): string {
   const letters = sportLeagueName.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
-  const hash = createHash('sha256').update(sportLeagueName).digest('hex').slice(0, 6).toUpperCase();
+  const hash = createHash('sha256').update(`${sport}:${sportLeagueName}`).digest('hex').slice(0, 6).toUpperCase();
   return `QA${letters}${hash}`;
 }
 
-export function testLeagueName(sportLeagueName: string): string {
-  return `${sportLeagueName} test pool`;
+export function testLeagueName(sport: Sport, sportLeagueName: string): string {
+  return `${sportLeagueName} ${getSportDefinition(sport).name} test pool`;
 }
 
 /**

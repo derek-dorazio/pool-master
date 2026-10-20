@@ -1,4 +1,5 @@
 import {
+  MatchPeriodLayout,
   PARTICIPANT_SCORING_DEFINITIONS,
   SPORT_DEFINITIONS,
   ScoringFamily,
@@ -319,6 +320,78 @@ describe('American football', () => {
   it('calls the event the playoffs and the moment entries close the first kickoff', () => {
     expect(americanFootball.vocabulary.event).toEqual({ one: 'playoffs', many: 'playoffs' });
     expect(americanFootball.vocabulary.eventStart).toBe('first kickoff');
+  });
+});
+
+describe('hockey', () => {
+  const hockey = getSportDefinition(Sport.HOCKEY);
+
+  it('is a team sport played as a knockout bracket, scored head to head by knockout round points, in three periods a game', () => {
+    expect(hockey.name).toBe('Hockey');
+    expect(hockey.participantType).toBe('TEAM');
+    expect(hockey.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
+    expect(hockey.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
+    expect(hockey.matchPeriodLayout).toBe(MatchPeriodLayout.THREE_PERIODS);
+    expect(sportPlaysMatches(Sport.HOCKEY)).toBe(true);
+  });
+
+  it('gives new playoffs four rounds and four tiers of four, for a 16-team bracket', () => {
+    expect(hockey.defaultRounds).toBe(4);
+    expect(hockey.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 4 });
+  });
+
+  it('labels a four-round bracket Regional Semifinals through National Championship, and a stored round past the count Round N', () => {
+    expect([1, 2, 3, 4].map((roundNumber) => hockey.roundLabel(roundNumber, 4))).toEqual([
+      'Regional Semifinals', 'Regional Finals', 'Frozen Four', 'National Championship',
+    ]);
+    expect(hockey.roundLabel(5, 4)).toBe('Round 5');
+  });
+
+  it('offers the three roster selection types, bracket, survivor and squares, and no pick\'em, since it has no weeks of games', () => {
+    expect(hockey.selectionTypes).toEqual([
+      SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES,
+    ]);
+  });
+
+  it('calls the event the playoffs, a game a game, and the moment entries close the opening puck drop', () => {
+    expect(hockey.vocabulary.event).toEqual({ one: 'playoffs', many: 'playoffs' });
+    expect(hockey.vocabulary.match).toEqual({ one: 'game', many: 'games' });
+    expect(hockey.vocabulary.eventStart).toBe('opening puck drop');
+  });
+});
+
+describe('baseball', () => {
+  const baseball = getSportDefinition(Sport.BASEBALL);
+
+  it('is a team sport played as a knockout bracket, scored head to head by knockout round points, keeping no score by period', () => {
+    expect(baseball.name).toBe('Baseball');
+    expect(baseball.participantType).toBe('TEAM');
+    expect(baseball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
+    expect(baseball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
+    expect(baseball.matchPeriodLayout).toBeUndefined();
+    expect(sportPlaysMatches(Sport.BASEBALL)).toBe(true);
+  });
+
+  it('gives a new postseason four rounds and four tiers of three, for a 12-team bracket', () => {
+    expect(baseball.defaultRounds).toBe(4);
+    expect(baseball.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 3 });
+  });
+
+  it('labels a four-round postseason Wild Card Series through World Series, and a stored round past the count Round N', () => {
+    expect([1, 2, 3, 4].map((roundNumber) => baseball.roundLabel(roundNumber, 4))).toEqual([
+      'Wild Card Series', 'Division Series', 'League Championship Series', 'World Series',
+    ]);
+    expect(baseball.roundLabel(5, 4)).toBe('Round 5');
+  });
+
+  it('offers the three roster selection types, bracket and survivor, and no squares or pick\'em, since every round is a series', () => {
+    expect(baseball.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR]);
+  });
+
+  it('calls the event the postseason, a match a series, and the moment entries close the first pitch', () => {
+    expect(baseball.vocabulary.event).toEqual({ one: 'postseason', many: 'postseasons' });
+    expect(baseball.vocabulary.match).toEqual({ one: 'series', many: 'series' });
+    expect(baseball.vocabulary.eventStart).toBe('first pitch');
   });
 });
 

@@ -234,7 +234,8 @@ on the Bracket tab:
   the scoreboard shows it, and the final score, overtime included, which saves the game's result
   with the higher score winning. A score can't go down as the game goes on, so a quarter's score
   is refused below an earlier quarter's or above a later one's or the final score. Squares pools
-  read them.
+  read them. Men's college basketball takes a halftime score (#786), and hockey the scores at
+  the end of the first and second periods (#788), each before its final score.
 
 The NBA and WNBA playoffs are basketball tournaments too, in their own sport leagues. A series
 is one game of the bracket: choose the team that won the series, with the games each side won
@@ -247,6 +248,22 @@ teams, the top four seeds placed straight into the quarterfinals (a bye scores n
 first round at the higher seed's campus and every later game at a bowl site. Its rounds show its
 own names (Quarterfinals, National Championship), not the NFL's. The 2026-27 playoff keeps 12
 teams; a larger field would change its round count and need presets to match.
+
+Hockey (#788) has four sport leagues, every bracket fixed. The NHL's 16 teams play four rounds
+of best-of-seven series, seeded 1 to 3 in each division with both wild cards 4; the PWHL's four
+play best-of-five semifinals and a final, the first seed choosing its semifinal opponent before
+the bracket is loaded. Like the NBA's, each series is one game of the bracket, scored in games
+won. The NCAA men's tournament is 16 teams in four regions of four, every game at a neutral
+site; the women's seeds five teams, and the six others play a first round for three
+quarterfinal places, which are play-in places until it is played. The PWHL starts on two tiers,
+the others on four. Only the college title games, single games, take squares pools.
+
+Baseball (#789) has one sport league, the MLB postseason, a fixed bracket of 12 teams in four
+rounds of series: best-of-three Wild Card Series at the better seed's park, best-of-five
+Division Series, best-of-seven League Championship Series and World Series. Each league's
+teams are seeded 1 to 6, and the top two seeds are placed straight into the Division Series,
+as the CFP's byes are (a bye scores nothing). Each series is one game of the bracket, scored in
+games won, so baseball takes no squares pools. It starts on four tiers of three.
 
 **Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
 `RESEED_BY_SEED`) loads each round that is placed by seed with no next game in the round

@@ -142,7 +142,7 @@ seeds), which the load sets after release, before any result. A bye is a team na
 into a later round's match, its other side filled by a link (the College Football Playoff's top
 four seeds in the quarterfinals). A match of a sport with periods (American football) may also
 carry `periodScores`, the score at the end of each period but the last, which the load enters
-before its result: the 2026 NFL seed's Super Bowl does, for squares pools. A league of weekly
+before its result: the 2026 NFL seed's Super Bowl and the college hockey title games do, for squares pools. A league of weekly
 games tries pick'em on last season's weeks as played: each week its own event, every game a
 match that links nowhere, with its real `result`
 (`american-football-2025-nfl-weeks-test.json`, `docs/SPORT-DATA-LOADING.md` *Seeded NFL
@@ -159,7 +159,7 @@ Two options of "Load sport data" are for test data only, and the run refuses bot
 site is a QA or test environment. `all_test_data` loads every league's test data file (not the
 slates) in one run, in place of `file`; a file that fails is reported and the rest still load,
 so running again fills in what is missing. `with_participants` also loads test players with
-entries in a `<sport league> test pool` league (`NFL test pool`), so a contest can be looked at
+entries in a `<sport league> <sport> test pool` league (`NFL American football test pool`), so a contest can be looked at
 with entries already in it.
 
 ## Sources per sport

@@ -217,12 +217,14 @@ describe('SDK Functional: Super Bowl squares', () => {
   });
 });
 
-// Each March Madness league's squares preset on its own final (#786): men's college basketball
-// played in two halves, women's in quarters. Each test seed loads with every game played but the final; one entry holds
+// Each college league's squares preset on its own final: men's college basketball played in two
+// halves, women's in quarters (#786), and college hockey in three periods (#788). Each test seed loads with every game played but the final; one entry holds
 // the top row, the other the left column, and every scoring moment lands in the top row.
 const COLLEGE_FINALS = [
   { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', layout: MatchPeriodLayout.HALVES },
   { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', layout: MatchPeriodLayout.QUARTERS },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Ice Hockey Tournament', templateKey: 'ncaa-men-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Ice Hockey Tournament', templateKey: 'ncaa-women-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS },
 ] as const;
 
 describe('SDK Functional: squares on each league\'s final, scored at the end of each of its periods', () => {

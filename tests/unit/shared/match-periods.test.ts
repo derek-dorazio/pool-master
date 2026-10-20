@@ -12,6 +12,11 @@ describe('matchPeriodsOf — the periods a sport league\'s games are played in (
     expect(matchPeriodLayoutOf(Sport.BASKETBALL, MatchPeriodLayout.HALVES)).toBe(MatchPeriodLayout.HALVES);
   });
 
+  it('plays hockey in three periods, the last of which is the final result', () => {
+    expect(matchPeriodsOf(Sport.HOCKEY, null)).toEqual({ count: 3, label: { one: 'period', many: 'periods' } });
+    expect(matchPeriodLayoutOf(Sport.HOCKEY, null)).toBe(MatchPeriodLayout.THREE_PERIODS);
+  });
+
   it('gives no periods to a sport whose games keep no score by period, whatever its league says', () => {
     expect(matchPeriodsOf(Sport.GOLF, null)).toBeUndefined();
     expect(matchPeriodLayoutOf(Sport.HORSE_RACING, MatchPeriodLayout.HALVES)).toBeUndefined();
