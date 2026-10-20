@@ -95,7 +95,7 @@ Two options on *Load sport data* are for QA only. The run reads the site's envir
 - **`with_participants`** also loads the pool side of each test file: six test players
   (`qa-avery-adams` to `qa-finley-fox`, `@example.com` addresses that take no mail, all with
   the password in `test-participants.ts`), and for each sport league a league named
-  "*sport league* test pool". The E2E root admin creates it and is its commissioner; each
+  "*sport league* *sport* test pool" (the sport in the name, since two sports can share a league name). The E2E root admin creates it and is its commissioner; each
   player joins with an invite link, which gives them their squad. Each of the league's next
   three events open for entries gets a contest from the sport league's default tiered or
   budget template (never a random draw, which deals the picks itself), opened, and every

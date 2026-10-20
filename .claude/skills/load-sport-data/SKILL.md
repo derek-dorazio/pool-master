@@ -159,7 +159,7 @@ Two options of "Load sport data" are for test data only, and the run refuses bot
 site is a QA or test environment. `all_test_data` loads every league's test data file (not the
 slates) in one run, in place of `file`; a file that fails is reported and the rest still load,
 so running again fills in what is missing. `with_participants` also loads test players with
-entries in a `<sport league> test pool` league (`NFL test pool`), so a contest can be looked at
+entries in a `<sport league> <sport> test pool` league (`NFL American football test pool`), so a contest can be looked at
 with entries already in it.
 
 ## Sources per sport

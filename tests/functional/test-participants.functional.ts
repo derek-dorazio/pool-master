@@ -101,8 +101,8 @@ describe('SDK Functional: test participants', () => {
 
     await loadTestParticipants(file, { ...options, mode: LoadMode.APPLY });
 
-    const league = expectDefined((await getLeagueByCode({ client: a, path: { leagueCode: testLeagueCode(sportLeague.name) } })).data).league;
-    expect(league.name).toBe(`${sportLeague.name} test pool`);
+    const league = expectDefined((await getLeagueByCode({ client: a, path: { leagueCode: testLeagueCode(file.scope.sport, sportLeague.name) } })).data).league;
+    expect(league.name).toBe(`${sportLeague.name} Horse racing test pool`);
     const members = expectDefined((await listLeagueMembers({ client: a, path: { id: league.id } })).data).members;
     expect(members.map((member) => member.user.username).sort()).toEqual([admin.username, ...players.map((player) => player.username)].sort());
 
