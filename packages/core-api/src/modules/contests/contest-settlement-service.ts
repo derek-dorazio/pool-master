@@ -483,8 +483,9 @@ export class ContestSettlementService {
 
   /**
    * Settles one week of a survivor contest (#719): each entry still in coming into the week is
-   * frozen with 1 when it survived the week and 0 when it went out, survivors first. Entries out
-   * before the week have no standing for it, and a cancelled week counts for nothing (#743). A
+   * frozen with 1 when it survived the week and 0 when it went out, survivors first. A playoff
+   * event is a week per round (#785), so its standing is the rounds the entry survived in it, most
+   * first. Entries out before the event have no standing for it, and a cancelled week counts for nothing (#743). A
    * week settles once. When the contest's last week settles, the contest standings are ranked from
    * the season's run, as the live board ranks it (entries still in first, then weeks survived,
    * entries out in the same week sharing a place), and the contest is COMPLETED.
@@ -498,33 +499,35 @@ export class ContestSettlementService {
     const settledWeeks = await this.deps.eventStandings.findByContest(contest.id);
     if (sportEvent.status !== SportEventStatus.CANCELLED && !settledWeeks.some((standing) => standing.sportEventId === sportEventId)) {
       const season = await loadSurvivorSeason(this.deps, contest, completedAt);
-      const weekIndex = season.weeks.findIndex((week) => week.event.id === sportEventId);
+      // A playoff event is several weeks, one per round (#785): its standing counts the rounds survived in it.
+      const weekIndexes = season.weeks.flatMap((week, index) => (week.event.id === sportEventId ? [index] : []));
       const decided = season.entries.flatMap(({ entry, run }) => {
-        const outcome = run.weeks[weekIndex]?.outcome ?? null;
-        return outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.ELIMINATED
-          ? [{ entry, survived: outcome === SurvivorWeekOutcome.SURVIVED }]
+        const outcomes = weekIndexes.map((index) => run.weeks[index]?.outcome ?? null);
+        const survived = outcomes.filter((outcome) => outcome === SurvivorWeekOutcome.SURVIVED).length;
+        return outcomes.some((outcome) => outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.ELIMINATED)
+          ? [{ entry, survived, decidedCount: outcomes.filter((outcome) => outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.ELIMINATED).length }]
           : [];
       });
-      const survivorCount = decided.filter(({ survived }) => survived).length;
-      const placeOf = (survived: boolean) => {
-        const position = survived ? 1 : survivorCount + 1;
-        const sharing = survived ? survivorCount : decided.length - survivorCount;
+      const placeOf = (survived: number) => {
+        const position = 1 + decided.filter((other) => other.survived > survived).length;
+        const sharing = decided.filter((other) => other.survived === survived).length;
         return { position, displayPosition: sharing > 1 ? `T${position}` : String(position) };
       };
-      for (const { entry, survived } of decided) {
+      for (const { entry, survived, decidedCount } of decided) {
         await this.deps.eventStandings.upsert({
           contestId: contest.id,
           contestEntryId: entry.id,
           sportEventId,
           ...placeOf(survived),
-          // One pick a week, decided once its game is played.
-          countingPickLimit: 1,
-          scoredPickCount: 1,
+          // One pick a week (a round, in a playoff), decided once its game is played.
+          countingPickLimit: weekIndexes.length,
+          scoredPickCount: decidedCount,
           asOf: completedAt,
           settledAt: completedAt,
-          totalScore: survived ? 1 : 0,
+          totalScore: survived,
         });
       }
+      const survivorCount = decided.filter(({ survived, decidedCount }) => survived === decidedCount).length;
       this.logger.info({ contestId: contest.id, sportEventId, entryCount: decided.length, survivorCount }, 'Settled one week of a survivor contest');
     }
     if (!(await this.allEventsFinished(contest))) {

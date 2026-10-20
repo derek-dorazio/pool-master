@@ -13,7 +13,7 @@ import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from
 export const bracketPredictionEngine: PredictionEngine = {
   selectionType: SelectionType.BRACKET,
   pickWindow: PickWindow.UNTIL_EVENT_START,
-  onePickPerEvent: false,
+  onePickPerRound: false,
   readsEarlierWeeks: false,
 
   tiebreakerGame({ games }) {

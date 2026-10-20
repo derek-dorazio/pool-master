@@ -10960,6 +10960,17 @@ export type SurvivorLeaderboardResponse = {
          * 1 for the contest's first week, by start date.
          */
         weekNumber: number;
+        /**
+         * The round of the event the week is (#785): 1 for a regular-season week, which is an event of one round; each round of a playoff bracket is a week of its own.
+         */
+        roundNumber: number;
+        /**
+         * The event's number of rounds, for the round's name: 1 for a regular-season week.
+         */
+        roundCount: number;
+        /**
+         * The event's name; a playoff round is named by its round number and the event's round names.
+         */
         name: string;
         /**
          * The week's first kickoff.
@@ -11009,6 +11020,10 @@ export type SurvivorLeaderboardResponse = {
          */
         weeks: Array<{
             sportEventId: string;
+            /**
+             * The round of the event the week is, as on the contest's weeks.
+             */
+            roundNumber: number;
             /**
              * SURVIVED when the picked team won or its game was cancelled, ELIMINATED after a loss, a tie or a week not submitted by its first kickoff, PENDING while the game is unplayed. Null before the week starts, for a cancelled week, and for weeks after the entry went out.
              */

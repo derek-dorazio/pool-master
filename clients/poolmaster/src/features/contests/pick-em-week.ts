@@ -194,3 +194,54 @@ export function weekSubmitHint(gamePicks: GamePicksResponse): string | null {
   }
   return null;
 }
+
+/**
+ * The event's rounds, in order. A regular-season week has one; a survivor pool on a playoff
+ * bracket (#785) picks each round as a week of its own.
+ */
+export function weekRounds(gamePicks: Pick<GamePicksResponse, 'games'>): number[] {
+  return [...new Set(gamePicks.games.map((game) => game.roundNumber))].sort((left, right) => left - right);
+}
+
+/** Whether the week is a survivor pool's playoff bracket (#785): several rounds, a pick in each. */
+export function isPlayoffSurvivor(gamePicks: Pick<GamePicksResponse, 'games' | 'selectionType'>): boolean {
+  return isSurvivorWeek(gamePicks) && weekRounds(gamePicks).length > 1;
+}
+
+/**
+ * The round a playoff survivor screen opens on: the first with a game still to kick off, else
+ * the last.
+ */
+export function currentWeekRound(gamePicks: Pick<GamePicksResponse, 'games'>): number {
+  const rounds = weekRounds(gamePicks);
+  return rounds.find((round) => gamePicks.games.some((game) => game.roundNumber === round && !game.locked)) ?? rounds.at(-1) ?? 1;
+}
+
+/** The participant the game's pick names, or null with none shown. */
+function pickedParticipantId(game: PickEmGame): string | null {
+  const pickedId = game.pick?.sportEventParticipantId;
+  return gameTeams(game).find((team) => team !== null && team.sportEventParticipantId === pickedId)?.participantId ?? null;
+}
+
+/**
+ * One round of a playoff survivor pool (#785) as its own week: that round's games, its picks
+ * counted, and the teams picked in the event's other rounds added to the teams already used, so
+ * the week's screen reads it as it reads a regular-season week.
+ */
+export function roundWeek(gamePicks: GamePicksResponse, roundNumber: number): GamePicksResponse {
+  const games = gamePicks.games.filter((game) => game.roundNumber === roundNumber);
+  const otherRounds = gamePicks.games
+    .filter((game) => game.roundNumber !== roundNumber)
+    .flatMap((game) => pickedParticipantId(game) ?? []);
+  const { survivor } = gamePicks;
+  return {
+    ...gamePicks,
+    games,
+    gameCount: games.length,
+    pickedCount: games.filter((game) => game.pick !== null).length,
+    survivor: survivor && {
+      ...survivor,
+      usedParticipantIds: survivor.usedParticipantIds && [...new Set([...survivor.usedParticipantIds, ...otherRounds])],
+    },
+  };
+}

@@ -24974,8 +24974,17 @@
                   "type": "integer",
                   "description": "1 for the contest's first week, by start date."
                 },
+                "roundNumber": {
+                  "type": "integer",
+                  "description": "The round of the event the week is (#785): 1 for a regular-season week, which is an event of one round; each round of a playoff bracket is a week of its own."
+                },
+                "roundCount": {
+                  "type": "integer",
+                  "description": "The event's number of rounds, for the round's name: 1 for a regular-season week."
+                },
                 "name": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "The event's name; a playoff round is named by its round number and the event's round names."
                 },
                 "startDate": {
                   "type": "string",
@@ -25005,6 +25014,8 @@
               "required": [
                 "sportEventId",
                 "weekNumber",
+                "roundNumber",
+                "roundCount",
                 "name",
                 "startDate",
                 "status",
@@ -25012,7 +25023,7 @@
                 "aliveCount"
               ],
               "additionalProperties": false,
-              "description": "One week of a survivor contest."
+              "description": "One week of a survivor contest: a regular-season week, or one round of a playoff bracket."
             },
             "description": "The contest's weeks in week order."
           },
@@ -25070,6 +25081,10 @@
                         "type": "string",
                         "format": "uuid"
                       },
+                      "roundNumber": {
+                        "type": "integer",
+                        "description": "The round of the event the week is, as on the contest's weeks."
+                      },
                       "outcome": {
                         "type": [
                           "string",
@@ -25093,6 +25108,7 @@
                     },
                     "required": [
                       "sportEventId",
+                      "roundNumber",
                       "outcome",
                       "team"
                     ],
@@ -46643,7 +46659,7 @@
         "tags": [
           "Selections"
         ],
-        "description": "Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, and replaces the entry's pick on that game. In a bracket (#721) a pick must name a team the entry's picks put in the game (picks earlier in the same request count), and a later pick that no longer follows from them is cleared; the request may also set the event's `tiebreakerValue`, the total points of its tiebreaker game, a bracket's final or a week's last game (#717; 409 CONTEST_ENTRY_LOCKED once that game's pick has locked). A bracket's every pick locks at the event's start. Only a member of the entry's squad may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team the game does not offer the entry; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. In a survivor contest (#719): 409 PREDICTION_ONE_PICK_REQUIRED unless the week holds exactly one pick; 409 PREDICTION_TEAM_ALREADY_USED for a team the entry picked in another submitted week; 409 PREDICTION_ENTRY_ELIMINATED once the entry is out. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
+        "description": "Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, and replaces the entry's pick on that game. In a bracket (#721) a pick must name a team the entry's picks put in the game (picks earlier in the same request count), and a later pick that no longer follows from them is cleared; the request may also set the event's `tiebreakerValue`, the total points of its tiebreaker game, a bracket's final or a week's last game (#717; 409 CONTEST_ENTRY_LOCKED once that game's pick has locked). A bracket's every pick locks at the event's start. Only a member of the entry's squad may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team the game does not offer the entry; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. In a survivor contest (#719): 409 PREDICTION_ONE_PICK_REQUIRED unless the week holds exactly one pick; 409 PREDICTION_TEAM_ALREADY_USED for a team the entry picked in another submitted week; 409 PREDICTION_ENTRY_ELIMINATED once the entry is out. On a playoff bracket (#785) each round is a week: the event is submitted once with its first round's one pick, each later round holds at most one pick (a new one replaces the entry's pick in that round), no team is picked in two rounds, and an entry out in one round picks no later round. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
         "requestBody": {
           "required": true,
           "content": {
@@ -46864,7 +46880,7 @@
         "tags": [
           "Selections"
         ],
-        "description": "Submits the caller's entry for one event (\"submit week 6\") and returns the event's games with the entry's picks (#716). Only a submitted event counts. Every game must be picked: 409 PREDICTION_WEEK_INCOMPLETE otherwise. In a confidence pool the values must be 1 to the game count, each used once: 409 PREDICTION_CONFIDENCE_INVALID otherwise. Every event needs its tiebreaker, a bracket's (#721) and a pick'em week's (#717): 409 PREDICTION_TIEBREAKER_MISSING otherwise. Submitting a submitted event changes nothing. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE and the event's first game has not started. Only a member of the entry's team may submit: 403 ENTRY_ACCESS_DENIED otherwise. In a survivor contest (#719): 409 PREDICTION_ONE_PICK_REQUIRED unless the week holds exactly one pick; 409 PREDICTION_TEAM_ALREADY_USED for a team the entry picked in another submitted week; 409 PREDICTION_ENTRY_ELIMINATED once the entry is out. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
+        "description": "Submits the caller's entry for one event (\"submit week 6\") and returns the event's games with the entry's picks (#716). Only a submitted event counts. Every game must be picked: 409 PREDICTION_WEEK_INCOMPLETE otherwise. In a confidence pool the values must be 1 to the game count, each used once: 409 PREDICTION_CONFIDENCE_INVALID otherwise. Every event needs its tiebreaker, a bracket's (#721) and a pick'em week's (#717): 409 PREDICTION_TIEBREAKER_MISSING otherwise. Submitting a submitted event changes nothing. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE and the event's first game has not started. Only a member of the entry's team may submit: 403 ENTRY_ACCESS_DENIED otherwise. In a survivor contest (#719): 409 PREDICTION_ONE_PICK_REQUIRED unless the week holds exactly one pick; 409 PREDICTION_TEAM_ALREADY_USED for a team the entry picked in another submitted week; 409 PREDICTION_ENTRY_ELIMINATED once the entry is out. On a playoff bracket (#785) each round is a week: the event is submitted once with its first round's one pick, each later round holds at most one pick (a new one replaces the entry's pick in that round), no team is picked in two rounds, and an entry out in one round picks no later round. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
         "parameters": [
           {
             "schema": {

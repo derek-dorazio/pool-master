@@ -100,9 +100,12 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
     },
     countGames: async (sportEventId) =>
       (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED).length,
-    countUndecidedGames: async (sportEventId) =>
-      (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED
-        && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null)).length,
+    countUndecidedGames: async (sportEventId, options) => {
+      const games = (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED);
+      const openingRound = Math.min(...games.map((match) => match.roundNumber));
+      return games.filter((match) => (options?.openingRoundOnly !== true || match.roundNumber === openingRound)
+        && (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null)).length;
+    },
     countGamesWithoutSpread: async (sportEventId) =>
       (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED && match.homeSpread === null).length,
     findBracketProblem: async (sportEventId, startsAtRound) => {

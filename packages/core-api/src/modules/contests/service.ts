@@ -62,7 +62,7 @@ import type { BracketLeaderboardEntryRow, BracketLeaderboardModel } from '../../
 import type { PickEmLeaderboardEntryRow, PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
 import { BracketScoringUnavailableError, loadBracketStandings } from './bracket-standings';
 import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
-import { loadSurvivorSeason } from './survivor-standings';
+import { loadSurvivorSeason, survivorWeekKey } from './survivor-standings';
 import type { SurvivorLeaderboardModel } from '../../mappers/survivor-leaderboard.mapper';
 import {
   applySettledContestStandings,
@@ -817,10 +817,13 @@ export class ContestService {
     }
     const now = this.now();
     const season = await loadSurvivorSeason(this.deps, contest, now);
+    const openingRoundOf = new Map<string, number>();
+    for (const { event, roundNumber } of season.weeks) openingRoundOf.set(event.id, Math.min(openingRoundOf.get(event.id) ?? roundNumber, roundNumber));
     const gameById = new Map(season.weeks.flatMap(({ event, games }) => games.map((game) => [game.id, { event, game }] as const)));
     const isRevealed = (sportEventMatchId: string) => {
       const found = gameById.get(sportEventMatchId);
-      return found !== undefined && areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, contest, found.event, found.game, now);
+      return found !== undefined
+        && areMatchPicksRevealed(PickWindow.UNTIL_MATCH_START, contest, found.event, found.game, openingRoundOf.get(found.event.id) ?? found.game.roundNumber, now);
     };
     const revealedParticipantIds = new Set(season.entries.flatMap(({ picks }) =>
       [...picks.values()].filter((pick) => isRevealed(pick.sportEventMatchId)).map((pick) => pick.participantId)));
@@ -843,10 +846,11 @@ export class ContestService {
         weeksSurvived: run.weeksSurvived,
         position: frozen?.position ?? position,
         displayPosition: frozen?.displayPosition ?? displayPosition,
-        weeks: season.weeks.map(({ event }, index) => {
-          const pick = picks.get(event.id);
+        weeks: season.weeks.map(({ event, roundNumber }, index) => {
+          const pick = picks.get(survivorWeekKey({ sportEventId: event.id, roundNumber }));
           return {
             sportEventId: event.id,
+            roundNumber,
             outcome: run.weeks[index]?.outcome ?? null,
             // Only a submitted week's pick is shown: a draft one never counted, and the entry is out for not submitting.
             team: pick !== undefined && contestEntryEventStatus(entry, event.id) === ContestEntryStatus.SUBMITTED && isRevealed(pick.sportEventMatchId)
@@ -859,9 +863,11 @@ export class ContestService {
 
     return {
       contestId,
-      weeks: season.weeks.map(({ event, weekNumber, started, cancelled }, index) => ({
+      weeks: season.weeks.map(({ event, roundNumber, roundCount, weekNumber, started, cancelled }, index) => ({
         sportEventId: event.id,
         weekNumber,
+        roundNumber,
+        roundCount,
         name: event.name,
         startDate: event.startDate,
         status: event.status,

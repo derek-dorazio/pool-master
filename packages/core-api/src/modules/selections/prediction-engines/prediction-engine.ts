@@ -26,9 +26,9 @@ export const PredictionIssueKind = {
   CONFIDENCE_INVALID: 'CONFIDENCE_INVALID',
   /** No guess of the tiebreaker game's total points: a bracket's final (#721), a week's last game (#717). */
   TIEBREAKER_MISSING: 'TIEBREAKER_MISSING',
-  /** A survivor week (#719) has other than one pick. */
+  /** A survivor week (#719) has other than one pick: the event's first round needs one, and any round holds at most one. */
   ONE_PICK_REQUIRED: 'ONE_PICK_REQUIRED',
-  /** A survivor pick names a team the entry picked in an earlier week. */
+  /** A survivor pick names a team the entry picked in another week or round. */
   TEAM_ALREADY_USED: 'TEAM_ALREADY_USED',
   /** A survivor entry is out, so it plays no later week. */
   ENTRY_ELIMINATED: 'ENTRY_ELIMINATED',
@@ -48,11 +48,20 @@ export type PredictionIssue =
  * participant, and whether it is already out. Read only for an engine that `readsEarlierWeeks`.
  */
 export interface PredictionSeason {
+  /** The teams, by participant, the entry picked in the other events it submitted. This event's own rounds are read from its picks. */
   usedParticipantIds: ReadonlySet<string>;
   /** The week number (1 for the contest's first week) that put the entry out; null while it stands. */
   eliminatedInWeek: number | null;
   /** Each field row of this week's event, by id, to its participant. */
   participantIdOf: ReadonlyMap<string, string>;
+  /** Each game of the event, by match id, to its round: a playoff's rounds are each a week (#785). */
+  roundOf: ReadonlyMap<string, number>;
+  /** The event's first round, whose pick submitting the event needs. */
+  firstRoundNumber: number;
+  /** Each of the event's rounds to its week number in the contest. */
+  weekNumberOfRound: ReadonlyMap<number, number>;
+  /** The week number of the event's first round. */
+  firstWeekNumber: number;
 }
 
 /** One pick as the week's rules read it. */
@@ -72,8 +81,8 @@ export interface PredictionEngine {
   readonly selectionType: PredictionSelectionType;
   /** When a pick closes and is revealed to the league: at its game's kickoff, or at the event's start. */
   readonly pickWindow: PickWindow;
-  /** One pick per event (survivor) rather than one per game: a new pick replaces the entry's other one. */
-  readonly onePickPerEvent: boolean;
+  /** One pick per round of the event (survivor: a week, or a playoff round) rather than one per game: a new pick replaces the entry's other one in its round. */
+  readonly onePickPerRound: boolean;
   /** Whether the week's rules read the entry's earlier weeks of the contest (survivor's used teams and elimination). */
   readonly readsEarlierWeeks: boolean;
 
