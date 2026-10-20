@@ -12,7 +12,7 @@ import {
   SelectionType,
   SportEventStatus,
   SurvivorWeekOutcome,
-  getSportDefinition,
+  matchPeriodsOf,
   hasEverySquaresScoringMoment,
   squaresScoringMoments,
   squaresWinners,
@@ -310,7 +310,7 @@ export class ContestSettlementService {
       this.deps.squares.findDraw(contest.id),
     ]);
     const game = games.find((candidate) => candidate.id === contest.squaresGameMatchId);
-    const periodCount = getSportDefinition(sportEvent.sport).matchPeriods?.count;
+    const periodCount = matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null)?.count;
     let standingsUpserted = 0;
     if (game?.status === MatchStatus.COMPLETED && draw && periodCount !== undefined) {
       const moments = squaresScoringMoments(game, periodCount);

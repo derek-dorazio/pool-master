@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ContestStatus, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, MATCH_PERIOD_LAYOUTS } from '@poolmaster/shared/domain';
 import {
   claimSquaresBox,
   clearSquaresBox,
@@ -132,8 +132,7 @@ export function SquaresBoardView({
   }
 
   const board = boardQuery.data;
-  const sport = contest.sport ? getSportDefinition(contest.sport) : null;
-  const periods = sport?.matchPeriods ?? { count: board.periodCount, label: { one: 'period', many: 'periods' } };
+  const periods = MATCH_PERIOD_LAYOUTS[board.periodLayout];
   const myEntryId = myEntryIds.at(0) ?? null;
   const claimingEntryId = canManage
     ? claimForEntryId

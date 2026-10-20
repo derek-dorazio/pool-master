@@ -116,10 +116,10 @@ function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto,
   };
 }
 
-function seed(matches: SportEventMatchDto[], options: { event?: SportEventDto; field?: SportEventParticipantDto[]; roundNames?: string[] } = {}) {
+function seed(matches: SportEventMatchDto[], options: { event?: SportEventDto; field?: SportEventParticipantDto[]; roundNames?: string[]; matchPeriodLayout?: 'HALVES' } = {}) {
   getEventMock.mockResolvedValue({ data: { event: options.event ?? tournament } });
   listSportLeaguesMock.mockResolvedValue({
-    data: { sportLeagues: [sportLeagueFixture({ id: tournament.sportLeagueId, name: 'NCAA Division I Men', roundNames: options.roundNames ?? [] })] },
+    data: { sportLeagues: [sportLeagueFixture({ id: tournament.sportLeagueId, name: 'NCAA Division I Men', roundNames: options.roundNames ?? [], matchPeriodLayout: options.matchPeriodLayout ?? null })] },
   });
   listEventParticipantsMock.mockResolvedValue({ data: { participants: options.field ?? [duke, vermont, houston, texas] } });
   getEventBracketMock.mockResolvedValue({ data: { matches } });
@@ -464,11 +464,12 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       expect(await screen.findByTestId('root-admin-bracket-score-1-3-error')).toHaveTextContent('A score can only go up as the game goes on. Check it against the other scores of this game.');
     });
 
-    it('offers no scores for a basketball game, whose sport keeps none by period, or for a draft', async () => {
-      seed([superBowl()]);
+    it('scores a game of a sport league played in halves by its first half and its final, and offers no scores for a draft', async () => {
+      seed([superBowl()], { matchPeriodLayout: 'HALVES' });
       const { unmount } = renderPage();
-      await screen.findByTestId('root-admin-bracket-match-1');
-      expect(screen.queryByTestId('root-admin-bracket-scores-1')).not.toBeInTheDocument();
+      expect(await screen.findByTestId('root-admin-bracket-score-1-1-edit')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-bracket-score-1-2-edit')).not.toBeInTheDocument();
+      expect(screen.getByTestId('root-admin-bracket-score-1-final-edit')).toBeInTheDocument();
       unmount();
 
       seed([superBowl()], { event: { ...playoffs, status: 'DRAFT' } });

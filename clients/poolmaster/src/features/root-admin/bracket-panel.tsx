@@ -6,7 +6,7 @@ import { formsNoBracket, matchNoun } from './bracket-copy';
 import { BracketMatchRow, type BracketContext } from './bracket-match-row';
 import { capitalize } from './manage-navigation';
 import { PlayInPlacesCard } from './play-in-places-card';
-import { useEventRoundLabel } from './use-sport-catalog';
+import { useEventMatchPeriods, useEventRoundLabel } from './use-sport-catalog';
 import { useSportEventBracketQuery, useSportEventFieldQuery } from './use-sport-event';
 
 /**
@@ -20,6 +20,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
   const bracketQuery = useSportEventBracketQuery(event.id);
   const fieldQuery = useSportEventFieldQuery(event.id);
   const roundLabel = useEventRoundLabel(event);
+  const periods = useEventMatchPeriods(event);
 
   if (bracketQuery.isError || fieldQuery.isError) {
     return (
@@ -43,7 +44,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
     field: fieldQuery.data,
     fieldById: new Map(fieldQuery.data.map((entry) => [entry.id, entry])),
     spreads: bracket.length > 0 && formsNoBracket(bracket),
-    periods: definition.matchPeriods,
+    periods,
   };
   const roundCount = Math.max(event.rounds ?? 0, ...bracket.map((match) => match.roundNumber));
   const roundNumbers = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);

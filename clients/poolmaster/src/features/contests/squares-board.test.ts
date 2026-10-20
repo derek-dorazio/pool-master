@@ -12,14 +12,15 @@ import { squaresGameFixture } from './test/squares-fixtures';
 const QUARTERS = { count: 4, label: { one: 'quarter', many: 'quarters' } };
 
 describe('squares board helpers', () => {
-  it('names American football\'s scoring moments Q1, Halftime, Q3 and Final, and another sport\'s by its period word with the last one Final', () => {
+  it('names a quarters game\'s scoring moments Q1, Halftime, Q3 and Final, a halves game\'s Halftime and Final, and another layout\'s by its period word with the last one Final', () => {
     expect([1, 2, 3, 4].map((period) => squaresMomentLabel(period, QUARTERS))).toEqual(['Q1', 'Halftime', 'Q3', 'Final']);
-    expect([1, 2].map((period) => squaresMomentLabel(period, { count: 2, label: { one: 'half', many: 'halves' } }))).toEqual(['Half 1', 'Final']);
+    expect([1, 2].map((period) => squaresMomentLabel(period, { count: 2, label: { one: 'half', many: 'halves' } }))).toEqual(['Halftime', 'Final']);
+    expect([1, 2, 3].map((period) => squaresMomentLabel(period, { count: 3, label: { one: 'period', many: 'periods' } }))).toEqual(['Period 1', 'Period 2', 'Final']);
   });
 
   it('lists every scoring moment in order with its winner once scored and none before', () => {
     const winner = { periodNumber: 2, homeScore: 10, awayScore: 3, rowIndex: 3, columnIndex: 0, contestEntryId: null, entryName: null };
-    const rows = squaresMomentRows({ periodCount: 4, winners: [winner] }, QUARTERS);
+    const rows = squaresMomentRows({ winners: [winner] }, QUARTERS);
     expect(rows.map((row) => [row.label, row.winner])).toEqual([['Q1', null], ['Halftime', winner], ['Q3', null], ['Final', null]]);
   });
 

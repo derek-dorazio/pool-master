@@ -140,6 +140,7 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     matchKeyword: 'PGA',
     bracketAdvancement: 'FIXED',
     roundNames: [],
+    matchPeriodLayout: null,
     currentEventYear: null,
     isActive: true,
     affiliationCount: 0,

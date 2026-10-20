@@ -300,6 +300,13 @@ enum PrismaBracketAdvancement {
   RESEED_BY_SEED
 }
 
+/// The periods a sport league's games are played in, when not its sport's (#786). Mirrors the
+/// domain `MatchPeriodLayout`.
+enum PrismaMatchPeriodLayout {
+  QUARTERS
+  HALVES
+}
+
 /// How one field member's race ended (#622). Mirrors the domain `RaceResultStatus`. Only a
 /// FINISHED runner has a finishing place; every other status scores the contest's
 /// "did not finish" points.
@@ -622,6 +629,10 @@ model SportLeague {
   /// Playoff's 12 teams in six tiers of two). Null: the sport's default tier count. Reference
   /// data, set by the migration that seeds the league.
   tierCount          Int?                     @map("tier_count")
+  /// The periods its games are played in, when not its sport's (#786: men's college basketball
+  /// plays halves). Null: the sport's layout. Reference data, set by the migration that seeds the
+  /// league.
+  matchPeriodLayout  PrismaMatchPeriodLayout? @map("match_period_layout")
   createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 

@@ -47,6 +47,9 @@ export function squaresMomentLabel(periodNumber: number, periods: Pick<SportMatc
   if (periods.count === 4 && periods.label.one === 'quarter') {
     return ['Q1', 'Halftime', 'Q3'][periodNumber - 1] ?? `Q${periodNumber}`;
   }
+  if (periods.count === 2 && periods.label.one === 'half') {
+    return 'Halftime';
+  }
   const word = periods.label.one;
   return `${word.charAt(0).toUpperCase()}${word.slice(1)} ${periodNumber}`;
 }
@@ -69,8 +72,8 @@ export type SquaresMomentRow = {
 };
 
 /** Every scoring moment of the game in order, each with its winner once scored. */
-export function squaresMomentRows(board: Pick<SquaresBoardResponse, 'periodCount' | 'winners'>, periods: Pick<SportMatchPeriods, 'count' | 'label'>): SquaresMomentRow[] {
-  return Array.from({ length: board.periodCount }, (_, index) => {
+export function squaresMomentRows(board: Pick<SquaresBoardResponse, 'winners'>, periods: Pick<SportMatchPeriods, 'count' | 'label'>): SquaresMomentRow[] {
+  return Array.from({ length: periods.count }, (_, index) => {
     const periodNumber = index + 1;
     return {
       periodNumber,

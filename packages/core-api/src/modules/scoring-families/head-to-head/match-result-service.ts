@@ -33,6 +33,7 @@ import {
   SportEventStatus,
   compareScores,
   getSportDefinition,
+  matchPeriodsOf,
   rankSortedScores,
   sportPlaysMatches,
   type SportEvent,
@@ -167,7 +168,7 @@ export class MatchResultService {
         422,
       );
     }
-    const scoreProblem = describeScoreProblem(input) ?? describeFinalBelowPeriods(match, input, getSportDefinition(sportEvent.sport).matchPeriods);
+    const scoreProblem = describeScoreProblem(input) ?? describeFinalBelowPeriods(match, input, matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null));
     if (scoreProblem) {
       this.deps.logger?.warn({ sportEventId, matchNumber, scoreProblem }, 'Refused a match result with invalid scores');
       throw new SportEventError(`Match ${matchNumber}'s result cannot be saved: ${scoreProblem}.`, 'MATCH_RESULT_INVALID', 422);
@@ -311,7 +312,7 @@ export class MatchResultService {
     periodNumber: number,
   ): Promise<{ sportEvent: SportEvent; match: SportEventMatch; periods: SportMatchPeriods }> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
-    const periods = getSportDefinition(sportEvent.sport).matchPeriods;
+    const periods = matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null);
     if (!periods) {
       this.deps.logger?.warn({ sportEventId, sport: sportEvent.sport }, 'Refused a period score for a sport without periods');
       throw new SportEventError(

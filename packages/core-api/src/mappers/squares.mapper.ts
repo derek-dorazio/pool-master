@@ -11,7 +11,7 @@ export function toSquaresBoardResponse(board: SquaresBoard): SquaresBoardRespons
     contestId: board.contest.id,
     contestStatus: board.contest.status,
     maxSquaresPerEntry: board.maxSquaresPerEntry,
-    periodCount: board.periodCount,
+    periodLayout: board.periodLayout,
     game: mapSportEventMatchToDto(board.game),
     homeTeamName: board.homeTeamName,
     awayTeamName: board.awayTeamName,

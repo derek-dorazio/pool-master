@@ -1,4 +1,4 @@
-import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
+import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
 
@@ -31,7 +31,7 @@ export const americanFootballSportDefinition: SportDefinition = {
   defaultTierLayout: { tierCount: 7, tierSize: 2 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
-  matchPeriods: { count: 4, label: { one: 'quarter', many: 'quarters' } },
+  matchPeriodLayout: MatchPeriodLayout.QUARTERS,
   vocabulary: {
     participant: { one: 'team', many: 'teams' },
     event: { one: 'playoffs', many: 'playoffs' },
