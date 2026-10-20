@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import {
+  Link,
   Outlet,
   useLocation,
   useNavigate,
@@ -17,6 +18,9 @@ import { buildLeagueAdminPath } from "@/features/leagues/league-routing";
 import { LeagueMenuBar } from "@/features/leagues/league-menu-bar";
 import { useLeaguesQuery } from "@/features/leagues/use-leagues-query";
 import { LeagueSelector } from "./league-selector";
+
+/** The public How to Play page (#803): linked from the signed-out header and from every page's footer. */
+const HOW_TO_PLAY_PATH = "/how-to-play";
 
 export function AppShell() {
   const location = useLocation();
@@ -197,7 +201,15 @@ export function AppShell() {
                   }}
                 />
               </>
-            ) : null}
+            ) : (
+              <Link
+                className="font-display text-sm font-bold uppercase text-on-inverse hover:text-primary"
+                data-testid="app-shell-how-to-play"
+                to={HOW_TO_PLAY_PATH}
+              >
+                How to Play
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -209,6 +221,14 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+
+      <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-6xl flex-wrap gap-4 px-6 py-6 text-sm text-muted-foreground">
+          <Link className="hover:text-foreground" data-testid="app-shell-footer-how-to-play" to={HOW_TO_PLAY_PATH}>
+            How to Play
+          </Link>
+        </div>
+      </footer>
 
       {shouldLoadLeagueShell ? (
         <CreateLeagueModal

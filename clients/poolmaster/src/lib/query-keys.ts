@@ -111,6 +111,7 @@ export const QueryKeys = {
   /** One sport league: a bracket's own round names (#706). */
   sportLeagues: {
     detail: (sportLeagueId: QueryKeyId) => ['poolmaster', 'sport-league', sportLeagueId] as const,
+    list: () => ['poolmaster', 'sport-leagues'] as const,
   },
   leagues: {
     all: ['poolmaster', 'leagues'] as const,

@@ -1294,7 +1294,7 @@ export interface paths {
         };
         /**
          * List contest configuration templates
-         * @description The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format, narrowed to the chosen event's sport league (that league's templates plus the sport-wide ones).
+         * @description The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for one sport's active templates, narrowed to the chosen event's sport league (that league's templates plus the sport-wide ones) and kind of event.
          */
         get: operations["listContestConfigTemplates"];
         put?: never;
@@ -18378,15 +18378,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
                 headers: {
                     [name: string]: unknown;
                 };

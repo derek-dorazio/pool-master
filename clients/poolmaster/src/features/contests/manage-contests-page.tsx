@@ -6,6 +6,7 @@ import type { ContestDto } from '@/lib/api';
 import {
   buildLeagueAdminContestCreatePath,
   buildLeagueAdminContestPath,
+  buildLeagueContestTypesPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
@@ -190,12 +191,21 @@ export function ManageContestsPage() {
       <PageHeader
         actions={
           league.isActive ? (
-            <LinkButton
-              data-testid="manage-contests-create-link"
-              to={buildLeagueAdminContestCreatePath(league.leagueCode)}
-            >
-              Create contest
-            </LinkButton>
+            <>
+              <LinkButton
+                data-testid="manage-contests-contest-types-link"
+                to={buildLeagueContestTypesPath(league.leagueCode)}
+                variant="secondary"
+              >
+                Browse contest types
+              </LinkButton>
+              <LinkButton
+                data-testid="manage-contests-create-link"
+                to={buildLeagueAdminContestCreatePath(league.leagueCode)}
+              >
+                Create contest
+              </LinkButton>
+            </>
           ) : (
             <Chip tone="inactive">League inactive</Chip>
           )

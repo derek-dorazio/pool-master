@@ -71,6 +71,10 @@ const PUBLIC_ROUTES = new Set([
   // registration hole — it needs a valid PENDING invite code, and it creates the account with the
   // email the commissioner invited rather than one the caller supplies.
   'POST /api/v1/team-invitations/register',
+  // #803 — the contest templates, read by the public How to Play page. They are platform-seeded
+  // product copy, identical for every viewer and tied to no league or user, so a visitor deciding
+  // whether to sign up may read what contests PoolMaster runs. Their update stays root-admin only.
+  'GET /api/v1/contest-config-templates',
 ]);
 
 const PUBLIC_ROUTE_PATTERNS = [

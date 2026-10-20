@@ -18757,10 +18757,6 @@ export type ListContestConfigTemplatesErrors = {
      * Standard API error envelope.
      */
     400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
 };
 
 export type ListContestConfigTemplatesError = ListContestConfigTemplatesErrors[keyof ListContestConfigTemplatesErrors];

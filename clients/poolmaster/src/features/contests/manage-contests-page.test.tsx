@@ -270,7 +270,7 @@ describe('ManageContestsPage', () => {
     expect(screen.getByTestId('commissioner-tools-menu-settings')).not.toHaveAttribute('aria-current');
   });
 
-  it('offers a commissioner of an active league Create contest when the league has none', async () => {
+  it('offers a commissioner of an active league Create contest when the league has none, beside a way to browse every contest type', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue(apiSuccess({ contests: [] }));
 
@@ -280,6 +280,7 @@ describe('ManageContestsPage', () => {
     expect(empty.getByText('No contests yet')).toBeInTheDocument();
     expect(empty.getByRole('link', { name: 'Create contest' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/new');
     expect(screen.getByTestId('manage-contests-create-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/new');
+    expect(screen.getByTestId('manage-contests-contest-types-link')).toHaveAttribute('href', '/league/BIGDAWGS/contest-types');
   });
 
   it('marks an inactive league and offers no way to create a contest in it', async () => {
