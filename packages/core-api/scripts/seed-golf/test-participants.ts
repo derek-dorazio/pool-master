@@ -212,9 +212,18 @@ class ParticipantLoader {
       const contestName = `${event.name} picks`;
       if (contest && contest.status !== ContestStatus.DRAFT) {
         row(LoadSubject.CONTEST, LoadAction.SKIP, contestName);
+      } else if (contest) {
+        row(LoadSubject.CONTEST, LoadAction.UPDATE, contestName, 'opened');
+        if (this.apply && leagueId !== null) contestId = await this.open(client, leagueId, contest.id, contestName);
       } else {
-        row(LoadSubject.CONTEST, contest ? LoadAction.UPDATE : LoadAction.ADD, contestName, contest ? 'opened' : 'created from the default template and opened');
-        if (this.apply && leagueId !== null) contestId = await this.createAndOpen(client, leagueId, event, contestId, contestName);
+        const template = await this.template(client, event);
+        if (!template) {
+          // A week of games is picked game by game (#816): the run makes roster picks only.
+          row(LoadSubject.CONTEST, LoadAction.SKIP, contestName, 'no tiered or budget contest is offered on this event');
+          continue;
+        }
+        row(LoadSubject.CONTEST, LoadAction.ADD, contestName, 'created from the default template and opened');
+        if (this.apply && leagueId !== null) contestId = await this.createAndOpen(client, leagueId, event, template, contestName);
       }
       await this.loadEntries(sportLeagueName, leagueId, contestId, event.id, contestName);
     }
@@ -233,27 +242,26 @@ class ParticipantLoader {
       .slice(0, CONTESTS_PER_SPORT_LEAGUE);
   }
 
-  private async template(client: Client, event: StoredEvent): Promise<Template> {
+  private async template(client: Client, event: StoredEvent): Promise<Template | null> {
     const { templates } = await must(listContestConfigTemplates({
       client,
       query: { sport: event.sport, sportLeagueId: event.sportLeagueId, active: true },
     }), `List contest templates for ${event.name}`);
-    const chosen = chooseContestTemplate(templates, event);
-    if (!chosen) throw new Error(`No tiered or budget contest template for ${event.sport}.`);
-    return chosen;
+    return chooseContestTemplate(templates, event);
   }
 
-  /** Creates the contest unless it is already there as a draft, then opens it; returns its id. */
-  private async createAndOpen(client: Client, leagueId: string, event: StoredEvent, draftId: string | null, contestName: string): Promise<string> {
-    let contestId = draftId;
-    if (contestId === null) {
-      const template = await this.template(client, event);
-      contestId = (await must(createContest({
-        client,
-        path: { id: leagueId },
-        body: { name: contestName, sportEventIds: [event.id], contestFormat: ContestFormat.ROSTER, selectionType: template.selectionType, templateId: template.id },
-      }), `Create ${contestName}`)).contest.id;
-    }
+  /** Creates the contest from the template, then opens it; returns its id. */
+  private async createAndOpen(client: Client, leagueId: string, event: StoredEvent, template: Template, contestName: string): Promise<string> {
+    const contestId = (await must(createContest({
+      client,
+      path: { id: leagueId },
+      body: { name: contestName, sportEventIds: [event.id], contestFormat: ContestFormat.ROSTER, selectionType: template.selectionType, templateId: template.id },
+    }), `Create ${contestName}`)).contest.id;
+    return this.open(client, leagueId, contestId, contestName);
+  }
+
+  /** Opens a draft contest; returns its id. */
+  private async open(client: Client, leagueId: string, contestId: string, contestName: string): Promise<string> {
     await must(openContest({ client, path: { id: leagueId, contestId } }), `Open ${contestName}`);
     return contestId;
   }

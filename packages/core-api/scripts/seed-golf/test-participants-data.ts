@@ -5,7 +5,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { ContestFormat, getSportDefinition, SelectionType, type Sport } from '@poolmaster/shared/domain';
+import { contestTemplateEventTypeOf, ContestFormat, getSportDefinition, SelectionType, type Sport } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateListResponse, SelectionStateResponse, SportEventListResponse } from '@poolmaster/shared/generated/hey-api';
 import { AppEnvironment } from '../../src/core/config';
 
@@ -43,12 +43,18 @@ export function testLeagueName(sport: Sport, sportLeagueName: string): string {
 }
 
 /**
- * The template a test contest on this event is created from: a tiered or budget one, its sport
- * league's ahead of a sport-wide one, the default first. A draw deals its picks to every entry at
- * once and closes them, so the run picks for itself instead. Null when none is offered.
+ * The template a test contest on this event is created from: a tiered or budget one offered on the
+ * event's kind of event (#816), as Create contest offers it, its sport league's ahead of a
+ * sport-wide one, the default first. A draw deals its picks to every entry at once and closes
+ * them, so the run picks for itself instead. Null when none is offered: a week of a season's games
+ * is picked game by game, so it has no roster template.
  */
-export function chooseContestTemplate(templates: readonly Template[], _event: Pick<StoredEvent, 'sport' | 'sportLeagueId' | 'rounds'>): Template | null {
-  const pickable = templates.filter((template) => template.contestFormat === ContestFormat.ROSTER
+export function chooseContestTemplate(templates: readonly Template[], event: Pick<StoredEvent, 'sport' | 'sportLeagueId' | 'rounds'>): Template | null {
+  const eventType = contestTemplateEventTypeOf(event);
+  const pickable = templates.filter((template) => template.sport === event.sport
+    && (template.sportLeagueId === null || template.sportLeagueId === event.sportLeagueId)
+    && ((template.eventType ?? null) === null || template.eventType === eventType)
+    && template.contestFormat === ContestFormat.ROSTER
     && template.selectionType !== SelectionType.RANDOM_DRAW);
   const ranked = [...pickable].sort((left, right) => Number(right.sportLeagueId !== null) - Number(left.sportLeagueId !== null)
     || Number(right.isDefault) - Number(left.isDefault) || left.sortOrder - right.sortOrder);
