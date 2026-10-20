@@ -20,6 +20,7 @@ export const Sport = {
   RUNNING: 'RUNNING',
   BASKETBALL: 'BASKETBALL',
   AMERICAN_FOOTBALL: 'AMERICAN_FOOTBALL',
+  HOCKEY: 'HOCKEY',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
 
@@ -139,12 +140,14 @@ export type BracketAdvancement = (typeof BracketAdvancement)[keyof typeof Bracke
 
 /**
  * The periods one game of a sport league is played in (#786): QUARTERS for American football, the
- * NBA, the WNBA and women's college basketball; HALVES for men's college basketball. A sport league
- * with none set plays its sport's layout (`SportDefinition.matchPeriodLayout`).
+ * NBA, the WNBA and women's college basketball; HALVES for men's college basketball; THREE_PERIODS
+ * for hockey (#788). A sport league with none set plays its sport's layout
+ * (`SportDefinition.matchPeriodLayout`).
  */
 export const MatchPeriodLayout = {
   QUARTERS: 'QUARTERS',
   HALVES: 'HALVES',
+  THREE_PERIODS: 'THREE_PERIODS',
 } as const;
 export type MatchPeriodLayout = (typeof MatchPeriodLayout)[keyof typeof MatchPeriodLayout];
 

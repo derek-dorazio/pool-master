@@ -366,6 +366,76 @@ describe('basketball-2026-ncaa-tournaments-test.json', () => {
   });
 });
 
+describe('hockey-2026-nhl-playoffs-test.json', () => {
+  const file = readDataFile('hockey-2026-nhl-playoffs-test.json', true);
+  const [playoffs] = file.sportLeagues[0].events;
+  const matches = playoffs.matches ?? [];
+
+  it('is a test seed of one fixed four-round Stanley Cup playoffs of 16 teams, seeded 1 to 3 in each division with both wild cards 4', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.HOCKEY, 2026, ['NHL']]);
+    expect([playoffs.rounds, playoffs.startDate, playoffs.endDate]).toEqual([4, '2026-04-18', '2026-06-14']);
+    expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]);
+    expect(matches.filter((match) => match.roundNumber < 4).every((match) => match.regionLabel === 'East' || match.regionLabel === 'West')).toBe(true);
+  });
+
+  it('plays each best-of-seven series as one game scored in games won, Carolina beating Vegas 4-2 in the Stanley Cup Final', () => {
+    expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
+    expect(matches.every((match) => match.result !== undefined && Math.max(match.result.homeScore, match.result.awayScore) === 4)).toBe(true);
+    expect(matches.every((match) => !match.isNeutralSite)).toBe(true);
+    expect(matches[14]).toMatchObject({ home: null, away: null, advancesTo: null, result: { winner: 'HOME', homeScore: 4, awayScore: 2 } });
+  });
+});
+
+describe('hockey-2026-pwhl-playoffs-test.json', () => {
+  const file = readDataFile('hockey-2026-pwhl-playoffs-test.json', true);
+  const [playoffs] = file.sportLeagues[0].events;
+  const matches = playoffs.matches ?? [];
+
+  it('is a test seed of a two-round Walter Cup bracket of four teams, 1 against 3 as Montreal chose, Montreal beating Ottawa 3-1 in the final', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.HOCKEY, 2026, ['PWHL']]);
+    expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4]);
+    const seedOf = new Map(playoffs.field.map((entry) => [entry.player, entry.seed]));
+    expect(matches.filter((match) => match.roundNumber === 1).map((match) => [seedOf.get(match.home ?? ''), seedOf.get(match.away ?? '')])).toEqual([[1, 3], [2, 4]]);
+    expect(matches[2]).toMatchObject({ roundNumber: 2, advancesTo: null, result: { winner: 'HOME', homeScore: 3, awayScore: 1 } });
+  });
+});
+
+describe('hockey-2026-ncaa-tournaments-test.json', () => {
+  const file = readDataFile('hockey-2026-ncaa-tournaments-test.json', true);
+  const [men, women] = file.sportLeagues.map((league) => league.events[0]);
+
+  it('is a test seed of the men\'s 16-team tournament in four regions seeded 1 to 4, every game at a neutral site', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.HOCKEY, 2026, ['NCAA Division I Men', 'NCAA Division I Women']]);
+    const matches = men.matches ?? [];
+    expect(men.rounds).toBe(4);
+    for (let seed = 1; seed <= 4; seed += 1) expect(men.field.filter((entry) => entry.seed === seed)).toHaveLength(4);
+    expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
+    expect(matches.every((match) => match.isNeutralSite && match.result !== undefined)).toBe(true);
+    expect(new Set(matches.map((match) => match.regionLabel))).toEqual(new Set(['Albany', 'Loveland', 'Sioux Falls', 'Worcester', undefined]));
+  });
+
+  it('fills the women\'s three quarterfinal places from the first round, seeded 6 to 8 by the seed each meets, never with a team already in the field', () => {
+    expect(women.rounds).toBe(3);
+    expect(women.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(women.field.filter((entry) => entry.isPlayInPlace).map((entry) => [entry.seed, entry.playInWinner])).toEqual([
+      [6, 'ncaawh-uconn-huskies'], [7, 'ncaawh-quinnipiac-bobcats'], [8, 'ncaawh-yale-bulldogs'],
+    ]);
+    const fieldKeys = new Set(women.field.map((entry) => entry.player));
+    expect(women.field.filter((entry) => entry.playInWinner !== undefined && fieldKeys.has(entry.playInWinner))).toEqual([]);
+  });
+
+  it('ends with Denver beating Wisconsin 2-1 for the men\'s title and Wisconsin beating Ohio State 3-2 for the women\'s, each with its first two periods\' scores', () => {
+    expect(men.matches?.[14]).toMatchObject({
+      roundNumber: 4, advancesTo: null, result: { winner: 'HOME', homeScore: 2, awayScore: 1 },
+      periodScores: [{ periodNumber: 1, homeScore: 0, awayScore: 1 }, { periodNumber: 2, homeScore: 0, awayScore: 1 }],
+    });
+    expect(women.matches?.[6]).toMatchObject({
+      roundNumber: 3, advancesTo: null, result: { winner: 'AWAY', homeScore: 2, awayScore: 3 },
+      periodScores: [{ periodNumber: 1, homeScore: 0, awayScore: 2 }, { periodNumber: 2, homeScore: 0, awayScore: 2 }],
+    });
+  });
+});
+
 describe('2026 racing test seeds', () => {
   it.each([
     ['auto-racing-2026-test.json', Sport.AUTO_RACING, [['Formula 1', 17, 'Max Verstappen'], ['NASCAR Cup Series', 32, 'Chase Briscoe'], ['IndyCar', 18, 'Scott McLaughlin']]],

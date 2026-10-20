@@ -113,6 +113,7 @@ const SPORTS: readonly SportScenario[] = [
   { sport: Sport.RUNNING, seed: oneEventOf('running-2026-test.json', 'World Marathon Majors (men)', 'Boston Marathon') },
   { sport: Sport.BASKETBALL, seed: oneEventOf('basketball-2025-nba-playoffs-test.json', 'NBA', 'NBA Playoffs') },
   { sport: Sport.AMERICAN_FOOTBALL, seed: oneEventOf('american-football-2026-nfl-playoffs-test.json', 'NFL', 'NFL Playoffs') },
+  { sport: Sport.HOCKEY, seed: oneEventOf('hockey-2026-nhl-playoffs-test.json', 'NHL', 'Stanley Cup Playoffs') },
 ];
 
 /**

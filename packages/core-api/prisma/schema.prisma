@@ -264,6 +264,7 @@ enum PrismaSport {
   RUNNING
   BASKETBALL
   AMERICAN_FOOTBALL
+  HOCKEY
 }
 
 /// Tournament structural format — drives which contest types are valid
@@ -305,6 +306,7 @@ enum PrismaBracketAdvancement {
 enum PrismaMatchPeriodLayout {
   QUARTERS
   HALVES
+  THREE_PERIODS
 }
 
 /// How one field member's race ended (#622). Mirrors the domain `RaceResultStatus`. Only a

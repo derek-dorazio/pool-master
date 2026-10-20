@@ -59,6 +59,7 @@ describe('RootAdminManageLayout', () => {
       'Running',
       'Basketball',
       'American football',
+      'Hockey',
       'Content Configuration',
       'Events',
       'Sync',

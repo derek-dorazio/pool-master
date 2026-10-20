@@ -73,6 +73,10 @@ const LEAGUES: readonly PlayoffLeague[] = [
   { sport: Sport.BASKETBALL, file: 'basketball-2025-wnba-playoffs-test.json', league: 'WNBA', event: 'WNBA Playoffs' },
   { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Tournament' },
   { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Tournament' },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-nhl-playoffs-test.json', league: 'NHL', event: 'Stanley Cup Playoffs' },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-pwhl-playoffs-test.json', league: 'PWHL', event: 'Walter Cup Playoffs' },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Ice Hockey Tournament' },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Ice Hockey Tournament' },
 ];
 
 /**
@@ -159,10 +163,10 @@ async function playedResults(row: PlayoffLeague, tag: string) {
 type Team = NonNullable<GamePicksResponse['games'][number]['predictedHome']>;
 
 describe('SDK Functional: a bracket pool and a playoff survivor pool on every playoff league\'s test seed', () => {
-  it.each(ROWS.map((row) => [row.league, row.selectionType, row] as const))(
+  it.each(ROWS.map((row) => [row.event, row.selectionType, row] as const))(
     '%s, %s: the entry that picks the real winners takes every point or survives every round, and the other is scored by the knockout rule',
-    async (_league, selectionType, row) => {
-      const tag = `${RUN}-${row.league}-${selectionType}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
+    async (_event, selectionType, row) => {
+      const tag = `${RUN}-${row.event}-${selectionType}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
       const played = await playedResults(row, tag);
       const { eventId, field } = await loadCopy(row, tag, SEASON[selectionType], true);
       const seed = playedSeedEvent(row.file, row.league, row.event);
