@@ -26,6 +26,7 @@ import type {
 import { ContestStatus, Sport, SelectionType} from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { freshEventEdition } from '../../support/event-edition';
+import { expectDefined } from '../../support/expect-defined';
 
 // No api-routes manifest entry for the new template list (the manifest is not extended without
 // approval); the literal is the published path.
@@ -333,7 +334,7 @@ describe('Contest management integration', () => {
 
     const templateRes = await getApp().inject({
       method: 'GET',
-      url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&contestFormat=ROSTER&active=true`,
+      url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&active=true`,
       headers: ownerHeaders,
     });
 
@@ -545,7 +546,7 @@ describe('Contest management integration', () => {
     await addContestReadyGolfField(80);
     const templatesRes = await getApp().inject({
       method: 'GET',
-      url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&contestFormat=ROSTER&active=true`,
+      url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&active=true`,
       headers: ownerHeaders,
     });
     const defaultTemplate = templatesRes.json<ContestConfigTemplateListResponse>().templates.find(
@@ -705,9 +706,9 @@ describe('Contest management integration', () => {
     });
   });
 
-  // #245 / A11 — templates are a global object: any authenticated caller reads them, no league
-  // membership involved; an anonymous caller does not.
-  it('lists templates for any authenticated caller and refuses anonymous callers', async () => {
+  // #245 / A11 — templates are a global object: anyone reads them, no league membership involved,
+  // and since #803 no session either, for the public How to Play page. Changing one stays root-admin.
+  it('lists templates for a signed-in caller and a signed-out visitor alike, and refuses a signed-out update', async () => {
     const outsider = await createTestUser({ displayName: 'Template Reader' });
     const readRes = await getApp().inject({
       method: 'GET',
@@ -715,12 +716,22 @@ describe('Contest management integration', () => {
       headers: outsider.headers,
     });
     expect(readRes.statusCode).toBe(200);
-    expect(readRes.json<ContestConfigTemplateListResponse>().templates.length).toBeGreaterThan(0);
+    const templates = readRes.json<ContestConfigTemplateListResponse>().templates;
+    expect(templates.length).toBeGreaterThan(0);
 
     const anonymousRes = await getApp().inject({
       method: 'GET',
       url: CONTEST_CONFIG_TEMPLATES_URL,
     });
-    expect(anonymousRes.statusCode).toBe(401);
+    expect(anonymousRes.statusCode).toBe(200);
+    expect(anonymousRes.json<ContestConfigTemplateListResponse>().templates).toEqual(templates);
+
+    const [template] = templates;
+    const anonymousUpdateRes = await getApp().inject({
+      method: 'PUT',
+      url: `${CONTEST_CONFIG_TEMPLATES_URL}${expectDefined(template).id}`,
+      payload: { name: 'Renamed by a visitor' },
+    });
+    expect(anonymousUpdateRes.statusCode).toBe(401);
   });
 });

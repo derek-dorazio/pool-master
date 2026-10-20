@@ -333,6 +333,25 @@ describe('AppShell', () => {
     expect(screen.queryByTestId('mock-league-menu')).not.toBeInTheDocument();
   });
 
+  it('links a signed-out visitor to How to Play from the header and the footer', () => {
+    authState.isAuthenticated = false;
+
+    renderAppShell(['/']);
+
+    expect(screen.getByTestId('app-shell-how-to-play')).toHaveAttribute('href', '/how-to-play');
+    expect(screen.getByTestId('app-shell-footer-how-to-play')).toHaveAttribute('href', '/how-to-play');
+  });
+
+  it('keeps How to Play in a signed-in member\'s footer, with the header given to their account menu', async () => {
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
+
+    renderAppShell(['/welcome']);
+
+    expect(screen.getByTestId('app-shell-footer-how-to-play')).toHaveAttribute('href', '/how-to-play');
+    expect(screen.queryByTestId('app-shell-how-to-play')).not.toBeInTheDocument();
+    await waitFor(() => expect(listLeaguesMock).toHaveBeenCalled());
+  });
+
   it('pool-master-fo5.5 does not render debug route copy for signed-out users', () => {
     authState.isAuthenticated = false;
 

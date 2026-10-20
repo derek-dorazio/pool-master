@@ -576,7 +576,7 @@ describe('Contract verification (web)', () => {
 
     const templateRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/contest-config-templates/?sport=GOLF&contestFormat=ROSTER&active=true',
+      url: '/api/v1/contest-config-templates/?sport=GOLF&active=true',
       headers: owner.headers,
     });
 

@@ -78,7 +78,7 @@ function AdminContestDestination() {
   return <div data-testid="admin-contest-destination">{contestId}</div>;
 }
 
-function renderCreateContestPage() {
+function renderCreateContestPage(path = '/league/BIGDAWGS/admin/contests/new') {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -89,7 +89,7 @@ function renderCreateContestPage() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/league/BIGDAWGS/admin/contests/new']}>
+      <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route element={<CreateContestPage />} path="/league/:leagueCode/admin/contests/new" />
           <Route element={<AdminContestDestination />} path="/league/:leagueCode/admin/contests/:contestId" />
@@ -396,6 +396,16 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.click(screen.getByTestId('contest-template-golf-tiered-pick-6'));
 
     expect(screen.getByTestId('contest-name')).toHaveValue('Spring Major');
+  });
+
+  it('starts on the template chosen on the contest types page, over the default, with its rules filled in', async () => {
+    primeCommonMocks();
+    renderCreateContestPage('/league/BIGDAWGS/admin/contests/new?template=33333333-3333-4333-8333-333333333333');
+
+    await waitFor(() => expect(screen.getByTestId('contest-template-golf-tiered-pick-12')).toBeChecked());
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).not.toBeChecked();
+    expect(screen.getByTestId('contest-tiered-picks-per-tier')).toHaveValue(2);
+    expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);
   });
 
   it('applies the pick-12 preset: two picks per tier on six tiers is twelve golfers, eight counting', async () => {
@@ -1659,6 +1669,20 @@ describe('Commissioner tools › Contests › Create contest › templates by na
     expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Select one from each tier, 4 count');
     expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toHaveTextContent('Default golf tiered template');
     expect(screen.getByTestId('contest-template-golf-tiered-pick-12')).toHaveTextContent('Pick two golfers from each seeded tier.');
+  });
+
+  it('opens on another sport\'s template chosen on the contest types page: its sport, an event it is offered on, its format and its own card', async () => {
+    primeNflWeekMocks();
+    const nflAndGolf = listContestConfigTemplatesMock.getMockImplementation() as (options: { query?: { sport?: string } }) => Promise<{ data: { templates: unknown[] } }>;
+    listContestConfigTemplatesMock.mockImplementation(async (options: { query?: { sport?: string } }) => (options.query?.sport
+      ? nflAndGolf(options)
+      : { data: { templates: [...(await nflAndGolf({ query: { sport: 'GOLF' } })).data.templates, ...WEEK_TEMPLATES, ...KNOCKOUT_TEMPLATES] } }));
+    renderCreateContestPage('/league/BIGDAWGS/admin/contests/new?template=80200000-0000-4000-8000-000000000002');
+
+    await waitFor(() => expect(screen.getByTestId('contest-template-nfl-survivor')).toBeChecked());
+    expect(screen.getByTestId('contest-sport-AMERICAN_FOOTBALL')).toBeChecked();
+    expect(screen.getByTestId('contest-event-nfl-week-1')).toBeChecked();
+    expect(screen.getByTestId('contest-format-SURVIVOR')).toBeChecked();
   });
 
   it('asks for a week\'s templates on an NFL week, starts it on the NFL\'s Pick\'em default, and offers survivor\'s default on switching', async () => {

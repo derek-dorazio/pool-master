@@ -27,6 +27,7 @@ import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
   getFunctionalPrisma,
+  getSdkClient,
 } from './setup';
 import { randomUUID } from 'node:crypto';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
@@ -454,6 +455,15 @@ describe('SDK Functional: Contests and Entries', () => {
       status: 400,
       code: 'PARTICIPANT_NOT_IN_EVENT',
     });
+  });
+
+  it('lets a signed-out visitor read the active contest templates, each with its name and description, for the How to Play page', async () => {
+    const response = await listContestConfigTemplates({ client: getSdkClient(), query: { active: true } });
+
+    expect(response.response.status).toBe(200);
+    const templates = expectDefined(response.data).templates;
+    expect(new Set(templates.map((template) => template.sport))).toEqual(new Set(Object.values(Sport)));
+    expect(templates.every((template) => template.active && template.name.length > 0 && template.description.length > 0)).toBe(true);
   });
 
   it('rejects invalid contest creation requests through the generated SDK', async () => {

@@ -29,6 +29,11 @@ export function buildLeagueHistoryPath(leagueCode: string) {
   return `/league/${leagueCode}/history`;
 }
 
+/** Every contest type the league could run (#803): with create links for its commissioners. */
+export function buildLeagueContestTypesPath(leagueCode: string) {
+  return `/league/${leagueCode}/contest-types`;
+}
+
 export function buildLeagueContestsPath(leagueCode: string) {
   return `/league/${leagueCode}/contests`;
 }
@@ -67,6 +72,11 @@ export function buildLeagueAdminContestsPath(leagueCode: string) {
 
 export function buildLeagueAdminContestCreatePath(leagueCode: string) {
   return `/league/${leagueCode}/admin/contests/new`;
+}
+
+/** Create contest started on one contest template (#803), as the contest types page links to it. */
+export function buildLeagueAdminContestCreateFromTemplatePath(leagueCode: string, templateId: string) {
+  return `${buildLeagueAdminContestCreatePath(leagueCode)}?template=${encodeURIComponent(templateId)}`;
 }
 
 export function buildLeagueAdminContestPath(leagueCode: string, contestId: string) {

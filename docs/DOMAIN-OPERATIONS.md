@@ -326,9 +326,10 @@ tournament), `ContestEntryPick` is tenant-scoped (a squad chose that golfer). Th
 condition 3.
 
 **`ContestConfigTemplate` is global — classified in slice 3 (#245).** It passes all three
-conditions: platform seeded, no owner, not produced by anyone's activity. Its reads are
+conditions: platform seeded, no owner, not produced by anyone's activity. Its reads were
 `authenticated` — a commissioner needs the templates to create a contest, and a template is
-the same row for every viewer — and its one write stays `rootAdmin`. Until #245 it was held at
+the same row for every viewer — and its one write stays `rootAdmin`. Since #803 its list is
+`public`: the exception below, not an application of this rule. Until #245 it was held at
 `rootAdmin` pending this call, which is why the commissioner flow had its own copy of the read.
 A contest's *configuration*, copied from a template at create, is tenant-scoped like the rest
 of the contest: the template is where it came from, not what it is.
@@ -336,7 +337,11 @@ of the contest: the template is where it came from, not what it is.
 ### What this rule does not do
 
 - **Global is not public.** A valid session is still required. A11 moves an object from
-  `rootAdmin` to `authenticated`, never to anonymous.
+  `rootAdmin` to `authenticated`, never to anonymous. The one exception is the
+  `ContestConfigTemplate` list (#803). Its rows are product copy, names and descriptions written
+  to advertise each contest, and the signed-out How to Play page shows them, so a visitor can see
+  what PoolMaster runs before signing up. It was opened for that reason, not because it is global;
+  the other global objects stay `authenticated`.
 - **Global is not a field-level exemption.** A11 decides which *rows* a caller may read.
   Whether a particular column should be visible stays §13: admin-only fields are annotated on
   the canonical DTO, not enforced. If a field on a global object turns out to be genuinely
@@ -768,8 +773,8 @@ edition is released (see *Set events*). The PGA TOUR's "Majors pool" names the f
 
 | Operation | Role | Notes |
 |---|---|---|
-| List | `authenticated` | `listContestConfigTemplates` (#245). Every filter optional — `sport`, `sportLeagueId`, `contestFormat`, `eventType`, `active`; an `eventType` narrows to that type plus the templates for any event type, and a `sportLeagueId` to that league's templates plus the sport-wide ones, never another league's. The create flow asks for the chosen event's league and starts on that league's default over the sport-wide default. One read for the create flow and the root-admin screens |
-| Update | `rootAdmin` | `updateContestConfigTemplate`, `PUT /api/v1/contest-config-templates/:templateId`, guarded by `requireRootAdmin` like every other global-object write. Seeded rows only; there is no create or delete. The rules keep the template's selection type: a body of another type is 422 `CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH` (#93). Only an active template can be the default: deactivating one clears it, and an inactive one cannot take it. Making one the default clears the default of the others with its sport, format, event type and sport league exactly, so each sport league keeps its own default preset (#624). Until #248 it was `adminUpdateContestConfigTemplate` under `/api/v1/admin`, the last route there |
+| List | `public` | `listContestConfigTemplates` (#245; public since #803, see A11). Every filter optional — `sport`, `sportLeagueId`, `eventType`, `active`; an `eventType` narrows to that type plus the templates for any event type, and a `sportLeagueId` to that league's templates plus the sport-wide ones, never another league's. The create flow asks for the chosen event's league and starts on that league's default over the sport-wide default. One read for the create flow, the How to Play and Contest types pages, and the root-admin screens |
+| Update | `rootAdmin` | `updateContestConfigTemplate`, `PUT /api/v1/contest-config-templates/:templateId`, guarded by `requireRootAdmin` like every other global-object write. Seeded rows only; there is no create or delete. The rules keep the template's selection type: a body of another type is 422 `CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH` (#93). Only an active template can be the default: deactivating one clears it, and an inactive one cannot take it. Making one the default clears the default of the others with its sport, selection type, event type and sport league exactly, so each sport league keeps its own default for each format (#624, #802). Until #248 it was `adminUpdateContestConfigTemplate` under `/api/v1/admin`, the last route there |
 
 ### Contest
 

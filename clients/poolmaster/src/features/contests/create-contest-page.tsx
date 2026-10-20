@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarCheck, Grid3x3, ListOrdered, Network, ShieldCheck, Shuffle, Wallet, type LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import type { CreateContestRequest } from '@poolmaster/shared/dto';
@@ -22,7 +22,7 @@ import {
   type SportDefinition,
   type SportNoun,
 } from '@poolmaster/shared/domain';
-import { createContest, listContestConfigTemplates, listEvents } from '@/lib/api';
+import { createContest, listContestConfigTemplates } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
 import {
@@ -30,8 +30,11 @@ import {
   buildLeagueAdminContestsPath,
 } from '@/features/leagues/league-routing';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
-import { bracketRoundCount, bracketStartRoundOptions, hasSecondChanceRound } from './bracket-start-round';
-import { isKnockoutUnderWay } from './contest-readiness';
+import { bracketRoundCount, bracketStartRoundOptions } from './bracket-start-round';
+import { contestEventsFor, contestEventsForTemplate } from './contest-template-events';
+import { SELECTION_TYPE_ICONS } from './selection-type-icons';
+import { useActiveContestTemplatesQuery } from './use-active-contest-templates-query';
+import { sportEventsQueryOptions } from './sport-events-query';
 import { useEventRoundName } from './use-bracket-round-label';
 import { hasWebEntryScreen, type WebEnterableSelectionType } from './contest-entry-screens';
 import { SquaresGamePicker } from './squares-game-picker';
@@ -81,31 +84,31 @@ type CreatableSelectionType = Extract<CreateContestRequest['selectionType'], Web
  */
 const FORMAT_CHOICES: Record<CreatableSelectionType, { describe: (participant: SportNoun) => string; icon: LucideIcon }> = {
   [SelectionType.TIERED]: {
-    icon: ListOrdered,
+    icon: SELECTION_TYPE_ICONS.TIERED,
     describe: ({ many }) => `Pick ${many} from each of the event's tiers, so the favorites are spread across every entry.`,
   },
   [SelectionType.BUDGET_PICK]: {
-    icon: Wallet,
+    icon: SELECTION_TYPE_ICONS.BUDGET_PICK,
     describe: ({ one }) => `Every ${one} has a price. Pick a roster whose prices fit under the salary cap.`,
   },
   [SelectionType.RANDOM_DRAW]: {
-    icon: Shuffle,
+    icon: SELECTION_TYPE_ICONS.RANDOM_DRAW,
     describe: ({ many }) => `A sweepstake: nobody picks. Once entries are in, you run the draw and each entry is dealt ${many} at random.`,
   },
   [SelectionType.PICK_EM]: {
-    icon: CalendarCheck,
+    icon: SELECTION_TYPE_ICONS.PICK_EM,
     describe: () => 'Pick the winner of every game, week by week, straight up or ranked by confidence. Add the season\'s other weeks once the contest is created.',
   },
   [SelectionType.BRACKET]: {
-    icon: Network,
+    icon: SELECTION_TYPE_ICONS.BRACKET,
     describe: () => 'Pick the winner of every game, all the way to the final: the whole bracket before it starts, or a second-chance bracket from a later round.',
   },
   [SelectionType.SURVIVOR]: {
-    icon: ShieldCheck,
+    icon: SELECTION_TYPE_ICONS.SURVIVOR,
     describe: () => 'Pick one team to win each week, never the same team twice. A loss puts the entry out; the last ones standing win. Add the season\'s other weeks once the contest is created.',
   },
   [SelectionType.SQUARES]: {
-    icon: Grid3x3,
+    icon: SELECTION_TYPE_ICONS.SQUARES,
     describe: () => 'A 10x10 grid on one game. Members claim boxes, you draw the numbers, and the box matching each team\'s last digit wins each quarter and the final score.',
   },
 };
@@ -124,6 +127,10 @@ const creatableSelectionTypes = Object.values(SelectionType).filter(hasWebEntryS
   CreatableSelectionType,
   ...CreatableSelectionType[],
 ];
+
+function isCreatableSelectionType(selectionType: SelectionType): selectionType is CreatableSelectionType {
+  return creatableSelectionTypes.some((creatable) => creatable === selectionType);
+}
 
 const createContestFormSchema = z.object({
   contestName: z.string().trim().min(1, 'Contest name is required.'),
@@ -182,24 +189,6 @@ function leagueStartingFormatOf(
   return formats.at(0) ?? null;
 }
 
-function sortEventsBySoonest(events: SportEventDto[]) {
-  return [...events].sort((left, right) => Date.parse(left.startDate) - Date.parse(right.startDate));
-}
-
-/**
- * The events a contest of this format can be created on: the contest-ready ones and, for a
- * bracket, a knockout under way with a later round to start a second-chance bracket at (#721).
- * A squares contest closes at its own game's kickoff, so an event under way still offers its
- * games to come (#711): the Super Bowl is the last game of the playoffs.
- */
-function contestEventsFor(events: readonly SportEventDto[], selectionType: CreatableSelectionType) {
-  return events.filter((event) => event.contestEligible
-    || (selectionType === SelectionType.BRACKET
-      && isKnockoutUnderWay(event)
-      && hasSecondChanceRound(bracketRoundCount(event)))
-    || (selectionType === SelectionType.SQUARES && isKnockoutUnderWay(event)));
-}
-
 /**
  * Commissioner tools › Contests › Create contest: one page in four numbered sections. Event,
  * then format with a preset to start from, then the rules, then a name suggested from the event
@@ -245,18 +234,17 @@ export function CreateContestPage() {
     }
   }, [form]);
 
-  const eventsQuery = useQuery({
-    queryKey: QueryKeys.sportEvents.list({ sport }),
-    queryFn: async (): Promise<SportEventDto[]> => {
-      const response = await listEvents({ query: { sport } });
-      if (!response.data?.events) {
-        throwApiError(response.error, 'Sport event list response is missing data.');
-      }
-      return sortEventsBySoonest(response.data.events);
-    },
-    enabled: auth.isAuthenticated,
-    retry: false,
-  });
+  // A contest type chosen on the league's contest types page (#803) arrives as `?template=<id>`:
+  // the page starts on that template, on the soonest event it is offered on, once. After that the
+  // commissioner's own choices stand.
+  const [searchParams] = useSearchParams();
+  const requestedTemplateId = searchParams.get('template');
+  const requestedTemplateQuery = useActiveContestTemplatesQuery({ enabled: auth.isAuthenticated && requestedTemplateId !== null });
+  const requestedTemplate = requestedTemplateQuery.data?.find((template) => template.id === requestedTemplateId
+    && isCreatableSelectionType(template.selectionType)) ?? null;
+  const requestedTemplateProgress = useRef<'sport' | 'event' | 'applied'>('sport');
+
+  const eventsQuery = useQuery(sportEventsQueryOptions(sport, auth.isAuthenticated));
 
   const contestEvents = useMemo(
     () => contestEventsFor(eventsQuery.data ?? [], selectionType),
@@ -402,13 +390,34 @@ export function CreateContestPage() {
     }
   }, [firstSquaresGameId, isSquaresGameMissing, setFormValues]);
 
-  // The soonest contest-ready event is chosen to start with, else a knockout under way.
+  // A requested template starts the page on its sport and format, so its events are listed.
   useEffect(() => {
-    const soonest = contestEvents.find((event) => event.contestEligible) ?? contestEvents.at(0);
-    if (soonest && !contestEvents.some((event) => event.id === sportEventId)) {
+    if (!requestedTemplate || requestedTemplateProgress.current !== 'sport' || !isCreatableSelectionType(requestedTemplate.selectionType)) {
+      return;
+    }
+    requestedTemplateProgress.current = 'event';
+    if (form.getValues('sport') !== requestedTemplate.sport) {
+      selectSport(requestedTemplate.sport);
+    }
+    setFormValues({ selectionType: requestedTemplate.selectionType });
+  }, [form, requestedTemplate, selectSport, setFormValues]);
+
+  // The soonest contest-ready event is chosen to start with, else a knockout under way. Until a
+  // requested template is applied, the soonest event it is offered on, when it has one.
+  useEffect(() => {
+    const requestedEvents = requestedTemplate && requestedTemplateProgress.current === 'event'
+      ? contestEventsForTemplate(contestEvents, requestedTemplate)
+      : [];
+    const current = contestEvents.find((event) => event.id === sportEventId);
+    if (current && (!requestedEvents.length || requestedEvents.includes(current))) {
+      return;
+    }
+    const choices = requestedEvents.length ? requestedEvents : contestEvents;
+    const soonest = choices.find((event) => event.contestEligible) ?? choices.at(0);
+    if (soonest) {
       chooseEvent(soonest);
     }
-  }, [chooseEvent, contestEvents, sportEventId]);
+  }, [chooseEvent, contestEvents, requestedTemplate, sportEventId]);
 
   // A newly chosen sport, sport league or kind of event starts on its default preset; while all
   // three stay, Custom stays Custom. A sport league starts on the format its defaults sort first
@@ -440,6 +449,22 @@ export function CreateContestPage() {
       selectPreset(defaultPreset.id);
     }
   }, [eventType, form, isBudgetUnavailable, presets, selectFormat, selectPreset, selectedEvent, sport, sportLeagueId, templatesQuery.data]);
+
+  // A requested template is applied once its event's templates arrive, over the league's default
+  // the effect above may have started on.
+  useEffect(() => {
+    if (!requestedTemplate || requestedTemplateProgress.current !== 'event' || templatesQuery.data === undefined
+      || !isCreatableSelectionType(requestedTemplate.selectionType)) {
+      return;
+    }
+    const preset = presetsFor(requestedTemplate.selectionType).find((template) => template.id === requestedTemplate.id);
+    if (!preset) {
+      return;
+    }
+    requestedTemplateProgress.current = 'applied';
+    defaultPresetAppliedFor.current = `${sport}/${sportLeagueId ?? ''}/${eventType ?? ''}`;
+    setFormValues({ selectionType: requestedTemplate.selectionType, selectedTemplateId: preset.id, ...presetValues(preset.configuration) });
+  }, [eventType, presetValues, presetsFor, requestedTemplate, setFormValues, sport, sportLeagueId, templatesQuery.data]);
 
   // A preset the chosen event cannot start, such as a full bracket once the event is under way,
   // gives way to the format's default among the presets it can (#802), or to Custom.

@@ -1,7 +1,8 @@
 /**
  * ContestConfigTemplate's operations. Templates are global under A11 — platform-seeded, no owner,
- * identical for every viewer — so any signed-in user reads them, through the one list (#245) that
- * the commissioner's create flow and the root-admin screens both call; the write is root-admin
+ * identical for every viewer — so anyone reads them, signed in or not (#803: the public How to Play
+ * page), through the one list (#245) that the commissioner's create flow, the league's contest
+ * types page and the root-admin screens all call; the write is root-admin
  * only, guarded like every other global-object write. The write lived at
  * /api/v1/admin/contest-config-templates as `adminUpdateContestConfigTemplate` until #248, the
  * last route under /admin: the permission, not the place, is what makes it an admin operation.
@@ -30,13 +31,12 @@ export function contestConfigTemplatesModule(fastify: FastifyInstance): void {
       tags: ['Contest Config Templates'],
       summary: 'List contest configuration templates',
       description:
-        'The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format, narrowed to the chosen event\'s sport league (that league\'s templates plus the sport-wide ones).',
+        'The seeded configurations a contest can be created from. Anyone may read them, signed in or not: they are product copy shown on the public How to Play page. Every filter is optional; the create flow asks for one sport\'s active templates, narrowed to the chosen event\'s sport league (that league\'s templates plus the sport-wide ones) and kind of event.',
       operationId: 'listContestConfigTemplates',
       querystring: schemaRef('ListContestConfigTemplatesQuery'),
       response: {
         200: schemaRef('ContestConfigTemplateListResponse'),
         400: schemaRef('ErrorEnvelope'),
-        401: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handlers.listTemplates,

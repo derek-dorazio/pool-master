@@ -279,4 +279,9 @@ administration area (root admin included), reusing the same shared components.
     variation is added only where there is something to vary (an upset bonus,
     a second-chance bracket), never for its own sake. A league starts on the
     format whose default sorts first. The seeded-template integration test
-    checks all of it.
+    checks all of it. The same names and descriptions are the contest types
+    menu (#803): the public How to Play page shows each sport's formats, and a
+    league's Contest types page shows every sport league's tiles, with
+    "Create this contest" links for its commissioners. Both read the
+    templates, so a new template or sport shows up there with no copy change;
+    the only hand-written copy is one line per sport.
