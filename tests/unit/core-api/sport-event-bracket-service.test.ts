@@ -328,7 +328,7 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
     const store = new InMemorySportEvents();
     const sportRow = store.addSport(Sport.AMERICAN_FOOTBALL);
     const sportLeague = store.addSportLeague(sportRow.id, 'NFL');
-    await store.sportLeagueRepo().update(sportLeague.id, {
+    Object.assign(sportLeague, {
       bracketAdvancement: BracketAdvancement.RESEED_BY_SEED,
       roundNames: ['Wild Card', 'Divisional', 'Conference Championship'],
     });
