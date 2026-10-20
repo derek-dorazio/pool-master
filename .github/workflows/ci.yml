@@ -44,9 +44,10 @@ jobs:
   # that `needs:` a skipped job is itself skipped, so skipping this one would cascade into
   # skipping the suites and then the deploy; and the gating below reads its outputs.
   #
-  # On anything that is not a pull request it reports every area as changed without looking, so a
-  # push to main runs the full set. main's run is what gates deploy-publish-images, and filtering
-  # there would mean deploying code whose tests never ran -- #281's failure through another door.
+  # On a push to main it is all-or-nothing (#778): a documentation-only push skips the code jobs
+  # and so the deploy, and any other push runs every job. main is diffed against the last
+  # successful main run, not the previous commit, so a commit whose own run was replaced or
+  # failed is still tested and deployed -- deploying untested code was #281's failure.
   changes:
     name: changes
     runs-on: ubuntu-latest
