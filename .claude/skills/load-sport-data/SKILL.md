@@ -53,6 +53,8 @@ plain page fetch has nothing in it. Dispatch the "Fetch sport sources" workflow 
 plain pages in `urls`, script-filled pages (tour field pages) in `rendered_urls`, which it
 loads in headless Chromium. Then pull the branch and read `sport-sources/`; `index.json`
 says which fetches failed.
+A PDF (the NCAA's printed brackets) is saved as it is, as `<NN>-<host>.pdf`: read it with
+`pdftotext -layout`, which keeps a bracket's columns.
 
 For each fact, get it from the primary and from a second, independent source: event name,
 start and end dates, venue, location, rounds, par; each player in a field and their ranking;
