@@ -121,7 +121,7 @@ Two readings of this chain have both been held at once, so it is worth stating p
 ### A league is a tenant
 
 Everything on the pool side belongs to one league, and nothing built for members or
-commissioners combines two (Derek, 2026-10-21). No page, email, standings table, history or
+commissioners combines two (#845). No page, email, standings table, history or
 cup mixes data from more than one league, and a person in three leagues gets each league's
 emails separately, each with that league's own links. A list that only names leagues (the
 league list, pending invitations) is fine, since it leads into one league at a time. Account
