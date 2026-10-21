@@ -95,8 +95,12 @@ CupStanding                      frozen when the cup is crowned, like ContestEnt
   deleted, and its scope stays `ALL_SPORTS`.
 - Enums mirror domain consts in `packages/shared/domain/enums.ts` with the `Prisma` prefix,
   like every other status column.
-- **Cross-league cups** (one Poolmaster Cup across every league a person plays in) are out:
-  squads, entries and places all live inside one league. See Q2.3.
+- **A cup never crosses leagues.** Leagues are tenants (Derek, 2026-10-21): no feature lets a
+  member or commissioner see or combine anything across leagues. A cup belongs to one league,
+  counts only that league's contests and ranks only its squads. `CupContestSetting` refuses a
+  contest from another league (typed error `CUP_CONTEST_NOT_IN_LEAGUE`), and the server checks
+  `contest.leagueId = cup.leagueId` on every write, never trusting the request. A commissioner
+  who runs several leagues gets a separate cup in each; there is no cup across them.
 
 Questions:
 
@@ -107,9 +111,9 @@ Questions:
   sport the league plays? Recommendation: commissioner-created, one tap from a "Start a Golf
   Cup" suggestion on the cups page. A league that plays one squares pool doesn't want a Football
   Cup with one contest in it.
-- **Q2.3** Cross-league cups for a person across all their leagues: later, or never?
-  Recommendation: not in this ticket. It credits people, not squads, which no other screen does,
-  and needs its own privacy rules (other leagues' names and members).
+- **Q2.3** Decided (Derek, 2026-10-21): no cross-league cups, ever, for members or
+  commissioners. Leagues are tenants. Nothing else in this plan crosses leagues: every route is
+  under `/leagues/:leagueId`, and past cups and trophies show only inside their own league.
 - **Q2.4** May a contest count toward several cups at once (Poolmaster Cup, Golf Cup and
   Derek's Cup)? Recommendation: yes, that is the point of sport cups. Each cup works out its own
   points.
@@ -208,7 +212,7 @@ new `cups` module (`rules/service-rules.md` §4 *DTOs, Mappers, OpenAPI*):
   `movement` (places gained or lost since the last Final contest, see Q6.2), `trophy`.
 - `CupContestRowDto`: contest ref, sport, settled date, `weight`, `counts: CupContestCount`
   (`COUNTED`, `NO_RESULT`, `TOO_FEW_ENTRIES`, `NOT_FINAL`, `EXCLUDED`), and the winner.
-- Typed errors: `CUP_NOT_FOUND`, `CUP_CROWNED`, `CUP_HAS_UNFINISHED_CONTESTS`,
+- Typed errors: `CUP_NOT_FOUND`, `CUP_CONTEST_NOT_IN_LEAGUE`, `CUP_CROWNED`, `CUP_HAS_UNFINISHED_CONTESTS`,
   `CUP_LEAGUE_CUP_LOCKED` (deleting or rescoping the Poolmaster Cup), `CUP_SCOPE_INVALID`.
 - Read cost: one query per page over the league's settled standings for the season, the same
   shape as #837 section 5. If a league ever gets slow, the escape hatch is the same cache keyed
