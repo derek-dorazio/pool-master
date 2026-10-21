@@ -227,7 +227,7 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
     const asOf = new Date('2027-03-19T04:00:00.000Z');
 
     await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80 , ...NO_SHOOTOUT },
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80, ...NO_SHOOTOUT },
       sideFill: { id: final.id, side: MatchSide.HOME, sportEventParticipantId: entryOf('Vermont').id },
       standings: [
         { sportEventParticipantId: entryOf('Vermont').id, position: 1, displayPosition: '1', status: 'ACTIVE', currentRound: 2, asOf },
@@ -235,7 +235,7 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
       ],
     });
     await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81 , ...NO_SHOOTOUT },
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81, ...NO_SHOOTOUT },
       sideFill: null,
       standings: [{ sportEventParticipantId: entryOf('Duke').id, position: 3, displayPosition: 'T3', status: 'ELIMINATED', currentRound: 1, asOf }],
     });
@@ -275,7 +275,7 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
     const [first] = await repos().matches.findBySportEvent(event.id);
 
     await expect(repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70 , ...NO_SHOOTOUT },
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70, ...NO_SHOOTOUT },
       sideFill: { id: randomUUID(), side: MatchSide.HOME, sportEventParticipantId: entryOf('Duke').id },
       standings: [],
     })).rejects.toThrow();
