@@ -78,7 +78,7 @@ Questions:
 | **Tennis** | Men's and women's singles: 64 draws, 16 seeds | Tennis bracket of individuals | Everything tennis offers (after #704 slice 2) | Data only, already listed on #820 row 1 |
 | **Basketball** | Men's and women's 5x5: 12 teams, groups, then a knockout of 8 | Bracket of national teams, quarters | Tiered, budget, random draw, bracket, playoff survivor, squares; pick'em on group games | Data only |
 | **Soccer** | Men's (12 teams at LA28) and women's (16): groups, then a knockout of 8 | Bracket of national teams with shoot-outs | Same as basketball, with draw picks on group games | Data only, after #787 slice 3 (knockouts) and slice 5 (group matchdays) |
-| **Cycling** | Men's and women's road race (one long one-day race on open roads, about 90 riders, the cycling event stars ride) and individual time trial | One-day race, finishing order | Tiered, budget, random draw | Data only, but not planned (Q3) |
+| **Cycling** | Men's and women's road race (one long one-day race on open roads, about 90 riders, the cycling event stars ride) and individual time trial | One-day race, finishing order | Tiered, budget, random draw | Data only. Road race in; time trial out (Q3) |
 | **Running** | Men's and women's marathon | One race, finishing order | Tiered, budget, random draw | Data only. Fields of about 80, so tiers would hold more than the series' default |
 | **Baseball, softball** | Six teams each | Format for LA28 not yet published | | Skipped (Q4) |
 | **American football** | Flag football, men's and women's: six teams each, five a side | A league under American football, if it ends in a knockout | Bracket, roster pools | Skipped (Q5) |
@@ -95,7 +95,8 @@ Questions:
   are the same shape and cost one event each. Leave track cycling, mountain biking, BMX, race
   walks and the 10,000 m out; they fit the race shape but nobody pools them. **Decided
   2026-10-21 (Derek): golf, tennis singles and the marathon are the priority; no time trials.**
-  The cycling road race is left out with them: it is a data file away if anyone asks.
+  The men's and women's cycling road races go in with the Summer individuals (Derek
+  2026-10-21: it fits with no changes, so it is just data).
 - **Q4** Baseball and softball. Tokyo 2020 played groups and then a repechage, where a loser
   stays in, which needs #793. Recommendation: wait until the LA28 format is published (expected
   in 2027) and add them then only if the knockout is single elimination. **Decided 2026-10-21:
@@ -154,7 +155,7 @@ Questions:
 As listed on #821, each one PR of reference data and test data:
 
 1. Winter hockey (men's and women's), with hockey's shoot-out entry. Needs #791.
-2. Summer individuals: golf and the marathon.
+2. Summer individuals: golf, the marathon and the cycling road race.
 3. Summer basketball, with squares on the gold medal game.
 4. Summer soccer. Needs #787 slice 3; group matchdays need slice 5.
 5. Summer tennis singles. Needs #704 slice 2.
