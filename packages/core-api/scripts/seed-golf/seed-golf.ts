@@ -882,6 +882,7 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
         awayScore: result.awayScore,
         homeShootoutScore: result.homeShootoutScore ?? null,
         awayShootoutScore: result.awayShootoutScore ?? null,
+        ending: result.ending,
       };
       await must(recordEventMatchResult({ client, path: { eventId, matchNumber }, body }), `Enter the result of match ${matchNumber} of ${event.name}`);
     }

@@ -1,5 +1,5 @@
 import { expect, jest } from '@jest/globals';
-import { MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
@@ -160,7 +160,7 @@ describe('SportEventParticipantService — changing the field', () => {
     store.matchRows.push({
       id: 'match-1', sportEventId: event.id, roundNumber: 1, matchNumber: 1,
       homeSportEventParticipantId: null, awaySportEventParticipantId: duke.id, isNeutralSite: true,
-      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null,
+      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
       advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
     });
 

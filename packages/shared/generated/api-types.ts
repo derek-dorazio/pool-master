@@ -1912,7 +1912,7 @@ export interface paths {
         get?: never;
         /**
          * Enter a match's result
-         * @description Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score, a tie without level scores, a tie in a bracket match, or shoot-out scores on a match that is not a level bracket match of such a sport. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         * @description Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. A match that ended early says how (ending): after a RETIREMENT or DEFAULT the winner's score may be the lower, and a WALKOVER has no scores; its winner wins in full. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score in a match played to its end, a tie without level scores, a tie in a bracket match, shoot-out scores on a match that is not a level bracket match of such a sport, a tie or shoot-out that ended early, or a walkover with scores or period scores. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
          */
         put: operations["recordEventMatchResult"];
         post?: never;
@@ -1936,7 +1936,7 @@ export interface paths {
         get?: never;
         /**
          * Enter a game's score at the end of a period
-         * @description Both sides' score at the end of one period before the last (the end of the first, second or third quarter in American football), as the scoreboard shows it. It can be entered while the game is played and corrected after it; re-sending it changes it. Squares pools read it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_CANCELLED for a cancelled game. 422 MATCH_PERIOD_INVALID when the event's sport keeps no score by period, or for the last period or past it, whose score is the final result. 422 MATCH_SIDES_NOT_SET while a side waits for its team. 422 MATCH_PERIOD_SCORE_INVALID when a side's score is below its score at an earlier period's end, or above its score at a later one's or its final score. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         * @description Both sides' score at the end of one period before the last (the end of the first, second or third quarter in American football), as the scoreboard shows it. It can be entered while the game is played and corrected after it; re-sending it changes it. Squares pools read it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_CANCELLED for a cancelled game. 422 MATCH_PERIOD_INVALID when the event's sport keeps no score by period, or for the last period or past it, whose score is the final result. 422 MATCH_SIDES_NOT_SET while a side waits for its team. 422 MATCH_PERIOD_SCORE_INVALID when a side's score is below its score at an earlier period's end, or above its score at a later one's or its final score, and for a game that was a walkover. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
          */
         put: operations["recordEventMatchPeriodScore"];
         post?: never;
@@ -13092,6 +13092,11 @@ export interface components {
          * @enum {string}
          */
         MatchSideDto: "HOME" | "AWAY";
+        /**
+         * @description How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way.
+         * @enum {string}
+         */
+        MatchEndingDto: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
         /** @description Both sides' score at the end of one period of a game (#772). */
         SportEventMatchPeriodScoreDto: {
             /** @description 1 for the first period (quarter, in American football); never the last, whose score is the match's final result. */
@@ -13146,6 +13151,11 @@ export interface components {
             homeShootoutScore: number | null;
             /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
             awayShootoutScore: number | null;
+            /**
+             * @description How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+             * @enum {string}
+             */
+            ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
             /**
              * Format: uuid
              * @description The match the winner moves on to; null for the final.
@@ -13218,6 +13228,11 @@ export interface components {
                 /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
                 awayShootoutScore: number | null;
                 /**
+                 * @description How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+                 * @enum {string}
+                 */
+                ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
+                /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.
                  */
@@ -13289,6 +13304,11 @@ export interface components {
                 homeShootoutScore: number | null;
                 /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
                 awayShootoutScore: number | null;
+                /**
+                 * @description How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+                 * @enum {string}
+                 */
+                ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.
@@ -13377,7 +13397,7 @@ export interface components {
              */
             participantId: string;
         };
-        /** @description A match's result: who won, or a tie, and both scores or neither. The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores. */
+        /** @description A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores. */
         RecordSportEventMatchResultRequest: {
             /**
              * @description The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.
@@ -13392,6 +13412,11 @@ export interface components {
             homeShootoutScore?: number | null;
             /** @description The away side's kicks scored in a shoot-out; omitted or null with the home side's. */
             awayShootoutScore?: number | null;
+            /**
+             * @description How the match ended; omitted is PLAYED. A RETIREMENT or DEFAULT takes both scores or neither, and the winner's may be the lower (where it stopped); a WALKOVER takes no scores. Neither a tie nor a shoot-out ends early.
+             * @enum {string}
+             */
+            ending?: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
         };
         /** @description Both sides' score at the end of one period, as the scoreboard shows it. Neither may be below its score at an earlier period's end, or above its score at a later one's or its final score. */
         RecordSportEventMatchPeriodScoreRequest: {
@@ -13565,6 +13590,11 @@ export interface components {
                 homeShootoutScore: number | null;
                 /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
                 awayShootoutScore: number | null;
+                /**
+                 * @description How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+                 * @enum {string}
+                 */
+                ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.

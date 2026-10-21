@@ -129,6 +129,20 @@ export const MatchSide = {
 export type MatchSide = (typeof MatchSide)[keyof typeof MatchSide];
 
 /**
+ * How a match with a result ended (#704 slice 1), in any sport that plays matches. PLAYED: to its
+ * end. RETIREMENT: the loser stopped part way, often ahead. WALKOVER: the loser never started.
+ * DEFAULT: the loser was disqualified. The winner wins in full every way: scorers read only
+ * `winnerSide`, so a walkover's winner advances and earns the round's points.
+ */
+export const MatchEnding = {
+  PLAYED: 'PLAYED',
+  RETIREMENT: 'RETIREMENT',
+  WALKOVER: 'WALKOVER',
+  DEFAULT: 'DEFAULT',
+} as const;
+export type MatchEnding = (typeof MatchEnding)[keyof typeof MatchEnding];
+
+/**
  * How a sport league's bracket winners reach their next match (#722). FIXED: each match names
  * the match and side its winner moves on to (March Madness, the NBA). RESEED_BY_SEED: after a
  * round whose matches name no next match, the admin places the teams left in each region, the

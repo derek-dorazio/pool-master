@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MatchSide, MatchStatus, type SportMatchPeriods } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, type SportMatchPeriods } from '@poolmaster/shared/domain';
 import { clearEventMatchPeriodScore, recordEventMatchPeriodScore, recordEventMatchResult } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
 import { Button, Input } from '@/features/shared/ui';
@@ -8,7 +8,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { tieWord } from '@/features/contests/contest-sport';
-import { bracketErrorMessages, formsNoBracket, sideEntry } from './bracket-copy';
+import { bracketErrorMessages, formsNoBracket, MATCH_ENDING_MARK, sideEntry } from './bracket-copy';
 import type { BracketContext } from './bracket-match-row';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
@@ -45,6 +45,7 @@ export function MatchScoresRow({
     : null;
   // A result entered with the winner buttons alone has a winner but no final score.
   const winnerOnly = match.status === MatchStatus.COMPLETED && final === null;
+  const endingMark = match.status === MatchStatus.COMPLETED ? MATCH_ENDING_MARK[match.ending] : null;
   const shootout: ShootoutScore | null = final && match.homeShootoutScore !== null && match.awayShootoutScore !== null
     ? { homeShootoutScore: match.homeShootoutScore, awayShootoutScore: match.awayShootoutScore }
     : null;
@@ -72,7 +73,8 @@ export function MatchScoresRow({
           <ScoreMoment
             away={away}
             context={context}
-            empty={winnerOnly ? 'Winner entered, no score' : 'Not entered'}
+            empty={winnerOnly ? `Winner entered, no score${endingMark ? ` (${endingMark})` : ''}` : 'Not entered'}
+            endingMark={endingMark}
             home={home}
             label={`Final, ${context.vocabulary.overtime ?? 'overtime'} included`}
             match={match}
@@ -101,6 +103,7 @@ function ScoreMoment({
   away,
   saved,
   savedShootout = null,
+  endingMark = null,
   empty,
   context,
 }: {
@@ -112,6 +115,8 @@ function ScoreMoment({
   saved: MomentScore;
   /** The final score's shoot-out, when a level match went to one. */
   savedShootout?: ShootoutScore | null;
+  /** The final score's mark when the match stopped early (#704): "ret.". */
+  endingMark?: string | null;
   /** What the moment reads while it has no score. */
   empty: string;
   context: BracketContext;
@@ -127,12 +132,16 @@ function ScoreMoment({
   const awayScore = parse(awayValue);
   // A game of a week, which forms no bracket, can end level (#792); a bracket match always has a winner.
   const tiesAllowed = formsNoBracket(context.bracket);
-  const tied = moment === 'final' && !tiesAllowed && homeScore !== null && homeScore === awayScore;
+  // A match that ended early (#704) keeps the winner it was entered with: a retirement's winner may
+  // trail, and a level score is no tie, so it takes no shoot-out either.
+  const endedEarly = match.status === MatchStatus.COMPLETED && match.ending !== MatchEnding.PLAYED;
+  const tied = moment === 'final' && !tiesAllowed && !endedEarly && homeScore !== null && homeScore === awayScore;
   // A level final score in a sport that holds shoot-outs is settled by one instead of refused.
   const shootout = tied ? context.shootout : null;
   const homeShootoutScore = parse(homeShootoutValue);
   const awayShootoutScore = parse(awayShootoutValue);
   const shootoutLevel = homeShootoutScore !== null && homeShootoutScore === awayShootoutScore;
+  const walkover = match.status === MatchStatus.COMPLETED && match.ending === MatchEnding.WALKOVER;
   const shootoutMissing = shootout !== null && (homeShootoutScore === null || awayShootoutScore === null || shootoutLevel);
 
   const invalidates = [QueryKeys.rootAdmin.manageSport.event(context.eventId)];
@@ -144,10 +153,12 @@ function ScoreMoment({
   const save = useInvalidatingMutation({
     mutationFn: async ({ score, kicks }: { score: { homeScore: number; awayScore: number }; kicks: ShootoutScore | null }) => {
       // A shoot-out names the winner of a level score; otherwise the higher score wins, and a
-      // level score of a week game is a tie.
-      const winnerSide = kicks ? finalWinner(kicks.homeShootoutScore, kicks.awayShootoutScore) : finalWinner(score.homeScore, score.awayScore);
+      // level score of a week game is a tie. A match that ended early keeps its winner.
+      const winnerSide = endedEarly
+        ? match.winnerSide
+        : kicks ? finalWinner(kicks.homeShootoutScore, kicks.awayShootoutScore) : finalWinner(score.homeScore, score.awayScore);
       const response = moment === 'final'
-        ? await recordEventMatchResult({ path, body: { winnerSide, ...score, ...kicks } })
+        ? await recordEventMatchResult({ path, body: { winnerSide, ...score, ...kicks, ending: match.ending } })
         : await recordEventMatchPeriodScore({ path: { ...path, periodNumber: moment }, body: score });
       if (response.error) {
         throwApiError(response.error);
@@ -233,9 +244,10 @@ function ScoreMoment({
       ) : (
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <span className={saved ? 'text-sm' : 'text-sm text-muted-foreground'} data-testid={`${testId}-value`}>
-            {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}${describeLevelFinal(moment, saved, savedShootout, context)}` : empty}
+            {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}${describeLevelFinal(moment, saved, savedShootout, context)}${endingMark ? ` ${endingMark}` : ''}` : empty}
           </span>
-          <Button
+          {/* A walkover has no score to enter (#704). */}
+          {walkover ? null : <Button
             data-testid={`${testId}-edit`}
             onClick={() => {
               save.reset();
@@ -250,7 +262,7 @@ function ScoreMoment({
             variant="ghost"
           >
             {saved ? 'Change' : 'Enter score'}
-          </Button>
+          </Button>}
           {saved && moment !== 'final' ? (
             <Button data-testid={`${testId}-clear`} disabled={clear.isPending} onClick={() => clear.mutate(moment)} size="sm" variant="ghost">
               Clear

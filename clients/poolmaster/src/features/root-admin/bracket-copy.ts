@@ -1,10 +1,21 @@
-import { MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
 import { tieWord } from '@/features/contests/contest-sport';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { ErrorCodeMessages } from '@/lib/errors';
 
 /** What a bracket screen calls one match when the sport's vocabulary names none. */
 const MATCH: SportNoun = { one: 'match', many: 'matches' };
+
+/**
+ * How a match that stopped early is marked beside its result (#704): "ret.", "w/o", "def.", as
+ * tennis writes them. The marks belong to the ending, not the sport. A played match has none.
+ */
+export const MATCH_ENDING_MARK: Readonly<Record<MatchEnding, string | null>> = {
+  [MatchEnding.PLAYED]: null,
+  [MatchEnding.RETIREMENT]: 'ret.',
+  [MatchEnding.WALKOVER]: 'w/o',
+  [MatchEnding.DEFAULT]: 'def.',
+};
 
 /** One match of the sport's bracket as its screens say it: "game" for basketball. */
 export function matchNoun(vocabulary: SportVocabulary): SportNoun {

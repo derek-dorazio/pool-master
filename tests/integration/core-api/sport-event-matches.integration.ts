@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import type { SportEventMatchWrite } from '@poolmaster/shared/db';
 import { expectDefined } from '../../support/expect-defined';
 import {
@@ -27,8 +27,8 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
-/** A result with no shoot-out. */
-const NO_SHOOTOUT = { homeShootoutScore: null, awayShootoutScore: null };
+/** A result with no shoot-out, played to its end. */
+const NO_SHOOTOUT = { homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED };
 
 function repos() {
   const prisma = getPrisma();
@@ -256,7 +256,7 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
     const [first] = await repos().matches.findBySportEvent(event.id);
     const level = { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1 };
 
-    await repos().matches.applyResult({ result: { ...level, homeShootoutScore: 3, awayShootoutScore: 4 }, sideFill: null, standings: [] });
+    await repos().matches.applyResult({ result: { ...level, homeShootoutScore: 3, awayShootoutScore: 4, ending: MatchEnding.PLAYED }, sideFill: null, standings: [] });
     const [settled] = await repos().matches.findBySportEvent(event.id);
     await repos().matches.applyResult({
       result: { id: first.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_SHOOTOUT },
@@ -267,6 +267,28 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
 
     expect(settled).toMatchObject({ homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4, winnerSide: MatchSide.AWAY });
     expect(cleared).toMatchObject({ homeShootoutScore: null, awayShootoutScore: null });
+  });
+
+  it('stores how a match ended, and a walkover with no score, and puts it back to played when cleared (#704)', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+
+    await repos().matches.applyResult({
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: null, awayScore: null, ...NO_SHOOTOUT, ending: MatchEnding.WALKOVER },
+      sideFill: null,
+      standings: [],
+    });
+    const [walkover] = await repos().matches.findBySportEvent(event.id);
+    await repos().matches.applyResult({
+      result: { id: first.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_SHOOTOUT },
+      sideFill: null,
+      standings: [],
+    });
+    const [cleared] = await repos().matches.findBySportEvent(event.id);
+
+    expect(walkover).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: null, ending: MatchEnding.WALKOVER });
+    expect(cleared).toMatchObject({ status: MatchStatus.SCHEDULED, ending: MatchEnding.PLAYED });
   });
 
   it('writes nothing when one part of the result is refused by the database', async () => {
@@ -358,6 +380,16 @@ describe('sport_event_matches database checks', () => {
     await expect(insertMatch(event, { homeShootoutScore: 4 })).rejects.toThrow(/sport_event_matches_shootout_scores_check/);
     await expect(insertMatch(event, { homeShootoutScore: -1, awayShootoutScore: 3 })).rejects.toThrow(/sport_event_matches_shootout_scores_check/);
     await expect(insertMatch(event, { homeShootoutScore: 4, awayShootoutScore: 3 })).resolves.toMatchObject({ homeShootoutScore: 4 });
+  });
+
+  it('refuses an early ending on a match without a winner and a walkover with a score, and takes a retirement whose winner trailed (#704)', async () => {
+    const { event } = await createBracketEvent();
+
+    await expect(insertMatch(event, { ending: MatchEnding.RETIREMENT })).rejects.toThrow(/sport_event_matches_ending_check/);
+    await expect(insertMatch(event, { ending: MatchEnding.WALKOVER, winnerSide: MatchSide.HOME, status: MatchStatus.COMPLETED, homeScore: 1, awayScore: 0 }))
+      .rejects.toThrow(/sport_event_matches_ending_check/);
+    await expect(insertMatch(event, { ending: MatchEnding.RETIREMENT, winnerSide: MatchSide.HOME, status: MatchStatus.COMPLETED, homeScore: 0, awayScore: 1 }))
+      .resolves.toMatchObject({ ending: MatchEnding.RETIREMENT });
   });
 
   it('refuses a spread that is not in half points, and takes one that is (#720)', async () => {

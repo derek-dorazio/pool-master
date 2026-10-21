@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { BracketAdvancement, MatchSide, MatchStatus, ParticipantStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, MatchSide, MatchStatus, ParticipantStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
   SportEventBracketService,
@@ -447,7 +447,7 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
     store.matchRows.push({
       id: 'match-started', sportEventId: event.id, roundNumber: 1, matchNumber: 1,
       homeSportEventParticipantId: duke.id, awaySportEventParticipantId: slot.id, isNeutralSite: true,
-      scheduledDate: null, status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null,
+      scheduledDate: null, status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
       advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
     });
 

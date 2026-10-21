@@ -316,7 +316,7 @@ describe('SDK Functional: a pick\'em pool on the NFL weeks test seed', () => {
       return players.get(expectDefined(expectDefined(match.result).winner === MatchSide.HOME ? match.home : match.away));
     };
     const last = expectDefined(matches.at(-1));
-    const lastTotal = expectDefined(last.result).homeScore + expectDefined(last.result).awayScore;
+    const lastTotal = expectDefined(expectDefined(last.result).homeScore) + expectDefined(expectDefined(last.result).awayScore);
     const homeWins = matches.filter((match) => expectDefined(match.result).winner === MatchSide.HOME).length;
 
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Pick\'em Scenario Perfect', leagueName: `Pick'em Scenario ${tag}` });

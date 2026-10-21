@@ -4,7 +4,7 @@
  * bracket at once and edits one match at a time; results are entered separately (#699).
  */
 import { z } from 'zod';
-import { MatchSide, MatchStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus } from '@poolmaster/shared/domain';
 import { registerSchema } from './schema-registry';
 
 /** The most matches one bracket holds: a 128-place draw has 127. */
@@ -12,6 +12,7 @@ export const BRACKET_MATCHES_MAX = 127;
 
 export const MatchStatusDtoSchema = z.nativeEnum(MatchStatus).describe('Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.');
 export const MatchSideDtoSchema = z.nativeEnum(MatchSide).describe('One side of a match. On a neutral site HOME is the upper line of the bracket.');
+export const MatchEndingDtoSchema = z.nativeEnum(MatchEnding).describe('How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way.');
 
 export const SportEventMatchPeriodScoreDtoSchema = z.object({
   periodNumber: z.number().int().min(1).describe('1 for the first period (quarter, in American football); never the last, whose score is the match\'s final result.'),
@@ -35,6 +36,7 @@ export const SportEventMatchDtoSchema = z.object({
   awayScore: z.number().int().nullable().describe('The away side\'s score; in a series, games won.'),
   homeShootoutScore: z.number().int().nullable().describe('The home side\'s kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side\'s when there was none. Not part of the match score.'),
   awayShootoutScore: z.number().int().nullable().describe('The away side\'s kicks scored in the shoot-out; null with the home side\'s.'),
+  ending: MatchEndingDtoSchema.describe('How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.'),
   advancesToMatchId: z.string().uuid().nullable().describe('The match the winner moves on to; null for the final.'),
   advancesToSide: MatchSideDtoSchema.nullable().describe('The side of that match the winner fills; null for the final.'),
   regionLabel: z.string().nullable().describe('The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.'),
@@ -93,7 +95,8 @@ export const RecordSportEventMatchResultRequestSchema = z.object({
   awayScore: z.number().int().min(0).nullable().describe('The away side\'s score, or null with the home score null too.'),
   homeShootoutScore: z.number().int().min(0).nullable().optional().describe('The home side\'s kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the away side\'s for none.'),
   awayShootoutScore: z.number().int().min(0).nullable().optional().describe('The away side\'s kicks scored in a shoot-out; omitted or null with the home side\'s.'),
-}).describe('A match\'s result: who won, or a tie, and both scores or neither. The winner\'s score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner\'s shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.');
+  ending: MatchEndingDtoSchema.optional().describe('How the match ended; omitted is PLAYED. A RETIREMENT or DEFAULT takes both scores or neither, and the winner\'s may be the lower (where it stopped); a WALKOVER takes no scores. Neither a tie nor a shoot-out ends early.'),
+}).describe('A match\'s result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner\'s score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner\'s shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.');
 export type RecordSportEventMatchResultRequest = z.infer<typeof RecordSportEventMatchResultRequestSchema>;
 
 export const RecordSportEventMatchPeriodScoreRequestSchema = z.object({
@@ -122,6 +125,7 @@ export type SetSportEventRoundMatchupsRequest = z.infer<typeof SetSportEventRoun
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('MatchStatusDto', MatchStatusDtoSchema);
 registerSchema('MatchSideDto', MatchSideDtoSchema);
+registerSchema('MatchEndingDto', MatchEndingDtoSchema);
 registerSchema('SportEventMatchPeriodScoreDto', SportEventMatchPeriodScoreDtoSchema);
 registerSchema('SportEventMatchDto', SportEventMatchDtoSchema);
 registerSchema('SportEventBracketResponse', SportEventBracketResponseSchema);

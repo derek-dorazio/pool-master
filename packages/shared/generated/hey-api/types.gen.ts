@@ -14209,6 +14209,11 @@ export type MatchStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCEL
 export type MatchSideDto = 'HOME' | 'AWAY';
 
 /**
+ * How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way.
+ */
+export type MatchEndingDto = 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+
+/**
  * Both sides' score at the end of one period of a game (#772).
  */
 export type SportEventMatchPeriodScoreDto = {
@@ -14280,6 +14285,10 @@ export type SportEventMatchDto = {
      * The away side's kicks scored in the shoot-out; null with the home side's.
      */
     awayShootoutScore: number | null;
+    /**
+     * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+     */
+    ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
     /**
      * The match the winner moves on to; null for the final.
      */
@@ -14374,6 +14383,10 @@ export type SportEventBracketResponse = {
          */
         awayShootoutScore: number | null;
         /**
+         * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+         */
+        ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+        /**
          * The match the winner moves on to; null for the final.
          */
         advancesToMatchId: string | null;
@@ -14467,6 +14480,10 @@ export type SportEventMatchResponse = {
          * The away side's kicks scored in the shoot-out; null with the home side's.
          */
         awayShootoutScore: number | null;
+        /**
+         * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+         */
+        ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
          * The match the winner moves on to; null for the final.
          */
@@ -14580,7 +14597,7 @@ export type FillPlayInSlotRequest = {
 };
 
 /**
- * A match's result: who won, or a tie, and both scores or neither. The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.
+ * A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.
  */
 export type RecordSportEventMatchResultRequest = {
     /**
@@ -14603,6 +14620,10 @@ export type RecordSportEventMatchResultRequest = {
      * The away side's kicks scored in a shoot-out; omitted or null with the home side's.
      */
     awayShootoutScore?: number | null;
+    /**
+     * How the match ended; omitted is PLAYED. A RETIREMENT or DEFAULT takes both scores or neither, and the winner's may be the lower (where it stopped); a WALKOVER takes no scores. Neither a tie nor a shoot-out ends early.
+     */
+    ending?: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
 };
 
 /**
@@ -14861,6 +14882,10 @@ export type SquaresBoardResponse = {
          * The away side's kicks scored in the shoot-out; null with the home side's.
          */
         awayShootoutScore: number | null;
+        /**
+         * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+         */
+        ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
          * The match the winner moves on to; null for the final.
          */

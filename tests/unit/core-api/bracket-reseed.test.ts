@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { MatchSide, MatchStatus, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, type SportEventMatch } from '@poolmaster/shared/domain';
 import {
   findRoundMatchupProblems,
   proposeRoundMatchups,
@@ -55,7 +55,7 @@ function nflPlayoff(): SportEventMatch[] {
     homeScore: null,
     awayScore: null,
     homeShootoutScore: null,
-    awayShootoutScore: null,
+    awayShootoutScore: null, ending: MatchEnding.PLAYED,
     advancesToMatchId: spec.advancesTo ? `m${spec.advancesTo.matchNumber}` : null,
     advancesToSide: spec.advancesTo?.side ?? null,
     regionLabel: spec.region,
