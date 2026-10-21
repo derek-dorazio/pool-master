@@ -76,15 +76,10 @@ function withSides(match: SportEventMatch, sides: PredictedSides): SportEventMat
   return { ...match, homeSportEventParticipantId: sides.home, awaySportEventParticipantId: sides.away };
 }
 
-/** The field rows withdrawn after the draw (#704): inactive, as no row still in a bracket is. */
-export function withdrawnRowIds(field: ReadonlyArray<{ id: string; isActive: boolean }>): Set<string> {
-  return new Set(field.filter((row) => !row.isActive).map((row) => row.id));
-}
-
 /**
  * Each game's predicted sides under the entry's picks, and which picks stand. `bracket` is the
  * event's games (cancelled ones left out); `seedOf` is the field's seeds (`knockoutSeeds`);
- * `withdrawn` the rows withdrawn after the draw (`withdrawnRowIds`), whose first-round picks stand.
+ * `withdrawn` the rows withdrawn after the draw (`withdrawnRowIds` in score-team), whose first-round picks stand.
  */
 export function resolveBracketPicks<Pick extends BracketPick>(
   bracket: readonly SportEventMatch[],
@@ -158,11 +153,10 @@ export function resolveBracketPicks<Pick extends BracketPick>(
       } else if (pick !== undefined) {
         stranded.push(pick);
       }
-      predicted.push({
-        ...withSides(match, placed),
-        status: winnerSide === null ? MatchStatus.SCHEDULED : MatchStatus.COMPLETED,
-        winnerSide,
-      });
+      // A withdrawn team the entry picked wins its game in the entry's bracket, so reseeding moves it on.
+      predicted.push(pickedWithdrawn
+        ? { ...withSides(match, { home: pick.sportEventParticipantId, away: null }), status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME }
+        : { ...withSides(match, placed), status: winnerSide === null ? MatchStatus.SCHEDULED : MatchStatus.COMPLETED, winnerSide });
       for (const side of SIDES) {
         const team = storedSide(match, side);
         if (team !== null) teamsBefore.add(team);

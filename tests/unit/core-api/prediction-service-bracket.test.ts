@@ -11,6 +11,7 @@ import {
   ContestFormat,
   ContestStatus,
   MatchSide,
+  ParticipantInactiveReason,
   PickOutcome,
   SelectionType,
   UpsetBonusRule,
@@ -359,7 +360,7 @@ describe('PredictionService on a bracket — a team withdrawn after the draw (#7
   /** T1 withdraws before game 1, and a lucky loser takes its place against T8. */
   function withdrawT1(context: ReturnType<typeof setup>) {
     const sportEventId = expectDefined(context.games.matches.get('m1')).sportEventId;
-    Object.assign(expectDefined(context.games.field.get('T1')), { isActive: false });
+    Object.assign(expectDefined(context.games.field.get('T1')), { isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN });
     context.games.addTeam(sportEventId, 'Lucky Loser', { id: 'LL' });
     context.games.putMatches([...context.games.matches.values()].map((match) => (match.matchNumber === 1 ? { ...match, homeSportEventParticipantId: 'LL' } : match)));
   }
@@ -380,6 +381,17 @@ describe('PredictionService on a bracket — a team withdrawn after the draw (#7
     expect(predicted(view, 5)).toEqual(['T1', 'T4']);
     // Games 2, 3, 4 (1 each) and game 6 (2) are all that can still score.
     expect(view).toMatchObject({ points: 0, maxPossiblePoints: 3 + 2 });
+  });
+
+  it('keeps the entry\'s picks of the withdrawn team when it saves another pick while open, rather than clearing them as stranded', async () => {
+    const context = setup();
+    await context.service.saveGamePicks({ ...context.input, picks: CHALK, tiebreakerValue: 140 });
+    withdrawT1(context);
+
+    await context.service.saveGamePicks({ ...context.input, picks: [{ ...bracketPick(2, 'T5'), confidence: null }] });
+
+    expect(context.storedPicks()).toEqual(expect.arrayContaining([['m1', 'T1'], ['m2', 'T5']]));
+    expect(context.storedPicks().filter(([, team]) => team === 'T1')).toHaveLength(3);
   });
 
   it('refuses a new pick of the withdrawn team with 400 PREDICTION_TEAM_NOT_IN_GAME, and takes its replacement while the entry is open', async () => {

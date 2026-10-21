@@ -239,4 +239,18 @@ describe('knockout round points — upset bonus', () => {
     expect(rows['Duke']).toMatchObject({ score: 0, detail: { wins: 0, isAlive: false } });
     expect(rows['Lucky Loser']).toMatchObject({ score: 1, detail: { wins: 1, isAlive: true } });
   });
+
+  it('keeps a team made inactive as withdrawn in the field grid alive while its game still names it, since nobody took its place', () => {
+    const field = bracketField(
+      [{ name: 'Duke', seed: 1, withdrawn: true }, { name: 'Vermont', seed: 4 }, { name: 'Houston', seed: 2 }, { name: 'Texas', seed: 3 }],
+      [
+        { matchNumber: 1, round: 1, home: 'Duke', away: 'Vermont' },
+        { matchNumber: 2, round: 1, home: 'Houston', away: 'Texas', winner: MatchSide.HOME },
+      ],
+    );
+
+    const rows = Object.fromEntries(family.scoreField(field, TOURNAMENT, knockout([1, 2])).map((row) => [row.name, row]));
+
+    expect(rows['Duke']).toMatchObject({ detail: { wins: 0, isAlive: true } });
+  });
 });

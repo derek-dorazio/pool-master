@@ -16,10 +16,9 @@ import {
   rankPredictionStandings,
   resolveBracketPicks,
   scoreBracketPicks,
-  withdrawnRowIds,
   type BracketScore,
 } from '../scoring-families/head-to-head/bracket-picks';
-import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
+import { knockoutSeeds, withdrawnRowIds } from '../scoring-families/head-to-head/score-team';
 import { resolveContestScoringDefinition, type ContestScoringResolutionFailure } from './contest-leaderboard-calculator';
 import {
   loadContestScoringConfiguration,
@@ -91,7 +90,7 @@ export async function loadBracketStandings(
   const startsAtRound = rules?.selectionType === SelectionType.BRACKET ? rules.startsAtRound : 1;
   const games = eventCancelled ? [] : contestBracketGames(matches, startsAtRound);
   const seedOf = knockoutSeeds(field.map((row) => row.entry));
-  const withdrawn = withdrawnRowIds(field.map((row) => row.entry));
+  const withdrawn = withdrawnRowIds(field.map((row) => row.entry), matches);
   const predictions = await deps.predictions.findByEntriesAndEvent(entries.map((entry) => entry.id), sportEventId);
 
   const picksByEntry = new Map<string, typeof predictions>();

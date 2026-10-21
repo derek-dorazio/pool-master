@@ -67,8 +67,8 @@ import type {
 } from '@poolmaster/shared/db';
 import { resolveContestScoringDefinition } from '../contests/contest-leaderboard-calculator';
 import { areMatchPicksOpen, areMatchPicksRevealed, contestCutoff, cutoffTiming, openingRoundNumber, type EventTiming } from '../contests/entry-window';
-import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
-import { contestBracketGames, withdrawnRowIds, type PredictedSides, type ScoredBracketPick } from '../scoring-families/head-to-head/bracket-picks';
+import { knockoutSeeds, withdrawnRowIds } from '../scoring-families/head-to-head/score-team';
+import { contestBracketGames, type PredictedSides, type ScoredBracketPick } from '../scoring-families/head-to-head/bracket-picks';
 import { hasSportEventStarted } from '../events/operational-timing';
 import { getPredictionEngine } from './prediction-engines/registry';
 import {
@@ -562,7 +562,7 @@ export class PredictionService {
       openingRound: openingRoundNumber(matches),
       field,
       seedOf: knockoutSeeds(field),
-      withdrawn: withdrawnRowIds(field),
+      withdrawn: withdrawnRowIds(field, matches),
       entry,
       games,
       tiebreakerGame: engine.tiebreakerGame({ games, eventStart: sportEvent.startDate }),

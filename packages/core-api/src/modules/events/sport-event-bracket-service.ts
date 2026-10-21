@@ -471,14 +471,15 @@ export class SportEventBracketService {
 
   /**
    * A withdrawal after the draw (#704 slice 3): puts `replacementParticipantId` in the bracket place
-   * of a field row that withdrew before its first match, before or after release, in any sport.
+   * of a field row that withdrew before its first-round match, before or after release, in any sport.
    * The replacement gets a field row of its own, unseeded, in the event's last tier and at its
    * lowest price, so roster pools can pick it while entries are open; the withdrawn row stays on
    * the field, inactive as WITHDRAWN, keeping every pick of it, which then scores as a first-round
    * loss. 404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 409
    * EVENT_PARTICIPANT_IS_PLAY_IN_PLACE for a play-in place, which is filled instead; 409
    * EVENT_PARTICIPANT_NOT_IN_BRACKET for a row no match names (one already replaced, too); 409
-   * BRACKET_PARTICIPANT_ALREADY_PLAYED once its match has started; and the play-in winner's
+   * BRACKET_PARTICIPANT_ALREADY_PLAYED once its match has started; 409
+   * BRACKET_PLACE_NOT_FIRST_ROUND for a place after the first round (a bye); and the play-in winner's
    * refusals for the replacement: 404 PARTICIPANT_NOT_FOUND, 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD.
    * Returns the replacement's field row id.
    */
@@ -516,6 +517,16 @@ export class SportEventBracketService {
       throw new SportEventError(
         `Field row ${sportEventParticipantId}'s match ${place.match.matchNumber} has started, so a withdrawal is now a walkover.`,
         'BRACKET_PARTICIPANT_ALREADY_PLAYED',
+        409,
+      );
+    }
+    // A pick of a withdrawn row stands only in the bracket's first round, so a place a bye put
+    // later is not replaced: the withdrawal is a walkover there.
+    if (place.match.roundNumber !== Math.min(...bracket.map((match) => match.roundNumber))) {
+      this.deps.logger?.warn({ sportEventId, sportEventParticipantId, matchNumber: place.match.matchNumber }, 'Refused to replace a participant placed after the first round');
+      throw new SportEventError(
+        `Field row ${sportEventParticipantId}'s place is in round ${place.match.roundNumber}, not the first round, so a withdrawal is a walkover.`,
+        'BRACKET_PLACE_NOT_FIRST_ROUND',
         409,
       );
     }

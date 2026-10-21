@@ -234,7 +234,8 @@ on the Bracket tab:
   participants not already in the event (a tennis lucky loser). The replacement takes the place
   unseeded, last in the event's last tier at its lowest price; the withdrawn row stays on the
   field as withdrawn, and every pick of it scores as a first-round loss. Once their game has
-  started, a withdrawal is a walkover, entered with **Ended early**. A play-in place is filled
+  started, or for a team placed straight into a later round (a bye), a withdrawal is a walkover,
+  entered with **Ended early**. A play-in place is filled
   with its winner instead.
 - **Quarter scores**, for American football (#772): under each released game with both teams,
   *Enter score* takes both teams' score at the end of the first, second and third quarters, as

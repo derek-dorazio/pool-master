@@ -38,17 +38,25 @@ export function sideEntry(
 }
 
 /**
- * The field rows a withdrawal can still replace (#704): named on a side of a match not yet
- * started, so in their first match, and not a play-in place, which takes its winner instead.
+ * The field rows a withdrawal can still replace (#704), as the server allows: named by exactly one
+ * match, a first-round match not yet started, and not a play-in place, which takes its winner instead.
  */
 export function replaceableEntries(
   bracket: readonly SportEventMatchDto[],
   fieldById: ReadonlyMap<string, SportEventParticipantDto>,
 ): SportEventParticipantDto[] {
+  const firstRound = Math.min(...bracket.map((match) => match.roundNumber));
+  const placesOf = new Map<string, number>();
+  for (const match of bracket) {
+    for (const id of [match.homeSportEventParticipantId, match.awaySportEventParticipantId]) {
+      if (id !== null) placesOf.set(id, (placesOf.get(id) ?? 0) + 1);
+    }
+  }
   return bracket
-    .filter((match) => match.status === MatchStatus.SCHEDULED)
+    .filter((match) => match.status === MatchStatus.SCHEDULED && match.roundNumber === firstRound)
     .flatMap((match) => [MatchSide.HOME, MatchSide.AWAY].map((side) => sideEntry(match, side, fieldById)))
-    .filter((entry): entry is SportEventParticipantDto => entry !== undefined && entry.isActive && !entry.isPlayInPlace);
+    .filter((entry): entry is SportEventParticipantDto => entry !== undefined
+      && placesOf.get(entry.id) === 1 && entry.isActive && !entry.isPlayInPlace);
 }
 
 /** The earlier match whose winner fills one side of this one, if any. */
@@ -86,6 +94,7 @@ export function bracketErrorMessages(
     EVENT_PARTICIPANT_IS_PLAY_IN_PLACE: `That is a ${vocabulary.playInPlace ?? 'play-in'} place. Name its ${team.one} there instead.`,
     EVENT_PARTICIPANT_NOT_IN_BRACKET: `That ${team.one} no longer has a place in the bracket. Refresh the page.`,
     BRACKET_PARTICIPANT_ALREADY_PLAYED: `That ${team.one}'s ${noun.one} has started, so enter the withdrawal as a walkover.`,
+    BRACKET_PLACE_NOT_FIRST_ROUND: `That ${team.one} skipped the first round, so enter the withdrawal as a walkover.`,
     PARTICIPANT_NOT_FOUND: `That ${team.one} is no longer active. Pick another.`,
     MATCH_SPREAD_LOCKED: `This ${noun.one} already has picks, so its spread can no longer change.`,
     MATCH_PERIOD_SCORE_INVALID: 'A score can only go up as the game goes on. Check it against the other scores of this game.',

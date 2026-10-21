@@ -211,8 +211,9 @@ Shown By Its Name*.
   inactive with `inactiveReason` `WITHDRAWN`; horse racing shows it as "Scratched". A runner
   that did not start is a result (`DID_NOT_START`), which also leaves it `WITHDRAWN` in the standing.
 - **Withdrawn after the draw, replacement** (#704): in any bracket sport, a field member who
-  withdraws before their first match is made inactive (`WITHDRAWN`) and a replacement (a tennis
-  lucky loser) gets a field row of its own in that bracket place. Picks stay on the withdrawn row
+  withdraws before their first-round match is made inactive (`WITHDRAWN`) and a replacement (a
+  tennis lucky loser) gets a field row of its own in that bracket place; a bye's place is not
+  replaced. "Withdrawn" in scoring means `WITHDRAWN` and named by no match. Picks stay on the withdrawn row
   and score as a first-round loss; they never move to the replacement, unlike a play-in place,
   which stands for whoever wins it. After the match starts a withdrawal is a walkover result.
 - **Official**: a race's result counts for contest scoring only once the admin marks it official,

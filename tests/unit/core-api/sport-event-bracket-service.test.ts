@@ -619,6 +619,18 @@ describe('SportEventBracketService.replaceWithdrawn', () => {
     expect(store.field.some((entry) => entry.participantId === luckyLoser.id)).toBe(false);
   });
 
+  it('refuses (409 BRACKET_PLACE_NOT_FIRST_ROUND) a team placed straight into a later round, a bye, whose picks a replacement would strand, and changes nothing', async () => {
+    const { service, store, event, vermont, luckyLoser } = await released();
+    // Vermont skips round 1: its place is in the final.
+    Object.assign(expectDefined(store.matchRows.find((match) => match.matchNumber === 1)), { awaySportEventParticipantId: null });
+    Object.assign(expectDefined(store.matchRows.find((match) => match.roundNumber === 2)), { homeSportEventParticipantId: vermont.id });
+
+    await expect(service.replaceWithdrawn(event.id, vermont.id, luckyLoser.id))
+      .rejects.toMatchObject({ code: 'BRACKET_PLACE_NOT_FIRST_ROUND', statusCode: 409 });
+    expect(store.field.find((entry) => entry.id === vermont.id)?.isActive).toBe(true);
+    expect(store.field.some((entry) => entry.participantId === luckyLoser.id)).toBe(false);
+  });
+
   it('refuses (409 EVENT_PARTICIPANT_NOT_IN_BRACKET) a row the bracket no longer names, so a place is replaced once', async () => {
     const { service, store, event, vermont, luckyLoser, sportRow } = await released();
     await service.replaceWithdrawn(event.id, vermont.id, luckyLoser.id);

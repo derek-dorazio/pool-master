@@ -738,6 +738,22 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       }));
     });
 
+    it('leaves out a winner already placed in its next game, as the server refuses to replace it', async () => {
+      seedWithdrawals([...firstRound, match({ id: 'm3', matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: 'sep-1' })]);
+      renderPage();
+
+      const withdrawn = await screen.findByTestId('root-admin-withdrawal-select');
+      expect(within(withdrawn).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose a team', '(2) Houston', '(15) Texas']);
+    });
+
+    it('leaves out a team placed straight into a later round, a bye, as the server replaces first-round places only', async () => {
+      seedWithdrawals([...firstRound.slice(1), match({ id: 'm3', matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: 'sep-1' })]);
+      renderPage();
+
+      const withdrawn = await screen.findByTestId('root-admin-withdrawal-select');
+      expect(within(withdrawn).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose a team', '(2) Houston', '(15) Texas']);
+    });
+
     it('shows no withdrawals card once every game has started, when a withdrawal is a walkover', async () => {
       seedWithdrawals(firstRound.slice(0, 1));
       renderPage();
