@@ -12,7 +12,8 @@ const EARLY_ROUND_NAMES = ['First round', 'Second round', 'Third round', 'Fourth
  * Tennis (#704): individuals playing a knockout draw, scored by the head-to-head family from the
  * draw's matches, as the team sports are. Its sport leagues are the ATP (men's singles) and the
  * WTA (women's singles), split as every other sport's men's and women's competitions are; each
- * holds the four Grand Slams as event series. A Slam singles draw is 128 players in seven rounds,
+ * holds the four Grand Slams as event series. The NCAA Division I men's and women's singles
+ * championships are two more, each a 64-player draw in six rounds with its own round names. A Slam singles draw is 128 players in seven rounds,
  * 32 of them seeded; a match's score is sets won, and a match can end early (a retirement, a
  * walkover or a default) with its winner winning in full.
  *
