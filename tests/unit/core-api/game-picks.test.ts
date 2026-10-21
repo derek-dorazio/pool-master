@@ -30,6 +30,8 @@ function game(matchNumber: number, overrides: Partial<SportEventMatch> = {}): Sp
     winnerSide: null,
     homeScore: null,
     awayScore: null,
+    homeShootoutScore: null,
+    awayShootoutScore: null,
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,

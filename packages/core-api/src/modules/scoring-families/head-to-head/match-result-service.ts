@@ -16,6 +16,9 @@
  * match between the wrong teams, so the admin clears the later result first. Fixing only the
  * scores never moves a team and is always allowed.
  *
+ * A bracket match level after extra time, in a sport settled by shoot-out (#791), names its winner
+ * by the shoot-out's scores, kept apart from the match score (IFAB Law 10).
+ *
  * In a reseeded bracket (#722) a match before a reseed links nowhere: its winner's next match is
  * the one the admin placed it in. Changing or clearing that result swaps or empties the winner's
  * place there, under the same lock, and the admin can set the round again before it starts.
@@ -30,6 +33,7 @@ import type {
 import {
   MatchSide,
   MatchStatus,
+  type SportShootout,
   ParticipantStandingStatus,
   SportEventStatus,
   compareScores,
@@ -48,10 +52,19 @@ import { formsNoBracket } from '../../events/sport-event-bracket-service';
 export interface MatchResultInput {
   /** The side that won; null for a tie (#792), only in a game of a week, which forms no bracket. */
   winnerSide: MatchSide | null;
-  /** Both scores or neither: the winner's must be the higher. A tie needs both, level. */
+  /**
+   * Both scores or neither: the winner's must be the higher, unless a shoot-out settled a level
+   * score. A tie needs both, level.
+   */
   homeScore: number | null;
   awayScore: number | null;
+  /** Both or neither (left out is neither): a level bracket match's shoot-out, the winner's the higher. */
+  homeShootoutScore?: number | null;
+  awayShootoutScore?: number | null;
 }
+
+/** A result with no shoot-out, as a cleared or cancelled match is written. */
+const NO_SHOOTOUT = { homeShootoutScore: null, awayShootoutScore: null } as const;
 
 /** Both sides' score at the end of one period, as the scoreboard shows it. */
 export interface PeriodScoreInput {
@@ -154,9 +167,9 @@ export class MatchResultService {
    * Enters or changes one match's result: a winner, or a tie (#792) in a game of a week, which
    * forms no bracket (a knockout always has a winner). 404 BRACKET_MATCH_NOT_FOUND; 422
    * MATCH_SIDES_NOT_SET while a side still waits for its team; 422 MATCH_RESULT_INVALID for one
-   * score without the other, scores the winner did not win by, a tie without level scores, or a
-   * tie in a bracket match; 409 SPORT_EVENT_MATCH_RESULT_LOCKED for a new winner once the next
-   * match has a result.
+   * score without the other, scores the winner did not win by, a tie that does not fit, or a
+   * shoot-out that does not fit (`describeScoreProblem`); 409 SPORT_EVENT_MATCH_RESULT_LOCKED for
+   * a new winner once the next match has a result.
    */
   async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput): Promise<SportEventMatch[]> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
@@ -170,9 +183,14 @@ export class MatchResultService {
         422,
       );
     }
-    const scoreProblem = describeScoreProblem(input)
-      ?? (input.winnerSide === null && !formsNoBracket(bracket, linksOn) ? 'a bracket match always has a winner' : null)
-      ?? describeFinalBelowPeriods(match, input, matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null));
+    const shootout = {
+      homeShootoutScore: input.homeShootoutScore ?? null,
+      awayShootoutScore: input.awayShootoutScore ?? null,
+    };
+    const scoreProblem = describeScoreProblem(input, shootout, {
+      inBracket: !formsNoBracket(bracket, linksOn),
+      shootout: getSportDefinition(sportEvent.sport).shootout,
+    }) ?? describeFinalBelowPeriods(match, input, matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null));
     if (scoreProblem) {
       this.deps.logger?.warn({ sportEventId, matchNumber, scoreProblem }, 'Refused a match result with invalid scores');
       throw new SportEventError(`Match ${matchNumber}'s result cannot be saved: ${scoreProblem}.`, 'MATCH_RESULT_INVALID', 422);
@@ -182,7 +200,7 @@ export class MatchResultService {
       this.assertNextMatchOpen(sportEventId, bracket, match);
     }
 
-    const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore };
+    const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout };
     // A tie sends nobody on: only a game that forms no bracket can end level.
     const sideFill = input.winnerSide === null ? null : this.advance(bracket, match, sideRowId(match, input.winnerSide));
     await this.write(sportEventId, bracket, result, sideFill);
@@ -208,7 +226,7 @@ export class MatchResultService {
       return bracket;
     }
     this.assertNextMatchOpen(sportEventId, bracket, match);
-    const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null };
+    const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_SHOOTOUT };
     await this.write(sportEventId, bracket, result, this.advance(bracket, match, null));
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cleared a match result');
     return this.deps.matches.findBySportEvent(sportEventId);
@@ -246,7 +264,7 @@ export class MatchResultService {
         422,
       );
     }
-    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null };
+    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_SHOOTOUT };
     await this.write(sportEventId, bracket, result, null);
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cancelled a game');
     // A squares contest on the game ends Final with no scores (#711, #743).
@@ -357,7 +375,7 @@ export class MatchResultService {
   private async write(
     sportEventId: string,
     bracket: readonly SportEventMatch[],
-    result: Pick<SportEventMatch, 'id' | 'status' | 'winnerSide' | 'homeScore' | 'awayScore'>,
+    result: Pick<SportEventMatch, 'id' | 'status' | 'winnerSide' | 'homeScore' | 'awayScore' | 'homeShootoutScore' | 'awayShootoutScore'>,
     sideFill: MatchSideFill | null,
   ): Promise<void> {
     // The standings are read off the bracket as it will stand after this write.
@@ -445,18 +463,46 @@ function placementOf(bracket: readonly SportEventMatch[], match: SportEventMatch
   return undefined;
 }
 
+/** Where a result is entered: in a bracket or a week of games, and how the sport settles a level knockout. */
+export interface ScoreRules {
+  inBracket: boolean;
+  shootout: SportShootout | null;
+}
+
 /**
- * What is wrong with a result's scores, or null: both or neither, and the winner's the higher. A
- * tie needs both, level.
+ * What is wrong with a result's scores, or null. Both scores or neither, and the winner's the
+ * higher; except that a bracket match of a sport settled by shoot-out (#791) may be level, its
+ * winner named by both shoot-out scores, the winner's the higher. Shoot-out scores are refused
+ * anywhere else, and on a result that is not level. A tie (#792) is only for a game of a week,
+ * and needs both scores, level.
  */
-function describeScoreProblem({ winnerSide, homeScore, awayScore }: MatchResultInput): string | null {
+export function describeScoreProblem(
+  { winnerSide, homeScore, awayScore }: Pick<MatchResultInput, 'winnerSide' | 'homeScore' | 'awayScore'>,
+  { homeShootoutScore, awayShootoutScore }: Pick<SportEventMatch, 'homeShootoutScore' | 'awayShootoutScore'>,
+  rules: ScoreRules,
+): string | null {
+  const hasShootout = homeShootoutScore !== null || awayShootoutScore !== null;
+  if (hasShootout && (!rules.shootout || !rules.inBracket)) {
+    return rules.shootout ? 'only a bracket match is settled by a shoot-out' : 'this sport has no shoot-outs';
+  }
   if (winnerSide === null) {
+    if (rules.inBracket) return 'a bracket match always has a winner';
     return homeScore !== null && awayScore !== null && homeScore === awayScore ? null : 'a tie needs both scores, level';
   }
-  if (homeScore === null && awayScore === null) return null;
+  if (homeScore === null && awayScore === null) {
+    return hasShootout ? 'a shoot-out needs the score after extra time, level' : null;
+  }
   if (homeScore === null || awayScore === null) return 'give both scores or neither';
-  const [winner, loser] = winnerSide === MatchSide.HOME ? [homeScore, awayScore] : [awayScore, homeScore];
-  return winner > loser ? null : 'the winner\'s score must be higher than the loser\'s';
+  const winnerFirst = <T>(home: T, away: T): [T, T] => (winnerSide === MatchSide.HOME ? [home, away] : [away, home]);
+  const [winner, loser] = winnerFirst(homeScore, awayScore);
+  if (homeScore !== awayScore) {
+    if (hasShootout) return 'a shoot-out is only held after a level score';
+    return winner > loser ? null : 'the winner\'s score must be higher than the loser\'s';
+  }
+  if (!rules.shootout || !rules.inBracket) return 'the winner\'s score must be higher than the loser\'s';
+  if (homeShootoutScore === null || awayShootoutScore === null) return 'a level score needs both shoot-out scores';
+  const [winnerKicks, loserKicks] = winnerFirst(homeShootoutScore, awayShootoutScore);
+  return winnerKicks > loserKicks ? null : 'the winner\'s shoot-out score must be higher than the loser\'s';
 }
 
 /**

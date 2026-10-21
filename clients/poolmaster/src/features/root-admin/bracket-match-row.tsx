@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MatchSide, MatchStatus, type SportMatchPeriods, type SportVocabulary } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, type SportMatchPeriods, type SportShootout, type SportVocabulary } from '@poolmaster/shared/domain';
 import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { formatSpread } from '@/features/contests/pick-em-week';
@@ -40,6 +40,8 @@ export type BracketContext = {
   spreads: boolean;
   /** The periods a game is scored by, for a sport that keeps a score at each period's end (#772). */
   periods?: SportMatchPeriods;
+  /** How a level bracket match is settled, for a sport that holds shoot-outs (#791); null otherwise. */
+  shootout: SportShootout | null;
 };
 
 /** A side's team, with its seed, or who fills it while that is still to be decided. */

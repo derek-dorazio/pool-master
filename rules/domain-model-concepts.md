@@ -65,6 +65,12 @@ Two readings of this chain have both been held at once, so it is worth stating p
 - **A knockout roster pick scores per match it wins** (`KNOCKOUT_ROUND_POINTS`, #699): that
   round's value from the contest's table, plus an upset bonus when the contest has one on. A
   team placed straight into a later round (a bye) scores nothing for the round it skipped.
+- **A match's winner is its own fact** (`winnerSide`), and every scorer reads it, never the
+  score. In a sport that settles a level knockout by shoot-out (`SportDefinition.shootout`,
+  soccer's penalties), a bracket match level after extra time names its winner by the
+  shoot-out's scores (`homeShootoutScore`, `awayShootoutScore`, #791), kept apart from the match
+  score as IFAB Law 10 has it: screens show "1-1 (4-3 pens)", and the tiebreaker and squares read
+  the 1-1.
 - **A random draw deals the picks** (`RANDOM_DRAW`, #601). The commissioner's **Run draw** deals
   every entry the same number of field members, round-robin from a seeded shuffle recorded for
   replay; leftovers go undealt. The draw submits every entry, closes entries and reveals every

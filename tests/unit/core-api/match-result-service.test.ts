@@ -2,7 +2,7 @@ import { expect, jest } from '@jest/globals';
 import { MatchPeriodLayout, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import { MatchResultService } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
+import { MatchResultService, describeScoreProblem } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 
 // The admin's match results against an in-memory store (#699): what a result saves (the winner,
@@ -240,6 +240,75 @@ describe('MatchResultService once the next game has quarter scores', () => {
     const { service, event } = await scoredFinal();
 
     await expect(service.clearResult(event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+  });
+});
+
+describe('MatchResultService shoot-outs (#791)', () => {
+  it('refuses (422 MATCH_RESULT_INVALID) shoot-out scores in a sport whose knockouts never end level, and saves nothing', async () => {
+    const { service, event, store } = await setup();
+
+    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 70, homeShootoutScore: 4, awayShootoutScore: 3 }))
+      .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
+    expect(store.matchRows.every((match) => match.status === MatchStatus.SCHEDULED)).toBe(true);
+  });
+
+  it('saves a result sent without shoot-out scores as having no shoot-out', async () => {
+    const { service, event } = await setup();
+
+    const bracket = await service.recordResult(event.id, 1, homeWins);
+
+    expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ homeShootoutScore: null, awayShootoutScore: null });
+  });
+
+  it('clears a match\'s shoot-out with its result', async () => {
+    const { service, event, store } = await setup();
+    await service.recordResult(event.id, 1, homeWins);
+    Object.assign(store.matchRows[0], { homeShootoutScore: 4, awayShootoutScore: 3 });
+
+    const bracket = await service.clearResult(event.id, 1);
+
+    expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ status: MatchStatus.SCHEDULED, homeShootoutScore: null, awayShootoutScore: null });
+  });
+});
+
+describe('describeScoreProblem with shoot-outs (#791)', () => {
+  // A test-only sport rule: no sport settles a level knockout by shoot-out until soccer.
+  const penalties = { inBracket: true, shootout: { label: 'pens' } };
+  const level = { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1 };
+  const kicks = (homeShootoutScore: number | null, awayShootoutScore: number | null) => ({ homeShootoutScore, awayShootoutScore });
+
+  it('accepts a level bracket match whose winner has the higher shoot-out score', () => {
+    expect(describeScoreProblem(level, kicks(3, 4), penalties)).toBeNull();
+    expect(describeScoreProblem({ ...level, winnerSide: MatchSide.HOME }, kicks(5, 4), penalties)).toBeNull();
+  });
+
+  it('accepts a decided match with no shoot-out, and a winner with no scores at all', () => {
+    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: 2, awayScore: 1 }, kicks(null, null), penalties)).toBeNull();
+    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: null, awayScore: null }, kicks(null, null), penalties)).toBeNull();
+  });
+
+  it.each([
+    ['a level score with no shoot-out', level, kicks(null, null), 'a level score needs both shoot-out scores'],
+    ['a level score with one shoot-out score', level, kicks(null, 4), 'a level score needs both shoot-out scores'],
+    ['a winner who lost the shoot-out', level, kicks(4, 3), 'the winner\'s shoot-out score must be higher than the loser\'s'],
+    ['a shoot-out after a decided score', { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 2 }, kicks(3, 4), 'a shoot-out is only held after a level score'],
+    ['a shoot-out with no match score', { winnerSide: MatchSide.AWAY, homeScore: null, awayScore: null }, kicks(3, 4), 'a shoot-out needs the score after extra time, level'],
+  ])('refuses %s in a bracket of a sport settled by shoot-out', (_label, result, shootout, problem) => {
+    expect(describeScoreProblem(result, shootout, penalties)).toBe(problem);
+  });
+
+  it('refuses a shoot-out, and a level score, on a week of games that forms no bracket', () => {
+    const week = { ...penalties, inBracket: false };
+
+    expect(describeScoreProblem(level, kicks(3, 4), week)).toBe('only a bracket match is settled by a shoot-out');
+    expect(describeScoreProblem(level, kicks(null, null), week)).toBe('the winner\'s score must be higher than the loser\'s');
+  });
+
+  it('refuses a shoot-out, and a level score, in a sport without shoot-outs', () => {
+    const noShootouts = { inBracket: true, shootout: null };
+
+    expect(describeScoreProblem(level, kicks(3, 4), noShootouts)).toBe('this sport has no shoot-outs');
+    expect(describeScoreProblem(level, kicks(null, null), noShootouts)).toBe('the winner\'s score must be higher than the loser\'s');
   });
 });
 
@@ -510,7 +579,7 @@ describe('MatchResultService on a reseeded bracket', () => {
     const match = (matchNumber: number, roundNumber: number, home: string | null, away: string | null, advancesTo: [string, MatchSide] | null) => ({
       id: `m${matchNumber}`, sportEventId: event.id, roundNumber, matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
-      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null,
+      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null,
       advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
     });

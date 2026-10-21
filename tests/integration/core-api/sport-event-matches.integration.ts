@@ -27,6 +27,9 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
+/** A result with no shoot-out. */
+const NO_SHOOTOUT = { homeShootoutScore: null, awayShootoutScore: null };
+
 function repos() {
   const prisma = getPrisma();
   return {
@@ -224,7 +227,7 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
     const asOf = new Date('2027-03-19T04:00:00.000Z');
 
     await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80 },
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80, ...NO_SHOOTOUT },
       sideFill: { id: final.id, side: MatchSide.HOME, sportEventParticipantId: entryOf('Vermont').id },
       standings: [
         { sportEventParticipantId: entryOf('Vermont').id, position: 1, displayPosition: '1', status: 'ACTIVE', currentRound: 2, asOf },
@@ -232,7 +235,7 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
       ],
     });
     await repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81 },
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 81, ...NO_SHOOTOUT },
       sideFill: null,
       standings: [{ sportEventParticipantId: entryOf('Duke').id, position: 3, displayPosition: 'T3', status: 'ELIMINATED', currentRound: 1, asOf }],
     });
@@ -247,13 +250,32 @@ describe('PrismaSportEventMatchRepository.applyResult', () => {
     });
   });
 
+  it('stores a level match\'s shoot-out apart from its score, and clears it with the result (#791)', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+    const level = { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1 };
+
+    await repos().matches.applyResult({ result: { ...level, homeShootoutScore: 3, awayShootoutScore: 4 }, sideFill: null, standings: [] });
+    const [settled] = await repos().matches.findBySportEvent(event.id);
+    await repos().matches.applyResult({
+      result: { id: first.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_SHOOTOUT },
+      sideFill: null,
+      standings: [],
+    });
+    const [cleared] = await repos().matches.findBySportEvent(event.id);
+
+    expect(settled).toMatchObject({ homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4, winnerSide: MatchSide.AWAY });
+    expect(cleared).toMatchObject({ homeShootoutScore: null, awayShootoutScore: null });
+  });
+
   it('writes nothing when one part of the result is refused by the database', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
     const [first] = await repos().matches.findBySportEvent(event.id);
 
     await expect(repos().matches.applyResult({
-      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70 },
+      result: { id: first.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70, ...NO_SHOOTOUT },
       sideFill: { id: randomUUID(), side: MatchSide.HOME, sportEventParticipantId: entryOf('Duke').id },
       standings: [],
     })).rejects.toThrow();
@@ -328,6 +350,14 @@ describe('sport_event_matches database checks', () => {
 
     await expect(insertMatch(event, { homeScore: -1 })).rejects.toThrow(/sport_event_matches_scores_not_negative/);
     await expect(insertMatch(event, { matchNumber: 0 })).rejects.toThrow(/sport_event_matches_match_number_positive/);
+  });
+
+  it('refuses one shoot-out score without the other and a negative one, and takes both (#791)', async () => {
+    const { event } = await createBracketEvent();
+
+    await expect(insertMatch(event, { homeShootoutScore: 4 })).rejects.toThrow(/sport_event_matches_shootout_scores_check/);
+    await expect(insertMatch(event, { homeShootoutScore: -1, awayShootoutScore: 3 })).rejects.toThrow(/sport_event_matches_shootout_scores_check/);
+    await expect(insertMatch(event, { homeShootoutScore: 4, awayShootoutScore: 3 })).resolves.toMatchObject({ homeShootoutScore: 4 });
   });
 
   it('refuses a spread that is not in half points, and takes one that is (#720)', async () => {

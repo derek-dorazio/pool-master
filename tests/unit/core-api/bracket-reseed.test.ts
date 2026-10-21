@@ -54,6 +54,8 @@ function nflPlayoff(): SportEventMatch[] {
     winnerSide: null,
     homeScore: null,
     awayScore: null,
+    homeShootoutScore: null,
+    awayShootoutScore: null,
     advancesToMatchId: spec.advancesTo ? `m${spec.advancesTo.matchNumber}` : null,
     advancesToSide: spec.advancesTo?.side ?? null,
     regionLabel: spec.region,

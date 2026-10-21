@@ -12,6 +12,7 @@ export const golfSportDefinition: SportDefinition = {
   defaultTierLayout: { tierCount: 6, tierSize: 10 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['GOLF_RELATIVE_TO_PAR_TOTAL'],
+  shootout: null,
   vocabulary: {
     participant: { one: 'golfer', many: 'golfers' },
     event: { one: 'tournament', many: 'tournaments' },

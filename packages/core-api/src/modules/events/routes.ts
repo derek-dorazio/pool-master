@@ -646,7 +646,8 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       summary: 'Enter a match\'s result',
       description: 'Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team\'s event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. '
         + 'Re-sending a match\'s result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. '
-        + '422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score, a tie without level scores, or a tie in a bracket match. '
+        + 'A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner\'s is the higher; they are kept apart from the match score. '
+        + '422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score, a tie without level scores, a tie in a bracket match, or shoot-out scores on a match that is not a level bracket match of such a sport. '
         + `${MATCH_RESULT_LOCKED} 422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
       operationId: 'recordEventMatchResult',
       params: MATCH_PARAMS,

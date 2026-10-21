@@ -25,6 +25,7 @@ export const baseballSportDefinition: SportDefinition = {
   defaultTierLayout: { tierCount: 4, tierSize: 3 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
+  shootout: null,
   vocabulary: {
     participant: { one: 'team', many: 'teams' },
     event: { one: 'postseason', many: 'postseasons' },

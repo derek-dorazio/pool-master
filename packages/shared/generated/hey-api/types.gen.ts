@@ -14261,6 +14261,14 @@ export type SportEventMatchDto = {
      */
     awayScore: number | null;
     /**
+     * The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.
+     */
+    homeShootoutScore: number | null;
+    /**
+     * The away side's kicks scored in the shoot-out; null with the home side's.
+     */
+    awayShootoutScore: number | null;
+    /**
      * The match the winner moves on to; null for the final.
      */
     advancesToMatchId: string | null;
@@ -14345,6 +14353,14 @@ export type SportEventBracketResponse = {
          * The away side's score; in a series, games won.
          */
         awayScore: number | null;
+        /**
+         * The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.
+         */
+        homeShootoutScore: number | null;
+        /**
+         * The away side's kicks scored in the shoot-out; null with the home side's.
+         */
+        awayShootoutScore: number | null;
         /**
          * The match the winner moves on to; null for the final.
          */
@@ -14431,6 +14447,14 @@ export type SportEventMatchResponse = {
          * The away side's score; in a series, games won.
          */
         awayScore: number | null;
+        /**
+         * The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.
+         */
+        homeShootoutScore: number | null;
+        /**
+         * The away side's kicks scored in the shoot-out; null with the home side's.
+         */
+        awayShootoutScore: number | null;
         /**
          * The match the winner moves on to; null for the final.
          */
@@ -14544,7 +14568,7 @@ export type FillPlayInSlotRequest = {
 };
 
 /**
- * A match's result: who won, or a tie, and both scores or neither. The winner's score must be the higher; a tie's scores are level.
+ * A match's result: who won, or a tie, and both scores or neither. The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.
  */
 export type RecordSportEventMatchResultRequest = {
     /**
@@ -14559,6 +14583,14 @@ export type RecordSportEventMatchResultRequest = {
      * The away side's score, or null with the home score null too.
      */
     awayScore: number | null;
+    /**
+     * The home side's kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the away side's for none.
+     */
+    homeShootoutScore?: number | null;
+    /**
+     * The away side's kicks scored in a shoot-out; omitted or null with the home side's.
+     */
+    awayShootoutScore?: number | null;
 };
 
 /**
@@ -14809,6 +14841,14 @@ export type SquaresBoardResponse = {
          * The away side's score; in a series, games won.
          */
         awayScore: number | null;
+        /**
+         * The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score.
+         */
+        homeShootoutScore: number | null;
+        /**
+         * The away side's kicks scored in the shoot-out; null with the home side's.
+         */
+        awayShootoutScore: number | null;
         /**
          * The match the winner moves on to; null for the final.
          */
