@@ -672,7 +672,7 @@ export class ContestManagementService {
     if (!isSquaresRound(game.squaresFromRound, game.roundNumber)) {
       this.logger.warn({ sportEventIds: input.sportEventIds, sportEventMatchId: gameId, roundNumber: game.roundNumber, squaresFromRound: game.squaresFromRound }, 'contest management create refused a squares game before the sport league\'s first round of single games');
       throw new ContestManagementError(
-        'That game is a two-legged tie or a series, not one game, so a squares contest can\'t be played on it.',
+        'A squares contest can\'t be played on that game: this sport league\'s squares contests start at a later round.',
         CONTEST_SQUARES_GAME_INVALID,
       );
     }

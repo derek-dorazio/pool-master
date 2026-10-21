@@ -295,8 +295,8 @@ hockey seeds do.
 
 ## Seeded soccer knockouts
 
-Eight test seeds hold soccer knockout stages as they went, one event each, in the nine soccer
-sport leagues the migrations create:
+Eight test seeds hold soccer knockout stages as they went, one event per sport league, in the
+nine soccer sport leagues the migrations create:
 
 - `soccer-2022-fifa-world-cup-test.json`: the 2022 World Cup's 16-team knockout stage.
   Argentina beat France 4-2 on penalties after a 3-3 final.
@@ -321,9 +321,9 @@ sport leagues the migrations create:
 
 A match's score is the score after extra time; a match level after it carries its shoot-out,
 kept apart. Every match carries its half-time score for squares pools, except a two-legged
-tie, an MLS series and the NCAA games. The international tournaments are seeded by FIFA ranking and every match is at a neutral
-site; the third-place match is left out. Kickoffs, scores and shoot-outs are real, and the odds
-are made up. Each loads as the hockey seeds do.
+tie, an MLS series and the NCAA games. The international tournaments are seeded by FIFA
+ranking and every match is at a neutral site; the third-place match is left out. Kickoffs,
+scores and shoot-outs are real, and the odds are made up. Each loads as the hockey seeds do.
 
 ## Seeded 2026 races
 
