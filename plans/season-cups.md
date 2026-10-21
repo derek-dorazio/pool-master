@@ -26,15 +26,17 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
 
 - **Two kinds of cup, both inside one Poolmaster league** (Derek, 2026-10-21). "League" here is
   always the Poolmaster league, the tenant; "sports league" is the PGA Tour, the LPGA Tour, the
-  NFL. The **Poolmaster Cup** is the one leaderboard across every contest in every sport. A
+  NFL. The **league cup** is the league's championship for the year, the one leaderboard
+  across every contest in every sport, and it carries the league's name: "2026 Lakeside Pool
+  League Cup". A
   **sports league cup** (the PGA Tour Cup, the NFL Cup) covers that sports league's contests. No
   cup per sport (men's and women's golf together) and no hand-picked cups.
 - **A cup is a rule, not a copy of results.** It names a season, which contests count (all of
   them, or one sports league's) and a points table. Standings are
   worked out on read from the places every contest already freezes when it settles
   (`ContestEntryStanding`), the same read #837 builds. Nothing is kept in step by hand.
-- **Every cup appears on its own.** A league gets its Poolmaster Cup and a cup for each sports
-  league it plays each season, with no setup. The commissioner can rename them, pick the points
+- **Every cup appears on its own.** A league gets its league cup and a cup for each sports
+  league it plays each season, with no setup. The commissioner can rename a sports league cup, pick the points
   table, and drop or weight a contest.
 - **Points follow the place, the field and an optional weight.** A preset points table, shared
   points for ties, and a per-contest weight so a majors pool can count for more.
@@ -92,13 +94,16 @@ CupStanding                      frozen when the cup is crowned, like ContestEnt
   `ALL_CONTESTS` cup per (league, season) and one cup per (league, season, sports league).
 - **Cups are created, never set up.** When a contest is created, contest-management calls the
   cups service (modules call each other's services, `rules/architecture-rules.md` §4 *Service
-  Topology*), which makes the (league, season)'s Poolmaster Cup and its sports league's cup if
-  they don't exist yet. The migration does the same for every existing contest. Cups can be
-  renamed but not deleted, and their scope never changes. Default names are "Poolmaster Cup"
-  and "<sports league name> Cup" ("PGA Tour Cup", "NFL Cup").
+  Topology*), which makes the (league, season)'s league cup and its sports league's cup if
+  they don't exist yet. The migration does the same for every existing contest. Cups are
+  never deleted and their scope never changes.
+- **Names.** The league cup has no name of its own (`name` is null for `ALL_CONTESTS`, a
+  database check): screens show "<season> <league name> Cup", so it follows a league rename and
+  always reads as that league's championship. A sports league cup defaults to "<sports league
+  name> Cup" ("PGA Tour Cup", "NFL Cup") and the commissioner can rename it.
 - A sports league cup stays off the Cups page until it has two counted contests, so a league
   that plays one Super Bowl squares pool doesn't get an NFL Cup with one contest in it. The
-  Poolmaster Cup always shows.
+  league cup always shows.
 - Enums mirror domain consts in `packages/shared/domain/enums.ts` with the `Prisma` prefix,
   like every other status column.
 - **A cup never crosses leagues.** Leagues are tenants (Derek, 2026-10-21): no feature lets a
@@ -110,18 +115,22 @@ CupStanding                      frozen when the cup is crowned, like ContestEnt
 
 Questions:
 
-- **Q2.1** Decided (Derek, 2026-10-21): every league gets a Poolmaster Cup each season, the
-  one leaderboard across every contest in every sport.
-- **Q2.2** Decided (Derek, 2026-10-21): the cups are the Poolmaster Cup across everything and
+- **Q2.1** Decided (Derek, 2026-10-21): every league gets a league cup each season, the one
+  leaderboard across every contest in every sport. It is the league's championship for that
+  year and carries the league's name ("2026 Lakeside Pool League Cup").
+- **Q2.5** A crowned cup from a past season: show the league's name then, or now?
+  Recommendation: now. The league is the same tenant under a new name, and keeping the old name
+  would need a copy of it frozen on each cup for a rare case.
+- **Q2.2** Decided (Derek, 2026-10-21): the cups are the league cup across everything and
   one cup per sports league (the PGA Tour Cup). No combined cup per sport (men's and women's golf
   together) and no hand-picked custom cups. Sports league cups appear on their own, like the
-  Poolmaster Cup, once they have two counted contests.
+  league cup, once they have two counted contests.
 - **Q2.3** Decided (Derek, 2026-10-21): no cross-league cups, ever, for members or
   commissioners. Leagues are tenants. "Across everything" means every sport and sports league
   inside one Poolmaster league. Every route is under `/leagues/:leagueId`, and past cups and
   trophies show only inside their own league. A person in several leagues never sees their cups,
   points or trophies added up across them: the league selector is always a hard partition.
-- **Q2.4** A contest counts toward both the Poolmaster Cup and its sports league's cup. Each cup
+- **Q2.4** A contest counts toward both the league cup and its sports league's cup. Each cup
   works out its own points, and a commissioner can drop or weight a contest in one without
   changing the other.
 
@@ -157,7 +166,7 @@ points = scale(place, rankedEntries) x weight
 
 Questions:
 
-- **Q3.1** Default points table for the Poolmaster Cup? Recommendation: `STANDARD`. It rewards
+- **Q3.1** Default points table for the league cup? Recommendation: `STANDARD`. It rewards
   winning without leaving anyone at zero, so the bottom half of the league still has a reason to
   enter the next pool.
 - **Q3.2** Contest weights: three fixed choices (x1, x1.5, x2) or any number? Recommendation:
@@ -207,7 +216,7 @@ new `cups` module (`rules/service-rules.md` §4 *DTOs, Mappers, OpenAPI*):
 | `GET /cups?seasonYear=` | Member | The league's cups for a season (default: the current one), each with its leader and the viewer's squad's place |
 | `GET /cups/:cupId` | Member | Standings (`CupStandingRowDto[]`) and the counted contests (`CupContestRowDto[]`) |
 | `GET /cups/:cupId/squads/:squadId` | Member | One squad's points contest by contest |
-| `PATCH /cups/:cupId` | Commissioner | Name, points scale, custom points (open cups only) |
+| `PATCH /cups/:cupId` | Commissioner | Points scale, custom points, and the name of a sports league cup (open cups only) |
 | `PUT /cups/:cupId/contests/:contestId` | Commissioner | Include, exclude or weight one contest |
 | `POST /cups/:cupId/crown` | Commissioner | Crown the champion (section 4) |
 | `GET /cups/past` | Member | Crowned cups across every season, newest first, paged; used by history |
@@ -230,7 +239,7 @@ new `cups` module (`rules/service-rules.md` §4 *DTOs, Mappers, OpenAPI*):
 | Cups | `/league/:code/cups` | This season's cups as cards: name, leader, viewer's place, contests counted of total. Sports league cups show once they have two counted contests |
 | Cup | `/league/:code/cups/:cupId` | The leaderboard (place, movement, squad, points, wins, contests), a points-race chart of the top five across the season, and the counted contests with their weights and winners |
 | Squad in a cup | sheet from a leaderboard row | That squad's points contest by contest |
-| League home | existing | A small Poolmaster Cup card: top three and the viewer's place |
+| League home | existing | A small league cup card: top three and the viewer's place |
 | Team page | existing | Cup trophies won, beside #837's contest trophies |
 | History, Cups tab | `/league/:code/history/cups` | Crowned cups by season: champion, podium, link to the frozen table. Built with #837 |
 
@@ -256,7 +265,7 @@ browser journey row once a page exists. All depend on #837 slice 1 (`seasonYear`
 guard).
 
 1. **Model and read API.** `Cup`, `CupContestSetting`, `CupStanding` and their enums; migration
-   creating each (league, season)'s Poolmaster Cup; automatic league cup on contest create;
+   creating each (league, season)'s league cup; automatic cups on contest create;
    `cup-points.ts` with every scale, ties, weights and the minimum field; `GET /cups` and
    `GET /cups/:cupId` and the squad breakdown. Depends on Q3.1, Q3.3, Q3.4.
 2. **Cup pages.** The Cups menu item, Cups page, Cup leaderboard with movement and the
