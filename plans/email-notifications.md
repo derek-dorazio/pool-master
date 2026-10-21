@@ -176,7 +176,7 @@ listed. Members without an entry don't need to know.
 | # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
 |---|---|---|---|---|---|---|---|
 | D1 | New contest open | Commissioner opens a contest (`DRAFT` → `OPEN`) | Every active league member | At once | Contest name, event(s) and start, selection type in a line ("pick 6 golfers from 6 tiers"), entries per member, prizes if set, closes at, Enter contest button | | P1 |
-| D2 | Entry reminder | The contest is `OPEN`, its cutoff is near, and the member has no submitted entry for the starting event (no entry, or a draft) | Members with nothing submitted | 48 h, 24 h and 3 h before cutoff, with the two rules in Q3.6 | "Entries close Thursday 7:00 am." Their draft's status if they have one ("4 of 6 picked"), Make picks button | | P1 |
+| D2 | Entry reminder | The contest is `OPEN`, its cutoff is near, and the member has no submitted entry for the starting event (no entry, or a draft) | Members with nothing submitted | 48 h, 24 h and 3 h before cutoff, with the rules in Q3.6 | "Entries close Thursday 7:00 am." Their draft's status if they have one ("4 of 6 picked"), Make picks button | | P1 |
 | D3 | Entry submitted | An entry's lineup is submitted for an event | Every owner of the squad | At once | Lineup, tiebreaker, "you can change picks until [time]", Entry link | 🟡 `CONTEST_ENTRY_COMPLETED`: roster contests only, submitter only, golf tiebreaker | P2 |
 | D4 | Pick'em week submitted | A pick'em or survivor week is submitted | Every owner of the squad | At once | Their picks by game (confidence values), "each pick locks at its kickoff" | | P3 |
 | D5 | A pick withdrew | A field member in a submitted lineup withdraws (or is scratched) while that event's picks are still open | Owners of entries holding that pick | At once, at most once per entry per event | Who withdrew, whether the lineup is now short (back to draft) and won't count unless fixed, Make picks button | | P2 |
@@ -189,26 +189,17 @@ cutoff: a one-event contest's start, each week of a pick'em or survivor contest 
 week's first kickoff, to entries whose week is still a draft), each event of a season contest,
 a second-chance bracket's starting round and a squares game's kickoff.
 
-One schedule works for every format we have, with two rules, so there are no per-sport
-schedule profiles. Format was not the problem when we checked each one. Short notice and
-overnight cutoffs were:
+One schedule works for every format we have, with the two rules below, so there are no
+per-sport schedule profiles. Format was not the problem when we checked each one; short
+notice was:
 
 1. **Too late is skipped.** A reminder whose time has passed when the contest opens, or that
    would land within 6 hours of the "New contest open" email (D1), is not sent. That covers a
    contest opened the day before, a bracket set on Selection Sunday for a Thursday tip-off, and
    a reseeded round set a few days ahead.
-2. **Overnight moves earlier, lightly.** Readers live all over the world, not in the event's
-   time zone, so this is worked out per reader and kept narrow. Only the 3-hour reminder moves,
-   and only when it would land between 11:00 pm and 6:00 am in the reader's own time zone. It
-   then goes at 9:00 pm their time the evening before. The 48- and 24-hour reminders always
-   send on time, since there is a full day left to read them. A reader with no time zone set
-   gets every reminder on time. "The reader's time zone" is the optional time zone on each
-   person's account (Profile, Preferences; `User.timezone`). Most people never fill it in, so
-   slice 1 fills it from the browser's own time zone at sign-in when it is empty, and the
-   person can still change it. Golf is the main case: before a 7:00 am Eastern Thursday
-   tee-off, a reader on the US east coast would get the 3-hour reminder at 4:00 am, so theirs
-   goes Wednesday at 9:00 pm. A reader in London gets it at 9:00 am, unchanged. An NFL
-   Thursday 8:15 pm kickoff moves nobody in the Americas.
+2. **Everyone at once.** **Decided (Derek 2026-10-21):** each reminder goes to every
+   recipient at the same moment, on the schedule, with no per-person time zone shifting. Some
+   readers will get one overnight; the other two reminders cover them.
 
 The offsets (48, 24, 3) go in `EMAIL_CONFIG` as one list, so a root admin can change them on
 the Settings page without a deploy. That is the "configurable someday" for almost no cost.
@@ -250,9 +241,7 @@ the top 10 is a real order, so it starts with the standings emails (E2–E4).
 
 **Q3.11 Golf round timing.** Golf rounds finish over several hours and scores trickle in.
 *Recommendation:* send E2 when `scheduledEndAt` has passed (the admin sets it to the last
-group's expected finish plus an hour), or when the next round starts if no end is set. Never
-in the middle of the night for the reader: hold until 7:00 am in their time zone if it would
-land between 10:00 pm and 7:00 am.
+group's expected finish plus an hour), or when the next round starts if no end is set. It goes to everyone at once, like the reminders.
 
 ### F. Settlement
 
@@ -297,7 +286,7 @@ This catalog leans on the SES design for these, so they are listed for it, not d
 Each slice is one PR, opened in order, after the SES design's first slice lands.
 
 1. **Foundation.** Sent-email record and its idempotency key; a "notifications due" step in the
-   lifecycle scheduler sweep; per-category email preferences on the user; the account time zone filled from the browser at sign-in when empty with an Email settings
+   lifecycle scheduler sweep; per-category email preferences on the user with an Email settings
    section on the profile page and a one-click unsubscribe route. No new email yet.
 2. **Contest lifecycle.** D1 contest open, D2 reminders, E1 upgraded (all members, "good luck",
    event and rules summary instead of the entry list, leaderboard link), D3 to every owner.
