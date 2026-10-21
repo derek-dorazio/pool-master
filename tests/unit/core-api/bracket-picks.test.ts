@@ -427,3 +427,35 @@ describe('a second-chance bracket, started at a later round once the results dec
     });
   });
 });
+
+describe('a team withdrawn after the draw and replaced in its first-round game (#704)', () => {
+  const NO_BONUS: KnockoutRoundPointsSettings = { roundValues: [1, 2, 4], upsetBonus: { rule: UpsetBonusRule.NONE } };
+  // T8 withdrew before game 1, and LL took its place against T1.
+  const replaced = eightTeamBracket().map((match) => (match.matchNumber === 1 ? { ...match, awaySportEventParticipantId: 'LL' } : match));
+  const withdrawn = new Set(['T8']);
+  const picks = [pick(1, 'T8'), pick(2, 'T4'), pick(5, 'T8'), pick(7, 'T8')];
+
+  it('keeps a pick of the withdrawn team made before, and the later picks that followed from it, rather than stranding them', () => {
+    const resolved = resolveBracketPicks(replaced, picks, EIGHT_SEEDS, withdrawn);
+
+    expect(ids(resolved.kept)).toEqual(['m1', 'm2', 'm5', 'm7']);
+    expect(sidesOf(resolved, 5)).toEqual({ home: 'T8', away: 'T4' });
+    expect(sidesOf(resolved, 1)).toEqual({ home: 'T1', away: 'LL' });
+  });
+
+  it('strands the same picks when nobody is withdrawn, as a pick of a team not in its game always is', () => {
+    expect(ids(resolveBracketPicks(replaced, picks, EIGHT_SEEDS).stranded)).toEqual(['m1', 'm5', 'm7']);
+  });
+
+  it('busts every pick of the withdrawn team as a first-round loss before game 1 is played, and leaves the others pending', () => {
+    const score = scoreBracketPicks(replaced, picks, EIGHT_SEEDS, NO_BONUS, withdrawn);
+
+    expect(Object.fromEntries(score.picks)).toEqual({
+      m1: { outcome: PickOutcome.BUSTED, points: 0 },
+      m2: { outcome: PickOutcome.PENDING, points: null },
+      m5: { outcome: PickOutcome.BUSTED, points: 0 },
+      m7: { outcome: PickOutcome.BUSTED, points: 0 },
+    });
+    expect(score.maxPossiblePoints).toBe(1);
+  });
+});

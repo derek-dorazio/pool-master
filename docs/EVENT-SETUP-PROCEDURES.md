@@ -229,6 +229,13 @@ on the Bracket tab:
   the standings update. A wrong winner can be switched, or the result cleared, until the next
   game has a result. Each play-in place takes its winner once, from the sport's active teams
   not already in the tournament.
+- **Withdrawals**, in any sport (#704): a team or player who withdraws before their first game,
+  before or after release, is replaced under *Withdrawals* by one of the sport's active
+  participants not already in the event (a tennis lucky loser). The replacement takes the place
+  unseeded, last in the event's last tier at its lowest price; the withdrawn row stays on the
+  field as withdrawn, and every pick of it scores as a first-round loss. Once their game has
+  started, a withdrawal is a walkover, entered with **Ended early**. A play-in place is filled
+  with its winner instead.
 - **Quarter scores**, for American football (#772): under each released game with both teams,
   *Enter score* takes both teams' score at the end of the first, second and third quarters, as
   the scoreboard shows it, and the final score, overtime included, which saves the game's result
@@ -298,7 +305,8 @@ rounds, First round to Final, with the tournament's 32 seeds as seeds 1 to 32 an
 unseeded (the admin's "derive seeds from ranking" action is not used, because it would overwrite
 the real seeds). Each quarter of the draw is a region ("Top quarter" to "Bottom quarter")
 through the quarterfinals. The draw's qualifier places are play-in places, named "qualifier"
-on the Bracket tab, and are filled once qualifying ends. A match's score is sets won (3-1) and
+on the Bracket tab, and are filled once qualifying ends. A player who withdraws before their first
+match is replaced by a lucky loser under *Withdrawals*. A match's score is sets won (3-1) and
 is optional: choosing the winner is enough. A match that ended early is entered with **Ended
 early**: a retirement, a walkover (no score) or a default; the winner advances in full. There
 are no periods, so no squares pools. A draw starts on six tiers of eight by ranking, the last

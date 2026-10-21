@@ -12,6 +12,8 @@
  *   is locked from release (design Q3.1).
  * - A team placed straight into a later round (a bye) has no match in the round it skipped, so it
  *   scores nothing for it (design Q3.4).
+ * - A team withdrawn after the draw (#704) and replaced in its place has no match: it scores
+ *   nothing and is out, a first-round loss.
  * - Until the bracket has a result, no team is scored: nobody has won or lost yet.
  */
 import {
@@ -104,7 +106,7 @@ export function scoreKnockoutField(
     const record: KnockoutTeamRecord = {
       wins: won.length,
       upsetBonusPoints,
-      isAlive: results.length === won.length,
+      isAlive: row.entry.isActive && results.length === won.length,
     };
     const scoredRounds = roundPoints.filter((points): points is number => points !== undefined);
     if (decided.size === 0 || scoredRounds.length < roundPoints.length) {

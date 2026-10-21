@@ -26,6 +26,7 @@ const {
   updateEventBracketMatchMock,
   updateEventParticipantsMock,
   setEventPlayInWinnerMock,
+  replaceEventParticipantMock,
   listSportsMock,
   listParticipantsMock,
   listSportLeaguesMock,
@@ -52,6 +53,7 @@ const {
     updateEventBracketMatchMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
     setEventPlayInWinnerMock: vi.fn(),
+    replaceEventParticipantMock: vi.fn(),
     listSportsMock: vi.fn(),
     listParticipantsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
@@ -71,6 +73,7 @@ bindApiMocks({
   updateEventBracketMatch: updateEventBracketMatchMock,
   updateEventParticipants: updateEventParticipantsMock,
   setEventPlayInWinner: setEventPlayInWinnerMock,
+  replaceEventParticipant: replaceEventParticipantMock,
   listSports: listSportsMock,
   listParticipants: listParticipantsMock,
   listSportLeagues: listSportLeaguesMock,
@@ -698,6 +701,63 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       await userEvent.click(screen.getByTestId('root-admin-play-in-winner-save-sep-5'));
 
       expect(await screen.findByRole('alert')).toHaveTextContent('That team is already in the tournament.');
+    });
+  });
+
+  // #704 slice 3: a team that withdraws before its first game is replaced in its place.
+  describe('withdrawals', () => {
+    const replacement = participantFixture({ id: 'p-6', name: 'Xavier', sportId: 'sport-basketball' });
+    const firstRound = [
+      match({ id: 'm1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'COMPLETED', winnerSide: 'HOME' }),
+      match({ id: 'm2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4' }),
+    ];
+
+    function seedWithdrawals(matches: SportEventMatchDto[] = firstRound) {
+      seed(matches);
+      listSportsMock.mockResolvedValue({ data: { sports: [{ id: 'sport-basketball', sport: 'BASKETBALL', participantType: 'TEAM', tournamentFormat: 'MATCHES', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
+      listParticipantsMock.mockResolvedValue({ data: { participants: [duke.participant, replacement].map((participant) => participantFixture({ ...participant, sportId: 'sport-basketball' })) } });
+    }
+
+    it('offers only the teams of games not yet started, and replaces the chosen one with a team not in the tournament', async () => {
+      seedWithdrawals();
+      replaceEventParticipantMock.mockResolvedValue({ data: { participant: fieldEntryFixture({ id: 'sep-6', participantId: 'p-6', participant: replacement }) } });
+      renderPage();
+
+      const withdrawn = await screen.findByTestId('root-admin-withdrawal-select');
+      expect(within(withdrawn).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose a team', '(2) Houston', '(15) Texas']);
+      const replacedBy = screen.getByTestId('root-admin-withdrawal-replacement-select');
+      await waitFor(() => expect(within(replacedBy).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose a team', 'Xavier']));
+      await userEvent.selectOptions(withdrawn, 'sep-4');
+      await userEvent.selectOptions(replacedBy, 'p-6');
+      await userEvent.click(screen.getByTestId('root-admin-withdrawal-replace'));
+
+      expect(screen.getByTestId('root-admin-withdrawal-replace')).toHaveTextContent('Replace team');
+      expect(replaceEventParticipantMock).toHaveBeenCalledWith(expect.objectContaining({
+        path: { eventId: 'evt-1', sportEventParticipantId: 'sep-4' },
+        body: { participantId: 'p-6' },
+      }));
+    });
+
+    it('shows no withdrawals card once every game has started, when a withdrawal is a walkover', async () => {
+      seedWithdrawals(firstRound.slice(0, 1));
+      renderPage();
+
+      await screen.findByTestId('root-admin-bracket-round-1');
+      expect(screen.queryByTestId('root-admin-withdrawals')).not.toBeInTheDocument();
+    });
+
+    it('shows a refused replacement in product copy', async () => {
+      seedWithdrawals();
+      replaceEventParticipantMock.mockResolvedValue({ error: { error: { code: 'BRACKET_PARTICIPANT_ALREADY_PLAYED', message: 'Match 2 has started.' } } });
+      renderPage();
+
+      const replacedBy = await screen.findByTestId('root-admin-withdrawal-replacement-select');
+      await waitFor(() => expect(within(replacedBy).getAllByRole('option')).toHaveLength(2));
+      await userEvent.selectOptions(screen.getByTestId('root-admin-withdrawal-select'), 'sep-3');
+      await userEvent.selectOptions(replacedBy, 'p-6');
+      await userEvent.click(screen.getByTestId('root-admin-withdrawal-replace'));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('That team\'s game has started, so enter the withdrawal as a walkover.');
     });
   });
 });

@@ -37,6 +37,20 @@ export function sideEntry(
   return sportEventParticipantId === null ? undefined : fieldById.get(sportEventParticipantId);
 }
 
+/**
+ * The field rows a withdrawal can still replace (#704): named on a side of a match not yet
+ * started, so in their first match, and not a play-in place, which takes its winner instead.
+ */
+export function replaceableEntries(
+  bracket: readonly SportEventMatchDto[],
+  fieldById: ReadonlyMap<string, SportEventParticipantDto>,
+): SportEventParticipantDto[] {
+  return bracket
+    .filter((match) => match.status === MatchStatus.SCHEDULED)
+    .flatMap((match) => [MatchSide.HOME, MatchSide.AWAY].map((side) => sideEntry(match, side, fieldById)))
+    .filter((entry): entry is SportEventParticipantDto => entry !== undefined && entry.isActive && !entry.isPlayInPlace);
+}
+
 /** The earlier match whose winner fills one side of this one, if any. */
 export function feederOf(match: SportEventMatchDto, side: MatchSide, bracket: readonly SportEventMatchDto[]): SportEventMatchDto | undefined {
   return bracket.find((other) => other.advancesToMatchId === match.id && other.advancesToSide === side);
@@ -69,6 +83,9 @@ export function bracketErrorMessages(
     EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: `That place is not a ${vocabulary.playInPlace ?? 'play-in'} place, so its ${team.one} can't be replaced.`,
     EVENT_PARTICIPANT_ALREADY_ON_FIELD: `That ${team.one} is already in the ${vocabulary.event.one}.`,
     PLAY_IN_SLOT_ALREADY_PLAYED: `That place has already played a ${noun.one}, so its ${team.one} can't change.`,
+    EVENT_PARTICIPANT_IS_PLAY_IN_PLACE: `That is a ${vocabulary.playInPlace ?? 'play-in'} place. Name its ${team.one} there instead.`,
+    EVENT_PARTICIPANT_NOT_IN_BRACKET: `That ${team.one} no longer has a place in the bracket. Refresh the page.`,
+    BRACKET_PARTICIPANT_ALREADY_PLAYED: `That ${team.one}'s ${noun.one} has started, so enter the withdrawal as a walkover.`,
     PARTICIPANT_NOT_FOUND: `That ${team.one} is no longer active. Pick another.`,
     MATCH_SPREAD_LOCKED: `This ${noun.one} already has picks, so its spread can no longer change.`,
     MATCH_PERIOD_SCORE_INVALID: 'A score can only go up as the game goes on. Check it against the other scores of this game.',

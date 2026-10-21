@@ -14629,6 +14629,16 @@ export type FillPlayInSlotRequest = {
 };
 
 /**
+ * A replacement for a field row that withdrew before its first match. The replacement gets its own field row in the withdrawn row's bracket place, unseeded, last in the event's last tier and at its lowest price. The withdrawn row stays on the field, inactive as WITHDRAWN, and every pick of it scores as a first-round loss.
+ */
+export type ReplaceWithdrawnParticipantRequest = {
+    /**
+     * Who takes the place: an active participant of the event's sport not yet on the field, such as a tennis lucky loser.
+     */
+    participantId: string;
+};
+
+/**
  * A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.
  */
 export type RecordSportEventMatchResultRequest = {
@@ -20795,6 +20805,54 @@ export type SetEventPlayInWinnerResponses = {
 };
 
 export type SetEventPlayInWinnerResponse = SetEventPlayInWinnerResponses[keyof SetEventPlayInWinnerResponses];
+
+export type ReplaceEventParticipantData = {
+    body: ReplaceWithdrawnParticipantRequest;
+    path: {
+        eventId: string;
+        sportEventParticipantId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/participants/{sportEventParticipantId}/replacement';
+};
+
+export type ReplaceEventParticipantErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type ReplaceEventParticipantError = ReplaceEventParticipantErrors[keyof ReplaceEventParticipantErrors];
+
+export type ReplaceEventParticipantResponses = {
+    /**
+     * One field row.
+     */
+    200: SportEventParticipantResponse;
+};
+
+export type ReplaceEventParticipantResponse = ReplaceEventParticipantResponses[keyof ReplaceEventParticipantResponses];
 
 export type ListSportsData = {
     body?: never;

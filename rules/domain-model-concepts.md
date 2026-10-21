@@ -210,6 +210,11 @@ Shown By Its Name*.
 - **Scratched, withdrawn**: a runner taken out of a race before the start is a field member made
   inactive with `inactiveReason` `WITHDRAWN`; horse racing shows it as "Scratched". A runner
   that did not start is a result (`DID_NOT_START`), which also leaves it `WITHDRAWN` in the standing.
+- **Withdrawn after the draw, replacement** (#704): in any bracket sport, a field member who
+  withdraws before their first match is made inactive (`WITHDRAWN`) and a replacement (a tennis
+  lucky loser) gets a field row of its own in that bracket place. Picks stay on the withdrawn row
+  and score as a first-round loss; they never move to the replacement, unlike a play-in place,
+  which stands for whoever wins it. After the match starts a withdrawal is a walkover result.
 - **Official**: a race's result counts for contest scoring only once the admin marks it official,
   which applies to the whole race. Until then its places are provisional.
 - **Dead heat**: runners who share a finishing place. Both take that place's full points, and the

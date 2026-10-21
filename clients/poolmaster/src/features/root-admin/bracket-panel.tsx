@@ -7,6 +7,7 @@ import { BracketMatchRow, type BracketContext } from './bracket-match-row';
 import { capitalize } from './manage-navigation';
 import { PlayInPlacesCard } from './play-in-places-card';
 import { ReseedRoundsCard } from './reseed-rounds-card';
+import { WithdrawalsCard } from './withdrawals-card';
 import { useEventMatchPeriods, useEventRoundLabel } from './use-sport-catalog';
 import { useSportEventBracketQuery, useSportEventFieldQuery } from './use-sport-event';
 
@@ -15,7 +16,8 @@ import { useSportEventBracketQuery, useSportEventFieldQuery } from './use-sport-
  * the sport and each match called what the sport calls it ("game" for basketball). Before
  * release an admin edits pairings and marks play-in places; once released one tap names a
  * match's winner and each play-in place takes its winner. For a league that reseeds, each round
- * placed by seed is suggested and saved on its own card (#785).
+ * placed by seed is suggested and saved on its own card (#785). A participant who withdraws
+ * before their first match is replaced on the withdrawals card (#704).
  */
 export function BracketPanel({ event }: { event: SportEventDto }) {
   const definition = getSportDefinition(event.sport);
@@ -95,6 +97,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
       </Tile>
       <ReseedRoundsCard context={context} event={event} roundCount={roundCount} roundLabel={roundLabel} />
       <PlayInPlacesCard event={event} field={fieldQuery.data} vocabulary={vocabulary} />
+      <WithdrawalsCard bracket={bracket} event={event} field={fieldQuery.data} vocabulary={vocabulary} />
     </div>
   );
 }

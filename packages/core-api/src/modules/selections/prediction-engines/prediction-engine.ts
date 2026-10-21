@@ -113,6 +113,8 @@ export interface PredictionEngine {
     games: readonly SportEventMatch[];
     predictions: readonly Pick[];
     seedOf: ReadonlyMap<string, number | null>;
+    /** The field rows withdrawn after the draw (#704), out of their games. */
+    withdrawn: ReadonlySet<string>;
   }): ResolvedPicks<Pick>;
 
   /**
@@ -135,6 +137,7 @@ export interface PredictionEngine {
     games: readonly SportEventMatch[];
     predictions: readonly WeekPrediction[];
     seedOf: ReadonlyMap<string, number | null>;
+    withdrawn: ReadonlySet<string>;
     scoring: ContestScoringSettings | null;
   }): PicksScore | null;
 

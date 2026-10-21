@@ -2,6 +2,7 @@ import {
   MatchEnding,
   MatchSide,
   MatchStatus,
+  ParticipantInactiveReason,
   ScoringFamily,
   Sport,
   SportEventStatus,
@@ -31,6 +32,8 @@ function knockout(roundValues: number[], upsetBonus: UpsetBonus = NO_BONUS): Con
 interface TeamInput {
   name: string;
   seed?: number;
+  /** Withdrew after the draw (#704), its place taken by a replacement. */
+  withdrawn?: boolean;
 }
 
 interface MatchInput {
@@ -48,9 +51,12 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.BASKETBALL);
   const event = store.addEvent({ sport: Sport.BASKETBALL, rounds: 2 });
-  const rows = teams.map(({ name, seed }) => {
+  const rows = teams.map(({ name, seed, withdrawn = false }) => {
     const participant = store.addParticipant(sport.id, name, { participantType: 'TEAM' });
-    const entry = store.addToField(event.id, participant.id, seed === undefined ? {} : { seedNumber: seed });
+    const entry = store.addToField(event.id, participant.id, {
+      ...(seed === undefined ? {} : { seedNumber: seed }),
+      ...(withdrawn ? { isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN } : {}),
+    });
     return { name, entry, participant };
   });
   const idOf = (name: string | null) => (name === null ? null : rows.find((row) => row.name === name)?.entry.id ?? null);
@@ -220,5 +226,17 @@ describe('knockout round points — upset bonus', () => {
       Vermont: { scoringFamily: ScoringFamily.HEAD_TO_HEAD, wins: 1, upsetBonusPoints: 3, isAlive: true },
       Duke: { scoringFamily: ScoringFamily.HEAD_TO_HEAD, wins: 0, upsetBonusPoints: 0, isAlive: false },
     });
+  });
+
+  it('scores a team withdrawn after the draw and replaced in its place nothing, and shows it out, as a first-round loss', () => {
+    const field = bracketField(
+      [{ name: 'Duke', seed: 1, withdrawn: true }, { name: 'Lucky Loser' }, { name: 'Vermont', seed: 4 }],
+      [{ matchNumber: 1, round: 1, home: 'Lucky Loser', away: 'Vermont', winner: MatchSide.HOME }],
+    );
+
+    const rows = Object.fromEntries(family.scoreField(field, TOURNAMENT, knockout([1, 2])).map((row) => [row.name, row]));
+
+    expect(rows['Duke']).toMatchObject({ score: 0, detail: { wins: 0, isAlive: false } });
+    expect(rows['Lucky Loser']).toMatchObject({ score: 1, detail: { wins: 1, isAlive: true } });
   });
 });
