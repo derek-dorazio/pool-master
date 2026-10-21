@@ -257,6 +257,12 @@ export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
  * "Scores that count" follows picks per tier: a new picks-per-tier value resets it to the default
  * for the event's tiers. Returns null when there is nothing to reset to.
  */
+/** The tiers a contest picks from, reading the form's tiers-used field; blank or unreadable means every tier. */
+export function tiersInPlayFor(tiersUsed: string, tierCount: number) {
+  const parsed = tiersUsed.trim() === '' ? null : parseWholeNumber(tiersUsed);
+  return getTiersInPlay(tierCount, parsed ?? undefined);
+}
+
 export function defaultCountedScoresFor(picksPerTier: string, tierCount: number) {
   // tierCount is the tiers in play: a contest picking from the first tiers only counts those.
   const parsed = parseWholeNumber(picksPerTier);

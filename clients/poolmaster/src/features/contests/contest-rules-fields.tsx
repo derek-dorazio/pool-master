@@ -1,9 +1,9 @@
 import type { ReactElement } from 'react';
-import { PickEmMode, RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SQUARES_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, getTiersInPlay, type SportNoun } from '@poolmaster/shared/domain';
+import { PickEmMode, RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SQUARES_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, type SportNoun } from '@poolmaster/shared/domain';
 import { Checkbox, FormField, formatDollars, Input, SegmentedControl, Select } from '@/features/shared/ui';
 import type { BracketStartRoundOption } from './bracket-start-round';
 import { describeBracketRules, describePickEmMode, describeSurvivorRules, formatPickEmModeName, isSecondChanceBracket } from './contest-rules';
-import { defaultCountedScoresFor, perEntryLabel, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
+import { defaultCountedScoresFor, perEntryLabel, tiersInPlayFor, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
 function TieredRulesInputs({
   onChange,
@@ -17,8 +17,7 @@ function TieredRulesInputs({
   values: ContestRulesValues;
 }) {
   const picksPerTier = Number(values.picksPerTier);
-  const tiersUsed = Number(values.tiersUsed);
-  const tiersInPlay = getTiersInPlay(tierCount, values.tiersUsed.trim() !== '' && Number.isInteger(tiersUsed) && tiersUsed >= 1 ? tiersUsed : undefined);
+  const tiersInPlay = tiersInPlayFor(values.tiersUsed, tierCount);
   const rosterSize = tierCount > 0 && Number.isInteger(picksPerTier) && picksPerTier >= 1
     ? getTieredRosterSize(tiersInPlay, picksPerTier)
     : null;

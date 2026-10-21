@@ -68,6 +68,7 @@ import {
   DEFAULT_CONTEST_RULES,
   defaultCountedScoresFor,
   parseContestRules,
+  tiersInPlayFor,
   toContestRulesValues,
 } from './contest-rules-form';
 
@@ -488,7 +489,7 @@ export function CreateContestPage() {
       && String(preset.configuration.picksPerTier) === picksPerTier) {
       return;
     }
-    const countedScores = defaultCountedScoresFor(picksPerTier, tierCount);
+    const countedScores = defaultCountedScoresFor(picksPerTier, tiersInPlayFor(form.getValues('tiersUsed'), tierCount));
     if (countedScores !== null) {
       setFormValues({ countedScores });
     }

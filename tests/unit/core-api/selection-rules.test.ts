@@ -18,6 +18,7 @@ import {
   mapContestStatusToSelectionStatus,
 } from '../../../packages/core-api/src/modules/selections/selection-rules';
 import { getSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
+import { SelectionOutcomeKind, SelectionRejectCode } from '../../../packages/core-api/src/modules/selections/selection-engines/selection-engine';
 import { tieredSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/tiered';
 import type {
   SelectionTierConfig,
@@ -220,6 +221,15 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
 
     expect(tiers.map((tier) => tier.tierNumber)).toEqual([1, 2, 3, 4]);
     expect(tieredSelectionEngine.rosterSize({ configuration: configuration(), tiers })).toBe(4);
+  });
+
+  it('refuses a tier-5 player under seeds-only rules with TIER_NOT_FOUND, since tiersUsed 4 leaves tiers 5 and 6 out of play', () => {
+    const groups = [1, 2, 3, 4, 5, 6].map((tierNumber) => ({ tierKey: `tier-${tierNumber}`, label: `Tier ${tierNumber}`, tierNumber, participants: [] })) as unknown as SportEventTierGroup[];
+    const tiers = buildSelectionTiers(groups, 1, 4);
+    const participant = { sportEventParticipantId: 'sep-p5', participantId: 'p5', participantName: 'Player 5', tier: 'Tier 5', seedNumber: null, isAvailable: true };
+
+    expect(tieredSelectionEngine.evaluate({ participant, heldPick: null, existingPicks: [], tiers, rosterSize: 4 }))
+      .toEqual({ kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.TIER_NOT_FOUND, tierLabel: 'Tier 5' });
   });
 
   it('offers every tier when tiersUsed is more than the event has', () => {

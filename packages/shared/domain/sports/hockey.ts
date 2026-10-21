@@ -41,6 +41,7 @@ export const hockeySportDefinition: SportDefinition = {
     eventStart: 'opening puck drop',
     match: { one: 'game', many: 'games' },
     tie: 'Tie',
+    scoreUnit: 'goals',
   },
   // A four-round bracket reads Regional Semifinals, Regional Finals, Frozen Four, National
   // Championship; a shorter one keeps the names counted back from its final.

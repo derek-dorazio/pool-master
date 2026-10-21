@@ -408,7 +408,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         {canChange ? (
           <p className="mb-5 text-sm text-muted-foreground">
             {isSurvivor
-              ? `Tap the one ${participant.one} you think wins this ${period}. If it loses or ties, the entry is out. A ${participant.one} you picked in another ${period} can't be picked again.`
+              ? `Tap the one ${participant.one} you think wins this ${period}. If that pick loses, the entry is out. A ${participant.one} you picked in another ${period} can't be picked again.`
               : gamePicks.mode === PickEmMode.CONFIDENCE
               ? `${pickInstruction}, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value.`
               : `${pickInstruction}. Each correct pick scores 1 point.`}
