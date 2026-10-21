@@ -97,7 +97,8 @@ Two readings of this chain have both been held at once, so it is worth stating p
 - **A pool against the spread scores the team that covers** (`againstTheSpread`, #720), in
   either mode. Each game carries its spread from the home side (`homeSpread`, "Chiefs -3.5"); a
   team covers when its score plus its spread beats the other team's. A game landing exactly on
-  the spread is a **push**, worth nothing to either side.
+  the spread is a **push**, worth nothing to either side. A game ended early (a retirement,
+  walkover or default, #825) has no real final score, so its winner covers.
 - **A survivor entry plays until it loses** (`SURVIVOR`, #719): one pick a week, each team once
   a season (by participant, not field row), out after a loss, a tie or a week not submitted by
   its first kickoff, and out for good. A pick on a cancelled game survives, and since it locks only at
