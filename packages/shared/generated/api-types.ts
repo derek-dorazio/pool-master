@@ -5039,6 +5039,8 @@ export interface components {
         } | {
             /** @enum {string} */
             selectionType: "SURVIVOR";
+            /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+            reuseTeamsOnceAllUsed?: boolean;
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -5241,6 +5243,8 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                reuseTeamsOnceAllUsed?: boolean;
                 /** @description Contest-configuration identifier. */
                 id: string;
                 /** @description Contest that owns the configuration. */
@@ -5575,6 +5579,8 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -5735,6 +5741,8 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
+                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                    reuseTeamsOnceAllUsed?: boolean;
                     /** @description Contest-configuration identifier. */
                     id: string;
                     /** @description Contest that owns the configuration. */
@@ -6091,6 +6099,8 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
+                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                    reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -6405,6 +6415,8 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -6754,6 +6766,8 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
+                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                    reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -9684,6 +9698,8 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */

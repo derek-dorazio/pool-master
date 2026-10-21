@@ -158,7 +158,9 @@ stopped early says how in its result's `ending` (`RETIREMENT`, `WALKOVER`, `DEFA
 is played), and a walkover's scores are null. A league of weekly games tries pick'em on last season's weeks as played: each week its own event, every game a
 match that links nowhere, with its real `result`
 (`american-football-2025-nfl-weeks-test.json`, `docs/SPORT-DATA-LOADING.md` *Seeded NFL
-regular-season weeks*).
+regular-season weeks*). A drawn week game's `result` has a null `winner`. A season that spans two
+years splits into one file per year its weeks start in, since a file's events start in its
+season year (the Premier League seeds, *Seeded soccer weeks*).
 
 A racing sport's test seed is its last season's races as played: each field entry carries
 made-up `oddsToWin` and its real `raceResult` (status, finishing place, grid or post position,

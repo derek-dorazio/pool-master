@@ -48,3 +48,25 @@ describe('contest rules fields for a pick\'em contest', () => {
     expect(onChange).toHaveBeenCalledWith({ pickEmAgainstTheSpread: true });
   });
 });
+
+describe('contest rules fields for a survivor contest', () => {
+  it('lets teams be picked again once every team is used, on by default, reports it when unticked, and says so in the rules', () => {
+    const onChange = vi.fn();
+    render(
+      <ContestRulesFields
+        onChange={onChange}
+        participant={TEAM}
+        salaryCap={null}
+        selectionType={SelectionType.SURVIVOR}
+        tierCount={0}
+        values={DEFAULT_CONTEST_RULES}
+      />,
+    );
+
+    expect(screen.getByTestId('contest-survivor-reuse-teams')).toBeChecked();
+    expect(screen.getByTestId('contest-survivor-rules')).toHaveTextContent('never the same team twice until every team has been picked');
+    fireEvent.click(screen.getByTestId('contest-survivor-reuse-teams'));
+
+    expect(onChange).toHaveBeenCalledWith({ survivorReuseTeams: false });
+  });
+});

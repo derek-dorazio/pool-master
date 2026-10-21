@@ -229,6 +229,16 @@ down: a lesson that was true mid-series may not be by the end.
   place in the field, so an unseeded team in a 48-team draw reads as seed 40 and an upset bonus
   over it pays out wildly. Give unseeded teams the seed after the last one (17 in the NCAA men's
   soccer field, 9 in each women's bracket).
+- **A defaulted rules field.** The contest rules travel in the same kind of union as the
+  scoring settings, so a new yes/no rule (survivor's "teams can be picked again once every team
+  is used") cannot carry a zod `.default()` either: the OpenAPI export fails on Ajv strict mode.
+  Make it optional, say in its description what left out means, and resolve it where it is read
+  and stored.
+- **A season across two years.** A data file's events start in its season year, so a league
+  season from August to May (the Premier League) is two test files, one per year its weeks start
+  in, each with the same players and rankings.
+- **A league with no knockout.** A league played only in weeks has no roster presets, since
+  roster formats are played on a knockout, and its week templates are its only defaults.
 - **League presets without their leagues.** A per-league template needs its league row, so the
   league is reference data even though admins normally create leagues
   (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Give each league's

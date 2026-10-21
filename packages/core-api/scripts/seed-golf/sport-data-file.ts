@@ -117,11 +117,12 @@ const MatchSchema = z.object({
   /**
    * Test data only (RESULTS): the match's result, entered after release in round order. `winner`
    * is the side as the match stands when its result goes in: in a reseeded round, the side the
-   * server's reseed placed the team on. `ending` says how a match that stopped early ended
-   * (#704; left out is played to its end): a walkover's scores are null.
+   * server's reseed placed the team on, or null for a game of a week left level (#787), which a
+   * week allows and a bracket match never does. `ending` says how a match that stopped early
+   * ended (#704; left out is played to its end): a walkover's scores are null.
    */
   result: z.object({
-    winner: z.nativeEnum(MatchSide),
+    winner: z.nativeEnum(MatchSide).nullable(),
     homeScore: z.number().int().min(0).nullable(),
     awayScore: z.number().int().min(0).nullable(),
     /**
@@ -377,7 +378,24 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
     if (!file.testData && matches.some((match) => match.result !== undefined)) problems.push(`${where}: carries match results, which only test data may.`);
     if (!file.testData && matches.some((match) => match.periodScores !== undefined)) problems.push(`${where}: carries period scores, which only test data may.`);
     for (const problem of periodScoreProblems(file.scope.sport, matches)) problems.push(`${where}: ${problem}.`);
+    for (const problem of tieProblems(event, matches)) problems.push(`${where}: ${problem}.`);
   }
+}
+
+/**
+ * What is wrong with the matches left level (#787): only a week's game (an event of one round
+ * whose games form no bracket), played to its end at level scores with no shoot-out, has no winner.
+ */
+function tieProblems(event: SportDataEvent, matches: readonly SportDataMatch[]): string[] {
+  return matches.flatMap((match) => {
+    const result = match.result;
+    if (result?.winner !== null) return [];
+    if (event.rounds > 1 || match.advancesTo !== null) return [`match ${match.matchNumber} has no winner, but a bracket match always has one`];
+    const level = result.homeScore !== null && result.homeScore === result.awayScore;
+    const shootout = result.homeShootoutScore !== undefined || result.awayShootoutScore !== undefined;
+    if (!level || shootout || result.ending !== undefined) return [`match ${match.matchNumber} has no winner, so it needs level scores, played to its end with no shoot-out`];
+    return [];
+  });
 }
 
 /** What is wrong with the matches' period scores: a sport without periods, the last period or past it, or a period twice or out of order. */

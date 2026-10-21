@@ -1,0 +1,1803 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "SOCCER",
+    "season": 2023,
+    "sportLeagues": [
+      "FIFA Women's World Cup"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-21",
+    "gatheredBy": "load-sport-data, the 2023 FIFA Women's World Cup group stage as played: three matchdays, each its own event whose 16 matches form no bracket, every matchday's field all 32 teams (a team's first, second and third group match fall on matchdays 1, 2 and 3). Each match's score, its half-time score (from the goal minutes, which add up to the score in every match) and its kickoff from the group page's local time and UTC offset. Home is the side Wikipedia lists first, and every match is at a neutral site, as at every World Cup match. ESPN's scoreboards agree on kickoff, home side and score for the 10 matches of three dates. Teams are ranked by the 9 June 2023 FIFA women's ranking, as the knockout test file ranks them. Odds to win are made up from the ranking.",
+    "sources": [
+      {
+        "name": "2023 FIFA Women's World Cup Group A (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_Group_A"
+      },
+      {
+        "name": "2023 FIFA Women's World Cup Group B (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_Group_B"
+      },
+      {
+        "name": "2023 FIFA Women's World Cup Group C (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_Group_C"
+      },
+      {
+        "name": "2023 FIFA Women's World Cup Group D (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_Group_D"
+      },
+      {
+        "name": "2023 FIFA Women's World Cup Group E (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_Group_E"
+      },
+      {
+        "name": "2023 FIFA Women's World Cup Group F (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_Group_F"
+      },
+      {
+        "name": "2023 FIFA Women's World Cup Group G (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_Group_G"
+      },
+      {
+        "name": "2023 FIFA Women's World Cup Group H (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_Group_H"
+      },
+      {
+        "name": "2023 FIFA Women's World Cup (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup"
+      },
+      {
+        "name": "ESPN Women's World Cup scoreboard, 20230720",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.wwc/scoreboard?dates=20230720"
+      },
+      {
+        "name": "ESPN Women's World Cup scoreboard, 20230727",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.wwc/scoreboard?dates=20230727"
+      },
+      {
+        "name": "ESPN Women's World Cup scoreboard, 20230731",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.wwc/scoreboard?dates=20230731"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "FIFA Women's World Cup",
+      "players": [
+        {
+          "key": "wwc-united-states",
+          "name": "United States",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "wwc-germany",
+          "name": "Germany",
+          "countryCode": "DE",
+          "ranking": 2
+        },
+        {
+          "key": "wwc-sweden",
+          "name": "Sweden",
+          "countryCode": "SE",
+          "ranking": 3
+        },
+        {
+          "key": "wwc-england",
+          "name": "England",
+          "countryCode": "GB",
+          "ranking": 4
+        },
+        {
+          "key": "wwc-france",
+          "name": "France",
+          "countryCode": "FR",
+          "ranking": 5
+        },
+        {
+          "key": "wwc-spain",
+          "name": "Spain",
+          "countryCode": "ES",
+          "ranking": 6
+        },
+        {
+          "key": "wwc-canada",
+          "name": "Canada",
+          "countryCode": "CA",
+          "ranking": 7
+        },
+        {
+          "key": "wwc-brazil",
+          "name": "Brazil",
+          "countryCode": "BR",
+          "ranking": 8
+        },
+        {
+          "key": "wwc-netherlands",
+          "name": "Netherlands",
+          "countryCode": "NL",
+          "ranking": 9
+        },
+        {
+          "key": "wwc-australia",
+          "name": "Australia",
+          "countryCode": "AU",
+          "ranking": 10
+        },
+        {
+          "key": "wwc-japan",
+          "name": "Japan",
+          "countryCode": "JP",
+          "ranking": 11
+        },
+        {
+          "key": "wwc-norway",
+          "name": "Norway",
+          "countryCode": "NO",
+          "ranking": 12
+        },
+        {
+          "key": "wwc-denmark",
+          "name": "Denmark",
+          "countryCode": "DK",
+          "ranking": 13
+        },
+        {
+          "key": "wwc-china",
+          "name": "China",
+          "countryCode": "CN",
+          "ranking": 14
+        },
+        {
+          "key": "wwc-italy",
+          "name": "Italy",
+          "countryCode": "IT",
+          "ranking": 16
+        },
+        {
+          "key": "wwc-south-korea",
+          "name": "South Korea",
+          "countryCode": "KR",
+          "ranking": 17
+        },
+        {
+          "key": "wwc-switzerland",
+          "name": "Switzerland",
+          "countryCode": "CH",
+          "ranking": 20
+        },
+        {
+          "key": "wwc-portugal",
+          "name": "Portugal",
+          "countryCode": "PT",
+          "ranking": 21
+        },
+        {
+          "key": "wwc-republic-of-ireland",
+          "name": "Republic of Ireland",
+          "countryCode": "IE",
+          "ranking": 22
+        },
+        {
+          "key": "wwc-colombia",
+          "name": "Colombia",
+          "countryCode": "CO",
+          "ranking": 25
+        },
+        {
+          "key": "wwc-new-zealand",
+          "name": "New Zealand",
+          "countryCode": "NZ",
+          "ranking": 26
+        },
+        {
+          "key": "wwc-argentina",
+          "name": "Argentina",
+          "countryCode": "AR",
+          "ranking": 28
+        },
+        {
+          "key": "wwc-vietnam",
+          "name": "Vietnam",
+          "countryCode": "VN",
+          "ranking": 32
+        },
+        {
+          "key": "wwc-costa-rica",
+          "name": "Costa Rica",
+          "countryCode": "CR",
+          "ranking": 36
+        },
+        {
+          "key": "wwc-nigeria",
+          "name": "Nigeria",
+          "countryCode": "NG",
+          "ranking": 40
+        },
+        {
+          "key": "wwc-jamaica",
+          "name": "Jamaica",
+          "countryCode": "JM",
+          "ranking": 43
+        },
+        {
+          "key": "wwc-philippines",
+          "name": "Philippines",
+          "countryCode": "PH",
+          "ranking": 46
+        },
+        {
+          "key": "wwc-panama",
+          "name": "Panama",
+          "countryCode": "PA",
+          "ranking": 52
+        },
+        {
+          "key": "wwc-haiti",
+          "name": "Haiti",
+          "countryCode": "HT",
+          "ranking": 53
+        },
+        {
+          "key": "wwc-south-africa",
+          "name": "South Africa",
+          "countryCode": "ZA",
+          "ranking": 54
+        },
+        {
+          "key": "wwc-morocco",
+          "name": "Morocco",
+          "countryCode": "MA",
+          "ranking": 72
+        },
+        {
+          "key": "wwc-zambia",
+          "name": "Zambia",
+          "countryCode": "ZM",
+          "ranking": 77
+        }
+      ],
+      "events": [
+        {
+          "key": "fifa-womens-world-cup-2023-matchday-1",
+          "name": "FIFA Women's World Cup Matchday 1",
+          "startDate": "2023-07-20",
+          "endDate": "2023-07-25",
+          "venue": null,
+          "location": "Australia and New Zealand",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "wwc-united-states",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "wwc-germany",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "wwc-sweden",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "wwc-england",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "wwc-france",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "wwc-spain",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "wwc-canada",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "wwc-brazil",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "wwc-netherlands",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "wwc-australia",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "wwc-japan",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "wwc-norway",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "wwc-denmark",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "wwc-china",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "wwc-italy",
+              "ranking": 16,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "wwc-south-korea",
+              "ranking": 17,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "wwc-switzerland",
+              "ranking": 20,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "wwc-portugal",
+              "ranking": 21,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "wwc-republic-of-ireland",
+              "ranking": 22,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "wwc-colombia",
+              "ranking": 25,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "wwc-new-zealand",
+              "ranking": 26,
+              "oddsToWin": 33.5
+            },
+            {
+              "player": "wwc-argentina",
+              "ranking": 28,
+              "oddsToWin": 35.0
+            },
+            {
+              "player": "wwc-vietnam",
+              "ranking": 32,
+              "oddsToWin": 36.5
+            },
+            {
+              "player": "wwc-costa-rica",
+              "ranking": 36,
+              "oddsToWin": 38.0
+            },
+            {
+              "player": "wwc-nigeria",
+              "ranking": 40,
+              "oddsToWin": 39.5
+            },
+            {
+              "player": "wwc-jamaica",
+              "ranking": 43,
+              "oddsToWin": 41.0
+            },
+            {
+              "player": "wwc-philippines",
+              "ranking": 46,
+              "oddsToWin": 42.5
+            },
+            {
+              "player": "wwc-panama",
+              "ranking": 52,
+              "oddsToWin": 44.0
+            },
+            {
+              "player": "wwc-haiti",
+              "ranking": 53,
+              "oddsToWin": 45.5
+            },
+            {
+              "player": "wwc-south-africa",
+              "ranking": 54,
+              "oddsToWin": 47.0
+            },
+            {
+              "player": "wwc-morocco",
+              "ranking": 72,
+              "oddsToWin": 48.5
+            },
+            {
+              "player": "wwc-zambia",
+              "ranking": 77,
+              "oddsToWin": 50.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "wwc-new-zealand",
+              "away": "wwc-norway",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-20T07:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "wwc-australia",
+              "away": "wwc-republic-of-ireland",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-20T10:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "wwc-nigeria",
+              "away": "wwc-canada",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-21T02:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "wwc-philippines",
+              "away": "wwc-switzerland",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-21T05:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "wwc-spain",
+              "away": "wwc-costa-rica",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-21T07:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 3,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "wwc-united-states",
+              "away": "wwc-vietnam",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-22T01:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "wwc-zambia",
+              "away": "wwc-japan",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-22T07:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 5
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "wwc-england",
+              "away": "wwc-haiti",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-22T09:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "wwc-denmark",
+              "away": "wwc-china",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-22T12:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "wwc-sweden",
+              "away": "wwc-south-africa",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-23T05:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "wwc-netherlands",
+              "away": "wwc-portugal",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-23T07:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "wwc-france",
+              "away": "wwc-jamaica",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-23T10:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "wwc-italy",
+              "away": "wwc-argentina",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-24T06:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "wwc-germany",
+              "away": "wwc-morocco",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-24T08:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 6,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "wwc-brazil",
+              "away": "wwc-panama",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-24T11:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "wwc-colombia",
+              "away": "wwc-south-korea",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-25T02:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "fifa-womens-world-cup-2023-matchday-2",
+          "name": "FIFA Women's World Cup Matchday 2",
+          "startDate": "2023-07-25",
+          "endDate": "2023-07-30",
+          "venue": null,
+          "location": "Australia and New Zealand",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "wwc-united-states",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "wwc-germany",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "wwc-sweden",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "wwc-england",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "wwc-france",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "wwc-spain",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "wwc-canada",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "wwc-brazil",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "wwc-netherlands",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "wwc-australia",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "wwc-japan",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "wwc-norway",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "wwc-denmark",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "wwc-china",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "wwc-italy",
+              "ranking": 16,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "wwc-south-korea",
+              "ranking": 17,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "wwc-switzerland",
+              "ranking": 20,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "wwc-portugal",
+              "ranking": 21,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "wwc-republic-of-ireland",
+              "ranking": 22,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "wwc-colombia",
+              "ranking": 25,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "wwc-new-zealand",
+              "ranking": 26,
+              "oddsToWin": 33.5
+            },
+            {
+              "player": "wwc-argentina",
+              "ranking": 28,
+              "oddsToWin": 35.0
+            },
+            {
+              "player": "wwc-vietnam",
+              "ranking": 32,
+              "oddsToWin": 36.5
+            },
+            {
+              "player": "wwc-costa-rica",
+              "ranking": 36,
+              "oddsToWin": 38.0
+            },
+            {
+              "player": "wwc-nigeria",
+              "ranking": 40,
+              "oddsToWin": 39.5
+            },
+            {
+              "player": "wwc-jamaica",
+              "ranking": 43,
+              "oddsToWin": 41.0
+            },
+            {
+              "player": "wwc-philippines",
+              "ranking": 46,
+              "oddsToWin": 42.5
+            },
+            {
+              "player": "wwc-panama",
+              "ranking": 52,
+              "oddsToWin": 44.0
+            },
+            {
+              "player": "wwc-haiti",
+              "ranking": 53,
+              "oddsToWin": 45.5
+            },
+            {
+              "player": "wwc-south-africa",
+              "ranking": 54,
+              "oddsToWin": 47.0
+            },
+            {
+              "player": "wwc-morocco",
+              "ranking": 72,
+              "oddsToWin": 48.5
+            },
+            {
+              "player": "wwc-zambia",
+              "ranking": 77,
+              "oddsToWin": 50.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "wwc-new-zealand",
+              "away": "wwc-philippines",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-25T05:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "wwc-switzerland",
+              "away": "wwc-norway",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-25T08:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "wwc-japan",
+              "away": "wwc-costa-rica",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-26T05:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "wwc-spain",
+              "away": "wwc-zambia",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-26T07:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "wwc-canada",
+              "away": "wwc-republic-of-ireland",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-26T12:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "wwc-united-states",
+              "away": "wwc-netherlands",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-27T01:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "wwc-portugal",
+              "away": "wwc-vietnam",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-27T07:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "wwc-australia",
+              "away": "wwc-nigeria",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-27T10:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "wwc-argentina",
+              "away": "wwc-south-africa",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-28T00:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "wwc-england",
+              "away": "wwc-denmark",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-28T08:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "wwc-china",
+              "away": "wwc-haiti",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-28T11:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "wwc-sweden",
+              "away": "wwc-italy",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-29T07:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 3,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "wwc-france",
+              "away": "wwc-brazil",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-29T10:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "wwc-panama",
+              "away": "wwc-jamaica",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-29T12:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "wwc-south-korea",
+              "away": "wwc-morocco",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-30T04:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "wwc-germany",
+              "away": "wwc-colombia",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-30T09:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "fifa-womens-world-cup-2023-matchday-3",
+          "name": "FIFA Women's World Cup Matchday 3",
+          "startDate": "2023-07-30",
+          "endDate": "2023-08-03",
+          "venue": null,
+          "location": "Australia and New Zealand",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "wwc-united-states",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "wwc-germany",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "wwc-sweden",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "wwc-england",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "wwc-france",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "wwc-spain",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "wwc-canada",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "wwc-brazil",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "wwc-netherlands",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "wwc-australia",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "wwc-japan",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "wwc-norway",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "wwc-denmark",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "wwc-china",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "wwc-italy",
+              "ranking": 16,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "wwc-south-korea",
+              "ranking": 17,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "wwc-switzerland",
+              "ranking": 20,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "wwc-portugal",
+              "ranking": 21,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "wwc-republic-of-ireland",
+              "ranking": 22,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "wwc-colombia",
+              "ranking": 25,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "wwc-new-zealand",
+              "ranking": 26,
+              "oddsToWin": 33.5
+            },
+            {
+              "player": "wwc-argentina",
+              "ranking": 28,
+              "oddsToWin": 35.0
+            },
+            {
+              "player": "wwc-vietnam",
+              "ranking": 32,
+              "oddsToWin": 36.5
+            },
+            {
+              "player": "wwc-costa-rica",
+              "ranking": 36,
+              "oddsToWin": 38.0
+            },
+            {
+              "player": "wwc-nigeria",
+              "ranking": 40,
+              "oddsToWin": 39.5
+            },
+            {
+              "player": "wwc-jamaica",
+              "ranking": 43,
+              "oddsToWin": 41.0
+            },
+            {
+              "player": "wwc-philippines",
+              "ranking": 46,
+              "oddsToWin": 42.5
+            },
+            {
+              "player": "wwc-panama",
+              "ranking": 52,
+              "oddsToWin": 44.0
+            },
+            {
+              "player": "wwc-haiti",
+              "ranking": 53,
+              "oddsToWin": 45.5
+            },
+            {
+              "player": "wwc-south-africa",
+              "ranking": 54,
+              "oddsToWin": 47.0
+            },
+            {
+              "player": "wwc-morocco",
+              "ranking": 72,
+              "oddsToWin": 48.5
+            },
+            {
+              "player": "wwc-zambia",
+              "ranking": 77,
+              "oddsToWin": 50.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "wwc-norway",
+              "away": "wwc-philippines",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-30T07:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 6,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 3,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "wwc-switzerland",
+              "away": "wwc-new-zealand",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-30T07:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "wwc-costa-rica",
+              "away": "wwc-zambia",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-31T07:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "wwc-japan",
+              "away": "wwc-spain",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-31T07:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 3,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "wwc-canada",
+              "away": "wwc-australia",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-31T10:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 4
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "wwc-republic-of-ireland",
+              "away": "wwc-nigeria",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-07-31T10:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "wwc-portugal",
+              "away": "wwc-united-states",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-08-01T07:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "wwc-vietnam",
+              "away": "wwc-netherlands",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-08-01T07:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 7
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 5
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "wwc-china",
+              "away": "wwc-england",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-08-01T11:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 6
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 3
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "wwc-haiti",
+              "away": "wwc-denmark",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-08-01T11:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 1,
+              "home": "wwc-argentina",
+              "away": "wwc-sweden",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-08-02T07:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 1,
+              "home": "wwc-south-africa",
+              "away": "wwc-italy",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-08-02T07:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 1,
+              "home": "wwc-jamaica",
+              "away": "wwc-brazil",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-08-02T10:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 1,
+              "home": "wwc-panama",
+              "away": "wwc-france",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-08-02T10:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 6
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 4
+                }
+              ]
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 1,
+              "home": "wwc-morocco",
+              "away": "wwc-colombia",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-08-03T10:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 1,
+              "home": "wwc-south-korea",
+              "away": "wwc-germany",
+              "isNeutralSite": true,
+              "scheduledAt": "2023-08-03T10:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

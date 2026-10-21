@@ -498,7 +498,7 @@ const SOCCER_COMPETITIONS = [
 ] as const;
 
 describe('Seeded soccer competitions and their knockout templates', () => {
-  it('seeds the nine competitions as fixed brackets, the international ones reading the sport\'s round names, read back through the sport league repository', async () => {
+  it('seeds the nine competitions as fixed brackets, the international ones reading the sport\'s round names, and the Premier League, played in weeks, read back through the sport league repository', async () => {
     const soccer = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.SOCCER } });
     const leagues = await new PrismaSportLeagueRepository(getPrisma()).findAll({ sportId: soccer.id });
     const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
@@ -511,6 +511,7 @@ describe('Seeded soccer competitions and their knockout templates', () => {
       ['NCAA Division I Men', 'FIXED', ncaaRounds],
       ['NCAA Division I Women', 'FIXED', ncaaRounds],
       ['NWSL', 'FIXED', ['Quarterfinals', 'Semifinals', 'Championship']],
+      ['Premier League', 'FIXED', []],
       ['UEFA Champions League', 'FIXED', ['Knockout phase play-offs', 'Round of 16', 'Quarter-finals', 'Semi-finals', 'Final']],
       ['UEFA European Championship', 'FIXED', []],
     ]);
@@ -526,7 +527,7 @@ describe('Seeded soccer competitions and their knockout templates', () => {
 
   it.each(SOCCER_COMPETITIONS)('gives %s eleven knockout templates, one default per format, every roster and bracket preset doubling from 1 to its final', async (name, prefix, roundValues, budgetRoster) => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.SOCCER, sportLeague: { name } },
+      where: { sport: Sport.SOCCER, sportLeague: { name }, eventType: ContestTemplateEventType.KNOCKOUT },
       orderBy: [{ sortOrder: 'asc' }],
     });
 
@@ -557,6 +558,38 @@ describe('Seeded soccer competitions and their knockout templates', () => {
       if (rules.selectionType === SelectionType.BRACKET) expect(rules.startsAtRound).toBe(template.templateKey.includes('second-chance') ? 2 : 1);
     }
   });
+});
+
+// League seasons and group matchdays (#787): a week of games is a week event, as an NFL week is.
+describe('Seeded soccer week templates', () => {
+  it('gives the Premier League pick\'em straight up and confidence on draw-pick weeks and Last Man Standing, whose teams can be picked again once all 20 are used', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.SOCCER, sportLeague: { name: 'Premier League' } },
+      orderBy: [{ sortOrder: 'asc' }],
+    });
+
+    expect(templates.map((template) => [template.templateKey, template.selectionType, template.eventType, template.isDefault, template.configJson])).toEqual([
+      ['premier-league-pick-em-straight-up', SelectionType.PICK_EM, ContestTemplateEventType.WEEK, true, { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP', againstTheSpread: false, maxEntriesPerSquad: 1 }],
+      ['premier-league-pick-em-confidence', SelectionType.PICK_EM, ContestTemplateEventType.WEEK, false, { selectionType: 'PICK_EM', mode: 'CONFIDENCE', againstTheSpread: false, maxEntriesPerSquad: 1 }],
+      ['premier-league-survivor', SelectionType.SURVIVOR, ContestTemplateEventType.WEEK, true, { selectionType: 'SURVIVOR', reuseTeamsOnceAllUsed: true, maxEntriesPerSquad: 1 }],
+    ]);
+    expect(templates.map((template) => template.description).join(' ')).toMatch(/or a draw/);
+  });
+
+  it.each(SOCCER_COMPETITIONS.filter(([name]) => ['FIFA World Cup', 'FIFA Women\'s World Cup', 'UEFA European Championship', 'Copa América', 'UEFA Champions League'].includes(name)))(
+    'gives %s pick\'em on its group matchdays, straight up the default, and no matchday survivor',
+    async (name, prefix) => {
+      const templates = await getPrisma().contestConfigTemplate.findMany({
+        where: { sport: Sport.SOCCER, sportLeague: { name }, eventType: ContestTemplateEventType.WEEK },
+        orderBy: [{ sortOrder: 'asc' }],
+      });
+
+      expect(templates.map((template) => [template.templateKey, template.selectionType, template.isDefault])).toEqual([
+        [`${prefix}-matchday-pick-em-straight-up`, SelectionType.PICK_EM, true],
+        [`${prefix}-matchday-pick-em-confidence`, SelectionType.PICK_EM, false],
+      ]);
+    },
+  );
 });
 
 // Tennis (#704): the ATP and the WTA, each a fixed knockout draw of seven rounds, their presets
@@ -835,7 +868,8 @@ describe('Every seeded contest template, whatever its sport', () => {
   });
 
   // Roster presets only: a pick'em contest (#716) is set up without a template, so its selection
-  // type, a PREDICTION one, has no ROSTER preset to find.
+  // type, a PREDICTION one, has no ROSTER preset to find. A league played only in weeks (the
+  // Premier League, #787) hosts no roster contest, as roster formats are played on a knockout.
   it('gives each seeded sport league, and each sport with no league seeded, a roster default and a preset for every roster selection type its sport offers', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { active: true, contestFormat: ContestFormat.ROSTER },
@@ -844,7 +878,7 @@ describe('Every seeded contest template, whatever its sport', () => {
 
     // What the create page offers for an event: its league's own presets with the sport-wide ones.
     const scopes = [
-      ...leagues.filter((league) => SCORED_SPORTS.includes(league.sport.sport)).map((league) => ({
+      ...leagues.filter((league) => SCORED_SPORTS.includes(league.sport.sport) && !LEAGUES_PLAYED_ONLY_IN_WEEKS.includes(league.name)).map((league) => ({
         name: league.name,
         sport: league.sport.sport,
         offered: templates.filter((template) => template.sport === league.sport.sport
@@ -977,8 +1011,18 @@ const KNOCKOUT_SELECTION_TYPES: readonly SelectionType[] = [
   SelectionType.SURVIVOR,
   SelectionType.SQUARES,
 ];
-const WEEK_SELECTION_TYPES: readonly SelectionType[] = [SelectionType.PICK_EM, SelectionType.SURVIVOR, SelectionType.SQUARES];
-const LEAGUES_PLAYED_IN_WEEKS: readonly string[] = ['NFL'];
+/** The formats each league played in weeks hosts on a week: soccer's group matchdays offer pick'em only (#787). */
+const WEEK_SELECTION_TYPES: Readonly<Record<string, readonly SelectionType[]>> = {
+  NFL: [SelectionType.PICK_EM, SelectionType.SURVIVOR, SelectionType.SQUARES],
+  'Premier League': [SelectionType.PICK_EM, SelectionType.SURVIVOR],
+  'FIFA World Cup': [SelectionType.PICK_EM],
+  'FIFA Women\'s World Cup': [SelectionType.PICK_EM],
+  'UEFA European Championship': [SelectionType.PICK_EM],
+  'Copa América': [SelectionType.PICK_EM],
+  'UEFA Champions League': [SelectionType.PICK_EM],
+};
+/** Leagues with no knockout events: a season of weeks and nothing else. */
+const LEAGUES_PLAYED_ONLY_IN_WEEKS: readonly string[] = ['Premier League'];
 // A playoff series is one match whose score is games won (NBA, WNBA, NHL, PWHL, MLB), so squares,
 // played on one game's score, has no template there.
 const LEAGUES_PLAYED_AS_SERIES: readonly string[] = ['NBA', 'WNBA', 'NHL', 'PWHL', 'MLB'];
@@ -1009,8 +1053,8 @@ describe('Every seeded sport league\'s default templates and their names (#802)'
       const definition = getSportDefinition(sport);
       const kinds: Array<{ eventType: ContestTemplateEventType | null; selectionTypes: readonly SelectionType[] }> = sportPlaysMatches(sport)
         ? [
-          { eventType: ContestTemplateEventType.KNOCKOUT, selectionTypes: KNOCKOUT_SELECTION_TYPES },
-          ...(LEAGUES_PLAYED_IN_WEEKS.includes(name) ? [{ eventType: ContestTemplateEventType.WEEK, selectionTypes: WEEK_SELECTION_TYPES }] : []),
+          ...(LEAGUES_PLAYED_ONLY_IN_WEEKS.includes(name) ? [] : [{ eventType: ContestTemplateEventType.KNOCKOUT, selectionTypes: KNOCKOUT_SELECTION_TYPES }]),
+          ...(name in WEEK_SELECTION_TYPES ? [{ eventType: ContestTemplateEventType.WEEK, selectionTypes: WEEK_SELECTION_TYPES[name] }] : []),
         ]
         : [{ eventType: null, selectionTypes: definition.selectionTypes }];
       return kinds.flatMap(({ eventType, selectionTypes }) => selectionTypes
