@@ -309,6 +309,12 @@ function submittedBody() {
   return request.body;
 }
 
+/** Create contest stays disabled while the chosen event's presets load, so a click waits for them. */
+async function submitOnceReady() {
+  await waitFor(() => expect(screen.getByTestId('create-contest-submit')).toBeEnabled());
+  fireEvent.click(screen.getByTestId('create-contest-submit'));
+}
+
 /** The soonest event, the default preset and the suggested name are set once the reads land. */
 async function waitForStartingChoices() {
   await waitFor(() => expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toBeChecked());
@@ -356,7 +362,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     renderCreateContestPage();
 
     await waitForStartingChoices();
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     expect(await screen.findByTestId('admin-contest-destination')).toHaveTextContent('contest-90');
     expect(createContestMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
@@ -423,7 +429,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);
     expect(screen.getByText('6 tiers × 2 = 12 golfers per entry')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toEqual(expect.objectContaining({
@@ -444,7 +450,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     expect(screen.getByTestId('contest-template-custom')).toBeChecked();
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('The best 5 scores count. No limit on entries per member.');
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).not.toHaveProperty('templateId');
@@ -542,7 +548,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     await waitForStartingChoices();
     fireEvent.change(screen.getByTestId('contest-name'), { target: { value: '  ' } });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     expect(await screen.findByText('Contest name is required.')).toBeInTheDocument();
     expect(createContestMock).not.toHaveBeenCalled();
@@ -556,8 +562,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     renderCreateContestPage();
 
-    await waitFor(() => expect(screen.getByTestId('create-contest-submit')).toBeEnabled());
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await screen.findByText('Contest name is already in use.');
     expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -597,7 +602,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.click(screen.getByTestId('contest-pick-em-mode-CONFIDENCE'));
     await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('Week 1 Pick’em'));
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('Pick the winner of every game, then rank each week’s picks by confidence.');
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toEqual({
@@ -628,7 +633,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent(
       'Fill in the whole bracket before the first game: pick the winner of every game, all the way to the final. Points for a win in each round: 1, 2, 4. 1 entry per member.',
     );
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toEqual({
@@ -676,7 +681,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     await waitFor(() => expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('Full bracket'));
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toMatchObject({
@@ -710,7 +715,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       'Second-chance bracket from the Sweet 16: pick the winner of every game from the Sweet 16 on, all the way to the final, before its first game.',
     );
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('Second-chance bracket from the Sweet 16');
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toMatchObject({
@@ -752,7 +757,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(startsAt).toHaveDisplayValue('From the Second Round');
     expect(screen.queryByRole('option', { name: 'Full bracket' })).not.toBeInTheDocument();
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toMatchObject({
@@ -815,7 +820,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Sweet 16');
       expect(screen.queryByTestId('contest-rules-error')).not.toBeInTheDocument();
       fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
-      fireEvent.click(screen.getByTestId('create-contest-submit'));
+      await submitOnceReady();
 
       await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
       expect(submittedBody()).toMatchObject({
@@ -900,7 +905,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.click(await screen.findByTestId('contest-format-BRACKET'));
     await waitFor(() => expect(screen.getByTestId('contest-event-bb-live')).toBeChecked());
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     expect(await screen.findByText('The bracket\'s starting round has already started, so a bracket can no longer start there.')).toBeInTheDocument();
   });
@@ -918,7 +923,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
     fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4' } });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     expect(await screen.findByText(/can’t be filled in as a bracket yet/)).toBeInTheDocument();
   });
@@ -1082,7 +1087,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
 
     fireEvent.change(screen.getByTestId('contest-budget-roster-size'), { target: { value: '5' } });
     expect(screen.getByTestId('contest-template-custom')).toBeChecked();
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toEqual({
@@ -1104,7 +1109,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
 
     await waitForStartingChoices();
     fireEvent.click(screen.getByTestId('contest-format-BUDGET_PICK'));
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     expect(await screen.findByText(
       'Even the cheapest picks for every place cost more than the salary cap, so nobody could enter. Pick fewer per entry.',
@@ -1180,7 +1185,7 @@ describe('Commissioner tools › Contests › Create contest › Random draw for
       'The draw deals each entry 3 golfers at random. The best 2 scores count. 1 entry per member.',
     );
 
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toEqual({
@@ -1291,7 +1296,7 @@ describe('Commissioner tools › Contests › Create contest for a horse race', 
     );
 
     fireEvent.change(screen.getByTestId('contest-scoring-points-table'), { target: { value: '10, 6, 4, 2' } });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toEqual({
@@ -1421,7 +1426,7 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
     expect(screen.getByTestId('contest-budget-counted-scores')).toHaveValue(5);
     expect(screen.getByTestId('contest-scoring-points-table')).toHaveValue('25, 18, 15, 12, 10, 8, 6, 4, 2, 1');
 
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toMatchObject({
@@ -1594,7 +1599,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     expect(screen.queryByTestId('contest-scoring-round-values')).not.toBeInTheDocument();
 
     fireEvent.change(picker, { target: { value: 'game-afc' } });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
+    await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
     expect(submittedBody()).toMatchObject({
