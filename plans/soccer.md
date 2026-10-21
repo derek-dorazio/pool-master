@@ -95,7 +95,8 @@ teams aren't the real sides, so the team column stays:
 Questions:
 
 - **Q2.1** Name of the enum: `PredictedResult` (`TEAM`, `TIE`)? `PickOutcome` is taken: it
-  already means CORRECT, BUSTED, PUSH or PENDING. Recommendation: `PredictedResult`.
+  already means CORRECT, BUSTED, PUSH or PENDING. Recommendation: `PredictedResult`. **Decided
+  2026-10-21: `PredictedResult`.**
 - **Q2.2** Can the week's tiebreaker game, or any game, be tied in a non-soccer pick'em? Yes
   for recording (NFL ties). For picking, no: only soccer offers tie picks. Recommendation: as
   written. Nothing to decide unless you want NFL tie picks, which no NFL pool offers.
