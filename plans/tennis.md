@@ -84,21 +84,21 @@ Scenario-suite rows ride in each PR, as hockey's did, rather than as a slice of 
   non-null `ending` column on `SportEventMatch`, default `PLAYED` (existing rows backfill to it).
   Through `SportEventMatchDto`, the mapper and `RecordSportEventMatchResultRequest` (optional,
   default `PLAYED`). A cleared result goes back to `PLAYED`.
-- **Sport definition:** `matchEndings: readonly MatchEnding[]`, the endings besides `PLAYED`
-  that the sport allows. Empty for every sport today; tennis sets all three. This slice tests it
-  with a test-only definition, as #791 does for shoot-outs.
+- **Every sport that plays matches gets it** (Derek 2026-10-21): it is optional on every
+  result, not a tennis switch. A walkover or a withdrawal through injury can happen in any match
+  play: a forfeited college game, a "no contest" in March Madness (2021), a future golf match-play
+  event. So there is no per-sport list of allowed endings; `PLAYED` stays the default everywhere.
 - **Rules** (422 `MATCH_RESULT_INVALID`, as other score problems are):
   - `PLAYED`: unchanged, including #791's shoot-out rule.
   - `RETIREMENT` and `DEFAULT`: both scores or neither, and the winner's may be lower (the
     sets completed when it stopped).
   - `WALKOVER`: no scores and no period scores.
-  - An ending the sport doesn't allow is refused.
 - **Scoring:** nothing changes. Every scorer reads `winnerSide`, so a walkover or retirement
   winner advances, earns the round's points and keeps a survivor pick alive; the other player is
   out (`ELIMINATED`). See Q1.2.
 - **Data file:** a result gains an optional `ending` (default `PLAYED`), applied by the loader.
-- **Web:** the admin result form offers the sport's endings beside the winner when the sport
-  has any. Match rows on the bracket, game and leaderboard screens read "2-1 ret.", "w/o",
+- **Web:** the admin result form offers the endings beside the winner, collapsed under "Ended
+  early" so the usual one-click winner entry is unchanged. Match rows on the bracket, game and leaderboard screens read "2-1 ret.", "w/o",
   "def." (the abbreviations live with the ending, not the sport).
 
 Questions:
@@ -118,7 +118,7 @@ The `add-sport` skill, as hockey did it.
 
 - **Sport:** `TENNIS`, `INDIVIDUAL`, `HEAD_TO_HEAD`, `MATCHES`, no period layout (so no
   squares). Selection types `TIERED`, `BUDGET_PICK`, `RANDOM_DRAW`, `BRACKET`, `SURVIVOR`.
-  Scoring `KNOCKOUT_ROUND_POINTS`. `matchEndings` all three, `shootout: null`, `pickEm` as
+  Scoring `KNOCKOUT_ROUND_POINTS`. `shootout: null`, `pickEm` as
   every non-soccer sport (unused: no `PICK_EM`). `defaultRounds` 7.
 - **Vocabulary:** player/players, event "draw" ("the Australian Open men's singles draw"),
   sport league "series", round "round", match "match", eliminated "Out", withdrawn
