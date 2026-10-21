@@ -57,8 +57,10 @@ email today: the commissioner has to share the link by hand.
 
 These hold for every row below, so the tables don't repeat them.
 
-1. **One email per person per trigger.** A person who owns two squads with entries, or is both
-   commissioner and member, gets one email. Recipients are active users with an active league
+1. **Each league sends its own.** Leagues are tenants (Derek 2026-10-21): no email combines
+   two leagues, and each carries only its own league's links. Within one league, a person who
+   owns two squads with entries, or is both commissioner and member, gets one email per
+   trigger. A commissioner of two leagues gets C1 once from each. Recipients are active users with an active league
    membership; an inactive squad's owners are not league members and get nothing.
 2. **Never twice.** Every send writes a record keyed by template, subject (contest, event,
    round or invitation) and recipient. A scheduler sweep that runs again, or a second server
@@ -90,14 +92,13 @@ These hold for every row below, so the tables don't repeat them.
 | Results | Each member | F1, F3 |
 | Receipts | Each member | D3, D4 |
 
-**Q2.1 Opt-out granularity.** Per category per person, or per league too?
-*Recommendation:* per category per person for the first cut, with the categories above. A
-per-league switch is easy to add later when someone in five leagues asks for it.
+**Q2.1 Opt-out granularity.** **Decided (Derek 2026-10-21):** one on/off switch per category
+per person, applying to all their leagues, plus one-click unsubscribe. It is the same decision
+as Q7.1 in the SES design (#844), which builds the switches; this plan supplies the categories.
 
-**Q2.2 Daily digest instead of separate emails.** A person in three golf contests on the
-Masters gets three round-standings emails a night.
-*Recommendation:* one email per contest for now (each has its own leaderboard and link). Revisit
-a digest once real leagues use it; the sent record makes merging them later straightforward.
+**Q2.2 Digest instead of separate emails.** **Decided (Derek 2026-10-21):** no digests for
+members. Each contest sends its own email, and nothing combines leagues (§2 rule 1). The
+weekly digest in #851 is for commissioners and covers one league.
 
 ---
 
