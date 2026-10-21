@@ -52,6 +52,12 @@ export interface SportEvent extends DomainEntity {
    * Read through `matchPeriodsOf`.
    */
   matchPeriodLayout?: MatchPeriodLayout;
+  /**
+   * The series' sport league's first squares round when not every round's matches are single
+   * games (#787), read through the series like `sportLeagueId`; absent takes every round. Read
+   * through `isSquaresRound`.
+   */
+  squaresFromRound?: number;
   syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;

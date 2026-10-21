@@ -715,6 +715,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     roundNames: row.roundNames,
     tierCount: row.tierCount,
     matchPeriodLayout: row.matchPeriodLayout,
+    squaresFromRound: row.squaresFromRound,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -734,8 +735,8 @@ function toAffiliation(
   };
 }
 
-/** Every SportEvent read carries its series' sport league, the event's one path to it, and the league's period layout. */
-const SPORT_EVENT_INCLUDE = { eventSeries: { select: { sportLeagueId: true, sportLeague: { select: { matchPeriodLayout: true } } } } } as const;
+/** Every SportEvent read carries its series' sport league, the event's one path to it, and the league's period layout and first squares round. */
+const SPORT_EVENT_INCLUDE = { eventSeries: { select: { sportLeagueId: true, sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true } } } } } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
   return {
@@ -757,6 +758,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     eventYear: row.eventYear,
     sportLeagueId: row.eventSeries.sportLeagueId,
     ...(row.eventSeries.sportLeague.matchPeriodLayout !== null && { matchPeriodLayout: row.eventSeries.sportLeague.matchPeriodLayout }),
+    ...(row.eventSeries.sportLeague.squaresFromRound !== null && { squaresFromRound: row.eventSeries.sportLeague.squaresFromRound }),
     syncScope: row.syncScope as SportEventSyncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),

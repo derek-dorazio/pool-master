@@ -53,7 +53,10 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
      shoot-out's winner goes through. A sport that calls overtime something else (soccer's
      "extra time") sets `vocabulary.overtime`, which the final-score label reads.
      A two-legged tie (the Champions League's) is one match scored on aggregate, scheduled at the
-     first leg, with no period scores; it needs no model of its own.
+     first leg, with no period scores; it needs no model of its own. Nor does a series (MLS's
+     best-of-three round one): one match scored in games won. Either one can't take a squares
+     pool, so a league with them sets `SportLeague.squaresFromRound` to its first round of
+     single games.
    - Finish position: points by place (horse racing, auto racing, cycling).
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.
@@ -215,6 +218,10 @@ down: a lesson that was true mid-series may not be by the end.
 - **Family copy that names one sport's participant.** A message such as "every runner still in
   the field" in a family's admin card reads wrong for the next sport. Error and hint copy reads
   the vocabulary too, not only headings and column labels.
+- **Unseeded teams seeded by their place.** A test seed's field entry without a `seed` takes its
+  place in the field, so an unseeded team in a 48-team draw reads as seed 40 and an upset bonus
+  over it pays out wildly. Give unseeded teams the seed after the last one (17 in the NCAA men's
+  soccer field, 9 in each women's bracket).
 - **League presets without their leagues.** A per-league template needs its league row, so the
   league is reference data even though admins normally create leagues
   (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Give each league's

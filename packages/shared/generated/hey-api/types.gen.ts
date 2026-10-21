@@ -6140,6 +6140,10 @@ export type SportLeagueDto = {
      */
     matchPeriodLayout: 'QUARTERS' | 'HALVES' | 'THREE_PERIODS' | null;
     /**
+     * The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.
+     */
+    squaresFromRound: number | null;
+    /**
      * Participants currently affiliated with the sport league.
      */
     affiliationCount: number;
@@ -6216,6 +6220,10 @@ export type SportLeagueListResponse = {
          */
         matchPeriodLayout: 'QUARTERS' | 'HALVES' | 'THREE_PERIODS' | null;
         /**
+         * The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.
+         */
+        squaresFromRound: number | null;
+        /**
          * Participants currently affiliated with the sport league.
          */
         affiliationCount: number;
@@ -6278,6 +6286,10 @@ export type SportLeagueResponse = {
          * The periods the sport league's games are played in, when not its sport's: HALVES for men's college basketball. Null plays the sport's layout. Set with the league's reference data, never by a request.
          */
         matchPeriodLayout: 'QUARTERS' | 'HALVES' | 'THREE_PERIODS' | null;
+        /**
+         * The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.
+         */
+        squaresFromRound: number | null;
         /**
          * Participants currently affiliated with the sport league.
          */

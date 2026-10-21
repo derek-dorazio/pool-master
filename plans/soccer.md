@@ -153,7 +153,15 @@ The same sport, three more league shapes:
 - **NCAA Division I men's College Cup** (2025): 48 teams, the top 16 on byes.
 - **NCAA Division I women's College Cup** (2025): 64 teams.
 
-Each gets its own round names and tier count (`SportLeague.roundNames`, `tierCount`).
+Each gets its own round names (`SportLeague.roundNames`); all four keep the default four tiers.
+
+**Decided 2026-10-21 (review of slice 3): squares only on single games.** A Champions League
+tie scored on aggregate and an MLS best-of-three series are each one bracket match with no
+half-time score, so a squares pool can't be played on one. The sport league carries its first
+squares round as a typed round number, `squaresFromRound` (Champions League 5, MLS 3, null for
+every other league: any round). Contest create refuses a squares game before it, and the create
+form leaves those games out. Chosen over a per-match flag (the shape is the league's, not the
+game's) and a free-form round name.
 
 No open questions. Whether a league's bracket is fixed or reseeded is read from the source when
 the seed file is written (`load-sport-data`).

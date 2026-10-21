@@ -240,6 +240,7 @@ function createSportEventReader(overrides?: Partial<{
   undecidedGameCount: number;
   gamesWithoutSpreadCount: number;
   bracketProblem: string | null;
+  squaresFromRound: number | null;
 }>): {
   findById: jest.Mock;
   findActiveFieldPrices: jest.Mock;
@@ -248,7 +249,7 @@ function createSportEventReader(overrides?: Partial<{
   countGamesWithoutSpread: jest.Mock;
   findBracketProblem: jest.Mock;
   findCutoffTiming: jest.Mock;
-  findGameStatus: jest.Mock;
+  findGame: jest.Mock;
 } {
   return {
     findActiveFieldPrices: jest.fn().mockResolvedValue(overrides?.activeFieldPrices ?? []),
@@ -258,7 +259,7 @@ function createSportEventReader(overrides?: Partial<{
     findBracketProblem: jest.fn().mockResolvedValue(overrides?.bracketProblem ?? null),
     // The event's own timing for an ordinary contest; a later round's start would read its games, of which this event has none.
     findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
-    findGameStatus: jest.fn().mockResolvedValue(null),
+    findGame: jest.fn().mockResolvedValue(null),
     findById: jest.fn().mockResolvedValue({
       id: '11111111-1111-1111-1111-111111111111',
       status: overrides?.status ?? SportEventStatus.SCHEDULED,
@@ -271,6 +272,7 @@ function createSportEventReader(overrides?: Partial<{
       loadedParticipantCount: overrides?.loadedParticipantCount ?? 72,
       rounds: overrides?.rounds === undefined ? 4 : overrides.rounds,
       salaryCap: overrides?.salaryCap ?? null,
+      squaresFromRound: overrides?.squaresFromRound ?? null,
     }),
   };
 }
@@ -1712,6 +1714,7 @@ describe('ContestManagementService — a contest of several events', () => {
       loadedParticipantCount: 72,
       rounds: 4,
       salaryCap: null,
+      squaresFromRound: null,
       eventYear: 2026,
       ...event,
       startDate: new Date(event.startDate),
@@ -1724,7 +1727,7 @@ describe('ContestManagementService — a contest of several events', () => {
       countGamesWithoutSpread: jest.fn().mockResolvedValue(0),
       findBracketProblem: jest.fn().mockResolvedValue(null),
       findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
-      findGameStatus: jest.fn().mockResolvedValue(null),
+      findGame: jest.fn().mockResolvedValue(null),
     };
   }
 
@@ -2469,12 +2472,15 @@ describe('ContestManagementService squares rules (#711)', () => {
     ...overrides,
   });
 
-  function squaresService(gameStatus: MatchStatus | null = MatchStatus.SCHEDULED) {
+  function squaresService(
+    gameStatus: MatchStatus | null = MatchStatus.SCHEDULED,
+    { roundNumber = 4, squaresFromRound = null }: { roundNumber?: number; squaresFromRound?: number | null } = {},
+  ) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const reader = createSportEventReader({ sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4, gameCount: 1 });
-    reader.findGameStatus.mockImplementation(async (sportEventId: string, sportEventMatchId: string) =>
-      sportEventId === EVENT_ID && sportEventMatchId === GAME_ID ? gameStatus : null);
+    const reader = createSportEventReader({ sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4, gameCount: 1, squaresFromRound });
+    reader.findGame.mockImplementation(async (sportEventId: string, sportEventMatchId: string) =>
+      sportEventId === EVENT_ID && sportEventMatchId === GAME_ID && gameStatus !== null ? { status: gameStatus, roundNumber } : null);
     const service = new ContestManagementService(
       contestCoreRepo,
       createContestConfigTemplateRepo(),
@@ -2548,6 +2554,22 @@ describe('ContestManagementService squares rules (#711)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
       .rejects.toMatchObject({ code: CONTEST_SQUARES_GAME_INVALID });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a squares contest on a game before its sport league\'s first squares round (a two-legged tie) with CONTEST_SQUARES_GAME_INVALID, writing nothing', async () => {
+    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED, { roundNumber: 4, squaresFromRound: 5 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
+      .rejects.toMatchObject({ code: CONTEST_SQUARES_GAME_INVALID, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('creates a squares contest on a game in its sport league\'s first squares round (the Champions League final)', async () => {
+    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED, { roundNumber: 5, squaresFromRound: 5 });
+
+    await service.createContest({ leagueId: 'league-1' }, squaresRequest());
+
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ squaresGameMatchId: GAME_ID }));
   });
 
   it('refuses a game sent for a contest that is not squares with CONTEST_SQUARES_GAME_INVALID', async () => {

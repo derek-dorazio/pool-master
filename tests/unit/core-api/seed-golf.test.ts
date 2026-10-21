@@ -520,6 +520,93 @@ describe('soccer-2026-uefa-champions-league-test.json', () => {
   });
 });
 
+// #787: the US and college leagues. MLS's round one is a best-of-three series, scored in games won.
+describe('soccer-2025-mls-cup-playoffs-test.json', () => {
+  const file = readDataFile('soccer-2025-mls-cup-playoffs-test.json', true);
+  const [playoffs] = file.sportLeagues[0].events;
+  const matches = playoffs.matches ?? [];
+
+  it('is a test seed of the 2025 MLS Cup playoffs, nine seeds a conference, the 8 and 9 seeds meeting in the wild card round for the 1 seed\'s place', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2025, ['MLS']]);
+    expect(playoffs.rounds).toBe(5);
+    for (let seed = 1; seed <= 9; seed += 1) expect(playoffs.field.filter((entry) => entry.seed === seed)).toHaveLength(2);
+    expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 5]);
+    expect(matches.filter((match) => match.roundNumber === 1).every((match) => match.advancesTo?.side === 'AWAY')).toBe(true);
+    expect(matches.filter((match) => match.roundNumber < 5).every((match) => match.regionLabel === 'Eastern Conference' || match.regionLabel === 'Western Conference')).toBe(true);
+  });
+
+  it('scores each round one series in games won with no half-time score, and every single game with one, Inter Miami beating Vancouver 3-1 in MLS Cup', () => {
+    const series = matches.filter((match) => match.roundNumber === 2);
+    expect(series.every((match) => match.result !== undefined && Math.max(expectDefined(match.result.homeScore), expectDefined(match.result.awayScore)) === 2 && match.periodScores === undefined)).toBe(true);
+    expect(matches.filter((match) => match.roundNumber !== 2).every((match) => match.periodScores?.length === 1)).toBe(true);
+    expect(matches.at(-1)).toMatchObject({
+      home: null, away: null, isNeutralSite: false, advancesTo: null, scheduledAt: '2025-12-06T19:30:00Z',
+      result: { winner: 'HOME', homeScore: 3, awayScore: 1 },
+    });
+  });
+});
+
+describe('soccer-2025-nwsl-playoffs-test.json', () => {
+  it('is a test seed of the 2025 NWSL playoffs, eight seeds on a fixed bracket, Gotham beating Washington 1-0 in the championship at a neutral site', () => {
+    const file = readDataFile('soccer-2025-nwsl-playoffs-test.json', true);
+    const [playoffs] = file.sportLeagues[0].events;
+    const matches = playoffs.matches ?? [];
+
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2025, ['NWSL']]);
+    expect(playoffs.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(matches.map((match) => [match.roundNumber, match.isNeutralSite])).toEqual([[1, false], [1, false], [1, false], [1, false], [2, false], [2, false], [3, true]]);
+    expect(matches.every((match) => match.periodScores?.length === 1)).toBe(true);
+    expect(matches.filter((match) => match.result?.homeShootoutScore !== undefined)).toHaveLength(1);
+    expect(matches.at(-1)).toMatchObject({ advancesTo: null, result: { winner: 'AWAY', homeScore: 0, awayScore: 1 } });
+  });
+});
+
+describe('soccer-2025-ncaa-tournaments-test.json', () => {
+  const file = readDataFile('soccer-2025-ncaa-tournaments-test.json', true);
+  const [men, women] = file.sportLeagues.map((league) => league.events[0]);
+
+  it('is a test seed of both 2025 NCAA tournaments, six rounds each, the College Cup at a neutral site', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2025, ['NCAA Division I Men', 'NCAA Division I Women']]);
+    for (const tournament of [men, women]) {
+      const matches = tournament.matches ?? [];
+      expect(tournament.rounds).toBe(6);
+      expect(matches).toHaveLength(tournament.field.length - 1);
+      expect(matches.every((match) => match.isNeutralSite === match.roundNumber >= 5)).toBe(true);
+    }
+  });
+
+  it('starts the men\'s 16 national seeds in the second round on the home side, unseeded teams sharing seed 17, Washington winning the final', () => {
+    const seedOf = new Map(men.field.map((entry) => [entry.player, entry.seed]));
+    const secondRound = (men.matches ?? []).filter((match) => match.roundNumber === 2);
+    expect(men.field).toHaveLength(48);
+    expect(secondRound.map((match) => seedOf.get(match.home ?? '')).sort((left, right) => (left ?? 0) - (right ?? 0))).toEqual(Array.from({ length: 16 }, (_, index) => index + 1));
+    expect(secondRound.every((match) => match.away === null)).toBe(true);
+    expect(men.field.filter((entry) => entry.seed === 17)).toHaveLength(32);
+    expect(men.matches?.at(-1)).toMatchObject({ home: null, away: null, result: { winner: 'AWAY', homeScore: 2, awayScore: 3 } });
+  });
+
+  it('splits the women\'s 64 into four brackets of eight seeds, each named for its 1 seed, Florida State winning the final', () => {
+    const matches = women.matches ?? [];
+    expect(women.field).toHaveLength(64);
+    for (let seed = 1; seed <= 8; seed += 1) expect(women.field.filter((entry) => entry.seed === seed)).toHaveLength(4);
+    expect(new Set(matches.filter((match) => match.roundNumber <= 4).map((match) => match.regionLabel)))
+      .toEqual(new Set(['Notre Dame bracket', 'Vanderbilt bracket', 'Stanford bracket', 'Virginia bracket']));
+    expect(matches.at(-1)).toMatchObject({ result: { winner: 'AWAY', homeScore: 0, awayScore: 1 } });
+  });
+
+  it('settles every level game on its shoot-out, and gives a game with a winner none', () => {
+    const results = [men, women].flatMap((tournament) => (tournament.matches ?? []).map((match) => expectDefined(match.result)));
+    for (const result of results) {
+      const level = result.homeScore === result.awayScore;
+      expect(result.homeShootoutScore !== undefined && result.awayShootoutScore !== undefined).toBe(level);
+      const [home, away] = level
+        ? [result.homeShootoutScore ?? 0, result.awayShootoutScore ?? 0]
+        : [expectDefined(result.homeScore), expectDefined(result.awayScore)];
+      expect(result.winner).toBe(home > away ? 'HOME' : 'AWAY');
+    }
+  });
+});
+
 describe('2026 racing test seeds', () => {
   it.each([
     ['auto-racing-2026-test.json', Sport.AUTO_RACING, [['Formula 1', 17, 'Max Verstappen'], ['NASCAR Cup Series', 32, 'Chase Briscoe'], ['IndyCar', 18, 'Scott McLaughlin']]],

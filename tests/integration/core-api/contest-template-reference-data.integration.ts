@@ -480,27 +480,45 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
 
 // Soccer's competitions (#787): each a fixed knockout bracket, its presets doubling up to its
 // final. The Copa América starts at the quarter-finals; the Champions League at its knockout
-// play-offs, naming its own rounds.
+// play-offs, naming its own rounds. MLS starts at its wild card round, the NWSL at its
+// quarterfinals, and each NCAA tournament at its first round, all naming their own rounds.
 const SOCCER_COMPETITIONS = [
   ['FIFA World Cup', 'world-cup', [1, 2, 4, 8], 4],
   ['FIFA Women\'s World Cup', 'womens-world-cup', [1, 2, 4, 8], 4],
   ['UEFA European Championship', 'euro', [1, 2, 4, 8], 4],
   ['Copa América', 'copa-america', [1, 2, 4], 3],
   ['UEFA Champions League', 'champions-league', [1, 2, 4, 8, 16], 4],
+  ['MLS', 'mls', [1, 2, 4, 8, 16], 4],
+  ['NWSL', 'nwsl', [1, 2, 4], 3],
+  ['NCAA Division I Men', 'ncaa-men-soccer', [1, 2, 4, 8, 16, 32], 4],
+  ['NCAA Division I Women', 'ncaa-women-soccer', [1, 2, 4, 8, 16, 32], 4],
 ] as const;
 
 describe('Seeded soccer competitions and their knockout templates', () => {
-  it('seeds the five competitions as fixed brackets, the Champions League alone naming its own rounds, read back through the sport league repository', async () => {
+  it('seeds the nine competitions as fixed brackets, the international ones reading the sport\'s round names, read back through the sport league repository', async () => {
     const soccer = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.SOCCER } });
     const leagues = await new PrismaSportLeagueRepository(getPrisma()).findAll({ sportId: soccer.id });
+    const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
 
     expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames])).toEqual([
       ['Copa América', 'FIXED', []],
       ['FIFA Women\'s World Cup', 'FIXED', []],
       ['FIFA World Cup', 'FIXED', []],
+      ['MLS', 'FIXED', ['Wild Card', 'Round One', 'Conference Semifinals', 'Conference Finals', 'MLS Cup']],
+      ['NCAA Division I Men', 'FIXED', ncaaRounds],
+      ['NCAA Division I Women', 'FIXED', ncaaRounds],
+      ['NWSL', 'FIXED', ['Quarterfinals', 'Semifinals', 'Championship']],
       ['UEFA Champions League', 'FIXED', ['Knockout phase play-offs', 'Round of 16', 'Quarter-finals', 'Semi-finals', 'Final']],
       ['UEFA European Championship', 'FIXED', []],
     ]);
+  });
+
+  it('starts squares at the Champions League final and the MLS conference semifinals, past their two-legged ties and best-of-three series, and every other soccer league at its first round', async () => {
+    const soccer = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.SOCCER } });
+    const leagues = await new PrismaSportLeagueRepository(getPrisma()).findAll({ sportId: soccer.id });
+
+    expect(leagues.filter((league) => league.squaresFromRound !== null).map((league) => [league.name, league.squaresFromRound]))
+      .toEqual([['MLS', 3], ['UEFA Champions League', 5]]);
   });
 
   it.each(SOCCER_COMPETITIONS)('gives %s eleven knockout templates, one default per format, every roster and bracket preset doubling from 1 to its final', async (name, prefix, roundValues, budgetRoster) => {
@@ -637,7 +655,7 @@ describe('The seeded NFL league and its knockout templates', () => {
     }
   });
 
-  // Squares (#711, #786, #787): the NFL's, the College Football Playoff's, each March Madness league's, each college hockey league's and each soccer competition's squares preset, the default for its own format.
+  // Squares (#711, #786, #787): the NFL's, the College Football Playoff's, each March Madness league's, each college hockey league's and each soccer league's squares preset, the default for its own format.
   it('seeds one squares template on the NFL, the College Football Playoff, men\'s and women\'s March Madness, men\'s and women\'s college hockey and each soccer competition, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { contestFormat: ContestFormat.SQUARES },
@@ -650,11 +668,15 @@ describe('The seeded NFL league and its knockout templates', () => {
       ['champions-league-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'UEFA Champions League'],
       ['copa-america-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'Copa América'],
       ['euro-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'UEFA European Championship'],
+      ['mls-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'MLS'],
       ['ncaa-men-hockey-squares', Sport.HOCKEY, SelectionType.SQUARES, true, 'NCAA Division I Men'],
+      ['ncaa-men-soccer-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'NCAA Division I Men'],
       ['ncaa-men-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Men'],
       ['ncaa-women-hockey-squares', Sport.HOCKEY, SelectionType.SQUARES, true, 'NCAA Division I Women'],
+      ['ncaa-women-soccer-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'NCAA Division I Women'],
       ['ncaa-women-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Women'],
       ['nfl-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'NFL'],
+      ['nwsl-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'NWSL'],
       ['womens-world-cup-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'FIFA Women\'s World Cup'],
       ['world-cup-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'FIFA World Cup'],
     ]);

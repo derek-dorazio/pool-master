@@ -7274,6 +7274,8 @@ export interface components {
              * @enum {string|null}
              */
             matchPeriodLayout: "QUARTERS" | "HALVES" | "THREE_PERIODS" | null;
+            /** @description The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request. */
+            squaresFromRound: number | null;
             /** @description Participants currently affiliated with the sport league. */
             affiliationCount: number;
             /** @description Events on record for the sport league, across every series and year. */
@@ -7333,6 +7335,8 @@ export interface components {
                  * @enum {string|null}
                  */
                 matchPeriodLayout: "QUARTERS" | "HALVES" | "THREE_PERIODS" | null;
+                /** @description The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request. */
+                squaresFromRound: number | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -7383,6 +7387,8 @@ export interface components {
                  * @enum {string|null}
                  */
                 matchPeriodLayout: "QUARTERS" | "HALVES" | "THREE_PERIODS" | null;
+                /** @description The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request. */
+                squaresFromRound: number | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */

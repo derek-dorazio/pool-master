@@ -96,3 +96,12 @@ export function squaresWinners(
     return { ...moment, rowIndex, columnIndex, contestEntryId: box?.contestEntryId ?? null };
   });
 }
+
+/**
+ * Whether a squares pool can be played on a match of this round (#787): every round's, unless the
+ * sport league names the first round of single games (`SportLeague.squaresFromRound`). A
+ * two-legged tie or a series before it is one match with no half-time score to pay on.
+ */
+export function isSquaresRound(squaresFromRound: number | null | undefined, roundNumber: number): boolean {
+  return squaresFromRound === null || squaresFromRound === undefined || roundNumber >= squaresFromRound;
+}
