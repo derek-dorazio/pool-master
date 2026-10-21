@@ -57,6 +57,8 @@ function setup(sportName: Sport = Sport.GOLF) {
       field: store.fieldRepo(),
       participants: store.participantRepo(),
       matches: store.matchRepo(),
+      tiers: store.tierRepo(),
+      valuations: store.valuationRepo(),
       ...NO_PICKS_ON_EVENT,
     }),
     lifecycle,

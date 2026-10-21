@@ -303,6 +303,7 @@ export function fakeSportEventParticipantRepo(
     delete: nothing(),
     countPicks: jest.fn().mockResolvedValue(0),
     fillPlayInSlot: nothing(),
+    replaceWithdrawn: jest.fn().mockResolvedValue('replacement-row'),
     ...overrides,
   };
 }

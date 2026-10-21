@@ -269,7 +269,7 @@ describe('survivorPredictionEngine', () => {
   it('keeps the latest pick of the week and clears the other, as a new pick replaces the entry\'s one', () => {
     const first = { sportEventMatchId: 'a', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'a-home', confidence: null };
     const second = { sportEventMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-away', confidence: null };
-    const resolved = survivorPredictionEngine.resolvePicks({ games, predictions: [first, second], seedOf: new Map() });
+    const resolved = survivorPredictionEngine.resolvePicks({ games, predictions: [first, second], seedOf: new Map(), withdrawn: new Set() });
     expect(resolved.kept).toEqual([second]);
     expect(resolved.stranded).toEqual([first]);
   });

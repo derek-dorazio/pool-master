@@ -80,6 +80,7 @@ export type {
   ParticipantMatchQuery,
   ParticipantRanking,
   PriceAssignment,
+  ReplacementValuation,
   SportEventCreate,
   SportEventFilters,
   SportEventParticipantCreate,

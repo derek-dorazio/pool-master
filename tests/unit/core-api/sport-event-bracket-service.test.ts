@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { MatchEnding, BracketAdvancement, MatchSide, MatchStatus, ParticipantStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import {
   findBracketProblems,
   SportEventBracketService,
@@ -39,6 +39,8 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     matches: store.matchRepo(),
+    tiers: store.tierRepo(),
+    valuations: store.valuationRepo(),
     ...picks,
     newId: () => {
       sequence += 1;
@@ -348,6 +350,8 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
       field: store.fieldRepo(),
       participants: store.participantRepo(),
       matches: store.matchRepo(),
+      tiers: store.tierRepo(),
+      valuations: store.valuationRepo(),
       ...NO_PICKS_ON_EVENT,
     });
     const game = (matchNumber: number, roundNumber: number, home: string | null, away: string | null): BracketMatchInput => ({
@@ -549,5 +553,115 @@ describe('SportEventBracketService round matchups (reseeded bracket)', () => {
       homeSportEventParticipantId: null,
       awaySportEventParticipantId: null,
     });
+  });
+});
+
+describe('SportEventBracketService.replaceWithdrawn', () => {
+  /** A released four-team bracket, with tiers and prices on the field when `valued`. */
+  async function released({ valued = true }: { valued?: boolean } = {}) {
+    const context = setup();
+    await context.service.loadBracket(context.event.id, bracketOf(context));
+    if (valued) {
+      await context.store.tierRepo().createMany(context.event.id, [
+        { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+        { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
+      ]);
+      const [first, second] = context.store.tierRows;
+      await context.store.valuationRepo().assignTiers([context.duke, context.vermont, context.houston, context.texas].map((entry, index) => ({
+        sportEventParticipantId: entry.id,
+        sportEventTierId: expectDefined(index < 2 ? first : second).id,
+        tierOrderIndex: index + 1,
+        source: ValuationSource.AUTO_ODDS,
+      })));
+      await context.store.fieldRepo().updateMany([
+        { id: context.duke.id, updates: {}, price: 9000 },
+        { id: context.texas.id, updates: {}, price: 4500 },
+      ]);
+    }
+    Object.assign(context.event, { status: SportEventStatus.SCHEDULED });
+    const luckyLoser = context.store.addParticipant(context.sportRow.id, 'Lucky Loser', { participantType: 'TEAM' });
+    return { ...context, luckyLoser };
+  }
+
+  it('puts the replacement in the withdrawn place after release, unseeded, last in the last tier at the lowest price, and keeps the withdrawn row as inactive WITHDRAWN', async () => {
+    const { service, store, event, vermont, luckyLoser } = await released();
+
+    const replacementId = await service.replaceWithdrawn(event.id, vermont.id, luckyLoser.id);
+
+    const replacement = expectDefined(store.field.find((entry) => entry.id === replacementId));
+    expect(replacement).toMatchObject({ participantId: luckyLoser.id, isActive: true });
+    expect(replacement.seedNumber ?? null).toBeNull();
+    expect(store.matchRows.find((match) => match.matchNumber === 1)?.awaySportEventParticipantId).toBe(replacementId);
+    expect(store.field.find((entry) => entry.id === vermont.id)).toMatchObject({ isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN, seedNumber: 2 });
+    expect(store.valuationRows.find((valuation) => valuation.sportEventParticipantId === replacementId)).toMatchObject({
+      sportEventTierId: expectDefined(store.tierRows[1]).id,
+      tierOrderIndex: 5,
+      price: 4500,
+    });
+  });
+
+  it('gives the replacement no tier or price when the event has neither, as a bracket-only event', async () => {
+    const { service, store, event, duke, luckyLoser } = await released({ valued: false });
+
+    const replacementId = await service.replaceWithdrawn(event.id, duke.id, luckyLoser.id);
+
+    expect(store.matchRows.find((match) => match.matchNumber === 1)?.homeSportEventParticipantId).toBe(replacementId);
+    expect(store.valuationRows.some((valuation) => valuation.sportEventParticipantId === replacementId)).toBe(false);
+  });
+
+  it('refuses (409 BRACKET_PARTICIPANT_ALREADY_PLAYED) once the withdrawn row\'s match has started, when a withdrawal is a walkover, and changes nothing', async () => {
+    const { service, store, event, vermont, luckyLoser } = await released();
+    Object.assign(expectDefined(store.matchRows.find((match) => match.matchNumber === 1)), { status: MatchStatus.IN_PROGRESS });
+
+    await expect(service.replaceWithdrawn(event.id, vermont.id, luckyLoser.id))
+      .rejects.toMatchObject({ code: 'BRACKET_PARTICIPANT_ALREADY_PLAYED', statusCode: 409 });
+    expect(store.field.find((entry) => entry.id === vermont.id)?.isActive).toBe(true);
+    expect(store.field.some((entry) => entry.participantId === luckyLoser.id)).toBe(false);
+  });
+
+  it('refuses (409 BRACKET_PLACE_NOT_FIRST_ROUND) a team placed straight into a later round, a bye, whose picks a replacement would strand, and changes nothing', async () => {
+    const { service, store, event, vermont, luckyLoser } = await released();
+    // Vermont skips round 1: its place is in the final.
+    Object.assign(expectDefined(store.matchRows.find((match) => match.matchNumber === 1)), { awaySportEventParticipantId: null });
+    Object.assign(expectDefined(store.matchRows.find((match) => match.roundNumber === 2)), { homeSportEventParticipantId: vermont.id });
+
+    await expect(service.replaceWithdrawn(event.id, vermont.id, luckyLoser.id))
+      .rejects.toMatchObject({ code: 'BRACKET_PLACE_NOT_FIRST_ROUND', statusCode: 409 });
+    expect(store.field.find((entry) => entry.id === vermont.id)?.isActive).toBe(true);
+    expect(store.field.some((entry) => entry.participantId === luckyLoser.id)).toBe(false);
+  });
+
+  it('refuses (409 EVENT_PARTICIPANT_NOT_IN_BRACKET) a row the bracket no longer names, so a place is replaced once', async () => {
+    const { service, store, event, vermont, luckyLoser, sportRow } = await released();
+    await service.replaceWithdrawn(event.id, vermont.id, luckyLoser.id);
+    const another = store.addParticipant(sportRow.id, 'Another', { participantType: 'TEAM' });
+
+    await expect(service.replaceWithdrawn(event.id, vermont.id, another.id))
+      .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_IN_BRACKET', statusCode: 409 });
+  });
+
+  it('refuses (409 EVENT_PARTICIPANT_IS_PLAY_IN_PLACE) a play-in place, which is filled with its winner instead', async () => {
+    const { service, store, event, vermont, luckyLoser } = await released();
+    Object.assign(expectDefined(store.field.find((entry) => entry.id === vermont.id)), { isPlayInPlace: true });
+
+    await expect(service.replaceWithdrawn(event.id, vermont.id, luckyLoser.id))
+      .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_IS_PLAY_IN_PLACE', statusCode: 409 });
+  });
+
+  it('refuses (409 EVENT_PARTICIPANT_ALREADY_ON_FIELD) a replacement already on the field, and (404 PARTICIPANT_NOT_FOUND) one from another sport', async () => {
+    const { service, store, event, vermont, houston } = await released();
+    const golfer = store.addParticipant(store.addSport(Sport.GOLF).id, 'Ana');
+
+    await expect(service.replaceWithdrawn(event.id, vermont.id, houston.participantId))
+      .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_ALREADY_ON_FIELD', statusCode: 409 });
+    await expect(service.replaceWithdrawn(event.id, vermont.id, golfer.id))
+      .rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('refuses (404 EVENT_PARTICIPANT_NOT_FOUND) a field row of another event', async () => {
+    const { service, event, luckyLoser } = await released();
+
+    await expect(service.replaceWithdrawn(event.id, 'no-such-row', luckyLoser.id))
+      .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_FOUND', statusCode: 404 });
   });
 });

@@ -92,6 +92,9 @@ export const EIGHT_SEEDS: ReadonlyMap<string, number | null> = new Map(
   [1, 2, 3, 4, 5, 6, 7, 8].map((seed) => [`T${seed}`, seed] as const),
 );
 
+/** A field with nobody withdrawn after the draw (#704). */
+export const NONE_WITHDRAWN: ReadonlySet<string> = new Set();
+
 /** Seeds 1 to 7 in each conference, for the NFL-shaped playoff. */
 export const NFL_SEEDS: ReadonlyMap<string, number | null> = new Map(
   ['AFC', 'NFC'].flatMap((conference) => [1, 2, 3, 4, 5, 6, 7].map((seed) => [`${conference}-${seed}`, seed] as const)),

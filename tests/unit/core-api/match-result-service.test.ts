@@ -31,6 +31,8 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     matches: store.matchRepo(),
+    tiers: store.tierRepo(),
+    valuations: store.valuationRepo(),
     ...NO_PICKS_ON_EVENT,
     newId: () => {
       sequence += 1;
@@ -66,6 +68,8 @@ async function week() {
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     matches: store.matchRepo(),
+    tiers: store.tierRepo(),
+    valuations: store.valuationRepo(),
     ...NO_PICKS_ON_EVENT,
     newId: () => {
       sequence += 1;

@@ -7,6 +7,7 @@ import { expect } from '@jest/globals';
 import {
   MatchSide,
   MatchStatus,
+  ParticipantInactiveReason,
   PickOutcome,
   UpsetBonusRule,
   type KnockoutRoundPointsSettings,
@@ -19,7 +20,7 @@ import {
   resolveBracketPicks,
   scoreBracketPicks,
 } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/bracket-picks';
-import { knockoutSeeds } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/score-team';
+import { knockoutSeeds, withdrawnRowIds } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/score-team';
 import {
   EIGHT_SEEDS,
   NFL_SEEDS,
@@ -425,5 +426,66 @@ describe('a second-chance bracket, started at a later round once the results dec
       expect(score.picks.get('m7')).toEqual({ outcome: PickOutcome.CORRECT, points: 2 });
       expect(score.picks.get('m8')).toEqual({ outcome: PickOutcome.BUSTED, points: 0 });
     });
+  });
+});
+
+describe('a team withdrawn after the draw and replaced in its first-round game (#704)', () => {
+  const NO_BONUS: KnockoutRoundPointsSettings = { roundValues: [1, 2, 4], upsetBonus: { rule: UpsetBonusRule.NONE } };
+  // T8 withdrew before game 1, and LL took its place against T1.
+  const replaced = eightTeamBracket().map((match) => (match.matchNumber === 1 ? { ...match, awaySportEventParticipantId: 'LL' } : match));
+  const withdrawn = new Set(['T8']);
+  const picks = [pick(1, 'T8'), pick(2, 'T4'), pick(5, 'T8'), pick(7, 'T8')];
+
+  it('keeps a pick of the withdrawn team made before, and the later picks that followed from it, rather than stranding them', () => {
+    const resolved = resolveBracketPicks(replaced, picks, EIGHT_SEEDS, withdrawn);
+
+    expect(ids(resolved.kept)).toEqual(['m1', 'm2', 'm5', 'm7']);
+    expect(sidesOf(resolved, 5)).toEqual({ home: 'T8', away: 'T4' });
+    expect(sidesOf(resolved, 1)).toEqual({ home: 'T1', away: 'LL' });
+  });
+
+  it('strands the same picks when nobody is withdrawn, as a pick of a team not in its game always is', () => {
+    expect(ids(resolveBracketPicks(replaced, picks, EIGHT_SEEDS).stranded)).toEqual(['m1', 'm5', 'm7']);
+  });
+
+  it('busts every pick of the withdrawn team as a first-round loss before game 1 is played, and leaves the others pending', () => {
+    const score = scoreBracketPicks(replaced, picks, EIGHT_SEEDS, NO_BONUS, withdrawn);
+
+    expect(Object.fromEntries(score.picks)).toEqual({
+      m1: { outcome: PickOutcome.BUSTED, points: 0 },
+      m2: { outcome: PickOutcome.PENDING, points: null },
+      m5: { outcome: PickOutcome.BUSTED, points: 0 },
+      m7: { outcome: PickOutcome.BUSTED, points: 0 },
+    });
+    expect(score.maxPossiblePoints).toBe(1);
+  });
+
+  it('carries a withdrawn team the entry picked into a reseeded round, so its later picks stand rather than being stranded and cleared', () => {
+    // AFC-7 withdrew before Wild Card game 1, and LL took its place against AFC-2.
+    const reseeded = nflPlayoff().map((match) => (match.matchNumber === 1 ? { ...match, awaySportEventParticipantId: 'LL' } : match));
+    const wildCard = [pick(1, 'AFC-7'), pick(2, 'AFC-3'), pick(3, 'AFC-5'), pick(4, 'NFC-2'), pick(5, 'NFC-3'), pick(6, 'NFC-4'), pick(7, 'AFC-7')];
+
+    const resolved = resolveBracketPicks(reseeded, wildCard, NFL_SEEDS, new Set(['AFC-7']));
+
+    expect(sidesOf(resolved, 7)).toEqual({ home: 'AFC-1', away: 'AFC-7' });
+    expect(ids(resolved.kept)).toEqual(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7']);
+    expect(resolved.stranded).toEqual([]);
+  });
+});
+
+describe('withdrawnRowIds — which field rows count as withdrawn after the draw (#704)', () => {
+  // T8 withdrew, and LL took its place in game 1.
+  const bracket = eightTeamBracket().map((match) => (match.matchNumber === 1 ? { ...match, awaySportEventParticipantId: 'LL' } : match));
+
+  it('counts a row inactive as WITHDRAWN that no game names any more, the one a replacement took the place of', () => {
+    expect(withdrawnRowIds([{ id: 'T8', isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN }], bracket)).toEqual(new Set(['T8']));
+  });
+
+  it('does not count a row made inactive in the field grid while a game still names it, so it stays in its game', () => {
+    expect(withdrawnRowIds([{ id: 'T1', isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN }], bracket)).toEqual(new Set());
+  });
+
+  it('does not count a row inactive for another reason, such as eliminated', () => {
+    expect(withdrawnRowIds([{ id: 'T8', isActive: false, inactiveReason: ParticipantInactiveReason.ELIMINATED }], bracket)).toEqual(new Set());
   });
 });
