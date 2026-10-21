@@ -91,7 +91,7 @@ export interface PredictionServiceDeps {
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
-  field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
+  field: Pick<SportEventParticipantRepository, 'findBySportEvent' | 'countDistinctParticipants'>;
   participants: Pick<ParticipantRepository, 'findByIds'>;
   predictions: ContestEntryMatchPredictionRepository;
   /** Each sport's definition, for what its pools offer (tie picks, #792); the sport registry unless given. */
@@ -580,8 +580,9 @@ export class PredictionService {
    * teams it picked in the other events it submitted, earlier or later (a later week can be picked
    * ahead), so no team is picked twice. In a playoff (#785) the event's rounds are weeks of their
    * own: a round after the one that put the entry out takes no pick. When teams can be picked
-   * again once every team is used (#787), only the week's own cycle counts, every team being the
-   * week's field.
+   * again once every team is used (#787), only the week's own cycle counts, and a cycle holds
+   * every team in any of the contest's weeks (#836): a week missing a postponed game's teams does
+   * not end a cycle early.
    */
   private async loadSeason(
     contest: Contest,
@@ -601,7 +602,7 @@ export class PredictionService {
     const usedParticipantIds = survivorTeamsUsedInCycle(
       entryWeeks.map((week) => (week.sportEventId !== sportEventId && !week.cancelled && week.submitted ? week.pickedParticipantId : null)),
       weekIndex,
-      reuseTeamsOnceAllUsed ? new Set(field.map((row) => row.participantId)).size : null,
+      reuseTeamsOnceAllUsed ? await this.deps.field.countDistinctParticipants(contest.sportEventIds) : null,
     );
     const ownWeeks = weeks.filter((week) => week.event.id === sportEventId);
     const first = ownWeeks.at(0);

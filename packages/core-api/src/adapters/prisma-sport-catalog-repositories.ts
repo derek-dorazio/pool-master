@@ -505,6 +505,15 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     return rows.map(toSportEventParticipant);
   }
 
+  async countDistinctParticipants(sportEventIds: readonly string[]): Promise<number> {
+    const rows = await this.prisma.sportEventParticipant.findMany({
+      where: { sportEventId: { in: [...sportEventIds] } },
+      distinct: ['participantId'],
+      select: { participantId: true },
+    });
+    return rows.length;
+  }
+
   async createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void> {
     await this.prisma.$transaction(rows.map((row) => this.prisma.sportEventParticipant.create({
       data: { sportEventId, participantId: row.participantId, ...fieldPatch(row) },

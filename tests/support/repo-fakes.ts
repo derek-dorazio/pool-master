@@ -298,6 +298,7 @@ export function fakeSportEventParticipantRepo(
   return {
     findById: one(),
     findBySportEvent: many(),
+    countDistinctParticipants: jest.fn().mockResolvedValue(0),
     createMany: nothing(),
     updateMany: nothing(),
     delete: nothing(),

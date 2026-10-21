@@ -360,7 +360,7 @@ describe('PredictionService — a survivor week', () => {
     expect(context.storedPicks('entry-alice')).not.toContain(g5.id);
   });
 
-  /** Week 3 down to its Bills-Raiders game: a league of two teams, so Alice's two picks are a whole cycle. */
+  /** Week 3 down to its Bills-Raiders game: a smaller field than the four teams the season has. */
   function twoTeamWeek3(context: ReturnType<typeof beforeWeek3>) {
     const { g6 } = context.gamesByNumber;
     context.games.matches.delete(g6.id);
@@ -371,9 +371,24 @@ describe('PredictionService — a survivor week', () => {
     }
   }
 
-  it('lets an entry that has used every team pick them again, each entry in its own cycle', async () => {
-    const context = beforeWeek3();
+  /**
+   * A league of two teams, Bills and Raiders: every week's field loses Chiefs and Jets, and Alice
+   * survives week 2 on the Raiders, so her two picks are a whole cycle.
+   */
+  function twoTeamLeague(context: ReturnType<typeof beforeWeek3>) {
+    const { g4 } = context.gamesByNumber;
+    context.play(g4, MatchSide.AWAY);
+    const prediction = expectDefined(context.games.predictions.get(`entry-alice:${g4.id}`));
+    context.games.predictions.set(`entry-alice:${g4.id}`, { ...prediction, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.sideOf(g4, 'Raiders') });
     twoTeamWeek3(context);
+    for (const row of [...context.games.field.values()]) {
+      if (row.participantId === context.team.Chiefs || row.participantId === context.team.Jets) context.games.field.delete(row.id);
+    }
+  }
+
+  it('lets an entry that has used every team in the league pick them again, each entry in its own cycle', async () => {
+    const context = beforeWeek3();
+    twoTeamLeague(context);
     const { g5 } = context.gamesByNumber;
     const view = await context.predictions.getGamePicks(context.input('Alice'));
     expect(view.survivor).toEqual({ eliminatedInWeek: null, usedParticipantIds: [] });
@@ -382,9 +397,19 @@ describe('PredictionService — a survivor week', () => {
     expect(context.storedPicks('entry-alice')).toContain(g5.id);
   });
 
+  it('counts every team in the contest\'s weeks, so a week with a smaller field (a postponed game) does not end the cycle early', async () => {
+    const context = beforeWeek3();
+    twoTeamWeek3(context);
+    const { g5 } = context.gamesByNumber;
+    const view = await context.predictions.getGamePicks(context.input('Alice'));
+    expect([...(view.survivor?.usedParticipantIds ?? [])].sort()).toEqual([context.team.Bills, context.team.Chiefs].sort());
+
+    await expectRefused(context.predictions.saveGamePicks({ ...context.input('Alice'), picks: [context.pickOf(g5, 'Bills')] }), 'PREDICTION_TEAM_ALREADY_USED', 409);
+  });
+
   it('refuses a team already used, even once every team is used, when teams can never be picked again', async () => {
     const context = beforeWeek3({ reuseTeamsOnceAllUsed: false });
-    twoTeamWeek3(context);
+    twoTeamLeague(context);
     const { g5 } = context.gamesByNumber;
     await expectRefused(context.predictions.saveGamePicks({ ...context.input('Alice'), picks: [context.pickOf(g5, 'Bills')] }), 'PREDICTION_TEAM_ALREADY_USED', 409);
   });
