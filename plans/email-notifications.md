@@ -202,7 +202,10 @@ overnight cutoffs were:
    and only when it would land between 11:00 pm and 6:00 am in the reader's own time zone. It
    then goes at 9:00 pm their time the evening before. The 48- and 24-hour reminders always
    send on time, since there is a full day left to read them. A reader with no time zone set
-   gets every reminder on time. Golf is the main case: before a 7:00 am Eastern Thursday
+   gets every reminder on time. "The reader's time zone" is the optional time zone on each
+   person's account (Profile, Preferences; `User.timezone`). Most people never fill it in, so
+   slice 1 fills it from the browser's own time zone at sign-in when it is empty, and the
+   person can still change it. Golf is the main case: before a 7:00 am Eastern Thursday
    tee-off, a reader on the US east coast would get the 3-hour reminder at 4:00 am, so theirs
    goes Wednesday at 9:00 pm. A reader in London gets it at 9:00 am, unchanged. An NFL
    Thursday 8:15 pm kickoff moves nobody in the Americas.
@@ -294,7 +297,7 @@ This catalog leans on the SES design for these, so they are listed for it, not d
 Each slice is one PR, opened in order, after the SES design's first slice lands.
 
 1. **Foundation.** Sent-email record and its idempotency key; a "notifications due" step in the
-   lifecycle scheduler sweep; per-category email preferences on the user with an Email settings
+   lifecycle scheduler sweep; per-category email preferences on the user; the account time zone filled from the browser at sign-in when empty with an Email settings
    section on the profile page and a one-click unsubscribe route. No new email yet.
 2. **Contest lifecycle.** D1 contest open, D2 reminders, E1 upgraded (all members, "good luck",
    event and rules summary instead of the entry list, leaderboard link), D3 to every owner.
