@@ -1,10 +1,10 @@
 /**
- * Pick'em (#716): pick the winner of every game of each week, or the team that covers when the
+ * Pick'em (#716): pick the winner of every game of each week, or a tie where the sport offers one (#792), or the team that covers when the
  * pool is scored against the spread (#720), straight up or ranked by confidence, with a guess of the week's last game's total points as the tiebreaker (#717). Each
  * pick locks, and is revealed, at its own game's kickoff; game-picks.ts holds the scoring.
  */
 
-import { PickEmMode, SelectionType, type ContestSelectionConfig } from '@poolmaster/shared/domain';
+import { PickEmMode, SelectionType, isTeamChoice, type ContestSelectionConfig } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../contests/entry-window';
 import { scoreGamePicks, weekTiebreakerGame, type GamePickScoring } from '../../scoring-families/head-to-head/game-picks';
 import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from './prediction-engine';
@@ -26,6 +26,7 @@ export const pickEmPredictionEngine: PredictionEngine = {
   pickWindow: PickWindow.UNTIL_MATCH_START,
   onePickPerRound: false,
   readsEarlierWeeks: false,
+  takesTiePicks: true,
 
   tiebreakerGame({ games, eventStart }) {
     return weekTiebreakerGame(games, eventStart);
@@ -36,10 +37,11 @@ export const pickEmPredictionEngine: PredictionEngine = {
       home: game.homeSportEventParticipantId,
       away: game.awaySportEventParticipantId,
     }]));
+    // A tie pick stands on any of the week's games; the service takes one only where the sport offers it.
     const stands = (prediction: (typeof predictions)[number]) => {
       const game = sides.get(prediction.sportEventMatchId);
-      return game !== undefined
-        && (prediction.sportEventParticipantId === game.home || prediction.sportEventParticipantId === game.away);
+      return game !== undefined && (!isTeamChoice(prediction)
+        || prediction.sportEventParticipantId === game.home || prediction.sportEventParticipantId === game.away);
     };
     return {
       sides,

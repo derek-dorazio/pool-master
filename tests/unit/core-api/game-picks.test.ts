@@ -3,7 +3,7 @@
  * week's tiebreaker game, and the ranking that breaks level points with the tiebreaker.
  */
 import { expect } from '@jest/globals';
-import { MatchSide, MatchStatus, PickEmMode, PickOutcome, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, PickEmMode, PickOutcome, PredictedResult, type SportEventMatch } from '@poolmaster/shared/domain';
 import { rankPredictionStandings } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/bracket-picks';
 import {
   gameTotalPoints,
@@ -48,6 +48,7 @@ const played = (matchNumber: number, winnerSide: MatchSide | null, homeScore: nu
 
 const pick = (matchNumber: number, side: 'home' | 'away', confidence: number | null = null): GamePick => ({
   sportEventMatchId: `game-${matchNumber}`,
+  predictedResult: PredictedResult.TEAM,
   sportEventParticipantId: `${side}-${matchNumber}`,
   confidence,
 });
@@ -71,6 +72,34 @@ describe('scoreGamePicks — a straight-up week', () => {
       ['game-3', { outcome: PickOutcome.BUSTED, points: 0 }],
       ['game-4', { outcome: PickOutcome.PENDING, points: null }],
     ]);
+  });
+});
+
+const tiePick = (matchNumber: number, confidence: number | null = null): GamePick => ({
+  sportEventMatchId: `game-${matchNumber}`,
+  predictedResult: PredictedResult.TIE,
+  sportEventParticipantId: null,
+  confidence,
+});
+
+describe('scoreGamePicks — tie picks (#792)', () => {
+  it('scores a tie pick correct on the level game, busted on the games a team won, and pending on the game still to play', () => {
+    const score = scoreGamePicks(WEEK, [tiePick(1), tiePick(2), tiePick(3), tiePick(4)], { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false });
+
+    expect(score).toMatchObject({ points: 1, maxPossiblePoints: 2, correctPickCount: 1, decidedPickCount: 3 });
+    expect([...score.picks]).toEqual([
+      ['game-1', { outcome: PickOutcome.BUSTED, points: 0 }],
+      ['game-2', { outcome: PickOutcome.BUSTED, points: 0 }],
+      ['game-3', { outcome: PickOutcome.CORRECT, points: 1 }],
+      ['game-4', { outcome: PickOutcome.PENDING, points: null }],
+    ]);
+  });
+
+  it('earns a correct tie pick its confidence value in a confidence week, as a team pick would', () => {
+    const score = scoreGamePicks(WEEK, [pick(1, 'home', 1), tiePick(3, 3), tiePick(4, 2)], { mode: PickEmMode.CONFIDENCE, againstTheSpread: false });
+
+    expect(score).toMatchObject({ points: 4, maxPossiblePoints: 6, correctPickCount: 2 });
+    expect(score.picks.get('game-3')).toEqual({ outcome: PickOutcome.CORRECT, points: 3 });
   });
 });
 

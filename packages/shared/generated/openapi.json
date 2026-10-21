@@ -25001,10 +25001,21 @@
                   "format": "uuid",
                   "description": "The game picked: one of the event's games."
                 },
-                "sportEventParticipantId": {
+                "predictedResult": {
                   "type": "string",
+                  "enum": [
+                    "TEAM",
+                    "TIE"
+                  ],
+                  "description": "What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE."
+                },
+                "sportEventParticipantId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
                   "format": "uuid",
-                  "description": "The team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it."
+                  "description": "With TEAM, the team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it. Null with TIE."
                 },
                 "confidence": {
                   "type": [
@@ -25017,6 +25028,7 @@
               },
               "required": [
                 "sportEventMatchId",
+                "predictedResult",
                 "sportEventParticipantId"
               ],
               "additionalProperties": false,
@@ -25588,6 +25600,10 @@
             "type": "boolean",
             "description": "Whether picks are scored against each game's spread: a pick names the team that covers. Only a pick'em pool can be."
           },
+          "tiePicksOffered": {
+            "type": "boolean",
+            "description": "Whether a pick may say the game ends level (#792): a pick'em pool in a sport that offers tie picks, a draw in soccer. False in a bracket or survivor pool."
+          },
           "survivor": {
             "type": [
               "object",
@@ -25847,10 +25863,21 @@
                     "null"
                   ],
                   "properties": {
-                    "sportEventParticipantId": {
+                    "predictedResult": {
                       "type": "string",
+                      "enum": [
+                        "TEAM",
+                        "TIE"
+                      ],
+                      "description": "What the pick says happens: TEAM, its team wins; TIE, the game ends level (#792)."
+                    },
+                    "sportEventParticipantId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
                       "format": "uuid",
-                      "description": "The team picked to win."
+                      "description": "The team picked to win; null for a TIE pick."
                     },
                     "confidence": {
                       "type": [
@@ -25875,7 +25902,7 @@
                         "PENDING",
                         null
                       ],
-                      "description": "How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING."
+                      "description": "How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), or for a TIE pick once the game ended level, BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING."
                     },
                     "points": {
                       "type": [
@@ -25886,6 +25913,7 @@
                     }
                   },
                   "required": [
+                    "predictedResult",
                     "sportEventParticipantId",
                     "confidence",
                     "pickedAt",
@@ -25927,6 +25955,7 @@
           "selectionType",
           "mode",
           "againstTheSpread",
+          "tiePicksOffered",
           "survivor",
           "status",
           "submittedAt",
@@ -31402,7 +31431,7 @@
               "AWAY",
               null
             ],
-            "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has."
+            "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be."
           },
           "homeScore": {
             "type": [
@@ -31594,7 +31623,7 @@
                     "AWAY",
                     null
                   ],
-                  "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has."
+                  "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be."
                 },
                 "homeScore": {
                   "type": [
@@ -31793,7 +31822,7 @@
                   "AWAY",
                   null
                 ],
-                "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has."
+                "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be."
               },
               "homeScore": {
                 "type": [
@@ -32086,12 +32115,16 @@
         "type": "object",
         "properties": {
           "winnerSide": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
               "HOME",
-              "AWAY"
+              "AWAY",
+              null
             ],
-            "description": "The side that won."
+            "description": "The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie."
           },
           "homeScore": {
             "type": [
@@ -32132,7 +32165,7 @@
           "awayScore"
         ],
         "additionalProperties": false,
-        "description": "A match's result: who won, and both scores or neither. The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else."
+        "description": "A match's result: who won, or a tie, and both scores or neither. The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores."
       },
       "RecordSportEventMatchPeriodScoreRequest": {
         "type": "object",
@@ -32531,7 +32564,7 @@
                   "AWAY",
                   null
                 ],
-                "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has."
+                "description": "Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be."
               },
               "homeScore": {
                 "type": [
@@ -39134,7 +39167,7 @@
             }
           },
           "422": {
-            "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).",
+            "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).",
             "content": {
               "application/json": {
                 "schema": {
@@ -39534,7 +39567,7 @@
             }
           },
           "422": {
-            "description": "SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules.",
+            "description": "SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules. CONTEST_SPREAD_NOT_OFFERED — a pick'em pool against the spread in a sport whose pools have no spread (#792).",
             "content": {
               "application/json": {
                 "schema": {
@@ -43675,7 +43708,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score, or shoot-out scores on a match that is not a level bracket match of such a sport. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
+        "description": "Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score, a tie without level scores, a tie in a bracket match, or shoot-out scores on a match that is not a level bracket match of such a sport. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -46931,7 +46964,7 @@
         "tags": [
           "Selections"
         ],
-        "description": "Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, and replaces the entry's pick on that game. In a bracket (#721) a pick must name a team the entry's picks put in the game (picks earlier in the same request count), and a later pick that no longer follows from them is cleared; the request may also set the event's `tiebreakerValue`, the total points of its tiebreaker game, a bracket's final or a week's last game (#717; 409 CONTEST_ENTRY_LOCKED once that game's pick has locked). A bracket's every pick locks at the event's start. Only a member of the entry's squad may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team the game does not offer the entry; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. In a survivor contest (#719): 409 PREDICTION_ONE_PICK_REQUIRED unless the week holds exactly one pick; 409 PREDICTION_TEAM_ALREADY_USED for a team the entry picked in another submitted week; 409 PREDICTION_ENTRY_ELIMINATED once the entry is out. On a playoff bracket (#785) each round is a week: the event is submitted once with its first round's one pick, each later round holds at most one pick (a new one replaces the entry's pick in that round), no team is picked in two rounds, and an entry out in one round picks no later round. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
+        "description": "Saves the caller's picks on one event's games, all or none, and returns the event's games with the entry's picks (#716). Each pick names a game and the team picked to win, or in a pick'em pool whose sport offers it (`tiePicksOffered`) a tie (#792), and replaces the entry's pick on that game. In a bracket (#721) a pick must name a team the entry's picks put in the game (picks earlier in the same request count), and a later pick that no longer follows from them is cleared; the request may also set the event's `tiebreakerValue`, the total points of its tiebreaker game, a bracket's final or a week's last game (#717; 409 CONTEST_ENTRY_LOCKED once that game's pick has locked). A bracket's every pick locks at the event's start. Only a member of the entry's squad may save: 403 ENTRY_ACCESS_DENIED otherwise. Refused with 409 CONTEST_ENTRY_LOCKED unless the contest is OPEN or ACTIVE, and once the event's first game has started for a week still in draft (it doesn't count); 404 PREDICTION_GAME_NOT_FOUND for a game not in the event; 409 PREDICTION_GAME_STARTED once a game has kicked off; 400 PREDICTION_TEAM_NOT_IN_GAME for a team the game does not offer the entry; 400 PREDICTION_PICK_INVALID for a TEAM pick without its team or a TIE pick with one; 422 PREDICTION_TIE_NOT_OFFERED for a tie pick in a pool that takes none; 409 PREDICTION_CONFIDENCE_INVALID for a confidence value in a straight-up pool, outside 1 to the week's game count, or, after the first kickoff, leaving a submitted week's values repeated. A value may repeat until the week is submitted. Before the first kickoff, a change that leaves a submitted week's confidence values invalid sends it back to DRAFT. In a survivor contest (#719): 409 PREDICTION_ONE_PICK_REQUIRED unless the week holds exactly one pick; 409 PREDICTION_TEAM_ALREADY_USED for a team the entry picked in another submitted week; 409 PREDICTION_ENTRY_ELIMINATED once the entry is out. On a playoff bracket (#785) each round is a week: the event is submitted once with its first round's one pick, each later round holds at most one pick (a new one replaces the entry's pick in that round), no team is picked in two rounds, and an entry out in one round picks no later round. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.",
         "requestBody": {
           "required": true,
           "content": {

@@ -16,6 +16,7 @@ import {
   MatchSide,
   MatchStatus,
   PickEmMode,
+  PredictedResult,
   SelectionType,
   SportEventStatus,
   type ContestEntry,
@@ -82,6 +83,7 @@ function setup() {
       for (const [game, side] of week.picks) {
         games.predictions.set(`${entry.id}:${game.id}`, {
           id: `prediction-${entry.id}-${game.id}`, contestEntryId: entry.id, sportEventMatchId: game.id,
+          predictedResult: PredictedResult.TEAM,
           sportEventParticipantId: expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId),
           confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
         });

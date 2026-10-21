@@ -4,8 +4,10 @@
  */
 
 import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
-import type { GamePickGameDto, GamePicksResponse, SaveGamePicksRequest } from '@poolmaster/shared/dto';
+import { PredictedResult, type PredictedChoice } from '@poolmaster/shared/domain';
+import type { GamePickGameDto, GamePickWrite, GamePicksResponse, SaveGamePicksRequest } from '@poolmaster/shared/dto';
 import type { GamePickGame, GamePicksView } from '../modules/selections/prediction-service';
+import { selectionErrors } from '../modules/selections/selection-errors';
 
 function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
   const { match, pick, pickScore } = game;
@@ -27,6 +29,7 @@ function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
     pick: pick === null
       ? null
       : {
+        predictedResult: pick.predictedResult,
         sportEventParticipantId: pick.sportEventParticipantId,
         confidence: pick.confidence,
         pickedAt: pick.pickedAt.toISOString(),
@@ -45,6 +48,7 @@ export function toGamePicksResponse(view: GamePicksView): GamePicksResponse {
     selectionType: view.selectionType,
     mode: view.mode,
     againstTheSpread: view.againstTheSpread,
+    tiePicksOffered: view.tiePicksOffered,
     survivor: view.survivor,
     status: view.status,
     submittedAt: view.submittedAt?.toISOString() ?? null,
@@ -60,11 +64,26 @@ export function toGamePicksResponse(view: GamePicksView): GamePicksResponse {
   };
 }
 
+/**
+ * What one requested pick says: its team, or a tie (#792). The request schema's refinement is not
+ * part of its published JSON schema, so the pairing is checked here: 400 PREDICTION_PICK_INVALID for
+ * a TEAM pick without its team or a TIE pick with one.
+ */
+function toChoice(pick: GamePickWrite): PredictedChoice {
+  if (pick.predictedResult === PredictedResult.TIE && pick.sportEventParticipantId === null) {
+    return { predictedResult: PredictedResult.TIE, sportEventParticipantId: null };
+  }
+  if (pick.predictedResult === PredictedResult.TEAM && pick.sportEventParticipantId !== null) {
+    return { predictedResult: PredictedResult.TEAM, sportEventParticipantId: pick.sportEventParticipantId };
+  }
+  throw selectionErrors.pickInvalid(pick.sportEventMatchId);
+}
+
 /** The picks a save request names, with an omitted confidence as none. */
 export function toGamePickWrites(request: SaveGamePicksRequest): ContestEntryMatchPredictionWrite[] {
   return request.picks.map((pick) => ({
     sportEventMatchId: pick.sportEventMatchId,
-    sportEventParticipantId: pick.sportEventParticipantId,
+    ...toChoice(pick),
     confidence: pick.confidence ?? null,
   }));
 }

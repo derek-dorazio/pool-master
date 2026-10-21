@@ -276,6 +276,22 @@ export const selectionErrors = {
       400,
     ),
 
+  /** A tie pick only in a pick'em pool whose sport offers one (#792): a draw in soccer. */
+  tieNotOffered: (sportEventMatchId: string) =>
+    new SelectionError(
+      `This pool takes no tie pick on game ${sportEventMatchId}: pick a team to win`,
+      'PREDICTION_TIE_NOT_OFFERED',
+      422,
+    ),
+
+  /** A TEAM pick names its team and a TIE pick names none (#792). */
+  pickInvalid: (sportEventMatchId: string) =>
+    new SelectionError(
+      `The pick on game ${sportEventMatchId} must name a team with TEAM and no team with TIE`,
+      'PREDICTION_PICK_INVALID',
+      400,
+    ),
+
   /** Each game's pick locks at its kickoff (#716). */
   gameStarted: (sportEventMatchId: string) =>
     new SelectionError(

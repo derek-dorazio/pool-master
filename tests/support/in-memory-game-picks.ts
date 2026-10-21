@@ -10,6 +10,7 @@
  */
 import type {
   ContestEntryMatchPredictionRepository,
+  ContestEntrySeasonPrediction,
   ParticipantRepository,
   SportEventMatchRepository,
   SportEventParticipantRepository,
@@ -18,6 +19,7 @@ import {
   ContestEntryStatus,
   MatchStatus,
   ParticipantStatus,
+  PredictedResult,
   type ContestEntryMatchPrediction,
   type Participant,
   type SportEventMatch,
@@ -188,11 +190,12 @@ export class InMemoryGamePicks {
       findByEntriesAndEvents: async (contestEntryIds, sportEventIds) => [...this.predictions.values()]
         .filter((row) => contestEntryIds.includes(row.contestEntryId)
           && sportEventIds.some((sportEventId) => this.inEvent(row, sportEventId)))
-        .map((row) => ({
-          ...row,
-          sportEventId: expectDefined(this.matches.get(row.sportEventMatchId)).sportEventId,
-          participantId: expectDefined(this.field.get(row.sportEventParticipantId)).participantId,
-        })),
+        .map((row): ContestEntrySeasonPrediction => {
+          const sportEventId = expectDefined(this.matches.get(row.sportEventMatchId)).sportEventId;
+          return row.predictedResult === PredictedResult.TIE
+            ? { ...row, sportEventId, participantId: null }
+            : { ...row, sportEventId, participantId: expectDefined(this.field.get(row.sportEventParticipantId)).participantId };
+        }),
       hasAnyOnMatch: async (sportEventMatchId) => [...this.predictions.values()].some((row) => row.sportEventMatchId === sportEventMatchId),
       save: async ({ contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at: when }) => {
         if (saves.some((save) => save.confidence !== null && save.confidence < 1)) {

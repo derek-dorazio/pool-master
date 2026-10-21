@@ -72,6 +72,14 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     }
   });
 
+  it('says what its pick\'em pools can be exactly when it offers pick\'em (#792)', () => {
+    expect(definition.pickEm !== undefined).toBe(definition.selectionTypes.includes(SelectionType.PICK_EM));
+  });
+
+  it('names a game that ends level exactly when it plays matches, so results and picks can call a tie by its word (#792)', () => {
+    expect((definition.vocabulary.tie ?? '').trim() !== '').toBe(definition.scoringFamily === ScoringFamily.HEAD_TO_HEAD);
+  });
+
   it('has a name and every vocabulary word filled in, and an eliminated word that is either absent or filled in', () => {
     const { participant, event, sportLeague, round, eliminated, withdrawn, eventStart } = definition.vocabulary;
     for (const word of [
@@ -320,6 +328,11 @@ describe('American football', () => {
   it('calls the event the playoffs and the moment entries close the first kickoff', () => {
     expect(americanFootball.vocabulary.event).toEqual({ one: 'playoffs', many: 'playoffs' });
     expect(americanFootball.vocabulary.eventStart).toBe('first kickoff');
+  });
+
+  it('offers pick\'em pools against the spread but no tie pick, and calls a game that ends level a Tie (#792)', () => {
+    expect(americanFootball.pickEm).toEqual({ tiePicks: false, againstTheSpread: true });
+    expect(americanFootball.vocabulary.tie).toBe('Tie');
   });
 });
 

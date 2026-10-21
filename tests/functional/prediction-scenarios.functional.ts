@@ -17,7 +17,7 @@ import {
   submitGamePicks,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestEntryStatus, ContestFormat, ContestStatus, MatchSide, PickEmMode, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestFormat, ContestStatus, MatchSide, PickEmMode, PredictedResult, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   BracketLeaderboardResponseSchema,
   GamePicksResponseSchema,
@@ -217,7 +217,7 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
             const picks = games.map((game) => {
               const sides = [game.predictedHome, game.predictedAway].filter((team): team is Team => team !== null);
               expect(sides).toHaveLength(2);
-              return { sportEventMatchId: game.sportEventMatchId, sportEventParticipantId: choose(roundNumber, sides).sportEventParticipantId, confidence: null };
+              return { sportEventMatchId: game.sportEventMatchId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: choose(roundNumber, sides).sportEventParticipantId, confidence: null };
             });
             const saved = await saveGamePicks({ client: entrant.client, path: path(entrant.entryId), body: { picks, ...(roundNumber === played.rounds ? { tiebreakerValue } : {}) } });
             expect(saved.error).toBeUndefined();
@@ -236,7 +236,7 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
         const board = expectMatchesSchema(BracketLeaderboardResponseSchema, (await getBracketLeaderboard({ client: other.client, path: { contestId } })).data);
         const perfectPoints = roundValues.reduce((sum, value, index) => sum + value * expectDefined(played.winners.get(index + 1)).size, 0);
         const rivalPoints = rivalBracket.games.reduce((sum, game) => {
-          const pickId = expectDefined(game.pick, `game ${game.matchNumber}'s pick`).sportEventParticipantId;
+          const pickId = expectDefined(expectDefined(game.pick, `game ${game.matchNumber}'s pick`).sportEventParticipantId, `game ${game.matchNumber}'s picked team`);
           return sum + (won(game.roundNumber, pickId) ? roundValues[game.roundNumber - 1] : 0);
         }, 0);
         expect(board.finalTotalPoints).toBe(played.finalTotal);
@@ -257,7 +257,7 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
         const teams = games.flatMap((match) => [match.homeSportEventParticipantId, match.awaySportEventParticipantId]).filter((id): id is string => id !== null);
         const team = choose(teams);
         const game = expectDefined(games.find((match) => match.homeSportEventParticipantId === team || match.awaySportEventParticipantId === team));
-        const saved = await saveGamePicks({ client: entrant.client, path: path(entrant.entryId), body: { picks: [{ sportEventMatchId: game.id, sportEventParticipantId: team }] } });
+        const saved = await saveGamePicks({ client: entrant.client, path: path(entrant.entryId), body: { picks: [{ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team }] } });
         expect(saved.error).toBeUndefined();
         used.add(team);
       };
@@ -334,7 +334,7 @@ describe('SDK Functional: a pick\'em pool on the NFL weeks test seed', () => {
       const path = { contestId, entryId, sportEventId: eventId };
       const games = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client, path })).data).games;
       expect(games).toHaveLength(matches.length);
-      const picks = games.map((game) => ({ sportEventMatchId: game.sportEventMatchId, sportEventParticipantId: choose(game), confidence: null }));
+      const picks = games.map((game) => ({ sportEventMatchId: game.sportEventMatchId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: choose(game), confidence: null }));
       expect((await saveGamePicks({ client, path, body: { picks, tiebreakerValue } })).error).toBeUndefined();
       expect((await submitGamePicks({ client, path })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
       return entryId;

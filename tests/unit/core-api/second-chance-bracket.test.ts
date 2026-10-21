@@ -20,6 +20,7 @@ import {
   MatchSide,
   MatchStatus,
   PickOutcome,
+  PredictedResult,
   SelectionType,
   SportEventStatus,
   UpsetBonusRule,
@@ -358,6 +359,7 @@ describe('a second-chance bracket — its leaderboard and standings', () => {
     // A pick on game 1, which T1 won: a full bracket would score it, a second-chance one must not.
     context.games.predictions.set('entry-alice:m1', {
       id: 'prediction-entry-alice-m1', contestEntryId: 'entry-alice', sportEventMatchId: 'm1',
+      predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: 'T1', confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
     });
     context.play(new Map<number, GameResult>([

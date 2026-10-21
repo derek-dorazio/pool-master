@@ -81,6 +81,13 @@ Two readings of this chain have both been held at once, so it is worth stating p
   Every week needs one to submit. A roster contest's tiebreaker stays on the `ContestEntry`.
 - **A pick'em pick scores by the pool's mode** (#717), not by a scoring definition: 1 point
   straight up, its confidence value in a confidence pool, nothing for a loss or a tie.
+- **A pick'em pick can be a tie** (#792) where the sport says its games can end level
+  (`pickEm.tiePicks` on the sport definition): `predictedResult` `TIE` with no team, against
+  `TEAM` with one. It is correct when the game ends level, and scores as a correct team pick
+  does. The screen calls it by the sport's word (`vocabulary.tie`: "Draw" in soccer, "Tie"
+  elsewhere); the code term is always TIE. Only pick'em offers it: a survivor or bracket pick is
+  always a team, and a survivor pick on a game that ends level is out. Only a game of a week can
+  end level; a bracket match always has a winner.
 - **A pool against the spread scores the team that covers** (`againstTheSpread`, #720), in
   either mode. Each game carries its spread from the home side (`homeSpread`, "Chiefs -3.5"); a
   team covers when its score plus its spread beats the other team's. A game landing exactly on

@@ -7,6 +7,7 @@
  * until they are rebuilt or removed.
  */
 
+import type { PredictedChoice } from './predicted-choice';
 import type {
   AuthProvider,
   ContestEntryStatus,
@@ -284,18 +285,16 @@ export interface ContestEntryPick extends DomainEntity {
 }
 
 /**
- * A prediction contest entry's pick of one game (#716): the team it says wins, and in a
- * confidence pool the value it gives that pick. One per entry per game.
+ * A prediction contest entry's pick of one game (#716): the team it says wins, or a tie (#792),
+ * and in a confidence pool the value it gives that pick. One per entry per game.
  */
-export interface ContestEntryMatchPrediction extends DomainEntity {
+export type ContestEntryMatchPrediction = DomainEntity & PredictedChoice & {
   contestEntryId: string;
   sportEventMatchId: string;
-  /** The field row of the team picked to win. */
-  sportEventParticipantId: string;
   /** Null in a straight-up pool, and in a confidence pool until the entry gives one. */
   confidence: number | null;
   pickedAt: Date;
-}
+};
 
 // --- Payout Configuration ---
 

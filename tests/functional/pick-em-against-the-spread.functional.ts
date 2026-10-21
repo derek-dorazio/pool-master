@@ -32,6 +32,7 @@ import {
   ParticipantStandingStatus,
   PickEmMode,
   PickOutcome,
+  PredictedResult,
   SelectionType,
   Sport,
   findSportRow,
@@ -189,6 +190,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     const game = (matchNumber: number) => expectDefined(games.find((match) => match.matchNumber === matchNumber), `game ${matchNumber}`);
     const pick = (matchNumber: number, side: Side) => ({
       sportEventMatchId: game(matchNumber).id,
+      predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(side === 'home' ? game(matchNumber).homeSportEventParticipantId : game(matchNumber).awaySportEventParticipantId),
     });
 

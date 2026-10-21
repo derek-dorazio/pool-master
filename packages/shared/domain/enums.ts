@@ -259,6 +259,17 @@ export const PickOutcome = {
 export type PickOutcome = (typeof PickOutcome)[keyof typeof PickOutcome];
 
 /**
+ * What one game pick says happens (#792). TEAM: the team it names wins. TIE: the game ends level,
+ * a draw in soccer. Only a pick'em pool on a sport that offers tie picks takes a TIE pick
+ * (`SportPickEm.tiePicks`); a bracket and survivor pick always names a team.
+ */
+export const PredictedResult = {
+  TEAM: 'TEAM',
+  TIE: 'TIE',
+} as const;
+export type PredictedResult = (typeof PredictedResult)[keyof typeof PredictedResult];
+
+/**
  * How a survivor entry's week went (#719). SURVIVED: its team won, or its game was cancelled.
  * ELIMINATED: its team lost or tied, or the week started with no submitted pick. PENDING: its
  * game is still to be decided.

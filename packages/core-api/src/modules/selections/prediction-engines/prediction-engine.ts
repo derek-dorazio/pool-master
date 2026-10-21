@@ -12,11 +12,12 @@
 import type {
   ContestScoringSettings,
   ContestSelectionConfig,
+  PredictedChoice,
   PredictionSelectionType,
   SportEventMatch,
 } from '@poolmaster/shared/domain';
 import type { PickWindow } from '../../contests/entry-window';
-import type { BracketScore, ResolvedBracket } from '../../scoring-families/head-to-head/bracket-picks';
+import type { BracketScore, PredictedSides } from '../../scoring-families/head-to-head/bracket-picks';
 
 /** What stops a week's picks being submitted. */
 export const PredictionIssueKind = {
@@ -64,15 +65,20 @@ export interface PredictionSeason {
   firstWeekNumber: number;
 }
 
-/** One pick as the week's rules read it. */
-export interface WeekPrediction {
+/** One pick as the week's rules read it: a team, or a tie (#792). */
+export type WeekPrediction = PredictedChoice & {
   sportEventMatchId: string;
-  sportEventParticipantId: string;
   confidence: number | null;
-}
+};
 
 /** Each game's teams the entry may pick, by match id, and which of its picks stand. */
-export type ResolvedPicks<Pick extends WeekPrediction> = ResolvedBracket<Pick>;
+export interface ResolvedPicks<Pick extends WeekPrediction> {
+  sides: Map<string, PredictedSides>;
+  /** The picks that stand. */
+  kept: Pick[];
+  /** The picks that do not: a team its game does not offer the entry, or a tie where the engine takes none. */
+  stranded: Pick[];
+}
 
 /** How an entry's picks score against the results so far: its points and each pick's outcome. */
 export type PicksScore = BracketScore;
@@ -85,6 +91,11 @@ export interface PredictionEngine {
   readonly onePickPerRound: boolean;
   /** Whether the week's rules read the entry's earlier weeks of the contest (survivor's used teams and elimination). */
   readonly readsEarlierWeeks: boolean;
+  /**
+   * Whether a pick may say a game ends level (#792): pick'em, where the sport offers tie picks
+   * (`SportPickEm.tiePicks`). A bracket and a survivor pick always name a team.
+   */
+  readonly takesTiePicks: boolean;
 
   /**
    * The game whose total points the entry's tiebreaker guesses (#717): a bracket's final, a week's

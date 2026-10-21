@@ -61,6 +61,7 @@ function openingGame(matchNumber: number, regionLabel: string, home: Team, away:
 /** The pick a game holds: its team, still pending until the games are played. */
 export function gamePick(picked: Team, overrides: Partial<NonNullable<Game['pick']>> = {}): NonNullable<Game['pick']> {
   return {
+    predictedResult: 'TEAM',
     sportEventParticipantId: picked.sportEventParticipantId,
     confidence: null,
     pickedAt: '2099-03-01T12:00:00.000Z',
@@ -129,6 +130,7 @@ export function gamePicksFixture(overrides: Partial<GamePicksResponse> = {}): Ga
     selectionType: 'BRACKET',
     mode: null,
     againstTheSpread: false,
+    tiePicksOffered: false,
     survivor: null,
     status: 'DRAFT',
     submittedAt: null,

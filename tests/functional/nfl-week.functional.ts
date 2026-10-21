@@ -48,7 +48,8 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 // An NFL regular-season week end to end over HTTP (#715). The week is its own event of one round,
 // its field the eight teams playing, and its four games link nowhere: they form no bracket, even
 // in a league that reseeds its playoff bracket. An admin loads the games, releases the week,
-// cancels the game that is postponed, enters the other three results and completes the week. A
+// cancels the game that is postponed, enters the other three results (one first as a tie, #792)
+// and completes the week. A
 // contest scored by knockout round points is refused on it, because no team goes a round further.
 // The QA test seed of the 2025 season's first weeks loads a week the same way, played.
 //
@@ -98,7 +99,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: an NFL regular-season week (#715)', () => {
-  it('loads a week whose games link nowhere, releases it, cancels its postponed game, completes it on the other three results, and refuses knockout round points on it', async () => {
+  it('loads a week whose games link nowhere, releases it, cancels its postponed game, takes a tie on a game, completes it on the other three results, and refuses knockout round points on it', async () => {
     const db = getFunctionalPrisma();
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
@@ -201,6 +202,15 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
     const billsWin = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 1 }, body: { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 20 } });
     expect([billsWin.error, billsWin.response.status]).toEqual([undefined, 200]);
+    // A game of a week can end in a tie (#792): no winner, and both scores, level. Corrected here
+    // to the Raiders' win.
+    expectFunctionalError(
+      await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: null, homeScore: 17, awayScore: 24 } }),
+      { status: 422, code: 'MATCH_RESULT_INVALID' },
+    );
+    const tie = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: null, homeScore: 20, awayScore: 20 } });
+    expect(expectMatchesSchema(SportEventBracketResponseSchema, tie.data).matches.filter((game) => game.matchNumber === 2)
+      .map((game) => [game.status, game.winnerSide, game.homeScore, game.awayScore])).toEqual([[MatchStatus.COMPLETED, null, 20, 20]]);
     expect((await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 17, awayScore: 24 } })).response.status).toBe(200);
     const packersWin = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 3 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } });
     expect(expectMatchesSchema(SportEventBracketResponseSchema, packersWin.data).matches.map((game) => [game.matchNumber, game.status, game.winnerSide]))

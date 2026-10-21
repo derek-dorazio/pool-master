@@ -7,6 +7,7 @@ import {
   MatchSide,
   MatchStatus,
   PickEmMode,
+  PredictedResult,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -163,6 +164,7 @@ async function submitHomePicks(entryId: string, sportEventId: string, games: rea
     sportEventId,
     saves: games.map((game) => ({
       sportEventMatchId: game.id,
+      predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(game.homeSportEventParticipantId),
       confidence: null,
     })),

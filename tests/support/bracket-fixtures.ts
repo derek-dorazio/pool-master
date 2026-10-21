@@ -9,10 +9,12 @@
 import {
   MatchSide,
   MatchStatus,
+  PredictedResult,
   parseContestScoringSettings,
   type KnockoutRoundPointsSettings,
   type ParticipantContestScoringRule,
   type SportEventMatch,
+  type TeamChoice,
 } from '@poolmaster/shared/domain';
 
 const T0 = new Date('2027-01-01T00:00:00.000Z');
@@ -145,8 +147,8 @@ export function withResults(bracket: readonly SportEventMatch[], results: Readon
 }
 
 /** One bracket pick: the team (field row id) an entry says wins game `m<matchNumber>`. */
-export function bracketPick(matchNumber: number, team: string): { sportEventMatchId: string; sportEventParticipantId: string } {
-  return { sportEventMatchId: `m${matchNumber}`, sportEventParticipantId: team };
+export function bracketPick(matchNumber: number, team: string): { sportEventMatchId: string } & TeamChoice {
+  return { sportEventMatchId: `m${matchNumber}`, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team };
 }
 
 /** A contest configuration's knockout round-points rule, read back as the adapter reads it. */

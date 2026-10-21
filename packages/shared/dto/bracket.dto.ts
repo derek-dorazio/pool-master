@@ -30,7 +30,7 @@ export const SportEventMatchDtoSchema = z.object({
   isNeutralSite: z.boolean().describe('True when neither side is at home: screens then say "vs" rather than "@".'),
   scheduledDate: z.string().datetime().nullable().describe('Tip-off or kickoff; null until it is announced.'),
   status: MatchStatusDtoSchema,
-  winnerSide: MatchSideDtoSchema.nullable().describe('Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has.'),
+  winnerSide: MatchSideDtoSchema.nullable().describe('Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.'),
   homeScore: z.number().int().nullable().describe('The home side\'s score; in a series, games won.'),
   awayScore: z.number().int().nullable().describe('The away side\'s score; in a series, games won.'),
   homeShootoutScore: z.number().int().nullable().describe('The home side\'s kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side\'s when there was none. Not part of the match score.'),
@@ -88,12 +88,12 @@ export const FillPlayInSlotRequestSchema = z.object({
 export type FillPlayInSlotRequest = z.infer<typeof FillPlayInSlotRequestSchema>;
 
 export const RecordSportEventMatchResultRequestSchema = z.object({
-  winnerSide: MatchSideDtoSchema.describe('The side that won.'),
+  winnerSide: MatchSideDtoSchema.nullable().describe('The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.'),
   homeScore: z.number().int().min(0).nullable().describe('The home side\'s score (games won, for a series), or null with the away score null too.'),
   awayScore: z.number().int().min(0).nullable().describe('The away side\'s score, or null with the home score null too.'),
   homeShootoutScore: z.number().int().min(0).nullable().optional().describe('The home side\'s kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the away side\'s for none.'),
   awayShootoutScore: z.number().int().min(0).nullable().optional().describe('The away side\'s kicks scored in a shoot-out; omitted or null with the home side\'s.'),
-}).describe('A match\'s result: who won, and both scores or neither. The winner\'s score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner\'s shoot-out score is the higher. Shoot-out scores are refused anywhere else.');
+}).describe('A match\'s result: who won, or a tie, and both scores or neither. The winner\'s score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner\'s shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.');
 export type RecordSportEventMatchResultRequest = z.infer<typeof RecordSportEventMatchResultRequestSchema>;
 
 export const RecordSportEventMatchPeriodScoreRequestSchema = z.object({

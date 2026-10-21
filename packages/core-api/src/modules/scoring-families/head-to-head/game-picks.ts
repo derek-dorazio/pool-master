@@ -4,8 +4,10 @@
  *
  * - **A correct pick** names the game's winner. It earns 1 point in a straight-up pool, and its
  *   confidence value in a confidence pool.
- * - **A pick on a lost game, or on a tie,** earns nothing. A tie has no winner, so every pick on it
- *   is wrong (an NFL tie scores 0).
+ * - **A pick on a lost game, or a team pick on a tie,** earns nothing. A tie has no winner, so every
+ *   team pick on it is wrong (an NFL tie scores 0).
+ * - **A tie pick** (#792), in a sport that offers one (soccer's draw), is correct when the game ends
+ *   level and wrong when either team wins. It is worth what a team pick is.
  * - **Against the spread** (#720) a correct pick names the team that covers: the home team's
  *   score plus its spread beats the away team's. A game that lands exactly on the spread is a
  *   push, and every pick on it earns nothing, as does a game completed without its scores, which
@@ -23,19 +25,31 @@ import {
   MatchStatus,
   PickEmMode,
   PickOutcome,
+  PredictedResult,
+  type PredictedChoice,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
-import type { BracketPick, BracketScore, ScoredBracketPick } from './bracket-picks';
+import type { BracketScore, ScoredBracketPick } from './bracket-picks';
 
-/** One pick'em pick: the team an entry says wins one game, with its confidence value in a confidence pool. */
-export interface GamePick extends BracketPick {
+/**
+ * One pick'em pick: the team an entry says wins one game, or a tie (#792), with its confidence
+ * value in a confidence pool.
+ */
+export type GamePick = PredictedChoice & {
+  sportEventMatchId: string;
   confidence: number | null;
-}
+};
 
-/** The team a completed game's result names the winner of; null for a tie, or a game still to be decided. */
-function winnerOf(game: SportEventMatch): string | null {
-  if (game.status !== MatchStatus.COMPLETED || game.winnerSide === null) return null;
-  return game.winnerSide === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;
+/**
+ * Whether a completed game's result is what the pick says: its team won, or for a tie pick, the
+ * game ended level. False for a game still to be decided.
+ */
+function pickCameTrue(game: SportEventMatch, pick: GamePick): boolean {
+  if (game.status !== MatchStatus.COMPLETED) return false;
+  if (pick.predictedResult === PredictedResult.TIE) return game.winnerSide === null;
+  if (game.winnerSide === null) return false;
+  const winner = game.winnerSide === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;
+  return winner === pick.sportEventParticipantId;
 }
 
 /** How a pick'em pool scores its picks: weighted by its mode, and against the spread or straight up. */
@@ -80,13 +94,15 @@ export function scoreGamePicks(
     const game = gamesById.get(pick.sportEventMatchId);
     if (!game) continue;
     const value = pickValue(pick, mode);
-    const right = againstTheSpread ? coverOf(game) : winnerOf(game);
+    // A sport with tie picks has no spread pools (contest setup refuses them), so a pick against
+    // the spread always names a team.
+    const cover = againstTheSpread ? coverOf(game) : undefined;
     if (game.status !== MatchStatus.COMPLETED) {
       scored.set(game.id, { outcome: PickOutcome.PENDING, points: null });
       pendingPoints += value;
-    } else if (againstTheSpread && right === null) {
+    } else if (againstTheSpread && cover === null) {
       scored.set(game.id, { outcome: PickOutcome.PUSH, points: 0 });
-    } else if (right === pick.sportEventParticipantId) {
+    } else if (againstTheSpread ? cover === pick.sportEventParticipantId : pickCameTrue(game, pick)) {
       scored.set(game.id, { outcome: PickOutcome.CORRECT, points: value });
       points += value;
       correctPickCount += 1;
