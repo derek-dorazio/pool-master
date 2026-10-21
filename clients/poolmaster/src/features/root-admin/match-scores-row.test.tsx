@@ -10,8 +10,7 @@ import { MatchScoresRow } from './match-scores-row';
 import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
 
 // MSW hands path parameters over as strings, so a match number reads '1'.
-// #791: a bracket match's final score in a sport that holds shoot-outs. No sport does until
-// soccer, so the context carries a test-only shoot-out ("pens").
+// #791: a soccer bracket match's final score, level after extra time and settled on penalties.
 
 const { recordEventMatchResultMock, recordEventMatchPeriodScoreMock, clearEventMatchPeriodScoreMock, mockLogger } = vi.hoisted(() => {
   const logger = {
@@ -74,10 +73,12 @@ function knockoutMatch(overrides: Partial<SportEventMatchDto> = {}): SportEventM
   };
 }
 
-function renderRow(match: SportEventMatchDto, shootout: BracketContext['shootout'] = { label: 'pens' }) {
+const soccer = getSportDefinition(Sport.SOCCER);
+
+function renderRow(match: SportEventMatchDto, shootout: BracketContext['shootout'] = soccer.shootout) {
   const context: BracketContext = {
     eventId: 'evt-1',
-    vocabulary: getSportDefinition(Sport.HOCKEY).vocabulary,
+    vocabulary: soccer.vocabulary,
     bracket: [match],
     field: [arsenal, porto],
     fieldById: new Map([arsenal, porto].map((entry) => [entry.id, entry])),
@@ -157,6 +158,12 @@ describe('MatchScoresRow shoot-outs', () => {
     expect(screen.queryByTestId('root-admin-bracket-score-1-final-shootout-away')).not.toBeInTheDocument();
     expect(screen.getByText('The final score can\'t be a tie: the winner\'s score is the higher.')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-bracket-score-1-final-save')).toBeDisabled();
+  });
+
+  it('calls the final score the score with extra time included', async () => {
+    renderRow(knockoutMatch());
+
+    expect(await screen.findByTestId('root-admin-bracket-score-1-final')).toHaveTextContent('Final, extra time included');
   });
 
   it('shows a saved shoot-out after the final score, away side first, and fills it in to change', async () => {

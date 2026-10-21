@@ -1,0 +1,748 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "SOCCER",
+    "season": 2026,
+    "sportLeagues": [
+      "UEFA Champions League"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-21",
+    "gatheredBy": "load-sport-data, the 2025-26 UEFA Champions League knockout phase as played, from the knockout play-offs to the final. A two-legged tie is one match: its scores are the aggregate after both legs (extra time included), it is scheduled at the first leg's kickoff, and its home side hosted the first leg. No tie was level on aggregate. The league phase's top eight go straight into the Round of 16, named on the away side of their tie; the play-off winners fill the home side. The final, in Budapest, is the one neutral-site match, level after extra time and won on penalties, with its half-time score from the goal minutes; a tie has no half-time score. Kickoffs are the page's CET (to 28 March) and CEST times. Seeds and rankings are the league phase places. ESPN's scoreboards agree on the play-off first legs of 17 February and on the final's shoot-out. Odds to win are made up by seed.",
+    "sources": [
+      {
+        "name": "2025-26 UEFA Champions League knockout phase (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025%E2%80%9326_UEFA_Champions_League_knockout_phase"
+      },
+      {
+        "name": "2025-26 UEFA Champions League league phase (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025%E2%80%9326_UEFA_Champions_League_league_phase"
+      },
+      {
+        "name": "ESPN Champions League scoreboard, 20260217",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?dates=20260217"
+      },
+      {
+        "name": "ESPN Champions League scoreboard, 20260530",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?dates=20260530"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "UEFA Champions League",
+      "players": [
+        {
+          "key": "ucl-arsenal",
+          "name": "Arsenal",
+          "countryCode": "GB",
+          "ranking": 1
+        },
+        {
+          "key": "ucl-bayern-munich",
+          "name": "Bayern Munich",
+          "countryCode": "DE",
+          "ranking": 2
+        },
+        {
+          "key": "ucl-liverpool",
+          "name": "Liverpool",
+          "countryCode": "GB",
+          "ranking": 3
+        },
+        {
+          "key": "ucl-tottenham-hotspur",
+          "name": "Tottenham Hotspur",
+          "countryCode": "GB",
+          "ranking": 4
+        },
+        {
+          "key": "ucl-barcelona",
+          "name": "Barcelona",
+          "countryCode": "ES",
+          "ranking": 5
+        },
+        {
+          "key": "ucl-chelsea",
+          "name": "Chelsea",
+          "countryCode": "GB",
+          "ranking": 6
+        },
+        {
+          "key": "ucl-sporting-cp",
+          "name": "Sporting CP",
+          "countryCode": "PT",
+          "ranking": 7
+        },
+        {
+          "key": "ucl-manchester-city",
+          "name": "Manchester City",
+          "countryCode": "GB",
+          "ranking": 8
+        },
+        {
+          "key": "ucl-real-madrid",
+          "name": "Real Madrid",
+          "countryCode": "ES",
+          "ranking": 9
+        },
+        {
+          "key": "ucl-inter-milan",
+          "name": "Inter Milan",
+          "countryCode": "IT",
+          "ranking": 10
+        },
+        {
+          "key": "ucl-paris-saint-germain",
+          "name": "Paris Saint-Germain",
+          "countryCode": "FR",
+          "ranking": 11
+        },
+        {
+          "key": "ucl-newcastle-united",
+          "name": "Newcastle United",
+          "countryCode": "GB",
+          "ranking": 12
+        },
+        {
+          "key": "ucl-juventus",
+          "name": "Juventus",
+          "countryCode": "IT",
+          "ranking": 13
+        },
+        {
+          "key": "ucl-atletico-madrid",
+          "name": "Atlético Madrid",
+          "countryCode": "ES",
+          "ranking": 14
+        },
+        {
+          "key": "ucl-atalanta",
+          "name": "Atalanta",
+          "countryCode": "IT",
+          "ranking": 15
+        },
+        {
+          "key": "ucl-bayer-leverkusen",
+          "name": "Bayer Leverkusen",
+          "countryCode": "DE",
+          "ranking": 16
+        },
+        {
+          "key": "ucl-borussia-dortmund",
+          "name": "Borussia Dortmund",
+          "countryCode": "DE",
+          "ranking": 17
+        },
+        {
+          "key": "ucl-olympiacos",
+          "name": "Olympiacos",
+          "countryCode": "GR",
+          "ranking": 18
+        },
+        {
+          "key": "ucl-club-brugge",
+          "name": "Club Brugge",
+          "countryCode": "BE",
+          "ranking": 19
+        },
+        {
+          "key": "ucl-galatasaray",
+          "name": "Galatasaray",
+          "countryCode": "TR",
+          "ranking": 20
+        },
+        {
+          "key": "ucl-monaco",
+          "name": "Monaco",
+          "countryCode": "MC",
+          "ranking": 21
+        },
+        {
+          "key": "ucl-qarabag",
+          "name": "Qarabağ",
+          "countryCode": "AZ",
+          "ranking": 22
+        },
+        {
+          "key": "ucl-bod-glimt",
+          "name": "Bodø/Glimt",
+          "countryCode": "NO",
+          "ranking": 23
+        },
+        {
+          "key": "ucl-benfica",
+          "name": "Benfica",
+          "countryCode": "PT",
+          "ranking": 24
+        }
+      ],
+      "events": [
+        {
+          "key": "uefa-champions-league-2025-26",
+          "name": "UEFA Champions League",
+          "startDate": "2026-02-17",
+          "endDate": "2026-05-30",
+          "venue": null,
+          "location": "Europe",
+          "rounds": 5,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "ucl-arsenal",
+              "ranking": 1,
+              "seed": 1,
+              "oddsToWin": 4.0
+            },
+            {
+              "player": "ucl-bayern-munich",
+              "ranking": 2,
+              "seed": 2,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "ucl-liverpool",
+              "ranking": 3,
+              "seed": 3,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "ucl-tottenham-hotspur",
+              "ranking": 4,
+              "seed": 4,
+              "oddsToWin": 10.0
+            },
+            {
+              "player": "ucl-barcelona",
+              "ranking": 5,
+              "seed": 5,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "ucl-chelsea",
+              "ranking": 6,
+              "seed": 6,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "ucl-sporting-cp",
+              "ranking": 7,
+              "seed": 7,
+              "oddsToWin": 16.0
+            },
+            {
+              "player": "ucl-manchester-city",
+              "ranking": 8,
+              "seed": 8,
+              "oddsToWin": 18.0
+            },
+            {
+              "player": "ucl-real-madrid",
+              "ranking": 9,
+              "seed": 9,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "ucl-inter-milan",
+              "ranking": 10,
+              "seed": 10,
+              "oddsToWin": 22.0
+            },
+            {
+              "player": "ucl-paris-saint-germain",
+              "ranking": 11,
+              "seed": 11,
+              "oddsToWin": 24.0
+            },
+            {
+              "player": "ucl-newcastle-united",
+              "ranking": 12,
+              "seed": 12,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "ucl-juventus",
+              "ranking": 13,
+              "seed": 13,
+              "oddsToWin": 28.0
+            },
+            {
+              "player": "ucl-atletico-madrid",
+              "ranking": 14,
+              "seed": 14,
+              "oddsToWin": 30.0
+            },
+            {
+              "player": "ucl-atalanta",
+              "ranking": 15,
+              "seed": 15,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "ucl-bayer-leverkusen",
+              "ranking": 16,
+              "seed": 16,
+              "oddsToWin": 34.0
+            },
+            {
+              "player": "ucl-borussia-dortmund",
+              "ranking": 17,
+              "seed": 17,
+              "oddsToWin": 36.0
+            },
+            {
+              "player": "ucl-olympiacos",
+              "ranking": 18,
+              "seed": 18,
+              "oddsToWin": 38.0
+            },
+            {
+              "player": "ucl-club-brugge",
+              "ranking": 19,
+              "seed": 19,
+              "oddsToWin": 40.0
+            },
+            {
+              "player": "ucl-galatasaray",
+              "ranking": 20,
+              "seed": 20,
+              "oddsToWin": 42.0
+            },
+            {
+              "player": "ucl-monaco",
+              "ranking": 21,
+              "seed": 21,
+              "oddsToWin": 44.0
+            },
+            {
+              "player": "ucl-qarabag",
+              "ranking": 22,
+              "seed": 22,
+              "oddsToWin": 46.0
+            },
+            {
+              "player": "ucl-bod-glimt",
+              "ranking": 23,
+              "seed": 23,
+              "oddsToWin": 48.0
+            },
+            {
+              "player": "ucl-benfica",
+              "ranking": 24,
+              "seed": 24,
+              "oddsToWin": 50.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "ucl-monaco",
+              "away": "ucl-paris-saint-germain",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-02-17T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 4,
+                "awayScore": 5
+              }
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "ucl-galatasaray",
+              "away": "ucl-juventus",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-02-17T17:45:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 7,
+                "awayScore": 5
+              }
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "ucl-benfica",
+              "away": "ucl-real-madrid",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-02-17T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 3
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "ucl-borussia-dortmund",
+              "away": "ucl-atalanta",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-02-17T20:15:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "ucl-qarabag",
+              "away": "ucl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-02-18T17:45:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 9
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "ucl-club-brugge",
+              "away": "ucl-atletico-madrid",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-02-18T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 4,
+                "awayScore": 7
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "ucl-bod-glimt",
+              "away": "ucl-inter-milan",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-02-18T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 2
+              }
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "ucl-olympiacos",
+              "away": "ucl-bayer-leverkusen",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-02-18T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 16,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              }
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 2,
+              "home": null,
+              "away": "ucl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-11T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 17,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 8,
+                "awayScore": 2
+              }
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 2,
+              "home": null,
+              "away": "ucl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-10T17:45:00Z",
+              "advancesTo": {
+                "matchNumber": 17,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 4
+              }
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 2,
+              "home": null,
+              "away": "ucl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-11T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 18,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 2,
+              "home": null,
+              "away": "ucl-bayern-munich",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-10T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 18,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 10
+              }
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 2,
+              "home": null,
+              "away": "ucl-barcelona",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-10T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 19,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 8
+              }
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 2,
+              "home": null,
+              "away": "ucl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-10T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 19,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 7,
+                "awayScore": 5
+              }
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 2,
+              "home": null,
+              "away": "ucl-sporting-cp",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-11T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 20,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 5
+              }
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 2,
+              "home": null,
+              "away": "ucl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-03-11T17:45:00Z",
+              "advancesTo": {
+                "matchNumber": 20,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 3
+              }
+            },
+            {
+              "matchNumber": 17,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-08T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 21,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 18,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-07T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 21,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 4,
+                "awayScore": 6
+              }
+            },
+            {
+              "matchNumber": 19,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-08T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 22,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 3
+              }
+            },
+            {
+              "matchNumber": 20,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-07T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 22,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 21,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-28T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 23,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 6,
+                "awayScore": 5
+              }
+            },
+            {
+              "matchNumber": 22,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2026-04-29T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 23,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              }
+            },
+            {
+              "matchNumber": 23,
+              "roundNumber": 5,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2026-05-30T16:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 1,
+                "homeShootoutScore": 4,
+                "awayShootoutScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -458,6 +458,68 @@ describe('baseball-2025-mlb-postseason-test.json', () => {
   });
 });
 
+// #787: soccer's fixed-bracket knockouts. A level score after extra time is settled by a
+// shoot-out, kept apart from the score.
+describe('soccer international knockout test seeds', () => {
+  it.each([
+    ['soccer-2022-fifa-world-cup-test.json', 2022, 'FIFA World Cup', 16, { winner: 'HOME', homeScore: 3, awayScore: 3, homeShootoutScore: 4, awayShootoutScore: 2 }],
+    ['soccer-2023-fifa-womens-world-cup-test.json', 2023, "FIFA Women's World Cup", 16, { winner: 'HOME', homeScore: 1, awayScore: 0 }],
+    ['soccer-2024-uefa-euro-test.json', 2024, 'UEFA European Championship', 16, { winner: 'HOME', homeScore: 2, awayScore: 1 }],
+    ['soccer-2024-copa-america-test.json', 2024, 'Copa América', 8, { winner: 'HOME', homeScore: 1, awayScore: 0 }],
+  ] as const)('%s is a test seed of a fixed bracket of neutral-site matches seeded by FIFA ranking, ending with its real final', (fileName, season, league, teams, final) => {
+    const file = readDataFile(fileName, true);
+    const [tournament] = file.sportLeagues[0].events;
+    const matches = tournament.matches ?? [];
+
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([Sport.SOCCER, season, [league], [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS]]);
+    expect(tournament.field.map((entry) => entry.seed)).toEqual(Array.from({ length: teams }, (_, index) => index + 1));
+    expect(matches).toHaveLength(teams - 1);
+    expect(matches.every((match) => match.isNeutralSite && match.result !== undefined && match.periodScores?.length === 1)).toBe(true);
+    expect(matches.filter((match) => match.roundNumber > 1).every((match) => match.home === null && match.away === null)).toBe(true);
+    expect(matches.at(-1)).toMatchObject({ advancesTo: null, result: final });
+  });
+
+  it('settles every level match on its shoot-out, and gives a match with a winner none', () => {
+    const files = ['soccer-2022-fifa-world-cup-test.json', 'soccer-2023-fifa-womens-world-cup-test.json', 'soccer-2024-uefa-euro-test.json', 'soccer-2024-copa-america-test.json'];
+    const results = files.flatMap((name) => (readDataFile(name, true).sportLeagues[0].events[0].matches ?? []).map((match) => expectDefined(match.result)));
+
+    for (const result of results) {
+      const level = result.homeScore === result.awayScore;
+      expect(result.homeShootoutScore !== undefined && result.awayShootoutScore !== undefined).toBe(level);
+      const [home, away] = level ? [result.homeShootoutScore ?? 0, result.awayShootoutScore ?? 0] : [expectDefined(result.homeScore), expectDefined(result.awayScore)];
+      expect(result.winner).toBe(home > away ? 'HOME' : 'AWAY');
+    }
+    expect(results.filter((result) => result.homeScore === result.awayScore)).toHaveLength(14);
+  });
+});
+
+describe('soccer-2026-uefa-champions-league-test.json', () => {
+  const file = readDataFile('soccer-2026-uefa-champions-league-test.json', true);
+  const [knockouts] = file.sportLeagues[0].events;
+  const matches = knockouts.matches ?? [];
+
+  it('is a test seed of the 2025-26 knockout phase, the league phase\'s top eight waiting in the Round of 16 on the away side', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2026, ['UEFA Champions League']]);
+    expect(knockouts.rounds).toBe(5);
+    expect(knockouts.field.map((entry) => entry.seed)).toEqual(Array.from({ length: 24 }, (_, index) => index + 1));
+    expect(matches.map((match) => match.roundNumber)).toEqual([1, 2, 3, 4, 5].flatMap((round) => Array<number>(round === 1 ? 8 : 2 ** (5 - round)).fill(round)));
+    const seedOf = new Map(knockouts.field.map((entry) => [entry.player, entry.seed]));
+    const roundOf16 = matches.filter((match) => match.roundNumber === 2);
+    expect(roundOf16.every((match) => match.home === null && (seedOf.get(match.away ?? '') ?? 99) <= 8)).toBe(true);
+    expect(matches.filter((match) => match.roundNumber === 1).every((match) => match.advancesTo?.side === 'HOME')).toBe(true);
+  });
+
+  it('plays each two-legged tie as one match scored on aggregate at the first leg\'s home ground, and the final at a neutral site, PSG beating Arsenal 4-3 on penalties', () => {
+    expect(matches.slice(0, -1).every((match) => !match.isNeutralSite && match.result !== undefined && match.result.homeScore !== match.result.awayScore)).toBe(true);
+    expect(matches[1]).toMatchObject({ home: 'ucl-galatasaray', away: 'ucl-juventus', scheduledAt: '2026-02-17T17:45:00Z', result: { winner: 'HOME', homeScore: 7, awayScore: 5 } });
+    expect(matches[22]).toMatchObject({
+      isNeutralSite: true, advancesTo: null,
+      result: { winner: 'HOME', homeScore: 1, awayScore: 1, homeShootoutScore: 4, awayShootoutScore: 3 },
+      periodScores: [{ periodNumber: 1, homeScore: 0, awayScore: 1 }],
+    });
+  });
+});
+
 describe('2026 racing test seeds', () => {
   it.each([
     ['auto-racing-2026-test.json', Sport.AUTO_RACING, [['Formula 1', 17, 'Max Verstappen'], ['NASCAR Cup Series', 32, 'Chase Briscoe'], ['IndyCar', 18, 'Scott McLaughlin']]],

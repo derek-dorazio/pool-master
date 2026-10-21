@@ -76,7 +76,7 @@ export function MatchScoresRow({
             empty={winnerOnly ? `Winner entered, no score${endingMark ? ` (${endingMark})` : ''}` : 'Not entered'}
             endingMark={endingMark}
             home={home}
-            label="Final, overtime included"
+            label={`Final, ${context.vocabulary.overtime ?? 'overtime'} included`}
             match={match}
             moment="final"
             saved={final}

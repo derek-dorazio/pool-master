@@ -110,7 +110,13 @@ export async function enterSeedRound(client: Client, eventId: string, played: Sp
     await recordEventMatchResult({
       client,
       path: { eventId, matchNumber: match.matchNumber },
-      body: { winnerSide: result.winner, homeScore: result.homeScore, awayScore: result.awayScore },
+      body: {
+        winnerSide: result.winner,
+        homeScore: result.homeScore,
+        awayScore: result.awayScore,
+        homeShootoutScore: result.homeShootoutScore ?? null,
+        awayShootoutScore: result.awayShootoutScore ?? null,
+      },
     });
   }
 }

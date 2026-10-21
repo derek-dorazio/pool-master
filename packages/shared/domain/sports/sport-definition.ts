@@ -51,6 +51,11 @@ export interface SportVocabulary {
    */
   match?: SportNoun;
   /**
+   * What play after regulation time is called, read after "Final, " on the admin's final score
+   * ("Final, extra time included"): "extra time" for soccer. Absent reads "overtime".
+   */
+  overtime?: string;
+  /**
    * What a game that ends level is called, as a result and a pick read it (#792): "Tie" for
    * American football and hockey, "Draw" for soccer. Absent for a sport that plays no matches;
    * a screen of a sport without one says "Tie".

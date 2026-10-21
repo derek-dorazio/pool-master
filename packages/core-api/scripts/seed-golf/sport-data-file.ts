@@ -123,6 +123,12 @@ const MatchSchema = z.object({
     winner: z.nativeEnum(MatchSide),
     homeScore: z.number().int().min(0).nullable(),
     awayScore: z.number().int().min(0).nullable(),
+    /**
+     * A level knockout match's shoot-out (#791), in a sport that holds them: both sides' kicks
+     * scored, apart from the score after extra time. Left out for a match settled in play.
+     */
+    homeShootoutScore: z.number().int().min(0).optional(),
+    awayShootoutScore: z.number().int().min(0).optional(),
     ending: z.nativeEnum(MatchEnding).optional(),
   }).strict().optional(),
   /**
