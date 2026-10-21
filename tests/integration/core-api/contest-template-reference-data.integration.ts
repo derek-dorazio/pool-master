@@ -23,7 +23,7 @@ import {
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
-import { parseSportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
+import { isTestSlate, parseSportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 
 // The contest templates the migrations seed, read back from real Postgres. A template with a
 // sport league is offered only for that league's events, so a template pointing at a league of
@@ -1022,13 +1022,15 @@ const SPORT_DATA_DIR = join(__dirname, '../../../packages/core-api/scripts/seed-
 
 // Every sport league can be tried by hand end to end (rules/architecture-rules.md §6 *Manual-testing
 // seed data goes through the admin API*): the migrations seed it, so a test data file of its last
-// season as played has to load it. Slates in test-slates/ fill one event's field and do not count.
+// season as played has to load it. Test cleanup keeps only the leagues a template names, so in
+// practice this checks every league with a template, as the suite above does. A slate fills one
+// event's field and does not count.
 describe('Every seeded sport league\'s test data', () => {
   it('has a test data file of its last season as played for every sport league the migrations seed, so no league reaches QA with nothing to try', async () => {
     const covered = new Set(readdirSync(SPORT_DATA_DIR)
       .filter((name) => name.endsWith('.json'))
       .map((name) => parseSportDataFile(JSON.parse(readFileSync(join(SPORT_DATA_DIR, name), 'utf8')) as unknown, { allowTestData: true }))
-      .filter((file) => file.testData)
+      .filter((file) => file.testData && !isTestSlate(file))
       .flatMap((file) => file.scope.sportLeagues.map((league) => `${file.scope.sport} ${league}`)));
     const leagues = await getPrisma().sportLeague.findMany({ include: { sport: true }, orderBy: { name: 'asc' } });
 
