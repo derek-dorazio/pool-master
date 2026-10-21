@@ -197,11 +197,15 @@ overnight cutoffs were:
    would land within 6 hours of the "New contest open" email (D1), is not sent. That covers a
    contest opened the day before, a bracket set on Selection Sunday for a Thursday tip-off, and
    a reseeded round set a few days ahead.
-2. **Overnight moves earlier.** A reminder that would land between 10:00 pm and 7:00 am in the
-   reader's time zone goes at 9:00 pm the evening before. Golf matters most here: a 7:00 am
-   Thursday tee-off puts the 3-hour reminder at 4:00 am, so it goes Wednesday at 9:00 pm instead.
-   An NFL Thursday 8:15 pm kickoff keeps all three where they are (Tuesday and Wednesday
-   evening, then Thursday at 5:15 pm).
+2. **Overnight moves earlier, lightly.** Readers live all over the world, not in the event's
+   time zone, so this is worked out per reader and kept narrow. Only the 3-hour reminder moves,
+   and only when it would land between 11:00 pm and 6:00 am in the reader's own time zone. It
+   then goes at 9:00 pm their time the evening before. The 48- and 24-hour reminders always
+   send on time, since there is a full day left to read them. A reader with no time zone set
+   gets every reminder on time. Golf is the main case: before a 7:00 am Eastern Thursday
+   tee-off, a reader on the US east coast would get the 3-hour reminder at 4:00 am, so theirs
+   goes Wednesday at 9:00 pm. A reader in London gets it at 9:00 am, unchanged. An NFL
+   Thursday 8:15 pm kickoff moves nobody in the Americas.
 
 The offsets (48, 24, 3) go in `EMAIL_CONFIG` as one list, so a root admin can change them on
 the Settings page without a deploy. That is the "configurable someday" for almost no cost.
