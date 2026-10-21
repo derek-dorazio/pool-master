@@ -199,7 +199,7 @@ places when they are outside it, with movement since the last email.
 
 | # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
 |---|---|---|---|---|---|---|---|
-| E1 | Contest is live, good luck | The contest goes `OPEN` → `ACTIVE` at its cutoff | Every active league member (Q3.8) | At once | "Good luck, everyone." Event, entry count, entries up to 25 by squad name (Q3.9) then "and N more", each entry's picks once revealed, Leaderboard button | 🟡 `CONTEST_STARTED_SUMMARY` (no cap, no leaderboard link, no "good luck", entrants only) | P1 |
+| E1 | Contest is live, good luck | The contest goes `OPEN` → `ACTIVE` at its cutoff | Every active league member (Q3.8, decided) | At once | "Good luck, everyone." Event, entry count, entries up to 25 by squad name (Q3.9) then "and N more", each entry's picks once revealed, Leaderboard button | 🟡 `CONTEST_STARTED_SUMMARY` (no cap, no leaderboard link, no "good luck", entrants only) | P1 |
 | E2 | Round standings | A stroke-play event's round ends: its `scheduledEndAt` has passed, or the next round has started, whichever is first | Every league member with an entry, plus commissioners | Once per round; not after the final round (F1 covers it) | "After round 2 of the Masters." Top 10 with movement, the reader's entries, cut news for their picks, Leaderboard button | | P1 |
 | E3 | Week results | A pick'em or survivor week settles | Same as E2 | Once per week; not for the last week | The week's winner (#717), the week's top 10, contest standings top 10, next week's first kickoff, Make picks for next week button | | P1 |
 | E4 | Bracket round results | Every match of a bracket round has a result | Same as E2 | Once per round; not after the final | Top 10, the reader's busted picks and remaining champions, next round's start, Bracket link | | P1 |
@@ -209,8 +209,9 @@ places when they are outside it, with movement since the last email.
 | E8 | Next round is set | A reseeded or second-chance round's matchups are set, and picks are open for it | Owners of entries that pick that round | At once | The round's games, picks close at, Make picks button | | P2 |
 
 **Q3.8 Who gets E1?** Today it goes to commissioners and squads with an entry.
-*Recommendation:* every active member, with a line for those not in it ("You're not in this
-one. Follow along on the leaderboard."). It is the league's social moment.
+**Decided (Derek 2026-10-21):** every active member, with a line for those not in it ("You're
+not in this one. Follow along on the leaderboard."). Members without an entry can still watch
+the leaderboard, and it reminds them to enter next time.
 
 **Q3.9 Entries cap in E1.** *Recommendation:* 25 entries, then "and 14 more", with the
 Leaderboard button showing all. 25 rows fit a phone screen or two.
