@@ -187,7 +187,8 @@ Questions:
 - **Q2.3** A full-draw bracket is 127 picks. Default to it, or to the second-week bracket (from
   the fourth round, 15 picks)? Recommendation: full draw as the default, as the bracket sites
   that offer tennis do, with the second-week bracket as the variation for people who join late
-  or want less work.
+  or want less work. **Decided 2026-10-21: both, as two setups; the full draw is the
+  default.**
 - **Q2.4** Results: the admin marks each match's winner (scores optional; around 60 a day
   across both draws in the first days, a handful a day in the second week), or a paid feed
   (around $40-150 a month)? Recommendation: admin entry. **Decided 2026-10-21: manual entry.
