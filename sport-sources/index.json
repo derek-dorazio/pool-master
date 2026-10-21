@@ -1,82 +1,40 @@
 {
-  "fetchedAt": "2026-10-21T10:06:17.183Z",
+  "fetchedAt": "2026-10-21T10:09:04.184Z",
   "results": [
-    {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_men%27s_tennis_championships&action=raw",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 404,
-      "file": "01-en.wikipedia.org.txt"
-    },
-    {
-      "url": "https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_women%27s_tennis_championships&action=raw",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 404,
-      "file": "02-en.wikipedia.org.txt"
-    },
     {
       "url": "https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_Men%27s_Tennis_Championships&action=raw",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "03-en.wikipedia.org.txt"
+      "file": "01-en.wikipedia.org.txt"
     },
     {
       "url": "https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_Women%27s_Tennis_Championships&action=raw",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "04-en.wikipedia.org.txt"
+      "file": "02-en.wikipedia.org.txt"
     },
     {
-      "url": "https://en.wikipedia.org/w/index.php?title=2025_NCAA_Division_I_men%27s_tennis_championships&action=raw",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 404,
-      "file": "05-en.wikipedia.org.txt"
-    },
-    {
-      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=2026+NCAA+Division+I+tennis&limit=20&format=json",
+      "url": "https://www.ncaa.com/_flysystem/public-s3/files/25%20M%20Singles_1.pdf",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "06-en.wikipedia.org.txt"
+      "file": "03-ncaa.com.pdf"
     },
     {
-      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=NCAA+Division+I+singles+championship+tennis&limit=20&format=json",
+      "url": "https://www.ncaa.com/_flysystem/public-s3/files/25%20W%20Singles_0.pdf",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "07-en.wikipedia.org.txt"
+      "file": "04-ncaa.com.pdf"
     },
     {
-      "url": "https://www.ncaa.com/brackets/tennis-men/d1/2026",
-      "rendered": true,
+      "url": "https://www.usta.com/en/home/stay-current/national/2025-ncaa-tennis-individual-championships-culminate-with-histori.html",
+      "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "08-ncaa.com.txt"
-    },
-    {
-      "url": "https://www.ncaa.com/brackets/tennis-women/d1/2026",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "09-ncaa.com.txt"
-    },
-    {
-      "url": "https://www.ncaa.com/history/tennis-men/d1",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "10-ncaa.com.txt"
-    },
-    {
-      "url": "https://www.ncaa.com/history/tennis-women/d1",
-      "rendered": true,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "11-ncaa.com.txt"
+      "file": "05-usta.com.txt"
     }
   ]
 }

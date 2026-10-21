@@ -1,13 +1,1740 @@
-Source: https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_men%27s_tennis_championships&action=raw
-Final URL: https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_men%27s_tennis_championships&action=raw
-HTTP 404
-Fetched: 2026-10-21T10:06:03.328Z
+Source: https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_Men%27s_Tennis_Championships&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2026_NCAA_Division_I_Men%27s_Tennis_Championships&action=raw
+HTTP 200
+Fetched: 2026-10-21T10:09:02.309Z
 
-Wikimedia Error
-Error
-Not Found
-If you report this error to the Wikimedia System Administrators, please include the details below.
-Request served via cp2055 cp2055, Varnish XID 297052693
-Upstream caches: cp2055 int
-Error: 404, Not Found at Wed, 21 Oct 2026 10:06:03 GMT
-Sensitive client information IP address: 132.196.36.81
+{{TennisEventInfo|2026|NCAA Division I Men's Tennis Championships|
+|date= November 18–23, 2025
+May 1–17, 2026
+|logo=NCAA logo.svg
+|logo_size= 150px
+|edition=80th
+|location=[[Orlando, Florida]] (Fall 2025)
+[[Athens, Georgia]] (Spring 2026)
+|venue= [[USTA National Campus]]
+Hosted by: [[University of Central Florida|UCF]] (Fall 2025)
+Dan Magill Tennis Complex
+Hosted by: [[University of Georgia]] (Spring 2026)
+|surface=
+|category=
+|champmt= [[Virginia Cavaliers men's tennis|Virginia Cavaliers]]
+(Spring 2026)
+|champms= [[Michael Zheng]] ([[Columbia Lions men's tennis|Columbia]])
+(Fall 2025)
+|champmd=Mans Dahlberg and [[Dylan Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])
+(Fall 2025)
+}}
+The '''2026 NCAA Division I Men's Tennis Championships''' were the men's [[NCAA Division I Men's Tennis Championship|tennis tournaments]], the men's singles and doubles tournament was played in the fall from November 18 to November 23, 2025, in [[Orlando, Florida]] at the [[USTA National Campus]]. {{Cite web|url=https://www.ustanationalcampus.com/en/home/events/2025-ncaa-division-i-singles-and-doubles-championships.html#tab=tickets|title=2025 NCAA Division I Singles and Doubles Championships|publisher=[[USTA National Campus]]|date=|access-date=June 3, 2026}} The men's team tournament was played in the spring from May 1 to May 17, 2026, at campus sites and [[Athens, Georgia]] at the Dan Magill Tennis Complex hosted by [[University of Georgia]]. {{Cite web|url=https://www.ncaa.com/news/tennis-men/article/2026-04-27/teams-announced-2026-ncaa-divison-i-mens-tennis-championship|title=Teams announced for 2026 NCAA Divison I men's tennis championship|publisher=NCAA|date=April 28, 2026|access-date=June 3, 2026}} It was the 80th edition of the [[NCAA Division I men's tennis championships|NCAA Division I Men's Tennis Championship]]. As part of a two-year pilot program, the men's singles and doubles championships were conducted in the fall of 2025, while the team championships were played in the spring of 2026. {{cite web|url=https://www.ncaa.com/news/tennis-men/article/2025-11-10/2025-ncaa-division-i-mens-tennis-singles-and-doubles-championships-selections |title=2025 NCAA Division I Men’s Tennis Singles and Doubles Championships Selections|date=November 10, 2025|website=NCAA.com |accessdate=June 3, 2026}}
+== Men's team championship ==
+There were 64 teams selected for the men's team championship, 27 of which were automatic qualifiers from each Division 1 conference. The remaining 37 teams were selected at-large. Teams played two rounds of single-elimination matches in groups of four on May 1–2 at campus sites; the winners of those regionals advanced to a super-regional round on May 8 or 9, also held at campus sites. The remaining eight teams advanced to the championship rounds in [[Athens, Georgia]] on May 14–17.
+=== Automatic qualifiers ===
+The following 27 teams were automatic qualifiers, representing their conferences:
+{| class="wikitable sortable" style="text-align:center"
+|-
+! Conference !! Team
+|-
+| [[American Athletic Conference| American]]
+| [[Tulsa Golden Hurricane men's tennis|Tulsa]]
+|-
+| [[Atlantic 10 Conference|Atlantic 10]]
+| [[Richmond Spiders men's tennis|Richmond]]
+|-
+| [[Atlantic Coast Conference|ACC]]
+| [[Wake Forest Demon Deacons men's tennis|Wake Forest]]
+|-
+| [[ASUN Conference|ASUN]]
+| [[Stetson Hatters|Stetson]]
+|-
+| [[Big East Conference|Big East]]
+| [[St. John's Red Storm men's tennis|St. John's]]
+|-
+| [[Big Sky Conference|Big Sky]]
+| [[Northern Arizona Lumberjacks|Northern Arizona]]
+|-
+| [[Big South Conference|Big South]]
+| [[Gardner–Webb Runnin' Bulldogs|Gardner–Webb]]
+|-
+| [[Big Ten Conference|Big Ten]]
+| [[Michigan State Spartans men's tennis|Michigan State]]
+|-
+| [[Big 12 Conference|Big 12]]
+| [[TCU Horned Frogs men's tennis|TCU]]
+|-
+| [[Big West Conference|Big West]]
+| [[UC Santa Barbara Gauchos men's tennis|UC Santa Barbra]]
+|-
+| [[Colonial Athletic Association|CAA]]
+| [[Elon Phoenix men's tennis|Elon]]
+|-
+| [[Conference USA|CUSA]]
+| [[Middle Tennessee Blue Raiders men's tennis|Middle Tennessee]]
+|-
+| [[Horizon League|Horizon]]
+| [[Tennessee Tech Golden Eagles men's tennis|Tennessee Tech]]
+|-
+| [[Ivy League|Ivy]]
+| [[Cornell Big Red men's tennis|Cornell]]
+|-
+| [[Metro Atlantic Athletic Conference|MAAC]]
+| [[Rider Broncs|Rider]]
+|-
+| [[Mid-American Conference|MAC]]
+| [[Buffalo Bulls men's tennis|Buffalo]]
+|-
+| [[Mid-Eastern Athletic Conference|MEAC]]
+| [[South Carolina State Bulldogs men's tennis|South Carolina State]]
+|-
+| [[Mountain West Conference|Mountain West]]
+| [[Utah State Aggies men's tennis|Utah State]]
+|-
+| [[Northeast Conference|Northeast]]
+| [[Wagner Seahawks|Wagner]]
+|-
+| [[Patriot League|Patriot]]
+| [[Navy Midshipmen men's tennis|Navy]]
+|-
+| [[Southeastern Conference|SEC]]
+| [[Texas Longhorns men's tennis|Texas]]
+|-
+| [[Southern Conference|Southern]]
+| [[Samford Bulldogs men's tennis|Samford]]
+|-
+| [[Southland Conference|Southland]]
+| [[Texas A&M–Corpus Christi Islanders men's tennis|Texas A&M – Corpus Christi]]
+|-
+| [[Southwestern Athletic Conference|SWAC]]
+| [[Alabama State Hornets men's tennis|Alabama State]]
+|-
+| [[Summit League|Summit]]
+| [[Denver Pioneers men's tennis|Denver]]
+|-
+| [[Sun Belt Conference|Sun Belt]]
+| [[Old Dominion Monarchs men's tennis|Old Dominion]]
+|-
+| [[West Coast Conference|West Coast]]
+| [[San Diego Toreros men's tennis|San Diego]]
+|}
+=== National seeds ===
+Sixteen teams were selected as national seeds and were guaranteed to host for the first two rounds if they submitted a bid and met criteria. {{cite web|url=https://www.ncaa.com/brackets/print/tennis-men/d1/2026|title=2026 Division I Men's Tennis Official Bracket|website=NCAA.com|format=pdf|accessdate=June 3, 2026}}
+{{div col|colwidth=22em}}
+1. [[Wake Forest Demon Deacons men's tennis|Wake Forest]] ''(semifinals)''
+2. [[Texas Longhorns men's tennis|Texas]] ''(runner-up)''
+3. [[Ohio State Buckeyes men's tennis|Ohio State]] ''(quarterfinals)''
+4. '''[[Virginia Cavaliers men's tennis|Virginia]] (National Champions)'''
+5. [[Mississippi State Bulldogs men's tennis|Mississippi State]] ''(quarterfinals)''
+6. [[TCU Horned Frogs men's tennis|TCU]] ''(semifinals)''
+7. [[LSU Tigers men's tennis|LSU]] ''(second round)''
+8. [[Arizona Wildcats men's tennis|Arizona]] ''(quarterfinals)''
+9. [[Oklahoma Sooners men's tennis|Oklahoma]] ''(super regionals)''
+10. [[Baylor Bears men's tennis|Baylor]] ''(quarterfinals)''
+11. [[Texas A&M Aggies men's tennis|Texas A&M]] ''(second round)''
+12. [[Georgia Bulldogs men's tennis|Georgia]] ''(super regionals)''
+13. [[South Carolina Gamecocks men's tennis|South Carolina]] ''(super regionals)''
+14. [[Illinois Fighting Illini men's tennis|Illinois]] ''(super regionals)''
+15. [[San Diego Toreros men's tennis|San Diego]] ''(super regionals)''
+16. [[UCF Knights men's tennis|UCF]] ''(super regionals)''
+{{div col end}}
+===Bracket===
+'''''Bold''' indicates winner. Host institutions for the first two rounds and Super Regionals are marked with an asterisk ( * ).''
+{{64TeamBracket
+| RD1='''First Round'''
+May 1–2, 2026
+''Campus sites''
+| RD2='''Second Round'''
+May 1–2, 2026
+''Campus sites''
+| RD3='''Super Regionals'''
+May 8 or 9, 2026
+''Campus sites''
+| RD4='''Quarterfinals'''
+May 14, 2026
+[[Athens, Georgia|Athens]]
+| RD5='''Semifinals'''
+May 16, 2026
+[[Athens, Georgia|Athens]]
+| RD6='''Championship'''
+May 17, 2026
+[[Athens, Georgia|Athens]]
+| subgroup1=[[Winston-Salem, North Carolina]]
+| subgroup2=[[Orlando, Florida]]
+| subgroup3=[[Norman, Oklahoma]]
+| subgroup4=[[Tucson, Arizona]]
+| subgroup5=[[Starkville, Mississippi]]
+| subgroup6=[[Athens, Georgia]]
+| subgroup7=[[Columbia, South Carolina]]
+| subgroup8=[[Charlottesville, Virginia]]
+| subgroup9=[[Columbus, Ohio]]
+| subgroup10=[[Champaign-Urbana, Illinois]]
+| subgroup11=[[College Station, Texas]]
+| subgroup12=[[Fort Worth, Texas]]
+| subgroup13=[[Baton Rouge, Louisiana]]
+| subgroup14=[[Waco, Texas]]
+| subgroup15=[[San Diego, California]]
+| subgroup16=[[Austin, Texas]]
+| RD1-seed01=1
+| RD1-team01='''[[Wake Forest Demon Deacons men's tennis|Wake Forest]]'''*
+| RD1-score01='''4'''
+| RD1-seed02=
+| RD1-team02=[[Navy Midshipmen men's tennis|Navy]]
+| RD1-score02=0
+| RD1-seed03={{nbsp}}
+| RD1-team03=[[Gardner–Webb Runnin' Bulldogs|Gardner–Webb]]
+| RD1-score03=0
+| RD1-seed04=
+| RD1-team04='''[[Old Dominion Monarchs men's tennis|Old Dominion]]'''
+| RD1-score04='''4'''
+| RD1-seed05={{nbsp}}
+| RD1-team05='''[[Florida Gators men's tennis|Florida]]'''
+| RD1-score05='''4'''
+| RD1-seed06=
+| RD1-team06=[[Stetson Hatters|Stetson]]
+| RD1-score06=0
+| RD1-seed07=
+| RD1-team07=[[South Carolina State Bulldogs men's tennis|South Carolina State]]
+| RD1-score07=0
+| RD1-seed08=16
+| RD1-team08='''[[UCF Knights men's tennis|UCF]]'''*
+| RD1-score08='''4'''
+| RD1-seed09=9
+| RD1-team09='''[[Oklahoma Sooners men's tennis|Oklahoma]]'''*
+| RD1-score09='''4'''
+| RD1-seed10=
+| RD1-team10=[[Utah State Aggies men's tennis|Utah State]]
+| RD1-score10=0
+| RD1-seed11={{nbsp}}
+| RD1-team11=[[Duke Blue Devils men's tennis|Duke]]
+| RD1-score11=2
+| RD1-seed12=
+| RD1-team12='''[[USC Trojans men's tennis|Southern California]]'''
+| RD1-score12='''4'''
+| RD1-seed13={{nbsp}}
+| RD1-team13=[[Ole Miss Rebels men's tennis|Ole Miss]]
+| RD1-score13=3
+| RD1-seed14=
+| RD1-team14='''[[Clemson Tigers men's tennis|Clemson]]'''
+| RD1-score14='''4'''
+| RD1-seed15=
+| RD1-team15=[[Northern Arizona Lumberjacks|Northern Arizona]]
+| RD1-score15=0
+| RD1-seed16=8
+| RD1-team16='''[[Arizona Wildcats men's tennis|Arizona]]'''*
+| RD1-score16='''4'''
+| RD1-seed17=5
+| RD1-team17='''[[Mississippi State Bulldogs men's tennis|Mississippi State]]'''*
+| RD1-score17='''4'''
+| RD1-seed18=
+| RD1-team18=[[Tennessee Tech Golden Eagles men's tennis|Tennessee Tech]]
+| RD1-score18=0
+| RD1-seed19={{nbsp}}
+| RD1-team19=[[Samford Bulldogs men's tennis|Samford]]
+| RD1-score19=1
+| RD1-seed20=
+| RD1-team20='''[[Wisconsin Badgers men's tennis|Wisconsin]]'''
+| RD1-score20='''4'''
+| RD1-seed21={{nbsp}}
+| RD1-team21='''[[NC State Wolfpack men's tennis|NC State]]'''
+| RD1-score21='''4'''
+| RD1-seed22=
+| RD1-team22=[[Middle Tennessee Blue Raiders men's tennis|Middle Tennessee]]
+| RD1-score22=2
+| RD1-seed23=
+| RD1-team23=[[Elon Phoenix men's tennis|Elon]]
+| RD1-score23=0
+| RD1-seed24=12
+| RD1-team24='''[[Georgia Bulldogs men's tennis|Georgia]]'''*
+| RD1-score24='''4'''
+| RD1-seed25=13
+| RD1-team25='''[[South Carolina Gamecocks men's tennis|South Carolina]]'''*
+| RD1-score25='''4'''
+| RD1-seed26=
+| RD1-team26=[[Richmond Spiders men's tennis|Richmond]]
+| RD1-score26=0
+| RD1-seed27={{nbsp}}
+| RD1-team27=[[North Carolina Tar Heels men's tennis|North Carolina]]
+| RD1-score27=1
+| RD1-seed28=
+| RD1-team28='''[[Michigan State Spartans men's tennis|Michigan State]]'''
+| RD1-score28='''4'''
+| RD1-seed29={{nbsp}}
+| RD1-team29='''[[Columbia Lions men's tennis|Columbia]]'''
+| RD1-score29='''4'''
+| RD1-seed30=
+| RD1-team30=[[St. John's Red Storm men's tennis|St. John's]]
+| RD1-score30=0
+| RD1-seed31=
+| RD1-team31=[[Rider Broncs|Rider]]
+| RD1-score31=0
+| RD1-seed32=4
+| RD1-team32='''[[Virginia Cavaliers men's tennis|Virginia]]'''*
+| RD1-score32='''4'''
+| RD1-seed33=3
+| RD1-team33='''[[Ohio State Buckeyes men's tennis|Ohio State]]'''*
+| RD1-score33='''4'''
+| RD1-seed34=
+| RD1-team34=[[Buffalo Bulls men's tennis|Buffalo]]
+| RD1-score34=0
+| RD1-seed35={{nbsp}}
+| RD1-team35='''[[California Golden Bears men's tennis|California]]'''
+| RD1-score35='''4'''
+| RD1-seed36=
+| RD1-team36=[[Kentucky Wildcats men's tennis|Kentucky]]
+| RD1-score36=3
+| RD1-seed37={{nbsp}}
+| RD1-team37=[[Notre Dame Fighting Irish men's tennis|Notre Dame]]
+| RD1-score37=1
+| RD1-seed38=
+| RD1-team38='''[[Vanderbilt Commodores men's tennis|Vanderbilt]]'''
+| RD1-score38='''4'''
+| RD1-seed39=
+| RD1-team39=[[Yale Bulldogs men's tennis|Yale]]
+| RD1-score39=0
+| RD1-seed40=14
+| RD1-team40='''[[Illinois Fighting Illini men's tennis|Illinois]]'''*
+| RD1-score40='''4'''
+| RD1-seed41=11
+| RD1-team41='''[[Texas A&M Aggies men's tennis|Texas A&M]]'''*
+| RD1-score41='''4'''
+| RD1-seed42=
+| RD1-team42=[[Wagner Seahawks|Wagner]]
+| RD1-score42=0
+| RD1-seed43={{nbsp}}
+| RD1-team43=[[Penn Quakers men's tennis|Penn]]
+| RD1-score43=1
+| RD1-seed44=
+| RD1-team44='''[[Stanford Cardinal men's tennis|Stanford]]'''
+| RD1-score44='''4'''
+| RD1-seed45={{nbsp}}
+| RD1-team45='''[[Cornell Big Red men's tennis|Cornell]]'''
+| RD1-score45='''4'''
+| RD1-seed46=
+| RD1-team46=[[Arkansas Razorbacks men's tennis|Arkansas]]
+| RD1-score46=3
+| RD1-seed47=
+| RD1-team47=[[Denver Pioneers men's tennis|Denver]]
+| RD1-score47=0
+| RD1-seed48=6
+| RD1-team48='''[[TCU Horned Frogs men's tennis|TCU]]'''*
+| RD1-score48='''4'''
+| RD1-seed49=7
+| RD1-team49='''[[LSU Tigers men's tennis|Virginia]]'''*
+| RD1-score49='''4'''
+| RD1-seed50=
+| RD1-team50=[[Alabama State Hornets men's tennis|Alabama State]]
+| RD1-score50=0
+| RD1-seed51={{nbsp}}
+| RD1-team51=[[Michigan Wolverines men's tennis|Michigan]]
+| RD1-score51=2
+| RD1-seed52=
+| RD1-team52='''[[Pepperdine Waves men's tennis|Pepperdine]]'''
+| RD1-score52='''4'''
+| RD1-seed53={{nbsp}}
+| RD1-team53='''[[Auburn Tigers men's tennis|Auburn]]'''
+| RD1-score53='''4'''
+| RD1-seed54=
+| RD1-team54=[[Santa Clara Broncos|Santa Clara]]
+| RD1-score54=3
+| RD1-seed55=
+| RD1-team55=[[Tulsa Golden Hurricane men's tennis|Tulsa]]
+| RD1-score55=0
+| RD1-seed56=10
+| RD1-team56='''[[Baylor Bears men's tennis|Baylor]]'''*
+| RD1-score56='''4'''
+| RD1-seed57=15
+| RD1-team57='''[[San Diego Toreros men's tennis|San Diego]]'''*
+| RD1-score57='''4'''
+| RD1-seed58=
+| RD1-team58=[[UC Santa Barbara Gauchos men's tennis|UC Santa Barbara]]
+| RD1-score58=2
+| RD1-seed59={{nbsp}}
+| RD1-team59=[[Arizona State Sun Devils men's tennis|Arizona State]]
+| RD1-score59=0
+| RD1-seed60=
+| RD1-team60='''[[UCLA Bruins men's tennis|UCLA]]'''
+| RD1-score60='''4'''
+| RD1-seed61={{nbsp}}
+| RD1-team61='''[[SMU Mustangs men's tennis|SMU]]'''
+| RD1-score61='''4'''
+| RD1-seed62=
+| RD1-team62=[[Princeton Tigers men's tennis|Princeton]]
+| RD1-score62=2
+| RD1-seed63=
+| RD1-team63=[[Texas A&M–Corpus Christi Islanders men's tennis|A&M–Corpus Christi]]
+| RD1-score63=0
+| RD1-seed64=2
+| RD1-team64='''[[Texas Longhorns men's tennis|Texas]]'''*
+| RD1-score64='''4'''
+| RD2-seed01=1
+| RD2-team01='''Wake Forest'''
+| RD2-score01='''4'''
+| RD2-seed02=
+| RD2-team02=Old Dominion
+| RD2-score02=0
+| RD2-seed03=
+| RD2-team03=Florida
+| RD2-score03= 3
+| RD2-seed04=16
+| RD2-team04='''UCF'''
+| RD2-score04='''4'''
+| RD2-seed05=9
+| RD2-team05='''Oklahoma'''
+| RD2-score05='''4'''
+| RD2-seed06=
+| RD2-team06=Southern California
+| RD2-score06=0
+| RD2-seed07=
+| RD2-team07=Clemson
+| RD2-score07=2
+| RD2-seed08=8
+| RD2-team08='''Arizona'''
+| RD2-score08='''4'''
+| RD2-seed09=5
+| RD2-team09='''Mississippi State'''
+| RD2-score09='''4'''
+| RD2-seed10=
+| RD2-team10=Wisconsin
+| RD2-score10=0
+| RD2-seed11=
+| RD2-team11=NC State
+| RD2-score11=0
+| RD2-seed12=12
+| RD2-team12='''Georgia'''
+| RD2-score12='''4'''
+| RD2-seed13=13
+| RD2-team13='''South Carolina'''
+| RD2-score13='''4'''
+| RD2-seed14=
+| RD2-team14=Michigan State
+| RD2-score14=1
+| RD2-seed15=
+| RD2-team15=Columbia
+| RD2-score15=2
+| RD2-seed16=4
+| RD2-team16='''Virginia'''
+| RD2-score16='''4'''
+| RD2-seed17=3
+| RD2-team17='''Ohio State'''
+| RD2-score17='''4'''
+| RD2-seed18=
+| RD2-team18=California
+| RD2-score18=0
+| RD2-seed19=
+| RD2-team19=Vanderbilt
+| RD2-score19=0
+| RD2-seed20=14
+| RD2-team20='''Illinois'''
+| RD2-score20='''4'''
+| RD2-seed21=11
+| RD2-team21=Texas A&M
+| RD2-score21=2
+| RD2-seed22=
+| RD2-team22='''Stanford'''
+| RD2-score22='''4'''
+| RD2-seed23=
+| RD2-team23=Cornell
+| RD2-score23=0
+| RD2-seed24=6
+| RD2-team24='''TCU'''
+| RD2-score24='''4'''
+| RD2-seed25=7
+| RD2-team25=LSU
+| RD2-score25=3
+| RD2-seed26=
+| RD2-team26='''Pepperdine'''
+| RD2-score26='''4'''
+| RD2-seed27=
+| RD2-team27=Auburn
+| RD2-score27=1
+| RD2-seed28=10
+| RD2-team28='''Baylor'''
+| RD2-score28='''4'''
+| RD2-seed29=15
+| RD2-team29='''San Diego'''
+| RD2-score29='''4'''
+| RD2-seed30=
+| RD2-team30=UCLA
+| RD2-score30=0
+| RD2-seed31=
+| RD2-team31=SMU
+| RD2-score31=0
+| RD2-seed32=2
+| RD2-team32='''Texas'''
+| RD2-score32='''4'''
+| RD3-seed01=1
+| RD3-team01='''Wake Forest'''*
+| RD3-score01='''4'''
+| RD3-seed02=16
+| RD3-team02=UCF
+| RD3-score02=1
+| RD3-seed03=9
+| RD3-team03=Oklahoma
+| RD3-score03=3
+| RD3-seed04=8
+| RD3-team04='''Arizona'''*
+| RD3-score04='''4'''
+| RD3-seed05=5
+| RD3-team05='''Mississippi State'''*
+| RD3-score05='''4'''
+| RD3-seed06=12
+| RD3-team06=Georgia
+| RD3-score06=1
+| RD3-seed07=13
+| RD3-team07=South Carolina
+| RD3-score07=1
+| RD3-seed08=4
+| RD3-team08='''Virginia'''*
+| RD3-score08='''4'''
+| RD3-seed09=3
+| RD3-team09='''Ohio State'''*
+| RD3-score09='''4'''
+| RD3-seed10=14
+| RD3-team10=Illinois
+| RD3-score10=0
+| RD3-seed11=
+| RD3-team11=Stanford
+| RD3-score11=0
+| RD3-seed12=6
+| RD3-team12='''TCU'''*
+| RD3-score12='''4'''
+| RD3-seed13=
+| RD3-team13=Pepperdine
+| RD3-score13=3
+| RD3-seed14=10
+| RD3-team14='''Baylor'''*
+| RD3-score14='''4'''
+| RD3-seed15=15
+| RD3-team15=San Diego
+| RD3-score15=0
+| RD3-seed16=2
+| RD3-team16='''Texas'''*
+| RD3-score16='''4'''
+| RD4-seed01=1
+| RD4-team01='''Wake Forest'''
+| RD4-score01='''4'''
+| RD4-seed02=8
+| RD4-team02=Arizona
+| RD4-score02=1
+| RD4-seed03=5
+| RD4-team03=Mississippi State
+| RD4-score03=1
+| RD4-seed04=4
+| RD4-team04='''Virginia'''
+| RD4-score04='''4'''
+| RD4-seed05=3
+| RD4-team05=Ohio State
+| RD4-score05=3
+| RD4-seed06=6
+| RD4-team06='''TCU'''
+| RD4-score06='''4'''
+| RD4-seed07=10
+| RD4-team07=Baylor
+| RD4-score07=1
+| RD4-seed08=2
+| RD4-team08='''Texas'''
+| RD4-score08='''4'''
+| RD5-seed01=1
+| RD5-team01=Wake Forest
+| RD5-score01=3
+| RD5-seed02=4
+| RD5-team02='''Virginia'''
+| RD5-score02='''4'''
+| RD5-seed03=6
+| RD5-team03=TCU
+| RD5-score03=3
+| RD5-seed04=2
+| RD5-team04='''Texas'''
+| RD5-score04='''4'''
+| RD6-seed01=4
+| RD6-team01='''Virginia'''
+| RD6-score01='''4'''
+| RD6-seed02=2
+| RD6-team02=Texas
+| RD6-score02=3
+}}
+Bracket source:
+==Men's singles championship==
+64 singles players qualified for the men's singles championship via competition in approved [[Intercollegiate Tennis Association|ITA]] qualifying pathway events. The tournament was played in the Fall of 2025 from November 18 to 23 in [[Orlando, Florida]].
+[[Columbia Lions men's tennis|Columbia]] senior [[Michael Zheng]] won the men's singles title against [[SMU Mustangs men's tennis|SMU]] junior [[Trevor Svajda]] 6–4, 1–6, 6–3. {{cite web|last=Alcido|first=Mary|url=https://www.usta.com/en/home/stay-current/national/2025-ncaa-tennis-individual-championships-culminate-with-histori.html|title=2025 NCAA Tennis Individual Championships culminate with historic achievements|publisher=[[United States Tennis Association]]|date=November 25, 2025|accessdate=June 4, 2026}}
+===National seeds===
+The following sixteen players were seeded for this tournament:
+{{col-begin}}
+{{col-break}}
+# [[Jay Friend]] ([[Arizona Wildcats men's tennis|Arizona]])
+# [[Duncan Chan]] ([[TCU Horned Frogs men's tennis|TCU]])
+# Aidan Kim ([[Ohio State Buckeyes men's tennis|Ohio State]])
+# [[Matthew Forbes]] ([[Michigan State Spartans men's tennis|Michigan State]])
+# Devin Badenhorst ([[Baylor Bears men's tennis|Baylor]])
+# Kenta Miyoshi ([[Illinois Fighting Illini men's tennis|Illinois]])
+# [[Dylan Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])
+# [[Ozan Baris]] ([[Michigan State Spartans men's tennis|Michigan State]])
+{{col-break}}
+''Players ranked 9th–16th, listed by last name''
+* Jack Anthrop ([[Ohio State Buckeyes men's tennis|Ohio State]])
+* Martin Borisiouk ([[NC State Wolfpack men's tennis|NC State]])
+* Paul Inchauspe ([[Princeton Tigers men's tennis|Princeton]])
+* Jeremy Jin ([[Florida Gators men's tennis|Florida]])
+* Petar Jovanovic ([[Mississippi State Bulldogs men's tennis|Mississippi State]])
+* Eli Stephenson ([[Kentucky Wildcats men's tennis|Kentucky]])
+* Connor Henry Van Schalkwyk ([[Baylor Bears men's tennis|Baylor]])
+* Jakub Vrba ([[Arkansas Razorbacks men's tennis|Arkansas]])
+{{col-end}}
+===Draw===
+Bracket: {{cite web|url=https://www.ncaa.com/_flysystem/public-s3/files/25%20M%20Singles_1.pdf|title=2025–26 NCAA Division I Men's Tennis Championship Event: Singles Championship|website=NCAA.com|format=pdf |accessdate=June 4, 2026}}
+====Finals====
+{{8TeamBracket|sets=3|seeds=y|nowrap=y
+| RD1=Quarterfinals
+| RD2=Semifinals
+| RD3=Final
+|
+| team-width=175
+| RD1-seed1=9–16
+| RD1-team1=Petar Jovanovic ([[Mississippi State Bulldogs men's tennis|Mississippi State]])
+| RD1-score1-1=3
+| RD1-score1-2=2
+| RD1-score1-3=
+| RD1-seed2=
+| RD1-team2='''[[Trevor Svajda]] ([[SMU Mustangs men's tennis|SMU]])'''
+| RD1-score2-1='''6'''
+| RD1-score2-2='''6'''
+| RD1-score2-3=
+| RD1-seed3=
+| RD1-team3=[[Max Dahlin]] ([[Michigan Wolverines men's tennis|Michigan]])
+| RD1-score3-1='''6'''
+| RD1-score3-2=5
+| RD1-score3-3=2
+| RD1-seed4=5
+| RD1-team4='''Martin Borisiouk ([[NC State Wolfpack men's tennis|NC State]])'''
+| RD1-score4-1=4
+| RD1-score4-2='''7'''
+| RD1-score4-3='''6'''
+| RD1-seed5=
+| RD1-team5=[[Luca Pow]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])
+| RD1-score5-1='''6'''
+| RD1-score5-2=4
+| RD1-score5-3=2
+| RD1-seed6=9–16
+| RD1-team6= '''Paul Inchauspe ([[Princeton Tigers men's tennis|Princeton]])'''
+| RD1-score6-1=4
+| RD1-score6-2='''6'''
+| RD1-score6-3='''6'''
+| RD1-seed7=8
+| RD1-team7=[[Ozan Baris]] ([[Michigan State Spartans men's tennis|Michigan State]])
+| RD1-score7-1='''6'''
+| RD1-score7-2=3
+| RD1-score7-3=2
+| RD1-seed8=
+| RD1-team8='''[[Michael Zheng]] ([[Columbia Lions men's tennis|Columbia]])'''
+| RD1-score8-1=4
+| RD1-score8-2='''6'''
+| RD1-score8-3='''6'''
+| RD2-seed1=
+| RD2-team1='''[[Trevor Svajda]] ([[SMU Mustangs men's tennis|SMU]])'''
+| RD2-score1-1='''6'''
+| RD2-score1-2='''6'''
+| RD2-score1-3=
+| RD2-seed2=
+| RD2-team2=Martin Borisiouk ([[NC State Wolfpack men's tennis|NC State]])
+| RD2-score2-1=2
+| RD2-score2-2=0
+| RD2-score2-3=
+| RD2-seed3=9–16
+| RD2-team3=Paul Inchauspe ([[Princeton Tigers men's tennis|Princeton]])
+| RD2-score3-1=3
+| RD2-score3-2='''7'''
+| RD2-score3-3=2
+| RD2-seed4=
+| RD2-team4='''[[Michael Zheng]] ([[Columbia Lions men's tennis|Columbia]])'''
+| RD2-score4-1='''6'''
+| RD2-score4-2=5
+| RD2-score4-3='''6'''
+| RD3-seed1=
+| RD3-team1=[[Trevor Svajda]] ([[SMU Mustangs men's tennis|SMU]])
+| RD3-score1-1=4
+| RD3-score1-2='''6'''
+| RD3-score1-3=3
+| RD3-seed2=
+| RD3-team2='''[[Michael Zheng]] ([[Columbia Lions men's tennis|Columbia]])'''
+| RD3-score2-1='''6'''
+| RD3-score2-2=1
+| RD3-score2-3='''6'''
+}}
+====Section 1====
+{{16TeamBracket|compact=y|sets=3|seeds=y|nowrap=y
+| RD1=First round
+| RD2=Second round
+| RD3=Third round
+| RD4=Quarterfinals
+| RD1-seed01=1
+| RD1-team01='''[[Jay Friend]] ([[Arizona Wildcats men's tennis|Arizona]])'''
+| RD1-score01-1='''6'''
+| RD1-score01-2=3
+| RD1-score01-3='''6'''
+| RD1-seed02=
+| RD1-team02=Joaquin Guilleme ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])
+| RD1-score02-1=4
+| RD1-score02-2='''6'''
+| RD1-score02-3=1
+| RD1-seed03=
+| RD1-team03=Oscar Lacides ([[Oklahoma Sooners men's tennis|Oklahoma]])
+| RD1-score03-1=4
+| RD1-score03-2='''6'''
+| RD1-score03-3=4
+| RD1-seed04=
+| RD1-team04='''Keegan Rice ([[Virginia Cavaliers men's tennis|Virginia]])'''
+| RD1-score04-1='''6'''
+| RD1-score04-2=3
+| RD1-score04-3='''6'''
+| RD1-seed05=9–16
+| RD1-team05='''Petar Jovanovic ([[Mississippi State Bulldogs men's tennis|Mississippi State]])'''
+| RD1-score05-1='''7'''
+| RD1-score05-2='''6'''
+| RD1-score05-3=
+| RD1-seed06=
+| RD1-team06=Preston Stearns ([[Ohio State Buckeyes men's tennis|Ohio State]])
+| RD1-score06-1=5
+| RD1-score06-2=3
+| RD1-score06-3=
+| RD1-seed07=
+| RD1-team07=Ian Mayew ([[North Carolina Tar Heels men's tennis|North Carolina]])
+| RD1-score07-1=3
+| RD1-score07-2=6
+| RD1-score07-3=
+| RD1-seed08=
+| RD1-team08='''[[Sebastian Gorzny]] ([[Texas Longhorns men's tennis|Texas]])'''
+| RD1-score08-1='''6'''
+| RD1-score08-2='''7 2 '''
+| RD1-score08-3=
+| RD1-seed09=6
+| RD1-team09='''Kenta Miyoshi ([[Illinois Fighting Illini men's tennis|Illinois]])'''
+| RD1-score09-1='''6'''
+| RD1-score09-2='''6'''
+| RD1-score09-3=
+| RD1-seed10=
+| RD1-team10=Dominique Rolland ([[UC Santa Barbara Gauchos men's tennis|UC Santa Barbara]])
+| RD1-score10-1=4
+| RD1-score10-2=1
+| RD1-score10-3=
+| RD1-seed11=
+| RD1-team11='''[[Edward Winter (tennis)|Edward Winter]] ([[Pepperdine Waves men's tennis|Pepperdine]])'''
+| RD1-score11-1='''6'''
+| RD1-score11-2='''6'''
+| RD1-score11-3=
+| RD1-seed12=
+| RD1-team12=Melchior Delloye ([[Harvard Crimson men's tennis|Harvard]])
+| RD1-score12-1=2
+| RD1-score12-2=3
+| RD1-score12-3=
+| RD1-seed13=9–16
+| RD1-team13=Jeremy Jin ([[Florida Gators men's tennis|Florida]])
+| RD1-score13-1=1
+| RD1-score13-2='''6'''
+| RD1-score13-3=4
+| RD1-seed14=
+| RD1-team14='''[[Trevor Svajda]] ([[SMU Mustangs men's tennis|SMU]])'''
+| RD1-score14-1='''6'''
+| RD1-score14-2=4
+| RD1-score14-3='''6'''
+| RD1-seed15=
+| RD1-team15=Vignesh Gogineni ([[Yale Bulldogs men's tennis|Yale]])
+| RD1-score15-1=3
+| RD1-score15-2=6
+| RD1-score15-3=
+| RD1-seed16=
+| RD1-team16='''Amirkhamza Nasridinov ([[Auburn Tigers men's tennis|Auburn]])'''
+| RD1-score16-1='''6'''
+| RD1-score16-2='''7 11 '''
+| RD1-score16-3=
+| RD2-seed01=1
+| RD2-team01=[[Jay Friend|J Friend]] ([[Arizona Wildcats men's tennis|Arizona]])
+| RD2-score01-1=6
+| RD2-score01-2=4
+| RD2-score01-3=
+| RD2-seed02=
+| RD2-team02= '''K Rice ([[Virginia Cavaliers men's tennis|Virginia]])'''
+| RD2-score02-1='''7 4 '''
+| RD2-score02-2='''6'''
+| RD2-score02-3=
+| RD2-seed03=9–16
+| RD2-team03='''P Jovanovic ([[Mississippi State Bulldogs men's tennis|Mississippi State]])'''
+| RD2-score03-1='''6'''
+| RD2-score03-2=0
+| RD2-score03-3='''6'''
+| RD2-seed04=
+| RD2-team04=[[Sebastian Gorzny|S Gorzny]] ([[Texas Longhorns men's tennis|Texas]])
+| RD2-score04-1=3
+| RD2-score04-2='''6'''
+| RD2-score04-3=3
+| RD2-seed05=6
+| RD2-team05='''K Miyoshi ([[Illinois Fighting Illini men's tennis|Illinois]])'''
+| RD2-score05-1='''7 2 '''
+| RD2-score05-2='''6'''
+| RD2-score05-3=
+| RD2-seed06=
+| RD2-team06=[[Edward Winter (tennis)|E Winter]] ([[Pepperdine Waves men's tennis|Pepperdine]])
+| RD2-score06-1=6
+| RD2-score06-2=0
+| RD2-score06-3=
+| RD2-seed07=
+| RD2-team07='''[[Trevor Svajda|T Svajda]] ([[SMU Mustangs men's tennis|SMU]])'''
+| RD2-score07-1='''6'''
+| RD2-score07-2=2
+| RD2-score07-3='''6'''
+| RD2-seed08=
+| RD2-team08=A Nasridinov ([[Auburn Tigers men's tennis|Auburn]])
+| RD2-score08-1=3
+| RD2-score08-2='''6'''
+| RD2-score08-3=0
+| RD3-seed01=
+| RD3-team01=K Rice ([[Virginia Cavaliers men's tennis|Virginia]])
+| RD3-score01-1=5
+| RD3-score01-2=5
+| RD3-score01-3=
+| RD3-seed02=9–16
+| RD3-team02='''P Jovanovic ([[Mississippi State Bulldogs men's tennis|Mississippi State]])'''
+| RD3-score02-1='''7'''
+| RD3-score02-2='''7'''
+| RD3-score02-3=
+| RD3-seed03=6
+| RD3-team03=K Miyoshi ([[Illinois Fighting Illini men's tennis|Illinois]])
+| RD3-score03-1=2
+| RD3-score03-2=4
+| RD3-score03-3=
+| RD3-seed04=
+| RD3-team04='''[[Trevor Svajda|T Svajda]] ([[SMU Mustangs men's tennis|SMU]])'''
+| RD3-score04-1='''6'''
+| RD3-score04-2='''6'''
+| RD3-score04-3=
+| RD4-seed01=9–16
+| RD4-team01=P Jovanovic ([[Mississippi State Bulldogs men's tennis|Mississippi State]])
+| RD4-score01-1=3
+| RD4-score01-2=2
+| RD4-score01-3=
+| RD4-seed02=
+| RD4-team02='''[[Trevor Svajda|T Svajda]] ([[SMU Mustangs men's tennis|SMU]])'''
+| RD4-score02-1='''6'''
+| RD4-score02-2='''6'''
+| RD4-score02-3=
+}}
+====Section 2====
+{{16TeamBracket|compact=y|sets=3|seeds=y|nowrap=y
+| RD1=First round
+| RD2=Second round
+| RD3=Third round
+| RD4=Quarterfinals
+| RD1-seed01=4
+| RD1-team01='''[[Matthew Forbes]] ([[Michigan State Spartans men's tennis|Michigan State]])'''
+| RD1-score01-1=3
+| RD1-score01-2='''7 3 '''
+| RD1-score01-3='''6'''
+| RD1-seed02=
+| RD1-team02=Pablo Martinez Gomez ([[Vanderbilt Commodores men's tennis|Vanderbilt]])
+| RD1-score02-1='''6'''
+| RD1-score02-2=6
+| RD1-score02-3=4
+| RD1-seed03=
+| RD1-team03='''Cosme Rolland De Ravel ([[TCU Horned Frogs men's tennis|TCU]])'''
+| RD1-score03-1='''7'''
+| RD1-score03-2=5
+| RD1-score03-3='''7 8 '''
+| RD1-seed04=
+| RD1-team04=[[Alexander Frusina]] ([[Texas A&M Aggies men's tennis|Texas A&M]])
+| RD1-score04-1=5
+| RD1-score04-2='''7'''
+| RD1-score04-3=6
+| RD1-seed05=9–16
+| RD1-team05='''Jack Loutit ([[Kentucky Wildcats men's tennis|Kentucky]])'''
+| RD1-score05-1='''6'''
+| RD1-score05-2='''7'''
+| RD1-score05-3=
+| RD1-seed06=
+| RD1-team06=Illia Maksymchuk ([[UNLV Rebels men's tennis|UNLV]])
+| RD1-score06-1=1
+| RD1-score06-2=5
+| RD1-score06-3=
+| RD1-seed07=
+| RD1-team07=Sebastian Dominko ([[Notre Dame Fighting Irish men's tennis|Notre Dame]])
+| RD1-score07-1=6
+| RD1-score07-2=3
+| RD1-score07-3=
+| RD1-seed08=
+| RD1-team08='''[[Max Dahlin]] ([[Michigan Wolverines men's tennis|Michigan]])'''
+| RD1-score08-1='''7 3 '''
+| RD1-score08-2='''6'''
+| RD1-score08-3=
+| RD1-seed09=5
+| RD1-team09='''Devin Badenhorst ([[Baylor Bears men's tennis|Baylor]])'''
+| RD1-score09-1='''6'''
+| RD1-score09-2='''6'''
+| RD1-score09-3=
+| RD1-seed10=
+| RD1-team10=Tiago Silva ([[California Golden Bears men's tennis|California]])
+| RD1-score10-1=2
+| RD1-score10-2=1
+| RD1-score10-3=
+| RD1-seed11=
+| RD1-team11=Matic Kriznik ([[Alabama Crimson Tide men's tennis|Alabama]])
+| RD1-score11-1=3
+| RD1-score11-2=4
+| RD1-score11-3=
+| RD1-seed12=
+| RD1-team12='''[[Dhakshineswar Suresh|DK Suresh]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])'''
+| RD1-score12-1='''6'''
+| RD1-score12-2='''6'''
+| RD1-score12-3=
+| RD1-seed13=9–16
+| RD1-team13=Jack Anthrop ([[Ohio State Buckeyes men's tennis|Ohio State]])
+| RD1-score13-1=3
+| RD1-score13-2=0
+| RD1-score13-3=
+| RD1-seed14=
+| RD1-team14='''Filip Gustafsson ([[Arizona Wildcats men's tennis|Arizona]])'''
+| RD1-score14-1='''6'''
+| RD1-score14-2='''6'''
+| RD1-score14-3=
+| RD1-seed15=
+| RD1-team15=Spencer Johnson ([[UCLA Bruins men's tennis|UCLA]])
+| RD1-score15-1=2
+| RD1-score15-2='''7 4 '''
+| RD1-score15-3=6
+| RD1-seed16=
+| RD1-team16='''Martin Borisiouk ([[NC State Wolfpack men's tennis|NC State]])'''
+| RD1-score16-1='''6'''
+| RD1-score16-2=6
+| RD1-score16-3='''7 1 '''
+| RD2-seed01=4
+| RD2-team01='''[[Matthew Forbes|M Forbes]] ([[Michigan State Spartans men's tennis|Michigan State]])'''
+| RD2-score01-1='''6'''
+| RD2-score01-2='''6'''
+| RD2-score01-3=
+| RD2-seed02=
+| RD2-team02=C Rolland De Ravel ([[TCU Horned Frogs men's tennis|TCU]])
+| RD2-score02-1=1
+| RD2-score02-2=4
+| RD2-score02-3=
+| RD2-seed03=9–16
+| RD2-team03=J Loutit ([[Kentucky Wildcats men's tennis|Kentucky]])
+| RD2-score03-1=4
+| RD2-score03-2=3
+| RD2-score03-3=
+| RD2-seed04=
+| RD2-team04='''[[Max Dahlin|M Dahlin]] ([[Michigan Wolverines men's tennis|Michigan]])'''
+| RD2-score04-1='''6'''
+| RD2-score04-2='''6'''
+| RD2-score04-3=
+| RD2-seed05=5
+| RD2-team05=D Badenhorst ([[Baylor Bears men's tennis|Baylor]])
+| RD2-score05-1=6
+| RD2-score05-2=4
+| RD2-score05-3=
+| RD2-seed06=
+| RD2-team06= '''[[Dhakshineswar Suresh|D Suresh]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])'''
+| RD2-score06-1='''7 4 '''
+| RD2-score06-2='''6'''
+| RD2-score06-3=
+| RD2-seed07=
+| RD2-team07=F Gustafsson ([[Arizona Wildcats men's tennis|Arizona]])
+| RD2-score07-1=4
+| RD2-score07-2=3
+| RD2-score07-3=
+| RD2-seed08=
+| RD2-team08='''M Borisiouk ([[NC State Wolfpack men's tennis|NC State]])'''
+| RD2-score08-1='''6'''
+| RD2-score08-2='''6'''
+| RD2-score08-3=
+| RD3-seed01=4
+| RD3-team01=[[Matthew Forbes|M Forbes]] ([[Michigan State Spartans men's tennis|Michigan State]])
+| RD3-score01-1=5
+| RD3-score01-2='''6'''
+| RD3-score01-3=6
+| RD3-seed02=
+| RD3-team02='''[[Max Dahlin|M Dahlin]] ([[Michigan Wolverines men's tennis|Michigan]])'''
+| RD3-score02-1='''7'''
+| RD3-score02-2=1
+| RD3-score02-3='''7 3 '''
+| RD3-seed03=
+| RD3-team03=[[Dhakshineswar Suresh|D Suresh]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])
+| RD3-score03-1=4
+| RD3-score03-2=1
+| RD3-score03-3=
+| RD3-seed04=
+| RD3-team04='''M Borisiouk ([[NC State Wolfpack men's tennis|NC State]])'''
+| RD3-score04-1='''6'''
+| RD3-score04-2='''6'''
+| RD3-score04-3=
+| RD4-seed01=
+| RD4-team01=[[Max Dahlin|M Dahlin]] ([[Michigan Wolverines men's tennis|Michigan]])
+| RD4-score01-1='''6'''
+| RD4-score01-2=5
+| RD4-score01-3=2
+| RD4-seed02=
+| RD4-team02='''M Borisiouk ([[NC State Wolfpack men's tennis|NC State]])'''
+| RD4-score02-1=4
+| RD4-score02-2='''7'''
+| RD4-score02-3='''6'''
+}}
+====Section 3====
+{{16TeamBracket|compact=y|sets=3|seeds=y|nowrap=y
+| RD1=First round
+| RD2=Second round
+| RD3=Third round
+| RD4=Quarterfinals
+| RD1-seed01=
+| RD1-team01='''[[Luca Pow]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])'''
+| RD1-score01-1=3
+| RD1-score01-2='''6'''
+| RD1-score01-3='''6'''
+| RD1-seed02=
+| RD1-team02=Sam Landau ([[Indiana Hoosiers men's tennis|Indiana]])
+| RD1-score02-1='''6'''
+| RD1-score02-2=1
+| RD1-score02-3=4
+| RD1-seed03=
+| RD1-team03=Peter Benjamin Privara ([[Harvard Crimson men's tennis|Harvard]])
+| RD1-score03-1=4
+| RD1-score03-2='''6'''
+| RD1-score03-3=1
+| RD1-seed04=9–16
+| RD1-team04='''Jakub Vrba ([[Arkansas Razorbacks men's tennis|Arkansas]])'''
+| RD1-score04-1='''6'''
+| RD1-score04-2=4
+| RD1-score04-3='''6'''
+| RD1-seed05=
+| RD1-team05=Soham Purohit ([[Washington Huskies men's tennis|Washington]])
+| RD1-score05-1=3
+| RD1-score05-2=6
+| RD1-score05-3=
+| RD1-seed06=
+| RD1-team06='''Bryan Hernandez Cortes ([[Mississippi State Bulldogs men's tennis|Mississippi State]])'''
+| RD1-score06-1='''6'''
+| RD1-score06-2='''7 5 '''
+| RD1-score06-3=
+| RD1-seed07=
+| RD1-team07=[[Luis Carlos Alvarez Valdes]] ([[Oklahoma Sooners men's tennis|Oklahoma]])
+| RD1-score07-1=4
+| RD1-score07-2=3
+| RD1-score07-3=
+| RD1-seed08=7
+| RD1-team08='''[[Dylan Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])'''
+| RD1-score08-1='''6'''
+| RD1-score08-2='''6'''
+| RD1-score08-3=
+| RD1-seed09=
+| RD1-team09='''Lucca Liu ([[UC Santa Barbara Gauchos men's tennis|UC Santa Barbara]])'''
+| RD1-score09-1=3
+| RD1-score09-2='''7'''
+| RD1-score09-3='''7 4 '''
+| RD1-seed10=
+| RD1-team10=Niels Ratiu ([[North Carolina Tar Heels men's tennis|North Carolina]])
+| RD1-score10-1='''6'''
+| RD1-score10-2=5
+| RD1-score10-3=6
+| RD1-seed11=
+| RD1-team11=Sasha Rozin ([[Arizona Wildcats men's tennis|Arizona]])
+| RD1-score11-1='''6'''
+| RD1-score11-2=6
+| RD1-score11-3=5
+| RD1-seed12=9–16
+| RD1-team12='''Paul Inchauspe ([[Princeton Tigers men's tennis|Princeton]])'''
+| RD1-score12-1=0
+| RD1-score12-2='''7 5 '''
+| RD1-score12-3='''7'''
+| RD1-seed13=
+| RD1-team13=Rudy Quan ([[UCLA Bruins men's tennis|UCLA]])
+| RD1-score13-1='''7 5 '''
+| RD1-score13-2=4
+| RD1-score13-3=2
+| RD1-seed14=
+| RD1-team14='''William Jansen ([[Georgia Bulldogs men's tennis|Georgia]])'''
+| RD1-score14-1=6
+| RD1-score14-2='''6'''
+| RD1-score14-3='''6'''
+| RD1-seed15=
+| RD1-team15=Antonio Prat ([[Miami Hurricanes men's tennis|Miami (FL)]])
+| RD1-score15-1=6
+| RD1-score15-2=4
+| RD1-score15-3=
+| RD1-seed16=3
+| RD1-team16='''Aidan Kim ([[Ohio State Buckeyes men's tennis|Ohio State]])'''
+| RD1-score16-1='''7 7 '''
+| RD1-score16-2='''6'''
+| RD1-score16-3=
+| RD2-seed01={{nbsp}}
+| RD2-team01='''[[Luca Pow|L Pow]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])'''
+| RD2-score01-1='''6'''
+| RD2-score01-2='''6'''
+| RD2-score01-3=
+| RD2-seed02=9–16
+| RD2-team02=J Vrba ([[Arkansas Razorbacks men's tennis|Arkansas]])
+| RD2-score02-1=3
+| RD2-score02-2=3
+| RD2-score02-3=
+| RD2-seed03=
+| RD2-team03=B Hernandez Cortes ([[Mississippi State Bulldogs men's tennis|Mississippi State]])
+| RD2-score03-1=4
+| RD2-score03-2=4
+| RD2-score03-3=
+| RD2-seed04=7
+| RD2-team04='''[[Dylan Dietrich|D Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])'''
+| RD2-score04-1='''6'''
+| RD2-score04-2='''6'''
+| RD2-score04-3=
+| RD2-seed05=
+| RD2-team05=L Liu ([[UC Santa Barbara Gauchos men's tennis|UC Santa Barbara]]
+| RD2-score05-1='''6'''
+| RD2-score05-2=6
+| RD2-score05-3=1
+| RD2-seed06=9–16
+| RD2-team06='''P Inchauspe ([[Princeton Tigers men's tennis|Princeton]])'''
+| RD2-score06-1=2
+| RD2-score06-2='''7 4 '''
+| RD2-score06-3='''6'''
+| RD2-seed07=
+| RD2-team07='''W Jansen ([[Georgia Bulldogs men's tennis|Georgia]])'''
+| RD2-score07-1='''7'''
+| RD2-score07-2='''6'''
+| RD2-score07-3=
+| RD2-seed08=3
+| RD2-team08=A Kim ([[Ohio State Buckeyes men's tennis|Ohio State]])
+| RD2-score08-1=5
+| RD2-score08-2=2
+| RD2-score08-3=
+| RD3-seed01=
+| RD3-team01='''[[Luca Pow|L Pow]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])'''
+| RD3-score01-1=2
+| RD3-score01-2='''6'''
+| RD3-score01-3='''6'''
+| RD3-seed02=7
+| RD3-team02=[[Dylan Dietrich|D Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])
+| RD3-score02-1='''6'''
+| RD3-score02-2=4
+| RD3-score02-3=4
+| RD3-seed03=9–16
+| RD3-team03='''P Inchauspe ([[Princeton Tigers men's tennis|Princeton]])'''
+| RD3-score03-1='''6'''
+| RD3-score03-2='''6'''
+| RD3-score03-3=
+| RD3-seed04=
+| RD3-team04=W Jansen ([[Georgia Bulldogs men's tennis|Georgia]])
+| RD3-score04-1=2
+| RD3-score04-2=4
+| RD3-score04-3=
+| RD4-seed01=
+| RD4-team01=[[Luca Pow|L Pow]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])
+| RD4-score01-1='''6'''
+| RD4-score01-2=4
+| RD4-score01-3=2
+| RD4-seed02=9–16
+| RD4-team02='''P Inchauspe ([[Princeton Tigers men's tennis|Princeton]])'''
+| RD4-score02-1=4
+| RD4-score02-2='''6'''
+| RD4-score02-3='''6'''
+}}
+====Section 4====
+{{16TeamBracket|compact=y|sets=3|seeds=y|nowrap=y
+| RD1=First round
+| RD2=Second round
+| RD3=Third round
+| RD4=Quarterfinals
+| RD1-seed01=
+| RD1-team01='''[[Ilya Snitari]] ([[UNLV Rebels men's tennis|UNLV]])'''
+| RD1-score01-1=4
+| RD1-score01-2='''6'''
+| RD1-score01-3='''6'''
+| RD1-seed02=
+| RD1-team02=Shu Matsuoka ([[Arizona State Sun Devils men's tennis|Arizona State]])
+| RD1-score02-1='''6'''
+| RD1-score02-2=3
+| RD1-score02-3=4
+| RD1-seed03=
+| RD1-team03=[[Luis Felipe Miguel]] ([[Florida State Seminoles men's tennis|Florida State]])
+| RD1-score03-1=2
+| RD1-score03-2=0
+| RD1-score03-3=
+| RD1-seed04=9–16
+| RD1-team04='''Eli Stephenson ([[Kentucky Wildcats men's tennis|Kentucky]])'''
+| RD1-score04-1='''6'''
+| RD1-score04-2='''6'''
+| RD1-score04-3=
+| RD1-seed05=
+| RD1-team05='''Roan Jones ([[North Carolina Tar Heels men's tennis|North Carolina]])'''
+| RD1-score05-1='''6'''
+| RD1-score05-2=1
+| RD1-score05-3='''6'''
+| RD1-seed06=
+| RD1-team06=Paul Barbier Gazeu ([[South Carolina Gamecocks men's tennis|South Carolina]])
+| RD1-score06-1=4
+| RD1-score06-2='''6'''
+| RD1-score06-3=3
+| RD1-seed07=
+| RD1-team07=Jangjun Kim ([[Virginia Cavaliers men's tennis|Virginia]])
+| RD1-score07-1=2
+| RD1-score07-2=6
+| RD1-score07-3=
+| RD1-seed08=8
+| RD1-team08='''[[Ozan Baris]] ([[Michigan State Spartans men's tennis|Michigan State]])'''
+| RD1-score08-1='''6'''
+| RD1-score08-2='''7 4 '''
+| RD1-score08-3=
+| RD1-seed09=
+| RD1-team09=Hugo Car ([[South Florida Bulls men's tennis|South Florida]])
+| RD1-score09-1=4
+| RD1-score09-2=2
+| RD1-score09-3=
+| RD1-seed10=
+| RD1-team10='''[[Michael Zheng]] ([[Columbia Lions men's tennis|Columbia]])'''
+| RD1-score10-1='''6'''
+| RD1-score10-2='''6'''
+| RD1-score10-3=
+| RD1-seed11=
+| RD1-team11='''Sebastian Eriksson ([[Texas Longhorns men's tennis|Texas]])'''
+| RD1-score11-1='''6'''
+| RD1-score11-2='''6'''
+| RD1-score11-3=
+| RD1-seed12=9–16
+| RD1-team12=Connor Henry Van Schalkwyk ([[Baylor Bears men's tennis|Baylor]])
+| RD1-score12-1=3
+| RD1-score12-2=3
+| RD1-score12-3=
+| RD1-seed13=
+| RD1-team13=Fryderyk Lechno Wasiutynski ([[California Golden Bears men's tennis|California]])
+| RD1-score13-1=2
+| RD1-score13-2=4
+| RD1-score13-3=
+| RD1-seed14=
+| RD1-team14='''[[Benito Sanchez Martinez]] ([[Mississippi State Bulldogs men's tennis|Mississippi State]])'''
+| RD1-score14-1='''6'''
+| RD1-score14-2='''6'''
+| RD1-score14-3=
+| RD1-seed15=
+| RD1-team15='''Romain Gales ([[Clemson Tigers men's tennis|Clemson]])'''
+| RD1-score15-1='''6'''
+| RD1-score15-2=6
+| RD1-score15-3='''7 10 '''
+| RD1-seed16=2
+| RD1-team16=[[Duncan Chan]] ([[TCU Horned Frogs men's tennis|TCU]])
+| RD1-score16-1=2
+| RD1-score16-2='''7 5 '''
+| RD1-score16-3=6
+| RD2-seed01=
+| RD2-team01='''[[Ilya Snitari|I Snitari]] ([[UNLV Rebels men's tennis|UNLV]])'''
+| RD2-score01-1=6
+| RD2-score01-2='''6'''
+| RD2-score01-3='''6'''
+| RD2-seed02=9–16
+| RD2-team02=E Stephenson ([[Kentucky Wildcats men's tennis|Kentucky]])
+| RD2-score02-1='''7 4 '''
+| RD2-score02-2=2
+| RD2-score02-3=3
+| RD2-seed03=
+| RD2-team03=R Jones ([[North Carolina Tar Heels men's tennis|North Carolina]])
+| RD2-score03-1=2
+| RD2-score03-2=5
+| RD2-score03-3=
+| RD2-seed04=8
+| RD2-team04='''[[Ozan Baris|O Baris]] ([[Michigan State Spartans men's tennis|Michigan State]])'''
+| RD2-score04-1='''6'''
+| RD2-score04-2='''7'''
+| RD2-score04-3=
+| RD2-seed05=
+| RD2-team05='''[[Michael Zheng|M Zheng]] ([[Columbia Lions men's tennis|Columbia]])'''
+| RD2-score05-1='''6'''
+| RD2-score05-2='''6'''
+| RD2-score05-3=
+| RD2-seed06=
+| RD2-team06=S Eriksson ([[Texas Longhorns men's tennis|Texas]])
+| RD2-score06-1=3
+| RD2-score06-2=3
+| RD2-score06-3=
+| RD2-seed07=
+| RD2-team07=[[Benito Sanchez Martinez|B Sanchez Martinez]] ([[Mississippi State Bulldogs men's tennis|Mississippi State]])
+| RD2-score07-1=3
+| RD2-score07-2=6
+| RD2-score07-3=
+| RD2-seed08=
+| RD2-team08='''R Gales ([[Clemson Tigers men's tennis|Clemson]])'''
+| RD2-score08-1='''6'''
+| RD2-score08-2='''7 4 '''
+| RD2-score08-3=
+| RD3-seed01=
+| RD3-team01=[[Ilya Snitari|I Snitari]] ([[UNLV Rebels men's tennis|UNLV]])
+| RD3-score01-1=4
+| RD3-score01-2=6
+| RD3-score01-3=
+| RD3-seed02=8
+| RD3-team02='''[[Ozan Baris|O Baris]] ([[Michigan State Spartans men's tennis|Michigan State]])'''
+| RD3-score02-1='''6'''
+| RD3-score02-2='''7 5 '''
+| RD3-score02-3=
+| RD3-seed03=
+| RD3-team03='''[[Michael Zheng|M Zheng]] ([[Columbia Lions men's tennis|Columbia]])'''
+| RD3-score03-1='''6'''
+| RD3-score03-2='''6'''
+| RD3-score03-3=
+| RD3-seed04=
+| RD3-team04=R Gales ([[Clemson Tigers men's tennis|Clemson]])
+| RD3-score04-1=3
+| RD3-score04-2=2
+| RD3-score04-3=
+| RD4-seed01=8
+| RD4-team01=[[Ozan Baris|O Baris]] ([[Michigan State Spartans men's tennis|Michigan State]])
+| RD4-score01-1='''6'''
+| RD4-score01-2=3
+| RD4-score01-3=2
+| RD4-seed02=
+| RD4-team02='''[[Michael Zheng|M Zheng]] ([[Columbia Lions men's tennis|Columbia]])'''
+| RD4-score02-1=4
+| RD4-score02-2='''6'''
+| RD4-score02-3='''6'''
+}}
+==Men's doubles championship==
+32 doubles teams qualified for the men's doubles championship, via competition in approved [[Intercollegiate Tennis Association|ITA]] qualifying pathway events. The tournament was played at the same time as the singles championship in the Fall of 2025 from November 18 to 23 in [[ Orlando, Florida]].
+Mans Dahlberg and [[Dylan Dietrich]] of [[Virginia Cavaliers men's tennis|Virginia]] beat [[Nikita Filin]] and [[Brandon Carpico]] of [[Ohio State Buckeyes men's tennis|Ohio State]] to win the men's double title. {{cite web|last=Piatos|first=Margaret|title=Dietrich and Dahlberg win doubles title as Virginia dominates NCAA Individual Championships|url=https://www.cavalierdaily.com/article/2025/11/dietrich-and-dahlberg-win-doubles-title-as-virginia-dominates-ncaa-individual-championships|publisher=[[The Cavalier Daily]]|date=November 25, 2025|access-date=June 4, 2026}}
+===National seeds===
+The following eight teams were seeded for this tournament:
+{{col-begin}}
+{{col-break}}
+# [[Benito Sanchez Martinez]] / Petar Jovanovic ([[Mississippi State Bulldogs men's tennis|Mississippi State]])
+# [[Dhakshineswar Suresh|DK Suresh]] / Andrew Delgado ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])
+# Isac Stromberg / Kai Milburn ([[Ole Miss Rebels men's tennis|Ole Miss]])
+# [[Max Dahlin]] / Bjorn Swenson ([[Michigan Wolverines men's tennis|Michigan]])
+{{col-break}}
+''Players ranked 5th–8th, listed by institution''
+* Aidan Kim / [[Bryce Nakashima]] ([[Ohio State Buckeyes men's tennis|Ohio State]])
+* Paul Inchauspe / Landon Ardila ([[Princeton Tigers men's tennis|Princeton]])
+* Aleksa Krivokapic / Maj Premzl ([[Purdue Boilermakers men's tennis|Purdue]])
+* Cosme Rolland De Ravel / Albert Pedrico Kravtsov ([[TCU Horned Frogs men's tennis|TCU]])
+{{col-end}}
+===Draw===
+Bracket: {{cite web|url=https://www.ncaa.com/_flysystem/public-s3/files/25%20M%20Doubles_1.pdf|title=2025–26 NCAA Division I Men's Tennis Championship Event: Doubles Championship |website=ncaa.com|format=pdf |accessdate=June 4, 2026}}
+====Finals====
+{{4TeamBracket|sets=3|seeds=y|nowrap=y
+| RD1=Semifinals
+| RD2=Final
+| team-width=175
+| RD1-seed1=
+| RD1-team1='''Mans Dahlberg ([[Virginia Cavaliers men's tennis|Virginia]])
+[[Dylan Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])'''
+| RD1-score1-1='''6'''
+| RD1-score1-2='''6'''
+| RD1-score1-3=
+| RD1-seed2=
+| RD1-team2=Tanapatt Nirundorn ([[Florida Gators men's tennis|Florida]])
+Henry Jefferson ([[Florida Gators men's tennis|Florida]])
+| RD1-score2-1=1
+| RD1-score2-2=4
+| RD1-score2-3=
+| RD1-seed3=
+| RD1-team3='''[[Nikita Filin]] ([[Ohio State Buckeyes men's tennis|Ohio State]])
+[[Brandon Carpico]] ([[Ohio State Buckeyes men's tennis|Ohio State]])'''
+| RD1-score3-1='''7 2 '''
+| RD1-score3-2='''6'''
+| RD1-score3-3=
+| RD1-seed4=
+| RD1-team4=Aaron Sandler ([[Penn Quakers|Penn]])
+Manfredi Graziani ([[Penn Quakers|Penn]])
+| RD1-score4-1=6
+| RD1-score4-2=4
+| RD1-score4-3=
+| RD2-seed1=
+| RD2-team1='''Mans Dahlberg ([[Virginia Cavaliers men's tennis|Virginia]])
+[[Dylan Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])'''
+| RD2-score1-1='''7 3 '''
+| RD2-score1-2='''6'''
+| RD2-score1-3=
+| RD2-seed2=
+| RD2-team2=[[Nikita Filin]] ([[Ohio State Buckeyes men's tennis|Ohio State]])
+[[Brandon Carpico]] ([[Ohio State Buckeyes men's tennis|Ohio State]])
+| RD2-score2-1=6
+| RD2-score2-2=2
+| RD2-score2-3=
+}}
+====Top half====
+{{16TeamBracket|compact=y|sets=3|seeds=y|nowrap=y
+| RD1=First round
+| RD2=Second round
+| RD3=Quarterfinals
+| RD4=Semifinals
+| RD1-seed01=1
+| RD1-team01='''[[Benito Sanchez Martinez]] ([[Mississippi State Bulldogs men's tennis|Mississippi State]])
+Petar Jovanovic ([[Mississippi State Bulldogs men's tennis|Mississippi State]])'''
+| RD1-score01-1='''6'''
+| RD1-score01-2='''6'''
+| RD1-score01-3=
+| RD1-seed02=
+| RD1-team02=Rudy Quan ([[UCLA Bruins men's tennis|UCLA]])
+Aadarsh Tripathi ([[UCLA Bruins men's tennis|UCLA]])
+| RD1-score02-1=4
+| RD1-score02-2=4
+| RD1-score02-3=
+| RD1-seed03=
+| RD1-team03=Johan Alexander Rodriguez ([[Oklahoma Sooners men's tennis|Oklahoma]])
+Orel Kimhi ([[Oklahoma Sooners men's tennis|Oklahoma]])
+| RD1-score03-1=3
+| RD1-score03-2=1
+| RD1-score03-3
+| RD1-seed04=
+| RD1-team04='''Mans Dahlberg ([[Virginia Cavaliers men's tennis|Virginia]])
+[[Dylan Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])'''
+| RD1-score04-1='''6'''
+| RD1-score04-2='''6'''
+| RD1-score04-3=
+| RD1-seed05=5–8
+| RD1-team05='''Aidan Kim ([[Ohio State Buckeyes men's tennis|Ohio State]])
+[[Bryce Nakashima]] ([[Ohio State Buckeyes men's tennis|Ohio State]])'''
+| RD1-score05-1='''6'''
+| RD1-score05-2='''6'''
+| RD1-score05-3=
+| RD1-seed06=
+| RD1-team06=Matei Cristian Onofrei ([[Louisville Cardinals men's tennis|Louisville]])
+Andre Steinbach ([[Louisville Cardinals men's tennis|Louisville]])
+| RD1-score06-1=1
+| RD1-score06-2=1
+| RD1-score06-3=
+| RD1-seed07=
+| RD1-team07='''Karim Al-Amin ([[Middle Tennessee Blue Raiders men's tennis|Middle Tennessee]])
+Onrej Horak ([[Middle Tennessee Blue Raiders men's tennis|Middle Tennessee]])'''
+| RD1-score07-1='''6'''
+| RD1-score07-2='''6'''
+| RD1-score07-3=
+| RD1-seed08=
+| RD1-team08=Tiago Silva ([[California Golden Bears men's tennis|California]])
+Timofey Stepanov ([[California Golden Bears men's tennis|California]])
+| RD1-score08-1=3
+| RD1-score08-2=4
+| RD1-score08-3=
+| RD1-seed09=3
+| RD1-team09='''Isac Stromberg ([[Ole Miss Rebels men's tennis|Ole Miss]])
+Kai Milburn ([[Ole Miss Rebels men's tennis|Ole Miss]])'''
+| RD1-score09-1='''6'''
+| RD1-score09-2='''6'''
+| RD1-score09-3=
+| RD1-seed10=
+| RD1-team10=Oscar Martinez ([[East Tennessee State Buccaneers men's tennis|ETSU]])
+Martin Vergara Del Puerto ([[East Tennessee State Buccaneers men's tennis|ETSU]])
+| RD1-score10-1=0
+| RD1-score10-2=3
+| RD1-score10-3=
+| RD1-seed11=
+| RD1-team11='''Tanapatt Nirundorn ([[Florida Gators men's tennis|Florida]])
+Henry Jefferson ([[Florida Gators men's tennis|Florida]])'''
+| RD1-score11-1='''6'''
+| RD1-score11-2='''6'''
+| RD1-score11-3=
+| RD1-seed12=
+| RD1-team12=Sam Landau ([[Indiana Hoosiers men's tennis|Indiana]])
+Facundo Yunis ([[Indiana Hoosiers men's tennis|Indiana]])
+| RD1-score12-1=3
+| RD1-score12-2=4
+| RD1-score12-3=
+| RD1-seed13=5–8
+| RD1-team13=Aleksa Krivokapic ([[Purdue Boilermakers men's tennis|Purdue]])
+Maj Premzl ([[Purdue Boilermakers men's tennis|Purdue]])
+| RD1-score13-1='''7 8 '''
+| RD1-score13-2=3
+| RD1-score13-3=1
+| RD1-seed14=
+| RD1-team14='''Max Stenzer ([[South Carolina Gamecocks men's tennis|South Carolina]])
+Sean Daryabeigi ([[South Carolina Gamecocks men's tennis|South Carolina]])'''
+| RD1-score14-1=6
+| RD1-score14-2='''6'''
+| RD1-score14-3='''[10]'''
+| RD1-seed15=
+| RD1-team15='''Ian Mayew ([[North Carolina Tar Heels men's tennis|North Carolina]])
+Kase Schinnerer ([[North Carolina Tar Heels men's tennis|North Carolina]])'''
+| RD1-score15-1='''6'''
+| RD1-score15-2='''6'''
+| RD1-score15-3=
+| RD1-seed16=
+| RD1-team16=Adam Chodur ([[BYU Cougars men's tennis|BYU]])
+Otto Schreiner ([[BYU Cougars men's tennis|BYU]])
+| RD1-score16-1=1
+| RD1-score16-2=2
+| RD1-score16-3=
+| RD2-seed01=1
+| RD2-team01=[[Benito Sanchez Martinez|B Sanchez Martinez]] ([[Mississippi State Bulldogs men's tennis|Mississippi State]])
+P Jovanovic ([[Mississippi State Bulldogs men's tennis|Mississippi State]])
+| RD2-score01-1=3
+| RD2-score01-2=6
+| RD2-score01-3=
+| RD2-seed02=
+| RD2-team02='''M Dahlberg ([[Virginia Cavaliers men's tennis|Virginia]])
+[[Dylan Dietrich|D Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])'''
+| RD2-score02-1='''6'''
+| RD2-score02-2='''7 3 '''
+| RD2-score02-3=
+| RD2-seed03=5–8
+| RD2-team03='''A Kim ([[Ohio State Buckeyes men's tennis|Ohio State]])
+[[Bryce Nakashima|B Nakashima]] ([[Ohio State Buckeyes men's tennis|Ohio State]])'''
+| RD2-score03-1='''6'''
+| RD2-score03-2=4
+| RD2-score03-3='''[13]'''
+| RD2-seed04=
+| RD2-team04=K Al-Amin ([[Middle Tennessee Blue Raiders men's tennis|Middle Tennessee]])
+O Horak ([[Middle Tennessee Blue Raiders men's tennis|Middle Tennessee]])
+| RD2-score04-1=3
+| RD2-score04-2='''6'''
+| RD2-score04-3=[10]
+| RD2-seed05=3
+| RD2-team05=I Stromberg ([[Ole Miss Rebels men's tennis|Ole Miss]])
+K Milburn ([[Ole Miss Rebels men's tennis|Ole Miss]])
+| RD2-score05-1=3
+| RD2-score05-2=3
+| RD2-score05-3=
+| RD2-seed06=
+| RD2-team06='''T Nirundorn ([[Florida Gators men's tennis|Florida]])
+H Jefferson ([[Florida Gators men's tennis|Florida]])'''
+| RD2-score06-1='''6'''
+| RD2-score06-2='''6'''
+| RD2-score06-3=
+| RD2-seed07=
+| RD2-team07='''M Stenzer ([[South Carolina Gamecocks men's tennis|South Carolina]])
+S Daryabeigi ([[South Carolina Gamecocks men's tennis|South Carolina]])'''
+| RD2-score07-1='''7 2 '''
+| RD2-score07-2='''6'''
+| RD2-score07-3=
+| RD2-seed08=
+| RD2-team08=I Mayew ([[North Carolina Tar Heels men's tennis|North Carolina]])
+K Schinnerer ([[North Carolina Tar Heels men's tennis|North Carolina]])
+| RD2-score08-1=6
+| RD2-score08-2=4
+| RD2-score08-3=
+| RD3-seed01=
+| RD3-team01='''M Dahlberg ([[Virginia Cavaliers men's tennis|Virginia]])
+[[Dylan Dietrich|D Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])'''
+| RD3-score01-1=6
+| RD3-score01-2='''7 5 '''
+| RD3-score01-3='''[10]'''
+| RD3-seed02=5–8
+| RD3-team02=A Kim ([[Ohio State Buckeyes men's tennis|Ohio State]])
+[[Bryce Nakashima|B Nakashima]] ([[Ohio State Buckeyes men's tennis|Ohio State]])
+| RD3-score02-1='''7 5 '''
+| RD3-score02-2=6
+| RD3-score02-3=5
+| RD3-seed03=
+| RD3-team03='''T Nirundorn ([[Florida Gators men's tennis|Florida]])
+H Jefferson ([[Florida Gators men's tennis|Florida]])'''
+| RD3-score03-1='''6'''
+| RD3-score03-2='''6'''
+| RD3-score03-3=
+| RD3-seed04=
+| RD3-team04=M Stenzer ([[South Carolina Gamecocks men's tennis|South Carolina]])
+S Daryabeigi ([[South Carolina Gamecocks men's tennis|South Carolina]])
+| RD3-score04-1=4
+| RD3-score04-2=2
+| RD3-score04-3=
+| RD4-seed01=
+| RD4-team01='''M Dahlberg ([[Virginia Cavaliers men's tennis|Virginia]])
+[[Dylan Dietrich|D Dietrich]] ([[Virginia Cavaliers men's tennis|Virginia]])'''
+| RD4-score01-1='''6'''
+| RD4-score01-2='''6'''
+| RD4-score01-3=
+| RD4-seed02=
+| RD4-team02=T Nirundorn ([[Florida Gators men's tennis|Florida]])
+H Jefferson ([[Florida Gators men's tennis|Florida]])
+| RD4-score02-1=1
+| RD4-score02-2=4
+| RD4-score02-3=
+}}
+====Bottom half====
+{{16TeamBracket|compact=y|sets=3|seeds=y|nowrap=y
+| RD1=First round
+| RD2=Second round
+| RD3=Quarterfinals
+| RD4=Semifinals
+| RD1-seed01=
+| RD1-team01='''[[Nikita Filin]] ([[Ohio State Buckeyes men's tennis|Ohio State]])
+[[Brandon Carpico]] ([[Ohio State Buckeyes men's tennis|Ohio State]])'''
+| RD1-score01-1='''7 3 '''
+| RD1-score01-2='''7'''
+| RD1-score01-3=
+| RD1-seed02=
+| RD1-team02=[[Luis Felipe Miguel]] ([[Florida State Seminoles men's tennis|Florida State]])
+Erik Schiessl ([[Florida State Seminoles men's tennis|Florida State]])
+| RD1-score02-1=6
+| RD1-score02-2=5
+| RD1-score02-3=
+| RD1-seed03=
+| RD1-team03='''Alex Chang ([[Stanford Cardinal men's tennis|Stanford]])
+[[Alexander Razeghi]] ([[Stanford Cardinal men's tennis|Stanford]])'''
+| RD1-score03-1='''6'''
+| RD1-score03-2='''6'''
+| RD1-score03-3=
+| RD1-seed04=5–8
+| RD1-team04=Paul Inchauspe ([[Princeton Tigers men's tennis|Princeton]])
+Landon Ardila ([[Princeton Tigers men's tennis|Princeton]])
+| RD1-score04-1=4
+| RD1-score04-2=4
+| RD1-score04-3=
+| RD1-seed05=
+| RD1-team05=Chris Xu ([[North Carolina Tar Heels men's tennis|North Carolina]])
+Niels Ratiu ([[North Carolina Tar Heels men's tennis|North Carolina]])
+| RD1-score05-1=3
+| RD1-score05-2='''6'''
+| RD1-score05-3=8
+| RD1-seed06=
+| RD1-team06='''Spencer Johnson ([[UCLA Bruins men's tennis|UCLA]])
+Emon van Loben Sels ([[UCLA Bruins men's tennis|UCLA]])'''
+| RD1-score06-1='''6'''
+| RD1-score06-2=3
+| RD1-score06-3='''[10]'''
+| RD1-seed07=
+| RD1-team07=Petro Kuzmenok ([[Rice Owls men's tennis|Rice]])
+Santiago Navarro ([[Rice Owls men's tennis|Rice]])
+| RD1-score07-1=2
+| RD1-score07-2=2
+| RD1-score07-3=
+| RD1-seed08=4
+| RD1-team08='''[[Max Dahlin]] ([[Michigan Wolverines men's tennis|Michigan]])
+Bjorn Swenson ([[Michigan Wolverines men's tennis|Michigan]])'''
+| RD1-score08-1='''6'''
+| RD1-score08-2='''6'''
+| RD1-score08-3=
+| RD1-seed09=
+| RD1-team09='''Aaron Sandler ([[Penn Quakers|Penn]])
+Manfredi Graziani ([[Penn Quakers|Penn]])'''
+| RD1-score09-1=3
+| RD1-score09-2='''7 2 '''
+| RD1-score09-3='''[10]'''
+| RD1-seed10=
+| RD1-team10=Luca Bluett ([[Santa Clara Broncos|Santa Clara]])
+John Kim ([[Santa Clara Broncos|Santa Clara]])
+| RD1-score10-1='''6'''
+| RD1-score10-2=6
+| RD1-score10-3=5
+| RD1-seed11=
+| RD1-team11=Tobey Lock ([[Delaware Fightin' Blue Hens|Delaware]])
+Euan Mackenzie ([[Delaware Fightin' Blue Hens|Delaware]])
+| RD1-score11-1=3
+| RD1-score11-2=6
+| RD1-score11-3=
+| RD1-seed12=5–8
+| RD1-team12='''Cosme Rolland De Ravel ([[TCU Horned Frogs men's tennis|TCU]])
+Albert Pedrico Kravtsov ([[TCU Horned Frogs men's tennis|TCU]])'''
+| RD1-score12-1='''6'''
+| RD1-score12-2='''7 3 '''
+| RD1-score12-3=
+| RD1-seed13=
+| RD1-team13=Felipe Pinzon ([[Cornell Big Red men's tennis|Cornell]])
+Petar Teodorovic ([[Cornell Big Red men's tennis|Cornell]])
+| RD1-score13-1=1
+| RD1-score13-2=6
+| RD1-score13-3=
+| RD1-seed14=
+| RD1-team14='''Zsombor Velcz ([[Baylor Bears men's tennis|Baylor]])
+Connor Henry Van Schalkwyk ([[Baylor Bears men's tennis|Baylor]])'''
+| RD1-score14-1='''6'''
+| RD1-score14-2='''7 7 '''
+| RD1-score14-3=
+| RD1-seed15=
+| RD1-team15=Billy Blaydes ([[Auburn Tigers men's tennis|Auburn]])
+Freddy Blaydes ([[Auburn Tigers men's tennis|Auburn]])
+| RD1-score15-1='''6'''
+| RD1-score15-2=3
+| RD1-score15-3=6
+| RD1-seed16=2
+| RD1-team16='''[[Dhakshineswar Suresh|DK Suresh]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])
+Andrew Delgado ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])'''
+| RD1-score16-1=4
+| RD1-score16-2='''6'''
+| RD1-score16-3='''[10]'''
+| RD2-seed01=
+| RD2-team01='''[[Nikita Filin|N Filin]] ([[Ohio State Buckeyes men's tennis|Ohio State]])
+[[Brandon Carpico|B Carpico]] ([[Ohio State Buckeyes men's tennis|Ohio State]])'''
+| RD2-score01-1='''6'''
+| RD2-score01-2='''6'''
+| RD2-score01-3=
+| RD2-seed02=
+| RD2-team02=A Chang ([[Stanford Cardinal men's tennis|Stanford]])
+[[Alexander Razeghi|A Razeghi]] ([[Stanford Cardinal men's tennis|Stanford]])
+| RD2-score02-1=4
+| RD2-score02-2=4
+| RD2-score02-3=
+| RD2-seed03=
+| RD2-team03=S Johnson ([[UCLA Bruins men's tennis|UCLA]])
+E van Loben Sels ([[UCLA Bruins men's tennis|UCLA]])
+| RD2-score03-1=5
+| RD2-score03-2='''6'''
+| RD2-score03-3=7
+| RD2-seed04=4
+| RD2-team04='''[[Max Dahlin|M Dahlin]] ([[Michigan Wolverines men's tennis|Michigan]])
+B Swenson ([[Michigan Wolverines men's tennis|Michigan]])'''
+| RD2-score04-1='''7'''
+| RD2-score04-2=4
+| RD2-score04-3='''[10]'''
+| RD2-seed05=
+| RD2-team05='''A Sandler ([[Penn Quakers|Penn]])
+M Graziani ([[Penn Quakers|Penn]])'''
+| RD2-score05-1='''6'''
+| RD2-score05-2='''6'''
+| RD2-score05-3=
+| RD2-seed06=5–8
+| RD2-team06=C R De Ravel ([[TCU Horned Frogs men's tennis|TCU]])
+A Pedrico Kravtsov ([[TCU Horned Frogs men's tennis|TCU]])
+| RD2-score06-1=4
+| RD2-score06-2=4
+| RD2-score06-3=
+| RD2-seed07=
+| RD2-team07=Z Velcz ([[Baylor Bears men's tennis|Baylor]])
+C H Van Schalkwyk ([[Baylor Bears men's tennis|Baylor]])
+| RD2-score07-1=6
+| RD2-score07-2=2
+| RD2-score07-3=
+| RD2-seed08=2
+| RD2-team08='''[[Dhakshineswar Suresh|D Suresh]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])
+A Delgado ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])'''
+| RD2-score08-1='''7 5 '''
+| RD2-score08-2='''6'''
+| RD2-score08-3=
+| RD3-seed01=
+| RD3-team01='''[[Nikita Filin|N Filin]] ([[Ohio State Buckeyes men's tennis|Ohio State]])
+[[Brandon Carpico|B Carpico]] ([[Ohio State Buckeyes men's tennis|Ohio State]])'''
+| RD3-score01-1='''6'''
+| RD3-score01-2='''6'''
+| RD3-score01-3=
+| RD3-seed02=4
+| RD3-team02=[[Max Dahlin|M Dahlin]] ([[Michigan Wolverines men's tennis|Michigan]])
+B Swenson ([[Michigan Wolverines men's tennis|Michigan]])
+| RD3-score02-1=2
+| RD3-score02-2=1
+| RD3-score02-3=
+| RD3-seed03=
+| RD3-team03='''A Sandler ([[Penn Quakers|Penn]])
+M Graziani ([[Penn Quakers|Penn]])'''
+| RD3-score03-1=6
+| RD3-score03-2='''7'''
+| RD3-score03-3='''[10]'''
+| RD3-seed04=2
+| RD3-team04=[[Dhakshineswar Suresh|D Suresh]] ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])
+A Delgado ([[Wake Forest Demon Deacons men's tennis|Wake Forest]])
+| RD3-score04-1='''7 3 '''
+| RD3-score04-2=5
+| RD3-score04-3=7
+| RD4-seed01=
+| RD4-team01='''[[Nikita Filin|N Filin]] ([[Ohio State Buckeyes men's tennis|Ohio State]])
+[[Brandon Carpico|B Carpico]] ([[Ohio State Buckeyes men's tennis|Ohio State]])'''
+| RD4-score01-1='''7 2 '''
+| RD4-score01-2='''6'''
+| RD4-score01-3=
+| RD4-seed02=
+| RD4-team02=A Sandler ([[Penn Quakers|Penn]])
+M Graziani ([[Penn Quakers|Penn]])
+| RD4-score02-1=6
+| RD4-score02-2=4
+| RD4-score02-3=
+}}
+==References==
+{{reflist}}
+{{NCAA Division I Men's Tennis Championship}}
+{{2025–26 NCAA Division I championships navbox}}
+[[Category:NCAA Division I tennis championships]]
+[[Category:2025 in American tennis|NCAA Division I Men's Tennis Championships]]
+[[Category:2026 in American tennis|NCAA Division I Men's Tennis Championships]]
+[[Category:2025 in sports in Florida|NCAA Division I Men's Tennis Championships]]
+[[Category:2026 in sports in Georgia (U.S. state)|NCAA Division I Men's Tennis Championships]]
+[[Category:2025 in men's tennis|NCAA Division I Men's Tennis Championships]]
+[[Category:2026 in men's tennis|NCAA Division I Men's Tennis Championships]]
+[[Category:2025 in American sports|NCAA Division I Men's Tennis Championships]]
+[[Category:2026 in American sports|NCAA Division I Men's Tennis Championships]]
+[[Category:November 2025 sports events in the United States|NCAA Division I Men's Tennis Championships]]
+[[Category:May 2026 sports events in the United States|NCAA Division I Men's Tennis Championships]]
+[[Category:College sports tournaments in Florida]]
+[[Category:College sports tournaments in Georgia (U.S. state)]]
