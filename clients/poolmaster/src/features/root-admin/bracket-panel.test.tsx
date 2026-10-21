@@ -528,7 +528,7 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-final-save'));
       expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
         path: { eventId: 'evt-1', matchNumber: '1' },
-        body: { winnerSide: 'AWAY', homeScore: 13, awayScore: 29 },
+        body: { winnerSide: 'AWAY', homeScore: 13, awayScore: 29, ending: 'PLAYED' },
       }));
     });
 
@@ -545,7 +545,7 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-final-save'));
       expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
         path: { eventId: 'evt-1', matchNumber: '1' },
-        body: { winnerSide: null, homeScore: 20, awayScore: 20 },
+        body: { winnerSide: null, homeScore: 20, awayScore: 20, ending: 'PLAYED' },
       }));
     });
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MatchSide, MatchStatus, type SportMatchPeriods } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, type SportMatchPeriods } from '@poolmaster/shared/domain';
 import { clearEventMatchPeriodScore, recordEventMatchPeriodScore, recordEventMatchResult } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
 import { Button, Input } from '@/features/shared/ui';
@@ -132,12 +132,16 @@ function ScoreMoment({
   const awayScore = parse(awayValue);
   // A game of a week, which forms no bracket, can end level (#792); a bracket match always has a winner.
   const tiesAllowed = formsNoBracket(context.bracket);
-  const tied = moment === 'final' && !tiesAllowed && homeScore !== null && homeScore === awayScore;
+  // A match that ended early (#704) keeps the winner it was entered with: a retirement's winner may
+  // trail, and a level score is no tie, so it takes no shoot-out either.
+  const endedEarly = match.status === MatchStatus.COMPLETED && match.ending !== MatchEnding.PLAYED;
+  const tied = moment === 'final' && !tiesAllowed && !endedEarly && homeScore !== null && homeScore === awayScore;
   // A level final score in a sport that holds shoot-outs is settled by one instead of refused.
   const shootout = tied ? context.shootout : null;
   const homeShootoutScore = parse(homeShootoutValue);
   const awayShootoutScore = parse(awayShootoutValue);
   const shootoutLevel = homeShootoutScore !== null && homeShootoutScore === awayShootoutScore;
+  const walkover = match.status === MatchStatus.COMPLETED && match.ending === MatchEnding.WALKOVER;
   const shootoutMissing = shootout !== null && (homeShootoutScore === null || awayShootoutScore === null || shootoutLevel);
 
   const invalidates = [QueryKeys.rootAdmin.manageSport.event(context.eventId)];
@@ -149,10 +153,12 @@ function ScoreMoment({
   const save = useInvalidatingMutation({
     mutationFn: async ({ score, kicks }: { score: { homeScore: number; awayScore: number }; kicks: ShootoutScore | null }) => {
       // A shoot-out names the winner of a level score; otherwise the higher score wins, and a
-      // level score of a week game is a tie.
-      const winnerSide = kicks ? finalWinner(kicks.homeShootoutScore, kicks.awayShootoutScore) : finalWinner(score.homeScore, score.awayScore);
+      // level score of a week game is a tie. A match that ended early keeps its winner.
+      const winnerSide = endedEarly
+        ? match.winnerSide
+        : kicks ? finalWinner(kicks.homeShootoutScore, kicks.awayShootoutScore) : finalWinner(score.homeScore, score.awayScore);
       const response = moment === 'final'
-        ? await recordEventMatchResult({ path, body: { winnerSide, ...score, ...kicks } })
+        ? await recordEventMatchResult({ path, body: { winnerSide, ...score, ...kicks, ending: match.ending } })
         : await recordEventMatchPeriodScore({ path: { ...path, periodNumber: moment }, body: score });
       if (response.error) {
         throwApiError(response.error);
@@ -240,7 +246,8 @@ function ScoreMoment({
           <span className={saved ? 'text-sm' : 'text-sm text-muted-foreground'} data-testid={`${testId}-value`}>
             {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}${describeLevelFinal(moment, saved, savedShootout, context)}${endingMark ? ` ${endingMark}` : ''}` : empty}
           </span>
-          <Button
+          {/* A walkover has no score to enter (#704). */}
+          {walkover ? null : <Button
             data-testid={`${testId}-edit`}
             onClick={() => {
               save.reset();
@@ -255,7 +262,7 @@ function ScoreMoment({
             variant="ghost"
           >
             {saved ? 'Change' : 'Enter score'}
-          </Button>
+          </Button>}
           {saved && moment !== 'final' ? (
             <Button data-testid={`${testId}-clear`} disabled={clear.isPending} onClick={() => clear.mutate(moment)} size="sm" variant="ghost">
               Clear
