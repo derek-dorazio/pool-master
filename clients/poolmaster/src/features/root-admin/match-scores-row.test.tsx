@@ -122,7 +122,7 @@ describe('MatchScoresRow shoot-outs', () => {
 
     expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { eventId: 'evt-1', matchNumber: '1' },
-      body: { winnerSide: 'AWAY', homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4 },
+      body: { winnerSide: 'AWAY', homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4, ending: 'PLAYED' },
     }));
   });
 
@@ -146,7 +146,7 @@ describe('MatchScoresRow shoot-outs', () => {
     await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-final-save'));
 
     expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
-      body: { winnerSide: 'HOME', homeScore: 2, awayScore: 0 },
+      body: { winnerSide: 'HOME', homeScore: 2, awayScore: 0, ending: 'PLAYED' },
     }));
   });
 
@@ -173,5 +173,47 @@ describe('MatchScoresRow shoot-outs', () => {
     await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-final-edit'));
     expect(screen.getByTestId('root-admin-bracket-score-1-final-shootout-away')).toHaveValue(4);
     expect(screen.getByTestId('root-admin-bracket-score-1-final-shootout-home')).toHaveValue(3);
+  });
+});
+
+// #704: a match that ended early keeps its winner and how it ended when its final score is changed.
+describe('MatchScoresRow early endings', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('keeps the winner and the retirement when a retired match\'s final score is changed, even though the winner trailed', async () => {
+    recordEventMatchResultMock.mockResolvedValue({ data: { matches: [] } });
+    renderRow(knockoutMatch({ status: 'COMPLETED', winnerSide: 'HOME', homeScore: 1, awayScore: 2, ending: MatchEnding.RETIREMENT }));
+
+    await userEvent.click(await screen.findByTestId('root-admin-bracket-score-1-final-edit'));
+    await userEvent.clear(screen.getByTestId('root-admin-bracket-score-1-final-away'));
+    await userEvent.type(screen.getByTestId('root-admin-bracket-score-1-final-away'), '3');
+    await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-final-save'));
+
+    expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { winnerSide: 'HOME', homeScore: 1, awayScore: 3, ending: 'RETIREMENT' },
+    }));
+  });
+
+  it('takes a level final score on a defaulted match without asking for a shoot-out, since its winner is already named', async () => {
+    recordEventMatchResultMock.mockResolvedValue({ data: { matches: [] } });
+    renderRow(knockoutMatch({ status: 'COMPLETED', winnerSide: 'AWAY', homeScore: null, awayScore: null, ending: MatchEnding.DEFAULT }));
+
+    await enterFinal('1', '1');
+    expect(screen.queryByTestId('root-admin-bracket-score-1-final-shootout-away')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-final-save'));
+
+    expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { winnerSide: 'AWAY', homeScore: 1, awayScore: 1, ending: 'DEFAULT' },
+    }));
+  });
+
+  it('offers no score entry on a walkover, which has no score', async () => {
+    renderRow(knockoutMatch({ status: 'COMPLETED', winnerSide: 'HOME', ending: MatchEnding.WALKOVER }));
+
+    expect(await screen.findByTestId('root-admin-bracket-score-1-final-value')).toHaveTextContent('Winner entered, no score (w/o)');
+    expect(screen.queryByTestId('root-admin-bracket-score-1-final-edit')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-bracket-score-1-1-edit')).not.toBeInTheDocument();
   });
 });
