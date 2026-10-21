@@ -1,0 +1,658 @@
+Source: https://www.ncaa.com/brackets/tennis-women/d1/2026
+Final URL: https://www.ncaa.com/brackets/tennis-women/d1/2026
+HTTP 200
+Fetched: 2026-10-21T10:06:09.824Z
+
+2026 Division I Women's Tennis Official Bracket | NCAA.com
+Skip to main content
+FBS Football
+FBS Football
+DI W Volleyball
+DI M Soccer
+DI W Soccer
+FCS Football
+DI M Ice Hockey
+NC W Hockey
+DII Football
+DII W Volleyball
+FBS Football
+DI W Volleyball
+DI M Soccer
+DI W Soccer
+FCS Football
+DI M Ice Hockey
+NC W Hockey
+DII Football
+DII W Volleyball
+View All Scores
+<
+Previous
+Wed 8:00 PM ET
+NM ST NM ST
+SAMHOU SAMHOU
+Thu 7:00 PM ET
+JMU JMU
+APP ST APP ST
+Thu 7:00 PM ET
+LIBRTY LIBRTY
+KENSAW KENSAW
+Thu 7:30 PM ET
+E CAR E CAR
+MEM MEM
+Fri 7:00 PM ET
+UMASS UMASS
+UCONN UCONN
+Fri 7:00 PM ET
+DUKE DUKE
+UVA UVA
+Fri 8:30 PM ET
+ARMY ARMY
+TULSA TULSA
+Fri 9:00 PM ET
+AIRFOR AIRFOR
+WYO WYO
+Fri 10:30 PM ET
+NC ST NC ST
+STAN STAN
+Sat 12:00 PM ET
+PITT PITT
+1
+MIAMI MIAMI
+Sat 3:30 PM ET
+2
+BYU BYU
+UCF UCF
+Sat 12:00 PM ET
+6
+IND IND
+MICH MICH
+Sat 7:30 PM ET
+7
+MISS MISS
+19
+TEXAS TEXAS
+Sat 12:00 PM ET
+8
+TXTECH TXTECH
+CINCY CINCY
+Sat 3:30 PM ET
+MICHST MICHST
+9
+UCLA UCLA
+Sat 10:15 PM ET
+14
+HOU HOU
+10
+UTAH UTAH
+Sat 3:30 PM ET
+11
+TENN TENN
+S CAR S CAR
+Sat 7:30 PM ET
+VANDY VANDY
+12
+UK UK
+Sat 3:30 PM ET
+TX A&M TX A&M
+13
+ALA ALA
+Sat 3:30 PM ET
+15
+IOWA IOWA
+MINN MINN
+Sat 7:30 PM ET
+16
+USC USC
+WISC WISC
+Sat 12:00 PM ET
+18
+LSU LSU
+AUBURN AUBURN
+Sat 6:00 PM ET
+21
+BOISE BOISE
+WASHST WASHST
+Sat 12:00 PM ET
+CAL CAL
+23
+SMU SMU
+Sat 12:00 PM ET
+RUTGER RUTGER
+24
+NW NW
+Sat 7:30 PM ET
+IOWAST IOWAST
+25
+ARIZ ARIZ
+Sat 12:00 PM ET
+RICE RICE
+FAU FAU
+Sat 12:00 PM ET
+WVU WVU
+TCU TCU
+Sat 12:00 PM ET
+W MICH W MICH
+TOLEDO TOLEDO
+Sat 1:00 PM ET
+MIA OH MIA OH
+C MICH C MICH
+Sat 1:00 PM ET
+BAYLOR BAYLOR
+KANSAS KANSAS
+Sat 1:00 PM ET
+AKRON AKRON
+KENT KENT
+Sat 3:00 PM ET
+OREGN OREGN
+ILL ILL
+Sat 3:30 PM ET
+SAC ST SAC ST
+BALLST BALLST
+Sat 3:30 PM ET
+BGSU BGSU
+BUFF BUFF
+Sat 3:30 PM ET
+BC BC
+GATECH GATECH
+Sat 3:30 PM ET
+OKLA OKLA
+MISSST MISSST
+Sat 3:30 PM ET
+HAWAII HAWAII
+NIU NIU
+Sat 3:30 PM ET
+NO TEX NO TEX
+NAVY NAVY
+Sat 3:45 PM ET
+KAN ST KAN ST
+AZ ST AZ ST
+Sat 4:00 PM ET
+E MICH E MICH
+OHIO OHIO
+Sat 4:00 PM ET
+LA MON LA MON
+TROY TROY
+Sat 5:00 PM ET
+ODU ODU
+LATECH LATECH
+Sat 5:00 PM ET
+SJSU SJSU
+NEVADA NEVADA
+Sat 5:00 PM ET
+LA LA
+S MISS S MISS
+Sat 6:30 PM ET
+SDSU SDSU
+CO ST CO ST
+Sat 7:00 PM ET
+GA ST GA ST
+ARK ST ARK ST
+Sat 7:00 PM ET
+VT VT
+CLEM CLEM
+Sat 7:00 PM ET
+COLO COLO
+OKLAST OKLAST
+Sat 7:30 PM ET
+SYR SYR
+UNC UNC
+Sat 7:30 PM ET
+UT ST UT ST
+TX ST TX ST
+Sat 8:00 PM ET
+UTSA UTSA
+TULANE TULANE
+Sat 10:00 PM ET
+ND ST ND ST
+N MEX N MEX
+FINAL
+S ALA S ALA 13
+MARSH MARSH 20
+FINAL
+MO ST MO ST 38
+DEL DEL 61
+FINAL
+MIDTEN MIDTEN 26
+FIU FIU 23
+Next
+>
+NCAA.com
+Live Video
+Sports
+Sports
+Fall
+Cross Country - Men
+Cross Country - Women
+Cross Country
+M Men
+W Women
+Field Hockey
+Football Trending
+Individual Tennis (DI) - Men
+Individual Tennis (DI) - Women
+Individual Tennis (DI)
+M Men
+W Women
+Soccer - Men
+Soccer - Women
+Soccer
+M Men
+W Women
+Volleyball - Women Trending
+Water Polo - Men
+Winter
+Basketball - Men
+Basketball - Women
+Basketball
+M Men
+W Women
+Bowling
+Fencing
+Gymnastics - Men
+Gymnastics - Women Trending
+Gymnastics
+M Men
+W Women
+Ice Hockey - Men
+Ice Hockey - Women
+Ice Hockey
+M Men
+W Women
+Rifle
+Skiing
+Swimming & Diving - Men
+Swimming & Diving - Women
+Swimming & Diving
+M Men
+W Women
+Track & Field (I) - Men
+Track & Field (I) - Women
+Track & Field (I)
+M Men
+W Women
+Wrestling - Men Trending
+Wrestling - Women
+Wrestling
+M Men
+W Women
+Spring
+Acrobatics & Tumbling
+Baseball
+Beach Volleyball
+Golf - Men
+Golf - Women
+Golf
+M Men
+W Women
+Lacrosse - Men
+Lacrosse - Women
+Lacrosse
+M Men
+W Women
+Rowing
+Softball
+Stunt
+Tennis - Men
+Tennis - Women
+Tennis
+M Men
+W Women
+Track & Field (O) - Men
+Track & Field (O) - Women
+Track & Field (O)
+M Men
+W Women
+Volleyball - Men
+Water Polo - Women
+Trending Sports
+Division I
+wrestling-men
+Division I
+Women's Volleyball
+NC
+Women's Gymnastics
+FCS
+Football
+Video
+March Madness
+March Madness
+March Madness Live (DI MBB)
+Home
+Scores
+My Picks
+Official Bracket
+March Madness (DI WBB)
+Home
+Scores
+My Picks
+Official Bracket
+March Madness Live (DI MBB)
+March Madness (DI WBB)
+Schools
+Schools
+Search all schools
+Trending Schools
+Florida
+Kentucky
+Nebraska
+Pittsburgh
+Louisville
+UCLA
+Southern California
+Oklahoma St.
+Duke
+South Carolina
+TCU
+Connecticut
+Shop
+Shop
+Home
+NCAA Championships Gear
+Men’s Gear
+Women’s Gear
+Kids Gear
+T-Shirts
+Jerseys
+Sideline Gear
+Tickets
+Tickets
+NCAATickets.com
+NCAA Championship Tickets
+FCS
+Women's Volleyball
+Men's Basketball
+Women's Basketball
+NCAA Hospitality Experiences
+NCAA Tournament
+Men's Final Four
+Women's Final Four
+Men’s College World Series
+Women’s College World Series
+Marriott Bonvoy
+Marriott Bonvoy Travel Hub
+Settings
+Settings
+Feedback
+Division I
+DII
+DIII
+Women's Tennis
+Home
+Team Bracket
+Championship Info
+Rankings
+Video
+History
+PRESENTED BY
+2026 DI Women's Tennis Championship
+Official Bracket
+First Round
+Second Round
+Third Round
+Quarterfinals
+Quarterfinals
+Third Round
+Second Round
+First Round
+Get Tickets | Printable Bracket | Share
+FINAL
+1 Georgia 4
+Alabama St. 0
+FINAL
+Elon 0
+Charlotte 4
+FINAL
+UCLA 4
+San Diego St. 3
+FINAL
+Denver 0
+16 Arizona St. 4
+FINAL
+9 Texas 5
+Tarleton St. 1
+FINAL
+Yale 1
+Texas Tech 4
+FINAL
+UCF 4
+Navy 1
+FINAL
+Morgan St. 0
+8 NC State 5
+FINAL
+1 Georgia 4
+Charlotte 0
+FINAL
+UCLA 4
+16 Arizona St. 3
+FINAL
+9 Texas 4
+Texas Tech 2
+FINAL
+UCF 0
+8 NC State 4
+FINAL
+1 Georgia 4
+UCLA 1
+FINAL
+9 Texas 2
+8 NC State 4
+FINAL
+1 Georgia 4
+8 NC State 1
+FINAL
+3 Ohio St. 4
+Youngstown St. 0
+FINAL
+Notre Dame 4
+Arizona 3
+FINAL
+Clemson 4
+ETSU 1
+FINAL
+Xavier 0
+14 Vanderbilt 4
+FINAL
+11 Pepperdine 4
+UC Santa Barbara 0
+FINAL
+BYU 2
+Stanford 4
+FINAL
+SMU 4
+Wichita St. 1
+FINAL
+Kansas 0
+6 Oklahoma 4
+FINAL
+3 Ohio St. 4
+Notre Dame 0
+FINAL
+Clemson 1
+14 Vanderbilt 4
+FINAL
+11 Pepperdine 4
+Stanford 0
+FINAL
+SMU 2
+6 Oklahoma 4
+FINAL
+3 Ohio St. 4
+14 Vanderbilt 1
+FINAL
+11 Pepperdine 4
+6 Oklahoma 3
+FINAL
+3 Ohio St. 4
+11 Pepperdine 0
+Semifinals
+Championship
+Semifinals
+FINAL
+1 Georgia 3
+4 Texas A&M 4
+FINAL
+4 Texas A&M 4
+2 Auburn 1
+FINAL
+3 Ohio St. 1
+2 Auburn 4
+2026 National Champion
+Texas A&M
+FINAL
+5 North Carolina 4
+Charleston So. 0
+FINAL
+Maryland 0
+South Carolina 4
+FINAL
+Florida 4
+Toledo 0
+FINAL
+Illinois St. 0
+12 Michigan 5
+FINAL
+13 Southern California 4
+Sacramento St. 0
+FINAL
+Utah 1
+California 4
+FINAL
+Wisconsin 3
+Baylor 4
+FINAL
+Quinnipiac 0
+4 Texas A&M 4
+FINAL
+5 North Carolina 4
+South Carolina 0
+FINAL
+Florida 2
+12 Michigan 4
+FINAL
+13 Southern California 4
+California 1
+FINAL
+Baylor 1
+4 Texas A&M 4
+FINAL
+5 North Carolina 4
+12 Michigan 2
+FINAL
+13 Southern California 1
+4 Texas A&M 5
+FINAL
+5 North Carolina 3
+4 Texas A&M 4
+FINAL
+7 Virginia 4
+Saint Francis 0
+FINAL
+Liberty 0
+Washington 4
+FINAL
+TCU 2
+Rice 4
+FINAL
+SFA 0
+10 LSU 4
+FINAL
+15 Duke 4
+VCU 0
+FINAL
+Old Dominion 2
+Tennessee 4
+FINAL
+Miami (FL) 4
+North Florida 0
+FINAL
+Bryant 0
+2 Auburn 4
+FINAL
+7 Virginia 4
+Washington 0
+FINAL
+Rice 2
+10 LSU 4
+FINAL
+15 Duke 4
+Tennessee 1
+FINAL
+Miami (FL) 0
+2 Auburn 4
+FINAL
+7 Virginia 1
+10 LSU 4
+FINAL
+15 Duke 2
+2 Auburn 4
+FINAL
+10 LSU 1
+2 Auburn 4
+Latest DI Women's Tennis News
+DI Women's Tennis
+Current and former NCAA student-athletes competing in the 2026 US Open
+DI Women's Tennis
+Texas A&M wins 2026 NCAA women's tennis title
+DI Women's Tennis
+TAMU wins 2026 DI women's tennis championship
+DI Women's Tennis
+Teams announced for 2026 NCAA Division I women’s tennis championship
+DI Women's Tennis
+DI women's tennis: 2026 selection show
+DI Women's Tennis
+2025 NCAA DI women's singles and doubles tennis championships: Results, brackets, schedule
+DI Women's Tennis
+2025 NCAA Division I Women’s Tennis Singles and Doubles Championships Selections
+DI Women's Tennis
+Georgia wins 2025 NCAA women's tennis championship | Match point
+Advertisement
+NCAA Footer Navigation Menu
+Featured Sections
+March Madness
+Bracket Challenge Game
+Video
+TV Broadcast Schedule
+Newsletters
+Experience It Live
+Championship Tickets
+NCAA Fan Experience
+NCAA Travel
+DI Men's Basketball Tickets
+DI Women's Basketball Tickets
+Ticket Terms
+NCAA Championships
+Championship Central
+Championship Store
+Men's Final Four
+Women's Final Four
+Men's College World Series
+Women's College World Series
+About the NCAA
+NCAA.org
+Hall of Champions
+Eligibility Center
+Corporate Champions & Partners
+Careers in College Athletics
+NCAA Media and Advertising Information
+Feedback
+Terms of Service
+Accessibility and Closed Captioning
+AdChoices
+Privacy Policy
+RSS
+Your Privacy Choices
+© 2026 NCAA | © 2026 TNT Sports, a division of Warner Bros. Discovery | All Rights Reserved
+NCAA.com is a part of Bleacher Report - Turner Sports Network, part of the Turner Sports and Entertainment Network.
+Legal Terms and Privacy
+By clicking "Agree", you agree to the Terms of Use and to collection and use of your information by cookies and similar technologies, as set forth in our Privacy Policy . Clicking "Agree" does not impact privacy choices you may have under state laws. Learn more in our US State Supplement .
+Agree
+
+--- embedded JSON ---
+{"@context":"http:\/\/schema.org","@type":"WebPage","url":"https:\/\/www.ncaa.com\/brackets\/tennis-women\/d1\/2026","dateCreated":"2018-08-21T15:00:00Z","datePublished":"2026-10-19T09:00:00-04:00","dateModified":"2026-10-19T09:00:00-04:00","publisher":{"@type":"Organization","name":"NCAA.com","logo":{"@type":"ImageObject","url":"https:\/\/www.ncaa.com\/modules\/custom\/casablanca_content\/img\/meta\/ncaa.60.png","width":60,"height":60}},"headline":"2026 Division I Women&#039;s Tennis Official Bracket","description":"The official 2026 College Women&#039;s Tennis Bracket for Division I. Includes a printable bracket and links to buy NCAA championship tickets.","image":{"@type":"ImageObject","url":"https:\/\/www.ncaa.com\/modules\/custom\/casablanca_core\/img\/sportbanners\/tennis-women.png"},"author":{"@type":"Organization","name":"NCAA.com"},"creator":{"@type":"Organization","name":"NCAA.com"},"thumbnailUrl":"https:\/\/www.ncaa.com\/modules\/custom\/casablanca_core\/img\/sportbanners\/tennis-women.png","keywords":"official bracket, NCAA, championship, d1, DI, Division I, tennis, Tennis, tennis-women, Women's Tennis, 2026 DI Women's Tennis Championship, 2026"}
+
+--- embedded JSON ---
+{"path":{"baseUrl":"\/","pathPrefix":"","currentPath":"taxonomy\/term\/106279","currentPathIsAdmin":false,"isFront":false,"currentLanguage":"en","currentQuery":{"_wrapper_format":"html"}},"pluralDelimiter":"\u0003","suppressDeprecationErrors":true,"ajaxPageState":{"libraries":"eJxtUtGOAyEI_KFu_SSDyu5yZcUI2-v-_dH00qxpH4zCTAYGTKiNalhYEvCUVS9pyPzoJYNCYqgZIlTgwyhreL9iEjG1Du070SOIjAtwTFAr9jMtdcg3NA0bUP0K3Hc857Nsm9TwqZSlGlYLDTos3syqI9ox4MOwe18TU71NMz1GheIlJZa5BSgaN3ewjITZjWL_aHXufq2kGN6vf6exyit1pjO5t06ooXU0OxQZs50ZFe7BDy1gJEMpzasI6xO9wm7i02iMhiPHvSaBXp6zm36pLDjIq2TyZaxQ3V94RQPepPvgdU9eZgAMHqHtiSlfGQ7ZB1kjdk9QvuS6fwTGT-BOBeWihxpuvlLFP97K_zE","theme":"bespin","theme_token":null},"ajaxTrustedUrl":[],"cdx":{"adform":["ads-contextual","ads-person","ads-person-prof","measure-ads","vendor"],"adobe":["content-person","measure-content"],"akamai":["measure-content","measure-market","product-develop"],"amazon_a9":["ads-contextual","ads-person","measure-ads"],"chartbeat":["measure-content","measure-market","product-develop"],"cloud_front":["measure-content","measure-market","product-develop"],"comscore":["data-store","measure-content","vendor"],"conviva":["measure-content","measure-market","product-develop"],"cws_pixel":["ads-contextual","ads-person","measure-ads"],"dalton":[""],"dataxu":["ads-contextual","ads-person","measure-ads"],"facebook_pixel":["ads-contextual","ads-person","ads-person-prof","data-store","vendor"],"floodlight":["data-store","vendor"],"gtm":["ads-contextual","ads-person","ads-person-prof","data-store","measure-ads","vendor"],"insight_pixel":["ads-contextual","ads-person","measure-ads"],"new_relic":["measure-content","measure-market","product-develop"],"nielsen":["data-store","measure-content","vendor"],"quantcast":["vendor"],"simpli_fi":["ads-contextual","ads-person","measure-ads","vendor"],"tracking_pixel":["ads-contextual","ads-person","ads-person-prof","content-person","content-person-prof","data-store","vendor"],"twitter_pixel":["ads-contextual","ads-person","ads-person-prof","content-person","content-person-prof","data-store","vendor"],"wunderkind":["measure-content","measure-market","product-develop"]},"casablanca_analytics":{"one_trust_url":"https:\/\/cdn.cookielaw.org\/scripttemplates\/otSDKStub.js","one_trust_guid":"27c817ca-399c-4851-9dc1-5725121225d3-test","force_opt_out":false,"analytics_bootstrap_url":"\/\/lightning.ncaa.com\/launch\/7be62238e4c3\/d27aaa336a89\/launch-8355f7a8c0c6.min.js"},"ncaaLegalBanner":{"ackTermsEnforced":true,"cookieKey":""},"core":{"build":"master-9787","build_version":"master-9787","build_timestamp":"Thu Sep 24 07:07:25 EDT 2026","build_branch":"refs\/heads\/master","isPROD":true,"gqlHostRW":"https:\/\/sdata-ncaa-gql.prod.sdata-cloud.com","gqlHost":"https:\/\/sdataprod.ncaa.com"},"casablanca_draco_dfp":{"ad_manager":{"registries":["https:\/\/i.cdn.turner.com\/ads\/ncaa_3\/ncaa_brackets.json"],"test_mode":false,"dfp_ad_unit_map":"NCAA\/sports\/$sport\/brackets","defer_queue_registry":false,"dfp_primary_sport":"w_tennis","dfp_franchise":""}},"activate":{"service_app_id":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuZXR3b3JrIjoibmNhYSIsInByb2R1Y3QiOiJtbWwiLCJwbGF0Zm9ybSI6IndlYi10b3AyIiwiYXBwSWQiOiJuY2FhLW1tbC13ZWItdG9wMi0xcHE2dW8ifQ.nG2Je5fBXOv1HyCzGenv-1vRGMSugBpk0fkPoEqT1eM","software_statement":"eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI5NGVmZTE1YS0wZmNkLTRmMDctYmQ5ZC04NDk2OTFmNDdlMjciLCJuYmYiOjE3NTIyNTg1NjIsImlzcyI6ImF1dGguYWRvYmUuY29tIiwiaWF0IjoxNzUyMjU4NTYyfQ.JfdHzdxZala4uViL6mrGYDa_YSaVXTsgmUfv8T7rUzwHefYrra48qGyKG3okAeHAKcg0GKg8LAwZHs2Pd41R3QdgF2sktiqk5TDOMg0k8FZYk_Bs6m-IpJlAPMvKjBIVm4zmbzckLo0Hn8yIpFfHRXCvUiH_sB3oHoZkQPzjy7B7X0Ha45tH0FkrkByfWgjREOFAGpxemcYZ7EkU3YjvSBqWSIcVk0Bsxe8LYe3aWdxECy56gZ2Phar9sTST3bxYV_gUFVfcYuGNUJGBWIJx3miH2rRSZ6GfBv9SHHBHSin7hpyxwHRC7VJGbf6pkHzNCS30MCc8SZCA_OF2_n_6Cw"},"shareData":{"tickets":"\/tickets","print_bracket":"\/brackets\/print\/tennis-women\/d1\/2026","share":"https:\/\/www.ncaa.com\/brackets\/tennis-women\/d1\/2026","logo":"https:\/\/www.ncaa.com\/modules\/custom\/casablanca_core\/img\/sportbanners\/tennis-women.svg"},"subnav":{"divLinks":{"d3":{"Home":"\/sports\/tennis-women\/d3","Rankings":"\/rankings\/tennis-women\/d3","Team Bracket":"\/brackets\/tennis-women\/d3\/2026","History":"\/history\/tennis-women\/d3","Video":"\/video\/tennis-women","2026 Singles Brackets":"https:\/\/www.ncaa.com\/_flysystem\/public-s3\/files\/Copy%20of%202026_DIIIWTEN_FilledBracket_Chattanooga.singles5.25.26.pdf","2026 Doubles Brackets":"https:\/\/www.ncaa.com\/_flysystem\/public-s3\/files\/Copy%20of%202026_DIIIWTEN_FilledBracket_Chattanooga.Double.5.25.26.pdf","Champs Pass":"http:\/\/ncaa.com\/champs-pass","Scores":"https:\/\/ioncourt.com\/tournaments\/6a037ef336cd30e2cc0c8899\/upcoming"},"d2":{"Home":"\/sports\/tennis-women\/d2","Rankings":"\/rankings\/tennis-women\/d2","Bracket":"\/brackets\/tennis-women\/d2\/2026","History":"\/history\/tennis-women\/d2","Video":"\/video\/tennis-women","Regional brackets":"https:\/\/www.ncaa.com\/_flysystem\/public-s3\/files\/WomenRegionalRounds2026_SecondRoundFinal.pdf","Champs Pass":"http:\/\/ncaa.com\/champs-pass"}}},"liveSchedule":{"graphqlDataUrl":"https:\/\/sdataprod.ncaa.com?meta=GetLiveSchedulePlusMmlEventVideo_web\u0026extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22145b6f09ac69b0dc728c75f59a488c90b781e665fca89d60609e643614252a1f%22%7D%7D","mmlSeasonYear":2026,"path":"\/ncaa\/liveschedule\/today"},"scoreboardWidget":{"widgets":[{"id":"1720482","title":"FBS Football","sportCode":"MFB","sport":"football","division":"fbs","divisionId":11,"rangeStart":"","rangeEnd":"","sourceType":"Regular Season","sortByTop25":true,"round":"showAll","seasonYear":2026,"year":"2026","month":"","day":"","week":8,"contestDate":""},{"id":"1438230","title":"DI W Volleyball","sportCode":"WVB","sport":"volleyball-women","division":"d1","divisionId":1,"rangeStart":"","rangeEnd":"","sourceType":"Regular Season","sortByTop25":true,"round":"showAll","seasonYear":2026,"year":"2026","month":"10","day":"20","week":"","contestDate":"10\/20\/2026"},{"id":"1397943","title":"DI M Soccer","sportCode":"MSO","sport":"soccer-men","division":"d1","divisionId":1,"rangeStart":"","rangeEnd":"","sourceType":"Regular Season","sortByTop25":true,"round":"showAll","seasonYear":2026,"year":"2026","month":"10","day":"20","week":"","contestDate":"10\/20\/2026"},{"id":"1379217","title":"DI W Soccer","sportCode":"WSO","sport":"soccer-women","division":"d1","divisionId":1,"rangeStart":"","rangeEnd":"","sourceType":"Regular Season","sortByTop25":true,"round":"showAll","seasonYear":2026,"year":"2026","month":"10","day":"21","week":"","contestDate":"10\/21\/2026"},{"id":"806183","title":"FCS Football","sportCode":"MFB","sport":"football","division":"fcs","divisionId":12,"rangeStart":"","rangeEnd":"","sourceType":"Regular Season","sortByTop25":false,"round":"1","seasonYear":2026,"year":"2026","month":"","day":"","week":8,"contestDate":""},{"id":"1528833","title":"DI M Ice Hockey","sportCode":"MIH","sport":"icehockey-men","division":"d1","divisionId":1,"rangeStart":"","rangeEnd":"","sourceType":"Regular Season","sortByTop25":false,"round":"showAll","seasonYear":2026,"year":"2026","month":"10","day":"20","week":"","contestDate":"10\/20\/2026"},{"id":"806196","title":"NC W Hockey","sportCode":"WIH","sport":"icehockey-women","division":"d1","divisionId":0,"rangeStart":"","rangeEnd":"","sourceType":"Regular Season","sortByTop25":false,"round":"showAll","seasonYear":2026,"year":"2026","month":"10","day":"22","week":"","contestDate":"10\/22\/2026"},{"id":"1410166","title":"DII Football ","sportCode":"MFB","sport":"football","division":"d2","divisionId":2,"rangeStart":"","rangeEnd":"","sourceType":"Regular Season","sortByTop25":false,"round":"showAll","seasonYear":2026,"year":"2026","month":"","day":"","week":8,"contestDate":""},{"id":"1400708","title":"DII W Volleyball","sportCode":"WVB","sport":"volleyball-women","division":"d2","divisionId":2,"rangeStart":"","rangeEnd":"","sourceType":"Regular Season","sortByTop25":false,"round":"showAll","seasonYear":2026,"year":"2026","month":"10","day":"20","week":"","contestDate":"10\/20\/2026"}],"multipleWidgets":true,"alwaysShowLabel":true,"widgetName":"","rangeStart":"","rangeEnd":"","isHome":false,"gametoolApi":"https:\/\/sdataprod.ncaa.com","gametoolEnv":"prod","gametoolStaticEnv":"","shas":{"GetContests_web":"4bcb5e6432fa9da365c0c19af01b1f9015cc7eb5c21e7af2dba308784a166df7","ScoringWidgetChampionship_ncaa":"833b812cd33218fbffa93fa81646e843d0b9bbca75283b2a33a0bf6d65ef9d27"}},"json":["https:\/\/sdataprod.ncaa.com?meta=GetContests_web\u0026extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%224bcb5e6432fa9da365c0c19af01b1f9015cc7eb5c21e7af2dba308784a166df7%22%7D%7D\u0026variables=%7B%22sportCode%22%3A%22MFB%22%2C%22division%22%3A12%2C%22seasonYear%22%3A2026%2C%22week%22%3A8%7D","https:\/\/sdataprod.ncaa.com?meta=NCAA_schedules_today_web\u0026extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22efc1700c64a920868b6ef44ca8aad6e36c5b25ed8067d0ab70dde824329683a2%22%7D%7D\u0026variables=%7B%22sportCode%22%3A%22WIH%22%2C%22seasonYear%22%3A2026%2C%22division%22%3A0%7D"],"dalton":{"modal_bypass":false,"modal_enabled":true,"modal_live_embed_enabled":true,"base_url":"https:\/\/audience.ncaa.com"},"daltonModal":{"apple":{"clientId":"com.ncaa.mml","redirectURI":"https:\/\/www.ncaa.com\/dalton\/auth"},"google":{"clientId":"356558856367-ifouv3otp24pp0nj64v4bmpo5qkorl8p.apps.googleusercontent.com","redirectURI":"https:\/\/www.ncaa.com\/dalton\/auth"},"newsletter_name":"","subscription_id":"ae8239eb-a8c5-4219-9ca7-244c7ebcb3f0"},"user":{"uid":0,"permissionsHash":"d1eab18d9b5fed590641db439164d555a7af1fac2ecb2de09cb9fd47c3836682"}}
+
+--- embedded JSON ---
+[["ShallowReactive",1],{"data":2,"state":5,"once":7,"_errors":9,"serverRendered":11,"path":12,"pinia":13},["ShallowReactive",3],{"apollo":4},"{}",["Reactive",6],{},["Set",8],"$hVlVZs9nBr",["ShallowReactive",10],{},true,"\u002Fbrackets\u002Ftennis-women\u002Fd1\u002F2026?env=prod&ncaaSite=https%3A%2F%2Fwww.ncaa.com&logo=https%3A%2F%2Fwww.ncaa.com%2Fmodules%2Fcustom%2Fcasablanca_core%2Fimg%2Fsportbanners%2Ftennis-women.svg&print_bracket=%2Fbrackets%2Fprint%2Ftennis-women%2Fd1%2F2026&share=https%3A%2F%2Fwww.ncaa.com%2Fbrackets%2Ftennis-women%2Fd1%2F2026&tickets=%2Ftickets",["Reactive",14],{"main":15},{"championship":16,"stagedGames":965,"staged":968},["Ref",17],["Reactive",18],{"__typename":19,"title":20,"year":21,"dataPath":22,"bracketTemplate":23,"season":24,"sportUrl":25,"championshipId":26,"divisionName":27,"games":28,"rounds":928,"regions":947,"sections":964},"Championship","2026 DI Women's Tennis Championship",2026,"\u002Fcarmen\u002Fbrackets\u002Fchampionships\u002Ftennis-women\u002Fd1\u002F2026","bracket_64.json",2025,"tennis-women",6408,"d1",[29,64,84,105,125,147,166,185,205,223,240,258,276,295,312,330,347,365,382,400,418,437,455,475,495,514,531,549,567,586,603,622,639,650,658,667,675,685,693,702,711,721,730,739,748,757,765,774,782,793,802,811,820,831,841,850,858,869,879,889,898,909,918],{"__typename":30,"contestId":31,"bracketPositionId":32,"bracketId":32,"victorGamePosition":33,"victorBracketPositionId":34,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":42,"startTimeEpoch":43,"sectionId":44,"title":45,"url":46,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":47,"stream":61,"broadcaster":35},"ChampionshipGame",6599565,101,"Top",201,null,"","FINAL","F","final",false,"05\u002F02\u002F2026","13:00",1777741200,1,"Alabama St. vs Georgia","\u002Fgame\u002F6599565",[48,55],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":50,"score":51,"seed":44,"nameShort":52,"nameFull":53,"seoname":54,"textOverride":35},"ChampionshipTeam","\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fg\u002Fgeorgia.70.png",4,"Georgia","University of Georgia","georgia",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":56,"score":57,"seed":35,"nameShort":58,"nameFull":59,"seoname":60,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fa\u002Falabama-st.70.png",0,"Alabama St.","Alabama State University","alabama-st",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},"Stream","pre",{"__typename":30,"contestId":65,"bracketPositionId":66,"bracketId":66,"victorGamePosition":67,"victorBracketPositionId":34,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":68,"startTimeEpoch":69,"sectionId":44,"title":70,"url":71,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":72,"stream":83,"broadcaster":35},6599566,102,"Bottom","10:00",1777730400,"Charlotte vs Elon","\u002Fgame\u002F6599566",[73,78],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":74,"score":57,"seed":35,"nameShort":75,"nameFull":76,"seoname":77,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fe\u002Felon.70.png","Elon","Elon University","elon",{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":79,"score":51,"seed":35,"nameShort":80,"nameFull":81,"seoname":82,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fc\u002Fcharlotte.70.png","Charlotte","The University of North Carolina at Charlotte","charlotte",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":85,"bracketPositionId":86,"bracketId":86,"victorGamePosition":33,"victorBracketPositionId":87,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":42,"startTimeEpoch":89,"sectionId":44,"title":90,"url":91,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":92,"stream":104,"broadcaster":35},6599567,103,202,"05\u002F01\u002F2026",1777654800,"San Diego St. vs UCLA","\u002Fgame\u002F6599567",[93,98],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":94,"score":51,"seed":35,"nameShort":95,"nameFull":96,"seoname":97,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fu\u002Fucla.70.png","UCLA","University of California, Los Angeles","ucla",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":99,"score":100,"seed":35,"nameShort":101,"nameFull":102,"seoname":103,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fs\u002Fsan-diego-st.70.png",3,"San Diego St.","San Diego State University","san-diego-st",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":106,"bracketPositionId":107,"bracketId":107,"victorGamePosition":67,"victorBracketPositionId":87,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":108,"startTimeEpoch":109,"sectionId":44,"title":110,"url":111,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":112,"stream":124,"broadcaster":35},6599568,104,"16:00",1777665600,"Denver vs Arizona St.","\u002Fgame\u002F6599568",[113,118],{"__typename":49,"isHome":40,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":114,"score":57,"seed":35,"nameShort":115,"nameFull":116,"seoname":117,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fd\u002Fdenver.70.png","Denver","University of Denver","denver",{"__typename":49,"isHome":11,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":119,"score":51,"seed":120,"nameShort":121,"nameFull":122,"seoname":123,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fa\u002Farizona-st.70.png",16,"Arizona St.","Arizona State University","arizona-st",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":126,"bracketPositionId":127,"bracketId":127,"victorGamePosition":33,"victorBracketPositionId":128,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":129,"startTimeEpoch":130,"sectionId":44,"title":131,"url":132,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":133,"stream":146,"broadcaster":35},6599569,105,203,"14:00",1777744800,"Tarleton St. vs Texas","\u002Fgame\u002F6599569",[134,141],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":135,"score":136,"seed":137,"nameShort":138,"nameFull":139,"seoname":140,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Ft\u002Ftexas.70.png",5,9,"Texas","University of Texas at Austin","texas",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":142,"score":44,"seed":35,"nameShort":143,"nameFull":144,"seoname":145,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Ft\u002Ftarleton-st.70.png","Tarleton St.","Tarleton State University","tarleton-st",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":148,"bracketPositionId":149,"bracketId":149,"victorGamePosition":67,"victorBracketPositionId":128,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":150,"startTimeEpoch":151,"sectionId":44,"title":152,"url":153,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":154,"stream":165,"broadcaster":35},6599570,106,"11:00",1777734000,"Texas Tech vs Yale","\u002Fgame\u002F6599570",[155,160],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":156,"score":44,"seed":35,"nameShort":157,"nameFull":158,"seoname":159,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fy\u002Fyale.70.png","Yale","Yale University","yale",{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":161,"score":51,"seed":35,"nameShort":162,"nameFull":163,"seoname":164,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Ft\u002Ftexas-tech.70.png","Texas Tech","Texas Tech University","texas-tech",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":167,"bracketPositionId":168,"bracketId":168,"victorGamePosition":33,"victorBracketPositionId":169,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":129,"startTimeEpoch":170,"sectionId":44,"title":171,"url":172,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":173,"stream":184,"broadcaster":35},6599571,107,204,1777658400,"Navy vs UCF","\u002Fgame\u002F6599571",[174,179],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":175,"score":51,"seed":35,"nameShort":176,"nameFull":177,"seoname":178,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fu\u002Fucf.70.png","UCF","University of Central Florida","ucf",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":180,"score":44,"seed":35,"nameShort":181,"nameFull":182,"seoname":183,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fn\u002Fnavy.70.png","Navy","U.S. Naval Academy","navy",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":186,"bracketPositionId":187,"bracketId":187,"victorGamePosition":67,"victorBracketPositionId":169,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":188,"startTimeEpoch":189,"sectionId":44,"title":190,"url":191,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":192,"stream":204,"broadcaster":35},6599572,108,"17:00",1777669200,"Morgan St. vs NC State","\u002Fgame\u002F6599572",[193,198],{"__typename":49,"isHome":40,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":194,"score":57,"seed":35,"nameShort":195,"nameFull":196,"seoname":197,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fm\u002Fmorgan-st.70.png","Morgan St.","Morgan State University","morgan-st",{"__typename":49,"isHome":11,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":199,"score":136,"seed":200,"nameShort":201,"nameFull":202,"seoname":203,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fn\u002Fnorth-carolina-st.70.png",8,"NC State","North Carolina State University","north-carolina-st",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":206,"bracketPositionId":207,"bracketId":207,"victorGamePosition":33,"victorBracketPositionId":208,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":108,"startTimeEpoch":109,"sectionId":44,"title":209,"url":210,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":211,"stream":222,"broadcaster":35},6599573,109,205,"Charleston So. vs North Carolina","\u002Fgame\u002F6599573",[212,217],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":213,"score":51,"seed":136,"nameShort":214,"nameFull":215,"seoname":216,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fn\u002Fnorth-carolina.70.png","North Carolina","University of North Carolina, Chapel Hill","north-carolina",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":218,"score":57,"seed":35,"nameShort":219,"nameFull":220,"seoname":221,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fc\u002Fcharleston-so.70.png","Charleston So.","Charleston Southern University","charleston-so",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":224,"bracketPositionId":225,"bracketId":225,"victorGamePosition":67,"victorBracketPositionId":208,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":42,"startTimeEpoch":89,"sectionId":44,"title":226,"url":227,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":228,"stream":239,"broadcaster":35},6599574,110,"South Carolina vs Maryland","\u002Fgame\u002F6599574",[229,234],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":230,"score":57,"seed":35,"nameShort":231,"nameFull":232,"seoname":233,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fm\u002Fmaryland.70.png","Maryland","University of Maryland, College Park","maryland",{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":235,"score":51,"seed":35,"nameShort":236,"nameFull":237,"seoname":238,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fs\u002Fsouth-carolina.70.png","South Carolina","University of South Carolina, Columbia","south-carolina",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":241,"bracketPositionId":242,"bracketId":242,"victorGamePosition":33,"victorBracketPositionId":243,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":68,"startTimeEpoch":69,"sectionId":44,"title":244,"url":245,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":246,"stream":257,"broadcaster":35},6599575,111,206,"Toledo vs Florida","\u002Fgame\u002F6599575",[247,252],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":248,"score":51,"seed":35,"nameShort":249,"nameFull":250,"seoname":251,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Ff\u002Fflorida.70.png","Florida","University of Florida","florida",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":253,"score":57,"seed":35,"nameShort":254,"nameFull":255,"seoname":256,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Ft\u002Ftoledo.70.png","Toledo","University of Toledo","toledo",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":259,"bracketPositionId":260,"bracketId":260,"victorGamePosition":67,"victorBracketPositionId":243,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":42,"startTimeEpoch":43,"sectionId":44,"title":261,"url":262,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":263,"stream":275,"broadcaster":35},6599576,112,"Illinois St. vs Michigan","\u002Fgame\u002F6599576",[264,269],{"__typename":49,"isHome":40,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":265,"score":57,"seed":35,"nameShort":266,"nameFull":267,"seoname":268,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fi\u002Fillinois-st.70.png","Illinois St.","Illinois State University","illinois-st",{"__typename":49,"isHome":11,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":270,"score":136,"seed":271,"nameShort":272,"nameFull":273,"seoname":274,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fm\u002Fmichigan.70.png",12,"Michigan","University of Michigan","michigan",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":277,"bracketPositionId":278,"bracketId":278,"victorGamePosition":33,"victorBracketPositionId":279,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":188,"startTimeEpoch":189,"sectionId":44,"title":280,"url":281,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":282,"stream":294,"broadcaster":35},6599577,113,207,"Sacramento St. vs Southern California","\u002Fgame\u002F6599577",[283,289],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":284,"score":51,"seed":285,"nameShort":286,"nameFull":287,"seoname":288,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fs\u002Fsouthern-california.70.png",13,"Southern California","University of Southern California","southern-california",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":290,"score":57,"seed":35,"nameShort":291,"nameFull":292,"seoname":293,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fs\u002Fsacramento-st.70.png","Sacramento St.","California State University, Sacramento","sacramento-st",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":296,"bracketPositionId":297,"bracketId":297,"victorGamePosition":67,"victorBracketPositionId":279,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":129,"startTimeEpoch":170,"sectionId":44,"title":298,"url":299,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":300,"stream":311,"broadcaster":35},6599578,114,"California vs Utah","\u002Fgame\u002F6599578",[301,306],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":302,"score":44,"seed":35,"nameShort":303,"nameFull":304,"seoname":305,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fu\u002Futah.70.png","Utah","University of Utah","utah",{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":307,"score":51,"seed":35,"nameShort":308,"nameFull":309,"seoname":310,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fc\u002Fcalifornia.70.png","California","University of California, Berkeley","california",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":313,"bracketPositionId":314,"bracketId":314,"victorGamePosition":33,"victorBracketPositionId":315,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":129,"startTimeEpoch":130,"sectionId":44,"title":316,"url":317,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":318,"stream":329,"broadcaster":35},6599579,115,208,"Baylor vs Wisconsin","\u002Fgame\u002F6599579",[319,324],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":320,"score":100,"seed":35,"nameShort":321,"nameFull":322,"seoname":323,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fw\u002Fwisconsin.70.png","Wisconsin","University of Wisconsin-Madison","wisconsin",{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":325,"score":51,"seed":35,"nameShort":326,"nameFull":327,"seoname":328,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fb\u002Fbaylor.70.png","Baylor","Baylor University","baylor",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":331,"bracketPositionId":332,"bracketId":332,"victorGamePosition":67,"victorBracketPositionId":315,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":129,"startTimeEpoch":130,"sectionId":44,"title":333,"url":334,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":335,"stream":346,"broadcaster":35},6599580,116,"Quinnipiac vs Texas A&M","\u002Fgame\u002F6599580",[336,341],{"__typename":49,"isHome":40,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":337,"score":57,"seed":35,"nameShort":338,"nameFull":339,"seoname":340,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fq\u002Fquinnipiac.70.png","Quinnipiac","Quinnipiac University","quinnipiac",{"__typename":49,"isHome":11,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":342,"score":51,"seed":51,"nameShort":343,"nameFull":344,"seoname":345,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Ft\u002Ftexas-am.70.png","Texas A&M","Texas A&M University, College Station","texas-am",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":348,"bracketPositionId":349,"bracketId":349,"victorGamePosition":33,"victorBracketPositionId":350,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":42,"startTimeEpoch":43,"sectionId":44,"title":351,"url":352,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":353,"stream":364,"broadcaster":35},6599581,117,209,"Youngstown St. vs Ohio St.","\u002Fgame\u002F6599581",[354,359],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":355,"score":51,"seed":100,"nameShort":356,"nameFull":357,"seoname":358,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fo\u002Fohio-st.70.png","Ohio St.","The Ohio State University","ohio-st",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":360,"score":57,"seed":35,"nameShort":361,"nameFull":362,"seoname":363,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fy\u002Fyoungstown-st.70.png","Youngstown St.","Youngstown State University","youngstown-st",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":366,"bracketPositionId":367,"bracketId":367,"victorGamePosition":67,"victorBracketPositionId":350,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":68,"startTimeEpoch":69,"sectionId":44,"title":368,"url":369,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":370,"stream":381,"broadcaster":35},6599582,118,"Arizona vs Notre Dame","\u002Fgame\u002F6599582",[371,376],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":372,"score":51,"seed":35,"nameShort":373,"nameFull":374,"seoname":375,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fn\u002Fnotre-dame.70.png","Notre Dame","University of Notre Dame","notre-dame",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":377,"score":100,"seed":35,"nameShort":378,"nameFull":379,"seoname":380,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fa\u002Farizona.70.png","Arizona","University of Arizona","arizona",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":383,"bracketPositionId":384,"bracketId":384,"victorGamePosition":33,"victorBracketPositionId":385,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":129,"startTimeEpoch":170,"sectionId":44,"title":386,"url":387,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":388,"stream":399,"broadcaster":35},6599583,119,210,"ETSU vs Clemson","\u002Fgame\u002F6599583",[389,394],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":390,"score":51,"seed":35,"nameShort":391,"nameFull":392,"seoname":393,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fc\u002Fclemson.70.png","Clemson","Clemson University","clemson",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":395,"score":44,"seed":35,"nameShort":396,"nameFull":397,"seoname":398,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fe\u002Feast-tenn-st.70.png","ETSU","East Tennessee State University","east-tenn-st",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":401,"bracketPositionId":402,"bracketId":402,"victorGamePosition":67,"victorBracketPositionId":385,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":188,"startTimeEpoch":189,"sectionId":44,"title":403,"url":404,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":405,"stream":417,"broadcaster":35},6599584,120,"Xavier vs Vanderbilt","\u002Fgame\u002F6599584",[406,411],{"__typename":49,"isHome":40,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":407,"score":57,"seed":35,"nameShort":408,"nameFull":409,"seoname":410,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fx\u002Fxavier.70.png","Xavier","Xavier University","xavier",{"__typename":49,"isHome":11,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":412,"score":51,"seed":413,"nameShort":414,"nameFull":415,"seoname":416,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fv\u002Fvanderbilt.70.png",14,"Vanderbilt","Vanderbilt University","vanderbilt",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":419,"bracketPositionId":420,"bracketId":420,"victorGamePosition":33,"victorBracketPositionId":421,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":108,"startTimeEpoch":109,"sectionId":44,"title":422,"url":423,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":424,"stream":436,"broadcaster":35},6599585,121,211,"UC Santa Barbara vs Pepperdine","\u002Fgame\u002F6599585",[425,431],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":426,"score":51,"seed":427,"nameShort":428,"nameFull":429,"seoname":430,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fp\u002Fpepperdine.70.png",11,"Pepperdine","Pepperdine University","pepperdine",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":432,"score":57,"seed":35,"nameShort":433,"nameFull":434,"seoname":435,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fu\u002Fuc-santa-barbara.70.png","UC Santa Barbara","University of California, Santa Barbara","uc-santa-barbara",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":438,"bracketPositionId":439,"bracketId":439,"victorGamePosition":67,"victorBracketPositionId":421,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":42,"startTimeEpoch":89,"sectionId":44,"title":440,"url":441,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":442,"stream":454,"broadcaster":35},6599586,122,"Stanford vs BYU","\u002Fgame\u002F6599586",[443,449],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":444,"score":445,"seed":35,"nameShort":446,"nameFull":447,"seoname":448,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fb\u002Fbyu.70.png",2,"BYU","Brigham Young University","byu",{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":450,"score":51,"seed":35,"nameShort":451,"nameFull":452,"seoname":453,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fs\u002Fstanford.70.png","Stanford","Stanford University","stanford",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":456,"bracketPositionId":457,"bracketId":457,"victorGamePosition":33,"victorBracketPositionId":458,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":459,"startTimeEpoch":460,"sectionId":44,"title":461,"url":462,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":463,"stream":474,"broadcaster":35},6599587,123,212,"12:00",1777737600,"Wichita St. vs SMU","\u002Fgame\u002F6599587",[464,469],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":465,"score":51,"seed":35,"nameShort":466,"nameFull":467,"seoname":468,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fs\u002Fsmu.70.png","SMU","Southern Methodist University","smu",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":470,"score":44,"seed":35,"nameShort":471,"nameFull":472,"seoname":473,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fw\u002Fwichita-st.70.png","Wichita St.","Wichita State University","wichita-st",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":476,"bracketPositionId":477,"bracketId":477,"victorGamePosition":67,"victorBracketPositionId":458,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":478,"startTimeEpoch":479,"sectionId":44,"title":480,"url":481,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":482,"stream":494,"broadcaster":35},6599588,124,"15:00",1777748400,"Kansas vs Oklahoma","\u002Fgame\u002F6599588",[483,488],{"__typename":49,"isHome":40,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":484,"score":57,"seed":35,"nameShort":485,"nameFull":486,"seoname":487,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fk\u002Fkansas.70.png","Kansas","University of Kansas","kansas",{"__typename":49,"isHome":11,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":489,"score":51,"seed":490,"nameShort":491,"nameFull":492,"seoname":493,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fo\u002Foklahoma.70.png",6,"Oklahoma","University of Oklahoma","oklahoma",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":496,"bracketPositionId":497,"bracketId":497,"victorGamePosition":33,"victorBracketPositionId":498,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":129,"startTimeEpoch":130,"sectionId":44,"title":499,"url":500,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":501,"stream":513,"broadcaster":35},6599589,125,213,"Saint Francis vs Virginia","\u002Fgame\u002F6599589",[502,508],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":503,"score":51,"seed":504,"nameShort":505,"nameFull":506,"seoname":507,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fv\u002Fvirginia.70.png",7,"Virginia","University of Virginia","virginia",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":509,"score":57,"seed":35,"nameShort":510,"nameFull":511,"seoname":512,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fs\u002Fst-francis-pa.70.png","Saint Francis","Saint Francis University","st-francis-pa",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":515,"bracketPositionId":516,"bracketId":516,"victorGamePosition":67,"victorBracketPositionId":498,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":150,"startTimeEpoch":151,"sectionId":44,"title":517,"url":518,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":519,"stream":530,"broadcaster":35},6599590,126,"Washington vs Liberty","\u002Fgame\u002F6599590",[520,525],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":521,"score":57,"seed":35,"nameShort":522,"nameFull":523,"seoname":524,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fl\u002Fliberty.70.png","Liberty","Liberty University","liberty",{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":526,"score":51,"seed":35,"nameShort":527,"nameFull":528,"seoname":529,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fw\u002Fwashington.70.png","Washington","University of Washington","washington",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":532,"bracketPositionId":533,"bracketId":533,"victorGamePosition":33,"victorBracketPositionId":534,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":459,"startTimeEpoch":460,"sectionId":44,"title":535,"url":536,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":537,"stream":548,"broadcaster":35},6599591,127,214,"Rice vs TCU","\u002Fgame\u002F6599591",[538,543],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":539,"score":445,"seed":35,"nameShort":540,"nameFull":541,"seoname":542,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Ft\u002Ftcu.70.png","TCU","Texas Christian University","tcu",{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":544,"score":51,"seed":35,"nameShort":545,"nameFull":546,"seoname":547,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fr\u002Frice.70.png","Rice","Rice University","rice",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":550,"bracketPositionId":551,"bracketId":551,"victorGamePosition":67,"victorBracketPositionId":534,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":478,"startTimeEpoch":479,"sectionId":44,"title":552,"url":553,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":554,"stream":566,"broadcaster":35},6599592,128,"SFA vs LSU","\u002Fgame\u002F6599592",[555,560],{"__typename":49,"isHome":40,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":556,"score":57,"seed":35,"nameShort":557,"nameFull":558,"seoname":559,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fs\u002Fstephen-f-austin.70.png","SFA","Stephen F. Austin State University","stephen-f-austin",{"__typename":49,"isHome":11,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":561,"score":51,"seed":562,"nameShort":563,"nameFull":564,"seoname":565,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fl\u002Flsu.70.png",10,"LSU","Louisiana State University","lsu",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":568,"bracketPositionId":569,"bracketId":569,"victorGamePosition":33,"victorBracketPositionId":570,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":108,"startTimeEpoch":109,"sectionId":44,"title":571,"url":572,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":573,"stream":585,"broadcaster":35},6599593,129,215,"VCU vs Duke","\u002Fgame\u002F6599593",[574,580],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":575,"score":51,"seed":576,"nameShort":577,"nameFull":578,"seoname":579,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fd\u002Fduke.70.png",15,"Duke","Duke University","duke",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":581,"score":57,"seed":35,"nameShort":582,"nameFull":583,"seoname":584,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fv\u002Fvcu.70.png","VCU","Virginia Commonwealth University","vcu",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":587,"bracketPositionId":588,"bracketId":588,"victorGamePosition":67,"victorBracketPositionId":570,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":42,"startTimeEpoch":89,"sectionId":44,"title":589,"url":590,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":591,"stream":602,"broadcaster":35},6599594,130,"Tennessee vs Old Dominion","\u002Fgame\u002F6599594",[592,597],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":593,"score":445,"seed":35,"nameShort":594,"nameFull":595,"seoname":596,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fo\u002Fold-dominion.70.png","Old Dominion","Old Dominion University","old-dominion",{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":598,"score":51,"seed":35,"nameShort":599,"nameFull":600,"seoname":601,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Ft\u002Ftennessee.70.png","Tennessee","University of Tennessee, Knoxville","tennessee",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":604,"bracketPositionId":605,"bracketId":605,"victorGamePosition":33,"victorBracketPositionId":606,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":150,"startTimeEpoch":607,"sectionId":44,"title":608,"url":609,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":610,"stream":621,"broadcaster":35},6599595,131,216,1777647600,"North Florida vs Miami (FL)","\u002Fgame\u002F6599595",[611,616],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":612,"score":51,"seed":35,"nameShort":613,"nameFull":614,"seoname":615,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fm\u002Fmiami-fl.70.png","Miami (FL)","University of Miami (Florida)","miami-fl",{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":617,"score":57,"seed":35,"nameShort":618,"nameFull":619,"seoname":620,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fn\u002Fnorth-florida.70.png","North Florida","University of North Florida","north-florida",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":623,"bracketPositionId":624,"bracketId":624,"victorGamePosition":67,"victorBracketPositionId":606,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":88,"startTime":129,"startTimeEpoch":170,"sectionId":44,"title":625,"url":626,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":627,"stream":638,"broadcaster":35},6599596,132,"Bryant vs Auburn","\u002Fgame\u002F6599596",[628,633],{"__typename":49,"isHome":40,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":629,"score":57,"seed":35,"nameShort":630,"nameFull":631,"seoname":632,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fb\u002Fbryant.70.png","Bryant","Bryant University","bryant",{"__typename":49,"isHome":11,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":634,"score":51,"seed":445,"nameShort":635,"nameFull":636,"seoname":637,"textOverride":35},"\u002Fsites\u002Fdefault\u002Ffiles\u002Fimages\u002Flogos\u002Fschools\u002Fa\u002Fauburn.70.png","Auburn","Auburn University","auburn",{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":640,"bracketPositionId":34,"bracketId":34,"victorGamePosition":33,"victorBracketPositionId":641,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":642,"startTime":42,"startTimeEpoch":643,"sectionId":445,"title":644,"url":645,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":646,"stream":649,"broadcaster":35},6599597,301,"05\u002F03\u002F2026",1777827600,"Charlotte vs Georgia","\u002Fgame\u002F6599597",[647,648],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":50,"score":51,"seed":44,"nameShort":52,"nameFull":53,"seoname":54,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":79,"score":57,"seed":35,"nameShort":80,"nameFull":81,"seoname":82,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":651,"bracketPositionId":87,"bracketId":87,"victorGamePosition":67,"victorBracketPositionId":641,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":478,"startTimeEpoch":479,"sectionId":445,"title":652,"url":653,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":654,"stream":657,"broadcaster":35},6599598,"Arizona St. vs UCLA","\u002Fgame\u002F6599598",[655,656],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":94,"score":51,"seed":35,"nameShort":95,"nameFull":96,"seoname":97,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":119,"score":100,"seed":120,"nameShort":121,"nameFull":122,"seoname":123,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":659,"bracketPositionId":128,"bracketId":128,"victorGamePosition":33,"victorBracketPositionId":660,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":642,"startTime":42,"startTimeEpoch":643,"sectionId":445,"title":661,"url":662,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":663,"stream":666,"broadcaster":35},6599599,302,"Texas Tech vs Texas","\u002Fgame\u002F6599599",[664,665],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":135,"score":51,"seed":137,"nameShort":138,"nameFull":139,"seoname":140,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":161,"score":445,"seed":35,"nameShort":162,"nameFull":163,"seoname":164,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":668,"bracketPositionId":169,"bracketId":169,"victorGamePosition":67,"victorBracketPositionId":660,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":478,"startTimeEpoch":479,"sectionId":445,"title":669,"url":670,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":671,"stream":674,"broadcaster":35},6599600,"NC State vs UCF","\u002Fgame\u002F6599600",[672,673],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":175,"score":57,"seed":35,"nameShort":176,"nameFull":177,"seoname":178,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":199,"score":51,"seed":200,"nameShort":201,"nameFull":202,"seoname":203,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":676,"bracketPositionId":208,"bracketId":208,"victorGamePosition":33,"victorBracketPositionId":677,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":108,"startTimeEpoch":678,"sectionId":445,"title":679,"url":680,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":681,"stream":684,"broadcaster":35},6599601,303,1777752000,"South Carolina vs North Carolina","\u002Fgame\u002F6599601",[682,683],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":213,"score":51,"seed":136,"nameShort":214,"nameFull":215,"seoname":216,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":235,"score":57,"seed":35,"nameShort":236,"nameFull":237,"seoname":238,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":686,"bracketPositionId":243,"bracketId":243,"victorGamePosition":67,"victorBracketPositionId":677,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":642,"startTime":42,"startTimeEpoch":643,"sectionId":445,"title":687,"url":688,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":689,"stream":692,"broadcaster":35},6599602,"Michigan vs Florida","\u002Fgame\u002F6599602",[690,691],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":248,"score":445,"seed":35,"nameShort":249,"nameFull":250,"seoname":251,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":270,"score":51,"seed":271,"nameShort":272,"nameFull":273,"seoname":274,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":694,"bracketPositionId":279,"bracketId":279,"victorGamePosition":33,"victorBracketPositionId":695,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":478,"startTimeEpoch":479,"sectionId":445,"title":696,"url":697,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":698,"stream":701,"broadcaster":35},6599603,304,"California vs Southern California","\u002Fgame\u002F6599603",[699,700],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":284,"score":51,"seed":285,"nameShort":286,"nameFull":287,"seoname":288,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":307,"score":44,"seed":35,"nameShort":308,"nameFull":309,"seoname":310,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":703,"bracketPositionId":315,"bracketId":315,"victorGamePosition":67,"victorBracketPositionId":695,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":642,"startTime":129,"startTimeEpoch":704,"sectionId":445,"title":705,"url":706,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":707,"stream":710,"broadcaster":35},6599604,1777831200,"Texas A&M vs Baylor","\u002Fgame\u002F6599604",[708,709],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":325,"score":44,"seed":35,"nameShort":326,"nameFull":327,"seoname":328,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":342,"score":51,"seed":51,"nameShort":343,"nameFull":344,"seoname":345,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":712,"bracketPositionId":350,"bracketId":350,"victorGamePosition":33,"victorBracketPositionId":713,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":642,"startTime":459,"startTimeEpoch":714,"sectionId":445,"title":715,"url":716,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":717,"stream":720,"broadcaster":35},6599605,305,1777824000,"Notre Dame vs Ohio St.","\u002Fgame\u002F6599605",[718,719],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":355,"score":51,"seed":100,"nameShort":356,"nameFull":357,"seoname":358,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":372,"score":57,"seed":35,"nameShort":373,"nameFull":374,"seoname":375,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":722,"bracketPositionId":385,"bracketId":385,"victorGamePosition":67,"victorBracketPositionId":713,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":188,"startTimeEpoch":723,"sectionId":445,"title":724,"url":725,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":726,"stream":729,"broadcaster":35},6599606,1777755600,"Vanderbilt vs Clemson","\u002Fgame\u002F6599606",[727,728],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":390,"score":44,"seed":35,"nameShort":391,"nameFull":392,"seoname":393,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":412,"score":51,"seed":413,"nameShort":414,"nameFull":415,"seoname":416,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":731,"bracketPositionId":421,"bracketId":421,"victorGamePosition":33,"victorBracketPositionId":732,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":188,"startTimeEpoch":723,"sectionId":445,"title":733,"url":734,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":735,"stream":738,"broadcaster":35},6599607,306,"Stanford vs Pepperdine","\u002Fgame\u002F6599607",[736,737],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":426,"score":51,"seed":427,"nameShort":428,"nameFull":429,"seoname":430,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":450,"score":57,"seed":35,"nameShort":451,"nameFull":452,"seoname":453,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":740,"bracketPositionId":458,"bracketId":458,"victorGamePosition":67,"victorBracketPositionId":732,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":642,"startTime":478,"startTimeEpoch":741,"sectionId":445,"title":742,"url":743,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":744,"stream":747,"broadcaster":35},6599608,1777834800,"Oklahoma vs SMU","\u002Fgame\u002F6599608",[745,746],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":465,"score":445,"seed":35,"nameShort":466,"nameFull":467,"seoname":468,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":489,"score":51,"seed":490,"nameShort":491,"nameFull":492,"seoname":493,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":749,"bracketPositionId":498,"bracketId":498,"victorGamePosition":33,"victorBracketPositionId":750,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":642,"startTime":42,"startTimeEpoch":643,"sectionId":445,"title":751,"url":752,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":753,"stream":756,"broadcaster":35},6599609,307,"Washington vs Virginia","\u002Fgame\u002F6599609",[754,755],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":503,"score":51,"seed":504,"nameShort":505,"nameFull":506,"seoname":507,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":526,"score":57,"seed":35,"nameShort":527,"nameFull":528,"seoname":529,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":758,"bracketPositionId":534,"bracketId":534,"victorGamePosition":67,"victorBracketPositionId":750,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":642,"startTime":478,"startTimeEpoch":741,"sectionId":445,"title":759,"url":760,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":761,"stream":764,"broadcaster":35},6599610,"LSU vs Rice","\u002Fgame\u002F6599610",[762,763],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":544,"score":445,"seed":35,"nameShort":545,"nameFull":546,"seoname":547,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":561,"score":51,"seed":562,"nameShort":563,"nameFull":564,"seoname":565,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":766,"bracketPositionId":570,"bracketId":570,"victorGamePosition":33,"victorBracketPositionId":767,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":108,"startTimeEpoch":678,"sectionId":445,"title":768,"url":769,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":770,"stream":773,"broadcaster":35},6599611,308,"Tennessee vs Duke","\u002Fgame\u002F6599611",[771,772],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":575,"score":51,"seed":576,"nameShort":577,"nameFull":578,"seoname":579,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":598,"score":44,"seed":35,"nameShort":599,"nameFull":600,"seoname":601,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":775,"bracketPositionId":606,"bracketId":606,"victorGamePosition":67,"victorBracketPositionId":767,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":41,"startTime":129,"startTimeEpoch":130,"sectionId":445,"title":776,"url":777,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":778,"stream":781,"broadcaster":35},6599612,"Auburn vs Miami (FL)","\u002Fgame\u002F6599612",[779,780],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":612,"score":57,"seed":35,"nameShort":613,"nameFull":614,"seoname":615,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":634,"score":51,"seed":445,"nameShort":635,"nameFull":636,"seoname":637,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":783,"bracketPositionId":641,"bracketId":641,"victorGamePosition":33,"victorBracketPositionId":784,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":785,"startTime":108,"startTimeEpoch":786,"sectionId":100,"title":787,"url":788,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":789,"stream":792,"broadcaster":35},6599613,401,"05\u002F08\u002F2026",1778270400,"UCLA vs Georgia","\u002Fgame\u002F6599613",[790,791],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":50,"score":51,"seed":44,"nameShort":52,"nameFull":53,"seoname":54,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":94,"score":44,"seed":35,"nameShort":95,"nameFull":96,"seoname":97,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":794,"bracketPositionId":660,"bracketId":660,"victorGamePosition":67,"victorBracketPositionId":784,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":785,"startTime":188,"startTimeEpoch":795,"sectionId":100,"title":796,"url":797,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":798,"stream":801,"broadcaster":35},6599614,1778274000,"NC State vs Texas","\u002Fgame\u002F6599614",[799,800],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":135,"score":445,"seed":137,"nameShort":138,"nameFull":139,"seoname":140,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":199,"score":51,"seed":200,"nameShort":201,"nameFull":202,"seoname":203,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":803,"bracketPositionId":677,"bracketId":677,"victorGamePosition":33,"victorBracketPositionId":804,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":785,"startTime":188,"startTimeEpoch":795,"sectionId":100,"title":805,"url":806,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":807,"stream":810,"broadcaster":35},6599615,402,"Michigan vs North Carolina","\u002Fgame\u002F6599615",[808,809],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":213,"score":51,"seed":136,"nameShort":214,"nameFull":215,"seoname":216,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":270,"score":445,"seed":271,"nameShort":272,"nameFull":273,"seoname":274,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":812,"bracketPositionId":695,"bracketId":695,"victorGamePosition":67,"victorBracketPositionId":804,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":785,"startTime":478,"startTimeEpoch":813,"sectionId":100,"title":814,"url":815,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":816,"stream":819,"broadcaster":35},6599616,1778266800,"Texas A&M vs Southern California","\u002Fgame\u002F6599616",[817,818],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":284,"score":44,"seed":285,"nameShort":286,"nameFull":287,"seoname":288,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":342,"score":136,"seed":51,"nameShort":343,"nameFull":344,"seoname":345,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":821,"bracketPositionId":713,"bracketId":713,"victorGamePosition":33,"victorBracketPositionId":822,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":823,"startTime":42,"startTimeEpoch":824,"sectionId":100,"title":825,"url":826,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":827,"stream":830,"broadcaster":35},6599617,403,"05\u002F09\u002F2026",1778346000,"Vanderbilt vs Ohio St.","\u002Fgame\u002F6599617",[828,829],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":355,"score":51,"seed":100,"nameShort":356,"nameFull":357,"seoname":358,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":412,"score":44,"seed":413,"nameShort":414,"nameFull":415,"seoname":416,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":832,"bracketPositionId":732,"bracketId":732,"victorGamePosition":67,"victorBracketPositionId":822,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":785,"startTime":833,"startTimeEpoch":834,"sectionId":100,"title":835,"url":836,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":837,"stream":840,"broadcaster":35},6599618,"18:00",1778277600,"Oklahoma vs Pepperdine","\u002Fgame\u002F6599618",[838,839],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":426,"score":51,"seed":427,"nameShort":428,"nameFull":429,"seoname":430,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":489,"score":100,"seed":490,"nameShort":491,"nameFull":492,"seoname":493,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":842,"bracketPositionId":750,"bracketId":750,"victorGamePosition":33,"victorBracketPositionId":843,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":823,"startTime":42,"startTimeEpoch":824,"sectionId":100,"title":844,"url":845,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":846,"stream":849,"broadcaster":35},6599619,404,"LSU vs Virginia","\u002Fgame\u002F6599619",[847,848],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":503,"score":44,"seed":504,"nameShort":505,"nameFull":506,"seoname":507,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":561,"score":51,"seed":562,"nameShort":563,"nameFull":564,"seoname":565,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":851,"bracketPositionId":767,"bracketId":767,"victorGamePosition":67,"victorBracketPositionId":843,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":785,"startTime":833,"startTimeEpoch":834,"sectionId":100,"title":852,"url":853,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":854,"stream":857,"broadcaster":35},6599620,"Auburn vs Duke","\u002Fgame\u002F6599620",[855,856],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":575,"score":445,"seed":576,"nameShort":577,"nameFull":578,"seoname":579,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":634,"score":51,"seed":445,"nameShort":635,"nameFull":636,"seoname":637,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":859,"bracketPositionId":784,"bracketId":784,"victorGamePosition":33,"victorBracketPositionId":860,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":861,"startTime":108,"startTimeEpoch":862,"sectionId":51,"title":863,"url":864,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":865,"stream":868,"broadcaster":35},6599621,501,"05\u002F15\u002F2026",1778875200,"NC State vs Georgia","\u002Fgame\u002F6599621",[866,867],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":50,"score":51,"seed":44,"nameShort":52,"nameFull":53,"seoname":54,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":199,"score":44,"seed":200,"nameShort":201,"nameFull":202,"seoname":203,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":870,"bracketPositionId":804,"bracketId":804,"victorGamePosition":67,"victorBracketPositionId":860,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":861,"startTime":871,"startTimeEpoch":872,"sectionId":51,"title":873,"url":874,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":875,"stream":878,"broadcaster":35},6599622,"19:00",1778886000,"Texas A&M vs North Carolina","\u002Fgame\u002F6599622",[876,877],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":213,"score":100,"seed":136,"nameShort":214,"nameFull":215,"seoname":216,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":342,"score":51,"seed":51,"nameShort":343,"nameFull":344,"seoname":345,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":880,"bracketPositionId":822,"bracketId":822,"victorGamePosition":33,"victorBracketPositionId":881,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":861,"startTime":42,"startTimeEpoch":882,"sectionId":51,"title":883,"url":884,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":885,"stream":888,"broadcaster":35},6599623,502,1778864400,"Pepperdine vs Ohio St.","\u002Fgame\u002F6599623",[886,887],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":355,"score":51,"seed":100,"nameShort":356,"nameFull":357,"seoname":358,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":426,"score":57,"seed":427,"nameShort":428,"nameFull":429,"seoname":430,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":890,"bracketPositionId":843,"bracketId":843,"victorGamePosition":67,"victorBracketPositionId":881,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":861,"startTime":68,"startTimeEpoch":891,"sectionId":51,"title":892,"url":893,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":894,"stream":897,"broadcaster":35},6599624,1778853600,"Auburn vs LSU","\u002Fgame\u002F6599624",[895,896],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":561,"score":44,"seed":562,"nameShort":563,"nameFull":564,"seoname":565,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":634,"score":51,"seed":445,"nameShort":635,"nameFull":636,"seoname":637,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":899,"bracketPositionId":860,"bracketId":860,"victorGamePosition":33,"victorBracketPositionId":900,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":901,"startTime":871,"startTimeEpoch":902,"sectionId":136,"title":903,"url":904,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":905,"stream":908,"broadcaster":35},6599625,601,"05\u002F16\u002F2026",1778972400,"Texas A&M vs Georgia","\u002Fgame\u002F6599625",[906,907],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":50,"score":100,"seed":44,"nameShort":52,"nameFull":53,"seoname":54,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":342,"score":51,"seed":51,"nameShort":343,"nameFull":344,"seoname":345,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":910,"bracketPositionId":881,"bracketId":881,"victorGamePosition":67,"victorBracketPositionId":900,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":901,"startTime":108,"startTimeEpoch":911,"sectionId":136,"title":912,"url":913,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":914,"stream":917,"broadcaster":35},6599626,1778961600,"Auburn vs Ohio St.","\u002Fgame\u002F6599626",[915,916],{"__typename":49,"isHome":11,"isTop":11,"isWinner":40,"isVisible":11,"logoUrl":355,"score":44,"seed":100,"nameShort":356,"nameFull":357,"seoname":358,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":11,"isVisible":11,"logoUrl":634,"score":51,"seed":445,"nameShort":635,"nameFull":636,"seoname":637,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},{"__typename":30,"contestId":919,"bracketPositionId":900,"bracketId":900,"victorGamePosition":35,"victorBracketPositionId":35,"loserGamePosition":35,"loserBracketPositionId":35,"contestClock":36,"currentPeriod":37,"finalMessage":37,"gameState":38,"statusCodeDisplay":39,"liveVideoEnabled":40,"hasStartTime":11,"startDate":920,"startTime":871,"startTimeEpoch":921,"sectionId":35,"title":922,"url":923,"enabled":11,"isIfNecessary":40,"visible":11,"isTopVisible":11,"isBottomVisible":11,"teams":924,"stream":927,"broadcaster":35},6599627,"05\u002F17\u002F2026",1779058800,"Auburn vs Texas A&M","\u002Fgame\u002F6599627",[925,926],{"__typename":49,"isHome":11,"isTop":11,"isWinner":11,"isVisible":11,"logoUrl":342,"score":51,"seed":51,"nameShort":343,"nameFull":344,"seoname":345,"textOverride":35},{"__typename":49,"isHome":40,"isTop":40,"isWinner":40,"isVisible":11,"logoUrl":634,"score":44,"seed":445,"nameShort":635,"nameFull":636,"seoname":637,"textOverride":35},{"__typename":62,"syndicateOnly":40,"enabled":40,"state":63,"url":36},[929,933,936,939,942,945],{"__typename":930,"id":931,"roundNumber":44,"label":36,"staged":40,"subtitle":36,"title":932},"Round","8768","First Round",{"__typename":930,"id":934,"roundNumber":445,"label":36,"staged":40,"subtitle":36,"title":935},"8769","Second Round",{"__typename":930,"id":937,"roundNumber":100,"label":36,"staged":40,"subtitle":36,"title":938},"8770","Third Round",{"__typename":930,"id":940,"roundNumber":51,"label":36,"staged":40,"subtitle":36,"title":941},"8771","Quarterfinals",{"__typename":930,"id":943,"roundNumber":136,"label":36,"staged":40,"subtitle":36,"title":944},"8772","Semifinals",{"__typename":930,"id":946,"roundNumber":490,"label":36,"staged":40,"subtitle":36,"title":19},"8773",[948,952,955,958,961],{"__typename":949,"id":950,"abbreviation":36,"title":36,"subtitle":36,"sectionId":44,"regionCode":951},"RegionSection","4072","TL",{"__typename":949,"id":953,"abbreviation":36,"title":36,"subtitle":36,"sectionId":445,"regionCode":954},"4073","TR",{"__typename":949,"id":956,"abbreviation":36,"title":36,"subtitle":36,"sectionId":100,"regionCode":957},"4074","BL",{"__typename":949,"id":959,"abbreviation":36,"title":36,"subtitle":36,"sectionId":51,"regionCode":960},"4075","BR",{"__typename":949,"id":962,"abbreviation":36,"title":36,"subtitle":36,"sectionId":136,"regionCode":963},"4076","CC",[],["Ref",966],["Reactive",967],[],["Ref",969],["Reactive",970],{"show":971,"hide":972},[],[]]

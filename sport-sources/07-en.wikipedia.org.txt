@@ -1,0 +1,6 @@
+Source: https://en.wikipedia.org/w/api.php?action=opensearch&search=NCAA+Division+I+singles+championship+tennis&limit=20&format=json
+Final URL: https://en.wikipedia.org/w/api.php?action=opensearch&search=NCAA+Division+I+singles+championship+tennis&limit=20&format=json
+HTTP 200
+Fetched: 2026-10-21T10:06:03.817Z
+
+["NCAA Division I singles championship tennis",[],[],[]]
