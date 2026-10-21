@@ -31,3 +31,17 @@ export function contestTemplateEventTypeOf(event: { sport: Sport; rounds: number
   const rounds = event.rounds ?? getSportDefinition(event.sport).defaultRounds;
   return rounds === 1 ? ContestTemplateEventType.WEEK : ContestTemplateEventType.KNOCKOUT;
 }
+
+/**
+ * Whether a contest template is offered on an event (#802): its own sport league's or a
+ * sport-wide one, for the event's kind of event (a knockout or a week of games) or for any.
+ * Create contest and the test-participants loader both choose templates by it (#816).
+ */
+export function isTemplateOfferedOn(
+  template: { sport: Sport; sportLeagueId: string | null; eventType?: ContestTemplateEventType | null },
+  event: { sport: Sport; sportLeagueId: string; rounds: number | null },
+): boolean {
+  return template.sport === event.sport
+    && (template.sportLeagueId === null || template.sportLeagueId === event.sportLeagueId)
+    && ((template.eventType ?? null) === null || template.eventType === contestTemplateEventTypeOf(event));
+}

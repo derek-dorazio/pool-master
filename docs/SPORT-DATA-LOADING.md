@@ -98,8 +98,11 @@ Two options on *Load sport data* are for QA only. The run reads the site's envir
   "*sport league* *sport* test pool" (the sport in the name, since two sports can share a league name). The E2E root admin creates it and is its commissioner; each
   player joins with an invite link, which gives them their squad. Each of the league's next
   three events open for entries gets a contest from the sport league's default tiered or
-  budget template (never a random draw, which deals the picks itself), opened, and every
-  player's squad enters, picks a lineup and submits it. Locally it is `--with-participants`.
+  budget template offered on that kind of event (never a random draw, which deals the picks
+  itself), opened, and every player's squad enters, picks a lineup and submits it. A week of
+  games (the NFL weeks seed) offers no such template, since it is picked game by game, so its
+  events get no test contest and the report lists them as skipped. Locally it is
+  `--with-participants`.
 
 Both are re-entrant like every load: each step looks first and only adds what is missing, so a
 second run lists everything as a skip, and a run after a failure part-way fills in the rest. A

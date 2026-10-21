@@ -1,4 +1,4 @@
-import { SelectionType, contestTemplateEventTypeOf } from '@poolmaster/shared/domain';
+import { SelectionType, isTemplateOfferedOn } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import { bracketRoundCount, bracketStartRoundOptions, hasSecondChanceRound } from './bracket-start-round';
 import { isKnockoutUnderWay } from './contest-readiness';
@@ -15,19 +15,6 @@ export function contestEventsFor(events: readonly SportEventDto[], selectionType
       && isKnockoutUnderWay(event)
       && hasSecondChanceRound(bracketRoundCount(event)))
     || (selectionType === SelectionType.SQUARES && isKnockoutUnderWay(event)));
-}
-
-/**
- * Whether a template is offered on an event (#802): its own sport league's or a sport-wide one,
- * for the event's kind of event (a knockout or a week of games) or for any.
- */
-export function isTemplateOfferedOn(
-  template: Pick<ContestConfigTemplateDto, 'sport' | 'sportLeagueId' | 'eventType'>,
-  event: SportEventDto,
-) {
-  return template.sport === event.sport
-    && (template.sportLeagueId === null || template.sportLeagueId === event.sportLeagueId)
-    && ((template.eventType ?? null) === null || template.eventType === contestTemplateEventTypeOf(event));
 }
 
 /**
