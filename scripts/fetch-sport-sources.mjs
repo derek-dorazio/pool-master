@@ -4,7 +4,7 @@
  *
  * Run by the "Fetch sport sources" workflow, which commits the output folder to the branch it
  * ran on. Each URL becomes `<NN>-<host>.txt`. A JSON feed (ESPN's public API) is saved as it
- * is. A page is saved as its visible text, then any JSON it embeds in script tags. A page
+ * is, and a PDF as `<NN>-<host>.pdf`. A page is saved as its visible text, then any JSON it embeds in script tags. A page
  * that fills itself in with scripts (tour field pages) goes in `--render`: it is loaded in
  * headless Chromium and saved once its scripts have run. `index.json` lists every URL with
  * its status and file. The skill deletes the folder before its data file is merged.
@@ -80,8 +80,8 @@ export function checkUrl(raw) {
   return { ok: true, url };
 }
 
-export function fileNameFor(index, url) {
-  return `${String(index + 1).padStart(2, '0')}-${url.hostname.replace(/^www\./, '').replace(/[^a-z0-9.-]/gi, '-')}.txt`;
+export function fileNameFor(index, url, extension = 'txt') {
+  return `${String(index + 1).padStart(2, '0')}-${url.hostname.replace(/^www\./, '').replace(/[^a-z0-9.-]/gi, '-')}.${extension}`;
 }
 
 function pageParts(html) {
@@ -97,8 +97,15 @@ function save(outputDir, index, url, finalUrl, status, parts) {
 
 async function fetchOne(index, url, outputDir) {
   const response = await fetch(url, { headers: { 'user-agent': USER_AGENT, accept: 'application/json,text/html;q=0.9,*/*;q=0.5' }, redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT_MS) });
+  const contentType = response.headers.get('content-type') ?? '';
+  // A PDF (a printed bracket) is saved as it is, for the skill to read with pdftotext.
+  if (contentType.includes('application/pdf')) {
+    const file = fileNameFor(index, url, 'pdf');
+    writeFileSync(join(outputDir, file), Buffer.from(await response.arrayBuffer()));
+    return { status: response.ok ? 'OK' : 'HTTP_ERROR', httpStatus: response.status, file };
+  }
   const body = await response.text();
-  const isJson = (response.headers.get('content-type') ?? '').includes('json');
+  const isJson = contentType.includes('json');
   const file = save(outputDir, index, url, response.url, response.status, isJson ? [body] : pageParts(body));
   return { status: response.ok ? 'OK' : 'HTTP_ERROR', httpStatus: response.status, file };
 }
