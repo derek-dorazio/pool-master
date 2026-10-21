@@ -31,7 +31,35 @@ recommendation; none blocks slice 1.
   per-category email preferences** with a one-click unsubscribe link and header. Account and invite
   emails can't be turned off; notification emails can.
 - **Five slices:** domain and sender; email service and template registry; outbox; bounces and
-  complaints; preferences and unsubscribe.
+  complaints; preferences and unsubscribe. They interleave with the notification catalog's slices
+  in one order, §10.
+
+## Who owns what
+
+Two plans cover email. This one is the **mechanism**; `plans/email-notifications.md` (#845) is the
+**catalog**. Each item has one owner, and the other plan cites it rather than restating it.
+
+| Concern | Owner |
+|---|---|
+| Which emails exist, their rows, priorities and copy content | Catalog |
+| Trigger and conditions for each email (status change, clock time, "round finished" rules) | Catalog |
+| Audience for each email (who, in which league) | Catalog |
+| Timing: reminder offsets (48/24/3 h, everyone at once), standings buffer (30 min), "too late" skips | Catalog |
+| The scheduler's "notifications due" step that finds time-based emails | Catalog |
+| The list of opt-out categories and which emails sit in each | Catalog (§2 *Categories*) |
+| Resolving an audience to people, one email per person | This plan (§5) |
+| Template keys, the typed registry, renderers, the shared layout, escaping, date formatting | This plan (§3, §4) |
+| The outbox: the sent record, idempotency keys, queueing, retries, rate limit | This plan (§5) |
+| Settings and preference checks before queueing, the QA recipient guard | This plan (§4, §6) |
+| Preference switches, unsubscribe token, page, footer link and headers | This plan (§7) |
+| SES, domain authentication, sandbox exit, bounces, complaints, suppression | This plan (§6, §8) |
+
+Decisions from the catalog that bind the mechanism (Derek 2026-10-21): **leagues are tenants**, so
+an email belongs to one league, links only into it, and nothing combines leagues; one on/off
+switch per category for each person, across their leagues, with one-click unsubscribe; no digests;
+reminders go to everyone at once with no per-person time zone shifting; standings emails fire on
+the actual finish plus a buffer. The reminder offsets and the buffer live in `EMAIL_CONFIG` next to
+this plan's settings.
 
 ## 1. What exists today
 
@@ -99,15 +127,16 @@ already works this way):
 
 ```
 EMAIL_TEMPLATES = {
-  LEAGUE_MEMBER_INVITE: { category: EmailCategory.INVITATION,  render: renderLeagueMemberInvite },
-  CONTEST_RELEASED:     { category: EmailCategory.CONTEST_UPDATES, render: renderContestReleased },
-  PASSWORD_RESET:       { category: EmailCategory.ACCOUNT,     render: renderPasswordReset },
+  LEAGUE_MEMBER_INVITE: { category: EmailCategory.MEMBERSHIP,      render: renderLeagueMemberInvite },
+  CONTEST_OPENED:       { category: EmailCategory.CONTEST_UPDATES, render: renderContestOpened },
+  PASSWORD_RESET:       { category: EmailCategory.ACCOUNT,         render: renderPasswordReset },
   …
 } satisfies Record<EmailTemplateKey, EmailTemplateDefinition<…>>
 ```
 
-- `EmailCategory` is a new enum (and a Postgres enum where stored). It decides whether a member can
-  turn the email off (§7) and which unsubscribe link it carries.
+- `EmailCategory` is a new enum (and a Postgres enum where stored), one member per category in the
+  catalog's §2 *Categories*. It decides whether a member can turn the email off (§7) and which
+  unsubscribe link it carries.
 - `MailDeliveryMessage.metadata.templateKey` becomes `EmailTemplateKey`, not `string`.
 - Statuses on the outbox row are an enum (§5), per the status-columns-are-enums decision.
 
@@ -143,7 +172,7 @@ New table `email_message` (one row per recipient per email):
 | `templateKey`, `category` | Enums |
 | `recipientUserId` (nullable), `recipientEmail` | Invites go to addresses with no user yet |
 | `leagueId`, `contestId`, `entryId`, `invitationId` (nullable) | Same refs we log today |
-| `idempotencyKey` (unique) | e.g. `CONTEST_RELEASED:<contestId>:<userId>`, so a retried transition or a double click never sends twice |
+| `idempotencyKey` (unique) | e.g. `CONTEST_OPENED:<contestId>:<userId>`: template, the subject it is about (contest, event, round, week or invitation) and the recipient, the catalog's "never twice" rule. A retried transition, a second scheduler sweep or a double click never sends twice; a resend the person asked for is a new subject |
 | `subject`, `textBody`, `htmlBody` | Rendered at queue time: what we send is what we stored. Bodies are cleared after 30 days; the row stays |
 | `status` | `QUEUED`, `SENDING`, `SENT`, `DELIVERED`, `BOUNCED`, `COMPLAINED`, `FAILED`, `SKIPPED` |
 | `skipReason` | `EMAIL_DISABLED`, `TEMPLATE_DISABLED`, `SUPPRESSED`, `OPTED_OUT`, `NOT_ALLOWED_IN_ENVIRONMENT` |
@@ -167,7 +196,7 @@ not send") and Resend works as today.
 > so the commissioner sees an error at once, but leaves two send paths, and SES rarely refuses at
 > submit time anyway: a bad address shows up minutes later as a bounce, which only the outbox sees.
 
-### Worked example: a contest release email to one league
+### Worked example: a "new contest open" email to one league
 
 Every email goes to **one person**. There is no league mailing list or alias address, and no send
 with the whole league in `To`. Reasons:
@@ -184,11 +213,12 @@ with the whole league in `To`. Reasons:
 The league is the scope, not the address: recipients are resolved from the league, then each gets
 their own email, from that league, linking only into that league (leagues are tenants, §7).
 
-Say the commissioner of *Office League* (24 members) releases the *Masters Pool* contest.
+Say the commissioner of *Office League* (24 members) opens the *Masters Pool* contest (catalog row D1).
 
-1. **The release action calls the email service once**, inside the release transaction:
-   `emailService.sendToMany(CONTEST_RELEASED, audience: LEAGUE_MEMBERS(leagueId), data, refs: { leagueId, contestId })`.
-   Who the audience is comes from the notifications catalog (#845); this mechanism only resolves it.
+1. **The open action calls the email service once**, inside the transaction that moves the contest
+   `DRAFT` → `OPEN`: `emailService.sendToMany(CONTEST_OPENED, audience: LEAGUE_MEMBERS(leagueId), data, refs: { leagueId, contestId })`.
+   Who the audience is comes from the catalog row; this mechanism only resolves it. Time-based emails
+   (reminders, standings) make the same call from the catalog's scheduler step.
 2. **Resolve the audience to people.** One query: the league's active memberships → users →
    email addresses. 24 rows, one per person even if they own several squads.
 3. **Filter, person by person,** and record why anyone is left out:
@@ -199,12 +229,12 @@ Say the commissioner of *Office League* (24 members) releases the *Masters Pool*
    | Address on the suppression list (bounced or complained before) | 1 member → `SKIPPED / SUPPRESSED` |
    | Member turned off this category (`CONTEST_UPDATES`) | 2 members → `SKIPPED / OPTED_OUT` |
    | QA recipient guard (`.invalid` addresses, allow list) | 1 smoke user → `SKIPPED / NOT_ALLOWED_IN_ENVIRONMENT` |
-   | Already queued with this idempotency key (`CONTEST_RELEASED:<contestId>:<userId>`) | nobody; a second release click would stop here |
+   | Already queued with this idempotency key (`CONTEST_OPENED:<contestId>:<userId>`) | nobody; a second click would stop here |
 
 4. **Render and queue.** For each of the 20 remaining members, render the email with their own
    data (their name, their unsubscribe link) and insert an `email_message` row, `QUEUED`. The 4
    skipped ones get a `SKIPPED` row, so "why didn't I get it?" has an answer. The transaction
-   commits; the commissioner's release returns at once, without waiting for SES.
+   commits; the commissioner's action returns at once, without waiting for SES.
 5. **Send.** The sender wakes, claims the 20 due rows and makes 20 SES `SendEmail` calls, each with
    `To` = one address, `From` = the environment's `noreply@` address, the configuration set, and the
    `List-Unsubscribe` headers. At 10 a second that takes two seconds. Each call returns a SES message
@@ -262,16 +292,18 @@ Steps, in order (slice 1; Derek runs the Terraform applies and the AWS console r
 
 ## 7. Unsubscribe and preferences
 
-**Categories.** Every template has a category (§3). A starting set; the notifications thread may
-split them:
+**Categories.** Every template has a category (§3). The list, and which emails sit in each, is the
+catalog's (§2 *Categories*); the enum mirrors it:
 
-| Category | Examples | Can be turned off? |
+| `EmailCategory` | Catalog category | Can be turned off? |
 |---|---|---|
-| `ACCOUNT` | Password reset, welcome | No |
-| `INVITATION` | League invite | No for a member; a non-member can "never email me again", which suppresses the address |
-| `ENTRY_RECEIPT` | Entry submitted | Yes |
-| `CONTEST_UPDATES` | Contest released, entry reminder, contest live, standings, final results | Yes |
-| `COMMISSIONER` | Upcoming events to set up | Yes |
+| `ACCOUNT` | Account and security | No |
+| `MEMBERSHIP` | Invitations and membership | No |
+| `COMMISSIONER_UPDATES` | Commissioner updates | Yes |
+| `CONTEST_UPDATES` | Contest updates | Yes |
+| `LIVE_STANDINGS` | Live standings | Yes |
+| `RESULTS` | Results | Yes |
+| `RECEIPTS` | Receipts | Yes |
 
 **Preferences.** A `user_email_preference` row per user per category that can be turned off
 (absent = on), shown as switches on the account page. The service checks it before queueing and
@@ -341,20 +373,34 @@ The SES account suppression list (§6) is the backstop; our table is what the ap
   The sender is the real one; no test-mode path.
 - **QA**: smoke users stay on `@e2e.invalid`, which the recipient guard skips, so smoke never sends.
 
-## 10. Slices
+## 10. Slices, and the order across both plans
+
+This plan's slices:
 
 1. **Domain and sender** (Terraform + docs; Derek applies): two-pass DKIM apply, custom MAIL FROM,
    DMARC, configuration set, account suppression list, per-environment sender (Q6.1), sandbox exit
    request, QA recipient guard in `EMAIL_CONFIG`. Done when a QA invite reaches Gmail with DKIM, SPF
    and DMARC passing. Closes #120.
-2. **Email service and registry**: `EmailCategory`, template registry, `emailService.send`, typed
-   `templateKey`, SES v2 transport, the three callers moved over, preview script. No behaviour change.
+2. **Email service and registry**: `EmailCategory` with the catalog's categories, template registry,
+   `emailService.send`, typed `templateKey`, recipient time zone in renderers, SES v2 transport, the
+   three callers moved over, `replyTo` deleted, preview script. No behaviour change.
 3. **Outbox**: `email_message` table and enums, sender loop with retries, rate limit and
    idempotency, invites through it with their email state on the pending invites list (Q5.1).
 4. **Bounces and complaints**: SNS topic and subscription in Terraform, the webhook, status updates,
-   `email_suppression`, the invite and member warnings.
+   `email_suppression`, the invite and member warnings. The catalog's G2 delivery-problems email
+   follows it.
 5. **Preferences and unsubscribe**: preference table and account-page switches, unsubscribe token,
    page and one-click endpoint, footer link and `List-Unsubscribe` headers.
 
-The notification emails from the other design can start after slice 3; they need slice 5 before
-they go to real leagues.
+One order across both plans ("SES n" here, "Catalog n" in `plans/email-notifications.md` §5).
+Steps on the same line can run in parallel:
+
+| Step | Slices | Why here |
+|---|---|---|
+| 1 | SES 1 and SES 2 | Terraform and code don't touch each other |
+| 2 | SES 3 and Catalog 1 | The outbox, and the scheduler's "notifications due" step with the offsets and buffer settings, are separate code |
+| 3 | SES 4 and SES 5 | Bounce handling and unsubscribe must exist before email goes to many people |
+| 4 | Catalog 2, then 3, 4, 5, 6 | Each new email is a registry entry plus a trigger; they all reuse the steps above |
+
+QA email can be switched on after step 2 for the four existing emails, behind the recipient guard.
+Password recovery's emails (catalog A1, A2) need SES 3 and arrive with that design.

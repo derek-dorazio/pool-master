@@ -7,8 +7,10 @@ lifecycle it follows (accounts, leagues, events, contests, live play, settlement
 gets it, what fires it and what it says. This is the functional catalog only. Two other
 designs sit beside it and are referenced, not repeated:
 
-- **Sending real email**: AWS SES delivery, where templates and their copy live, and how data
-  is merged into them. This catalog says *what* each email carries; that design says *how*.
+- **Sending real email** (#844, `plans/email-delivery-ses.md`): AWS SES delivery, templates and
+  their copy in code, merging, the outbox, preferences and unsubscribe, bounces. This catalog says
+  *what* each email carries, *who* gets it and *when*; that design says *how*. Its *Who owns what*
+  table splits the two, and its §10 orders both plans' slices together.
 - **Password recovery**: there is none today (no forgot-password route or screen), so its
   emails are listed here and designed there.
 
@@ -63,7 +65,7 @@ These hold for every row below, so the tables don't repeat them.
    trigger. A commissioner of two leagues gets C1 once from each. Recipients are active users with an active league
    membership; an inactive squad's owners are not league members and get nothing.
 2. **Never twice.** Every send writes a record keyed by template, subject (contest, event,
-   round or invitation) and recipient. A scheduler sweep that runs again, or a second server
+   round or invitation) and recipient: the SES design's outbox row and its idempotency key. A scheduler sweep that runs again, or a second server
    task, finds the record and skips. A resend the person asked for (Resend Invite, a new reset
    link) is a new subject, so it still sends.
 3. **Squads by name.** Entries and standings show the squad's name and the entry name, never
@@ -285,27 +287,25 @@ it is built.
 
 ---
 
-## 4. What the sending design must provide
+## 4. What the sending design provides
 
-This catalog leans on the SES design for these, so they are listed for it, not designed here:
-
-- A template per row, with typed merge data per template (today's `SystemEmailTemplateDataByKey`
-  pattern), product copy editable without a deploy if SES templates are used.
-- Sending that doesn't hold a request open: D1, E1 and F1 go to a whole league, and today's
-  loop sends one by one inline.
-- The sent-email record (§2 rule 2) and bounce and complaint handling.
-- A List-Unsubscribe header and a signed unsubscribe link for the league-update categories.
+All decided in `plans/email-delivery-ses.md` (#844), not here: templates as typed renderers in
+code (copy changes go through a PR; SES only delivers), one email per recipient through an outbox
+that never holds a request open, the sent record and idempotency key (§2 rule 2), the
+preference switches for the categories above, one-click unsubscribe with `List-Unsubscribe`
+headers, no Reply-To, and bounce and complaint handling.
 
 ---
 
 ## 5. Slices
 
-Each slice is one PR, opened in order. They build on the SES design (#844, `plans/email-delivery-ses.md`): its outbox (the sent record and idempotency key) before slice 2, and its per-category preferences and unsubscribe before real leagues get these emails.
+Each slice is one PR. The order across this plan and the SES design is in
+`plans/email-delivery-ses.md` §10: SES 1 and 2 first, then SES 3 alongside slice 1 here, then
+SES 4 and 5, then slices 2 to 6 here.
 
-1. **Foundation.** A "notifications due" step in the lifecycle scheduler sweep, the
-   notification categories above registered with #844's category registry, and the reminder
-   offsets and standings buffer in `EMAIL_CONFIG`. The sent record, preferences and unsubscribe
-   come from #844, not this plan. No new email yet.
+1. **Foundation.** A "notifications due" step in the lifecycle scheduler sweep, and the reminder
+   offsets and standings buffer in `EMAIL_CONFIG`. The categories are registered in SES slice 2;
+   the sent record, preferences and unsubscribe come from #844. No new email yet.
 2. **Contest lifecycle.** D1 contest open, D2 reminders, E1 upgraded (all members, "good luck",
    event and rules summary instead of the entry list, leaderboard link), D3 to every owner.
 3. **Live standings.** E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,
