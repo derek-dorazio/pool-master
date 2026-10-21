@@ -3,10 +3,13 @@ import { getEventBracket, listEventParticipants, type SportEventDto, type SportE
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { squaresGameChoices, teamNamesById } from './squares-board';
+import { sportLeagueQueryOptions } from './use-bracket-round-label';
 
 /**
  * The games a squares contest can be played on, for the chosen event (#711): its games still to
- * kick off, the final first, with the field's team names. Reads nothing until an event is chosen.
+ * kick off, the final first, with the field's team names. Games before the sport league's first
+ * squares round are left out (#787: a Champions League two-legged tie). Reads nothing until an
+ * event is chosen.
  */
 export function useSquaresGameChoices(event: SportEventDto | null, now: Date) {
   const eventId = event?.id ?? '';
@@ -34,10 +37,11 @@ export function useSquaresGameChoices(event: SportEventDto | null, now: Date) {
     enabled: eventId !== '',
     retry: false,
   });
+  const sportLeagueQuery = useQuery(sportLeagueQueryOptions(event?.sportLeagueId ?? ''));
   return {
-    games: squaresGameChoices(gamesQuery.data ?? [], now),
+    games: squaresGameChoices(gamesQuery.data ?? [], now, sportLeagueQuery.data?.squaresFromRound ?? null),
     namesById: fieldQuery.data ?? new Map<string, string>(),
-    isLoading: gamesQuery.isLoading || fieldQuery.isLoading,
-    isError: gamesQuery.isError || fieldQuery.isError,
+    isLoading: gamesQuery.isLoading || fieldQuery.isLoading || sportLeagueQuery.isLoading,
+    isError: gamesQuery.isError || fieldQuery.isError || sportLeagueQuery.isError,
   };
 }

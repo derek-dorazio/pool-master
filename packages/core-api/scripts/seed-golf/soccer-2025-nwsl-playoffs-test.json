@@ -1,0 +1,322 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "SOCCER",
+    "season": 2025,
+    "sportLeagues": [
+      "NWSL"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-21",
+    "gatheredBy": "load-sport-data, the 2025 NWSL playoffs as played, from Wikipedia's season page: the top eight of the regular season on a fixed bracket, the higher seed hosting each quarterfinal and semifinal, and the championship at a neutral site (PayPal Park, San Jose). Every match's score is after extra time, with its shoot-out, and its half-time score from the goal minutes. Kickoffs are the page's Eastern and Pacific times. Seeds and rankings are the regular-season table. ESPN's scoreboards agree on the quarterfinals of 9 November and on the championship. Odds to win are made up by seed.",
+    "sources": [
+      {
+        "name": "2025 NWSL season (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025_National_Women%27s_Soccer_League_season"
+      },
+      {
+        "name": "ESPN NWSL scoreboard, 20251109",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.nwsl/scoreboard?dates=20251109"
+      },
+      {
+        "name": "ESPN NWSL scoreboard, 20251122",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.nwsl/scoreboard?dates=20251122"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "NWSL",
+      "players": [
+        {
+          "key": "nwsl-kansas-city-current",
+          "name": "Kansas City Current",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "nwsl-washington-spirit",
+          "name": "Washington Spirit",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "nwsl-portland-thorns-fc",
+          "name": "Portland Thorns FC",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "nwsl-orlando-pride",
+          "name": "Orlando Pride",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "nwsl-seattle-reign-fc",
+          "name": "Seattle Reign FC",
+          "countryCode": "US",
+          "ranking": 5
+        },
+        {
+          "key": "nwsl-san-diego-wave-fc",
+          "name": "San Diego Wave FC",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "nwsl-racing-louisville-fc",
+          "name": "Racing Louisville FC",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "nwsl-gotham-fc",
+          "name": "Gotham FC",
+          "countryCode": "US",
+          "ranking": 8
+        }
+      ],
+      "events": [
+        {
+          "key": "nwsl-playoffs-2025",
+          "name": "NWSL Playoffs",
+          "startDate": "2025-11-08",
+          "endDate": "2025-11-23",
+          "venue": null,
+          "location": "United States",
+          "rounds": 3,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nwsl-kansas-city-current",
+              "ranking": 1,
+              "seed": 1,
+              "oddsToWin": 4.0
+            },
+            {
+              "player": "nwsl-washington-spirit",
+              "ranking": 2,
+              "seed": 2,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "nwsl-portland-thorns-fc",
+              "ranking": 3,
+              "seed": 3,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "nwsl-orlando-pride",
+              "ranking": 4,
+              "seed": 4,
+              "oddsToWin": 10.0
+            },
+            {
+              "player": "nwsl-seattle-reign-fc",
+              "ranking": 5,
+              "seed": 5,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "nwsl-san-diego-wave-fc",
+              "ranking": 6,
+              "seed": 6,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "nwsl-racing-louisville-fc",
+              "ranking": 7,
+              "seed": 7,
+              "oddsToWin": 16.0
+            },
+            {
+              "player": "nwsl-gotham-fc",
+              "ranking": 8,
+              "seed": 8,
+              "oddsToWin": 18.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "nwsl-washington-spirit",
+              "away": "nwsl-racing-louisville-fc",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-08T17:00:00Z",
+              "advancesTo": {
+                "matchNumber": 5,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 1,
+                "homeShootoutScore": 3,
+                "awayShootoutScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "nwsl-portland-thorns-fc",
+              "away": "nwsl-san-diego-wave-fc",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-09T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 5,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "nwsl-orlando-pride",
+              "away": "nwsl-seattle-reign-fc",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-08T01:00:00Z",
+              "advancesTo": {
+                "matchNumber": 6,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "nwsl-kansas-city-current",
+              "away": "nwsl-gotham-fc",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-09T17:30:00Z",
+              "advancesTo": {
+                "matchNumber": 6,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-15T17:00:00Z",
+              "advancesTo": {
+                "matchNumber": 7,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-16T20:00:00Z",
+              "advancesTo": {
+                "matchNumber": 7,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2025-11-23T01:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

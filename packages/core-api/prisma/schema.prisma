@@ -650,6 +650,11 @@ model SportLeague {
   /// plays halves). Null: the sport's layout. Reference data, set by the migration that seeds the
   /// league.
   matchPeriodLayout  PrismaMatchPeriodLayout? @map("match_period_layout")
+  /// The first round whose matches are single games a squares pool can be played on, when not
+  /// every round's are (#787: a Champions League two-legged tie or an MLS best-of-three series
+  /// is one match with no half-time score). Null: every round. Reference data, set by the
+  /// migration that seeds the league.
+  squaresFromRound   Int?                     @map("squares_from_round")
   createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 

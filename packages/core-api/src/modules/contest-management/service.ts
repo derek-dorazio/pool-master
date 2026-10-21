@@ -71,6 +71,7 @@ import {
   getTieredRosterSize,
   contestFormatForSelectionType,
   isContestFormatValidForTournamentFormat,
+  isSquaresRound,
   UpsetBonusRule,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
@@ -99,6 +100,8 @@ export interface ContestCreateSportEventState {
   rounds: number | null;
   /** The salary cap the event's field was priced against, or null when it never was (#93). */
   salaryCap: number | null;
+  /** Its sport league's first round of single games a squares contest can be played on; null for every round (#787). */
+  squaresFromRound: number | null;
 }
 
 export interface ContestCreateSportEventReader {
@@ -118,8 +121,8 @@ export interface ContestCreateSportEventReader {
   countGamesWithoutSpread(sportEventId: string): Promise<number>;
   /** Why the event's games from `startsAtRound` on cannot be filled in as a bracket, or null when they can (#721). */
   findBracketProblem(sportEventId: string, startsAtRound: number): Promise<string | null>;
-  /** The status of one of the event's games, or null when the game is not the event's (#711). */
-  findGameStatus(sportEventId: string, sportEventMatchId: string): Promise<MatchStatus | null>;
+  /** The status and round of one of the event's games, or null when the game is not the event's (#711). */
+  findGame(sportEventId: string, sportEventMatchId: string): Promise<{ status: MatchStatus; roundNumber: number } | null>;
   /** When a contest with this cutoff closes on the event (#721): at its start, or at its starting round's first game. */
   findCutoffTiming(sportEvent: ContestCreateSportEventState, cutoff: ContestCutoff): Promise<EventTiming>;
 }
@@ -168,11 +171,11 @@ export class ContestManagementService {
       input,
       this.contestConfigTemplateRepo,
     );
-    await this.assertSquaresGame(input);
     const sportEvents = await this.assertSportEventsContestEligible(
       input.sportEventIds,
       contestCutoff(resolvedConfiguration.configuration, input.sportEventMatchId),
     );
+    await this.assertSquaresGame(input, sportEvents);
     const sportEvent = this.assertOneSportLeague(sportEvents);
     const templateLeagueId = resolvedConfiguration.template?.sportLeagueId ?? null;
     if (templateLeagueId !== null && templateLeagueId !== sportEvent.sportLeagueId) {
@@ -637,10 +640,11 @@ export class ContestManagementService {
 
   /**
    * A squares contest is played on one game of its event (#711), named at create: it must be one
-   * of the event's games and not cancelled; whether it has kicked off is the contest's cutoff,
-   * checked with the event. Only a squares contest names a game.
+   * of the event's games, not cancelled, and in a round of single games (#787: not a Champions
+   * League two-legged tie); whether it has kicked off is the contest's cutoff, checked with the
+   * event. Only a squares contest names a game.
    */
-  private async assertSquaresGame(input: CreateContestRequest): Promise<void> {
+  private async assertSquaresGame(input: CreateContestRequest, sportEvents: readonly ContestCreateSportEventState[]): Promise<void> {
     const gameId = input.sportEventMatchId;
     if (input.selectionType !== SelectionType.SQUARES) {
       if (gameId !== undefined) {
@@ -653,12 +657,22 @@ export class ContestManagementService {
       this.logger.warn({ sportEventIds: input.sportEventIds }, 'contest management create refused a squares contest without its game');
       throw new ContestManagementError('Choose the game the squares contest is played on.', CONTEST_SQUARES_GAME_REQUIRED);
     }
-    const statuses = await Promise.all(input.sportEventIds.map((sportEventId) => this.sportEventReader.findGameStatus(sportEventId, gameId)));
-    const status = statuses.find((each) => each !== null) ?? null;
-    if (status === null || status === MatchStatus.CANCELLED) {
-      this.logger.warn({ sportEventIds: input.sportEventIds, sportEventMatchId: gameId, status }, 'contest management create refused a squares game that is not the event\'s or is cancelled');
+    const games = await Promise.all(sportEvents.map(async (sportEvent) => {
+      const game = await this.sportEventReader.findGame(sportEvent.id, gameId);
+      return game === null ? null : { ...game, squaresFromRound: sportEvent.squaresFromRound };
+    }));
+    const game = games.find((each) => each !== null) ?? null;
+    if (game === null || game.status === MatchStatus.CANCELLED) {
+      this.logger.warn({ sportEventIds: input.sportEventIds, sportEventMatchId: gameId, status: game?.status ?? null }, 'contest management create refused a squares game that is not the event\'s or is cancelled');
       throw new ContestManagementError(
-        status === null ? 'That game is not one of the event\'s games.' : 'That game was cancelled, so a squares contest can\'t be played on it.',
+        game === null ? 'That game is not one of the event\'s games.' : 'That game was cancelled, so a squares contest can\'t be played on it.',
+        CONTEST_SQUARES_GAME_INVALID,
+      );
+    }
+    if (!isSquaresRound(game.squaresFromRound, game.roundNumber)) {
+      this.logger.warn({ sportEventIds: input.sportEventIds, sportEventMatchId: gameId, roundNumber: game.roundNumber, squaresFromRound: game.squaresFromRound }, 'contest management create refused a squares game before the sport league\'s first round of single games');
+      throw new ContestManagementError(
+        'That game is a two-legged tie or a series, not one game, so a squares contest can\'t be played on it.',
         CONTEST_SQUARES_GAME_INVALID,
       );
     }

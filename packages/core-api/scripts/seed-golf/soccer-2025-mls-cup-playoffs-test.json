@@ -1,0 +1,654 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "SOCCER",
+    "season": 2025,
+    "sportLeagues": [
+      "MLS"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-21",
+    "gatheredBy": "load-sport-data, the 2025 MLS Cup playoffs as played, from Wikipedia's playoffs page: a fixed bracket of nine seeds a conference, the 8 and 9 seeds meeting in the wild card round for the 1 seed's place. Round one is a best-of-three series, one match here: its score is games won (a drawn game went straight to penalties, and its shoot-out winner took the game), scheduled at game 1, and its home side is team 1, the higher seed, who hosted games 1 and 3. Every other round is one game hosted by the higher seed, MLS Cup included, its score after extra time with its shoot-out, and its half-time score from the goal minutes; a series has none. Kickoffs are the page's local times. Seeds are the conference seeds; rankings are the overall table (Real Salt Lake 19th). ESPN's scoreboards agree on the conference semifinals, conference finals and MLS Cup, and on Vancouver's shoot-out over LAFC; ESPN lists Philadelphia v New York City at 00:45Z, and the file keeps the page's 7:30 pm EST. Odds to win are made up by ranking.",
+    "sources": [
+      {
+        "name": "2025 MLS Cup playoffs (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025_MLS_Cup_playoffs"
+      },
+      {
+        "name": "2025 Major League Soccer season (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2025_Major_League_Soccer_season"
+      },
+      {
+        "name": "ESPN MLS scoreboard, 20251122",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/scoreboard?dates=20251122"
+      },
+      {
+        "name": "ESPN MLS scoreboard, 20251123",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/scoreboard?dates=20251123"
+      },
+      {
+        "name": "ESPN MLS scoreboard, 20251129",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/scoreboard?dates=20251129"
+      },
+      {
+        "name": "ESPN MLS scoreboard, 20251206",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/scoreboard?dates=20251206"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "MLS",
+      "players": [
+        {
+          "key": "mls-philadelphia-union",
+          "name": "Philadelphia Union",
+          "countryCode": "US",
+          "ranking": 1
+        },
+        {
+          "key": "mls-fc-cincinnati",
+          "name": "FC Cincinnati",
+          "countryCode": "US",
+          "ranking": 2
+        },
+        {
+          "key": "mls-inter-miami-cf",
+          "name": "Inter Miami CF",
+          "countryCode": "US",
+          "ranking": 3
+        },
+        {
+          "key": "mls-san-diego-fc",
+          "name": "San Diego FC",
+          "countryCode": "US",
+          "ranking": 4
+        },
+        {
+          "key": "mls-vancouver-whitecaps-fc",
+          "name": "Vancouver Whitecaps FC",
+          "countryCode": "CA",
+          "ranking": 5
+        },
+        {
+          "key": "mls-los-angeles-fc",
+          "name": "Los Angeles FC",
+          "countryCode": "US",
+          "ranking": 6
+        },
+        {
+          "key": "mls-charlotte-fc",
+          "name": "Charlotte FC",
+          "countryCode": "US",
+          "ranking": 7
+        },
+        {
+          "key": "mls-minnesota-united-fc",
+          "name": "Minnesota United FC",
+          "countryCode": "US",
+          "ranking": 8
+        },
+        {
+          "key": "mls-new-york-city-fc",
+          "name": "New York City FC",
+          "countryCode": "US",
+          "ranking": 9
+        },
+        {
+          "key": "mls-seattle-sounders-fc",
+          "name": "Seattle Sounders FC",
+          "countryCode": "US",
+          "ranking": 10
+        },
+        {
+          "key": "mls-nashville-sc",
+          "name": "Nashville SC",
+          "countryCode": "US",
+          "ranking": 11
+        },
+        {
+          "key": "mls-columbus-crew",
+          "name": "Columbus Crew",
+          "countryCode": "US",
+          "ranking": 12
+        },
+        {
+          "key": "mls-chicago-fire-fc",
+          "name": "Chicago Fire FC",
+          "countryCode": "US",
+          "ranking": 13
+        },
+        {
+          "key": "mls-orlando-city-sc",
+          "name": "Orlando City SC",
+          "countryCode": "US",
+          "ranking": 14
+        },
+        {
+          "key": "mls-austin-fc",
+          "name": "Austin FC",
+          "countryCode": "US",
+          "ranking": 15
+        },
+        {
+          "key": "mls-fc-dallas",
+          "name": "FC Dallas",
+          "countryCode": "US",
+          "ranking": 16
+        },
+        {
+          "key": "mls-portland-timbers",
+          "name": "Portland Timbers",
+          "countryCode": "US",
+          "ranking": 17
+        },
+        {
+          "key": "mls-real-salt-lake",
+          "name": "Real Salt Lake",
+          "countryCode": "US",
+          "ranking": 19
+        }
+      ],
+      "events": [
+        {
+          "key": "mls-cup-playoffs-2025",
+          "name": "MLS Cup Playoffs",
+          "startDate": "2025-10-23",
+          "endDate": "2025-12-06",
+          "venue": null,
+          "location": "United States and Canada",
+          "rounds": 5,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "mls-philadelphia-union",
+              "ranking": 1,
+              "seed": 1,
+              "oddsToWin": 4.0
+            },
+            {
+              "player": "mls-fc-cincinnati",
+              "ranking": 2,
+              "seed": 2,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "mls-inter-miami-cf",
+              "ranking": 3,
+              "seed": 3,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "mls-san-diego-fc",
+              "ranking": 4,
+              "seed": 1,
+              "oddsToWin": 10.0
+            },
+            {
+              "player": "mls-vancouver-whitecaps-fc",
+              "ranking": 5,
+              "seed": 2,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "mls-los-angeles-fc",
+              "ranking": 6,
+              "seed": 3,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "mls-charlotte-fc",
+              "ranking": 7,
+              "seed": 4,
+              "oddsToWin": 16.0
+            },
+            {
+              "player": "mls-minnesota-united-fc",
+              "ranking": 8,
+              "seed": 4,
+              "oddsToWin": 18.0
+            },
+            {
+              "player": "mls-new-york-city-fc",
+              "ranking": 9,
+              "seed": 5,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "mls-seattle-sounders-fc",
+              "ranking": 10,
+              "seed": 5,
+              "oddsToWin": 22.0
+            },
+            {
+              "player": "mls-nashville-sc",
+              "ranking": 11,
+              "seed": 6,
+              "oddsToWin": 24.0
+            },
+            {
+              "player": "mls-columbus-crew",
+              "ranking": 12,
+              "seed": 7,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "mls-chicago-fire-fc",
+              "ranking": 13,
+              "seed": 8,
+              "oddsToWin": 28.0
+            },
+            {
+              "player": "mls-orlando-city-sc",
+              "ranking": 14,
+              "seed": 9,
+              "oddsToWin": 30.0
+            },
+            {
+              "player": "mls-austin-fc",
+              "ranking": 15,
+              "seed": 6,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "mls-fc-dallas",
+              "ranking": 16,
+              "seed": 7,
+              "oddsToWin": 34.0
+            },
+            {
+              "player": "mls-portland-timbers",
+              "ranking": 17,
+              "seed": 8,
+              "oddsToWin": 36.0
+            },
+            {
+              "player": "mls-real-salt-lake",
+              "ranking": 19,
+              "seed": 9,
+              "oddsToWin": 40.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "mls-chicago-fire-fc",
+              "away": "mls-orlando-city-sc",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-23T00:30:00Z",
+              "advancesTo": {
+                "matchNumber": 5,
+                "side": "AWAY"
+              },
+              "regionLabel": "Eastern Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "mls-portland-timbers",
+              "away": "mls-real-salt-lake",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-23T02:30:00Z",
+              "advancesTo": {
+                "matchNumber": 7,
+                "side": "AWAY"
+              },
+              "regionLabel": "Western Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 2,
+              "home": "mls-fc-cincinnati",
+              "away": "mls-columbus-crew",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-27T22:45:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "HOME"
+              },
+              "regionLabel": "Eastern Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 2,
+              "home": "mls-inter-miami-cf",
+              "away": "mls-nashville-sc",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-25T00:00:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "AWAY"
+              },
+              "regionLabel": "Eastern Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 2,
+              "home": "mls-philadelphia-union",
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-26T21:30:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "HOME"
+              },
+              "regionLabel": "Eastern Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 2,
+              "home": "mls-charlotte-fc",
+              "away": "mls-new-york-city-fc",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-28T22:45:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "AWAY"
+              },
+              "regionLabel": "Eastern Conference",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              }
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 2,
+              "home": "mls-san-diego-fc",
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-27T01:30:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "HOME"
+              },
+              "regionLabel": "Western Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 2,
+              "home": "mls-minnesota-united-fc",
+              "away": "mls-seattle-sounders-fc",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-28T01:00:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "AWAY"
+              },
+              "regionLabel": "Western Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              }
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 2,
+              "home": "mls-vancouver-whitecaps-fc",
+              "away": "mls-fc-dallas",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-26T23:30:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "HOME"
+              },
+              "regionLabel": "Western Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 2,
+              "home": "mls-los-angeles-fc",
+              "away": "mls-austin-fc",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-30T02:30:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "AWAY"
+              },
+              "regionLabel": "Western Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              }
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-23T22:00:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "HOME"
+              },
+              "regionLabel": "Eastern Conference",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 4
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-24T00:30:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "AWAY"
+              },
+              "regionLabel": "Eastern Conference",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-25T03:00:00Z",
+              "advancesTo": {
+                "matchNumber": 16,
+                "side": "HOME"
+              },
+              "regionLabel": "Western Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-23T02:30:00Z",
+              "advancesTo": {
+                "matchNumber": 16,
+                "side": "AWAY"
+              },
+              "regionLabel": "Western Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 2,
+                "homeShootoutScore": 4,
+                "awayShootoutScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-29T23:00:00Z",
+              "advancesTo": {
+                "matchNumber": 17,
+                "side": "HOME"
+              },
+              "regionLabel": "Eastern Conference",
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 16,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-30T02:00:00Z",
+              "advancesTo": {
+                "matchNumber": 17,
+                "side": "AWAY"
+              },
+              "regionLabel": "Western Conference",
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 3
+                }
+              ]
+            },
+            {
+              "matchNumber": 17,
+              "roundNumber": 5,
+              "home": null,
+              "away": null,
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-06T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

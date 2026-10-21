@@ -295,7 +295,7 @@ hockey seeds do.
 
 ## Seeded soccer knockouts
 
-Five test seeds hold soccer knockout stages as they went, one event each, in the five soccer
+Eight test seeds hold soccer knockout stages as they went, one event each, in the nine soccer
 sport leagues the migrations create:
 
 - `soccer-2022-fifa-world-cup-test.json`: the 2022 World Cup's 16-team knockout stage.
@@ -309,10 +309,19 @@ sport leagues the migrations create:
   from the knockout play-offs: 24 teams seeded by league phase place, the top eight waiting in
   the Round of 16. Each two-legged tie is one match scored on aggregate, kicking off at the
   first leg. Paris Saint-Germain beat Arsenal 4-3 on penalties after a 1-1 final.
+- `soccer-2025-mls-cup-playoffs-test.json`: the 2025 MLS Cup playoffs, nine seeds a conference,
+  from the wild card round. Each round one best-of-three series is one match scored in games
+  won, with no half-time score. Inter Miami beat Vancouver 3-1 in MLS Cup, at home.
+- `soccer-2025-nwsl-playoffs-test.json`: the 2025 NWSL playoffs, eight seeds. Gotham beat
+  Washington 1-0 in the championship at a neutral site.
+- `soccer-2025-ncaa-tournaments-test.json`: the 2025 NCAA Division I men's (48 teams, 16 national
+  seeds waiting in the second round) and women's (64 teams, four brackets of eight seeds)
+  tournaments, unseeded teams sharing the seed after the last. Washington beat NC State 3-2 after
+  overtime, and Florida State beat Stanford 1-0. No half-time scores.
 
 A match's score is the score after extra time; a match level after it carries its shoot-out,
 kept apart. Every match carries its half-time score for squares pools, except a two-legged
-tie. The international tournaments are seeded by FIFA ranking and every match is at a neutral
+tie, an MLS series and the NCAA games. The international tournaments are seeded by FIFA ranking and every match is at a neutral
 site; the third-place match is left out. Kickoffs, scores and shoot-outs are real, and the odds
 are made up. Each loads as the hockey seeds do.
 
