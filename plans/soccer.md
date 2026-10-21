@@ -113,6 +113,9 @@ The `add-sport` skill, as hockey did it.
   names are counted back from the final: Final, Semi-finals, Quarter-finals, Round of 16,
   Round of 32; leagues override where they differ (the Champions League's "Knockout phase
   play-offs").
+  As built, slice 3 leaves `PICK_EM`, `pickEm` and the tie word out: its events are all
+  knockouts, where no match ends level, and the tie fields arrive with #792. Slice 5 adds them
+  with the group matchdays, the first soccer events a pick'em pool plays.
 - **Leagues and test seeds** (last edition as played, each a knockout-stage event):
   - FIFA World Cup: 2022, round of 16 (the 2026 edition's round of 32 if its data is easier to
     get; it has just finished).

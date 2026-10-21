@@ -293,6 +293,29 @@ Angeles Dodgers beat the Toronto Blue Jays 4-3 in the World Series. Seeds, pairi
 scores and each series' Game 1 first pitch are real, and the odds are made up. It loads as the
 hockey seeds do.
 
+## Seeded soccer knockouts
+
+Five test seeds hold soccer knockout stages as they went, one event each, in the five soccer
+sport leagues the migrations create:
+
+- `soccer-2022-fifa-world-cup-test.json`: the 2022 World Cup's 16-team knockout stage.
+  Argentina beat France 4-2 on penalties after a 3-3 final.
+- `soccer-2023-fifa-womens-world-cup-test.json`: the 2023 Women's World Cup's 16-team knockout
+  stage. Spain beat England 1-0.
+- `soccer-2024-uefa-euro-test.json`: Euro 2024's 16-team knockout stage. Spain beat England 2-1.
+- `soccer-2024-copa-america-test.json`: Copa América 2024's eight-team knockout stage, from the
+  quarter-finals. Argentina beat Colombia 1-0 after extra time.
+- `soccer-2026-uefa-champions-league-test.json`: the 2025-26 Champions League knockout phase,
+  from the knockout play-offs: 24 teams seeded by league phase place, the top eight waiting in
+  the Round of 16. Each two-legged tie is one match scored on aggregate, kicking off at the
+  first leg. Paris Saint-Germain beat Arsenal 4-3 on penalties after a 1-1 final.
+
+A match's score is the score after extra time; a match level after it carries its shoot-out,
+kept apart. Every match carries its half-time score for squares pools, except a two-legged
+tie. The international tournaments are seeded by FIFA ranking and every match is at a neutral
+site; the third-place match is left out. Kickoffs, scores and shoot-outs are real, and the odds
+are made up. Each loads as the hockey seeds do.
+
 ## Seeded 2026 races
 
 To try racing contests without setting up a race, load a test seed of the 2026 season as run.

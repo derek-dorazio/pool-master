@@ -115,6 +115,7 @@ const SPORTS: readonly SportScenario[] = [
   { sport: Sport.AMERICAN_FOOTBALL, seed: oneEventOf('american-football-2026-nfl-playoffs-test.json', 'NFL', 'NFL Playoffs') },
   { sport: Sport.HOCKEY, seed: oneEventOf('hockey-2026-nhl-playoffs-test.json', 'NHL', 'Stanley Cup Playoffs') },
   { sport: Sport.BASEBALL, seed: oneEventOf('baseball-2025-mlb-postseason-test.json', 'MLB', 'MLB Postseason') },
+  { sport: Sport.SOCCER, seed: oneEventOf('soccer-2022-fifa-world-cup-test.json', 'FIFA World Cup', 'FIFA World Cup') },
 ];
 
 /**

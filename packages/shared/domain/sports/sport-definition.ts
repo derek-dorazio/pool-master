@@ -50,6 +50,11 @@ export interface SportVocabulary {
    * sport that plays no bracket; a bracket screen of a sport without one says "match".
    */
   match?: SportNoun;
+  /**
+   * What play after regulation time is called, read after "Final, " on the admin's final score
+   * ("Final, extra time included"): "extra time" for soccer. Absent reads "overtime".
+   */
+  overtime?: string;
 }
 
 /**

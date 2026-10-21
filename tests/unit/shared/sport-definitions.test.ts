@@ -395,6 +395,49 @@ describe('baseball', () => {
   });
 });
 
+describe('soccer', () => {
+  const soccer = getSportDefinition(Sport.SOCCER);
+
+  it('is a team sport played as a knockout bracket, scored head to head by knockout round points, in two halves a match', () => {
+    expect(soccer.name).toBe('Soccer');
+    expect(soccer.participantType).toBe('TEAM');
+    expect(soccer.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
+    expect(soccer.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
+    expect(soccer.matchPeriodLayout).toBe(MatchPeriodLayout.HALVES);
+    expect(sportPlaysMatches(Sport.SOCCER)).toBe(true);
+  });
+
+  it('settles a knockout match level after extra time by a shoot-out, labelled pens, and calls overtime extra time', () => {
+    expect(soccer.shootout).toEqual({ label: 'pens' });
+    expect(soccer.vocabulary.overtime).toBe('extra time');
+  });
+
+  it('gives a new tournament four rounds and four tiers of four, for a 16-team knockout stage', () => {
+    expect(soccer.defaultRounds).toBe(4);
+    expect(soccer.defaultTierLayout).toEqual({ tierCount: 4, tierSize: 4 });
+  });
+
+  it('labels a four-round knockout Round of 16 through Final, a five-round one from the Round of 32, and a stored round past the count Round N', () => {
+    expect([1, 2, 3, 4].map((roundNumber) => soccer.roundLabel(roundNumber, 4))).toEqual(['Round of 16', 'Quarter-finals', 'Semi-finals', 'Final']);
+    expect(soccer.roundLabel(1, 5)).toBe('Round of 32');
+    expect(soccer.roundLabel(1, 3)).toBe('Quarter-finals');
+    expect(soccer.roundLabel(5, 4)).toBe('Round 5');
+  });
+
+  it('offers the three roster selection types, bracket, survivor and squares, and no pick\'em until it has weeks of matches', () => {
+    expect(soccer.selectionTypes).toEqual([
+      SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES,
+    ]);
+  });
+
+  it('calls the event a tournament, its sport league a competition, and the moment entries close the first kickoff', () => {
+    expect(soccer.vocabulary.event).toEqual({ one: 'tournament', many: 'tournaments' });
+    expect(soccer.vocabulary.sportLeague).toEqual({ one: 'competition', many: 'competitions' });
+    expect(soccer.vocabulary.match).toEqual({ one: 'match', many: 'matches' });
+    expect(soccer.vocabulary.eventStart).toBe('first kickoff');
+  });
+});
+
 describe('sportPlaysMatches', () => {
   it('is true only for a sport whose tournament format is a knockout bracket', () => {
     for (const definition of definitions) {

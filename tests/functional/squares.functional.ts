@@ -217,18 +217,21 @@ describe('SDK Functional: Super Bowl squares', () => {
   });
 });
 
-// Each college league's squares preset on its own final: men's college basketball played in two
-// halves, women's in quarters (#786), and college hockey in three periods (#788). Each test seed loads with every game played but the final; one entry holds
-// the top row, the other the left column, and every scoring moment lands in the top row.
-const COLLEGE_FINALS = [
-  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', layout: MatchPeriodLayout.HALVES },
-  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', layout: MatchPeriodLayout.QUARTERS },
-  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Ice Hockey Tournament', templateKey: 'ncaa-men-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS },
-  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Ice Hockey Tournament', templateKey: 'ncaa-women-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS },
+// Each league's squares preset on its own final: men's college basketball played in two halves,
+// women's in quarters (#786), college hockey in three periods (#788), and the World Cup in two
+// halves (#787). Men's college basketball sets its halves on the league; the others take the
+// sport's. Each test seed loads with every game played but the final; one entry holds the top
+// row, the other the left column, and every scoring moment lands in the top row.
+const LEAGUE_FINALS = [
+  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: MatchPeriodLayout.HALVES },
+  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', layout: MatchPeriodLayout.QUARTERS, leagueLayout: null },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Ice Hockey Tournament', templateKey: 'ncaa-men-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Ice Hockey Tournament', templateKey: 'ncaa-women-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
+  { sport: Sport.SOCCER, file: 'soccer-2022-fifa-world-cup-test.json', league: 'FIFA World Cup', event: 'FIFA World Cup', templateKey: 'world-cup-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: null },
 ] as const;
 
 describe('SDK Functional: squares on each league\'s final, scored at the end of each of its periods', () => {
-  it.each(COLLEGE_FINALS.map((row) => [row.league, row.layout, row] as const))(
+  it.each(LEAGUE_FINALS.map((row) => [row.league, row.layout, row] as const))(
     '%s, %s: the league\'s squares preset runs on its final, takes a score for each period but the last, and settles a winner for every period',
     async (_league, layout, row) => {
       const admin = await buildRegisteredUser({ displayName: 'College Squares Director' });
@@ -246,7 +249,7 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
 
       const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: row.sport } })).data).sportLeagues
         .find((league) => league.name === row.league));
-      expect(sportLeague.matchPeriodLayout).toBe(layout === MatchPeriodLayout.HALVES ? MatchPeriodLayout.HALVES : null);
+      expect(sportLeague.matchPeriodLayout).toBe(row.leagueLayout);
       const loaded = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: sportLeague.id } })).data).events
         .find((each) => each.name === event.name));
       created.sportEventIds.add(loaded.id);

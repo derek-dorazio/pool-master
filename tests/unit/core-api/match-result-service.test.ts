@@ -37,7 +37,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
       return `match-${sequence}`;
     },
   });
-  if (sport === Sport.BASKETBALL || sport === Sport.AMERICAN_FOOTBALL) {
+  if (sport === Sport.BASKETBALL || sport === Sport.AMERICAN_FOOTBALL || sport === Sport.SOCCER) {
     await brackets.loadBracket(event.id, [
       { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: duke.id, awaySportEventParticipantId: vermont.id, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
       { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: houston.id, awaySportEventParticipantId: texas.id, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
@@ -243,6 +243,24 @@ describe('MatchResultService once the next game has quarter scores', () => {
 });
 
 describe('MatchResultService shoot-outs (#791)', () => {
+  it('saves a soccer bracket match level after extra time with its shoot-out, the shoot-out\'s winner moving on', async () => {
+    const { service, event, vermont } = await setup({ sport: Sport.SOCCER });
+
+    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4 });
+
+    expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({
+      status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4,
+    });
+    expect(bracket.find((match) => match.matchNumber === 3)?.homeSportEventParticipantId).toBe(vermont.id);
+  });
+
+  it('refuses (422 MATCH_RESULT_INVALID) a soccer bracket match left level with no shoot-out', async () => {
+    const { service, event } = await setup({ sport: Sport.SOCCER });
+
+    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1 }))
+      .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
+  });
+
   it('refuses (422 MATCH_RESULT_INVALID) shoot-out scores in a sport whose knockouts never end level, and saves nothing', async () => {
     const { service, event, store } = await setup();
 

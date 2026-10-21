@@ -44,10 +44,16 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
 1. **Scoring family.** Does an existing family already score this sport?
    - Stroke play: lowest total wins (golf).
    - Head to head: a bracket of matches, points per round won plus an optional seed upset
-     bonus (basketball, American football, hockey, baseball; tennis next). A league whose rounds the sport's names
+     bonus (basketball, American football, hockey, baseball, soccer; tennis next). A league whose rounds the sport's names
      do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's), and a league whose field the
      sport's default tiers do not fit sets its own tier count (`SportLeague.tierCount`: the
      College Football Playoff's six). Its matches are `SportEventMatch` rows in the event core, not family tables.
+     A sport whose level match is settled by a shoot-out sets the definition's `shootout` (its
+     label, soccer's "pens"); every other sport sets it to null. The score stays level and the
+     shoot-out's winner goes through. A sport that calls overtime something else (soccer's
+     "extra time") sets `vocabulary.overtime`, which the final-score label reads.
+     A two-legged tie (the Champions League's) is one match scored on aggregate, scheduled at the
+     first leg, with no period scores; it needs no model of its own.
    - Finish position: points by place (horse racing, auto racing, cycling).
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.
@@ -161,7 +167,9 @@ In order:
     sites differ per league, so the workflows need no change for a new sport.
     A knockout differs. Its field and pairings exist only once the bracket is set (the NFL
     playoffs' at the end of the regular season), so there is no bracket to write ahead, and a
-    slate fills a field but no bracket; its test data is the last real bracket, played out. A
+    slate fills a field but no bracket; its test data is the last real bracket, played out, and
+    it needs no schedule file or slate. A sport league whose last edition was a while ago (a
+    World Cup every four years) uses its last edition played, whatever the year. A
     regular season of games is a schedule like any other: each week is an event with its
     games, which link nowhere, written once the league publishes them (the NFL's in May); its
     test data is last season's weeks as played (the `load-sport-data` skill, *Test slates*).
@@ -245,6 +253,12 @@ down: a lesson that was true mid-series may not be by the end.
 - **Scenario rows keyed by league name.** Two sports can share a league name ("NCAA Division I
   Men" plays basketball and hockey), so a functional suite whose test names or tags come from
   the league name runs two rows under one name. Key them by event name, or name the sport too.
+- **ESPN date ranges.** The ESPN scoreboard refuses `dates=<from>-<to>` with a 400 for most
+  leagues; fetch one day per URL, at most 20 URLs a run. Each "Fetch sport sources" run
+  replaces the folder the last one wrote, so copy what you need before the next run.
+- **A bye on the away side.** A fixed bracket may name a team placed straight into a later
+  round on either side of its match (MLB's byes are home sides, the Champions League's away
+  sides); the earlier round's winner fills the other side through `advancesTo`.
 - **Squares on a league whose final is a series.** A series is one bracket match scored in
   games won, so it has no single game for a grid. Leave squares out of such a sport's selection
   types and its period layout off the definition, and add the league to the template checks'

@@ -1,0 +1,630 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "SOCCER",
+    "season": 2024,
+    "sportLeagues": [
+      "UEFA European Championship"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-21",
+    "gatheredBy": "load-sport-data, the UEFA Euro 2024 knockout stage as played: the bracket, every match's score after extra time, its shoot-out and its half-time score (from the goal minutes), and each kickoff from the page's local time and UTC offset. The third-place match is left out (not part of the bracket). Home is the side Wikipedia lists first. Seeds are the knockout teams' order in the FIFA ranking at the start of the knockouts (the 20 June 2024 men's ranking, published during the group stage, as Transfermarkt lists it). Host Germany played at home, still a neutral site here. ESPN's scoreboards agree on every shoot-out and the final. Odds to win are made up by seed.",
+    "sources": [
+      {
+        "name": "UEFA Euro 2024 knockout stage (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/UEFA_Euro_2024_knockout_stage"
+      },
+      {
+        "name": "UEFA Euro 2024 (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/UEFA_Euro_2024"
+      },
+      {
+        "name": "FIFA world ranking of 20 June 2024 (Transfermarkt)",
+        "url": "https://www.transfermarkt.com/statistik/weltrangliste/statistik/stat/datum/2024-06-20"
+      },
+      {
+        "name": "ESPN Euro scoreboard, 20240701",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.euro/scoreboard?dates=20240701"
+      },
+      {
+        "name": "ESPN Euro scoreboard, 20240705",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.euro/scoreboard?dates=20240705"
+      },
+      {
+        "name": "ESPN Euro scoreboard, 20240706",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.euro/scoreboard?dates=20240706"
+      },
+      {
+        "name": "ESPN Euro scoreboard, 20240714",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.euro/scoreboard?dates=20240714"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "UEFA European Championship",
+      "players": [
+        {
+          "key": "euro-france",
+          "name": "France",
+          "countryCode": "FR",
+          "ranking": 2
+        },
+        {
+          "key": "euro-belgium",
+          "name": "Belgium",
+          "countryCode": "BE",
+          "ranking": 3
+        },
+        {
+          "key": "euro-england",
+          "name": "England",
+          "countryCode": "GB",
+          "ranking": 5
+        },
+        {
+          "key": "euro-portugal",
+          "name": "Portugal",
+          "countryCode": "PT",
+          "ranking": 6
+        },
+        {
+          "key": "euro-netherlands",
+          "name": "Netherlands",
+          "countryCode": "NL",
+          "ranking": 7
+        },
+        {
+          "key": "euro-spain",
+          "name": "Spain",
+          "countryCode": "ES",
+          "ranking": 8
+        },
+        {
+          "key": "euro-italy",
+          "name": "Italy",
+          "countryCode": "IT",
+          "ranking": 10
+        },
+        {
+          "key": "euro-germany",
+          "name": "Germany",
+          "countryCode": "DE",
+          "ranking": 16
+        },
+        {
+          "key": "euro-switzerland",
+          "name": "Switzerland",
+          "countryCode": "CH",
+          "ranking": 19
+        },
+        {
+          "key": "euro-denmark",
+          "name": "Denmark",
+          "countryCode": "DK",
+          "ranking": 21
+        },
+        {
+          "key": "euro-austria",
+          "name": "Austria",
+          "countryCode": "AT",
+          "ranking": 25
+        },
+        {
+          "key": "euro-turkey",
+          "name": "Turkey",
+          "countryCode": "TR",
+          "ranking": 42
+        },
+        {
+          "key": "euro-slovakia",
+          "name": "Slovakia",
+          "countryCode": "SK",
+          "ranking": 45
+        },
+        {
+          "key": "euro-romania",
+          "name": "Romania",
+          "countryCode": "RO",
+          "ranking": 47
+        },
+        {
+          "key": "euro-slovenia",
+          "name": "Slovenia",
+          "countryCode": "SI",
+          "ranking": 57
+        },
+        {
+          "key": "euro-georgia",
+          "name": "Georgia",
+          "countryCode": "GE",
+          "ranking": 74
+        }
+      ],
+      "events": [
+        {
+          "key": "uefa-euro-2024",
+          "name": "UEFA Euro",
+          "startDate": "2024-06-29",
+          "endDate": "2024-07-14",
+          "venue": null,
+          "location": "Germany",
+          "rounds": 4,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "euro-france",
+              "ranking": 2,
+              "seed": 1,
+              "oddsToWin": 4.0
+            },
+            {
+              "player": "euro-belgium",
+              "ranking": 3,
+              "seed": 2,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "euro-england",
+              "ranking": 5,
+              "seed": 3,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "euro-portugal",
+              "ranking": 6,
+              "seed": 4,
+              "oddsToWin": 10.0
+            },
+            {
+              "player": "euro-netherlands",
+              "ranking": 7,
+              "seed": 5,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "euro-spain",
+              "ranking": 8,
+              "seed": 6,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "euro-italy",
+              "ranking": 10,
+              "seed": 7,
+              "oddsToWin": 16.0
+            },
+            {
+              "player": "euro-germany",
+              "ranking": 16,
+              "seed": 8,
+              "oddsToWin": 18.0
+            },
+            {
+              "player": "euro-switzerland",
+              "ranking": 19,
+              "seed": 9,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "euro-denmark",
+              "ranking": 21,
+              "seed": 10,
+              "oddsToWin": 22.0
+            },
+            {
+              "player": "euro-austria",
+              "ranking": 25,
+              "seed": 11,
+              "oddsToWin": 24.0
+            },
+            {
+              "player": "euro-turkey",
+              "ranking": 42,
+              "seed": 12,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "euro-slovakia",
+              "ranking": 45,
+              "seed": 13,
+              "oddsToWin": 28.0
+            },
+            {
+              "player": "euro-romania",
+              "ranking": 47,
+              "seed": 14,
+              "oddsToWin": 30.0
+            },
+            {
+              "player": "euro-slovenia",
+              "ranking": 57,
+              "seed": 15,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "euro-georgia",
+              "ranking": 74,
+              "seed": 16,
+              "oddsToWin": 34.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "euro-spain",
+              "away": "euro-georgia",
+              "isNeutralSite": true,
+              "scheduledAt": "2024-06-30T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "euro-germany",
+              "away": "euro-denmark",
+              "isNeutralSite": true,
+              "scheduledAt": "2024-06-29T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "euro-portugal",
+              "away": "euro-slovenia",
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-01T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 0,
+                "awayScore": 0,
+                "homeShootoutScore": 3,
+                "awayShootoutScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "euro-france",
+              "away": "euro-belgium",
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-01T16:00:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "euro-romania",
+              "away": "euro-netherlands",
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-02T16:00:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "euro-austria",
+              "away": "euro-turkey",
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-02T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "euro-england",
+              "away": "euro-slovakia",
+              "isNeutralSite": true,
+              "scheduledAt": "2024-06-30T16:00:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "euro-switzerland",
+              "away": "euro-italy",
+              "isNeutralSite": true,
+              "scheduledAt": "2024-06-29T16:00:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-05T16:00:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-05T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 0,
+                "homeShootoutScore": 3,
+                "awayShootoutScore": 5
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-06T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-06T16:00:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 1,
+                "homeShootoutScore": 5,
+                "awayShootoutScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-09T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-10T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2024-07-14T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
