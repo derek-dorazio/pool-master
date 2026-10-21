@@ -241,8 +241,13 @@ so it works without signing in and can't be reused for anything else.
 headers for you, but the preference then lives in SES where the app can't show it, there is one
 contact list per account (shared by QA and prod), and it only covers SES sends, not Mailpit.
 
-> **Q7.1 Preference granularity.** Recommendation: **one switch per category across all leagues** to
-> start. Per-league muting ("no emails from my work league") can come later if asked for.
+> **Q7.1 Preference granularity. Decided (Derek 2026-10-21):** one on/off switch per category, the
+> same for every league, with one-click unsubscribe. No digests.
+>
+> **Leagues are tenants (Derek 2026-10-21).** Members and commissioners get no cross-league
+> features. Each email comes from one league, about that league, with links only into that league;
+> nothing combines several leagues into one email or one page. The preference switch is a setting
+> on the user's own account, not a league feature, so it doesn't break this rule.
 
 ## 8. Bounces and complaints
 
