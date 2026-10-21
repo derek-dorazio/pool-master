@@ -176,6 +176,29 @@ describe('scoreGamePicks — a week against the spread', () => {
     ]);
   });
 
+  // #825: a game ended early has no real final score to measure, so its named winner covers.
+  it('scores the winner of a walkover as covering, though the game has no score', () => {
+    const walkover = (matchNumber: number) => game(matchNumber, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeSpread: -7, ending: MatchEnding.WALKOVER });
+    const score = scoreGamePicks([walkover(1), walkover(2)], [pick(1, 'away'), pick(2, 'home')], { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true });
+
+    expect([...score.picks]).toEqual([
+      ['game-1', { outcome: PickOutcome.CORRECT, points: 1 }],
+      ['game-2', { outcome: PickOutcome.BUSTED, points: 0 }],
+    ]);
+  });
+
+  it('scores the winner of a retirement or a default as covering, even when its score falls short of the spread', () => {
+    // The home team, favoured by 10.5, leads 3-0 when the away team retires, and 7-0 when it defaults.
+    const retired = game(1, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 3, awayScore: 0, homeSpread: -10.5, ending: MatchEnding.RETIREMENT });
+    const defaulted = game(2, { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 7, awayScore: 0, homeSpread: -10.5, ending: MatchEnding.DEFAULT });
+    const score = scoreGamePicks([retired, defaulted], [pick(1, 'home'), pick(2, 'away')], { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true });
+
+    expect([...score.picks]).toEqual([
+      ['game-1', { outcome: PickOutcome.CORRECT, points: 1 }],
+      ['game-2', { outcome: PickOutcome.BUSTED, points: 0 }],
+    ]);
+  });
+
   it('ignores the spread in a pool picked straight up', () => {
     const score = scoreGamePicks(ATS_WEEK, [pick(1, 'home'), pick(3, 'home')], { mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false });
 
