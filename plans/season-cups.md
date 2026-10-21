@@ -16,8 +16,7 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
   table with movement arrows and wins, a points-race chart of the top five, and the counted
   contests with their weights and why one doesn't count.
 - **B. Trophy cabinet.** The Cups page: a card per cup with its leader and progress, the
-  commissioner's "Ready to crown" banner, a "Start a Football Cup" suggestion, the crowned
-  podium, and the trophy shelf on a team page.
+  commissioner's "Ready to crown" banner, the crowned podium, and the trophy shelf on a team page.
 - **C. Past seasons.** History's Cups tab: most cups won, then each season's cup champions,
   newest first.
 
@@ -25,17 +24,23 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
 
 ## TL;DR
 
-- **A cup is a rule, not a copy of results.** It names a season, which contests count (every
-  contest, one sport, one sport league, or a hand-picked list) and a points table. Standings are
+- **Two kinds of cup, both inside one Poolmaster league** (Derek, 2026-10-21). "League" here is
+  always the Poolmaster league, the tenant; "sports league" is the PGA Tour, the LPGA Tour, the
+  NFL. The **Poolmaster Cup** is the one leaderboard across every contest in every sport. A
+  **sports league cup** (the PGA Tour Cup, the NFL Cup) covers that sports league's contests. No
+  cup per sport (men's and women's golf together) and no hand-picked cups.
+- **A cup is a rule, not a copy of results.** It names a season, which contests count (all of
+  them, or one sports league's) and a points table. Standings are
   worked out on read from the places every contest already freezes when it settles
   (`ContestEntryStanding`), the same read #837 builds. Nothing is kept in step by hand.
-- **Every league gets a Poolmaster Cup** (all sports) each season without lifting a finger. The
-  commissioner can add sport cups (a Golf Cup, an NFL Cup) and custom cups ("Derek's Cup").
+- **Every cup appears on its own.** A league gets its Poolmaster Cup and a cup for each sports
+  league it plays each season, with no setup. The commissioner can rename them, pick the points
+  table, and drop or weight a contest.
 - **Points follow the place, the field and an optional weight.** A preset points table, shared
   points for ties, and a per-contest weight so a majors pool can count for more.
 - **Crowning is an explicit action.** The commissioner crowns the champion, which freezes the
   standings and hands out trophies. That frozen row is what history shows six years later.
-- **Five slices:** model and read API; the cup leaderboard page; commissioner cup tools;
+- **Five slices:** model and read API; the cup leaderboard page; commissioner cup settings;
   crowning, trophies and past seasons; projected points from live contests.
 
 ## 1. What it builds on
@@ -44,7 +49,7 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
 |---|---|---|
 | Frozen contest places | `ContestEntryStanding.position` (1 best, ties allowed), written at settlement | The only input to cup points |
 | Contest status | `Contest.status` `COMPLETED` | Only Final contests award points (projected points are slice 5) |
-| Contest sport | `ContestSportEvent` → `SportEvent.sport` and `SportEvent.eventSeries.sportLeagueId` | Which sport and sport league a contest belongs to, for sport cups |
+| Contest sport | `ContestSportEvent` → `SportEvent.sport` and `SportEvent.eventSeries.sportLeagueId` | Which sport and sport league a contest belongs to, for sports league cups |
 | Season | `Contest.seasonYear`, added by #837 slice 1 | Which season a contest counts toward |
 | A squad's best entry | #837 `history` module, Q3.2 | A squad with several entries in a contest scores once, from its best place |
 | Squad delete guard | #837 slice 1, Q3.1 | A squad with results can't be deleted, so cup standings can't lose a row |
@@ -58,18 +63,16 @@ templates), so a contest has exactly one sport and one sport league.
 ```
 Cup                              one points race in one league and one season
   leagueId, seasonYear, name
-  scope        CupScope          ALL_SPORTS | SPORT | SPORT_LEAGUE | HAND_PICKED
-  sport        Sport?            set only for SPORT
+  scope        CupScope          ALL_CONTESTS | SPORT_LEAGUE
   sportLeagueId                  set only for SPORT_LEAGUE
   pointsScale  CupPointsScale    STANDARD | TOP_TEN | FIELD_BEATEN | CUSTOM
   customPoints Int[]             points for 1st, 2nd, ... ; only for CUSTOM
-  isLeagueCup  Boolean           the league's automatic Poolmaster Cup for that season
   status       CupStatus         OPEN | CROWNED
   crownedAt    DateTime?
 
 CupContestSetting                a commissioner's change to one contest in one cup
   cupId, contestId               unique together
-  included     Boolean           false drops a matching contest; true adds one to a HAND_PICKED cup
+  included     Boolean           false drops the contest from this cup
   weight       CupContestWeight  NORMAL (x1) | BONUS (x1.5) | DOUBLE (x2)
 
 CupStanding                      frozen when the cup is crowned, like ContestEntryStanding
@@ -82,17 +85,20 @@ CupStanding                      frozen when the cup is crowned, like ContestEnt
 ```
 
 - **Which contests count** is worked out on read: the league's contests with the cup's
-  `seasonYear` that match its scope, minus those with a setting `included = false`. A
-  `HAND_PICKED` cup counts only contests with a setting `included = true`. A contest made next
-  month joins the Golf Cup on its own, with no step for anyone.
-- Database checks keep the scope honest: `sport` is set exactly when scope is `SPORT`,
-  `sportLeagueId` exactly when `SPORT_LEAGUE`, `customPoints` is non-empty exactly when
-  `CUSTOM`. One `isLeagueCup` per (league, season), as a partial unique index.
-- **The Poolmaster Cup** is created by the cups service the first time a contest is created
-  in a (league, season) that has no league cup yet; contest-management calls it (modules call
-  each other's services, `rules/architecture-rules.md` §4 *Service Topology*). The migration
-  creates one for every (league, season) that already has a contest. It can be renamed, never
-  deleted, and its scope stays `ALL_SPORTS`.
+  `seasonYear` that match its scope, minus those with a setting `included = false`. A contest
+  made next month joins the PGA Tour Cup on its own, with no step for anyone.
+- Database checks keep the scope honest: `sportLeagueId` is set exactly when scope is
+  `SPORT_LEAGUE`, and `customPoints` is non-empty exactly when `CUSTOM`. Unique indexes allow one
+  `ALL_CONTESTS` cup per (league, season) and one cup per (league, season, sports league).
+- **Cups are created, never set up.** When a contest is created, contest-management calls the
+  cups service (modules call each other's services, `rules/architecture-rules.md` §4 *Service
+  Topology*), which makes the (league, season)'s Poolmaster Cup and its sports league's cup if
+  they don't exist yet. The migration does the same for every existing contest. Cups can be
+  renamed but not deleted, and their scope never changes. Default names are "Poolmaster Cup"
+  and "<sports league name> Cup" ("PGA Tour Cup", "NFL Cup").
+- A sports league cup stays off the Cups page until it has two counted contests, so a league
+  that plays one Super Bowl squares pool doesn't get an NFL Cup with one contest in it. The
+  Poolmaster Cup always shows.
 - Enums mirror domain consts in `packages/shared/domain/enums.ts` with the `Prisma` prefix,
   like every other status column.
 - **A cup never crosses leagues.** Leagues are tenants (Derek, 2026-10-21): no feature lets a
@@ -104,19 +110,20 @@ CupStanding                      frozen when the cup is crowned, like ContestEnt
 
 Questions:
 
-- **Q2.1** Every league gets a Poolmaster Cup each season automatically? Recommendation: yes.
-  It makes the feature visible from the first Final contest, and a commissioner who doesn't care
-  never has to set anything up.
-- **Q2.2** Sport cups (Golf Cup, NFL Cup): created by the commissioner, or automatic for every
-  sport the league plays? Recommendation: commissioner-created, one tap from a "Start a Golf
-  Cup" suggestion on the cups page. A league that plays one squares pool doesn't want a Football
-  Cup with one contest in it.
+- **Q2.1** Decided (Derek, 2026-10-21): every league gets a Poolmaster Cup each season, the
+  one leaderboard across every contest in every sport.
+- **Q2.2** Decided (Derek, 2026-10-21): the cups are the Poolmaster Cup across everything and
+  one cup per sports league (the PGA Tour Cup). No combined cup per sport (men's and women's golf
+  together) and no hand-picked custom cups. Sports league cups appear on their own, like the
+  Poolmaster Cup, once they have two counted contests.
 - **Q2.3** Decided (Derek, 2026-10-21): no cross-league cups, ever, for members or
-  commissioners. Leagues are tenants. Nothing else in this plan crosses leagues: every route is
-  under `/leagues/:leagueId`, and past cups and trophies show only inside their own league.
-- **Q2.4** May a contest count toward several cups at once (Poolmaster Cup, Golf Cup and
-  Derek's Cup)? Recommendation: yes, that is the point of sport cups. Each cup works out its own
-  points.
+  commissioners. Leagues are tenants. "Across everything" means every sport and sports league
+  inside one Poolmaster league. Every route is under `/leagues/:leagueId`, and past cups and
+  trophies show only inside their own league. A person in several leagues never sees their cups,
+  points or trophies added up across them: the league selector is always a hard partition.
+- **Q2.4** A contest counts toward both the Poolmaster Cup and its sports league's cup. Each cup
+  works out its own points, and a commissioner can drop or weight a contest in one without
+  changing the other.
 
 ## 3. Points
 
@@ -200,11 +207,9 @@ new `cups` module (`rules/service-rules.md` §4 *DTOs, Mappers, OpenAPI*):
 | `GET /cups?seasonYear=` | Member | The league's cups for a season (default: the current one), each with its leader and the viewer's squad's place |
 | `GET /cups/:cupId` | Member | Standings (`CupStandingRowDto[]`) and the counted contests (`CupContestRowDto[]`) |
 | `GET /cups/:cupId/squads/:squadId` | Member | One squad's points contest by contest |
-| `POST /cups` | Commissioner | Create a sport, sport league or hand-picked cup |
 | `PATCH /cups/:cupId` | Commissioner | Name, points scale, custom points (open cups only) |
 | `PUT /cups/:cupId/contests/:contestId` | Commissioner | Include, exclude or weight one contest |
 | `POST /cups/:cupId/crown` | Commissioner | Crown the champion (section 4) |
-| `DELETE /cups/:cupId` | Commissioner | Delete an open cup that isn't the league cup |
 | `GET /cups/past` | Member | Crowned cups across every season, newest first, paged; used by history |
 
 - `CupStandingRowDto`: squad ref (id, current name, icon, `isActive`), `position`,
@@ -213,7 +218,7 @@ new `cups` module (`rules/service-rules.md` §4 *DTOs, Mappers, OpenAPI*):
 - `CupContestRowDto`: contest ref, sport, settled date, `weight`, `counts: CupContestCount`
   (`COUNTED`, `NO_RESULT`, `TOO_FEW_ENTRIES`, `NOT_FINAL`, `EXCLUDED`), and the winner.
 - Typed errors: `CUP_NOT_FOUND`, `CUP_CONTEST_NOT_IN_LEAGUE`, `CUP_CROWNED`, `CUP_HAS_UNFINISHED_CONTESTS`,
-  `CUP_LEAGUE_CUP_LOCKED` (deleting or rescoping the Poolmaster Cup), `CUP_SCOPE_INVALID`.
+  `CUP_SCOPE_INVALID`.
 - Read cost: one query per page over the league's settled standings for the season, the same
   shape as #837 section 5. If a league ever gets slow, the escape hatch is the same cache keyed
   by its latest `settledAt`.
@@ -222,7 +227,7 @@ new `cups` module (`rules/service-rules.md` §4 *DTOs, Mappers, OpenAPI*):
 
 | Page | Route | Content |
 |---|---|---|
-| Cups | `/league/:code/cups` | This season's cups as cards: name, leader, viewer's place, contests counted of total. A "Start a Golf Cup" suggestion per sport the league plays without a cup |
+| Cups | `/league/:code/cups` | This season's cups as cards: name, leader, viewer's place, contests counted of total. Sports league cups show once they have two counted contests |
 | Cup | `/league/:code/cups/:cupId` | The leaderboard (place, movement, squad, points, wins, contests), a points-race chart of the top five across the season, and the counted contests with their weights and winners |
 | Squad in a cup | sheet from a leaderboard row | That squad's points contest by contest |
 | League home | existing | A small Poolmaster Cup card: top three and the viewer's place |
@@ -241,7 +246,7 @@ Questions:
   against the standings before the most recently settled counted contest. It's what makes a
   points race fun to check, and it needs only a second read without that contest.
 - **Q6.3** Name the golf cup after a real one? Recommendation: no. "FedEx Cup" is a trademark;
-  the defaults are "Golf Cup", "NFL Cup" and so on, which the commissioner can rename.
+  the defaults are "PGA Tour Cup", "NFL Cup" and so on, which the commissioner can rename.
 
 ## 7. Slices
 
@@ -253,11 +258,11 @@ guard).
 1. **Model and read API.** `Cup`, `CupContestSetting`, `CupStanding` and their enums; migration
    creating each (league, season)'s Poolmaster Cup; automatic league cup on contest create;
    `cup-points.ts` with every scale, ties, weights and the minimum field; `GET /cups` and
-   `GET /cups/:cupId` and the squad breakdown. Depends on Q2.1, Q3.1, Q3.3, Q3.4.
+   `GET /cups/:cupId` and the squad breakdown. Depends on Q3.1, Q3.3, Q3.4.
 2. **Cup pages.** The Cups menu item, Cups page, Cup leaderboard with movement and the
    points-race chart, the squad sheet, the league home card. Depends on Q6.1, Q6.2.
-3. **Commissioner cup tools.** Create, edit and delete cups; include, exclude and weight
-   contests; points table preview; sport cup suggestions. Depends on Q2.2, Q3.2.
+3. **Commissioner cup settings.** Rename a cup, pick its points table with a preview, drop or
+   weight a contest. Depends on Q3.2.
 4. **Crowning, trophies and past cups.** `POST .../crown`, frozen `CupStanding`, trophies on
    team pages, `GET /cups/past` and the History Cups tab (with #837 slices 2 and 5), the
    `seasonYear` freeze. Depends on Q4.1, Q4.2.
