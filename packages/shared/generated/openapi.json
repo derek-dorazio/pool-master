@@ -5558,6 +5558,11 @@
                 "minimum": 1,
                 "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
               },
+              "tiersUsed": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+              },
               "maxEntriesPerSquad": {
                 "type": [
                   "integer",
@@ -5719,7 +5724,7 @@
               "countedScores"
             ],
             "additionalProperties": false,
-            "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+            "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
           },
           {
             "type": "object",
@@ -7078,6 +7083,11 @@
                     "minimum": 1,
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
+                  "tiersUsed": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                  },
                   "id": {
                     "type": "string",
                     "description": "Contest-configuration identifier."
@@ -7103,7 +7113,7 @@
                   "contestId"
                 ],
                 "additionalProperties": false,
-                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
               },
               {
                 "type": "object",
@@ -7432,7 +7442,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Sport this template applies to."
           },
@@ -7526,6 +7537,11 @@
                     "type": "integer",
                     "minimum": 1,
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                  },
+                  "tiersUsed": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
                   },
                   "maxEntriesPerSquad": {
                     "type": [
@@ -7688,7 +7704,7 @@
                   "countedScores"
                 ],
                 "additionalProperties": false,
-                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
               },
               {
                 "type": "object",
@@ -8922,6 +8938,11 @@
                         "minimum": 1,
                         "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                       },
+                      "tiersUsed": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                      },
                       "id": {
                         "type": "string",
                         "description": "Contest-configuration identifier."
@@ -8947,7 +8968,7 @@
                       "contestId"
                     ],
                     "additionalProperties": false,
-                    "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                    "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
                   },
                   {
                     "type": "object",
@@ -9278,7 +9299,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Only templates for this sport."
           },
@@ -9328,7 +9350,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ],
                   "description": "Sport this template applies to."
                 },
@@ -9422,6 +9445,11 @@
                           "type": "integer",
                           "minimum": 1,
                           "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                        },
+                        "tiersUsed": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
                         },
                         "maxEntriesPerSquad": {
                           "type": [
@@ -9584,7 +9612,7 @@
                         "countedScores"
                       ],
                       "additionalProperties": false,
-                      "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                      "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
                     },
                     {
                       "type": "object",
@@ -10740,6 +10768,11 @@
                     "minimum": 1,
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
+                  "tiersUsed": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -10901,7 +10934,7 @@
                   "countedScores"
                 ],
                 "additionalProperties": false,
-                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
               },
               {
                 "type": "object",
@@ -12007,7 +12040,8 @@
                   "AMERICAN_FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
-                  "SOCCER"
+                  "SOCCER",
+                  "TENNIS"
                 ],
                 "description": "Sport this template applies to."
               },
@@ -12101,6 +12135,11 @@
                         "type": "integer",
                         "minimum": 1,
                         "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
+                      },
+                      "tiersUsed": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
                       },
                       "maxEntriesPerSquad": {
                         "type": [
@@ -12263,7 +12302,7 @@
                       "countedScores"
                     ],
                     "additionalProperties": false,
-                    "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                    "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
                   },
                   {
                     "type": "object",
@@ -14250,7 +14289,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "The sport."
           },
@@ -14318,7 +14358,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ],
                   "description": "The sport."
                 },
@@ -14494,7 +14535,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Only sport leagues of this sport."
           },
@@ -14763,7 +14805,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "The sport the new sport league belongs to."
           },
@@ -15665,7 +15708,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Sport the event belongs to."
           },
@@ -15946,7 +15990,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Only events of this sport."
           },
@@ -16012,7 +16057,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -16318,7 +16364,8 @@
                   "AMERICAN_FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
-                  "SOCCER"
+                  "SOCCER",
+                  "TENNIS"
                 ],
                 "description": "Sport the event belongs to."
               },
@@ -16769,7 +16816,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -20065,6 +20113,11 @@
                     "minimum": 1,
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
+                  "tiersUsed": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -20226,7 +20279,7 @@
                   "countedScores"
                 ],
                 "additionalProperties": false,
-                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
               },
               {
                 "type": "object",
@@ -21613,6 +21666,7 @@
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
+              "TENNIS",
               null
             ]
           },
@@ -22438,7 +22492,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
           },
@@ -23395,6 +23450,7 @@
                   "HOCKEY",
                   "BASEBALL",
                   "SOCCER",
+                  "TENNIS",
                   null
                 ]
               },
@@ -23562,6 +23618,7 @@
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
+                    "TENNIS",
                     null
                   ]
                 },
@@ -26220,7 +26277,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "minItems": 1
@@ -26324,7 +26382,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "minItems": 1,
@@ -26338,7 +26397,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Sports that scheduled ingestion is allowed to run automatically."
           },
@@ -26448,7 +26508,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ]
                   },
                   "minItems": 1
@@ -26651,7 +26712,8 @@
                         "AMERICAN_FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
-                        "SOCCER"
+                        "SOCCER",
+                        "TENNIS"
                       ]
                     },
                     "minItems": 1,
@@ -26665,7 +26727,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -26775,7 +26838,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1
@@ -26891,7 +26955,8 @@
                         "AMERICAN_FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
-                        "SOCCER"
+                        "SOCCER",
+                        "TENNIS"
                       ]
                     },
                     "minItems": 1,
@@ -26905,7 +26970,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -27015,7 +27081,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1
@@ -27594,7 +27661,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1,
@@ -27608,7 +27676,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -27718,7 +27787,8 @@
                                     "AMERICAN_FOOTBALL",
                                     "HOCKEY",
                                     "BASEBALL",
-                                    "SOCCER"
+                                    "SOCCER",
+                                    "TENNIS"
                                   ]
                                 },
                                 "minItems": 1
@@ -27834,7 +27904,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1,
@@ -27848,7 +27919,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -27958,7 +28030,8 @@
                                     "AMERICAN_FOOTBALL",
                                     "HOCKEY",
                                     "BASEBALL",
-                                    "SOCCER"
+                                    "SOCCER",
+                                    "TENNIS"
                                   ]
                                 },
                                 "minItems": 1
@@ -28494,7 +28567,8 @@
                         "AMERICAN_FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
-                        "SOCCER"
+                        "SOCCER",
+                        "TENNIS"
                       ]
                     },
                     "minItems": 1,
@@ -28606,7 +28680,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1
@@ -28961,7 +29036,8 @@
                         "AMERICAN_FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
-                        "SOCCER"
+                        "SOCCER",
+                        "TENNIS"
                       ]
                     },
                     "minItems": 1,
@@ -28975,7 +29051,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -29085,7 +29162,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1
@@ -29201,7 +29279,8 @@
                         "AMERICAN_FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
-                        "SOCCER"
+                        "SOCCER",
+                        "TENNIS"
                       ]
                     },
                     "minItems": 1,
@@ -29215,7 +29294,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -29325,7 +29405,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1
@@ -29862,7 +29943,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1,
@@ -29876,7 +29958,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -29986,7 +30069,8 @@
                                     "AMERICAN_FOOTBALL",
                                     "HOCKEY",
                                     "BASEBALL",
-                                    "SOCCER"
+                                    "SOCCER",
+                                    "TENNIS"
                                   ]
                                 },
                                 "minItems": 1
@@ -30102,7 +30186,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1,
@@ -30116,7 +30201,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -30226,7 +30312,8 @@
                                     "AMERICAN_FOOTBALL",
                                     "HOCKEY",
                                     "BASEBALL",
-                                    "SOCCER"
+                                    "SOCCER",
+                                    "TENNIS"
                                   ]
                                 },
                                 "minItems": 1
@@ -33152,7 +33239,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "description": "Sports the provider covers that ingestion is scheduled for."
@@ -33235,7 +33323,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ]
                   },
                   "description": "Sports the provider covers that ingestion is scheduled for."
@@ -33292,7 +33381,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           },
           "eventId": {
@@ -33375,7 +33465,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ]
                   },
                   "eventId": {
@@ -33538,7 +33629,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ]
                   },
                   "eventExternalId": {
@@ -33830,7 +33922,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           },
           "status": {
@@ -33883,7 +33976,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ]
                 },
                 "eventId": {
@@ -33966,7 +34060,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ]
                         },
                         "eventId": {
@@ -34129,7 +34224,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ]
                         },
                         "eventExternalId": {
@@ -34426,7 +34522,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           },
           "eventId": {
@@ -34472,7 +34569,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ]
                 },
                 "eventId": {
@@ -34555,7 +34653,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ]
                         },
                         "eventId": {
@@ -34718,7 +34817,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ]
                         },
                         "eventExternalId": {
@@ -35033,7 +35133,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           }
         },
@@ -35081,7 +35182,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ]
                 }
               },
@@ -35125,7 +35227,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           },
           "name": {
@@ -35217,7 +35320,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           },
           "sportLeagueId": {
@@ -35271,7 +35375,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ]
                 },
                 "name": {
@@ -40649,7 +40754,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "query",
@@ -40828,7 +40934,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "query",
@@ -44733,7 +44840,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "query",
@@ -46091,7 +46199,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "path",
@@ -46165,7 +46274,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "path",
@@ -46331,7 +46441,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "query",
@@ -46440,7 +46551,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "path",
@@ -46584,7 +46696,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "query",

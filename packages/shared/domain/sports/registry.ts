@@ -9,6 +9,7 @@ import { hockeySportDefinition } from './hockey';
 import { horseRacingSportDefinition } from './horse-racing';
 import { runningSportDefinition } from './running';
 import { soccerSportDefinition } from './soccer';
+import { tennisSportDefinition } from './tennis';
 import type { SportDefinition } from './sport-definition';
 
 /**
@@ -27,6 +28,7 @@ export const SPORT_DEFINITIONS: Readonly<Record<Sport, SportDefinition>> = {
   [Sport.HOCKEY]: hockeySportDefinition,
   [Sport.BASEBALL]: baseballSportDefinition,
   [Sport.SOCCER]: soccerSportDefinition,
+  [Sport.TENNIS]: tennisSportDefinition,
 };
 
 /** Every supported sport, in enum order. */

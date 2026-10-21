@@ -453,6 +453,53 @@ describe('soccer', () => {
   });
 });
 
+describe('tennis', () => {
+  const tennis = getSportDefinition(Sport.TENNIS);
+
+  it('is an individual sport played as a knockout draw, scored head to head by knockout round points, with no periods and no shoot-out', () => {
+    expect(tennis.name).toBe('Tennis');
+    expect(tennis.participantType).toBe('INDIVIDUAL');
+    expect(tennis.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
+    expect(tennis.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
+    expect(tennis.matchPeriodLayout).toBeUndefined();
+    expect(tennis.shootout).toBeNull();
+    expect(sportPlaysMatches(Sport.TENNIS)).toBe(true);
+  });
+
+  it('gives a new draw seven rounds and six tiers of eight, so the first four tiers are the 32 seeds', () => {
+    expect(tennis.defaultRounds).toBe(7);
+    expect(tennis.defaultTierLayout).toEqual({ tierCount: 6, tierSize: 8 });
+  });
+
+  it('labels a Slam\'s seven rounds First round through Final, a six-round draw with no Fourth round, and a stored round past the count Round N', () => {
+    expect([1, 2, 3, 4, 5, 6, 7].map((roundNumber) => tennis.roundLabel(roundNumber, 7))).toEqual([
+      'First round', 'Second round', 'Third round', 'Fourth round', 'Quarterfinals', 'Semifinals', 'Final',
+    ]);
+    expect([1, 2, 3, 4, 5, 6].map((roundNumber) => tennis.roundLabel(roundNumber, 6))).toEqual([
+      'First round', 'Second round', 'Third round', 'Quarterfinals', 'Semifinals', 'Final',
+    ]);
+    expect(tennis.roundLabel(8, 7)).toBe('Round 8');
+    expect(tennis.roundLabel(4, 3)).toBe('Round 4');
+  });
+
+  it('offers the three roster selection types, bracket and survivor, and no pick\'em or squares', () => {
+    expect(tennis.selectionTypes).toEqual([
+      SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR,
+    ]);
+    expect(tennis.pickEm).toBeUndefined();
+  });
+
+  it('calls a competitor a player, the event a draw, its sport league a tour, a knocked-out player Out, and a draw place filled later a qualifier place', () => {
+    expect(tennis.vocabulary.participant).toEqual({ one: 'player', many: 'players' });
+    expect(tennis.vocabulary.event).toEqual({ one: 'draw', many: 'draws' });
+    expect(tennis.vocabulary.sportLeague).toEqual({ one: 'tour', many: 'tours' });
+    expect(tennis.vocabulary.match).toEqual({ one: 'match', many: 'matches' });
+    expect(tennis.vocabulary.eliminated).toBe('Out');
+    expect(tennis.vocabulary.eventStart).toBe('first match');
+    expect(tennis.vocabulary.playInPlace).toBe('qualifier');
+  });
+});
+
 describe('sportPlaysMatches', () => {
   it('is true only for a sport whose tournament format is a knockout bracket', () => {
     for (const definition of definitions) {

@@ -15,4 +15,5 @@ export const SPORT_BLURBS: Record<Sport, string> = {
   HOCKEY: 'NHL, PWHL and college playoff brackets, survivor pools, and squares on the big games.',
   BASEBALL: 'MLB postseason brackets and survivor pools, from the Wild Card round to the World Series.',
   SOCCER: 'World Cup, Euros, Copa América and Champions League: brackets, sweepstakes, survivor, and squares on the final.',
+  TENNIS: 'The four Grand Slams, men\'s and women\'s draws: tiered and budget picks, full-draw brackets, sweepstakes and survivor.',
 };

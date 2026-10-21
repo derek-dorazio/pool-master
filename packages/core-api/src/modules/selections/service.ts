@@ -595,10 +595,9 @@ export class SelectionService {
       squadMemberships,
       // A configuration without typed settings takes no picks per tier: its roster is 0, and the
       // room refuses picks with SELECTION_CONFIG_INVALID rather than guessing a number.
-      tiers: buildSelectionTiers(
-        tierGroups,
-        configuration?.configJson?.selectionType === SelectionType.TIERED ? configuration.configJson.picksPerTier : 0,
-      ),
+      tiers: configuration?.configJson?.selectionType === SelectionType.TIERED
+        ? buildSelectionTiers(tierGroups, configuration.configJson.picksPerTier, configuration.configJson.tiersUsed)
+        : buildSelectionTiers(tierGroups, 0),
       // One rule for every pick change: see contests/entry-window.
       acceptsPicks: areEventPicksOpen(contest, sportEvent, now),
       picksRevealed: areEventPicksRevealed(contest, sportEvent, now),

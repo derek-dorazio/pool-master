@@ -2,7 +2,17 @@
  * A tiered contest's roster arithmetic (#479). The event owns the tiers; the contest owns how
  * many picks each tier takes. Every tier takes the same number, so the roster is never stored:
  * it is the event's tier count times the contest's picks per tier, whatever the tiers are now.
+ * A contest may pick from only the event's first tiers (`tiersUsed`, #704): its roster counts
+ * those tiers alone.
  */
+
+/**
+ * How many of the event's tiers a tiered contest picks from: its `tiersUsed`, or every tier when
+ * it sets none, and never more than the event has.
+ */
+export function getTiersInPlay(eventTierCount: number, tiersUsed: number | undefined): number {
+  return tiersUsed === undefined ? eventTierCount : Math.min(tiersUsed, eventTierCount);
+}
 
 /** How many golfers a full tiered entry holds. */
 export function getTieredRosterSize(tierCount: number, picksPerTier: number): number {

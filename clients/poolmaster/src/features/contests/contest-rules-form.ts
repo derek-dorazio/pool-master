@@ -7,6 +7,7 @@ import {
   SelectionType,
   getDefaultCountedScores,
   getTieredRosterSize,
+  getTiersInPlay,
   type SportNoun,
 } from '@poolmaster/shared/domain';
 import type { ContestConfigurationRequest } from '@poolmaster/shared/dto';
@@ -33,6 +34,8 @@ export type ContestRulesValues = {
   maxSquaresPerEntry: string;
   /** A bracket's starting round: "1" for the full bracket, a later round for a second chance. */
   startsAtRound: string;
+  /** How many of the event's tiers a tiered entry picks from, the first ones; empty for every tier. */
+  tiersUsed: string;
   unlimitedEntries: boolean;
 };
 
@@ -68,8 +71,17 @@ function parseTieredRules(values: ContestRulesValues, tierCount: number, partici
   if (picksPerTier === null) {
     return { configuration: null, error: 'Picks per tier must be a positive whole number.' };
   }
+  const tiersUsed = values.tiersUsed.trim() === '' ? undefined : parseWholeNumber(values.tiersUsed);
+  if (tiersUsed === null || (tiersUsed !== undefined && tierCount > 0 && tiersUsed > tierCount)) {
+    return {
+      configuration: null,
+      error: tierCount > 0
+        ? `Tiers to pick from must be between 1 and the event's ${tierCount}, or left empty for every tier.`
+        : 'Tiers to pick from must be a positive whole number, or left empty for every tier.',
+    };
+  }
 
-  const rosterSize = getTieredRosterSize(tierCount, picksPerTier);
+  const rosterSize = getTieredRosterSize(getTiersInPlay(tierCount, tiersUsed), picksPerTier);
   const countedScores = parseWholeNumber(values.countedScores);
   if (countedScores === null || (tierCount > 0 && countedScores > rosterSize)) {
     return {
@@ -79,7 +91,7 @@ function parseTieredRules(values: ContestRulesValues, tierCount: number, partici
         : 'Scores that count must be a positive whole number.',
     };
   }
-  return withEntryLimit(values, { selectionType: SelectionType.TIERED, picksPerTier, countedScores });
+  return withEntryLimit(values, { selectionType: SelectionType.TIERED, picksPerTier, countedScores, ...(tiersUsed === undefined ? {} : { tiersUsed }) });
 }
 
 /** The budget rules (#93). The salary cap is the event's, so it is not part of them. */
@@ -198,6 +210,7 @@ export function toContestRulesValues(
     rosterSize: current.rosterSize,
     maxSquaresPerEntry: current.maxSquaresPerEntry,
     startsAtRound: current.startsAtRound,
+    tiersUsed: current.tiersUsed,
     unlimitedEntries: current.unlimitedEntries,
   };
   const entryLimit = {
@@ -206,7 +219,7 @@ export function toContestRulesValues(
   };
   switch (configuration.selectionType) {
     case SelectionType.TIERED:
-      return { ...rules, ...entryLimit, countedScores: String(configuration.countedScores), picksPerTier: String(configuration.picksPerTier) };
+      return { ...rules, ...entryLimit, countedScores: String(configuration.countedScores), picksPerTier: String(configuration.picksPerTier), tiersUsed: configuration.tiersUsed === undefined ? '' : String(configuration.tiersUsed) };
     case SelectionType.BUDGET_PICK:
       return { ...rules, ...entryLimit, countedScores: String(configuration.countedScores), rosterSize: String(configuration.rosterSize) };
     case SelectionType.RANDOM_DRAW:
@@ -235,6 +248,8 @@ export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
   maxSquaresPerEntry: '10',
   // A bracket starts as the full bracket.
   startsAtRound: '1',
+  // A tiered entry picks from every tier.
+  tiersUsed: '',
   unlimitedEntries: false,
 };
 
@@ -242,7 +257,14 @@ export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
  * "Scores that count" follows picks per tier: a new picks-per-tier value resets it to the default
  * for the event's tiers. Returns null when there is nothing to reset to.
  */
+/** The tiers a contest picks from, reading the form's tiers-used field; blank or unreadable means every tier. */
+export function tiersInPlayFor(tiersUsed: string, tierCount: number) {
+  const parsed = tiersUsed.trim() === '' ? null : parseWholeNumber(tiersUsed);
+  return getTiersInPlay(tierCount, parsed ?? undefined);
+}
+
 export function defaultCountedScoresFor(picksPerTier: string, tierCount: number) {
+  // tierCount is the tiers in play: a contest picking from the first tiers only counts those.
   const parsed = parseWholeNumber(picksPerTier);
   return tierCount > 0 && parsed !== null ? String(getDefaultCountedScores(tierCount, parsed)) : null;
 }

@@ -122,7 +122,7 @@ describe('Survivor contest leaderboard', () => {
     await screen.findByTestId('survivor-leaderboard-table');
     expect(screen.getByTestId('survivor-leaderboard-week-week-1-entry-1')).toHaveTextContent('ChiefsSurvived');
     expect(screen.getByTestId('survivor-leaderboard-week-week-2-entry-2')).toHaveTextContent('BearsOut');
-    expect(screen.getByTestId('survivor-leaderboard-week-week-2-entry-1')).toHaveTextContent('Shown at kickoffPending');
+    expect(screen.getByTestId('survivor-leaderboard-week-week-2-entry-1')).toHaveTextContent('Hidden until it startsPending');
   });
 
   it('heads a playoff survivor pool by its round names and says the round an entry went out in', async () => {

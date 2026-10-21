@@ -15,11 +15,17 @@ const logger = getLogger().child({ feature: 'root-admin-play-in' });
 /** The select's value before an admin picks a row or a team. */
 const NONE = '';
 
+/** What the sport calls a field place filled after the draw is made (#704): "qualifier" in tennis. */
+function playInWord(vocabulary: SportVocabulary): string {
+  return vocabulary.playInPlace ?? 'play-in';
+}
+
 /**
  * Play-in places on the bracket tab (#709, #700). Before release an admin marks the field rows
  * that stand for a play-in pairing ("Texas / Xavier"); once released, each marked place takes its
  * winner, chosen from the sport's active teams not already in the event. Only a marked row is
- * offered, and a filled place is a play-in place no more.
+ * offered, and a filled place is a play-in place no more. The copy reads the sport's own word for
+ * such a place: tennis's qualifier places (#704).
  */
 export function PlayInPlacesCard({
   event,
@@ -33,6 +39,7 @@ export function PlayInPlacesCard({
   const released = event.status !== SportEventStatus.DRAFT;
   const places = field.filter((entry) => entry.isPlayInPlace);
   const team = vocabulary.participant;
+  const word = playInWord(vocabulary);
 
   if (released && places.length === 0) {
     return null;
@@ -40,14 +47,14 @@ export function PlayInPlacesCard({
 
   return (
     <Tile data-testid="root-admin-play-in-places">
-      <h3 className="text-base font-semibold text-foreground">Play-in places</h3>
+      <h3 className="text-base font-semibold text-foreground">{`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         {released
-          ? `Name the ${team.one} that won each play-in. It takes over the place's seed, picks and bracket spot.`
-          : `Mark each place that stands for a play-in pairing. Its winner is named after the ${vocabulary.event.one} is released.`}
+          ? `Name the ${team.one} in each ${word} place. It takes over the place's seed, picks and bracket spot.`
+          : `Mark each place a ${word} fills later. Its ${team.one} is named after the ${vocabulary.event.one} is released.`}
       </p>
       {places.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground" data-testid="root-admin-play-in-empty">No play-in places.</p>
+        <p className="mt-3 text-sm text-muted-foreground" data-testid="root-admin-play-in-empty">{`No ${word} places.`}</p>
       ) : (
         <ul className="mt-3 space-y-3">
           {places.map((place) => (
@@ -95,7 +102,7 @@ function PlayInUnmarkButton({ eventId, row, vocabulary }: { eventId: string; row
         size="sm"
         variant="ghost"
       >
-        Remove play-in mark
+        {`Remove ${playInWord(vocabulary)} mark`}
       </Button>
       {mutation.isError ? (
         <p className="text-sm text-destructive" role="alert">
@@ -115,7 +122,7 @@ function PlayInMarker({ eventId, field, vocabulary }: { eventId: string; field: 
   return (
     <div className="mt-4 flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-        Mark a play-in place
+        {`Mark a ${playInWord(vocabulary)} place`}
         <Select data-testid="root-admin-play-in-mark-select" onChange={(change) => setRowId(change.target.value)} value={rowId}>
           <option value={NONE}>{`Choose a ${vocabulary.participant.one}`}</option>
           {candidates.map((entry) => (
@@ -130,7 +137,7 @@ function PlayInMarker({ eventId, field, vocabulary }: { eventId: string; field: 
         size="sm"
         variant="secondary"
       >
-        Mark as play-in place
+        {`Mark as ${playInWord(vocabulary)} place`}
       </Button>
       {mutation.isError ? (
         <p className="w-full text-sm text-destructive" role="alert">
@@ -195,7 +202,7 @@ function PlayInWinnerPicker({
   return (
     <>
       <Select
-        aria-label={`Play-in winner for ${place.participant.name}`}
+        aria-label={`Who fills ${place.participant.name}'s ${playInWord(vocabulary)} place`}
         data-testid={`root-admin-play-in-winner-select-${place.id}`}
         disabled={!teamsQuery.data}
         onChange={(change) => setParticipantId(change.target.value)}
