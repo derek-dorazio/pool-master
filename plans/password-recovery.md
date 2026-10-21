@@ -3,8 +3,12 @@
 **Tracking issue:** #843
 
 Written 2026-10-21 for Derek's ask: a person who forgets their password can get back in by
-email, without a root admin. Questions sit under the section they belong to, each with a
-recommendation; none blocks slice 1.
+email, without a root admin. Derek answered every question on 2026-10-21; each now reads
+**Decided** under its section.
+
+Tickets: epic #843; slice 1 #847 (API, tokens, reset email); slice 2 #848 (screens and the
+password changed email); #849 (root admin sends a reset link). Hashing refresh tokens is a
+separate ticket, #850, outside this epic.
 
 Two other design threads cover what this plan leans on and does not repeat: the **SES email
 delivery** design (how real mail leaves the system, templates, tokens and merge data) and the
@@ -16,18 +20,19 @@ row in that catalog; this plan owns its behavior.
 ## TL;DR
 
 - **What exists today.** A signed-in user can change their own password, which needs the
-  current one (it keeps the caller's session and signs out the rest). A root admin can reset somebody else's password to a temporary one, which
-  signs that person out everywhere. There is **no** "Forgot password?" on sign in, no reset
+  current one (it keeps the caller's session and signs out the rest). A root admin can reset
+  somebody else's password to a temporary one, which signs that person out everywhere. There is **no** "Forgot password?" on sign in, no reset
   token, no reset email and no reset screen.
 - **What this adds.** "Forgot password?" on sign in, a page that asks for the email or
   username, an email with a one-time link, and a page that sets the new password. A reset
   signs the account out of every device.
 - **The link is the only authority.** A random 256-bit token, stored only as a SHA-256 hash,
-  usable once, expiring after 60 minutes. A new request cancels any earlier link.
+  usable once, expiring after 10 minutes. A new request cancels any earlier link.
 - **No account enumeration.** The request endpoint always answers the same thing, the same
   way, whether or not an account matches.
 - **Rate limited** per account (silently) and per client address (with a typed 429).
-- **Three slices**: API and email; screens; an optional "your password changed" notice.
+- **Two slices**: API and email; then screens plus a "your password was changed" email.
+  Then the root admin reset switches to sending this link.
 
 ---
 
@@ -38,8 +43,9 @@ row in that catalog; this plan owns its behavior.
 2. The person enters their **email or username** and taps **Send reset link**.
 3. The page always shows the same confirmation, whatever the answer was:
    *"Check your email. If an account matches, we've sent a link to reset your password. The
-   link works once and expires in 60 minutes."* with **Back to sign in**.
-4. If an account matches, it gets the reset email (section 4).
+   link works once and expires in 10 minutes."* with **Back to sign in**.
+4. If an account matches, it gets the reset email (section 4). If nothing matches, the server
+   logs a warning (with nothing identifying, see section 3) and does nothing else.
 5. The link opens `/reset-password` with the token. The page asks for **New password** and
    **Confirm new password** and has a **Set new password** button.
 6. On success: every session for that account is revoked, every other open reset link for it
@@ -52,16 +58,16 @@ Inactive accounts may reset, because an inactive account may still sign in (acce
 in `docs/DOMAIN-OPERATIONS.md`): reactivating it needs a session.
 
 **Q1.1 Email only, or email or username?** Sign in takes either, and someone who forgot a
-password may remember only one. *Recommendation:* accept either, with the field labelled
+password may remember only one. **Decided:** accept either, with the field labelled
 "Email or username", and always mail the account's email address. One lookup already does
-this (`findByIdentifier`).
+this (`findByIdentifier`). No match: `log.warn` and no other action.
 
-**Q1.2 Sign in automatically after the reset?** *Recommendation:* no. Send them to sign in.
+**Q1.2 Sign in automatically after the reset?** **Decided:** no. Send them to sign in.
 It proves the new password works, and a reset link forwarded to the wrong inbox does not
 also hand out a live session. It costs one extra screen.
 
 **Q1.3 Check the link before the form shows?** A check-on-load endpoint would tell someone
-the link is dead before they type a password. *Recommendation:* skip it for now. The set
+the link is dead before they type a password. **Decided:** skip it for now. The set
 password call already answers "link expired", and the page keeps what they typed so
 **Send a new link** is one tap. Easy to add later if it annoys people.
 
@@ -74,7 +80,7 @@ A new table, `password_reset_tokens`, owned by the auth module (like `refresh_to
 | `id` | uuid |
 | `user_id` | the account, indexed |
 | `token_hash` | SHA-256 of the token, hex, unique |
-| `expires_at` | issue time plus 60 minutes |
+| `expires_at` | issue time plus 10 minutes |
 | `used_at` | set once, when the password is set |
 | `cancelled_at` | set when a newer request or a password change replaces it |
 | `created_at` | also drives the per-account rate limit |
@@ -95,11 +101,12 @@ A new table, `password_reset_tokens`, owned by the auth module (like `refresh_to
   copy that. Hashing refresh tokens is out of scope here; noted as **Q2.1**.
 
 **Q2.1 Hash refresh tokens too?** They are stored as plain uuids, so a database leak is a set
-of live sessions. *Recommendation:* a separate small ticket, not this one; it touches login,
-refresh, logout and every session revoke.
+of live sessions. **Decided:** a separate ticket, #850, outside this epic; it touches login,
+refresh, logout and every session revoke. Low priority while QA holds only test users.
 
-**Q2.2 Link lifetime.** *Recommendation:* 60 minutes. Long enough for slow mail and a phone
-switch, short enough to limit a forwarded or leaked link.
+**Q2.2 Link lifetime.** **Decided:** 10 minutes. Short enough to limit a forwarded or leaked
+link. It means the reset email must leave at once: if the SES design's outbox queues mail,
+the reset email goes out immediately rather than waiting behind notification batches.
 
 ## 3. API
 
@@ -141,7 +148,7 @@ user with no session, and the token is its whole authority. It sits next to A6 (
 user or a root admin writes a user) as the one unauthenticated user write.
 
 **Logging** (`rules/service-rules.md` §11): `authService.passwordReset.requested` with
-`userId` when matched and nothing identifying when not, `.rateLimited`, `.confirmed`,
+`userId` when matched; at warn level and with nothing identifying when nothing matched, `.rateLimited`, `.confirmed`,
 `.linkInvalid`. Never the token, the link, the identifier typed, or the email body.
 
 ## 4. The email
@@ -169,7 +176,7 @@ layout as the invite emails. Data: `firstName`, `username`, `resetUrl`, `expires
   SES design's call; this template moves with whatever it decides.
 
 **Q4.1 Can a root admin switch this email off?** `EMAIL_CONFIG` lists every template with an
-on/off switch. Switching off the reset email silently breaks recovery. *Recommendation:* keep
+on/off switch. Switching off the reset email silently breaks recovery. **Decided:** keep
 `PASSWORD_RESET` out of the per-template switches (always on), but still obey the global
 "send email" switch, which is what keeps QA quiet today.
 
@@ -189,7 +196,7 @@ There is no shared rate limiter, and production runs two core-api tasks, so the 
   double, which is fine: the token's entropy, not the limiter, is what stops guessing.
 
 **Q5.1 Also send a "your password was changed" email?** It tells a person whose account was
-taken over that something happened. *Recommendation:* yes, as slice 3, after a reset and after
+taken over that something happened. **Decided:** yes, in slice 2, after a reset and after
 an own password change (not after an admin reset, which already involves a person). Subject
 *"Your Poolmaster password was changed"*, body says when, and *"If this wasn't you, reset your
 password now"* with a link to `/forgot-password`.
@@ -211,23 +218,25 @@ generated client and TanStack Query mutations.
 - **My account** keeps its existing change password section unchanged.
 
 **Q6.1 Should a root admin send a reset link instead of a temporary password?** The admin
-reset makes the admin read a password to someone. *Recommendation:* later, as its own ticket.
-Once this ships it is a small change: the admin action calls the same request service for
-that user.
+reset makes the admin read a password to someone. **Decided:** yes, this becomes the way an
+admin resets a password, deferred to its own ticket, #849. Once slices 1 and 2 ship it is a
+small change: the admin action calls the same request service for that user, and the
+temporary password path goes away.
 
 ## 7. Slices
 
-1. **API and email.** Migration for `password_reset_tokens`; the two routes, DTOs, error
+1. **API and email (#847).** Migration for `password_reset_tokens`; the two routes, DTOs, error
    codes `PASSWORD_RESET_LINK_INVALID` and `PASSWORD_RESET_RATE_LIMITED`; the `PASSWORD_RESET`
    template; limits; regenerated client; `docs/DOMAIN-OPERATIONS.md` and
    `docs/EMAIL-DELIVERY.md` updates. Tests: unit for token issue, hash, expiry and cancel;
    integration for the single-use race and session revoke; an API scenario that requests,
    reads the link from the test mail provider, confirms, and shows the old refresh token is
    dead and the new password signs in; the not-found path answers identically.
-2. **Screens.** The link on sign in, the two pages, MSW-backed component tests, and a
-   browser test of the whole flow.
-3. **Password changed notice** (if Q5.1 is yes): the `PASSWORD_CHANGED` template, sent from
+2. **Screens and password changed email (#848).** The link on sign in, the two pages,
+   MSW-backed component tests, and a browser test of the whole flow. Plus the
+   `PASSWORD_CHANGED` template, sent from
    the reset and own-change paths, after the password write commits; a send failure is logged
    and does not undo the change.
+3. **Root admin sends a reset link (#849).** After 1 and 2.
 
-Slices 1 and 2 could share one PR; the screens are small. Slice 3 is tiny and can ride with 2.
+Slices 1 and 2 could share one PR; the screens are small.
