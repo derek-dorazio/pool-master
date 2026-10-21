@@ -176,6 +176,12 @@ Questions:
   survivor runs out after 20 weeks. Last Man Standing games usually reset the used list once
   every team is used, or end the game by then. Recommendation: keep each team once for v1, and
   let commissioners pick a span of 20 weeks or fewer. Offer a reset as a follow-up if anyone asks.
+  **Decided 2026-10-21 (Derek), in slice 5:** a survivor contest setting, a yes/no, default
+  yes in every sport: "teams can be picked again once every team is used". Each entry has its
+  own cycle. Its used-teams list resets only once that entry has used every team, and in the
+  new cycle each team is again usable once, until the entry has used them all again. It only
+  matters when a contest has more weeks than the league has teams; an NFL contest never
+  reaches it.
 - **Q5.2** Survivor on group matchdays? Recommendation: no. Three matchdays with a third of
   results drawn makes a poor survivor. Pick'em only, as decided. **Decided 2026-10-21:
   deferred.**
