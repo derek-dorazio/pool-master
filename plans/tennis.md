@@ -166,7 +166,8 @@ Questions:
   ATP and WTA, split as basketball, hockey and golf are. A one-league exception for tennis would
   be the only one, and the 1000-level events belong to the ATP and WTA anyway. If a men's plus
   women's pool is wanted, it should come as a general "contest across leagues of one sport"
-  feature, which would also give a combined men's and women's March Madness pool.
+  feature, which would also give a combined men's and women's March Madness pool. **Decided 2026-10-21:
+  separate ATP and WTA leagues; no combined men's and women's pool.**
 - **Q2.2** How should the roster pool's tiers be cut? A draw has 32 seeds and 96 others.
   Recommendation: six tiers of eight by ranking, the last taking everyone else (1-8, 9-16,
   17-24, 25-32, 33-40, and 41 down); pick one from each, all six count. Ranking and seeding agree
