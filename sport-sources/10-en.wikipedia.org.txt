@@ -1,0 +1,2288 @@
+Source: https://en.wikipedia.org/wiki/2024_Copa_Am%C3%A9rica
+Final URL: https://en.wikipedia.org/wiki/2024_Copa_Am%C3%A9rica
+HTTP 200
+Fetched: 2026-10-21T02:13:46.461Z
+
+2024 Copa América - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Host selection
+2
+Venues
+Toggle Venues subsection
+2.1
+Team base camps
+3
+Teams
+Toggle Teams subsection
+3.1
+Qualification
+3.2
+Draw
+3.2.1
+Seeding
+3.2.2
+Draw
+4
+Squads
+5
+Match officials
+6
+Group stage
+Toggle Group stage subsection
+6.1
+Group A
+6.2
+Group B
+6.3
+Group C
+6.4
+Group D
+7
+Knockout stage
+Toggle Knockout stage subsection
+7.1
+Bracket
+7.2
+Quarter-finals
+7.3
+Semi-finals
+7.4
+Third place play-off
+7.5
+Final
+8
+Statistics
+Toggle Statistics subsection
+8.1
+Goalscorers
+8.2
+Discipline
+8.3
+Awards
+8.3.1
+Team of the Tournament
+9
+Marketing
+Toggle Marketing subsection
+9.1
+Sponsorships
+9.2
+Merchandise
+9.3
+Broadcasting rights
+10
+Symbols
+Toggle Symbols subsection
+10.1
+Mascot
+10.2
+Match ball
+10.3
+Music
+11
+Controversies and incidents
+Toggle Controversies and incidents subsection
+11.1
+Pitch quality
+11.2
+High ticket prices
+11.3
+Referee management
+11.4
+Uruguay vs Colombia match altercation
+11.5
+Argentina vs Colombia ticketless fans
+11.6
+CONMEBOL's sanctions and Shakira's halftime performance
+11.7
+Argentine celebrations
+12
+See also
+13
+Notes
+14
+References
+15
+External links
+Toggle the table of contents
+2024 Copa América
+44 languages
+العربية
+Беларуская (тарашкевіца)
+Български
+বাংলা
+Català
+کوردی
+Čeština
+Deutsch
+Ελληνικά
+Español
+Eesti
+فارسی
+Suomi
+Français
+עברית
+हिन्दी
+Hrvatski
+Magyar
+Bahasa Indonesia
+Íslenska
+Italiano
+日本語
+Қазақша
+한국어
+Lietuvių
+Latviešu
+Bahasa Melayu
+Nederlands
+Norsk bokmål
+Polski
+Português
+Română
+Русский
+Simple English
+Slovenčina
+Shqip
+Српски / srpski
+Svenska
+ไทย
+Türkçe
+Українська
+Tiếng Việt
+粵語
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikimedia Commons
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+48th edition of the Copa América
+''(Vibra o Continente)''<br />''[[English language|English]]: Rocking the Continent''"},"country":{"wt":"United States"},"dates":{"wt":"June 20 – July 14"},"num_teams":{"wt":"16"},"confederations":{"wt":"2"},"venues":{"wt":"14"},"cities":{"wt":"14"},"champion":{"wt":"ARG"},"count":{"wt":"16"},"second":{"wt":"COL"},"third":{"wt":"URU"},"fourth":{"wt":"CAN"},"matches":{"wt":"32"},"goals":{"wt":"70"},"attendance":{"wt":"{{#expr: <!--Group A-->+ 70564 + 43030 + 15625 + 81106 + 64972 + 24481 <!--Group B-->+ 29864 + 53763 + 24074 + 72773 + 62565 + 20240 <!--Group C-->+ 47873 + 33425 + 59145 + 48033 + 55460 + 16129 <!--Group D-->+ 67059 + 67158 + 27386 + 46939 + 70971 + 12765 <!--Quarter-finals-->+ 69456 + 51080 + 39740 + 55770 <!--Semi-finals-->+ 80102 + 70644 <!--Third place play-off-->+ 24386 <!--Final-->+ 65300}}"},"top_scorer":{"wt":"{{fbicon|ARG}} [[Lautaro Martínez]]<br />(5 goals)"},"player":{"wt":"{{fbicon|COL}} [[James Rodríguez]]"},"goalkeeper":{"wt":"{{fbicon|ARG}} [[Emiliano Martínez]]"},"fair_play":{"wt":"{{fb|COL}}"},"prevseason":{"wt":"[[2021 Copa América|2021]]"},"nextseason":{"wt":"''[[2028 Copa América|2028]]''"}},"i":0}}]}'> 2024 Copa América CONMEBOL Copa América USA 2024
+Vibra el Continente
+(Vibra o Continente)
+English : Rocking the Continent
+Tournament details
+Host country United States
+Dates June 20 – July 14
+Teams 16 (from 2 confederations)
+Venues 14 (in 14 host cities)
+Final positions
+Champions Argentina (16th title)
+Runners-up Colombia
+Third place Uruguay
+Fourth place Canada
+Tournament statistics
+Matches played 32
+Goals scored 70 (2.19 per match)
+Attendance 1,571,878 (49,121 per match)
+Top scorer(s) Lautaro Martínez
+(5 goals)
+Best player James Rodríguez
+Best goalkeeper Emiliano Martínez
+Fair play award Colombia
+← 2021
+2028 →
+International football competition
+The 2024 Copa América was the 48th edition of the Copa América , the quadrennial international men's soccer championship organized by South America's football ruling body CONMEBOL . [ 1 ] The tournament was held in the United States from June 20 to July 14, 2024, and was co-organized by CONCACAF . [ 2 ]
+This was the second time that the United States hosted the tournament, having hosted the Copa América Centenario in 2016. Argentina was the defending champion, [ 3 ] and won a record sixteenth title after defeating Colombia 1–0 after extra time in the final , [ 4 ] [ 5 ] which was played on July 14, 2024, at Hard Rock Stadium in Miami Gardens, Florida . [ 6 ]
+Host selection
+[ edit ]
+The 2024 Copa América had been expected to be hosted by Ecuador because of CONMEBOL 's host rotation order. However, it was held in the United States because [ 7 ] CONMEBOL president Alejandro Domínguez said Ecuador had been nominated but not yet chosen to organize the edition. In November 2022, the country declined to host the tournament. [ 8 ] Peru and the United States had both expressed interest in organizing the tournament. [ 1 ] [ 9 ]
+On January 27, 2023, it was announced that, as part of CONCACAF and CONMEBOL's new strategic partnership, the United States would host the tournament with six CONCACAF guest teams qualifying through the 2023–24 CONCACAF Nations League . [ 2 ] The tournament also acted as a prelude to the 2026 FIFA World Cup , of which the United States would also be a joint host along with Canada and Mexico. [ 10 ] [ 11 ]
+Venues
+[ edit ]
+All of the stadiums were existing venues. The opening match was held at Mercedes-Benz Stadium in Atlanta , Georgia, while the final was held at Hard Rock Stadium in Miami Gardens, Florida . Both venues were announced on November 20, 2023. [ 12 ] All other stadiums were selected and announced on December 4, 2023. [ 13 ]
+List of host cities and stadiums
+Arlington, Texas
+( Dallas/Fort Worth Area )
+Atlanta, Georgia
+Austin, Texas
+AT&T Stadium
+Mercedes-Benz Stadium
+Q2 Stadium
+Capacity: 80,000
+Capacity: 71,000
+Capacity: 20,730
+Charlotte, North Carolina
+East Rutherford, New Jersey
+( New York City Area )
+Houston, Texas
+Bank of America Stadium
+MetLife Stadium
+NRG Stadium
+Capacity: 74,860
+Capacity: 82,560
+Capacity: 72,220
+Inglewood, California
+( Los Angeles Area )
+Santa Clara, California
+( San Francisco Bay Area )
+Glendale, Arizona
+( Phoenix Area )
+SoFi Stadium
+Levi's Stadium
+State Farm Stadium
+Capacity: 70,240
+Capacity: 68,500
+Capacity: 63,400
+Paradise, Nevada
+( Las Vegas Area )
+Kansas City, Missouri
+Kansas City, Kansas
+Allegiant Stadium
+Arrowhead Stadium
+Children's Mercy Park
+Capacity: 61,000
+Capacity: 76,410
+Capacity: 18,460
+Miami Gardens, Florida
+( Miami Area )
+Orlando, Florida
+Hard Rock Stadium
+Inter&Co Stadium
+Capacity: 64,760
+Capacity: 25,500
+{{col-begin}}{{Col-3}}{{Ubl\n | {{#invoke:overlay|icon|1|blue}} [[Arlington, TX]]\n | {{#invoke:overlay|icon|2|blue}} [[Atlanta, GA]]\n | {{#invoke:overlay|icon|3|blue}} [[Austin, TX]]\n | {{#invoke:overlay|icon|4|blue}} [[Charlotte, NC]]\n | {{#invoke:overlay|icon|5|blue}} [[East Rutherford, NJ]]\n | {{#invoke:overlay|icon|6|blue}} [[Glendale, AZ]]\n | {{#invoke:overlay|icon|7|blue}} [[Houston, TX]]\n | {{#invoke:overlay|icon|8|blue}} [[Inglewood, CA]]\n | {{#invoke:overlay|icon|9|blue}} [[Kansas City, KS]]\n | {{#invoke:overlay|icon|10|blue}} [[Kansas City, MO]]\n | {{#invoke:overlay|icon|11|blue}} [[Paradise, NV]]\n | {{#invoke:overlay|icon|12|blue}} [[Miami Gardens, FL]]\n | {{#invoke:overlay|icon|13|blue}} [[Orlando, FL]]\n | {{#invoke:overlay|icon|14|blue}} [[Santa Clara, CA]]\n }}{{col-end}}</div>"},"mark-coord1":{"wt":"{{Coord|32.747778| -97.092778}}"},"shape-color1":{"wt":"blue"},"mark-title1":{"wt":"[[Arlington, TX]]"},"mark-description1":{"wt":"[[AT&T Stadium]]"},"mark-coord2":{"wt":"{{Coord|33.75541|-84.40085}}"},"shape-color2":{"wt":"blue"},"mark-title2":{"wt":"[[Atlanta, GA]]"},"mark-description2":{"wt":"[[Mercedes-Benz Stadium]]"},"mark-coord3":{"wt":"{{Coord|30.3877| -97.7195}}"},"shape-color3":{"wt":"blue"},"mark-title3":{"wt":"[[Austin, TX]]"},"mark-description3":{"wt":"[[Q2 Stadium]]"},"mark-coord4":{"wt":"{{Coord|35.225833| -80.852778}}"},"shape-color4":{"wt":"blue"},"mark-title4":{"wt":"[[Charlotte, NC]]"},"mark-description4":{"wt":"[[Bank of America Stadium]]"},"mark-coord5":{"wt":"{{Coord|40.813528| -74.074361}}"},"shape-color5":{"wt":"blue"},"mark-title5":{"wt":"[[East Rutherford, NJ]]"},"mark-description5":{"wt":"[[MetLife Stadium]]"},"mark-coord6":{"wt":"{{Coord|33.528| -112.263}}"},"shape-color6":{"wt":"blue"},"mark-title6":{"wt":"[[Glendale, AZ]]"},"mark-description6":{"wt":"[[State Farm Stadium]]"},"mark-coord7":{"wt":"{{Coord|29.684722|-95.410833}}"},"shape-color7":{"wt":"blue"},"mark-title7":{"wt":"[[Houston, TX]]"},"mark-description7":{"wt":"[[NRG Stadium]]"},"mark-coord8":{"wt":"{{Coord|33.9535| -118.3389}}"},"shape-color8":{"wt":"blue"},"mark-title8":{"wt":"[[Inglewood, CA]]"},"mark-description8":{"wt":"[[SoFi Stadium]]"},"mark-coord9":{"wt":"{{Coord|39.12159560307439|-94.82317795371489}}"},"shape-color9":{"wt":"blue"},"mark-title9":{"wt":"[[Kansas City, KS]]"},"mark-description9":{"wt":"[[Children's Mercy Park]]"},"mark-coord10":{"wt":"{{Coord|39.0489| -94.4839}}"},"shape-color10":{"wt":"blue"},"mark-title10":{"wt":"[[Kansas City, MO]]"},"mark-description10":{"wt":"[[Arrowhead Stadium]]"},"mark-coord11":{"wt":"{{Coord|36.0907| -115.1833}}"},"shape-color11":{"wt":"blue"},"mark-title11":{"wt":"[[Paradise, NV]]"},"mark-description11":{"wt":"[[Allegiant Stadium]]"},"mark-coord12":{"wt":"{{Coord|25.95795|-80.23885}}"},"shape-color12":{"wt":"blue"},"mark-title12":{"wt":"[[Miami Gardens, FL]]"},"mark-description12":{"wt":"[[Hard Rock Stadium]]"},"mark-coord13":{"wt":"{{Coord|28.5411| -81.3893}}"},"shape-color13":{"wt":"blue"},"mark-title13":{"wt":"[[Orlando, FL]]"},"mark-description13":{"wt":"[[Inter&Co Stadium]]"},"mark-coord14":{"wt":"{{Coord|37.403| -121.97}}"},"shape-color14":{"wt":"blue"},"mark-title14":{"wt":"[[Santa Clara, CA]]"},"mark-description14":{"wt":"[[Levi's Stadium]]"}},"i":0}}]}'>
+900km
+559miles
+14
+13
+12
+11
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+&nbsp;&nbsp;&nbsp;</div>","zoom":"4"},"body":{"extsrc":"[ { \"type\": \"FeatureCollection\", \"features\": [ { \"type\": \"Feature\", \"properties\": { \"title\": \"1 <br>[[Arlington, TX]]<br>\", \"description\": \"[[AT&T Stadium]] ([https://geohack.toolforge.org/geohack.php?params=32.74778;-97.09278_dim:2000 32.74778,-97.09278])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-97.09278,32.74778] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"2 <br>[[Atlanta, GA]]<br>\", \"description\": \"[[Mercedes-Benz Stadium]] ([https://geohack.toolforge.org/geohack.php?params=33.75541;-84.40085_dim:2000 33.75541,-84.40085])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-84.40085,33.75541] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"3 <br>[[Austin, TX]]<br>\", \"description\": \"[[Q2 Stadium]] ([https://geohack.toolforge.org/geohack.php?params=30.3877;-97.7195_dim:2000 30.3877,-97.7195])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-97.7195,30.3877] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"4 <br>[[Charlotte, NC]]<br>\", \"description\": \"[[Bank of America Stadium]] ([https://geohack.toolforge.org/geohack.php?params=35.22583;-80.85278_dim:2000 35.22583,-80.85278])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-80.85278,35.22583] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"5 <br>[[East Rutherford, NJ]]<br>\", \"description\": \"[[MetLife Stadium]] ([https://geohack.toolforge.org/geohack.php?params=40.81353;-74.07436_dim:2000 40.81353,-74.07436])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-74.07436,40.81353] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"6 <br>[[Glendale, AZ]]<br>\", \"description\": \"[[State Farm Stadium]] ([https://geohack.toolforge.org/geohack.php?params=33.528;-112.263_dim:2000 33.528,-112.263])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-112.263,33.528] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"7 <br>[[Houston, TX]]<br>\", \"description\": \"[[NRG Stadium]] ([https://geohack.toolforge.org/geohack.php?params=29.68472;-95.41083_dim:2000 29.68472,-95.41083])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-95.41083,29.68472] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"8 <br>[[Inglewood, CA]]<br>\", \"description\": \"[[SoFi Stadium]] ([https://geohack.toolforge.org/geohack.php?params=33.9535;-118.3389_dim:2000 33.9535,-118.3389])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-118.3389,33.9535] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"9 <br>[[Kansas City, KS]]<br>\", \"description\": \"[[Children's Mercy Park]] ([https://geohack.toolforge.org/geohack.php?params=39.1216;-94.82318_dim:2000 39.1216,-94.82318])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-94.82318,39.1216] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"10 <br>[[Kansas City, MO]]<br>\", \"description\": \"[[Arrowhead Stadium]] ([https://geohack.toolforge.org/geohack.php?params=39.0489;-94.4839_dim:2000 39.0489,-94.4839])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-94.4839,39.0489] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"11 <br>[[Paradise, NV]]<br>\", \"description\": \"[[Allegiant Stadium]] ([https://geohack.toolforge.org/geohack.php?params=36.0907;-115.1833_dim:2000 36.0907,-115.1833])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-115.1833,36.0907] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"12 <br>[[Miami Gardens, FL]]<br>\", \"description\": \"[[Hard Rock Stadium]] ([https://geohack.toolforge.org/geohack.php?params=25.95795;-80.23885_dim:2000 25.95795,-80.23885])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-80.23885,25.95795] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"13 <br>[[Orlando, FL]]<br>\", \"description\": \"[[Inter&Co Stadium]] ([https://geohack.toolforge.org/geohack.php?params=28.5411;-81.3893_dim:2000 28.5411,-81.3893])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-81.3893,28.5411] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"14 <br>[[Santa Clara, CA]]<br>\", \"description\": \"[[Levi's Stadium]] ([https://geohack.toolforge.org/geohack.php?params=37.403;-121.97_dim:2000 37.403,-121.97])\", \"marker-symbol\": \"-number-F61\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [-121.97,37.403] } } ] } ]"}}'>
+Location of the host cities of the 2024 Copa América.
+1
+Arlington, TX
+2
+Atlanta, GA
+3
+Austin, TX
+4
+Charlotte, NC
+5
+East Rutherford, NJ
+6
+Glendale, AZ
+7
+Houston, TX
+8
+Inglewood, CA
+9
+Kansas City, KS
+10
+Kansas City, MO
+11
+Paradise, NV
+12
+Miami Gardens, FL
+13
+Orlando, FL
+14
+Santa Clara, CA
+Team base camps
+[ edit ]
+Each team chose a "team base camp" for its stay between the matches. The teams trained and resided in these locations throughout the tournament, travelling to games staged away from their bases. The "team base camp" needed to be in the United States.
+Base camp and training ground by team—sortable
+Team
+Base camp
+Training ground
+Argentina
+Fort Lauderdale, Florida
+Chase Stadium [ 14 ]
+Bolivia
+Brazil
+Bay Lake, Florida
+ESPN Wide World of Sports Complex [ 15 ]
+Canada
+Chile
+Colombia
+Costa Rica
+Ecuador
+Santa Clara, California
+Santa Clara Youth Soccer Park [ 16 ]
+Jamaica
+Mexico
+Panama
+Paraguay
+Peru
+United States
+Bethesda, Maryland
+Landon School [ 17 ]
+Uruguay
+Palm Beach Gardens, Florida
+Gardens North County District Park
+Venezuela
+San Jose, California
+San Jose State University [ 18 ]
+Teams
+[ edit ]
+Map of the participant countries. [ neutrality is disputed ]
+Qualification
+[ edit ]
+Main article: 2024 Copa América qualifying play-offs
+The tournament included sixteen teams: ten from CONMEBOL and six from CONCACAF. [ 2 ] All ten CONMEBOL national teams were eligible to enter.
+The six CONCACAF participants qualified through the 2023–24 CONCACAF Nations League . [ 2 ] The teams were the four League A quarter-final winners, and two play-off round winners between the four losing quarter-finalists. [ 19 ] Unlike the Copa América Centenario , the United States did not qualify automatically despite being the hosts, but still secured a berth as one of League A quarter-final winners, following a 4–2 aggregate win against Trinidad and Tobago .
+CONMEBOL (10 teams)
+CONCACAF (6 teams)
+Argentina ( title holders )
+Bolivia
+Brazil
+Chile
+Colombia
+Ecuador
+Paraguay
+Peru
+Uruguay
+Venezuela
+Jamaica ( 2023–24 CONCACAF Nations League top 4 )
+Mexico ( 2023–24 CONCACAF Nations League top 4 )
+Panama ( 2023–24 CONCACAF Nations League top 4 )
+United States ( 2023–24 CONCACAF Nations League top 4 )
+Canada ( play-in round winners )
+Costa Rica ( play-in round winners )
+Draw
+[ edit ]
+The group stage draw was held on December 7, 2023, at 19:30 EST ( UTC−5 ) in the James L. Knight Center in Miami , Florida. [ 20 ] The sixteen teams were drawn into four groups of four, by selecting one team from each of the four ranked pots.
+For the draw, the four teams in Pot 1 were pre-seeded into their respective groups, determined as follows:
+The reigning Copa América champions, Argentina, were seeded into Group A
+The reigning CONCACAF Gold Cup champions, Mexico, were seeded into Group B
+The highest ranked CONCACAF team in the October 2023 FIFA World Rankings , the United States, was seeded into Group C
+The highest ranked CONMEBOL team (after Argentina) in the October 2023 FIFA World Rankings, Brazil, was seeded into Group D
+The remaining 12 teams were placed into Pots 2–4 according to their October 2023 World Rankings, with placeholders for the two CONCACAF participants yet to be determined at the time of the draw each being automatically placed into Pot 4. [ 21 ]
+For the draw, the competition rules stated that no group could have more than three CONMEBOL teams or more than two CONCACAF teams. If this condition was not met during the draw, the team moved to the next available group in alphabetical order. [ 22 ]
+Seeding
+[ edit ]
+Pot 1
+Team
+FIFA World ranking</span>"}]],"parts":[{"template":{"target":{"wt":"Abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Rank"},"2":{"wt":"FIFA World ranking"}},"i":0}}]}'>Rank
+Argentina
+1
+Mexico
+14
+United States ( host )
+12
+Brazil
+5
+Pot 2
+Team
+FIFA World ranking</span>"}]],"parts":[{"template":{"target":{"wt":"Abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Rank"},"2":{"wt":"FIFA World ranking"}},"i":0}}]}'>Rank
+Uruguay
+11
+Colombia
+15
+Ecuador
+32
+Peru
+35
+Pot 3
+Team
+FIFA World ranking</span>"}]],"parts":[{"template":{"target":{"wt":"Abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Rank"},"2":{"wt":"FIFA World ranking"}},"i":0}}]}'>Rank
+Chile
+40
+Panama
+41
+Venezuela
+49
+Paraguay
+53
+Pot 4
+Team
+FIFA World ranking</span>"}]],"parts":[{"template":{"target":{"wt":"Abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Rank"},"2":{"wt":"FIFA World ranking"}},"i":0}}]}'>Rank
+Jamaica
+55
+Bolivia
+85
+Canada [ a ]
+50
+Costa Rica [ a ]
+54
+Notes
+1 2 Team was competing in the qualifying play-offs and was not known at the time of the draw
+Draw
+[ edit ]
+Group A
+Position</span>"}]]}'>Pos Team
+A1 Argentina
+A2 Peru
+A3 Chile
+A4 Canada [ a ]
+Group B
+Position</span>"}]]}'>Pos Team
+B1 Mexico
+B2 Ecuador
+B3 Venezuela
+B4 Jamaica
+Group C
+Position</span>"}]]}'>Pos Team
+C1 United States
+C2 Uruguay
+C3 Panama
+C4 Bolivia
+Group D
+Position</span>"}]]}'>Pos Team
+D1 Brazil
+D2 Colombia
+D3 Paraguay
+D4 Costa Rica [ a ]
+Notes
+1 2 Team was competing in the qualifying play-offs and was not known at the time of the draw
+Squads
+[ edit ]
+Main article: 2024 Copa América squads
+The maximum squad size of the teams was increased from the original quota of 23 to 26 players. Teams had to provide the list containing a minimum of 23 players and a maximum of 26 by the deadline of June 15. [ 23 ]
+Match officials
+[ edit ]
+On May 24, 2024, CONMEBOL announced 101 referees for the tournament. Referees were from CONMEBOL, CONCACAF, and UEFA because of the continuation of the UEFA–CONMEBOL memorandum of understanding . Italian official Maurizio Mariani, with his assistants Daniele Brindoni and Alberto Tegoni, along with Marco Di Bello and Aleandro Di Paolo (VAR), represented UEFA. This was the first edition of the Copa América to feature female referees. Four referees from the 2023 FIFA Women's World Cup final were incorporated, including Tori Penso and her assistants Brooke Mayo and Kathryn Nesbitt , as well as VAR official Tatiana Guzmán . Edina Alves and assistants Neuza Back, Mary Blanco, Migdalia Rodríguez also took part in the tournament. [ 24 ]
+Association
+Referees
+Assistant referees
+Video assistant referees
+Argentina
+Darío Herrera
+Yael Falcón
+Juan Pablo Belatti
+Cristian Navarro
+Facundo Rodríguez
+Maximiliano del Yesso
+Mauro Vigliano
+Silvio Trucco
+Héctor Paletta
+Bolivia
+Ivo Méndez
+José Antelo
+Edwar Saavedra
+Gery Vargas
+Brazil
+Wilton Sampaio
+Raphael Claus
+Edina Alves
+Danilo Manis
+Rodrigo Correa
+Bruno Boschilia
+Bruno Pires
+Neuza Back
+Rodolpho Toski
+Daniel Nobre
+Pablo Gonçalves
+Chile
+Piero Maza
+Cristián Garay
+Claudio Urrutia
+Miguel Rocha
+José Retamal
+Juan Serrano
+Juan Lara
+Rodrigo Carvajal
+Edson Cisternas
+Colombia
+Wilmar Roldán
+Jhon Ospina
+Alexander Guzmán
+Jhon León
+Jhon Gallego
+Miguel Roldán
+Mary Blanco
+Nicolás Gallo
+Yadir Acuña
+David Rodríguez
+Ecuador
+Augusto Aragón
+Cristhian Lescano
+Ricardo Baren
+Carlos Orbe
+Bryan Loayza
+Guatemala
+Mario Escobar
+Luis Ventura
+Humberto Panjoj
+Italy
+Maurizio Mariani
+Daniele Bindoni
+Alberto Tegoni
+Marco Di Bello
+Aleandro Di Paolo
+Mexico
+César Ramos
+Alberto Morín
+Marco Bisguerra
+Erik Miranda
+Guillermo Pacheco
+Nicaragua
+Tatiana Guzmán
+Paraguay
+Juan Gabriel Benítez
+Eduardo Cardozo
+Milcíades Saldívar
+Derlis López
+Eduardo Britos
+José Cuevas
+Peru
+Kevin Ortega
+Michael Orué
+Stephen Atoche
+Joel Alarcón
+Jonny Bossio
+Augusto Menéndez
+El Salvador
+Iván Barton
+David Morán
+Henri Pupiro
+Uruguay
+Andrés Matonte
+Gustavo Tejera
+Nicolás Tarán
+Martín Soppi
+Carlos Barreiro
+Pablo Llarena
+Leodán González
+Richard Trinidad
+Cristhian Ferreyra
+United States
+Ismail Elfath
+Tori Penso
+Corey Parker
+Kyle Atkins
+Brooke Mayo
+Kathryn Nesbitt
+Armando Villarreal
+Venezuela
+Jesús Valenzuela
+Alexis Herrera
+Jorge Urrego
+Alberto Ponte
+Lubin Torrealba
+Migdalia Rodríguez
+Juan Soto
+Carlos López
+Group stage
+[ edit ]
+The top two teams of each group advanced to the quarter-finals.
+Tiebreakers
+The ranking of teams in the group stage was determined as follows (Regulations Article 24): [ 21 ]
+Points obtained in all group matches (three points for a win, one for a draw, none for a defeat);
+Goal difference in all group matches;
+Number of goals scored in all group matches;
+Points obtained in the matches played between the teams in question;
+Goal difference in the matches played between the teams in question;
+Number of goals scored in the matches played between the teams in question;
+Fewest red cards;
+Fewest yellow cards;
+Drawing of lots.
+Group A
+[ edit ]
+Main article: 2024 Copa América Group A
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Argentina
+3
+3
+0
+0
+5
+0
++5
+9
+Advance to knockout stage
+2
+Canada
+3
+1
+1
+1
+1
+2
+− 1
+4
+3
+Chile
+3
+0
+2
+1
+0
+1
+− 1
+2
+4
+Peru
+3
+0
+1
+2
+0
+3
+− 3
+1
+Source: CONMEBOL
+June 20, 2024 ( 2024-06-20 )
+8:00 pm EDT ( UTC−4 )
+Argentina 2–0 Canada
+Alvarez 49'
+La. Martínez 88'
+Report (CONMEBOL)
+Report (CONCACAF)
+Mercedes-Benz Stadium , Atlanta, Georgia
+Attendance: 70,564 [ 25 ]
+Referee: Jesús Valenzuela ( Venezuela )
+June 21, 2024 ( 2024-06-21 )
+7:00 pm CDT ( UTC−5 )
+Peru 0–0 Chile
+Report (CONMEBOL)
+Report (CONCACAF)
+AT&T Stadium , Arlington, Texas
+Attendance: 43,030 [ 26 ]
+Referee: Wilton Sampaio ( Brazil )
+June 25, 2024 ( 2024-06-25 )
+5:00 pm CDT ( UTC−5 )
+Peru 0–1 Canada
+Report (CONMEBOL)
+Report (CONCACAF)
+David 74'
+Children's Mercy Park , Kansas City, Kansas
+Attendance: 15,625 [ 27 ]
+Referee: Mario Escobar ( Guatemala )
+June 25, 2024 ( 2024-06-25 )
+9:00 pm EDT ( UTC−4 )
+Chile 0–1 Argentina
+Report (CONMEBOL)
+Report (CONCACAF)
+La. Martínez 88'
+MetLife Stadium , East Rutherford, New Jersey
+Attendance: 81,106 [ 28 ]
+Referee: Andrés Matonte ( Uruguay )
+June 29, 2024 ( 2024-06-29 )
+8:00 pm EDT ( UTC−4 )
+Argentina 2–0 Peru
+La. Martínez 47' , 86'
+Report (CONMEBOL)
+Report (CONCACAF)
+Hard Rock Stadium , Miami Gardens, Florida
+Attendance: 64,972 [ 29 ]
+Referee: César Ramos ( Mexico )
+June 29, 2024 ( 2024-06-29 )
+8:00 pm EDT ( UTC−4 )
+Canada 0–0 Chile
+Report (CONMEBOL)
+Report (CONCACAF)
+Inter&Co Stadium , Orlando, Florida
+Attendance: 24,481 [ 30 ]
+Referee: Wilmar Roldán ( Colombia )
+Group B
+[ edit ]
+Main article: 2024 Copa América Group B
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Venezuela
+3
+3
+0
+0
+6
+1
++5
+9
+Advance to knockout stage
+2
+Ecuador
+3
+1
+1
+1
+4
+3
++1
+4
+3
+Mexico
+3
+1
+1
+1
+1
+1
+0
+4
+4
+Jamaica
+3
+0
+0
+3
+1
+7
+− 6
+0
+Source: CONMEBOL
+June 22, 2024 ( 2024-06-22 )
+3:00 pm PDT ( UTC−7 )
+Ecuador 1–2 Venezuela
+Sarmiento 40'
+Report (CONMEBOL)
+Report (CONCACAF)
+Cádiz 64'
+Bello 74'
+Levi's Stadium , Santa Clara, California
+Attendance: 29,864 [ 31 ]
+Referee: Wilmar Roldán ( Colombia )
+June 22, 2024 ( 2024-06-22 )
+8:00 pm CDT ( UTC−5 )
+Mexico 1–0 Jamaica
+Arteaga 69'
+Report (CONMEBOL)
+Report (CONCACAF)
+NRG Stadium , Houston, Texas
+Attendance: 53,763 [ 32 ]
+Referee: Ismail Elfath ( United States )
+June 26, 2024 ( 2024-06-26 )
+3:00 pm PDT ( UTC−7 )
+Ecuador 3–1 Jamaica
+Hincapié 13'
+Páez 45+4' ( pen. )
+Minda 90+1'
+Report (CONMEBOL)
+Report (CONCACAF)
+Antonio 54'
+Allegiant Stadium , Paradise, Nevada
+Attendance: 24,074 [ 33 ]
+Referee: Cristián Garay ( Chile )
+June 26, 2024 ( 2024-06-26 )
+6:00 pm PDT ( UTC−7 )
+Venezuela 1–0 Mexico
+Rondón 57' ( pen. )
+Report (CONMEBOL)
+Report (CONCACAF)
+SoFi Stadium , Inglewood, California
+Attendance: 72,773 [ 34 ]
+Referee: Raphael Claus ( Brazil )
+June 30, 2024 ( 2024-06-30 )
+5:00 pm MST ( UTC−7 )
+Mexico 0–0 Ecuador
+Report (CONMEBOL)
+Report (CONCACAF)
+State Farm Stadium , Glendale, Arizona
+Attendance: 62,565 [ 35 ]
+Referee: Mario Escobar ( Guatemala )
+June 30, 2024 ( 2024-06-30 )
+7:00 pm CDT ( UTC−5 )
+Jamaica 0–3 Venezuela
+Report (CONMEBOL)
+Report (CONCACAF)
+Bello 49'
+Rondón 56'
+Ramírez 85'
+Q2 Stadium , Austin, Texas
+Attendance: 20,240 [ 36 ]
+Referee: Maurizio Mariani ( Italy )
+Group C
+[ edit ]
+Main article: 2024 Copa América Group C
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Uruguay
+3
+3
+0
+0
+9
+1
++8
+9
+Advance to knockout stage
+2
+Panama
+3
+2
+0
+1
+6
+5
++1
+6
+3
+United States (H)
+3
+1
+0
+2
+3
+3
+0
+3
+4
+Bolivia
+3
+0
+0
+3
+1
+10
+− 9
+0
+Source: CONMEBOL
+(H) Hosts
+June 23, 2024 ( 2024-06-23 )
+5:00 pm CDT ( UTC−5 )
+United States 2–0 Bolivia
+Pulisic 3'
+Balogun 44'
+Report (CONMEBOL)
+Report (CONCACAF)
+AT&T Stadium , Arlington, Texas
+Attendance: 47,873 [ 37 ]
+Referee: Maurizio Mariani ( Italy )
+June 23, 2024 ( 2024-06-23 )
+9:00 pm EDT ( UTC−4 )
+Uruguay 3–1 Panama
+M. Araújo 16'
+Núñez 85'
+Viña 90+1'
+Report (CONMEBOL)
+Report (CONCACAF)
+Murillo 90+5'
+Hard Rock Stadium , Miami Gardens, Florida
+Attendance: 33,425 [ 38 ]
+Referee: Piero Maza ( Chile )
+June 27, 2024 ( 2024-06-27 )
+6:00 pm EDT ( UTC−4 )
+Panama 2–1 United States
+Blackman 26'
+Fajardo 83'
+Report (CONMEBOL)
+Report (CONCACAF)
+Balogun 22'
+Mercedes-Benz Stadium , Atlanta, Georgia
+Attendance: 59,145 [ 39 ]
+Referee: Iván Barton ( El Salvador )
+June 27, 2024 ( 2024-06-27 )
+9:00 pm EDT ( UTC−4 )
+Uruguay 5–0 Bolivia
+Pellistri 8'
+Núñez 21'
+M. Araújo 77'
+Valverde 81'
+Bentancur 89'
+Report (CONMEBOL)
+Report (CONCACAF)
+MetLife Stadium , East Rutherford, New Jersey
+Attendance: 48,033 [ 40 ]
+Referee: Juan Gabriel Benítez ( Paraguay )
+July 1, 2024 ( 2024-07-01 )
+8:00 pm CDT ( UTC−5 )
+United States 0–1 Uruguay
+Report (CONMEBOL)
+Report (CONCACAF)
+M. Olivera 66'
+Arrowhead Stadium , Kansas City, Missouri
+Attendance: 55,460 [ 41 ]
+Referee: Kevin Ortega ( Peru )
+July 1, 2024 ( 2024-07-01 )
+9:00 pm EDT ( UTC−4 )
+Bolivia 1–3 Panama
+Miranda 69'
+Report (CONMEBOL)
+Report (CONCACAF)
+Fajardo 22'
+Guerrero 79'
+Yanis 90+1'
+Inter&Co Stadium , Orlando, Florida
+Attendance: 16,129 [ 42 ]
+Referee: Edina Alves ( Brazil )
+Group D
+[ edit ]
+Main article: 2024 Copa América Group D
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Colombia
+3
+2
+1
+0
+6
+2
++4
+7
+Advance to knockout stage
+2
+Brazil
+3
+1
+2
+0
+5
+2
++3
+5
+3
+Costa Rica
+3
+1
+1
+1
+2
+4
+− 2
+4
+4
+Paraguay
+3
+0
+0
+3
+3
+8
+− 5
+0
+Source: CONMEBOL
+June 24, 2024 ( 2024-06-24 )
+5:00 pm CDT ( UTC−5 )
+Colombia 2–1 Paraguay
+Muñoz 32'
+Lerma 42'
+Report (CONMEBOL)
+Report (CONCACAF)
+Enciso 69'
+NRG Stadium , Houston, Texas
+Attendance: 67,059 [ 43 ]
+Referee: Darío Herrera ( Argentina )
+June 24, 2024 ( 2024-06-24 )
+6:00 pm PDT ( UTC−7 )
+Brazil 0–0 Costa Rica
+Report (CONMEBOL)
+Report (CONCACAF)
+SoFi Stadium , Inglewood, California
+Attendance: 67,158 [ 44 ]
+Referee: César Ramos ( Mexico )
+June 28, 2024 ( 2024-06-28 )
+3:00 pm MST ( UTC−7 )
+Colombia 3–0 Costa Rica
+Díaz 31' ( pen. )
+Sánchez 59'
+Córdoba 62'
+Report (CONMEBOL)
+Report (CONCACAF)
+State Farm Stadium , Glendale, Arizona
+Attendance: 27,386 [ 45 ]
+Referee: Gustavo Tejera ( Uruguay )
+June 28, 2024 ( 2024-06-28 )
+6:00 pm PDT ( UTC−7 )
+Paraguay 1–4 Brazil
+Alderete 48'
+Report (CONMEBOL)
+Report (CONCACAF)
+Vinícius 35' , 45+5'
+Savinho 43'
+Paquetá 65' ( pen. )
+Allegiant Stadium , Paradise, Nevada
+Attendance: 46,939 [ 46 ]
+Referee: Piero Maza ( Chile )
+July 2, 2024 ( 2024-07-02 )
+6:00 pm PDT ( UTC−7 )
+Brazil 1–1 Colombia
+Raphinha 12'
+Report (CONMEBOL)
+Report (CONCACAF)
+Muñoz 45+2'
+Levi's Stadium , Santa Clara, California
+Attendance: 70,971 [ 47 ]
+Referee: Jesús Valenzuela ( Venezuela )
+July 2, 2024 ( 2024-07-02 )
+8:00 pm CDT ( UTC−5 )
+Costa Rica 2–1 Paraguay
+Calvo 3'
+Alcócer 7'
+Report (CONMEBOL)
+Report (CONCACAF)
+Sosa 55'
+Q2 Stadium , Austin, Texas
+Attendance: 12,765 [ 48 ]
+Referee: Yael Falcón ( Argentina )
+Knockout stage
+[ edit ]
+Main article: 2024 Copa América knockout stage
+In the pre-final knockout stage matches (quarter-finals, semi-finals, and third place play-off), no extra time was played and any draws were immediately resolved via penalties. In the final, if the score was level after 90 minutes, two extra time periods of 15 minutes each were to be played. If still level, the match was to be decided by a penalty shoot-out . [ 21 ]
+Bracket
+[ edit ]
+Quarter-finals Semi-finals Final
+July 4 – Houston, TX
+Argentina ( p ) 1 (4)
+July 9 – East Rutherford, NJ
+Ecuador 1 (2)
+Argentina 2
+July 5 – Arlington, TX
+Canada 0
+Venezuela 1 (3)
+July 14 – Miami Gardens, FL
+Canada ( p ) 1 (4)
+Argentina ( a.e.t. ) 1
+July 6 – Paradise, NV
+Colombia 0
+Uruguay ( p ) 0 (4)
+July 10 – Charlotte, NC
+Brazil 0 (2)
+Uruguay 0
+July 6 – Glendale, AZ
+Colombia 1
+Third place play-off
+Colombia 5
+July 13 – Charlotte, NC
+Panama 0
+Canada 2 (3)
+Uruguay ( p ) 2 (4)
+Quarter-finals
+[ edit ]
+July 4, 2024 ( 2024-07-04 )
+8:00 pm CDT ( UTC−5 )
+Argentina 1–1 Ecuador
+Li. Martínez 35'
+Report (CONMEBOL)
+Report (CONCACAF)
+Rodríguez 90+2'
+Penalties
+Messi
+Alvarez
+Mac Allister
+Montiel
+Otamendi
+4–2
+Mena
+Minda
+Yeboah
+J. Caicedo
+NRG Stadium , Houston, Texas
+Attendance: 69,456 [ 49 ]
+Referee: Andrés Matonte ( Uruguay )
+July 5, 2024 ( 2024-07-05 )
+8:00 pm CDT ( UTC−5 )
+Venezuela 1–1 Canada
+Rondón 65'
+Report (CONMEBOL)
+Report (CONCACAF)
+Shaffelburg 13'
+Penalties
+Rondón
+Herrera
+Rincón
+Savarino
+Cádiz
+Ángel
+3–4
+David
+Millar
+Bombito
+Eustáquio
+Davies
+Koné
+AT&T Stadium , Arlington, Texas
+Attendance: 51,080 [ 50 ]
+Referee: Wilton Sampaio ( Brazil )
+July 6, 2024 ( 2024-07-06 )
+3:00 pm MST ( UTC−7 )
+Colombia 5–0 Panama
+Córdoba 8'
+Rodríguez 15' ( pen. )
+Díaz 41'
+Ríos 70'
+Borja 90+4' ( pen. )
+Report (CONMEBOL)
+Report (CONCACAF)
+State Farm Stadium , Glendale, Arizona
+Attendance: 39,740 [ 51 ]
+Referee: Maurizio Mariani ( Italy )
+July 6, 2024 ( 2024-07-06 )
+6:00 pm PDT ( UTC−7 )
+Uruguay 0–0 Brazil
+Report (CONMEBOL)
+Report (CONCACAF)
+Penalties
+Valverde
+Bentancur
+De Arrascaeta
+Giménez
+Ugarte
+4–2
+Militão
+Pereira
+Douglas Luiz
+Martinelli
+Allegiant Stadium , Paradise, Nevada
+Attendance: 55,770 [ 52 ]
+Referee: Darío Herrera ( Argentina )
+Semi-finals
+[ edit ]
+July 9, 2024 ( 2024-07-09 )
+8:00 pm EDT ( UTC−4 )
+Argentina 2–0 Canada
+Alvarez 22'
+Messi 51'
+Report (CONMEBOL)
+Report (CONCACAF)
+MetLife Stadium , East Rutherford, New Jersey
+Attendance: 80,102 [ 53 ]
+Referee: Piero Maza ( Chile )
+July 10, 2024 ( 2024-07-10 )
+8:00 pm EDT ( UTC−4 )
+Uruguay 0–1 Colombia
+Report (CONMEBOL)
+Report (CONCACAF)
+Lerma 39'
+Bank of America Stadium , Charlotte, North Carolina
+Attendance: 70,644 [ 54 ]
+Referee: César Ramos ( Mexico )
+Third place play-off
+[ edit ]
+July 13, 2024 ( 2024-07-13 )
+8:00 pm EDT ( UTC−4 )
+Canada 2–2 Uruguay
+Koné 22'
+David 80'
+Report (CONMEBOL)
+Report (CONCACAF)
+Bentancur 8'
+Suárez 90+2'
+Penalties
+David
+Bombito
+Koné
+Choinière
+Davies
+3–4
+Valverde
+Bentancur
+De Arrascaeta
+Suárez
+Bank of America Stadium , Charlotte, North Carolina
+Attendance: 24,386 [ 55 ]
+Referee: Alexis Herrera ( Venezuela )
+Final
+[ edit ]
+Main article: 2024 Copa América final
+Due to security incidents around and within Hard Rock Stadium, the match was initially delayed by 30 minutes, ultimately starting 82 minutes after its scheduled time. [ 56 ] [ 57 ] [ 58 ] [ 59 ]
+July 14, 2024 ( 2024-07-14 )
+9:22 pm EDT ( UTC−4 ) [ a ] [ 60 ]
+Argentina 1–0 ( a.e.t. ) Colombia
+La. Martínez 112'
+Report (CONMEBOL)
+Report (CONCACAF)
+Hard Rock Stadium , Miami Gardens, Florida
+Attendance: 65,300 [ 61 ]
+Referee: Raphael Claus ( Brazil )
+Statistics
+[ edit ]
+Goalscorers
+[ edit ]
+There were 70 goals scored in 32 matches, for an average of 2.19 goals per match.
+5 goals
+Lautaro Martínez
+3 goals
+Salomón Rondón
+2 goals
+Julián Alvarez
+Vinícius Júnior
+Jonathan David
+Jhon Córdoba
+Luis Díaz
+Jefferson Lerma
+Daniel Muñoz
+José Fajardo
+Folarin Balogun
+Maximiliano Araújo
+Rodrigo Bentancur
+Darwin Núñez
+Eduard Bello
+1 goal
+Lisandro Martínez
+Lionel Messi
+Bruno Miranda
+Lucas Paquetá
+Raphinha
+Savinho
+Ismaël Koné
+Jacob Shaffelburg
+Miguel Borja
+Richard Ríos
+James Rodríguez
+Davinson Sánchez
+Josimar Alcócer
+Francisco Calvo
+Piero Hincapié
+Alan Minda
+Kendry Páez
+Kevin Rodríguez
+Jeremy Sarmiento
+Michail Antonio
+Gerardo Arteaga
+César Blackman
+Eduardo Guerrero
+Michael Amir Murillo
+César Yanis
+Omar Alderete
+Julio Enciso
+Ramón Sosa
+Christian Pulisic
+Mathías Olivera
+Facundo Pellistri
+Luis Suárez
+Federico Valverde
+Matías Viña
+Jhonder Cádiz
+Eric Ramírez
+Discipline
+[ edit ]
+Player
+Offense(s)
+Suspension(s)
+Enner Valencia
+in Group B vs Venezuela (matchday 1; June 22, 2024)
+Group B vs Jamaica (matchday 2; June 26, 2024)
+Miguel Araujo
+in Group A vs Canada (matchday 2; June 25, 2024)
+Group A vs Argentina (matchday 3; June 29, 2024)
+Timothy Weah
+in Group C vs Panama (matchday 2; June 27, 2024)
+Group C vs Uruguay (matchday 3; July 1, 2024) [ A ]
+Adalberto Carrasquilla
+in Group C vs United States (matchday 2; June 27, 2024)
+Group C vs Bolivia (matchday 3; July 1, 2024)
+Quarter-finals vs Colombia (July 6, 2024)
+Manfred Ugalde
+in Group D vs Brazil (matchday 1; June 24, 2024)
+in Group D vs Colombia (matchday 2; June 28, 2024)
+Group D vs Paraguay (matchday 3; July 2, 2024)
+Andrés Cubas
+in Group D vs Brazil (matchday 2; June 28, 2024)
+Group D vs Costa Rica (matchday 3; July 2, 2024)
+Gabriel Suazo
+in Group A vs Canada (matchday 3; June 29, 2024)
+Suspension served outside the tournament
+Darwin Machís
+in Group B vs Ecuador (matchday 1; June 22, 2024)
+in Group B vs Jamaica (matchday 3; June 30, 2024)
+Quarter-finals vs Canada (July 5, 2024)
+Vinícius Júnior
+in Group D vs Paraguay (matchday 2; June 28, 2024)
+in Group D vs Colombia (matchday 3; July 2, 2024)
+Quarter-finals vs Uruguay (July 6, 2024)
+Jefferson Lerma
+in Group D vs Paraguay (matchday 1; June 24, 2024)
+in Group D vs Brazil (matchday 3; July 2, 2024)
+Quarter-finals vs Panama (July 6, 2024)
+Nahitan Nández
+in Quarter-finals vs Brazil (July 6, 2024)
+Semi-finals vs Colombia (July 10, 2024)
+Nicolás de la Cruz
+in Quarter-finals vs Brazil (July 6, 2024)
+in Semi-finals vs Colombia (July 10, 2024)
+Third place play-off vs Canada (July 13, 2024)
+Daniel Muñoz
+in Semi-finals vs Uruguay (July 10, 2024)
+Final vs Argentina (July 14, 2024)
+Guillermo Varela
+in Semi-finals vs Colombia (July 10, 2024)
+Third place play-off vs Canada (July 13, 2024)
+↑ Weah was handed a two-match ban, with the second match of the suspension to be served outside the tournament.
+Awards
+[ edit ]
+The following awards were given at the conclusion of the tournament. [ 62 ]
+Best Player Award: James Rodríguez [ 63 ]
+Golden Boot Award: Lautaro Martínez (5 goals)
+Best Goalkeeper Award: Emiliano Martínez [ 64 ]
+Fair Play Award: Colombia
+Team of the Tournament
+[ edit ]
+The team of the tournament was announced on July 31, 2024. [ 65 ]
+Goalkeeper
+Defenders
+Midfielders
+Forwards
+Emiliano Martínez
+Piero Hincapié
+Davinson Sánchez
+Cristian Romero
+Alistair Johnston
+James Rodríguez
+Manuel Ugarte
+Rodrigo De Paul
+Raphinha
+Lautaro Martínez
+Lionel Messi
+Marketing
+[ edit ]
+Sponsorships
+[ edit ]
+Absolut Sport [ 66 ]
+Betano [ 67 ]
+BYD Auto [ 68 ]
+Coca-Cola [ 69 ]
+Delta Air Lines (US) and LATAM Airlines (Latin America and Brazil) [ 70 ]
+Decolar.com / Despegar.com
+Gran Centenario
+Inter Rapidísimo
+Lowe's [ 71 ]
+Mastercard [ 72 ]
+Mercado Livre/Mercado Libre [ 73 ]
+Michelob ULTRA [ 74 ]
+Puma [ 75 ]
+TCL [ 76 ]
+Unilever [ 77 ]
+Merchandise
+[ edit ]
+Copa América content was added to EA Sports FC 24 ' s Ultimate Team and EA Sports FC Mobile in June 2024, although a standalone tournament mode was not made available in the game. [ 78 ] [ 79 ] [ 80 ]
+The Panini Group produced thematic stickers and a sticker album for this edition of the Copa América. Stickers were produced for all the Copa América teams, as well as Honduras and Trinidad and Tobago , the teams that failed to qualify for the main draw through the play-offs . [ 81 ]
+Broadcasting rights
+[ edit ]
+Territory
+Broadcaster(s)
+Ref.
+Afghanistan
+SOLH TV
+[ 82 ]
+Albania
+MCN TV
+[ 83 ]
+Argentina
+Telefe , TyC Sports , DSports , Televisión Pública
+[ 84 ]
+Aruba
+Telearuba
+[ 85 ]
+Australia
+Optus Sport
+[ 86 ]
+Austria
+Sportdigital
+[ 87 ]
+Balkans
+Arena Sport
+[ 88 ]
+Bangladesh
+T Sports and Toffee
+[ 89 ]
+Bolivia
+Unitel Bolivia
+[ 90 ]
+Brazil
+Grupo Globo
+[ 91 ]
+Brunei
+Astro
+[ 92 ]
+Bulgaria
+Max Sport
+[ 93 ]
+Canada
+CTV - TSN (in English ), RDS (in French )
+[ 94 ]
+Caribbean
+C Sport
+[ 95 ]
+Chile
+Canal 13 , Chilevisión
+[ 96 ]
+China
+CCTV and Tencent QQ
+[ 97 ]
+Colombia
+Caracol , RCN , DSports
+[ 98 ]
+Costa Rica
+Teletica
+[ 99 ]
+Denmark
+Viaplay
+[ 100 ]
+El Salvador
+TCS
+[ 101 ]
+Estonia
+Viaplay
+[ 102 ]
+Fiji
+FBC
+[ 103 ]
+Finland
+Viaplay
+[ 102 ]
+France
+L'Équipe
+[ 104 ]
+Georgia
+Setanta Sports
+[ 105 ]
+Germany
+Sportdigital
+[ 87 ]
+Greece
+ANT1
+[ 106 ]
+Guatemala
+TV Azteca and Claro TV
+[ 107 ] [ 108 ]
+Honduras
+Canal 11
+[ 109 ]
+Hong Kong
+i-CABLE HOY
+[ 110 ]
+Hungary
+Arena4
+[ 111 ]
+Iceland
+Viaplay
+[ 102 ]
+Indonesia
+Emtek
+[ 112 ]
+Iran
+IRIB TV3, IRIB Varzesh
+[ 82 ]
+Ireland
+Premier Sports
+[ 113 ]
+Italy
+Sportitalia and Mola
+[ 114 ] [ 115 ]
+Jamaica
+CVM
+[ 116 ]
+Japan
+Prime Video
+[ 117 ]
+Kazakhstan
+QAZTRK
+[ 118 ]
+Latvia
+Viaplay
+[ 102 ]
+Lithuania
+Viaplay
+[ 102 ]
+Malaysia
+Astro
+[ 92 ]
+Mexico
+TelevisaUnivision , TV Azteca
+[ 119 ] [ 120 ]
+Netherlands
+Viaplay
+[ 121 ]
+New Zealand
+TVNZ
+[ 122 ]
+Nicaragua
+Viva Nicaragua
+[ 123 ]
+Norway
+Viaplay
+[ 102 ]
+Pacific Islands
+Digicel
+[ 124 ]
+Pakistan
+PTV Sports ,
+[ 125 ] [ 126 ]
+Papua New Guinea
+NBC
+[ 127 ]
+Paraguay
+Unicanal , Telefuturo , SNT
+[ 128 ]
+Peru
+América TV , DSports
+[ 129 ]
+Poland
+Viaplay
+[ 130 ]
+Portugal
+Sport TV
+[ 131 ]
+Romania
+Digi Sport
+[ 132 ]
+Russia
+Okko Sport
+[ 133 ]
+Slovakia
+RTVS and STVR
+[ 134 ]
+South Korea
+TVING
+[ 135 ]
+Spain
+Movistar Plus+ , CCMA
+[ 136 ] [ 137 ]
+Sub-Saharan Africa
+StarTimes Sports (English) and Canal+ (French)
+[ 138 ]
+Sweden
+Viaplay
+[ 102 ]
+Switzerland
+Sportdigital
+[ 87 ]
+Tajikistan
+TV Varzish, TV Football
+[ 82 ]
+Turkey
+TV8.5 , Exxen
+[ 139 ]
+United Kingdom
+Premier Sports
+[ 113 ]
+United States
+Fox Sports (English)
+TUDN ( Spanish )
+[ 140 ] [ 141 ]
+Uruguay
+TV Ciudad, AUF TV , and DSports
+[ 142 ]
+Uzbekistan
+Setanta Sports
+[ 143 ]
+Venezuela
+Televen
+[ 144 ]
+Vietnam
+Next Media, K+ , VTC
+[ 145 ]
+Symbols
+[ edit ]
+Mascot
+[ edit ]
+The tournament's official mascot was unveiled on December 7, 2023, during the group stage draw. It was an eagle named "Capitán", the Spanish word for captain. The inspiration for the choice of an eagle as the mascot for the 2024 Copa América, was "born from the symbolism that this majestic animal has in various cultures of the Americas, illustrating strength, boldness, and excellence." [ 146 ]
+Match ball
+[ edit ]
+The match balls of this tournament were provided by Puma for the first time after twenty years of partnership with Nike ended in 2023. The "Puma Cumbre" was unveiled during the draw for the group stage of the competition on December 7, 2023. [ 147 ]
+Music
+[ edit ]
+Due to unknown reasons, an official song for the tournament was never released. It was believed that a customized version of " Puntería " by Colombian singer Shakira would serve as the official song of the tournament, [ 148 ] however such version was never released. It was later understood that Puntería was instead to be used for TUDN 's coverage of the tournament, not as the official song, effectively leaving Copa America 2024 without an official song. Subsequently, Darude 's " Sandstorm " became the "unofficial" song as the tournament progressed, mainly as it grew popular among fans who played it at fanfests and stadiums. [ 149 ]
+Controversies and incidents
+[ edit ]
+Pitch quality
+[ edit ]
+The tournament's pitch dimensions and grass surface was met with significant controversy amongst fans, players, and commentators alike. The smaller pitch sizes in the venues of the tournament, with most of them being used for American football , measured 110 yards (100 m) by 70 yards (64 m) , compared to FIFA's standard of 115 yards (105 m) by 74 yards (68 m) , was reported to likely influence the dynamics of the game, leading to more closely contested matches. In addition, grass cultivated in specially selected nurseries was attached to plastic layers that adhered to the field's surface. It was transported by truck and laid down with meticulous attention to detail, considering factors like watering, sunlight, and the delivery routes of the trucks, according to a statement issued by CONMEBOL. Frederico Nantes, CONMEBOL's director of competitions, stated that the dimensions and capacity of soccer-specific MLS venues influenced the decision to restrict their usage during the tournament. Factors such as venue size, travel distances between cities, and infrastructure were carefully evaluated before CONMEBOL concluded that the use of artificial turf was unavoidable, despite player concerns about that playing surface. [ 150 ] [ 151 ] [ 152 ]
+After the inaugural match of the tournament, Argentina vs Canada at Mercedes-Benz Stadium, Argentina head coach Lionel Scaloni and first-choice goalkeeper Emiliano Martínez called the newly installed grass surface a "disaster" in a post-game interview. "They knew seven months ago that we'd play here and they changed the field two days ago," Scaloni said. "It's not an excuse, but this isn't a good field. Sincerely, the field is not apt for these kinds of players. We gave not necessarily a good game, but a game according to the pitch and what the opponent proposed. We couldn't do much more with the conditions of the pitch." Martínez added on to Scaloni's comments by saying the pitch was, "Very bumpy. We must improve in this aspect; otherwise, Copa América will always appear at a lower level than the European Championship ." [ 153 ] [ 154 ] [ 155 ]
+After Peruvian player Luis Advíncula 's achilles injury during his side's match against Chile, Peru head coach Jorge Fossati cited AT&T Stadium's unsatisfactory field as a potential reason for his injury: "It came out of nowhere. I realize that this is a grass field today but it's not normal grass. It's not grass that's born, and grows [naturally]. It's a grass they bring in from elsewhere. That can be a bit of a harder surface and it can affect you in that exact place [the Achilles]." Vinícius Júnior , Kamal Miller , James Rodríguez , and Chile's coach Ricardo Gareca were among other notable figures who expressed their concerns about the field conditions. [ 156 ]
+"We started the project in June, when traveling to analyze fields and watch games here, and in November, we began inspections in all stadiums and all training centers," Maristela Kuhn, CONMEBOL's agricultural engineer, said. "Reports were generated with recommendations of everything that had to be done. We had meetings with the agronomists and programming. With a special technology, we had all the grass plantations defined." [ 154 ]
+High ticket prices
+[ edit ]
+There were concerns about overpriced tickets, with many fans feeling that the costs were excessive compared to previous tournaments. This sparked discussions about accessibility and the overall affordability of attending matches. Ticket resale markets, both official and unofficial, were prevalent in the United States. Statistics on resale tickets revealed significant price increases; according to TickPick , the average purchase price for the 2024 Copa América group stage was $187, which marked a 61% rise from 2016, when it was $116. The most expensive group stage ticket was for the match between Argentina and Peru, with average purchase price for the match reached $478. For the final , tickets were priced anywhere from $1,300 to $7,000 through websites such as Ticketmaster and SeatGeek . As a result, several matches saw low attendance. [ 157 ] [ 158 ]
+Referee management
+[ edit ]
+The tournament was met with several poor refereeing incidents, the most notable of which included the United States vs Uruguay match; Uruguay's Mathías Olivera scored the only goal of the match in the 66th minute, but appeared to be offside when the ball was flicked on, yet a prolonged VAR review upheld the goal without summoning the match referee, Kevin Ortega , to the video monitor. Replays revealed a marginal overlap between Olivera's position and the foot of United States defender Chris Richards , potentially keeping the Uruguayan onside. There were other contentious non-decisions during the match, but the most peculiar incident, aside from the goal, occurred in the 32nd minute, when Ortega reached for a yellow card to book Richards. Uruguay quickly took the free kick, and just as Ortega was about to show the card, he raised his other arm signaling to play on. Nahitan Nández found himself through on goal but failed to score. Members of the United States team were very disappointed in the overall outcome of the match, particularly Christian Pulisic , who was seen showing his frustration to Ortega throughout the match, with Ortega refusing to shake Pulisic's hand after the final whistle, and head coach Gregg Berhalter stated in a post-game interview, "I don't understand it. You know, I feel like I know the rule pretty well. I feel like we had the pictures that are showing how the rule could be interpreted and it's an offside goal." [ 159 ]
+Another match that involved questionable referee decisions was the Brazil vs Colombia match, when Venezuelan referee Jesús Valenzuela denied a penalty in the 42nd minute for Vinícius Júnior , to which CONMEBOL, in a statement after the match, acknowledged that a critical VAR mistake was made. [ 160 ]
+Uruguay vs Colombia match altercation
+[ edit ]
+In the aftermath of the semi-final match between Uruguay and Colombia, Uruguay forward Darwin Núñez was seen getting involved in a confrontation with fans of Colombia in the stadium stands. [ 161 ] The altercation reportedly took place near where family members and friends of the Uruguay team were situated, [ 162 ] with CONMEBOL later announcing it would investigate the incident. [ 163 ]
+The altercation was highly condemned. Two days after the match, Uruguay's head coach Marcelo Bielsa , in a press conference interview, stated, "You know whose responsibility it is to protect the fans in the stands. You have to ask me whether the players have received an apology from those responsible for safeguarding security. The players reacted as any human being would have done if they saw that there was no escape or prevention and they were attacking their wife, mother, or baby." [ 164 ]
+The Uruguayan players' involvement with the Colombian fans was supported by others, particularly from members of the Argentine national team. When interviewed about the situation, coach Lionel Scaloni commented, "The images were very upsetting, and I believe anyone in that situation would have acted the same way." Goalkeeper Emiliano Martínez likened the altercations to a similar incident at a 2026 FIFA World Cup qualification match between Argentina and Brazil in November 2023; "I had family members in the stands close to what took place, watching the young people and women being beaten with clubs (by the Brazilian police). It was terrible to witness that. I wouldn't claim that I would do the same thing (fight with the fans), but I am supporting with the Uruguayan players, I think we need to improve security a bit more. When you see women or your parents being hit, obviously with Darwin and (Mathias) Olivera, players that I know personally, it's a very sad thing to see." [ 165 ] Colombian midfielder Juan Fernando Quintero also described the event as upsetting, "It's sad what happened and the people are not to blame. We don't want these kinds of things to happen when there's football. Nobody wants violence. Aggressive people who don't enjoy football shouldn't be in the stadiums." [ 166 ]
+Argentina vs Colombia ticketless fans
+[ edit ]
+During the final between Argentina and Colombia, thousands of ticketless fans rushed the stadium gates amidst major crowd congestion, resulting in CONMEBOL delaying the start time three times, first from 8:00 p.m. to 8:30 p.m., then to 8:45 p.m., and finally to 9:22 p.m. The families of several Argentina players found themselves delayed at the gate. For example, the mother of Alexis Mac Allister stated in an interview that "He was worried and called us constantly to check on us, saying he would stay at the gate until we could get in." [ 56 ] Many of the areas and equipment such as escalators were damaged. Some fans were seen trying to enter the stadium through the ventilation system , and some people suffered medical issues from the heat and crowd crush . [ 56 ] [ 57 ] [ 58 ] [ 59 ] [ 167 ] Many ticketed fans were prevented from entering the stadium, leading to some seeking refunds. [ 168 ]
+CONMEBOL's sanctions and Shakira's halftime performance
+[ edit ]
+Several coaches have been sanctioned and received a one-match ban by CONMEBOL after returning to the pitch later than the given fifteen minutes during their matches, including Lionel Scaloni during Argentina's match against Canada in the group stage, in which Canada's coach Jesse Marsch questioned, "I wish the referees would manage that. [Argentina] had that time to prepare how they wanted to play against us in the second half, which — if we would have known ahead of time that we could have an extra 10 minutes, then we could have prepared some things more", Uruguay's Marcelo Bielsa during their game with Bolivia, and Mexico's head coach Jaime Lozano during Mexico's match against Jamaica in Group B as the Jamaican players were waiting on the soccer field. Lozano later admitted he and his team were reviewing tactics, "I don't know if it's unfair. But we went through four or five plays, and I took too long. Yes, it's my responsibility. Normally we have some actions, some plays on the screen to correct, or to see what we are doing right. And there, I think I went a bit overboard." [ 169 ] [ 170 ] [ 171 ]
+Colombia's head coach Néstor Lorenzo criticized CONMEBOL's decision to extend the length of the halftime break in the final by 10 minutes to accommodate Shakira 's halftime set. "When the rules change suddenly for both teams, when the pitch is bad for both sides or when the time to rest between halves is the same for both teams, I can't tell you if it's good or bad or who has an advantage. I don't understand it to be honest," he explained in a news conference. "I think the halftime for the final should be 15 minutes because those are the rules. And because we've been fined when we've walked back onto the pitch 16 minutes later. But now apparently, because there's going to be a concert, we'll be walking back out 20 to 25 minutes later. This could affect the players fitness. They could cool down too much. Those minutes of recovery in the dressing room, people don't understand what it takes to reach those levels." [ 172 ]
+Argentine celebrations
+[ edit ]
+See also: 2024 Copa América final § Argentina team celebrations , and Enzo Fernández § July 2024 video controversy
+Following Argentina's victory in the final , a video live-streamed by Enzo Fernández on social media showed the Argentine players celebrating with alleged racist chants toward the French national team . The French Football Federation announced it would be lodging a complaint with FIFA . [ 173 ] [ 174 ] [ 175 ] Fernández's club Chelsea announced it would investigate the video. [ 176 ] [ 177 ] Some of Fernández's Chelsea teammates unfollowed him on all of his social media accounts, with his teammate Wesley Fofana described it as "uninhibited racism". [ 178 ] [ 179 ] Fernández later apologized for the incident. [ 180 ] [ 181 ]
+Argentina President Javier Milei congratulated the team for the victory. [ 182 ] Many massive celebrations were held in Buenos Aires, Rosario, Córdoba and Mendoza. [ 183 ]
+See also
+[ edit ]
+2024 Copa América qualifying play-offs
+2024 OFC Men's Nations Cup
+2026 Finalissima
+UEFA Euro 2024
+Notes
+[ edit ]
+↑ The kickoff time was delayed from the original time of 8:00 pm EDT.
+References
+[ edit ]
+1 2 "Copa América 2024: cuándo es, dónde y todo lo que hay que saber" . Goal.com (in Spanish). Archived from the original on March 20, 2023 . Retrieved April 13, 2020 .
+1 2 3 4 "CONMEBOL and Concacaf sign strategic collaboration agreement" . CONCACAF. January 27, 2023. Archived from the original on March 17, 2023 . Retrieved January 27, 2023 .
+↑ "Copa America 2021 Final Highlights: Argentina beat Brazil 1–0, Messi wins first senior International trophy" . The Indian Express . July 11, 2021. Archived from the original on July 11, 2021 . Retrieved July 11, 2021 .
+↑ Burrows, Ben. "Argentina beats Colombia to win record-breaking Copa America title" . The New York Times . ISSN 0362-4331 . Retrieved July 15, 2024 .
+↑ Rosenstein, Greg (July 15, 2024). "Argentina wins the 2024 Copa América title over Colombia with a late goal" . NBC News . Retrieved July 15, 2024 .
+↑ Kaufman, Michelle (November 21, 2023). "Golazo Miami! 2024 Copa America final to be held at Hard Rock Stadium next summer" . Miami Herald . Archived from the original on February 14, 2024 . Retrieved December 7, 2023 .
+↑ "Copa América to run in parallel with Euros from 2020" . Diario online de deportes. March 19, 2017. Archived from the original on July 5, 2019 . Retrieved July 15, 2018 .
+↑ "Ya es oficial: Ecuador no será sede de la Copa América 2024" . El Universo (in Spanish). November 9, 2022. Archived from the original on November 10, 2022 . Retrieved November 10, 2022 .
+↑ Vertelney, Seth (December 12, 2022). "CONMEBOL chief: 'Conversation remains open' on 2024 Copa America in United States" . Pro Soccer Wire . Archived from the original on June 10, 2023 . Retrieved December 14, 2022 .
+↑ Wine II, Donald (January 27, 2023). "United States to host 2024 Copa América" . Stars and Stripes FC . Archived from the original on April 1, 2023 . Retrieved January 27, 2023 .
+↑ "Copa América 2024 to be hosted in USA" . Major League Soccer . January 27, 2023. Archived from the original on April 9, 2023 . Retrieved April 9, 2023 .
+↑ "CONMEBOL Announces Host Venues for Opening and Final matches of the CONMEBOL Copa America 2024" . Copa América . Archived from the original on November 20, 2023 . Retrieved November 20, 2023 .
+↑ "CONMEBOL announces venue cities, stadiums and schedule of the CONMEBOL Copa America 2024" . Copa América . Archived from the original on December 4, 2023 . Retrieved December 4, 2023 .
+↑ "Argentina National Team Training at Florida Blue Training Center Ahead of 2024 Copa América | Inter Miami CF" . intermiamicf .
+↑ "Brazil prepares for the Copa America in a relaxed atmosphere in Orlando" . Yahoo Sports . June 15, 2024.
+↑ "Ecuagol (@ECUAGOL) on X" . X.com . Retrieved July 10, 2026 .
+↑ "The USMNT visited our campus for training camp to prepare for the 2024 Copa América" . June 20, 2024 – via YouTube.
+↑ "Ericka Vera Briones (@ErickaVeraTA) on X" . X.com . Retrieved July 10, 2026 .
+↑ "CONCACAF announces formats for men's national team competitions for the 2023–2026 cycle" . CONCACAF . February 28, 2023. Archived from the original on February 28, 2023 . Retrieved February 28, 2023 .
+↑ "Conoceremos los grupos para la CONMEBOL Copa América 2024" (in Spanish). CONMEBOL. November 10, 2023. Archived from the original on November 14, 2023 . Retrieved November 12, 2023 .
+1 2 3 "CONMEBOL Copa America 2024 Regulations" (PDF) . CONMEBOL. November 29, 2023. Archived (PDF) from the original on December 1, 2023 . Retrieved December 1, 2023 .
+↑ "Key points of the 2024 Copa America draw: Seeded teams, draw pots, and rules" . Sambafoot . December 4, 2023. Archived from the original on December 5, 2023 . Retrieved December 7, 2023 .
+↑ "CONMEBOL Copa América USA 2024™ has increased the allowed number of registered players" . copaamerica.com . Archived from the original on June 16, 2024 . Retrieved June 25, 2024 .
+↑ "Referees called for the CONMEBOL Copa América 2024™" . Copa América . May 24, 2024. Archived from the original on May 25, 2024 . Retrieved May 25, 2024 .
+↑ "Argentina 2-0 Canada (Jun 20, 2024) Game Analysis" . ESPN . June 20, 2024 . Retrieved June 20, 2024 .
+↑ "Chile, Peru leap ahead of Canada with scoreless draw at Copa America" . Sportsnet . June 22, 2024 . Retrieved June 22, 2024 – via Associated Press .
+↑ "Canada 1-0 Peru (Jun 25, 2024) Game Analysis" . ESPN . June 26, 2024 . Retrieved June 26, 2024 .
+↑ Deen, Safid (June 25, 2024). "Argentina vs. Chile live updates: Watch Messi in Copa América game today" . USA Today . Retrieved June 25, 2024 .
+↑ "Argentina 2-0 Peru (Jun 29, 2024) Final Score" . ESPN . June 29, 2024 . Retrieved June 29, 2024 .
+↑ "Copa América 2024 USA » Group A » Canada – Chile 0:0" . WorldFootball.net . June 29, 2024 . Retrieved June 29, 2024 .
+↑ "Ecuador vs. Venezuela" . ESPN . June 22, 2024 . Retrieved June 22, 2024 .
+↑ Armando Botello II (June 22, 2024). "Copa América: Mexico salvages win over Jamaica after losing captain Edson Álvarez to injury" . ESPN . Retrieved June 23, 2024 .
+↑ "Copa América 2024 USA » Group B » Ecuador – Jamaica 3:1" . WorldFootball.net . June 26, 2024 . Retrieved June 26, 2024 .
+↑ "Copa América 2024 USA » Group B » Venezuela – Mexico 1:0" . WorldFootball.net . June 26, 2024 . Retrieved June 26, 2024 .
+↑ "Mexico 0–0 Ecuador (Jun 30, 2024) Final Score" . ESPN . June 30, 2024 . Retrieved June 30, 2024 .
+↑ "Jamaica 0–3 Venezuela (Jun 30, 2024) Final Score" . ESPN . June 30, 2024 . Retrieved June 30, 2024 .
+↑ "Pulisic and Balogun Lift U.S. Men's National Team to Dominant 2–0 Victory Against Bolivia in 2024 Copa América Opener" . USsoccer.com . United States Soccer Federation . June 23, 2024 . Retrieved June 24, 2024 .
+↑ Thames, Alanis (June 23, 2024). "Uruguay starts Copa America campaign with 3–1 win over Panama" . Yahoo! Sports . The Canadian Press . Archived from the original on June 24, 2024 . Retrieved June 24, 2024 .
+↑ "Copa América 2024 USA » Group C » Panama – USA 2:1" . WorldFootball.net . June 27, 2024 . Retrieved June 27, 2024 .
+↑ "Copa América 2024 USA » Group C » Uruguay – Bolivia 5:0" . WorldFootball.net . June 27, 2024 . Retrieved June 27, 2024 .
+↑ Bushnell, Henry (July 1, 2024). "USMNT loses to Uruguay, crashes out of Copa América" . Yahoo Sports . Retrieved July 1, 2024 .
+↑ "BOL 1–3 PAN" . FlashScore . July 1, 2024 . Retrieved July 1, 2024 .
+↑ "Colombia beats Paraguay 2–1 in Copa América opener, extends winning streak to 9" . Fox Sports . Associated Press . June 24, 2024 . Retrieved June 25, 2024 .
+↑ "Brazil vs. Costa Rica" . ESPN . June 25, 2024 . Retrieved June 25, 2024 .
+↑ "Copa América 2024 USA » Group D » Colombia – Costa Rica 3:0" . WorldFootball.net . June 28, 2024 . Retrieved June 28, 2024 .
+↑ "Copa América 2024 USA » Group D » Paraguay – Brazil 1:4" . WorldFootball.net . June 28, 2024 . Retrieved June 28, 2024 .
+↑ "Brazil 1–1 Colombia (Jul 2, 2024) Final Score" . ESPN . July 2, 2024 . Retrieved July 2, 2024 .
+↑ "Copa América 2024 USA » Group D » Costa Rica – Paraguay 2:1" . WorldFootball.net . July 2, 2024 . Retrieved July 2, 2024 .
+↑ "Copa América 2024 USA » Quarter-finals » Argentina – Ecuador 4:2" . WorldFootball.net . July 4, 2024 . Retrieved July 4, 2024 .
+↑ "Copa América 2024 USA » Quarter-finals » Venezuela – Canada 3:4" . WorldFootball.net . July 5, 2024 . Retrieved July 5, 2024 .
+↑ "Copa América 2024 USA » Quarter-finals » Colombia – Panama 5:0" . WorldFootball.net . July 6, 2024 . Retrieved July 6, 2024 .
+↑ "Uruguay 0–0 Brazil (Jul 6, 2024) Game Analysis" . ESPN . July 6, 2024 . Retrieved July 6, 2024 .
+↑ "Argentina 2–0 Canada (Jul 9, 2024) Game Analysis" . ESPN . July 9, 2024 . Retrieved July 9, 2024 .
+↑ "Copa América 2024 USA » Semi-finals » Uruguay – Colombia 0:1" . WorldFootball.net . July 10, 2024 . Retrieved July 10, 2024 .
+↑ "Copa América 2024 USA » Third place play-off » Canada – Uruguay 2:2" . WorldFootball.net . July 13, 2024 . Retrieved July 13, 2024 .
+1 2 3 "Copa final delayed after ticketless fans rush stadium gates" . Reuters. July 14, 2024 . Retrieved July 15, 2024 .
+1 2 Credeur, Aaron; Goff, Steven (July 15, 2024). "Crowd chaos leads to lengthy delay at Copa América final" . The Washington Post . ISSN 0190-8286 . Retrieved July 15, 2024 .
+1 2 "Copa America final delayed: Hard Rock Stadium breached by ticketless fans before Argentina vs. Colombia" . CBS Sports . July 15, 2024 . Retrieved July 15, 2024 .
+1 2 "Fans Seen Entering Copa America Final Through Vents of Hard Rock Stadium" . Sports Illustrated . July 15, 2024 . Retrieved July 15, 2024 .
+↑ Carlisle, Jeff (July 14, 2024). "Copa América final start delayed 30 minutes after fans rush gates" . ABC News . Retrieved July 14, 2024 .
+↑ Rabin, Charles; Hanks, Douglas; Kaufman, Michelle (July 15, 2024). "Lax security for walk-ins led to breach, chaos at Hard Rock Stadium's Copa America final" . Miami Herald . Retrieved July 15, 2024 .
+↑ "2024 Copa America Golden Ball: Player of tournament MVP plus prizes for Golden Glove, Golden Boot and Team of the Tournament" . The Sporting News . July 15, 2024 . Retrieved July 15, 2024 .
+↑ "James Rodríguez Named the Best Player of CONMEBOL Copa America 2024™" . Copa América . July 15, 2024 . Retrieved July 15, 2024 .
+↑ "Dibu Martínez's Record: A Champion in Every Tournament He's Played with Argentina" . Copa América . July 15, 2024 . Retrieved July 15, 2024 .
+↑ "The CONMEBOL Copa América 2024™ Best XI" . Copa América . July 31, 2024 . Retrieved July 31, 2024 .
+↑ "ABSOLUT Sport becomes the Official Travel Partner of CONMEBOL Copa América USA 2024™ | CONMEBOL Copa América" . copaamerica.com . Retrieved November 20, 2024 .
+↑ "Betano, nuevo Sponsor Oficial de la CONMEBOL Copa America 2024™️ – CONMEBOL" [ Betano, new Official Sponsor of the CONMEBOL Copa America 2024™️ ] . www.conmebol.com . Archived from the original on February 23, 2024 . Retrieved June 22, 2024 .
+↑ "BYD se une con la CONMEBOL COPA AMÉRICA USA 2024™ como Partner Oficial – CONMEBOL" . www.conmebol.com (in European Spanish). May 21, 2024. Archived from the original on May 21, 2024 . Retrieved May 22, 2024 .
+↑ "Coca-Cola joins CONMEBOL as Global Partners of the Copa America 2024™️" . copaamerica.com . June 20, 2024. Archived from the original on June 20, 2024 . Retrieved June 21, 2024 .
+↑ "Grupo LATAM y Delta serán las aerolíneas oficiales de la Copa América 2024" . news.delta.com . June 10, 2024. Archived from the original on June 11, 2024 . Retrieved June 10, 2024 .
+↑ "LOWE'S TEAMS UP WITH LIONEL MESSI, INTER MIAMI CF AND CONMEBOL COPA AMÉRICA 2024 USA™ TO WIN OVER SOCCER FANS" . corporate.lowes.com . April 18, 2024. Archived from the original on April 29, 2024 . Retrieved April 18, 2024 .
+↑ "Mastercard Renews its Commitment to South American Football and Becomes the Official Sponsor of Women's Football" . www.mastercard.com . Archived from the original on December 8, 2023 . Retrieved December 8, 2023 .
+↑ "Mercado Livre é o novo patrocinador oficial da Copa América 2024" . ISTOÉ Independente (in Brazilian Portuguese). May 30, 2024 . Retrieved May 30, 2024 .
+↑ "CONMEBOL and Michelob Ultra: Official Beer Sponsor Worldwide of the CONMEBOL Copa América 2024" . copaamerica.com (in European Spanish). Archived from the original on December 9, 2023 . Retrieved December 9, 2023 .
+↑ "PUMA PARTNERS WITH CONMEBOL TO SPONSOR MAJOR FOOTBALLTOURNAMENTS AND PRODUCTION LATIN AMERICAN | PUMA" . about.puma.com . Archived from the original on December 8, 2023 . Retrieved December 8, 2023 .
+↑ "TCL é patrocinadora oficial da CONMEBOL Copa América 2024™, pelo terceiro ano consecutivo – CONMEBOL" . www.conmebol.com (in Brazilian Portuguese). May 29, 2024. Archived from the original on May 30, 2024 . Retrieved May 30, 2024 .
+↑ "Unilever Personal Care brands to partner CONMEBOL Copa América USA 2024™" . CONMEBOL Copa America (in European Spanish). Archived from the original on April 27, 2024 . Retrieved April 27, 2024 .
+↑ "EA SPORTS and CONMEBOL Bring Copa América 2024 to FC 24 Ultimate Team & Mobile" . June 14, 2024.
+↑ "Is Copa America 2024 coming to EA FC 24?" . June 6, 2024.
+↑ "EA SPORTS FC™ Mobile – CONMEBOL Copa América™ 2024" . June 20, 2024.
+↑ "Panini presents the official collectible sticker album of the CONMEBOL Copa América USA 2024™ | CONMEBOL Copa América" .
+1 2 3 {{}}
+↑ "Ekskluzivitet i MCN/ Grupet dhe kalendari i ndeshjeve të Copa America" . MCNTV (in Albanian). June 20, 2024. Archived from the original on June 21, 2024 . Retrieved June 21, 2024 .
+↑ Página|12 (May 31, 2024). "TV Pública transmitirá los partidos de la selección argentina en la Copa América 2024 | Acuerdo con Torneos, DirecTV y Telefe" . PAGINA12 (in Spanish). Archived from the original on June 1, 2024 . Retrieved June 6, 2024 . {{ cite web }} : CS1 maint: numeric names: authors list ( link )
+↑ "Confrensa di Prensa Copa America 2024" . YouTube .
+↑ "Optus Sport secures long term rights to Copa America 2021 and 2024 tournaments" . Optus Sport . March 30, 2021. Archived from the original on June 4, 2021 . Retrieved June 5, 2021 .
+1 2 3 "Die Copa América 2024 LIVE bei Sportdigital+" . June 5, 2024. Archived from the original on June 14, 2024 . Retrieved June 14, 2024 .
+↑ "Scaloni objavio popis Argentinaca za Copa Americu" . June 16, 2024. Archived from the original on June 17, 2024 . Retrieved June 17, 2024 .
+↑ "Where to watch Copa?" . April 26, 2024 . Retrieved June 14, 2024 .
+↑ "No te pierdas el sorteo de la Copa América 2024 este jueves por UNITEL" . Unitel . December 3, 2023. Archived from the original on December 4, 2023 . Retrieved December 4, 2023 .
+↑ Mattos, Rodrigo (September 18, 2023). "Brax leva direitos da Copa América nos EUA" [ Brax takes Copa America rights ] . UOL (in Brazilian Portuguese). Archived from the original on September 20, 2023 . Retrieved September 20, 2023 .
+1 2 "UEFA EURO & CONMEBOL COPA AMÉRICA 2024. All Matches, All Live, All in HD. Subscribe to the Astro Sports Pack, now with free installation" . June 15, 2024 . Retrieved June 19, 2024 .
+↑ "MAX Sport Придоби Праватв за Излъчването на Copa América 2024" . June 4, 2024. Archived from the original on June 14, 2024 . Retrieved June 14, 2024 .
+↑ TSN ca Staff (December 7, 2023). "TSN and RDS Acquire Exclusive Media Rights to the CONMEBOL COPA AMERICA 2024 – TSN.ca" . TSN . Archived from the original on December 8, 2023 . Retrieved December 8, 2023 .
+↑ "CVM TV & C Sport Secure Exclusive Broadcast Rights for Copa América 2024" . December 7, 2023. Archived from the original on December 8, 2023 . Retrieved June 25, 2024 .
+↑ Al Aire Libre (January 22, 2024). "Chilevisión y Canal 13 transmitirán la Copa América 2024" . Radio Cooperativa (in Spanish). Archived from the original on January 22, 2024 . Retrieved January 22, 2024 .
+↑ "2024年美洲杯足球赛央视体育宣传片" . CCTV Sports (in Chinese). June 1, 2024. Archived from the original on June 19, 2024 . Retrieved June 19, 2024 .
+↑ "Confirmado: Caracol y RCN no transmitirán toda la Copa América 2024" . Bolavip Colombia (in Spanish). November 23, 2023. Archived from the original on December 8, 2023 . Retrieved May 1, 2024 .
+↑ "Televisora de Costa Rica transmitirá la Liga de Naciones de la CONCACAF 2023–2024, Copa América 2024 y las Eliminatorias de la CONCACAF rumbo al Mundial 2026 en todas sus plataformas" . September 8, 2023. Archived from the original on November 4, 2023 . Retrieved September 23, 2023 .
+↑ "Viaplay viser Copa América i Danmark – og otte andre lande" . June 11, 2021. Archived from the original on December 1, 2023 . Retrieved December 1, 2023 .
+↑ "Mira la Copa América 2024 COMPLETA por Canal 4 y TCS Go!". June 17, 2024.
+1 2 3 4 5 6 7 "Viaplay visar Copa América 2021 och 2024" [ Viaplay will show Copa América 2021 and 2024 ] (in Swedish). June 17, 2021. Archived from the original on June 5, 2024 . Retrieved June 5, 2024 .
+↑ "Fiji's FBC Sports secures rights to 2022 FIFA World Cup" . Asia-Pacific Broadcasting Union . Archived from the original on April 29, 2024 . Retrieved November 22, 2022 .
+↑ "La Copa America à suivre sur L'Équipe live foot du 20 juin au 14 juillet" . May 28, 2024 . Retrieved June 14, 2024 .
+↑ "კოპა ამერიკა იწყება! ტურნირს ჩემპიონები კანადასთან დაპირისპირებით გახსნიან 04:00-დან, უყურე მატჩის ლაივს Setanta Sports 1-სა" . June 20, 2024 . Retrieved June 25, 2024 .
+↑ "Το Copa America 2024 αποκλειστικά σε ΑΝΤ1 και ANT1+" . antenna.gr/news (in Greek). Archived from the original on June 7, 2024 . Retrieved June 7, 2024 .
+↑ "Inicia la Copa América con Transmisión Exclusiva en TV Azteca Guatemala" . June 20, 2024. Archived from the original on June 22, 2024 . Retrieved June 22, 2024 .
+↑ "Cómo ver la Eurocopa y Copa América en Guatemala" . June 20, 2024. Archived from the original on June 22, 2024 . Retrieved June 22, 2024 .
+↑ "Copa América 2024, el torneo de fútbol más antiguo del mundo Solo por el Once" . December 1, 2023. Archived from the original on February 25, 2024 . Retrieved February 25, 2024 .
+↑ "美洲國家盃2024直播賽程時間表 HOY TV免費播足全部32場美洲盃" . HK01 (in Chinese). June 18, 2024. Archived from the original on June 19, 2024 . Retrieved June 19, 2024 .
+↑ "Copa América Network4 Kozvetitesi Jog" . June 14, 2024 . Retrieved June 17, 2024 . [ permanent dead link ]
+↑ "Official Account Nex Parabola on Instagram" . April 2, 2024 . Retrieved April 2, 2024 .
+1 2 "Premier Sports Scores 2024 Copa América rights" . April 24, 2024. Archived from the original on May 1, 2024 . Retrieved May 2, 2024 .
+↑ "Copa America 2024 in diretta su Sportitalia" . May 11, 2024. Archived from the original on May 17, 2024 . Retrieved May 11, 2024 .
+↑ "LA @copaamerica SBARCA SU MOLA, SEMPRE PIU CASA DEL CALCIO SUDAMERICANO" . May 29, 2024. Archived from the original on May 29, 2024 . Retrieved May 30, 2024 .
+↑ "We've Got COPA! Catch all the COPA América matches live on CVM and CVM+" . June 19, 2024 . Retrieved June 22, 2024 .
+↑ "Amazon makes rare sports move in Japan with Copa América" . SportBusiness . June 6, 2024. Archived from the original on June 7, 2024 . Retrieved June 7, 2024 .
+↑ "«Qazaqstan» және «Qazsport» телеарналары футболдан 2024 жылғы Америка кубогын тікелей эфирде көрсетеді" . June 17, 2024. Archived from the original on June 22, 2024 . Retrieved June 22, 2024 .
+↑ "TelevisaUnivision Announces Expansive Sports Offering in 2024" . May 16, 2023. Archived from the original on November 27, 2023 . Retrieved December 7, 2023 .
+↑ "TV Azteca transmitirá el sorteo de la Copa América 2024" . December 5, 2023. Archived from the original on December 5, 2023 . Retrieved December 8, 2023 .
+↑ "Voetballiefhebbers opgelet: Nederlandse zender heeft rechten Copa América" . May 3, 2024. Archived from the original on June 14, 2024 . Retrieved June 14, 2024 .
+↑ "Spark Sport closure" . June 30, 2023. Archived from the original on December 8, 2023 . Retrieved December 7, 2023 .
+↑ "Instagram" . May 11, 2024 . Retrieved June 25, 2024 .
+↑ Cite error: The named reference UEFA was invoked but never defined (see the help page ).
+↑ "Sorteo Copa América 2024: Fecha, hora y dónde ver en vivo" . December 7, 2023. Archived from the original on December 8, 2023 . Retrieved December 8, 2023 .
+↑ "Copa América 2024: Todo lo que debes saber previo a este evento internacional" . December 7, 2023. Archived from the original on December 16, 2023 . Retrieved December 8, 2023 .
+↑ Cite error: The named reference AFC was invoked but never defined (see the help page ).
+↑ "¡La Copa América nos une!" . December 5, 2023. Archived from the original on December 8, 2023 . Retrieved December 8, 2023 .
+↑ "¿Qué canales transmitirán la Copa América en vivo en Perú y qué partidos irán por señal abierta o cable?" . June 7, 2024. Archived from the original on June 8, 2024 . Retrieved June 10, 2024 .
+↑ "x.com" . X (formerly Twitter) . Archived from the original on May 31, 2024 . Retrieved May 31, 2024 .
+↑ "As maiores estrelas da Copa América 2024 em exclusivo na sport tv" . May 24, 2024 . Retrieved June 14, 2024 .
+↑ "Copa America 2024, în EXCLUSIVITATE la Digi Sport" [ Copa America 2024, EXCLUSIVE at Digi Sport ] . digisport.ro (in Romanian). May 16, 2024. Archived from the original on May 16, 2024 . Retrieved May 17, 2024 .
+↑ "Кубок Америки 2024 в —Okko" . June 11, 2024. Archived from the original on June 22, 2024 . Retrieved June 22, 2024 .
+↑ "TV program – RTVS.sk" . www.rtvs.sk (in Slovak). Archived from the original on June 11, 2024 . Retrieved June 11, 2024 .
+↑ " [ 방송소식 ] 티빙, '2024 코파 아메리카' 전 경기 생중계" [ TVING will broadcast all the matches of '2024 Copa America' at live. ] . Yonhap News (in Korean). May 30, 2024. Archived from the original on June 7, 2024 . Retrieved May 30, 2024 .
+↑ "La Copa América y la Soccer Champions Tour se juegan al completo en Movistar Plus+" [ Copa América and the Soccer Champions Tour in full on Movistar Plus+ ] . mundoplus.tv (in European Spanish). May 16, 2024 . Retrieved May 16, 2024 .
+↑ "La Copa Amèrica de futbol i la gira americana del Barça, a 3Cat" [ The football Copa América and Barcelona's American tour will be on 3Cat ] (in Catalan). CCMA . June 11, 2024. Archived from the original on June 11, 2024 . Retrieved June 11, 2024 .
+↑ "Canal Plus acquires Copa America rights for sub-Saharan Africa" . June 12, 2024. Archived from the original on June 17, 2024 . Retrieved June 17, 2024 .
+↑ "Copa América 2024 maçında Arjantin-Kanada karşı karşıya Gerliyor" . June 20, 2024 . Retrieved June 22, 2024 .
+↑ Carp, Sam (May 5, 2021). "Copa America to kick off Fox Sports" six-year Conmebol rights deal" . SportsPro . Archived from the original on June 8, 2023 . Retrieved October 16, 2022 .
+↑ Medow, Shawn (May 16, 2023). "TelevisaUnivision lands Super Bowl, Copa América, Uefa club rights" . SportBusiness . Archived from the original on May 16, 2023 . Retrieved May 16, 2023 .
+↑ "Televisación de Uruguay en la Copa América: lo que está confirmado, qué se negocia y la estrategia de AUF TV" . June 17, 2024 . Retrieved June 22, 2024 .
+↑ "Amerika Kubogining birinchi o'yinini o'tkazib yubormang! Turnirni chempionlar Kanada bilan qarama-qarshilik orqali orchib berishadi! Uchrashuvni 05:00 dan boshlab Setanta Sports 1 telekanali" . June 20, 2024 . Retrieved June 25, 2024 .
+↑ "TELEVEN transmitirá la Copa América 2024" . September 7, 2023. Archived from the original on December 8, 2023 . Retrieved December 8, 2023 .
+↑ thanhnien.vn (June 15, 2024). "Khán giả Việt Nam chính thức được xem Copa America 2024, trên kênh nào, ở đâu?" [ Where to watch Copa America 2024 in Vietnam? ] . thanhnien.vn (in Vietnamese). Archived from the original on June 16, 2024 . Retrieved June 15, 2024 .
+↑ "CAPITÁN will be the official mascot of the CONMEBOL Copa América 2024" . Copa América . Archived from the original on January 6, 2024 . Retrieved December 8, 2023 .
+↑ "PUMA Cumbre: the official ball of the CONMEBOL Copa América 2024" . Copa América . Archived from the original on January 6, 2024 . Retrieved December 8, 2023 .
+↑ "¿Cuál es la canción oficial de la Copa América 2024 y quién es su autor?" . AS.com .
+↑ Contreras, Emilio (July 7, 2024). " "Sandstorm": La canción "no oficial" de la Copa América que opacó a Shakira y hace bailar estadios" . BioBioChile - La Red de Prensa Más Grande de Chile (in Spanish) . Retrieved September 23, 2025 .
+↑ Mudaliar, Karthik (July 9, 2024). "Copa America 2024: Smaller US grounds, poor quality of surface hamper tournament" . Sportstar . Retrieved July 14, 2024 .
+↑ James, Stuart (June 27, 2024). "Why Copa America is being played on small pitches – and what it means" . The New York Times . ISSN 0362-4331 . Retrieved July 14, 2024 .
+↑ "Copa organizers defend quality of pitches in U.S." ESPN . July 1, 2024 . Retrieved July 14, 2024 .
+↑ O'Keeffe, Greg. " 'It's not normal grass': Why field conditions at Copa America are causing concern" . The New York Times .
+1 2 "Will Copa América's controversy over poor pitch conditions affect 2026 World Cup?" . ESPN . July 6, 2024 . Retrieved July 13, 2024 .
+↑ "Argentina slams Atlanta field: 'Better that we won' " . ESPN . June 21, 2024 . Retrieved July 13, 2024 .
+↑ "Copa America 2024: Poor ground surfaces, injury concerns & player complaints" . Khel Now . Retrieved July 14, 2024 .
+↑ O'Sullivan, Joseph (July 10, 2024). "High Copa América Ticket Prices Led To Many Empty Seats" . Forbes . Retrieved July 14, 2024 .
+↑ "Why do Copa América games have empty seats? It's about more than ticket prices" . Yahoo Sports . June 25, 2024 . Retrieved July 14, 2024 .
+↑ "Pulisic 'can't accept' referee as U.S. exits Copa" . ESPN . July 2, 2024 . Retrieved July 14, 2024 .
+↑ "CONMEBOL admits Brazil VAR error in Copa America" . World Soccer Talk . July 3, 2024 . Retrieved July 14, 2024 .
+↑ "Footballer Darwin Núñez involved in clash with fans" . BBC Sport . July 11, 2024 . Retrieved July 12, 2024 .
+↑ "Incidentes entre los jugadores uruguayos e hinchas colombianos al final del partido: mirá los videos" . El País (in Spanish). July 11, 2024 . Retrieved July 12, 2024 .
+↑ "Conmebol investigates clash between Nunez and fans" . BBC Sport . July 11, 2024 . Retrieved July 12, 2024 .
+↑ "Uruguay coach Bielsa defends players after Copa America brawl" . Sportstar . July 13, 2024 . Retrieved July 13, 2024 .
+↑ "Dibu Martínez calienta la final ante Colombia con seis palabras sobre la pelea con Uruguay" . Bolavip Colombia (in Spanish). July 13, 2024. Archived from the original on July 13, 2024 . Retrieved July 13, 2024 .
+↑ "Juan Fernando Quintero alzó la voz y defendió a familias de jugadores uruguayos" . Gol Caracol (in Spanish). July 13, 2024 . Retrieved July 14, 2024 .
+↑ "Absolute Disaster Crowd Crush Scenes Ahead of Copa America Final Cast Shadow on USA as World Cup Host" . www.theroar.com.au . July 15, 2024 . Retrieved August 17, 2024 .
+↑ "Ticketed fans kept out of Copa America final want refunds" . July 15, 2024.
+↑ "Argentina boss Lionel Scaloni handed one-match ban and fined after halftime antics in Copa America" . Goal.com . June 28, 2024 . Retrieved July 15, 2024 .
+↑ "Explained: Bizarre reason Marcelo Bielsa suspended for Uruguay vs USMNT as Gregg Berhalter's side handed potential boost ahead of huge Copa America clash" . Goal.com . June 30, 2024 . Retrieved July 15, 2024 .
+↑ " 'Unfair and disrespectful'? Opponents call out Mexico's, Argentina's halftime antics at Copa América" . Yahoo Sports . June 23, 2024 . Retrieved July 15, 2024 .
+↑ Cardenas, Felipe; Burrows, Ben (July 13, 2024). "Colombia coach criticizes Copa America plans for halftime show" . The New York Times . ISSN 0362-4331 . Retrieved July 15, 2024 .
+↑ "France take action over 'racist' Argentina chants" . July 16, 2024.
+↑ "France condemns Argentina footballers' 'racist remarks' – DW – 07/16/2024" . Deutsche Welle .
+↑ "Argentina faces calls for discipline over team singing 'racist' song about France players" . USA Today .
+↑ Dean, Sam; Rumsby, Ben. "Enzo Fernandez's 'racist' video triggers Chelsea investigation after team-mates' fury" . The Telegraph . The Telegraph . Retrieved July 17, 2024 .
+↑ Kinsella, Nizaar (July 16, 2024). "Fernandez faces disciplinary action over alleged racist chant" . BBC Sport . BBC News . Retrieved July 17, 2024 .
+↑ "Enzo Fernandez: Chelsea and Fifa begin action over alleged racist chant video" . July 16, 2024.
+↑ "Chelsea Investigating Enzo Fernandezs Video of Argentina Squad That French Football Federation Alleges is Racist" . www.skysports.com .
+↑ Aarons, Ed. "Enzo Fernández apologises to Chelsea teammates over racist chants" . The Guardian .
+↑ "Enzo Fernández apologizes for singing racist chant with Argentina teammates about France" . CNN . July 17, 2024.
+↑ "Milei felicita a selección de Argentina por bicampeonato en la Copa América" . Milenio. July 14, 2024.
+↑ "Argentina fans revel in their Copa America triumph, a brief respite from their country's crises" . News 10. July 15, 2024.
+External links
+[ edit ]
+Wikimedia Commons has media related to Copa América 2024 .
+Official website
+v
+t
+e
+2024 Copa América
+Stages
+Group stage
+Group A
+Group B
+Group C
+Group D
+Knockout stage
+Final
+General information
+Final halftime show
+Squads
+Official song
+Qualification
+CONCACAF Nations League
+League A
+Quarter-finals
+Qualifying play-offs
+v
+t
+e
+Copa América
+Editions
+South American
+Championship
+Argentina 1916
+Uruguay 1917
+Brazil 1919
+Chile 1920
+Argentina 1921
+Brazil 1922
+Uruguay 1923
+Uruguay 1924
+Argentina 1925
+Chile 1926
+Peru 1927
+Argentina 1929
+Peru 1935
+Argentina 1937
+Peru 1939
+Chile 1941
+Uruguay 1942
+Chile 1945
+Argentina 1946
+Ecuador 1947
+Brazil 1949
+Peru 1953
+Chile 1955
+Uruguay 1956
+Peru 1957
+Argentina 1959
+Ecuador 1959
+Bolivia 1963
+Uruguay 1967
+Copa América
+1975 (no fixed host)
+1979 (no fixed host)
+1983 (no fixed host)
+Argentina 1987
+Brazil 1989
+Chile 1991
+Ecuador 1993
+Uruguay 1995
+Bolivia 1997
+Paraguay 1999
+Colombia 2001
+Peru 2004
+Venezuela 2007
+Argentina 2011
+Chile 2015
+United States 2016 (Centenario)
+Brazil 2019
+Brazil 2021
+United States 2024
+2028
+Finals
+1975
+1979
+1983
+1987
+1993
+1995
+1997
+1999
+2001
+2004
+2007
+2011
+2015
+2016
+2019
+2021
+2024
+Squads
+1916
+1917
+1919
+1920
+1921
+1922
+1923
+1924
+1925
+1926
+1927
+1929
+1935
+1937
+1939
+1941
+1942
+1945
+1946
+1947
+1949
+1953
+1955
+1956
+1957
+1959 (Argentina)
+1959 (Ecuador)
+1963
+1967
+1975
+1979
+1983
+1987
+1989
+1991
+1993
+1995
+1997
+1999
+2001
+2004
+2007
+2011
+2015
+2016
+2019
+2021
+2024
+Qualification
+1967
+2016
+2024
+Related topics
+Copa Centenario Revolución de Mayo
+Squads
+Awards
+Hat-tricks
+Mascots
+Music
+Penalty shoot-outs
+Records and statistics
+Trophy
+U.S. television
+Category
+Commons
+v
+t
+e
+2024 Copa América venues
+Allegiant Stadium ( Paradise )
+Arrowhead Stadium ( Kansas City )
+AT&T Stadium ( Arlington )
+Bank of America Stadium ( Charlotte )
+Children's Mercy Park ( Kansas City )
+Hard Rock Stadium ( Miami Gardens )
+Inter&Co Stadium ( Orlando )
+Levi's Stadium ( Santa Clara )
+Mercedes-Benz Stadium ( Atlanta )
+MetLife Stadium ( East Rutherford )
+NRG Stadium ( Houston )
+Q2 Stadium ( Austin )
+SoFi Stadium ( Inglewood )
+State Farm Stadium ( Glendale )
+v
+t
+e
+2024 in South American football ( CONMEBOL )
+« 2023
+2025 »
+Domestic leagues
+Argentina
+Bolivia
+Brazil
+Chile
+Colombia
+Ecuador
+Paraguay
+Peru
+Uruguay
+Venezuela
+Domestic cups
+Argentina
+Brazil
+Chile
+Colombia
+Ecuador
+Paraguay
+Uruguay ( 2023 , 2024 )
+Venezuela
+League cups
+Argentina
+Super cups
+Argentina ( Supercopa Argentina , Trofeo de Campeones )
+Brazil
+Chile
+Colombia
+Paraguay
+Uruguay
+CONMEBOL competitions
+Copa Libertadores ( qualifying stages , group stage , final stages , final )
+Copa Sudamericana ( first stage , group stage , final stages , final )
+Recopa Sudamericana
+Copa Libertadores Femenina
+U-20 Copa Libertadores ( final )
+Under-20 Intercontinental Cup
+Copa Libertadores de Futsal
+Copa Libertadores de Futsal Femenina
+v
+t
+e
+2023 – 24 in North and Central America and Caribbean association football ( CONCACAF )
+« 2022–23
+2024–25 »
+Domestic leagues
+Anguilla '23 '24
+Antigua and Barbuda
+Aruba
+Bahamas
+Barbados '23 '24
+Belize
+Bermuda
+Bonaire
+British Virgin Islands
+Canada '23 '24
+Cayman Islands
+Costa Rica
+Cuba
+Curaçao
+Dominica '23 '24
+Dominican Republic '23 '24
+El Salvador
+French Guiana
+Greenland '23 '24
+Grenada '23 '24
+Guadeloupe
+Guatemala
+Guyana
+Haiti
+Honduras
+Jamaica
+Martinique
+Mexico
+Montserrat
+Nicaragua
+Panama '23 '24
+Puerto Rico
+Saint-Barthelemy '23 '24
+Saint Kitts and Nevis
+Saint Lucia '23 '24
+Saint-Martin
+Saint Pierre and Miquelon '23 '24
+Saint Vincent and the Grenadines
+Sint Maarten
+Suriname
+Trinidad and Tobago '23 '23–'24
+Turks and Caicos Islands
+United States '23 '24
+U.S. Virgin Islands
+Domestic cups
+Anguilla '23 '24
+Aruba
+Barbados '23 '24
+Bermuda
+British Virgin Islands
+Canada '23 '24
+Cayman Islands
+Costa Rica
+El Salvador
+French Guiana
+Guadeloupe '23 '24
+Guatemala
+Honduras '23
+Martinique '23 '24
+Nicaragua
+Panama
+Puerto Rico '23 '24
+Saint Kitts and Nevis
+Saint Lucia '23 '24
+Suriname
+Trinidad and Tobago
+United States '23 '24
+League cups
+Mexico–United States : Leagues Cup
+group stage
+knockout stage
+Final
+Super cups
+Campeones
+CONCACAF competitions
+National
+Nations League
+Finals
+Final
+Club
+Caribbean Cup
+Caribbean Shield
+Central American Cup
+Champions Cup
+Final
+International competitions
+National
+2024 Copa América ( Qualifying play-offs )
+Club
+FIFA Club World Cup
+Retrieved from " https://en.wikipedia.org/w/index.php?title=2024_Copa_América&oldid=1380638226 "
+Categories : 2024 Copa América
+Copa América tournaments
+2024 in South American men's continental football
+2024 in South American men's international football
+2024 in American soccer
+Men's international association football competitions hosted by the United States
+June 2024 sports events in the United States
+July 2024 sports events in the United States
+Hidden categories: Articles with short description
+Short description is different from Wikidata
+Use American English from June 2024
+All Wikipedia articles written in American English
+Use mdy dates from June 2024
+CS1 Spanish-language sources (es)
+Articles containing OSM location maps
+All articles with minor POV problems
+Articles with minor POV problems from June 2024
+CS1 European Spanish-language sources (es-es)
+CS1 Brazilian Portuguese-language sources (pt-br)
+CS1 Albanian-language sources (sq)
+CS1 maint: numeric names: authors list
+CS1 Chinese-language sources (zh)
+CS1 Greek-language sources (el)
+All articles with dead external links
+Articles with dead external links from August 2024
+Articles with permanently dead external links
+CS1 Swedish-language sources (sv)
+CS1 Romanian-language sources (ro)
+CS1 Slovak-language sources (sk)
+CS1 Korean-language sources (ko)
+CS1 Catalan-language sources (ca)
+CS1 Vietnamese-language sources (vi)
+Commons category link from Wikidata
+Official website not in Wikidata
+Pages with reference errors
+Pages using the Kartographer extension
+This page was last edited on 17 October 2026, at 00:22 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+2024 Copa América
+44 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"2024 Copa Am\u00e9rica","url":"https:\/\/en.wikipedia.org\/wiki\/2024_Copa_Am%C3%A9rica","sameAs":"http:\/\/www.wikidata.org\/entity\/Q16481624","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q16481624","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2013-09-15T00:44:28Z","dateModified":"2026-10-17T00:22:23Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/4\/45\/2024_Copa_Am%C3%A9rica_logo.svg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"2024 edition of the Copa Am\u00e9rica association football competition"}

@@ -1,0 +1,3086 @@
+Source: https://en.wikipedia.org/wiki/UEFA_Euro_2024
+Final URL: https://en.wikipedia.org/wiki/UEFA_Euro_2024
+HTTP 200
+Fetched: 2026-10-21T02:13:46.384Z
+
+UEFA Euro 2024 - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Host selection
+2
+Venues
+Toggle Venues subsection
+2.1
+Team base camps
+2.2
+Ticketing
+3
+Qualification
+Toggle Qualification subsection
+3.1
+Qualified teams
+3.1.1
+Disqualification of Russia
+4
+Final draw
+Toggle Final draw subsection
+4.1
+Seeding
+4.2
+Draw
+5
+Squads
+6
+Match officials
+7
+Group stage
+Toggle Group stage subsection
+7.1
+Tiebreakers
+7.2
+Group A
+7.3
+Group B
+7.4
+Group C
+7.5
+Group D
+7.6
+Group E
+7.7
+Group F
+7.8
+Ranking of third-placed teams
+8
+Knockout stage
+Toggle Knockout stage subsection
+8.1
+Bracket
+8.2
+Round of 16
+8.3
+Quarter-finals
+8.4
+Semi-finals
+8.5
+Final
+9
+Statistics
+Toggle Statistics subsection
+9.1
+Goalscorers
+9.2
+Awards
+9.3
+Discipline
+9.4
+Prize money
+9.5
+Records
+10
+Marketing
+Toggle Marketing subsection
+10.1
+Branding
+10.2
+Merchandise
+10.3
+Official song
+10.4
+Broadcasting rights
+10.5
+Sponsorship
+11
+Symbols
+Toggle Symbols subsection
+11.1
+Mascot
+11.2
+Match ball
+12
+Controversies and incidents
+Toggle Controversies and incidents subsection
+12.1
+Pitch invasions, thrown projectiles, and other interference
+12.2
+Barnabás Varga injury
+12.3
+Balkan incidents
+12.4
+Merih Demiral celebration
+12.5
+Top Coffee bombing
+12.6
+Spanish celebrations
+12.7
+Referee performance in the quarter-final Germany – Spain
+13
+See also
+14
+References
+15
+External links
+Toggle the table of contents
+UEFA Euro 2024
+76 languages
+Alemannisch
+العربية
+الدارجة
+Asturianu
+Azərbaycanca
+Basa Bali
+Беларуская (тарашкевіца)
+Беларуская
+Български
+বাংলা
+Bosanski
+Català
+کوردی
+Čeština
+Cymraeg
+Dansk
+Deutsch
+Ελληνικά
+Esperanto
+Español
+Eesti
+Euskara
+فارسی
+Suomi
+Võro
+Français
+Nordfriisk
+Frysk
+Gaeilge
+Galego
+עברית
+हिन्दी
+Hrvatski
+Magyar
+Հայերեն
+Արեւմտահայերէն
+Bahasa Indonesia
+Ido
+Íslenska
+Italiano
+日本語
+ქართული
+Қазақша
+한국어
+Limburgs
+Lietuvių
+Latviešu
+Malagasy
+Македонски
+Bahasa Melayu
+Nederlands
+Norsk nynorsk
+Norsk bokmål
+Polski
+Português
+Română
+Русский
+Srpskohrvatski / српскохрватски
+Simple English
+Slovenčina
+Slovenščina
+Anarâškielâ
+Shqip
+Српски / srpski
+Svenska
+Ślůnski
+தமிழ்
+ไทย
+Türkçe
+Українська
+اردو
+Oʻzbekcha / ўзбекча
+Tiếng Việt
+მარგალური
+粵語
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikimedia Commons
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+17th edition of the UEFA European Football Championship
+"Euro 2024" redirects here. For the handball competition in the same country, see 2024 European Men's Handball Championship .
+{{nobold|''{{in lang|de}}''}}"},"image":{"wt":"UEFA Euro 2024 Logo.svg"},"size":{"wt":"180px"},"caption":{"wt":"{{longitem|''<br><big>United by Football.</big><br />Vereint im Herzen Europas.''<br />''(United in the heart of Europe.)''}}"},"country":{"wt":"Germany"},"dates":{"wt":"14 June – 14 July"},"num_teams":{"wt":"24"},"venues":{"wt":"10"},"cities":{"wt":"10"},"count":{"wt":"4"},"champion":{"wt":"Spain"},"second":{"wt":"England"},"third_other":{"wt":"{{fb|FRA}}<br>{{fb|NED}}"},"attendance":{"wt":"{{#expr: <!--Group A-->+ 65052 + 41676 + 54000 + 42711 + 46685 + 54000 <!--Group B-->+ 68844 + 60512 + 46784 + 49528 + 46586 + 38322 <!--Group C-->+ 54000 + 48953 + 63028 + 46177 + 41536 + 64288 <!--Group D-->+ 48117 + 46425 + 69455 + 38531 + 68363 + 59728 <!--Group E-->+ 61591 + 45181 + 43910 + 42535 + 45033 + 54000 <!--Group F-->+ 59127 + 38421 + 46524 + 61047 + 49616 + 47683 <!--Round of 16-->+ 68172 + 61612 + 47244 + 42233 + 46810 + 46576 + 65012 + 38305 <!--Quarter-finals-->+ 54000 + 47789 + 46907 + 70091 <!--Semi-finals-->+ 62042 + 60926 <!--Final-->+ 65600}}"},"top_scorer":{"wt":"{{ubl|{{fbicon|ENG}} [[Harry Kane]]|\n{{fbicon|GEO}} [[Georges Mikautadze]]|\n{{fbicon|GER}} [[Jamal Musiala]]|\n{{fbicon|NED}} [[Cody Gakpo]]|\n{{fbicon|SVK}} [[Ivan Schranz]]|\n{{fbicon|ESP}} [[Dani Olmo]]}}\n(3 goals each)"},"matches":{"wt":"51"},"goals":{"wt":"117"},"player":{"wt":"{{fbicon|ESP}} [[Rodri (footballer, born 1996)|Rodri]]"},"young_player":{"wt":"{{fbicon|ESP}} [[Lamine Yamal]]"},"prevseason":{"wt":"[[UEFA Euro 2020|2020]]"},"nextseason":{"wt":"''[[UEFA Euro 2028|2028]]''"}},"i":0}}]}'> UEFA Euro 2024 Fußball-Europameisterschaft 2024
+(in German)
+United by Football.
+Vereint im Herzen Europas.
+(United in the heart of Europe.)
+Tournament details
+Host country Germany
+Dates 14 June – 14 July
+Teams 24
+Venues 10 (in 10 host cities)
+Final positions
+Champions Spain (4th title)
+Runners-up England
+Third place France
+Netherlands
+Tournament statistics
+Matches played 51
+Goals scored 117 (2.29 per match)
+Attendance 2,681,288 (52,574 per match)
+Top scorers Harry Kane
+Georges Mikautadze
+Jamal Musiala
+Cody Gakpo
+Ivan Schranz
+Dani Olmo
+(3 goals each)
+Best player Rodri
+Best young player Lamine Yamal
+← 2020
+2028 →
+International football competition
+The 2024 UEFA European Football Championship , commonly referred to as UEFA Euro 2024 or simply Euro 2024 , was the 17th UEFA European Championship , the quadrennial international football championship organised by UEFA for the European men's national teams of their member associations. Germany hosted the tournament, which took place from 14 June to 14 July 2024. The tournament involved 24 teams.
+It was the third time that European Championship matches were played on German territory and the second time in reunified Germany , as West Germany hosted the 1988 tournament , and four matches of the multi-national Euro 2020 were played in Munich . It was the first time the competition was held in what was formerly East Germany , with Leipzig as a host city, as well as the first major tournament since the 2006 FIFA World Cup that Germany served as a solo host nation. [ 1 ] [ 2 ] The tournament returned to its usual four-year cycle after the 2020 edition was postponed to 2021 due to the COVID-19 pandemic .
+Georgia made their tournament debut. Italy were the defending champion, having won the 2020 final against England on penalties , [ 3 ] but failed to defend the title after being eliminated by Switzerland in the round of 16. [ 4 ] Host nation Germany were eliminated by Spain in the quarter-finals; Spain went on to win the tournament for a record fourth time after defeating England 2–1 in the final . [ 5 ]
+Host selection
+[ edit ]
+Main article: UEFA Euro 2024 bids
+On 8 March 2017, UEFA announced that two countries, Germany and Turkey , had announced their intentions to host the tournament before the deadline of 3 March 2017. [ 6 ] [ 7 ]
+The host was chosen by the UEFA Executive Committee in a confidential ballot, [ 8 ] [ 9 ] needing only a simple majority of votes to win. If the votes were equal, the final decision rested with UEFA president Aleksander Čeferin . [ 10 ] [ 11 ] Out of the 20 members of the UEFA Executive Committee , Reinhard Grindel (Germany) and Servet Yardımcı (Turkey) could not vote because they were ineligible. Lars-Christer Olsson (Sweden) was also absent due to illness. In total, 17 members were able to vote. [ 8 ] [ 12 ]
+The host was selected on 27 September 2018 in Nyon , Switzerland. [ 2 ] [ 8 ] [ 13 ] Germany initially planned to fully host Euro 2020, although it had not announced any firm interest by May 2012. [ 14 ]
+Voting results
+Country
+Votes
+Germany
+12
+Turkey
+4
+Abstention
+1
+Total
+17
+Venues
+[ edit ]
+180km
+112miles
+Stuttgart
+Munich
+Leipzig
+Hamburg
+Gelsenkirchen
+Frankfurt
+Düsseldorf
+Dortmund
+Cologne
+Berlin
+&nbsp;&nbsp;&nbsp;</div>","zoom":"6"},"body":{"extsrc":"[ { \"type\": \"FeatureCollection\", \"features\": [ { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Berlin]]<br>[[File:Olympiastadion Berlin, 2023.jpg|250px]]\", \"description\": \"[[Olympiastadion (Berlin)|Olympiastadion]] ([https://geohack.toolforge.org/geohack.php?params=52.5147;13.2395_dim:2000 52.5147,13.2395])\", \"marker-symbol\": \"-number-F602\", \"marker-size\": \"medium\", \"marker-color\": \"#DB3123\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [13.2395,52.5147] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Cologne]]<br>[[File:Drohnenaufnahme RheinEnergieStadion im Sportpark Müngersdorf-0551.jpg|250px]]\", \"description\": \"[[RheinEnergieStadion]] ([https://geohack.toolforge.org/geohack.php?params=50.9335;6.8751_dim:2000 50.9335,6.8751])\", \"marker-symbol\": \"-number-F602\", \"marker-size\": \"medium\", \"marker-color\": \"#DB3123\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [6.8751,50.9335] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Dortmund]]<br>[[File:Signal_iduna_park_stadium_dortmund_4.jpg|250px]]\", \"description\": \"[[Westfalenstadion]] ([https://geohack.toolforge.org/geohack.php?params=51.4926;7.4518_dim:2000 51.4926,7.4518])\", \"marker-symbol\": \"-number-F602\", \"marker-size\": \"medium\", \"marker-color\": \"#DB3123\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [7.4518,51.4926] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Düsseldorf]]<br>[[File:Merkur-Spiel-Arena.jpg|250px]]\", \"description\": \"[[Merkur Spiel-Arena]] ([https://geohack.toolforge.org/geohack.php?params=51.2617;6.7331_dim:2000 51.2617,6.7331])\", \"marker-symbol\": \"-number-F602\", \"marker-size\": \"medium\", \"marker-color\": \"#DB3123\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [6.7331,51.2617] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Frankfurt]]<br>[[File:Commerzbank-Arena (Haupttribüne).JPG|250px]]\", \"description\": \"[[Waldstadion (Frankfurt)|Waldstadion]] ([https://geohack.toolforge.org/geohack.php?params=50.0686;8.6454_dim:2000 50.0686,8.6454])\", \"marker-symbol\": \"-number-F602\", \"marker-size\": \"medium\", \"marker-color\": \"#DB3123\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [8.6454,50.0686] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Gelsenkirchen]]<br>[[File:Gelsenkirchen - Schalker Feld - AufSchalke 26 ies.jpg|250px]]\", \"description\": \"[[Arena AufSchalke]] ([https://geohack.toolforge.org/geohack.php?params=51.5546;7.0676_dim:2000 51.5546,7.0676])\", \"marker-symbol\": \"-number-F602\", \"marker-size\": \"medium\", \"marker-color\": \"#DB3123\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [7.0676,51.5546] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Hamburg]]<br>[[File:HH imtech arena.jpg|250px]]\", \"description\": \"[[Volksparkstadion]] ([https://geohack.toolforge.org/geohack.php?params=53.5872;9.8986_dim:2000 53.5872,9.8986])\", \"marker-symbol\": \"-number-F602\", \"marker-size\": \"medium\", \"marker-color\": \"#DB3123\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [9.8986,53.5872] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Leipzig]]<br>[[File:Red Bull arena, Leipzig von oben Zentralstadion.jpg|250px]]\", \"description\": \"[[Red Bull Arena (Leipzig)|Red Bull Arena]] ([https://geohack.toolforge.org/geohack.php?params=51.3458;12.3483_dim:2000 51.3458,12.3483])\", \"marker-symbol\": \"-number-F602\", \"marker-size\": \"medium\", \"marker-color\": \"#DB3123\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [12.3483,51.3458] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Munich]]<br>[[File:Allianz-Arena-München.jpg|250px]]\", \"description\": \"[[Allianz Arena]] ([https://geohack.toolforge.org/geohack.php?params=48.2188;11.6247_dim:2000 48.2188,11.6247])\", \"marker-symbol\": \"-number-F602\", \"marker-size\": \"medium\", \"marker-color\": \"#DB3123\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [11.6247,48.2188] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Stuttgart]]<br>[[File:Stuttgart_stadium.jpg|250px]]\", \"description\": \"[[MHPArena]] ([https://geohack.toolforge.org/geohack.php?params=48.7923;9.232_dim:2000 48.7923,9.232])\", \"marker-symbol\": \"-number-F602\", \"marker-size\": \"medium\", \"marker-color\": \"#DB3123\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [9.232,48.7923] } } ] } ]"}}'>
+Location of the host cities of the UEFA Euro 2024.
+Germany had a wide selection of stadiums that met UEFA's minimum capacity requirement of 30,000 seats for European Championship matches. [ 15 ] The Olympiastadion in Berlin was the largest stadium at UEFA Euro 2024. It hosted the final of the tournament, along with three group-stage matches, a round of 16 match, and a quarterfinal.
+Of the ten venues selected for Euro 2024, nine were used for the 2006 FIFA World Cup : Berlin , Dortmund , Munich , Cologne , Stuttgart , Hamburg , Leipzig , Frankfurt , and Gelsenkirchen . [ 16 ] [ 17 ] Düsseldorf , which was not used in 2006 but had previously been used for the 1974 FIFA World Cup and UEFA Euro 1988 , served as the tenth venue; conversely, Hanover , Nuremberg and Kaiserslautern , host cities in 2006 (in addition to 1974 and 1988 in Hanover's case), were not used for this championship. Munich, the site of the first game of UEFA Euro 2024, was also a host city at the multi-national UEFA Euro 2020 tournament, hosting four matches (three involving Germany) in front of a greatly reduced number of spectators due to COVID-19 restrictions. [ 18 ] During the tournament, all but Arena AufSchalke were known by different names, mainly due to the stadia sponsorship prohibition.
+Various other stadiums, such as those in Bremen and Mönchengladbach , were not selected. [ 19 ] The area with the highest number of venues at UEFA Euro 2024 was the Rhine-Ruhr metropolitan region in the state of North Rhine-Westphalia , with four of the ten host cities (Dortmund, Düsseldorf, Gelsenkirchen, and Cologne). [ 20 ]
+Berlin
+Munich
+Dortmund
+Stuttgart
+Gelsenkirchen
+Olympiastadion
+(Olympiastadion Berlin)
+Allianz Arena
+(Munich Football Arena)
+Westfalenstadion
+(BVB Stadion Dortmund)
+MHPArena
+(Stuttgart Arena)
+Arena AufSchalke
+Capacity: 71,000 [ 21 ]
+Capacity: 66,000 [ 22 ]
+Capacity: 62,000 [ 23 ]
+Capacity: 51,000 [ 24 ]
+Capacity: 50,000 [ 25 ]
+Hamburg
+Düsseldorf
+Frankfurt
+Cologne
+Leipzig
+Volksparkstadion
+(Volksparkstadion Hamburg)
+Merkur Spiel-Arena
+(Düsseldorf Arena)
+Waldstadion
+(Frankfurt Arena)
+RheinEnergieStadion
+(Cologne Stadium)
+Red Bull Arena
+(Leipzig Stadium)
+Capacity: 49,000 [ 26 ]
+Capacity: 47,000 [ 27 ]
+Capacity: 47,000 [ 28 ]
+Capacity: 43,000 [ 29 ]
+Capacity: 40,000 [ 30 ]
+Team base camps
+[ edit ]
+Each team chose a "team base camp" for its stay between the matches. The teams trained and resided in these locations throughout the tournament, travelling to games staged away from their bases. The "team base camp" needed to be in Germany. [ 31 ]
+Base camp and training ground by team—sortable
+Team
+Base camp
+Training ground
+Albania
+Kamen [ 32 ]
+SportCentrum Kaiserau
+Austria
+Berlin [ 33 ]
+Mommsenstadion
+Belgium
+Ludwigsburg [ 34 ]
+Wasenstadion, SGV Freiberg am Neckar
+Croatia
+Neuruppin [ 35 ]
+Volksparkstadion [ de ] , MSV Neuruppin
+Czech Republic
+Hamburg [ 36 ]
+Edmund-Plambeck-Stadion , FC Eintracht Norderstedt 03
+Denmark
+Freudenstadt [ 37 ]
+Hermann-Saam-Stadion
+England
+Blankenhain [ 38 ]
+Golfresort Weimarer Land
+France
+Bad Lippspringe [ 39 ]
+Home Deluxe Arena , SC Paderborn 07
+Georgia
+Velbert [ 40 ]
+Stadion Velbert, SSVg Velbert
+Germany
+Herzogenaurach [ 41 ]
+Adidas Campus/HomeGround
+Hungary
+Weiler-Simmerberg [ 42 ]
+Tannenhof Resort, Sport & Spa
+Italy
+Iserlohn [ 43 ]
+Hemberg-Stadion
+Netherlands
+Wolfsburg [ 44 ]
+AOK Stadion , VfL Wolfsburg (women)
+Poland
+Hanover [ 45 ]
+Eilenriedestadion
+Portugal
+Harsewinkel [ 46 ]
+Hotel-Residence Klosterpforte Marienfeld / Sports grounds
+Romania
+Würzburg [ 47 ]
+Akon Arena , FC Würzburger Kickers
+Scotland
+Garmisch-Partenkirchen [ 48 ]
+Stadion am Gröben
+Serbia
+Augsburg [ 49 ]
+Rosenaustadion , FC Augsburg (Women)
+Slovakia
+Mainz [ 50 ]
+Bruchwegstadion , 1. FSV Mainz 05 (Women)
+Slovenia
+Wuppertal [ 51 ]
+Stadion am Zoo , Wuppertaler SV
+Spain
+Donaueschingen [ 52 ]
+Der Öschberghof
+Switzerland
+Stuttgart [ 53 ]
+Gazi-Stadion auf der Waldau , Stuttgarter Kickers
+Turkey
+Barsinghausen [ 54 ]
+Sporthotel Fuchsbachtal [ de ]
+Ukraine
+Wiesbaden
+Stadion am Halberg
+Ticketing
+[ edit ]
+Tickets for the venues were sold directly by UEFA via its website, or distributed by the football associations of the 24 finalists. Ticket sales started on 3 October 2023. More than 80% of the 2.7 million tickets for the 51 tournament matches were available for the fans of the participating teams and the general public. [ 55 ] Fans of each participating team allocated 10,000 tickets for group stage matches, 6,000 tickets for the round of 16 and quarter-finals, 7,000 for the semi-finals, and 10,000 for the final match. Over 50 million applications from 206 countries were received. Besides fans of Germany, most tickets were requested by fans supporting Turkey, Hungary, England, Albania and Croatia. [ 56 ] Prices ranged from €30 (for a seat behind the goal at a group match) to €2000 (for a Prime Seat in the main stand at the final). [ 57 ]
+Qualification
+[ edit ]
+Main article: UEFA Euro 2024 qualifying
+Team qualified for UEFA Euro 2024
+Team failed to qualify
+Team suspended from entering the competition
+Country not a member of UEFA
+As the hosts, Germany qualified for the tournament automatically. The 23 remaining spots were determined by a qualifying tournament ; 20 spots were decided by the direct qualification of the winners and runners-up of the 10 qualifying groups, with the remaining three spots decided by play-offs . [ 58 ] Places in the play-offs were given to the teams that performed the best in the 2022–23 UEFA Nations League who did not already qualify via the main qualifying tournament. [ 59 ] The draw for the UEFA Euro 2024 qualifying group stage was held on 9 October 2022 at the Festhalle in Frankfurt . [ 60 ] [ 61 ] The qualifying group stage took place from March to November 2023, while the three play-offs were held in March 2024. [ 62 ]
+Qualified teams
+[ edit ]
+Of the 24 teams that qualified for the tournament, 19 had participated in the previous edition. These included the defending champions Italy and runners-up England , as well as 2022 World Cup runners-up France and bronze medalist Croatia . Portugal was the only team to qualify with a flawless record, whilst France , England , Belgium , Hungary , and Romania also qualified without a loss. [ 63 ]
+Albania and Romania returned after missing out on Euro 2020 , the former qualifying for only their second major tournament. Serbia and Slovenia both returned for the first time since Euro 2000 , with Serbia qualifying for the first time since Serbia and Montenegro became separate nations , and Slovenia qualifying for their fourth major tournament as an independent nation. [ 64 ] [ 65 ] Georgia beat Greece on penalties in the play-offs to qualify for their first-ever tournament since gaining independence from the Soviet Union in 1991, also becoming the only debutants for this edition and ensuring every final tournament since the inaugural Euro 1960 saw at least one new team make their debut. [ 66 ]
+Notable absentees included Sweden , Russia , and Wales . Sweden failed to reach the finals for the first time since Euro 1996 and also failed to qualify for their second major tournament in a row, having missed out on the 2022 World Cup . Russia, who were regulars at finals since Euro 2004 , were barred from the qualifiers altogether in the aftermath of the country's invasion of Ukraine . Wales, who reached the knockout stages at the previous two editions, including the semi-finals at Euro 2016 , lost to Poland on penalties in the play-offs. Having made their debut at the previous edition, both North Macedonia and Finland failed to qualify for this edition.
+Team
+Qualified as
+Qualified on
+Previous appearances in tournament [ A ]
+Germany [ B ] Host 27 September 2018 13 ( 1972 , 1976 , 1980 , 1984 , 1988 , 1992 , 1996 , 2000 , 2004 , 2008 , 2012 , 2016 , 2020 )
+Belgium Group F winner 13 October 2023 6 ( 1972 , 1980 , 1984 , 2000 , 2016 , 2020 )
+France Group B winner 13 October 2023 10 ( 1960 , 1984 , 1992 , 1996 , 2000 , 2004 , 2008 , 2012 , 2016 , 2020 )
+Portugal Group J winner 13 October 2023 8 ( 1984 , 1996 , 2000 , 2004 , 2008 , 2012 , 2016 , 2020 )
+Scotland Group A runner-up 15 October 2023 3 ( 1992 , 1996 , 2020 )
+Spain Group A winner 15 October 2023 11 ( 1964 , 1980 , 1984 , 1988 , 1996 , 2000 , 2004 , 2008 , 2012 , 2016 , 2020 )
+Turkey Group D winner 15 October 2023 5 ( 1996 , 2000 , 2008 , 2016 , 2020 )
+Austria Group F runner-up 16 October 2023 3 ( 2008 , 2016 , 2020 )
+England Group C winner 17 October 2023 10 ( 1968 , 1980 , 1988 , 1992 , 1996 , 2000 , 2004 , 2012 , 2016 , 2020 )
+Hungary Group G winner 16 November 2023 4 ( 1964 , 1972 , 2016 , 2020 )
+Slovakia [ C ] Group J runner-up 16 November 2023 5 ( 1960 , 1976 , 1980 , 2016 , 2020 )
+Albania Group E winner 17 November 2023 1 ( 2016 )
+Denmark Group H winner 17 November 2023 9 ( 1964 , 1984 , 1988 , 1992 , 1996 , 2000 , 2004 , 2012 , 2020 )
+Netherlands Group B runner-up 18 November 2023 10 ( 1976 , 1980 , 1988 , 1992 , 1996 , 2000 , 2004 , 2008 , 2012 , 2020 )
+Romania Group I winner 18 November 2023 5 ( 1984 , 1996 , 2000 , 2008 , 2016 )
+Switzerland Group I runner-up 18 November 2023 5 ( 1996 , 2004 , 2008 , 2016 , 2020 )
+Serbia [ D ] Group G runner-up 19 November 2023 5 ( 1960 , 1968 , 1976 , 1984 , 2000 ) [ E ]
+Czech Republic [ C ] Group E runner-up 20 November 2023 10 ( 1960 , 1976 , 1980 , 1996 , 2000 , 2004 , 2008 , 2012 , 2016 , 2020 )
+Italy Group C runner-up 20 November 2023 10 ( 1968 , 1980 , 1988 , 1996 , 2000 , 2004 , 2008 , 2012 , 2016 , 2020 )
+Slovenia Group H runner-up 20 November 2023 1 ( 2000 )
+Croatia Group D runner-up 21 November 2023 6 ( 1996 , 2004 , 2008 , 2012 , 2016 , 2020 )
+Georgia Play-off Path C winner 26 March 2024 0 (debut)
+Ukraine Play-off Path B winner 26 March 2024 3 ( 2012 , 2016 , 2020 )
+Poland Play-off Path A winner 26 March 2024 4 ( 2008 , 2012 , 2016 , 2020 )
+↑ Bold indicates champion for that year. Italic indicates host for that year.
+↑ From 1972 to 1988, Germany competed as West Germany .
+1 2 From 1960 to 1980, both Slovakia and the Czech Republic competed as Czechoslovakia . [ 67 ] [ 68 ] [ 69 ] [ 70 ]
+↑ From 1960 to 1984, Serbia competed as Yugoslavia , and in 2000 as FR Yugoslavia .
+↑ FR Yugoslavia were initially to appear in 1992 (after qualifying as Yugoslavia ), but were replaced after being banned by the United Nations from all international sport.
+Disqualification of Russia
+[ edit ]
+At a meeting of the UEFA Executive Committee in Hvar , Croatia, on 20 September 2022, it was confirmed that Russia would be excluded from qualifying for Euro 2024, reaffirming the suspension of all Russian teams following the country's invasion of Ukraine in February 2022 and making this the first European Championship finals Russia would miss since 2000 . [ 71 ] [ 72 ] [ 73 ] [ 74 ]
+Final draw
+[ edit ]
+The final tournament draw took place on 2 December 2023, 18:00 CET , at the Elbphilharmonie in Hamburg . [ 75 ] The teams were seeded in accordance with the overall European Qualifiers rankings . Hosts Germany were automatically seeded into pot 1, and they were placed in position A1. The three play-off winners were not known at the time of the draw, and the teams participating in those play-offs, scheduled to be held in March 2024, were placed into pot 4 for the draw. [ 76 ] [ 77 ] [ 78 ] [ 79 ] The draw was disrupted by various sexual noises whilst it was taking place, as the result of a prankster. [ 80 ] [ 81 ]
+Pot 1: Germany (Host), group winners ranked 1–5
+Pot 2: Group winners ranked 6–10, group runner-up ranked 1 (6–11 overall)
+Pot 3: Group runners-up ranked 2–7 (12–17 overall)
+Pot 4: Group runners-up ranked 8–10 (18–20 overall), play-off winners A–C (identity unknown at the time of the draw)
+Seeding
+[ edit ]
+Seeding Pot 1
+Team
+European Qualifiers overall ranking</span>"}]],"parts":[{"template":{"target":{"wt":"Abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Rank"},"2":{"wt":"European Qualifiers overall ranking"}},"i":0}}]}'>Rank
+Germany ( hosts )
+— N/a
+Portugal
+1
+France
+2
+Spain
+3
+Belgium
+4
+England
+5
+Seeding Pot 2
+Team
+European Qualifiers overall ranking</span>"}]],"parts":[{"template":{"target":{"wt":"Abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Rank"},"2":{"wt":"European Qualifiers overall ranking"}},"i":0}}]}'>Rank
+Hungary
+6
+Turkey
+7
+Romania
+8
+Denmark
+9
+Albania
+10
+Austria
+11
+Seeding Pot 3
+Team
+European Qualifiers overall ranking</span>"}]],"parts":[{"template":{"target":{"wt":"Abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Rank"},"2":{"wt":"European Qualifiers overall ranking"}},"i":0}}]}'>Rank
+Netherlands
+12
+Scotland
+13
+Croatia
+14
+Slovenia
+15
+Slovakia
+16
+Czech Republic
+17
+Seeding Pot 4 [ a ]
+Team
+European Qualifiers overall ranking</span>"}]],"parts":[{"template":{"target":{"wt":"Abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"Rank"},"2":{"wt":"European Qualifiers overall ranking"}},"i":0}}]}'>Rank
+Italy
+18
+Serbia
+19
+Switzerland
+20
+Play-off winners A
+— N/a
+Play-off winners B
+Play-off winners C
+↑ Identity of the three play-off winners was unknown at the time of the draw.
+Draw
+[ edit ]
+Group A
+Position</span>"}]]}'>Pos Team
+A1 Germany
+A2 Scotland
+A3 Hungary
+A4 Switzerland
+Group B
+Position</span>"}]]}'>Pos Team
+B1 Spain
+B2 Croatia
+B3 Italy
+B4 Albania
+Group C
+Position</span>"}]]}'>Pos Team
+C1 Slovenia
+C2 Denmark
+C3 Serbia
+C4 England
+Group D
+Position</span>"}]]}'>Pos Team
+D1 Poland [ a ]
+D2 Netherlands
+D3 Austria
+D4 France
+Group E
+Position</span>"}]]}'>Pos Team
+E1 Belgium
+E2 Slovakia
+E3 Romania
+E4 Ukraine [ a ]
+Group F
+Position</span>"}]]}'>Pos Team
+F1 Turkey
+F2 Georgia [ a ]
+F3 Portugal
+F4 Czech Republic
+1 2 3 Identity of the three play-off winners was unknown at the time of the draw.
+Squads
+[ edit ]
+Main article: UEFA Euro 2024 squads
+The maximum squad size of the teams was increased from the original quota of 23 to 26 players. Teams had to provide the list containing a minimum of 23 players and a maximum of 26 by the deadline of 7 June. [ 82 ]
+Match officials
+[ edit ]
+In April 2024, 19 refereeing teams were selected to take charge of the 51 matches at the tournament, including an Argentine team selected as part of a co-operation agreement between the UEFA and CONMEBOL confederations. [ 83 ] [ 84 ]
+Refereeing teams
+Country
+Referee
+Assistant referees
+Matches assigned
+Argentina
+Facundo Tello
+Gabriel Chade
+Ezequiel Brailovsky [ es ]
+Turkey–Georgia ( Group F )
+Scotland–Hungary ( Group A )
+England
+Michael Oliver
+Stuart Burt
+Dan Cook [ de ]
+Spain–Croatia ( Group B )
+Slovakia–Ukraine ( Group E )
+Germany–Denmark ( Round of 16 )
+Portugal–France ( Quarter-finals )
+Anthony Taylor
+Gary Beswick [ de ]
+Adam Nunn [ de ]
+Netherlands–France ( Group D )
+Ukraine–Belgium ( Group E )
+Spain–Germany ( Quarter-finals )
+France
+François Letexier
+Cyril Mugnier [ de ]
+Mehdi Rahmouni
+Croatia–Albania ( Group B )
+Denmark–Serbia ( Group C )
+Spain–Georgia ( Round of 16 )
+Spain–England ( Final )
+Clément Turpin
+Nicolas Danos [ de ]
+Benjamin Pagès [ de ]
+Germany–Scotland ( Group A )
+England–Slovenia ( Group C )
+Netherlands–Turkey ( Quarter-finals )
+Germany
+Daniel Siebert
+Jan Seidel
+Rafael Foltyn
+Georgia–Czech Republic ( Group F )
+Slovakia–Romania ( Group E )
+Felix Zwayer
+Stefan Lupp [ de ]
+Marco Achmüller [ de ]
+Italy–Albania ( Group B )
+Turkey–Portugal ( Group F )
+Romania–Netherlands ( Round of 16 )
+Netherlands–England ( Semi-finals )
+Italy
+Marco Guida
+Filippo Meli [ it ]
+Giorgio Peretti [ de ]
+Portugal–Czech Republic ( Group F )
+France–Poland ( Group D )
+Daniele Orsato
+Ciro Carbone [ de ]
+Alessandro Giallatini [ de ]
+Serbia–England ( Group C )
+Switzerland–Germany ( Group A )
+Portugal–Slovenia ( Round of 16 )
+England–Switzerland ( Quarter-finals )
+Netherlands
+Danny Makkelie
+Hessel Steegstra [ de ]
+Jan de Vries [ simple ]
+Germany–Hungary ( Group A )
+Croatia–Italy ( Group B )
+Poland
+Szymon Marciniak
+Tomasz Listkiewicz
+Adam Kupsik [ de ]
+Belgium–Romania ( Group E )
+Switzerland–Italy ( Round of 16 )
+Portugal
+Artur Soares Dias
+Paulo Soares [ de ]
+Pedro Ribeiro [ de ]
+Poland–Netherlands ( Group D )
+Denmark–England ( Group C )
+Austria–Turkey ( Round of 16 )
+Romania
+István Kovács
+Vasile Marinescu [ de ]
+Mihai Ovidiu Artene [ de ]
+Slovenia–Serbia ( Group C )
+Czech Republic–Turkey ( Group F )
+Slovakia
+Ivan Kružliak
+Branislav Hancko [ de ]
+Jan Pozor [ de ]
+Scotland–Switzerland ( Group A )
+Netherlands–Austria ( Group D )
+Slovenia
+Slavko Vinčić
+Tomaž Klančnik [ de ]
+Andraž Kovačič [ de ]
+Hungary–Switzerland ( Group A )
+Spain–Italy ( Group B )
+Spain–France ( Semi-finals )
+Spain
+Jesús Gil Manzano
+Diego Barbero Sevilla [ de ]
+Ángel Nevado Rodríguez [ es ]
+Austria–France ( Group D )
+Sweden
+Glenn Nyberg
+Mahbod Beigi [ de ]
+Andreas Söderkvist [ de ]
+Romania–Ukraine ( Group E )
+Albania–Spain ( Group B )
+France–Belgium ( Round of 16 )
+Switzerland
+Sandro Schärer
+Stéphane de Almeida [ de ]
+Bekim Zogaj [ de ]
+Slovenia–Denmark ( Group C )
+Georgia–Portugal ( Group F )
+Turkey
+Halil Umut Meler
+Mustafa Emre Eyisoy [ de ]
+Kerem Ersoy [ de ]
+Belgium–Slovakia ( Group E )
+Poland–Austria ( Group D )
+England–Slovakia ( Round of 16 )
+In addition, UEFA announced twenty video match officials and twelve support match officials (who would act as fourth official or reserve assistant referee). [ 84 ]
+Video match officials
+Country
+Referee(s)
+England
+Stuart Attwell
+David Coote
+France
+Jérôme Brisard
+Willy Delajod
+Germany
+Bastian Dankert
+Christian Dingert
+Marco Fritz
+Italy
+Massimiliano Irrati
+Paolo Valeri
+Netherlands
+Rob Dieperink
+Pol van Boekel
+Poland
+Bartosz Frankowski
+Tomasz Kwiatkowski [ pl ]
+Portugal
+Tiago Martins
+Romania
+Cătălin Popa [ it ]
+Slovenia
+Nejc Kajtazovič [ nl ]
+Spain
+Alejandro Hernández Hernández
+Juan Martínez Munuera
+Switzerland
+Fedayi San
+Turkey
+Alper Ulusoy [ tr ]
+Support match officials
+Country
+Fourth official
+Reserve assistant referee
+Bosnia and Herzegovina
+Irfan Peljto
+Senad Ibrišimbegović [ de ]
+Lithuania
+Donatas Rumšas
+Aleksandr Radiuš [ de ]
+Netherlands
+Serdar Gözübüyük
+Johan Balder [ de ]
+Norway
+Espen Eskås
+Jan Erik Engan [ de ]
+Slovenia
+Rade Obrenović
+Jure Praprotnik [ de ]
+Ukraine
+Mykola Balakin
+Oleksandr Berkut [ de ]
+Group stage
+[ edit ]
+Performance of teams participating in UEFA Euro 2024
+Winners
+Runners-up
+Semi-finalists
+Quarter-finalists
+Round of 16
+Group stage
+UEFA announced the tournament schedule on 10 May 2022, which included kick-off times only for the opening match, semi-finals, and final. [ 85 ] [ 86 ] The kick-off times for all other matches were announced on 2 December 2023 following the draw. [ 87 ] [ 88 ]
+Group winners, runners-up and the best four third-placed teams advanced to the round of 16.
+All times are local, CEST ( UTC+2 ).
+Tiebreakers
+[ edit ]
+If two or more teams were equal on points on completion of the group matches, the following tie-breaking criteria were applied: [ 76 ]
+Higher number of points obtained in the matches played between the teams in question;
+Superior goal difference resulting from the matches played between the teams in question;
+Higher number of goals scored in the matches played between the teams in question;
+If, after having applied criteria 1 to 3, teams still have an equal ranking, criteria 1 to 3 are reapplied exclusively to the matches between the teams who are still level to determine their final rankings. [ a ] If this procedure does not lead to a decision, criteria 5 to 9 will apply;
+Superior goal difference in all group matches;
+Higher number of goals scored in all group matches;
+Lower disciplinary points total in all group matches (1 point for a single yellow card, 3 points for a red card regardless whether it was a direct red card or two yellow cards, 4 points for a yellow card followed by a direct red card);
+Higher position in the European Qualifiers overall ranking , or drawing of lots if hosts Germany had been involved in the tiebreaker.
+However, the normal criteria did not apply if on the last round of the group stage, two teams who were facing each other were tied in points, goal difference and goals scored ended their match in a draw, and no other teams were tied; in that case, their ranking would be determined by a penalty shoot-out .
+Notes
+↑ If there is a three-way tie on points, the application of the first three criteria may only break the tie for one of the teams, leaving the other two teams still tied. In this case, the tiebreaking procedure is resumed, from the beginning, for the two teams that are still tied.
+Group A
+[ edit ]
+Main article: UEFA Euro 2024 Group A
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Germany (H)
+3
+2
+1
+0
+8
+2
++6
+7
+Advance to knockout stage
+2
+Switzerland
+3
+1
+2
+0
+5
+3
++2
+5
+3
+Hungary
+3
+1
+0
+2
+2
+5
+− 3
+3
+4
+Scotland
+3
+0
+1
+2
+2
+7
+− 5
+1
+Source: UEFA
+(H) Hosts
+14 June 2024 ( 2024-06-14 )
+21:00
+Germany 5–1 Scotland
+Wirtz 10'
+Musiala 19'
+Havertz 45+1' ( pen. )
+Füllkrug 68'
+Can 90+3'
+Report
+Rüdiger 87' ( o.g. )
+Allianz Arena , Munich
+Attendance: 65,052 [ 89 ]
+Referee: Clément Turpin ( France )
+15 June 2024 ( 2024-06-15 )
+15:00
+Hungary 1–3 Switzerland
+Varga 66'
+Report
+Duah 12'
+Aebischer 45'
+Embolo 90+3'
+RheinEnergieStadion , Cologne
+Attendance: 41,676 [ 90 ]
+Referee: Slavko Vinčić ( Slovenia )
+19 June 2024 ( 2024-06-19 )
+18:00
+Germany 2–0 Hungary
+Musiala 22'
+Gündoğan 67'
+Report
+MHPArena , Stuttgart
+Attendance: 54,000 [ 91 ]
+Referee: Danny Makkelie ( Netherlands )
+19 June 2024 ( 2024-06-19 )
+21:00
+Scotland 1–1 Switzerland
+McTominay 13'
+Report
+Shaqiri 26'
+RheinEnergieStadion , Cologne
+Attendance: 42,711 [ 92 ]
+Referee: Ivan Kružliak ( Slovakia )
+23 June 2024 ( 2024-06-23 )
+21:00
+Switzerland 1–1 Germany
+Ndoye 28'
+Report
+Füllkrug 90+2'
+Waldstadion , Frankfurt
+Attendance: 46,685 [ 93 ]
+Referee: Daniele Orsato ( Italy )
+23 June 2024 ( 2024-06-23 )
+21:00
+Scotland 0–1 Hungary
+Report
+Csoboth 90+10'
+MHPArena , Stuttgart
+Attendance: 54,000 [ 94 ]
+Referee: Facundo Tello ( Argentina )
+Group B
+[ edit ]
+Main article: UEFA Euro 2024 Group B
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Spain
+3
+3
+0
+0
+5
+0
++5
+9
+Advance to knockout stage
+2
+Italy
+3
+1
+1
+1
+3
+3
+0
+4
+3
+Croatia
+3
+0
+2
+1
+3
+6
+− 3
+2
+4
+Albania
+3
+0
+1
+2
+3
+5
+− 2
+1
+Source: UEFA
+15 June 2024 ( 2024-06-15 )
+18:00
+Spain 3–0 Croatia
+Morata 29'
+Fabián 32'
+Carvajal 45+2'
+Report
+Olympiastadion , Berlin
+Attendance: 68,844 [ 95 ]
+Referee: Michael Oliver ( England )
+15 June 2024 ( 2024-06-15 )
+21:00
+Italy 2–1 Albania
+Bastoni 11'
+Barella 16'
+Report
+Bajrami 1'
+Westfalenstadion , Dortmund
+Attendance: 60,512 [ 96 ]
+Referee: Felix Zwayer ( Germany )
+19 June 2024 ( 2024-06-19 )
+15:00
+Croatia 2–2 Albania
+Kramarić 74'
+Gjasula 76' ( o.g. )
+Report
+Laçi 11'
+Gjasula 90+5'
+Volksparkstadion , Hamburg
+Attendance: 46,784 [ 97 ]
+Referee: François Letexier ( France )
+20 June 2024 ( 2024-06-20 )
+21:00
+Spain 1–0 Italy
+Calafiori 55' ( o.g. )
+Report
+Arena AufSchalke , Gelsenkirchen
+Attendance: 49,528 [ 98 ]
+Referee: Slavko Vinčić ( Slovenia )
+24 June 2024 ( 2024-06-24 )
+21:00
+Albania 0–1 Spain
+Report
+Torres 13'
+Merkur Spiel-Arena , Düsseldorf
+Attendance: 46,586 [ 99 ]
+Referee: Glenn Nyberg ( Sweden )
+24 June 2024 ( 2024-06-24 )
+21:00
+Croatia 1–1 Italy
+Modrić 55'
+Report
+Zaccagni 90+8'
+Red Bull Arena , Leipzig
+Attendance: 38,322 [ 100 ]
+Referee: Danny Makkelie ( Netherlands )
+Group C
+[ edit ]
+Main article: UEFA Euro 2024 Group C
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+England
+3
+1
+2
+0
+2
+1
++1
+5
+Advance to knockout stage
+2
+Denmark
+3
+0
+3
+0
+2
+2
+0
+3 [ a ]
+3
+Slovenia
+3
+0
+3
+0
+2
+2
+0
+3 [ a ]
+4
+Serbia
+3
+0
+2
+1
+1
+2
+− 1
+2
+Source: UEFA
+Notes:
+1 2 Tied on head-to-head result (Slovenia 1–1 Denmark), overall goal difference and overall goals scored. Disciplinary points : Denmark −6, Slovenia −7. [ 101 ] [ 102 ]
+16 June 2024 ( 2024-06-16 )
+18:00
+Slovenia 1–1 Denmark
+Janža 77'
+Report
+Eriksen 17'
+MHPArena , Stuttgart
+Attendance: 54,000 [ 103 ]
+Referee: Sandro Schärer ( Switzerland )
+16 June 2024 ( 2024-06-16 )
+21:00
+Serbia 0–1 England
+Report
+Bellingham 13'
+Arena AufSchalke , Gelsenkirchen
+Attendance: 48,953 [ 104 ]
+Referee: Daniele Orsato ( Italy )
+20 June 2024 ( 2024-06-20 )
+15:00
+Slovenia 1–1 Serbia
+Karničnik 69'
+Report
+Jović 90+5'
+Allianz Arena , Munich
+Attendance: 63,028 [ 105 ]
+Referee: István Kovács ( Romania )
+20 June 2024 ( 2024-06-20 )
+18:00
+Denmark 1–1 England
+Hjulmand 34'
+Report
+Kane 18'
+Waldstadion , Frankfurt
+Attendance: 46,177 [ 106 ]
+Referee: Artur Soares Dias ( Portugal )
+25 June 2024 ( 2024-06-25 )
+21:00
+England 0–0 Slovenia
+Report
+RheinEnergieStadion , Cologne
+Attendance: 41,536 [ 107 ]
+Referee: Clément Turpin ( France )
+25 June 2024 ( 2024-06-25 )
+21:00
+Denmark 0–0 Serbia
+Report
+Allianz Arena , Munich
+Attendance: 64,288 [ 108 ]
+Referee: François Letexier ( France )
+Group D
+[ edit ]
+Main article: UEFA Euro 2024 Group D
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Austria
+3
+2
+0
+1
+6
+4
++2
+6
+Advance to knockout stage
+2
+France
+3
+1
+2
+0
+2
+1
++1
+5
+3
+Netherlands
+3
+1
+1
+1
+4
+4
+0
+4
+4
+Poland
+3
+0
+1
+2
+3
+6
+− 3
+1
+Source: UEFA
+16 June 2024 ( 2024-06-16 )
+15:00
+Poland 1–2 Netherlands
+Buksa 16'
+Report
+Gakpo 29'
+Weghorst 83'
+Volksparkstadion , Hamburg
+Attendance: 48,117 [ 109 ]
+Referee: Artur Soares Dias ( Portugal )
+17 June 2024 ( 2024-06-17 )
+21:00
+Austria 0–1 France
+Report
+Wöber 38' ( o.g. )
+Merkur Spiel-Arena , Düsseldorf
+Attendance: 46,425 [ 110 ]
+Referee: Jesús Gil Manzano ( Spain )
+21 June 2024 ( 2024-06-21 )
+18:00
+Poland 1–3 Austria
+Piątek 30'
+Report
+Trauner 9'
+Baumgartner 66'
+Arnautović 78' ( pen. )
+Olympiastadion , Berlin
+Attendance: 69,455 [ 111 ]
+Referee: Halil Umut Meler ( Turkey )
+21 June 2024 ( 2024-06-21 )
+21:00
+Netherlands 0–0 France
+Report
+Red Bull Arena , Leipzig
+Attendance: 38,531 [ 112 ]
+Referee: Anthony Taylor ( England )
+25 June 2024 ( 2024-06-25 )
+18:00
+Netherlands 2–3 Austria
+Gakpo 47'
+Depay 75'
+Report
+Malen 6' ( o.g. )
+Schmid 59'
+Sabitzer 80'
+Olympiastadion , Berlin
+Attendance: 68,363 [ 113 ]
+Referee: Ivan Kružliak ( Slovakia )
+25 June 2024 ( 2024-06-25 )
+18:00
+France 1–1 Poland
+Mbappé 56' ( pen. )
+Report
+Lewandowski 79' ( pen. )
+Westfalenstadion , Dortmund
+Attendance: 59,728 [ 114 ]
+Referee: Marco Guida ( Italy )
+Group E
+[ edit ]
+Main article: UEFA Euro 2024 Group E
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Romania
+3
+1
+1
+1
+4
+3
++1
+4
+Advance to knockout stage
+2
+Belgium
+3
+1
+1
+1
+2
+1
++1
+4
+3
+Slovakia
+3
+1
+1
+1
+3
+3
+0
+4
+4
+Ukraine
+3
+1
+1
+1
+2
+4
+− 2
+4
+Source: UEFA
+17 June 2024 ( 2024-06-17 )
+15:00
+Romania 3–0 Ukraine
+Stanciu 29'
+R. Marin 53'
+Drăguș 57'
+Report
+Allianz Arena , Munich
+Attendance: 61,591 [ 115 ]
+Referee: Glenn Nyberg ( Sweden )
+17 June 2024 ( 2024-06-17 )
+18:00
+Belgium 0–1 Slovakia
+Report
+Schranz 7'
+Waldstadion , Frankfurt
+Attendance: 45,181 [ 116 ]
+Referee: Halil Umut Meler ( Turkey )
+21 June 2024 ( 2024-06-21 )
+15:00
+Slovakia 1–2 Ukraine
+Schranz 17'
+Report
+Shaparenko 54'
+Yaremchuk 80'
+Merkur Spiel-Arena , Düsseldorf
+Attendance: 43,910 [ 117 ]
+Referee: Michael Oliver ( England )
+22 June 2024 ( 2024-06-22 )
+21:00
+Belgium 2–0 Romania
+Tielemans 2'
+De Bruyne 80'
+Report
+RheinEnergieStadion , Cologne
+Attendance: 42,535 [ 118 ]
+Referee: Szymon Marciniak ( Poland )
+26 June 2024 ( 2024-06-26 )
+18:00
+Slovakia 1–1 Romania
+Duda 24'
+Report
+R. Marin 37' ( pen. )
+Waldstadion , Frankfurt
+Attendance: 45,033 [ 119 ]
+Referee: Daniel Siebert ( Germany )
+26 June 2024 ( 2024-06-26 )
+18:00
+Ukraine 0–0 Belgium
+Report
+MHPArena , Stuttgart
+Attendance: 54,000 [ 120 ]
+Referee: Anthony Taylor ( England )
+Group F
+[ edit ]
+Main article: UEFA Euro 2024 Group F
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Portugal
+3
+2
+0
+1
+5
+3
++2
+6 [ a ]
+Advance to knockout stage
+2
+Turkey
+3
+2
+0
+1
+5
+5
+0
+6 [ a ]
+3
+Georgia
+3
+1
+1
+1
+4
+4
+0
+4
+4
+Czech Republic
+3
+0
+1
+2
+3
+5
+− 2
+1
+Source: UEFA
+Notes:
+1 2 Head-to-head result: Turkey 0–3 Portugal.
+18 June 2024 ( 2024-06-18 )
+18:00
+Turkey 3–1 Georgia
+Müldür 25'
+Güler 65'
+Aktürkoğlu 90+7'
+Report
+Mikautadze 32'
+Westfalenstadion , Dortmund
+Attendance: 59,127 [ 121 ]
+Referee: Facundo Tello ( Argentina )
+18 June 2024 ( 2024-06-18 )
+21:00
+Portugal 2–1 Czech Republic
+Hranáč 69' ( o.g. )
+Conceição 90+2'
+Report
+Provod 62'
+Red Bull Arena , Leipzig
+Attendance: 38,421 [ 122 ]
+Referee: Marco Guida ( Italy )
+22 June 2024 ( 2024-06-22 )
+15:00
+Georgia 1–1 Czech Republic
+Mikautadze 45+4' ( pen. )
+Report
+Schick 59'
+Volksparkstadion , Hamburg
+Attendance: 46,524 [ 123 ]
+Referee: Daniel Siebert ( Germany )
+22 June 2024 ( 2024-06-22 )
+18:00
+Turkey 0–3 Portugal
+Report
+B. Silva 21'
+Akaydin 28' ( o.g. )
+Fernandes 56'
+Westfalenstadion , Dortmund
+Attendance: 61,047 [ 124 ]
+Referee: Felix Zwayer ( Germany )
+26 June 2024 ( 2024-06-26 )
+21:00
+Georgia 2–0 Portugal
+Kvaratskhelia 2'
+Mikautadze 57' ( pen. )
+Report
+Arena AufSchalke , Gelsenkirchen
+Attendance: 49,616 [ 125 ]
+Referee: Sandro Schärer ( Switzerland )
+26 June 2024 ( 2024-06-26 )
+21:00
+Czech Republic 1–2 Turkey
+Souček 66'
+Report
+Çalhanoğlu 51'
+Tosun 90+4'
+Volksparkstadion , Hamburg
+Attendance: 47,683 [ 126 ]
+Referee: István Kovács ( Romania )
+Ranking of third-placed teams
+[ edit ]
+{{cite web |url=https://documents.uefa.com/r/Regulations-of-the-UEFA-European-Football-Championship-2022-24-Online |title=Regulations of the UEFA European Football Championship, 2022–24 |publisher=Union of European Football Associations |date=10 May 2022 |access-date=16 May 2022 |url-status=live |archive-url=https://web.archive.org/web/20220516115052/https://documents.uefa.com/api/khub/maps/5tYSJw48iUOPsbIGOxQA4w/attachments/_dSxuIv48n81YqITx97r~g/content?Ft-Calling-App=ft%2Fturnkey-portal&Ft-Calling-App-Version=3.11.26&filename=20220601_Regulations_EURO_2024_en.pdf |archive-date=16 May 2022}}</ref>\n"},"5":{"wt":"source=[https://www.uefa.com/euro2024/news/028e-1b3221d55b32-0a95528a80d5-1000/ UEFA]\n\n<!--Update team positions below (check tiebreakers)-->\n"},"6":{"wt":"team_order=GrD, GrF, GrE, GrC, GrA, GrB\n\n<!--Update team results below (including date)-->\n"},"7":{"wt":"update=complete\n"},"8":{"wt":"win_GrA=1 "},"9":{"wt":"draw_GrA=0 "},"10":{"wt":"loss_GrA=2 "},"11":{"wt":"gf_GrA=2 "},"12":{"wt":"ga_GrA=5 "},"13":{"wt":"status_GrA=\n"},"14":{"wt":"win_GrB=0 "},"15":{"wt":"draw_GrB=2 "},"16":{"wt":"loss_GrB=1 "},"17":{"wt":"gf_GrB=3 "},"18":{"wt":"ga_GrB=6 "},"19":{"wt":"status_GrB=\n"},"20":{"wt":"win_GrC=0 "},"21":{"wt":"draw_GrC=3 "},"22":{"wt":"loss_GrC=0 "},"23":{"wt":"gf_GrC=2 "},"24":{"wt":"ga_GrC=2 "},"25":{"wt":"status_GrC=\n"},"26":{"wt":"win_GrD=1 "},"27":{"wt":"draw_GrD=1 "},"28":{"wt":"loss_GrD=1 "},"29":{"wt":"gf_GrD=4 "},"30":{"wt":"ga_GrD=4 "},"31":{"wt":"status_GrD=\n"},"32":{"wt":"win_GrE=1 "},"33":{"wt":"draw_GrE=1 "},"34":{"wt":"loss_GrE=1 "},"35":{"wt":"gf_GrE=3 "},"36":{"wt":"ga_GrE=3 "},"37":{"wt":"status_GrE=\n"},"38":{"wt":"win_GrF=1 "},"39":{"wt":"draw_GrF=1 "},"40":{"wt":"loss_GrF=1 "},"41":{"wt":"gf_GrF=4 "},"42":{"wt":"ga_GrF=4 "},"43":{"wt":"status_GrF=\n\n"},"44":{"wt":"hth_GrD=Disciplinary points: [[UEFA Euro 2024 Group D#Discipline|Netherlands −2]], [[UEFA Euro 2024 Group F#Discipline|Georgia −6]].<ref name=\"R16 booking list\">{{cite web |url=https://editorial.uefa.com/resources/028e-1b3cfabc8db9-577a9853196b-1000/euro_booking_list_before_r16.pdf |title=European Championship 2024: Booking List before Round of 16 |website=[[UEFA]] |publisher=Union of European Football Associations |date=28 June 2024 |access-date=28 June 2024}}</ref>\n"},"45":{"wt":"hth_GrF=GrD\n\n<!--Team definitions-->\n"},"46":{"wt":"name_GrA={{fb|HUN}}\n"},"47":{"wt":"name_GrB={{fb|CRO}}\n"},"48":{"wt":"name_GrC={{fb|SVN}}\n"},"49":{"wt":"name_GrD={{fb|NED}}\n"},"50":{"wt":"name_GrE={{fb|SVK}}\n"},"51":{"wt":"name_GrF={{fb|GEO}}\n\n<!--Group definitions-->\n"},"52":{"wt":"show_groups=T\n"},"53":{"wt":"group_GrA=[[UEFA Euro 2024#Group A|A]]\n"},"54":{"wt":"group_GrB=[[UEFA Euro 2024#Group B|B]]\n"},"55":{"wt":"group_GrC=[[UEFA Euro 2024#Group C|C]]\n"},"56":{"wt":"group_GrD=[[UEFA Euro 2024#Group D|D]]\n"},"57":{"wt":"group_GrE=[[UEFA Euro 2024#Group E|E]]\n"},"58":{"wt":"group_GrF=[[UEFA Euro 2024#Group F|F]]\n\n<!--Qualification column definitions-->\n"},"59":{"wt":"res_col_header=Q\n"},"60":{"wt":"result1=KO "},"61":{"wt":"result2=KO "},"62":{"wt":"result3=KO "},"63":{"wt":"result4=KO\n"},"64":{"wt":"col_KO=green1 "},"65":{"wt":"text_KO=Advance to [[UEFA Euro 2024#Knockout stage|knockout stage]]\n"}},"i":0}}]}'/>
+Pos
+Grp
+Team
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+D
+Netherlands
+3
+1
+1
+1
+4
+4
+0
+4 [ a ]
+Advance to knockout stage
+2
+F
+Georgia
+3
+1
+1
+1
+4
+4
+0
+4 [ a ]
+3
+E
+Slovakia
+3
+1
+1
+1
+3
+3
+0
+4
+4
+C
+Slovenia
+3
+0
+3
+0
+2
+2
+0
+3
+5
+A
+Hungary
+3
+1
+0
+2
+2
+5
+− 3
+3
+6
+B
+Croatia
+3
+0
+2
+1
+3
+6
+− 3
+2
+Source: UEFA
+Rules for classification: 1) Points; 2) Goal difference; 3) Goals scored; 4) Wins; 5) Lower disciplinary points total; 6) European Qualifiers overall ranking (or drawing of lots, if hosts Germany had been involved in the tiebreaker). [ 76 ]
+Notes:
+1 2 Disciplinary points: Netherlands −2 , Georgia −6 . [ 102 ]
+Knockout stage
+[ edit ]
+Main article: UEFA Euro 2024 knockout stage
+In the knockout stage, if a match was level at the end of normal playing time, extra time was played (two periods of 15 minutes each). If still tied after extra time, the match was decided by a penalty shoot-out . [ 76 ]
+As with every tournament since UEFA Euro 1984 , there was no third place play-off .
+All times listed are Central European Summer Time ( UTC+2 )
+Bracket
+[ edit ]
+Round of 16 Quarter-finals Semi-finals Final
+30 June – Cologne
+Spain 4
+5 July – Stuttgart
+Georgia 1
+Spain ( a.e.t. ) 2
+29 June – Dortmund
+Germany 1
+Germany 2
+9 July – Munich
+Denmark 0
+Spain 2
+1 July – Frankfurt
+France 1
+Portugal ( p ) 0 (3)
+5 July – Hamburg
+Slovenia 0 (0)
+Portugal 0 (3)
+1 July – Düsseldorf
+France ( p ) 0 (5)
+France 1
+14 July – Berlin
+Belgium 0
+Spain 2
+2 July – Munich
+England 1
+Romania 0
+6 July – Berlin
+Netherlands 3
+Netherlands 2
+2 July – Leipzig
+Turkey 1
+Austria 1
+10 July – Dortmund
+Turkey 2
+Netherlands 1
+30 June – Gelsenkirchen
+England 2
+England ( a.e.t. ) 2
+6 July – Düsseldorf
+Slovakia 1
+England ( p ) 1 (5)
+29 June – Berlin
+Switzerland 1 (3)
+Switzerland 2
+Italy 0
+Round of 16
+[ edit ]
+29 June 2024 ( 2024-06-29 )
+18:00
+Switzerland 2–0 Italy
+Freuler 37'
+Vargas 46'
+Report
+Olympiastadion , Berlin
+Attendance: 68,172 [ 127 ]
+Referee: Szymon Marciniak ( Poland )
+29 June 2024 ( 2024-06-29 )
+21:00
+Germany 2–0 Denmark
+Havertz 53' ( pen. )
+Musiala 68'
+Report
+Westfalenstadion , Dortmund
+Attendance: 61,612 [ 128 ]
+Referee: Michael Oliver ( England )
+30 June 2024 ( 2024-06-30 )
+18:00
+England 2–1 ( a.e.t. ) Slovakia
+Bellingham 90+5'
+Kane 91'
+Report
+Schranz 25'
+Arena AufSchalke , Gelsenkirchen
+Attendance: 47,244 [ 129 ]
+Referee: Halil Umut Meler ( Turkey )
+30 June 2024 ( 2024-06-30 )
+21:00
+Spain 4–1 Georgia
+Rodri 39'
+Fabián 51'
+Williams 75'
+Olmo 83'
+Report
+Le Normand 18' ( o.g. )
+RheinEnergieStadion , Cologne
+Attendance: 42,233 [ 130 ]
+Referee: François Letexier ( France )
+1 July 2024 ( 2024-07-01 )
+18:00
+France 1–0 Belgium
+Vertonghen 85' ( o.g. )
+Report
+Merkur Spiel-Arena , Düsseldorf
+Attendance: 46,810 [ 131 ]
+Referee: Glenn Nyberg ( Sweden )
+1 July 2024 ( 2024-07-01 )
+21:00
+Portugal 0–0 ( a.e.t. ) Slovenia
+Report
+Penalties
+Ronaldo
+Fernandes
+B. Silva
+3–0
+Iličić
+Balkovec
+Verbič
+Waldstadion , Frankfurt
+Attendance: 46,576 [ 132 ]
+Referee: Daniele Orsato ( Italy )
+2 July 2024 ( 2024-07-02 )
+18:00
+Romania 0–3 Netherlands
+Report
+Gakpo 20'
+Malen 83' , 90+3'
+Allianz Arena , Munich
+Attendance: 65,012 [ 133 ]
+Referee: Felix Zwayer ( Germany )
+2 July 2024 ( 2024-07-02 )
+21:00
+Austria 1–2 Turkey
+Gregoritsch 66'
+Report
+Demiral 1' , 59'
+Red Bull Arena , Leipzig
+Attendance: 38,305 [ 134 ]
+Referee: Artur Soares Dias ( Portugal )
+Quarter-finals
+[ edit ]
+5 July 2024 ( 2024-07-05 )
+18:00
+Spain 2–1 ( a.e.t. ) Germany
+Olmo 51'
+Merino 119'
+Report
+Wirtz 89'
+MHPArena , Stuttgart
+Attendance: 54,000 [ 135 ]
+Referee: Anthony Taylor ( England )
+5 July 2024 ( 2024-07-05 )
+21:00
+Portugal 0–0 ( a.e.t. ) France
+Report
+Penalties
+Ronaldo
+B. Silva
+Félix
+Mendes
+3–5
+Dembélé
+Fofana
+Koundé
+Barcola
+Hernandez
+Volksparkstadion , Hamburg
+Attendance: 47,789 [ 136 ]
+Referee: Michael Oliver ( England )
+6 July 2024 ( 2024-07-06 )
+18:00
+England 1–1 ( a.e.t. ) Switzerland
+Saka 80'
+Report
+Embolo 75'
+Penalties
+Palmer
+Bellingham
+Saka
+Toney
+Alexander-Arnold
+5–3
+Akanji
+Schär
+Shaqiri
+Amdouni
+Merkur Spiel-Arena , Düsseldorf
+Attendance: 46,907 [ 137 ]
+Referee: Daniele Orsato ( Italy )
+6 July 2024 ( 2024-07-06 )
+21:00
+Netherlands 2–1 Turkey
+De Vrij 70'
+Müldür 76' ( o.g. )
+Report
+Akaydin 35'
+Olympiastadion , Berlin
+Attendance: 70,091 [ 138 ]
+Referee: Clément Turpin ( France )
+Semi-finals
+[ edit ]
+9 July 2024 ( 2024-07-09 )
+21:00
+Spain 2–1 France
+Yamal 21'
+Olmo 25'
+Report
+Kolo Muani 9'
+Allianz Arena , Munich
+Attendance: 62,042 [ 139 ]
+Referee: Slavko Vinčić ( Slovenia )
+10 July 2024 ( 2024-07-10 )
+21:00
+Netherlands 1–2 England
+Simons 7'
+Report
+Kane 18' ( pen. )
+Watkins 90'
+Westfalenstadion , Dortmund
+Attendance: 60,926 [ 140 ]
+Referee: Felix Zwayer ( Germany )
+Final
+[ edit ]
+Main article: UEFA Euro 2024 final
+14 July 2024 ( 2024-07-14 )
+21:00
+Spain 2–1 England
+Williams 47'
+Oyarzabal 86'
+Report
+Palmer 73'
+Olympiastadion , Berlin
+Attendance: 65,600 [ 141 ]
+Referee: François Letexier ( France )
+Statistics
+[ edit ]
+Main article: UEFA Euro 2024 statistics
+Goalscorers
+[ edit ]
+{{cite web |url=https://www.uefa.com/euro2024/statistics/players/goals/?sortBy=goals|title=Player stats – Goals |website=[[UEFA]] |publisher=Union of European Football Associations |access-date=14 July 2024}}</ref>"},"3 goals":{"wt":"*{{fbicon|ENG}} [[Harry Kane]]\n*{{fbicon|GEO}} [[Georges Mikautadze]]\n*{{fbicon|GER}} [[Jamal Musiala]]\n*{{fbicon|NED}} [[Cody Gakpo]]\n*{{fbicon|SVK}} [[Ivan Schranz]]\n*{{fbicon|ESP}} [[Dani Olmo]]"},"2 goals":{"wt":"*{{fbicon|ENG}} [[Jude Bellingham]]\n*{{fbicon|GER}} [[Niclas Füllkrug]]\n*{{fbicon|GER}} [[Kai Havertz]]\n*{{fbicon|GER}} [[Florian Wirtz]]\n*{{fbicon|NED}} [[Donyell Malen]]\n*{{fbicon|ROU}} [[Răzvan Marin]]\n*{{fbicon|ESP}} [[Fabián Ruiz]]\n*{{fbicon|ESP}} [[Nico Williams]]\n*{{fbicon|SUI}} [[Breel Embolo]]\n*{{fbicon|TUR}} [[Merih Demiral]]"},"1 goal":{"wt":"*{{fbicon|ALB}} [[Nedim Bajrami]]\n*{{fbicon|ALB}} [[Klaus Gjasula]]\n*{{fbicon|ALB}} [[Qazim Laçi]]\n*{{fbicon|AUT}} [[Marko Arnautović]]\n*{{fbicon|AUT}} [[Christoph Baumgartner]]\n*{{fbicon|AUT}} [[Michael Gregoritsch]]\n*{{fbicon|AUT}} [[Marcel Sabitzer]]\n*{{fbicon|AUT}} [[Romano Schmid]]\n*{{fbicon|AUT}} [[Gernot Trauner]]\n*{{fbicon|BEL}} [[Kevin De Bruyne]]\n*{{fbicon|BEL}} [[Youri Tielemans]]\n*{{fbicon|CRO}} [[Andrej Kramarić]]\n*{{fbicon|CRO}} [[Luka Modrić]]\n*{{fbicon|CZE}} [[Lukáš Provod]]\n*{{fbicon|CZE}} [[Patrik Schick]]\n*{{fbicon|CZE}} [[Tomáš Souček]]\n*{{fbicon|DEN}} [[Christian Eriksen]]\n*{{fbicon|DEN}} [[Morten Hjulmand]]\n*{{fbicon|ENG}} [[Cole Palmer]]\n*{{fbicon|ENG}} [[Bukayo Saka]]\n*{{fbicon|ENG}} [[Ollie Watkins]]\n*{{fbicon|FRA}} [[Randal Kolo Muani]]\n*{{fbicon|FRA}} [[Kylian Mbappé]]\n*{{fbicon|GEO}} [[Khvicha Kvaratskhelia]]\n*{{fbicon|GER}} [[Emre Can]]\n*{{fbicon|GER}} [[İlkay Gündoğan]]\n*{{fbicon|HUN}} [[Kevin Csoboth]]\n*{{fbicon|HUN}} [[Barnabás Varga]]\n*{{fbicon|ITA}} [[Nicolò Barella]]\n*{{fbicon|ITA}} [[Alessandro Bastoni]]\n*{{fbicon|ITA}} [[Mattia Zaccagni]]\n*{{fbicon|NED}} [[Memphis Depay]]\n*{{fbicon|NED}} [[Xavi Simons]]\n*{{fbicon|NED}} [[Stefan de Vrij]]\n*{{fbicon|NED}} [[Wout Weghorst]]\n*{{fbicon|POL}} [[Adam Buksa]]\n*{{fbicon|POL}} [[Robert Lewandowski]]\n*{{fbicon|POL}} [[Krzysztof Piątek]]\n*{{fbicon|POR}} [[Francisco Conceição]]\n*{{fbicon|POR}} [[Bruno Fernandes]]\n*{{fbicon|POR}} [[Bernardo Silva]]\n*{{fbicon|ROU}} [[Denis Drăguș]]\n*{{fbicon|ROU}} [[Nicolae Stanciu (footballer, born 1993)|Nicolae Stanciu]]\n*{{fbicon|SCO}} [[Scott McTominay]]\n*{{fbicon|SRB}} [[Luka Jović]]\n*{{fbicon|SVK}} [[Ondrej Duda]]\n*{{fbicon|SVN}} [[Erik Janža]]\n*{{fbicon|SVN}} [[Žan Karničnik]]\n*{{fbicon|ESP}} [[Dani Carvajal]]\n*{{fbicon|ESP}} [[Mikel Merino]]\n*{{fbicon|ESP}} [[Álvaro Morata]]\n*{{fbicon|ESP}} [[Mikel Oyarzabal]]\n*{{fbicon|ESP}} [[Rodri (footballer, born 1996)|Rodri]]\n*{{fbicon|ESP}} [[Ferran Torres]]\n*{{fbicon|ESP}} [[Lamine Yamal]]\n*{{fbicon|SUI}} [[Michel Aebischer]]\n*{{fbicon|SUI}} [[Kwadwo Duah]]\n*{{fbicon|SUI}} [[Remo Freuler]]\n*{{fbicon|SUI}} [[Dan Ndoye]]\n*{{fbicon|SUI}} [[Xherdan Shaqiri]]\n*{{fbicon|SUI}} [[Rubén Vargas]]\n*{{fbicon|TUR}} [[Samet Akaydin]]\n*{{fbicon|TUR}} [[Kerem Aktürkoğlu]]\n*{{fbicon|TUR}} [[Hakan Çalhanoğlu]]\n*{{fbicon|TUR}} [[Arda Güler]]\n*{{fbicon|TUR}} [[Mert Müldür]]\n*{{fbicon|TUR}} [[Cenk Tosun]]\n*{{fbicon|UKR}} [[Mykola Shaparenko]]\n*{{fbicon|UKR}} [[Roman Yaremchuk]]"},"1 own goal":{"wt":"*{{fbicon|ALB}} [[Klaus Gjasula]] (against Croatia)\n*{{fbicon|AUT}} [[Maximilian Wöber]] (against France)\n*{{fbicon|BEL}} [[Jan Vertonghen]] (against France)\n*{{fbicon|CZE}} [[Robin Hranáč]] (against Portugal)\n*{{fbicon|GER}} [[Antonio Rüdiger]] (against Scotland)\n*{{fbicon|ITA}} [[Riccardo Calafiori]] (against Spain)\n*{{fbicon|NED}} [[Donyell Malen]] (against Austria)\n*{{fbicon|ESP}} [[Robin Le Normand]] (against Georgia)\n*{{fbicon|TUR}} [[Samet Akaydin]] (against Portugal)\n*{{fbicon|TUR}} [[Mert Müldür]] (against Netherlands)"}},"i":0}}]}'>There were 117 goals scored in 51 matches, for an average of 2.29 goals per match.
+3 goals
+Harry Kane
+Georges Mikautadze
+Jamal Musiala
+Cody Gakpo
+Ivan Schranz
+Dani Olmo
+2 goals
+Jude Bellingham
+Niclas Füllkrug
+Kai Havertz
+Florian Wirtz
+Donyell Malen
+Răzvan Marin
+Fabián Ruiz
+Nico Williams
+Breel Embolo
+Merih Demiral
+1 goal
+Nedim Bajrami
+Klaus Gjasula
+Qazim Laçi
+Marko Arnautović
+Christoph Baumgartner
+Michael Gregoritsch
+Marcel Sabitzer
+Romano Schmid
+Gernot Trauner
+Kevin De Bruyne
+Youri Tielemans
+Andrej Kramarić
+Luka Modrić
+Lukáš Provod
+Patrik Schick
+Tomáš Souček
+Christian Eriksen
+Morten Hjulmand
+Cole Palmer
+Bukayo Saka
+Ollie Watkins
+Randal Kolo Muani
+Kylian Mbappé
+Khvicha Kvaratskhelia
+Emre Can
+İlkay Gündoğan
+Kevin Csoboth
+Barnabás Varga
+Nicolò Barella
+Alessandro Bastoni
+Mattia Zaccagni
+Memphis Depay
+Xavi Simons
+Stefan de Vrij
+Wout Weghorst
+Adam Buksa
+Robert Lewandowski
+Krzysztof Piątek
+Francisco Conceição
+Bruno Fernandes
+Bernardo Silva
+Denis Drăguș
+Nicolae Stanciu
+Scott McTominay
+Luka Jović
+Ondrej Duda
+Erik Janža
+Žan Karničnik
+Dani Carvajal
+Mikel Merino
+Álvaro Morata
+Mikel Oyarzabal
+Rodri
+Ferran Torres
+Lamine Yamal
+Michel Aebischer
+Kwadwo Duah
+Remo Freuler
+Dan Ndoye
+Xherdan Shaqiri
+Rubén Vargas
+Samet Akaydin
+Kerem Aktürkoğlu
+Hakan Çalhanoğlu
+Arda Güler
+Mert Müldür
+Cenk Tosun
+Mykola Shaparenko
+Roman Yaremchuk
+1 own goal
+Klaus Gjasula (against Croatia)
+Maximilian Wöber (against France)
+Jan Vertonghen (against France)
+Robin Hranáč (against Portugal)
+Antonio Rüdiger (against Scotland)
+Riccardo Calafiori (against Spain)
+Donyell Malen (against Austria)
+Robin Le Normand (against Georgia)
+Samet Akaydin (against Portugal)
+Mert Müldür (against Netherlands)
+Source: UEFA [ 142 ]
+Awards
+[ edit ]
+See also: UEFA European Championship awards
+Maignan
+Saliba
+Akanji
+Walker
+Cucurella
+Rodri
+Olmo
+Fabián
+Yamal
+Williams
+Musiala
+The Team of the Tournament, chosen by UEFA
+UEFA Team of the Tournament
+UEFA's technical observer team was given the objective of naming a team of the best eleven players from the tournament. Six players from the winning Spanish squad were named in the team. [ 143 ]
+UEFA Team of the Tournament
+Goalkeeper
+Defenders
+Midfielders
+Forwards
+Mike Maignan
+Kyle Walker
+Manuel Akanji
+William Saliba
+Marc Cucurella
+Dani Olmo
+Rodri
+Fabián Ruiz
+Lamine Yamal
+Jamal Musiala
+Nico Williams
+Player of the Tournament
+The Player of the Tournament award was given to Rodri , who was chosen by UEFA's technical observers. [ 144 ]
+Rodri
+Young Player of the Tournament
+The Young Player of the Tournament award, open to players born on or after 1 January 2002, was given to Lamine Yamal , as chosen by UEFA's technical observers. [ 145 ]
+Lamine Yamal – ( 2007-07-13 ) 13 July 2007 (aged 17)
+Top Scorer
+Unlike in previous editions, the " Alipay Top Scorer" award, given to the top scorer of the tournament, was allowed to be shared among multiple players, whereas previous installments used assists and minutes played as tiebreakers. The award was thus given to each of the six players who scored three goals in the tournament: Cody Gakpo , Harry Kane , Georges Mikautadze , Jamal Musiala , Dani Olmo , and Ivan Schranz . [ 146 ]
+Cody Gakpo
+Harry Kane
+Georges Mikautadze
+Jamal Musiala
+Dani Olmo
+Ivan Schranz
+(3 goals each)
+Goal of the Tournament
+The Goal of the Tournament was decided by a panel of UEFA technical observers. On 16 July 2024, UEFA announced that Spanish winger Lamine Yamal 's semi-final goal against France had been chosen as the best goal of the tournament. [ 147 ]
+Lamine Yamal (goal vs France )
+Prior announcing Yamal's goal as the Goal of the Tournament, UEFA published an extensive list of goals nominated for the award. [ 148 ]
+The following three goals, according to UEFA's ranking, were:
+Jude Bellingham (goal vs Slovakia during the round of 16)
+Xherdan Shaqiri (goal vs Scotland during the group stage)
+Nicolae Stanciu (goal vs Ukraine during the group stage)
+Fans' Goal of the Tournament
+The Fans' Goal of the Tournament was decided by online voting. A total 10 goals were in the shortlist, chosen by UEFA technical observers. On 20 July 2024, after an open vote on the official Euro 2024 website, UEFA announced that Turkish defender Mert Müldür 's group stage goal against Georgia had been chosen as the fans' goal of the tournament. [ 149 ]
+Mert Müldür (goal vs Georgia )
+Discipline
+[ edit ]
+A player or team official was automatically suspended for the next match for the following offences: [ 76 ]
+Receiving a red card (red card suspensions could be extended for serious offences)
+Receiving two yellow cards in two different matches; [ A ] yellow cards expired after the completion of the quarter-finals (yellow card suspensions were not carried forward to any other future international matches)
+Players suspended during the tournament—sortable [ 150 ] [ 102 ] [ 151 ] [ 152 ] [ 153 ]
+Player
+Offence(s)
+Suspension(s)
+Giorgi Loria
+in qualifying vs Greece (26 March 2024)
+Group F vs Turkey (matchday 1; 18 June 2024)
+Ryan Porteous
+in Group A vs Germany (matchday 1; 14 June 2024)
+Group A vs Switzerland (matchday 2; 19 June 2024)
+Group A vs Hungary (matchday 3; 23 June 2024) [ 154 ]
+Mirlind Daku {{cite web |date=23 June 2024 |title=CEDB decisions: 2024 European Championship match, Croatia – Albania |url=https://disciplinary.uefa.com/028e-1b3386bfea54-bcda6f8194bd-1000/ |access-date=23 June 2024 |website=[[UEFA]] |publisher=Union of European Football Associations}}</ref> with the second match of the suspension served outside the tournament."}},"i":0}}]}'> [ B ]
+Nationalist chants following Group B vs Croatia (matchday 2; 19 June 2024) [ 156 ]
+Group B vs Spain (matchday 3; 24 June 2024)
+Rodri
+in Group B vs Croatia (matchday 1; 15 June 2024)
+in Group B vs Italy (matchday 2; 20 June 2024)
+Group B vs Albania (matchday 3; 24 June 2024)
+Dodi Lukebakio
+in Group E vs Slovakia (matchday 1; 17 June 2024)
+in Group E vs Romania (matchday 2; 22 June 2024)
+Group E vs Ukraine (matchday 3; 26 June 2024)
+Rafael Leão
+in Group F vs Czech Republic (matchday 1; 18 June 2024)
+in Group F vs Turkey (matchday 2; 22 June 2024)
+Group F vs Georgia (matchday 3; 26 June 2024)
+Abdülkerim Bardakcı
+in Group F vs Georgia (matchday 1; 18 June 2024)
+in Group F vs Portugal (matchday 2; 22 June 2024)
+Group F vs Czech Republic (matchday 3; 26 June 2024)
+Jonathan Tah
+in Group A vs Scotland (matchday 1; 14 June 2024)
+in Group A vs Switzerland (matchday 3; 23 June 2024)
+Round of 16 vs Denmark (29 June 2024)
+Silvan Widmer
+in Group A vs Hungary (matchday 1; 15 June 2024)
+in Group A vs Germany (matchday 3; 23 June 2024)
+Round of 16 vs Italy (29 June 2024)
+Riccardo Calafiori
+in Group B vs Albania (matchday 1; 15 June 2024)
+in Group B vs Croatia (matchday 3; 24 June 2024)
+Round of 16 vs Switzerland (29 June 2024)
+Patrick Wimmer
+in Group D vs Poland (matchday 2; 21 June 2024)
+in Group D vs Netherlands (matchday 3; 25 June 2024)
+Round of 16 vs Turkey (2 July 2024)
+Morten Hjulmand
+in Group C vs Slovenia (matchday 1; 16 June 2024)
+in Group C vs Serbia (matchday 3; 25 June 2024)
+Round of 16 vs Germany (29 June 2024)
+Erik Janža
+in Group C vs Serbia (matchday 2; 20 June 2024)
+in Group C vs England (matchday 3; 25 June 2024)
+Round of 16 vs Portugal (1 July 2024)
+Nicușor Bancu
+in Group E vs Belgium (matchday 2; 22 June 2024)
+in Group E vs Slovakia (matchday 3; 26 June 2024)
+Round of 16 vs Netherlands (2 July 2024)
+Antonín Barák
+in Group F vs Turkey (matchday 3; 26 June 2024)
+Suspension served outside the tournament
+Tomáš Chorý
+in Group F vs Turkey (matchday 3; 26 June 2024)
+Anzor Mekvabishvili
+in Group F vs Czech Republic (matchday 2; 22 June 2024)
+in Group F vs Portugal (matchday 3; 26 June 2024)
+Round of 16 vs Spain (30 June 2024)
+Samet Akaydin
+in Group F vs Portugal (matchday 2; 22 June 2024)
+in Group F vs Czech Republic (matchday 3; 26 June 2024)
+Round of 16 vs Austria (2 July 2024)
+Hakan Çalhanoğlu
+in Group F vs Georgia (matchday 1; 18 June 2024)
+in Group F vs Czech Republic (matchday 3; 26 June 2024)
+Marc Guéhi
+in Group C vs Slovenia (matchday 3; 25 June 2024)
+in Round of 16 vs Slovakia (30 June 2024)
+Quarter-finals vs Switzerland (6 July 2024)
+Adrien Rabiot
+in Group D vs Poland (matchday 3; 25 June 2024)
+in Round of 16 vs Belgium (1 July 2024)
+Quarter-finals vs Portugal (5 July 2024)
+Matjaž Kek (manager)
+in Round of 16 vs Portugal (1 July 2024)
+Suspension served outside the tournament
+Orkun Kökçü
+in Group F vs Czech Republic (matchday 3; 26 June 2024)
+in Round of 16 vs Austria (2 July 2024)
+Quarter-finals vs Netherlands (6 July 2024)
+İsmail Yüksek
+in Group F vs Czech Republic (matchday 3; 26 June 2024)
+in Round of 16 vs Austria (2 July 2024)
+Merih Demiral {{cite web |date=5 July 2024 |title=CEDB decisions: 2024 European Championship match, Austria – Turkey |url=https://disciplinary.uefa.com/028f-1b4b5df93e8d-2aae45b09ee5-1000/ |access-date=5 July 2024 |website=[[UEFA]] |publisher=Union of European Football Associations}}</ref> with the second match of the suspension served outside the tournament."}},"i":0}}]}'> [ C ]
+Nationalist hand symbol in Round of 16 vs Austria (2 July 2024) [ 158 ]
+Dani Carvajal
+in Quarter-finals vs Germany (5 July 2024)
+Semi-finals vs France (9 July 2024)
+Robin Le Normand
+in Group B vs Italy (matchday 2; 20 June 2024)
+in Quarter-finals vs Germany (5 July 2024)
+Bertuğ Yıldırım
+in Quarter-finals vs Netherlands (6 July 2024)
+Suspension served outside the tournament
+↑ As yellow cards are not carried forward to penalty shoot-outs , players may be shown two yellow cards in the same fixture without being sent off. However, this would result in a suspension for accumulating two yellow cards during the tournament.
+↑ Daku was handed a two-match ban, [ 155 ] with the second match of the suspension served outside the tournament.
+↑ Demiral was handed a two-match ban, [ 157 ] with the second match of the suspension served outside the tournament.
+Prize money
+[ edit ]
+The prize money was finalised on 2 December 2023. Each team received a participation fee of €9.25 million, with the winner able to earn a maximum of €28.25 million. [ 159 ]
+Prize money
+Rank (unoff.) Team € million
+1 Spain 28.25
+2 England 24.25
+3 France 19.25
+4 Netherlands 18.75
+5 Germany 15.75
+6 Portugal
+Turkey
+Switzerland 15.25
+9 Austria 12.75
+10 Romania
+Belgium
+Georgia
+Italy
+Slovakia
+Denmark
+Slovenia 12.25
+17 Ukraine 10.75
+18 Hungary
+Serbia
+Croatia 10.25
+21 Albania
+Czech Republic
+Poland
+Scotland 9.75
+Prize money by round achieved
+Round achieved
+Amount
+Number of teams
+Final tournament €9.25m 24
+Group stage €1m for a win
+€500,000 for a draw 24
+Round of 16 €1.5m 16
+Quarter-finals €2.5m 8
+Semi-finals €4m 4
+Runner-up €5m 1
+Winner €8m 1
+Records
+[ edit ]
+See also: UEFA European Championship records and statistics
+After securing a record fourth title, Spain became the first European Championship winners to win all their group matches twice (having done so previously in 2008 ), with France ( 1984 ) and Italy ( 2021 ) the only other teams to have achieved this once. This statistic refers to the European Championship since 1980 , with the inclusion of the group stage. [ 160 ]
+Spain also became the first European team to win all seven matches at European championship without needing a penalty shoot-out . [ 161 ] France also won every match without needing a penalty shoot-out in 1984, albeit while playing only five matches.
+Spain's 15 goals broke the record for most goals scored by a team at a single European Championship. The record was previously held by France, scoring 14 goals in 1984. Ten different players scored for Spain, another record. [ 160 ]
+England became the first team to lose back to back European Championship finals, while Gareth Southgate became the first manager to lose back to back finals in either the World Cup or European Championships.
+By taking charge of Germany 's tournament opener against Scotland , Julian Nagelsmann became the youngest head coach to manage a match at the European Championship at the age of 36 years and 327 days, surpassing the previous record set in 2000 by Slovenia coach Srečko Katanec by six days. [ 160 ]
+Lamine Yamal became the youngest player to play at a UEFA European Championship aged 16 years and 338 days old, after featuring for Spain in their opening match against Croatia . The previous youngest player was Poland's Kacper Kozłowski , aged 17 years and 246 days in 2021 . [ 162 ]
+With his goal in Spain's semi-final against France, Yamal then became the youngest goalscorer in the history of the European Championship, aged 16 years and 362 days. The previous youngest was Switzerland's Johan Vonlanthen , aged 18 years and 141 days in 2004, also against France. [ 163 ]
+Yamal's appearance in the final , one day after his 17th birthday, also made him the youngest player to both appear in and also win a UEFA European Championship final. [ 164 ] Previously, the youngest player to both appear in and also win a UEFA European Championship final was Portugal's Renato Sanches , in 2016 , aged 18 years and 328 days.
+Nedim Bajrami set the record for fastest goal scored in European Championship history, scoring in Albania 's opener against Italy after just 23 seconds. This shattered the previous record of 67 seconds, set by Russia 's Dmitri Kirichenko in 2004 . Kirichenko's goal was then pushed into third place following Merih Demiral 's goal for Turkey against Austria in the round of 16, coming after only 58 seconds. The fourth-fastest goal was also recorded, when Youri Tielemans scored for Belgium against Romania after only 74 seconds. [ 165 ]
+Portugal 's Pepe became the oldest player to make an appearance at the European Championship, aged 41 years and 130 days in his side's quarter-final match against France. Hungary goalkeeper Gabor Király , the previous record holder, was aged 40 years and 86 days when he faced Belgium in the round of 16 in 2016 . Before Pepe, the oldest outfield player was Lothar Matthäus , who won his 150th and final cap for Germany aged 39 years and 91 days in 2000. [ 166 ]
+Cristiano Ronaldo extended his own record for the most tournaments featured in, appearing in his sixth European Championship. [ 167 ]
+Luka Modrić became the oldest player to score a goal at the European Championship, aged 38 years and 289 days in Croatia's group stage match against Italy. The previous record was held by Austria 's Ivica Vastić , who was 38 years and 257 days old when he scored against Poland in 2008 . [ 168 ]
+Kevin Csoboth set the record for the latest regulation time goal in tournament history, scoring for Hungary against Scotland in the 10th minute after the 90-minute mark. [ 169 ] [ 170 ]
+The final Group F game between Czech Republic and Turkey broke the record for the most number of cards shown in total in a single match. 19 cards (17 yellow and 2 red) were shown (Czech Republic receiving 7 of them and Turkey 12), surpassing the previous record of 10 shown in the Euro 2016 final between Portugal and France. [ 171 ]
+Portuguese goalkeeper Diogo Costa made three saves in the round of 16 penalty shoot-out against Slovenia , breaking the European Championship record for most saves in one penalty shoot-out, while Slovenia became the first team in European Championship history to miss all of their penalties. [ 172 ] [ 173 ]
+Marketing
+[ edit ]
+Countdown clock for UEFA Euro 2024 in front of Düsseldorf City Hall
+Branding
+[ edit ]
+The official logo was unveiled on 5 October 2021, during a ceremony at the Olympiastadion in Berlin . The logo depicted the Henri Delaunay Trophy with 24 coloured slices around the trophy representing the 24 participating nations, and the ellipse reflected the shape of the Olympiastadion. [ 174 ] The coloured slices also represent the flags of all 55 UEFA member nations. [ 175 ] [ 176 ] [ 177 ] In addition, each of the ten host cities had their own unique logo, featuring the following local sights: [ 178 ]
+Berlin : Brandenburg Gate
+Cologne : Cologne Cathedral
+Dortmund : Dortmund U-Tower
+Düsseldorf : Schlossturm [ de ] , Rheinturm and Rheinkniebrücke
+Frankfurt : Römer
+Gelsenkirchen : Musiktheater im Revier
+Hamburg : Elbphilharmonie
+Leipzig : Monument to the Battle of the Nations
+Munich : Frauenkirche
+Stuttgart : Fernsehturm Stuttgart
+The official slogan of the tournament was "United by Football. [German:] Vereint im Herzen Europas " (English: United in the heart of Europe). The slogan was chosen to promote diversity and inclusion. [ 179 ]
+Merchandise
+[ edit ]
+See also: UEFA European Championship video games § UEFA Euro 2024
+In November 2023, it was announced that EA Sports had picked up the rights for the UEFA Euro 2024 video game, and that the Euro 2024 downloadable update would be coming to EA Sports FC 24 , EA Sports FC Mobile , and EA Sports FC Online in the summer of 2024. [ 180 ] Released on 11 June, the update featured a full tournament mode, local and online friendlies, and a Euro-themed single player career mode, called "Lead Your Nation", each including all of the teams, players, and tournament venues. [ 181 ] [ 182 ]
+From Euro 2024, Fanatics would be controlling the e-commerce, event retail and licensing of UEFA National Team competitions until Euro 2028 . [ 183 ]
+Topps , also owned by Fanatics, was the official sticker and trading card partner of the tournament, marking the end of Panini 's association with UEFA which began in 1976. Stickers were produced for all the Euro 2024 teams, including the teams that did not qualify for the qualifying play-offs . These stickers could be sold, collected or traded . [ 184 ]
+Official song
+[ edit ]
+Main article: Fire (Meduza, OneRepublic and Leony song)
+In December 2023, Italian DJ group Meduza , American pop rock band OneRepublic and German singer Kim Petras were all announced as the official music artists of the tournament. [ 185 ] However, in March 2024, it was announced that Petras had withdrawn from production due to scheduling issues, and was replaced by German singer Leony . [ 185 ] The official song, " Fire ", was released on 10 May 2024. [ 186 ] It was performed live by the three music artists at the tournament's closing ceremony before the final on 14 July 2024. [ 187 ]
+Broadcasting rights
+[ edit ]
+Main article: UEFA Euro 2024 broadcasting rights
+The International Broadcast Centre (IBC) was located at the halls of the Leipzig Trade Fair in Leipzig , Germany. [ 188 ]
+Unlike the previous two tournaments, UEFA discontinued 4K ultra-high-definition broadcasts due to technical constraints, and amid lukewarm interest in the format among European broadcasters in comparison to high-dynamic-range (HDR) colour. [ 189 ]
+Sponsorship
+[ edit ]
+UEFA, in collaboration with AIM Sport, used virtual advertising for the first time in the history of Euros, having three different types of sponsorship besides the Global sponsors, one pack for Germany, one for the United States and another for the Chinese market. [ 190 ]
+Official global sponsors [ 191 ]
+Adidas
+Alibaba Group [ 192 ] [ 193 ] ( Alipay , AliExpress , Antom and WorldFirst brands)
+Atos [ 194 ]
+Betano [ 195 ]
+Booking.com [ 196 ]
+BYD Auto [ 197 ]
+Coca-Cola [ 198 ]
+Engelbert Strauss [ 199 ]
+Hisense [ 200 ]
+Lidl [ 201 ]
+Qatar Airways [ 202 ]
+Unilever [ 203 ]
+Visit Qatar
+Vivo Mobile [ 204 ]
+Official Germany national sponsors [ 190 ]
+Bitburger Brewery [ 205 ]
+Deutsche Bahn [ 206 ]
+Deutsche Telekom [ 207 ]
+Ergo Group [ 208 ]
+Wiesenhof [ 209 ]
+Symbols
+[ edit ]
+Mascot
+[ edit ]
+The official mascot "Albärt".
+The official UEFA Euro 2024 mascot was unveiled on 20 June 2023 at the Germany vs Colombia international friendly in Gelsenkirchen . [ 210 ] The mascot was a teddy bear with shorts on. [ 211 ] A public vote was used to select the name of the mascot, with options being "Albärt", "Bärnardo", "Bärnheart" and "Herzi von Bär", all referencing the German word for bear (Bär). [ 212 ] Results were made public on 5 July, with the mascot's name announced to be "Albärt", getting 32% of the votes. [ 213 ]
+Unofficially the event even has an animal oracle following in the footsteps of Paul the Octopus : Bubi the Elephant, who "predicted" Germany's opening round against Scotland with her initial kick through a makeshift goal. [ 214 ]
+Match ball
+[ edit ]
+Official replica -version of the match ball "Fussballliebe".
+The official match ball of the tournament, "Fussballliebe", was unveiled by UEFA and Adidas on 15 November 2023. [ 215 ] Translated from the German as "football love", it featured black wing shapes with red, blue, orange and green edges and curves to showcase the qualified nations' vibrancy to the tournament, and the love that fans around the world give to football. Created with sustainable organic materials, [ 215 ] this was the first ball for a UEFA Euro to feature "Connected Ball Technology", where it contained internal electronic sensors, allowing detection of its movement for UEFA match officials to use to assist in decision-making. [ 216 ]
+Controversies and incidents
+[ edit ]
+Pitch invasions, thrown projectiles, and other interference
+[ edit ]
+The Group F match between Turkey and Portugal was interrupted four times by pitch invaders trying to take a selfie with Cristiano Ronaldo . Two others invaded the pitch right after the final whistle. Additional pitch invasions happened during the game between Albania and Italy, one during the game between Romania and Ukraine, and one during the round of 16 game between Romania and the Netherlands. During another pitch invasion after the semi-final between Spain and France, a security guard chasing the invader accidentally slid into Spanish striker Álvaro Morata , who suffered an injury as a consequence. [ 217 ] [ 218 ] [ 219 ] [ 220 ] [ 221 ] [ 222 ]
+Several players and managers complained about fans throwing reusable plastic cups on the pitch, on occasion hitting players, particularly when taking a corner kick . [ 223 ] Other objects were thrown as well, [ 224 ] and Kevin De Bruyne had a laser pointer shone in his eye in one match. [ 225 ] [ 226 ] [ 227 ] [ 228 ]
+Barnabás Varga injury
+[ edit ]
+During the second half of the Group A fixture between Scotland and Hungary, Hungarian striker Barnabás Varga was left unconscious after a collision with Scottish goalkeeper Angus Gunn , landing in a fencing response . It was later revealed that Varga had suffered from a concussion and sustained multiple fractured cheekbones . [ 229 ] Rapidly following the incident, medics made their way toward the scene and protective sheets were held around Varga. However, the stretcher bearers were seen walking toward the player, rather than running, prompting dismay from players, fans, and staff alike. Hungary captain Dominik Szoboszlai and fellow player Endre Botka proceeded to run with the stretcher in an attempt to speed up the process. [ 230 ] Following the injury, the captain expressed his frustration, stating that the medical staff did not react quick enough, with hopes that "everyone can save a few seconds and save a life." This was rebutted by UEFA, who claimed that the coordination between the on-site medical staff was "professional", with "no delay in the treatment of and assistance to the player." [ 231 ]
+The match was resumed after 10 minutes, as Hungary went on to win by a score of 0–1 following a stoppage time goal from Kevin Csoboth , with Varga making a full recovery after undergoing surgery. [ 232 ]
+Balkan incidents
+[ edit ]
+During the group stage, several controversies came up due to the behaviour of various Balkan fans and players. Albania and Serbia were both fined €10,000 after their fans displayed irredentist symbols; Serbian fans displayed maps of Kosovo as being a part of Serbia while Albanian fans displayed maps of Greater Albania . Serbia threatened to quit the tournament if UEFA did not take action against Croatia and Albania after some of their fans chanted anti-Serbian slogans during the match, such as Ubij ubij ubij Srbina ("Kill kill kill the Serb"); an investigation was later launched into Croatia. [ 233 ] After the group stage game between Albania and Croatia, Mirlind Daku led the Albanian supporters in chanting anti-Macedonian and anti-Serbian slogans, and Albania was fined €47,250 and Daku was banned for two games. Kosovar journalist Arlind Sadiku was banned after making the crossed hands gesture towards Serbian fans during the Serbia and England game. [ 233 ]
+Merih Demiral celebration
+[ edit ]
+In the Austria vs Turkey match on 2 July 2024, Turkish player Merih Demiral celebrated his second goal of the match with a wolf salute . The gesture is seen as ultra-nationalist due to its connection with far-right extremist group Grey Wolves and is banned in Austria, as well as France. [ 234 ] The celebration was criticised by German interior minister Nancy Faeser , while Nationalist Movement Party president Devlet Bahçeli shared his support for the celebration. [ 235 ] Demiral also posted a photo on his Twitter account of him performing the celebration along with the caption of: " How happy is the one who says I am a Turk !". UEFA opened an investigation on Demiral the following day [ 236 ] before later handing him a two-match ban, meaning he would miss Turkey's quarter-final match against the Netherlands, as well as their first 2024–25 UEFA Nations League match as they were eliminated in the quarter-finals. [ 237 ] Ahead of Turkey's following match against the Netherlands, Turkish supporters were seen making the controversial hand gesture en masse while on their way to the stadium as well as inside the stadium. [ 238 ] [ 239 ] UEFA's ban on Demiral was criticised by some Turkish media outlets as hypocritical and of double standard by drawing comparisons with the lighter penalty received by Jude Bellingham for offensive gesture made at the same tournament and with political gestures made by footballers of other nations which had gone unpunished in previous editions of the tournament. [ 240 ] [ 241 ]
+Top Coffee bombing
+[ edit ]
+Main article: Top Coffee bombing
+On 14 July 2024, Al-Shabaab bombed Top Coffee in Mogadishu , Somalia , where spectators were watching the Euro 2024 final between England and Spain . [ 242 ] The attack killed more than ten people and injured 20 others. [ 243 ]
+Spanish celebrations
+[ edit ]
+Following Spain's victory in the final , videos showed some Spanish players (notably Álvaro Morata and Rodri ) celebrating with offensive chants towards Gibraltar , a British Overseas Territory . [ 244 ] [ 245 ] The Gibraltar FA stated they would file a complaint with UEFA. [ 246 ] UEFA eventually suspended both Morata and Rodri for Spain's upcoming match in the 2024–25 UEFA Nations League against Serbia. [ 247 ]
+Referee performance in the quarter-final Germany – Spain
+[ edit ]
+The decisions of referee Anthony Taylor in the quarter-final between Germany and Spain were controversial. On the one hand, Toni Kroos could have received two yellow cards in the first minutes of the game, and on the other hand, a penalty for Germany could have been awarded in extra time after a handball by Spaniard Marc Cucurella in his own penalty area. [ 248 ] [ 249 ] [ 250 ] In its internal review of the tournament, the UEFA Referees Committee came to the conclusion that a penalty should have been awarded. [ 251 ]
+See also
+[ edit ]
+Association football portal
+Sports portal
+2024 Copa América – 48th edition of the Copa América
+2024 OFC Men's Nations Cup
+CONMEBOL–UEFA Cup of Champions – International football match
+UEFA Women's Euro 2025 – European football tournament
+References
+[ edit ]
+↑ "Euro 2024: Germany beats Turkey to host tournament" . BBC Sport . 27 September 2018. Archived from the original on 12 February 2024 . Retrieved 27 September 2018 .
+1 2 Penfold, Chuck (27 September 2018). "Germany wins right to host UEFA Euro 2024" . DW . Archived from the original on 11 June 2024 . Retrieved 1 April 2024 .
+↑ "Italy 1–1 England, aet (3–2 on pens): Donnarumma the hero as Azzurri win Euro 2020!" . UEFA . Union of European Football Associations. 11 July 2021. Archived from the original on 29 June 2024 . Retrieved 11 July 2021 .
+↑ "Switzerland 2–0 Italy: Swiss club together in Berlin" . UEFA . Union of European Football Associations. 29 June 2024. Archived from the original on 10 July 2024 . Retrieved 29 June 2024 .
+↑ "Spain 2–1 England: Late Oyarzabal winner earns La Roja record fourth EURO crown" . UEFA . Union of European Football Associations. 14 July 2024 . Retrieved 14 July 2024 .
+↑ "Euro 2024: Tournament to be held in Germany or Turkey" . BBC Sport . British Broadcasting Corporation . 8 March 2017. Archived from the original on 1 October 2022 . Retrieved 8 March 2017 .
+↑ "Germany and Turkey officially interested in hosting UEFA Euro 2024" . UEFA. 8 March 2017. Archived from the original on 7 June 2017 . Retrieved 9 March 2017 .
+1 2 3 "Germany to host UEFA Euro 2024" . UEFA. 27 September 2018. Archived from the original on 15 December 2018 . Retrieved 27 September 2018 .
+↑ Georgiou, Stephan (26 September 2018). "Euro 2024: Germany vs Turkey – who's leading the race?" . SportsPro . Retrieved 12 March 2024 .
+↑ "UEFA Euro 2024: bid regulations" (PDF) . UEFA. Archived (PDF) from the original on 20 December 2016 . Retrieved 16 December 2016 .
+↑ Graaf, Patrick de. "EURO 2024 host selection – All about Germany's selection as host country" . European Championship 2024 Germany . Archived from the original on 12 March 2024 . Retrieved 12 March 2024 .
+↑ Adams, Tom (27 September 2018). "Germany win vote to host 2024 European Championship" . Eurosport . Archived from the original on 10 May 2024 . Retrieved 12 March 2024 .
+↑ Dunbar, Graham (27 September 2018). "Germany beats Turkey to host Euro 2024" . AP News . Archived from the original on 26 March 2024 . Retrieved 26 March 2024 .
+↑ "Niersbach: EM-Bewerbung wäre "reizvoll" " . FIFA.com. 4 March 2012. Archived from the original on 4 July 2012 . Retrieved 22 August 2021 .
+↑ Source: UEFA Euro 2024 Tournament Requirements, Sector 2, pag. 4, 5.
+↑ "EURO 2024 host cities: Venue guide" . UEFA . 2022. Archived from the original on 29 September 2022 . Retrieved 12 May 2022 .
+↑ "Opening game of UEFA Euro 2024 to take place in Munich, final in Berlin" . UEFA . 10 May 2022. Archived from the original on 22 January 2023 . Retrieved 21 November 2023 .
+↑ "Grünes Licht: EM-Spiele in München vor rund 14.000 Zuschauern" [ Green light: EC-matches in Munich in front of 14.000 spectators ] . Kicker (in German). 4 June 2021 . Retrieved 4 June 2021 .
+↑ "Evaluierungsbericht Stadien/Städte" [ Evaluation report stadiums/cities ] (PDF) . DFB.de (in German). German Football Association . 2017. Archived (PDF) from the original on 16 September 2017 . Retrieved 15 September 2017 .
+↑ "EURO 2024 an Rhein und Ruhr" . nrw.de (in German). North Rhine-Westphalia State Government. 27 September 2018. Archived from the original on 28 September 2018 . Retrieved 28 September 2018 .
+↑ "Event guide: Berlin" . UEFA . 3 June 2024 . Retrieved 19 June 2024 .
+↑ "Event guide: Munich" . UEFA . 3 June 2024 . Retrieved 19 June 2024 .
+↑ "Event guide: Dortmund" . UEFA . 3 June 2024 . Retrieved 19 June 2024 .
+↑ "Event guide: Stuttgart Arena" . UEFA . Retrieved 25 June 2024 .
+↑ "Event guide: Gelsenkirchen" . UEFA . 3 June 2024 . Retrieved 19 June 2024 .
+↑ "Event guide: Hamburg" . UEFA . 3 June 2024 . Retrieved 19 June 2024 .
+↑ "Event guide: Dūsseldorf" . UEFA . Retrieved 19 June 2024 .
+↑ "Event guide: Frankfurt" . UEFA . Retrieved 19 June 2024 .
+↑ "Event guide: Cologne" . UEFA . 3 June 2024 . Retrieved 19 June 2024 .
+↑ "Event guide: Leipzig" . UEFA . 3 June 2024 . Retrieved 19 June 2024 .
+↑ "Archived copy" . Archived from the original on 17 December 2023 . Retrieved 17 December 2023 . {{ cite web }} : CS1 maint: archived copy as title ( link )
+↑ "The AFL selects the camp near Dortmund for "Euro 2024" - KOHA.net" . 6 December 2023. Archived from the original on 17 December 2023 . Retrieved 17 December 2023 .
+↑ "Austria's National Football Team Set for Dignified EURO 2024 Base Camp in Berlin" . Archysport . 14 December 2023. Archived from the original on 17 December 2023 . Retrieved 19 December 2023 .
+↑ "Proche des matchs de poule et... du village d'enfance de Domenico Tedesco : le camp de base des Diables rouges pour l'Euro 2024 est choisi" . RTBF (in French). Archived from the original on 17 January 2024 . Retrieved 17 January 2024 .
+↑ "PHOTOS: Croatia selects base camp for Euro 2024" . Croatia Week . 4 December 2023. Archived from the original on 17 December 2023 . Retrieved 19 December 2023 .
+↑ Mikeš, Pavel (7 December 2023). "Base camp fotbalistů? Luxus i relax. Češi budou během Eura bydlet v Hamburku" . Kroměřížský deník (in Czech). Archived from the original on 17 December 2023 . Retrieved 19 December 2023 .
+↑ "Herrelandsholdet har valgt Basecamp til sommerens EM" . DBU (in Danish). 12 December 2023. Archived from the original on 17 December 2023 . Retrieved 19 December 2023 .
+↑ Burrows, Tom. "England set to choose five-star hotel and spa as base for Euros" . The New York Times . Archived from the original on 17 December 2023 . Retrieved 19 December 2023 .
+↑ "Euro 2024 : à la découverte du camp de base des Bleus, « un hôtel confortable sans qu'il soit luxueux »" . Le Parisien (in French). 3 December 2023 . Retrieved 19 December 2023 .
+↑ "Velbert wird "Team Base Camp" der georgischen Fußballnationalmannschaft bei der UEFA EURO 2024" . velbert.de (in German). 29 April 2024 . Retrieved 3 June 2024 .
+↑ "Deutsches EM-Quartier in Herzogenaurach" . BR24 (in German). 14 November 2023 . Retrieved 13 March 2024 .
+↑ "Minden a zavartalan felkészülést szolgálja Nyugat-Bajorországban" . MLSZ (in Hungarian). 12 January 2024. Archived from the original on 12 January 2024 . Retrieved 12 January 2023 .
+↑ "EM 2024 Quartiere, Basecamps, Trainingslager & Öffentliche Trainingseinheiten" . fussball-em-2024.de (in German). Archived from the original on 17 March 2024 . Retrieved 17 March 2024 .
+↑ "Welkom, Oranje!" . VfL Wolfsburg. Archived from the original on 17 December 2023 . Retrieved 19 December 2023 .
+↑ "Polen schlägt EM-Quartier in Hannover auf" (in German). 3 April 2024. Archived from the original on 3 April 2024 . Retrieved 3 April 2024 .
+↑ "Fußball EM 2024: Vorbereitung der "Team Base Camps" " . intergreen.de (in German). Archived from the original on 17 March 2024 . Retrieved 17 March 2024 .
+↑ "Naționala României și-a ales baza de pregătire de la Wurzburg pentru Euro 2024" . www.digisport.ro (in Romanian). Archived from the original on 18 December 2023 . Retrieved 19 December 2023 .
+↑ "Scotland finalise UEFA Euro 2024 preparations" . Archived from the original on 23 January 2024 . Retrieved 23 January 2024 .
+↑ "Archived copy" . Archived from the original on 18 December 2023 . Retrieved 18 December 2023 . {{ cite web }} : CS1 maint: archived copy as title ( link )
+↑ Šurin, Peter (3 January 2024). "MUŽI A/EURO 2024 – Hlavný stan v Mainzi, pred Eurom štyri prípravné oficiálne zápasy" . futbalsfz.sk (in Slovak). Archived from the original on 1 March 2024 . Retrieved 11 February 2024 .
+↑ "The plan for preparations for Euro 2024 is known: Slovenia will conduct most of the hard work at Brdo pri Kranju, with the German base being in Wuppertal – Planet Nogomet" . 16 December 2023. Archived from the original on 22 December 2023 . Retrieved 22 December 2023 .
+↑ "Der Öschberghof chosen as Spain's basecamp for Euro 2024" . EN Web oficial de la Real Federación Española de Fútbol . Archived from the original on 17 December 2023 . Retrieved 19 December 2023 .
+↑ "Schweizerischer Fussballverband – SFV" . Archived from the original on 17 December 2023 . Retrieved 17 December 2023 .
+↑ "Fußball-EM 2024: Türkei soll EM-Feeling nach Niedersachsen bringen" . NDR (in German). Archived from the original on 18 December 2023 . Retrieved 19 December 2023 .
+↑ "1.2 million UEFA EURO 2024 tickets to be on sale as of 3 October" . UEFA . Union of European Football Associations. 12 September 2023.
+↑ "UEFA EURO 2024: Fans of participating teams request 30 million tickets" . UEFA . Union of European Football Associations. 18 December 2023.
+↑ "UEFA EURO 2024 ticketing" . UEFA EURO 2024 ticketing . Retrieved 21 February 2025 .
+↑ "UEFA Euro 2024 qualifying: All you need to know" . UEFA . Union of European Football Associations. 27 September 2022. Archived from the original on 1 October 2022 . Retrieved 28 September 2022 .
+↑ "EURO 2024 play-offs: How they work" . UEFA . Union of European Football Associations. 27 September 2022. Archived from the original on 12 December 2022 . Retrieved 28 September 2022 .
+↑ "UEFA Euro 2024 qualifying group stage draw to be staged in Frankfurt in 2022" . UEFA . Union of European Football Associations. 7 October 2021. Archived from the original on 25 May 2022 . Retrieved 7 October 2021 .
+↑ "UEFA Euro 2024 qualifying draw" . UEFA . Union of European Football Associations. Archived from the original on 9 October 2022 . Retrieved 28 September 2022 .
+↑ "UEFA Euro 2024: all you need to know" . UEFA . Union of European Football Associations. 27 November 2019. Archived from the original on 27 December 2020 . Retrieved 28 November 2019 .
+↑ Summerscales, Robert (19 November 2023). "Cristiano Ronaldo's Portugal Complete Perfect Euro 2024 Qualifying Campaign" . Futbol on FanNation . Archived from the original on 15 February 2024 . Retrieved 15 February 2024 .
+↑ "Serbia seal historic Euro 2024 finals place after nervy draw with Bulgaria" . The Guardian . 19 November 2023. ISSN 0261-3077 . Archived from the original on 10 May 2024 . Retrieved 15 February 2024 .
+↑ "Slovenia qualifies for the Euro 2024" . Portal GOV.SI . 24 November 2023. Archived from the original on 7 January 2024 . Retrieved 15 February 2024 .
+↑ Jurejko, Jonathan. "Georgia create history by reaching Euro 2024" . BBC Sport . Archived from the original on 26 March 2024 . Retrieved 26 March 2024 .
+↑ UEFA.com (17 November 2015). "UEFA EURO 2016: How all the teams qualified" . UEFA . Retrieved 2 January 2024 .
+↑ UEFA.com (22 February 2021). "UEFA EURO 2020 contenders in focus: Czech Republic" . UEFA . Retrieved 6 January 2024 .
+↑ UEFA.com (3 March 2021). "UEFA EURO 2020 contenders in focus: Slovakia" . UEFA . Retrieved 6 January 2024 .
+↑ UEFA.com (28 December 2023). "Who has qualified for UEFA EURO 2024?" . UEFA . Retrieved 5 January 2024 .
+↑ "UEFA Euro 2024 qualifying draw procedure approved" . UEFA . Union of European Football Associations . 20 September 2022. Archived from the original on 20 September 2022 . Retrieved 20 September 2022 .
+↑ Brennan, Feargal (3 December 2023). "Is Russia out of UEFA Euro 2024? Ban on national team, clubs in effect after invasion, war in Ukraine" . sportingnews.com . Archived from the original on 5 February 2024 . Retrieved 5 February 2024 .
+↑ Summerscales, Robert (20 September 2022). "Russia Banned From Euro 2024, UEFA Confirms" . Futbol on FanNation . Archived from the original on 5 February 2024 . Retrieved 5 February 2024 .
+↑ "Uefa confirms Russia Euro 2024 qualifying ban" . BBC Sport . Archived from the original on 5 February 2024 . Retrieved 5 February 2024 .
+↑ "Hamburg to stage EURO 2024 finals draw" . UEFA . Union of European Football Associations. 11 September 2020 . Retrieved 11 September 2020 . {{ cite news }} : CS1 maint: url-status ( link )
+1 2 3 4 5 "Regulations of the UEFA European Football Championship, 2022–24" . Union of European Football Associations. 10 May 2022. Archived (PDF) from the original on 16 May 2022 . Retrieved 16 May 2022 .
+↑ "EURO 2024 final tournament draw pots confirmed" . UEFA . Union of European Football Associations. Archived from the original on 23 November 2023 . Retrieved 27 November 2023 .
+↑ "UEFA Euro 2024 Final Draw Procedure" (PDF) . UEFA.com . 28 June 2023. Archived (PDF) from the original on 29 March 2024 . Retrieved 21 February 2024 .
+↑ "Lisbon to host UEFA Women's Champions League final in 2025" . UEFA . 6 June 2023. Archived from the original on 29 March 2024 . Retrieved 21 February 2024 .
+↑ "Red faces for Uefa as Euro 2024 draw disrupted by 'pornographic noises' " . The Guardian . 2 December 2023. Archived from the original on 10 May 2024 . Retrieved 2 December 2023 .
+↑ O'Brien, Josh (2 December 2023). "BBC Euro 2024 draw sabotaged by sex noises as viewers left stunned" . The Mirror. Archived from the original on 2 December 2023 . Retrieved 2 December 2023 .
+↑ "Teams allowed to register up to 26 players for UEFA EURO 2024" . UEFA . Union of European Football Associations. 3 May 2024. Archived from the original on 8 May 2024 . Retrieved 8 May 2024 .
+↑ "Referee teams for UEFA EURO 2024 appointed" . UEFA . Union of European Football Associations. 23 April 2024. Archived from the original on 23 April 2024 . Retrieved 23 April 2024 .
+1 2 "Referees and assistant referees" (PDF) . UEFA . Union of European Football Associations. 23 April 2024. Archived (PDF) from the original on 23 April 2024 . Retrieved 23 April 2024 .
+↑ "UEFA Euro 2024 match schedule approved" . UEFA . Union of European Football Associations. 10 May 2022. Archived from the original on 2 June 2023 . Retrieved 10 May 2022 .
+↑ "UEFA Euro 2024 match schedule" (PDF) . UEFA . Union of European Football Associations. 10 May 2022. Archived (PDF) from the original on 12 June 2022 . Retrieved 10 May 2022 .
+↑ "UEFA Euro 2024 fixtures: When and where are the matches?" . UEFA . Union of European Football Associations. 2 December 2023 . Retrieved 2 December 2023 .
+↑ "UEFA Euro 2024 match schedule" (PDF) . UEFA . Union of European Football Associations. 2 December 2023. Archived (PDF) from the original on 31 January 2024 . Retrieved 2 December 2023 .
+↑ "Full Time Report – Germany v Scotland" (PDF) . UEFA . Union of European Football Associations. 14 June 2024. Archived from the original (PDF) on 15 June 2024 . Retrieved 15 June 2024 . Alt URL
+↑ "Full Time Report – Hungary v Switzerland" (PDF) . UEFA . Union of European Football Associations. 15 June 2024 . Retrieved 15 June 2024 .
+↑ "Full Time Report – Germany v Hungary" (PDF) . UEFA . Union of European Football Associations. 19 June 2024 . Retrieved 19 June 2024 .
+↑ "Full Time Report – Scotland v Switzerland" (PDF) . UEFA . Union of European Football Associations. 19 June 2024 . Retrieved 19 June 2024 .
+↑ "Full Time Report – Switzerland v Germany" (PDF) . UEFA . Union of European Football Associations. 23 June 2024 . Retrieved 23 June 2024 .
+↑ "Full Time Report – Scotland v Hungary" (PDF) . UEFA . Union of European Football Associations. 23 June 2024 . Retrieved 23 June 2024 .
+↑ "Full Time Report – Spain v Croatia" (PDF) . UEFA . Union of European Football Associations. 15 June 2024 . Retrieved 15 June 2024 .
+↑ "Full Time Report – Italy v Albania" (PDF) . UEFA . Union of European Football Associations. 15 June 2024 . Retrieved 15 June 2024 .
+↑ "Full Time Report – Croatia v Albania" (PDF) . UEFA . Union of European Football Associations. 19 June 2024 . Retrieved 19 June 2024 .
+↑ "Full Time Report – Spain v Italy" (PDF) . UEFA . Union of European Football Associations. 20 June 2024 . Retrieved 20 June 2024 .
+↑ "Full Time Report – Albania v Spain" (PDF) . UEFA . Union of European Football Associations. 24 June 2024 . Retrieved 24 June 2024 .
+↑ "Full Time Report – Croatia v Italy" (PDF) . UEFA . Union of European Football Associations. 24 June 2024 . Retrieved 24 June 2024 .
+↑ "Who made it through from the EURO 2024 groups" . UEFA . Union of European Football Associations. 26 June 2024 . Retrieved 1 July 2024 . Denmark are through to the round of 16 as group runners-up (finishing ahead of Slovenia on disciplinary points).
+1 2 3 "European Championship 2024: Booking List before Round of 16" (PDF) . UEFA . Union of European Football Associations. 28 June 2024 . Retrieved 28 June 2024 .
+↑ "Full Time Report – Slovenia v Denmark" (PDF) . UEFA . Union of European Football Associations. 16 June 2024 . Retrieved 16 June 2024 .
+↑ "Full Time Report – Serbia v England" (PDF) . UEFA . Union of European Football Associations. 16 June 2024 . Retrieved 16 June 2024 .
+↑ "Full Time Report – Slovenia v Serbia" (PDF) . UEFA . Union of European Football Associations. 20 June 2024 . Retrieved 20 June 2024 .
+↑ "Full Time Report – Denmark v England" (PDF) . UEFA . Union of European Football Associations. 20 June 2024 . Retrieved 20 June 2024 .
+↑ "Full Time Report – England v Slovenia" (PDF) . UEFA . Union of European Football Associations. 25 June 2024 . Retrieved 25 June 2024 .
+↑ "Full Time Report – Denmark v Serbia" (PDF) . UEFA . Union of European Football Associations. 25 June 2024 . Retrieved 25 June 2024 .
+↑ "Full Time Report – Poland v Netherlands" (PDF) . UEFA . Union of European Football Associations. 16 June 2024 . Retrieved 16 June 2024 .
+↑ "Full Time Report – Austria v France" (PDF) . UEFA . Union of European Football Associations. 17 June 2024 . Retrieved 17 June 2024 .
+↑ "Full Time Report – Poland v Austria" (PDF) . UEFA . Union of European Football Associations. 21 June 2024 . Retrieved 21 June 2024 .
+↑ "Full Time Report – Netherlands v France" (PDF) . UEFA . Union of European Football Associations. 21 June 2024 . Retrieved 21 June 2024 .
+↑ "Full Time Report – Netherlands v Austria" (PDF) . UEFA . Union of European Football Associations. 25 June 2024 . Retrieved 25 June 2024 .
+↑ "Full Time Report – France v Poland" (PDF) . UEFA . Union of European Football Associations. 25 June 2024 . Retrieved 25 June 2024 .
+↑ "Full Time Report – Romania v Ukraine" (PDF) . UEFA . Union of European Football Associations. 17 June 2024 . Retrieved 17 June 2024 .
+↑ "Full Time Report – Belgium v Slovakia" (PDF) . UEFA . Union of European Football Associations. 17 June 2024 . Retrieved 17 June 2024 .
+↑ "Full Time Report – Slovakia v Ukraine" (PDF) . UEFA . Union of European Football Associations. 21 June 2024 . Retrieved 21 June 2024 .
+↑ "Full Time Report – Belgium v Romania" (PDF) . UEFA . Union of European Football Associations. 22 June 2024 . Retrieved 22 June 2024 .
+↑ "Full Time Report – Slovakia v Romania" (PDF) . UEFA . Union of European Football Associations. 24 June 2024 . Retrieved 24 June 2024 .
+↑ "Full Time Report – Ukraine v Belgium" (PDF) . UEFA . Union of European Football Associations. 24 June 2024 . Retrieved 24 June 2024 .
+↑ "Full Time Report – Türkiye v Georgia" (PDF) . UEFA . Union of European Football Associations. 18 June 2024 . Retrieved 26 June 2024 .
+↑ "Full Time Report – Portugal v Czechia" (PDF) . UEFA . Union of European Football Associations. 18 June 2024 . Retrieved 18 June 2024 .
+↑ "Full Time Report – Georgia v Czechia" (PDF) . UEFA . Union of European Football Associations. 22 June 2024 . Retrieved 22 June 2024 .
+↑ "Full Time Report – Türkiye v Portugal" (PDF) . UEFA . Union of European Football Associations. 22 June 2024 . Retrieved 22 June 2024 .
+↑ "Full Time Report – Georgia v Portugal" (PDF) . UEFA . Union of European Football Associations. 26 June 2024 . Retrieved 26 June 2024 .
+↑ "Full Time Report – Czechia v Türkiye" (PDF) . UEFA . Union of European Football Associations. 26 June 2024 . Retrieved 26 June 2024 .
+↑ "Full Time Report – Switzerland v Italy" (PDF) . UEFA . Union of European Football Associations. 29 June 2024 . Retrieved 29 June 2024 .
+↑ "Full Time Report – Germany v Denmark" (PDF) . UEFA . Union of European Football Associations. 29 June 2024 . Retrieved 29 June 2024 .
+↑ "Full Time Report – England v Slovakia" (PDF) . UEFA . Union of European Football Associations. 30 June 2024 . Retrieved 30 June 2024 .
+↑ "Full Time Report – Spain v Georgia" (PDF) . UEFA . Union of European Football Associations. 30 June 2024 . Retrieved 30 June 2024 .
+↑ "Full Time Report – France v Belgium" (PDF) . UEFA . Union of European Football Associations. 1 July 2024 . Retrieved 1 July 2024 .
+↑ "Full Time Report – Portugal v Slovenia" (PDF) . UEFA . Union of European Football Associations. 1 July 2024 . Retrieved 1 July 2024 .
+↑ "Full Time Report – Romania v Netherlands" (PDF) . UEFA . Union of European Football Associations. 2 July 2024 . Retrieved 2 July 2024 .
+↑ "Full Time Report – Austria v Türkiye" (PDF) . UEFA . Union of European Football Associations. 2 July 2024 . Retrieved 2 July 2024 .
+↑ "Full Time Report – Spain v Germany" (PDF) . UEFA . Union of European Football Associations. 5 July 2024 . Retrieved 5 July 2024 .
+↑ "Full Time Report – Portugal v France" (PDF) . UEFA . Union of European Football Associations. 5 July 2024 . Retrieved 5 July 2024 .
+↑ "Full Time Report – England v Switzerland" (PDF) . UEFA . Union of European Football Associations. 6 July 2024 . Retrieved 6 July 2024 .
+↑ "Full Time Report – Netherlands v Türkiye" (PDF) . UEFA . Union of European Football Associations. 6 July 2024 . Retrieved 6 July 2024 .
+↑ "Full Time Report – Spain v France" (PDF) . UEFA . Union of European Football Associations. 9 July 2024 . Retrieved 9 July 2024 .
+↑ "Full Time Report – Netherlands v England" (PDF) . UEFA . Union of European Football Associations. 10 July 2024 . Retrieved 10 July 2024 .
+↑ "Full Time Report – Spain v England" (PDF) . UEFA . Union of European Football Associations. 14 July 2024 . Retrieved 14 July 2024 .
+↑ "Player stats – Goals" . UEFA . Union of European Football Associations . Retrieved 14 July 2024 .
+↑ "UEFA Euro 2024 Team of the Tournament revealed" . UEFA . Union of European Football Associations. 16 July 2024 . Retrieved 16 July 2024 .
+↑ "Rodri named EURO 2024 Player of the Tournament" . UEFA . Union of European Football Associations. 14 July 2024 . Retrieved 14 July 2024 .
+↑ "Lamine Yamal named EURO 2024 Young Player of the Tournament" . UEFA . Union of European Football Associations. 14 July 2024 . Retrieved 14 July 2024 .
+↑ "EURO 2024 Alipay+ Top Scorers: Gakpo, Kane, Mikautadze, Musiala, Olmo, Schranz" . UEFA . Union of European Football Associations. 14 July 2024 . Retrieved 16 July 2024 .
+↑ "UEFA EURO 2024 Goal of the Tournament: Lamine Yamal tops technical observer selection" . UEFA . Union of European Football Associations. 16 July 2024 . Retrieved 16 July 2024 .
+↑ "Goal of the Tournament" .
+↑ "Mert Müldür volley tops vote for fans' Goal of the Tournament" . UEFA . Union of European Football Associations. 20 July 2024 . Retrieved 20 July 2024 .
+↑ "European Championship 2024: Booking List before Final tournament Matchday 3" (PDF) . UEFA . Union of European Football Associations. 23 June 2024 . Retrieved 23 June 2024 .
+↑ "European Championship 2024: Booking List before Quarter-finals" (PDF) . UEFA . Union of European Football Associations. 5 July 2024 . Retrieved 5 July 2024 .
+↑ "European Championship 2024: Booking List before Semi-finals" (PDF) . UEFA . Union of European Football Associations. 7 July 2024 . Retrieved 11 July 2024 .
+↑ "European Championship 2024: Booking List before Final" (PDF) . UEFA . Union of European Football Associations. 11 July 2024. Archived from the original (PDF) on 14 July 2024 . Retrieved 18 July 2024 .
+↑ "CEDB decision: 2024 European Championship match, Germany – Scotland" . UEFA . Union of European Football Associations. 17 June 2024 . Retrieved 17 June 2024 .
+↑ "CEDB decisions: 2024 European Championship match, Croatia – Albania" . UEFA . Union of European Football Associations. 23 June 2024 . Retrieved 23 June 2024 .
+↑ Dunbar, Graham (23 June 2024). "Albania player Mirlind Daku banned by UEFA for two Euro 2024 games after nationalist chants" . Associated Press . Retrieved 23 June 2024 .
+↑ "CEDB decisions: 2024 European Championship match, Austria – Turkey" . UEFA . Union of European Football Associations. 5 July 2024 . Retrieved 5 July 2024 .
+↑ Fahey, Ciarán (5 July 2024). "UEFA suspends Turkey player Merih Demiral for 2 games for making nationalistic gesture at Euro 2024" . Associated Press . Retrieved 5 July 2024 .
+↑ "UEFA EURO 2024 prize money distribution system confirmed" . UEFA . Union of European Football Associations. 2 December 2023 . Retrieved 15 June 2024 .
+1 2 3 "EURO 2024 in numbers" . UEFA . Union of European Football Associations. 14 July 2024 . Retrieved 14 July 2024 .
+↑ Begley, Emlyn (15 July 2024). " 'A good thing for football' – Spain's victory caps off perfect campaign" . BBC Sport .
+↑ "Lamine Yamal sets new record as youngest player to feature at a UEFA European Championship" . UEFA . Union of European Football Associations. 15 June 2024 . Retrieved 15 June 2024 .
+↑ "EURO's youngest scorers: Lamine Yamal, Vonlanthen, Rooney, Renato Sanches, Stojković, Arda Güler" . UEFA . Union of European Football Associations. 9 July 2024 . Retrieved 9 July 2024 .
+↑ "Lamine Yamal's record-breaking EURO: Spain prodigy wins final a day after 17th birthday" . UEFA . UEFA . Retrieved 15 July 2024 .
+↑ "Who scored the fastest goals at UEFA European Championship final tournaments?" . UEFA . Union of European Football Associations. 15 June 2024 . Retrieved 15 June 2024 .
+↑ "Pepe sets new record as oldest player to appear at a EURO" . UEFA . Union of European Football Associations. 18 June 2024 . Retrieved 18 June 2024 .
+↑ "Most EURO final tournaments: Ronaldo breaks new ground" . UEFA . Union of European Football Associations. 18 June 2024 . Retrieved 19 June 2024 .
+↑ "EURO's oldest scorers: Modrić sets new record" . UEFA . Union of European Football Associations . Retrieved 24 June 2024 .
+↑ "Euro 2024 Moment of the Day: Kevin Csoboth's record-making winner keeps Hungary alive" . ESPN. 24 June 2024 . Retrieved 25 June 2024 .
+↑ "Scotland 0–1 Hungary: Csoboth snatches stoppage-time victory" . UEFA . Union of European Football Associations. 23 June 2024 . Retrieved 25 June 2024 .
+↑ Burke, Elias (27 June 2024). "How Czech Republic v Turkey became the dirtiest game in Euros history" . The New York Times . Retrieved 1 July 2024 .
+↑ "Euro 2024 stats: Ronaldo's goal drought, Kante's unbeaten streak, Costa's record save" . ESPN . 2 July 2024 . Retrieved 2 July 2024 .
+↑ O'Donnell, Martín (1 July 2024). "Euro 2024: Diogo Costa rescues Cristiano Ronaldo, Portugal by saving three penalties vs Slovenia" . Bolavip US . Retrieved 2 July 2024 .
+↑ "UEFA Euro 2024 logo unveiled with spectacular light show at the Olympiastadion in Berlin" . UEFA . 5 October 2021. Archived from the original on 1 December 2022 . Retrieved 6 October 2021 .
+↑ "},"website":{"wt":"UEFA Euro 2024"},"title":{"wt":"VML Branding"},"access-date":{"wt":"12 July 2025"},"date":{"wt":"24 January 2023"},"publisher":{"wt":"Behance"}},"i":0}}]}'/> "VML Branding" . UEFA Euro 2024 . Behance. 24 January 2023 . Retrieved 12 July 2025 .
+↑ Fitzsimons, Sean (5 July 2024). "Euro 2024: My Favourite Data Viz From The Tournament" . medium.com . Retrieved 11 December 2024 .
+↑ Domínguez, Gerardo (1 July 2024). "El logo de la Eurocopa 2024 no tiene relación con la Agenda 2030" [ Euro 2024 logo has no relation to Agenda 2030 ] (in Spanish). EFE Verifica . Retrieved 11 December 2024 .
+↑ Rothfuß, Frank (7 October 2021). "Das sind die Logos zur Fußball-EM 2024 für Stuttgart und die anderen Städte" [ These are the logos of UEFA Euro 2024 for Stuttgart and the other cities ] . Stuttgarter Nachrichten (in German). Archived from the original on 7 February 2023 . Retrieved 8 March 2022 .
+↑ "UEFA Euro 2024 logo unveiled in Berlin" . UEFA . Union of European Football Associations. 5 October 2021 . Retrieved 5 October 2021 . {{ cite news }} : CS1 maint: url-status ( link )
+↑ "EA Sports FC 24 to Get Free Euro 2024 Update Next Year" . IGN .com . 24 November 2023. Archived from the original on 4 December 2023 . Retrieved 23 November 2023 .
+↑ "UEFA EURO 2024™" . EA Sports FC . Retrieved 24 June 2024 .
+↑ "EA SPORTS FC™ MOBILE UEFA EURO 2024™ TOURNAMENT MODE DEEP DIVE" . EA Sports FC . Retrieved 24 June 2024 .
+↑ "UEFA and Fanatics sign long-term licensing, e-commerce and event retail deal" . UEFA . 20 September 2022. Archived from the original on 10 May 2024 . Retrieved 2 May 2024 .
+↑ "Topps becomes official UEFA Euro 2024 sticker & trading card partner" . UEFA . 6 April 2022. Archived from the original on 26 October 2023 . Retrieved 26 October 2023 .
+1 2 "Meduza, OneRepublic and Kim Petras announced as UEFA EURO 2024's official music artists" . UEFA . 2 December 2023. Archived from the original on 6 May 2024 . Retrieved 21 May 2024 . on 20 March 2024 it was announced that due to unforeseen scheduling issues Kim Petras could no longer be part of the production of the official UEFA EURO 2024 song. Instead, German singer and songwriter Leony was announced as an official UEFA EURO 2024 music artist, who together with Italian producers Meduza and American pop-rock trailblazers OneRepublic will perform the official tournament song.
+↑ Fire (Official UEFA EURO 2024 Song) . Archived from the original on 10 May 2024 . Retrieved 10 May 2024 – via YouTube.
+↑ "What is the official EURO 2024 song? Name, lyrics and artists behind the track" . Optus Sport . 14 June 2024 . Retrieved 15 June 2024 .
+↑ "Leipzig to host UEFA Euro 2024 international broadcast centre" . UEFA . 8 December 2020. Archived from the original on 12 December 2022 . Retrieved 8 December 2020 .
+↑ "UEFA relegates UHD for Euro 2024 and Champions League Final" . IBC . Archived from the original on 3 May 2024 . Retrieved 4 May 2024 .
+1 2 "EXCLUSIVE: AIM Sport lands Euro 2024 virtual advertising contract" . SportBusiness . 29 April 2024. Archived from the original on 2 May 2024 . Retrieved 2 May 2024 .
+↑ "Partners" . UEFA . Archived from the original on 17 April 2023 . Retrieved 15 June 2023 .
+↑ "Alipay signs long-term deal to become UEFA national team football sponsor" . UEFA . 9 November 2018. Archived from the original on 9 November 2018 . Retrieved 5 December 2018 .
+↑ "AliExpress signs as UEFA Euro 2024 partner" . UEFA . 27 March 2024. Archived from the original on 28 March 2024 . Retrieved 28 March 2024 .
+↑ "Atos signs eight-year deal to become UEFA National Team Football partner" . UEFA . 8 December 2022. Archived from the original on 4 August 2023 . Retrieved 24 March 2023 .
+↑ "Betano becomes official global sponsor of UEFA Euro 2024" . UEFA . 30 November 2023. Archived from the original on 2 December 2023 . Retrieved 2 December 2023 .
+↑ "Booking.com renews partnership with men's and women's UEFA European Football Championships" . UEFA . Union of European Football Associations. 16 November 2023. Archived from the original on 23 November 2023 . Retrieved 18 November 2023 .
+↑ "BYD becomes Official E-Mobility Partner of UEFA Euro 2024" . UEFA . 12 January 2024. Archived from the original on 10 May 2024 . Retrieved 13 January 2024 .
+↑ "Coca-Cola becomes UEFA EURO 2024 sponsor" . UEFA . 25 October 2023. Archived from the original on 26 October 2023 . Retrieved 26 October 2023 .
+↑ "Engelbert Strauss becomes official partner of UEFA Euro 2024" . UEFA . 7 October 2022. Archived from the original on 16 May 2023 . Retrieved 24 March 2023 .
+↑ Sim, Josh (1 September 2023). "Hisense extends Uefa sponsorship to include Euro 2024" . SportsPro . Archived from the original on 1 September 2023 . Retrieved 24 March 2023 .
+↑ "Lidl becomes official partner of UEFA Euro 2024" . UEFA . 21 March 2023. Archived from the original on 30 March 2023 . Retrieved 24 March 2023 .
+↑ "Qatar Airways Announces Partnership Renewal with UEFA" . Qatar Airways . 14 June 2024 . Retrieved 15 June 2024 .
+↑ "Unilever kicks off multi-brand partnership with UEFA Euro 2024" . UEFA . 6 December 2023. Archived from the original on 10 December 2023 . Retrieved 10 December 2023 .
+↑ "vivo becomes official partner of UEFA Euro 2020 and 2024" . UEFA . 12 November 2020. Archived from the original on 19 April 2021 . Retrieved 12 November 2020 .
+↑ "Bitburger becomes official national partner of UEFA Euro 2024" . UEFA . 11 September 2023. Archived from the original on 14 September 2023 . Retrieved 12 September 2023 .
+↑ "Deutsche Bahn unveiled as national partner for UEFA Euro 2024" . 12 June 2023. Archived from the original on 12 June 2023 . Retrieved 12 June 2023 .
+↑ "Deutsche Telekom becomes official national partner of UEFA Euro 2024 providing digital services for tournament" . UEFA . 23 August 2023. Archived from the original on 1 September 2023 . Retrieved 1 September 2023 .
+↑ "ERGO becomes official national partner of UEFA Euro 2024" . UEFA . 14 June 2023. Archived from the original on 23 August 2023 . Retrieved 23 August 2023 .
+↑ "Wiesenhof partners with UEFA Euro 2024" . UEFA . 15 September 2023. Archived from the original on 14 October 2023 . Retrieved 17 September 2023 .
+↑ "Countdown to Euro 2024 is on" . 14 June 2023. Archived from the original on 21 August 2023 . Retrieved 15 June 2023 .
+↑ "Germany unveils a teddy bear as the mascot for Euro 2024 but this time wearing shorts" . ABC News. 20 June 2023. Archived from the original on 21 June 2023 . Retrieved 21 June 2023 .
+↑ "UEFA Euro 2024 mascot unveiled – now we need your helping naming it!" . UEFA . Union of European Football Associations. 20 June 2023. Archived from the original on 20 June 2023 . Retrieved 20 June 2023 .
+↑ "Euro 2024 mascot named: Meet Albärt!" . UEFA . Union of European Football Associations. 5 July 2023. Archived from the original on 5 July 2023 . Retrieved 5 July 2023 .
+↑ "With a big kick, Bubi the elephant oracle predicts Germany to win Euro 2024 opener" . AP News . 13 June 2024.
+1 2 "UEFA and adidas unveil FUSSBALLLIEBE, the Official Match Ball of UEFA Euro 2024" . UEFA . Union of European Football Associations. 15 November 2023. Archived from the original on 19 November 2023 . Retrieved 15 November 2023 .
+↑ "Euro 2024: Adidas ball technology will enable quicker offside and handball decisions, says Uefa" . BBC Sport . British Broadcasting Corporation . 5 December 2023. Archived from the original on 5 December 2023 . Retrieved 5 December 2023 .
+↑ "Álvaro Morata hurt after being slid into by security guard in Spain celebrations" . The Guardian . 9 July 2024.
+↑ "UEFA starts disciplinary proceedings against Albania over pitch invasion | Reuters" . Reuters .
+↑ Ronald, Issy (23 June 2024). "Portugal manager expresses 'concern' after several fans invade pitch at Euro 2024 to take a selfie with Cristiano Ronaldo" . CNN .
+↑ Rampling, Ali. "UEFA increases security after pitch invaders target Ronaldo" . The New York Times – via NYTimes.com.
+↑ "UEFA to up security after Ronaldo pitch invasions" . ESPN.com . 23 June 2024.
+↑ "Romania vs Netherlands, Euro 2024: Round of 16 match paused after pitch invader gets on field" . Sportstar . 2 July 2024.
+↑ Morse, Ben (25 June 2024). "It's raining plastic beer cups at Euro 2024 – on players, fans and TV commentators" . CNN .
+↑ "Austria captain Marcel Sabitzer hit in face by object thrown from crowd during ugly scenes in Turkey clash" . Yahoo News . 2 July 2024 . Retrieved 5 July 2024 .
+↑ "Kevin De Bruyne left FUMING as Man City star is repeatedly targeted by laser from the stands during Belgium's Euro 2024 clash with Ukraine | Goal.com" . www.goal.com . 26 June 2024.
+↑ MacInnes, Paul (26 June 2024). " 'We're getting drenched': how beer and cup throwing has littered Euro 2024" . The Guardian .
+↑ "Cups thrown at England manager Gareth Southgate after a 0–0 draw with Slovenia at Euro 2024" . AP News . 25 June 2024.
+↑ Stafford-Bloor, Sebastian. "Beer, Euro 2024, and all those cups – what's going on?" . The New York Times – via NYTimes.com.
+↑ "Hungary player Barnabas Varga pictured for first time after getting injured in shocking collision at Euro 2024" . LAD Bible . 25 June 2024 . Retrieved 26 June 2024 .
+↑ Morse, Ben; Kosztolanyi, Boglarka (24 June 2024). "Hungary captain Dominik Szoboszlai calls for medical protocol change after Barnabás Varga sustains serious injury at Euros" . CNN . Retrieved 26 June 2024 .
+↑ Murray, Ewan. " 'No delay' treating Barnabas Varga insists Uefa after injury against Scotland" . The Guardian . Retrieved 26 June 2024 .
+↑ "Barnabas Varga posts first message from hospital bed after undergoing surgery on facial fractures sustained in horror collision at Euro 2024" . GOAL . Retrieved 26 June 2024 .
+1 2 "Euro 2024: Albania most fined nation as matches reignite Balkan feuds" . euronews . 23 June 2024.
+↑ "Uefa investigating Turkey's Demiral over goal celebration" . BBC . 3 July 2024.
+↑ Schlachter, Thomas. "German Interior Minister condemns Turkish defender for using Euro 2024 as 'platform for racism' as UEFA opens investigation" . CNN . Retrieved 3 July 2024 .
+↑ Ames, Nick. "Turkey's Merih Demiral facing ban over 'wolf' celebration in win over Austria" . The Guardian . Retrieved 3 July 2024 .
+↑ "Two-game ban for Turkey's Demiral over celebration" . BBC . 5 July 2024.
+↑ Fahey, Ciarán (6 July 2024). "Turkey supporters make controversial hand gesture on way to stadium and in it for Euro 2024 match" . Associated Press News .
+↑ "Turkey fans make hand gesture that led to ban" . 6 July 2024.
+↑ "Giving Turkish defender Merih Demiral 2-match ban shows UEFA's double standards" . aa.com . Retrieved 23 July 2024 .
+↑ "UEFA's 2-match ban on Merih Demiral sparks allegations of Western hypocrisy" . turkiyetoday.com . Retrieved 23 July 2024 .
+↑ "Somalia car bomb kills fans watching Euro 2024 football final in Mogadishu" . www.bbc.com . Retrieved 2 August 2024 .
+↑ "At least nine dead in Mogadishu cafe bombing during Euro final" . 15 July 2024 . Retrieved 2 August 2024 .
+↑ Jones, Sam (16 July 2024). "Gibraltar's government and FA criticise Spain players' chants at Euro 2024 party" . The Guardian .
+↑ Greenall, Robert (16 July 2024). "Euro winners Spain chant 'Gibraltar is Spanish' at Madrid parade" . BBC . Retrieved 18 July 2024 .
+↑ "Official Statement: The Gibraltar FA to make official complaint to UEFA following Spanish Men's National Team Euro 2024 celebrations" .
+↑ "CEDB decisions on RFEF players Rodri and Morata" . Retrieved 7 August 2024 .
+↑ "Kroos im Glück! Aber Spaniens Presse tobt: "Kroos 'tötet' Pedri" " . SPORT1 (in German). 5 July 2024 . Retrieved 3 January 2025 .
+↑ "Schon wieder Handspiel-Kontroverse: EM-Schiedsrichter Taylor erneut im Fokus" . www.tz.de (in German). 21 August 2024 . Retrieved 3 January 2025 .
+↑ Sobolewski, Daniel (15 July 2024). "Deutschland – Spanien: Hand-Eklat weitet sich aus! Hat die UEFA einen schweren Fehler gemacht?" . DerWesten.de (in German) . Retrieved 3 January 2025 .
+↑ "Interner UEFA-Bericht - Cucurella-Handspiel bei der EM hätte Strafstoß geben müssen" . Die Nachrichten (in German). 23 September 2024 . Retrieved 3 January 2025 .
+External links
+[ edit ]
+Wikimedia Commons has media related to 2024 UEFA European Championship .
+Official technical report ( Archived 22 November 2024 at the Wayback Machine )
+v
+t
+e
+UEFA Euro 2024
+Stages
+Qualification
+Group stage
+Group A
+Group B
+Group C
+Group D
+Group E
+Group F
+Knockout stage
+Final
+General information
+Bids
+Broadcasting
+Squads
+Official symbols
+Adidas Fussballliebe (ball)
+Albärt (mascot)
+"Fire" (song)
+v
+t
+e
+UEFA Euro 2024 finalists
+Champions
+Spain
+Runners-up
+England
+Eliminated in the semi-finals
+France
+Netherlands
+Eliminated in the quarter-finals
+Germany
+Portugal
+Switzerland
+Turkey
+Eliminated in the round of 16
+Austria
+Belgium
+Denmark
+Georgia
+Italy
+Romania
+Slovakia
+Slovenia
+Eliminated in the group stage
+Group A
+Hungary
+Scotland
+Group B
+Albania
+Croatia
+Group C
+Serbia
+Group D
+Poland
+Group E
+Ukraine
+Group F
+Czech Republic
+v
+t
+e
+UEFA Euro 2024 stadiums
+Olympiastadion Berlin ( Berlin )
+Cologne Stadium ( Cologne )
+BVB Stadion Dortmund ( Dortmund )
+Düsseldorf Arena ( Düsseldorf )
+Frankfurt Arena ( Frankfurt )
+Arena AufSchalke ( Gelsenkirchen )
+Volksparkstadion Hamburg ( Hamburg )
+Leipzig Stadium ( Leipzig )
+Munich Football Arena ( Munich )
+Stuttgart Arena ( Stuttgart )
+v
+t
+e
+UEFA European Championship
+Tournaments
+France 1960
+Spain 1964
+Italy 1968
+Belgium 1972
+Yugoslavia 1976
+Italy 1980
+France 1984
+West Germany 1988
+Sweden 1992
+England 1996
+Belgium / Netherlands 2000
+Portugal 2004
+Austria / Switzerland 2008
+Poland / Ukraine 2012
+France 2016
+Pan-European 2020 †
+Germany 2024
+United Kingdom / Ireland 2028
+Italy / Turkey 2032
+Qualifying
+1960
+1964
+1968
+1972
+1976
+1980
+1984
+1988
+1992
+1996
+2000
+2004
+2008
+2012
+2016
+2020
+2024
+2028
+Finals
+1960
+1964
+1968
+1972
+1976
+1980
+1984
+1988
+1992
+1996
+2000
+2004
+2008
+2012
+2016
+2020
+2024
+2028
+Squads
+1960
+1964
+1968
+1972
+1976
+1980
+1984
+1988
+1992
+1996
+2000
+2004
+2008
+2012
+2016
+2020
+2024
+Bids
+2004
+2008
+2012
+2016
+2020
+2024
+2028
+2032
+Statistics
+1992
+1996
+2000
+2004
+2008
+2012
+2016
+2020
+2024
+Broadcasting rights
+2000
+2004
+2008
+2012
+2016
+2020
+2024
+Other records
+Overall records and statistics
+Player appearances
+Goalscorers
+Hat-tricks
+Own goals
+Penalty shoot-outs
+Red cards
+Winning players
+Winning managers
+Miscellaneous
+Awards
+Music
+Mascots
+Balls
+Video games
+† Postponed to 2021 due to the COVID-19 pandemic
+Category
+Commons
+v
+t
+e
+2023 – 24 in European men's football ( UEFA )
+Domestic leagues
+Albania
+Andorra
+Armenia
+Austria
+Azerbaijan
+Belarus '23 '24
+Belgium
+Bosnia and Herzegovina
+Bulgaria
+Croatia
+Cyprus
+Czech Republic
+Denmark
+England
+Estonia '23 '24
+Faroe Islands '23 '24
+Finland '23 '24
+France
+Georgia '23 '24
+Germany
+Gibraltar
+Greece
+Hungary
+Iceland '23 '24
+Israel
+Italy
+Kazakhstan '23 '24
+Kosovo
+Latvia '23 '24
+Lithuania '23 '24
+Luxembourg
+Malta
+Moldova
+Montenegro
+Netherlands
+North Macedonia
+Northern Ireland
+Norway '23 '24
+Poland
+Portugal
+Republic of Ireland '23 '24
+Romania
+Russia
+San Marino
+Scotland
+Serbia
+Slovakia
+Slovenia
+Spain
+Sweden '23 '24
+Switzerland
+Turkey
+Ukraine
+Wales
+Domestic cups
+Albania
+Andorra
+Armenia
+Austria
+Azerbaijan
+Belarus
+Belgium
+Bosnia and Herzegovina
+Bulgaria
+Croatia
+Cyprus
+Czech Republic
+Denmark
+England
+Estonia
+Faroe Islands '23 '24
+Finland '23 '24
+France
+Georgia '23 '24
+Germany
+Gibraltar
+Greece
+Hungary
+Iceland '23 '24
+Israel
+Italy
+Kazakhstan '23 (Final) '24
+Kosovo
+Latvia '23 '24
+Liechtenstein
+Lithuania '23 '24
+Luxembourg
+Malta
+Moldova
+Montenegro
+Netherlands
+North Macedonia
+Northern Ireland
+Norway '23 '24
+Poland
+Portugal
+Republic of Ireland '23 '24
+Romania
+Russia
+San Marino
+Scotland
+Serbia
+Slovakia
+Slovenia
+Spain
+Sweden
+Switzerland
+Turkey
+Ukraine
+Wales
+League cups
+England
+Finland
+Iceland
+Israel
+Kazakhstan '24
+Northern Ireland
+Portugal
+Scotland
+Wales
+Supercups
+Albania
+Andorra
+Armenia
+Azerbaijan
+Belarus
+Belgium
+Bulgaria
+Croatia
+Cyprus
+England
+Estonia '23 '24
+Faroe Islands
+France
+Georgia
+Germany
+Iceland
+Israel
+Italy
+Kazakhstan '23 '24
+Kosovo
+Latvia '24
+Lithuania '23 '24
+Malta
+Netherlands
+Northern Ireland
+Poland
+Portugal
+Republic of Ireland '23 '24
+Romania
+Russia
+San Marino
+Spain
+Turkey
+UEFA competitions
+Champions League
+qualifying
+group stage
+knockout phase
+Final
+Europa League
+qualifying
+group stage
+knockout phase
+Final
+Europa Conference League
+qualifying
+1st and 2nd rounds
+3rd and play-off rounds
+group stage
+knockout phase
+Final
+Fenix Trophy
+Super Cup
+UEFA–CONMEBOL Club Challenge
+Youth League
+UEFA Champions League Path
+Domestic Champions Path
+knockout phase
+Under-20 Intercontinental Cup
+International competitions
+UEFA Euro 2024
+qualification
+2022–23 UEFA Nations League
+League C relegation play-outs
+Football at the 2024 Summer Olympics ( qualification )
+2023 FIFA U-20 World Cup
+2023 FIFA U-17 World Cup
+2025 Euro Under-21
+qualification
+2024 Euro Under-19
+qualification
+2024 Euro Under-17
+qualification
+v
+t
+e
+European championships in 2024
+Summer sports &
+indoor sports
+Aquatic sports
+Athletics
+Archery
+indoor
+outdoor
+Football (men)
+Badminton
+Basketball
+3x3
+Beach soccer
+Beach volleyball
+Boxing
+Brazilian Jiu-Jitsu
+Canoeing
+slalom
+sprint
+marathon
+Cycling
+BMX
+cyclo-cross
+road
+track
+mountain bike
+Fencing
+Golf
+team (men)
+team (women)
+Gymnastics
+men's artistic
+women's artistic
+rhythmic
+trampoline
+Handball
+men
+women
+Indoor hockey
+men
+women
+Judo
+team
+Karate
+Minifootball
+Modern pentathlon
+Orienteering
+foot
+MTB
+Rowing
+Rugby union
+men's I / II
+women
+Sambo
+Shooting
+10 m
+25/50/300 m
+running target
+shotgun
+Softball (women)
+Sport climbing
+Table tennis
+Taekwondo
+Triathlon
+Water polo
+men
+women
+Weightlifting
+Wrestling
+Winter sports
+Biathlon
+Bobsleigh / Skeleton
+Curling
+Figure skating
+Luge
+Short-track speed skating
+Speed skating
+Cue & mind sports
+Chess
+Darts
+Motor sports
+Formula Regional
+Le Mans Series
+Motocross
+Rally
+Rallycross
+Speedway
+individual
+pairs
+team
+Touring car
+Truck racing
+Portals : Europe
+Association football
+Sports
+2020s
+Retrieved from " https://en.wikipedia.org/w/index.php?title=UEFA_Euro_2024&oldid=1380931992 "
+Categories : UEFA Euro 2024
+UEFA European Championship tournaments
+2024 in European men's continental football
+2024 in European men's international football
+2023–24 in German football
+Men's international association football competitions hosted by Germany
+June 2024 sports events in Germany
+July 2024 sports events in Germany
+Hidden categories: Articles with short description
+Short description is different from Wikidata
+Use British English from November 2020
+All Wikipedia articles written in British English
+Use dmy dates from April 2024
+Articles with German-language sources (de)
+Articles containing OSM location maps
+CS1 German-language sources (de)
+CS1 maint: archived copy as title
+CS1 French-language sources (fr)
+CS1 Czech-language sources (cs)
+CS1 Danish-language sources (da)
+CS1 Hungarian-language sources (hu)
+CS1 Romanian-language sources (ro)
+CS1 Slovak-language sources (sk)
+CS1 maint: url-status
+CS1 Spanish-language sources (es)
+Articles containing German-language text
+Commons category link from Wikidata
+Webarchive template wayback links
+Pages using the Kartographer extension
+This page was last edited on 18 October 2026, at 21:32 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+UEFA Euro 2024
+76 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"UEFA Euro 2024","url":"https:\/\/en.wikipedia.org\/wiki\/UEFA_Euro_2024","sameAs":"http:\/\/www.wikidata.org\/entity\/Q15098367","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q15098367","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2013-10-24T16:00:38Z","dateModified":"2026-10-18T21:32:48Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/2\/26\/UEFA_Euro_2024_Logo.svg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"17th European association football championship"}

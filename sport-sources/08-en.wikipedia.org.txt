@@ -1,0 +1,3575 @@
+Source: https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup
+Final URL: https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup
+HTTP 200
+Fetched: 2026-10-21T02:13:46.286Z
+
+2023 FIFA Women's World Cup - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Overview
+Toggle Overview subsection
+1.1
+Schedule
+1.2
+Prize money
+2
+Host selection
+3
+Format
+4
+Venues
+5
+Teams
+Toggle Teams subsection
+5.1
+Qualification
+5.2
+Squads
+5.3
+Draw
+5.3.1
+Draw result
+6
+Officiating
+7
+Ceremonies
+Toggle Ceremonies subsection
+7.1
+Opening ceremonies
+7.2
+Closing ceremonies
+8
+Impact
+9
+Group stage
+Toggle Group stage subsection
+9.1
+Group A
+9.2
+Group B
+9.3
+Group C
+9.4
+Group D
+9.5
+Group E
+9.6
+Group F
+9.7
+Group G
+9.8
+Group H
+10
+Knockout stage
+Toggle Knockout stage subsection
+10.1
+Bracket
+10.2
+Round of 16
+10.3
+Quarter-finals
+10.4
+Semi-finals
+10.5
+Third-place match
+10.6
+Final
+11
+Awards
+12
+Statistics
+Toggle Statistics subsection
+12.1
+Goalscorers
+12.2
+Discipline
+12.3
+Tournament ranking
+13
+Marketing
+Toggle Marketing subsection
+13.1
+Branding
+13.2
+Ticketing
+13.3
+Merchandise
+13.4
+Broadcasting rights
+13.5
+Sponsorship
+14
+Symbols
+Toggle Symbols subsection
+14.1
+Mascot
+14.2
+Match ball
+14.3
+Music
+15
+Progressive actions
+Toggle Progressive actions subsection
+15.1
+Indigenous flags and names
+15.2
+Player advocacy
+15.2.1
+Climate action
+15.2.2
+Germany grassroots
+15.3
+UN Women partnership
+16
+Issues
+Toggle Issues subsection
+16.1
+Controversies
+16.2
+Auckland shootings
+16.3
+Pullman hotel fire
+17
+References
+18
+External links
+Toggle the table of contents
+2023 FIFA Women's World Cup
+54 languages
+Afrikaans
+العربية
+الدارجة
+مصرى
+Asturianu
+Basa Bali
+বাংলা
+Brezhoneg
+Català
+کوردی
+Čeština
+Cymraeg
+Dansk
+Deutsch
+Ελληνικά
+Esperanto
+Español
+Eesti
+Euskara
+فارسی
+Suomi
+Français
+Frysk
+Gaeilge
+עברית
+हिन्दी
+Magyar
+Bahasa Indonesia
+Íslenska
+Italiano
+日本語
+한국어
+Kurdî
+Lietuvių
+Latviešu
+नेपाली
+Nederlands
+Norsk nynorsk
+Norsk bokmål
+Polski
+Português
+Русский
+Simple English
+Slovenčina
+Anarâškielâ
+Српски / srpski
+Svenska
+ไทย
+Türkçe
+Українська
+Oʻzbekcha / ўзбекча
+Tiếng Việt
+粵語
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikimedia Commons
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+Football championship
+{{cite web | url=https://www.stuff.co.nz/pou-tiaki/te-reo-maori/300762938/ki-hea-noho-ai-ng-toki-hei-te-ipu-poiwhana-wahine-ao-2023-a-fifa | title=Ki hea noho ai ngā toki hei te Ipu Poiwhana Wahine ā-Ao 2023 a Fifa | date=12 December 2022 }} </ref>"},"year":{"wt":"2023"},"image":{"wt":"Logo of the 2023 FIFA Women's World Cup.svg"},"size":{"wt":"170px"},"country":{"wt":"[[Australia]]"},"country2":{"wt":"[[New Zealand]]"},"dates":{"wt":"20 July – 20 August"},"num_teams":{"wt":"32"},"confederations":{"wt":"6"},"venues":{"wt":"10"},"cities":{"wt":"9"},"champion_other":{"wt":"{{fbw|ESP}}"},"count":{"wt":"1"},"second_other":{"wt":"{{fbw|ENG}}"},"third_other":{"wt":"{{fbw|SWE}}"},"fourth_other":{"wt":"{{fbw|AUS}}"},"matches":{"wt":"64"},"goals":{"wt":"164"},"attendance":{"wt":"{{#expr: <!--Group A--> 42137 + 13711 + 32357 + 10769 + 25947 + 34697 <!--Group B-->+ 75784 + 21410 + 17065 + 49156 + 27706 + 24884 <!--Group C-->+ 22966 + 16111 + 6992 + 20983 + 20957 + 8117 <!--Group D-->+ 44369 + 16989 + 40439 + 12675 + 13497 + 17897 <!--Group E-->+ 41107 + 11991 + 27312 + 6645 + 42958 + 8215 <!--Group F-->+ 39045 + 13142 + 49378 + 15987 + 40498 + 27638 <!--Group G-->+ 18317 + 30889 + 8834 + 29143 + 17907 + 14967 <!--Group H-->+ 27256 + 24323 + 12886 + 40499 + 38945 + 17342 <!--Round of 16-->+ 43217 + 33042 + 40233 + 27706 + 49461 + 75784 + 27706 + 13557 <!--Quarter-finals-->+ 32021 + 43217 + 49461 + 75784 <!--Semi-finals-->+ 43217 + 75784 <!--Third place-->+ 49461 <!--Final-->+ 75784}}"},"top_scorer":{"wt":"{{fbwicon|JPN}} [[Hinata Miyazawa]] <br/>(5 goals)"},"player":{"wt":"{{fbwicon|ESP}} [[Aitana Bonmatí]]"},"goalkeeper":{"wt":"{{fbwicon|ENG}} [[Mary Earps]]"},"young_player":{"wt":"{{fbwicon|ESP}} [[Salma Paralluelo]]"},"fair_play":{"wt":"{{fbw|JPN}}"},"prevseason":{"wt":"[[2019 FIFA Women's World Cup|2019]]"},"nextseason":{"wt":"''[[2027 FIFA Women's World Cup|2027]]''"}},"i":0}}]}'> 2023 FIFA Women's World Cup Ipu Wahine o te Ao Whīwha i 2023 ( Māori ) [ 1 ]
+Tournament details
+Host countries Australia
+New Zealand
+Dates 20 July – 20 August
+Teams 32 (from 6 confederations)
+Venues 10 (in 9 host cities)
+Final positions
+Champions Spain (1st title)
+Runners-up England
+Third place Sweden
+Fourth place Australia
+Tournament statistics
+Matches played 64
+Goals scored 164 (2.56 per match)
+Attendance 1,978,274 (30,911 per match)
+Top scorer(s) Hinata Miyazawa
+(5 goals)
+Best player Aitana Bonmatí
+Best young player Salma Paralluelo
+Best goalkeeper Mary Earps
+Fair play award Japan
+← 2019
+2027 →
+International football competition
+Part of a series on the
+2023 FIFA Women's World Cup
+Hosting
+Bids
+Australia–New Zealand
+Brazil
+Colombia
+Japan
+Broadcasting rights
+Venues
+Brisbane Stadium
+Dunedin Stadium
+Eden Park
+Hindmarsh Stadium
+Melbourne Rectangular Stadium
+Perth Rectangular Stadium
+Stadium Australia
+Sydney Football Stadium
+Waikato Stadium
+Wellington Regional Stadium
+Qualification
+Overview
+Africa
+group stage
+group A
+group B
+group C
+knockout stage
+Asia
+group stage
+group A
+group B
+group C
+knockout stage
+Europe
+group stage
+group A
+group B
+group C
+group D
+group E
+group F
+group G
+group H
+group I
+play-offs
+North and Central America
+group stage
+group A
+group B
+Oceania Though the OFC Women's Nations Cup was nominally the qualification competition for Oceania, the confederation has one direct berth, which was automatically filled by co-hosts New Zealand. Nations Cup winner Papua New Guinea was entered into inter-confederation play-offs by ranking.</span>"}]]}'>*
+South America
+group stage
+group A
+group B
+knockout stage
+Inter-confederation play-offs
+Matches
+Group stage
+group A
+group B
+group C
+group D
+group E
+group F
+group G
+group H
+Knockout stage
+Final
+People
+Sarai Bareman
+Gianni Infantino
+Fatma Samoura
+Officials
+Squads
+Promotional and related media
+FIFA 23 downloadable content
+Songs
+"Unity" - Kelly Lee Owens
+"Do It Again" - BENEE ft. Mallrat
+Controversies
+Overview
+Auckland shooting
+Big Five broadcasting rights
+England 20–0 Latvia
+Haka videos
+OneLove
+Professionalism disputes
+Canada
+England
+France
+Jamaica
+Nigeria
+Spain
+Rubiales case
+v
+t
+e
+The 2023 FIFA Women's World Cup was the ninth edition of the FIFA Women's World Cup , the quadrennial international women's football championship contested by women's national teams and organised by FIFA . The tournament, which took place from 20 July to 20 August 2023, was jointly hosted by Australia and New Zealand . [ 2 ] [ 3 ] [ 4 ] It was the first FIFA Women's World Cup with more than one host nation, as well as the first World Cup to be held across multiple confederations , as Australia is a member of the Asian Football Confederation , while New Zealand is a member of the Oceania Football Confederation . It was also the first Women's World Cup to be held in the Southern Hemisphere . [ 5 ]
+This tournament was the first to feature an expanded format of 32 teams, from the previous 24. [ 2 ] The opening match was won by co-host New Zealand , beating Norway at Eden Park in Auckland on 20 July 2023 and achieving their first Women's World Cup victory. [ 6 ]
+Spain was crowned champions after defeating reigning European champions England 1–0 in the final . It was the first time a European nation had won the Women's World Cup since 2007 , although their victory was marred by the Rubiales affair . [ 7 ] [ 8 ] [ 9 ] Spain became the second nation to win both the women's and men's World Cup since Germany in the 2003 edition . [ 10 ] In addition, they became the first nation to concurrently hold the FIFA women's U-17 , U-20 , and senior World Cups. [ 11 ] Sweden would claim their fourth third place finish at the Women's World Cup while co-host Australia achieved their best placing yet, finishing fourth. [ 12 ] Japanese player Hinata Miyazawa won the Golden Boot scoring five goals throughout the tournament. Spanish player Aitana Bonmatí was voted the tournament's best player, winning the Golden Ball , whilst Bonmatí's teammate Salma Paralluelo was awarded the Young Player Award . England goalkeeper Mary Earps won the Golden Glove , awarded to the best-performing goalkeeper of the tournament.
+Overview
+[ edit ]
+The FIFA Women's World Cup is a professional association football (soccer) tournament contested by senior women's national football teams, organised by FIFA . [ 13 ] The tournament, held every four years and one year after the men's World Cup, was first played in 1991 in China, and was expanded to 32 teams beginning with the 2023 edition. The tournament is contested with eight round-robin groups followed by a knockout round for 16 teams. The defending champions were the United States , who defeated the Netherlands 2–0 in the 2019 final . [ 14 ] [ 15 ] The event took place over a period of a month, from 20 July to 20 August, in Australia and New Zealand. This Women's World Cup was the first co-hosted tournament, and also the first senior World Cup to be held across multiple confederations. In addition, it was the first senior tournament to be held in Oceania , the first Women's World Cup in the Southern Hemisphere , and the third to be held in the Asia-Pacific region, after 1991 and 2007 .
+Schedule
+[ edit ]
+The match schedule was announced by FIFA on 1 December 2021, [ 16 ] [ 17 ] with kick-off times confirmed on 24 October 2022, two days after the final draw. [ 18 ] [ 19 ]
+The opening match of the tournament, between co-host New Zealand and Norway, was played on 20 July 2023 at Eden Park . The inaugural match played in Australia, was between Australia playing against the Republic of Ireland on the same day at Stadium Australia , after a venue change due to strong ticketing demand. [ 20 ]
+Prize money
+[ edit ]
+The total prize pool was USD 110 million, $80 million greater than the prize pool of the previous tournament . [ 21 ]
+At previous tournaments, FIFA paid total prize money to the national associations, but for the 2023 Women's World Cup it was set to award prize payments directly to players as well as the associations. This came as a result of reports in the women's game that a number of national associations were withholding competition prize money from players and/or not paying them at all. [ 21 ] In March 2023, global player union FIFPRO sent a letter signed by players from around the world to FIFA, challenging FIFA to make prize money in the men's and women's tournaments equal and to ensure at least 30% of prize money in the women's tournament made it to the players. While FIFA did not match the prize money of the men's tournament, it did significantly increase it, with more than half set to be paid to players directly. [ 22 ]
+Just before the tournament, FIFA president Gianni Infantino announced that the player payments would still be paid to the associations, and that FIFA planned to audit the associations to make sure the money got to the players. Football administrator Lise Klaveness expressed concern over what she felt sounded like reneging on the promise, both for the players and for FIFA's credibility. [ 23 ] During the tournament, Infantino admitted that FIFA had simply made recommendations to associations on how much to pay players, and they could not reasonably check. [ 24 ]
+Place
+Teams
+Amount (in U.S. dollars )
+Per association
+Per player FIFA recommendation</span>"}]],"parts":[{"template":{"target":{"wt":"abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"'''*'''"},"2":{"wt":"FIFA recommendation"}},"i":0}}]}'> *
+Total
+Champions
+1
+$4,290,000
+$270,000
+$10,500,000
+Runners-up
+1
+$3,015,000
+$195,000
+$7,500,000
+Third place
+1
+$2,610,000
+$180,000
+$6,750,000
+Fourth place
+1
+$2,455,000
+$165,000
+$6,250,000
+5th–8th place (quarter-finals)
+4
+$2,180,000
+$90,000
+$17,000,000
+9th–16th place (round of 16)
+8
+$1,870,000
+$60,000
+$26,000,000
+17th–32nd place (group stage)
+16
+$1,560,000
+$30,000
+$36,000,000
+Total
+32
+$110,000,000
+Host selection
+[ edit ]
+Main articles: 2023 FIFA Women's World Cup bids and Australia–New Zealand 2023 FIFA Women's World Cup bid
+Bidding began for the 2023 FIFA Women's World Cup on 19 February 2019. [ 25 ] Member associations interested in hosting the tournament had to submit a declaration of interest by 15 March, and provide the completed bidding registration by 16 April. However, FIFA revised the bidding timeline as the tournament expanded to 32 teams on 31 July. [ 26 ] Other member associations interested in hosting the tournament then had until 16 August to submit a declaration of interest, while the completed bidding registration of new member associations and re-confirmation of prior bidders was due by 2 September. [ 27 ]
+Nine countries initially indicated interest in hosting the events: Argentina, Australia, Bolivia, Brazil, Colombia, Japan, South Korea (with interest in a joint bid with North Korea), New Zealand and South Africa. [ 28 ] Belgium expressed interest in hosting the tournament following the new deadline but later dropped out, as did Bolivia, in September 2019. [ 29 ] [ 30 ] Australia and New Zealand later announced they would merge their bids in a joint submission. [ 31 ] Brazil , Colombia , and Japan joined them in submitting their bid books to FIFA by 13 December. [ 32 ] However, both Brazil and Japan later withdrew their bids in June 2020 before the final voting. [ 33 ] [ 34 ]
+On 25 June 2020, Australia and New Zealand won the bid to host the Women's World Cup. [ 35 ] The decision came after a vote by the FIFA Council , with the winning bid earning 22 votes, while Colombia earned 13. [ 36 ] Neither country had previously hosted a senior FIFA tournament. This was the first Women's World Cup to be hosted in multiple countries, and only the second World Cup tournament to do so, following the 2002 FIFA World Cup , held in Japan and South Korea. It was also the first FIFA Women's World Cup to be held in the Southern Hemisphere , the first senior FIFA tournament to be held in Oceania , and the first FIFA tournament to be hosted across multiple confederations (with Australia in the AFC and New Zealand in the OFC ). Australia became the second association from the AFC to host the Women's World Cup, after China in both 1991 and 2007 . [ 37 ]
+2023 FIFA WWC bidding
+Bidding nation(s)
+Votes
+Round 1
+Australia & New Zealand
+22
+Colombia
+13
+Recused
+2
+Total votes
+35
+Majority required
+18
+Format
+[ edit ]
+In July 2019, Infantino proposed an expansion of the Women's World Cup from 24 to 32 teams, starting with the 2023 edition, and doubling the tournament's prize money. [ 38 ] The proposal came following the success of the 2019 FIFA Women's World Cup and the prior edition of the tournament in 2015 , which after increasing from 16 to 24 teams set an attendance record for all FIFA competitions besides the men's FIFA World Cup. [ 39 ] Expanding the tournament to allow eight additional participating teams gave more member associations a greater opportunity to qualify for the final tournament. This fostered the growing reach and professionalisation of the women's game. [ 40 ]
+On 31 July, the FIFA Council unanimously decided to expand the tournament to 32 teams, featuring eight groups of four. [ 26 ]
+The astounding success of this year's FIFA Women's World Cup in France made it very clear that this is the time to keep the momentum going and take concrete steps to foster the growth of women's football. I am glad to see this proposal becoming a reality.
+—   FIFA President , Gianni Infantino . [ 26 ]
+The tournament opened with a group stage consisting of eight groups of four teams, with the top two teams progressing from each group to a knockout tournament featuring 16 teams. The number of games played overall increased from 52 to 64. The tournament replicated the format of the men's FIFA World Cup used between 1998 and 2022 . For the first time since the 2002 FIFA World Cup , both qualified teams from each group were kept on the same side of the draw in the knockout stage, meaning they would meet again in the semi-final instead of the final if they advanced that far. This was to minimize travel between Australia and New Zealand and to ensure both host nations remained in their own country up to the semi-finals should they qualify. [ 41 ]
+Venues
+[ edit ]
+Australia</b>,1"},"legendItem2":{"wt":"<b>New Zealand</b>,6,14"},"label1":{"wt":"'''[[Adelaide]]'''"},"mark-coord1":{"wt":"{{Coord|-34.9074|138.5689}}"},"label-pos1":{"wt":"west"},"mark-title1":{"wt":"[[Adelaide]]"},"mark-description1":{"wt":"[[Hindmarsh Stadium]]"},"label2":{"wt":"'''[[Brisbane]]'''"},"mark-coord2":{"wt":"{{Coord|-27.4648|153.0096}}"},"mark-title2":{"wt":"[[Brisbane]]"},"mark-description2":{"wt":"[[Lang Park]]"},"label3":{"wt":"'''[[Melbourne]]'''"},"mark-coord3":{"wt":"{{Coord|-37.8251|144.9837}}"},"mark-title3":{"wt":"[[Melbourne]]"},"mark-description3":{"wt":"[[Melbourne Rectangular Stadium]]"},"label4":{"wt":"'''[[Perth]]'''"},"mark-coord4":{"wt":"{{Coord|-31.9457|115.8699}}"},"mark-title4":{"wt":"[[Perth]]"},"mark-description4":{"wt":"[[Perth Rectangular Stadium]]"},"label5":{"wt":"'''[[Sydney]]'''"},"mark-coord5":{"wt":"{{Coord|-33.8471|151.0634}}"},"mark-title5":{"wt":"[[Sydney]]"},"mark-description5":{"wt":"[[Stadium Australia]] and [[Sydney Football Stadium (2022)|Sydney Football Stadium]]"},"label6":{"wt":"'''[[Auckland]]'''"},"mark-coord6":{"wt":"{{Coord|-36.8749|174.7448}}"},"label-pos6":{"wt":"northwest"},"shape-color6":{"wt":"blue"},"mark-title6":{"wt":"[[Auckland]]"},"mark-description6":{"wt":"[[Eden Park]]"},"label7":{"wt":"'''[[Dunedin]]'''"},"mark-coord7":{"wt":"{{Coord|-45.8694|170.5245}}"},"label-pos7":{"wt":"west"},"shape-color7":{"wt":"blue"},"mark-title7":{"wt":"[[Dunedin]]"},"mark-description7":{"wt":"[[Forsyth Barr Stadium]]"},"label8":{"wt":"'''[[Hamilton, New Zealand|Hamilton]]'''"},"mark-coord8":{"wt":"{{Coord|-37.7811|175.2683}}"},"label-pos8":{"wt":"southwest"},"shape-color8":{"wt":"blue"},"mark-title8":{"wt":"[[Hamilton, New Zealand|Hamilton]]"},"mark-description8":{"wt":"[[Waikato Stadium]]"},"label9":{"wt":"'''[[Wellington]]'''"},"mark-coord9":{"wt":"{{Coord|-41.273|174.7859}}"},"label-pos9":{"wt":"west"},"shape-color9":{"wt":"blue"},"mark-title9":{"wt":"[[Wellington]]"},"mark-description9":{"wt":"[[Wellington Regional Stadium]]"}},"i":0}}]}'>
+900km
+559miles
+Wellington
+Hamilton
+Dunedin
+Auckland
+Sydney
+Perth
+Melbourne
+Brisbane
+Adelaide
+Australia
+New Zealand
+&nbsp;&nbsp;&nbsp;</div>","zoom":"4"},"body":{"extsrc":"[ { \"type\": \"FeatureCollection\", \"features\": [ { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Adelaide]]<br>\", \"description\": \"[[Hindmarsh Stadium]] ([https://geohack.toolforge.org/geohack.php?params=-34.9074;138.5689_dim:2000 -34.9074,138.5689])\", \"marker-symbol\": \"-number-F108\", \"marker-size\": \"medium\", \"marker-color\": \"#269F46\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [138.5689,-34.9074] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Brisbane]]<br>\", \"description\": \"[[Lang Park]] ([https://geohack.toolforge.org/geohack.php?params=-27.4648;153.0096_dim:2000 -27.4648,153.0096])\", \"marker-symbol\": \"-number-F108\", \"marker-size\": \"medium\", \"marker-color\": \"#269F46\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [153.0096,-27.4648] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Melbourne]]<br>\", \"description\": \"[[Melbourne Rectangular Stadium]] ([https://geohack.toolforge.org/geohack.php?params=-37.8251;144.9837_dim:2000 -37.8251,144.9837])\", \"marker-symbol\": \"-number-F108\", \"marker-size\": \"medium\", \"marker-color\": \"#269F46\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [144.9837,-37.8251] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Perth]]<br>\", \"description\": \"[[Perth Rectangular Stadium]] ([https://geohack.toolforge.org/geohack.php?params=-31.9457;115.8699_dim:2000 -31.9457,115.8699])\", \"marker-symbol\": \"-number-F108\", \"marker-size\": \"medium\", \"marker-color\": \"#269F46\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [115.8699,-31.9457] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Sydney]]<br>\", \"description\": \"[[Stadium Australia]] and [[Sydney Football Stadium (2022)|Sydney Football Stadium]] ([https://geohack.toolforge.org/geohack.php?params=-33.8471;151.0634_dim:2000 -33.8471,151.0634])\", \"marker-symbol\": \"-number-F108\", \"marker-size\": \"medium\", \"marker-color\": \"#269F46\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [151.0634,-33.8471] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Auckland]]<br>\", \"description\": \"[[Eden Park]] ([https://geohack.toolforge.org/geohack.php?params=-36.8749;174.7448_dim:2000 -36.8749,174.7448])\", \"marker-symbol\": \"-number-F108\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [174.7448,-36.8749] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Dunedin]]<br>\", \"description\": \"[[Forsyth Barr Stadium]] ([https://geohack.toolforge.org/geohack.php?params=-45.8694;170.5245_dim:2000 -45.8694,170.5245])\", \"marker-symbol\": \"-number-F108\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [170.5245,-45.8694] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Hamilton, New Zealand|Hamilton]]<br>\", \"description\": \"[[Waikato Stadium]] ([https://geohack.toolforge.org/geohack.php?params=-37.7811;175.2683_dim:2000 -37.7811,175.2683])\", \"marker-symbol\": \"-number-F108\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [175.2683,-37.7811] } }, { \"type\": \"Feature\", \"properties\": { \"title\": \"[[Wellington]]<br>\", \"description\": \"[[Wellington Regional Stadium]] ([https://geohack.toolforge.org/geohack.php?params=-41.273;174.7859_dim:2000 -41.273,174.7859])\", \"marker-symbol\": \"-number-F108\", \"marker-size\": \"medium\", \"marker-color\": \"#4B77D6\" }, \"geometry\": {\"type\": \"Point\", \"coordinates\": [174.7859,-41.273] } } ] } ]"}}'>
+Australia and New Zealand proposed 13 possible venues across 12 host cities for the tournament in the bid book submitted to FIFA, suggesting a minimum of 10 stadiums be used—5 in each country. [ 42 ] The original proposal of the joint bid would have seen the venues divided into three main travel hubs: South Hub, containing Perth, Adelaide, Launceston and Melbourne; East Hub, containing Brisbane, Newcastle, Sydney, Melbourne and Launceston; and New Zealand Hub, containing Auckland, Hamilton, Wellington, Christchurch and Dunedin. The Sydney Football Stadium was the only new stadium, undergoing a major renovation during the bid period, replacing the old football stadium on the same site and opening on 28 August 2022. [ 43 ]
+The bid evaluation was released on 10 June 2020 by FIFA, which noted that the majority of the stadiums listed in the bid meet FIFA's hosting requirements with capacity, aside from Adelaide and Auckland, which did not meet the minimum requirements capacity wise for stages of the competition proposed for. [ 44 ] Most stadiums featured in the bid were planned to have minor renovations with new floodlighting, pitch renovations, [ 45 ] in addition to gender-neutral changing rooms in time for the tournament. [ 46 ]
+On 31 March 2021, FIFA announced the final host city and venue selections. Five cities and six stadiums were used in Australia, along with four cities and stadiums in New Zealand. From the proposed venues, Newcastle and Launceston were not selected in Australia and Christchurch was omitted in New Zealand. Eden Park in Auckland hosted the opening game, with Stadium Australia in Sydney hosting the final match. [ 47 ] [ 48 ] As a part of the branding, all cities used native names ( Indigenous in Australia and Māori in New Zealand) alongside their English names in an effort to "reconcile and respect the original owners of the land". [ 49 ] They were: Tarntanya (Adelaide), Meanjin (written as Meaanjin; Brisbane), Naarm (Melbourne), Boorloo (Perth), Gadigal (Eastern Sydney; for Sydney Football Stadium), Wangal (Western Sydney; for Stadium Australia), Tāmaki Makaurau (Auckland), Ōtepoti (Dunedin), Kirikiriroa (Hamilton), and Te Whanganui-a-Tara (Wellington). [ 50 ]
+Eden Park , Auckland hosted New Zealand's opening match; Stadium Australia , Sydney hosted Australia's opening match (both group stages). Lang Park , Brisbane, hosted the third-place match on 19 August; Stadium Australia hosted the final which was held on 20 August. [ 51 ]
+The Women's World Cup forced many domestic Australian sporting teams to move matches from grounds under the FIFA lockout, particularly those in the National Rugby League . [ 52 ]
+Australia
+New Zealand
+Sydney
+Brisbane
+Auckland
+Wellington
+Stadium Australia
+Sydney Football Stadium
+Lang Park
+(Brisbane Stadium)
+Eden Park
+Wellington Regional Stadium
+Capacity: 75,784 [ 53 ]
+Capacity: 40,583 [ 54 ]
+Capacity: 49,461 [ 55 ]
+Capacity: 43,217 [ 56 ]
+Capacity: 33,132 [ 57 ]
+Melbourne
+Perth
+Adelaide
+Dunedin
+Hamilton
+Melbourne Rectangular Stadium
+Perth Rectangular Stadium
+Hindmarsh Stadium
+Forsyth Barr Stadium (Dunedin Stadium)
+Waikato Stadium
+Capacity: 27,706 [ 58 ]
+Capacity: 18,727 [ 59 ]
+Capacity: 13,557 [ 60 ]
+Capacity: 25,947 [ 61 ]
+Capacity: 18,009 [ 62 ]
+Team base camps
+Base camps were used by the 32 national squads to stay and train before and during the Women's World Cup tournament. FIFA announced the hotels and training sites for the 29 qualified participating nations on 11 December 2022, with the remaining 3 qualified teams selecting their base camps after the Play-off Tournament. [ 63 ] FIFA later confirmed the last remaining three base camps for the play-off tournament winners on 21 March 2023. [ 64 ] It was the first World Cup to have dedicated base camps for the 32 participating nations. [ 65 ]
+Team
+Hotel
+Training site
+Argentina
+Novotel Auckland – Ellerslie
+Michaels Avenue Reserve, Auckland
+Australia
+Rydges Brisbane – South Bank
+Queensland Sport and Athletics Centre
+Brazil
+Best Western Hotel North Lakes
+Moreton Bay Central Sports Complex
+Canada
+Mercure Melbourne – Doncaster
+Olympic Park , Heidelberg West
+China
+Pullman Adelaide
+Croatian Sports Centre, Adelaide
+Colombia
+Mercure Sydney – Liverpool
+Marconi Stadium
+Costa Rica
+Distinction Christchurch Hotel
+Ngā Puna Wai Sports Hub
+Denmark
+DoubleTree by Hilton Perth – Waterfront
+Kingsway Reserve
+England
+Crowne Plaza Terrigal Pacific
+Central Coast Stadium
+France
+Grand Mercure Hills Lodge
+Valentine Sports Park 1
+Germany
+Mercure Kooindah Waters
+Central Coast Regional Sporting & Recreation Complex
+Haiti
+Rendezvous Hotel Perth Scarborough
+Percy Doyle Reserve
+Italy
+Grand Millennium Auckland
+Shepherds Park
+Jamaica
+Novotel Melbourne – Preston
+Victorian State Football Centre
+Japan
+Rydges Latimer Christchurch
+Christchurch Stadium
+Morocco
+Lancemore Mansion Hotel Werribee Park
+Galvin Park Reserve
+Netherlands
+Trinity Wharf – Tauranga
+Bay Oval
+New Zealand
+Pullman Auckland Hotel & Apartments
+Keith Hay Park
+Nigeria
+Sofitel Brisbane Central
+Lions Stadium
+Norway
+M Social Auckland
+Seddon Fields
+Panama
+The Playford Adelaide – MGallery
+Adelaide United Training Centre
+Philippines
+Mövenpick Hotel
+Olympic Park Auckland
+Portugal
+Waipuna Hotel and Conference Centre
+Māngere Centre Park
+Republic of Ireland
+Emporium Hotel South Bank
+Goodwin Park
+South Africa
+InterContinental Hotel Wellington
+Porirua Park
+South Korea
+Rydges Campbelltown
+Campbelltown Sports Stadium
+Spain
+Copthorne Palmerston North
+Massey Sport Institute Palmerston North
+Sweden
+NZCIS Accommodation Wellington
+NZ Campus of Innovation & Sport
+Switzerland
+Distinction Dunedin Hotel
+Tahuna Park
+United States
+Sofitel Auckland Viaduct Harbour
+Bay City Park
+Vietnam
+Rydges Auckland
+Fred Taylor Park
+Zambia
+Novotel Hamilton – Tainui
+Korikori Park
+Teams
+[ edit ]
+Qualification
+[ edit ]
+Main article: 2023 FIFA Women's World Cup qualification
+FIFA's confederations organised their qualifications through continental championships , with the exception of UEFA which organised its own qualifying competition . Australia and New Zealand, as co-hosts, qualified automatically for the tournament, leaving the remaining 207 FIFA member associations eligible to enter qualification if they chose to do so. Australia competed at the 2022 AFC Women's Asian Cup , whilst New Zealand did not enter the OFC Women's Nations Cup the same year. The reigning Women's World Cup champions United States competed in qualification through the CONCACAF W Championship . [ 66 ] [ 67 ]
+The Chadian and Pakistani football associations were suspended by FIFA, thus excluding them from entering qualifications. [ 68 ] Rwanda , Sudan , DR Congo and São Tomé and Príncipe entered qualification but withdrew later. [ 69 ] [ 70 ] [ 71 ] [ 72 ] Kenya withdrew before the second round of qualifiers. [ 73 ] North Korea and Turkmenistan withdrew from the Women's Asian Cup qualifiers due to safety concerns and travel restrictions related to the COVID-19 pandemic . [ 74 ] Iraq withdrew after the AFC draw. [ 75 ] Due to the uncertainty of women's sport after the Taliban takeover of the country , Afghanistan withdrew from qualification. [ 76 ] Due to COVID-19 pandemic outbreaks in their squads, Women's Asian Cup hosts India withdrew from qualification. [ 77 ] American Samoa withdrew due to continuing difficulties related to the pandemic. [ 78 ] Russia were disqualified from competing due to the Russian invasion of Ukraine . [ 79 ]
+The allocation of slots for each confederation was confirmed by the FIFA Council on 25 December 2020. The slots for the two host nations were taken directly from the quotas allocated to their confederations. [ 80 ]
+AFC (Asia): 6 slots (including co-hosts Australia )
+CAF (Africa): 4 slots
+CONCACAF (North America, Central America and the Caribbean): 4 slots
+CONMEBOL (South America): 3 slots
+OFC (Oceania): 1 slot (including co-hosts New Zealand )
+UEFA (Europe): 11 slots
+Inter-confederation play-off tournament : 3 slots
+A ten-team play-off tournament decided the final three spots at the Women's World Cup. The play-off slot allocation was as follows: [ 81 ] [ 82 ]
+AFC (Asia): 2 slots
+CAF (Africa): 2 slots
+CONCACAF (North America, Central America and the Caribbean): 2 slots
+CONMEBOL (South America): 2 slots
+OFC (Oceania): 1 slot
+UEFA (Europe): 1 slot
+Of the 32 nations qualified for the 2023 FIFA Women's World Cup, 20 countries competed at the previous tournament in 2019. Haiti , Morocco , Panama , the Philippines , Portugal , the Republic of Ireland , Vietnam and Zambia made their debuts at the FIFA Women's World Cup. This World Cup was the first FIFA tournament the Philippines played in. This was Panama, Portugal and Vietnam's first FIFA women's competition, having only taken part in various FIFA men's tournaments. Zambia made history as the first landlocked country in Africa to qualify for a World Cup for either sex. Morocco became the first-ever Arab country to qualify for the Women's World Cup, while the Republic of Ireland marked their debut at any senior women's tournament. Denmark made their first appearance in 16 years after missing three consecutive tournaments, their last appearance being in 2007 . Costa Rica , Colombia and Switzerland returned to the tournament after missing the previous one in 2019 . Italy qualified for two consecutive women's World Cups for the first time in their history, after three sporadic appearances in 1991, 1999 and 2019. [ 83 ] [ 82 ] Africa had four representatives for the first time in the competition's history. [ 84 ]
+Thailand , Cameroon , Chile , and Scotland , all of whom qualified for the 2019 Women's World Cup, did not qualify for the 2023 tournament. Iceland was the highest ranked team in the FIFA Women's World Rankings that failed to qualify, ranked 16th at the time. [ A ] Zambia were the lowest ranked team to qualify, ranked 81st at the time. [ 85 ]
+The qualified teams, listed by region, with numbers in parentheses indicating final positions in the FIFA Women's World Ranking before the tournament were: [ 86 ]
+AFC (6)
+Australia (10) (co-hosts)
+China (14)
+Japan (11)
+Philippines (46) (debut)
+South Korea (17)
+Vietnam (32) (debut)
+CAF (4)
+Morocco (72) (debut)
+Nigeria (40)
+South Africa (54)
+Zambia (77) (debut)
+CONCACAF (6)
+Canada (7)
+Costa Rica (36)
+Haiti (53) (debut)
+Jamaica (43)
+Panama (52) (debut)
+United States (1)
+CONMEBOL (3)
+Argentina (28)
+Brazil (8)
+Colombia (25)
+OFC (1)
+New Zealand (26) (co-hosts)
+UEFA (12)
+Denmark (13)
+England (4)
+France (5)
+Germany (2)
+Italy (16)
+Netherlands (9)
+Norway (12)
+Portugal (21) (debut)
+Republic of Ireland (22) (debut)
+Spain (6)
+Sweden (3)
+Switzerland (20)
+Teams qualified
+Teams failed to qualify
+Teams withdrew or suspended
+Did not enter
+↑ North Korea , ranked 10th, withdrew from qualifications.
+Squads
+[ edit ]
+Main article: 2023 FIFA Women's World Cup squads
+Each team had to provide to FIFA a preliminary squad of between 35 and 55 players, which FIFA did not publish. From the preliminary squad, each team had to name a final squad of 23 players (three of whom must be goalkeepers) by 9 July 2023. Players in the final squad could be replaced by a player from the preliminary squad due to serious injury or illness up to 24 hours prior to kickoff of the team's first match. [ 87 ]
+Draw
+[ edit ]
+The final draw took place at the Aotea Centre in Auckland , New Zealand, on 22 October 2022 at 19:30 NZDT ( UTC+13 ), prior to the completion of qualification . [ 88 ] [ 89 ] The three winners of the inter-confederation play-off were not known at the time of the draw. [ 90 ]
+Retired American international and two-time Women's World Cup winner Carli Lloyd and CNN International sports presenter Amanda Davies conducted the draw. Each confederation had a retired international representing them as a draw assistant: Maia Jackman of New Zealand for the OFC and Julie Dolan of Australia for the AFC, alongside men's internationals Ian Wright of England for UEFA, Alexi Lalas of the United States for CONCACAF, Geremi of Cameroon for the CAF and 2002 World Cup winner Gilberto Silva of Brazil for CONMEBOL. Snowboarding Olympic gold medalist Zoi Sadowski-Synnott of New Zealand and four-time swimming Olympic gold medalist Cate Campbell of Australia also assisted the draw. [ 91 ]
+For the draw, the 32 teams were allocated into four pots based on the FIFA Women's World Rankings of 13 October 2022. Pot one contained both co-hosts New Zealand and Australia (both automatically placed in positions A1 and B1, respectively) along with the best six teams. Pot two contained the next best eight teams, with the next best eight teams being allocated into the following pot (pot three). Pot four contained the lowest ranked teams, along with the placeholders for the three inter-confederation play-off winners. With the exception of UEFA, teams from the same confederation could not be drawn in the same group. However, since each inter-confederation play-off group contained multiple confederations, the placeholders were identified by the seeded teams in their respective play-off pathways to avoid any draw constraints. The draw started with pot one and ended with pot four, with the team selected being allocated to the first available group alphabetically. Pot 1 teams were automatically drawn to position 1 of each group, with the following positions drawn for the remaining pots. The pots for the draws are shown below. [ 92 ]
+Pot 1
+Pot 2
+Pot 3
+Pot 4
+New Zealand (22) (co-hosts)
+Australia (13) (co-hosts)
+United States (1) (title holders)
+Sweden (2)
+Germany (3)
+England (4)
+France (5)
+Spain (6)
+Canada (7)
+Netherlands (8)
+Brazil (9)
+Japan (11)
+Norway (12)
+Italy (14)
+China (15)
+South Korea (17)
+Denmark (18)
+Switzerland (21)
+Republic of Ireland (24)
+Colombia (27)
+Argentina (29)
+Vietnam (34)
+Costa Rica (37)
+Jamaica (43)
+Nigeria (45)
+Philippines (53)
+South Africa (54)
+Morocco (76)
+Zambia (81)
+Winner of Play-off Group A [ a ]
+Winner of Play-off Group B [ b ]
+Winner of Play-off Group C [ c ]
+↑ The placeholder for the play-off Group A winners adhered to the geographical constraints of a European team in the draw (based on the seeded team in the group, Portugal ). The Group A winner that eventually qualified was Portugal .
+↑ The placeholder for the play-off Group B winners adhered to the geographical constraints of a South American team in the draw (based on the seeded team in the group, Chile ). The Group B winner that eventually qualified was Haiti .
+↑ The placeholder for the play-off Group C winners adhered to the geographical constraints of an Asian and Oceanian team in the draw (based on the seeded teams in the group, Chinese Taipei and Papua New Guinea , respectively). The Group C winner that eventually qualified was Panama .
+Draw result
+[ edit ]
+Group A
+Position</span>"}]]}'>Pos Team
+A1 New Zealand (H)
+A2 Norway
+A3 Philippines
+A4 Switzerland
+Group B
+Position</span>"}]]}'>Pos Team
+B1 Australia (H)
+B2 Republic of Ireland
+B3 Nigeria
+B4 Canada
+Group C
+Position</span>"}]]}'>Pos Team
+C1 Spain
+C2 Costa Rica
+C3 Zambia
+C4 Japan
+Group D
+Position</span>"}]]}'>Pos Team
+D1 England
+D2 Haiti
+D3 Denmark
+D4 China
+Group E
+Position</span>"}]]}'>Pos Team
+E1 United States
+E2 Vietnam
+E3 Netherlands
+E4 Portugal
+Group F
+Position</span>"}]]}'>Pos Team
+F1 France
+F2 Jamaica
+F3 Brazil
+F4 Panama
+Group G
+Position</span>"}]]}'>Pos Team
+G1 Sweden
+G2 South Africa
+G3 Italy
+G4 Argentina
+Group H
+Position</span>"}]]}'>Pos Team
+H1 Germany
+H2 Morocco
+H3 Colombia
+H4 South Korea
+Notes
+(H) : Hosts
+Officiating
+[ edit ]
+Main article: 2023 FIFA Women's World Cup officials
+In January 2023, the FIFA Referees Committee announced the list of 33 referees, 55 assistant referees, and 19 video assistant referees (VAR) for the tournament. Of the 33 referees, FIFA included 2 each from Australia, Canada, South Korea, and the United States. [ 93 ]
+France's Stéphanie Frappart , Salima Mukansanga from Rwanda, and Yoshimi Yamashita from Japan, who became the first female referees to officiate the men's World Cup in 2022, were among those selected for the Women's World Cup. They were also joined by female assistant referees Neuza Back, Kathryn Nesbitt, and Karen Díaz Medina, who also participated at the men's tournament. [ 93 ]
+Heba Saadieh became the first Palestinian and Arab female referee to officiate at a World Cup of either gender. Firas Abu Hilal, secretary general of the Palestinian Football Association labelled Saadia as "a role model for Palestinian women who aspire to achieve success and greatness" and that she "has proven the ability of Palestinian women to excel in any field". [ 94 ] [ 95 ]
+The VAR at the tournament had the spoken explanations broadcast in the stadium and on television as part of a year-long trial of the technique intended to give more transparency to often-controversial decisions. Other sports with video referees already used the measure, with FIFA also having implemented it at the 2022 FIFA Club World Cup and 2023 FIFA U-20 World Cup . [ 96 ]
+On 18 August 2023, FIFA announced that American referee Tori Penso would adjudicate the final at Stadium Australia. [ 97 ]
+Ceremonies
+[ edit ]
+Opening ceremonies
+[ edit ]
+There were two opening ceremonies, one before each kick-off game in the two host nations on 20 July 2023. [ 98 ] The first took place at Eden Park , Auckland , ahead of the opening game of the competition between New Zealand and Norway. [ 99 ] The ceremonies both featured indigenous welcomes, fireworks, dancing and live music, before a moment of silence. [ 98 ] A few hours before the opening ceremony, a shooting occurred in downtown Auckland during which three people, including the assailant, were killed. A moment of silence was held for the attack victims. [ 100 ]
+The Eden Park ceremony was noted to be very brief. [ 99 ] It began with Māori and indigenous Australian artists; [ 99 ] colour and culture representing the indigenous people featured in the ceremony, with a haka being performed as well. [ 101 ] There was a dance with groups of dancers representing each nation competing at the tournament, and a montage of star players from all the participants. [ 99 ] To close the ceremony, [ 99 ] New Zealand singer Benee and Australian singer Mallrat performed the tournament's official song, " Do It Again ". [ 101 ]
+At Stadium Australia , Sydney , Indigenous Australian artists performed. [ 98 ]
+Closing ceremonies
+[ edit ]
+The tournament's closing ceremony took place at Stadium Australia , Sydney , on 20 August 2023, ahead of the Final. The ceremony featured a Welcome to Country , and a performance from Australian singer Tones and I . [ 102 ]
+There was also an extended pre-game ceremony featuring a Māori poi performance prior to the first semi-final at Eden Park , Auckland as it was the final match to be held in New Zealand. [ 103 ]
+Impact
+[ edit ]
+Main article: Matildas fever
+The Sydney Opera House lit up in support of the Matildas during the third-place match
+The performance of the Australian national women's team (nicknamed "the Matildas") greatly increased public interest in the sport. Amidst the tournament, FIFA said "football is the only subject on everyone's lips" in the nation, having an "enormous impact" on the Australian public. [ 104 ] The outpouring of support for the team was dubbed " Matildas fever " by the media. [ 105 ] Writing for The Guardian , former professional soccer player Craig Foster said: "We are not so much watching a national team compete, as a changing nation at play," citing the Matildas' performance for "overturn[ing] misconceptions of women's sport" and inspiring young women. [ 106 ]
+Australian TV broadcast viewership records were broken multiple times, with 11.15 million watching the Matildas' match against England on the Seven Network . [ 107 ] Live viewing sites were set up in cities around the country, [ 108 ] with major stadiums being used to show the match in Sydney to cope with massive crowds. [ 109 ] The Australian government pledged $200 million to improve women's sporting facilities as a direct result of the team's success. [ 110 ]
+The success of the tournament and the high viewership increased support for Australia and New Zealand to host the 2034 FIFA World Cup . [ 111 ] The tournament netted NZ$109.5 million to New Zealand's economy, which was more than double the projected $46.3 million. [ 112 ]
+New Zealand Football have already stated a 25% increase in girls and women playing football occurred in New Zealand as of 2023, with more expected to play in 2024, the first full season after the conclusion of the tournament. [ 113 ] The tournament has also left its effect on the New Zealand community, with 30 sports venues receiving upgrades for the tournament. [ 114 ]
+Following the tournament, Football Australia CEO James Johnson stated that the successful delivery of the 2023 FIFA Women's World Cup demonstrated Australia's ability to host major international sporting competitions. On 15 May 2024, the Asian Football Confederation confirmed that Australia would host the 2026 AFC Women's Asian Cup . [ 115 ] [ 116 ]
+Group stage
+[ edit ]
+The group stage was played from 20 July to 3 August. Competing countries were divided into eight groups of four teams (groups A to H). Teams in each group played one another in a round-robin , with the top two teams advancing to the knockout stage . [ 117 ]
+Tie-breaking criteria for group play
+The ranking of teams in the group stage was determined as follows: [ 117 ]
+Points obtained in all group matches (three points for a win, one for a draw, none for a defeat);
+Goal difference in all group matches;
+Number of goals scored in all group matches;
+Points obtained in the matches played between the teams in question;
+Goal difference in the matches played between the teams in question;
+Number of goals scored in the matches played between the teams in question;
+Fair play points in all group matches (only one deduction could be applied to a player in a single match): Yellow card: −1 point;
+Indirect red card (second yellow card): −3 points;
+Direct red card: −4 points;
+Yellow card and direct red card: −5 points;
+Drawing of lots.
+Result of countries participating in the 2023 FIFA Women's World Cup
+Group A
+[ edit ]
+Main article: 2023 FIFA Women's World Cup Group A
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Switzerland
+3
+1
+2
+0
+2
+0
++2
+5
+Advance to knockout stage
+2
+Norway
+3
+1
+1
+1
+6
+1
++5
+4
+3
+New Zealand (H)
+3
+1
+1
+1
+1
+1
+0
+4
+4
+Philippines
+3
+1
+0
+2
+1
+8
+− 7
+3
+Source: FIFA
+(H) Hosts
+20 July 2023 ( 2023-07-20 )
+19:00 UTC+12
+New Zealand 1–0 Norway
+Wilkinson 48'
+Report
+Eden Park , Auckland
+Attendance: 42,137
+Referee: Yoshimi Yamashita ( Japan )
+21 July 2023 ( 2023-07-21 )
+17:00 UTC+12
+Philippines 0–2 Switzerland
+Report
+Bachmann 45' ( pen. )
+Piubel 64'
+Forsyth Barr Stadium , Dunedin
+Attendance: 13,711
+Referee: Vincentia Amedome ( Togo )
+25 July 2023 ( 2023-07-25 )
+17:30 UTC+12
+New Zealand 0–1 Philippines
+Report
+Bolden 24'
+Wellington Regional Stadium , Wellington
+Attendance: 32,357
+Referee: Katia García ( Mexico )
+25 July 2023 ( 2023-07-25 )
+20:00 UTC+12
+Switzerland 0–0 Norway
+Report
+Waikato Stadium , Hamilton
+Attendance: 10,769
+Referee: Stéphanie Frappart ( France )
+30 July 2023 ( 2023-07-30 )
+19:00 UTC+12
+Switzerland 0–0 New Zealand
+Report
+Forsyth Barr Stadium , Dunedin
+Attendance: 25,947
+Referee: Tori Penso ( United States )
+30 July 2023 ( 2023-07-30 )
+19:00 UTC+12
+Norway 6–0 Philippines
+Román Haug 6' , 17' , 90+5'
+Graham Hansen 31'
+Barker 48' ( o.g. )
+Reiten 53' ( pen. )
+Report
+Eden Park , Auckland
+Attendance: 34,697
+Referee: Marie-Soleil Beaudoin ( Canada )
+Group B
+[ edit ]
+Main article: 2023 FIFA Women's World Cup Group B
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Australia (H)
+3
+2
+0
+1
+7
+3
++4
+6
+Advance to knockout stage
+2
+Nigeria
+3
+1
+2
+0
+3
+2
++1
+5
+3
+Canada
+3
+1
+1
+1
+2
+5
+− 3
+4
+4
+Republic of Ireland
+3
+0
+1
+2
+1
+3
+− 2
+1
+Source: FIFA
+(H) Hosts
+20 July 2023 ( 2023-07-20 )
+20:00 UTC+10
+Australia 1–0 Republic of Ireland
+Catley 52' ( pen. )
+Report
+Stadium Australia , Sydney
+Attendance: 75,784
+Referee: Edina Alves Batista ( Brazil )
+21 July 2023 ( 2023-07-21 )
+12:30 UTC+10
+Nigeria 0–0 Canada
+Report
+Melbourne Rectangular Stadium , Melbourne
+Attendance: 21,410
+Referee: Lina Lehtovaara ( Finland )
+26 July 2023 ( 2023-07-26 )
+20:00 UTC+8
+Canada 2–1 Republic of Ireland
+Connolly 45+5' ( o.g. )
+Leon 53'
+Report
+McCabe 4'
+Perth Rectangular Stadium , Perth
+Attendance: 17,065
+Referee: Laura Fortunato ( Argentina )
+27 July 2023 ( 2023-07-27 )
+20:00 UTC+10
+Australia 2–3 Nigeria
+Van Egmond 45+1'
+Kennedy 90+10'
+Report
+Kanu 45+6'
+Ohale 65'
+Oshoala 72'
+Lang Park , Brisbane
+Attendance: 49,156
+Referee: Esther Staubli ( Switzerland )
+31 July 2023 ( 2023-07-31 )
+20:00 UTC+10
+Canada 0–4 Australia
+Report
+Raso 9' , 39'
+Fowler 58'
+Catley 90+4' ( pen. )
+Melbourne Rectangular Stadium , Melbourne
+Attendance: 27,706
+Referee: Stéphanie Frappart ( France )
+31 July 2023 ( 2023-07-31 )
+20:00 UTC+10
+Republic of Ireland 0–0 Nigeria
+Report
+Lang Park , Brisbane
+Attendance: 24,884
+Referee: Katia García ( Mexico )
+Group C
+[ edit ]
+Main article: 2023 FIFA Women's World Cup Group C
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Japan
+3
+3
+0
+0
+11
+0
++11
+9
+Advance to knockout stage
+2
+Spain
+3
+2
+0
+1
+8
+4
++4
+6
+3
+Zambia
+3
+1
+0
+2
+3
+11
+− 8
+3
+4
+Costa Rica
+3
+0
+0
+3
+1
+8
+− 7
+0
+Source: FIFA
+21 July 2023 ( 2023-07-21 )
+19:30 UTC+12
+Spain 3–0 Costa Rica
+Del Campo 21' ( o.g. )
+Bonmatí 23'
+González 27'
+Report
+Wellington Regional Stadium , Wellington
+Attendance: 22,966
+Referee: Casey Reibelt ( Australia )
+22 July 2023 ( 2023-07-22 )
+19:00 UTC+12
+Zambia 0–5 Japan
+Report
+Miyazawa 43' , 62'
+Mi. Tanaka 55'
+Endō 71'
+Ueki 90+11' ( pen. )
+Waikato Stadium , Hamilton
+Attendance: 16,111
+Referee: Tess Olofsson ( Sweden )
+26 July 2023 ( 2023-07-26 )
+17:00 UTC+12
+Japan 2–0 Costa Rica
+Naomoto 25'
+Fujino 27'
+Report
+Forsyth Barr Stadium , Dunedin
+Attendance: 6,992
+Referee: Maria Sole Ferrieri Caputi ( Italy )
+26 July 2023 ( 2023-07-26 )
+19:30 UTC+12
+Spain 5–0 Zambia
+Abelleira 9'
+Hermoso 13' , 70'
+Redondo 69' , 85'
+Report
+Eden Park , Auckland
+Attendance: 20,983
+Referee: Oh Hyeon-jeong ( South Korea )
+31 July 2023 ( 2023-07-31 )
+19:00 UTC+12
+Japan 4–0 Spain
+Miyazawa 12' , 40'
+Ueki 29'
+Mi. Tanaka 82'
+Report
+Wellington Regional Stadium , Wellington
+Attendance: 20,957
+Referee: Ekaterina Koroleva ( United States )
+31 July 2023 ( 2023-07-31 )
+19:00 UTC+12
+Costa Rica 1–3 Zambia
+Herrera 47'
+Report
+Mweemba 3'
+B. Banda 31' ( pen. )
+Kundananji 90+3'
+Waikato Stadium , Hamilton
+Attendance: 8,117
+Referee: Bouchra Karboubi ( Morocco )
+Group D
+[ edit ]
+Main article: 2023 FIFA Women's World Cup Group D
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+England
+3
+3
+0
+0
+8
+1
++7
+9
+Advance to knockout stage
+2
+Denmark
+3
+2
+0
+1
+3
+1
++2
+6
+3
+China
+3
+1
+0
+2
+2
+7
+− 5
+3
+4
+Haiti
+3
+0
+0
+3
+0
+4
+− 4
+0
+Source: FIFA
+22 July 2023 ( 2023-07-22 )
+19:30 UTC+10
+England 1–0 Haiti
+Stanway 29' ( pen. )
+Report
+Lang Park , Brisbane
+Attendance: 44,369
+Referee: Emikar Calderas ( Venezuela )
+22 July 2023 ( 2023-07-22 )
+20:00 UTC+8
+Denmark 1–0 China
+Vangsgaard 90'
+Report
+Perth Rectangular Stadium , Perth
+Attendance: 16,989
+Referee: Marie-Soleil Beaudoin ( Canada )
+28 July 2023 ( 2023-07-28 )
+18:30 UTC+10
+England 1–0 Denmark
+James 6'
+Report
+Sydney Football Stadium , Sydney
+Attendance: 40,439
+Referee: Tess Olofsson ( Sweden )
+28 July 2023 ( 2023-07-28 )
+20:30 UTC+9:30
+China 1–0 Haiti
+Wang Shuang 74' ( pen. )
+Report
+Hindmarsh Stadium , Adelaide
+Attendance: 12,675
+Referee: Marta Huerta de Aza ( Spain )
+1 August 2023 ( 2023-08-01 )
+20:30 UTC+9:30
+China 1–6 England
+Wang Shuang 57' ( pen. )
+Report
+Russo 4'
+Hemp 26'
+James 41' , 65'
+Kelly 77'
+Daly 84'
+Hindmarsh Stadium , Adelaide
+Attendance: 13,497
+Referee: Casey Reibelt ( Australia )
+1 August 2023 ( 2023-08-01 )
+19:00 UTC+8
+Haiti 0–2 Denmark
+Report
+Harder 21' ( pen. )
+Troelsgaard 90+10'
+Perth Rectangular Stadium , Perth
+Attendance: 17,897
+Referee: Oh Hyeon-jeong ( South Korea )
+Group E
+[ edit ]
+Main article: 2023 FIFA Women's World Cup Group E
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Netherlands
+3
+2
+1
+0
+9
+1
++8
+7
+Advance to knockout stage
+2
+United States
+3
+1
+2
+0
+4
+1
++3
+5
+3
+Portugal
+3
+1
+1
+1
+2
+1
++1
+4
+4
+Vietnam
+3
+0
+0
+3
+0
+12
+− 12
+0
+Source: FIFA
+22 July 2023 ( 2023-07-22 )
+13:00 UTC+12
+United States 3–0 Vietnam
+Smith 14' , 45+7'
+Horan 77'
+Report
+Eden Park , Auckland
+Attendance: 41,107
+Referee: Bouchra Karboubi ( Morocco )
+23 July 2023 ( 2023-07-23 )
+19:30 UTC+12
+Netherlands 1–0 Portugal
+Van der Gragt 13'
+Report
+Forsyth Barr Stadium , Dunedin
+Attendance: 11,991
+Referee: Kateryna Monzul ( Ukraine )
+27 July 2023 ( 2023-07-27 )
+13:00 UTC+12
+United States 1–1 Netherlands
+Horan 62'
+Report
+Roord 17'
+Wellington Regional Stadium , Wellington
+Attendance: 27,312
+Referee: Yoshimi Yamashita ( Japan )
+27 July 2023 ( 2023-07-27 )
+19:30 UTC+12
+Portugal 2–0 Vietnam
+Encarnação 7'
+Nazareth 21'
+Report
+Waikato Stadium , Hamilton
+Attendance: 6,645
+Referee: Salima Mukansanga ( Rwanda )
+1 August 2023 ( 2023-08-01 )
+19:00 UTC+12
+Portugal 0–0 United States
+Report
+Eden Park , Auckland
+Attendance: 42,958
+Referee: Rebecca Welch ( England )
+1 August 2023 ( 2023-08-01 )
+19:00 UTC+12
+Vietnam 0–7 Netherlands
+Report
+Martens 8'
+Snoeijs 11'
+Brugts 18' , 57'
+Roord 23' , 83'
+Van de Donk 45'
+Forsyth Barr Stadium , Dunedin
+Attendance: 8,215
+Referee: Ivana Martinčić ( Croatia )
+Group F
+[ edit ]
+Main article: 2023 FIFA Women's World Cup Group F
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+France
+3
+2
+1
+0
+8
+4
++4
+7
+Advance to knockout stage
+2
+Jamaica
+3
+1
+2
+0
+1
+0
++1
+5
+3
+Brazil
+3
+1
+1
+1
+5
+2
++3
+4
+4
+Panama
+3
+0
+0
+3
+3
+11
+− 8
+0
+Source: FIFA
+23 July 2023 ( 2023-07-23 )
+20:00 UTC+10
+France 0–0 Jamaica
+Report
+Sydney Football Stadium , Sydney
+Attendance: 39,045
+Referee: María Carvajal ( Chile )
+24 July 2023 ( 2023-07-24 )
+20:30 UTC+9:30
+Brazil 4–0 Panama
+Ary Borges 19' , 39' , 70'
+Bia Zaneratto 48'
+Report
+Hindmarsh Stadium , Adelaide
+Attendance: 13,142
+Referee: Cheryl Foster ( Wales )
+29 July 2023 ( 2023-07-29 )
+20:00 UTC+10
+France 2–1 Brazil
+Le Sommer 17'
+Renard 83'
+Report
+Debinha 58'
+Lang Park , Brisbane
+Attendance: 49,378
+Referee: Kate Jacewicz ( Australia )
+29 July 2023 ( 2023-07-29 )
+20:30 UTC+8
+Panama 0–1 Jamaica
+Report
+A. Swaby 56'
+Perth Rectangular Stadium , Perth
+Attendance: 15,987
+Referee: Kateryna Monzul ( Ukraine )
+2 August 2023 ( 2023-08-02 )
+20:00 UTC+10
+Panama 3–6 France
+Cox 2'
+Pinzón 64' ( pen. )
+L. Cedeño 87'
+Report
+Lakrar 21'
+Diani 28' , 37' ( pen. ) , 52' ( pen. )
+Le Garrec 45+5'
+Bècho 90+10'
+Sydney Football Stadium , Sydney
+Attendance: 40,498
+Referee: Laura Fortunato ( Argentina )
+2 August 2023 ( 2023-08-02 )
+20:00 UTC+10
+Jamaica 0–0 Brazil
+Report
+Melbourne Rectangular Stadium , Melbourne
+Attendance: 27,638
+Referee: Esther Staubli ( Switzerland )
+Group G
+[ edit ]
+Main article: 2023 FIFA Women's World Cup Group G
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Sweden
+3
+3
+0
+0
+9
+1
++8
+9
+Advance to knockout stage
+2
+South Africa
+3
+1
+1
+1
+6
+6
+0
+4
+3
+Italy
+3
+1
+0
+2
+3
+8
+− 5
+3
+4
+Argentina
+3
+0
+1
+2
+2
+5
+− 3
+1
+Source: FIFA
+23 July 2023 ( 2023-07-23 )
+17:00 UTC+12
+Sweden 2–1 South Africa
+Rolfö 65'
+Ilestedt 90'
+Report
+Magaia 48'
+Wellington Regional Stadium , Wellington
+Attendance: 18,317
+Referee: Ekaterina Koroleva ( United States )
+24 July 2023 ( 2023-07-24 )
+18:00 UTC+12
+Italy 1–0 Argentina
+Girelli 87'
+Report
+Eden Park , Auckland
+Attendance: 30,889
+Referee: Melissa Borjas ( Honduras )
+28 July 2023 ( 2023-07-28 )
+12:00 UTC+12
+Argentina 2–2 South Africa
+Braun 74'
+Núñez 79'
+Report
+Motlhalo 30'
+Kgatlana 66'
+Forsyth Barr Stadium , Dunedin
+Attendance: 8,834
+Referee: Anna-Marie Keighley ( New Zealand )
+29 July 2023 ( 2023-07-29 )
+19:30 UTC+12
+Sweden 5–0 Italy
+Ilestedt 39' , 50'
+Rolfö 44'
+Blackstenius 45+1'
+Blomqvist 90+5'
+Report
+Wellington Regional Stadium , Wellington
+Attendance: 29,143
+Referee: Cheryl Foster ( Wales )
+2 August 2023 ( 2023-08-02 )
+19:00 UTC+12
+Argentina 0–2 Sweden
+Report
+Blomqvist 66'
+Rubensson 90' ( pen. )
+Waikato Stadium , Hamilton
+Attendance: 17,907
+Referee: Salima Mukansanga ( Rwanda )
+2 August 2023 ( 2023-08-02 )
+19:00 UTC+12
+South Africa 3–2 Italy
+Orsi 32' ( o.g. )
+Magaia 67'
+Kgatlana 90+2'
+Report
+Caruso 11' ( pen. ) , 74'
+Wellington Regional Stadium , Wellington
+Attendance: 14,967
+Referee: María Carvajal ( Chile )
+Group H
+[ edit ]
+Main article: 2023 FIFA Women's World Cup Group H
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Colombia
+3
+2
+0
+1
+4
+2
++2
+6
+Advance to knockout stage
+2
+Morocco
+3
+2
+0
+1
+2
+6
+− 4
+6
+3
+Germany
+3
+1
+1
+1
+8
+3
++5
+4
+4
+South Korea
+3
+0
+1
+2
+1
+4
+− 3
+1
+Source: FIFA
+24 July 2023 ( 2023-07-24 )
+18:30 UTC+10
+Germany 6–0 Morocco
+Popp 11' , 39'
+Bühl 46'
+Aït El Haj 54' ( o.g. )
+Redouani 79' ( o.g. )
+Schüller 90'
+Report
+Melbourne Rectangular Stadium , Melbourne
+Attendance: 27,256
+Referee: Tori Penso ( United States )
+25 July 2023 ( 2023-07-25 )
+12:00 UTC+10
+Colombia 2–0 South Korea
+Usme 30' ( pen. )
+Caicedo 39'
+Report
+Sydney Football Stadium , Sydney
+Attendance: 24,323
+Referee: Rebecca Welch ( England )
+30 July 2023 ( 2023-07-30 )
+14:00 UTC+9:30
+South Korea 0–1 Morocco
+Report
+Jraïdi 6'
+Hindmarsh Stadium , Adelaide
+Attendance: 12,886
+Referee: Edina Alves Batista ( Brazil )
+30 July 2023 ( 2023-07-30 )
+19:30 UTC+10
+Germany 1–2 Colombia
+Popp 89' ( pen. )
+Report
+Caicedo 52'
+Vanegas 90+7'
+Sydney Football Stadium , Sydney
+Attendance: 40,499
+Referee: Melissa Borjas ( Honduras )
+3 August 2023 ( 2023-08-03 )
+20:00 UTC+10
+South Korea 1–1 Germany
+Cho So-hyun 6'
+Report
+Popp 42'
+Lang Park , Brisbane
+Attendance: 38,945
+Referee: Anna-Marie Keighley ( New Zealand )
+3 August 2023 ( 2023-08-03 )
+18:00 UTC+8
+Morocco 1–0 Colombia
+Lahmari 45+4'
+Report
+Perth Rectangular Stadium , Perth
+Attendance: 17,342
+Referee: Maria Sole Ferrieri Caputi ( Italy )
+Knockout stage
+[ edit ]
+Main article: 2023 FIFA Women's World Cup knockout stage
+In the knockout stage, if a match was level at the end of 90 minutes of normal playing time, extra time was played (two periods of 15 minutes each). If the score was still level after extra time, the winners were determined by a penalty shoot-out . [ 117 ]
+Bracket
+[ edit ]
+Round of 16 Quarter-finals Semi-finals Final
+5 August – Auckland
+Switzerland 1
+11 August – Wellington
+Spain 5
+Spain ( a.e.t. ) 2
+6 August – Sydney (SFS)
+Netherlands 1
+Netherlands 2
+15 August – Auckland
+South Africa 0
+Spain 2
+5 August – Wellington
+Sweden 1
+Japan 3
+11 August – Auckland
+Norway 1
+Japan 1
+6 August – Melbourne
+Sweden 2
+Sweden ( p ) 0 (5)
+20 August – Sydney (SA)
+United States 0 (4)
+Spain 1
+7 August – Sydney (SA)
+England 0
+Australia 2
+12 August – Brisbane
+Denmark 0
+Australia ( p ) 0 (7)
+8 August – Adelaide
+France 0 (6)
+France 4
+16 August – Sydney (SA)
+Morocco 0
+Australia 1
+7 August – Brisbane
+England 3
+Third place play-off
+England ( p ) 0 (4)
+12 August – Sydney (SA) 19 August – Brisbane
+Nigeria 0 (2)
+England 2 Sweden 2
+8 August – Melbourne
+Colombia 1
+Australia 0
+Colombia 1
+Jamaica 0
+Round of 16
+[ edit ]
+5 August 2023 ( 2023-08-05 )
+17:00 UTC+12
+Switzerland 1–5 Spain
+Codina 11' ( o.g. )
+Report
+Bonmatí 5' , 36'
+Redondo 17'
+Codina 45'
+Hermoso 70'
+Eden Park , Auckland
+Attendance: 43,217
+Referee: Cheryl Foster ( Wales )
+5 August 2023 ( 2023-08-05 )
+20:00 UTC+12
+Japan 3–1 Norway
+Syrstad Engen 15' ( o.g. )
+Shimizu 50'
+Miyazawa 81'
+Report
+Reiten 20'
+Wellington Regional Stadium , Wellington
+Attendance: 33,042
+Referee: Edina Alves Batista ( Brazil )
+6 August 2023 ( 2023-08-06 )
+12:00 UTC+10
+Netherlands 2–0 South Africa
+Roord 9'
+Beerensteyn 68'
+Report
+Sydney Football Stadium , Sydney
+Attendance: 40,233
+Referee: Yoshimi Yamashita ( Japan )
+6 August 2023 ( 2023-08-06 )
+19:00 UTC+10
+Sweden 0–0 ( a.e.t. ) United States
+Report
+Penalties
+Rolfö
+Rubensson
+Björn
+Blomqvist
+Bennison
+Eriksson
+Hurtig
+5–4
+Sullivan
+Horan
+Mewis
+Rapinoe
+Smith
+Naeher
+O'Hara
+Melbourne Rectangular Stadium , Melbourne
+Attendance: 27,706
+Referee: Stéphanie Frappart ( France )
+7 August 2023 ( 2023-08-07 )
+17:30 UTC+10
+England 0–0 ( a.e.t. ) Nigeria
+Report
+Penalties
+Stanway
+England
+Daly
+Greenwood
+Kelly
+4–2
+Oparanozie
+Alozie
+Ajibade
+Ucheibe
+Lang Park , Brisbane
+Attendance: 49,461
+Referee: Melissa Borjas ( Honduras )
+7 August 2023 ( 2023-08-07 )
+20:30 UTC+10
+Australia 2–0 Denmark
+Foord 29'
+Raso 70'
+Report
+Stadium Australia , Sydney
+Attendance: 75,784
+Referee: Rebecca Welch ( England )
+8 August 2023 ( 2023-08-08 )
+18:00 UTC+10
+Colombia 1–0 Jamaica
+Usme 51'
+Report
+Melbourne Rectangular Stadium , Melbourne
+Attendance: 27,706
+Referee: Kate Jacewicz ( Australia )
+8 August 2023 ( 2023-08-08 )
+20:30 UTC+9:30
+France 4–0 Morocco
+Diani 15'
+Dali 20'
+Le Sommer 23' , 70'
+Report
+Hindmarsh Stadium , Adelaide
+Attendance: 13,557
+Referee: Tori Penso ( United States )
+Quarter-finals
+[ edit ]
+11 August 2023 ( 2023-08-11 )
+13:00 UTC+12
+Spain 2–1 ( a.e.t. ) Netherlands
+Caldentey 81' ( pen. )
+Paralluelo 111'
+Report
+Van der Gragt 90+1'
+Wellington Regional Stadium , Wellington
+Attendance: 32,021
+Referee: Stéphanie Frappart ( France )
+11 August 2023 ( 2023-08-11 )
+19:30 UTC+12
+Japan 1–2 Sweden
+Hayashi 87'
+Report
+Ilestedt 32'
+Angeldahl 51' ( pen. )
+Eden Park , Auckland
+Attendance: 43,217
+Referee: Esther Staubli ( Switzerland )
+12 August 2023 ( 2023-08-12 )
+17:00 UTC+10
+Australia 0–0 ( a.e.t. ) France
+Report
+Penalties
+Foord
+Catley
+Kerr
+Fowler
+Arnold
+Gorry
+Yallop
+Carpenter
+Hunt
+Vine
+7–6
+Bacha
+Diani
+Renard
+Le Sommer
+Périsset
+Geyoro
+Karchaoui
+Lakrar
+Dali
+Bècho
+Lang Park , Brisbane
+Attendance: 49,461
+Referee: María Carvajal ( Chile )
+12 August 2023 ( 2023-08-12 )
+20:30 UTC+10
+England 2–1 Colombia
+Hemp 45+7'
+Russo 63'
+Report
+Santos 44'
+Stadium Australia , Sydney
+Attendance: 75,784
+Referee: Ekaterina Koroleva ( United States )
+Semi-finals
+[ edit ]
+15 August 2023 ( 2023-08-15 )
+20:00 UTC+12
+Spain 2–1 Sweden
+Paralluelo 81'
+Carmona 89'
+Report
+Blomqvist 88'
+Eden Park , Auckland
+Attendance: 43,217
+Referee: Edina Alves Batista ( Brazil )
+16 August 2023 ( 2023-08-16 )
+20:00 UTC+10
+Australia 1–3 England
+Kerr 63'
+Report
+Toone 36'
+Hemp 71'
+Russo 86'
+Stadium Australia , Sydney
+Attendance: 75,784
+Referee: Tori Penso ( United States )
+Third-place match
+[ edit ]
+19 August 2023 ( 2023-08-19 )
+18:00 UTC+10
+Sweden 2–0 Australia
+Rolfö 30' ( pen. )
+Asllani 62'
+Report
+Lang Park , Brisbane
+Attendance: 49,461
+Referee: Cheryl Foster ( Wales )
+Final
+[ edit ]
+Main article: 2023 FIFA Women's World Cup final
+20 August 2023 ( 2023-08-20 )
+20:00 UTC+10
+Spain 1–0 England
+Carmona 29'
+Report
+Stadium Australia , Sydney
+Attendance: 75,784
+Referee: Tori Penso ( United States )
+Awards
+[ edit ]
+Spanish midfielder Aitana Bonmatí (left) won the Golden Ball award . England's Mary Earps (right) won the Golden Glove award .
+The following World Cup awards were given at the conclusion of the tournament: the Golden Boot (top scorer), Golden Ball (best overall player) and Golden Glove (best goalkeeper) [ 118 ]
+Golden Ball
+Silver Ball
+Bronze Ball
+Aitana Bonmatí
+Jennifer Hermoso
+Amanda Ilestedt
+Golden Boot
+Silver Boot
+Bronze Boot
+Hinata Miyazawa
+Kadidiatou Diani
+Alexandra Popp
+5 goals, 1 assist
+4 goals, 3 assists
+4 goals, 0 assists
+Golden Glove
+Mary Earps
+FIFA Young Player Award
+Salma Paralluelo
+FIFA Fair Play Trophy
+Japan
+Additionally, FIFA.com shortlisted 10 goals for users to vote on as the tournament's best. The award was won by Colombia's Linda Caicedo for her goal in the group stage match against Germany . [ 119 ]
+Statistics
+[ edit ]
+Goalscorers
+[ edit ]
+There were 164 goals scored in 64 matches, for an average of 2.56 goals per match.
+5 goals
+Hinata Miyazawa
+4 goals
+Kadidiatou Diani
+Alexandra Popp
+Jill Roord
+Amanda Ilestedt
+3 goals
+Hayley Raso
+Ary Borges
+Lauren Hemp
+Lauren James
+Alessia Russo
+Eugénie Le Sommer
+Sophie Román Haug
+Aitana Bonmatí
+Jennifer Hermoso
+Alba Redondo
+Rebecka Blomqvist
+Fridolina Rolfö
+2 goals
+Steph Catley
+Wang Shuang
+Linda Caicedo
+Catalina Usme
+Arianna Caruso
+Mina Tanaka
+Riko Ueki
+Esmee Brugts
+Stefanie van der Gragt
+Guro Reiten
+Thembi Kgatlana
+Hildah Magaia
+Olga Carmona
+Salma Paralluelo
+Lindsey Horan
+Sophia Smith
+1 goal
+Sophia Braun
+Romina Núñez
+Emily van Egmond
+Caitlin Foord
+Mary Fowler
+Alanna Kennedy
+Sam Kerr
+Bia Zaneratto
+Debinha
+Adriana Leon
+Leicy Santos
+Manuela Vanegas
+Melissa Herrera
+Pernille Harder
+Sanne Troelsgaard Nielsen
+Amalie Vangsgaard
+Rachel Daly
+Chloe Kelly
+Georgia Stanway
+Ella Toone
+Vicki Bècho
+Kenza Dali
+Maëlle Lakrar
+Léa Le Garrec
+Wendie Renard
+Klara Bühl
+Lea Schüller
+Cristiana Girelli
+Allyson Swaby
+Jun Endō
+Aoba Fujino
+Honoka Hayashi
+Hikaru Naomoto
+Risa Shimizu
+Ibtissam Jraïdi
+Anissa Lahmari
+Lineth Beerensteyn
+Daniëlle van de Donk
+Lieke Martens
+Katja Snoeijs
+Hannah Wilkinson
+Uchenna Kanu
+Osinachi Ohale
+Asisat Oshoala
+Caroline Graham Hansen
+Lineth Cedeño
+Marta Cox
+Yomira Pinzón
+Sarina Bolden
+Telma Encarnação
+Kika Nazareth
+Katie McCabe
+Linda Motlhalo
+Cho So-hyun
+Teresa Abelleira
+Mariona Caldentey
+Laia Codina
+Esther González
+Filippa Angeldahl
+Kosovare Asllani
+Stina Blackstenius
+Elin Rubensson
+Ramona Bachmann
+Seraina Piubel
+Barbra Banda
+Racheal Kundananji
+Lushomo Mweemba
+1 own goal
+Valeria del Campo (against Spain)
+Benedetta Orsi (against South Africa)
+Hanane Aït El Haj (against Germany)
+Zineb Redouani (against Germany)
+Ingrid Syrstad Engen (against Japan)
+Alicia Barker (against Norway)
+Megan Connolly (against Canada)
+Laia Codina (against Switzerland)
+Source: ESPN
+Discipline
+[ edit ]
+A player was automatically suspended for the next match for the following offences: [ 117 ]
+Receiving a red card (red card suspensions could be extended for serious offences)
+Receiving two yellow cards in two matches; yellow cards expired after the completion of the quarter-finals (yellow card suspensions were not carried forward to any other future international matches)
+The following suspensions were served during the tournament:
+Player
+Offence(s)
+Suspension
+Deborah Abiodun
+in Group B vs Canada (matchday 1; 21 July)
+Group B vs Australia (matchday 2; 27 July)
+Group B vs Republic of Ireland (matchday 3; 31 July)
+Round of 16 vs England (7 August)
+Catherine Musonda
+in Group C vs Japan (matchday 1; 22 July)
+Group C vs Spain (matchday 2; 26 July)
+Khadija Shaw
+in Group F vs France (matchday 1; 23 July)
+Group F vs Panama (matchday 2; 29 July)
+Miriam Mayorga
+in Group G vs Italy (matchday 1; 24 July)
+in Group G vs South Africa (matchday 2; 28 July)
+Group G vs Sweden (matchday 3; 2 August)
+Kholosa Biyana
+in Group G vs Sweden (matchday 1; 23 July)
+in Group G vs Argentina (matchday 2; 28 July)
+Group G vs Italy (matchday 3; 2 August)
+Zhang Rui
+in Group D vs Haiti (matchday 2; 28 July)
+Group D vs England (matchday 3; 1 August)
+Sofia Harrison
+in Group A vs Norway (matchday 3; 30 July)
+Suspension served outside tournament
+Rose Lavelle
+in Group E vs Netherlands (matchday 2; 27 July)
+in Group E vs Portugal (matchday 3; 1 August)
+Round of 16 vs Sweden (6 August)
+Manuela Vanegas
+in Group H vs South Korea (matchday 2; 25 July)
+in Group H vs Morocco (matchday 3; 3 August)
+Round of 16 vs Jamaica (8 August)
+Daniëlle van de Donk
+in Group E vs Portugal (matchday 1; 23 July)
+in Round of 16 vs South Africa (6 August)
+Quarter-finals vs Spain (11 August)
+Lauren James
+in Round of 16 vs Nigeria (7 August)
+Quarter-finals vs Colombia (12 August)
+Semi-finals vs Australia (16 August)
+Oihane Hernández
+in Group C vs Japan (matchday 3; 31 July)
+in Quarter-finals vs Netherlands (11 August)
+Semi-finals vs Sweden (15 August)
+Tournament ranking
+[ edit ]
+{{cite web |url=https://fdp.fifa.org/assetspublic/ce93/pdf/CompetitionSummary-English.pdf |title=FIFA Women's World Cup Australia & New Zealand 2023: Competition summary |publisher=FIFA |page=4 |date=20 August 2023 |access-date=6 July 2026 |archive-date=7 July 2026 |archive-url=https://web.archive.org/web/20260707162250/https://fdp.fifa.org/assetspublic/ce93/pdf/CompetitionSummary-English.pdf |url-status=live }}</ref>\n"},"5":{"wt":"status_AUS=H "},"6":{"wt":"status_NZL=H\n\n<!--Team ranking-->\n"},"7":{"wt":"team_order=ESP, ENG, SWE, AUS, JPN, FRA, NED, COL, USA, NGA, DEN, MAR, JAM, SUI, NOR, RSA, GER, BRA, POR, NZL, CAN, ITA, CHN, PHI, ZAM, IRL, ARG, KOR, HAI, CRC, PAN, VIE\n\n<!--Team results-->\n"},"8":{"wt":"win_ARG=0 "},"9":{"wt":"draw_ARG=1 "},"10":{"wt":"loss_ARG=2 "},"11":{"wt":"gf_ARG=2 "},"12":{"wt":"ga_ARG=5\n"},"13":{"wt":"win_AUS=3 "},"14":{"wt":"draw_AUS=1 "},"15":{"wt":"loss_AUS=3 "},"16":{"wt":"gf_AUS=10"},"17":{"wt":"ga_AUS=8\n"},"18":{"wt":"win_BRA=1 "},"19":{"wt":"draw_BRA=1 "},"20":{"wt":"loss_BRA=1 "},"21":{"wt":"gf_BRA=5 "},"22":{"wt":"ga_BRA=2\n"},"23":{"wt":"win_CAN=1 "},"24":{"wt":"draw_CAN=1 "},"25":{"wt":"loss_CAN=1 "},"26":{"wt":"gf_CAN=2 "},"27":{"wt":"ga_CAN=5\n"},"28":{"wt":"win_CHN=1 "},"29":{"wt":"draw_CHN=0 "},"30":{"wt":"loss_CHN=2 "},"31":{"wt":"gf_CHN=2 "},"32":{"wt":"ga_CHN=7\n"},"33":{"wt":"win_COL=3 "},"34":{"wt":"draw_COL=0 "},"35":{"wt":"loss_COL=2 "},"36":{"wt":"gf_COL=6 "},"37":{"wt":"ga_COL=4\n"},"38":{"wt":"win_CRC=0 "},"39":{"wt":"draw_CRC=0 "},"40":{"wt":"loss_CRC=3 "},"41":{"wt":"gf_CRC=1 "},"42":{"wt":"ga_CRC=8\n"},"43":{"wt":"win_DEN=2 "},"44":{"wt":"draw_DEN=0 "},"45":{"wt":"loss_DEN=2 "},"46":{"wt":"gf_DEN=3 "},"47":{"wt":"ga_DEN=3\n"},"48":{"wt":"win_ENG=5 "},"49":{"wt":"draw_ENG=1 "},"50":{"wt":"loss_ENG=1 "},"51":{"wt":"gf_ENG=13"},"52":{"wt":"ga_ENG=4\n"},"53":{"wt":"win_FRA=3 "},"54":{"wt":"draw_FRA=2 "},"55":{"wt":"loss_FRA=0 "},"56":{"wt":"gf_FRA=12"},"57":{"wt":"ga_FRA=4\n"},"58":{"wt":"win_GER=1 "},"59":{"wt":"draw_GER=1 "},"60":{"wt":"loss_GER=1 "},"61":{"wt":"gf_GER=8 "},"62":{"wt":"ga_GER=3\n"},"63":{"wt":"win_HAI=0 "},"64":{"wt":"draw_HAI=0 "},"65":{"wt":"loss_HAI=3 "},"66":{"wt":"gf_HAI=0 "},"67":{"wt":"ga_HAI=4\n"},"68":{"wt":"win_ITA=1 "},"69":{"wt":"draw_ITA=0 "},"70":{"wt":"loss_ITA=2 "},"71":{"wt":"gf_ITA=3 "},"72":{"wt":"ga_ITA=8\n"},"73":{"wt":"win_JAM=1 "},"74":{"wt":"draw_JAM=2 "},"75":{"wt":"loss_JAM=1 "},"76":{"wt":"gf_JAM=1 "},"77":{"wt":"ga_JAM=1\n"},"78":{"wt":"win_JPN=4 "},"79":{"wt":"draw_JPN=0 "},"80":{"wt":"loss_JPN=1 "},"81":{"wt":"gf_JPN=15"},"82":{"wt":"ga_JPN=3\n"},"83":{"wt":"win_MAR=2 "},"84":{"wt":"draw_MAR=0 "},"85":{"wt":"loss_MAR=2 "},"86":{"wt":"gf_MAR=2 "},"87":{"wt":"ga_MAR=10\n"},"88":{"wt":"win_NED=3 "},"89":{"wt":"draw_NED=1 "},"90":{"wt":"loss_NED=1 "},"91":{"wt":"gf_NED=12"},"92":{"wt":"ga_NED=3\n"},"93":{"wt":"win_NZL=1 "},"94":{"wt":"draw_NZL=1 "},"95":{"wt":"loss_NZL=1 "},"96":{"wt":"gf_NZL=1 "},"97":{"wt":"ga_NZL=1\n"},"98":{"wt":"win_NGA=1 "},"99":{"wt":"draw_NGA=3 "},"100":{"wt":"loss_NGA=0 "},"101":{"wt":"gf_NGA=3 "},"102":{"wt":"ga_NGA=2\n"},"103":{"wt":"win_NOR=1 "},"104":{"wt":"draw_NOR=1 "},"105":{"wt":"loss_NOR=2 "},"106":{"wt":"gf_NOR=7 "},"107":{"wt":"ga_NOR=4\n"},"108":{"wt":"win_PAN=0 "},"109":{"wt":"draw_PAN=0 "},"110":{"wt":"loss_PAN=3 "},"111":{"wt":"gf_PAN=3 "},"112":{"wt":"ga_PAN=11\n"},"113":{"wt":"win_PHI=1 "},"114":{"wt":"draw_PHI=0 "},"115":{"wt":"loss_PHI=2 "},"116":{"wt":"gf_PHI=1 "},"117":{"wt":"ga_PHI=8\n"},"118":{"wt":"win_POR=1 "},"119":{"wt":"draw_POR=1 "},"120":{"wt":"loss_POR=1 "},"121":{"wt":"gf_POR=2 "},"122":{"wt":"ga_POR=1\n"},"123":{"wt":"win_IRL=0 "},"124":{"wt":"draw_IRL=1 "},"125":{"wt":"loss_IRL=2 "},"126":{"wt":"gf_IRL=1 "},"127":{"wt":"ga_IRL=3\n"},"128":{"wt":"win_RSA=1 "},"129":{"wt":"draw_RSA=1 "},"130":{"wt":"loss_RSA=2 "},"131":{"wt":"gf_RSA=6 "},"132":{"wt":"ga_RSA=8\n"},"133":{"wt":"win_KOR=0 "},"134":{"wt":"draw_KOR=1 "},"135":{"wt":"loss_KOR=2 "},"136":{"wt":"gf_KOR=1 "},"137":{"wt":"ga_KOR=4\n"},"138":{"wt":"win_ESP=6 "},"139":{"wt":"draw_ESP=0 "},"140":{"wt":"loss_ESP=1 "},"141":{"wt":"gf_ESP=18"},"142":{"wt":"ga_ESP=7\n"},"143":{"wt":"win_SWE=5 "},"144":{"wt":"draw_SWE=1 "},"145":{"wt":"loss_SWE=1 "},"146":{"wt":"gf_SWE=14"},"147":{"wt":"ga_SWE=4\n"},"148":{"wt":"win_SUI=1 "},"149":{"wt":"draw_SUI=2 "},"150":{"wt":"loss_SUI=1 "},"151":{"wt":"gf_SUI=3 "},"152":{"wt":"ga_SUI=5\n"},"153":{"wt":"win_USA=1 "},"154":{"wt":"draw_USA=3 "},"155":{"wt":"loss_USA=0 "},"156":{"wt":"gf_USA=4 "},"157":{"wt":"ga_USA=1\n"},"158":{"wt":"win_VIE=0 "},"159":{"wt":"draw_VIE=0 "},"160":{"wt":"loss_VIE=3 "},"161":{"wt":"gf_VIE=0 "},"162":{"wt":"ga_VIE=12\n"},"163":{"wt":"win_ZAM=1 "},"164":{"wt":"draw_ZAM=0 "},"165":{"wt":"loss_ZAM=2 "},"166":{"wt":"gf_ZAM=3 "},"167":{"wt":"ga_ZAM=11\n\n<!--Team and group definitions-->\n"},"168":{"wt":"show_groups=T\n"},"169":{"wt":"name_ARG={{fbw|ARG}} "},"170":{"wt":"group_ARG=[[#Group G|G]]\n"},"171":{"wt":"name_AUS={{fbw|AUS}} "},"172":{"wt":"group_AUS=[[#Group B|B]]\n"},"173":{"wt":"name_BRA={{fbw|BRA}} "},"174":{"wt":"group_BRA=[[#Group F|F]]\n"},"175":{"wt":"name_CAN={{fbw|CAN}} "},"176":{"wt":"group_CAN=[[#Group B|B]]\n"},"177":{"wt":"name_CHN={{fbw|CHN}} "},"178":{"wt":"group_CHN=[[#Group D|D]]\n"},"179":{"wt":"name_COL={{fbw|COL}} "},"180":{"wt":"group_COL=[[#Group H|H]]\n"},"181":{"wt":"name_CRC={{fbw|CRC}} "},"182":{"wt":"group_CRC=[[#Group C|C]]\n"},"183":{"wt":"name_DEN={{fbw|DEN}} "},"184":{"wt":"group_DEN=[[#Group D|D]]\n"},"185":{"wt":"name_ENG={{fbw|ENG}} "},"186":{"wt":"group_ENG=[[#Group D|D]]\n"},"187":{"wt":"name_FRA={{fbw|FRA}} "},"188":{"wt":"group_FRA=[[#Group F|F]]\n"},"189":{"wt":"name_GER={{fbw|GER}} "},"190":{"wt":"group_GER=[[#Group H|H]]\n"},"191":{"wt":"name_HAI={{fbw|HAI}} "},"192":{"wt":"group_HAI=[[#Group D|D]]\n"},"193":{"wt":"name_ITA={{fbw|ITA}} "},"194":{"wt":"group_ITA=[[#Group G|G]]\n"},"195":{"wt":"name_JAM={{fbw|JAM}} "},"196":{"wt":"group_JAM=[[#Group F|F]]\n"},"197":{"wt":"name_JPN={{fbw|JPN}} "},"198":{"wt":"group_JPN=[[#Group C|C]]\n"},"199":{"wt":"name_MAR={{fbw|MAR}} "},"200":{"wt":"group_MAR=[[#Group H|H]]\n"},"201":{"wt":"name_NED={{fbw|NED}} "},"202":{"wt":"group_NED=[[#Group E|E]]\n"},"203":{"wt":"name_NZL={{fbw|NZL}} "},"204":{"wt":"group_NZL=[[#Group A|A]]\n"},"205":{"wt":"name_NGA={{fbw|NGA}} "},"206":{"wt":"group_NGA=[[#Group B|B]]\n"},"207":{"wt":"name_NOR={{fbw|NOR}} "},"208":{"wt":"group_NOR=[[#Group A|A]]\n"},"209":{"wt":"name_PAN={{fbw|PAN}} "},"210":{"wt":"group_PAN=[[#Group F|F]]\n"},"211":{"wt":"name_PHI={{fbw|PHI}} "},"212":{"wt":"group_PHI=[[#Group A|A]]\n"},"213":{"wt":"name_POR={{fbw|POR}} "},"214":{"wt":"group_POR=[[#Group E|E]]\n"},"215":{"wt":"name_IRL={{fbw|IRL}} "},"216":{"wt":"group_IRL=[[#Group B|B]]\n"},"217":{"wt":"name_RSA={{fbw|RSA}} "},"218":{"wt":"group_RSA=[[#Group G|G]]\n"},"219":{"wt":"name_KOR={{fbw|KOR}} "},"220":{"wt":"group_KOR=[[#Group H|H]]\n"},"221":{"wt":"name_ESP={{fbw|ESP}} "},"222":{"wt":"group_ESP=[[#Group C|C]]\n"},"223":{"wt":"name_SWE={{fbw|SWE}} "},"224":{"wt":"group_SWE=[[#Group G|G]]\n"},"225":{"wt":"name_SUI={{fbw|SUI}} "},"226":{"wt":"group_SUI=[[#Group A|A]]\n"},"227":{"wt":"name_USA={{fbw|USA}} "},"228":{"wt":"group_USA=[[#Group E|E]]\n"},"229":{"wt":"name_VIE={{fbw|VIE}} "},"230":{"wt":"group_VIE=[[#Group E|E]]\n"},"231":{"wt":"name_ZAM={{fbw|ZAM}} "},"232":{"wt":"group_ZAM=[[#Group C|C]]\n\n<!--Final result column definitions-->\n"},"233":{"wt":"res_col_header=Final result\n"},"234":{"wt":"col_1st=#FFD700 "},"235":{"wt":"text_1st=Champions\n"},"236":{"wt":"col_2nd=#C0C0C0 "},"237":{"wt":"text_2nd=Runners-up\n"},"238":{"wt":"col_3rd=#CD7F32 "},"239":{"wt":"text_3rd=Third place\n"},"240":{"wt":"text_4th=Fourth place\n"},"241":{"wt":"text_QF=Eliminated in<br>[[#Quarter-finals|quarter-finals]]\n"},"242":{"wt":"text_R16=Eliminated in<br>[[#Round of 16|round of 16]]\n"},"243":{"wt":"text_GS=Eliminated in<br>[[#Group stage|group stage]]\n"},"244":{"wt":"split4=yes "},"245":{"wt":"split8=yes "},"246":{"wt":"split16=yes\n"},"247":{"wt":"result1=1st "},"248":{"wt":"result2=2nd "},"249":{"wt":"result3=3rd "},"250":{"wt":"result4=4th "},"251":{"wt":"result5=QF "},"252":{"wt":"result6=QF "},"253":{"wt":"result7=QF "},"254":{"wt":"result8=QF "},"255":{"wt":"result9=R16 "},"256":{"wt":"result10=R16 "},"257":{"wt":"result11=R16 "},"258":{"wt":"result12=R16 "},"259":{"wt":"result13=R16 "},"260":{"wt":"result14=R16 "},"261":{"wt":"result15=R16 "},"262":{"wt":"result16=R16 "},"263":{"wt":"result17=GS "},"264":{"wt":"result18=GS "},"265":{"wt":"result19=GS "},"266":{"wt":"result20=GS "},"267":{"wt":"result21=GS "},"268":{"wt":"result22=GS "},"269":{"wt":"result23=GS "},"270":{"wt":"result24=GS "},"271":{"wt":"result25=GS "},"272":{"wt":"result26=GS "},"273":{"wt":"result27=GS "},"274":{"wt":"result28=GS "},"275":{"wt":"result29=GS "},"276":{"wt":"result30=GS "},"277":{"wt":"result31=GS "},"278":{"wt":"result32=GS\n"}},"i":1}}]}'> Per statistical convention in football, matches decided in extra time are counted as wins and losses, while matches decided by penalty shoot-outs are counted as draws.
+Pos
+Grp
+Team
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Final result
+1
+C
+Spain
+7
+6
+0
+1
+18
+7
++11
+18
+Champions
+2
+D
+England
+7
+5
+1
+1
+13
+4
++9
+16
+Runners-up
+3
+G
+Sweden
+7
+5
+1
+1
+14
+4
++10
+16
+Third place
+4
+B
+Australia (H)
+7
+3
+1
+3
+10
+8
++2
+10
+Fourth place
+5
+C
+Japan
+5
+4
+0
+1
+15
+3
++12
+12
+Eliminated in
+quarter-finals
+6
+F
+France
+5
+3
+2
+0
+12
+4
++8
+11
+7
+E
+Netherlands
+5
+3
+1
+1
+12
+3
++9
+10
+8
+H
+Colombia
+5
+3
+0
+2
+6
+4
++2
+9
+9
+E
+United States
+4
+1
+3
+0
+4
+1
++3
+6
+Eliminated in
+round of 16
+10
+B
+Nigeria
+4
+1
+3
+0
+3
+2
++1
+6
+11
+D
+Denmark
+4
+2
+0
+2
+3
+3
+0
+6
+12
+H
+Morocco
+4
+2
+0
+2
+2
+10
+− 8
+6
+13
+F
+Jamaica
+4
+1
+2
+1
+1
+1
+0
+5
+14
+A
+Switzerland
+4
+1
+2
+1
+3
+5
+− 2
+5
+15
+A
+Norway
+4
+1
+1
+2
+7
+4
++3
+4
+16
+G
+South Africa
+4
+1
+1
+2
+6
+8
+− 2
+4
+17
+H
+Germany
+3
+1
+1
+1
+8
+3
++5
+4
+Eliminated in
+group stage
+18
+F
+Brazil
+3
+1
+1
+1
+5
+2
++3
+4
+19
+E
+Portugal
+3
+1
+1
+1
+2
+1
++1
+4
+20
+A
+New Zealand (H)
+3
+1
+1
+1
+1
+1
+0
+4
+21
+B
+Canada
+3
+1
+1
+1
+2
+5
+− 3
+4
+22
+G
+Italy
+3
+1
+0
+2
+3
+8
+− 5
+3
+23
+D
+China
+3
+1
+0
+2
+2
+7
+− 5
+3
+24
+A
+Philippines
+3
+1
+0
+2
+1
+8
+− 7
+3
+25
+C
+Zambia
+3
+1
+0
+2
+3
+11
+− 8
+3
+26
+B
+Republic of Ireland
+3
+0
+1
+2
+1
+3
+− 2
+1
+27
+G
+Argentina
+3
+0
+1
+2
+2
+5
+− 3
+1
+28
+H
+South Korea
+3
+0
+1
+2
+1
+4
+− 3
+1
+29
+D
+Haiti
+3
+0
+0
+3
+0
+4
+− 4
+0
+30
+C
+Costa Rica
+3
+0
+0
+3
+1
+8
+− 7
+0
+31
+F
+Panama
+3
+0
+0
+3
+3
+11
+− 8
+0
+32
+E
+Vietnam
+3
+0
+0
+3
+0
+12
+− 12
+0
+Source: FIFA [ 120 ]
+(H) Hosts
+Marketing
+[ edit ]
+Branding
+[ edit ]
+The official emblem was jointly designed by Toronto -based studio Public Address and Los Angeles -based Works Creative Agency and unveiled on 28 October 2021 during a live show. The emblem featured a football encircled by 32 coloured squares, reflecting the expanded field of the tournament, and the natural terrains of the two host nations. The overall branding of the tournament featured designs reflecting the host nations' Indigenous peoples, created by Australian Kalkatungu artist Chern'ee Sutton and Māori artist Fiona Collis. Furthermore, the tournament's branding also incorporated the native names of all host cities. Alongside the emblem, the official slogan of the tournament, "Beyond Greatness", reflected FIFA's goal for the event to further expand the prominence of women's football, was also revealed. [ 121 ] [ 122 ] The names of the host cities in their native names (the local Australian Aboriginal languages and Māori in New Zealand) were used as part of the official branding. [ 49 ]
+Ticketing
+[ edit ]
+Approximately 1.4 million tickets were sold or distributed by 19 July 2023, setting a new tournament record. Sluggish sales in New Zealand resulted in 20,000 free tickets being issued by sponsor Xero. [ 123 ] [ 124 ] [ 125 ]
+Merchandise
+[ edit ]
+FIFA 23 featured the 2023 FIFA Women's World Cup mode ; the video game update was released on 27 June 2023, replicating the 2023 FIFA Women's World Cup tournament and featuring the 32 qualified teams. [ 126 ] [ 127 ]
+Broadcasting rights
+[ edit ]
+Main article: 2023 FIFA Women's World Cup broadcasting rights
+The 2023 Women's World Cup was the first Women's World Cup to have its broadcasting rights sold as a standalone product rather than being packaged as a bonus of purchasing broadcasting rights for the Men's World Cup. FIFA stated that they saw "huge interest" in the separate bidding process and hoped for more regional partners to sign on. FIFA set an aim to reach a global audience of 2 billion, up from 1.12 billion at the previous edition of the tournament in France. [ 128 ]
+In October 2022, FIFA rejected multiple bids from various public and private broadcasters for what it described as significantly under-priced bids, urging broadcasters to bid more, saying it is what the women's game deserves. [ 129 ] Some European broadcasters were concerned about the timezone difference affecting viewership figures, something that was not an issue with the France-hosted 2019 Women's World Cup, while Gianni Infantino threatened a media blackout for Europe's " big five " (United Kingdom, France, Germany, Italy, Spain) if they did not offer more. [ 130 ] The issue was resolved by the middle of June 2023, five weeks before the tournament, with all territories having deals. [ 131 ] A deal between Japanese broadcaster NHK and FIFA was announced for the last uncovered major market a week before start of the tournament. [ 132 ]
+Sponsorship
+[ edit ]
+FIFA partners FIFA Women's Football partners FIFA Women's World Cup sponsors Asia and Pacific supporters European supporters North American supporters South American supporters
+{{Cite web |date=21 November 2013 |title=FIFA and adidas extend partnership until 2030 |url=https://www.fifa.com/worldcup/news/fifa-and-adidas-extend-partnership-until-2030-2227271 |url-status=dead |archive-url=https://web.archive.org/web/20170628145045/http://www.fifa.com/worldcup/news/y=2013/m=11/news=fifa-and-adidas-extend-partnership-until-2030-2227271.html |archive-date=28 June 2017 |access-date=10 May 2017 |publisher=FIFA}}</ref>\n* [[The Coca-Cola Company|{{nowrap|Coca-Cola}}]]<ref>{{Cite web |last=Matthews |first=Sam |date=22 November 2005 |title=Coca-Cola renews Fifa football sponsorship until 2022 |url=http://www.campaignlive.co.uk/article/coca-cola-renews-fifa-football-sponsorship-until-2022/529147 |url-status=live |archive-url=https://web.archive.org/web/20170827171212/http://www.campaignlive.co.uk/article/coca-cola-renews-fifa-football-sponsorship-until-2022/529147?src_site=brandrepublic |archive-date=27 August 2017 |access-date=10 May 2017 |publisher=Campaign}}</ref>\n* ",{"template":{"target":{"wt":"nowrap","href":"./Template:Nowrap"},"params":{"1":{"wt":"[[Hyundai Motor Company|Hyundai]]-[[Kia]]"}},"i":2}},"<ref>{{Cite web|title=Hyundai and Kia renew FIFA partnerships until 2030, with Boston Dynamics and Supernal to showcase future mobility solutions|website=FIFA.com|publisher=Fédération Internationale de Football Association|access-date=25 May 2023|date=25 May 2023|url=https://www.fifa.com/about-fifa/commercial/media-releases/hyundai-and-kia-renew-fifa-partnerships-until-2030|archive-date=25 May 2023|archive-url=https://web.archive.org/web/20230525163553/https://www.fifa.com/about-fifa/commercial/media-releases/hyundai-and-kia-renew-fifa-partnerships-until-2030|url-status=live}}</ref>\n*",{"template":{"target":{"wt":"nowrap","href":"./Template:Nowrap"},"params":{"1":{"wt":"[[Qatar Airways]]"}},"i":3}},"<ref>{{Cite web|title=Qatar Airways Commemorates Collaboration with FIFA|publisher=Qatar Airways|access-date=21 August 2023|date=22 August 2023|url=https://www.qatarairways.com/press-releases/en-WW/228993-qatar-airways-commemorates-collaboration-with-fifa-at-the-fifa-women-s-world-cup-australia-new-zealand-2023-final|archive-date=24 January 2025|archive-url=https://web.archive.org/web/20250124130435/https://www.qatarairways.com/press-releases/en-WW/228993-qatar-airways-commemorates-collaboration-with-fifa-at-the-fifa-women-s-world-cup-australia-new-zealand-2023-final|url-status=live}}</ref>\n*",{"template":{"target":{"wt":"nowrap","href":"./Template:Nowrap"},"params":{"1":{"wt":"[[Wanda Group]]"}},"i":4}},"<ref>{{Cite web |last=Wilson |first=Bill |date=18 March 2016 |title=Fifa signs China's Wanda as partner |url=https://www.bbc.com/news/business-35844777 |url-status=live |archive-url=https://web.archive.org/web/20190611214404/https://www.bbc.com/news/business-35844777 |archive-date=11 June 2019 |access-date=6 December 2018 |website=[[BBC News]] }}</ref>",{"template":{"target":{"wt":"nowrap","href":"./Template:Nowrap"},"params":{"1":{"wt":""}},"i":5}},{"template":{"target":{"wt":"col-2","href":"./Template:Col-2"},"params":{},"i":6}},"\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":7}}]}'>
+Adidas [ 133 ]
+Coca-Cola [ 134 ]
+Hyundai - Kia [ 135 ]
+Qatar Airways [ 136 ]
+Wanda Group [ 137 ]
+{{Cite web|title=FIFA announces Visa as first-ever FIFA Women's Football Partner|website=FIFA.com|publisher=Fédération Internationale de Football Association.|access-date=21 December 2021|url=https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/fifa-announce-visa-as-first-ever-fifa-womens-football-partner|archive-date=21 December 2021|archive-url=https://web.archive.org/web/20211221121055/https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/fifa-announce-visa-as-first-ever-fifa-womens-football-partner|url-status=live}}</ref>\n*[[Xero (company)|Xero]]<ref>{{Cite web|title=Xero named as FIFA Women's Football Partner|website=FIFA.com|publisher=Fédération Internationale de Football Association.|access-date=13 April 2022|url=https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/xero-named-as-fifa-womens-football-partner|archive-date=12 April 2022|archive-url=https://web.archive.org/web/20220412165558/https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/xero-named-as-fifa-womens-football-partner|url-status=live}}</ref>\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":1}}]}'>
+Visa [ 138 ]
+Xero [ 139 ]
+{{Cite web|title=FIFA announces AB InBev as official beer sponsor of FIFA Women's World Cup 2023 and FIFA World Cup 2026|website=FIFA.com|publisher=Fédération Internationale de Football Association.|access-date=8 June 2023|url=https://www.fifa.com/about-fifa/commercial/media-releases/fifa-announces-ab-inbev-as-official-beer-sponsor-of-fifa-womens-world-cup-2023|archive-date=8 June 2023|archive-url=https://web.archive.org/web/20230608164328/https://www.fifa.com/about-fifa/commercial/media-releases/fifa-announces-ab-inbev-as-official-beer-sponsor-of-fifa-womens-world-cup-2023|url-status=live}}</ref>\n* [[Algorand]]<ref>{{Cite web |url=https://www.fifa.com/about-fifa/president/media-releases/fifa-announces-partnership-with-blockchain-innovator-algorand |title=FIFA announces partnership with blockchain innovator Algorand |publisher=FIFA |date=1 May 2022 |access-date=3 May 2023 |archive-date=29 April 2023 |archive-url=https://web.archive.org/web/20230429164116/https://www.fifa.com/about-fifa/president/media-releases/fifa-announces-partnership-with-blockchain-innovator-algorand |url-status=live }}</ref>\n* [[Booking.com]]<ref>{{Cite web |url=https://www.fifa.com/about-fifa/commercial/media-releases/booking-com-announced-as-official-online-travel-sponsor-for-the-fifa-womens-world-cup |title=Booking.com announced as Official Online Travel Sponsor for the FIFA Women's World Cup Australia & New Zealand 2023 |publisher=FIFA |date=19 July 2023 |access-date=19 July 2023 |archive-date=19 July 2023 |archive-url=https://web.archive.org/web/20230719145232/https://www.fifa.com/about-fifa/commercial/media-releases/booking-com-announced-as-official-online-travel-sponsor-for-the-fifa-womens-world-cup |url-status=live }}</ref>\n* [[Globant]]<ref>{{Cite web |last=McCaskill |first=Steve |date=17 October 2022 |title=Fifa signs up Globant to build out Fifa+ DTC platform |url=https://www.sportspromedia.com/news/globant-fifa-world-cup-qatar-2022-sponsor/ |access-date=17 October 2022 |website=SportsPro Media }}</ref>\n* [[Mengniu Dairy]]<ref>{{Cite web|title=Mengniu becomes an Official FIFA Women's World Cup 2023 Sponsor|website=FIFA.com|publisher=Fédération Internationale de Football Association.|access-date=14 July 2023|url=https://www.fifa.com/about-fifa/commercial/media-releases/mengniu-becomes-an-official-fifa-womens-world-cup-2023-tm-sponsorn}}</ref>\n* [[McDonald's]]<ref>{{Cite web|title=FIFA and McDonald's renew long-standing partnership, with collaboration continuing for FIFA Women's World Cup 2023 and FIFA World Cup 2026|website=FIFA.com|publisher=Fédération Internationale de Football Association.|access-date=16 May 2023|url=https://www.fifa.com/about-fifa/commercial/news/fifa-and-mcdonalds-renew-long-standing-partnership-with-collaboration|archive-date=16 May 2023|archive-url=https://web.archive.org/web/20230516170728/https://www.fifa.com/about-fifa/commercial/news/fifa-and-mcdonalds-renew-long-standing-partnership-with-collaboration|url-status=live}}</ref>\n*[[Unilever]]<ref>{{cite press release |url=https://www.unilever.com/news/press-and-media/press-releases/2023/fifa-womens-world-cup-2023/ |title=Unilever personal care brands unveiled as Official Sponsors of FIFA Women's World Cup 2023 |publisher=[[Unilever]] |date=12 May 2023 |access-date=15 May 2023 |archive-date=22 July 2023 |archive-url=https://web.archive.org/web/20230722171822/https://www.unilever.com/news/press-and-media/press-releases/2023/fifa-womens-world-cup-2023/ |url-status=live }}</ref>\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":1}}]}'>
+AB InBev [ 140 ]
+Algorand [ 141 ]
+Booking.com [ 142 ]
+Globant [ 143 ]
+Mengniu Dairy [ 144 ]
+McDonald's [ 145 ]
+Unilever [ 146 ]
+{{Cite web |title=Cisco joins FIFA Women's World Cup 2023 as Official Network Infrastructure Provider |url=https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/cisco-joins-fifa-womens-world-cup-2023-tm-as-official-network-infrastructure |access-date=2023-04-20 |website=www.fifa.com |archive-date=19 April 2023 |archive-url=https://web.archive.org/web/20230419214048/https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/cisco-joins-fifa-womens-world-cup-2023-tm-as-official-network-infrastructure |url-status=live }}</ref>\n* [[Commonwealth Bank|CommBank]]<ref>{{Cite web |title=Commonwealth Bank announced as FIFA Women's World Cup Australia & New Zealand 2023 Official Supporter |url=https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/commonwealth-bank-announced-as-fifa-womens-world-cup-australia-and-new |access-date=2022-11-13 |website=www.fifa.com |archive-date=13 November 2022 |archive-url=https://web.archive.org/web/20221113210616/https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/commonwealth-bank-announced-as-fifa-womens-world-cup-australia-and-new |url-status=live }}</ref>\n* [[Orlando Wines|Jacob's Creek]]<ref>{{Cite web |title=Jacob's Creek announced as FIFA Women's World Cup Australia & New Zealand 2023 Official Supporter |url=https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/jacobs-creek-announced-as-fifa-womens-world-cup-australia-and-new-zealand |access-date=2023-04-07 |website=www.fifa.com |archive-date=6 April 2023 |archive-url=https://web.archive.org/web/20230406010723/https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/jacobs-creek-announced-as-fifa-womens-world-cup-australia-and-new-zealand |url-status=live }}</ref>\n* [[Optus]]<ref>{{Cite web |title=FIFA and Optus join forces to empower women's sport and inspire the next generation |url=https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/fifa-and-optus-join-forces-to-empower-womens-sport-and-inspire-the-next |access-date=2023-06-23 |website=www.fifa.com |archive-date=23 June 2023 |archive-url=https://web.archive.org/web/20230623014813/https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/fifa-and-optus-join-forces-to-empower-womens-sport-and-inspire-the-next |url-status=live }}</ref>\n* [[New Zealand Racing Board|TAB New Zealand]]<ref>{{Cite web |title=TAB become first betting agency to become official supporter of a FIFA World Cup |date=25 June 2023 |url=https://www.stuff.co.nz/sport/fifa-womens-world-cup-2023/132414779/tab-become-first-betting-agency-to-become-official-supporter-of-a-fifa-world-cup |access-date=2023-06-26 |publisher=[[Stuff (website)|Stuff]] |archive-date=26 June 2023 |archive-url=https://web.archive.org/web/20230626015030/https://www.stuff.co.nz/sport/fifa-womens-world-cup-2023/132414779/tab-become-first-betting-agency-to-become-official-supporter-of-a-fifa-world-cup |url-status=live }}</ref>\n* [[Toll Group#Global Express|Team Global Express]]<ref>{{Cite web |title=Team Global Express announced as FIFA Women's World Cup Australia & New Zealand 2023 Official Supporter |url=https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/team-global-express-announced-as-fifa-womens-world-cup-australia-and-new-zealand-2023-official-supporter |access-date=2023-04-18 |website=www.fifa.com |archive-date=19 April 2023 |archive-url=https://web.archive.org/web/20230419214047/https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/team-global-express-announced-as-fifa-womens-world-cup-australia-and-new-zealand-2023-official-supporter |url-status=live }}</ref>\n* [[Yadea]]<ref>{{Cite web |title=Yadea Named Tournament Supporter of FIFA Women's World Cup 2023 in Asia-Pacific |url=https://www.fifa.com/about-fifa/commercial/media-releases/yadea-named-tournament-supporter-of-fifa-womens-world-cup-2023-tm-in-asia-pacific |access-date=2023-07-03 |website=www.fifa.com |archive-date=3 July 2023 |archive-url=https://web.archive.org/web/20230703105611/https://www.fifa.com/about-fifa/commercial/media-releases/yadea-named-tournament-supporter-of-fifa-womens-world-cup-2023-tm-in-asia-pacific |url-status=live }}</ref>\n* [[Bellamy's Organic]]<ref>{{Cite web |title=Bellamy's Organic is so proud and excited to sponsor the FIFA Women's World Cup 2023|url=https://www.instagram.com/p/Cu6JrdHu95y/ |access-date=8 December 2023 |website=www.instagram.com/bellamysorganic}}</ref>\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":1}}]}'>
+Cisco [ 147 ]
+CommBank [ 148 ]
+Jacob's Creek [ 149 ]
+Optus [ 150 ]
+TAB New Zealand [ 151 ]
+Team Global Express [ 152 ]
+Yadea [ 153 ]
+Bellamy's Organic [ 154 ]
+{{Cite web |title=FIFA sells out all partnership packages for the FIFA Women's World Cup Australia & New Zealand 2023 |url=https://media.fifa.com/en/tournaments/womens/fwwc2023/news/fifa-sells-out-all-partnership-packages-for-the-fifa-womens-world-cup |access-date=2023-07-20 |website=www.fifa.com |archive-date=21 July 2023 |archive-url=https://web.archive.org/web/20230721232906/https://media.fifa.com/en/tournaments/womens/fwwc2023/news/fifa-sells-out-all-partnership-packages-for-the-fifa-womens-world-cup |url-status=live }}</ref>\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":2}}]}'>
+Hublot [ 155 ]
+{{Cite web |title=BMO named Official Supporter of FIFA Women's World Cup 2023 in North America |url=https://www.fifa.com/about-fifa/commercial/media-releases/bmo-named-official-supporter-of-fifa-womens-world-cup-2023-tm-in-north |access-date=2023-06-27 |website=www.fifa.com |archive-date=27 June 2023 |archive-url=https://web.archive.org/web/20230627181853/https://www.fifa.com/about-fifa/commercial/media-releases/bmo-named-official-supporter-of-fifa-womens-world-cup-2023-tm-in-north |url-status=live }}</ref>\n* [[Frito-Lay]]<ref>{{Cite web |title=Frito-Lay North America signs on as Tournament Supporter for FIFA Women's World Cup Australia & New Zealand 2023 |url=https://www.fifa.com/about-fifa/commercial/media-releases/frito-lay-north-america-signs-on-as-tournament-supporter-for-fifa-womens-world-cup-australia-and-new-zealand-2023 |access-date=2023-05-30 |website=www.fifa.com |archive-date=31 May 2023 |archive-url=https://web.archive.org/web/20230531073122/https://www.fifa.com/about-fifa/commercial/media-releases/frito-lay-north-america-signs-on-as-tournament-supporter-for-fifa-womens-world-cup-australia-and-new-zealand-2023 |url-status=live }}</ref>\n* [[GEICO]]<ref>{{Cite web |title=FIFA announces GEICO as Tournament Supporter in North America for FIFA Women's World Cup 2023 |url=https://www.fifa.com/about-fifa/commercial/media-releases/fifa-announces-geico-as-tournament-supporter-in-north-america-for-fifa-womens-world-cup-2023 |access-date=2023-07-19 |website=www.fifa.com |archive-date=19 July 2023 |archive-url=https://web.archive.org/web/20230719173129/https://www.fifa.com/about-fifa/commercial/media-releases/fifa-announces-geico-as-tournament-supporter-in-north-america-for-fifa-womens-world-cup-2023 |url-status=live }}</ref>\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":2}}]}'>
+BMO [ 156 ]
+Frito-Lay [ 157 ]
+GEICO [ 158 ]
+{{Cite web |title=Claro to be an Official Telecommunications Operator in Brazil of the FIFA Women's World Cup 2023 |url=https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/claro-to-be-an-official-telecommunications-operator-in-brazil-of-the-fifa |access-date=2023-07-15 |website=www.fifa.com |archive-date=16 July 2023 |archive-url=https://web.archive.org/web/20230716085241/https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/claro-to-be-an-official-telecommunications-operator-in-brazil-of-the-fifa |url-status=live }}</ref>\n* Estrela Bet<ref>{{cite tweet |author=Estrela Bet |user=EstrelaBet |number=1680940608574062592 |date=18 July 2023 |title=Official Brazilian supporters of the FIFA Women's World Cup 2023 |access-date=22 August 2023}}</ref>\n* Inter Rapidísimo<ref>{{Cite web |title=Inter Rapidísimo announced as FIFA Women's World Cup Australia & New Zealand 2023 Official Supporter |url=https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/inter-rapidisimo-strengthens-partnership-with-fifa |access-date=2023-02-24 |website=www.fifa.com |archive-date=23 February 2023 |archive-url=https://web.archive.org/web/20230223121016/https://www.fifa.com/tournaments/womens/womensworldcup/australia-new-zealand2023/media-releases/inter-rapidisimo-strengthens-partnership-with-fifa |url-status=live }}</ref>\n* [[Itaú Unibanco]]<ref name=\"supporters\"/>\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":1}}]}'>
+Claro [ 159 ]
+Estrela Bet [ 160 ]
+Inter Rapidísimo [ 161 ]
+Itaú Unibanco [ 155 ]
+Symbols
+[ edit ]
+Mascot
+[ edit ]
+A mascot in Tazuni costume
+The tournament's official mascot was unveiled on 19 October 2022. The mascot's name is Tazuni, which is a portmanteau of the Tasman Sea and "Unity". [ 162 ] She is a little penguin ( Eudyptula minor [ 162 ] ), endemic to New Zealand — FIFA incorrectly stated this penguin ( E. minor ) was endemic in Australia, where a closely related species ( Eudyptula novaehollandiae ) was described as new and distinct in 2016. [ 163 ]
+Match ball
+[ edit ]
+Adidas Oceaunz
+On 24 January 2023, The word " Oceaunz " was unveiled as the official match ball for the tournament by Adidas . [ 164 ]
+Oceaunz's design was inspired by the unique natural landscapes of the two host nations, with visuals nodding to the vast mountains of New Zealand and Australia's connection with the Indian Ocean. Its name was a portmanteau based on the tournament's geographical location: Oceania , Australia, and New Zealand. Oceaunz featured the same connected ball technology as was seen in Qatar at the 2022 FIFA World Cup . This provided precise ball data, which was made available to video assistant referees in real-time. [ 164 ] It was previously used at the 2023 FIFA U-20 World Cup .
+The match ball for the semi-finals, third place match, and final, the Oceaunz Final Pro , was revealed on 14 August 2023. It differed from the regular Oceaunz with an orange and gold colouration, reflecting the sunsets across the Sydney skyline, where the final was held. [ 165 ]
+Music
+[ edit ]
+See also: List of FIFA Women's World Cup songs and anthems
+There were several official songs for the 2023 Women's World Cup. The official theme song, "Unity" by British DJ and music producer Kelly Lee Owens , was released on 28 October 2021 at the same time as the official emblem and slogan unveiling. [ 166 ] An instrumental song with non-lyric vocals, it was played at half-time of every match. [ 167 ] On 29 June 2023, the official song of the tournament, "Do It Again" by New Zealand singer Benee and Australian singer Mallrat , and its lyric video were released. [ 168 ] [ 169 ] In July 2023, the "official walk-out track" for the matches at the tournament was revealed to be "Bring It On" by Australian singer Tones and I , American rapper BIA and French-Senegalese singer-songwriter Diarra Sylla . [ 170 ]
+Other songs were independently produced for the tournament. The Nike player commercials "Let It Rip", depicting Megan Rapinoe as an All-American Hero, [ 171 ] [ 172 ] [ 173 ] and "Like a Lioness", showcasing the England team, featured original songs. The latter (also called "Like a Lioness") was performed by Ms Banks , [ 174 ] who had previously performed the theme song of the BBC 's coverage of the 2019 Women's World Cup . [ 175 ] A supergroup of female artists, Hope FC, also released "Call Me a Lioness", an anthemic song inspired by the England team (better known as the Lionesses). Hope FC featured British musicians including Melanie C , Self Esteem , Alex Greenwood of Sports Team , Olivia Dean , Ellie Rowsell of Wolf Alice , and Shura (a former youth player herself). [ 176 ] [ 177 ] [ 178 ]
+Progressive actions
+[ edit ]
+Indigenous flags and names
+[ edit ]
+Football Australia CEO James Johnson indicated early on in planning that displaying flags representing Indigenous Australians and Indigenous New Zealanders was important to the host nations, and were discussing with FIFA whether this would be permitted at the same time as they and others were discussing captain's armbands . [ 179 ] A captain's armband highlighting rights for Indigenous peoples was approved by FIFA in June 2023, [ 180 ] with Australian Aboriginal and Torres Strait Islander flags ( Australian Aboriginal flag and Torres Strait Islander flag ), and New Zealand Māori flag ( Tino Rangatiratanga ) approved in July 2023. The extended wait for approval, especially after the armband decision had been announced, prompted Football Australia to seek further clarification. FIFA permitted the relevant flags to be flown alongside the national flags of Australia and New Zealand at all venues, giving them the same prominent status upon recommendation from Indigenous consultants and the governments of both host nations. [ 181 ] [ 182 ] Previously, the Australia team displaying the Aboriginal flag before matches had caused controversy. [ 183 ]
+Australian Aboriginal flag
+Tino Rangatiratanga
+In a sign of respect for the traditional custodians of the land, indigenous names for the host cities were used alongside the English names in branding. [ 49 ]
+Player advocacy
+[ edit ]
+For advocacy related to controversial issues, see List of 2023 FIFA Women's World Cup controversies .
+Climate action
+[ edit ]
+On 13 July 2023, a group of 44 players, led by Denmark's Sofie Junge Pedersen and facilitated by Common Goal and Football for Future , announced that they would combat the carbon footprint of the teams' flights to Australia and New Zealand by donating to " climate resilience and carbon offsetting initiatives" organised by the World Wildlife Fund and DanChurchAid . [ 184 ] Having donated to offset carbon emissions every time her team required flights for five years before the 2023 Women's World Cup, [ 179 ] Junge Pedersen decided to reach out to her national and club teammates to do the same when faced with the long flights to Australia and New Zealand and the prominence of the tournament. Announcing the initiative, she hoped other players would join them in donating before and during the World Cup. She and Canada's Jessie Fleming discussed their hope to leave a positive environmental impact, acknowledging that the donations were short-term fixes for one issue, and their hope that there will be more climate-positive developments in football. [ 184 ] [ 179 ]
+The group of players also petitioned football governing bodies to make carbon concerns a more important factor in the bidding processes for future tournaments. [ 185 ] The initiative was considered the biggest player-led climate campaign in football, especially with the 44 players coming from a variety of nations and working together. The player donations were also matched by a third party. [ 186 ]
+Germany grassroots
+[ edit ]
+Also facilitated by Common Goal, the Germany team announced before their opening match that they would donate 1% of their FIFA-guaranteed earnings from the tournament to Futbalo Girls and Girl Power, grassroots football programmes for young girls and non-binary people. [ 187 ]
+UN Women partnership
+[ edit ]
+The day before the tournament began, UN Women announced that it had partnered with FIFA for the Women's World Cup "to celebrate the skills and achievements of the teams and players, to advance gender equality in football, and to prevent abuse and discrimination on and off the field." [ 188 ] The initiative was also to highlight gender inequality issues during the tournament, with a joint campaign for everyone to recognise gender equality as a fundamental human right and to call for an end to violence against women and girls. [ 188 ]
+Issues
+[ edit ]
+Controversies
+[ edit ]
+Main article: List of 2023 FIFA Women's World Cup controversies
+There were various controversies relating to the 2023 FIFA Women's World Cup, with a main focus on players from a variety of teams going public about disputes with their respective football associations over various elements of professionalism , collective bargaining and development that they felt were not being met. [ 189 ]
+There were also controversies reacting to unpopular decisions made by FIFA: player welfare was a concern; [ 190 ] [ 191 ] the potential sponsorship of the tournament by Saudi Arabia was criticised and eventually dropped; [ 192 ] the amount of money that the Big Five bid for broadcasting rights was criticised by FIFA, which in turn was lambasted for hypocrisy; [ 193 ] and the inconsistency of the qualification system, in particular widespread condemnation by FIFPRO against confederations other than UEFA for failure to organise separate qualification campaigns unrelated to continental championships, was criticised. [ 194 ]
+After FIFA experienced criticism for specifically banning OneLove captain's armbands hours before the 2022 Men's World Cup, it spent months in discussion with the women's teams to communicate on the matter. Both rainbow and OneLove armbands were banned at the Women's World Cup, with a similar FIFA-designed armband instead made available by the organisation. [ 195 ] [ 196 ]
+After Spain won the Women's World Cup, former Royal Spanish Football Federation (RFEF) President Luis Rubiales forcibly kissed a Spanish footballer, Jenni Hermoso , and breached the Article 13 of FIFA Disciplinary Code . Rubiales was banned by the FIFA Disciplinary Committee from engaging in any football-related activities at both national and international level for three years. [ 197 ]
+Auckland shootings
+[ edit ]
+Main article: 2023 Auckland shooting
+The opening match of the Women's World Cup took place in Auckland, New Zealand, on 20 July; on the morning of the match, a gunman killed multiple people in the Auckland CBD . [ 198 ] The fatal attack "cast a shadow" over the tournament. [ 199 ] [ 200 ] [ 201 ] [ 202 ] Football Australia said the shooting was not motivated by the World Cup. [ 203 ] It took place near the hotel (M Social) where Norway , who played New Zealand in the opening match, were staying. [ 198 ] The FIFA Fan Festival which was scheduled to take place nearby to the shooting location was cancelled, while the Italy team , who were also staying in a nearby hotel, could not leave to attend training due to police cordons. NZ FIFA Head Office was also located and based in offices directly over the road from the shooting. [ 204 ] [ 205 ] Moments of silence were observed on matchday one in respect to the victims of the shooting; [ 206 ] [ 100 ] security at and around Eden Park , the location of the opening match in Auckland, was heightened, with a statement saying this measure was taken for "reassurance". [ 207 ] [ 208 ] The players also wore black armbands [ 206 ] and stadium flags were flown at half mast for both opening games. [ 209 ] After New Zealand won the opening match in a surprise victory, Ali Riley paid tribute to the victims, saying that the team had "wanted to bring something amazing" in response to the shooting. [ 210 ]
+Another fatal shooting in the Auckland CBD, on the same street, occurred on 3 August; considered an unrelated and isolated incident, one person was killed and the perpetrator fled the scene after a fight broke out. [ 211 ] [ 212 ]
+Pullman hotel fire
+[ edit ]
+The New Zealand team's base camp was at the Pullman Auckland Hotel & Apartments. At 7:48 pm on 22 July, the players and staff had to evacuate after fires broke out in multiple locations around the hotel due to a suspected arson attack; they were later allowed to return. Four people were treated for smoke inhalation, while Fire and Emergency New Zealand deemed the incident suspicious. [ 213 ] New Zealand Football said that the fire was not connected to the shooting two days earlier. The security around the New Zealand team was increased, [ 214 ] and a man was arrested on suspicion of burglary and arson. [ 215 ] [ 216 ]
+References
+[ edit ]
+↑ "Ki hea noho ai ngā toki hei te Ipu Poiwhana Wahine ā-Ao 2023 a Fifa" . 12 December 2022.
+1 2 "Everything you need to know about the FIFA Women's World Cup 2023" . FIFA.com . Fédération Internationale de Football Association. Archived from the original on 25 November 2022 . Retrieved 26 November 2022 .
+↑ Diamond, Drew (12 November 2023). "World Cup legacy continues to take effect in Aotearoa-New Zealand" . Her Football Hub . Archived from the original on 4 May 2025 . Retrieved 12 November 2023 .
+↑ "FIFA Council approves further transfer system reforms and announces key FIFA Women's World Cup 2023 dates" . FIFA.com . Fédération Internationale de Football Association. 20 May 2021. Archived from the original on 18 June 2021 . Retrieved 20 May 2021 .
+↑ "FIFA Women's World Cup 2023" . nzfootball.co.nz . New Zealand Football . Retrieved 21 August 2023 .
+↑ "New Zealand makes history with country's first World Cup victory ever" . FOX Sports . Archived from the original on 17 July 2024 . Retrieved 9 September 2023 .
+↑ Kassam, Ashifa (21 August 2023). "Spanish FA chief admits kiss 'somewhat tarnished' Women's World Cup win" . The Guardian . Retrieved 22 September 2023 .
+↑ Tronchoni, Nadia (20 August 2023). "A Jenni no le gustó el beso de Rubiales, a nosotras tampoco" . El País . Archived from the original on 1 June 2025 . Retrieved 22 September 2023 .
+↑ "Spain's Jenni Hermoso files legal complaint against Rubiales over kiss" . Al Jazeera . 6 September 2023. Archived from the original on 13 January 2025 . Retrieved 21 September 2023 .
+↑ "Spain win first Women's World Cup, beating England 1–0" . Al Jazeera . 20 August 2023. Archived from the original on 5 March 2025 . Retrieved 21 August 2023 .
+↑ "How Spain became the holders of all three Women's World Cups" . FIFA.com . FIFA. 20 August 2023. Archived from the original on 22 August 2023 . Retrieved 21 August 2023 .
+↑ "Sweden win fourth Women's World Cup third-place medal; Australia end up in fourth place in highest ever finish" . CBSSports.com . 19 August 2023. Archived from the original on 6 April 2025 . Retrieved 9 September 2023 .
+↑ "1991 Women's World Cup: Celebrating The Historic Tournament" . History of Soccer . 21 January 2023. Archived from the original on 19 June 2023 . Retrieved 19 June 2023 .
+↑ "US defeats Netherlands to win record 4th Women's World Cup title" . CNBC. 7 July 2019. Archived from the original on 19 June 2023 . Retrieved 19 June 2023 .
+↑ "USA beat Netherlands for fourth title" . BBC. 7 July 2019. Archived from the original on 21 July 2019 . Retrieved 24 October 2022 .
+↑ "Match schedule confirmed for FIFA Women's World Cup 2023" . FIFA . 1 December 2021. Archived from the original on 1 December 2021 . Retrieved 1 December 2021 .
+↑ "Match schedule: FIFA Women's World Cup Australia & New Zealand 2023" (PDF) . FIFA. Archived from the original (PDF) on 2 December 2021 . Retrieved 20 June 2023 .
+↑ "Match schedule and kick-off times confirmed for Australia & New Zealand 2023" . FIFA. 24 October 2022. Archived from the original on 24 October 2022 . Retrieved 24 October 2022 .
+↑ "Final rematch among FIFA Women's World Cup 2023 Draw headlines" . FIFA. 22 October 2022. Archived from the original on 22 October 2022 . Retrieved 22 October 2022 .
+↑ "FIFA Women's World Cup 2023 targets over 100,000 fans for epic opening matchday" . FIFA. 31 January 2023. Archived from the original on 30 January 2023 . Retrieved 31 January 2023 .
+1 2 "New payment model guarantees support for every FIFA Women's World Cup 2023 team and player" . FIFA. 9 June 2023. Archived from the original on 18 June 2023 . Retrieved 18 June 2023 .
+↑ Cootes, Isobel (16 July 2023). "What players at the FIFA Women's World Cup 2023 will be paid" . Optus Sports . Archived from the original on 17 July 2023 . Retrieved 17 July 2023 .
+↑ Kunti, Samindra. "Lise Klaveness: FIFA Must Stick To Prize Money Promises At Women's World Cup" . Forbes . Archived from the original on 27 July 2023 . Retrieved 27 July 2023 .
+↑ Aarons, Ed; Molina, Romain (3 August 2023). "Fifa investigating claims Zambia coach rubbed player's chest at World Cup" . The Guardian . ISSN 0261-3077 . Archived from the original on 5 August 2023 . Retrieved 5 August 2023 .
+↑ "FIFA starts bidding process for FIFA Women's World Cup 2023" . FIFA.com . Fédération Internationale de Football Association. 19 February 2019. Archived from the original on 22 November 2020 . Retrieved 21 February 2019 .
+1 2 3 "FIFA Council unanimously approves expanded 32-team field for FIFA Women's World Cup" . FIFA.com . Fédération Internationale de Football Association. 31 July 2019. Archived from the original on 9 June 2020 . Retrieved 31 July 2019 .
+↑ "FIFA Women's World Cup 2023: Overview of the bidding process (updated version, August 2019)" (PDF) . FIFA.com . Fédération Internationale de Football Association. 3 September 2019. Archived (PDF) from the original on 5 August 2021 . Retrieved 3 September 2019 .
+↑ "FIFA receives record number of expressions of interest in hosting FIFA Women's World Cup 2023" . FIFA.com . Fédération Internationale de Football Association. 18 March 2019. Archived from the original on 24 May 2021 . Retrieved 19 March 2019 .
+↑ "Belgium and Bolivia drop out as eight countries remain in race to host 2023 FIFA Women's World Cup" . insidethegames.biz . 3 September 2019. Archived from the original on 1 October 2020 . Retrieved 3 September 2019 .
+↑ "Bidding process for FIFA Women's World Cup 2023 continues with eight member associations" . FIFA.com . Fédération Internationale de Football Association. 3 September 2019. Archived from the original on 12 May 2021 . Retrieved 3 September 2019 .
+↑ "One Vision" . As One 2023 . Football Federation Australia. Archived from the original on 13 December 2019 . Retrieved 12 December 2019 .
+↑ "FIFA Women's World Cup 2023: four bids submitted" . FIFA.com . Fédération Internationale de Football Association. 13 December 2019. Archived from the original on 22 November 2020 . Retrieved 13 December 2019 .
+↑ "Brasil retira candidatura a sede da Copa do Mundo Feminina FIFA 2023" (in Brazilian Portuguese). Brazilian Football Confederation . 8 June 2020. Archived from the original on 26 January 2021 . Retrieved 26 June 2020 .
+↑ "Japan FA to withdraw from Bid to host the FIFA Women's World Cup 2023" . Japan Football Association . 22 June 2020. Archived from the original on 23 June 2020.
+↑ "Australia and New Zealand selected as hosts of FIFA Women's World Cup 2023" . FIFA.com . Fédération Internationale de Football Association. 25 June 2020. Archived from the original on 27 June 2020 . Retrieved 25 June 2020 .
+↑ "FIFA Women's World Cup 2023 Voting Results" (PDF) . FIFA.com . Fédération Internationale de Football Association. 25 June 2020. Archived from the original (PDF) on 25 June 2020 . Retrieved 25 June 2020 .
+↑ "Australia and New Zealand to host 2023 FIFA Women's World Cup" . Asian Football Confederation . 26 June 2020. Archived from the original on 29 June 2023 . Retrieved 29 June 2023 .
+↑ "FIFA President Infantino hails France 2019, outlines proposals for future of women's game" . FIFA.com . Fédération Internationale de Football Association. 5 July 2019 . Retrieved 5 July 2019 . {{ cite news }} : CS1 maint: deprecated archival service ( link )
+↑ "Key figures from the FIFA Women's World Cup Canada 2015" . FIFA.com . Fédération Internationale de Football Association. 7 July 2015. Archived from the original on 11 July 2015 . Retrieved 3 October 2016 .
+↑ Mather, Victor (5 July 2019). "FIFA President Proposes Expansion of Women's World Cup and Doubling of Prize Money" . The New York Times . Archived from the original on 16 October 2021 . Retrieved 28 June 2020 .
+↑ Mackey, Ed (1 June 2023). "Women's World Cup 2023: Everything you need to know (and some things you didn't)" . The Athletic . Archived from the original on 6 June 2023 . Retrieved 5 June 2023 .
+↑ "As One. Australia and New Zealand bidding to host the FIFA Women's World Cup 2023" (PDF) . Football Federation Australia, New Zealand Football. Archived (PDF) from the original on 6 April 2023 . Retrieved 14 December 2019 – via FIFA.com.
+↑ "Dominic Perrottet reopens Sydney Football Stadium while admitting rebuild damaged Coalition" . ABC News . 27 August 2022. Archived from the original on 6 June 2023 . Retrieved 5 June 2023 .
+↑ "FIFA Women's World Cup 2023 Bid Evaluation Report published – three bids submitted to FIFA Council" . FIFA.com . 10 June 2020. Archived from the original on 24 September 2021 . Retrieved 10 June 2020 .
+↑ "New turf rolled out ahead of FIFA Women's World Cup" (Press release). Department of Local Government, Sport and Cultural Industries . 12 April 2023. Archived from the original on 4 December 2024 . Retrieved 5 June 2023 .
+↑ Tan, Christopher (8 May 2023). "FIFA Women's World Cup 2023: Big names visit Kingsway and Sorrento to inspect venues" . PerthNow . Archived from the original on 6 June 2023 . Retrieved 5 June 2023 .
+↑ "FIFA Women's World Cup 2023 Host Cities and Stadiums announced" . FIFA.com . FIFA. Archived from the original on 31 March 2021 . Retrieved 31 March 2021 .
+↑ "Australia and New Zealand are hosting the FIFA 2023 Women's World Cup. Here's how the tournament will work" . ABC News . Australian Broadcasting Corporation. 25 June 2020. Archived from the original on 26 June 2020 . Retrieved 26 June 2020 .
+1 2 3 Lewis, Samantha (27 November 2021). "2023 Women's World Cup is already changing the game for First Nations communities" . ABC News . Archived from the original on 15 July 2022 . Retrieved 15 July 2022 .
+↑ Dator, James (7 July 2023). "FIFA allowing the Women's World Cup to honor indigenous people is a rare W" . SB Nation . Archived from the original on 21 July 2023 . Retrieved 21 July 2023 .
+↑ Lewis, Rhett (28 May 2022). "Womens World Cup 2023: Dates, Schedule And Kick-Off Times" . History Of Soccer . Archived from the original on 7 October 2022 . Retrieved 22 August 2022 .
+↑ Chammas, Michael (24 April 2022). "Women's World Cup lockout to cause two-month fixture chaos for NRL" . The Sydney Morning Herald . Archived from the original on 16 August 2023 . Retrieved 16 August 2023 .
+↑ "Stadium Australia" . FIFA.com . Archived from the original on 6 December 2022 . Retrieved 7 December 2022 .
+↑ "Sydney Football Stadium" . FIFA.com . Archived from the original on 6 December 2022 . Retrieved 7 December 2022 .
+↑ "Brisbane Stadium-womens-world-cup-2023" . FIFA.com . Archived from the original on 6 December 2022 . Retrieved 7 December 2022 .
+↑ "Eden Park" . FIFA.com . Archived from the original on 6 December 2022 . Retrieved 7 December 2022 .
+↑ "Wellington Regional Stadium" . FIFA.com . Archived from the original on 6 December 2022 . Retrieved 7 December 2022 .
+↑ "Melbourne Rectangular Stadium" . FIFA.com . Archived from the original on 6 December 2022 . Retrieved 7 December 2022 .
+↑ "Perth Rectangular Stadium" . FIFA.com . Archived from the original on 6 December 2022 . Retrieved 7 December 2022 .
+↑ "Hindmarsh Stadium" . FIFA.com . Archived from the original on 6 December 2022 . Retrieved 7 December 2022 .
+↑ "Dunedin Stadium" . FIFA.com . Archived from the original on 6 December 2022 . Retrieved 7 December 2022 .
+↑ "Waikato Stadium" . FIFA.com . Archived from the original on 6 December 2022 . Retrieved 7 December 2022 .
+↑ "Team Base Camps confirmed for FIFA Women's World Cup Australia & New Zealand 2023" . FIFA.com . FIFA. Archived from the original on 13 December 2022 . Retrieved 12 December 2022 .
+↑ "All 32 FIFA Women's World Cup Team Base Camps now confirmed" . FIFA.com . FIFA. Archived from the original on 22 March 2023 . Retrieved 21 March 2023 .
+↑ Roche, Calum (22 March 2023). "FIFA Women's World Cup 2023: find out where every team is based" . Diario AS . Archived from the original on 6 June 2023 . Retrieved 5 June 2023 .
+↑ "Concacaf to launch new senior women's national team competitions to benefit entire Confederation" (Press release). Concacaf . 10 December 2020. Archived from the original on 14 June 2021 . Retrieved 5 June 2023 .
+↑ "USWNT defeats Canada in CONCACAF W Championship final, secures berth in 2024 Paris Olympics" . The Athletic . 18 July 2022. Archived from the original on 6 June 2023 . Retrieved 5 June 2023 .
+↑ "FIFA suspends Chad and Pakistan football associations" . FIFA. 7 April 2021. Archived from the original on 16 May 2022 . Retrieved 16 May 2022 .
+↑ "Rwanda Government asks Federation to withdraw 2022 Women's AFCON qualifier" . Sports News Africa . 13 October 2021. Archived from the original on 19 October 2021 . Retrieved 13 October 2021 .
+↑ "Sudan – Algeria: the Greens will not play their return match" . california18.com . CA18. 26 October 2021. Archived from the original on 27 October 2021 . Retrieved 16 May 2022 .
+↑ "CAF Statement on the Women's AFCON Qualifier: Equatorial Guinea vs DR Congo" . CAF . 22 October 2021. Archived from the original on 16 March 2022 . Retrieved 16 May 2022 .
+↑ "Withdrawal of Sao Tome from the qualifiers of the TotalEnergies Women's AFCON 2022" . CAF . 24 October 2021. Archived from the original on 24 October 2021 . Retrieved 24 October 2021 .
+↑ "Kenya Government asks Federation to withdraw 2022 Women's AFCON qualifier" . fufa . 28 January 2022. Archived from the original on 28 January 2022 . Retrieved 26 January 2022 .
+↑ "Latest update on the AFC U23 Asian Cup Uzbekistan 2022 – Qualifiers" . Asian Football Confederation. 29 July 2021. Archived from the original on 23 October 2021 . Retrieved 16 May 2022 .
+↑ "It's now down to Indonesia-Singapore in Group C" . ASEAN Football Federation. 8 September 2021. Archived from the original on 4 November 2021 . Retrieved 12 September 2021 .
+↑ "Vietnam to play three AFC Women's Asian Cup 2022 qualifiers" . Voice of Vietnam. 18 August 2021. Archived from the original on 4 November 2021 . Retrieved 17 September 2021 .
+↑ "Latest update on the AFC Women's Asian Cup India 2022" . AFC. 24 January 2022. Archived from the original on 23 January 2022 . Retrieved 16 May 2022 .
+↑ "More calendar changes for 2021" . Oceania Football Confederation. 16 December 2020. Archived from the original on 23 May 2022 . Retrieved 15 May 2022 .
+↑ "FIFA/UEFA suspend Russian clubs and national teams from all competitions" . FIFA (Press release). 28 February 2022. Archived from the original on 28 February 2022 . Retrieved 28 February 2022 .
+↑ "Update on FIFA Women's World Cup and men's youth competition" . FIFA. 25 December 2020. Archived from the original on 22 June 2022 . Retrieved 15 May 2022 .
+↑ "New Zealand to host first ever FIFA Women's World Cup Play-Off Tournament" . FIFA. 4 July 2022. Archived from the original on 24 November 2022 . Retrieved 5 July 2022 .
+1 2 Thomas, Joshua (7 March 2023). "FIFA Women's World Cup 2023: Which teams have qualified for the tournament in Australia and New Zealand?" . The Sporting News . Archived from the original on 6 June 2023 . Retrieved 5 June 2023 .
+↑ Frith, Will (7 September 2022). "Italy and Netherlands qualify for 2023 FIFA Women's World Cup" . She Kicks . Archived from the original on 1 June 2025 . Retrieved 5 June 2023 .
+↑ "FIFA Women's World Cup 2023 – Africa Watch" . Boxscore News . Boxscore World Sportswire. 17 May 2023. Archived from the original on 18 May 2023 . Retrieved 18 May 2023 .
+↑ "2023 Women's World Cup – 100 days to go until Australia and New Zealand co-host tournament" . BBC . 11 April 2023. Archived from the original on 18 May 2023 . Retrieved 18 May 2023 .
+↑ "FIFA Women's Ranking – 9 June 2023" . FIFA. Archived from the original on 17 June 2023 . Retrieved 18 June 2023 .
+↑ "Regulations – FIFA Women's World Cup AU NZ 23" (PDF) . FIFA. Archived (PDF) from the original on 14 December 2022 . Retrieved 30 May 2023 .
+↑ "Auckland/Tāmaki Makaurau to host the Draw for the FIFA Women's World Cup 2023 in October" . FIFA . 12 May 2022. Archived from the original on 16 December 2022 . Retrieved 13 May 2022 .
+↑ "New Zealand to host FIFA Women's World Cup 2023 Draw" . Government of New Zealand . 13 May 2022. Archived from the original on 21 September 2022 . Retrieved 21 September 2022 .
+↑ "Procedures for the Final Draw for the FIFA Women's World Cup Australia New Zealand 2023" (PDF) . FIFA. 8 October 2022. Archived (PDF) from the original on 8 October 2022 . Retrieved 8 October 2022 .
+↑ "Star-studded line-up for FIFA Women's World Cup 2023 draw" . FIFA Plus . Fédération internationale de Football Association. Archived from the original on 20 October 2022 . Retrieved 22 October 2022 .
+↑ "Women's Draw Seedings FIFA Women's World Cup Australia New Zealand 2023" . FIFA. 14 October 2022. Archived from the original on 16 December 2022 . Retrieved 14 October 2022 .
+1 2 "Match officials appointed for FIFA Women's World Cup Australia & New Zealand 2023" . FIFA.com . 9 January 2023. Archived from the original on 9 January 2023 . Retrieved 9 January 2023 .
+↑ "Trailblazer: Palestine's Heba Saadieh is creating history and more" . FIFA.com . 13 January 2023. Archived from the original on 18 May 2023 . Retrieved 18 May 2023 .
+↑ "Saadia to become first Palestinian referee at FIFA Women's World Cup" . insidethegames.biz . 8 January 2023. Archived from the original on 21 May 2023 . Retrieved 18 May 2023 .
+↑ "Sources: World Cup to use NFL-style VAR calls" . ESPN . 30 June 2023. Archived from the original on 1 July 2023 . Retrieved 1 July 2023 .
+↑ FIFA Media [@fifamedia] (18 August 2023). "Final match officials" ( Tweet ) . Retrieved 18 August 2023 – via X (formerly Twitter) .
+1 2 3 Sharp-Wiggins, Blake; Khan, Jo (20 July 2023). "A missing star and an upset win: Women's World Cup opening night – in pictures" . The Guardian . ISSN 0261-3077 . Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+1 2 3 4 5 Hytner, Mike; Khan, Jo (20 July 2023). "New Zealand 1–0 Norway: Women's World Cup 2023 Group A – as it happened" . The Guardian . ISSN 0261-3077 . Archived from the original on 20 July 2023 . Retrieved 26 July 2023 .
+1 2 "A PESAR DE UN ATENTADO MORTAL, EL MUNDIAL FEMENINO SE INAUGURÓ CON ÉXITO" . El Gráfico (in Spanish). 20 July 2023. Archived from the original on 22 July 2023 . Retrieved 20 July 2023 .
+1 2 Knuckey, Brodyn (20 July 2023). "Football Ferns stun Norway to claim first-ever World Cup win" . 1 News . Archived from the original on 20 July 2023 . Retrieved 20 July 2023 .
+↑ Marnie Vinall; Billie Eder (20 August 2023). "As it happened Women's World Cup: Spain are Women's World Cup champions with masterclass 1–0 defeat of England in final" . The Age . Archived from the original on 25 January 2025 . Retrieved 20 August 2023 .
+↑ Athletic, The (15 August 2023). "Spain vs Sweden live updates" . The Athletic . Archived from the original on 15 August 2023 . Retrieved 15 August 2023 .
+↑ "Football fever grips Australia as Matildas' adventures continue" . FIFA. 14 August 2023. Archived from the original on 28 May 2024 . Retrieved 21 August 2023 .
+↑ Moodie, Anthea (6 October 2023). "Matildas fever saw the nation fall in love with women's sport — but that's not a new concept in the nation's capital" . ABC News . Archived from the original on 1 May 2025 . Retrieved 10 May 2024 .
+↑ Foster, Craig (14 August 2023). "The Matildas' courage is changing the Australian narrative. The question is: what next?" . The Guardian . Retrieved 21 August 2023 .
+↑ "Matildas' Women's World Cup semifinal loss to England sets TV audience record" . ABC News . 17 August 2023. Archived from the original on 9 April 2025 . Retrieved 21 August 2023 .
+↑ Bowring, Declan (15 August 2023). "Where to watch the Matildas vs England Women's World Cup semifinal live in Sydney" . ABC News . Archived from the original on 5 May 2025 . Retrieved 21 August 2023 .
+↑ Shams, Housnia (13 August 2023). "Two Sydney stadiums open as live sites for Matildas World Cup semifinal clash against England" . ABC News . Archived from the original on 8 March 2025 . Retrieved 21 August 2023 .
+↑ Shephard, Tory (19 August 2023). "Albanese government to pledge $200m for women's sport after Matildas inspire Australia" . The Guardian . Retrieved 21 August 2023 .
+↑ "Football Australia 'seriously' considering bid for men's World Cup" . 7NEWS . 21 August 2023. Archived from the original on 6 April 2025 . Retrieved 23 August 2023 .
+↑ reporters, Stuff sports (14 December 2023). "FIFA Women's World Cup exceeds expectations, returning New Zealand more than $100m" . Stuff . Archived from the original on 24 April 2024 . Retrieved 17 December 2023 .
+↑ "New Zealand Football record 25% increase in girls and women playing football in 2023 before impact of FIFA Women's World Cup felt in full" . New Zealand Football . 9 February 2024 . Retrieved 12 February 2024 . {{ cite web }} : CS1 maint: url-status ( link )
+↑ "FIFA Women's World Cup 2023 National Economic Impact Evaluation" . New Zealand Major Events . 15 December 2023. Archived from the original on 16 February 2025 . Retrieved 12 February 2024 .
+↑ Scarosella, Vita (28 November 2023). "Football Australia's CEO James Johnson Looks To Make Football Australia's Top Sport" . Forbes . Archived from the original on 3 December 2023 . Retrieved 24 June 2025 .
+↑ "Australia and Uzbekistan confirmed as 2026 and 2029 AFC Women's Asian Cup hosts" . Asian Football Confederation . 15 May 2024. Archived from the original on 9 February 2025 . Retrieved 24 June 2025 .
+1 2 3 4 "Regulations: FIFA Women's World Cup Australia & New Zealand 2023" (PDF) . FIFA. Archived (PDF) from the original on 14 December 2022 . Retrieved 14 December 2022 .
+↑ "FIFA Women's World Cup awards: Bonmati wins Golden Ball" . FIFA . 20 August 2023. Archived from the original on 21 August 2023 . Retrieved 21 August 2023 .
+↑ "Caicedo stunner wins Hyundai Goal of the Tournament" . FIFA. 29 August 2023. Archived from the original on 3 March 2024 . Retrieved 3 September 2023 .
+↑ "FIFA Women's World Cup Australia & New Zealand 2023: Competition summary" (PDF) . FIFA. 20 August 2023. p. 4. Archived (PDF) from the original on 7 July 2026 . Retrieved 6 July 2026 .
+↑ "Australia-NZ unveils '23 Women's World Cup logo" . ESPN . 28 October 2021. Archived from the original on 4 January 2022 . Retrieved 4 January 2022 .
+↑ "Beyond Greatness in 2023" . FIFA.com . Archived from the original on 6 August 2023 . Retrieved 4 January 2022 .
+↑ Snape, Jack (19 July 2023). "Women's World Cup ticket sales break record with close to 1.4m sold on eve of 2023 tournament" . The Guardian . Archived from the original on 19 July 2023 . Retrieved 20 July 2023 .
+↑ "FIFA offers free Women's World Cup tickets amid poor NZ sales" . ESPN. Reuters. 13 July 2023. Archived from the original on 18 July 2023 . Retrieved 20 July 2023 .
+↑ Johannsen, Dana (27 July 2023). "FIFA Women's World Cup: After sluggish start, tickets sales hit important milestone in New Zealand" . Stuff . Archived from the original on 27 July 2023 . Retrieved 27 July 2023 .
+↑ "FIFA Women's World Cup 2023 Comes to FIFA 23" . 28 June 2023. Archived from the original on 1 July 2023 . Retrieved 1 July 2023 .
+↑ "FIFA 23 Receives FIFA Women's World Cup 2023 Update and Predicts USA to Win" . 30 June 2023. Archived from the original on 1 July 2023 . Retrieved 1 July 2023 .
+↑ "With 100 days to Women's World Cup, calls for gender equity grow" . Al Jazeera . 11 April 2023. Archived from the original on 18 May 2023 . Retrieved 18 May 2023 .
+↑ "FIFA urges broadcasters pay what the women's game deserves" . Reuters . 20 October 2022. Archived from the original on 22 October 2022 . Retrieved 22 October 2022 .
+↑ Ingle, Sean (2 May 2023). "Fifa threatens Women's World Cup broadcast blackout in Europe" . The Guardian . ISSN 0261-3077 . Archived from the original on 16 May 2023 . Retrieved 16 May 2023 .
+↑ "FIFA and EBU extend agreement for FIFA Women's World Cup rights and commit to promoting women's football" . EBU . 14 June 2023. Archived from the original on 14 June 2023 . Retrieved 15 June 2023 .
+↑ "NHK to Broadcast All Nadeshiko Games" . The Yomiuri Shimbun . The Japan News. 14 July 2023. Archived from the original on 15 July 2023 . Retrieved 15 July 2023 .
+↑ "FIFA and adidas extend partnership until 2030" . FIFA. 21 November 2013. Archived from the original on 28 June 2017 . Retrieved 10 May 2017 .
+↑ Matthews, Sam (22 November 2005). "Coca-Cola renews Fifa football sponsorship until 2022" . Campaign. Archived from the original on 27 August 2017 . Retrieved 10 May 2017 .
+↑ "Hyundai and Kia renew FIFA partnerships until 2030, with Boston Dynamics and Supernal to showcase future mobility solutions" . FIFA.com . Fédération Internationale de Football Association. 25 May 2023. Archived from the original on 25 May 2023 . Retrieved 25 May 2023 .
+↑ "Qatar Airways Commemorates Collaboration with FIFA" . Qatar Airways. 22 August 2023. Archived from the original on 24 January 2025 . Retrieved 21 August 2023 .
+↑ Wilson, Bill (18 March 2016). "Fifa signs China's Wanda as partner" . BBC News . Archived from the original on 11 June 2019 . Retrieved 6 December 2018 .
+↑ "FIFA announces Visa as first-ever FIFA Women's Football Partner" . FIFA.com . Fédération Internationale de Football Association. Archived from the original on 21 December 2021 . Retrieved 21 December 2021 .
+↑ "Xero named as FIFA Women's Football Partner" . FIFA.com . Fédération Internationale de Football Association. Archived from the original on 12 April 2022 . Retrieved 13 April 2022 .
+↑ "FIFA announces AB InBev as official beer sponsor of FIFA Women's World Cup 2023 and FIFA World Cup 2026" . FIFA.com . Fédération Internationale de Football Association. Archived from the original on 8 June 2023 . Retrieved 8 June 2023 .
+↑ "FIFA announces partnership with blockchain innovator Algorand" . FIFA. 1 May 2022. Archived from the original on 29 April 2023 . Retrieved 3 May 2023 .
+↑ "Booking.com announced as Official Online Travel Sponsor for the FIFA Women's World Cup Australia & New Zealand 2023" . FIFA. 19 July 2023. Archived from the original on 19 July 2023 . Retrieved 19 July 2023 .
+↑ McCaskill, Steve (17 October 2022). "Fifa signs up Globant to build out Fifa+ DTC platform" . SportsPro Media . Retrieved 17 October 2022 .
+↑ "Mengniu becomes an Official FIFA Women's World Cup 2023 Sponsor" . FIFA.com . Fédération Internationale de Football Association . Retrieved 14 July 2023 .
+↑ "FIFA and McDonald's renew long-standing partnership, with collaboration continuing for FIFA Women's World Cup 2023 and FIFA World Cup 2026" . FIFA.com . Fédération Internationale de Football Association. Archived from the original on 16 May 2023 . Retrieved 16 May 2023 .
+↑ "Unilever personal care brands unveiled as Official Sponsors of FIFA Women's World Cup 2023" (Press release). Unilever . 12 May 2023. Archived from the original on 22 July 2023 . Retrieved 15 May 2023 .
+↑ "Cisco joins FIFA Women's World Cup 2023 as Official Network Infrastructure Provider" . www.fifa.com . Archived from the original on 19 April 2023 . Retrieved 20 April 2023 .
+↑ "Commonwealth Bank announced as FIFA Women's World Cup Australia & New Zealand 2023 Official Supporter" . www.fifa.com . Archived from the original on 13 November 2022 . Retrieved 13 November 2022 .
+↑ "Jacob's Creek announced as FIFA Women's World Cup Australia & New Zealand 2023 Official Supporter" . www.fifa.com . Archived from the original on 6 April 2023 . Retrieved 7 April 2023 .
+↑ "FIFA and Optus join forces to empower women's sport and inspire the next generation" . www.fifa.com . Archived from the original on 23 June 2023 . Retrieved 23 June 2023 .
+↑ "TAB become first betting agency to become official supporter of a FIFA World Cup" . Stuff . 25 June 2023. Archived from the original on 26 June 2023 . Retrieved 26 June 2023 .
+↑ "Team Global Express announced as FIFA Women's World Cup Australia & New Zealand 2023 Official Supporter" . www.fifa.com . Archived from the original on 19 April 2023 . Retrieved 18 April 2023 .
+↑ "Yadea Named Tournament Supporter of FIFA Women's World Cup 2023 in Asia-Pacific" . www.fifa.com . Archived from the original on 3 July 2023 . Retrieved 3 July 2023 .
+↑ "Bellamy's Organic is so proud and excited to sponsor the FIFA Women's World Cup 2023" . www.instagram.com/bellamysorganic . Retrieved 8 December 2023 .
+1 2 "FIFA sells out all partnership packages for the FIFA Women's World Cup Australia & New Zealand 2023" . www.fifa.com . Archived from the original on 21 July 2023 . Retrieved 20 July 2023 .
+↑ "BMO named Official Supporter of FIFA Women's World Cup 2023 in North America" . www.fifa.com . Archived from the original on 27 June 2023 . Retrieved 27 June 2023 .
+↑ "Frito-Lay North America signs on as Tournament Supporter for FIFA Women's World Cup Australia & New Zealand 2023" . www.fifa.com . Archived from the original on 31 May 2023 . Retrieved 30 May 2023 .
+↑ "FIFA announces GEICO as Tournament Supporter in North America for FIFA Women's World Cup 2023" . www.fifa.com . Archived from the original on 19 July 2023 . Retrieved 19 July 2023 .
+↑ "Claro to be an Official Telecommunications Operator in Brazil of the FIFA Women's World Cup 2023" . www.fifa.com . Archived from the original on 16 July 2023 . Retrieved 15 July 2023 .
+↑ Estrela Bet [@EstrelaBet] (18 July 2023). "Official Brazilian supporters of the FIFA Women's World Cup 2023" ( Tweet ) . Retrieved 22 August 2023 – via Twitter .
+↑ "Inter Rapidísimo announced as FIFA Women's World Cup Australia & New Zealand 2023 Official Supporter" . www.fifa.com . Archived from the original on 23 February 2023 . Retrieved 24 February 2023 .
+1 2 "2023 FIFA Women's World Cup Mascot Unveiled" . FIFA.com . 19 October 2022. Archived from the original on 20 April 2023 . Retrieved 19 October 2022 .
+↑ Banks, Jonathan C.; Mitchell, Anthony D.; Waas, Joseph R. & Paterson, Adrian M. (2002): An unexpected pattern of molecular divergence within the blue penguin ( Eudyptula minor ) complex. Notornis 49 (1): 29–38. PDF fulltext Archived 3 February 2020 at the Wayback Machine
+1 2 "Official Match Ball for the FIFA Women's World Cup 2023 unveiled by adidas" . Archived from the original on 18 March 2023 . Retrieved 5 April 2023 .
+↑ Odedra, Renuka (14 August 2023). "adidas unveil 2023 Women's World Cup Oceaunz final match ball" . Goal.com . Archived from the original on 14 August 2023 . Retrieved 14 August 2023 .
+↑ "Kelly Lee Owens Shares "Unity", the Theme Song for the 2023 FIFA Women's World Cup: Listen" . Pitchfork.com . 28 October 2021. Archived from the original on 28 October 2021 . Retrieved 29 October 2021 .
+↑ Zhou, Naaman (28 July 2023). "The Thrill on the Ground at the Women's World Cup" . The New Yorker . ISSN 0028-792X . Archived from the original on 16 February 2025 . Retrieved 3 August 2023 .
+↑ "Benee and Mallrat set to release official Fifa Women's World Cup song" . Stuff . 20 June 2023. Archived from the original on 20 June 2023 . Retrieved 20 June 2023 .
+↑ "Official Song for FIFA Women's World Cup 2023 announced: Do It Again – BENEE ft. Mallrat" . FIFA.com . 29 June 2023. Archived from the original on 29 June 2023 . Retrieved 29 June 2023 .
+↑ Brandle, Lars (20 July 2023). "Tones And I Sets-up FIFA Women's World Cup" . The Music Network . Archived from the original on 24 July 2023 . Retrieved 24 July 2023 .
+↑ Hogan, Heather (17 July 2023). "Megan Rapinoe's Nike World Cup Commercial is Lesbian Anime" . Autostraddle . Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+↑ "Kick off the Fifa Women's World Cup 2023 with the best ads so far" . The Drum . Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+↑ Let It Rip | Megan Rapinoe | Nike Football , 16 July 2023, archived from the original on 26 July 2023 , retrieved 26 July 2023
+↑ Like a Lioness | Nike Football , 20 July 2023, archived from the original on 26 July 2023 , retrieved 26 July 2023
+↑ "Ms Banks Is The Sound Of The Women's World Cup" . ELLE . 30 May 2019. Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+↑ Solomon, Kate (18 July 2023). "Call Me a Lioness: Melanie C, Self Esteem and more record song for Women's World Cup" . The Guardian . ISSN 0261-3077 . Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+↑ Call Me A Lioness , 18 July 2023, archived from the original on 26 July 2023 , retrieved 26 July 2023
+↑ "Mel C and Wolf Alice contribute to Lionesses' World Cup song" . BBC News . 19 July 2023. Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+1 2 3 "Sofie Junge Pedersen interview: Denmark midfielder on leading historic climate action ahead of the Women's World Cup" . Sky Sports . 13 July 2023. Archived from the original on 14 July 2023 . Retrieved 21 July 2023 .
+↑ "FIFA allows anti-discrimination armbands at Women's World Cup" . Al Jazeera . 30 June 2023. Archived from the original on 25 July 2023 . Retrieved 25 July 2023 .
+↑ "New Zealand and Australia indigenous flags to fly at FIFA Women's World Cup" . Insidethegames.biz . 7 July 2023. Archived from the original on 16 July 2023 . Retrieved 8 July 2023 .
+↑ Khan, Jo (7 July 2023). "Fifa allows First Nations flags to fly at Women's World Cup" . The Guardian . Archived from the original on 24 July 2023 . Retrieved 8 July 2023 .
+↑ Holmes, Tracey (7 July 2023). "FIFA to allow First Nations flags at Women's World Cup" . ABC News Australia . Archived from the original on 24 July 2023 . Retrieved 25 July 2023 .
+1 2 "Women's World Cup stars to offset climate impact of flights to tournament" . The Independent . 13 July 2023. Archived from the original on 14 July 2023 . Retrieved 14 July 2023 .
+↑ Onyeagwara, Nnamdi (13 July 2023). "Women's World Cup stars create player-led climate action initiative" . The Athletic . Archived from the original on 14 July 2023 . Retrieved 14 July 2023 .
+↑ Sethna-McIntosh, Kyra (12 July 2023). "Women's World Cup players launch football's biggest climate campaign" . The Guardian . ISSN 0261-3077 . Archived from the original on 14 July 2023 . Retrieved 14 July 2023 .
+↑ "Germany players commit some of their Women's World Cup bonuses to grassroots programs" . AP News . 24 July 2023. Archived from the original on 25 July 2023 . Retrieved 25 July 2023 .
+1 2 "Press release: Women's World Cup 2023 – UN Women and FIFA join forces for gender equality" . UN Women – Headquarters . 19 July 2023. Archived from the original on 21 July 2023 . Retrieved 21 July 2023 .
+↑ Miller, Nick. "The stars and storylines that could define the Women's World Cup" . The Athletic . Archived from the original on 22 July 2023 . Retrieved 22 July 2023 .
+↑ "FIFA rejects calls for 26-woman squads in 2023 World Cup, despite pleas from Sarina Wiegman and Martina Voss-Tecklenburg" . Sky Sports . Archived from the original on 1 June 2023 . Retrieved 31 May 2023 .
+↑ Christenson, Marcus (17 May 2023). "Player release date for Women's World Cup agreed but FA set to stick to plans" . The Guardian . ISSN 0261-3077 . Archived from the original on 3 June 2023 . Retrieved 3 June 2023 .
+↑ "Fifa drops controversial Visit Saudi sponsorship of Women's World Cup" . Independent.co.uk . 16 March 2023. Archived from the original on 19 March 2023 . Retrieved 19 March 2023 .
+↑ Pathak, Manasi (3 May 2023). "FIFA responsible for undervaluing Women's World Cup, says Dodd" . Reuters . Archived from the original on 16 May 2023 . Retrieved 16 May 2023 .
+↑ "New FIFPRO report warns of uneven Women's World Cup qualifying across confederations – FIFPRO World Players' Union" . FIFPRO . Archived from the original on 20 July 2023 . Retrieved 20 July 2023 .
+↑ Panja, Tariq (28 June 2023). "FIFA Will Allow Rainbow Armbands at Women's World Cup" . The New York Times . ISSN 0362-4331 . Archived from the original on 30 June 2023 . Retrieved 30 June 2023 .
+↑ Zeigler, Cyd (30 June 2023). "Women's World Cup captains can kind of wear Pride rainbow armband, sort of" . Outsports . Archived from the original on 30 June 2023 . Retrieved 30 June 2023 .
+↑ Donnelly, Dylan (30 October 2023). "Luis Rubiales: Ex-Spanish FA chief who kissed player at Women's World Cup final banned from 'all football-related activities' for three years" . Sky News . Archived from the original on 18 March 2025 . Retrieved 1 October 2023 .
+1 2 "Live: Auckland shooting: Multiple people believed dead, police officer hit" . Stuff . 19 July 2023. Archived from the original on 19 July 2023 . Retrieved 19 July 2023 .
+↑ "Deadly shooting 'overshadows' start of World Cup" . BBC Sport . Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+↑ Gordon, Oliver (20 July 2023). "Shooting casts shadow over day one of World Cup – ABC Radio" . ABC . Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+↑ "Women's World Cup Kicks Off Under Shadow of Deadly NZ Shooting" . Bloomberg . 20 July 2023. Archived from the original on 20 August 2023 . Retrieved 26 July 2023 .
+↑ "Hosts New Zealand stun Graham Hansen's Norway in World Cup opener" . sport . 20 July 2023. Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+↑ Sullivan, Helen (19 July 2023). "Auckland shooting live updates: New Zealand PM says Women's World Cup will go ahead after gunman kills two – latest news" . The Guardian . ISSN 0261-3077 . Archived from the original on 19 July 2023 . Retrieved 19 July 2023 .
+↑ Armah, Mildred (20 July 2023). "FIFA Women's World Cup Fan Festival closed after shooting in Auckland" . Stuff . Archived from the original on 22 July 2023 . Retrieved 20 July 2023 .
+↑ Hytner, Mike (20 July 2023). "Women's World Cup 2023: opening game to go ahead as players speak about Auckland shooting" . The Guardian . ISSN 0261-3077 . Archived from the original on 20 July 2023 . Retrieved 20 July 2023 .
+1 2 Rollo, Phillip (20 July 2023). "FIFA Women's World Cup teams honour victims of Auckland shooting" . Stuff . Archived from the original on 22 July 2023 . Retrieved 20 July 2023 .
+↑ Lucas, Katherine (20 July 2023). "World Cup 'to proceed as planned' with tributes prepared after fatal Auckland shooting" . inews . Archived from the original on 25 July 2023 . Retrieved 25 July 2023 .
+↑ "New Zealand: Shooting in Auckland before World Cup kills two" . BBC News . 19 July 2023. Archived from the original on 24 July 2023 . Retrieved 26 July 2023 .
+↑ "Women's World Cup: Australia and New Zealand kick-off tournament with wins as security increased after shooting" . Sky News . Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+↑ "Auckland shooting: Two people and a gunman killed on eve of Women's World Cup" . Sky Sports . Archived from the original on 26 July 2023 . Retrieved 26 July 2023 .
+↑ "Two critical after downtown Auckland shooting – gunman flees on Lime scooter" . The New Zealand Herald . 5 August 2023. Archived from the original on 5 August 2023 . Retrieved 5 August 2023 .
+↑ Rankin, Anna (4 August 2023). "New Zealand: one person dies in hospital after Auckland shooting" . The Guardian . ISSN 0261-3077 . Archived from the original on 5 August 2023 . Retrieved 5 August 2023 .
+↑ "Football Ferns escape Auckland hotel through thick smoke in stairwell after fire" . The New Zealand Herald . 24 July 2023. Archived from the original on 24 July 2023 . Retrieved 24 July 2023 .
+↑ "Football Ferns' security boosted after hotel fire, players dash from 'devastating' blaze" . The New Zealand Herald . 24 July 2023. Archived from the original on 24 July 2023 . Retrieved 24 July 2023 .
+↑ "New Zealand Women's World Cup team evacuated because of hotel fire in second security incident" . AP News . 22 July 2023. Archived from the original on 24 July 2023 . Retrieved 24 July 2023 .
+↑ "New Zealand's World Cup team evacuated after hotel fire" . DW . 23 July 2023. Archived from the original on 24 July 2023 . Retrieved 24 July 2023 .
+External links
+[ edit ]
+Wikimedia Commons has media related to 2023 FIFA Women's World Cup .
+Official website
+Australia-New Zealand 2023 bid website
+Post match summary reports
+v
+t
+e
+2023 FIFA Women's World Cup
+Stages
+Group stage
+Group A
+Group B
+Group C
+Group D
+Group E
+Group F
+Group G
+Group H
+Knockout stage
+Final
+General information
+Qualification
+Broadcasting rights
+Bids
+Controversies
+Big Five broadcasting rights
+OneLove
+Rubiales case
+Officials
+Squads
+Matildas fever
+v
+t
+e
+2023 FIFA Women's World Cup finalists
+Champions
+Spain
+Runner-up
+England
+Third place
+Sweden
+Fourth place
+Australia
+Quarter-finals
+Colombia
+France
+Japan
+Netherlands
+Round of 16
+Denmark
+Jamaica
+Morocco
+Nigeria
+Norway
+South Africa
+Switzerland
+United States
+Group stage
+Argentina
+Brazil
+Canada
+China
+Costa Rica
+Germany
+Haiti
+Republic of Ireland
+Italy
+New Zealand
+Panama
+Philippines
+Portugal
+South Korea
+Vietnam
+Zambia
+v
+t
+e
+2023 FIFA Women's World Cup stadiums
+Australia
+Brisbane Stadium
+Hindmarsh Stadium
+Melbourne Rectangular Stadium
+Perth Rectangular Stadium
+Stadium Australia
+Sydney Football Stadium
+New Zealand
+Dunedin Stadium
+Eden Park
+Waikato Stadium
+Wellington Regional Stadium
+v
+t
+e
+Referees at the 2023 FIFA Women's World Cup
+AFC
+Kate Jacewicz
+Kim Yu-jeong
+Oh Hyeon-jeong
+Casey Reibelt
+Yoshimi Yamashita
+CAF
+Vincentia Amedome
+Bouchra Karboubi
+Akhona Makalima
+Salima Mukansanga
+CONCACAF
+Marianela Araya
+Marie-Soleil Beaudoin
+Melissa Borjas
+Katia Itzel García
+Katja Koroleva
+Myriam Marcotte
+Tori Penso
+CONMEBOL
+Edina Alves
+Emikar Calderas
+María Carvajal
+Anahí Fernández
+Laura Fortunato
+OFC
+Anna-Marie Keighley
+UEFA
+Iuliana Demetrescu
+Maria Sole Ferrieri
+Cheryl Foster
+Stéphanie Frappart
+Marta Huerta de Aza
+Lina Lehtovaara
+Ivana Martinčić
+Kateryna Monzul
+Tess Olofsson
+Esther Staubli
+Rebecca Welch
+v
+t
+e
+FIFA Women's World Cup
+Fédération internationale de football association ( FIFA )
+Tournaments
+China 1991
+Sweden 1995
+United States 1999
+United States 2003
+China 2007
+Germany 2011
+Canada 2015
+France 2019
+Australia / New Zealand 2023
+Brazil 2027
+Costa Rica / Jamaica / Mexico / United States 2031
+England / Northern Ireland / Scotland / Wales 2035
+Qualification
+1991
+1995
+1999
+2003
+2007
+2011
+2015
+2019
+2023
+2027
+Finals
+1991
+1995
+1999
+2003
+2007
+2011
+2015
+2019
+2023
+Squads
+1991
+1995
+1999
+2003
+2007
+2011
+2015
+2019
+2023
+Broadcasters
+2019
+2023
+Bids
+2023
+2027
+2031
+2035
+Officials
+2023
+Team appearances
+AFC
+CAF
+CONCACAF
+CONMEBOL
+OFC
+UEFA
+Overall records
+Player records
+winners
+top appearances
+red cards
+Goalscorer records
+top
+finals
+hat-tricks
+own goals
+Manager records
+winners
+all appearances
+Match records
+opening
+penalty shoot-outs
+Miscellaneous
+Awards
+Balls
+Controversies
+Fan Festival
+Films
+Mascots
+Notable matches
+Referees
+Songs and anthems
+Video games
+FIFA (Men's) World Cup
+Predecessors
+1970 Women's World Cup
+1971 Women's World Cup
+Women's World Invitational Tournament (1978–1987)
+Mundialito (1981–1988)
+1988 FIFA Women's Invitation Tournament
+Women's association football portal
+v
+t
+e
+Soccer in Australia
+Football Australia
+National teams
+Men's
+Senior
+B
+U-23
+U-20
+U-17
+Futsal
+Beach
+Paralympic
+Women's
+Senior
+B
+U-23
+U-20
+U-17
+Futsal
+League competitions
+Men's
+A-League Men
+Australian Championship
+National Premier Leagues Men's
+Women's
+A-League Women
+National Premier Leagues Women's
+Cup competitions
+Australia Cup
+Others
+Youth soccer
+Defunct leagues
+Defunct cups
+Professional Footballers Australia
+Women's soccer in Australia
+History of soccer in Brisbane, Queensland
+Lists
+Appearances (300+)
+Clubs
+Honours won
+Champions
+Men
+Women
+Clubs in international competitions
+Goals (100+)
+Record home attendances
+Stadiums by capacity
+Venues
+Competitions
+Records and statistics
+v
+t
+e
+Association football in New Zealand
+New Zealand Football
+National teams
+Men
+National team (All Whites)
+B
+Olympic (U-23)
+U-20
+U-17
+Women
+National team (Football Ferns)
+U-20
+U-17
+Federations
+Northern Region Football
+WaiBOP Football
+Central Football
+Capital Football
+Mainland Football
+Southern Football
+League system
+Men (level 1)
+New Zealand National League
+New Zealand Football Championship ( defunct )
+National Soccer League ( defunct )
+Men (level 2)
+Central League
+Northern League
+Southern League
+Men (level 3)
+Canterbury Premiership
+Central League 2
+NRFL Championship
+Southern Premier
+Men (level 4)
+Canterbury Championship
+Capital Premier
+Central Federation League ( defunct )
+Western Premiership
+Eastern Premiership
+Donald Gray Memorial Cup
+Fletcher Cup
+Nelson Bays Premiership Division 1
+NRFL Conference
+Northern
+Southern
+South Canterbury Division 1
+Marlborough Division 1
+Men (level 5)
+NRF League One
+Southland Division 1
+WaiBOP League One
+Capital Division 1
+Horizons Premiership
+Pacific Premiership
+Taranaki Premiership
+Eastern League 1
+Nelson Bays Division 2
+Marlborough Division 2
+Mainland Division 1
+South Canterbury Division 2
+Otago Division 2
+Men (level 6)
+Northland Division 1
+NRF Championship Division 1
+WaiBop Championship
+Capital Division 2
+Taranaki Championship
+Manawatu Championship
+Whanganui Roly Taylor Championship
+Hawkes Bay Division 2
+Mainland Division 2
+Otago Division 3
+Southland Division 2
+Unaffiliated West Coast Senior Football
+Women
+National Women's League
+Capital Football W-League
+NRFL Women's Premiership
+Women's South Island League
+NRFL Women's Championship
+Youth
+Youth National League
+Domestic cups
+Men
+Chatham Cup
+Charity Cup
+White Ribbon Cup
+Women
+Kate Sheppard Cup
+Awards
+Jack Batty Memorial Cup
+Maia Jackman Trophy
+New Zealand Footballer of the Year
+New Zealand Football Golden Boot (2007–2021) New Zealand Football Golden Boot (2021–)
+Steve Sumner Trophy
+Lists
+All-time Table
+Champions
+Clubs
+International footballers
+Foreign players
+Venues
+Women's association football in New Zealand
+League system
+Men's clubs
+Women's clubs
+Men's players
+Women's players
+Expatriate players
+Managers
+Referees
+Venues
+Seasons
+Records
+2026 in New Zealand football
+v
+t
+e
+World championships in 2023
+Summer sports &
+indoor sports
+Archery
+Association football (women)
+Aquatics
+artistic swimming
+diving
+open water swimming
+swimming
+water polo
+Armwrestling
+Athletics
+cross country
+masters
+outdoor
+road running
+Badminton
+individual
+mixed team
+Baseball (men)
+Basketball
+men
+3x3
+Beach volleyball
+Bowling (9-pin)
+Bowls
+outdoor
+indoor WBT
+indoor WB/IIBC
+Boxing
+men
+women
+Breaking
+Canoeing
+slalom
+sprint
+marathon
+Climbing
+Cricket
+Test
+ODI
+women T20
+Cycling
+road
+track
+BMX
+cyclo-cross
+MTB
+MTB marathon
+gravel
+esports
+Fencing
+Field hockey (men)
+Floorball (women)
+Gymnastics
+artistic
+rhythmic
+Aesthetic group
+Trampoline
+Handball
+men
+women
+Indoor hockey
+men
+women
+Judo
+Karate
+Korfball
+Lacrosse (men)
+Minifootball
+Modern pentathlon
+Netball
+Nine-pin bowling
+Orienteering
+Real tennis
+men
+women
+Rowing
+Rugby union (men)
+Sailing
+Shooting
+Socca
+Squash
+men
+women
+Surfing
+Table tennis
+Taekwondo
+Vovinam
+Weightlifting
+Wrestling
+Wushu
+Winter sports
+Alpine skiing
+Bandy
+men
+women
+Biathlon
+Bobsleigh / Skeleton
+Curling
+men
+women
+mixed
+mixed doubles
+Figure skating
+Freestyle skiing
+Ice hockey
+men
+women
+Luge
+Nordic skiing
+Ski mountaineering
+Snowboarding
+Speed skating
+single distances
+short track
+inline
+Cue & mind sports
+Chess
+open
+women
+Draughts
+open
+women
+Darts
+PDC
+WDF
+Snooker
+open
+women
+Motor sports
+Air sports
+F3P
+Endurance auto racing
+Endurance moto racing
+Enduro
+Formula E
+Formula One
+Motocross
+men
+women
+team
+MotoGP
+Moto2
+Moto3
+MotoE
+Powerboat
+Rally
+Rallycross
+Rally raid
+FIA Bajas
+FIM Bajas
+Sidecarcross
+Speedway
+individual
+team
+longtrack
+Superbike
+Supersport
+Supersport 300
+Supercross
+Parasports
+Sitting volleyball
+Men
+Women
+Portals : 2020s
+Sport
+Association football
+Australia
+New Zealand
+Oceania
+Retrieved from " https://en.wikipedia.org/w/index.php?title=2023_FIFA_Women%27s_World_Cup&oldid=1381061935 "
+Categories : 2023 FIFA Women's World Cup
+FIFA Women's World Cup tournaments
+2023 in women's international association football
+2023–24 in Australian women's soccer
+2023 in New Zealand women's association football
+Women's international association football competitions hosted by Australia
+Women's international association football competitions hosted by New Zealand
+2023 in sport in Sydney
+2023 in sport in Melbourne
+2023 in sport in Brisbane
+2023 in sport in Adelaide
+2020s in Auckland
+2020s in Wellington
+2020s in Dunedin
+2020s in Perth, Western Australia
+2020s in Hamilton, New Zealand
+International soccer competitions in Sydney
+International soccer competitions in Brisbane
+Association football in Auckland
+Sports competitions in Auckland
+Association football in Wellington
+Sports competitions in Wellington
+International soccer competitions in Melbourne
+Association football in Dunedin
+Sports competitions in Dunedin
+International soccer competitions in Perth, Western Australia
+Association football in Hamilton, New Zealand
+International sports competitions in Adelaide
+Soccer competitions in Adelaide
+July 2023 sports events in Australia
+July 2023 sports events in New Zealand
+August 2023 sports events in Australia
+August 2023 sports events in New Zealand
+Australia–New Zealand sports relations
+Sports events affected by the Russian invasion of Ukraine
+Hidden categories: Articles with short description
+Short description is different from Wikidata
+Use British English from July 2019
+All Wikipedia articles written in British English
+Use dmy dates from December 2017
+Articles containing Māori-language text
+CS1 Brazilian Portuguese-language sources (pt-br)
+CS1 maint: deprecated archival service
+Articles containing OSM location maps
+CS1: unfit URL
+CS1 Spanish-language sources (es)
+CS1 maint: url-status
+Pages using multiple image with auto scaled images
+Webarchive template wayback links
+Commons category link from Wikidata
+Official website different in Wikidata and Wikipedia
+Pages using the Kartographer extension
+This page was last edited on 19 October 2026, at 19:32 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+2023 FIFA Women's World Cup
+54 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"2023 FIFA Women's World Cup","url":"https:\/\/en.wikipedia.org\/wiki\/2023_FIFA_Women%27s_World_Cup","sameAs":"http:\/\/www.wikidata.org\/entity\/Q19672232","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q19672232","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2015-02-01T04:08:29Z","dateModified":"2026-10-19T19:32:54Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/2\/24\/Logo_of_the_2023_FIFA_Women%27s_World_Cup.svg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"9th FIFA Women's World Cup"}

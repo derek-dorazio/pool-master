@@ -1,0 +1,911 @@
+Source: https://en.wikipedia.org/wiki/2024_Copa_Am%C3%A9rica_knockout_stage
+Final URL: https://en.wikipedia.org/wiki/2024_Copa_Am%C3%A9rica_knockout_stage
+HTTP 200
+Fetched: 2026-10-21T02:13:45.986Z
+
+2024 Copa América knockout stage - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Format
+2
+Qualified teams
+3
+Bracket
+4
+Quarter-finals
+Toggle Quarter-finals subsection
+4.1
+Argentina vs Ecuador
+4.2
+Venezuela vs Canada
+4.3
+Colombia vs Panama
+4.4
+Uruguay vs Brazil
+5
+Semi-finals
+Toggle Semi-finals subsection
+5.1
+Argentina vs Canada
+5.2
+Uruguay vs Colombia
+6
+Third place play-off
+7
+Final
+8
+Notes
+9
+References
+10
+External links
+Toggle the table of contents
+2024 Copa América knockout stage
+10 languages
+العربية
+বাংলা
+Bahasa Indonesia
+日本語
+Bahasa Melayu
+Português
+Svenska
+Tiếng Việt
+粵語
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikimedia Commons
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+International football tournament
+The knockout stage of the 2024 Copa América began on July 4 with the quarter-finals and ended on July 14, 2024, with the final at Hard Rock Stadium in Miami Gardens, Florida . [ 1 ]
+All kickoff times are local times , as listed by CONMEBOL. [ 2 ]
+Format
+[ edit ]
+In the knockout stage, if a match was tied after 90 minutes: [ 3 ]
+In the quarter-finals, semi-finals and third place play-off, extra time would not be played, and the match would be decided by a penalty shootout .
+In the final, extra time would be played. If still tied after extra time, the match would be decided by a penalty shootout.
+Qualified teams
+[ edit ]
+The top two placed teams from each group qualified for the knockout stage.
+Group
+Winners
+Runners-up
+A
+Argentina
+Canada
+B
+Venezuela
+Ecuador
+C
+Uruguay
+Panama
+D
+Colombia
+Brazil
+Bracket
+[ edit ]
+\n<!-- quarter-finals -->\n"},"10":{"wt":"July 4 – [[NRG Stadium|Houston, TX]]"},"11":{"wt":"{{fb|ARG}} {{pso}}"},"12":{"wt":"1 (4)"},"13":{"wt":"{{fb|ECU}}"},"14":{"wt":"1 (2)\n"},"15":{"wt":"July 5 – [[AT&T Stadium|Arlington, TX]]"},"16":{"wt":"{{fb|VEN}}"},"17":{"wt":"1 (3)"},"18":{"wt":"{{fb|CAN}} {{pso}}"},"19":{"wt":"1 (4)\n"},"20":{"wt":"July 6 – [[Allegiant Stadium|Paradise, NV]]"},"21":{"wt":"{{fb|URU}} {{pso}}"},"22":{"wt":"0 (4)"},"23":{"wt":"{{fb|BRA}}"},"24":{"wt":"0 (2)\n"},"25":{"wt":"July 6 – [[State Farm Stadium|Glendale, AZ]]"},"26":{"wt":"{{fb|COL}}"},"27":{"wt":"5"},"28":{"wt":"{{fb|PAN}}"},"29":{"wt":"0\n<!-- semi-finals -->\n"},"30":{"wt":"July 9 – [[MetLife Stadium|East Rutherford, NJ]]"},"31":{"wt":"{{fb|ARG}}"},"32":{"wt":"2"},"33":{"wt":"{{fb|CAN}}"},"34":{"wt":"0\n"},"35":{"wt":"July 10 – [[Bank of America Stadium|Charlotte, NC]]"},"36":{"wt":"{{fb|URU}}"},"37":{"wt":"0"},"38":{"wt":"{{fb|COL}}"},"39":{"wt":"1\n<!-- final -->\n"},"40":{"wt":"July 14 – [[Hard Rock Stadium|Miami Gardens, FL]]"},"41":{"wt":"{{fb|ARG}} {{aet}}"},"42":{"wt":"1"},"43":{"wt":"{{fb|COL}}"},"44":{"wt":"0\n<!--third place play-off-->\n"},"45":{"wt":"July 13 – [[Bank of America Stadium|Charlotte, NC]]"},"46":{"wt":"{{fb|CAN}}"},"47":{"wt":"2 (3)"},"48":{"wt":"{{fb|URU}} {{pso}}"},"49":{"wt":"2 (4)\n"}},"i":0}}]}'>
+Quarter-finals Semi-finals Final
+July 4 – Houston, TX
+Argentina ( p ) 1 (4)
+July 9 – East Rutherford, NJ
+Ecuador 1 (2)
+Argentina 2
+July 5 – Arlington, TX
+Canada 0
+Venezuela 1 (3)
+July 14 – Miami Gardens, FL
+Canada ( p ) 1 (4)
+Argentina ( a.e.t. ) 1
+July 6 – Paradise, NV
+Colombia 0
+Uruguay ( p ) 0 (4)
+July 10 – Charlotte, NC
+Brazil 0 (2)
+Uruguay 0
+July 6 – Glendale, AZ
+Colombia 1
+Third place play-off
+Colombia 5
+July 13 – Charlotte, NC
+Panama 0
+Canada 2 (3)
+Uruguay ( p ) 2 (4)
+Quarter-finals
+[ edit ]
+Argentina vs Ecuador
+[ edit ]
+The teams had faced each other in 40 previous matches, including 16 times in the Copa América with a wide advantage for Argentina who won 11 of those matches with 5 draws and no Ecuadorian victories. [ 4 ] This was only the second meeting between the sides in a Copa América knockout stage with the first being the quarter-final match won 3–0 by Argentina in the previous edition in 2021. [ 5 ] Their most recent meeting was a friendly won 1–0 by Argentina, just a few days before the tournament began. [ 6 ]
+[https://www.concacaf.com/en/copa-america/game-details?matchid=726983 Report (CONCACAF)]"},"team2":{"wt":"{{fb|ECU}}"},"goals1":{"wt":"*[[Lisandro Martínez|Li. Martínez]] {{goal|35}}"},"goals2":{"wt":"*[[Kevin Rodríguez (footballer, born 2000)|Rodríguez]] {{goal|90+2}}"},"stadium":{"wt":"[[NRG Stadium]], [[Houston|Houston, Texas]]"},"attendance":{"wt":"69,456<ref>{{cite web|url=https://www.worldfootball.net/match-report/ma10010471/lineup/|title=Copa América 2024 USA » Quarter-finals » Argentina – Ecuador 4:2|work=WorldFootball.net|date=July 4, 2024|access-date=July 4, 2024}}</ref>"},"referee":{"wt":"[[Andrés Matonte]] ([[Uruguayan Football Association|Uruguay]])"},"penaltyscore":{"wt":"4–2"},"penalties1":{"wt":"*[[Lionel Messi|Messi]] {{penmiss}}\n*[[Julián Alvarez|Alvarez]] {{pengoal}}\n*[[Alexis Mac Allister|Mac Allister]] {{pengoal}}\n*[[Gonzalo Montiel|Montiel]] {{pengoal}}\n*[[Nicolás Otamendi|Otamendi]] {{pengoal}}"},"penalties2":{"wt":"*{{penmiss}} [[Ángel Mena|Mena]]\n*{{penmiss}} [[Alan Minda|Minda]]\n*{{pengoal}} [[John Yeboah|Yeboah]]\n*{{pengoal}} [[Jordy Caicedo|J. Caicedo]]"}},"i":0}}]}'>
+July 4, 2024 ( 2024-07-04 )
+8:00 pm CDT ( UTC−5 )
+Argentina 1–1 Ecuador
+Li. Martínez 35'
+Report (CONMEBOL)
+Report (CONCACAF)
+Rodríguez 90+2'
+Penalties
+Messi
+Alvarez
+Mac Allister
+Montiel
+Otamendi
+4–2
+Mena
+Minda
+Yeboah
+J. Caicedo
+NRG Stadium , Houston, Texas
+Attendance: 69,456 [ 7 ]
+Referee: Andrés Matonte ( Uruguay )
+{{cite web |url=https://www.sofascore.com/argentina-ecuador/hVbsuWb |title=Argentina vs Ecuador live score, H2H and lineups |website=Sofascore |date=July 4, 2024 |access-date=July 4, 2024}}</ref>"}},"i":0}}]}'>
+Argentina [ 8 ]
+"}},"i":0}}]}'>
+Ecuador [ 8 ]
+GK 23 Emiliano Martínez
+RB 26 Nahuel Molina 90+5'
+CB 13 Cristian Romero
+CB 25 Lisandro Martínez 78'
+LB 3 Nicolás Tagliafico 81'
+RM 7 Rodrigo De Paul
+CM 20 Alexis Mac Allister
+CM 24 Enzo Fernández 78'
+LM 15 Nicolás González 77'
+CF 10 Lionel Messi ( c )
+CF 22 Lautaro Martínez 65'
+Substitutions:
+FW 9 Julián Alvarez 65'
+DF 19 Nicolás Otamendi 78'
+MF 16 Giovani Lo Celso 78'
+DF 4 Gonzalo Montiel 90+5'
+Manager:
+Lionel Scaloni
+GK 22 Alexander Domínguez
+RB 17 Ángelo Preciado
+CB 2 Félix Torres
+CB 6 Willian Pacho
+LB 3 Piero Hincapié
+CM 8 Carlos Gruezo 80'
+CM 21 Alan Franco 87'
+RW 10 Kendry Páez 76'
+AM 23 Moisés Caicedo 75'
+LW 16 Jeremy Sarmiento 76'
+CF 13 Enner Valencia ( c ) 30' 80'
+Substitutions:
+MF 14 Alan Minda 76'
+FW 11 Kevin Rodríguez 76'
+MF 15 Ángel Mena 80'
+MF 9 John Yeboah 80'
+FW 19 Jordy Caicedo 87'
+Manager:
+Félix Sánchez
+Man of the Match:
+Emiliano Martínez (Argentina) [ 9 ]
+Assistant referees : [ 10 ]
+Nicolás Tarán ( Uruguay )
+Martín Soppi ( Uruguay )
+Fourth official :
+Gustavo Tejera ( Uruguay )
+Fifth official :
+Pablo Llarena ( Uruguay )
+Video assistant referee :
+Leodán González ( Uruguay )
+Assistant video assistant referees :
+Richard Trinidad ( Uruguay )
+Cristhian Ferreyra ( Uruguay )
+Venezuela vs Canada
+[ edit ]
+The teams had met twice before, both in friendlies that ended in draws: 2–2 in June 2007 and 1–1 in May 2010. [ 11 ] This was their first competitive meeting. [ 12 ]
+[https://www.concacaf.com/en/copa-america/game-details?matchid=726984 Report (CONCACAF)]"},"team2":{"wt":"{{fb|CAN}}"},"goals1":{"wt":"*[[Salomón Rondón|Rondón]] {{goal|65}}"},"goals2":{"wt":"*[[Jacob Shaffelburg|Shaffelburg]] {{goal|13}}"},"stadium":{"wt":"[[AT&T Stadium]], [[Arlington, Texas]]"},"attendance":{"wt":"51,080<ref>{{cite web|url=https://www.worldfootball.net/match-report/ma10010474/lineup/|title=Copa América 2024 USA » Quarter-finals » Venezuela – Canada 3:4|work=WorldFootball.net|date=July 5, 2024|access-date=July 5, 2024}}</ref>"},"referee":{"wt":"[[Wilton Sampaio]] ([[Brazilian Football Confederation|Brazil]])"},"penaltyscore":{"wt":"3–4"},"penalties1":{"wt":"*[[Salomón Rondón|Rondón]] {{pengoal}}\n*[[Yangel Herrera|Herrera]] {{penmiss}}\n*[[Tomás Rincón|Rincón]] {{pengoal}}\n*[[Jefferson Savarino|Savarino]] {{penmiss}}\n*[[Jhonder Cádiz|Cádiz]] {{pengoal}}\n*[[Wilker Ángel|Ángel]] {{penmiss}}"},"penalties2":{"wt":"*{{pengoal}} [[Jonathan David|David]]\n*{{penmiss}} [[Liam Millar|Millar]]\n*{{pengoal}} [[Moïse Bombito|Bombito]]\n*{{penmiss}} [[Stephen Eustáquio|Eustáquio]]\n*{{pengoal}} [[Alphonso Davies|Davies]]\n*{{pengoal}} [[Ismaël Koné|Koné]]"}},"i":0}}]}'>
+July 5, 2024 ( 2024-07-05 )
+8:00 pm CDT ( UTC−5 )
+Venezuela 1–1 Canada
+Rondón 65'
+Report (CONMEBOL)
+Report (CONCACAF)
+Shaffelburg 13'
+Penalties
+Rondón
+Herrera
+Rincón
+Savarino
+Cádiz
+Ángel
+3–4
+David
+Millar
+Bombito
+Eustáquio
+Davies
+Koné
+AT&T Stadium , Arlington, Texas
+Attendance: 51,080 [ 13 ]
+Referee: Wilton Sampaio ( Brazil )
+{{cite web |url=https://www.sofascore.com/canada-venezuela/xUbscVb |title=Venezuela vs Canada live score, H2H and lineups |website=Sofascore |date=July 5, 2024 |access-date=July 5, 2024}}</ref>"}},"i":0}}]}'>
+Venezuela [ 14 ]
+"}},"i":0}}]}'>
+Canada [ 14 ]
+GK 22 Rafael Romo
+RB 4 Jon Aramburu 90+4'
+CB 2 Nahuel Ferraresi
+CB 3 Yordan Osorio 90+2'
+LB 15 Miguel Navarro
+DM 18 Cristian Cásseres Jr. 60'
+RM 25 Eduard Bello 84'
+CM 13 José Andrés Martínez 90+2'
+CM 6 Yangel Herrera
+LM 10 Yeferson Soteldo 84'
+CF 23 Salomón Rondón ( c )
+Substitutions:
+FW 9 Jhonder Cádiz 60'
+MF 7 Jefferson Savarino 84'
+MF 17 Matías Lacava 84'
+MF 8 Tomás Rincón 90+2'
+DF 20 Wilker Ángel 90+2'
+Manager:
+Fernando Batista
+GK 16 Maxime Crépeau
+RB 2 Alistair Johnston
+CB 15 Moïse Bombito
+CB 13 Derek Cornelius 50'
+LB 19 Alphonso Davies ( c )
+CM 21 Jonathan Osorio 81'
+CM 7 Stephen Eustáquio
+RW 22 Richie Laryea 72'
+AM 10 Jonathan David
+LW 14 Jacob Shaffelburg 36' 62'
+CF 9 Cyle Larin 72'
+Substitutions:
+FW 23 Liam Millar 62'
+FW 25 Tani Oluwaseyi 72'
+MF 20 Ali Ahmed 72'
+MF 8 Ismaël Koné 81'
+Manager:
+Jesse Marsch
+Man of the Match:
+Jacob Shaffelburg (Canada) [ 9 ]
+Assistant referees : [ 10 ]
+Bruno Pires ( Brazil )
+Bruno Boschilia ( Brazil )
+Fourth official :
+Juan Benítez ( Paraguay )
+Fifth official :
+Milcíades Saldívar ( Paraguay )
+Video assistant referee :
+Rodolpho Toski ( Brazil )
+Assistant video assistant referees :
+Daniel Nobre ( Brazil )
+Pablo Gonçalves ( Brazil )
+Colombia vs Panama
+[ edit ]
+The teams had previously met six times, with Colombia winning four matches and Panama two, but this was their first Copa América meeting. [ 15 ] The sides had already met in a knockout stage of a continental tournament, when Panama won 3–2 in the 2005 CONCACAF Gold Cup semi-finals. They most recently met in a June 2019 friendly, won by Colombia 3–0. [ 16 ] [ 17 ]
+[https://www.concacaf.com/en/copa-america/game-details?matchid=726985 Report (CONCACAF)]"},"team2":{"wt":"{{fb|PAN}}"},"goals1":{"wt":"*[[Jhon Córdoba|Córdoba]] {{goal|8}}\n*[[James Rodríguez|Rodríguez]] {{goal|15|pen.}}\n*[[Luis Díaz (footballer, born 1997)|Díaz]] {{goal|41}}\n*[[Richard Ríos|Ríos]] {{goal|70}}\n*[[Miguel Borja|Borja]] {{goal|90+4|pen.}}"},"goals2":{"wt":""},"stadium":{"wt":"[[State Farm Stadium]], [[Glendale, Arizona]]"},"attendance":{"wt":"39,740<ref>{{cite web|url=https://www.worldfootball.net/match-report/ma10010480/lineup/|title=Copa América 2024 USA » Quarter-finals » Colombia – Panama 5:0|work=WorldFootball.net|date=July 6, 2024|access-date=July 6, 2024}}</ref>"},"referee":{"wt":"[[Maurizio Mariani]] ([[Italian Football Federation|Italy]])"}},"i":0}}]}'>
+July 6, 2024 ( 2024-07-06 )
+3:00 pm MST ( UTC−7 )
+Colombia 5–0 Panama
+Córdoba 8'
+Rodríguez 15' ( pen. )
+Díaz 41'
+Ríos 70'
+Borja 90+4' ( pen. )
+Report (CONMEBOL)
+Report (CONCACAF)
+State Farm Stadium , Glendale, Arizona
+Attendance: 39,740 [ 18 ]
+Referee: Maurizio Mariani ( Italy )
+{{cite web |url=https://www.sofascore.com/panama-colombia/vWbsodc |title=Colombia vs Panama live score, H2H and lineups |website=Sofascore |date=July 6, 2024 |access-date=July 6, 2024}}</ref>"}},"i":0}}]}'>
+Colombia [ 19 ]
+"}},"i":0}}]}'>
+Panama [ 19 ]
+GK 12 Camilo Vargas
+RB 21 Daniel Muñoz 72'
+CB 23 Davinson Sánchez
+CB 2 Carlos Cuesta
+LB 17 Johan Mojica
+CM 6 Richard Ríos
+CM 15 Mateus Uribe 45'
+CM 11 Jhon Arias 65'
+RF 10 James Rodríguez ( c ) 72'
+CF 24 Jhon Córdoba 79'
+LF 7 Luis Díaz 65'
+Substitutions:
+FW 18 Luis Sinisterra 65'
+MF 8 Jorge Carrascal 65'
+DF 4 Santiago Arias 72'
+MF 20 Juan Fernando Quintero 72'
+FW 9 Miguel Borja 79'
+Manager:
+Néstor Lorenzo
+GK 22 Orlando Mosquera
+CB 24 Edgardo Fariña 64'
+CB 3 José Córdoba 90+2'
+CB 25 Roderick Miller 46'
+RWB 23 Michael Amir Murillo
+LWB 15 Eric Davis ( c ) 82'
+RM 2 César Blackman 46'
+CM 6 Cristian Martínez 62'
+CM 14 Jovani Welch 54'
+LM 10 Yoel Bárcenas
+CF 17 José Fajardo 85'
+Substitutions:
+FW 9 Eduardo Guerrero 46'
+MF 16 Carlos Harvey 46'
+MF 5 Abdiel Ayarza 62'
+DF 18 Omar Valencia 82'
+FW 11 Ismael Díaz 85'
+Manager:
+Thomas Christiansen
+Man of the Match:
+James Rodríguez (Colombia) [ 9 ]
+Assistant referees : [ 20 ]
+Daniele Bindoni ( Italy )
+Alberto Tegoni ( Italy )
+Fourth official :
+Kevin Ortega ( Peru )
+Fifth official :
+Michael Orué ( Peru )
+Video assistant referee :
+Marco Di Bello ( Italy )
+Assistant video assistant referees :
+Aleandro Di Paolo ( Italy )
+Gery Vargas ( Bolivia )
+Uruguay vs Brazil
+[ edit ]
+See also: Uruguay–Brazil football rivalry
+This was the eightieth meeting between these two historic rivals with Brazil winning 38 of the previous 79 matches to Uruguay's 21 wins and 20 draws. [ 21 ] However, the record in the 26 previous Copa América matches was fairly even, with nine wins for each side and eight draws, although the last Uruguayan triumph dated back to the 1983 Copa América when they won 2–0. [ 22 ] Their most recent meeting was in October 2023, with Uruguay winning 2–0 at home in the 2026 FIFA World Cup qualification . [ 21 ]
+[https://www.concacaf.com/en/copa-america/game-details?matchid=726986 Report (CONCACAF)]"},"team2":{"wt":"{{fb|BRA}}"},"goals1":{"wt":""},"goals2":{"wt":""},"stadium":{"wt":"[[Allegiant Stadium]], [[Paradise, Nevada]]"},"attendance":{"wt":"55,770<ref>{{cite web|url=https://www.espn.com/soccer/report/_/gameId/703949|title=Uruguay 0–0 Brazil (Jul 6, 2024) Game Analysis|work=[[ESPN]]|date=July 6, 2024|access-date=July 6, 2024}}</ref>"},"referee":{"wt":"[[Darío Herrera (referee)|Darío Herrera]] ([[Argentine Football Association|Argentina]])"},"penaltyscore":{"wt":"4–2"},"penalties1":{"wt":"*[[Federico Valverde|Valverde]] {{pengoal}}\n*[[Rodrigo Bentancur|Bentancur]] {{pengoal}}\n*[[Giorgian de Arrascaeta|De Arrascaeta]] {{pengoal}}\n*[[José María Giménez|Giménez]] {{penmiss}}\n*[[Manuel Ugarte (footballer)|Ugarte]] {{pengoal}}"},"penalties2":{"wt":"*{{penmiss}} [[Éder Militão|Militão]]\n*{{pengoal}} [[Andreas Pereira|Pereira]]\n*{{penmiss}} [[Douglas Luiz]]\n*{{pengoal}} [[Gabriel Martinelli|Martinelli]]"}},"i":0}}]}'>
+July 6, 2024 ( 2024-07-06 )
+6:00 pm PDT ( UTC−7 )
+Uruguay 0–0 Brazil
+Report (CONMEBOL)
+Report (CONCACAF)
+Penalties
+Valverde
+Bentancur
+De Arrascaeta
+Giménez
+Ugarte
+4–2
+Militão
+Pereira
+Douglas Luiz
+Martinelli
+Allegiant Stadium , Paradise, Nevada
+Attendance: 55,770 [ 23 ]
+Referee: Darío Herrera ( Argentina )
+{{cite web |url=https://www.sofascore.com/brazil-uruguay/AUbsYUb |title=Uruguay vs Brazil live score, H2H and lineups |website=Sofascore |date=July 6, 2024 |access-date=July 6, 2024}}</ref>"}},"i":0}}]}'>
+Uruguay [ 24 ]
+"}},"i":0}}]}'>
+Brazil [ 24 ]
+GK 1 Sergio Rochet
+RB 8 Nahitan Nández 74'
+CB 4 Ronald Araújo 33'
+CB 16 Mathías Olivera
+LB 17 Matías Viña 46'
+CM 5 Manuel Ugarte 51'
+CM 15 Federico Valverde ( c )
+RW 11 Facundo Pellistri 77'
+AM 7 Nicolás de la Cruz 60' 66'
+LW 20 Maximiliano Araújo
+CF 19 Darwin Núñez 78'
+Substitutions:
+DF 2 José María Giménez 33'
+DF 3 Sebastián Cáceres 46'
+MF 6 Rodrigo Bentancur 66'
+DF 13 Guillermo Varela 77'
+MF 10 Giorgian de Arrascaeta 78'
+Manager:
+Marcelo Bielsa
+GK 1 Alisson
+RB 2 Danilo ( c )
+CB 3 Éder Militão
+CB 4 Marquinhos
+LB 16 Guilherme Arana
+CM 5 Bruno Guimarães 87'
+CM 15 João Gomes 64' 82'
+RW 11 Raphinha 82'
+AM 8 Lucas Paquetá 39' 81'
+LW 10 Rodrygo 87'
+CF 9 Endrick
+Substitutions:
+MF 18 Douglas Luiz 81'
+FW 20 Savinho 82'
+MF 19 Andreas Pereira 82'
+FW 22 Gabriel Martinelli 87'
+FW 21 Evanilson 87'
+Manager:
+Dorival Júnior
+Man of the Match:
+Sergio Rochet (Uruguay) [ 9 ]
+Assistant referees : [ 20 ]
+Juan Pablo Belatti ( Argentina )
+Cristian Navarro ( Argentina )
+Fourth official :
+Iván Barton ( El Salvador )
+Fifth official :
+Henri Pupiro ( Nicaragua )
+Video assistant referee :
+Guillermo Pacheco ( Mexico )
+Assistant video assistant referees :
+Erick Miranda ( Mexico )
+Tatiana Guzmán ( Nicaragua )
+Semi-finals
+[ edit ]
+Argentina vs Canada
+[ edit ]
+The teams had met twice before, including the tournament's opening game in Group A , which was won 2–0 by Argentina . [ 25 ] Canada became the third CONCACAF team to reach the semi-finals of the Copa América in its tournament debut, following Mexico in 1993 , and Honduras in 2001 . [ 26 ]
+[https://www.concacaf.com/en/copa-america/game-details?matchid=726987 Report (CONCACAF)]"},"team2":{"wt":"{{fb|CAN}}"},"goals1":{"wt":"*[[Julián Alvarez|Alvarez]] {{goal|22}}\n*[[Lionel Messi|Messi]] {{goal|51}}"},"goals2":{"wt":""},"stadium":{"wt":"[[MetLife Stadium]], [[East Rutherford, New Jersey]]"},"attendance":{"wt":"80,102<ref>{{cite web|url=https://www.espn.com/soccer/report/_/gameId/703950|title=Argentina 2–0 Canada (Jul 9, 2024) Game Analysis |work=[[ESPN]]|date=July 9, 2024|access-date=July 9, 2024}}</ref>"},"referee":{"wt":"[[Piero Maza]] ([[Football Federation of Chile|Chile]])"}},"i":0}}]}'>
+July 9, 2024 ( 2024-07-09 )
+8:00 pm EDT ( UTC−4 )
+Argentina 2–0 Canada
+Alvarez 22'
+Messi 51'
+Report (CONMEBOL)
+Report (CONCACAF)
+MetLife Stadium , East Rutherford, New Jersey
+Attendance: 80,102 [ 27 ]
+Referee: Piero Maza ( Chile )
+{{cite web |url=https://www.sofascore.com/argentina-canada/cVbsuWb#id:11886259 |title=Argentina vs Canada live score, H2H and lineups |website=Sofascore |date=July 9, 2024 |access-date=July 9, 2024}}</ref>"}},"i":0}}]}'>
+Argentina [ 28 ]
+"}},"i":0}}]}'>
+Canada [ 28 ]
+GK 23 Emiliano Martínez
+RB 4 Gonzalo Montiel 71'
+CB 13 Cristian Romero
+CB 25 Lisandro Martínez
+LB 3 Nicolás Tagliafico 64'
+RM 11 Ángel Di María 78'
+CM 7 Rodrigo De Paul
+CM 24 Enzo Fernández
+LM 20 Alexis Mac Allister 78'
+CF 10 Lionel Messi ( c )
+CF 9 Julián Alvarez 78'
+Substitutions:
+DF 19 Nicolás Otamendi 64'
+DF 26 Nahuel Molina 88' 71'
+FW 22 Lautaro Martínez 78'
+MF 14 Exequiel Palacios 78'
+FW 15 Nicolás González 78'
+Manager:
+Lionel Scaloni
+GK 16 Maxime Crépeau
+RB 2 Alistair Johnston
+CB 15 Moïse Bombito
+CB 13 Derek Cornelius
+LB 19 Alphonso Davies ( c ) 71'
+RM 22 Richie Laryea 55'
+CM 8 Ismaël Koné 79'
+CM 7 Stephen Eustáquio 63' 72'
+LM 14 Jacob Shaffelburg 55'
+CF 10 Jonathan David 32' 64'
+CF 9 Cyle Larin
+Substitutions:
+FW 23 Liam Millar 55'
+MF 20 Ali Ahmed 55'
+FW 25 Tani Oluwaseyi 64'
+MF 21 Jonathan Osorio 71'
+MF 24 Mathieu Choinière 72'
+Manager:
+Jesse Marsch 77'
+Man of the Match:
+Lionel Messi (Argentina) [ 9 ]
+Assistant referees : [ 29 ]
+Claudio Urrutia ( Chile )
+José Retamal ( Chile )
+Fourth official :
+Cristian Garay ( Chile )
+Fifth official :
+Juan Serrano ( Chile )
+Video assistant referee :
+Juan Lara ( Chile )
+Assistant video assistant referees :
+Edson Cisternas ( Chile )
+Augusto Menéndez ( Peru )
+Rodrigo Carvajal ( Chile )
+Uruguay vs Colombia
+[ edit ]
+The teams had met 45 times prior to this match, with 20 wins for Uruguay, 12 wins for Colombia, and 13 draws. [ 30 ] Twelve of these encounters took place in the Copa América, with Uruguay winning six matches, Colombia three, and the other three ending in draws. [ 31 ] Their most recent meeting was in October 2023, a 2–2 stalemate on Colombian soil in the 2026 FIFA World Cup qualification . [ 32 ]
+Colombia contested its ninth Copa America semi-final, of which it only advanced to the final twice. For its part, Uruguay returned to a semi-final for the first time since 2011 , the edition in which it won its last title. [ 33 ] This was the third Copa América semifinal between the sides, with both advancing to the final once in the previous two series: Colombia won 3–1 on aggregate in 1975 while Uruguay won 2–0 in 1995 . [ 34 ]
+[https://www.concacaf.com/en/copa-america/game-details?matchid=726988 Report (CONCACAF)]"},"team2":{"wt":"{{fb|COL}}"},"goals1":{"wt":""},"goals2":{"wt":"*[[Jefferson Lerma|Lerma]] {{goal|39}}"},"stadium":{"wt":"[[Bank of America Stadium]], [[Charlotte, North Carolina]]"},"attendance":{"wt":"70,644<ref>{{cite web|url=https://www.worldfootball.net/match-report/ma10010486/lineup/|title=Copa América 2024 USA » Semi-finals » Uruguay – Colombia 0:1|work=WorldFootball.net|date=July 10, 2024|access-date=July 10, 2024}}</ref>"},"referee":{"wt":"[[César Arturo Ramos|César Ramos]] ([[Mexican Football Federation|Mexico]])"}},"i":0}}]}'>
+July 10, 2024 ( 2024-07-10 )
+8:00 pm EDT ( UTC−4 )
+Uruguay 0–1 Colombia
+Report (CONMEBOL)
+Report (CONCACAF)
+Lerma 39'
+Bank of America Stadium , Charlotte, North Carolina
+Attendance: 70,644 [ 35 ]
+Referee: César Ramos ( Mexico )
+{{cite web |url=https://www.sofascore.com/colombia-uruguay/AUbsvWb |title=Colombia vs Uruguay live score, H2H and lineups |website=Sofascore |date=July 10, 2024 |access-date=July 10, 2024}}</ref>"}},"i":0}}]}'>
+Uruguay [ 36 ]
+"}},"i":0}}]}'>
+Colombia [ 36 ]
+GK 1 Sergio Rochet
+CB 3 Sebastián Cáceres
+CB 2 José Giménez 69'
+CB 16 Mathías Olivera 46'
+CM 15 Federico Valverde ( c )
+CM 5 Manuel Ugarte
+RM 11 Facundo Pellistri 46'
+AM 6 Rodrigo Bentancur 34'
+AM 7 Nicolás de la Cruz 25' 90'
+LM 20 Maximiliano Araújo
+CF 19 Darwin Núñez
+Substitutions:
+DF 13 Guillermo Varela 63' 34' 67'
+FW 25 Cristian Olivera 46'
+MF 10 Giorgian de Arrascaeta 46'
+FW 9 Luis Suárez 67'
+FW 14 Agustín Canobbio 90'
+Manager:
+Marcelo Bielsa
+GK 12 Camilo Vargas
+RB 21 Daniel Muñoz 31' 45+1'
+CB 23 Davinson Sánchez
+CB 2 Carlos Cuesta 90+7'
+LB 17 Johan Mojica
+CM 6 Richard Ríos 62'
+CM 16 Jefferson Lerma
+RW 11 Jhon Arias 46'
+AM 10 James Rodríguez ( c ) 55' 62'
+LW 7 Luis Díaz 86'
+CF 24 Jhon Córdoba 75'
+Substitutions:
+DF 4 Santiago Arias 46'
+MF 15 Mateus Uribe 62'
+MF 5 Kevin Castaño 90+6' 62'
+DF 13 Yerry Mina 75'
+FW 18 Luis Sinisterra 86'
+Manager:
+Néstor Lorenzo
+Man of the Match:
+James Rodríguez (Colombia) [ 9 ]
+Assistant referees : [ 29 ]
+Alberto Morín ( Mexico )
+Marco Bisguerra ( Mexico )
+Fourth official :
+Mario Escobar ( Guatemala )
+Fifth official :
+Humberto Panjoj ( Guatemala )
+Video assistant referee :
+Carlos Orbe ( Ecuador )
+Assistant video assistant referees :
+Cristhian Lescano ( Ecuador )
+Joel Alarcón ( Peru )
+Bryan Loayza ( Ecuador )
+Third place play-off
+[ edit ]
+The teams had met twice before, both in friendlies that Uruguay won: 3–1 in February 1986 and 2–0 in September 2022. This was thus their first competitive meeting.
+[https://www.concacaf.com/en/copa-america/game-details?matchid=726989 Report (CONCACAF)]"},"team2":{"wt":"{{fb|URU}}"},"goals1":{"wt":"*[[Ismaël Koné|Koné]] {{goal|22}}\n*[[Jonathan David|David]] {{goal|80}}"},"goals2":{"wt":"*[[Rodrigo Bentancur|Bentancur]] {{goal|8}}\n*[[Luis Suárez (Uruguayan footballer)|Suárez]] {{goal|90+2}}"},"stadium":{"wt":"[[Bank of America Stadium]], [[Charlotte, North Carolina]]"},"attendance":{"wt":"24,386<ref>{{cite web|url=https://www.worldfootball.net/match-report/ma10010489/lineup/|title=Copa América 2024 USA » Third place play-off » Canada – Uruguay 2:2|work=WorldFootball.net|date=July 13, 2024|access-date=July 13, 2024}}</ref>"},"referee":{"wt":"Alexis Herrera ([[Venezuelan Football Federation|Venezuela]])"},"penaltyscore":{"wt":"3–4"},"penalties1":{"wt":"*[[Jonathan David|David]] {{pengoal}}\n*[[Moïse Bombito|Bombito]] {{pengoal}}\n*[[Ismaël Koné|Koné]] {{penmiss}}\n*[[Mathieu Choinière|Choinière]] {{pengoal}}\n*[[Alphonso Davies|Davies]] {{penmiss}}"},"penalties2":{"wt":"*{{pengoal}} [[Federico Valverde|Valverde]]\n*{{pengoal}} [[Rodrigo Bentancur|Bentancur]]\n*{{pengoal}} [[Giorgian de Arrascaeta|De Arrascaeta]]\n*{{pengoal}} [[Luis Suárez (Uruguayan footballer)|Suárez]]"}},"i":0}}]}'>
+July 13, 2024 ( 2024-07-13 )
+8:00 pm EDT ( UTC−4 )
+Canada 2–2 Uruguay
+Koné 22'
+David 80'
+Report (CONMEBOL)
+Report (CONCACAF)
+Bentancur 8'
+Suárez 90+2'
+Penalties
+David
+Bombito
+Koné
+Choinière
+Davies
+3–4
+Valverde
+Bentancur
+De Arrascaeta
+Suárez
+Bank of America Stadium , Charlotte, North Carolina
+Attendance: 24,386 [ 37 ]
+Referee: Alexis Herrera ( Venezuela )
+{{cite web |url=https://www.sofascore.com/canada-uruguay/AUbscVb |title=Canada vs Uruguay live score, H2H and lineups |website=Sofascore |date=July 13, 2024 |access-date=July 13, 2024}}</ref>"}},"i":0}}]}'>
+Canada [ 38 ]
+"}},"i":0}}]}'>
+Uruguay [ 38 ]
+GK 1 Dayne St. Clair 90+3'
+RB 2 Alistair Johnston 62'
+CB 3 Luc de Fougerolles 7' 67'
+CB 15 Moïse Bombito
+LB 22 Richie Laryea ( c )
+CM 8 Ismaël Koné 78'
+CM 24 Mathieu Choinière
+RW 20 Ali Ahmed 67'
+AM 21 Jonathan Osorio 77'
+LW 14 Jacob Shaffelburg
+CF 25 Tani Oluwaseyi 63' 67'
+Substitutions:
+DF 19 Alphonso Davies 62'
+DF 13 Derek Cornelius 67'
+FW 10 Jonathan David 67'
+FW 23 Liam Millar 77'
+FW 11 Theo Bair 77'
+Manager:
+Jesse Marsch
+GK 1 Sergio Rochet
+RB 8 Nahitan Nández
+CB 2 José Giménez ( c )
+CB 3 Sebastián Cáceres
+LB 17 Matías Viña 26' 66'
+CM 15 Federico Valverde
+CM 5 Manuel Ugarte 46'
+CM 6 Rodrigo Bentancur 85'
+RF 11 Facundo Pellistri 61'
+CF 19 Darwin Núñez 46'
+LF 20 Maximiliano Araújo 61'
+Substitutions:
+MF 10 Giorgian de Arrascaeta 46'
+FW 9 Luis Suárez 46'
+FW 18 Brian Rodríguez 61'
+FW 25 Cristian Olivera 61'
+DF 24 Lucas Olaza 66'
+Manager:
+Marcelo Bielsa
+Man of the Match:
+Luis Suárez (Uruguay) [ 9 ]
+Assistant referees : [ 39 ]
+Lubin Torrealba ( Venezuela )
+Alberto Ponte ( Venezuela )
+Fourth official :
+Gery Vargas ( Bolivia )
+Fifth official :
+Bruno Boschilia ( Brazilian )
+Video assistant referee :
+Derlis López ( Paraguay )
+Assistant video assistant referees :
+Milcíades Saldívar ( Paraguay )
+Jhon León ( Colombia )
+Jhon Ospina ( Colombia )
+Final
+[ edit ]
+Main article: 2024 Copa América final
+The teams had met 40 times prior to this match, with 20 wins for Argentina, 9 wins for Colombia, and 10 draws. Fifteen of these encounters took place in the Copa América, with Argentina winning seven matches, Colombia three, and the other four ending in draws. Their most recent meeting was in February 2022, an Argentina 1–0 win in the Estadio Mario Alberto Kempes , in Córdoba, in the 2022 FIFA World Cup qualification . The last Copa América meeting between the sides was a 1–1 draw in the previous edition semifinals in which Argentina won 3–2 on penalties.
+Colombia was in its third Copa América final, having previously won the 2001 edition , which took place on home soil. Argentina was in back-to-back finals for the first time since its 2015 and 2016 run, and as defending champion, was seeking to retain the title for the first time since its 1993 Copa América triumph.
+July 14, 2024 ( 2024-07-14 )
+9:22 pm EDT ( UTC−4 ) [ a ] [ 40 ]
+Argentina 1–0 ( a.e.t. ) Colombia
+La. Martínez 112'
+Report (CONMEBOL)
+Report (CONCACAF)
+Hard Rock Stadium , Miami Gardens, Florida
+Attendance: 65,300 [ 41 ]
+Referee: Raphael Claus ( Brazil )
+Argentina [ 42 ]
+Colombia [ 42 ]
+GK 23 Emiliano Martínez
+RB 4 Gonzalo Montiel 72'
+CB 13 Cristian Romero
+CB 25 Lisandro Martínez
+LB 3 Nicolás Tagliafico
+RM 11 Ángel Di María 117'
+CM 7 Rodrigo De Paul
+CM 24 Enzo Fernández 97'
+LM 20 Alexis Mac Allister 61' 97'
+CF 10 Lionel Messi ( c ) 66'
+CF 9 Julián Alvarez 97'
+Substitutions:
+FW 15 Nicolás González 66'
+DF 26 Nahuel Molina 72'
+FW 22 Lautaro Martínez 97'
+MF 5 Leandro Paredes 97'
+MF 16 Giovani Lo Celso 118' 97'
+DF 19 Nicolás Otamendi 117'
+Manager:
+Lionel Scaloni
+GK 12 Camilo Vargas
+RB 4 Santiago Arias
+CB 23 Davinson Sánchez
+CB 2 Carlos Cuesta
+LB 17 Johan Mojica
+CM 6 Richard Ríos 89'
+CM 16 Jefferson Lerma 106'
+CM 11 Jhon Arias 106'
+RF 10 James Rodríguez ( c ) 91'
+CF 24 Jhon Córdoba 27' 89'
+LF 7 Luis Díaz 106'
+Substitutions:
+FW 19 Rafael Santos Borré 89'
+MF 5 Kevin Castaño 89'
+MF 20 Juan Fernando Quintero 91'
+MF 15 Mateus Uribe 106'
+FW 9 Miguel Borja 115' 106'
+MF 8 Jorge Carrascal 106'
+Manager:
+Néstor Lorenzo
+Man of the Match:
+Ángel Di María (Argentina) [ 43 ]
+Assistant referees : [ 44 ]
+Bruno Pires ( Brazil )
+Rodrigo Correa ( Brazil )
+Fourth official :
+Juan Gabriel Benítez ( Paraguay )
+Fifth official :
+Eduardo Cardozo ( Paraguay )
+Video assistant referee :
+Rodolpho Toski ( Brazil )
+Assistant video assistant referees :
+Danilo Manis ( Brazil )
+Daniel Nobre ( Brazil )
+Pablo Gonçalves ( Brazil )
+Notes
+[ edit ]
+↑ The kickoff time was delayed from the original time of 8:00 pm EDT.
+References
+[ edit ]
+↑ Grez, Matias (December 5, 2023). "CONMEBOL announces 14 host cities for 2024 Copa América as tournament returns to the US" . CNN . Retrieved December 7, 2023 .
+↑ "All set! The CONMEBOL Copa América 2024 schedule is here" . Copa América . CONMEBOL. December 7, 2023.
+↑ "CONMEBOL Copa America 2024 Regulations" (PDF) . CONMEBOL. November 29, 2023. Archived (PDF) from the original on December 1, 2023 . Retrieved December 1, 2023 .
+↑ Maverino, Silvio (June 30, 2024). "Argentina y un historial favorable ante Ecuador" [ Argentina and a favorable record against Ecuador ] . El Gráfico (in Spanish) . Retrieved July 2, 2024 .
+↑ "The knockout stage begins: Argentina-Ecuador open the Quarterfinals" . Copa América . CONMEBOL. July 3, 2024 . Retrieved July 3, 2024 .
+↑ "Con media hora de Messi y gol de Di María, Argentina derrota a Ecuador rumbo a la Copa América" [ With half-hour of Messi and Di Maria's goal, Argentina defeats Ecuador on the road to Copa America ] . Los Angeles Times (in Spanish). Chicago. Associated Press . June 9, 2024 . Retrieved July 3, 2024 .
+↑ "Copa América 2024 USA » Quarter-finals » Argentina – Ecuador 4:2" . WorldFootball.net . July 4, 2024 . Retrieved July 4, 2024 .
+1 2 "Argentina vs Ecuador live score, H2H and lineups" . Sofascore . July 4, 2024 . Retrieved July 4, 2024 .
+1 2 3 4 5 6 7 "Superior Player of the Match | CONMEBOL Copa América" . Copa América . CONMEBOL. June 20, 2024 . Retrieved July 14, 2024 .
+1 2 "Designación de Árbitros" (PDF) (in Spanish). CONMEBOL. July 3, 2024 . Retrieved July 3, 2024 .
+↑ "Copa América 2024: Conozca el historial entre Venezuela y Canadá ¿Quién llega como favorito?" [ Copa América 2024: Know the history between Venezuela and Canada Who arrives as favorite? ] . Diario Meridiano (in Spanish). Bloque De Armas . July 3, 2024 . Retrieved July 3, 2024 .
+↑ "Canada meets Venezuela in Copa America quarterfinals" . Miami: CONCACAF . July 4, 2024 . Retrieved July 4, 2024 .
+↑ "Copa América 2024 USA » Quarter-finals » Venezuela – Canada 3:4" . WorldFootball.net . July 5, 2024 . Retrieved July 5, 2024 .
+1 2 "Venezuela vs Canada live score, H2H and lineups" . Sofascore . July 5, 2024 . Retrieved July 5, 2024 .
+↑ "Así está el historial entre Colombia y Panamá: ¿quién avanzará a semifinales?" [ Colombia vs. Panama history: who will advance to the semifinals? ] . El Espectador (in Spanish). July 5, 2024 . Retrieved July 6, 2024 .
+↑ "Colombia and Panama to play an unprecedented match to qualify for the Semifinals of CONMEBOL Copa América™" . Copa América . CONMEBOL. July 5, 2024 . Retrieved July 6, 2024 .
+↑ "Panama faces Colombia in Copa America quarterfinals" . Miami: CONCACAF. July 6, 2024 . Retrieved July 6, 2024 .
+↑ "Copa América 2024 USA » Quarter-finals » Colombia – Panama 5:0" . WorldFootball.net . July 6, 2024 . Retrieved July 6, 2024 .
+1 2 "Colombia vs Panama live score, H2H and lineups" . Sofascore . July 6, 2024 . Retrieved July 6, 2024 .
+1 2 "Designación de Árbitros" (PDF) (in Spanish). CONMEBOL. July 4, 2024 . Retrieved July 4, 2024 .
+1 2 "Brasil x Uruguai será o 80º jogo entre as seleções; veja retrospecto" [ Brazil vs Uruguay will be the 80th match between the sides; see the record ] (in Brazilian Portuguese). Brazilian Football Confederation . July 6, 2024 . Retrieved July 6, 2024 .
+↑ "Uruguay-Brazil, A South American Classico With Semifinals At Stake" . Copa América . CONMEBOL. July 6, 2024 . Retrieved July 6, 2024 .
+↑ "Uruguay 0–0 Brazil (Jul 6, 2024) Game Analysis" . ESPN . July 6, 2024 . Retrieved July 6, 2024 .
+1 2 "Uruguay vs Brazil live score, H2H and lineups" . Sofascore . July 6, 2024 . Retrieved July 6, 2024 .
+↑ "Argentina and Canada to decide the first finalist of CONMEBOL Copa América™" . Copa América . CONMEBOL. July 8, 2024 . Retrieved July 8, 2024 .
+↑ "Canada meets Argentina for place in Copa America Final" . Miami: CONCACAF. July 9, 2024 . Retrieved July 9, 2024 .
+↑ "Argentina 2–0 Canada (Jul 9, 2024) Game Analysis" . ESPN . July 9, 2024 . Retrieved July 9, 2024 .
+1 2 "Argentina vs Canada live score, H2H and lineups" . Sofascore . July 9, 2024 . Retrieved July 9, 2024 .
+1 2 "Designación de Árbitros" (PDF) (in Spanish). CONMEBOL. July 7, 2024 . Retrieved July 7, 2024 .
+↑ "Colombia national football team: record v Uruguay" . 11v11.com . Retrieved July 10, 2024 .
+↑ "Colombia and Uruguay Battle For A Spot In The CONMEBOL Copa América™ Final" . Copa América . CONMEBOL. July 10, 2024 . Retrieved July 10, 2024 .
+↑ Aboy, Agustín (July 9, 2024). "Historial de Colombia vs. Uruguay en la Copa América: Partidos, resultados y antecedentes" [ History of Colombia vs. Uruguay in the Copa América: Matches, results and background ] (in Spanish). The Sporting News . Retrieved July 9, 2024 .
+↑ Casallas, Sergio (July 8, 2024). "Datos históricos del Uruguay vs. Colombia en la Copa América" [ Historical facts of Uruguay vs. Colombia in the Copa América ] . Diario AS (in Spanish) . Retrieved July 9, 2024 .
+↑ Beetar, Juan David (July 9, 2024). "Así han sido los Colombia vs. Uruguay en semifinales de Copa" [ Colombia vs. Uruguay in the Copa semifinals ] . Diario AS (in Spanish) . Retrieved July 9, 2024 .
+↑ "Copa América 2024 USA » Semi-finals » Uruguay – Colombia 0:1" . WorldFootball.net . July 10, 2024 . Retrieved July 10, 2024 .
+1 2 "Colombia vs Uruguay live score, H2H and lineups" . Sofascore . July 10, 2024 . Retrieved July 10, 2024 .
+↑ "Copa América 2024 USA » Third place play-off » Canada – Uruguay 2:2" . WorldFootball.net . July 13, 2024 . Retrieved July 13, 2024 .
+1 2 "Canada vs Uruguay live score, H2H and lineups" . Sofascore . July 13, 2024 . Retrieved July 13, 2024 .
+↑ "Designación de Árbitros" (PDF) (in Spanish). CONMEBOL. July 11, 2024 . Retrieved July 11, 2024 .
+↑ Carlisle, Jeff (July 14, 2024). "Copa América final start delayed 30 minutes after fans rush gates" . ABC News . Retrieved July 14, 2024 .
+↑ Rabin, Charles; Hanks, Douglas; Kaufman, Michelle (July 15, 2024). "Lax security for walk-ins led to breach, chaos at Hard Rock Stadium's Copa America final" . Miami Herald . Retrieved July 15, 2024 .
+1 2 "Argentina vs Colombia live score, H2H and lineups" . Sofascore . July 14, 2024 . Retrieved July 14, 2024 .
+↑ "Angel Di Maria Wins CONMEBOL Copa América 2024™ Final Player of the Match" . Copa América . CONMEBOL. July 15, 2024 . Retrieved July 15, 2024 .
+↑ "Designación de Árbitros" (PDF) (in Spanish). CONMEBOL. July 11, 2024. Archived (PDF) from the original on July 12, 2024 . Retrieved July 11, 2024 .
+External links
+[ edit ]
+Official website
+2024 CONMEBOL Copa América at CONMEBOL.com
+2024 CONMEBOL Copa América at CONCACAF.com
+v
+t
+e
+2024 Copa América
+Stages
+Group stage
+Group A
+Group B
+Group C
+Group D
+Knockout stage
+Final
+General information
+Final halftime show
+Squads
+Official song
+Qualification
+CONCACAF Nations League
+League A
+Quarter-finals
+Qualifying play-offs
+Retrieved from " https://en.wikipedia.org/w/index.php?title=2024_Copa_América_knockout_stage&oldid=1376280512 "
+Categories : 2024 Copa América
+Copa América knockout stages
+Argentina at the 2024 Copa América
+Brazil at the 2024 Copa América
+Canada at the 2024 Copa América
+Ecuador at the 2024 Copa América
+Uruguay at the 2024 Copa América
+Colombia at the 2024 Copa América
+Venezuela at the 2024 Copa América
+2024 in Panamanian sport
+Argentina–Colombia sports relations
+Argentina–Ecuador sports relations
+Brazil–Uruguay football rivalry
+Colombia–Panama sports relations
+Colombia–Uruguay sports relations
+Hidden categories: Articles with short description
+Short description is different from Wikidata
+CS1 Spanish-language sources (es)
+CS1 Brazilian Portuguese-language sources (pt-br)
+Official website not in Wikidata
+This page was last edited on 23 September 2026, at 05:00 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+2024 Copa América knockout stage
+10 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"2024 Copa Am\u00e9rica knockout stage","url":"https:\/\/en.wikipedia.org\/wiki\/2024_Copa_Am%C3%A9rica_knockout_stage","sameAs":"http:\/\/www.wikidata.org\/entity\/Q124004083","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q124004083","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2023-12-08T16:39:08Z","dateModified":"2026-09-23T05:00:30Z","headline":"international soccer match"}

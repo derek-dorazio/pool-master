@@ -1,0 +1,1642 @@
+Source: https://en.wikipedia.org/wiki/2022_FIFA_World_Cup_knockout_stage
+Final URL: https://en.wikipedia.org/wiki/2022_FIFA_World_Cup_knockout_stage
+HTTP 200
+Fetched: 2026-10-21T02:13:45.459Z
+
+2022 FIFA World Cup knockout stage - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Format
+2
+Qualified teams
+3
+Bracket
+4
+Round of 16
+Toggle Round of 16 subsection
+4.1
+Netherlands vs United States
+4.2
+Argentina vs Australia
+4.3
+France vs Poland
+4.4
+England vs Senegal
+4.5
+Japan vs Croatia
+4.6
+Brazil vs South Korea
+4.7
+Morocco vs Spain
+4.8
+Portugal vs Switzerland
+5
+Quarter-finals
+Toggle Quarter-finals subsection
+5.1
+Croatia vs Brazil
+5.2
+Netherlands vs Argentina
+5.3
+Morocco vs Portugal
+5.4
+England vs France
+6
+Semi-finals
+Toggle Semi-finals subsection
+6.1
+Argentina vs Croatia
+6.2
+France vs Morocco
+7
+Match for third place
+8
+Final
+9
+Notes
+10
+References
+Toggle References subsection
+10.1
+Match reports
+11
+External links
+Toggle the table of contents
+2022 FIFA World Cup knockout stage
+33 languages
+العربية
+الدارجة
+Basa Bali
+বাংলা
+کوردی
+Čeština
+Deutsch
+فارسی
+Suomi
+Français
+עברית
+Magyar
+Bahasa Indonesia
+日本語
+한국어
+Македонски
+Bahasa Melayu
+Norsk bokmål
+Português
+Română
+Русский
+Simple English
+Српски / srpski
+Svenska
+తెలుగు
+ไทย
+Türkçe
+Українська
+اردو
+Oʻzbekcha / ўзбекча
+Tiếng Việt
+粵語
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikimedia Commons
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+The knockout stage of the 2022 FIFA World Cup was the second and final stage of the competition, following the group stage . Played from 3 to 18 December, the knockout stage ended with the final , held at Lusail Stadium in Lusail , Qatar between Argentina and France . [ 1 ] The top two teams from each group advanced to the knockout stage to compete in a single-elimination tournament . There were 16 matches in the knockout stage, including a match for third place played between the two losing teams of the semi-finals. [ 2 ] Morocco made history by becoming the first African and first Arab nation to reach a FIFA World Cup semi-final, defeating Spain and Portugal in the process. [ 3 ]
+Format
+[ edit ]
+The knockout stage of the 2022 FIFA World Cup was contested between 16 teams that qualified from the group stage. Matches in the knockout stage were played to a finish. If the score of a match was level at the end of 90 minutes of playing time, extra time was played. If, after two periods of 15 minutes, the scores were still tied, the match was decided by a penalty shoot-out . [ 2 ] All times listed are local in Arabia Standard Time ( UTC+3 ). [ 1 ]
+Qualified teams
+[ edit ]
+The top two placed teams from each of the eight groups qualified for the knockout stage. [ 2 ]
+Group
+Winners
+Runners-up
+A
+Netherlands
+Senegal
+B
+England
+United States
+C
+Argentina
+Poland
+D
+France
+Australia
+E
+Japan
+Spain
+F
+Morocco
+Croatia
+G
+Brazil
+Switzerland
+H
+Portugal
+South Korea
+Bracket
+[ edit ]
+The tournament bracket is shown below, with bold denoting the winners of each match. [ 4 ]
+\n<!--Round of 16-->\n"},"11":{"wt":"3 December – [[Al Rayyan]] ([[Khalifa International Stadium|Khalifa]])"},"12":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|NED}}"},"13":{"wt":"3"},"14":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|USA}}"},"15":{"wt":"1\n"},"16":{"wt":"3 December – [[Al Rayyan]] ([[Ahmad bin Ali Stadium|Ahmad bin Ali]])"},"17":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|ARG}}"},"18":{"wt":"2"},"19":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|AUS}}"},"20":{"wt":"1\n"},"21":{"wt":"5 December – [[Al Wakrah]]"},"22":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|JPN}}"},"23":{"wt":"1 (1)"},"24":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|CRO}} {{pso}}"},"25":{"wt":"1 (3)\n"},"26":{"wt":"5 December – [[Doha]] ([[Stadium 974|974]])"},"27":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|BRA}}"},"28":{"wt":"4"},"29":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|KOR}}"},"30":{"wt":"1\n"},"31":{"wt":"4 December – [[Al Khor]]"},"32":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|ENG}}"},"33":{"wt":"3"},"34":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|SEN}}"},"35":{"wt":"0\n"},"36":{"wt":"4 December – [[Doha]] ([[Al Thumama Stadium|Al Thumama]])"},"37":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|FRA}}"},"38":{"wt":"3"},"39":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|POL}}"},"40":{"wt":"1\n"},"41":{"wt":"6 December – [[Al Rayyan]] ([[Education City Stadium|Education City]])"},"42":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|MAR}} {{pso}}"},"43":{"wt":"0 (3)"},"44":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|ESP}}"},"45":{"wt":"0 (0)\n"},"46":{"wt":"6 December – [[Lusail]]"},"47":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|POR}}"},"48":{"wt":"6"},"49":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|SUI}}"},"50":{"wt":"1\n<!--Quarter-finals-->\n"},"51":{"wt":"[[Battle of Lusail|9 December]] – [[Lusail]]"},"52":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|NED}}"},"53":{"wt":"2 (3)"},"54":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|ARG}} {{pso}}"},"55":{"wt":"2 (4)\n"},"56":{"wt":"9 December – [[Al Rayyan]] ([[Education City Stadium|Education City]])"},"57":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|CRO}} {{pso}}"},"58":{"wt":"1 (4)"},"59":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|BRA}}"},"60":{"wt":"1 (2)\n"},"61":{"wt":"10 December – [[Al Khor]]"},"62":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|ENG}}"},"63":{"wt":"1"},"64":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|FRA}}"},"65":{"wt":"2\n"},"66":{"wt":"10 December – [[Doha]] ([[Al Thumama Stadium|Al Thumama]])"},"67":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|MAR}}"},"68":{"wt":"1"},"69":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|POR}}"},"70":{"wt":"0\n<!--Semi-finals-->\n"},"71":{"wt":"13 December – [[Lusail]]"},"72":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|ARG}}"},"73":{"wt":"3"},"74":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|CRO}}"},"75":{"wt":"0\n"},"76":{"wt":"14 December – [[Al Khor]]"},"77":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|FRA}}"},"78":{"wt":"2"},"79":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|MAR}}"},"80":{"wt":"0\n<!--Final-->\n"},"81":{"wt":"[[2022 FIFA World Cup final|18 December]] – [[Lusail]]"},"82":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|ARG}} {{pso}}"},"83":{"wt":"3 (4)"},"84":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|FRA}}"},"85":{"wt":"3 (2)\n<!--Match for third place-->\n"},"86":{"wt":"17 December – [[Al Rayyan]] ([[Khalifa International Stadium|Khalifa]])"},"87":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|CRO}}"},"88":{"wt":"2"},"89":{"wt":"{{#invoke:flagg|main|unpe|avar=fb|MAR}}"},"90":{"wt":"1\n"}},"i":0}}]}'>
+Round of 16 Quarter-finals Semi-finals Final
+3 December – Al Rayyan ( Khalifa )
+Netherlands 3
+9 December – Lusail
+United States 1
+Netherlands 2 (3)
+3 December – Al Rayyan ( Ahmad bin Ali )
+Argentina ( p ) 2 (4)
+Argentina 2
+13 December – Lusail
+Australia 1
+Argentina 3
+5 December – Al Wakrah
+Croatia 0
+Japan 1 (1)
+9 December – Al Rayyan ( Education City )
+Croatia ( p ) 1 (3)
+Croatia ( p ) 1 (4)
+5 December – Doha ( 974 )
+Brazil 1 (2)
+Brazil 4
+18 December – Lusail
+South Korea 1
+Argentina ( p ) 3 (4)
+4 December – Al Khor
+France 3 (2)
+England 3
+10 December – Al Khor
+Senegal 0
+England 1
+4 December – Doha ( Al Thumama )
+France 2
+France 3
+14 December – Al Khor
+Poland 1
+France 2
+6 December – Al Rayyan ( Education City )
+Morocco 0
+Match for third place
+Morocco ( p ) 0 (3)
+10 December – Doha ( Al Thumama ) 17 December – Al Rayyan ( Khalifa )
+Spain 0 (0)
+Morocco 1 Croatia 2
+6 December – Lusail
+Portugal 0
+Morocco 1
+Portugal 6
+Switzerland 1
+Round of 16
+[ edit ]
+Netherlands vs United States
+[ edit ]
+The teams had previously met five times, with the Netherlands winning the first four encounters. They most recently met in a June 2015 friendly, with the United States winning 4–3. [ 5 ]
+Early on in the contest, Christian Pulisic was sent through on goal for the United States but saw his shot saved by the outstretched leg of goalkeeper Andries Noppert . The Netherlands then went in front in the 10th minute, when Memphis Depay received a ball from the right from Denzel Dumfries and finished into the left corner of the net after a sequence of passes. [ 6 ] In added time in the first half, Daley Blind made it 2–0 for the Dutch with another low finish, receiving the ball on the right from Dumfries for his second assist of the game. In the 76th minute, the United States pulled a goal back when Haji Wright finished with a deflection from Christian Pulisic 's looped cross at the far post. Dumfries sealed the win with a third goal for the Netherlands five minutes later, adding to his two assists with a side-footed finish at the far post from Blind's cross. [ 7 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285073/400128136 |title=Netherlands vs United States {{!}} Round of 16 {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128068.pdf |title=Post match summary report – Round of 16 – Netherlands v USA |publisher=FIFA |date=3 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065542/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128068.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+3 December 2022 ( 2022-12-03 )
+18:00
+Netherlands 3–1 United States
+Depay 10'
+Blind 45+1'
+Dumfries 81'
+[ Report 1 ]
+Wright 76'
+Khalifa International Stadium , Al Rayyan
+Attendance: 44,846
+Referee: Wilton Sampaio ( Brazil )
+Netherlands
+United States</span>"}},"i":0}}]}'>
+United States
+GK 23 Andries Noppert
+CB 2 Jurriën Timber
+CB 4 Virgil van Dijk ( c )
+CB 5 Nathan Aké 90+3'
+RWB 22 Denzel Dumfries
+LWB 17 Daley Blind
+CM 15 Marten de Roon 46'
+CM 21 Frenkie de Jong 87'
+AM 14 Davy Klaassen 46'
+CF 8 Cody Gakpo 90+3'
+CF 10 Memphis Depay 83'
+Substitutions:
+MF 20 Teun Koopmeiners 60' 46'
+FW 7 Steven Bergwijn 46'
+MF 25 Xavi Simons 83'
+DF 3 Matthijs de Ligt 90+3'
+FW 19 Wout Weghorst 90+3'
+Manager:
+Louis van Gaal
+GK 1 Matt Turner
+RB 2 Sergiño Dest 75'
+CB 3 Walker Zimmerman
+CB 13 Tim Ream
+LB 5 Antonee Robinson 90+2'
+DM 4 Tyler Adams ( c )
+CM 6 Yunus Musah
+CM 8 Weston McKennie 67'
+RF 21 Timothy Weah 67'
+CF 9 Jesús Ferreira 46'
+LF 10 Christian Pulisic
+Substitutions:
+FW 7 Giovanni Reyna 46'
+FW 11 Brenden Aaronson 67'
+FW 19 Haji Wright 67'
+DF 22 DeAndre Yedlin 75'
+FW 16 Jordan Morris 90+2'
+Manager:
+Gregg Berhalter
+Man of the Match:
+Denzel Dumfries (Netherlands) [ 8 ]
+Assistant referees :
+Bruno Boschilia ( Brazil )
+Bruno Pires ( Brazil )
+Fourth official :
+Andrés Matonte ( Uruguay )
+Reserve assistant referee :
+Nicolás Taran ( Uruguay )
+Video assistant referee :
+Nicolás Gallo ( Colombia )
+Assistant video assistant referees :
+Juan Soto ( Venezuela )
+Ashley Beecham ( Australia )
+Mauro Vigliano ( Argentina )
+Stand-by assistant video assistant referee :
+Jerson dos Santos ( Angola )
+Argentina vs Australia
+[ edit ]
+The teams had previously met seven times, with Argentina winning five, drawing one, and losing one of these encounters. The sides notably met in the 1994 FIFA World Cup inter-confederation play-off , which Argentina won 2–1 on aggregate. They also faced off in Argentina's 4–2 win at the 2005 FIFA Confederations Cup . Their most recent meeting was in a September 2007 friendly, with Argentina winning 1–0. [ 9 ]
+On his 1,000th career appearance, Lionel Messi scored his 789th career goal and first in a World Cup knockout stage, giving Argentina the lead in the 35th minute with a low left-footed finish into the left corner. Julián Alvarez made it 2–0 in the 57th minute when he pounced on an error by Australian goalkeeper Mathew Ryan to finish low to the net past the stranded goalkeeper. [ 10 ] Australia pulled a goal back in the 77th minute when Craig Goodwin 's strike took a huge deflection off Enzo Fernández and ended up in the right corner of the net. [ 11 ] Australia had chances to level the match, first when Aziz Behich dribbled past four players before his shot was blocked by Lisandro Martínez , then in added time when Garang Kuol had a shot saved at close range by Argentine goalkeeper Emiliano Martínez . Argentina also spurned several opportunities to add to their advantage, with substitute Lautaro Martínez guilty of squandering multiple chances. [ 12 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285073/400128131 |title=Argentina vs Australia {{!}} Round of 16 {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128069.pdf |title=Post match summary report – Round of 16 – Argentina v Australia |publisher=FIFA |date=3 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065554/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128069.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+3 December 2022 ( 2022-12-03 )
+22:00
+Argentina 2–1 Australia
+Messi 35'
+Alvarez 57'
+[ Report 2 ]
+Fernández 77' ( o.g. )
+Ahmad bin Ali Stadium , Al Rayyan
+Attendance: 45,032
+Referee: Szymon Marciniak ( Poland )
+Argentina
+Australia
+GK 23 Emiliano Martínez
+RB 26 Nahuel Molina 80'
+CB 13 Cristian Romero
+CB 19 Nicolás Otamendi
+LB 8 Marcos Acuña 71'
+DM 24 Enzo Fernández
+CM 7 Rodrigo De Paul
+CM 20 Alexis Mac Allister 80'
+RF 9 Julián Alvarez 71'
+CF 10 Lionel Messi ( c )
+LF 17 Papu Gómez 50'
+Substitutions:
+DF 25 Lisandro Martínez 50'
+FW 22 Lautaro Martínez 71'
+DF 3 Nicolás Tagliafico 71'
+MF 14 Exequiel Palacios 80'
+DF 4 Gonzalo Montiel 80'
+Manager:
+Lionel Scaloni
+GK 1 Mathew Ryan ( c )
+RB 2 Miloš Degenek 38' 71'
+CB 19 Harry Souttar
+CB 4 Kye Rowles
+LB 16 Aziz Behich
+RM 7 Mathew Leckie 71'
+CM 26 Keanu Baccus 58'
+CM 13 Aaron Mooy
+LM 14 Riley McGree 58'
+CF 15 Mitchell Duke 71'
+CF 22 Jackson Irvine 15'
+Substitutions:
+MF 10 Ajdin Hrustic 58'
+FW 23 Craig Goodwin 58'
+FW 21 Garang Kuol 71'
+FW 9 Jamie Maclaren 71'
+DF 5 Fran Karačić 71'
+Manager:
+Graham Arnold
+Man of the Match:
+Lionel Messi (Argentina) [ 13 ]
+Assistant referees :
+Paweł Sokolnicki ( Poland )
+Tomasz Listkiewicz ( Poland )
+Fourth official :
+Mario Escobar ( Guatemala )
+Reserve assistant referee :
+Karen Díaz Medina ( Mexico )
+Video assistant referee :
+Tomasz Kwiatkowski ( Poland )
+Assistant video assistant referees :
+Marco Fritz ( Germany )
+Alessandro Giallatini ( Italy )
+Benoît Millot ( France )
+Stand-by assistant video assistant referee :
+Ciro Carbone ( Italy )
+France vs Poland
+[ edit ]
+The teams had met sixteen times prior to this match, with France winning eight and Poland winning three of these encounters, along with five draws. Poland's three victories included the 1982 World Cup match for third place , which they won 3–2. The sides most recently met in a friendly in June 2011, won by France 1–0. [ 14 ]
+After Olivier Giroud missed a chance for France in front of goal off a cross from Ousmane Dembélé , Poland nearly opened the scoring later in the first half when Piotr Zieliński saw two close-range shots blocked in quick succession. In the 44th minute, Giroud received a pass from Kylian Mbappé before firing low to the right corner of the net to put France into the lead, in the process also breaking the all-time French scoring record with his 52nd goal for the nation. Mbappé made it 2–0 in the 74th minute, when he received the ball on the left just inside the penalty area before firing powerfully into the top left corner of the net. Mbappé got his second of the game in the first minute of added time with a right-footed curling finish past goalkeeper Wojciech Szczęsny . In the final minute of the match, Robert Lewandowski pulled a goal back for Poland to make it 3–1 with a penalty low to the left corner, awarded after a handball by Dayot Upamecano ; goalkeeper Hugo Lloris saved Lewandowski's initial attempt, but it was retaken after Lloris was deemed to have left his goal line too early. [ 15 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285073/400128135 |title=France vs Poland {{!}} Round of 16 {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128071.pdf |title=Post match summary report – Round of 16 – France v Poland |publisher=FIFA |date=4 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065629/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128071.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+4 December 2022 ( 2022-12-04 )
+18:00
+France 3–1 Poland
+Giroud 44'
+Mbappé 74' , 90+1'
+[ Report 3 ]
+Lewandowski 90+9' ( pen. )
+Al Thumama Stadium , Doha
+Attendance: 40,989
+Referee: Jesús Valenzuela ( Venezuela )
+France
+Poland
+GK 1 Hugo Lloris ( c )
+RB 5 Jules Koundé 90+2'
+CB 4 Raphaël Varane
+CB 18 Dayot Upamecano
+LB 22 Théo Hernandez
+CM 8 Aurélien Tchouaméni 32' 66'
+CM 14 Adrien Rabiot
+RW 11 Ousmane Dembélé 76'
+AM 7 Antoine Griezmann
+LW 10 Kylian Mbappé
+CF 9 Olivier Giroud 76'
+Substitutions:
+MF 13 Youssouf Fofana 66'
+FW 20 Kingsley Coman 76'
+FW 26 Marcus Thuram 76'
+DF 3 Axel Disasi 90+2'
+Manager:
+Didier Deschamps
+GK 1 Wojciech Szczęsny
+RB 2 Matty Cash 88'
+CB 15 Kamil Glik
+CB 14 Jakub Kiwior 87'
+LB 18 Bartosz Bereszyński 47'
+DM 10 Grzegorz Krychowiak 71'
+CM 20 Piotr Zieliński
+CM 19 Sebastian Szymański 64'
+RW 13 Jakub Kamiński 71'
+LW 24 Przemysław Frankowski 87'
+CF 9 Robert Lewandowski ( c )
+Substitutions:
+FW 7 Arkadiusz Milik 64'
+MF 21 Nicola Zalewski 71'
+MF 6 Krystian Bielik 71'
+DF 5 Jan Bednarek 87'
+MF 11 Kamil Grosicki 87'
+Manager:
+Czesław Michniewicz
+Man of the Match:
+Kylian Mbappé (France) [ 16 ]
+Assistant referees :
+Jorge Urrego ( Venezuela )
+Tulio Moreno ( Venezuela )
+Fourth official :
+Kevin Ortega ( Peru )
+Reserve assistant referee :
+Michael Orué ( Peru )
+Video assistant referee :
+Juan Soto ( Venezuela )
+Assistant video assistant referees :
+Mauro Vigliano ( Argentina )
+Neuza Back ( Brazil )
+Julio Bascuñán ( Chile )
+Stand-by assistant video assistant referee :
+Martín Soppi ( Uruguay )
+England vs Senegal
+[ edit ]
+The two teams had never met before. [ 17 ] It was also the first time England faced an African opposition in the World Cup knockout stage since a 1990 quarter-final win over Cameroon .
+After a tight opening period where Senegal's Boulaye Dia saw his strike saved by goalkeeper Jordan Pickford , England went in front in the 38th minute, when Jordan Henderson scored low into the net from twelve yards off a pass from Jude Bellingham on the left. In added time in the first half, reigning World Cup Golden Boot winner Harry Kane made it 2–0 with his first goal of the tournament, firing into the net from the right after a pass from Phil Foden . In the 57th minute, Foden crossed from the left for Bukayo Saka to make it 3–0 with a clipped left-footed finish over Senegal goalkeeper Édouard Mendy . [ 18 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285073/400128134 |title=England vs Senegal {{!}} Round of 16 {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128070.pdf |title=Post match summary report – Round of 16 – England v Senegal |publisher=FIFA |date=4 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065642/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128070.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+4 December 2022 ( 2022-12-04 )
+22:00
+England 3–0 Senegal
+Henderson 38'
+Kane 45+3'
+Saka 57'
+[ Report 4 ]
+Al Bayt Stadium , Al Khor
+Attendance: 65,985
+Referee: Iván Barton ( El Salvador )
+England
+Senegal
+GK 1 Jordan Pickford
+RB 2 Kyle Walker
+CB 5 John Stones 76'
+CB 6 Harry Maguire
+LB 3 Luke Shaw
+DM 4 Declan Rice
+CM 8 Jordan Henderson 82'
+CM 22 Jude Bellingham 76'
+RF 17 Bukayo Saka 65'
+CF 9 Harry Kane ( c )
+LF 20 Phil Foden 65'
+Substitutions:
+FW 11 Marcus Rashford 65'
+FW 7 Jack Grealish 65'
+MF 19 Mason Mount 76'
+DF 15 Eric Dier 76'
+MF 14 Kalvin Phillips 82'
+Manager:
+Gareth Southgate
+GK 16 Édouard Mendy
+RB 21 Youssouf Sabaly
+CB 3 Kalidou Koulibaly ( c ) 76'
+CB 22 Abdou Diallo
+LB 14 Ismail Jakobs 84'
+CM 11 Pathé Ciss 46'
+CM 6 Nampalys Mendy
+RW 15 Krépin Diatta 46'
+AM 13 Iliman Ndiaye 46'
+LW 18 Ismaïla Sarr
+CF 9 Boulaye Dia 72'
+Substitutions:
+MF 17 Pape Matar Sarr 46'
+FW 20 Bamba Dieng 46'
+MF 26 Pape Gueye 46'
+FW 19 Famara Diédhiou 72'
+DF 12 Fodé Ballo-Touré 84'
+Manager:
+Aliou Cissé
+Man of the Match:
+Harry Kane (England) [ 19 ]
+Assistant referees :
+David Morán ( El Salvador )
+Kathryn Nesbitt ( United States )
+Fourth official :
+Saíd Martínez ( Honduras )
+Reserve assistant referee :
+Helpys Raymundo Feliz ( Dominican Republic )
+Video assistant referee :
+Drew Fischer ( Canada )
+Assistant video assistant referees :
+Armando Villarreal ( United States )
+Corey Parker ( United States )
+Nicolás Gallo ( Colombia )
+Stand-by assistant video assistant referee :
+Kyle Atkins ( United States )
+Japan vs Croatia
+[ edit ]
+The teams had previously met three times, with a draw and a win for each side. Two of these encounters were in World Cup group stages: Croatia won 1–0 in 1998, and the teams drew 0–0 in 2006. The latter draw was the most recent encounter between the two. [ 20 ]
+In the 43rd minute, Daizen Maeda scored the opener for Japan with a low finish in the penalty area, after the ball was knocked back to him from the left. Ten minutes into the second half, Ivan Perišić equalised when he headed powerfully to the right corner of the net after a cross from Dejan Lovren on the right. The match saw no further goals scored either in the ninety minutes or during extra time and thus went to a penalty shoot-out. Japan missed three of their four penalties, with all three saved by goalkeeper Dominik Livaković . After Marko Livaja 's effort struck the post, Mario Pašalić scored the winning spot kick with a low shot to the left, as Croatia won the shoot-out 3–1. [ 21 ] Livaković became the third goalkeeper to make three saves in a World Cup shoot-out , after Ricardo for Portugal in 2006 and his fellow countryman Danijel Subašić in 2018 . [ 22 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285073/400128132 |title=Japan vs Croatia {{!}} Round of 16 {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128072b.pdf |title=Post match summary report – Round of 16 – Japan v Croatia |publisher=FIFA |date=5 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065700/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128072b.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+5 December 2022 ( 2022-12-05 )
+18:00
+Japan 1–1 ( a.e.t. ) Croatia
+Maeda 43'
+[ Report 5 ]
+Perišić 55'
+Penalties
+Minamino
+Mitoma
+Asano
+Yoshida
+1–3
+Vlašić
+Brozović
+Livaja
+Pašalić
+Al Janoub Stadium , Al Wakrah
+Attendance: 42,523
+Referee: Ismail Elfath ( United States )
+Japan
+Croatia
+GK 12 Shūichi Gonda
+CB 16 Takehiro Tomiyasu
+CB 22 Maya Yoshida ( c )
+CB 3 Shōgo Taniguchi
+RM 14 Junya Itō
+CM 6 Wataru Endo
+CM 13 Hidemasa Morita 106'
+LM 5 Yūto Nagatomo 64'
+RF 8 Ritsu Dōan 87'
+CF 25 Daizen Maeda 64'
+LF 15 Daichi Kamada 75'
+Substitutions:
+MF 9 Kaoru Mitoma 64'
+FW 18 Takuma Asano 64'
+DF 19 Hiroki Sakai 75'
+MF 10 Takumi Minamino 87'
+MF 17 Ao Tanaka 106'
+Manager:
+Hajime Moriyasu
+GK 1 Dominik Livaković
+RB 22 Josip Juranović
+CB 6 Dejan Lovren
+CB 20 Joško Gvardiol
+LB 3 Borna Barišić 116'
+DM 11 Marcelo Brozović
+CM 10 Luka Modrić ( c ) 99'
+CM 8 Mateo Kovačić 90' 99'
+RF 9 Andrej Kramarić 68'
+CF 16 Bruno Petković 62'
+LF 4 Ivan Perišić 106'
+Substitutions:
+FW 17 Ante Budimir 62' 106'
+MF 15 Mario Pašalić 68'
+MF 13 Nikola Vlašić 99'
+MF 7 Lovro Majer 99'
+FW 14 Marko Livaja 106'
+FW 18 Mislav Oršić 106'
+Manager:
+Zlatko Dalić
+Man of the Match:
+Dominik Livaković (Croatia) [ 23 ]
+Assistant referees :
+Corey Parker ( United States )
+Kyle Atkins ( United States )
+Fourth official :
+Mustapha Ghorbal ( Algeria )
+Reserve assistant referee :
+Mokrane Gourari ( Algeria )
+Video assistant referee :
+Nicolás Gallo ( Colombia )
+Brazil vs South Korea
+[ edit ]
+The teams had previously met seven times, with Brazil winning six and South Korea winning one of these encounters. The most recent meeting was in June 2022, a 5–1 friendly win for Brazil. [ 24 ]
+Vinícius Júnior opened the scoring for Brazil in the 7th minute, when he converted a side-footed shot to the right of the net past three Korean defenders on the line. Brazil were awarded a penalty six minutes later when Richarlison was fouled just inside the penalty area, which the returning Neymar scored with a low shot to the right corner of the goalkeeper, who didn't move. Richarlison made it 3–0 in the 29th minute when he controlled the ball with his head before receiving the ball back from Thiago Silva and passing into the left corner of the net. Lucas Paquetá got Brazil's fourth goal before half-time in the 36th minute, volleying low into the left corner of the net with his right foot after a cross from Vinícius Júnior on the left. In the second half, South Korea pulled a goal back when Paik Seung-ho finished into the right of the net from thirty yards out. With ten minutes left and leading by three goals, Brazilian goalkeeper Alisson was substituted for third-choice keeper Weverton , making Brazil the first team to ever play 26 different players in a single World Cup. [ 25 ] [ 26 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285073/400128133 |title=Brazil vs Korea Republic {{!}} Round of 16 {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128073.pdf |title=Post match summary report – Round of 16 – Brazil v Korea Republic |publisher=FIFA |date=5 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065714/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128073.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+5 December 2022 ( 2022-12-05 )
+22:00
+Brazil 4–1 South Korea
+Vinícius 7'
+Neymar 13' ( pen. )
+Richarlison 29'
+Paquetá 36'
+[ Report 6 ]
+Paik Seung-ho 76'
+Stadium 974 , Doha
+Attendance: 43,847
+Referee: Clément Turpin ( France )
+Brazil
+South Korea</span>"}},"i":0}}]}'>
+South Korea
+GK 1 Alisson 80'
+RB 14 Éder Militão 63'
+CB 4 Marquinhos
+CB 3 Thiago Silva ( c )
+LB 2 Danilo 72'
+CM 5 Casemiro
+CM 7 Lucas Paquetá
+RW 11 Raphinha
+AM 10 Neymar 80'
+LW 20 Vinícius Júnior 72'
+CF 9 Richarlison
+Substitutions:
+DF 13 Dani Alves 63'
+FW 26 Gabriel Martinelli 72'
+DF 24 Bremer 72'
+GK 12 Weverton 80'
+FW 21 Rodrygo 80'
+Manager:
+Tite
+GK 1 Kim Seung-gyu
+RB 15 Kim Moon-hwan
+CB 4 Kim Min-jae
+CB 19 Kim Young-gwon
+LB 3 Kim Jin-su 46'
+RM 10 Lee Jae-sung 74'
+CM 5 Jung Woo-young 44' 46'
+CM 6 Hwang In-beom 65'
+LM 11 Hwang Hee-chan
+CF 9 Cho Gue-sung 80'
+CF 7 Son Heung-min ( c )
+Substitutions:
+DF 14 Hong Chul 46'
+MF 13 Son Jun-ho 46'
+MF 8 Paik Seung-ho 65'
+MF 18 Lee Kang-in 74'
+FW 16 Hwang Ui-jo 80'
+Manager:
+Paulo Bento
+Man of the Match:
+Neymar (Brazil) [ 27 ]
+Assistant referees :
+Nicolas Danos ( France )
+Cyril Gringore ( France )
+Fourth official :
+Slavko Vinčić ( Slovenia )
+Reserve assistant referee :
+Tomaž Klančnik ( Slovenia )
+Video assistant referee :
+Jérôme Brisard ( France )
+Morocco vs Spain
+[ edit ]
+The teams had met in three previous international matches, with two wins for Spain and one draw. Spain won both legs of the 1962 World Cup inter-continental play-off , while the sides' most recent meeting was a 2–2 draw in the 2018 World Cup group stage. [ 28 ]
+After a goalless 120 minutes that were dominated in possession by Spain but saw few chances created, the match went to a penalty shoot-out. Spain failed to convert any of their three attempts, with goalkeeper Yassine Bounou saving two of them from Sergio Busquets and Carlos Soler , and Pablo Sarabia hitting the post, whilst Morocco scored three out of four, including the winning penalty from Achraf Hakimi via a panenka kick in the middle of the goal, seeing Morocco progress to the World Cup quarter-finals for the first time in history. [ 29 ]
+Morocco also became the first Arab country to reach the quarter-finals, and just the fourth African nation – after Cameroon in 1990 , Senegal in 2002 , and Ghana in 2010 – to qualify for the last eight. [ 30 ] Additionally, Morocco manager Walid Regragui became the first African and first Arab head coach to progress this far at a World Cup. [ 31 ] [ 32 ] Spain became just the second team to fail to convert a single attempt in a World Cup penalty shoot-out , after Switzerland lost to Ukraine in 2006 by exactly the same scoreline at the very same phase.
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285073/400128137 |title=Morocco vs Spain {{!}} Round of 16 {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128074.pdf |title=Post match summary report – Round of 16 – Morocco v Spain |publisher=FIFA |date=6 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065722/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128074.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+6 December 2022 ( 2022-12-06 )
+18:00
+Morocco 0–0 ( a.e.t. ) Spain
+[ Report 7 ]
+Penalties
+Sabiri
+Ziyech
+Benoun
+Hakimi
+3–0
+Sarabia
+Soler
+Busquets
+Education City Stadium , Al Rayyan
+Attendance: 44,667
+Referee: Fernando Rapallini ( Argentina )
+Morocco
+Spain
+GK 1 Yassine Bounou
+RB 2 Achraf Hakimi
+CB 5 Nayef Aguerd 84'
+CB 6 Romain Saïss ( c ) 90'
+LB 3 Noussair Mazraoui 82'
+DM 4 Sofyan Amrabat
+CM 8 Azzedine Ounahi 120'
+CM 15 Selim Amallah 82'
+RF 7 Hakim Ziyech
+CF 19 Youssef En-Nesyri 82'
+LF 17 Sofiane Boufal 66'
+Substitutions:
+FW 16 Abde Ezzalzouli 66'
+FW 11 Abdelhamid Sabiri 82'
+FW 21 Walid Cheddira 82'
+DF 25 Yahia Attiyat Allah 82'
+DF 18 Jawad El Yamiq 84'
+DF 24 Badr Benoun 120'
+Manager:
+Walid Regragui
+GK 23 Unai Simón
+RB 6 Marcos Llorente
+CB 16 Rodri
+CB 24 Aymeric Laporte 77'
+LB 18 Jordi Alba 98'
+DM 5 Sergio Busquets ( c )
+CM 9 Gavi 63'
+CM 26 Pedri
+RF 11 Ferran Torres 75'
+CF 10 Marco Asensio 63'
+LF 21 Dani Olmo 98'
+Substitutions:
+FW 7 Álvaro Morata 63'
+MF 19 Carlos Soler 63'
+FW 12 Nico Williams 75' 118'
+DF 14 Alejandro Balde 98'
+FW 25 Ansu Fati 98'
+FW 22 Pablo Sarabia 118'
+Manager:
+Luis Enrique
+Man of the Match:
+Yassine Bounou (Morocco) [ 33 ]
+Assistant referees :
+Juan Pablo Belatti ( Argentina )
+Diego Bonfá ( Argentina )
+Fourth official :
+Raphael Claus ( Brazil )
+Reserve assistant referee :
+Bruno Pires ( Brazil )
+Video assistant referee :
+Mauro Vigliano ( Argentina )
+Portugal vs Switzerland
+[ edit ]
+The teams had met 25 times, with nine wins for Portugal, eleven wins for Switzerland, and five draws. The sides faced off in several editions of World Cup qualification, including 1938 , 1970 , 1990 , 1994 , and 2018 . Their most recent meeting was in June 2022, with Switzerland winning 1–0 in the 2022–23 UEFA Nations League A . [ 34 ]
+Captain Cristiano Ronaldo was left out of the starting line-up for Portugal – a first in major tournaments since their UEFA Euro 2008 group stage defeat , also against Switzerland – with Gonçalo Ramos named instead to make his first start. [ 35 ]
+After Portugal took a 2–0 first-half lead via goals from Ramos and Pepe , Ramos would score a further two efforts – either side of goals by Raphaël Guerreiro (assisted by Ramos) and Swiss defender Manuel Akanji – in the second half to become the first hat-trick scorer of the 2022 World Cup, the first player to score a hat-trick on their debut World Cup start since Miroslav Klose in 2002 , and the youngest World Cup hat-trick scorer since Flórián Albert in 1962 . A late long-range strike from substitute Rafael Leão concluded a 6–1 Portuguese victory as they reached the quarter-finals for the first time since 2006 .
+The result equalled Switzerland's 5–0 defeat to West Germany in 1966 as their biggest ever World Cup loss. In getting Portugal's second goal, Pepe became the oldest player to ever score in the World Cup knockout stage, [ 36 ] and the second-oldest to have scored at any stage of the World Cup, behind only Roger Milla , who scored the consolation goal in Cameroon 's thumping by the opposite scoreline in the 1994 group stage against Russia . [ 37 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285073/400128130 |title=Portugal vs Switzerland {{!}} Round of 16 {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128075.pdf |title=Post match summary report – Round of 16 – Portugal v Switzerland |publisher=FIFA |date=6 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065736/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128075.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+6 December 2022 ( 2022-12-06 )
+22:00
+Portugal 6–1 Switzerland
+Ramos 17' , 51' , 67'
+Pepe 33'
+Guerreiro 55'
+Leão 90+2'
+[ Report 8 ]
+Akanji 58'
+Lusail Stadium , Lusail
+Attendance: 83,720
+Referee: César Arturo Ramos ( Mexico )
+Portugal
+Switzerland</span>"}},"i":0}}]}'>
+Switzerland
+GK 22 Diogo Costa
+RB 2 Diogo Dalot
+CB 3 Pepe ( c )
+CB 4 Rúben Dias
+LB 5 Raphaël Guerreiro
+DM 14 William Carvalho
+CM 25 Otávio 74'
+CM 10 Bernardo Silva 81'
+RF 8 Bruno Fernandes 87'
+CF 26 Gonçalo Ramos 74'
+LF 11 João Félix 74'
+Substitutions:
+FW 21 Ricardo Horta 74'
+MF 16 Vitinha 74'
+FW 7 Cristiano Ronaldo 74'
+MF 18 Rúben Neves 81'
+FW 15 Rafael Leão 87'
+Manager:
+Fernando Santos
+GK 1 Yann Sommer
+CB 5 Manuel Akanji
+CB 22 Fabian Schär 43' 46'
+CB 13 Ricardo Rodriguez
+DM 10 Granit Xhaka ( c )
+RM 2 Edimilson Fernandes
+CM 15 Djibril Sow 54'
+CM 8 Remo Freuler 54'
+LM 17 Rubén Vargas 66'
+CF 7 Breel Embolo 89'
+CF 23 Xherdan Shaqiri
+Substitutions:
+DF 18 Eray Cömert 59' 46'
+MF 6 Denis Zakaria 54'
+FW 9 Haris Seferovic 54'
+FW 19 Noah Okafor 66'
+MF 26 Ardon Jashari 89'
+Manager:
+Murat Yakin
+Man of the Match:
+Gonçalo Ramos (Portugal) [ 38 ]
+Assistant referees :
+Alberto Morín ( Mexico )
+Miguel Hernández ( Mexico )
+Fourth official :
+István Kovács ( Romania )
+Reserve assistant referee :
+Ovidiu Artene ( Romania )
+Video assistant referee :
+Drew Fischer ( Canada )
+Quarter-finals
+[ edit ]
+Croatia vs Brazil
+[ edit ]
+The teams had met on four previous occasions, with three wins for Brazil and one draw. Two of these encounters took place in the World Cup group stage, with Brazil winning both matches: 1–0 in 2006 and 3–1 in 2014 . [ 39 ]
+Brazil created the majority of the game's chances, forcing Croatian keeper Dominik Livaković into eleven saves, the most in a single match at the tournament. Early in the second half, a handball in the Croatian penalty area by Croatian defender Josip Juranović was dismissed by the referee after being deemed accidental. Following a scoreless ninety minutes, Neymar finally claimed the opener just before half-time of extra time with his 77th international goal, bringing him level with Péle as the nation's all-time top scorer ; after receiving the ball back from Lucas Paquetá , Neymar rounded Livaković and shot high into the net from the right side of the penalty area. A defensive lapse then cost Brazil their lead, as Bruno Petković equalised for Croatia three minutes from the end; after picking out Mislav Oršić 's cross on the left flank, he fired a shot into the corner of the net that took a deflection off the leg of Brazilian defender Marquinhos . This would be Croatia's only shot on target of the game. In the subsequent penalty shoot-out, Croatia scored all four of their attempts, while Brazil's first kicker Rodrygo had his shot saved by Livaković diving to his left, before Marquinhos hit his penalty low against the left post to confirm Brazil's elimination. [ 40 ]
+Croatia qualified for their second successive World Cup semi-finals and their third ever, while Brazil exited the tournament at the hands of a European team for the fifth consecutive edition; their 2002 World Cup final triumph against Germany remained their last knockout stage win against European opposition. In the same period, Brazil was eliminated at the quarter-finals in all four World Cup tournaments they played away from home, thus excluding a fourth-place finish at the 2014 tournament which they hosted.
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285074/400128141 |title=Croatia vs Brazil {{!}} Quarter-final {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128077b.pdf |title=Post match summary report – Quarter-final – Croatia v Brazil |publisher=FIFA |date=9 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065754/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128077b.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+9 December 2022 ( 2022-12-09 )
+18:00
+Croatia 1–1 ( a.e.t. ) Brazil
+Petković 117'
+[ Report 9 ]
+Neymar 105+1'
+Penalties
+Vlašić
+Majer
+Modrić
+Oršić
+4–2
+Rodrygo
+Casemiro
+Pedro
+Marquinhos
+Education City Stadium , Al Rayyan
+Attendance: 43,893
+Referee: Michael Oliver ( England )
+Croatia
+Brazil
+GK 1 Dominik Livaković
+RB 22 Josip Juranović
+CB 6 Dejan Lovren
+CB 20 Joško Gvardiol
+LB 19 Borna Sosa 110'
+DM 11 Marcelo Brozović 31' 114'
+CM 10 Luka Modrić ( c )
+CM 8 Mateo Kovačić 106'
+RF 15 Mario Pašalić 72'
+CF 9 Andrej Kramarić 72'
+LF 4 Ivan Perišić
+Substitutions:
+FW 16 Bruno Petković 117' 72'
+MF 13 Nikola Vlašić 72'
+MF 7 Lovro Majer 106'
+FW 17 Ante Budimir 110'
+FW 18 Mislav Oršić 114'
+Manager:
+Zlatko Dalić
+GK 1 Alisson
+RB 14 Éder Militão 106'
+CB 4 Marquinhos 77'
+CB 3 Thiago Silva ( c )
+LB 2 Danilo 25'
+CM 7 Lucas Paquetá 106'
+CM 5 Casemiro 68'
+RW 11 Raphinha 56'
+AM 10 Neymar
+LW 20 Vinícius Júnior 64'
+CF 9 Richarlison 84'
+Substitutions:
+FW 19 Antony 56'
+FW 21 Rodrygo 64'
+FW 25 Pedro 84'
+DF 6 Alex Sandro 106'
+MF 8 Fred 106'
+Manager:
+Tite
+Man of the Match:
+Dominik Livaković (Croatia) [ 41 ]
+Assistant referees :
+Stuart Burt ( England )
+Gary Beswick ( England )
+Fourth official :
+Mustapha Ghorbal ( Algeria )
+Reserve assistant referee :
+Abdelhak Etchiali ( Algeria )
+Video assistant referee :
+Pol van Boekel ( Netherlands )
+Netherlands vs Argentina
+[ edit ]
+Main article: Battle of Lusail
+See also: Argentina–Netherlands football rivalry
+This was the tenth meeting between the teams, continuing a historic rivalry among the two nations . The Netherlands had won four of the previous nine encounters, Argentina had won one, and the remaining four matches were draws. The sides had faced off five previous times in World Cup matches; a 4–0 win for the Dutch in the second group stage in 1974 was replied to with a 3–1 Argentine victory in the 1978 final . The Netherlands then won 2–1 in the 1998 quarter-finals , prior to goalless draws in the 2006 group stage and the 2014 semi-finals , with the Argentines winning the latter meeting 4–2 on penalties. [ 42 ]
+Nahuel Molina opened the score for Argentina after 35 minutes, when he received a through ball in traffic from Lionel Messi and flicked it low past advancing goalkeeper Andries Noppert . In the 73rd minute, after Marcos Acuña had been fouled in the penalty area by Denzel Dumfries , Messi scored the resulting penalty to the right of the net to double Argentina's advantage. After being subbed on by the Netherlands in the 78th minute, Wout Weghorst pulled a goal back just five minutes later, converting a downward header via a cross on the right from Steven Berghuis . [ 43 ] He then scored an equaliser in the eleventh minute of added time, when a late Dutch free kick on the edge of Argentina's penalty area was played by Teun Koopmeiners directly to Weghorst as he stood in a decoy wall, sending the match to extra time. Argentina controlled the majority of the thirty-minute period, which saw Enzo Fernández strike the post in its dying moments, but the sides could ultimately not be separated and thus entered a penalty shoot-out, just as they had in 2014. [ 44 ]
+In the shoot-out, Argentine goalkeeper Emiliano Martínez saved both of the Netherlands' first two attempts from Virgil van Dijk and Berghuis, as Argentina scored twice to earn a 2–0 advantage. After Fernández missed the chance to send his side through with their fourth penalty, Lautaro Martínez scored Argentina's subsequent spot kick to end the shoot-out 4–3 in their favour and progress to the semi-finals.
+There were a number of contested incidents between the sides both during and after the match that garnered much discussion . Players clashed on multiple occasions across the contest, during both regulation and the subsequent shoot-out. [ 45 ] [ 46 ] Messi was also involved in confrontations with Dutch manager Louis van Gaal and an unwanted encounter with Weghorst during his post-match interview. [ 47 ]
+In total, the match saw a total of eighteen yellow cards brandished, breaking the World Cup record of sixteen that was set in another Dutch knockout defeat, their infamous round of 16 game against Portugal in 2006 . [ 48 ] Spanish referee Antonio Mateu Lahoz received criticism for his failure to control the match, with many fans and media outlets considering his yellow cards to be too lenient for some instances that could have seen players sent off, while other incidents were ignored altogether. [ 49 ] The amount of yellows issued by Mateu Lahoz was also criticised. [ 50 ]
+Because of these events, the match has been referred to as the "Battle of Lusail", in reference to the aforementioned 2006 contest between Portugal and the Netherlands that had been dubbed "The Battle of Nuremberg". The match continued the Netherlands' record of not losing a World Cup match since the 2010 World Cup final . [ 51 ] [ 48 ]
+The match was also marred by the death of American sportswriter Grant Wahl after he collapsed near the end of the match while watching in the press box. [ 52 ] [ 53 ]
+9 December 2022 ( 2022-12-09 )
+22:00
+Netherlands 2–2 ( a.e.t. ) Argentina
+Weghorst 83' , 90+11'
+[ Report 10 ]
+Molina 35'
+Messi 73' ( pen. )
+Penalties
+Van Dijk
+Berghuis
+Koopmeiners
+Weghorst
+L. de Jong
+3–4
+Messi
+Paredes
+Montiel
+Fernández
+La. Martínez
+Lusail Stadium , Lusail
+Attendance: 88,235
+Referee: Antonio Mateu Lahoz ( Spain )
+Netherlands
+Argentina
+GK 23 Andries Noppert
+CB 2 Jurriën Timber 43'
+CB 4 Virgil van Dijk ( c )
+CB 5 Nathan Aké
+RWB 22 Denzel Dumfries PSO FT
+LWB 17 Daley Blind 64'
+CM 15 Marten de Roon 46'
+CM 21 Frenkie de Jong
+AM 8 Cody Gakpo 113'
+CF 10 Memphis Depay 76' 78'
+CF 7 Steven Bergwijn AWET 46'
+Substitutions:
+MF 11 Steven Berghuis 88' 46'
+MF 20 Teun Koopmeiners 46'
+FW 9 Luuk de Jong 64'
+FW 19 Wout Weghorst 45+2' 78'
+FW 12 Noa Lang FT 113'
+Manager:
+Louis van Gaal
+GK 23 Emiliano Martínez
+CB 13 Cristian Romero 45' 78'
+CB 19 Nicolás Otamendi 90+12'
+CB 25 Lisandro Martínez 76' 112'
+RWB 26 Nahuel Molina 106'
+LWB 8 Marcos Acuña 43' 78'
+CM 7 Rodrigo De Paul 67'
+CM 24 Enzo Fernández
+CM 20 Alexis Mac Allister
+CF 9 Julián Alvarez 82'
+CF 10 Lionel Messi ( c ) 90+10'
+Substitutions:
+MF 5 Leandro Paredes 89' 67'
+DF 3 Nicolás Tagliafico 78'
+DF 6 Germán Pezzella 112' 78'
+FW 22 Lautaro Martínez 82'
+DF 4 Gonzalo Montiel 109' 106'
+FW 11 Ángel Di María 112'
+Other disciplinary actions:
+Technical staff member (assistant manager)</span>"}]]}'>TS — Walter Samuel 31'
+Manager:
+Lionel Scaloni 90'
+Man of the Match:
+Lionel Messi (Argentina) [ 54 ]
+Assistant referees :
+Pau Cebrián Devís ( Spain )
+Roberto Díaz Pérez del Palomar ( Spain )
+Fourth official :
+Victor Gomes ( South Africa )
+Reserve assistant referee :
+Kyle Atkins ( United States )
+Video assistant referee :
+Alejandro Hernández Hernández ( Spain )
+Morocco vs Portugal
+[ edit ]
+The teams had met twice before, both during the World Cup group stage, with both sides winning one match: Morocco won 3–1 in 1986 , while Portugal prevailed 1–0 in 2018 . [ 55 ]
+In the first half, Youssef En-Nesyri would put Morocco in front after 42 minutes when he jumped highest from a Yahia Attiyat Allah cross to head past advancing goalkeeper Diogo Costa and into the empty net, followed by Bruno Fernandes ' attempted equalizer just before half-time striking the bar from long range. Portugal subbed on Cristiano Ronaldo in the second half, which saw him equal the record of 196 international caps set by Bader Al-Mutawa . [ 56 ] [ 57 ] Despite late Portuguese chances from João Félix , Ronaldo and Pepe , and the dismissal of Moroccan defender Walid Cheddira following two yellow cards in quick succession, Morocco would hold on to win 1–0.
+With their victory, Morocco became both the first African and first Arab country to reach the World Cup semi-finals, as well as the second Muslim-majority country after Turkey in 2002 to qualify for the last four. [ 58 ] This was only the third time a nation from outside Europe and South America reached this stage after the United States in 1930 and South Korea in 2002.
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285074/400128140 |title=Morocco vs Portugal {{!}} Quarter-final {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128079.pdf |title=Post match summary report – Quarter-final – Morocco v Portugal |publisher=FIFA |date=10 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065817/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128079.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+10 December 2022 ( 2022-12-10 )
+18:00
+Morocco 1–0 Portugal
+En-Nesyri 42'
+[ Report 11 ]
+Al Thumama Stadium , Doha
+Attendance: 44,198
+Referee: Facundo Tello ( Argentina )
+Morocco
+Portugal
+GK 1 Yassine Bounou
+RB 2 Achraf Hakimi
+CB 18 Jawad El Yamiq
+CB 6 Romain Saïss ( c ) 57'
+LB 25 Yahia Attiyat Allah
+DM 4 Sofyan Amrabat
+CM 8 Azzedine Ounahi
+CM 15 Selim Amallah 65'
+RF 7 Hakim Ziyech 82'
+CF 19 Youssef En-Nesyri 65'
+LF 17 Sofiane Boufal 82'
+Substitutions:
+DF 20 Achraf Dari 70' 57'
+FW 21 Walid Cheddira 90+1' 90+3' 65'
+DF 24 Badr Benoun 65'
+MF 14 Zakaria Aboukhlal 82'
+MF 26 Yahya Jabrane 82'
+Manager:
+Walid Regragui
+GK 22 Diogo Costa
+RB 2 Diogo Dalot 79'
+CB 3 Pepe ( c )
+CB 4 Rúben Dias
+LB 5 Raphaël Guerreiro 51'
+DM 18 Rúben Neves 51'
+CM 10 Bernardo Silva
+CM 25 Otávio 69'
+RF 8 Bruno Fernandes
+CF 26 Gonçalo Ramos 69'
+LF 11 João Félix
+Substitutions:
+DF 20 João Cancelo 51'
+FW 7 Cristiano Ronaldo 51'
+FW 15 Rafael Leão 69'
+MF 16 Vitinha 87' 69'
+FW 21 Ricardo Horta 79'
+Manager:
+Fernando Santos
+Man of the Match:
+Yassine Bounou (Morocco) [ 59 ]
+Assistant referees :
+Ezequiel Brailovsky ( Argentina )
+Gabriel Chade ( Argentina )
+Fourth official :
+Iván Barton ( El Salvador )
+Reserve assistant referee :
+David Morán ( El Salvador )
+Video assistant referee :
+Mauro Vigliano ( Argentina )
+England vs France
+[ edit ]
+The teams had previously met 31 times, with 17 wins for England, nine wins for France and five draws. Two of these meetings took place during the World Cup, with England winning on both occasions: they defeated France 2–0 in the 1966 group stage and 3–1 in the 1982 first group stage . The sides most recently met in a friendly in June 2017, with France winning 3–2. [ 60 ]
+Aurélien Tchouaméni opened the scoring for France in the 17th minute, with a shot from outside the penalty area to the left corner which beat England goalkeeper Jordan Pickford diving down to his right. Several pundits questioned the goal because England's Bukayo Saka had been brought to the ground, allowing France to win possession, in the build-up to the opener. Some claimed it was a clear foul, while others, including British journalists, thought the contact was not clear enough for the VAR to overturn the on-pitch decision. [ 61 ] [ 62 ] [ 63 ] Early in the second half, England were awarded a penalty after Tchouaméni fouled Saka inside the area. Harry Kane scored from the spot against his club teammate Hugo Lloris , shooting to the left, which put Kane level with Wayne Rooney as England's all-time top scorer at 53 goals. Just moments after seeing his volley saved by Pickford, Olivier Giroud , who himself entered the match as France's all-time top scorer, also scored his 53rd international goal twelve minutes from time, with a header to the left of the net after a cross from Antoine Griezmann . In the 84th minute, the VAR awarded England a second penalty after English substitute Mason Mount was seen being pushed over in the area by Théo Hernandez . Kane again took the spot-kick but this time his shot blazed over the bar, as France held on to win 2–1 and progress to the last four, while England were eliminated in the World Cup quarter-finals for a record seventh time. [ 64 ]
+France became the first reigning world champions to reach the World Cup semi-finals since Brazil in 1998 , whom France would beat in that year's final . [ 65 ] France's passage to the semi-finals along with Croatia's, the side they defeated in the 2018 final , marked the first time that both teams from a World Cup final reached the last four of the subsequent tournament since Argentina and West Germany in 1990 . [ 66 ]
+The referee Wilton Sampaio had received criticism from many England fans, even resulting in the Wikipedia page for the referee as saying that he was called "A Brazilian Cheat"." [ 67 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285074/400128138 |title=England vs France {{!}} Quarter-final {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128078.pdf |title=Post match summary report – Quarter-final – England v France |publisher=FIFA |date=10 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065831/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128078.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+10 December 2022 ( 2022-12-10 )
+22:00
+England 1–2 France
+Kane 54' ( pen. )
+[ Report 12 ]
+Tchouaméni 17'
+Giroud 78'
+Al Bayt Stadium , Al Khor
+Attendance: 68,895
+Referee: Wilton Sampaio ( Brazil )
+England
+France
+GK 1 Jordan Pickford
+RB 2 Kyle Walker
+CB 5 John Stones 90+8'
+CB 6 Harry Maguire 90'
+LB 3 Luke Shaw
+DM 4 Declan Rice
+CM 8 Jordan Henderson 79'
+CM 22 Jude Bellingham
+RF 17 Bukayo Saka 79'
+CF 9 Harry Kane ( c )
+LF 20 Phil Foden 85'
+Substitutions:
+MF 19 Mason Mount 79'
+FW 10 Raheem Sterling 79'
+FW 11 Marcus Rashford 85'
+FW 7 Jack Grealish 90+8'
+Manager:
+Gareth Southgate
+GK 1 Hugo Lloris ( c )
+RB 5 Jules Koundé
+CB 4 Raphaël Varane
+CB 18 Dayot Upamecano
+LB 22 Théo Hernandez 82'
+CM 8 Aurélien Tchouaméni
+CM 14 Adrien Rabiot
+RW 11 Ousmane Dembélé 46' 79'
+AM 7 Antoine Griezmann 43'
+LW 10 Kylian Mbappé
+CF 9 Olivier Giroud
+Substitutions:
+FW 20 Kingsley Coman 79'
+Manager:
+Didier Deschamps
+Man of the Match:
+Olivier Giroud (France) [ 68 ]
+Assistant referees :
+Bruno Boschilia ( Brazil )
+Bruno Pires ( Brazil )
+Fourth official :
+Mohammed Abdulla Hassan Mohamed ( United Arab Emirates )
+Reserve assistant referee :
+Mohamed Al-Hammadi ( United Arab Emirates )
+Video assistant referee :
+Nicolás Gallo ( Colombia )
+Semi-finals
+[ edit ]
+Argentina vs Croatia
+[ edit ]
+The teams had met five times before, each side winning twice and drawing once. Two of these matches took place in the World Cup group stage: a 1–0 win for Argentina in 1998 was followed by Croatia's 3–0 victory in 2018 . [ 69 ]
+Both sides kept a cautious approach in the match's opening half hour, until Croatian defenders Dejan Lovren and Joško Gvardiol mistakenly let Julián Alvarez pass through the defence in the 32nd minute, leading to goalkeeper Dominik Livaković colliding with Alvarez. Referee Daniele Orsato booked Livaković and awarded a penalty kick to Argentina, which Lionel Messi converted high into the top right corner of the goal. The collision also sparked a feud between Orsato and some Croatia players, causing Mateo Kovačić to be booked and the sending off of assistant coach Mario Mandžukić . In the 39th minute, Alvarez ran through several Croatian defenders and scored Argentina's second goal. In the second half of the match, Croatian coach Zlatko Dalić substituted off five players, including team captain Luka Modrić , in order to boost the attacking ability of the team, but this didn't stop Messi and Alvarez from providing another goal for the Argentinians; in the 69th minute, Messi twisted past Gvardiol on the byline before teeing the ball up to Alvarez in the center, enabling Alvarez to score his second goal. The match ended in a 3–0 victory for Argentina, a reversal of the scoreline from their 2018 encounter. [ 70 ]
+Messi's goal from the penalty spot was his eleventh at a World Cup, taking him ahead of Gabriel Batistuta as Argentina's most prolific goalscorer in the competition. Messi also drew level with former German midfielder Lothar Matthäus 's record of 25 matches played in World Cup finals . [ 71 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285075/400128143 |title=Argentina vs Croatia {{!}} Semi-final {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128080.pdf |title=Post match summary report – Semi-final – Argentina v Croatia |publisher=FIFA |date=13 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065844/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128080.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+13 December 2022 ( 2022-12-13 )
+22:00
+Argentina 3–0 Croatia
+Messi 34' ( pen. )
+Alvarez 39' , 69'
+[ Report 13 ]
+Lusail Stadium , Lusail
+Attendance: 88,966
+Referee: Daniele Orsato ( Italy )
+Argentina
+Croatia
+GK 23 Emiliano Martínez
+RB 26 Nahuel Molina 86'
+CB 13 Cristian Romero 68'
+CB 19 Nicolás Otamendi 71'
+LB 3 Nicolás Tagliafico
+RM 7 Rodrigo De Paul 74'
+CM 5 Leandro Paredes 62'
+CM 24 Enzo Fernández
+LM 20 Alexis Mac Allister 86'
+CF 10 Lionel Messi ( c )
+CF 9 Julián Alvarez 74'
+Substitutions:
+DF 25 Lisandro Martínez 62'
+MF 14 Exequiel Palacios 74'
+FW 21 Paulo Dybala 74'
+FW 15 Ángel Correa 86'
+DF 2 Juan Foyth 86'
+Manager:
+Lionel Scaloni
+GK 1 Dominik Livaković 32'
+RB 22 Josip Juranović
+CB 6 Dejan Lovren
+CB 20 Joško Gvardiol
+LB 19 Borna Sosa 46'
+DM 11 Marcelo Brozović 50'
+CM 10 Luka Modrić ( c ) 81'
+CM 8 Mateo Kovačić 32'
+RF 15 Mario Pašalić 46'
+CF 9 Andrej Kramarić 72'
+LF 4 Ivan Perišić
+Substitutions:
+FW 18 Mislav Oršić 46'
+MF 13 Nikola Vlašić 46'
+FW 16 Bruno Petković 50'
+FW 14 Marko Livaja 72'
+MF 7 Lovro Majer 81'
+Other disciplinary actions:
+Technical staff member (assistant manager)</span>"}]],"parts":[{"template":{"target":{"wt":"abbr","href":"./Template:Abbr"},"params":{"1":{"wt":"TS"},"2":{"wt":"Technical staff member (assistant manager)"}},"i":0}}]}'>TS — Mario Mandžukić 35'
+Manager:
+Zlatko Dalić
+Man of the Match:
+Lionel Messi (Argentina) [ 72 ]
+Assistant referees :
+Ciro Carbone ( Italy )
+Alessandro Giallatini ( Italy )
+Fourth official :
+Mohammed Abdulla Hassan Mohamed ( United Arab Emirates )
+Reserve assistant referee :
+Mohamed Al-Hammadi ( United Arab Emirates )
+Video assistant referee :
+Massimiliano Irrati ( Italy )
+France vs Morocco
+[ edit ]
+The teams had previously met seven times, with France winning five matches and the other two being draws. Their most recent encounter was a friendly in 2007, ending in a 2–2 stalemate. This was the first World Cup meeting between the sides. [ 73 ] The match marked the first ever World Cup semi-final featuring either an African or Arab country, and just the third time that a team from a confederation outside Europe and South America played at this stage, after the United States in 1930 and South Korea in 2002 .
+Théo Hernandez would give France an early lead in the fifth minute, netting an acrobatic volley from a tight angle on the left after Kylian Mbappé 's shot was diverted into his path. Hernandez's goal, timed at four minutes and 39 seconds, was the fastest in a World Cup semi-final since Vavá netted in the second minute of Brazil 's 5–2 win against France in 1958 . It was also just the second goal Morocco had conceded at the tournament and the first since the group stage. [ 74 ] Olivier Giroud would hit the post for France, before Moroccan captain Romain Saïss was forced to withdraw after 21 minutes, having been a doubt to start the match after going off injured in the quarter-finals. Morocco would then nearly equalise right before half-time, after Jawad El Yamiq saw his overhead kick strike the post and be cleared away. Despite being in possession of the ball for the majority of the contest, Morocco were not rewarded for this pressure, and after Mbappé dribbled into the penalty area in the 79th minute, his ball would find Randal Kolo Muani , who scored his first-ever goal for France with his first touch of the game to double their advantage, having come on as a substitute 44 seconds prior. [ 75 ]
+France's 2–0 victory set up a final against Argentina, putting them one win away from becoming the first nation to successfully defend the World Cup since Brazil won the 1958 and 1962 editions. [ 76 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285075/400128142 |title=France vs Morocco {{!}} Semi-final {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128081.pdf |title=Post match summary report – Semi-final – France v Morocco |publisher=FIFA |date=14 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065858/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128081.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+14 December 2022 ( 2022-12-14 )
+22:00
+France 2–0 Morocco
+T. Hernandez 5'
+Kolo Muani 79'
+[ Report 14 ]
+Al Bayt Stadium , Al Khor
+Attendance: 68,294
+Referee: César Arturo Ramos ( Mexico )
+France
+Morocco
+GK 1 Hugo Lloris ( c )
+RB 5 Jules Koundé
+CB 4 Raphaël Varane
+CB 24 Ibrahima Konaté
+LB 22 Théo Hernandez
+CM 8 Aurélien Tchouaméni
+CM 13 Youssouf Fofana
+RW 11 Ousmane Dembélé 78'
+AM 7 Antoine Griezmann
+LW 10 Kylian Mbappé
+CF 9 Olivier Giroud 65'
+Substitutions:
+FW 26 Marcus Thuram 65'
+FW 12 Randal Kolo Muani 78'
+Manager:
+Didier Deschamps
+GK 1 Yassine Bounou
+CB 20 Achraf Dari
+CB 6 Romain Saïss ( c ) 21'
+CB 18 Jawad El Yamiq
+RWB 2 Achraf Hakimi
+LWB 3 Noussair Mazraoui 46'
+RM 7 Hakim Ziyech
+CM 8 Azzedine Ounahi
+CM 4 Sofyan Amrabat
+LM 17 Sofiane Boufal 27' 66'
+CF 19 Youssef En-Nesyri 66'
+Substitutions:
+MF 15 Selim Amallah 21' 78'
+DF 25 Yahia Attiyat Allah 46'
+FW 9 Abderrazak Hamdallah 66'
+MF 14 Zakaria Aboukhlal 66'
+FW 16 Abde Ezzalzouli 78'
+Manager:
+Walid Regragui
+Man of the Match:
+Antoine Griezmann (France) [ 77 ]
+Assistant referees :
+Alberto Morín ( Mexico )
+Miguel Hernández ( Mexico )
+Fourth official :
+Jesús Valenzuela ( Venezuela )
+Reserve assistant referee :
+Jorge Urrego ( Venezuela )
+Video assistant referee :
+Drew Fischer ( Canada )
+Match for third place
+[ edit ]
+The teams had previously faced each other twice, including their opening game in Group F at this World Cup, which ended 0–0 . [ 78 ] This marked the second consecutive World Cup where the teams playing in the match for third place also played each other in the group stage, following Belgium vs England in 2018 .
+Croatia went in front with an early goal, after defender Joško Gvardiol diverted a diving header into the top left corner of the net in the seventh minute, assisted via a headed pass from Ivan Perišić . Croatia's lead would only last two minutes; Morocco's Achraf Dari received the ball after a Hakim Ziyech free kick struck the Croatian wall, and levelled the score in the ninth minute with a close-range header, having been left unmarked in front of the net. [ 79 ] However, the Vatreni managed to regain the lead shortly before half-time through Mislav Oršić , who shot a long-range bending strike from just inside the penalty area on the left, hitting the inside of the post before the ball nestled in the back of the net. [ 80 ] Although Croatian keeper Dominik Livaković was forced into a smothering save at close range to deny Morocco's Youssef En-Nesyri , the second half saw no further goals scored, handing Croatia a third-place finish at the World Cup for the second time, following the one achieved in 1998 .
+This was the eleventh consecutive World Cup in which a European team finished third, dating back to 1982 . Despite the defeat, a fourth-place finish still signified the best ever World Cup achievement for Morocco and an African team; they won more matches in the 2022 edition than in their first five World Cup appearances combined. Additionally, this achievement also matches the best finish by a team outside of UEFA or CONMEBOL since South Korea in 2002 . [ 81 ]
+{{multiref | {{cite web |url=https://www.fifa.com/en/match-centre/match/17/255711/285076/400128144 |title=Croatia vs Morocco {{!}} Play-off for third place {{!}} FIFA World Cup Qatar 2022 |publisher=FIFA |access-date=1 May 2026}} | {{cite web |url=https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128082.pdf |title=Post match summary report – Play-off for third place – Croatia v Morocco |publisher=FIFA |date=17 December 2022 |access-date=1 May 2026 |url-status=live |archive-url=https://web.archive.org/web/20260413065916/https://www.fifatrainingcentre.com/media/native/world-cup-2022/report_128082.pdf |archive-date=13 April 2026}} }}{{cbignore}}</ref>"}},"i":0}}]}'>
+17 December 2022 ( 2022-12-17 )
+18:00
+Croatia 2–1 Morocco
+Gvardiol 7'
+Oršić 42'
+[ Report 15 ]
+Dari 9'
+Khalifa International Stadium , Al Rayyan
+Attendance: 44,137
+Referee: Abdulrahman Al-Jassim ( Qatar )
+Croatia
+Morocco
+GK 1 Dominik Livaković
+RB 2 Josip Stanišić
+CB 24 Josip Šutalo
+CB 20 Joško Gvardiol
+LB 4 Ivan Perišić
+CM 10 Luka Modrić ( c )
+CM 8 Mateo Kovačić
+RW 7 Lovro Majer 66'
+AM 9 Andrej Kramarić 61'
+LW 18 Mislav Oršić 90+5'
+CF 14 Marko Livaja 66'
+Substitutions:
+MF 13 Nikola Vlašić 61'
+FW 16 Bruno Petković 66'
+MF 15 Mario Pašalić 66'
+MF 26 Kristijan Jakić 90+5'
+Manager:
+Zlatko Dalić
+GK 1 Yassine Bounou
+RB 2 Achraf Hakimi
+CB 18 Jawad El Yamiq 66'
+CB 20 Achraf Dari 64'
+LB 25 Yahia Attiyat Allah
+DM 4 Sofyan Amrabat
+CM 23 Bilal El Khannous 56'
+CM 11 Abdelhamid Sabiri 46'
+RF 7 Hakim Ziyech ( c )
+CF 19 Youssef En-Nesyri
+LF 17 Sofiane Boufal 64'
+Substitutions:
+MF 13 Ilias Chair 46'
+MF 8 Azzedine Ounahi 69' 56'
+MF 10 Anass Zaroury 64'
+DF 24 Badr Benoun 64'
+MF 15 Selim Amallah 84' 66'
+Manager:
+Walid Regragui
+Man of the Match:
+Joško Gvardiol (Croatia) [ 82 ]
+Assistant referees :
+Taleb Al-Marri ( Qatar )
+Saud Al-Maqaleh ( Qatar )
+Fourth official :
+Raphael Claus ( Brazil )
+Reserve assistant referee :
+Neuza Back ( Brazil )
+Video assistant referee :
+Julio Bascuñán ( Chile )
+Final
+[ edit ]
+Main article: 2022 FIFA World Cup final
+The teams had met on twelve previous occasions, with Argentina winning six matches, France three, and the other three ending in draws. The sides had faced each other three times in the World Cup, with two of these encounters coming in the group stage: Argentina won 1–0 in 1930 (their World Cup debut) and 2–1 in 1978 , while their most recent World Cup meeting was France's 4–3 victory in the 2018 round of 16 , their first defeat of Argentina since 1986. [ 83 ]
+Both teams were seeking to win a third World Cup title. France were the first title holders to play in the final since Brazil , whom France defeated as hosts in 1998 , and were aiming to become the first nation to retain the World Cup since Brazil's victories in 1958 and 1962 . French coach Didier Deschamps was attempting to become the second manager to win multiple World Cup titles, and the first since Vittorio Pozzo in 1934 and 1938 with Italy . Argentina, who had been defeated by Germany in both of their previous two trips to the final (in 1990 and 2014 ), were looking for a first world title in 36 years, having last won the competition in 1986 .
+Following a dominant first half that saw Argentina go up 2–0 thanks to a Lionel Messi penalty and a goal from Ángel Di María , they were suddenly caught out late into the second period with two goals in two minutes for France from Kylian Mbappé . After the match headed to extra time, Messi would score his second to regain Argentina's lead, only for Mbappé to again equalise two minutes from time via his second penalty, making him the first player since Geoff Hurst in 1966 to score a hat-trick in a World Cup final. [ 84 ] Having scored once in the 2018 final , Mbappé also became the first player to score four World Cup final goals, as well as the first player to reach eight goals in a single World Cup since Ronaldo for winners Brazil in 2002 . However, Mbappé failed to emulate Hurst's and Ronaldo's successes; despite him scoring the first attempt for France, they lost 4–2 in the penalty shoot-out after Kingsley Coman and Aurélien Tchouaméni failed to convert their efforts, with Gonzalo Montiel 's spot kick sealing Argentina's victory.
+Argentina achieved their third world title, surpassing France and Uruguay 's totals. They also became the first non-European side to win the title since Brazil in 2002, the previous occasion that the World Cup was held in Asia. With this victory, they became the second South American team to win a World Cup held entirely in Asia, after Brazil in 2002 when it was held in South Korea and Japan. France's loss was their second in a World Cup final, having been defeated by Italy in 2006 , a match which was also decided by penalties. [ 85 ] Many reporters, pundits and fans regarded the match as the greatest FIFA World Cup final of all time. [ 86 ] [ 87 ] [ 88 ]
+Both the tournament and the final itself saw Messi break multiple World Cup records. The match, which was his 26th overall in World Cup finals, saw him surpass Lothar Matthäus as the player with the most appearances in the competition . His goals against France also made him the first player to score in all five rounds of a World Cup since the group stage to round of 16 format was introduced in 1986. Messi was subsequently named the final's official Player of the Match , before being awarded the Golden Ball for best player of the tournament. [ 89 ] His five Player of the Match titles in 2022 were the most ever won at a single World Cup by a player since their introduction in 2002, and his Golden Ball award made him the first player to claim the accolade in multiple World Cups, having done so previously in 2014. [ 90 ]
+18 December 2022 ( 2022-12-18 )
+18:00
+Argentina 3–3 ( a.e.t. ) France
+Messi 23' ( pen. ) , 108'
+Di María 36'
+[ Report 16 ]
+Mbappé 80' ( pen. ) , 81' , 118' ( pen. )
+Penalties
+Messi
+Dybala
+Paredes
+Montiel
+4–2
+Mbappé
+Coman
+Tchouaméni
+Kolo Muani
+Lusail Stadium , Lusail
+Attendance: 88,966
+Referee: Szymon Marciniak ( Poland )
+Argentina
+France
+GK 23 Emiliano Martínez PSO
+RB 26 Nahuel Molina 91'
+CB 13 Cristian Romero
+CB 19 Nicolás Otamendi
+LB 3 Nicolás Tagliafico 120+1'
+DM 24 Enzo Fernández 45+7'
+CM 20 Alexis Mac Allister 116'
+CM 7 Rodrigo De Paul 102'
+RF 10 Lionel Messi ( c )
+CF 9 Julián Alvarez 102'
+LF 11 Ángel Di María 64'
+Substitutions:
+MF 8 Marcos Acuña 90+8' 64'
+DF 4 Gonzalo Montiel 116' 91'
+MF 5 Leandro Paredes 114' 102'
+FW 22 Lautaro Martínez 102'
+DF 6 Germán Pezzella 116'
+FW 21 Paulo Dybala 120+1'
+Manager:
+Lionel Scaloni
+GK 1 Hugo Lloris ( c )
+RB 5 Jules Koundé 120+1'
+CB 4 Raphaël Varane 113'
+CB 18 Dayot Upamecano
+LB 22 Théo Hernandez 71'
+CM 8 Aurélien Tchouaméni
+CM 14 Adrien Rabiot 55' 96' [ note 1 ]
+RW 11 Ousmane Dembélé 41'
+AM 7 Antoine Griezmann 71'
+LW 10 Kylian Mbappé
+CF 9 Olivier Giroud 90+5' 41'
+Substitutions:
+FW 12 Randal Kolo Muani 41'
+FW 26 Marcus Thuram 87' 41'
+FW 20 Kingsley Coman 71'
+MF 25 Eduardo Camavinga 71'
+MF 13 Youssouf Fofana 96' [ note 1 ]
+DF 24 Ibrahima Konaté 113'
+DF 3 Axel Disasi 120+1'
+Manager:
+Didier Deschamps
+Man of the Match:
+Lionel Messi (Argentina) [ 93 ]
+Assistant referees :
+Paweł Sokolnicki ( Poland )
+Tomasz Listkiewicz (Poland)
+Fourth official :
+Ismail Elfath ( United States )
+Reserve assistant referee :
+Kathryn Nesbitt (United States)
+Video assistant referee :
+Tomasz Kwiatkowski (Poland)
+Assistant video assistant referees :
+Juan Soto ( Venezuela )
+Kyle Atkins ( United States )
+Fernando Guerrero ( Mexico )
+Stand-by video assistant referee :
+Bastian Dankert ( Germany )
+Stand-by assistant video assistant referee :
+Corey Parker ( United States )
+Notes
+[ edit ]
+1 2 Rabiot suffered a knock to the head in the 94th minute. Therefore, his substitution for Fofana fell under FIFA's "concussion protocol", which allows a player at risk of a concussion to be substituted without taking account either the substitution window nor the amount of players already substituted. [ 91 ] [ 92 ]
+References
+[ edit ]
+1 2 "FIFA World Cup Qatar 2022 – Match Schedule" (PDF) . FIFA . 11 August 2022 . Retrieved 11 August 2022 .
+1 2 3 "Regulations – FIFA World Cup Qatar 2022" (PDF) . FIFA . 15 December 2021 . Retrieved 30 March 2022 .
+↑ Gleeson, Mark (5 September 2025). "Morocco first African nation to qualify for 2026 World Cup" . Reuters . Retrieved 6 September 2025 .
+↑ "The route to the World Cup final at Qatar 2022" . FIFA . 3 December 2022 . Retrieved 3 December 2022 .
+↑ "Netherlands national football team: record v USA" . 11v11.com . Retrieved 3 December 2022 .
+↑ McNulty, Phil (3 December 2022). "Netherlands 3–1 USA: Dutch overcome USA to book quarter-final spot" . BBC Sport . Retrieved 5 December 2022 .
+↑ Hunter, Andy (3 December 2022). "Netherlands into quarter-finals after Dumfries volley caps win against USA" . The Guardian . Retrieved 5 December 2022 .
+↑ "Dumfries delivers as Dutch progress to quarter-final" . FIFA . 3 December 2022 . Retrieved 3 December 2022 .
+↑ "Argentina national football team: record v Australia" . 11v11.com . Retrieved 3 December 2022 .
+↑ "World Cup 2022: Argentina 2–1 Australia recap" . RTE Sport . 3 December 2022 . Retrieved 5 December 2022 .
+↑ "World Cup 2022 – Argentina 2–1 Australia: Lionel Messi and Julian Alvarez goals put Argentina into quarter-final against Netherlands" . Sky Sports . 3 December 2022 . Retrieved 5 December 2022 .
+↑ Hafez, Shamoon (3 December 2022). "World Cup 2022: Argentina 2–1 Australia: Lionel Messi scores in 1,000th game" . BBC Sport . Retrieved 5 December 2022 .
+↑ "Messi, Alvarez book Argentinians date with the Dutch" . FIFA . 3 December 2022 . Retrieved 3 December 2022 .
+↑ "France national football team: record v Poland" . 11v11.com . Retrieved 3 December 2022 .
+↑ Hafez, Shamoon (4 December 2022). "France 3–1 Poland: Olivier Giroud, Kylian Mbappe, Robert Lewandowski score" . BBC Sport . Retrieved 8 December 2022 .
+↑ "Ruthless Giroud and Mbappe send France into the quarter-finals" . FIFA . 4 December 2022 . Retrieved 4 December 2022 .
+↑ "England national football team: record v Senegal" . 11v11.com . Retrieved 4 December 2022 .
+↑ McNulty, Phil (4 December 2022). "England 3–0 Senegal: England set up quarter-final with France" . BBC Sport . Retrieved 7 December 2022 .
+↑ "England Beat Senegal To Book France Tie" . FIFA . 4 December 2022 . Retrieved 4 December 2022 .
+↑ "Japan national football team: record v Croatia" . 11v11.com . Retrieved 3 December 2022 .
+↑ Hafez, Shamoon (5 December 2022). "World Cup 2022: Japan 1–1 Croatia (1–3 on pens): Dominik Livakovic saves three penalties" . BBC Sport . Retrieved 8 December 2022 .
+↑ "Livakovic saves three penalties as Croatia advances" . beIN Sports . 5 December 2022 . Retrieved 5 December 2022 .
+↑ "Livakovic's penalty heroics send Croatia through" . FIFA . 5 December 2022 . Retrieved 5 December 2022 .
+↑ "Brazil national football team: record v Korea Republic" . 11v11.com . Association of Football Statisticians . Retrieved 3 December 2022 .
+↑ McNulty, Phil (5 December 2022). "Brazil 4–1 South Korea: Dazzling Brazil dismantle South Korea to set up quarter-final against Croatia" . BBC Sport . Retrieved 6 December 2022 .
+↑ McNulty, Phil (5 December 2022). "World Cup 2022: Brazil put down the biggest marker at Qatar tournament" . BBC Sport . Retrieved 6 December 2022 . It meant Brazil became the first team to use all 26 players at this World Cup.
+↑ "Neymar returns as exceptional Brazil storm into quarter-finals" . FIFA . 5 December 2022 . Retrieved 5 December 2022 .
+↑ "Morocco national football team: record v Spain" . 11v11.com . Retrieved 3 December 2022 .
+↑ "Morocco 0 Spain 0 (3–0 on pens): As it happened" . The Guardian . 6 December 2022 . Retrieved 8 December 2022 .
+↑ Hafez, Shamoon (6 December 2022). "World Cup 2022: Morocco's heroic win over Spain gets royal approval with call from the King" . BBC Sport . Retrieved 7 December 2022 .
+↑ Hafez, Shamoon (6 December 2022). "World Cup 2022: Morocco 0–0 Spain (3–0 pens) Achraf Hakimi chips winning penalty to reach quarters" . BBC Sport . Retrieved 6 December 2022 .
+↑ OptaJean [@OptaJean] (6 December 2022). "1 – Morocco coach Walid Regragui has become the first ever African manager to reach the World Cup quarter-finals. Pioneer. #MORSPA" ( Tweet ) . Retrieved 6 December 2022 – via Twitter .
+↑ "Morocco make history as Spain pay the penalty" . FIFA . 6 December 2022 . Retrieved 6 December 2022 .
+↑ "Portugal national football team: record v Switzerland" . 11v11.com . Retrieved 3 December 2022 .
+↑ "Ramos hits hat-trick as Portugal thrash Switzerland 6–1 after Ronaldo dropped" . The Guardian . 6 December 2022 . Retrieved 8 December 2022 .
+↑ OptaJoe [@OptaJoe] (6 December 2022). "39 – Portugal defender Pepe is now the oldest ever player to score in a knockout stage game at the #FIFAWorldCup (39 years & 283 days old). Appetite" ( Tweet ) . Retrieved 7 December 2022 – via Twitter .
+↑ McNulty, Phil (6 December 2022). "Portugal 6–1 Switzerland: Ronaldo replacement Ramos scores hat-trick as Portugal advance" . BBC Sport . Retrieved 6 December 2022 .
+↑ "Hat-trick hero Ramos propels six-goal Portugal into quarter-finals" . FIFA . 6 December 2022 . Retrieved 6 December 2022 .
+↑ "Brazil national football team: record v Croatia" . 11v11.com . Retrieved 5 December 2022 .
+↑ Hafez, Shamoon (9 December 2022). "World Cup 2022: Croatia 1–1 Brazil (4–2 pens): Tite's men knocked out" . BBC Sport . Retrieved 10 December 2022 .
+↑ "Penalty kings Croatia knock out Brazil" . FIFA . 9 December 2022 . Retrieved 9 December 2022 .
+↑ "Netherlands national football team: record v Argentina" . 11v11.com . Retrieved 4 December 2022 .
+↑ "Argentina edge Netherlands in shootout to win World Cup quarter-final thriller" . The Guardian . 9 December 2022 . Retrieved 13 December 2022 .
+↑ McNulty, Phil (9 December 2022). "World Cup 2022: Argentina beat the Netherlands in penalty shootout to reach semi-finals" . BBC Sport . Retrieved 10 December 2022 .
+↑ Koons, Zach (9 December 2022). "Argentina, Netherlands Get Into Scrap Late in Heated World Cup Match" . Sports Illustrated . Archived from the original on 31 January 2023 . Retrieved 23 July 2023 .
+↑ "Controversial footage shows exactly why Argentina celebrated in the Netherland's players' faces" . SPORTbible . 10 December 2022 . Retrieved 10 December 2022 .
+↑ Douglas, Steve (10 December 2022). "Messi snarls, taunts and thrills in World Cup classic" . Associated Press . Archived from the original on 19 December 2022 . Retrieved 20 December 2022 .
+1 2 Smith, Emma (10 December 2022). "World Cup 2022: Netherlands and Argentina descend into chaos as new yellow card record set" . BBC Sport . Retrieved 10 December 2022 .
+↑ McNulty, Phil (10 December 2022). "World Cup 2022: Messi the master as Argentina beat Netherlands in chaotic Qatar classic" . BBC Sport . Retrieved 10 December 2022 .
+↑ Hamilton, Tom (9 December 2022). "Argentina secure semifinal place over Netherlands after one of the wildest wins of Qatar 2022" . ESPN . Retrieved 10 December 2022 .
+↑ "As it happened – The battle of Lusail" . The Business Standard . 10 December 2022 . Retrieved 1 January 2023 .
+↑ Yeung, Jessie (9 December 2022). "American journalist Grant Wahl dies at Qatar World Cup" . CNN . Retrieved 9 December 2022 .
+↑ Lewis, Russell (9 December 2022). "Longtime soccer sportswriter Grant Wahl has died covering the World Cup in Qatar" . NPR . Retrieved 10 December 2022 .
+↑ "Martinez gets Argentina out of jail in Lusail thriller" . FIFA . 9 December 2022 . Retrieved 9 December 2022 .
+↑ "Morocco national football team: record v Portugal" . 11v11.com . Retrieved 6 December 2022 .
+↑ "Morocco book historic World Cup semi-final place as En-Nesyri stuns Portugal" . The Guardian . 10 December 2022 . Retrieved 13 December 2022 .
+↑ Hafez, Shamoon (10 December 2022). "World Cup 2022: Morocco 1–0 Portugal: Youssef En-Nesyri scores winner" . BBC Sport . Retrieved 10 December 2022 .
+↑ Hafez, Shamoon (10 December 2022). "World Cup 2022: Morocco are 'Rocky' of tournament after beating Portugal" . BBC Sport . Retrieved 11 December 2022 .
+↑ "Morocco beat Portugal to make World Cup history" . FIFA . 10 December 2022 . Retrieved 10 December 2022 .
+↑ "England national football team: record v France" . 11v11.com . Retrieved 4 December 2022 .
+↑ "England v France: World Cup 2022 Quarter-final Live" . The Guardian . 10 December 2022.
+↑ Davies, Mathew (10 December 2022). "Why France's goal vs England was given despite Saka appearing to be fouled" . WalesOnline . Retrieved 11 December 2022 .
+↑ "Qatar 2022: 'Should be a foul' – Pundits claim that England are unlucky due to foul in build-up of France's goal" . Eurosport . 10 December 2022 . Retrieved 11 December 2022 .
+↑ McNulty, Phil (10 December 2022). "World Cup 2022: England 1–2 France – Harry Kane misses penalty as Three Lions out" . BBC Sport . Retrieved 10 December 2022 .
+↑ OptaJean [@OptaJean] (10 December 2022). "1 – France are the first reigning champion to reach the World Cup semi-finals since Brazil in 1998. Samba. #ENGFRA" ( Tweet ) . Retrieved 10 December 2022 – via Twitter .
+↑ Abdalazem, Reem (13 December 2022). "What country has played the most times in semi-finals in the history of the World Cup?" . Diario AS . Retrieved 16 December 2022 .
+↑ Kane, wikipedia (10 December 2022). "England fans appear to update referee's Wikipedia after World Cup loss" . Dracott AS . Retrieved 22 September 2025 .
+↑ "English agony as Kane miss sends France through" . FIFA . 10 December 2022 . Retrieved 10 December 2022 .
+↑ "Argentina national football team: record v Croatia" . 11v11.com . Retrieved 10 December 2022 .
+↑ "Argentina reaches World Cup final after Lionel Messi magic condemns Croatia to 3–0 defeat" . ABC News. 13 December 2022 . Retrieved 14 December 2022 .
+↑ McNulty, Phil (13 December 2022). "World Cup 2022: Argentina 3–0 Croatia – Messi and Alvarez put their side into World Cup final" . BBC Sport . Retrieved 14 December 2022 .
+↑ "Magic Messi leads Argentina into World Cup final" . FIFA . 13 December 2022 . Retrieved 13 December 2022 .
+↑ "France national football team: record v Morocco" . 11v11.com . Retrieved 10 December 2022 .
+↑ "France 2–0 Morocco: Hernandez and Kolo Muani send champions through to Argentina final" . BeIN Sports . 14 December 2022 . Retrieved 14 December 2022 .
+↑ "France bring Morocco's adventure to an end and reach World Cup final" . The Guardian . 14 December 2022 . Retrieved 15 December 2022 .
+↑ McNulty, Phil (14 December 2022). "World Cup 2022: France 2–0 Morocco – France edge past Morocco to set up Argentina final" . BBC Sport . Retrieved 14 December 2022 .
+↑ "France extinguish Morocco dream to reach World Cup final" . FIFA . 14 December 2022 . Retrieved 14 December 2022 .
+↑ "Morocco national football team: record v Croatia" . 11v11.com . Retrieved 14 December 2022 .
+↑ "Croatia finish third at World Cup after Mislav Orsic's winner against Morocco" . The Guardian . 17 December 2022 . Retrieved 17 December 2022 .
+↑ Smyth, Rob (17 December 2022). "Croatia 2–1 Morocco: World Cup 2022 third-place playoff – as it happened" . The Guardian . Retrieved 17 December 2022 .
+↑ Hafez, Shamoon (17 December 2022). "World Cup 2022: Croatia 2–1 Morocco: Josko Gvardiol, Achraf Dari and Mislav Orsic score" . BBC Sport . Retrieved 17 December 2022 .
+↑ "Croatia pip Morocco to bronze" . FIFA . 17 December 2022 . Retrieved 17 December 2022 .
+↑ "Argentina national football team: record v Argentina" . 11v11.com . Retrieved 16 December 2022 .
+↑ OptaJean [@OptaJean] (18 December 2022). "2 – Kylian Mbappe is the second player to score a World Cup final hat-trick after Geoff Hurst for England v Germany in 1966. Historic" ( Tweet ) . Retrieved 18 December 2022 – via Twitter .
+↑ McNulty, Phil (18 December 2022). "World Cup final: Argentina beat France on penalties in dramatic Qatar showpiece" . BBC Sport . Retrieved 18 December 2022 .
+↑ "2022 World Cup final: Argentina vs. France highlights and reactions" . ESPN . 18 December 2022 . Retrieved 18 December 2022 .
+↑ Summerscales, Robert (18 December 2022). "Argentina beat France on penalties in best World Cup Final ever" . Sports Illustrated . Retrieved 18 December 2022 .
+↑ "Damien Duff declares World Cup final the 'best final ever' on RTE" . Irish Mirror . 18 December 2022 . Retrieved 18 December 2022 .
+↑ "Messi makes Golden Ball history" . FIFA . 18 December 2022 . Retrieved 18 December 2022 .
+↑ Atwal, Sanj (18 December 2022). "Messi breaks record after winning World Cup with Argentina" . Guinness World Records . Retrieved 18 December 2022 .
+↑ Álvarez, Fernando (19 December 2022). "Why could France make seven subs in the World Cup final against Argentina?" . Marca . Marca.com. Archived from the original on 16 August 2025 . Retrieved 24 October 2024 .
+↑ Campanale, Susy (18 December 2022). "Rabiot makes history with World Cup Final substitution" . Football Italia . Archived from the original on 15 August 2025 . Retrieved 24 October 2024 .
+↑ "Argentina and Messi spot on for World Cup glory" . FIFA . 18 December 2022. Archived from the original on 1 March 2023 . Retrieved 18 December 2022 .
+Match reports
+[ edit ]
+↑ "Netherlands vs United States | Round of 16 | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Round of 16 – Netherlands v USA" (PDF) . FIFA. 3 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Argentina vs Australia | Round of 16 | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Round of 16 – Argentina v Australia" (PDF) . FIFA. 3 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "France vs Poland | Round of 16 | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Round of 16 – France v Poland" (PDF) . FIFA. 4 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "England vs Senegal | Round of 16 | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Round of 16 – England v Senegal" (PDF) . FIFA. 4 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Japan vs Croatia | Round of 16 | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Round of 16 – Japan v Croatia" (PDF) . FIFA. 5 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Brazil vs Korea Republic | Round of 16 | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Round of 16 – Brazil v Korea Republic" (PDF) . FIFA. 5 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Morocco vs Spain | Round of 16 | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Round of 16 – Morocco v Spain" (PDF) . FIFA. 6 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Portugal vs Switzerland | Round of 16 | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Round of 16 – Portugal v Switzerland" (PDF) . FIFA. 6 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Croatia vs Brazil | Quarter-final | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Quarter-final – Croatia v Brazil" (PDF) . FIFA. 9 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Netherlands vs Argentina | Quarter-final | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Quarter-final – Netherlands v Argentina" (PDF) . FIFA. 9 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Morocco vs Portugal | Quarter-final | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Quarter-final – Morocco v Portugal" (PDF) . FIFA. 10 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "England vs France | Quarter-final | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Quarter-final – England v France" (PDF) . FIFA. 10 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Argentina vs Croatia | Semi-final | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Semi-final – Argentina v Croatia" (PDF) . FIFA. 13 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "France vs Morocco | Semi-final | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Semi-final – France v Morocco" (PDF) . FIFA. 14 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Croatia vs Morocco | Play-off for third place | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Play-off for third place – Croatia v Morocco" (PDF) . FIFA. 17 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+↑ "Argentina vs France | Final | FIFA World Cup Qatar 2022" . FIFA . Retrieved 1 May 2026 .
+"Post match summary report – Final – Argentina v France" (PDF) . FIFA. 18 December 2022. Archived (PDF) from the original on 13 April 2026 . Retrieved 1 May 2026 .
+External links
+[ edit ]
+Wikimedia Commons has media related to 2022 FIFA World Cup knockout stage .
+Official website
+v
+t
+e
+2022 FIFA World Cup
+Stages
+Group stage
+Group A
+Group B
+Group C
+Group D
+Group E
+Group F
+Group G
+Group H
+Knockout stage
+Argentina v Netherlands
+Final
+General information
+Qualification
+Bids
+Broadcasting rights
+Controversies
+Corruption allegations
+Criticisms of Qatar's suitability
+Human rights
+LGBTQ issues
+Officials
+Opening ceremony
+Seeding
+Squads
+Official symbols
+Al Rihla (ball)
+FIFA World Cup Qatar 2022 (official soundtrack)
+" Hayya Hayya (Better Together) " (song)
+" Tukoh Taka " (song)
+La'eeb (mascot)
+Retrieved from " https://en.wikipedia.org/w/index.php?title=2022_FIFA_World_Cup_knockout_stage&oldid=1370477690 "
+Categories : 2022 FIFA World Cup
+2020s in Doha
+Argentina at the 2022 FIFA World Cup
+Australia at the 2022 FIFA World Cup
+Brazil at the 2022 FIFA World Cup
+Croatia at the 2022 FIFA World Cup
+England at the 2022 FIFA World Cup
+FIFA World Cup knockout stages
+Football competitions in Doha
+France at the 2022 FIFA World Cup
+Japan at the 2022 FIFA World Cup
+Men's football competitions in Qatar
+Morocco at the 2022 FIFA World Cup
+Netherlands at the 2022 FIFA World Cup
+Poland at the 2022 FIFA World Cup
+Portugal at the 2022 FIFA World Cup
+Senegal at the 2022 FIFA World Cup
+South Korea at the 2022 FIFA World Cup
+Spain at the 2022 FIFA World Cup
+Sport in Al Khor
+Sport in Al Rayyan
+Sport in Al Wakrah
+Sport in Lusail
+Switzerland at the 2022 FIFA World Cup
+United States at the 2022 FIFA World Cup
+Hidden categories: Articles with short description
+Short description is different from Wikidata
+Use dmy dates from March 2022
+Articles containing Croatian-language text
+Commons category link from Wikidata
+Official website not in Wikidata
+This page was last edited on 21 August 2026, at 09:24 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+2022 FIFA World Cup knockout stage
+33 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"2022 FIFA World Cup knockout stage","url":"https:\/\/en.wikipedia.org\/wiki\/2022_FIFA_World_Cup_knockout_stage","sameAs":"http:\/\/www.wikidata.org\/entity\/Q111435490","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q111435490","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2022-03-30T19:30:15Z","dateModified":"2026-08-21T09:24:59Z","headline":"second and final stage of the competition"}

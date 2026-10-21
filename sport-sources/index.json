@@ -1,0 +1,110 @@
+{
+  "fetchedAt": "2026-10-21T02:13:47.256Z",
+  "results": [
+    {
+      "url": "https://en.wikipedia.org/wiki/2022_FIFA_World_Cup_knockout_stage",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_knockout_stage",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/UEFA_Euro_2024_knockout_stage",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2024_Copa_Am%C3%A9rica_knockout_stage",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025%E2%80%9326_UEFA_Champions_League_knockout_phase",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025%E2%80%9326_UEFA_Champions_League_league_phase",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2022_FIFA_World_Cup",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "08-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/UEFA_Euro_2024",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "09-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2024_Copa_Am%C3%A9rica",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "10-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20221203-20221218&limit=200",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 400,
+      "file": "11-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.wwc/scoreboard?dates=20230805-20230820&limit=200",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 400,
+      "file": "12-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.euro/scoreboard?dates=20240629-20240714&limit=200",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 400,
+      "file": "13-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/conmebol.america/scoreboard?dates=20240704-20240714&limit=200",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 400,
+      "file": "14-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?dates=20260217-20260530&limit=300",
+      "rendered": false,
+      "status": "HTTP_ERROR",
+      "httpStatus": 400,
+      "file": "15-site.api.espn.com.txt"
+    }
+  ]
+}

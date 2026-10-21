@@ -1,0 +1,1508 @@
+Source: https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_knockout_stage
+Final URL: https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_knockout_stage
+HTTP 200
+Fetched: 2026-10-21T02:13:45.681Z
+
+2023 FIFA Women's World Cup knockout stage - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Format
+2
+Qualified teams
+3
+Bracket
+4
+Round of 16
+Toggle Round of 16 subsection
+4.1
+Switzerland vs Spain
+4.2
+Japan vs Norway
+4.3
+Netherlands vs South Africa
+4.4
+Sweden vs United States
+4.5
+England vs Nigeria
+4.6
+Australia vs Denmark
+4.7
+Colombia vs Jamaica
+4.8
+France vs Morocco
+5
+Quarter-finals
+Toggle Quarter-finals subsection
+5.1
+Spain vs Netherlands
+5.2
+Japan vs Sweden
+5.3
+Australia vs France
+5.4
+England vs Colombia
+6
+Semi-finals
+Toggle Semi-finals subsection
+6.1
+Spain vs Sweden
+6.2
+Australia vs England
+7
+Third place play-off
+8
+Final
+9
+References
+10
+External links
+Toggle the table of contents
+2023 FIFA Women's World Cup knockout stage
+15 languages
+العربية
+الدارجة
+کوردی
+Dansk
+Deutsch
+فارسی
+日本語
+한국어
+Simple English
+Српски / srpski
+Svenska
+ไทย
+Türkçe
+Tiếng Việt
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+Part of a series on the
+2023 FIFA Women's World Cup
+Hosting
+Bids
+Australia–New Zealand
+Brazil
+Colombia
+Japan
+Broadcasting rights
+Venues
+Brisbane Stadium
+Dunedin Stadium
+Eden Park
+Hindmarsh Stadium
+Melbourne Rectangular Stadium
+Perth Rectangular Stadium
+Stadium Australia
+Sydney Football Stadium
+Waikato Stadium
+Wellington Regional Stadium
+Qualification
+Overview
+Africa
+group stage
+group A
+group B
+group C
+knockout stage
+Asia
+group stage
+group A
+group B
+group C
+knockout stage
+Europe
+group stage
+group A
+group B
+group C
+group D
+group E
+group F
+group G
+group H
+group I
+play-offs
+North and Central America
+group stage
+group A
+group B
+Oceania Though the OFC Women's Nations Cup was nominally the qualification competition for Oceania, the confederation has one direct berth, which was automatically filled by co-hosts New Zealand. Nations Cup winner Papua New Guinea was entered into inter-confederation play-offs by ranking.</span>"}]]}'>*
+South America
+group stage
+group A
+group B
+knockout stage
+Inter-confederation play-offs
+Matches
+Group stage
+group A
+group B
+group C
+group D
+group E
+group F
+group G
+group H
+Knockout stage
+Final
+People
+Sarai Bareman
+Gianni Infantino
+Fatma Samoura
+Officials
+Squads
+Promotional and related media
+FIFA 23 downloadable content
+Songs
+"Unity" - Kelly Lee Owens
+"Do It Again" - BENEE ft. Mallrat
+Controversies
+Overview
+Auckland shooting
+Big Five broadcasting rights
+England 20–0 Latvia
+Haka videos
+OneLove
+Professionalism disputes
+Canada
+England
+France
+Jamaica
+Nigeria
+Spain
+Rubiales case
+v
+t
+e
+The knockout stage of the 2023 FIFA Women's World Cup was the second and final stage of the competition, following the group stage. It began on 5 August with the round of 16 and ended on 20 August with the final match , held at the Stadium Australia in Sydney . [ 1 ] The top two teams from each group (sixteen in total) advanced to the knockout stage to compete in a single-elimination style tournament. [ 2 ]
+All times listed are local.
+Format
+[ edit ]
+In the knockout stage, if a match was level at the end of 90 minutes of normal playing time, extra time was played (two periods of 15 minutes each), where each team was allowed to make a sixth substitution . If still tied after extra time, the match was decided by a penalty shoot-out to determine the winner. [ 2 ]
+Qualified teams
+[ edit ]
+The top two placed teams from each of the eight groups qualified for the knockout stage. [ 2 ]
+Group
+Winners
+Runners-up
+A
+Switzerland
+Norway
+B
+Australia
+Nigeria
+C
+Japan
+Spain
+D
+England
+Denmark
+E
+Netherlands
+United States
+F
+France
+Jamaica
+G
+Sweden
+South Africa
+H
+Colombia
+Morocco
+Bracket
+[ edit ]
+\n<!--Round of 16-->\n"},"12":{"wt":"5 August – [[Eden Park|Auckland]]"},"13":{"wt":"{{fbw|SUI}}"},"14":{"wt":"1"},"15":{"wt":"{{fbw|ESP}}"},"16":{"wt":"5\n"},"17":{"wt":"6 August – [[Sydney Football Stadium (2022)|Sydney (SFS)]]"},"18":{"wt":"{{fbw|NED}}"},"19":{"wt":"2"},"20":{"wt":"{{fbw|RSA}}"},"21":{"wt":"0\n"},"22":{"wt":"5 August – [[Wellington Regional Stadium|Wellington]]"},"23":{"wt":"{{fbw|JPN}}"},"24":{"wt":"3"},"25":{"wt":"{{fbw|NOR}}"},"26":{"wt":"1\n"},"27":{"wt":"6 August – [[Melbourne Rectangular Stadium|Melbourne]]"},"28":{"wt":"{{fbw|SWE}} {{pso}}"},"29":{"wt":"0 (5)"},"30":{"wt":"{{fbw|USA}}"},"31":{"wt":"0 (4)\n"},"32":{"wt":"7 August – [[Stadium Australia|Sydney (SA)]]"},"33":{"wt":"{{fbw|AUS}}"},"34":{"wt":"2"},"35":{"wt":"{{fbw|DEN}}"},"36":{"wt":"0\n"},"37":{"wt":"8 August – [[Hindmarsh Stadium|Adelaide]]"},"38":{"wt":"{{fbw|FRA}}"},"39":{"wt":"4"},"40":{"wt":"{{fbw|MAR}}"},"41":{"wt":"0\n"},"42":{"wt":"7 August – [[Lang Park|Brisbane]]"},"43":{"wt":"{{fbw|ENG}} {{pso}}"},"44":{"wt":"0 (4)"},"45":{"wt":"{{fbw|NGA}}"},"46":{"wt":"0 (2)\n"},"47":{"wt":"8 August – [[Melbourne Rectangular Stadium|Melbourne]]"},"48":{"wt":"{{fbw|COL}}"},"49":{"wt":"1"},"50":{"wt":"{{fbw|JAM}}"},"51":{"wt":"0\n<!--Quarter-finals-->\n"},"52":{"wt":"11 August – [[Wellington Regional Stadium|Wellington]]"},"53":{"wt":"{{fbw|ESP}} {{aet}}"},"54":{"wt":"2"},"55":{"wt":"{{fbw|NED}}"},"56":{"wt":"1\n"},"57":{"wt":"11 August – [[Eden Park|Auckland]]"},"58":{"wt":"{{fbw|JPN}}"},"59":{"wt":"1"},"60":{"wt":"{{fbw|SWE}}"},"61":{"wt":"2\n"},"62":{"wt":"12 August – [[Lang Park|Brisbane]]"},"63":{"wt":"{{fbw|AUS}} {{pso}}"},"64":{"wt":"0 (7)"},"65":{"wt":"{{fbw|FRA}}"},"66":{"wt":"0 (6)\n"},"67":{"wt":"12 August – [[Stadium Australia|Sydney (SA)]]"},"68":{"wt":"{{fbw|ENG}}"},"69":{"wt":"2"},"70":{"wt":"{{fbw|COL}}"},"71":{"wt":"1\n<!--Semi-finals-->\n"},"72":{"wt":"15 August – [[Eden Park|Auckland]]"},"73":{"wt":"{{fbw|ESP}}"},"74":{"wt":"2"},"75":{"wt":"{{fbw|SWE}}"},"76":{"wt":"1\n"},"77":{"wt":"16 August – [[Stadium Australia|Sydney (SA)]]"},"78":{"wt":"{{fbw|AUS}}"},"79":{"wt":"1"},"80":{"wt":"{{fbw|ENG}}"},"81":{"wt":"3\n<!--Final-->\n"},"82":{"wt":"20 August – [[Stadium Australia|Sydney (SA)]]"},"83":{"wt":"{{fbw|ESP}}"},"84":{"wt":"1"},"85":{"wt":"{{fbw|ENG}}"},"86":{"wt":"0\n<!--Third place play-off-->\n"},"87":{"wt":"19 August – [[Lang Park|Brisbane]]"},"88":{"wt":"{{fbw|SWE}}"},"89":{"wt":"2"},"90":{"wt":"{{fbw|AUS}}"},"91":{"wt":"0\n"}},"i":0}}]}'>
+Round of 16 Quarter-finals Semi-finals Final
+5 August – Auckland
+Switzerland 1
+11 August – Wellington
+Spain 5
+Spain ( a.e.t. ) 2
+6 August – Sydney (SFS)
+Netherlands 1
+Netherlands 2
+15 August – Auckland
+South Africa 0
+Spain 2
+5 August – Wellington
+Sweden 1
+Japan 3
+11 August – Auckland
+Norway 1
+Japan 1
+6 August – Melbourne
+Sweden 2
+Sweden ( p ) 0 (5)
+20 August – Sydney (SA)
+United States 0 (4)
+Spain 1
+7 August – Sydney (SA)
+England 0
+Australia 2
+12 August – Brisbane
+Denmark 0
+Australia ( p ) 0 (7)
+8 August – Adelaide
+France 0 (6)
+France 4
+16 August – Sydney (SA)
+Morocco 0
+Australia 1
+7 August – Brisbane
+England 3
+Third place play-off
+England ( p ) 0 (4)
+12 August – Sydney (SA) 19 August – Brisbane
+Nigeria 0 (2)
+England 2 Sweden 2
+8 August – Melbourne
+Colombia 1
+Australia 0
+Colombia 1
+Jamaica 0
+Round of 16
+[ edit ]
+Switzerland vs Spain
+[ edit ]
+5 August 2023 ( 2023-08-05 )
+17:00 UTC+12
+Switzerland 1–5 Spain
+Codina 11' ( o.g. )
+Report
+Bonmatí 5' , 36'
+Redondo 17'
+Codina 45'
+Hermoso 70'
+Eden Park , Auckland
+Attendance: 43,217
+Referee: Cheryl Foster ( Wales )
+Switzerland
+Spain
+GK 1 Gaëlle Thalmann
+RB 19 Eseosa Aigbogun 46'
+CB 5 Noelle Maritz
+CB 2 Julia Stierli 73'
+LB 8 Nadine Riesen 84'
+DM 13 Lia Wälti ( c )
+CM 11 Coumba Sow 46'
+CM 6 Géraldine Reuteler 46'
+RF 17 Seraina Piubel 75'
+CF 10 Ramona Bachmann
+LF 9 Ana Maria Crnogorčević
+Substitutions:
+MF 16 Sandrine Mauron 46'
+FW 22 Meriame Terchoun 46'
+DF 18 Viola Calligaris 46'
+FW 20 Fabienne Humm 75'
+DF 3 Lara Marti 84'
+Manager:
+Inka Grings
+GK 23 Cata Coll
+RB 12 Oihane Hernández
+CB 4 Irene Paredes
+CB 14 Laia Codina
+LB 2 Ona Batlle
+DM 3 Teresa Abelleira 64'
+CM 6 Aitana Bonmatí 77'
+CM 10 Jennifer Hermoso 77'
+RF 17 Alba Redondo
+CF 9 Esther González ( c ) 64'
+LF 18 Salma Paralluelo 84'
+Substitutions:
+FW 15 Eva Navarro 64'
+MF 16 María Pérez 64'
+MF 7 Irene Guerrero 77'
+FW 11 Alexia Putellas 77'
+FW 22 Athenea del Castillo 84'
+Manager:
+Jorge Vilda
+Player of the Match:
+Aitana Bonmatí (Spain)
+Assistant referees :
+Michelle O'Neill ( Republic of Ireland )
+Franca Overtoom ( Netherlands )
+Fourth official :
+Ivana Martinčić ( Croatia )
+Reserve assistant referee :
+Sanja Rođak-Karšić ( Croatia )
+Video assistant referee :
+Marco Fritz ( Germany )
+Assistant video assistant referee:
+Pol van Boekel ( Netherlands )
+Offside video assistant referee:
+Ella De Vries ( Belgium )
+Japan vs Norway
+[ edit ]
+5 August 2023 ( 2023-08-05 )
+20:00 UTC+12
+Japan 3–1 Norway
+Syrstad Engen 15' ( o.g. )
+Shimizu 50'
+Miyazawa 81'
+Report
+Reiten 20'
+Wellington Regional Stadium , Wellington
+Attendance: 33,042
+Referee: Edina Alves Batista ( Brazil )
+Japan
+Norway
+GK 1 Ayaka Yamashita
+CB 12 Hana Takahashi
+CB 4 Saki Kumagai ( c )
+CB 3 Moeka Minami
+RM 2 Risa Shimizu
+CM 10 Fūka Nagano
+CM 14 Yui Hasegawa
+LM 13 Jun Endo
+RF 15 Aoba Fujino
+CF 11 Mina Tanaka 72'
+LF 7 Hinata Miyazawa
+Substitutions:
+FW 9 Riko Ueki 72'
+Manager:
+Futoshi Ikeda
+GK 23 Aurora Mikalsen
+RB 13 Thea Bjelde 88'
+CB 6 Maren Mjelde ( c )
+CB 16 Mathilde Harviken
+LB 4 Tuva Hansen 74'
+DM 7 Ingrid Syrstad Engen
+CM 8 Vilde Bøe Risa 63'
+CM 11 Guro Reiten
+RF 10 Caroline Graham Hansen
+CF 22 Sophie Román Haug
+LF 20 Emilie Haavi 63'
+Substitutions:
+MF 18 Frida Maanum 63'
+FW 9 Karina Sævik 63'
+FW 14 Ada Hegerberg 74'
+DF 3 Sara Hørte 88'
+Manager:
+Hege Riise
+Player of the Match:
+Hinata Miyazawa (Japan)
+Assistant referees :
+Neuza Back ( Brazil )
+Leila Moreira da Cruz ( Brazil )
+Fourth official :
+Katia García ( Mexico )
+Reserve assistant referee :
+Enedina Caudillo ( Mexico )
+Video assistant referee :
+Daiane Muniz dos Santos ( Brazil )
+Assistant video assistant referee:
+Nicolás Gallo ( Colombia )
+Offside video assistant referee:
+Mariana de Almeida ( Argentina )
+Netherlands vs South Africa
+[ edit ]
+6 August 2023 ( 2023-08-06 )
+12:00 UTC+10
+Netherlands 2–0 South Africa
+Roord 9'
+Beerensteyn 68'
+Report
+Sydney Football Stadium , Sydney
+Attendance: 40,233
+Referee: Yoshimi Yamashita ( Japan )
+Netherlands
+South Africa
+GK 1 Daphne van Domselaar
+CB 8 Sherida Spitse ( c )
+CB 3 Stefanie van der Gragt
+CB 20 Dominique Janssen
+RM 17 Victoria Pelova 88'
+CM 6 Jill Roord 90+2'
+CM 14 Jackie Groenen
+CM 10 Daniëlle van de Donk 67' 75'
+LM 22 Esmee Brugts 88'
+CF 7 Lineth Beerensteyn
+CF 11 Lieke Martens 90+2'
+Substitutions:
+MF 21 Damaris Egurrola 75'
+DF 2 Lynn Wilms 88'
+MF 18 Kerstin Casparij 88'
+MF 12 Jill Baijings 90+2'
+FW 9 Katja Snoeijs 90+2'
+Manager:
+Andries Jonker
+GK 1 Kaylin Swart
+RB 2 Lebogang Ramalepe
+CB 13 Bambanani Mbane 42'
+CB 4 Noko Matlou
+LB 7 Karabo Dhlamini
+CM 3 Bongeka Gamede
+CM 19 Kholosa Biyana
+RW 12 Jermaine Seoposenwe 30'
+AM 10 Linda Motlhalo 90+2'
+LW 8 Hildah Magaia 90+2'
+CF 11 Thembi Kgatlana ( c )
+Substitutions:
+FW 23 Wendy Shongwe 30'
+DF 14 Tiisetso Makhubela 42'
+MF 6 Noxolo Cesane 90+2'
+FW 17 Melinda Kgadiete 90+2'
+Manager:
+Desiree Ellis
+Player of the Match:
+Daphne van Domselaar (Netherlands)
+Assistant referees :
+Makoto Bozono ( Japan )
+Naomi Teshirogi ( Japan )
+Fourth official :
+Oh Hyeon-jeong ( South Korea )
+Reserve assistant referee :
+Park Mi-suk ( South Korea )
+Video assistant referee :
+Carol Anne Chenard ( Canada )
+Assistant video assistant referee:
+Abdulla Al-Marri ( Qatar )
+Offside video assistant referee:
+Sian Massey-Ellis ( England )
+Sweden vs United States
+[ edit ]
+6 August 2023 ( 2023-08-06 )
+19:00 UTC+10
+Sweden 0–0 ( a.e.t. ) United States
+Report
+Penalties
+Rolfö
+Rubensson
+Björn
+Blomqvist
+Bennison
+Eriksson
+Hurtig
+5–4
+Sullivan
+Horan
+Mewis
+Rapinoe
+Smith
+Naeher
+O'Hara
+Melbourne Rectangular Stadium , Melbourne
+Attendance: 27,706
+Referee: Stéphanie Frappart ( France )
+Sweden
+United States
+GK 1 Zećira Mušović
+RB 14 Nathalie Björn
+CB 13 Amanda Ilestedt
+CB 6 Magdalena Eriksson
+LB 2 Jonna Andersson
+CM 16 Filippa Angeldahl 97'
+CM 23 Elin Rubensson
+RW 19 Johanna Rytting Kaneryd 81'
+AM 9 Kosovare Asllani ( c ) 49' 81'
+LW 18 Fridolina Rolfö
+CF 11 Stina Blackstenius 112'
+Substitutions:
+FW 8 Lina Hurtig 81'
+FW 10 Sofia Jakobsson 81'
+MF 20 Hanna Bennison 97'
+FW 15 Rebecka Blomqvist 112'
+Manager:
+Peter Gerhardsson
+GK 1 Alyssa Naeher
+RB 23 Emily Fox 120'
+CB 8 Julie Ertz 119'
+CB 4 Naomi Girma
+LB 19 Crystal Dunn
+CM 17 Andi Sullivan
+CM 14 Emily Sonnett 120'
+RW 20 Trinity Rodman 66'
+AM 10 Lindsey Horan ( c )
+LW 11 Sophia Smith
+CF 13 Alex Morgan 99'
+Substitutions:
+FW 6 Lynn Williams 66'
+FW 15 Megan Rapinoe 99'
+MF 22 Kristie Mewis 120'
+DF 5 Kelley O'Hara 120'
+Manager:
+Vlatko Andonovski
+Player of the Match:
+Zećira Mušović (Sweden)
+Assistant referees :
+Manuela Nicolosi ( France )
+Elodie Coppola ( France )
+Fourth official :
+Casey Reibelt ( Australia )
+Reserve assistant referee :
+Ramina Tsoi ( Kyrgyzstan )
+Video assistant referee :
+Massimiliano Irrati ( Italy )
+Assistant video assistant referee:
+Tatiana Guzmán ( Nicaragua )
+Offside video assistant referee:
+Katrin Rafalski ( Germany )
+England vs Nigeria
+[ edit ]
+7 August 2023 ( 2023-08-07 )
+17:30 UTC+10
+England 0–0 ( a.e.t. ) Nigeria
+Report
+Penalties
+Stanway
+England
+Daly
+Greenwood
+Kelly
+4–2
+Oparanozie
+Alozie
+Ajibade
+Ucheibe
+Lang Park , Brisbane
+Attendance: 49,461
+Referee: Melissa Borjas ( Honduras )
+England
+Nigeria
+GK 1 Mary Earps
+CB 16 Jess Carter
+CB 6 Millie Bright ( c )
+CB 5 Alex Greenwood
+RM 2 Lucy Bronze
+CM 8 Georgia Stanway
+CM 4 Keira Walsh 120'
+LM 9 Rachel Daly
+AM 7 Lauren James 87'
+CF 23 Alessia Russo 88'
+CF 11 Lauren Hemp 106'
+Substitutions:
+FW 18 Chloe Kelly 88'
+FW 19 Bethany England 106'
+MF 20 Katie Zelem 120'
+Manager:
+Sarina Wiegman
+GK 16 Chiamaka Nnadozie ( c )
+RB 22 Michelle Alozie
+CB 3 Osinachi Ohale
+CB 14 Oluwatosin Demehin
+LB 2 Ashleigh Plumptre
+CM 18 Halimatu Ayinde 91'
+CM 10 Christy Ucheibe
+RW 12 Uchenna Kanu 81'
+CM 7 Toni Payne 114'
+LW 15 Rasheedat Ajibade
+CF 6 Ifeoma Onumonu 58'
+Substitutions:
+FW 8 Asisat Oshoala 58'
+FW 17 Francisca Ordega 81'
+MF 19 Jennifer Echegini 91'
+FW 9 Desire Oparanozie 114'
+Manager:
+Randy Waldrum
+Player of the Match:
+Mary Earps (England)
+Assistant referees :
+Shirley Perello ( Honduras )
+Sandra Ramirez ( Mexico )
+Fourth official :
+Emikar Calderas Barrera ( Venezuela )
+Reserve assistant referee :
+Migdalia Rodríguez Chirino ( Venezuela )
+Video assistant referee :
+Armando Villarreal ( United States )
+Assistant video assistant referee:
+Drew Fischer ( Canada )
+Offside video assistant referee:
+Felisha Mariscal ( United States )
+Australia vs Denmark
+[ edit ]
+7 August 2023 ( 2023-08-07 )
+20:30 UTC+10
+Australia 2–0 Denmark
+Foord 29'
+Raso 70'
+Report
+Stadium Australia , Sydney
+Attendance: 75,784
+Referee: Rebecca Welch ( England )
+Australia
+Denmark
+GK 18 Mackenzie Arnold
+RB 21 Ellie Carpenter
+CB 15 Clare Hunt
+CB 14 Alanna Kennedy
+LB 7 Steph Catley ( c )
+RM 16 Hayley Raso 80'
+CM 19 Katrina Gorry
+CM 23 Kyra Cooney-Cross
+LM 9 Caitlin Foord 90+5'
+CF 10 Emily van Egmond 80'
+CF 11 Mary Fowler 90+1'
+Substitutions:
+FW 5 Cortnee Vine 80'
+FW 20 Sam Kerr 80'
+DF 4 Clare Polkinghorne 90+1'
+MF 13 Tameka Yallop 90+5'
+Manager:
+Tony Gustavsson
+GK 1 Lene Christensen
+RB 4 Rikke Sevecke 63'
+CB 3 Stine Ballisager
+CB 5 Simone Boye
+LB 11 Katrine Veje
+RM 19 Janni Thomsen 67'
+CM 6 Karen Holmgaard 82'
+CM 12 Kathrine Møller Kühl 73'
+LM 17 Rikke Madsen 63'
+CF 10 Pernille Harder ( c )
+CF 9 Amalie Vangsgaard 82'
+Substitutions:
+FW 21 Mille Gejl 63'
+FW 20 Signe Bruun 63'
+MF 2 Josefine Hasbo 73'
+MF 8 Emma Snerle 82'
+MF 7 Sanne Troelsgaard 82'
+Manager:
+Lars Søndergaard
+Player of the Match:
+Caitlin Foord (Australia)
+Assistant referees :
+Natalie Aspinall ( England )
+Anita Vad ( Hungary )
+Fourth official :
+Marie-Soleil Beaudoin ( Canada )
+Reserve assistant referee :
+Chantal Boudreau ( Canada )
+Video assistant referee :
+Nicolás Gallo ( Colombia )
+Assistant video assistant referee:
+Juan Soto ( Venezuela )
+Offside video assistant referee:
+Mariana de Almeida ( Argentina )
+Colombia vs Jamaica
+[ edit ]
+8 August 2023 ( 2023-08-08 )
+18:00 UTC+10
+Colombia 1–0 Jamaica
+Usme 51'
+Report
+Melbourne Rectangular Stadium , Melbourne
+Attendance: 27,706
+Referee: Kate Jacewicz ( Australia )
+Colombia
+Jamaica
+GK 1 Catalina Pérez
+RB 17 Carolina Arias
+CB 19 Jorelyn Carabalí
+CB 3 Daniela Arias 70'
+LB 15 Ana María Guzmán
+DM 4 Diana Ospina
+CM 10 Leicy Santos 87'
+CM 5 Lorena Bedoya
+RF 9 Mayra Ramírez
+CF 11 Catalina Usme ( c ) 90+3'
+LF 18 Linda Caicedo
+Substitutions:
+MF 6 Daniela Montoya 87'
+MF 8 Marcela Restrepo 90+3'
+Manager:
+Nelson Abadía
+GK 13 Rebecca Spencer
+RB 19 Tiernny Wiltshire 83'
+CB 17 Allyson Swaby
+CB 4 Chantelle Swaby 41'
+LB 14 Deneisha Blackwood
+CM 8 Drew Spence 45+1'
+CM 3 Vyan Sampson 79'
+RW 12 Kiki Van Zanten 46'
+AM 10 Jody Brown 83'
+LW 18 Trudi Carter 67'
+CF 11 Khadija Shaw ( c )
+Substitutions:
+MF 20 Atlanta Primus 46'
+FW 15 Tiffany Cameron 67'
+MF 7 Peyton McNamara 79'
+FW 9 Kameron Simmonds 83'
+MF 21 Cheyna Matthews 83'
+Manager:
+Lorne Donaldson
+Player of the Match:
+Catalina Usme (Colombia)
+Assistant referees :
+Kim Kyoung-min ( South Korea )
+Joanna Charaktis ( Australia )
+Fourth official :
+Marta Huerta de Aza ( Spain )
+Reserve assistant referee :
+Diana Chikotesha ( Zambia )
+Video assistant referee :
+Pol van Boekel ( Netherlands )
+Assistant video assistant referee:
+Marco Fritz ( Germany )
+Offside video assistant referee:
+Ella De Vries ( Belgium )
+France vs Morocco
+[ edit ]
+8 August 2023 ( 2023-08-08 )
+20:30 UTC+9:30
+France 4–0 Morocco
+Diani 15'
+Dali 20'
+Le Sommer 23' , 70'
+Report
+Hindmarsh Stadium , Adelaide
+Attendance: 13,557
+Referee: Tori Penso ( United States )
+France
+Morocco
+GK 16 Pauline Peyraud-Magnin
+RB 22 Ève Périsset 81'
+CB 3 Wendie Renard ( c )
+CB 5 Élisa De Almeida
+LB 7 Sakina Karchaoui 90+1'
+RM 15 Kenza Dali
+CM 8 Grace Geyoro
+CM 6 Sandie Toletti 64'
+LM 13 Selma Bacha
+AM 9 Eugénie Le Sommer 81'
+CF 11 Kadidiatou Diani 90+1'
+Substitutions:
+FW 23 Vicki Bècho 64'
+FW 19 Naomie Feller 81'
+DF 20 Estelle Cascarino 81'
+FW 18 Viviane Asseyi 90+1'
+DF 14 Aïssatou Tounkara 90+1'
+Manager:
+Hervé Renard
+GK 1 Khadija Er-Rmichi
+RB 17 Hanane Aït El Haj 57'
+CB 5 Nesryne El Chad
+CB 3 Nouhaila Benzina
+LB 2 Zineb Redouani
+RM 19 Sakina Ouzraoui Diki
+CM 6 Élodie Nakkach 64'
+CM 7 Ghizlane Chebbak ( c )
+LM 11 Fatima Tagnaout 64'
+CF 16 Anissa Lahmari 64'
+CF 9 Ibtissam Jraïdi
+Substitutions:
+MF 4 Sarah Kassi 64'
+FW 23 Rosella Ayane 64'
+FW 20 Sofia Bouftini 64'
+Manager:
+Reynald Pedros
+Player of the Match:
+Kadidiatou Diani (France)
+Assistant referees :
+Brooke Mayo ( United States )
+Mijensa Rensch ( Suriname )
+Fourth official :
+Anna-Marie Keighley ( New Zealand )
+Reserve assistant referee :
+Sarah Jones ( New Zealand )
+Video assistant referee :
+Alejandro Hernández Hernández ( Spain )
+Assistant video assistant referee:
+Muhammad Taqi ( Singapore )
+Offside video assistant referee:
+Sian Massey-Ellis ( England )
+Quarter-finals
+[ edit ]
+Spain vs Netherlands
+[ edit ]
+11 August 2023 ( 2023-08-11 )
+13:00 UTC+12
+Spain 2–1 ( a.e.t. ) Netherlands
+Caldentey 81' ( pen. )
+Paralluelo 111'
+Report
+Van der Gragt 90+1'
+Wellington Regional Stadium , Wellington
+Attendance: 32,021
+Referee: Stéphanie Frappart ( France )
+Spain
+Netherlands
+GK 23 Cata Coll
+RB 12 Oihane Hernández 35' 91'
+CB 4 Irene Paredes
+CB 14 Laia Codina 77'
+LB 2 Ona Batlle
+DM 3 Teresa Abelleira
+CM 6 Aitana Bonmatí 87'
+CM 10 Jennifer Hermoso
+RF 17 Alba Redondo 71'
+CF 9 Esther González ( c ) 100'
+LF 8 Mariona Caldentey 100'
+Substitutions:
+FW 18 Salma Paralluelo 71'
+DF 5 Ivana Andrés 77'
+MF 7 Irene Guerrero 87'
+DF 19 Olga Carmona 91'
+FW 15 Eva Navarro 100'
+FW 11 Alexia Putellas 100'
+Manager:
+Jorge Vilda
+GK 1 Daphne van Domselaar
+CB 8 Sherida Spitse ( c ) 85'
+CB 3 Stefanie van der Gragt 106'
+CB 20 Dominique Janssen
+RM 17 Victoria Pelova
+CM 6 Jill Roord 61'
+CM 21 Damaris Egurrola 61' 96'
+CM 14 Jackie Groenen
+LM 22 Esmee Brugts 89'
+CF 7 Lineth Beerensteyn
+CF 11 Lieke Martens
+Substitutions:
+DF 2 Lynn Wilms 61'
+FW 9 Katja Snoeijs 85'
+DF 4 Aniek Nouwen 89'
+DF 15 Caitlin Dijkstra 96'
+MF 18 Kerstin Casparij 106'
+Manager:
+Andries Jonker
+Player of the Match:
+Salma Paralluelo (Spain)
+Assistant referees :
+Manuela Nicolosi ( France )
+Elodie Coppola ( France )
+Fourth official :
+Maria Sole Ferrieri Caputi ( Italy )
+Reserve assistant referee :
+Francesca Di Monte ( Italy )
+Video assistant referee :
+Tatiana Guzmán ( Nicaragua )
+Assistant video assistant referee:
+Marco Fritz ( Germany )
+Offside video assistant referee:
+Ella De Vries ( Belgium )
+Stand-by video assistant referee:
+Abdulla Al-Marri ( Qatar )
+Stand-by assistant video assistant referee:
+Adil Zourak ( Morocco )
+Japan vs Sweden
+[ edit ]
+11 August 2023 ( 2023-08-11 )
+19:30 UTC+12
+Japan 1–2 Sweden
+Hayashi 87'
+Report
+Ilestedt 32'
+Angeldahl 51' ( pen. )
+Eden Park , Auckland
+Attendance: 43,217
+Referee: Esther Staubli ( Switzerland )
+Japan
+Sweden
+GK 1 Ayaka Yamashita
+CB 12 Hana Takahashi 90+2'
+CB 4 Saki Kumagai ( c )
+CB 3 Moeka Minami
+RM 2 Risa Shimizu
+CM 14 Yui Hasegawa
+CM 10 Fūka Nagano 80'
+LM 6 Hina Sugita 46'
+RF 15 Aoba Fujino
+CF 11 Mina Tanaka 52'
+LF 7 Hinata Miyazawa 80'
+Substitutions:
+MF 13 Jun Endo 46'
+FW 9 Riko Ueki 79' 52'
+MF 16 Honoka Hayashi 80'
+DF 17 Kiko Seike 80'
+FW 20 Maika Hamano 90+2'
+Manager:
+Futoshi Ikeda
+GK 1 Zećira Mušović
+RB 14 Nathalie Björn
+CB 13 Amanda Ilestedt
+CB 6 Magdalena Eriksson
+LB 2 Jonna Andersson
+CM 16 Filippa Angeldahl
+CM 23 Elin Rubensson 84'
+RW 19 Johanna Rytting Kaneryd 84'
+AM 9 Kosovare Asllani ( c ) 73'
+LW 18 Fridolina Rolfö 73'
+CF 11 Stina Blackstenius
+Substitutions:
+FW 7 Madelen Janogy 73'
+FW 8 Lina Hurtig 73'
+FW 10 Sofia Jakobsson 84'
+MF 20 Hanna Bennison 84'
+Manager:
+Peter Gerhardsson
+Player of the Match:
+Amanda Ilestedt (Sweden)
+Assistant referees :
+Katrin Rafalski ( Germany )
+Susanne Küng ( Switzerland )
+Fourth official :
+Katia García ( Mexico )
+Reserve assistant referee :
+Karen Diaz Medina ( Mexico )
+Video assistant referee :
+Massimiliano Irrati ( Italy )
+Assistant video assistant referee:
+Drew Fischer ( Canada )
+Offside video assistant referee:
+Neuza Back ( Brazil )
+Stand-by video assistant referee:
+Salomé di Iorio ( Argentina )
+Stand-by assistant video assistant referee:
+Daiane Muniz dos Santos ( Brazil )
+Australia vs France
+[ edit ]
+12 August 2023 ( 2023-08-12 )
+17:00 UTC+10
+Australia 0–0 ( a.e.t. ) France
+Report
+Penalties
+Foord
+Catley
+Kerr
+Fowler
+Arnold
+Gorry
+Yallop
+Carpenter
+Hunt
+Vine
+7–6
+Bacha
+Diani
+Renard
+Le Sommer
+Périsset
+Geyoro
+Karchaoui
+Lakrar
+Dali
+Bècho
+Lang Park , Brisbane
+Attendance: 49,461
+Referee: María Carvajal ( Chile )
+Australia
+France
+GK 18 Mackenzie Arnold
+RB 21 Ellie Carpenter
+CB 15 Clare Hunt
+CB 14 Alanna Kennedy
+LB 7 Steph Catley ( c )
+RM 16 Hayley Raso 104'
+CM 19 Katrina Gorry 92'
+CM 23 Kyra Cooney-Cross 116'
+LM 9 Caitlin Foord
+CF 10 Emily van Egmond 55'
+CF 11 Mary Fowler
+Substitutions:
+FW 20 Sam Kerr 55'
+FW 5 Cortnee Vine 104'
+MF 13 Tameka Yallop 116'
+Manager:
+Tony Gustavsson
+GK 16 Pauline Peyraud-Magnin 120+3'
+RB 5 Élisa De Almeida 120+3'
+CB 2 Maëlle Lakrar
+CB 3 Wendie Renard ( c )
+LB 7 Sakina Karchaoui
+RM 15 Kenza Dali
+CM 8 Grace Geyoro
+CM 6 Sandie Toletti 64'
+LM 13 Selma Bacha
+AM 9 Eugénie Le Sommer
+CF 11 Kadidiatou Diani
+Substitutions:
+FW 23 Vicki Bècho 64'
+DF 22 Ève Périsset 120+3'
+GK 1 Solène Durand 120+3'
+Manager:
+Hervé Renard
+Player of the Match:
+Mackenzie Arnold (Australia)
+Assistant referees :
+Leslie Vásquez ( Chile )
+Mónica Amboya ( Ecuador )
+Fourth official :
+Laura Fortunato ( Argentina )
+Reserve assistant referee :
+Daiana Milone ( Argentina )
+Video assistant referee :
+Nicolás Gallo ( Colombia )
+Assistant video assistant referee:
+Juan Soto ( Venezuela )
+Offside video assistant referee:
+Mariana de Almeida ( Argentina )
+Stand-by video assistant referee:
+Juan Martínez Munuera ( Spain )
+Stand-by assistant video assistant referee:
+Alejandro Hernández Hernández ( Spain )
+England vs Colombia
+[ edit ]
+12 August 2023 ( 2023-08-12 )
+20:30 UTC+10
+England 2–1 Colombia
+Hemp 45+7'
+Russo 63'
+Report
+Santos 44'
+Stadium Australia , Sydney
+Attendance: 75,784
+Referee: Ekaterina Koroleva ( United States )
+England
+Colombia
+GK 1 Mary Earps
+CB 16 Jess Carter
+CB 6 Millie Bright ( c )
+CB 5 Alex Greenwood
+RM 2 Lucy Bronze
+CM 8 Georgia Stanway
+CM 4 Keira Walsh
+CM 10 Ella Toone
+LM 9 Rachel Daly
+CF 23 Alessia Russo 84'
+CF 11 Lauren Hemp 90+3'
+Substitutions:
+FW 18 Chloe Kelly 84'
+FW 19 Bethany England 90+3'
+Manager:
+Sarina Wiegman
+GK 1 Catalina Pérez 67'
+RB 17 Carolina Arias 10'
+CB 19 Jorelyn Carabalí
+CB 3 Daniela Arias
+LB 2 Manuela Vanegas
+CM 4 Diana Ospina 78'
+CM 5 Lorena Bedoya
+RW 11 Catalina Usme ( c )
+AM 10 Leicy Santos
+LW 18 Linda Caicedo
+CF 9 Mayra Ramírez
+Substitutions:
+DF 15 Ana María Guzmán 10'
+GK 13 Natalia Giraldo 67'
+FW 21 Ivonne Chacón 78'
+Manager:
+Nelson Abadía
+Player of the Match:
+Alessia Russo (England)
+Assistant referees :
+Kathryn Nesbitt ( United States )
+Felisha Mariscal ( United States )
+Fourth official :
+Oh Hyeon-jeong ( South Korea )
+Reserve assistant referee :
+Ramina Tsoi ( Kyrgyzstan )
+Video assistant referee :
+Carol Anne Chenard ( Canada )
+Assistant video assistant referee:
+Armando Villarreal ( United States )
+Offside video assistant referee:
+Chantal Boudreau ( Canada )
+Stand-by video assistant referee:
+Muhammad Taqi ( Singapore )
+Stand-by assistant video assistant referee:
+Pol van Boekel ( Netherlands )
+Semi-finals
+[ edit ]
+Spain vs Sweden
+[ edit ]
+15 August 2023 ( 2023-08-15 )
+20:00 UTC+12
+Spain 2–1 Sweden
+Paralluelo 81'
+Carmona 89'
+Report
+Blomqvist 88'
+Eden Park , Auckland
+Attendance: 43,217
+Referee: Edina Alves Batista ( Brazil )
+Spain
+Sweden
+GK 23 Cata Coll
+RB 2 Ona Batlle
+CB 4 Irene Paredes
+CB 14 Laia Codina
+LB 19 Olga Carmona ( c )
+DM 3 Teresa Abelleira
+CM 6 Aitana Bonmatí
+CM 11 Alexia Putellas 57'
+RF 17 Alba Redondo 73'
+CF 10 Jennifer Hermoso
+LF 8 Mariona Caldentey 90+5'
+Substitutions:
+FW 18 Salma Paralluelo 57'
+FW 15 Eva Navarro 73'
+FW 9 Esther González 90+5'
+Manager:
+Jorge Vilda
+GK 1 Zećira Mušović
+RB 14 Nathalie Björn
+CB 13 Amanda Ilestedt
+CB 6 Magdalena Eriksson
+LB 2 Jonna Andersson
+CM 16 Filippa Angeldahl
+CM 23 Elin Rubensson 87'
+RW 19 Johanna Rytting Kaneryd 77'
+AM 9 Kosovare Asllani ( c )
+LW 18 Fridolina Rolfö
+CF 11 Stina Blackstenius 77'
+Substitutions:
+MF 22 Olivia Schough 77'
+FW 15 Rebecka Blomqvist 77'
+FW 8 Lina Hurtig 87'
+Manager:
+Peter Gerhardsson
+Player of the Match:
+Salma Paralluelo (Spain)
+Assistant referees :
+Neuza Back ( Brazil )
+Leila Moreira da Cruz ( Brazil )
+Fourth official :
+Melissa Borjas ( Honduras )
+Reserve assistant referee :
+Sandra Ramirez ( Mexico )
+Video assistant referee :
+Nicolás Gallo ( Colombia )
+Assistant video assistant referee:
+Armando Villarreal ( United States )
+Offside video assistant referee:
+Felisha Mariscal ( United States )
+Support video assistant referee:
+Juan Soto ( Venezuela )
+Stand-by video assistant referee:
+Adil Zourak ( Morocco )
+Stand-by assistant video assistant referee:
+Muhammad Taqi ( Singapore )
+Australia vs England
+[ edit ]
+16 August 2023 ( 2023-08-16 )
+20:00 UTC+10
+Australia 1–3 England
+Kerr 63'
+Report
+Toone 36'
+Hemp 71'
+Russo 86'
+Stadium Australia , Sydney
+Attendance: 75,784
+Referee: Tori Penso ( United States )
+Australia
+England
+GK 18 Mackenzie Arnold
+RB 21 Ellie Carpenter
+CB 15 Clare Hunt
+CB 4 Clare Polkinghorne 81'
+LB 7 Steph Catley
+RM 16 Hayley Raso 72'
+CM 19 Katrina Gorry 88'
+CM 23 Kyra Cooney-Cross
+LM 9 Caitlin Foord
+CF 11 Mary Fowler
+CF 20 Sam Kerr ( c )
+Substitutions:
+FW 5 Cortnee Vine 72'
+FW 10 Emily van Egmond 81'
+MF 8 Alex Chidiac 88'
+Manager:
+Tony Gustavsson
+GK 1 Mary Earps
+CB 16 Jess Carter
+CB 6 Millie Bright ( c )
+CB 5 Alex Greenwood 10'
+RM 2 Lucy Bronze
+CM 8 Georgia Stanway
+CM 4 Keira Walsh
+CM 10 Ella Toone 90'
+LM 9 Rachel Daly
+CF 23 Alessia Russo 87'
+CF 11 Lauren Hemp
+Substitutions:
+FW 18 Chloe Kelly 90+5' 87'
+DF 3 Niamh Charles 90'
+Manager:
+Sarina Wiegman
+Player of the Match:
+Lauren Hemp (England)
+Assistant referees :
+Brooke Mayo ( United States )
+Mijensa Rensch ( Suriname )
+Fourth official :
+Tess Olofsson ( Sweden )
+Reserve assistant referee :
+Lucie Ratajová ( Czech Republic )
+Video assistant referee :
+Massimiliano Irrati ( Italy )
+Assistant video assistant referee:
+Carol Anne Chenard ( Canada )
+Offside video assistant referee:
+Kathryn Nesbitt ( United States )
+Support video assistant referee:
+Drew Fischer ( Canada )
+Third place play-off
+[ edit ]
+19 August 2023 ( 2023-08-19 )
+18:00 UTC+10
+Sweden 2–0 Australia
+Rolfö 30' ( pen. )
+Asllani 62'
+Report
+Lang Park , Brisbane
+Attendance: 49,461
+Referee: Cheryl Foster ( Wales )
+Sweden
+Australia
+GK 1 Zećira Mušović
+RB 14 Nathalie Björn
+CB 13 Amanda Ilestedt
+CB 6 Magdalena Eriksson
+LB 2 Jonna Andersson
+CM 16 Filippa Angeldahl
+CM 23 Elin Rubensson 89'
+RW 19 Johanna Rytting Kaneryd 89'
+AM 9 Kosovare Asllani ( c ) 67'
+LW 18 Fridolina Rolfö
+CF 11 Stina Blackstenius 67'
+Substitutions:
+FW 8 Lina Hurtig 90+4' 67'
+FW 15 Rebecka Blomqvist 67'
+DF 3 Linda Sembrant 89'
+Manager:
+Peter Gerhardsson
+GK 18 Mackenzie Arnold
+RB 21 Ellie Carpenter 74'
+CB 15 Clare Hunt
+CB 4 Clare Polkinghorne 74'
+LB 7 Steph Catley
+RM 16 Hayley Raso 60'
+CM 19 Katrina Gorry 45+1' 60'
+CM 23 Kyra Cooney-Cross
+LM 9 Caitlin Foord
+CF 11 Mary Fowler
+CF 20 Sam Kerr ( c )
+Substitutions:
+FW 10 Emily van Egmond 60'
+FW 5 Cortnee Vine 60'
+MF 8 Alex Chidiac 74'
+DF 2 Courtney Nevin 74'
+Manager:
+Tony Gustavsson
+Player of the Match:
+Fridolina Rolfö (Sweden)
+Assistant referees :
+Michelle O'Neill ( Republic of Ireland )
+Franca Overtoom ( Netherlands )
+Fourth official :
+Rebecca Welch ( England )
+Reserve assistant referee :
+Natalie Aspinall ( England )
+Video assistant referee :
+Marco Fritz ( Germany )
+Assistant video assistant referee:
+Alejandro Hernández Hernández ( Spain )
+Offside video assistant referee:
+Sian Massey-Ellis ( England )
+Support video assistant referee:
+Massimiliano Irrati ( Italy )
+Final
+[ edit ]
+Main article: 2023 FIFA Women's World Cup final
+20 August 2023 ( 2023-08-20 )
+20:00 UTC+10
+Spain 1–0 England
+Carmona 29'
+Report
+Stadium Australia , Sydney
+Attendance: 75,784
+Referee: Tori Penso ( United States )
+Spain
+England
+GK 23 Cata Coll
+RB 2 Ona Batlle
+CB 4 Irene Paredes
+CB 14 Laia Codina 73'
+LB 19 Olga Carmona ( c )
+DM 3 Teresa Abelleira
+CM 6 Aitana Bonmatí
+CM 10 Jennifer Hermoso
+RF 17 Alba Redondo 60'
+CF 18 Salma Paralluelo 78'
+LF 8 Mariona Caldentey 90'
+Substitutions:
+DF 12 Oihane Hernández 60'
+DF 5 Ivana Andrés 73'
+FW 11 Alexia Putellas 90'
+Manager:
+Jorge Vilda
+GK 1 Mary Earps
+CB 16 Jess Carter
+CB 6 Millie Bright ( c )
+CB 5 Alex Greenwood
+RM 2 Lucy Bronze
+CM 8 Georgia Stanway
+CM 4 Keira Walsh
+CM 10 Ella Toone 87'
+LM 9 Rachel Daly 46'
+CF 23 Alessia Russo 46'
+CF 11 Lauren Hemp 55'
+Substitutions:
+FW 7 Lauren James 46'
+FW 18 Chloe Kelly 46'
+FW 19 Bethany England 87'
+Manager:
+Sarina Wiegman
+Player of the Match:
+Olga Carmona (Spain)
+Assistant referees :
+Brooke Mayo ( United States )
+Kathryn Nesbitt ( United States )
+Fourth official :
+Yoshimi Yamashita ( Japan )
+Reserve assistant referee :
+Mijensa Rensch ( Suriname )
+Video assistant referee :
+Tatiana Guzmán ( Nicaragua )
+Assistant video assistant referee:
+Pol van Boekel ( Netherlands )
+Offside video assistant referee:
+Ella De Vries ( Belgium )
+Support video assistant referee:
+Armando Villarreal ( United States )
+References
+[ edit ]
+↑ "Match schedule: FIFA Women's World Cup Australia & New Zealand 2023" (PDF) . FIFA . 24 October 2022 . Retrieved 24 October 2022 .
+1 2 3 "Regulations: FIFA Women's World Cup Australia & New Zealand 2023" (PDF) . FIFA . Retrieved 14 December 2022 .
+External links
+[ edit ]
+Official website
+v
+t
+e
+2023 FIFA Women's World Cup
+Stages
+Group stage
+Group A
+Group B
+Group C
+Group D
+Group E
+Group F
+Group G
+Group H
+Knockout stage
+Final
+General information
+Qualification
+Broadcasting rights
+Bids
+Controversies
+Big Five broadcasting rights
+OneLove
+Rubiales case
+Officials
+Squads
+Matildas fever
+Retrieved from " https://en.wikipedia.org/w/index.php?title=2023_FIFA_Women%27s_World_Cup_knockout_stage&oldid=1364749750 "
+Categories : 2023 FIFA Women's World Cup
+FIFA Women's World Cup knockout stages
+Australia at the 2023 FIFA Women's World Cup
+Colombia at the 2023 FIFA Women's World Cup
+Denmark at the 2023 FIFA Women's World Cup
+England at the 2023 FIFA Women's World Cup
+France at the 2023 FIFA Women's World Cup
+Jamaica at the 2023 FIFA Women's World Cup
+Japan at the 2023 FIFA Women's World Cup
+Morocco at the 2023 FIFA Women's World Cup
+Netherlands at the 2023 FIFA Women's World Cup
+Nigeria at the 2023 FIFA Women's World Cup
+Norway at the 2023 FIFA Women's World Cup
+South Africa at the 2023 FIFA Women's World Cup
+Spain at the 2023 FIFA Women's World Cup
+Sweden at the 2023 FIFA Women's World Cup
+Switzerland at the 2023 FIFA Women's World Cup
+United States at the 2023 FIFA Women's World Cup
+Hidden categories: Articles with short description
+Short description with empty Wikidata description
+Use dmy dates from October 2022
+Pages using football kit with incorrect pattern parameters
+Official website not in Wikidata
+This page was last edited on 18 July 2026, at 08:38 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+2023 FIFA Women's World Cup knockout stage
+15 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"2023 FIFA Women's World Cup knockout stage","url":"https:\/\/en.wikipedia.org\/wiki\/2023_FIFA_Women%27s_World_Cup_knockout_stage","sameAs":"http:\/\/www.wikidata.org\/entity\/Q114680462","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q114680462","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2021-12-02T09:40:28Z","dateModified":"2026-07-18T08:38:07Z"}
