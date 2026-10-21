@@ -379,7 +379,7 @@ describe('PredictionService — a survivor week', () => {
     const { g4 } = context.gamesByNumber;
     context.play(g4, MatchSide.AWAY);
     const prediction = expectDefined(context.games.predictions.get(`entry-alice:${g4.id}`));
-    context.games.predictions.set(`entry-alice:${g4.id}`, { ...prediction, sportEventParticipantId: context.sideOf(g4, 'Raiders') });
+    context.games.predictions.set(`entry-alice:${g4.id}`, { ...prediction, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.sideOf(g4, 'Raiders') });
     twoTeamWeek3(context);
     for (const row of [...context.games.field.values()]) {
       if (row.participantId === context.team.Chiefs || row.participantId === context.team.Jets) context.games.field.delete(row.id);

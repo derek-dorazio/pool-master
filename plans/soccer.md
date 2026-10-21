@@ -196,7 +196,7 @@ Questions:
 
 As built: the survivor setting is `reuseTeamsOnceAllUsed` on the survivor rules, optional and
 read as yes when left out, since a defaulted field in the rules union breaks the API spec. A
-cycle's team count is the week's field, which holds every team of the league. The Premier
+cycle's team count is every team in any of the contest's weeks (#836), so a week short of a postponed game's teams doesn't end a cycle early. The Premier
 League's 2025-26 seed is two files, matchweeks 1 to 19 and 20 to 38, because a data file's
 events start in its season year. The Premier League has week templates only; its survivor
 template is "Survivor: Last Man Standing, 1 team a week".

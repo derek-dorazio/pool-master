@@ -206,6 +206,8 @@ export interface SportEventParticipantRepository {
   findById(id: string): Promise<SportEventParticipant | null>;
   /** Ordered by seed, unseeded last. */
   findBySportEvent(sportEventId: string): Promise<SportEventParticipant[]>;
+  /** How many different participants the events' fields hold between them: a season's teams (#836). */
+  countDistinctParticipants(sportEventIds: readonly string[]): Promise<number>;
   /** Adds participants to an event's field, all or none. */
   createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void>;
   /** Patches field rows and their manual prices, all or none. */

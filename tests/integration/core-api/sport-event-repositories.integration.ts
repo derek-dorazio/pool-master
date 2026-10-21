@@ -287,6 +287,18 @@ describe('SportEventParticipantRepository — the field', () => {
     expect(rows.map((row) => [row.participantId, row.seedNumber])).toEqual([[cal.id, 1], [ben.id, 2], [ana.id, undefined]]);
   });
 
+  it('counts each participant once across several events\' fields, leaving out events not asked for', async () => {
+    const { field } = repos();
+    const [week1, week2, other] = [await createEvent('Week 1'), await createEvent('Week 2'), await createEvent('Other')];
+    const [ana, ben, cal, dee] = await createParticipants(['Ana', 'Ben', 'Cal', 'Dee']);
+    await field.createMany(week1.id, [{ participantId: ana.id }, { participantId: ben.id }]);
+    await field.createMany(week2.id, [{ participantId: ben.id }, { participantId: cal.id }]);
+    await field.createMany(other.id, [{ participantId: dee.id }]);
+
+    expect(await field.countDistinctParticipants([week1.id, week2.id])).toBe(3);
+    expect(await field.countDistinctParticipants([])).toBe(0);
+  });
+
   it('patches rows and manual prices all or none; undefined leaves a column, null clears it', async () => {
     const { field, valuations } = repos();
     const event = await createEvent();

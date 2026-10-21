@@ -5039,7 +5039,7 @@ export interface components {
         } | {
             /** @enum {string} */
             selectionType: "SURVIVOR";
-            /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+            /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
             reuseTeamsOnceAllUsed?: boolean;
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
@@ -5243,7 +5243,7 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
-                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Contest-configuration identifier. */
                 id: string;
@@ -5579,7 +5579,7 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
-                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
@@ -5741,7 +5741,7 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
-                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Contest-configuration identifier. */
                     id: string;
@@ -6099,7 +6099,7 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
-                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
@@ -6415,7 +6415,7 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
-                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
@@ -6766,7 +6766,7 @@ export interface components {
                 } | {
                     /** @enum {string} */
                     selectionType: "SURVIVOR";
-                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
@@ -9683,7 +9683,7 @@ export interface components {
             } | {
                 /** @enum {string} */
                 selectionType: "SURVIVOR";
-                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;

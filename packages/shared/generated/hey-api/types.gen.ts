@@ -2977,7 +2977,7 @@ export type ContestConfigurationRequest = {
 } | {
     selectionType: 'SURVIVOR';
     /**
-     * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+     * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
      */
     reuseTeamsOnceAllUsed?: boolean;
     /**
@@ -3322,7 +3322,7 @@ export type ContestManagementDetailDto = {
     } | {
         selectionType: 'SURVIVOR';
         /**
-         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
          */
         reuseTeamsOnceAllUsed?: boolean;
         /**
@@ -3780,7 +3780,7 @@ export type ContestConfigTemplateDto = {
     } | {
         selectionType: 'SURVIVOR';
         /**
-         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
          */
         reuseTeamsOnceAllUsed?: boolean;
         /**
@@ -4043,7 +4043,7 @@ export type ContestManagementResponse = {
         } | {
             selectionType: 'SURVIVOR';
             /**
-             * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+             * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
              */
             reuseTeamsOnceAllUsed?: boolean;
             /**
@@ -4525,7 +4525,7 @@ export type ContestConfigTemplateListResponse = {
         } | {
             selectionType: 'SURVIVOR';
             /**
-             * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+             * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
              */
             reuseTeamsOnceAllUsed?: boolean;
             /**
@@ -4975,7 +4975,7 @@ export type UpdateContestConfigTemplateRequest = {
     } | {
         selectionType: 'SURVIVOR';
         /**
-         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
          */
         reuseTeamsOnceAllUsed?: boolean;
         /**
@@ -5460,7 +5460,7 @@ export type ContestConfigTemplateResponse = {
         } | {
             selectionType: 'SURVIVOR';
             /**
-             * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+             * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
              */
             reuseTeamsOnceAllUsed?: boolean;
             /**
@@ -9287,7 +9287,7 @@ export type CreateContestRequest = {
     } | {
         selectionType: 'SURVIVOR';
         /**
-         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
          */
         reuseTeamsOnceAllUsed?: boolean;
         /**

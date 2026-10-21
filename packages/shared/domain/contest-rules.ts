@@ -83,7 +83,7 @@ export type BracketContestRules = z.infer<typeof BracketContestRulesSchema>;
 export const SurvivorContestRulesSchema = z.object({
   selectionType: z.literal(SelectionType.SURVIVOR),
   reuseTeamsOnceAllUsed: z.boolean().optional()
-    .describe('Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week\'s field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.'),
+    .describe('Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest\'s weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.'),
 }).describe('Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win.');
 export type SurvivorContestRules = z.infer<typeof SurvivorContestRulesSchema>;
 

@@ -140,10 +140,13 @@ export class InMemoryGamePicks {
     };
   }
 
-  fieldRepo(): Pick<SportEventParticipantRepository, 'findBySportEvent'> {
+  fieldRepo(): Pick<SportEventParticipantRepository, 'findBySportEvent' | 'countDistinctParticipants'> {
     return {
       findBySportEvent: async (sportEventId) =>
         [...this.field.values()].filter((row) => row.sportEventId === sportEventId),
+      countDistinctParticipants: async (sportEventIds) => new Set([...this.field.values()]
+        .filter((row) => sportEventIds.includes(row.sportEventId))
+        .map((row) => row.participantId)).size,
     };
   }
 

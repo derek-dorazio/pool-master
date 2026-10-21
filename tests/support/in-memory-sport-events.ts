@@ -389,6 +389,9 @@ export class InMemorySportEvents {
       findBySportEvent: async (sportEventId) => this.field
         .filter((row) => row.sportEventId === sportEventId)
         .sort((left, right) => (left.seedNumber ?? Infinity) - (right.seedNumber ?? Infinity)),
+      countDistinctParticipants: async (sportEventIds) => new Set(this.field
+        .filter((row) => sportEventIds.includes(row.sportEventId))
+        .map((row) => row.participantId)).size,
       createMany: async (sportEventId, rows: readonly SportEventParticipantCreate[]) => {
         for (const { participantId, ...patch } of rows) {
           apply(this.addToField(sportEventId, participantId), patch);
