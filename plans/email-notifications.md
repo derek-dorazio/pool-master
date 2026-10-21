@@ -145,23 +145,23 @@ email could start an argument the app can't help with.
 A commissioner can only build a contest on a released event (`SCHEDULED`); a `DRAFT` event is
 invisible to them. Whole seasons are loaded and released months ahead, so "released" alone
 is the wrong moment to say "go set up your contest". These emails use the event's start date
-instead, and the sport leagues each league follows (Q3.3).
+instead. They go to every commissioner of every league (Q3.3).
 
 | # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
 |---|---|---|---|---|---|---|---|
-| C1 | Coming up soon | An event of a followed sport league starts in 10 days; it may still be `DRAFT` | Commissioners of leagues following that sport league | Once, 10 days before start | "The Masters is next week. Get ready to set up your league's contest." Dates, last year's winner of your league's contest on it if any, link to the sport league's schedule | | P1 |
+| C1 | Coming up soon | An event of any sport league starts in 10 days; it may still be `DRAFT` | Every commissioner of every active league | Once, 10 days before start | "The Masters is next week. Get ready to set up your league's contest." Dates, last year's winner of your league's contest on it if any, link to the sport league's schedule | | P1 |
 | C2 | Ready for contests | The event is released **and** starts within 7 days; fires at whichever comes later. Skipped for a league that already has a contest on it | Same as C1 | Once | "The Masters is ready. Set up your contest." Start date, field size, the default contest setups for it, Create contest button | | P1 |
-| C3 | No contest yet | 3 days before start, a following league has no contest on the event | Same as C1 | Once | Short nudge, Create contest button | | P3 |
+| C3 | No contest yet | 3 days before start, a league has no contest on the event | Same as C1 | Once | Short nudge, Create contest button | | P3 |
 | C4 | Your contest isn't open yet | A league's contest on the event is still `DRAFT` 48 hours before its cutoff | That league's commissioners | Once, 48 h before cutoff | Contest name, "members can't enter until you open it", Open contest link | | P2 |
 | C5 | Entries so far | A contest's cutoff is 24 hours away | That league's commissioners | Once | Entries submitted, members with none (names), Remind link (sends D2 now) | | P3 |
 | C6 | Event postponed or rescheduled | A released event's start date changes, or it goes `POSTPONED` | Commissioners with a contest on it, plus members with an entry | At once | Old and new dates, what it means for picks (still open until the new start) | | P2 |
 | C7 | Event cancelled | An event goes `CANCELLED` | Commissioners with a contest on it, plus members with an entry | At once | "Cancelled: counts for nothing in [contest]." For a one-event contest, that the contest ends with no scores (F2 then follows only if it had other events) | | P2 |
 
-**Q3.3 Which leagues get C1–C3?** Sending every commissioner every event of every sport would
-be spam.
-*Recommendation:* each league **follows** sport leagues. It starts following one automatically
-the first time it creates a contest on it, and commissioners can tick more on league settings
-(a new league picks its sports at creation). C1–C3 go only for followed sport leagues.
+**Q3.3 Which leagues get C1–C3?** **Decided (Derek 2026-10-21):** start simple. Every
+commissioner of every active league gets them for every sport league's events, whether or not
+the league has played that sport. Letting commissioners opt in to the sports and sport leagues
+they want is a follow-up feature, #851. A commissioner who wants none can turn off the
+Commissioner updates category meanwhile.
 
 **Q3.4 C1 and C2 timing.** *Recommendation:* C1 at 10 days, C2 at the later of release and 7
 days before start, as above. Football weeks (each NFL week is its own event) would fire every
@@ -273,7 +273,7 @@ nothing to re-send. *Recommendation:* no email.
 
 | # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
 |---|---|---|---|---|---|---|---|
-| G1 | Event still in draft | An event that some league follows starts in 7 days and is still `DRAFT` | Root admins | Once, then daily until released | Event, what's missing for release (field, tiers, prices), Event admin link | | P2 |
+| G1 | Event still in draft | An event starts in 7 days and is still `DRAFT` | Root admins | Once, then daily until released | Event, what's missing for release (field, tiers, prices), Event admin link | | P2 |
 | G2 | Email delivery problems | Bounces or complaints from the email provider in the last day | Root admins | Daily, only when there are any | Count by template, addresses suppressed | | P2 (sending design) |
 
 Later, not now: cup standings and "crowned champion" emails belong to season cups (#841), and a
@@ -307,7 +307,7 @@ Each slice is one PR, opened in order, after the SES design's first slice lands.
 3. **Live standings.** E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,
    with the top 10 and the reader's entries.
 4. **Final results.** F1 with F3 folded in, F2.
-5. **Commissioner event emails.** Followed sport leagues on the league, C1, C2, C4, C6, C7, G1.
+5. **Commissioner event emails.** C1, C2, C4, C6, C7, G1, to every commissioner. Choosing sport leagues is #851.
 6. **League and account gaps.** B4 and B5 co-owner emails, B3 with open contests, B6, A5. A1
    and A2 come with password recovery.
 
