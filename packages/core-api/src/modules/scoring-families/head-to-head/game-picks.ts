@@ -11,7 +11,8 @@
  * - **Against the spread** (#720) a correct pick names the team that covers: the home team's
  *   score plus its spread beats the away team's. A game that lands exactly on the spread is a
  *   push, and every pick on it earns nothing, as does a game completed without its scores, which
- *   cannot be measured against the spread. Contest setup refuses a week with a game missing its
+ *   cannot be measured against the spread. A game ended early (#825: a retirement, walkover or
+ *   default) has no real final score, so its winner covers whatever the score and spread. Contest setup refuses a week with a game missing its
  *   spread, and a released game's spread can't be cleared, so every game of such a contest has one.
  * - **A cancelled game** is not one of the week's games, so a pick on it is not scored or counted,
  *   even when it was made before the cancellation. A confidence pool keeps the other picks' values
@@ -21,6 +22,7 @@
  *   (`rankPredictionStandings`).
  */
 import {
+  MatchEnding,
   MatchSide,
   MatchStatus,
   PickEmMode,
@@ -60,10 +62,14 @@ export interface GamePickScoring {
 
 /**
  * The team a completed game's result says covered its spread (#720); null for a push, and for a
- * game without both scores and a spread to measure them by. Undefined for a game still to be decided.
+ * game without both scores and a spread to measure them by. The winner of a game ended early (#825).
+ * Undefined for a game still to be decided.
  */
 function coverOf(game: SportEventMatch): string | null | undefined {
   if (game.status !== MatchStatus.COMPLETED) return undefined;
+  if (game.ending !== MatchEnding.PLAYED && game.winnerSide !== null) {
+    return game.winnerSide === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;
+  }
   if (game.homeScore === null || game.awayScore === null || game.homeSpread === null) return null;
   const margin = game.homeScore + game.homeSpread - game.awayScore;
   if (margin === 0) return null;
