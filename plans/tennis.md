@@ -73,8 +73,11 @@ pick'em. Pick'em by day of play and squares don't suit tennis and aren't offered
 1. **How a match ended: retirements, walkovers and defaults** (shared, sport-agnostic). After #791.
 2. **Tennis and the Grand Slams**: the sport, both draws of the four Slams, every pool type,
    test seeds. After slice 1 and #792.
-3. **Withdrawals after the draw**: lucky losers. After slice 2; can fold into it if small.
+3. **Withdrawals after the draw**: lucky losers, in any sport that plays a bracket. After slice 2;
+   can fold into it if small.
 4. **NCAA singles championships**: data only. After slice 2.
+
+Slices 1 and 3 are shared by every sport that plays matches; only 2 and 4 are tennis.
 
 Scenario-suite rows ride in each PR, as hockey's did, rather than as a slice of their own.
 
@@ -180,6 +183,11 @@ Questions:
 
 A player who pulls out after the draw is published is replaced by a lucky loser until their
 first match starts; after that it is a walkover (slice 1).
+
+**Shared, not tennis-only** (Derek 2026-10-21): the action works on any released bracket in any
+sport. It matters most where the participants are individuals (tennis, and later darts, snooker
+or golf match play), but nothing in it reads the sport or the participant type, and the copy
+reads the sport's participant noun ("Replace player", "Replace team").
 
 - **Action:** "Replace player" on a first-round side whose match hasn't started, after release
   too. It adds the lucky loser as a new field row (unseeded, untiered: see below), puts it on that
