@@ -118,7 +118,19 @@ Two readings of this chain have both been held at once, so it is worth stating p
   game's kickoff, not its event's start, and settles with its game, not its event. Its score is
   the quarters won, ties shared; it has no picks and no tiebreaker.
 
-The tenant/global split is access rule A11 in `docs/DOMAIN-OPERATIONS.md`.
+### A league is a tenant
+
+Everything on the pool side belongs to one league, and nothing built for members or
+commissioners combines two (Derek, 2026-10-21). No page, email, standings table, history or
+cup mixes data from more than one league, and a person in three leagues gets each league's
+emails separately, each with that league's own links. A list that only names leagues (the
+league list, pending invitations) is fine, since it leads into one league at a time. Account
+settings (profile, password, email preferences by category) belong to the `User`, not a
+league, and carry no league data. Root admin is outside this rule.
+
+The access rules already enforce it in `docs/DOMAIN-OPERATIONS.md`: A4 (a member works one
+league at a time), A1 (only a root admin reads across leagues) and A11 (which objects are
+tenant-scoped, and which are global and shared by every league).
 
 ---
 
