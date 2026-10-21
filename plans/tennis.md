@@ -144,7 +144,12 @@ The `add-sport` skill, as hockey did it.
   so the unseeded players are priced by ranking when the file has no odds.
 - **Templates** (`rules/ux-rules.md` §12 naming, one default per format, round values for seven
   rounds):
-  - Tiered (default): one player from each tier, all six count, knockout round points.
+  - Tiered, "Whole field" (default): one player from each of the six tiers, all six count,
+    knockout round points.
+  - Tiered, "Seeds only": one player from each of the first four tiers (the 32 seeds), all four
+    count. Tiers live on the event and are shared by every contest (#249), so this is a contest
+    rule, not a second tier layout: `TieredContestRules` gains an optional `tiersUsed` (the first
+    N tiers; absent means all). Shared, so golf could offer a "top tiers only" pool the same way.
   - Budget, and random draw (the office sweepstake).
   - Bracket: the full draw (default), and a "second week" bracket from the fourth round (#760).
     See Q2.3.
@@ -171,7 +176,8 @@ Questions:
 - **Q2.2** How should the roster pool's tiers be cut? A draw has 32 seeds and 96 others.
   Recommendation: six tiers of eight by ranking, the last taking everyone else (1-8, 9-16,
   17-24, 25-32, 33-40, and 41 down); pick one from each, all six count. Ranking and seeding agree
-  at every Slam today, so the first four tiers are the seed lines.
+  at every Slam today, so the first four tiers are the seed lines. **Decided 2026-10-21:** as recommended,
+  as the "Whole field" default, plus a "Seeds only" variation picking from the first four tiers.
 - **Q2.3** A full-draw bracket is 127 picks. Default to it, or to the second-week bracket (from
   the fourth round, 15 picks)? Recommendation: full draw as the default, as the bracket sites
   that offer tennis do, with the second-week bracket as the variation for people who join late
