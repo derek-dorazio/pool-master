@@ -1,9 +1,9 @@
-Source: https://www.transfermarkt.com/statistik/weltrangliste/statistik/stat/datum/2024-06-20/plus/0/galerie/0?page=2
-Final URL: https://www.transfermarkt.com/statistik/weltrangliste/statistik/stat/datum/2024-06-20/plus/0/galerie/0?page=2
+Source: https://www.transfermarkt.com/statistik/weltrangliste/statistik/stat/datum/2024-06-20/plus/0/galerie/0?page=3
+Final URL: https://www.transfermarkt.com/statistik/weltrangliste/statistik/stat/datum/2024-06-20/plus/0/galerie/0?page=3
 HTTP 202
-Fetched: 2026-10-21T02:20:28.821Z
+Fetched: 2026-10-21T02:22:50.543Z
 
-FIFA world rankings list | Page 2 | Transfermarkt
+FIFA world rankings list | Page 3 | Transfermarkt
 DISCOVER
 TRANSFERS & RUMOURS
 MARKET VALUES
@@ -779,31 +779,31 @@ FIFA World rankings as of:
 Compact
 Gallery
 # Nation Confederation Points
-26 Poland UEFA 1541
-27 Hungary UEFA 1529
-28 Sweden UEFA 1522
-29 Wales UEFA 1521
-30 Ecuador CONMEBOL 1518
-31 Peru CONMEBOL 1515
-32 Serbia UEFA 1515
-33 Russia UEFA 1507
-34 Czechia UEFA 1506
-35 Qatar AFC 1504
-36 Egypt CAF 1502
-37 Ivory Coast CAF 1500
-38 Nigeria CAF 1499
-39 Scotland UEFA 1497
-40 Chile CONMEBOL 1496
-41 Tunisia CAF 1494
-42 Turkiye UEFA 1493
-43 Panama CONCACAF 1482
-44 Algeria CAF 1474
-45 Slovakia UEFA 1468
-46 Norway UEFA 1466
-47 Romania UEFA 1462
-48 Canada CONCACAF 1462
-49 Cameroon CAF 1458
-50 Mali CAF 1457
+51 Greece UEFA 1456
+52 Costa Rica CONCACAF 1454
+53 Jamaica CONCACAF 1443
+54 Venezuela CONMEBOL 1442
+55 Iraq AFC 1433
+56 Saudi Arabia AFC 1431
+57 Slovenia UEFA 1430
+58 Paraguay CONMEBOL 1427
+59 South Africa CAF 1417
+60 Ireland UEFA 1404
+61 DR Congo CAF 1401
+62 Uzbekistan AFC 1397
+63 Finland UEFA 1393
+64 Ghana CAF 1381
+65 Cape Verde CAF 1381
+66 Albania UEFA 1379
+67 Burkina Faso CAF 1375
+68 Jordan AFC 1374
+69 UAE AFC 1369
+70 Iceland UEFA 1353
+71 North Macedonia UEFA 1349
+72 Montenegro UEFA 1345
+73 N. Ireland UEFA 1341
+74 Georgia UEFA 1339
+75 Bosnia UEFA 1332
 1
 2
 3
@@ -813,7 +813,7 @@ Gallery
 7
 8
 9
-135 178 147 191 44 133 215 141 172 137 2 38 124 190 33 173 174 130 4 154 125 140 80 31 105
+56 36 76 182 70 146 155 132 159 72 193 180 49 54 32 3 29 78 183 73 100 216 192 53 24
 Explanation of the FIFA world rankings list
 Calculation of points for a single match
 P = M x I x T x C
