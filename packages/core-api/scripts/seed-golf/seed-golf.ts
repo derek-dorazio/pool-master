@@ -876,7 +876,7 @@ async function enterBracketResultsFor(client: Client, eventId: string, event: Sp
       for (const { periodNumber, ...score } of periodScores) {
         await must(recordEventMatchPeriodScore({ client, path: { eventId, matchNumber, periodNumber }, body: score }), `Enter the score at the end of period ${periodNumber} of match ${matchNumber} of ${event.name}`);
       }
-      const body = { winnerSide: result.winner, homeScore: result.homeScore, awayScore: result.awayScore };
+      const body = { winnerSide: result.winner, homeScore: result.homeScore, awayScore: result.awayScore, ending: result.ending };
       await must(recordEventMatchResult({ client, path: { eventId, matchNumber }, body }), `Enter the result of match ${matchNumber} of ${event.name}`);
     }
   }

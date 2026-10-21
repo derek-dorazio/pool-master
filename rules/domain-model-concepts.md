@@ -71,6 +71,12 @@ Two readings of this chain have both been held at once, so it is worth stating p
   shoot-out's scores (`homeShootoutScore`, `awayShootoutScore`, #791), kept apart from the match
   score as IFAB Law 10 has it: screens show "1-1 (4-3 pens)", and the tiebreaker and squares read
   the 1-1.
+- **A match can end early, in any sport that plays matches** (`ending`, a `MatchEnding`, #704):
+  `PLAYED` unless the loser retired part way (`RETIREMENT`), never started (`WALKOVER`) or was
+  disqualified (`DEFAULT`). The winner wins in full, since scorers read only `winnerSide`: it
+  advances, earns the round's value and any upset bonus, and keeps a survivor pick alive; the
+  other side is out. After a retirement or default the winner's score may be the lower (where it
+  stopped); a walkover has no score. Screens mark the result "ret.", "w/o" or "def.".
 - **A random draw deals the picks** (`RANDOM_DRAW`, #601). The commissioner's **Run draw** deals
   every entry the same number of field members, round-robin from a seeded shuffle recorded for
   replay; leftovers go undealt. The draw submits every entry, closes entries and reveals every

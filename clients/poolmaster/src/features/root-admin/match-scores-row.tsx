@@ -8,7 +8,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { tieWord } from '@/features/contests/contest-sport';
-import { bracketErrorMessages, formsNoBracket, sideEntry } from './bracket-copy';
+import { bracketErrorMessages, formsNoBracket, MATCH_ENDING_MARK, sideEntry } from './bracket-copy';
 import type { BracketContext } from './bracket-match-row';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
@@ -45,6 +45,7 @@ export function MatchScoresRow({
     : null;
   // A result entered with the winner buttons alone has a winner but no final score.
   const winnerOnly = match.status === MatchStatus.COMPLETED && final === null;
+  const endingMark = match.status === MatchStatus.COMPLETED ? MATCH_ENDING_MARK[match.ending] : null;
   const shootout: ShootoutScore | null = final && match.homeShootoutScore !== null && match.awayShootoutScore !== null
     ? { homeShootoutScore: match.homeShootoutScore, awayShootoutScore: match.awayShootoutScore }
     : null;
@@ -72,7 +73,8 @@ export function MatchScoresRow({
           <ScoreMoment
             away={away}
             context={context}
-            empty={winnerOnly ? 'Winner entered, no score' : 'Not entered'}
+            empty={winnerOnly ? `Winner entered, no score${endingMark ? ` (${endingMark})` : ''}` : 'Not entered'}
+            endingMark={endingMark}
             home={home}
             label="Final, overtime included"
             match={match}
@@ -101,6 +103,7 @@ function ScoreMoment({
   away,
   saved,
   savedShootout = null,
+  endingMark = null,
   empty,
   context,
 }: {
@@ -112,6 +115,8 @@ function ScoreMoment({
   saved: MomentScore;
   /** The final score's shoot-out, when a level match went to one. */
   savedShootout?: ShootoutScore | null;
+  /** The final score's mark when the match stopped early (#704): "ret.". */
+  endingMark?: string | null;
   /** What the moment reads while it has no score. */
   empty: string;
   context: BracketContext;
@@ -233,7 +238,7 @@ function ScoreMoment({
       ) : (
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <span className={saved ? 'text-sm' : 'text-sm text-muted-foreground'} data-testid={`${testId}-value`}>
-            {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}${describeLevelFinal(moment, saved, savedShootout, context)}` : empty}
+            {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}${describeLevelFinal(moment, saved, savedShootout, context)}${endingMark ? ` ${endingMark}` : ''}` : empty}
           </span>
           <Button
             data-testid={`${testId}-edit`}

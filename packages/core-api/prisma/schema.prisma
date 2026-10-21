@@ -295,6 +295,14 @@ enum PrismaMatchSide {
   AWAY
 }
 
+/// How a match with a result ended (#704). Mirrors the domain `MatchEnding`.
+enum PrismaMatchEnding {
+  PLAYED
+  RETIREMENT
+  WALKOVER
+  DEFAULT
+}
+
 /// What one game pick says happens (#792). Mirrors the domain `PredictedResult`.
 enum PrismaPredictedResult {
   TEAM
@@ -1323,6 +1331,8 @@ model SportEventMatch {
   /// scored, or neither. Not part of the match score (IFAB Law 10); the winner's is the higher.
   homeShootoutScore           Int?              @map("home_shootout_score")
   awayShootoutScore           Int?              @map("away_shootout_score")
+  /// How the match ended (#704): PLAYED unless it stopped early. A walkover has no scores.
+  ending                      PrismaMatchEnding @default(PLAYED)
   advancesToMatchId           String?           @map("advances_to_match_id") @db.Uuid
   advancesToSide              PrismaMatchSide?  @map("advances_to_side")
   /// The bracket region or conference the match is in ("East", "AFC"); null where the bracket

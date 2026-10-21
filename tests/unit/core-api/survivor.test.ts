@@ -14,6 +14,7 @@
  */
 import { expect } from '@jest/globals';
 import {
+  MatchEnding,
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
@@ -207,7 +208,7 @@ function game(id: string, overrides: Partial<SportEventMatch> = {}): SportEventM
     id, sportEventId: 'week', roundNumber: 1, matchNumber: 1,
     homeSportEventParticipantId: `${id}-home`, awaySportEventParticipantId: `${id}-away`,
     isNeutralSite: false, scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null,
-    homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, periodScores: [],
+    homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, periodScores: [],
     createdAt: T0, updatedAt: T0, ...overrides,
   };
 }

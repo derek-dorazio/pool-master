@@ -34,7 +34,7 @@ import type {
   SportRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { BracketAdvancement, findSportRow, MatchSide, MatchStatus, ParticipantStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, findSportRow, MatchSide, MatchStatus, ParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   GolfRoundResult,
   GolfStandingResult,
@@ -613,7 +613,7 @@ export class InMemorySportEvents {
             homeScore: null,
             awayScore: null,
             homeShootoutScore: null,
-            awayShootoutScore: null,
+            awayShootoutScore: null, ending: MatchEnding.PLAYED,
           })),
         ];
       },

@@ -1,5 +1,5 @@
 import { expect, jest } from '@jest/globals';
-import { MatchPeriodLayout, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchPeriodLayout, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { MatchResultService, describeScoreProblem } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
@@ -312,6 +312,96 @@ describe('describeScoreProblem with shoot-outs (#791)', () => {
   });
 });
 
+describe('MatchResultService matches that ended early (#704)', () => {
+  it('saves a retirement whose winner trailed when it stopped, sends the winner on and puts the player who retired out', async () => {
+    const { service, event, duke, vermont, standingOf } = await setup();
+
+    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 0, ending: MatchEnding.RETIREMENT });
+
+    expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 0, ending: MatchEnding.RETIREMENT });
+    expect(bracket.find((match) => match.matchNumber === 3)?.homeSportEventParticipantId).toBe(vermont.id);
+    expect(standingOf(duke.id)).toMatchObject({ status: ParticipantStandingStatus.ELIMINATED });
+  });
+
+  it('saves a walkover with no score as a full win that sends its winner on', async () => {
+    const { service, event, duke } = await setup();
+
+    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER });
+
+    expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER });
+    expect(bracket.find((match) => match.matchNumber === 3)?.homeSportEventParticipantId).toBe(duke.id);
+  });
+
+  it('saves a result sent without an ending as played to its end', async () => {
+    const { service, event } = await setup();
+
+    const bracket = await service.recordResult(event.id, 1, homeWins);
+
+    expect(bracket.find((match) => match.matchNumber === 1)?.ending).toBe(MatchEnding.PLAYED);
+  });
+
+  it('puts a match back to played when a result that ended early is re-sent without an ending, and when it is cleared', async () => {
+    const { service, event } = await setup();
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.DEFAULT });
+
+    const resent = await service.recordResult(event.id, 1, homeWins);
+    await service.recordResult(event.id, 2, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER });
+    const cleared = await service.clearResult(event.id, 2);
+
+    expect(resent.find((match) => match.matchNumber === 1)?.ending).toBe(MatchEnding.PLAYED);
+    expect(cleared.find((match) => match.matchNumber === 2)).toMatchObject({ status: MatchStatus.SCHEDULED, ending: MatchEnding.PLAYED });
+  });
+
+  it('refuses (422 MATCH_RESULT_INVALID) a walkover with a score, and saves nothing', async () => {
+    const { service, event, store } = await setup();
+
+    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 0, ending: MatchEnding.WALKOVER }))
+      .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
+    expect(store.matchRows.every((match) => match.status === MatchStatus.SCHEDULED)).toBe(true);
+  });
+
+  it('refuses (422 MATCH_RESULT_INVALID) a walkover for a game that already has quarter scores', async () => {
+    const { service, event } = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+    await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
+
+    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER }))
+      .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
+  });
+
+  it('refuses (422 MATCH_PERIOD_SCORE_INVALID) a quarter score for a game that was a walkover', async () => {
+    const { service, event } = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER });
+
+    await expect(service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 }))
+      .rejects.toMatchObject({ code: 'MATCH_PERIOD_SCORE_INVALID', statusCode: 422 });
+  });
+});
+
+describe('describeScoreProblem for matches that ended early (#704)', () => {
+  const bracket = { inBracket: true, shootout: null };
+  const noKicks = { homeShootoutScore: null, awayShootoutScore: null };
+
+  it.each([MatchEnding.RETIREMENT, MatchEnding.DEFAULT])('accepts a %s whose winner\'s score is lower, level or missing', (ending) => {
+    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: 0, awayScore: 1, ending }, noKicks, bracket)).toBeNull();
+    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 1, ending }, noKicks, bracket)).toBeNull();
+    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending }, noKicks, bracket)).toBeNull();
+  });
+
+  it('still refuses a played match whose winner\'s score is lower', () => {
+    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: 0, awayScore: 1, ending: MatchEnding.PLAYED }, noKicks, bracket))
+      .toBe('the winner\'s score must be higher than the loser\'s');
+  });
+
+  it.each([
+    ['a retirement with one score', { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: null, ending: MatchEnding.RETIREMENT }, noKicks, bracket, 'give both scores or neither'],
+    ['a walkover with scores', { winnerSide: MatchSide.HOME, homeScore: 0, awayScore: 0, ending: MatchEnding.WALKOVER }, noKicks, bracket, 'a walkover has no score'],
+    ['a tie that ended early', { winnerSide: null, homeScore: 1, awayScore: 1, ending: MatchEnding.RETIREMENT }, noKicks, { inBracket: false, shootout: null }, 'a tie is played to its end'],
+    ['a shoot-out after a retirement', { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 1, ending: MatchEnding.RETIREMENT }, { homeShootoutScore: 4, awayShootoutScore: 3 }, { inBracket: true, shootout: { label: 'pens' } }, 'a match that ended early has no shoot-out'],
+  ])('refuses %s', (_label, result, shootout, rules, problem) => {
+    expect(describeScoreProblem(result, shootout, rules)).toBe(problem);
+  });
+});
+
 describe('MatchResultService.clearResult', () => {
   it('schedules the match again, empties the side its winner filled and restores the loser\'s standing', async () => {
     const context = await setup();
@@ -579,7 +669,7 @@ describe('MatchResultService on a reseeded bracket', () => {
     const match = (matchNumber: number, roundNumber: number, home: string | null, away: string | null, advancesTo: [string, MatchSide] | null) => ({
       id: `m${matchNumber}`, sportEventId: event.id, roundNumber, matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
-      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null,
+      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
       advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
     });

@@ -25,7 +25,7 @@
  */
 
 import { z } from 'zod';
-import { BracketAdvancement, getSportDefinition, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { BracketAdvancement, getSportDefinition, MatchEnding, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import { findBracketProblems } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -116,12 +116,14 @@ const MatchSchema = z.object({
   /**
    * Test data only (RESULTS): the match's result, entered after release in round order. `winner`
    * is the side as the match stands when its result goes in: in a reseeded round, the side the
-   * server's reseed placed the team on.
+   * server's reseed placed the team on. `ending` says how a match that stopped early ended
+   * (#704; left out is played to its end): a walkover's scores are null.
    */
   result: z.object({
     winner: z.nativeEnum(MatchSide),
-    homeScore: z.number().int().min(0),
-    awayScore: z.number().int().min(0),
+    homeScore: z.number().int().min(0).nullable(),
+    awayScore: z.number().int().min(0).nullable(),
+    ending: z.nativeEnum(MatchEnding).optional(),
   }).strict().optional(),
   /**
    * Test data only (RESULTS), for a sport with periods (#772): the score at the end of each period

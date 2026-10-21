@@ -284,7 +284,7 @@ describe('basketball-2025-nba-playoffs-test.json', () => {
 
   it('plays each series as one game scored in games won, Oklahoma City beating Indiana 4-3 in the Finals', () => {
     expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
-    expect(matches.every((match) => match.result !== undefined && Math.max(match.result.homeScore, match.result.awayScore) === 4)).toBe(true);
+    expect(matches.every((match) => match.result !== undefined && Math.max(expectDefined(match.result.homeScore), expectDefined(match.result.awayScore)) === 4)).toBe(true);
     expect(matches.filter((match) => match.roundNumber < 4).every((match) => match.regionLabel === 'East' || match.regionLabel === 'West')).toBe(true);
     expect(matches[14]).toMatchObject({ advancesTo: null, isNeutralSite: false, result: { winner: 'HOME', homeScore: 4, awayScore: 3 } });
   });
@@ -380,7 +380,7 @@ describe('hockey-2026-nhl-playoffs-test.json', () => {
 
   it('plays each best-of-seven series as one game scored in games won, Carolina beating Vegas 4-2 in the Stanley Cup Final', () => {
     expect(matches.map((match) => match.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
-    expect(matches.every((match) => match.result !== undefined && Math.max(match.result.homeScore, match.result.awayScore) === 4)).toBe(true);
+    expect(matches.every((match) => match.result !== undefined && Math.max(expectDefined(match.result.homeScore), expectDefined(match.result.awayScore)) === 4)).toBe(true);
     expect(matches.every((match) => !match.isNeutralSite)).toBe(true);
     expect(matches[14]).toMatchObject({ home: null, away: null, advancesTo: null, result: { winner: 'HOME', homeScore: 4, awayScore: 2 } });
   });
@@ -453,7 +453,7 @@ describe('baseball-2025-mlb-postseason-test.json', () => {
 
   it('plays each round as series scored in games won, the Dodgers beating Toronto 4-3 in the World Series', () => {
     const toWin = { 1: 2, 2: 3, 3: 4, 4: 4 } as Record<number, number>;
-    expect(matches.every((match) => match.result !== undefined && Math.max(match.result.homeScore, match.result.awayScore) === toWin[match.roundNumber])).toBe(true);
+    expect(matches.every((match) => match.result !== undefined && Math.max(expectDefined(match.result.homeScore), expectDefined(match.result.awayScore)) === toWin[match.roundNumber])).toBe(true);
     expect(matches[10]).toMatchObject({ home: null, away: null, advancesTo: null, result: { winner: 'AWAY', homeScore: 3, awayScore: 4 } });
   });
 });

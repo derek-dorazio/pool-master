@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getSportDefinition, Sport, type SportMatchPeriods } from '@poolmaster/shared/domain';
+import { MatchEnding, getSportDefinition, Sport, type SportMatchPeriods } from '@poolmaster/shared/domain';
 import type { SportEventMatchDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import type { BracketContext } from './bracket-match-row';
@@ -64,6 +64,7 @@ function knockoutMatch(overrides: Partial<SportEventMatchDto> = {}): SportEventM
     awayScore: null,
     homeShootoutScore: null,
     awayShootoutScore: null,
+    ending: MatchEnding.PLAYED,
     advancesToMatchId: 'm-2',
     advancesToSide: 'HOME',
     regionLabel: null,

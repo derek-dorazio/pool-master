@@ -1,4 +1,5 @@
 import {
+  MatchEnding,
   MatchSide,
   MatchStatus,
   ScoringFamily,
@@ -67,7 +68,7 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     homeScore: null,
     awayScore: null,
     homeShootoutScore: null,
-    awayShootoutScore: null,
+    awayShootoutScore: null, ending: MatchEnding.PLAYED,
     advancesToMatchId: input.advancesTo === undefined ? null : `match-${input.advancesTo}`,
     advancesToSide: input.advancesTo === undefined ? null : MatchSide.HOME,
     regionLabel: null,

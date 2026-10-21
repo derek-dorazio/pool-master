@@ -16,6 +16,7 @@ import type {
   SportEventParticipantRepository,
 } from '@poolmaster/shared/db';
 import {
+  MatchEnding,
   ContestEntryStatus,
   MatchStatus,
   ParticipantStatus,
@@ -97,7 +98,7 @@ export class InMemoryGamePicks {
       homeScore: null,
       awayScore: null,
       homeShootoutScore: null,
-      awayShootoutScore: null,
+      awayShootoutScore: null, ending: MatchEnding.PLAYED,
       advancesToMatchId: null,
       advancesToSide: null,
       regionLabel: null,

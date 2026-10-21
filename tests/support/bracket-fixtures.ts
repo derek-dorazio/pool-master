@@ -7,6 +7,7 @@
  * Scaffolding only: no assertions and no test-specific results here.
  */
 import {
+  MatchEnding,
   MatchSide,
   MatchStatus,
   PredictedResult,
@@ -43,7 +44,7 @@ export function bracketMatches(sportEventId: string, specs: readonly BracketMatc
     homeScore: null,
     awayScore: null,
     homeShootoutScore: null,
-    awayShootoutScore: null,
+    awayShootoutScore: null, ending: MatchEnding.PLAYED,
     advancesToMatchId: spec.advancesTo ? `m${spec.advancesTo.matchNumber}` : null,
     advancesToSide: spec.advancesTo?.side ?? null,
     regionLabel: spec.region ?? null,
