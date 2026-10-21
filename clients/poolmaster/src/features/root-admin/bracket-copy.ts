@@ -1,4 +1,5 @@
 import { MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
+import { tieWord } from '@/features/contests/contest-sport';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { ErrorCodeMessages } from '@/lib/errors';
 
@@ -116,11 +117,6 @@ export function unfinishedBefore(bracket: readonly SportEventMatchDto[], roundNu
   return bracket
     .filter((match) => match.roundNumber === roundNumber - 1 && match.status !== MatchStatus.COMPLETED)
     .sort((left, right) => left.matchNumber - right.matchNumber);
-}
-
-/** What the sport calls a game that ends level (#792): "Draw" in soccer, else "Tie". */
-export function tieWord(vocabulary: SportVocabulary): string {
-  return vocabulary.tie ?? 'Tie';
 }
 
 /**

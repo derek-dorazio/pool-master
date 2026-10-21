@@ -7,7 +7,8 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, formsNoBracket, sideEntry, tieWord } from './bracket-copy';
+import { tieWord } from '@/features/contests/contest-sport';
+import { bracketErrorMessages, formsNoBracket, sideEntry } from './bracket-copy';
 import type { BracketContext } from './bracket-match-row';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
@@ -269,7 +270,6 @@ function ScoreMoment({
   );
 }
 
-/** A saved shoot-out after the final score, away side first: " (4-3 pens)"; empty for none. */
 /** What follows a level final score: its shoot-out in a bracket, or the sport's word for a tie (#792). */
 function describeLevelFinal(
   moment: number | 'final',
@@ -281,6 +281,7 @@ function describeLevelFinal(
   return moment === 'final' && saved.awayScore === saved.homeScore ? ` (${tieWord(context.vocabulary).toLowerCase()})` : '';
 }
 
+/** A saved shoot-out after the final score, away side first: " (4-3 pens)"; empty for none. */
 function describeShootout(shootout: ShootoutScore | null, context: BracketContext): string {
   if (!shootout) return '';
   const label = context.shootout?.label;
