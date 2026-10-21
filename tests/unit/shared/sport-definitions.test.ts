@@ -72,6 +72,14 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     }
   });
 
+  it('says what its pick\'em pools can be exactly when it offers pick\'em (#792)', () => {
+    expect(definition.pickEm !== undefined).toBe(definition.selectionTypes.includes(SelectionType.PICK_EM));
+  });
+
+  it('names a game that ends level exactly when it plays matches, so results and picks can call a tie by its word (#792)', () => {
+    expect((definition.vocabulary.tie ?? '').trim() !== '').toBe(definition.scoringFamily === ScoringFamily.HEAD_TO_HEAD);
+  });
+
   it('has a name and every vocabulary word filled in, and an eliminated word that is either absent or filled in', () => {
     const { participant, event, sportLeague, round, eliminated, withdrawn, eventStart } = definition.vocabulary;
     for (const word of [
@@ -321,6 +329,11 @@ describe('American football', () => {
     expect(americanFootball.vocabulary.event).toEqual({ one: 'playoffs', many: 'playoffs' });
     expect(americanFootball.vocabulary.eventStart).toBe('first kickoff');
   });
+
+  it('offers pick\'em pools against the spread but no tie pick, and calls a game that ends level a Tie (#792)', () => {
+    expect(americanFootball.pickEm).toEqual({ tiePicks: false, againstTheSpread: true });
+    expect(americanFootball.vocabulary.tie).toBe('Tie');
+  });
 });
 
 describe('hockey', () => {
@@ -424,10 +437,12 @@ describe('soccer', () => {
     expect(soccer.roundLabel(5, 4)).toBe('Round 5');
   });
 
-  it('offers the three roster selection types, bracket, survivor and squares, and no pick\'em until it has weeks of matches', () => {
+  it('offers the three roster selection types, pick\'em, bracket, survivor and squares, its pick\'em taking draw picks and no spread', () => {
     expect(soccer.selectionTypes).toEqual([
-      SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES,
+      SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES,
     ]);
+    expect(soccer.pickEm).toEqual({ tiePicks: true, againstTheSpread: false });
+    expect(soccer.vocabulary.tie).toBe('Draw');
   });
 
   it('calls the event a tournament, its sport league a competition, and the moment entries close the first kickoff', () => {

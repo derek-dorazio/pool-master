@@ -4,14 +4,17 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { ContestEntryStatus, MatchStatus, PickEmMode, PickOutcome, SelectionType, SportEventStatus, SurvivorWeekOutcome } from '../domain/enums';
+import { ContestEntryStatus, MatchStatus, PickEmMode, PickOutcome, PredictedResult, SelectionType, SportEventStatus, SurvivorWeekOutcome } from '../domain/enums';
 
 // --- Requests ---
 
 export const GamePickWriteSchema = z.object({
   sportEventMatchId: z.string().uuid().describe('The game picked: one of the event\'s games.'),
-  sportEventParticipantId: z.string().uuid().describe('The team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it.'),
+  predictedResult: z.nativeEnum(PredictedResult).describe('What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick\'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE.'),
+  sportEventParticipantId: z.string().uuid().nullable().describe('With TEAM, the team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it. Null with TIE.'),
   confidence: z.number().int().min(1).nullable().optional().describe('A confidence pool\'s value for this pick, 1 to the week\'s number of games. Omitted or null in a straight-up pool, and until the entry gives one. A value may repeat until the week is submitted.'),
+}).refine((pick) => (pick.predictedResult === PredictedResult.TEAM) === (pick.sportEventParticipantId !== null), {
+  message: 'A TEAM pick names its team, and a TIE pick names none.',
 }).describe('One game\'s pick as it is saved.');
 export type GamePickWrite = z.infer<typeof GamePickWriteSchema>;
 
@@ -39,10 +42,11 @@ export const GamePickTeamDtoSchema = z.object({
 export type GamePickTeamDto = z.infer<typeof GamePickTeamDtoSchema>;
 
 export const GamePickDtoSchema = z.object({
-  sportEventParticipantId: z.string().uuid().describe('The team picked to win.'),
+  predictedResult: z.nativeEnum(PredictedResult).describe('What the pick says happens: TEAM, its team wins; TIE, the game ends level (#792).'),
+  sportEventParticipantId: z.string().uuid().nullable().describe('The team picked to win; null for a TIE pick.'),
   confidence: z.number().int().nullable().describe('The pick\'s confidence value; null in a straight-up pool, in a bracket, or until given.'),
   pickedAt: z.string().datetime(),
-  outcome: z.nativeEnum(PickOutcome).nullable().describe('How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING.'),
+  outcome: z.nativeEnum(PickOutcome).nullable().describe('How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), or for a TIE pick once the game ended level, BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING.'),
   points: z.number().int().nullable().describe('What the pick earned when CORRECT: in a bracket its round\'s value plus any upset bonus, in a pick\'em pool 1 point straight up or its confidence value. 0 when BUSTED or PUSH, null while PENDING or not scored.'),
 }).describe('An entry\'s pick on one game.');
 export type GamePickDto = z.infer<typeof GamePickDtoSchema>;
@@ -80,6 +84,7 @@ export const GamePicksResponseSchema = z.object({
   selectionType: z.enum([SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR]),
   mode: z.nativeEnum(PickEmMode).nullable().describe('A pick\'em pool\'s mode; null in a bracket or survivor pool.'),
   againstTheSpread: z.boolean().describe('Whether picks are scored against each game\'s spread: a pick names the team that covers. Only a pick\'em pool can be.'),
+  tiePicksOffered: z.boolean().describe('Whether a pick may say the game ends level (#792): a pick\'em pool in a sport that offers tie picks, a draw in soccer. False in a bracket or survivor pool.'),
   survivor: GamePicksSurvivorDtoSchema.nullable().describe('A survivor pool\'s season for the entry; null in the other pools.'),
   status: z.nativeEnum(ContestEntryStatus).describe('The entry\'s status for this event: DRAFT while picking, SUBMITTED once every game is picked and submitted. Only a submitted event counts.'),
   submittedAt: z.string().datetime().nullable(),

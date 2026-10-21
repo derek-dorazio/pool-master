@@ -1,4 +1,4 @@
-import { formatParticipantStatusLabel, getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shared/domain';
+import { formatParticipantStatusLabel, getSportDefinition, type Sport, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
 import type { SelectionParticipant } from './contest-entry-selection';
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
 import type { EntryTiebreakerUi } from './scoring-family-ui/types';
@@ -13,6 +13,16 @@ const PARTICIPANT_WITHOUT_SPORT: SportNoun = { one: 'participant', many: 'partic
 /** "golfer" for a golf contest, "horse" for a horse race: the contest's sport's word for a participant. */
 export function contestParticipantNoun(sport: Sport | null | undefined): SportNoun {
   return sport ? getSportDefinition(sport).vocabulary.participant : PARTICIPANT_WITHOUT_SPORT;
+}
+
+/** What a game that ends level is called (#792): "Draw" in soccer, "Tie" wherever the sport names none. */
+export function tieWord(vocabulary: SportVocabulary | undefined): string {
+  return vocabulary?.tie ?? 'Tie';
+}
+
+/** The tie word of a contest's sport, "Tie" for a contest with no sport. */
+export function contestTieLabel(sport: Sport | null | undefined): string {
+  return tieWord(sport ? getSportDefinition(sport).vocabulary : undefined);
 }
 
 /**

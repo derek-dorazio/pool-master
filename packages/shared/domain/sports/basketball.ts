@@ -35,6 +35,7 @@ export const basketballSportDefinition: SportDefinition = {
   // Quarters, as the NBA, the WNBA and women's college basketball play; men's college basketball
   // plays halves (its sport league's `matchPeriodLayout`).
   matchPeriodLayout: MatchPeriodLayout.QUARTERS,
+  pickEm: { tiePicks: false, againstTheSpread: true },
   vocabulary: {
     participant: { one: 'team', many: 'teams' },
     event: { one: 'tournament', many: 'tournaments' },
@@ -44,6 +45,7 @@ export const basketballSportDefinition: SportDefinition = {
     withdrawn: 'Withdrawn',
     eventStart: 'opening tip-off',
     match: { one: 'game', many: 'games' },
+    tie: 'Tie',
   },
   // A six-round bracket reads First Round, Second Round, Sweet 16, Elite Eight, Final Four,
   // National Championship; a shorter one keeps the names counted back from its final.

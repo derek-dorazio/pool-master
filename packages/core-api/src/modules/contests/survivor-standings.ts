@@ -19,10 +19,12 @@ import {
   SportEventStatus,
   contestEntryEventStatus,
   hasSubmittedAnyEvent,
+  isTeamChoice,
   type Contest,
   type ContestEntry,
   type SportEvent,
   type SportEventMatch,
+  type TeamChoice,
 } from '@poolmaster/shared/domain';
 import { hasSportEventStarted } from '../events/operational-timing';
 import { FINISHED_EVENT_STATUSES, hasRoundMatchStarted } from './entry-window';
@@ -62,7 +64,7 @@ export interface SurvivorEntryStanding {
   entry: ContestEntryWithSquad;
   run: SurvivorRun;
   /** The entry's pick in each week, by week key (`survivorWeekKey`). */
-  picks: Map<string, ContestEntrySeasonPrediction>;
+  picks: Map<string, SurvivorSeasonPick>;
   /** Still standing: entries out in the same week share a place, below every entry still in. */
   alive: boolean;
   position: number;
@@ -117,7 +119,7 @@ export async function loadSurvivorWeeks(
 export function survivorWeeksOf(
   entry: Pick<ContestEntry, 'events'>,
   weeks: readonly SurvivorSeasonWeek[],
-  picks: ReadonlyMap<string, ContestEntrySeasonPrediction>,
+  picks: ReadonlyMap<string, SurvivorSeasonPick>,
 ): SurvivorWeek[] {
   return weeks.map(({ event, roundNumber, started, cancelled, games }) => {
     const pick = picks.get(survivorWeekKey({ sportEventId: event.id, roundNumber })) ?? null;
@@ -135,16 +137,19 @@ export function survivorWeeksOf(
 }
 
 /** Each entry's pick per week, by week key: a survivor week holds one. A pick on a game no week has is left out. */
+/** A survivor pick read across the season: always a team (#792), so it names its participant. */
+export type SurvivorSeasonPick = ContestEntrySeasonPrediction & TeamChoice;
+
 export function survivorPicksByEntry(
   predictions: readonly ContestEntrySeasonPrediction[],
   weeks: readonly SurvivorSeasonWeek[],
-): Map<string, Map<string, ContestEntrySeasonPrediction>> {
+): Map<string, Map<string, SurvivorSeasonPick>> {
   const weekOfGame = new Map(weeks.flatMap((week) => week.games.map((game) => [game.id, survivorWeekKey({ sportEventId: week.event.id, roundNumber: week.roundNumber })] as const)));
-  const byEntry = new Map<string, Map<string, ContestEntrySeasonPrediction>>();
-  for (const prediction of predictions) {
+  const byEntry = new Map<string, Map<string, SurvivorSeasonPick>>();
+  for (const prediction of predictions.filter(isTeamChoice)) {
     const key = weekOfGame.get(prediction.sportEventMatchId);
     if (key === undefined) continue;
-    const picks = byEntry.get(prediction.contestEntryId) ?? new Map<string, ContestEntrySeasonPrediction>();
+    const picks = byEntry.get(prediction.contestEntryId) ?? new Map<string, SurvivorSeasonPick>();
     picks.set(key, prediction);
     byEntry.set(prediction.contestEntryId, picks);
   }
@@ -169,7 +174,7 @@ export async function loadSurvivorSeason(
   const picksByEntry = survivorPicksByEntry(predictions, weeks);
 
   const runs = counted.map((entry) => {
-    const picks = picksByEntry.get(entry.id) ?? new Map<string, ContestEntrySeasonPrediction>();
+    const picks = picksByEntry.get(entry.id) ?? new Map<string, SurvivorSeasonPick>();
     const run = survivorRun(survivorWeeksOf(entry, weeks, picks));
     return { entry, run, picks, alive: run.eliminatedAt === null };
   });

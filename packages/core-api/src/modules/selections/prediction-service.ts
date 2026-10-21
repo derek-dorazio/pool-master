@@ -21,6 +21,8 @@
  *   revealed with that game's pick. A survivor week has none.
  * - In survivor (#719) a week holds one pick, which replaces the entry's other one, of a team the
  *   entry has not picked in another week it submitted. An entry that is out picks no later week.
+ * - A pick'em pick may be a tie (#792), a draw in soccer, where the event's sport offers tie picks.
+ *   A bracket or survivor pick always names a team.
  *
  * The shared parts are here; what varies by prediction type (its pick window, the values a pick
  * carries, what stops a week being submitted) is a `PredictionEngine`.
@@ -32,15 +34,20 @@ import {
   ContestStatus,
   MatchStatus,
   PickEmMode,
+  PredictedResult,
   SelectionType,
   contestEntryEventStatus,
   contestEntryEventTiebreaker,
+  getSportDefinition,
   isPredictionSelectionType,
+  isTeamChoice,
   type Contest,
   type ContestConfiguration,
   type ContestEntry,
   type ContestEntryMatchPrediction,
   type PredictionSelectionType,
+  type Sport,
+  type SportDefinition,
   type SportEvent,
   type SportEventMatch,
   type SportEventParticipant,
@@ -87,6 +94,8 @@ export interface PredictionServiceDeps {
   field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
   participants: Pick<ParticipantRepository, 'findByIds'>;
   predictions: ContestEntryMatchPredictionRepository;
+  /** Each sport's definition, for what its pools offer (tie picks, #792); the sport registry unless given. */
+  sportDefinitionOf?: (sport: Sport) => SportDefinition;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -141,6 +150,8 @@ export interface GamePicksView {
   mode: PickEmMode | null;
   /** A pick'em pool scored against each game's spread (#720); false in every other pool. */
   againstTheSpread: boolean;
+  /** Whether a pick may say the game ends level (#792): a pick'em pool in a sport that offers tie picks. */
+  tiePicksOffered: boolean;
   /** A survivor entry's season (#719); null in the other pools. */
   survivor: GamePicksSurvivorView | null;
   status: ContestEntryStatus;
@@ -173,6 +184,8 @@ interface WeekContext {
   selectionType: PredictionSelectionType;
   mode: PickEmMode | null;
   againstTheSpread: boolean;
+  /** Whether a pick may be a tie (#792): the engine takes one and the event's sport offers it. */
+  tiePicksOffered: boolean;
   sportEvent: SportEvent;
   /** The timing the contest's window runs on: the event's, or its starting round's for a second-chance bracket (#721). */
   window: EventTiming;
@@ -232,6 +245,13 @@ export class PredictionService {
       if (!game) throw selectionErrors.gameNotFound(pick.sportEventMatchId, context.sportEvent.id);
       this.assertGameOpen(context, game);
       this.assertNotEliminated(context, game.roundNumber);
+      if (pick.predictedResult === PredictedResult.TIE && !context.tiePicksOffered) {
+        this.deps.logger?.warn(
+          { action: 'prediction.tieRefused', data: { entryId: context.entry.id, sportEventMatchId: game.id, selectionType: context.selectionType } },
+          'Refused a tie pick in a pool that takes none',
+        );
+        throw selectionErrors.tieNotOffered(game.id);
+      }
     }
 
     // A saved pick must name a team its game offers the entry, its earlier picks included; a pick
@@ -242,7 +262,8 @@ export class PredictionService {
       ...context.predictions.filter((prediction) => !saved.has(prediction.sportEventMatchId)),
       ...input.picks,
     ]);
-    const refused = resolved.stranded.find((pick) => saved.has(pick.sportEventMatchId));
+    // Every tie pick being saved is one the pool takes, so a refused pick names a team.
+    const refused = resolved.stranded.filter(isTeamChoice).find((pick) => saved.has(pick.sportEventMatchId));
     if (refused) throw selectionErrors.teamNotInGame(refused.sportEventParticipantId, refused.sportEventMatchId);
     for (const pick of input.picks) this.assertTeamUnused(context, pick, resolved.kept);
     // A pick a new one replaces (survivor's one pick a week) is cleared only while its game is open.
@@ -409,7 +430,7 @@ export class PredictionService {
    * another round of this event (#785) among the picks that stand after the change.
    */
   private assertTeamUnused(context: WeekContext, pick: WeekPrediction, standing: readonly WeekPrediction[]): void {
-    if (context.season === null) return;
+    if (context.season === null || !isTeamChoice(pick)) return;
     const { sportEventParticipantId } = pick;
     const participantId = context.season.participantIdOf.get(sportEventParticipantId);
     const usedInAnotherRound = standing.some((other) => other.sportEventMatchId !== pick.sportEventMatchId
@@ -520,6 +541,7 @@ export class PredictionService {
       : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
     const engine = getPredictionEngine(selectionType);
     const now = this.now();
+    const sportDefinition = (this.deps.sportDefinitionOf ?? getSportDefinition)(sportEvent.sport);
 
     return {
       contest,
@@ -528,6 +550,7 @@ export class PredictionService {
       selectionType,
       mode: rules.selectionType === SelectionType.PICK_EM ? rules.mode : null,
       againstTheSpread: rules.selectionType === SelectionType.PICK_EM && rules.againstTheSpread,
+      tiePicksOffered: engine.takesTiePicks && sportDefinition.pickEm?.tiePicks === true,
       sportEvent,
       window: cutoffTiming(contestCutoff(rules), sportEvent, matches),
       openingRound: openingRoundNumber(matches),
@@ -639,6 +662,7 @@ export class PredictionService {
       selectionType: context.selectionType,
       mode: context.mode,
       againstTheSpread: context.againstTheSpread,
+      tiePicksOffered: context.tiePicksOffered,
       survivor: context.season === null ? null : {
         eliminatedInWeek: this.eliminatedInWeekShown(context.season),
         usedParticipantIds: ownEntry ? [...context.season.usedParticipantIds] : null,

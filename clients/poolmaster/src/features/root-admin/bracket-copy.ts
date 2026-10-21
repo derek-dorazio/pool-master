@@ -1,4 +1,5 @@
 import { MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
+import { tieWord } from '@/features/contests/contest-sport';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { ErrorCodeMessages } from '@/lib/errors';
 
@@ -47,7 +48,7 @@ export function bracketErrorMessages(
       ? `This ${noun.one}'s winner is already in ${noun.one} ${next.matchNumber}, which has a score. Clear ${noun.one} ${next.matchNumber}'s score first.`
       : `This ${noun.one}'s winner is already in its next ${noun.one}, which has a score. Clear that score first.`,
     MATCH_SIDES_NOT_SET: `Both ${team.many} in this ${noun.one} aren't known yet. Enter the results of the ${noun.many} before it first.`,
-    MATCH_RESULT_INVALID: 'That result could not be saved. The winner\'s score is the higher, and a final score is never below an earlier one.',
+    MATCH_RESULT_INVALID: `That result could not be saved. The winner's score is the higher, a ${tieWord(vocabulary).toLowerCase()} has level scores, and a final score is never below an earlier one.`,
     MATCH_ALREADY_PLAYED: `This ${noun.one} has a result. Clear it before cancelling the ${noun.one}.`,
     MATCH_IN_BRACKET: `This ${noun.one} is part of a bracket, which can't lose a ${noun.one}. Change its time instead.`,
     SPORT_EVENT_NOT_RELEASED: `Release the ${vocabulary.event.one} before entering results.`,

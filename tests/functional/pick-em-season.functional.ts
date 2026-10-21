@@ -33,6 +33,7 @@ import {
   MatchStatus,
   PickEmMode,
   PickOutcome,
+  PredictedResult,
   SelectionType,
   Sport,
   findSportRow,
@@ -173,6 +174,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   /** A confidence pick of game `matchNumber`'s home or away team. */
   const pick = (matchNumber: number, side: Side, confidence: number) => ({
     sportEventMatchId: game(matchNumber).id,
+    predictedResult: PredictedResult.TEAM,
     sportEventParticipantId: expectDefined(side === 'home' ? game(matchNumber).homeSportEventParticipantId : game(matchNumber).awaySportEventParticipantId),
     confidence,
   });

@@ -55,6 +55,23 @@ export interface SportVocabulary {
    * ("Final, extra time included"): "extra time" for soccer. Absent reads "overtime".
    */
   overtime?: string;
+  /**
+   * What a game that ends level is called, as a result and a pick read it (#792): "Tie" for
+   * American football and hockey, "Draw" for soccer. Absent for a sport that plays no matches;
+   * a screen of a sport without one says "Tie".
+   */
+  tie?: string;
+}
+
+/**
+ * What a sport's pick'em pools can be (#792): whether a pick may be a tie, and whether a pool
+ * may be scored against the spread.
+ */
+export interface SportPickEm {
+  /** Whether a pick'em pick may say the game ends level: soccer's draw. */
+  tiePicks: boolean;
+  /** Whether a pick'em pool may be scored against each game's spread (#720): not in soccer. */
+  againstTheSpread: boolean;
 }
 
 /**
@@ -122,6 +139,12 @@ export interface SportDefinition {
    * pools (#711) are not offered on it.
    */
   matchPeriodLayout?: MatchPeriodLayout;
+  /**
+   * What the sport's pick'em pools can be (#792). Present exactly when `selectionTypes` offers
+   * PICK_EM: contest setup refuses a spread pool where it says no, and a tie pick is taken only
+   * where it says yes.
+   */
+  pickEm?: SportPickEm;
   /**
    * Whether a bracket match level after extra time is settled by a shoot-out, and what screens
    * call it; null for a sport whose knockout matches always end with one side ahead. A shoot-out

@@ -7,7 +7,8 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, sideEntry } from './bracket-copy';
+import { tieWord } from '@/features/contests/contest-sport';
+import { bracketErrorMessages, formsNoBracket, sideEntry } from './bracket-copy';
 import type { BracketContext } from './bracket-match-row';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
@@ -85,6 +86,12 @@ export function MatchScoresRow({
   );
 }
 
+/** The side a pair of scores names the winner, or null for level scores: a tie (#792). */
+function finalWinner(homeScore: number, awayScore: number): MatchSide | null {
+  if (homeScore === awayScore) return null;
+  return homeScore > awayScore ? MatchSide.HOME : MatchSide.AWAY;
+}
+
 /** One scoring moment: a period's end by number, or the final score. */
 function ScoreMoment({
   match,
@@ -118,7 +125,9 @@ function ScoreMoment({
   const parse = (value: string) => (/^\d{1,3}$/.test(value.trim()) ? Number(value.trim()) : null);
   const homeScore = parse(homeValue);
   const awayScore = parse(awayValue);
-  const tied = moment === 'final' && homeScore !== null && homeScore === awayScore;
+  // A game of a week, which forms no bracket, can end level (#792); a bracket match always has a winner.
+  const tiesAllowed = formsNoBracket(context.bracket);
+  const tied = moment === 'final' && !tiesAllowed && homeScore !== null && homeScore === awayScore;
   // A level final score in a sport that holds shoot-outs is settled by one instead of refused.
   const shootout = tied ? context.shootout : null;
   const homeShootoutScore = parse(homeShootoutValue);
@@ -134,9 +143,9 @@ function ScoreMoment({
 
   const save = useInvalidatingMutation({
     mutationFn: async ({ score, kicks }: { score: { homeScore: number; awayScore: number }; kicks: ShootoutScore | null }) => {
-      // A shoot-out names the winner of a level score; otherwise the higher score wins.
-      const [home, away] = kicks ? [kicks.homeShootoutScore, kicks.awayShootoutScore] : [score.homeScore, score.awayScore];
-      const winnerSide = home > away ? MatchSide.HOME : MatchSide.AWAY;
+      // A shoot-out names the winner of a level score; otherwise the higher score wins, and a
+      // level score of a week game is a tie.
+      const winnerSide = kicks ? finalWinner(kicks.homeShootoutScore, kicks.awayShootoutScore) : finalWinner(score.homeScore, score.awayScore);
       const response = moment === 'final'
         ? await recordEventMatchResult({ path, body: { winnerSide, ...score, ...kicks } })
         : await recordEventMatchPeriodScore({ path: { ...path, periodNumber: moment }, body: score });
@@ -224,7 +233,7 @@ function ScoreMoment({
       ) : (
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <span className={saved ? 'text-sm' : 'text-sm text-muted-foreground'} data-testid={`${testId}-value`}>
-            {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}${describeShootout(savedShootout, context)}` : empty}
+            {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}${describeLevelFinal(moment, saved, savedShootout, context)}` : empty}
           </span>
           <Button
             data-testid={`${testId}-edit`}
@@ -259,6 +268,17 @@ function ScoreMoment({
       ) : null}
     </div>
   );
+}
+
+/** What follows a level final score: its shoot-out in a bracket, or the sport's word for a tie (#792). */
+function describeLevelFinal(
+  moment: number | 'final',
+  saved: { homeScore: number; awayScore: number },
+  shootout: ShootoutScore | null,
+  context: BracketContext,
+): string {
+  if (shootout) return describeShootout(shootout, context);
+  return moment === 'final' && saved.awayScore === saved.homeScore ? ` (${tieWord(context.vocabulary).toLowerCase()})` : '';
 }
 
 /** A saved shoot-out after the final score, away side first: " (4-3 pens)"; empty for none. */

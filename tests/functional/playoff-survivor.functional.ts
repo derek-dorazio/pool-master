@@ -14,7 +14,7 @@ import {
   submitGamePicks,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestEntryStatus, ContestFormat, ContestStatus, SelectionType, Sport, SurvivorWeekOutcome } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestFormat, ContestStatus, PredictedResult, SelectionType, Sport, SurvivorWeekOutcome } from '@poolmaster/shared/domain';
 import { SportEventBracketResponseSchema, SurvivorLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
@@ -94,7 +94,7 @@ describe('SDK Functional: a playoff survivor pool on the NFL playoffs (#785)', (
       const team = rowOf(key);
       const game = expectDefined(bracket.find((match) => match.roundNumber === roundNumber
         && (match.homeSportEventParticipantId === team || match.awaySportEventParticipantId === team)), `${key}'s round ${roundNumber} game`);
-      return { sportEventMatchId: game.id, sportEventParticipantId: team };
+      return { sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team };
     };
 
     // --- A survivor contest on the playoffs, entered by four teams ---------------------------------

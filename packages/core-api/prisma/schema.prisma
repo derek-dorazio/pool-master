@@ -296,6 +296,12 @@ enum PrismaMatchSide {
   AWAY
 }
 
+/// What one game pick says happens (#792). Mirrors the domain `PredictedResult`.
+enum PrismaPredictedResult {
+  TEAM
+  TIE
+}
+
 /// How a sport league's bracket winners reach their next match (#722). Mirrors the domain
 /// `BracketAdvancement`.
 enum PrismaBracketAdvancement {
@@ -951,23 +957,26 @@ model ContestEntryEvent {
   @@map("contest_entry_events")
 }
 
-/// A prediction contest entry's pick of one game (#716): the team it says wins, and in a
-/// confidence pool how sure it is (1 to the week's number of games, each once by submit). One
-/// per entry per game. Database checks: `confidence` is at least 1. That the team plays in the
-/// game and the game is still open is the prediction service's check.
+/// A prediction contest entry's pick of one game (#716): the team it says wins, or a tie (#792),
+/// and in a confidence pool how sure it is (1 to the week's number of games, each once by
+/// submit). One per entry per game. Database checks: `confidence` is at least 1, and the team is
+/// named exactly when `predictedResult` is TEAM. That the team plays in the game, that the pool
+/// takes a tie, and that the game is still open are the prediction service's checks.
 model ContestEntryMatchPrediction {
-  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestEntryId          String   @map("contest_entry_id") @db.Uuid
-  sportEventMatchId       String   @map("sport_event_match_id") @db.Uuid
-  sportEventParticipantId String   @map("sport_event_participant_id") @db.Uuid
+  id                      String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestEntryId          String                @map("contest_entry_id") @db.Uuid
+  sportEventMatchId       String                @map("sport_event_match_id") @db.Uuid
+  predictedResult         PrismaPredictedResult @default(TEAM) @map("predicted_result")
+  /// The team picked to win; null for a tie pick.
+  sportEventParticipantId String?               @map("sport_event_participant_id") @db.Uuid
   confidence              Int?
-  pickedAt                DateTime @map("picked_at") @db.Timestamptz
-  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  pickedAt                DateTime              @map("picked_at") @db.Timestamptz
+  createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime              @updatedAt @map("updated_at") @db.Timestamptz
 
-  contestEntry          ContestEntry          @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
-  sportEventMatch       SportEventMatch       @relation(fields: [sportEventMatchId], references: [id], onDelete: Restrict)
-  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id], onDelete: Restrict)
+  contestEntry          ContestEntry           @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
+  sportEventMatch       SportEventMatch        @relation(fields: [sportEventMatchId], references: [id], onDelete: Restrict)
+  sportEventParticipant SportEventParticipant? @relation(fields: [sportEventParticipantId], references: [id], onDelete: Restrict)
 
   @@unique([contestEntryId, sportEventMatchId])
   @@index([sportEventMatchId])

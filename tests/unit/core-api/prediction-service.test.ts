@@ -11,10 +11,14 @@ import {
   ContestStatus,
   MatchStatus,
   PickEmMode,
+  PredictedResult,
   SelectionType,
   SportEventStatus,
   contestEntryEventStatus,
+  getSportDefinition,
   type ContestEntry,
+  type Sport,
+  type SportDefinition,
   type SportEvent,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
@@ -30,7 +34,10 @@ const NOW = new Date('2026-09-10T20:00:00.000Z');
 const at = (offsetHours: number) => new Date(NOW.getTime() + offsetHours * HOUR);
 const T0 = new Date('2026-09-01T00:00:00.000Z');
 
-function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; selectionType?: SelectionType } = {}) {
+/** The world's sport, as a sport whose pick'em pools offer tie picks (soccer's draw, #792) reads it. */
+const offeringTiePicks = (sport: Sport): SportDefinition => ({ ...getSportDefinition(sport), pickEm: { tiePicks: true, againstTheSpread: false } });
+
+function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; selectionType?: SelectionType; tiePicks?: boolean } = {}) {
   const world = new InMemoryContestWorld();
   const week = new InMemoryGamePicks(world);
   const league = world.addLeague();
@@ -80,18 +87,26 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
     field: week.fieldRepo(),
     participants: week.participantRepo(),
     predictions: week.predictionRepo(),
+    ...(options.tiePicks ? { sportDefinitionOf: offeringTiePicks } : {}),
     now: () => now,
   });
 
   const input = { contestId: contest.id, entryId: aliceEntry.id, sportEventId: sportEvent.id, actorUserId: alice.id };
   const pick = (game: SportEventMatch, confidence: number | null, side: 'home' | 'away' = 'home'): ContestEntryMatchPredictionWrite => ({
     sportEventMatchId: game.id,
+    predictedResult: PredictedResult.TEAM,
     sportEventParticipantId: expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId),
+    confidence,
+  });
+  const tiePick = (game: SportEventMatch, confidence: number | null): ContestEntryMatchPredictionWrite => ({
+    sportEventMatchId: game.id,
+    predictedResult: PredictedResult.TIE,
+    sportEventParticipantId: null,
     confidence,
   });
 
   return {
-    world, week, service, contest, sportEvent, otherEvent, alice, bob, input, pick,
+    world, week, service, contest, sportEvent, otherEvent, alice, bob, input, pick, tiePick,
     games: { thursday, sunday, monday, cancelled, otherWeekGame },
     weekStatus: () => contestEntryEventStatus(expectDefined(world.entries.get(aliceEntry.id)), sportEvent.id),
     submittedAt: () => expectDefined(world.entries.get(aliceEntry.id)).events
@@ -212,7 +227,7 @@ describe('PredictionService.saveGamePicks — what a save is refused for', () =>
     await expectRefused(
       context.service.saveGamePicks({
         ...context.input,
-        picks: [{ sportEventMatchId: context.games.thursday.id, sportEventParticipantId: 'field-not-playing', confidence: 3 }],
+        picks: [{ sportEventMatchId: context.games.thursday.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'field-not-playing', confidence: 3 }],
       }),
       'PREDICTION_GAME_STARTED', 409,
     );
@@ -223,7 +238,7 @@ describe('PredictionService.saveGamePicks — what a save is refused for', () =>
     await expectRefused(
       context.service.saveGamePicks({
         ...context.input,
-        picks: [{ sportEventMatchId: context.games.sunday.id, sportEventParticipantId: context.games.thursday.homeSportEventParticipantId ?? '', confidence: 99 }],
+        picks: [{ sportEventMatchId: context.games.sunday.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.games.thursday.homeSportEventParticipantId ?? '', confidence: 99 }],
       }),
       'PREDICTION_TEAM_NOT_IN_GAME', 400,
     );
@@ -595,5 +610,53 @@ describe('PredictionService.getGamePicks — what each viewer sees', () => {
     expect(monday.kickoff).toEqual(context.sportEvent.startDate);
     expect(monday.home?.name).toBe('Home 3');
     expect(monday.away?.name).toBe('Away 3');
+  });
+});
+
+describe('PredictionService — tie picks (#792)', () => {
+  it('saves a tie pick, naming no team, in a pick\'em pool whose sport offers tie picks, and says the pool takes them', async () => {
+    const context = setup({ mode: PickEmMode.STRAIGHT_UP, tiePicks: true });
+
+    const view = await context.service.saveGamePicks({ ...context.input, picks: [context.tiePick(context.games.sunday, null)] });
+
+    expect(view.tiePicksOffered).toBe(true);
+    expect(context.storedPicks()).toEqual([['game-2', null, null]]);
+    expect(view.games.find((game) => game.match.id === 'game-2')?.pick).toMatchObject({ predictedResult: PredictedResult.TIE, sportEventParticipantId: null });
+  });
+
+  it('swaps a team pick for a tie pick on the same game, and back', async () => {
+    const context = setup({ mode: PickEmMode.STRAIGHT_UP, tiePicks: true });
+    await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, null)] });
+
+    await context.service.saveGamePicks({ ...context.input, picks: [context.tiePick(context.games.sunday, null)] });
+    expect(context.storedPicks()).toEqual([['game-2', null, null]]);
+
+    await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.sunday, null, 'away')] });
+    expect(context.storedPicks()).toEqual([['game-2', context.games.sunday.awaySportEventParticipantId, null]]);
+  });
+
+  it('submits a confidence week whose picks include a tie, each value used once', async () => {
+    const context = setup({ mode: PickEmMode.CONFIDENCE, tiePicks: true });
+    await context.service.saveGamePicks({
+      ...context.input,
+      picks: [context.pick(context.games.thursday, 3), context.tiePick(context.games.sunday, 2), context.pick(context.games.monday, 1)],
+      tiebreakerValue: 41,
+    });
+
+    const view = await context.service.submitGamePicks(context.input);
+
+    expect(view.status).toBe(ContestEntryStatus.SUBMITTED);
+  });
+
+  it('refuses a tie pick with 422 PREDICTION_TIE_NOT_OFFERED where the sport offers none, saving nothing of the batch', async () => {
+    const context = setup({ mode: PickEmMode.STRAIGHT_UP });
+
+    await expectRefused(
+      context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.thursday, null), context.tiePick(context.games.sunday, null)] }),
+      'PREDICTION_TIE_NOT_OFFERED',
+      422,
+    );
+    expect(context.storedPicks()).toEqual([]);
+    expect((await context.service.getGamePicks(context.input)).tiePicksOffered).toBe(false);
   });
 });

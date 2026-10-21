@@ -26,8 +26,12 @@ export const soccerSportDefinition: SportDefinition = {
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
   defaultTierLayout: { tierCount: 4, tierSize: 4 },
-  selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
+  selectionTypes: [
+    SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES,
+  ],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
+  // A pick'em pick may be a draw (#792); soccer has no spread to pick against.
+  pickEm: { tiePicks: true, againstTheSpread: false },
   shootout: { label: 'pens' },
   matchPeriodLayout: MatchPeriodLayout.HALVES,
   vocabulary: {
@@ -40,6 +44,7 @@ export const soccerSportDefinition: SportDefinition = {
     eventStart: 'first kickoff',
     match: { one: 'match', many: 'matches' },
     overtime: 'extra time',
+    tie: 'Draw',
   },
   // A four-round knockout reads Round of 16, Quarter-finals, Semi-finals, Final; a five-round one
   // starts at the Round of 32.

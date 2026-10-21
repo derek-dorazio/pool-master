@@ -1,4 +1,4 @@
-import { ContestEntryStatus, PickEmMode, SelectionType } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PickEmMode, PredictedResult, SelectionType } from '@poolmaster/shared/domain';
 import type { GamePicksResponse, SaveGamePicksRequest } from '@/lib/api';
 
 /**
@@ -115,9 +115,25 @@ export function missedWeek(gamePicks: Pick<GamePicksResponse, 'games' | 'ownEntr
 export function teamPick(game: PickEmGame, team: PickEmTeam, mode: GamePicksResponse['mode']): GamePickWrite {
   return {
     sportEventMatchId: game.sportEventMatchId,
+    predictedResult: PredictedResult.TEAM,
     sportEventParticipantId: team.sportEventParticipantId,
     ...(mode === PickEmMode.CONFIDENCE ? { confidence: game.pick?.confidence ?? null } : {}),
   };
+}
+
+/** A pick of a tie (#792), a draw in soccer, keeping the game's confidence value in a confidence pool. */
+export function tiePick(game: PickEmGame, mode: GamePicksResponse['mode']): GamePickWrite {
+  return {
+    sportEventMatchId: game.sportEventMatchId,
+    predictedResult: PredictedResult.TIE,
+    sportEventParticipantId: null,
+    ...(mode === PickEmMode.CONFIDENCE ? { confidence: game.pick?.confidence ?? null } : {}),
+  };
+}
+
+/** Whether the game's pick, as shown, says the game ends level. */
+export function isTiePicked(game: Pick<PickEmGame, 'pick'>): boolean {
+  return game.pick?.predictedResult === PredictedResult.TIE;
 }
 
 /**
@@ -131,6 +147,7 @@ export function confidencePicks(games: readonly PickEmGame[], game: PickEmGame, 
   }
   const picks: GamePickWrite[] = [{
     sportEventMatchId: game.sportEventMatchId,
+    predictedResult: game.pick.predictedResult,
     sportEventParticipantId: game.pick.sportEventParticipantId,
     confidence: value,
   }];
@@ -140,6 +157,7 @@ export function confidencePicks(games: readonly PickEmGame[], game: PickEmGame, 
   if (holder?.pick) {
     picks.push({
       sportEventMatchId: holder.sportEventMatchId,
+      predictedResult: holder.pick.predictedResult,
       sportEventParticipantId: holder.pick.sportEventParticipantId,
       confidence: game.pick.confidence,
     });

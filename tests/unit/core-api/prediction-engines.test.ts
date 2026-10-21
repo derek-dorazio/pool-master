@@ -4,10 +4,11 @@
  * (#721), whose later games offer the entry's own picked winners and which needs a tiebreaker.
  */
 import { expect } from '@jest/globals';
-import { MatchSide, PickEmMode, PickOutcome, SelectionType, UpsetBonusRule, type ContestScoringSettings } from '@poolmaster/shared/domain';
+import { MatchSide, PickEmMode, PickOutcome, PredictedResult, SelectionType, UpsetBonusRule, type ContestScoringSettings } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../../packages/core-api/src/modules/contests/entry-window';
 import { bracketPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/bracket';
 import { pickEmPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/pick-em';
+import { survivorPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/survivor';
 import { PredictionIssueKind } from '../../../packages/core-api/src/modules/selections/prediction-engines/prediction-engine';
 import { getPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/registry';
 import { expectDefined } from '../../support/expect-defined';
@@ -18,7 +19,7 @@ const CONFIDENCE = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONF
 const GAMES = ['game-1', 'game-2', 'game-3'];
 
 function picks(...confidences: Array<number | null>) {
-  return confidences.map((confidence, index) => ({ sportEventMatchId: `game-${index + 1}`, sportEventParticipantId: `home-${index + 1}`, confidence }));
+  return confidences.map((confidence, index) => ({ sportEventMatchId: `game-${index + 1}`, predictedResult: PredictedResult.TEAM, sportEventParticipantId: `home-${index + 1}`, confidence }));
 }
 
 describe('pick\'em engine — registry and pick window', () => {
@@ -75,7 +76,7 @@ describe('pick\'em engine — findWeekIssues', () => {
     expect(pickEmPredictionEngine.findWeekIssues({
       configuration: STRAIGHT_UP,
       gameMatchIds: GAMES,
-      predictions: [...picks(null, null), { sportEventMatchId: 'cancelled-game', sportEventParticipantId: 'home-9', confidence: null }],
+      predictions: [...picks(null, null), { sportEventMatchId: 'cancelled-game', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'home-9', confidence: null }],
       tiebreakerValue: 40,
     })).toEqual([{ kind: PredictionIssueKind.WEEK_INCOMPLETE, pickedCount: 2, gameCount: 3 }]);
   });
@@ -220,5 +221,40 @@ describe('bracket engine', () => {
   it('reports only the missing tiebreaker on a fully picked bracket', () => {
     expect(bracketPredictionEngine.findWeekIssues({ configuration: undefined, gameMatchIds: GAME_IDS, predictions: fullBracket, tiebreakerValue: null }))
       .toEqual([{ kind: PredictionIssueKind.TIEBREAKER_MISSING }]);
+  });
+});
+
+describe('tie picks in each engine (#792)', () => {
+  const games = eightTeamBracket().filter((game) => game.roundNumber === 1);
+  const tie = (matchNumber: number) => ({ sportEventMatchId: `m${matchNumber}`, predictedResult: PredictedResult.TIE, sportEventParticipantId: null, confidence: null });
+  const team = (matchNumber: number, row: string) => ({ ...bracketPick(matchNumber, row), confidence: null });
+
+  it('takes tie picks only in pick\'em: a bracket and a survivor pick always name a team', () => {
+    expect([pickEmPredictionEngine, bracketPredictionEngine, survivorPredictionEngine].map((engine) => [engine.selectionType, engine.takesTiePicks])).toEqual([
+      [SelectionType.PICK_EM, true],
+      [SelectionType.BRACKET, false],
+      [SelectionType.SURVIVOR, false],
+    ]);
+  });
+
+  it('keeps a pick\'em tie pick on a game of the week and strands one on a game the week does not have', () => {
+    const resolved = pickEmPredictionEngine.resolvePicks({ games, predictions: [tie(1), team(2, 'T4'), tie(99)], seedOf: EIGHT_SEEDS });
+
+    expect(resolved.kept.map((each) => each.sportEventMatchId)).toEqual(['m1', 'm2']);
+    expect(resolved.stranded.map((each) => each.sportEventMatchId)).toEqual(['m99']);
+  });
+
+  it('strands a tie pick in a bracket, keeping the team picks around it', () => {
+    const resolved = bracketPredictionEngine.resolvePicks({ games: eightTeamBracket(), predictions: [team(1, 'T1'), tie(2)], seedOf: EIGHT_SEEDS });
+
+    expect(resolved.kept.map((each) => each.sportEventMatchId)).toEqual(['m1']);
+    expect(resolved.stranded.map((each) => each.sportEventMatchId)).toEqual(['m2']);
+  });
+
+  it('strands a tie pick in a survivor week, so the week holds no pick', () => {
+    const resolved = survivorPredictionEngine.resolvePicks({ games, predictions: [tie(1)], seedOf: EIGHT_SEEDS });
+
+    expect(resolved.kept).toEqual([]);
+    expect(resolved.stranded.map((each) => each.sportEventMatchId)).toEqual(['m1']);
   });
 });

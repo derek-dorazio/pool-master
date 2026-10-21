@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { ContestEntryStatus, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PredictedResult, getSportDefinition } from '@poolmaster/shared/domain';
 import {
   getGamePicks,
   saveGamePicks,
@@ -182,7 +182,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const pick = (game: BracketGame, team: BracketTeam) => {
     saveMutation.reset();
     saveMutation.mutate({
-      picks: [{ sportEventMatchId: game.sportEventMatchId, sportEventParticipantId: team.sportEventParticipantId }],
+      picks: [{ sportEventMatchId: game.sportEventMatchId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team.sportEventParticipantId }],
     });
   };
   const errorMessage = (error: Error | null, fallback: string) => (error

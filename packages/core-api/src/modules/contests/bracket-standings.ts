@@ -9,7 +9,7 @@ import type {
   ContestEntryWithSquad,
   SportEventMatchRepository,
 } from '@poolmaster/shared/db';
-import { SelectionType, SportEventStatus, contestEntryEventTiebreaker, type SportEvent } from '@poolmaster/shared/domain';
+import { SelectionType, SportEventStatus, contestEntryEventTiebreaker, isTeamChoice, type SportEvent } from '@poolmaster/shared/domain';
 import {
   contestBracketGames,
   finalTotalPoints,
@@ -100,7 +100,8 @@ export async function loadBracketStandings(
   }
 
   const scored = entries.map((entry) => {
-    const { kept } = resolveBracketPicks(games, picksByEntry.get(entry.id) ?? [], seedOf);
+    // A bracket pick names a team (#792): a tie pick is never one.
+    const { kept } = resolveBracketPicks(games, (picksByEntry.get(entry.id) ?? []).filter(isTeamChoice), seedOf);
     return { entry, score: scoreBracketPicks(games, kept, seedOf, settings) };
   });
   const finalTotal = finalTotalPoints(games);

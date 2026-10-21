@@ -37,6 +37,7 @@ import {
   CONTEST_SCORING_ROUNDS_MISMATCH,
   CONTEST_SCORING_SETTINGS_REQUIRED,
   CONTEST_SELECTION_TYPE_NOT_ALLOWED,
+  CONTEST_SPREAD_NOT_OFFERED,
   CONTEST_SQUARES_GAME_INVALID,
   CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD,
   CONTEST_SQUARES_GAME_REQUIRED,
@@ -813,6 +814,14 @@ export class ContestManagementService {
       );
     }
     if (rules.selectionType === SelectionType.PICK_EM) {
+      // A sport's pools are scored against the spread only where its games have one (#792): not soccer.
+      if (rules.againstTheSpread && definition.pickEm?.againstTheSpread !== true) {
+        this.logger.warn({ sportEventId: sportEvent.id, sport: sportEvent.sport }, 'contest management rules refused against-the-spread picks in a sport without spreads');
+        throw new ContestManagementError(
+          `A ${definition.name.toLowerCase()} pick'em contest can't be scored against the spread.`,
+          CONTEST_SPREAD_NOT_OFFERED,
+        );
+      }
       // A pick'em entry picks the winner of each game, so every event must have games (#716).
       for (const each of sportEvents) {
         await this.assertEventHasGames(each.id);

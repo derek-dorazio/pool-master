@@ -33,6 +33,7 @@ export const americanFootballSportDefinition: SportDefinition = {
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   shootout: null,
   matchPeriodLayout: MatchPeriodLayout.QUARTERS,
+  pickEm: { tiePicks: false, againstTheSpread: true },
   vocabulary: {
     participant: { one: 'team', many: 'teams' },
     event: { one: 'playoffs', many: 'playoffs' },
@@ -42,6 +43,7 @@ export const americanFootballSportDefinition: SportDefinition = {
     withdrawn: 'Withdrawn',
     eventStart: 'first kickoff',
     match: { one: 'game', many: 'games' },
+    tie: 'Tie',
   },
   // A four-round bracket reads Wild Card, Divisional, Conference Championship, Super Bowl; a
   // shorter one keeps the names counted back from its final.
