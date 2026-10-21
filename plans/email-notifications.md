@@ -199,7 +199,7 @@ places when they are outside it, with movement since the last email.
 
 | # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
 |---|---|---|---|---|---|---|---|
-| E1 | Contest is live, good luck | The contest goes `OPEN` → `ACTIVE` at its cutoff | Every active league member (Q3.8, decided) | At once | "Good luck, everyone." Event, entry count, entries up to 25 by squad name (Q3.9) then "and N more", each entry's picks once revealed, Leaderboard button | 🟡 `CONTEST_STARTED_SUMMARY` (no cap, no leaderboard link, no "good luck", entrants only) | P1 |
+| E1 | Contest is live, good luck | The contest goes `OPEN` → `ACTIVE` at its cutoff | Every active league member (Q3.8, decided) | At once | "Good luck, everyone." The event (dates, venue, rounds or games) and the contest's rules in a few lines (selection type, scoring, prizes), entry count, Leaderboard button. No list of entries (Q3.9, decided) | 🟡 `CONTEST_STARTED_SUMMARY` (no cap, no leaderboard link, no "good luck", entrants only) | P1 |
 | E2 | Round standings | A stroke-play event's round ends: its `scheduledEndAt` has passed, or the next round has started, whichever is first | Every league member with an entry, plus commissioners | Once per round; not after the final round (F1 covers it) | "After round 2 of the Masters." Top 10 with movement, the reader's entries, cut news for their picks, Leaderboard button | | P1 |
 | E3 | Week results | A pick'em or survivor week settles | Same as E2 | Once per week; not for the last week | The week's winner (#717), the week's top 10, contest standings top 10, next week's first kickoff, Make picks for next week button | | P1 |
 | E4 | Bracket round results | Every match of a bracket round has a result | Same as E2 | Once per round; not after the final | Top 10, the reader's busted picks and remaining champions, next round's start, Bracket link | | P1 |
@@ -213,8 +213,9 @@ places when they are outside it, with movement since the last email.
 not in this one. Follow along on the leaderboard."). Members without an entry can still watch
 the leaderboard, and it reminds them to enter next time.
 
-**Q3.9 Entries cap in E1.** *Recommendation:* 25 entries, then "and 14 more", with the
-Leaderboard button showing all. 25 rows fit a phone screen or two.
+**Q3.9 Entries in E1.** **Decided (Derek 2026-10-21):** none. E1 describes the event and the
+contest's rules and links to the leaderboard. Listing some entries would pick an arbitrary few;
+the top 10 is a real order, so it starts with the standings emails (E2–E4).
 
 **Q3.10 One-day racing.** A horse race, a NASCAR race or a marathon is one round.
 *Recommendation:* no E2 for single-round events; E1 then F1 is the whole story.
@@ -271,7 +272,7 @@ Each slice is one PR, opened in order, after the SES design's first slice lands.
    lifecycle scheduler sweep; per-category email preferences on the user with an Email settings
    section on the profile page and a one-click unsubscribe route. No new email yet.
 2. **Contest lifecycle.** D1 contest open, D2 reminders, E1 upgraded (all members, "good luck",
-   25-entry cap, leaderboard link), D3 to every owner.
+   event and rules summary instead of the entry list, leaderboard link), D3 to every owner.
 3. **Live standings.** E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,
    with the top 10 and the reader's entries.
 4. **Final results.** F1 with F3 folded in, F2.
