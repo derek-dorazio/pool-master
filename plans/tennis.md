@@ -149,7 +149,12 @@ The `add-sport` skill, as hockey did it.
   - Tiered, "Seeds only": one player from each of the first four tiers (the 32 seeds), all four
     count. Tiers live on the event and are shared by every contest (#249), so this is a contest
     rule, not a second tier layout: `TieredContestRules` gains an optional `tiersUsed` (the first
-    N tiers; absent means all). Shared, so golf could offer a "top tiers only" pool the same way.
+    N tiers; absent means all).
+  - Tiered, "Whole field, best four count": six tiers, the best four picks count. Nothing new:
+    `countedScores` already does this.
+  - Golf gets the matching variation in the same PR (Derek 2026-10-21): "Top four tiers", one
+    golfer from each of the event's first four tiers, all four count, on each golf league's
+    default tiered setup.
   - Budget, and random draw (the office sweepstake).
   - Bracket: the full draw (default), and a "second week" bracket from the fourth round (#760).
     See Q2.3.
