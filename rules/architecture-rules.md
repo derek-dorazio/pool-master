@@ -285,6 +285,12 @@ The rules that keep it that way:
   category fall through silently; `@typescript-eslint/switch-exhaustiveness-check` rejects it.
 - **Shared screens use the sport's words.** "Golfer", "tee time" and "Cut" belong to golf's
   definition, not to a component every sport renders.
+- **Which contest templates an event offers is decided in one place.** A template is offered on
+  an event when its sport matches, its sport league is the event's or none, and its event type
+  is the event's kind of event or none: `isTemplateOfferedOn` in `@poolmaster/shared/domain`.
+  Create contest and the test-participants loader both choose templates through it; anything
+  else that picks templates for an event calls it too, never a filter of its own (two copies
+  once disagreed, and the loader built contests no week of games could host).
 - **Add a sport, family or enum value only with the code that serves it.** An unbuilt value
   is dead code. The `add-sport` skill sequences the work.
 
@@ -539,7 +545,8 @@ code defaults that may depend on the environment) and added to `SETTINGS_GROUPS`
 - **Every sport league has a test seed of its last season as played**: its real events, fields
   and results (made-up odds aside), loaded through the same workflow, so every sport can be
   tried by hand end to end. A future season's schedule and fields are an admin's routine work
-  with the same loader, not a ticket.
+  with the same loader, not a ticket. The seeded-template integration test fails for any sport
+  league the migrations seed that no test data file names, so a new league lands with its file.
 
 ### There is deliberately no Prisma seed
 

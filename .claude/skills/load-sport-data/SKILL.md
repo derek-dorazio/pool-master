@@ -39,6 +39,12 @@ rewrite an event, and its event must already be on the site. `contents` is what 
 change: keep it as narrow as the ask. One sport and season per file; several sport leagues
 of it are fine.
 
+Every sport league also has a test data file of its last season as played, its real events,
+fields and results with made-up odds (`rules/architecture-rules.md` §6 *Manual-testing seed
+data goes through the admin API*). A new sport league gets its file in the PR that adds it, and
+the seeded-template integration test fails until it has one. *Test slates* below says what one
+holds for each kind of sport.
+
 ## Step 2 — gather from two sources
 
 Use the sources in `docs/SPORT-DATA-SOURCES.md`, primary first. A cloud session cannot
@@ -144,10 +150,12 @@ seeds), which the load sets after release, before any result. A bye is a team na
 into a later round's match, its other side filled by a link (the College Football Playoff's top
 four seeds in the quarterfinals). A match of a sport with periods (American football) may also
 carry `periodScores`, the score at the end of each period but the last, which the load enters
-before its result: the 2026 NFL seed's Super Bowl and the college hockey title games do, for squares pools. A match that
-stopped early says how in its result's `ending` (`RETIREMENT`, `WALKOVER`, `DEFAULT`; left out is
-played), and a walkover's scores are null. A league of weekly
-games tries pick'em on last season's weeks as played: each week its own event, every game a
+before its result: the 2026 NFL seed's Super Bowl and the college hockey title games do, for
+squares pools. A match level after extra time, in a sport that settles it by shoot-out
+(soccer), carries the shoot-out in its result's `homeShootoutScore` and `awayShootoutScore`,
+the score staying the score after extra time; every other match leaves both out. A match that
+stopped early says how in its result's `ending` (`RETIREMENT`, `WALKOVER`, `DEFAULT`; left out
+is played), and a walkover's scores are null. A league of weekly games tries pick'em on last season's weeks as played: each week its own event, every game a
 match that links nowhere, with its real `result`
 (`american-football-2025-nfl-weeks-test.json`, `docs/SPORT-DATA-LOADING.md` *Seeded NFL
 regular-season weeks*).

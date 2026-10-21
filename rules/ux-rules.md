@@ -284,4 +284,9 @@ administration area (root admin included), reusing the same shared components.
     league's Contest types page shows every sport league's tiles, with
     "Create this contest" links for its commissioners. Both read the
     templates, so a new template or sport shows up there with no copy change;
-    the only hand-written copy is one line per sport.
+    the only hand-written copy is one line per sport (`SPORT_BLURBS`). That
+    line names the sport's leagues and formats, and nothing fails when it falls
+    behind, so a slice that adds a sport, a sport league or a contest template
+    rewrites its sport's line in the same PR and reads both pages for that
+    sport before review: every league and format it added has its tile, and
+    the line still describes what the tiles offer.
