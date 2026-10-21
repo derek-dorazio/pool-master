@@ -64,11 +64,11 @@ Questions:
 - **Q1** One league per sport per gender, or one "Olympic Games" league per sport holding both?
   Recommendation: per gender, as every other sport does. Tier counts, round names and templates
   are per league, and men's and women's draws differ in size (LA28 soccer is 12 men's teams, 16
-  women's).
+  women's). **Decided 2026-10-21 (Derek): per gender.**
 - **Q2** Entries close at the first knockout game, so a team pool is open only for the two to
   four days between the groups and the quarter-finals. Accept that? Recommendation: yes. The
   alternative, an event spanning the groups, needs group standings deciding the bracket, which is
-  new. Group-stage pick'em (below) covers the first week.
+  new. Group-stage pick'em (below) covers the first week. **Decided 2026-10-21: accepted.**
 
 ## Summer Games (LA 2028, 14 to 30 July 2028)
 
@@ -78,10 +78,10 @@ Questions:
 | **Tennis** | Men's and women's singles: 64 draws, 16 seeds | Tennis bracket of individuals | Everything tennis offers (after #704 slice 2) | Data only, already listed on #820 row 1 |
 | **Basketball** | Men's and women's 5x5: 12 teams, groups, then a knockout of 8 | Bracket of national teams, quarters | Tiered, budget, random draw, bracket, playoff survivor, squares; pick'em on group games | Data only |
 | **Soccer** | Men's (12 teams at LA28) and women's (16): groups, then a knockout of 8 | Bracket of national teams with shoot-outs | Same as basketball, with draw picks on group games | Data only, after #787 slice 3 (knockouts) and slice 5 (group matchdays) |
-| **Cycling** | Men's and women's road race and individual time trial | One-day race, finishing order | Tiered, budget, random draw | Data only. Fields of about 90 riders |
+| **Cycling** | Men's and women's road race (one long one-day race on open roads, about 90 riders, the cycling event stars ride) and individual time trial | One-day race, finishing order | Tiered, budget, random draw | Data only, but not planned (Q3) |
 | **Running** | Men's and women's marathon | One race, finishing order | Tiered, budget, random draw | Data only. Fields of about 80, so tiers would hold more than the series' default |
-| **Baseball, softball** | Six teams each | Format for LA28 not yet published | | Wait (Q4) |
-| **American football** | Flag football, men's and women's: six teams each, five a side | A league under American football, if it ends in a knockout | Bracket, roster pools | Wait (Q5) |
+| **Baseball, softball** | Six teams each | Format for LA28 not yet published | | Skipped (Q4) |
+| **American football** | Flag football, men's and women's: six teams each, five a side | A league under American football, if it ends in a knockout | Bracket, roster pools | Skipped (Q5) |
 
 Group-stage pick'em: basketball already offers pick'em, and soccer gets group matchdays in #787
 slice 5. Each matchday is a week event of the Olympic league, as decided for the World Cup.
@@ -93,17 +93,22 @@ Questions:
 - **Q3** Which individual events? Recommendation: golf, tennis singles, the road races and the
   marathon, the events with real followings and a star field. Add the two time trials too: they
   are the same shape and cost one event each. Leave track cycling, mountain biking, BMX, race
-  walks and the 10,000 m out; they fit the race shape but nobody pools them.
+  walks and the 10,000 m out; they fit the race shape but nobody pools them. **Decided
+  2026-10-21 (Derek): golf, tennis singles and the marathon are the priority; no time trials.**
+  The cycling road race is left out with them: it is a data file away if anyone asks.
 - **Q4** Baseball and softball. Tokyo 2020 played groups and then a repechage, where a loser
   stays in, which needs #793. Recommendation: wait until the LA28 format is published (expected
-  in 2027) and add them then only if the knockout is single elimination.
+  in 2027) and add them then only if the knockout is single elimination. **Decided 2026-10-21:
+  skipped; low chance of use.**
 - **Q5** Flag football. Six teams per gender, format not yet published; likely a round robin,
   then semi-finals and a gold medal game. Recommendation: wait for the format. If it ends in a
   knockout, it is a league under American football with two halves (`HALVES` exists) and a
   four-team bracket. Too small for anything but a bracket pool and squares on the final.
+  **Decided 2026-10-21: skipped.**
 - **Q6** Running's tiers: a marathon field of 80 against the series' four tiers of six (the last
   tier takes the rest). Recommendation: give the Olympic leagues a tier count of 5, so the last
-  tier is not 60 runners deep; it is one column on the league row.
+  tier is not 60 runners deep; it is one column on the league row. **Decided 2026-10-21: as
+  recommended.**
 
 ## Winter Games (French Alps 2030, February 2030)
 
@@ -118,16 +123,19 @@ Questions:
 - **Q7** Start the men's event at the qualification round (12 teams, four on byes) or at the
   quarter-finals (8)? Recommendation: the qualification round. It is the bigger pool and play-in
   places already work. Whether the quarter-finals are reseeded is read from the source when the
-  data file is written (`RESEED_BY_SEED` exists for the NFL).
+  data file is written (`RESEED_BY_SEED` exists for the NFL). **Decided 2026-10-21: as
+  recommended.**
 - **Q8** Which Games first? Recommendation: build the Milano Cortina 2026 hockey test seed first,
   since it is the most recent and needs only hockey, which exists. The Summer leagues can follow
-  in any order before LA28; nothing is urgent until then.
+  in any order before LA28; nothing is urgent until then. **Decided 2026-10-21 (Derek): build
+  the leagues and the last-Games test seeds and check them in QA; the real LA28 (and 2030) data
+  is loaded when those Games are set up.**
 
 ## Not in this work (needs new features)
 
 - **Medal-count pools**, the classic Olympic office pool: draft or pick countries and score their
   medals across every sport. Needs countries as participants spanning sports and a medal table.
-  The most common Olympic pool, and the one real gap; worth its own design if wanted.
+  The most common Olympic pool, and the one real gap. **Decided 2026-10-21: out of scope.**
 - **Bronze medal games** (#793 shape: a loser advances).
 - **Golf mixed team** (new at LA28: a man and a woman per country), **tennis doubles**, and any
   pair as a participant.
@@ -146,7 +154,7 @@ Questions:
 As listed on #821, each one PR of reference data and test data:
 
 1. Winter hockey (men's and women's), with hockey's shoot-out entry. Needs #791.
-2. Summer individuals: golf, cycling road races and time trials, the marathon.
+2. Summer individuals: golf and the marathon.
 3. Summer basketball, with squares on the gold medal game.
 4. Summer soccer. Needs #787 slice 3; group matchdays need slice 5.
 5. Summer tennis singles. Needs #704 slice 2.
