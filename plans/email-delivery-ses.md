@@ -289,6 +289,31 @@ Steps, in order (slice 1; Derek runs the Terraform applies and the AWS console r
 > monitored" and points to the league page. Slice 2 deletes the unused `EMAIL_CONFIG.replyTo`
 > setting and the `replyTo` field on the transport message.
 
+## 6a. League From address
+
+Decided (Derek 2026-10-21), built in slice 2: an email about a league comes **from that league's
+address**, the way CBS and ESPN league emails do. It is presentation only:
+
+```
+From: Office League <officeleague@qa.ultimateofficepoolmanager.com>
+```
+
+- **Address**: the league code, lowercased, at the environment's sending domain (Q6.1). League codes
+  are `A-Z0-9`, 3 to 16 characters, so every code is a valid address. **Display name**: the league's
+  name.
+- **No SES work per league.** SES lets any address at a verified domain send, so no per-league
+  verification, DKIM or DNS. SPF and DMARC still pass through the shared MAIL FROM domain.
+- **Nothing receives mail there.** Like `noreply@`, the address has no mailbox; with no Reply-To
+  (Q6.2) a reply bounces back to the sender, and the footer says the mailbox isn't monitored.
+  Turning the league address into a real list (mail to it reaches every member) would be a new
+  feature, not part of this plan.
+- **Emails with no league** (password reset, account changes, root admin emails) come from
+  `Poolmaster <noreply@…>`, with the display name from the app-name decision.
+- The registry entry says whether a template is league-scoped; league-scoped emails must carry
+  their `leagueId`, so the From address can't be forgotten.
+- The league code already appears in invite emails and league links, so showing it in the From
+  line exposes nothing new; joining still needs an invite.
+
 ## 7. Unsubscribe and preferences
 
 **Categories.** Every template has a category (§3). The list, and which emails sit in each, is the
@@ -370,8 +395,8 @@ keeps many SES calls in flight while it waits on the network.
 **League addresses don't reduce sending.** CBS and ESPN show a league address
 (`<league>@football.cbssports.com`) as the sender, and mail to it reaches every member, like a
 mailing list. Their list server still delivers one copy per member, so the work only moves from the
-app to the list server. A league-style display name (*Office League via Poolmaster*) is a
-presentation choice for the notifications design, not a scale fix.
+app to the list server. The league From address (§6a) gives the same look, as presentation
+only; it is not a scale fix.
 
 What to change when volume calls for it, all inside the email service, so no caller changes:
 
@@ -381,7 +406,7 @@ What to change when volume calls for it, all inside the email service, so no cal
 - send through SES bulk sending (50 recipients a call), which needs a different template approach
   for those emails.
 
-None of these is built now.
+None of these is built now; #853 (deferred) tracks revisiting them.
 
 ## 9. Local and test behaviour
 
@@ -408,7 +433,7 @@ This plan's slices:
    and DMARC passing. Closes #120.
 2. **Email service and registry**: `EmailCategory` with the catalog's categories, template registry,
    `emailService.send`, typed `templateKey`, recipient time zone in renderers, SES v2 transport, the
-   three callers moved over, `replyTo` deleted, preview script. No behaviour change.
+   three callers moved over, `replyTo` deleted, the league From address (§6a), preview script. No behaviour change.
 3. **Outbox**: `email_message` table and enums, sender loop with retries, rate limit and
    idempotency, invites through it with their email state on the pending invites list (Q5.1).
 4. **Bounces and complaints**: SNS topic and subscription in Terraform, the webhook, status updates,
