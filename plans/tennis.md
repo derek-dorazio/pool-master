@@ -143,7 +143,8 @@ The `add-sport` skill, as hockey did it.
 - **Prices:** `deriveGolfPrices` gains ranking as its third key (seed, then odds, then ranking),
   so the unseeded players are priced by ranking when the file has no odds.
 - **Templates** (`rules/ux-rules.md` §12 naming, one default per format, round values for seven
-  rounds):
+  rounds). Each has its own name and a short description saying what makes it different, so a
+  commissioner sees every option when creating a contest:
   - Tiered, "Whole field" (default): one player from each of the six tiers, all six count,
     knockout round points.
   - Tiered, "Seeds only": one player from each of the first four tiers (the 32 seeds), all four
