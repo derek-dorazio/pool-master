@@ -20,7 +20,8 @@ import { ContestScoringSettingsSchema, KNOCKOUT_ROUND_VALUES_MAX_ROUNDS } from '
  * - **Bracket:** a prediction contest on one knockout event (#721). The entry picks the winner of
  *   every game before the event starts, and a correct pick scores its round's value.
  * - **Survivor:** a prediction contest (#719). Each week the entry picks one team to win, never one
- *   it picked in an earlier week; a loss, a tie or a week left unsubmitted puts it out.
+ *   it picked in an earlier week; a loss, a tie or a week left unsubmitted puts it out. With
+ *   `reuseTeamsOnceAllUsed` (#787), an entry that has used every team starts again with all of them.
  * - **Squares:** a squares contest on one game (#711). The entry claims up to `maxSquaresPerEntry`
  *   boxes of a 10x10 grid; nothing is picked or scored by a definition.
  *
@@ -78,7 +79,9 @@ export type BracketContestRules = z.infer<typeof BracketContestRulesSchema>;
 
 export const SurvivorContestRulesSchema = z.object({
   selectionType: z.literal(SelectionType.SURVIVOR),
-}).describe('Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win.');
+  reuseTeamsOnceAllUsed: z.boolean().optional()
+    .describe('Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week\'s field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.'),
+}).describe('Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win.');
 export type SurvivorContestRules = z.infer<typeof SurvivorContestRulesSchema>;
 
 /** The most boxes one squares entry may hold: the whole grid. */

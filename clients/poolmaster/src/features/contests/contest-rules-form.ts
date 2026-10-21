@@ -33,6 +33,8 @@ export type ContestRulesValues = {
   maxSquaresPerEntry: string;
   /** A bracket's starting round: "1" for the full bracket, a later round for a second chance. */
   startsAtRound: string;
+  /** Whether a survivor entry may pick its teams again once it has used every team (#787). */
+  survivorReuseTeams: boolean;
   unlimitedEntries: boolean;
 };
 
@@ -129,9 +131,9 @@ function parseBracketRules(values: ContestRulesValues): RulesResult {
   return withEntryLimit(values, { selectionType: SelectionType.BRACKET, startsAtRound });
 }
 
-/** The survivor rules (#719): nothing to set but the entry limit. */
+/** The survivor rules (#719): whether teams can be picked again once all are used (#787), and the entry limit. */
 function parseSurvivorRules(values: ContestRulesValues): RulesResult {
-  return withEntryLimit(values, { selectionType: SelectionType.SURVIVOR });
+  return withEntryLimit(values, { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: values.survivorReuseTeams });
 }
 
 /**
@@ -198,6 +200,7 @@ export function toContestRulesValues(
     rosterSize: current.rosterSize,
     maxSquaresPerEntry: current.maxSquaresPerEntry,
     startsAtRound: current.startsAtRound,
+    survivorReuseTeams: current.survivorReuseTeams,
     unlimitedEntries: current.unlimitedEntries,
   };
   const entryLimit = {
@@ -216,7 +219,7 @@ export function toContestRulesValues(
     case SelectionType.BRACKET:
       return { ...rules, ...entryLimit, startsAtRound: String(configuration.startsAtRound) };
     case SelectionType.SURVIVOR:
-      return { ...rules, ...entryLimit };
+      return { ...rules, ...entryLimit, survivorReuseTeams: configuration.reuseTeamsOnceAllUsed ?? true };
     case SelectionType.SQUARES:
       return { ...rules, ...entryLimit, maxSquaresPerEntry: String(configuration.maxSquaresPerEntry) };
   }
@@ -235,6 +238,8 @@ export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
   maxSquaresPerEntry: '10',
   // A bracket starts as the full bracket.
   startsAtRound: '1',
+  // Teams can be picked again once all are used, in every sport (#787).
+  survivorReuseTeams: true,
   unlimitedEntries: false,
 };
 

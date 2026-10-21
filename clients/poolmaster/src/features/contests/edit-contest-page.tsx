@@ -47,6 +47,7 @@ const editContestFormSchema = z.object({
   maxEntriesPerTeam: z.string(),
   maxSquaresPerEntry: z.string(),
   pickEmAgainstTheSpread: z.boolean(),
+  survivorReuseTeams: z.boolean(),
   pickEmMode: z.nativeEnum(PickEmMode),
   picksPerEntry: z.string(),
   picksPerTier: z.string(),

@@ -1,0 +1,6337 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "SOCCER",
+    "season": 2025,
+    "sportLeagues": [
+      "Premier League"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-21",
+    "gatheredBy": "load-sport-data, matchweeks 1 to 19 of the 2025-26 Premier League as played, each week its own event whose matches form no bracket, every week's field all 20 clubs. Kickoffs (UK local time, turned to UTC), home sides, full-time and half-time scores from openfootball; across the whole season every club's wins, draws, losses and goals for and against agree with Wikipedia's final table, and ESPN's scoreboards agree on kickoff, home side and score for the 17 matches of five dates. Clubs are ranked by their final 2025-26 table position, the same in both halves' files. Odds to win are made up from the ranking. The season is split by the year each matchweek starts in, as a file holds one season year.",
+    "sources": [
+      {
+        "name": "openfootball, English Premier League 2025/26",
+        "url": "https://raw.githubusercontent.com/openfootball/football.json/master/2025-26/en.1.json"
+      },
+      {
+        "name": "2025–26 Premier League (Wikipedia), final table",
+        "url": "https://en.wikipedia.org/wiki/2025%E2%80%9326_Premier_League"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20250815",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20250815"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20251025",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20251025"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20260218",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20260218"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20260513",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20260513"
+      },
+      {
+        "name": "ESPN Premier League scoreboard, 20260524",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20260524"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "Premier League",
+      "players": [
+        {
+          "key": "pl-arsenal",
+          "name": "Arsenal",
+          "countryCode": "GB",
+          "ranking": 1
+        },
+        {
+          "key": "pl-manchester-city",
+          "name": "Manchester City",
+          "countryCode": "GB",
+          "ranking": 2
+        },
+        {
+          "key": "pl-manchester-united",
+          "name": "Manchester United",
+          "countryCode": "GB",
+          "ranking": 3
+        },
+        {
+          "key": "pl-aston-villa",
+          "name": "Aston Villa",
+          "countryCode": "GB",
+          "ranking": 4
+        },
+        {
+          "key": "pl-liverpool",
+          "name": "Liverpool",
+          "countryCode": "GB",
+          "ranking": 5
+        },
+        {
+          "key": "pl-bournemouth",
+          "name": "Bournemouth",
+          "countryCode": "GB",
+          "ranking": 6
+        },
+        {
+          "key": "pl-sunderland",
+          "name": "Sunderland",
+          "countryCode": "GB",
+          "ranking": 7
+        },
+        {
+          "key": "pl-brighton-hove-albion",
+          "name": "Brighton & Hove Albion",
+          "countryCode": "GB",
+          "ranking": 8
+        },
+        {
+          "key": "pl-brentford",
+          "name": "Brentford",
+          "countryCode": "GB",
+          "ranking": 9
+        },
+        {
+          "key": "pl-chelsea",
+          "name": "Chelsea",
+          "countryCode": "GB",
+          "ranking": 10
+        },
+        {
+          "key": "pl-fulham",
+          "name": "Fulham",
+          "countryCode": "GB",
+          "ranking": 11
+        },
+        {
+          "key": "pl-newcastle-united",
+          "name": "Newcastle United",
+          "countryCode": "GB",
+          "ranking": 12
+        },
+        {
+          "key": "pl-everton",
+          "name": "Everton",
+          "countryCode": "GB",
+          "ranking": 13
+        },
+        {
+          "key": "pl-leeds-united",
+          "name": "Leeds United",
+          "countryCode": "GB",
+          "ranking": 14
+        },
+        {
+          "key": "pl-crystal-palace",
+          "name": "Crystal Palace",
+          "countryCode": "GB",
+          "ranking": 15
+        },
+        {
+          "key": "pl-nottingham-forest",
+          "name": "Nottingham Forest",
+          "countryCode": "GB",
+          "ranking": 16
+        },
+        {
+          "key": "pl-tottenham-hotspur",
+          "name": "Tottenham Hotspur",
+          "countryCode": "GB",
+          "ranking": 17
+        },
+        {
+          "key": "pl-west-ham-united",
+          "name": "West Ham United",
+          "countryCode": "GB",
+          "ranking": 18
+        },
+        {
+          "key": "pl-burnley",
+          "name": "Burnley",
+          "countryCode": "GB",
+          "ranking": 19
+        },
+        {
+          "key": "pl-wolverhampton-wanderers",
+          "name": "Wolverhampton Wanderers",
+          "countryCode": "GB",
+          "ranking": 20
+        }
+      ],
+      "events": [
+        {
+          "key": "premier-league-2025-26-matchweek-1",
+          "name": "Premier League Matchweek 1",
+          "startDate": "2025-08-15",
+          "endDate": "2025-08-18",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-15T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-16T11:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-16T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-west-ham-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-16T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-burnley",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-16T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-wolverhampton-wanderers",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-16T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 4
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-17T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-17T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 3,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-17T15:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-18T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-2",
+          "name": "Premier League Matchweek 2",
+          "startDate": "2025-08-22",
+          "endDate": "2025-08-25",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-west-ham-united",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-22T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 5
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 3
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-23T11:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-wolverhampton-wanderers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-23T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-23T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-burnley",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-23T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-23T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-24T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-24T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-24T15:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-25T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-3",
+          "name": "Premier League Matchweek 3",
+          "startDate": "2025-08-30",
+          "endDate": "2025-08-31",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-30T11:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-burnley",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-30T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-30T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-30T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-wolverhampton-wanderers",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-30T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-30T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-31T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-west-ham-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-31T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-31T15:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-08-31T18:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-4",
+          "name": "Premier League Matchweek 4",
+          "startDate": "2025-09-13",
+          "endDate": "2025-09-14",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-13T11:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-13T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-13T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-13T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-13T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-wolverhampton-wanderers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-13T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-west-ham-united",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-13T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-13T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-burnley",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-14T15:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-5",
+          "name": "Premier League Matchweek 5",
+          "startDate": "2025-09-20",
+          "endDate": "2025-09-21",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-20T11:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-20T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-burnley",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-20T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-west-ham-united",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-20T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-wolverhampton-wanderers",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-20T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 3
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-20T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-20T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-21T15:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-6",
+          "name": "Premier League Matchweek 6",
+          "startDate": "2025-09-27",
+          "endDate": "2025-09-29",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-27T11:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-27T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-27T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-27T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-burnley",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-27T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 5,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-27T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-wolverhampton-wanderers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-27T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-28T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-28T15:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-west-ham-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-09-29T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-7",
+          "name": "Premier League Matchweek 7",
+          "startDate": "2025-10-03",
+          "endDate": "2025-10-05",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-03T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-04T11:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-west-ham-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-04T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-04T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-04T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-burnley",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-05T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-05T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-05T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-wolverhampton-wanderers",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-05T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-05T15:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-8",
+          "name": "Premier League Matchweek 8",
+          "startDate": "2025-10-18",
+          "endDate": "2025-10-20",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-18T11:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-18T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-burnley",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-18T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-18T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 3,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-18T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-wolverhampton-wanderers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-18T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-18T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-19T13:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-19T15:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-west-ham-united",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-20T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-9",
+          "name": "Premier League Matchweek 9",
+          "startDate": "2025-10-24",
+          "endDate": "2025-10-26",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-west-ham-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-24T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-25T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-25T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-25T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-25T19:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-26T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-26T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-26T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-wolverhampton-wanderers",
+              "away": "pl-burnley",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-26T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-10-26T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-10",
+          "name": "Premier League Matchweek 10",
+          "startDate": "2025-11-01",
+          "endDate": "2025-11-03",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-01T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-burnley",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-01T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-01T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-wolverhampton-wanderers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-01T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-01T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-01T17:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-01T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-west-ham-united",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-02T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-02T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-03T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-11",
+          "name": "Premier League Matchweek 11",
+          "startDate": "2025-11-08",
+          "endDate": "2025-11-09",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-08T12:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-08T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-west-ham-united",
+              "away": "pl-burnley",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-08T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-08T17:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-wolverhampton-wanderers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-08T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-09T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-09T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-09T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-09T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-09T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-12",
+          "name": "Premier League Matchweek 12",
+          "startDate": "2025-11-22",
+          "endDate": "2025-11-24",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-burnley",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-22T12:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-west-ham-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-22T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-22T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-22T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-22T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-wolverhampton-wanderers",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-22T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-22T17:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-23T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-23T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-24T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-13",
+          "name": "Premier League Matchweek 13",
+          "startDate": "2025-11-29",
+          "endDate": "2025-11-30",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-burnley",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-29T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-29T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-29T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-29T17:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 4
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 3
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-29T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-30T12:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-wolverhampton-wanderers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-30T14:05:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-30T14:05:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-west-ham-united",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-30T14:05:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-11-30T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-14",
+          "name": "Premier League Matchweek 14",
+          "startDate": "2025-12-02",
+          "endDate": "2025-12-04",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-02T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-02T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 4,
+                "awayScore": 5
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 3
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-02T20:15:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-03T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-03T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 3,
+                "awayScore": 4
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-burnley",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-03T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-wolverhampton-wanderers",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-03T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-03T20:15:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-03T20:15:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-west-ham-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-04T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-15",
+          "name": "Premier League Matchweek 15",
+          "startDate": "2025-12-06",
+          "endDate": "2025-12-08",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-06T12:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-06T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-06T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-06T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-burnley",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-06T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-06T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-06T17:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 3,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-west-ham-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-07T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-07T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-wolverhampton-wanderers",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-08T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 4
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-16",
+          "name": "Premier League Matchweek 16",
+          "startDate": "2025-12-13",
+          "endDate": "2025-12-15",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-13T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-13T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-burnley",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-13T17:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-wolverhampton-wanderers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-13T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-14T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-14T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-14T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-west-ham-united",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-14T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-14T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-15T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 4,
+                "awayScore": 4
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-17",
+          "name": "Premier League Matchweek 17",
+          "startDate": "2025-12-20",
+          "endDate": "2025-12-22",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-newcastle-united",
+              "away": "pl-chelsea",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T12:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-bournemouth",
+              "away": "pl-burnley",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-brighton-hove-albion",
+              "away": "pl-sunderland",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-manchester-city",
+              "away": "pl-west-ham-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-wolverhampton-wanderers",
+              "away": "pl-brentford",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-tottenham-hotspur",
+              "away": "pl-liverpool",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T17:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-everton",
+              "away": "pl-arsenal",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-leeds-united",
+              "away": "pl-crystal-palace",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-20T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-aston-villa",
+              "away": "pl-manchester-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-21T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-fulham",
+              "away": "pl-nottingham-forest",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-22T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-18",
+          "name": "Premier League Matchweek 18",
+          "startDate": "2025-12-26",
+          "endDate": "2025-12-28",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-26T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-27T12:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-27T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-27T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-burnley",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-27T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-wolverhampton-wanderers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-27T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-west-ham-united",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-27T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-27T17:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-28T14:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-28T16:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "premier-league-2025-26-matchweek-19",
+          "name": "Premier League Matchweek 19",
+          "startDate": "2025-12-30",
+          "endDate": "2026-01-01",
+          "venue": null,
+          "location": "England",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "pl-arsenal",
+              "ranking": 1,
+              "oddsToWin": 3.5
+            },
+            {
+              "player": "pl-manchester-city",
+              "ranking": 2,
+              "oddsToWin": 5.0
+            },
+            {
+              "player": "pl-manchester-united",
+              "ranking": 3,
+              "oddsToWin": 6.5
+            },
+            {
+              "player": "pl-aston-villa",
+              "ranking": 4,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "pl-liverpool",
+              "ranking": 5,
+              "oddsToWin": 9.5
+            },
+            {
+              "player": "pl-bournemouth",
+              "ranking": 6,
+              "oddsToWin": 11.0
+            },
+            {
+              "player": "pl-sunderland",
+              "ranking": 7,
+              "oddsToWin": 12.5
+            },
+            {
+              "player": "pl-brighton-hove-albion",
+              "ranking": 8,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "pl-brentford",
+              "ranking": 9,
+              "oddsToWin": 15.5
+            },
+            {
+              "player": "pl-chelsea",
+              "ranking": 10,
+              "oddsToWin": 17.0
+            },
+            {
+              "player": "pl-fulham",
+              "ranking": 11,
+              "oddsToWin": 18.5
+            },
+            {
+              "player": "pl-newcastle-united",
+              "ranking": 12,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "pl-everton",
+              "ranking": 13,
+              "oddsToWin": 21.5
+            },
+            {
+              "player": "pl-leeds-united",
+              "ranking": 14,
+              "oddsToWin": 23.0
+            },
+            {
+              "player": "pl-crystal-palace",
+              "ranking": 15,
+              "oddsToWin": 24.5
+            },
+            {
+              "player": "pl-nottingham-forest",
+              "ranking": 16,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "pl-tottenham-hotspur",
+              "ranking": 17,
+              "oddsToWin": 27.5
+            },
+            {
+              "player": "pl-west-ham-united",
+              "ranking": 18,
+              "oddsToWin": 29.0
+            },
+            {
+              "player": "pl-burnley",
+              "ranking": 19,
+              "oddsToWin": 30.5
+            },
+            {
+              "player": "pl-wolverhampton-wanderers",
+              "ranking": 20,
+              "oddsToWin": 32.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "pl-burnley",
+              "away": "pl-newcastle-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-30T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "pl-chelsea",
+              "away": "pl-bournemouth",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-30T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 2
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "pl-nottingham-forest",
+              "away": "pl-everton",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-30T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 0,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "pl-west-ham-united",
+              "away": "pl-brighton-hove-albion",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-30T19:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 2,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "pl-arsenal",
+              "away": "pl-aston-villa",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-30T20:15:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "pl-manchester-united",
+              "away": "pl-wolverhampton-wanderers",
+              "isNeutralSite": false,
+              "scheduledAt": "2025-12-30T20:15:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "pl-crystal-palace",
+              "away": "pl-fulham",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-01-01T17:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 1,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "pl-liverpool",
+              "away": "pl-leeds-united",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-01-01T17:30:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 1,
+              "home": "pl-brentford",
+              "away": "pl-tottenham-hotspur",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-01-01T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 1,
+              "home": "pl-sunderland",
+              "away": "pl-manchester-city",
+              "isNeutralSite": false,
+              "scheduledAt": "2026-01-01T20:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": null,
+                "homeScore": 0,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

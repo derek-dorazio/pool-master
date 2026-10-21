@@ -2973,6 +2973,10 @@ export type ContestConfigurationRequest = {
 } | {
     selectionType: 'SURVIVOR';
     /**
+     * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+     */
+    reuseTeamsOnceAllUsed?: boolean;
+    /**
      * Maximum entries a Team may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
@@ -3309,6 +3313,10 @@ export type ContestManagementDetailDto = {
         maxEntriesPerSquad?: number | null;
     } | {
         selectionType: 'SURVIVOR';
+        /**
+         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+         */
+        reuseTeamsOnceAllUsed?: boolean;
         /**
          * Contest-configuration identifier.
          */
@@ -3760,6 +3768,10 @@ export type ContestConfigTemplateDto = {
     } | {
         selectionType: 'SURVIVOR';
         /**
+         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+         */
+        reuseTeamsOnceAllUsed?: boolean;
+        /**
          * Maximum entries a Team may create. Null means unlimited.
          */
         maxEntriesPerSquad?: number | null;
@@ -4014,6 +4026,10 @@ export type ContestManagementResponse = {
             maxEntriesPerSquad?: number | null;
         } | {
             selectionType: 'SURVIVOR';
+            /**
+             * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+             */
+            reuseTeamsOnceAllUsed?: boolean;
             /**
              * Contest-configuration identifier.
              */
@@ -4489,6 +4505,10 @@ export type ContestConfigTemplateListResponse = {
         } | {
             selectionType: 'SURVIVOR';
             /**
+             * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+             */
+            reuseTeamsOnceAllUsed?: boolean;
+            /**
              * Maximum entries a Team may create. Null means unlimited.
              */
             maxEntriesPerSquad?: number | null;
@@ -4930,6 +4950,10 @@ export type UpdateContestConfigTemplateRequest = {
         };
     } | {
         selectionType: 'SURVIVOR';
+        /**
+         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+         */
+        reuseTeamsOnceAllUsed?: boolean;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -5407,6 +5431,10 @@ export type ContestConfigTemplateResponse = {
             };
         } | {
             selectionType: 'SURVIVOR';
+            /**
+             * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+             */
+            reuseTeamsOnceAllUsed?: boolean;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -9226,6 +9254,10 @@ export type CreateContestRequest = {
         };
     } | {
         selectionType: 'SURVIVOR';
+        /**
+         * Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes.
+         */
+        reuseTeamsOnceAllUsed?: boolean;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */

@@ -325,6 +325,25 @@ tie, an MLS series and the NCAA games. The international tournaments are seeded 
 ranking and every match is at a neutral site; the third-place match is left out. Kickoffs,
 scores and shoot-outs are real, and the odds are made up. Each loads as the hockey seeds do.
 
+## Seeded soccer weeks
+
+Three test seeds hold soccer weeks as played (#787), for trying pick'em with draw picks and
+Last Man Standing. Each week is its own event of one round whose games link nowhere, as an NFL
+week is, and every week's field holds all the league's teams:
+
+- `soccer-2025-premier-league-weeks-test.json` and `soccer-2026-premier-league-weeks-test.json`:
+  the 2025-26 Premier League's matchweeks 1 to 19 and 20 to 38, `Premier League Matchweek 1` to
+  `Premier League Matchweek 38`, split by the year each matchweek starts in, as a file holds one
+  season year. Both rank the 20 clubs by the final table. Two matchweek 31 matches were
+  rescheduled weeks later, so they are left out of their week, as a postponed game is cancelled
+  from its week.
+- `soccer-2023-fifa-womens-world-cup-group-matchdays-test.json`: the 2023 Women's World Cup's
+  three group matchdays, `FIFA Women's World Cup Matchday 1` to `3`, 16 neutral-site matches
+  each. It loads into the same sport league as the knockout seed and keeps its FIFA rankings.
+
+A drawn match's result has no `winner` (null), which only a week's game may have. Every match
+carries its half-time score. Kickoffs and scores are real, and the odds are made up.
+
 ## Seeded 2026 races
 
 To try racing contests without setting up a race, load a test seed of the 2026 season as run.

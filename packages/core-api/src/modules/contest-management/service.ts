@@ -862,7 +862,7 @@ export class ContestManagementService {
         await this.assertEventGamesDecided(each.id, { openingRoundOnly: true });
       }
       return {
-        configJson: { selectionType: rules.selectionType },
+        configJson: { selectionType: rules.selectionType, reuseTeamsOnceAllUsed: rules.reuseTeamsOnceAllUsed ?? true },
         scoring: this.resolvePickEmScoring(sportEvent, scoringInput),
       };
     }

@@ -29,7 +29,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { ContestOperationError, ContestService } from '../../../packages/core-api/src/modules/contests/service';
-import { survivorPickOutcome, survivorRun, type SurvivorWeek } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/survivor';
+import { survivorPickOutcome, survivorRun, survivorTeamsUsedInCycle, type SurvivorWeek } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/survivor';
 import { PredictionIssueKind } from '../../../packages/core-api/src/modules/selections/prediction-engines/prediction-engine';
 import { survivorPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/survivor';
 import { PredictionService } from '../../../packages/core-api/src/modules/selections/prediction-service';
@@ -48,7 +48,7 @@ const later = (when: Date, hours: number) => new Date(when.getTime() + hours * H
 
 type TeamName = 'Bills' | 'Jets' | 'Chiefs' | 'Raiders';
 
-function setup() {
+function setup(rules: { reuseTeamsOnceAllUsed?: boolean } = {}) {
   const world = new InMemoryContestWorld();
   const games = new InMemoryGamePicks(world);
   const league = world.addLeague();
@@ -84,7 +84,7 @@ function setup() {
   });
   world.addConfiguration(contest.id, {
     selectionType: SelectionType.SURVIVOR,
-    configJson: { selectionType: SelectionType.SURVIVOR },
+    configJson: { selectionType: SelectionType.SURVIVOR, ...rules },
   });
 
   /** The field row the team plays the game from. */
@@ -263,6 +263,28 @@ describe('survivorRun', () => {
   });
 });
 
+describe('survivorTeamsUsedInCycle', () => {
+  it('counts every other week\'s pick when each team is used once all season', () => {
+    expect([...survivorTeamsUsedInCycle(['a', 'b', 'c', null, 'd'], 3, null)]).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('starts a new cycle once the entry has used every team, so the first cycle\'s teams can be picked again', () => {
+    // Three teams: weeks 1-3 use all of them, so week 4 starts the second cycle.
+    expect([...survivorTeamsUsedInCycle(['a', 'b', 'c', null], 3, 3)]).toEqual([]);
+    expect([...survivorTeamsUsedInCycle(['a', 'b', 'c', 'a', null], 4, 3)]).toEqual(['a']);
+  });
+
+  it('keeps the week in its own cycle, counting a pick made ahead in a later week of that cycle', () => {
+    expect([...survivorTeamsUsedInCycle(['a', null, 'b'], 1, 3)]).toEqual(['a', 'b']);
+    // Week 2 closes the first cycle, so week 4's pick ahead belongs to the second one.
+    expect([...survivorTeamsUsedInCycle(['a', 'b', null, 'c'], 1, 2)]).toEqual(['a']);
+  });
+
+  it('skips weeks with no counted pick, so a cycle closes only on teams actually used', () => {
+    expect([...survivorTeamsUsedInCycle(['a', null, 'b', null], 3, 3)]).toEqual(['a', 'b']);
+  });
+});
+
 describe('survivorPredictionEngine', () => {
   const games = [game('a'), game('b')];
 
@@ -310,8 +332,8 @@ describe('survivorPredictionEngine', () => {
 
 describe('PredictionService — a survivor week', () => {
   /** Weeks 1 and 2 played; week 3 two hours from its first kickoff. */
-  function beforeWeek3() {
-    const context = setup();
+  function beforeWeek3(rules: { reuseTeamsOnceAllUsed?: boolean } = {}) {
+    const context = setup(rules);
     context.playWeek1();
     context.playWeek2();
     context.setEventStatus(context.week1.id, SportEventStatus.COMPLETED);
@@ -336,6 +358,35 @@ describe('PredictionService — a survivor week', () => {
 
     await expectRefused(context.predictions.saveGamePicks({ ...context.input('Alice'), picks: [context.pickOf(g5, 'Bills')] }), 'PREDICTION_TEAM_ALREADY_USED', 409);
     expect(context.storedPicks('entry-alice')).not.toContain(g5.id);
+  });
+
+  /** Week 3 down to its Bills-Raiders game: a league of two teams, so Alice's two picks are a whole cycle. */
+  function twoTeamWeek3(context: ReturnType<typeof beforeWeek3>) {
+    const { g6 } = context.gamesByNumber;
+    context.games.matches.delete(g6.id);
+    for (const row of [...context.games.field.values()]) {
+      if (row.sportEventId === context.week3.id && (row.participantId === context.team.Chiefs || row.participantId === context.team.Jets)) {
+        context.games.field.delete(row.id);
+      }
+    }
+  }
+
+  it('lets an entry that has used every team pick them again, each entry in its own cycle', async () => {
+    const context = beforeWeek3();
+    twoTeamWeek3(context);
+    const { g5 } = context.gamesByNumber;
+    const view = await context.predictions.getGamePicks(context.input('Alice'));
+    expect(view.survivor).toEqual({ eliminatedInWeek: null, usedParticipantIds: [] });
+
+    await context.predictions.saveGamePicks({ ...context.input('Alice'), picks: [context.pickOf(g5, 'Bills')] });
+    expect(context.storedPicks('entry-alice')).toContain(g5.id);
+  });
+
+  it('refuses a team already used, even once every team is used, when teams can never be picked again', async () => {
+    const context = beforeWeek3({ reuseTeamsOnceAllUsed: false });
+    twoTeamWeek3(context);
+    const { g5 } = context.gamesByNumber;
+    await expectRefused(context.predictions.saveGamePicks({ ...context.input('Alice'), picks: [context.pickOf(g5, 'Bills')] }), 'PREDICTION_TEAM_ALREADY_USED', 409);
   });
 
   it('replaces the week\'s pick when another team is picked, and submits the week with that one pick', async () => {

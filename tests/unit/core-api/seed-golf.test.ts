@@ -666,6 +666,81 @@ describe('american-football-2025-nfl-weeks-test.json', () => {
   });
 });
 
+describe('soccer-2025 and soccer-2026-premier-league-weeks-test.json', () => {
+  const autumn = readDataFile('soccer-2025-premier-league-weeks-test.json', true);
+  const spring = readDataFile('soccer-2026-premier-league-weeks-test.json', true);
+  const weeks = [...autumn.sportLeagues[0].events, ...spring.sportLeagues[0].events];
+
+  it('is a test seed of the 2025-26 Premier League\'s 38 matchweeks, split by the year each starts in, each one round of games that link nowhere, its field all 20 clubs', () => {
+    expect([autumn.scope.sport, autumn.scope.season, autumn.scope.sportLeagues]).toEqual([Sport.SOCCER, 2025, ['Premier League']]);
+    expect([spring.scope.sport, spring.scope.season, spring.scope.sportLeagues]).toEqual([Sport.SOCCER, 2026, ['Premier League']]);
+    expect(weeks.map((week) => week.name)).toEqual(Array.from({ length: 38 }, (_, index) => `Premier League Matchweek ${index + 1}`));
+    expect(autumn.sportLeagues[0].events).toHaveLength(19);
+    for (const week of weeks) {
+      expect(week.rounds).toBe(1);
+      expect(week.field).toHaveLength(20);
+      expect((week.matches ?? []).every((game) => game.roundNumber === 1 && game.advancesTo === null && !game.isNeutralSite && game.periodScores?.length === 1)).toBe(true);
+    }
+  });
+
+  it('ranks its 20 clubs 1 to 20 by the final table, the same in both files', () => {
+    expect(autumn.sportLeagues[0].players.map((player) => player.ranking)).toEqual(Array.from({ length: 20 }, (_, index) => index + 1));
+    expect(spring.sportLeagues[0].players).toEqual(autumn.sportLeagues[0].players);
+  });
+
+  it('leaves the two rescheduled matchweek 31 matches out of their week, so it has 8 games and the other weeks 10', () => {
+    const counts = weeks.map((week) => week.matches?.length);
+    expect(counts[30]).toBe(8);
+    expect(counts.filter((count) => count === 10)).toHaveLength(37);
+    const week31 = (weeks[30].matches ?? []).map((game) => [game.home, game.away]);
+    expect(week31).not.toContainEqual(['pl-wolverhampton-wanderers', 'pl-arsenal']);
+    expect(week31).not.toContainEqual(['pl-manchester-city', 'pl-crystal-palace']);
+  });
+
+  it('enters a level match with no winner, opens with Liverpool\'s 4-2 win over Bournemouth and ends with Arsenal\'s 2-1 win at Crystal Palace', () => {
+    const games = weeks.flatMap((week) => week.matches ?? []);
+    const draws = games.filter((game) => game.result?.winner === null);
+    expect(draws.length).toBeGreaterThan(0);
+    expect(draws.every((game) => game.result?.homeScore === game.result?.awayScore)).toBe(true);
+    expect(weeks[0].matches?.[0]).toMatchObject({
+      home: 'pl-liverpool', away: 'pl-bournemouth', scheduledAt: '2025-08-15T19:00:00Z',
+      result: { winner: 'HOME', homeScore: 4, awayScore: 2 }, periodScores: [{ periodNumber: 1, homeScore: 1, awayScore: 0 }],
+    });
+    expect(weeks[37].matches).toContainEqual(expect.objectContaining({
+      home: 'pl-crystal-palace', away: 'pl-arsenal', scheduledAt: '2026-05-24T15:00:00Z', result: { winner: 'AWAY', homeScore: 1, awayScore: 2 },
+    }));
+  });
+});
+
+describe('soccer-2023-fifa-womens-world-cup-group-matchdays-test.json', () => {
+  const file = readDataFile('soccer-2023-fifa-womens-world-cup-group-matchdays-test.json', true);
+  const [worldCup] = file.sportLeagues;
+
+  it('is a test seed of the 2023 Women\'s World Cup group stage: three matchdays of 16 neutral-site games, each team playing once a matchday', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2023, ["FIFA Women's World Cup"]]);
+    expect(eventRows(file)).toEqual([
+      ["FIFA Women's World Cup Matchday 1", '2023-07-20', '2023-07-25', 1, null],
+      ["FIFA Women's World Cup Matchday 2", '2023-07-25', '2023-07-30', 1, null],
+      ["FIFA Women's World Cup Matchday 3", '2023-07-30', '2023-08-03', 1, null],
+    ]);
+    for (const matchday of worldCup.events) {
+      const games = matchday.matches ?? [];
+      expect(games).toHaveLength(16);
+      expect(games.every((game) => game.isNeutralSite && game.advancesTo === null && game.periodScores?.length === 1)).toBe(true);
+      const sides = games.flatMap((game) => [game.home, game.away]);
+      expect(new Set(sides).size).toBe(32);
+      expect(new Set(matchday.field.map((entry) => entry.player))).toEqual(new Set(sides));
+    }
+    expect(worldCup.events[0].matches?.[0]).toMatchObject({ home: 'wwc-new-zealand', away: 'wwc-norway', scheduledAt: '2023-07-20T07:00:00Z', result: { winner: 'HOME', homeScore: 1, awayScore: 0 } });
+  });
+
+  it('ranks its teams as the knockout test seed does, so loading either keeps the other\'s rankings', () => {
+    const knockout = readDataFile('soccer-2023-fifa-womens-world-cup-test.json', true).sportLeagues[0].players;
+    const rankingOf = new Map(worldCup.players.map((player) => [player.key, player.ranking]));
+    expect(knockout.map((player) => [player.key, rankingOf.get(player.key)])).toEqual(knockout.map((player) => [player.key, player.ranking]));
+  });
+});
+
 describe('test seed match times', () => {
   it('move by the same whole days as the event dates, and stay put when the offset is zero', () => {
     const file = readDataFile('american-football-2026-nfl-playoffs-test.json', true);

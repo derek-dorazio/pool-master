@@ -95,9 +95,16 @@ export function describePickEmRules({ mode, againstTheSpread }: { mode: PickEmMo
     : `${pick}. A game that lands exactly on the spread scores nothing.`;
 }
 
-/** A survivor contest's rules (#719): one winner a week, each team once, out after a loss. */
-export function describeSurvivorRules() {
-  return 'Pick one team to win each week, and never the same team twice. A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.';
+/**
+ * A survivor contest's rules (#719): one winner a week, each team once, out after a loss. With
+ * `reuseTeamsOnceAllUsed` true each team is usable again once all are used (#787); null leaves
+ * team reuse out, for a screen that doesn't read the contest's rules.
+ */
+export function describeSurvivorRules(reuseTeamsOnceAllUsed: boolean | null) {
+  const once = reuseTeamsOnceAllUsed === null
+    ? ''
+    : reuseTeamsOnceAllUsed ? ', and never the same team twice until every team has been picked' : ', and never the same team twice';
+  return `Pick one team to win each week${once}. A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.`;
 }
 
 /** A squares contest's rules (#711) as a sentence. */
@@ -158,7 +165,7 @@ export function formatContestRules(
     case SelectionType.BRACKET:
       return describeBracketRules(isSecondChanceBracket(configuration.startsAtRound) ? roundName(configuration.startsAtRound) : null);
     case SelectionType.SURVIVOR:
-      return describeSurvivorRules();
+      return describeSurvivorRules(configuration.reuseTeamsOnceAllUsed ?? true);
     case SelectionType.SQUARES:
       return describeSquaresRules(configuration.maxSquaresPerEntry);
   }

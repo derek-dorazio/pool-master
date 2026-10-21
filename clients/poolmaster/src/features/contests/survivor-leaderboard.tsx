@@ -227,7 +227,7 @@ export function SurvivorLeaderboard({ contest, leagueCode: hintedLeagueCode }: {
         ) : null}
         summary={(
           <p className="mt-2 text-sm text-muted-foreground" data-testid="survivor-leaderboard-rules">
-            {describeSurvivorRules()}
+            {describeSurvivorRules(null)}
           </p>
         )}
         title={contest.name}
