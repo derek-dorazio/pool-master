@@ -163,8 +163,10 @@ the league has played that sport. Letting commissioners opt in to the sports and
 they want is a follow-up feature, #851. A commissioner who wants none can turn off the
 Commissioner updates category meanwhile.
 
-**Q3.4 C1 and C2 timing.** *Recommendation:* C1 at 10 days, C2 at the later of release and 7
-days before start, as above. Football weeks (each NFL week is its own event) would fire every
+**Q3.4 C1 and C2 timing.** **Decided (Derek 2026-10-21):** start with the basic case, one
+email per event: C1 at 10 days, C2 at the later of release and 7 days before start, as above. A
+weekly "coming up next week" digest, better for leagues that play many sports, is an option a
+commissioner will choose in #851 alongside which sports they hear about. Football weeks (each NFL week is its own event) would fire every
 week: for sport leagues whose events are weeks, send C1 once before the season's first week and
 C2 once when the season's weeks are released, not per week.
 
@@ -297,11 +299,12 @@ This catalog leans on the SES design for these, so they are listed for it, not d
 
 ## 5. Slices
 
-Each slice is one PR, opened in order, after the SES design's first slice lands.
+Each slice is one PR, opened in order. They build on the SES design (#844, `plans/email-delivery-ses.md`): its outbox (the sent record and idempotency key) before slice 2, and its per-category preferences and unsubscribe before real leagues get these emails.
 
-1. **Foundation.** Sent-email record and its idempotency key; a "notifications due" step in the
-   lifecycle scheduler sweep; per-category email preferences on the user with an Email settings
-   section on the profile page and a one-click unsubscribe route. No new email yet.
+1. **Foundation.** A "notifications due" step in the lifecycle scheduler sweep, the
+   notification categories above registered with #844's category registry, and the reminder
+   offsets and standings buffer in `EMAIL_CONFIG`. The sent record, preferences and unsubscribe
+   come from #844, not this plan. No new email yet.
 2. **Contest lifecycle.** D1 contest open, D2 reminders, E1 upgraded (all members, "good luck",
    event and rules summary instead of the entry list, leaderboard link), D3 to every owner.
 3. **Live standings.** E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,
