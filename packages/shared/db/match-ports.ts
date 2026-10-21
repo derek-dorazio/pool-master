@@ -36,6 +36,8 @@ export interface MatchResultWrite {
   winnerSide: MatchSide | null;
   homeScore: number | null;
   awayScore: number | null;
+  homeShootoutScore: number | null;
+  awayShootoutScore: number | null;
 }
 
 /** One side of a later match, set to the team that advances into it, or emptied. */

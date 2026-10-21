@@ -47,6 +47,8 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
     fieldById: new Map(fieldQuery.data.map((entry) => [entry.id, entry])),
     spreads: bracket.length > 0 && formsNoBracket(bracket),
     periods,
+    // A week of games forms no bracket, so none of its games goes to a shoot-out (#791).
+    shootout: bracket.length > 0 && !formsNoBracket(bracket) ? definition.shootout : null,
   };
   const roundCount = Math.max(event.rounds ?? 0, ...bracket.map((match) => match.roundNumber));
   const roundNumbers = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);

@@ -28,6 +28,8 @@ export const hockeySportDefinition: SportDefinition = {
   defaultTierLayout: { tierCount: 4, tierSize: 4 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
+  // Playoff games play overtime to a goal, so none ends in a shoot-out (#791).
+  shootout: null,
   matchPeriodLayout: MatchPeriodLayout.THREE_PERIODS,
   vocabulary: {
     participant: { one: 'team', many: 'teams' },

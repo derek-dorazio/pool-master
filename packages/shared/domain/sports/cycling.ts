@@ -23,6 +23,7 @@ export const cyclingSportDefinition: SportDefinition = {
   defaultTierLayout: { tierCount: 5, tierSize: 10 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
+  shootout: null,
   vocabulary: {
     participant: { one: 'rider', many: 'riders' },
     event: { one: 'race', many: 'races' },

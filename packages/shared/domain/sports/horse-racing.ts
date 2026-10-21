@@ -20,6 +20,7 @@ export const horseRacingSportDefinition: SportDefinition = {
   defaultTierLayout: { tierCount: 3, tierSize: 3 },
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
+  shootout: null,
   vocabulary: {
     participant: { one: 'horse', many: 'horses' },
     event: { one: 'race', many: 'races' },
