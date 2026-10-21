@@ -21,6 +21,7 @@ import { localDateTimeInputToIso } from './sport-admin-utils';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportEventPath, capitalize } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
+import { useSportLeagueNoun } from './use-sport-catalog';
 import { useSportEventQuery } from './use-sport-event';
 
 const editFormSchema = z.object({
@@ -78,6 +79,7 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
   const navigate = useNavigate();
   const homePath = buildSportEventPath(tournament.sport, tournament.id);
   const { vocabulary } = getSportDefinition(tournament.sport);
+  const sportLeagueNoun = useSportLeagueNoun(tournament.sport, tournament.sportLeagueId);
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament.sport);
 
   const form = useForm<EditFormValues>({
@@ -114,7 +116,7 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
   return (
     <FormPage
       cancelTo={homePath}
-      description={`The ${vocabulary.sportLeague.one} and event year are fixed at creation and cannot be changed.`}
+      description={`The ${sportLeagueNoun.one} and event year are fixed at creation and cannot be changed.`}
       errorMessage={updateMutation.isError
         ? extractErrorMessage(updateMutation.error, { fallback: 'We could not save these details.' })
         : undefined}

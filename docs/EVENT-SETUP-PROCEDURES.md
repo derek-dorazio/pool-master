@@ -227,11 +227,14 @@ on the Bracket tab:
   pairing ("Texas / Xavier").
 - **After release**, choose the team that won each game; the winner moves to its next game and
   the standings update. A wrong winner can be switched, or the result cleared, until the next
-  game has a result. Each play-in place takes its winner once, from the sport's active teams
-  not already in the tournament.
+  game has a result. Each play-in place takes its winner once, from the active teams on the
+  tournament's league roster not already in it (#830; every active team of the sport while the
+  league has no roster).
 - **Withdrawals**, in any sport (#704): a team or player who withdraws before their first game,
-  before or after release, is replaced under *Withdrawals* by one of the sport's active
-  participants not already in the event (a tennis lucky loser). The replacement takes the place
+  before or after release, is replaced under *Withdrawals* by one of the active participants on
+  the event's league roster not already in the event (a tennis lucky loser). Men's and women's
+  are separate leagues, so a WTA player is never offered for an ATP draw (#830); a league with no
+  roster yet offers every active participant of the sport. The replacement takes the place
   unseeded, last in the event's last tier at its lowest price; the withdrawn row stays on the
   field as withdrawn, and every pick of it scores as a first-round loss. Once their game has
   started, or for a team placed straight into a later round (a bye), a withdrawal is a walkover,

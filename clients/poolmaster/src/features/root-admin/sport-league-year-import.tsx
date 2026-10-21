@@ -1,3 +1,4 @@
+import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { importEventYearFromProvider } from '@/lib/api';
 import { Button, ConfirmationModal } from '@/features/shared/ui';
@@ -20,7 +21,8 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<ImportSportEventYearFromProviderResponse | null>(null);
   const { sport, definition } = useManagedSport();
-  const { event, sportLeague: sportLeagueNoun } = definition.vocabulary;
+  const { event } = definition.vocabulary;
+  const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
   const { providerId, isSuccess: providersLoaded } = useSportProviderId(true, sport);
 
   const importMutation = useInvalidatingMutation({

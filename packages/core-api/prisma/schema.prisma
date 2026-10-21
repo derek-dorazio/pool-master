@@ -326,6 +326,12 @@ enum PrismaMatchPeriodLayout {
   THREE_PERIODS
 }
 
+/// What screens call a sport league when its sport's noun does not fit (#834). Mirrors the domain
+/// `SportLeagueNoun`.
+enum PrismaSportLeagueNoun {
+  LEAGUE
+}
+
 /// How one field member's race ended (#622). Mirrors the domain `RaceResultStatus`. Only a
 /// FINISHED runner has a finishing place; every other status scores the contest's
 /// "did not finish" points.
@@ -664,6 +670,10 @@ model SportLeague {
   /// is one match with no half-time score). Null: every round. Reference data, set by the
   /// migration that seeds the league.
   squaresFromRound   Int?                     @map("squares_from_round")
+  /// What screens call the sport league, when not what its sport calls one (#834: the NCAA's
+  /// tennis championships are leagues, not tours). Null: the sport's noun. Reference data, set by
+  /// the migration that seeds the league.
+  noun               PrismaSportLeagueNoun?   @map("noun")
   createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 

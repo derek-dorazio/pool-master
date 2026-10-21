@@ -12,7 +12,7 @@ import { SportLeagueRosterGridCard } from './sport-league-roster-grid-card';
 import { SportLeagueRosterUploadCard } from './sport-league-roster-upload-card';
 import { SportLeagueCalendarCard } from './sport-league-calendar-card';
 import { capitalize } from './manage-navigation';
-import { useSportLeaguesQuery } from './use-sport-catalog';
+import { useSportLeagueNoun, useSportLeaguesQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 
 /**
@@ -23,8 +23,8 @@ import { useManagedSport } from './use-managed-sport';
  */
 export function RootAdminSportLeagueHomePage() {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
-  const { sport, definition } = useManagedSport();
-  const { sportLeague: sportLeagueNoun } = definition.vocabulary;
+  const { sport } = useManagedSport();
+  const sportLeagueNoun = useSportLeagueNoun(sport, leagueId);
 
   useManagePageOwnsHeading();
 

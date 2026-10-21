@@ -27,6 +27,7 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     tierCount: null,
     matchPeriodLayout: null,
     squaresFromRound: null,
+    noun: null,
     currentEventYear: null,
     isActive: true,
     createdAt: new Date('2026-01-01'),

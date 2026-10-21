@@ -1,7 +1,7 @@
-import { eventRoundLabel, findSportRow, getSportDefinition, matchPeriodsOf, type Sport, type SportMatchPeriods } from '@poolmaster/shared/domain';
+import { eventRoundLabel, findSportRow, getSportDefinition, matchPeriodsOf, sportLeagueNounOf, type Sport, type SportMatchPeriods, type SportNoun } from '@poolmaster/shared/domain';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getParticipant, listEvents, listParticipants, listSportLeagues, listSports } from '@/lib/api';
-import type { ParticipantDto, SportEventDto, SportLeagueDto } from '@/lib/api';
+import { getParticipant, listEvents, listParticipantLeagueAffiliations, listParticipants, listSportLeagues, listSports } from '@/lib/api';
+import type { ParticipantDto, ParticipantLeagueAffiliationDto, SportEventDto, SportLeagueDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
@@ -47,6 +47,17 @@ export function useEventMatchPeriods(event: Pick<SportEventDto, 'sport' | 'sport
   if (!leaguesQuery.data) return undefined;
   const league = leaguesQuery.data.find((candidate) => candidate.id === event.sportLeagueId);
   return matchPeriodsOf(event.sport, league?.matchPeriodLayout ?? null);
+}
+
+/**
+ * What screens call one sport league (#834): its own noun where it has one (the NCAA's tennis
+ * championships are leagues), else its sport's (the ATP is a tour). The sport's while the sport
+ * leagues load, or when no sport league is in view yet.
+ */
+export function useSportLeagueNoun(sport: Sport, sportLeagueId: string | undefined): SportNoun {
+  const leaguesQuery = useSportLeaguesQuery(sport);
+  const league = leaguesQuery.data?.find((candidate) => candidate.id === sportLeagueId);
+  return sportLeagueNounOf(sport, league?.noun ?? null);
 }
 
 /** One golf tour's tournaments, every event year, earliest start first. */
@@ -118,6 +129,51 @@ export function useParticipantsQuery(params: {
     enabled: params.enabled ?? true,
     retry: false,
   });
+}
+
+/** One sport league's roster: its affiliations, best rank first. */
+export function useLeagueRosterQuery(sportLeagueId: string, options: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.manageSport.leagueRoster(sportLeagueId),
+    queryFn: async (): Promise<ParticipantLeagueAffiliationDto[]> => {
+      const response = await listParticipantLeagueAffiliations({ path: { sportLeagueId } });
+      if (!response.data?.affiliations) {
+        throwApiError(response.error, 'The roster response is missing data.');
+      }
+      return response.data.affiliations;
+    },
+    enabled: options.enabled ?? true,
+    retry: false,
+  });
+}
+
+/**
+ * Who may take a place on an event's field after the draw, as a withdrawn player's replacement or
+ * a play-in place's winner (#830): the active participants on its sport league's roster once the
+ * league has one, so a WTA player is never offered for an ATP draw; otherwise every active
+ * participant of the sport. The server refuses the same.
+ */
+export function useEventLeagueCandidatesQuery(event: Pick<SportEventDto, 'sport' | 'sportLeagueId'>): {
+  data: ParticipantDto[] | undefined;
+  isError: boolean;
+  error: Error | null;
+} {
+  const sportQuery = useParticipantsQuery({
+    sport: event.sport,
+    status: 'ACTIVE',
+    queryKey: QueryKeys.rootAdmin.manageSport.participantList(event.sport, 'ACTIVE'),
+  });
+  const rosterQuery = useLeagueRosterQuery(event.sportLeagueId);
+  const error = sportQuery.error ?? rosterQuery.error;
+  if (!sportQuery.data || !rosterQuery.data) {
+    return { data: undefined, isError: error !== null, error };
+  }
+  const roster = new Set(rosterQuery.data.map((affiliation) => affiliation.participantId));
+  return {
+    data: roster.size === 0 ? sportQuery.data : sportQuery.data.filter((participant) => roster.has(participant.id)),
+    isError: false,
+    error: null,
+  };
 }
 
 /** A sport's row, whose id a new participant of the sport is created with. */

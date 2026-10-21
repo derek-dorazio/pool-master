@@ -65,6 +65,16 @@ export function feederOf(match: SportEventMatchDto, side: MatchSide, bracket: re
 }
 
 /**
+ * The refusal of a replacement or play-in winner off the event's league roster (#830), in the
+ * league's own word: a tour for the ATP, a league for the NCAA.
+ */
+export function offLeagueRosterMessages(vocabulary: SportVocabulary, sportLeague: SportNoun): ErrorCodeMessages {
+  return {
+    PARTICIPANT_NOT_IN_SPORT_LEAGUE: `That ${vocabulary.participant.one} isn't on this ${sportLeague.one}'s roster, so they can't join this ${vocabulary.event.one}. Pick another.`,
+  };
+}
+
+/**
  * The bracket's refusals in product copy, worded for the sport (#700). `match` is the match the
  * admin acted on, so a locked result can name the match to clear first.
  */

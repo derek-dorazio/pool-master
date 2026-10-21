@@ -3,6 +3,7 @@ import {
   autoAssignEventTiers,
   createEvent,
   createParticipant,
+  createParticipantLeagueAffiliation,
   getEventBracket,
   listEventParticipants,
   listEvents,
@@ -598,6 +599,8 @@ describe('Loading a real basketball bracket through the admin API', () => {
       client: admin.client,
       body: { sportId: expectDefined(findSportRow(sports, Sport.BASKETBALL)).id, participantType: 'TEAM', name: teamName('Texas'), externalId: key('Texas') },
     })).data).participant;
+    // A play-in winner is on the league's roster, as every team the file loads is (#830).
+    expect((await createParticipantLeagueAffiliation({ client: admin.client, path: { sportLeagueId: event.sportLeagueId }, body: { participantId: texas.id } })).error).toBeUndefined();
     const place = expectDefined((await fieldOf(eventId)).get(teamName(PAIRING)));
     expect((await setEventPlayInWinner({ client: admin.client, path: { eventId, sportEventParticipantId: place.id }, body: { participantId: texas.id } })).error).toBeUndefined();
 

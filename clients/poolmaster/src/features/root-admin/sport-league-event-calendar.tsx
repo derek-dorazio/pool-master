@@ -1,3 +1,4 @@
+import type { SportNoun } from '@poolmaster/shared/domain';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import { DataGrid, StatusBadge, formatDateTimeDisplay } from '@/features/shared/ui';
@@ -64,13 +65,16 @@ const buildCalendarColumns = (eventLabel: string) => [
  */
 export function SportLeagueEventCalendar({
   isError,
+  sportLeague,
   tournaments,
 }: {
   isError: boolean;
+  /** What the league is called (#834), for the copy. */
+  sportLeague: SportNoun;
   tournaments: SportEventDto[];
 }) {
   const { sport, definition } = useManagedSport();
-  const { event, sportLeague } = definition.vocabulary;
+  const { event } = definition.vocabulary;
   const columns = useMemo(() => buildCalendarColumns(capitalize(event.one)), [event.one]);
   return (
     <DataGrid

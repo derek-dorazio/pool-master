@@ -7,8 +7,8 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, describeEntry, matchNoun, replaceableEntries } from './bracket-copy';
-import { useParticipantsQuery } from './use-sport-catalog';
+import { bracketErrorMessages, describeEntry, matchNoun, offLeagueRosterMessages, replaceableEntries } from './bracket-copy';
+import { useEventLeagueCandidatesQuery, useSportLeagueNoun } from './use-sport-catalog';
 
 const logger = getLogger().child({ feature: 'root-admin-withdrawals' });
 
@@ -17,9 +17,10 @@ const NONE = '';
 
 /**
  * Withdrawals on the bracket tab (#704 slice 3), in any sport: a participant who pulls out before
- * their first match is replaced in their bracket place by one of the sport's active participants
- * not in the event, such as a tennis lucky loser. The withdrawn participant stays on the field,
- * and every pick of them scores as a loss. Once their match starts, a withdrawal is a walkover,
+ * their first match is replaced in their bracket place by one of the active participants on the
+ * event's league roster (or the sport's, for a league with no roster) not in the event, such as a
+ * tennis lucky loser. The withdrawn participant stays on the field, and every pick of them scores
+ * as a loss. Once their match starts, a withdrawal is a walkover,
  * entered as its result. Hidden when nobody can be replaced.
  */
 export function WithdrawalsCard({
@@ -38,11 +39,8 @@ export function WithdrawalsCard({
   const participant = vocabulary.participant;
   const noun = matchNoun(vocabulary);
   const replaceable = replaceableEntries(bracket, new Map(field.map((entry) => [entry.id, entry])));
-  const candidatesQuery = useParticipantsQuery({
-    sport: event.sport,
-    status: 'ACTIVE',
-    queryKey: QueryKeys.rootAdmin.manageSport.participantList(event.sport, 'ACTIVE'),
-  });
+  const candidatesQuery = useEventLeagueCandidatesQuery(event);
+  const sportLeague = useSportLeagueNoun(event.sport, event.sportLeagueId);
   const inEvent = new Set(field.map((entry) => entry.participantId));
   const candidates = (candidatesQuery.data ?? []).filter((candidate) => !inEvent.has(candidate.id));
 
@@ -116,7 +114,7 @@ export function WithdrawalsCard({
           </Button>
           {mutation.isError ? (
             <p className="w-full text-sm text-destructive" role="alert">
-              {extractErrorMessage(mutation.error, { codeMessages: bracketErrorMessages(vocabulary), fallback: `The ${participant.one} could not be replaced. Try again.` })}
+              {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: `The ${participant.one} could not be replaced. Try again.` })}
             </p>
           ) : null}
         </div>

@@ -7,8 +7,8 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, describeEntry } from './bracket-copy';
-import { useParticipantsQuery } from './use-sport-catalog';
+import { bracketErrorMessages, describeEntry, offLeagueRosterMessages } from './bracket-copy';
+import { useEventLeagueCandidatesQuery, useSportLeagueNoun } from './use-sport-catalog';
 
 const logger = getLogger().child({ feature: 'root-admin-play-in' });
 
@@ -148,7 +148,7 @@ function PlayInMarker({ eventId, field, vocabulary }: { eventId: string; field: 
   );
 }
 
-/** Names a released play-in place's winner from the sport's active teams not in the event. */
+/** Names a released play-in place's winner from the active teams of the event's league not in the event. */
 function PlayInWinnerPicker({
   event,
   field,
@@ -161,11 +161,8 @@ function PlayInWinnerPicker({
   vocabulary: SportVocabulary;
 }) {
   const [participantId, setParticipantId] = useState(NONE);
-  const teamsQuery = useParticipantsQuery({
-    sport: event.sport,
-    status: 'ACTIVE',
-    queryKey: QueryKeys.rootAdmin.manageSport.participantList(event.sport, 'ACTIVE'),
-  });
+  const teamsQuery = useEventLeagueCandidatesQuery(event);
+  const sportLeague = useSportLeagueNoun(event.sport, event.sportLeagueId);
   const inEvent = new Set(field.map((entry) => entry.participantId));
   const candidates = (teamsQuery.data ?? []).filter((participant) => !inEvent.has(participant.id));
 
@@ -223,7 +220,7 @@ function PlayInWinnerPicker({
       </Button>
       {mutation.isError ? (
         <p className="w-full text-sm text-destructive" role="alert">
-          {extractErrorMessage(mutation.error, { codeMessages: bracketErrorMessages(vocabulary), fallback: 'The winner could not be saved. Try again.' })}
+          {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: 'The winner could not be saved. Try again.' })}
         </p>
       ) : null}
     </>

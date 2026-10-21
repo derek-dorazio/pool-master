@@ -5,6 +5,7 @@ import {
   autoAssignEventTiers,
   createEvent,
   createParticipant,
+  createParticipantLeagueAffiliation,
   createSportLeague,
   getEventBracket,
   listEventParticipants,
@@ -36,6 +37,7 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 // tennis draw, then a player withdraws before the first round and a lucky loser takes the place.
 // The replacement joins unseeded, last in the last tier at the lowest price; the withdrawn player
 // stays on the field as WITHDRAWN. Once a match has started, its players can no longer be replaced.
+// A player off the tour's roster, from the women's tour, is refused (#830).
 
 const RUN = `tennis-withdrawal-${Date.now()}`;
 // Seeds, best first; the odds order the field into its tiers, two players to a tier.
@@ -69,6 +71,7 @@ async function cleanup(): Promise<void> {
     await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
+    await db.participantLeagueAffiliation.deleteMany({ where: { participantId: { in: [...created.participantIds] } } });
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
@@ -152,6 +155,19 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
     expect(loaded.response.status).toBe(200);
     const released = await releaseEvent({ client: a, path: { eventId } });
     expect([released.data?.event.status, released.error]).toEqual(['SCHEDULED', undefined]);
+
+    // --- The lucky loser is on the tour's roster; a women's tour player is not, so is refused -------
+    expect((await createParticipantLeagueAffiliation({ client: a, path: { sportLeagueId }, body: { participantId: expectDefined(playerIdOf.get(LUCKY_LOSER)) } })).error).toBeUndefined();
+    const womensTour = await createSportLeague({ client: a, body: { sport: Sport.TENNIS, name: `Harbour Women's Tour ${RUN}` } });
+    const womensTourId = expectDefined(womensTour.data).sportLeague.id;
+    created.sportLeagueIds.add(womensTourId);
+    const womensPlayer = expectDefined((await createParticipant({ client: a, body: { sportId, participantType: 'INDIVIDUAL', name: `Swiatek ${RUN}` } })).data).participant.id;
+    created.participantIds.add(womensPlayer);
+    expect((await createParticipantLeagueAffiliation({ client: a, path: { sportLeagueId: womensTourId }, body: { participantId: womensPlayer } })).error).toBeUndefined();
+    expectFunctionalError(
+      await replaceEventParticipant({ client: a, path: { eventId, sportEventParticipantId: rowOf('Fritz').id }, body: { participantId: womensPlayer } }),
+      { status: 409, code: 'PARTICIPANT_NOT_IN_SPORT_LEAGUE' },
+    );
 
     // --- Fritz withdraws before the first round, and the lucky loser takes his place ---------------
     const replaced = await replaceEventParticipant({

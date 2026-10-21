@@ -218,6 +218,17 @@ describe('pool-master-qqs RootAdminSportLeagueHomePage', () => {
     expect(updateSportLeagueMock).not.toHaveBeenCalled();
   });
 
+  it('calls a sport league with its own noun by it, not by its sport\'s, as the NCAA\'s tennis championships are leagues and not tours', async () => {
+    seed();
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league({ noun: 'LEAGUE' })] } });
+    renderPage();
+
+    const dangerZone = await screen.findByTestId('root-admin-sport-league-danger-zone');
+    expect(within(dangerZone).getByTestId('root-admin-sport-league-home-toggle-active')).toHaveTextContent('Deactivate league');
+    expect(await screen.findByText('2 golfers on this league.')).toBeInTheDocument();
+    expect(screen.queryByText(/on this tour/)).not.toBeInTheDocument();
+  });
+
   it('deactivates the tour from the danger zone only after the admin confirms', async () => {
     seed();
     updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: league({ isActive: false }) } });

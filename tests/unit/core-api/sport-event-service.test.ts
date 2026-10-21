@@ -56,6 +56,7 @@ function setup(sportName: Sport = Sport.GOLF) {
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
       participants: store.participantRepo(),
+      affiliations: store.affiliationRepo(),
       matches: store.matchRepo(),
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),

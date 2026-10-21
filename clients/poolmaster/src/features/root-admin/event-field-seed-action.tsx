@@ -1,4 +1,4 @@
-import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { capitalize } from './manage-navigation';
 import { seedEventParticipants } from '@/lib/api';
@@ -17,8 +17,13 @@ type SeedResult = SeedSportEventParticipantsResponse;
  * from the tour ranking (§4.7). Always available; golfers already in the field are
  * skipped.
  */
-export function EventFieldSeedAction({ eventId, sport }: { eventId: string; sport: Sport }) {
-  const { event, participant, sportLeague } = getSportDefinition(sport).vocabulary;
+export function EventFieldSeedAction({ eventId, sport, sportLeague }: {
+  eventId: string;
+  sport: Sport;
+  /** What the event's sport league is called (#834), for the copy. */
+  sportLeague: SportNoun;
+}) {
+  const { event, participant } = getSportDefinition(sport).vocabulary;
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-field-page',
   });
