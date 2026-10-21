@@ -590,17 +590,21 @@ describe('Seeded soccer week templates', () => {
 });
 
 // Tennis (#704): the ATP and the WTA, each a fixed knockout draw of seven rounds, their presets
-// doubling to 64 in the final, with a Slams pool over the four Grand Slams.
+// doubling to 64 in the final, with a Slams pool over the four Grand Slams; and the NCAA singles
+// championships, draws of six rounds doubling to 32.
 const TENNIS_ROUND_VALUES = [1, 2, 4, 8, 16, 32, 64];
 
 describe('Seeded tennis tours and their knockout templates', () => {
-  it('seeds the ATP and the WTA as fixed brackets on the sport\'s own round names and tiers, read back through the sport league repository', async () => {
+  it('seeds the ATP and the WTA as fixed brackets on the sport\'s own round names and tiers, and the NCAA singles championships on the NCAA\'s round names, read back through the sport league repository', async () => {
     const tennis = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.TENNIS } });
     const leagues = await new PrismaSportLeagueRepository(getPrisma()).findAll({ sportId: tennis.id });
+    const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
 
     expect(tennis.participantType).toBe('INDIVIDUAL');
     expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames, league.tierCount])).toEqual([
       ['ATP', 'FIXED', [], null],
+      ['NCAA Division I Men', 'FIXED', ncaaRounds, null],
+      ['NCAA Division I Women', 'FIXED', ncaaRounds, null],
       ['WTA', 'FIXED', [], null],
     ]);
   });
@@ -642,6 +646,40 @@ describe('Seeded tennis tours and their knockout templates', () => {
       }
       if (rules.selectionType === SelectionType.BUDGET_PICK) expect([rules.rosterSize, rules.countedScores]).toEqual([6, 6]);
       if (rules.selectionType === SelectionType.BRACKET) expect(rules.startsAtRound).toBe(template.templateKey.includes('second-week') ? 4 : 1);
+    }
+  });
+
+  it.each([['NCAA Division I Men', 'ncaa-men-tennis'], ['NCAA Division I Women', 'ncaa-women-tennis']] as const)('gives %s ten knockout templates, one default per format, each roster and bracket preset doubling from 1 to 32 in the six-round draw\'s final', async (name, prefix) => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.TENNIS, sportLeague: { name } },
+      orderBy: [{ sortOrder: 'asc' }],
+    });
+
+    expect(templates.map((template) => [template.templateKey, template.selectionType, template.eventType, template.isDefault])).toEqual([
+      [`${prefix}-tiered-doubling`, SelectionType.TIERED, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-tiered-doubling-upset-bonus`, SelectionType.TIERED, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-tiered-best-four-doubling`, SelectionType.TIERED, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-budget-doubling`, SelectionType.BUDGET_PICK, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-budget-doubling-upset-bonus`, SelectionType.BUDGET_PICK, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-random-draw-doubling`, SelectionType.RANDOM_DRAW, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-random-draw-doubling-upset-bonus`, SelectionType.RANDOM_DRAW, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-bracket-doubling`, SelectionType.BRACKET, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-bracket-doubling-upset-bonus`, SelectionType.BRACKET, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-knockout-survivor`, SelectionType.SURVIVOR, ContestTemplateEventType.KNOCKOUT, true],
+    ]);
+    for (const template of templates) {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      if (rules.selectionType === SelectionType.SURVIVOR) continue;
+      expect(rules.scoring).toEqual({
+        participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+        config: {
+          roundValues: [1, 2, 4, 8, 16, 32],
+          upsetBonus: template.templateKey.endsWith('-upset-bonus') ? { rule: 'SEED_DIFFERENCE', multiplier: 1 } : { rule: 'NONE' },
+        },
+      });
+      if (rules.selectionType === SelectionType.TIERED) expect(rules.countedScores).toBe(template.templateKey.includes('best-four') ? 4 : 6);
+      if (rules.selectionType === SelectionType.BUDGET_PICK) expect([rules.rosterSize, rules.countedScores]).toEqual([6, 6]);
+      if (rules.selectionType === SelectionType.BRACKET) expect(rules.startsAtRound).toBe(1);
     }
   });
 
