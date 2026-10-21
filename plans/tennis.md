@@ -113,7 +113,7 @@ Questions:
 - **Q1.2** Does a walkover win count as a win? Recommendation: yes, everywhere. The player
   advances, earns the round's points (and an upset bonus if the seeds say so), and a survivor or
   bracket pick on them is right. A pick on the player who withdrew or retired is wrong. This is
-  how tennis records it, and every pool we found does the same.
+  how tennis records it, and every pool we found does the same. **Decided 2026-10-21: as recommended.**
 
 ## Slice 2: tennis and the Grand Slams
 
@@ -188,13 +188,13 @@ Questions:
   the fourth round, 15 picks)? Recommendation: full draw as the default, as the bracket sites
   that offer tennis do, with the second-week bracket as the variation for people who join late
   or want less work.
-- **Q2.4** Results for the live 2027 Australian Open pilot (mid-January): the admin marks each
-  match's winner (scores optional; around 60 a day across both draws in the first days, a
-  handful a day in the second week), or a paid feed (around $40-150 a month)? Recommendation:
-  admin entry for the pilot, then decide on a feed from how heavy it was.
+- **Q2.4** Results: the admin marks each match's winner (scores optional; around 60 a day
+  across both draws in the first days, a handful a day in the second week), or a paid feed
+  (around $40-150 a month)? Recommendation: admin entry. **Decided 2026-10-21: manual entry.
+  No pilot is planned and no sport has a real data feed yet.**
 - **Q2.5** Show set-by-set scores ("6-4 3-6 7-6")? Recommendation: not now. A match's score is
   sets won ("3-1"), which is all scoring needs and what the admin can enter quickly. Set scores
-  would need a new non-cumulative period shape and add entry work.
+  would need a new non-cumulative period shape and add entry work. **Decided 2026-10-21: as recommended.**
 
 ## Slice 3: withdrawals after the draw
 
@@ -223,7 +223,7 @@ Questions:
 - **Q3.1** Should picks move to the lucky loser instead, as a filled play-in place's do?
   Recommendation: no. A play-in place stands for whoever wins; a named player doesn't, and moving
   a pick of a top seed to a lucky loser would surprise the entrant more than losing it. Most
-  withdrawals come before entries close, while entrants can still change their picks.
+  withdrawals come before entries close, while entrants can still change their picks. **Decided 2026-10-21: as recommended.**
 
 ## Slice 4: NCAA singles championships
 
@@ -241,7 +241,8 @@ Questions:
   Olympics (64), and the ATP and WTA Finals. Recommendation: none now. The 1000-level events and
   the Olympics are a league row and a data file each and can be added whenever wanted; the Finals
   start with a round robin, which no bracket model here plays. List them on a deferred ticket, as
-  soccer did with #818.
+  soccer did with #818. **Decided 2026-10-21 (Q4.1 and Q4.2): deferred; the candidates are listed
+  on #820, ordered by audience.**
 
 ## Not in this work
 
