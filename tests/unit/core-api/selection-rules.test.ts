@@ -213,6 +213,21 @@ describe('#324 draft rules — buildSelectionTiers and buildValuationLookup', ()
     expect(tieredSelectionEngine.rosterSize({ configuration: configuration(), tiers })).toBe(6);
   });
 
+  it('offers only the first tiersUsed tiers in tier order, so seeds-only rules on six tiers make a roster of four', () => {
+    const groups = [6, 5, 4, 3, 2, 1].map((tierNumber) => ({ tierKey: `tier-${tierNumber}`, label: `Tier ${tierNumber}`, tierNumber, participants: [] })) as unknown as SportEventTierGroup[];
+
+    const tiers = buildSelectionTiers(groups, 1, 4);
+
+    expect(tiers.map((tier) => tier.tierNumber)).toEqual([1, 2, 3, 4]);
+    expect(tieredSelectionEngine.rosterSize({ configuration: configuration(), tiers })).toBe(4);
+  });
+
+  it('offers every tier when tiersUsed is more than the event has', () => {
+    const groups = [1, 2].map((tierNumber) => ({ tierKey: `tier-${tierNumber}`, label: `Tier ${tierNumber}`, tierNumber, participants: [] })) as unknown as SportEventTierGroup[];
+
+    expect(buildSelectionTiers(groups, 1, 4).map((tier) => tier.tierNumber)).toEqual([1, 2]);
+  });
+
   it('gives every tier no picks when the contest supplies 0 picks per tier, so the tiered roster is 0', () => {
     const groups = [
       { tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1, participants: [] },

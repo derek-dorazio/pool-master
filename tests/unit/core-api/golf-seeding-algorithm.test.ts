@@ -80,13 +80,13 @@ describe('deriveSeedNumbersAndOdds', () => {
 
 describe('deriveGolfPrices — the budget pricing curve (#93)', () => {
   const standard = standardEventPricing();
-  const field = (size: number) => Array.from({ length: size }, (_, i) => ({ participantId: `p-${i + 1}`, seedNumber: i + 1, oddsToWin: null }));
+  const field = (size: number) => Array.from({ length: size }, (_, i) => ({ participantId: `p-${i + 1}`, seedNumber: i + 1, oddsToWin: null, ranking: null }));
 
   it('orders by the field\'s existing seedNumber, not a fresh sort', () => {
     const result = deriveGolfPrices([
-      { participantId: 'p-3', seedNumber: 3, oddsToWin: null },
-      { participantId: 'p-1', seedNumber: 1, oddsToWin: null },
-      { participantId: 'p-2', seedNumber: 2, oddsToWin: null },
+      { participantId: 'p-3', seedNumber: 3, oddsToWin: null, ranking: null },
+      { participantId: 'p-1', seedNumber: 1, oddsToWin: null, ranking: null },
+      { participantId: 'p-2', seedNumber: 2, oddsToWin: null, ranking: null },
     ], standard);
 
     expect(result.map((r) => r.participantId)).toEqual(['p-1', 'p-2', 'p-3']);
@@ -117,9 +117,9 @@ describe('deriveGolfPrices — the budget pricing curve (#93)', () => {
 
   it('places golfers by position, so a gap in seed numbers left by a withdrawal still prices the last golfer at the floor', () => {
     const result = deriveGolfPrices([
-      { participantId: 'p-1', seedNumber: 1, oddsToWin: null },
-      { participantId: 'p-2', seedNumber: 2, oddsToWin: null },
-      { participantId: 'p-9', seedNumber: 9, oddsToWin: null },
+      { participantId: 'p-1', seedNumber: 1, oddsToWin: null, ranking: null },
+      { participantId: 'p-2', seedNumber: 2, oddsToWin: null, ranking: null },
+      { participantId: 'p-9', seedNumber: 9, oddsToWin: null, ranking: null },
     ], standard);
 
     expect(result.map((r) => r.price)).toEqual([12000, 6400, 6000]);
@@ -127,10 +127,10 @@ describe('deriveGolfPrices — the budget pricing curve (#93)', () => {
 
   it('prices golfers with no seed after every seeded golfer, keeping their given order', () => {
     const result = deriveGolfPrices([
-      { participantId: 'guest-a', seedNumber: null, oddsToWin: null },
-      { participantId: 'p-2', seedNumber: 2, oddsToWin: null },
-      { participantId: 'guest-b', seedNumber: null, oddsToWin: null },
-      { participantId: 'p-1', seedNumber: 1, oddsToWin: null },
+      { participantId: 'guest-a', seedNumber: null, oddsToWin: null, ranking: null },
+      { participantId: 'p-2', seedNumber: 2, oddsToWin: null, ranking: null },
+      { participantId: 'guest-b', seedNumber: null, oddsToWin: null, ranking: null },
+      { participantId: 'p-1', seedNumber: 1, oddsToWin: null, ranking: null },
     ], standard);
 
     expect(result.map((r) => r.participantId)).toEqual(['p-1', 'p-2', 'guest-a', 'guest-b']);
@@ -139,14 +139,25 @@ describe('deriveGolfPrices — the budget pricing curve (#93)', () => {
 
   it('prices unseeded entries shortest odds first, ties in their given order, and entries with no odds last', () => {
     const result = deriveGolfPrices([
-      { participantId: 'no-odds', seedNumber: null, oddsToWin: null },
-      { participantId: 'long', seedNumber: null, oddsToWin: 20 },
-      { participantId: 'tied-a', seedNumber: null, oddsToWin: 5 },
-      { participantId: 'tied-b', seedNumber: null, oddsToWin: 5 },
-      { participantId: 'fav', seedNumber: null, oddsToWin: 2.5 },
+      { participantId: 'no-odds', seedNumber: null, oddsToWin: null, ranking: null },
+      { participantId: 'long', seedNumber: null, oddsToWin: 20, ranking: null },
+      { participantId: 'tied-a', seedNumber: null, oddsToWin: 5, ranking: null },
+      { participantId: 'tied-b', seedNumber: null, oddsToWin: 5, ranking: null },
+      { participantId: 'fav', seedNumber: null, oddsToWin: 2.5, ranking: null },
     ], standard);
 
     expect(result.map((r) => r.participantId)).toEqual(['fav', 'tied-a', 'tied-b', 'long', 'no-odds']);
+  });
+
+  it('prices entries with neither seed nor odds by ranking, best first, after the seeded ones, as a tennis draw\'s unseeded players are', () => {
+    const result = deriveGolfPrices([
+      { participantId: 'unranked', seedNumber: null, oddsToWin: null, ranking: null },
+      { participantId: 'ranked-80', seedNumber: null, oddsToWin: null, ranking: 80 },
+      { participantId: 'seed-1', seedNumber: 1, oddsToWin: null, ranking: 2 },
+      { participantId: 'ranked-41', seedNumber: null, oddsToWin: null, ranking: 41 },
+    ], standard);
+
+    expect(result.map((r) => r.participantId)).toEqual(['seed-1', 'ranked-41', 'ranked-80', 'unranked']);
   });
 
   it('prices a straight line with steepness 1', () => {
@@ -156,7 +167,7 @@ describe('deriveGolfPrices — the budget pricing curve (#93)', () => {
   });
 
   it('prices a field of one golfer at the top share', () => {
-    expect(deriveGolfPrices([{ participantId: 'p-1', seedNumber: 1, oddsToWin: null }], standard)).toEqual([
+    expect(deriveGolfPrices([{ participantId: 'p-1', seedNumber: 1, oddsToWin: null, ranking: null }], standard)).toEqual([
       { participantId: 'p-1', price: 12000 },
     ]);
   });

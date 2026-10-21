@@ -27,6 +27,8 @@ export interface PricingFieldEntry {
   seedNumber: number | null;
   /** Odds to win as a number "to 1": lower is shorter. Null when the field entry has none. */
   oddsToWin: number | null;
+  /** The ranking that applied at the event (1 is best); null when the field entry has none. */
+  ranking: number | null;
 }
 
 export interface PricedParticipant {
@@ -71,13 +73,16 @@ export function deriveSeedNumbersAndOdds(
 /**
  * Prices the field on the budget curve (#93): best seed first; participants with no seed after
  * every seeded one, shortest odds first, so a race priced from its morning line follows the
- * market (#653); then the order given. Position in that order, not the raw seed number, places
- * each participant on the curve, so a withdrawal leaves no gap. No jitter: a price is
- * explainable from seed and odds order alone.
+ * market (#653); then, with neither, best ranking first, so a tennis draw's unseeded players
+ * with no odds follow their ranking (#704); then the order given. Position in that order, not
+ * the raw seed number, places each participant on the curve, so a withdrawal leaves no gap. No
+ * jitter: a price is explainable from seed, odds and ranking order alone.
  */
 export function deriveGolfPrices(field: PricingFieldEntry[], values: BudgetPricingValues): PricedParticipant[] {
   const ordered = [...field].sort((left, right) =>
-    compareNullsLast(left.seedNumber, right.seedNumber) || compareNullsLast(left.oddsToWin, right.oddsToWin));
+    compareNullsLast(left.seedNumber, right.seedNumber)
+    || compareNullsLast(left.oddsToWin, right.oddsToWin)
+    || compareNullsLast(left.ranking, right.ranking));
   return ordered.map((entry, position) => ({
     participantId: entry.participantId,
     price: priceOnBudgetCurve(values, position, ordered.length),

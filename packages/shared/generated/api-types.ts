@@ -4764,6 +4764,8 @@ export interface components {
             picksPerTier: number;
             /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
             countedScores: number;
+            /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+            tiersUsed?: number;
             /** @description Maximum entries a Team may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
             /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -5142,6 +5144,8 @@ export interface components {
                 picksPerTier: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
+                /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                tiersUsed?: number;
                 /** @description Contest-configuration identifier. */
                 id: string;
                 /** @description Contest that owns the configuration. */
@@ -5296,6 +5300,8 @@ export interface components {
                 picksPerTier: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
+                /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                tiersUsed?: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -5632,6 +5638,8 @@ export interface components {
                     picksPerTier: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
+                    /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                    tiersUsed?: number;
                     /** @description Contest-configuration identifier. */
                     id: string;
                     /** @description Contest that owns the configuration. */
@@ -5808,6 +5816,8 @@ export interface components {
                     picksPerTier: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
+                    /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                    tiersUsed?: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -6120,6 +6130,8 @@ export interface components {
                 picksPerTier: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
+                /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                tiersUsed?: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -6467,6 +6479,8 @@ export interface components {
                     picksPerTier: number;
                     /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                     countedScores: number;
+                    /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                    tiersUsed?: number;
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                     /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
@@ -9374,6 +9388,8 @@ export interface components {
                 picksPerTier: number;
                 /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
                 countedScores: number;
+                /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                tiersUsed?: number;
                 /** @description Maximum entries a Team may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
                 /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */

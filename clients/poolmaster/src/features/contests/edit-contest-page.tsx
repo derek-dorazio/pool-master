@@ -52,6 +52,7 @@ const editContestFormSchema = z.object({
   picksPerTier: z.string(),
   rosterSize: z.string(),
   startsAtRound: z.string(),
+  tiersUsed: z.string(),
   unlimitedEntries: z.boolean(),
 });
 

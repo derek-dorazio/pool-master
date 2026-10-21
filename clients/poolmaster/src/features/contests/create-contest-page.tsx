@@ -147,6 +147,7 @@ const createContestFormSchema = z.object({
   roundValues: z.string(),
   scoringDefinitionId: ParticipantScoringDefinitionIdSchema,
   startsAtRound: z.string(),
+  tiersUsed: z.string(),
   selectedTemplateId: z.string(),
   selectionType: z.enum(creatableSelectionTypes),
   sport: z.custom<Sport>((value) => SUPPORTED_SPORTS.some((sport) => sport === value)),

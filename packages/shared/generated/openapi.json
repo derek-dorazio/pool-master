@@ -5558,6 +5558,11 @@
                 "minimum": 1,
                 "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
               },
+              "tiersUsed": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+              },
               "maxEntriesPerSquad": {
                 "type": [
                   "integer",
@@ -5719,7 +5724,7 @@
               "countedScores"
             ],
             "additionalProperties": false,
-            "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+            "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
           },
           {
             "type": "object",
@@ -7078,6 +7083,11 @@
                     "minimum": 1,
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
+                  "tiersUsed": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                  },
                   "id": {
                     "type": "string",
                     "description": "Contest-configuration identifier."
@@ -7103,7 +7113,7 @@
                   "contestId"
                 ],
                 "additionalProperties": false,
-                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
               },
               {
                 "type": "object",
@@ -7527,6 +7537,11 @@
                     "minimum": 1,
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
+                  "tiersUsed": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -7688,7 +7703,7 @@
                   "countedScores"
                 ],
                 "additionalProperties": false,
-                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
               },
               {
                 "type": "object",
@@ -8922,6 +8937,11 @@
                         "minimum": 1,
                         "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                       },
+                      "tiersUsed": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                      },
                       "id": {
                         "type": "string",
                         "description": "Contest-configuration identifier."
@@ -8947,7 +8967,7 @@
                       "contestId"
                     ],
                     "additionalProperties": false,
-                    "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                    "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
                   },
                   {
                     "type": "object",
@@ -9423,6 +9443,11 @@
                           "minimum": 1,
                           "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                         },
+                        "tiersUsed": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                        },
                         "maxEntriesPerSquad": {
                           "type": [
                             "integer",
@@ -9584,7 +9609,7 @@
                         "countedScores"
                       ],
                       "additionalProperties": false,
-                      "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                      "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
                     },
                     {
                       "type": "object",
@@ -10740,6 +10765,11 @@
                     "minimum": 1,
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
+                  "tiersUsed": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -10901,7 +10931,7 @@
                   "countedScores"
                 ],
                 "additionalProperties": false,
-                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
               },
               {
                 "type": "object",
@@ -12102,6 +12132,11 @@
                         "minimum": 1,
                         "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                       },
+                      "tiersUsed": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                      },
                       "maxEntriesPerSquad": {
                         "type": [
                           "integer",
@@ -12263,7 +12298,7 @@
                       "countedScores"
                     ],
                     "additionalProperties": false,
-                    "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                    "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
                   },
                   {
                     "type": "object",
@@ -20038,6 +20073,11 @@
                     "minimum": 1,
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
+                  "tiersUsed": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -20199,7 +20239,7 @@
                   "countedScores"
                 ],
                 "additionalProperties": false,
-                "description": "Tiered rules: pick the same number of golfers from every tier of the event."
+                "description": "Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers."
               },
               {
                 "type": "object",

@@ -2623,6 +2623,10 @@ export type ContestConfigurationRequest = {
      */
     countedScores: number;
     /**
+     * How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout.
+     */
+    tiersUsed?: number;
+    /**
      * Maximum entries a Team may create. Null means unlimited.
      */
     maxEntriesPerSquad?: number | null;
@@ -3190,6 +3194,10 @@ export type ContestManagementDetailDto = {
          */
         countedScores: number;
         /**
+         * How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout.
+         */
+        tiersUsed?: number;
+        /**
          * Contest-configuration identifier.
          */
         id: string;
@@ -3409,6 +3417,10 @@ export type ContestConfigTemplateDto = {
          * How many golfer scores count toward the entry total, best first. At most the roster size.
          */
         countedScores: number;
+        /**
+         * How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout.
+         */
+        tiersUsed?: number;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -3895,6 +3907,10 @@ export type ContestManagementResponse = {
              */
             countedScores: number;
             /**
+             * How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout.
+             */
+            tiersUsed?: number;
+            /**
              * Contest-configuration identifier.
              */
             id: string;
@@ -4138,6 +4154,10 @@ export type ContestConfigTemplateListResponse = {
              * How many golfer scores count toward the entry total, best first. At most the roster size.
              */
             countedScores: number;
+            /**
+             * How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout.
+             */
+            tiersUsed?: number;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -4580,6 +4600,10 @@ export type UpdateContestConfigTemplateRequest = {
          * How many golfer scores count toward the entry total, best first. At most the roster size.
          */
         countedScores: number;
+        /**
+         * How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout.
+         */
+        tiersUsed?: number;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
@@ -5057,6 +5081,10 @@ export type ContestConfigTemplateResponse = {
              * How many golfer scores count toward the entry total, best first. At most the roster size.
              */
             countedScores: number;
+            /**
+             * How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout.
+             */
+            tiersUsed?: number;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
@@ -8864,6 +8892,10 @@ export type CreateContestRequest = {
          * How many golfer scores count toward the entry total, best first. At most the roster size.
          */
         countedScores: number;
+        /**
+         * How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout.
+         */
+        tiersUsed?: number;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */

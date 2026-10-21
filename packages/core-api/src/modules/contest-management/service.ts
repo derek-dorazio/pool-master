@@ -69,6 +69,7 @@ import {
   getSportDefinition,
   sportAllowsSelectionType,
   getTieredRosterSize,
+  getTiersInPlay,
   contestFormatForSelectionType,
   isContestFormatValidForTournamentFormat,
   UpsetBonusRule,
@@ -879,6 +880,7 @@ export class ContestManagementService {
             selectionType: rules.selectionType,
             picksPerTier: rules.picksPerTier,
             countedScores: rules.countedScores,
+            ...(rules.tiersUsed === undefined ? {} : { tiersUsed: rules.tiersUsed }),
           },
           scoring,
         };
@@ -1195,14 +1197,21 @@ export class ContestManagementError extends Error {
 
 /**
  * Tiers are event-owned (plans/124 §4.6) and every tier takes the contest's
- * picksPerTier (#479), so the roster is the event's tier count times
- * picksPerTier. The only thing left to validate against the event is that
- * countedScores doesn't exceed that roster.
+ * picksPerTier (#479), so the roster is the event's tier count (or the contest's
+ * tiersUsed, the first ones only) times picksPerTier. What is left to validate
+ * against the event is that tiersUsed fits its tiers and countedScores that roster.
  */
 function assertCountedScoresFitRoster(
   configuration: TieredContestRules,
-  tierCount: number,
+  eventTierCount: number,
 ): void {
+  if (configuration.tiersUsed !== undefined && configuration.tiersUsed > eventTierCount) {
+    throw new ContestManagementError(
+      `tiersUsed (${configuration.tiersUsed}) cannot exceed the event's ${eventTierCount} tier(s).`,
+      'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+    );
+  }
+  const tierCount = getTiersInPlay(eventTierCount, configuration.tiersUsed);
   const rosterSize = getTieredRosterSize(tierCount, configuration.picksPerTier);
   if (configuration.countedScores > rosterSize) {
     throw new ContestManagementError(

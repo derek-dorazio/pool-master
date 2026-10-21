@@ -382,6 +382,63 @@ describe('ContestManagementService', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
+  describe('a tiered contest that picks from the first tiers only (tiersUsed)', () => {
+    function tieredService(tierCount: number) {
+      const contestConfigurationRepo = createContestConfigurationRepo();
+      const contestCoreRepo = createContestRepo();
+      const service = new ContestManagementService(
+        contestCoreRepo,
+        createContestConfigTemplateRepo(),
+        contestConfigurationRepo,
+        createParticipantScoringRuleRepo(),
+        createSportEventTierServiceStub(tierCount),
+        undefined,
+        createSportEventReader({ participantCount: 80, loadedParticipantCount: 80 }),
+      );
+      const create = (rules: { tiersUsed: number; countedScores: number }) => service.createContest(
+        { leagueId: 'league-1' },
+        {
+          name: 'Seeds only',
+          sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+          contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
+          configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, ...rules },
+        },
+      );
+      return { create, contestCoreRepo, contestConfigurationRepo };
+    }
+
+    it('stores tiersUsed with the rules and counts the roster from those tiers alone', async () => {
+      const { create, contestConfigurationRepo } = tieredService(6);
+
+      await expect(create({ tiersUsed: 4, countedScores: 4 })).resolves.toBe('contest-1');
+
+      expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, tiersUsed: 4 } }),
+      );
+    });
+
+    it('refuses (CONTEST_TIER_FIELD_OUT_OF_RANGE) more counted scores than the tiers in play hold, writing nothing', async () => {
+      const { create, contestCoreRepo } = tieredService(6);
+
+      await expect(create({ tiersUsed: 4, countedScores: 5 })).rejects.toMatchObject({
+        code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+        message: 'countedScores (5) cannot exceed the roster of 4 (4 tier(s) × 1 pick(s) per tier).',
+      });
+      expect(contestCoreRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses (CONTEST_TIER_FIELD_OUT_OF_RANGE) more tiers than the event has, writing nothing', async () => {
+      const { create, contestCoreRepo } = tieredService(3);
+
+      await expect(create({ tiersUsed: 4, countedScores: 3 })).rejects.toMatchObject({
+        code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+        message: 'tiersUsed (4) cannot exceed the event\'s 3 tier(s).',
+      });
+      expect(contestCoreRepo.create).not.toHaveBeenCalled();
+    });
+  });
+
   it('creates a tiered contest whose countedScores equals the event\'s tier count times picksPerTier, storing picksPerTier and no roster size', async () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();

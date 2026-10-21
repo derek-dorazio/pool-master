@@ -9,6 +9,7 @@ import {
   assertNever,
   getSportDefinition,
   getTieredRosterSize,
+  getTiersInPlay,
   isRosterSelectionType,
   sportAllowsSelectionType,
   sportPlaysMatches,
@@ -230,6 +231,27 @@ describe('Seeded PGA TOUR majors pool template', () => {
 const CYCLING_TOP_10_POINTS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
 describe('Seeded cycling tours and their Top 10 templates', () => {
+  it('seeds golf\'s "Top four tiers" setup beside its default tiered one: one golfer from each of the first four tiers, all four count, not a default (#704)', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.GOLF, sportLeagueId: null, active: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+
+    expect(templates.map((template) => template.templateKey)).toEqual([
+      'golf-tiered-pick-6',
+      'golf-tiered-pick-12',
+      'golf-tiered-top-four-tiers',
+      'golf-budget-pick-6-best-4',
+      'golf-budget-pick-6-all-count',
+      'golf-random-draw-1',
+      'golf-random-draw-3-best-2',
+    ]);
+    expect(templates.find((template) => template.templateKey === 'golf-tiered-top-four-tiers')).toMatchObject({
+      isDefault: false,
+      configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, tiersUsed: 4, countedScores: 4, maxEntriesPerSquad: 1 },
+    });
+  });
+
   it('seeds cycling\'s two tours, each with a tiered, a budget and a random-draw template of its own, every one the default of its format', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { sport: Sport.CYCLING },
@@ -636,7 +658,10 @@ describe('Every seeded contest template, whatever its sport', () => {
       const held = (() => {
         switch (rules.selectionType) {
           case SelectionType.TIERED:
-            return getTieredRosterSize(template.sportLeague?.tierCount ?? getSportDefinition(template.sport).defaultTierLayout.tierCount, rules.picksPerTier);
+            return getTieredRosterSize(
+              getTiersInPlay(template.sportLeague?.tierCount ?? getSportDefinition(template.sport).defaultTierLayout.tierCount, rules.tiersUsed),
+              rules.picksPerTier,
+            );
           case SelectionType.BUDGET_PICK:
             return rules.rosterSize;
           case SelectionType.RANDOM_DRAW:
