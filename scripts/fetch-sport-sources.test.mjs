@@ -31,4 +31,8 @@ describe('fetch-sport-sources', () => {
     assert.equal(fileNameFor(0, new URL('https://www.pgatour.com/schedule')), '01-pgatour.com.txt');
     assert.equal(fileNameFor(11, new URL('https://en.wikipedia.org/wiki/2027_PGA_Tour')), '12-en.wikipedia.org.txt');
   });
+
+  it('names a saved PDF, such as a printed bracket, with its own extension so it can be read as a PDF', () => {
+    assert.equal(fileNameFor(2, new URL('https://www.ncaa.com/files/singles.pdf'), 'pdf'), '03-ncaa.com.pdf');
+  });
 });

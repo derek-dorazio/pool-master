@@ -337,6 +337,15 @@ Ben Shelton 3-1 and Elena Rybakina beat Aryna Sabalenka 2-1. Pairings, winners, 
 times are real. The seeds' rankings are real; the unseeded players' are an ordering after the
 seeds, and the odds are made up. It loads as the hockey seeds do.
 
+`tennis-2025-ncaa-singles-test.json` holds the 2025 NCAA Division I men's and women's singles
+championships as played (the 2025-26 championships' singles, played in the fall), one event each
+in the two NCAA sport leagues. Each is a 64-player draw in six rounds, named as the NCAA names
+them, every quarter a region through the quarterfinals. Seeds 1 to 8 carry their seed and the
+eight seeded 9-16 as a group all carry 9. The women's Round of 16 walkover has no score. Michael
+Zheng beat Trevor Svajda 2-1 and Reese Brantmeier beat Berta Passola Folch 2-0. Pairings,
+winners and sets are real; neither source gives rankings or nationalities, so the rankings are an
+ordering, every player is from the US, and the odds are made up. It loads as the hockey seeds do.
+
 ## Seeded 2026 races
 
 To try racing contests without setting up a race, load a test seed of the 2026 season as run.
