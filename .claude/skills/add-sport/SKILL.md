@@ -136,6 +136,12 @@ In order:
    including its `entryTiebreaker` (null when entries submit without one); a new scoring
    definition adds its contest-setup inputs to `SCORING_SETTINGS_UI`. Both are exhaustive
    records. Use the `add-frontend-feature` skill.
+   The public How to Play page and each league's Contest types page (the commissioner's menu
+   of contest types) read the contest templates, so the sport's leagues and formats appear
+   there once their templates exist. The one hand-written part is the sport's line in
+   `SPORT_BLURBS`: write it for a new sport, and rewrite it when a slice adds a sport league
+   or a format to a sport already there. Then open both pages and read the sport's section
+   (`rules/ux-rules.md` §12 *League Pages and Commissioner Tools*, item 12).
 9. **Tests.** The registry conformance suite covers the new definition automatically; make
    sure it runs. Add the sport's row to the sport x selection-type scenario suite
    (`tests/functional/sport-selection-scenarios.functional.ts`): one played event from its
@@ -291,6 +297,13 @@ down: a lesson that was true mid-series may not be by the end.
   games won, so it has no single game for a grid. Leave squares out of such a sport's selection
   types and its period layout off the definition, and add the league to the template checks'
   series leagues, which otherwise expect a squares default (MLB, the NBA, the NHL).
+- **Choosing templates for an event by hand.** Whether a template fits an event (its sport,
+  its league or none, its kind of event or none) is `isTemplateOfferedOn`. A script or screen
+  that filters templates itself drifts from Create contest
+  (`rules/architecture-rules.md` §4 *Sport extension*).
+- **A stale sport line on How to Play.** Adding a league or format to a sport that already has
+  one fails no build and no test: the new tiles appear, and the sport's line goes on naming only
+  the old ones. Rewrite it in the same PR.
 - **Adding catalog values "for later".** Add a sport, scoring definition or enum value only
   with the code that uses it. Unused values are dead code and get deleted.
 - **Hiding missing results with defaults.** An unscored participant is unranked, never a
