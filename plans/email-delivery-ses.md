@@ -190,8 +190,7 @@ faster than a rate held in `EMAIL_CONFIG` (default 10 per second; SES production
 queued; the commissioner's pending invites list shows the email's state ("Sent", "Bounced", "Could
 not send") and Resend works as today.
 
-> **Q5.1 Invites through the outbox?** Recommendation: **yes** (Derek leaning yes 2026-10-21, after the
-> worked example below), every email goes through the outbox, and
+> **Q5.1 Invites through the outbox? Decided (Derek 2026-10-21): yes**, every email goes through the outbox, and
 > the pending invites list shows each invite's email state. The alternative keeps invites synchronous
 > so the commissioner sees an error at once, but leaves two send paths, and SES rarely refuses at
 > submit time anyway: a bad address shows up minutes later as a bounce, which only the outbox sees.
@@ -352,11 +351,37 @@ The SES account suppression list (§6) is the backstop; our table is what the ap
 > SES posts each of those reports to an AWS notification topic (SNS), and the topic calls a URL on
 > our server. Core-api checks the report really came from AWS (it is signed), finds the email row by
 > its SES message id, updates its state, and suppresses the address on a hard bounce or spam
-> complaint. Recommendation (Derek leaning yes 2026-10-21): **SNS → HTTPS webhook** on core-api. It fits "no
+> complaint. **Decided (Derek 2026-10-21): SNS → HTTPS webhook** on core-api. It fits "no
 > external queue" and needs only signature checking. The alternative, SNS → SQS polled by core-api,
 > survives core-api being down longer (SNS retries a webhook for about an hour), but adds a queue the
 > architecture rules deliberately avoid. Losing an hour-old delivery event costs little; a bounce is
 > also caught by the SES account suppression list.
+
+## 8a. Scale
+
+Derek (2026-10-21): this design is right for hundreds and thousands of leagues; note what changes
+at hundreds of thousands.
+
+Rough size at 100,000 leagues of 20 members, a few league emails a week each: about 6 million
+emails a week, around 10 a second on average and a few hundred a second at peaks (standings right
+after the NFL Sunday games). The sender is not a thread per email: one loop per core-api task
+keeps many SES calls in flight while it waits on the network.
+
+**League addresses don't reduce sending.** CBS and ESPN show a league address
+(`<league>@football.cbssports.com`) as the sender, and mail to it reaches every member, like a
+mailing list. Their list server still delivers one copy per member, so the work only moves from the
+app to the list server. A league-style display name (*Office League via Poolmaster*) is a
+presentation choice for the notifications design, not a scale fix.
+
+What to change when volume calls for it, all inside the email service, so no caller changes:
+
+- ask AWS to raise the SES send rate (it starts around 14 a second in production);
+- purge or partition `email_message` by month, since it grows by millions of rows a week;
+- move the sender loop to its own service, scaled separately from the API;
+- send through SES bulk sending (50 recipients a call), which needs a different template approach
+  for those emails.
+
+None of these is built now.
 
 ## 9. Local and test behaviour
 
