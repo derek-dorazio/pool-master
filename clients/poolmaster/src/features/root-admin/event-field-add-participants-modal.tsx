@@ -1,9 +1,8 @@
 import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
-import { useQuery } from '@tanstack/react-query';
 import { throwApiError } from '@/lib/errors';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-import { addEventParticipants, listParticipantLeagueAffiliations } from '@/lib/api';
+import { addEventParticipants } from '@/lib/api';
 import {
   Alert,
   Button,
@@ -19,7 +18,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { AddSportEventParticipantsResponse, ParticipantLeagueAffiliationDto } from '@/lib/api';
-import { useParticipantsQuery, useSportLeaguesQuery } from './use-sport-catalog';
+import { useLeagueRosterQuery, useParticipantsQuery, useSportLeaguesQuery } from './use-sport-catalog';
 import { capitalize } from './manage-navigation';
 
 type BulkAddResult = AddSportEventParticipantsResponse;
@@ -66,18 +65,7 @@ export function EventFieldAddParticipantsModal({
   const { participant, sportLeague } = getSportDefinition(sport).vocabulary;
   const leaguesQuery = useSportLeaguesQuery(sport);
 
-  const rosterQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.leagueRoster(leagueId),
-    queryFn: async (): Promise<ParticipantLeagueAffiliationDto[]> => {
-      const response = await listParticipantLeagueAffiliations({ path: { sportLeagueId: leagueId } });
-      if (!response.data?.affiliations) {
-        throwApiError(response.error, 'The roster response is missing data.');
-      }
-      return response.data.affiliations;
-    },
-    enabled: leagueId !== '',
-    retry: false,
-  });
+  const rosterQuery = useLeagueRosterQuery(leagueId, { enabled: leagueId !== '' });
 
   const searchTerm = search.trim();
   const searchQuery = useParticipantsQuery({

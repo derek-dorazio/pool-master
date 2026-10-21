@@ -8,7 +8,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { bracketErrorMessages, describeEntry, matchNoun, replaceableEntries } from './bracket-copy';
-import { useParticipantsQuery } from './use-sport-catalog';
+import { useEventLeagueCandidatesQuery } from './use-sport-catalog';
 
 const logger = getLogger().child({ feature: 'root-admin-withdrawals' });
 
@@ -17,8 +17,8 @@ const NONE = '';
 
 /**
  * Withdrawals on the bracket tab (#704 slice 3), in any sport: a participant who pulls out before
- * their first match is replaced in their bracket place by one of the sport's active participants
- * not in the event, such as a tennis lucky loser. The withdrawn participant stays on the field,
+ * their first match is replaced in their bracket place by one of the active participants on the
+ * event's league roster (or the sport's, for a league with no roster) not in the event, such as a tennis lucky loser. The withdrawn participant stays on the field,
  * and every pick of them scores as a loss. Once their match starts, a withdrawal is a walkover,
  * entered as its result. Hidden when nobody can be replaced.
  */
@@ -38,11 +38,7 @@ export function WithdrawalsCard({
   const participant = vocabulary.participant;
   const noun = matchNoun(vocabulary);
   const replaceable = replaceableEntries(bracket, new Map(field.map((entry) => [entry.id, entry])));
-  const candidatesQuery = useParticipantsQuery({
-    sport: event.sport,
-    status: 'ACTIVE',
-    queryKey: QueryKeys.rootAdmin.manageSport.participantList(event.sport, 'ACTIVE'),
-  });
+  const candidatesQuery = useEventLeagueCandidatesQuery(event);
   const inEvent = new Set(field.map((entry) => entry.participantId));
   const candidates = (candidatesQuery.data ?? []).filter((candidate) => !inEvent.has(candidate.id));
 

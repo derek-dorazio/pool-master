@@ -765,6 +765,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       summary: 'Set the winner of a play-in place',
       description: 'For a field row that stands for a play-in pairing ("Texas / Xavier"): the row then names the team that won, keeping its seed, tier, price and every pick of it, and the pairing\'s participant is inactivated. '
         + '404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 404 PARTICIPANT_NOT_FOUND when the winner is not an active participant of the event\'s sport; '
+        + '409 PARTICIPANT_NOT_IN_SPORT_LEAGUE when the event\'s sport league has a roster and the winner is not on it; '
         + '409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the winner already has a field row; 409 PLAY_IN_SLOT_ALREADY_PLAYED once the place has started or played a bracket match. '
         + `422 ${BRACKET_NOT_A_BRACKET} Returns the field row. Root admin only.`,
       operationId: 'setEventPlayInWinner',
@@ -788,7 +789,8 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
         + 'The withdrawn row stays on the field, inactive as WITHDRAWN, keeping every pick of it, which scores as a first-round loss. '
         + '404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 404 PARTICIPANT_NOT_FOUND when the replacement is not an active participant of the event\'s sport; '
         + '409 EVENT_PARTICIPANT_IS_PLAY_IN_PLACE for a play-in place, which is filled instead; 409 EVENT_PARTICIPANT_NOT_IN_BRACKET for a row no match names; '
-        + '409 BRACKET_PARTICIPANT_ALREADY_PLAYED once its match has started; 409 BRACKET_PLACE_NOT_FIRST_ROUND for a place after the first round (a bye); 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the replacement already has a field row. '
+        + '409 BRACKET_PARTICIPANT_ALREADY_PLAYED once its match has started; 409 BRACKET_PLACE_NOT_FIRST_ROUND for a place after the first round (a bye); '
+        + '409 PARTICIPANT_NOT_IN_SPORT_LEAGUE when the event\'s sport league has a roster and the replacement is not on it; 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the replacement already has a field row. '
         + `422 ${BRACKET_NOT_A_BRACKET} Returns the replacement's field row. Root admin only.`,
       operationId: 'replaceEventParticipant',
       params: {

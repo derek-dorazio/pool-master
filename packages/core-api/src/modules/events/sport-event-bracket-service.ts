@@ -24,6 +24,7 @@ import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestEntryMatchPredictionRepository,
+  ParticipantLeagueAffiliationRepository,
   ParticipantRepository,
   ReplacementValuation,
   SportLeagueRepository,
@@ -45,6 +46,7 @@ import {
   ParticipantStatus,
   sportPlaysMatches,
   SportEventStatus,
+  type Participant,
   type SportEvent,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
@@ -180,6 +182,8 @@ export interface SportEventBracketServiceDeps {
   rounds: Pick<SportEventRoundRepository, 'findBySportEvent'>;
   field: SportEventParticipantRepository;
   participants: Pick<ParticipantRepository, 'findById'>;
+  /** The event's league roster, which a replacement or play-in winner must be on once it has one (#830). */
+  affiliations: Pick<ParticipantLeagueAffiliationRepository, 'find' | 'countBySportLeagues'>;
   matches: SportEventMatchRepository;
   /** The event's tiers and valuations, which a replacement joins at the bottom of. */
   tiers: Pick<SportEventTierRepository, 'findBySportEvent'>;
@@ -410,12 +414,13 @@ export class SportEventBracketService {
    * play-in place. 404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event, 409
    * EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE for a row not marked as one (#709: filling Duke's row would
    * make every pick of Duke a pick of the winner), 404 PARTICIPANT_NOT_FOUND for a
-   * winner that is not a participant of the event's sport, 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD
+   * winner that is not a participant of the event's sport, 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE for
+   * one off the event's league roster, 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD
    * when the winner already has a field row, 409 PLAY_IN_SLOT_ALREADY_PLAYED once the place has
    * played or started a bracket match.
    */
   async fillPlayInSlot(sportEventId: string, sportEventParticipantId: string, winnerParticipantId: string): Promise<void> {
-    await this.requireBracketEvent(sportEventId);
+    const event = await this.requireBracketEvent(sportEventId);
     const entry = await this.deps.field.findById(sportEventParticipantId);
     if (!entry || entry.sportEventId !== sportEventId) {
       throw new SportEventError(
@@ -443,6 +448,7 @@ export class SportEventBracketService {
         404,
       );
     }
+    await this.requireOnLeagueRoster(event, winner);
     const field = await this.deps.field.findBySportEvent(sportEventId);
     if (field.some((row) => row.participantId === winnerParticipantId)) {
       throw new SportEventError(
@@ -480,11 +486,12 @@ export class SportEventBracketService {
    * EVENT_PARTICIPANT_NOT_IN_BRACKET for a row no match names (one already replaced, too); 409
    * BRACKET_PARTICIPANT_ALREADY_PLAYED once its match has started; 409
    * BRACKET_PLACE_NOT_FIRST_ROUND for a place after the first round (a bye); and the play-in winner's
-   * refusals for the replacement: 404 PARTICIPANT_NOT_FOUND, 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD.
+   * refusals for the replacement: 404 PARTICIPANT_NOT_FOUND, 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE,
+   * 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD.
    * Returns the replacement's field row id.
    */
   async replaceWithdrawn(sportEventId: string, sportEventParticipantId: string, replacementParticipantId: string): Promise<string> {
-    await this.requireBracketEvent(sportEventId);
+    const event = await this.requireBracketEvent(sportEventId);
     const entry = await this.deps.field.findById(sportEventParticipantId);
     if (!entry || entry.sportEventId !== sportEventId) {
       throw new SportEventError(
@@ -541,6 +548,7 @@ export class SportEventBracketService {
         404,
       );
     }
+    await this.requireOnLeagueRoster(event, replacement);
     const field = await this.deps.field.findBySportEvent(sportEventId);
     if (field.some((row) => row.participantId === replacementParticipantId)) {
       throw new SportEventError(
@@ -663,6 +671,27 @@ export class SportEventBracketService {
         409,
       );
     }
+  }
+
+  /**
+   * 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE for a participant off the event's league roster, once the
+   * league has one (#830): men's and women's are separate leagues, so a WTA player never joins an
+   * ATP draw. A league with no roster yet takes any active participant of the sport.
+   */
+  private async requireOnLeagueRoster(event: SportEvent, participant: Participant): Promise<void> {
+    const [rosterSize, affiliation] = await Promise.all([
+      this.deps.affiliations.countBySportLeagues([event.sportLeagueId]),
+      this.deps.affiliations.find(event.sportLeagueId, participant.id),
+    ]);
+    if (affiliation !== null || (rosterSize.get(event.sportLeagueId) ?? 0) === 0) {
+      return;
+    }
+    this.deps.logger?.warn({ sportEventId: event.id, sportLeagueId: event.sportLeagueId, participantId: participant.id }, 'Refused a participant off the event\'s league roster');
+    throw new SportEventError(
+      `${participant.name} is not on the roster of sport event ${event.id}'s league.`,
+      'PARTICIPANT_NOT_IN_SPORT_LEAGUE',
+      409,
+    );
   }
 
   private async requireBracketEvent(sportEventId: string): Promise<SportEvent> {

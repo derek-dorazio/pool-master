@@ -96,6 +96,7 @@ export function bracketErrorMessages(
     BRACKET_PARTICIPANT_ALREADY_PLAYED: `That ${team.one}'s ${noun.one} has started, so enter the withdrawal as a walkover.`,
     BRACKET_PLACE_NOT_FIRST_ROUND: `That ${team.one} skipped the first round, so enter the withdrawal as a walkover.`,
     PARTICIPANT_NOT_FOUND: `That ${team.one} is no longer active. Pick another.`,
+    PARTICIPANT_NOT_IN_SPORT_LEAGUE: `That ${team.one} plays in another league, so they can't join this ${vocabulary.event.one}. Pick another.`,
     MATCH_SPREAD_LOCKED: `This ${noun.one} already has picks, so its spread can no longer change.`,
     MATCH_PERIOD_SCORE_INVALID: 'A score can only go up as the game goes on. Check it against the other scores of this game.',
     MATCH_PERIOD_INVALID: `This ${noun.one}'s score at that point can't be entered here.`,
