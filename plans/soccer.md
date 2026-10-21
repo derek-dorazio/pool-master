@@ -131,14 +131,15 @@ Questions:
 
 - **Q3.1** Leave the third-place match out? The World Cups play one. The bracket model has no
   match a loser advances to (#793). Recommendation: leave it out. It isn't part of the bracket,
-  isn't picked, and no pool we found scores it.
+  isn't picked, and no pool we found scores it. **Decided 2026-10-21: left out.**
 - **Q3.2** Seed international knockouts by FIFA ranking? The upset bonus and budget prices need
   a seed, and these tournaments seed nothing past the groups. Recommendation: yes, by FIFA
   ranking at the start of the knockouts. The alternative, group finishing position, gives 8
-  teams seed 1. The upset bonus stays off by default anyway.
+  teams seed 1. The upset bonus stays off by default anyway. **Decided 2026-10-21: FIFA ranking.**
 - **Q3.3** Which optional leagues now? Recommendation: none beyond those above. The Gold Cup,
   Women's Euro, Women's Champions League, La Liga, Bundesliga, Serie A and WSL are each a league
-  row plus a test data file, so they can be added as data whenever wanted.
+  row plus a test data file, so they can be added as data whenever wanted. **Decided 2026-10-21: none now; the
+  candidates are listed on #818 (deferred).**
 
 ## Slice 4: club and college playoffs
 
@@ -175,4 +176,5 @@ Questions:
   every team is used, or end the game by then. Recommendation: keep each team once for v1, and
   let commissioners pick a span of 20 weeks or fewer. Offer a reset as a follow-up if anyone asks.
 - **Q5.2** Survivor on group matchdays? Recommendation: no. Three matchdays with a third of
-  results drawn makes a poor survivor. Pick'em only, as decided.
+  results drawn makes a poor survivor. Pick'em only, as decided. **Decided 2026-10-21:
+  deferred.**
