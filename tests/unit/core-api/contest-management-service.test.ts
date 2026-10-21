@@ -26,6 +26,7 @@ import {
   CONTEST_EVENT_NOT_A_BRACKET,
   CONTEST_EVENT_NOT_PRICED,
   CONTEST_EVENT_SPREAD_MISSING,
+  CONTEST_SPREAD_NOT_OFFERED,
   CONTEST_NOT_DRAFT,
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
   CONTEST_SCORING_ROUNDS_MISMATCH,
@@ -2058,6 +2059,24 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: { ...pickEmRules, againstTheSpread: true } })))
       .rejects.toMatchObject({ code: CONTEST_EVENT_SPREAD_MISSING, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  // #792: soccer's pick'em takes draw picks but has no spread, so a pool against it is refused.
+  it('refuses a soccer pick\'em contest against the spread with 422 CONTEST_SPREAD_NOT_OFFERED, never reading spreads or writing anything', async () => {
+    const { contestCoreRepo, reader, service } = pickEmService({ gameCount: 3, sport: Sport.SOCCER });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: { ...pickEmRules, againstTheSpread: true } })))
+      .rejects.toMatchObject({ code: CONTEST_SPREAD_NOT_OFFERED, statusCode: 422 });
+    expect(reader.countGamesWithoutSpread).not.toHaveBeenCalled();
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('creates a straight-up soccer pick\'em contest, since only the spread is refused', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 3, sport: Sport.SOCCER });
+
+    await service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: pickEmRules }));
+
+    expect(contestCoreRepo.create).toHaveBeenCalled();
   });
 
   it('creates a straight-up pick\'em contest on a week with no spreads, never reading them', async () => {

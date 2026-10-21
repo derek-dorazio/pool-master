@@ -78,6 +78,11 @@ const LEAGUES: readonly PlayoffLeague[] = [
   { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Ice Hockey Tournament' },
   { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Ice Hockey Tournament' },
   { sport: Sport.BASEBALL, file: 'baseball-2025-mlb-postseason-test.json', league: 'MLB', event: 'MLB Postseason' },
+  { sport: Sport.SOCCER, file: 'soccer-2022-fifa-world-cup-test.json', league: 'FIFA World Cup', event: 'FIFA World Cup' },
+  { sport: Sport.SOCCER, file: 'soccer-2023-fifa-womens-world-cup-test.json', league: 'FIFA Women\'s World Cup', event: 'FIFA Women\'s World Cup' },
+  { sport: Sport.SOCCER, file: 'soccer-2024-uefa-euro-test.json', league: 'UEFA European Championship', event: 'UEFA Euro' },
+  { sport: Sport.SOCCER, file: 'soccer-2024-copa-america-test.json', league: 'Copa América', event: 'Copa América' },
+  { sport: Sport.SOCCER, file: 'soccer-2026-uefa-champions-league-test.json', league: 'UEFA Champions League', event: 'UEFA Champions League' },
 ];
 
 /**

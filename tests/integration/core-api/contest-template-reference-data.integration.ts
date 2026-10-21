@@ -456,6 +456,66 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
   });
 });
 
+// Soccer's competitions (#787): each a fixed knockout bracket, its presets doubling up to its
+// final. The Copa América starts at the quarter-finals; the Champions League at its knockout
+// play-offs, naming its own rounds.
+const SOCCER_COMPETITIONS = [
+  ['FIFA World Cup', 'world-cup', [1, 2, 4, 8], 4],
+  ['FIFA Women\'s World Cup', 'womens-world-cup', [1, 2, 4, 8], 4],
+  ['UEFA European Championship', 'euro', [1, 2, 4, 8], 4],
+  ['Copa América', 'copa-america', [1, 2, 4], 3],
+  ['UEFA Champions League', 'champions-league', [1, 2, 4, 8, 16], 4],
+] as const;
+
+describe('Seeded soccer competitions and their knockout templates', () => {
+  it('seeds the five competitions as fixed brackets, the Champions League alone naming its own rounds, read back through the sport league repository', async () => {
+    const soccer = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.SOCCER } });
+    const leagues = await new PrismaSportLeagueRepository(getPrisma()).findAll({ sportId: soccer.id });
+
+    expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames])).toEqual([
+      ['Copa América', 'FIXED', []],
+      ['FIFA Women\'s World Cup', 'FIXED', []],
+      ['FIFA World Cup', 'FIXED', []],
+      ['UEFA Champions League', 'FIXED', ['Knockout phase play-offs', 'Round of 16', 'Quarter-finals', 'Semi-finals', 'Final']],
+      ['UEFA European Championship', 'FIXED', []],
+    ]);
+  });
+
+  it.each(SOCCER_COMPETITIONS)('gives %s eleven knockout templates, one default per format, every roster and bracket preset doubling from 1 to its final', async (name, prefix, roundValues, budgetRoster) => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.SOCCER, sportLeague: { name } },
+      orderBy: [{ sortOrder: 'asc' }],
+    });
+
+    expect(templates.map((template) => [template.templateKey, template.selectionType, template.eventType, template.isDefault])).toEqual([
+      [`${prefix}-tiered-doubling`, SelectionType.TIERED, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-tiered-doubling-upset-bonus`, SelectionType.TIERED, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-budget-doubling`, SelectionType.BUDGET_PICK, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-budget-doubling-upset-bonus`, SelectionType.BUDGET_PICK, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-random-draw-doubling`, SelectionType.RANDOM_DRAW, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-random-draw-doubling-upset-bonus`, SelectionType.RANDOM_DRAW, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-bracket-doubling`, SelectionType.BRACKET, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-bracket-doubling-upset-bonus`, SelectionType.BRACKET, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-bracket-second-chance-doubling`, SelectionType.BRACKET, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-squares`, SelectionType.SQUARES, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-knockout-survivor`, SelectionType.SURVIVOR, ContestTemplateEventType.KNOCKOUT, true],
+    ]);
+    for (const template of templates) {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      if (rules.selectionType === SelectionType.SQUARES || rules.selectionType === SelectionType.SURVIVOR) continue;
+      expect(rules.scoring).toEqual({
+        participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+        config: {
+          roundValues,
+          upsetBonus: template.templateKey.endsWith('-upset-bonus') ? { rule: 'SEED_DIFFERENCE', multiplier: 1 } : { rule: 'NONE' },
+        },
+      });
+      if (rules.selectionType === SelectionType.BUDGET_PICK) expect([rules.rosterSize, rules.countedScores]).toEqual([budgetRoster, budgetRoster]);
+      if (rules.selectionType === SelectionType.BRACKET) expect(rules.startsAtRound).toBe(template.templateKey.includes('second-chance') ? 2 : 1);
+    }
+  });
+});
+
 // The NFL's knockout presets (#702): four playoff rounds, so the doubling stops at 8.
 describe('The seeded NFL league and its knockout templates', () => {
   it('seeds the NFL, which reseeds, with a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default', async () => {
@@ -485,8 +545,8 @@ describe('The seeded NFL league and its knockout templates', () => {
     }
   });
 
-  // Squares (#711, #786): the NFL's, the College Football Playoff's and each March Madness league's squares preset, the default for its own format.
-  it('seeds one squares template on the NFL, the College Football Playoff, men\'s and women\'s March Madness and men\'s and women\'s college hockey, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
+  // Squares (#711, #786, #787): the NFL's, the College Football Playoff's, each March Madness league's, each college hockey league's and each soccer competition's squares preset, the default for its own format.
+  it('seeds one squares template on the NFL, the College Football Playoff, men\'s and women\'s March Madness, men\'s and women\'s college hockey and each soccer competition, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { contestFormat: ContestFormat.SQUARES },
       include: { sportLeague: true },
@@ -495,11 +555,16 @@ describe('The seeded NFL league and its knockout templates', () => {
 
     expect(templates.map((template) => [template.templateKey, template.sport, template.selectionType, template.isDefault, template.sportLeague?.name])).toEqual([
       ['cfp-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'College Football Playoff'],
+      ['champions-league-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'UEFA Champions League'],
+      ['copa-america-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'Copa América'],
+      ['euro-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'UEFA European Championship'],
       ['ncaa-men-hockey-squares', Sport.HOCKEY, SelectionType.SQUARES, true, 'NCAA Division I Men'],
       ['ncaa-men-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Men'],
       ['ncaa-women-hockey-squares', Sport.HOCKEY, SelectionType.SQUARES, true, 'NCAA Division I Women'],
       ['ncaa-women-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Division I Women'],
       ['nfl-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'NFL'],
+      ['womens-world-cup-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'FIFA Women\'s World Cup'],
+      ['world-cup-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'FIFA World Cup'],
     ]);
     for (const template of templates) {
       expect(ContestRulesWithEntryLimitSchema.parse(template.configJson))

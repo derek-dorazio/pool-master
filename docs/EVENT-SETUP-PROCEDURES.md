@@ -235,7 +235,8 @@ on the Bracket tab:
   with the higher score winning. A score can't go down as the game goes on, so a quarter's score
   is refused below an earlier quarter's or above a later one's or the final score. Squares pools
   read them. Men's college basketball takes a halftime score (#786), and hockey the scores at
-  the end of the first and second periods (#788), each before its final score.
+  the end of the first and second periods (#788), and soccer a half-time score (#787), each
+  before its final score.
 
 The NBA and WNBA playoffs are basketball tournaments too, in their own sport leagues. A series
 is one game of the bracket: choose the team that won the series, with the games each side won
@@ -264,6 +265,19 @@ Division Series, best-of-seven League Championship Series and World Series. Each
 teams are seeded 1 to 6, and the top two seeds are placed straight into the Division Series,
 as the CFP's byes are (a bye scores nothing). Each series is one game of the bracket, scored in
 games won, so baseball takes no squares pools. It starts on four tiers of three.
+
+Soccer (#787) has five sport leagues, every bracket fixed: the FIFA World Cup, the FIFA
+Women's World Cup, the UEFA European Championship and the Copa América, each event its
+knockout stage at neutral sites seeded by FIFA ranking, and the UEFA Champions League. A
+match's final score is the score after extra time. A match level after extra time asks for its
+shoot-out too (4-3 pens), and the shoot-out's winner goes through; the score stays level. The
+first half's score is entered for squares pools. The third-place match is not part of the
+bracket. The Champions League starts at its knockout play-offs, naming its own rounds: its
+league phase's top eight are placed straight into the Round of 16 (a bye scores nothing), and
+each two-legged tie is one game of the bracket, scored on aggregate, scheduled at the first
+leg, its home side the first leg's host. A tie level on aggregate goes to its shoot-out, as a
+single match does. The Copa América starts at the quarter-finals; every other competition
+starts on four tiers of four.
 
 **Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
 `RESEED_BY_SEED`) loads each round that is placed by seed with no next game in the round

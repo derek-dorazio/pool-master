@@ -1,0 +1,630 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "SOCCER",
+    "season": 2022,
+    "sportLeagues": [
+      "FIFA World Cup"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "BRACKET",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-21",
+    "gatheredBy": "load-sport-data, the 2022 FIFA World Cup knockout stage as played: the bracket, every match's score after extra time, its shoot-out and its half-time score (from the goal minutes), and each kickoff from the page's local time and UTC offset. The third-place match is left out (not part of the bracket). Home is the side Wikipedia lists first. Seeds are the knockout teams' order in the FIFA ranking at the start of the knockouts (the 6 October 2022 men's ranking, the last before the tournament, from the tournament page). ESPN's scoreboards agree on every shoot-out and the final. Odds to win are made up by seed.",
+    "sources": [
+      {
+        "name": "2022 FIFA World Cup knockout stage (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2022_FIFA_World_Cup_knockout_stage"
+      },
+      {
+        "name": "2022 FIFA World Cup (Wikipedia)",
+        "url": "https://en.wikipedia.org/wiki/2022_FIFA_World_Cup"
+      },
+      {
+        "name": "ESPN World Cup scoreboard, 20221205",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20221205"
+      },
+      {
+        "name": "ESPN World Cup scoreboard, 20221206",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20221206"
+      },
+      {
+        "name": "ESPN World Cup scoreboard, 20221209",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20221209"
+      },
+      {
+        "name": "ESPN World Cup scoreboard, 20221218",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20221218"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "FIFA World Cup",
+      "players": [
+        {
+          "key": "wc-brazil",
+          "name": "Brazil",
+          "countryCode": "BR",
+          "ranking": 1
+        },
+        {
+          "key": "wc-argentina",
+          "name": "Argentina",
+          "countryCode": "AR",
+          "ranking": 3
+        },
+        {
+          "key": "wc-france",
+          "name": "France",
+          "countryCode": "FR",
+          "ranking": 4
+        },
+        {
+          "key": "wc-england",
+          "name": "England",
+          "countryCode": "GB",
+          "ranking": 5
+        },
+        {
+          "key": "wc-spain",
+          "name": "Spain",
+          "countryCode": "ES",
+          "ranking": 7
+        },
+        {
+          "key": "wc-netherlands",
+          "name": "Netherlands",
+          "countryCode": "NL",
+          "ranking": 8
+        },
+        {
+          "key": "wc-portugal",
+          "name": "Portugal",
+          "countryCode": "PT",
+          "ranking": 9
+        },
+        {
+          "key": "wc-croatia",
+          "name": "Croatia",
+          "countryCode": "HR",
+          "ranking": 12
+        },
+        {
+          "key": "wc-switzerland",
+          "name": "Switzerland",
+          "countryCode": "CH",
+          "ranking": 15
+        },
+        {
+          "key": "wc-united-states",
+          "name": "United States",
+          "countryCode": "US",
+          "ranking": 16
+        },
+        {
+          "key": "wc-senegal",
+          "name": "Senegal",
+          "countryCode": "SN",
+          "ranking": 18
+        },
+        {
+          "key": "wc-morocco",
+          "name": "Morocco",
+          "countryCode": "MA",
+          "ranking": 22
+        },
+        {
+          "key": "wc-japan",
+          "name": "Japan",
+          "countryCode": "JP",
+          "ranking": 24
+        },
+        {
+          "key": "wc-poland",
+          "name": "Poland",
+          "countryCode": "PL",
+          "ranking": 26
+        },
+        {
+          "key": "wc-south-korea",
+          "name": "South Korea",
+          "countryCode": "KR",
+          "ranking": 28
+        },
+        {
+          "key": "wc-australia",
+          "name": "Australia",
+          "countryCode": "AU",
+          "ranking": 38
+        }
+      ],
+      "events": [
+        {
+          "key": "fifa-world-cup-2022",
+          "name": "FIFA World Cup",
+          "startDate": "2022-12-03",
+          "endDate": "2022-12-18",
+          "venue": null,
+          "location": "Qatar",
+          "rounds": 4,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "wc-brazil",
+              "ranking": 1,
+              "seed": 1,
+              "oddsToWin": 4.0
+            },
+            {
+              "player": "wc-argentina",
+              "ranking": 3,
+              "seed": 2,
+              "oddsToWin": 6.0
+            },
+            {
+              "player": "wc-france",
+              "ranking": 4,
+              "seed": 3,
+              "oddsToWin": 8.0
+            },
+            {
+              "player": "wc-england",
+              "ranking": 5,
+              "seed": 4,
+              "oddsToWin": 10.0
+            },
+            {
+              "player": "wc-spain",
+              "ranking": 7,
+              "seed": 5,
+              "oddsToWin": 12.0
+            },
+            {
+              "player": "wc-netherlands",
+              "ranking": 8,
+              "seed": 6,
+              "oddsToWin": 14.0
+            },
+            {
+              "player": "wc-portugal",
+              "ranking": 9,
+              "seed": 7,
+              "oddsToWin": 16.0
+            },
+            {
+              "player": "wc-croatia",
+              "ranking": 12,
+              "seed": 8,
+              "oddsToWin": 18.0
+            },
+            {
+              "player": "wc-switzerland",
+              "ranking": 15,
+              "seed": 9,
+              "oddsToWin": 20.0
+            },
+            {
+              "player": "wc-united-states",
+              "ranking": 16,
+              "seed": 10,
+              "oddsToWin": 22.0
+            },
+            {
+              "player": "wc-senegal",
+              "ranking": 18,
+              "seed": 11,
+              "oddsToWin": 24.0
+            },
+            {
+              "player": "wc-morocco",
+              "ranking": 22,
+              "seed": 12,
+              "oddsToWin": 26.0
+            },
+            {
+              "player": "wc-japan",
+              "ranking": 24,
+              "seed": 13,
+              "oddsToWin": 28.0
+            },
+            {
+              "player": "wc-poland",
+              "ranking": 26,
+              "seed": 14,
+              "oddsToWin": 30.0
+            },
+            {
+              "player": "wc-south-korea",
+              "ranking": 28,
+              "seed": 15,
+              "oddsToWin": 32.0
+            },
+            {
+              "player": "wc-australia",
+              "ranking": 38,
+              "seed": 16,
+              "oddsToWin": 34.0
+            }
+          ],
+          "matches": [
+            {
+              "matchNumber": 1,
+              "roundNumber": 1,
+              "home": "wc-netherlands",
+              "away": "wc-united-states",
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-03T15:00:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 2,
+              "roundNumber": 1,
+              "home": "wc-argentina",
+              "away": "wc-australia",
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-03T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 9,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 3,
+              "roundNumber": 1,
+              "home": "wc-japan",
+              "away": "wc-croatia",
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-05T15:00:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 1,
+                "homeShootoutScore": 1,
+                "awayShootoutScore": 3
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 4,
+              "roundNumber": 1,
+              "home": "wc-brazil",
+              "away": "wc-south-korea",
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-05T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 10,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 4,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 4,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 5,
+              "roundNumber": 1,
+              "home": "wc-england",
+              "away": "wc-senegal",
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-04T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 6,
+              "roundNumber": 1,
+              "home": "wc-france",
+              "away": "wc-poland",
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-04T15:00:00Z",
+              "advancesTo": {
+                "matchNumber": 11,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 7,
+              "roundNumber": 1,
+              "home": "wc-morocco",
+              "away": "wc-spain",
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-06T15:00:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 0,
+                "awayScore": 0,
+                "homeShootoutScore": 3,
+                "awayShootoutScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 8,
+              "roundNumber": 1,
+              "home": "wc-portugal",
+              "away": "wc-switzerland",
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-06T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 12,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 6,
+                "awayScore": 1
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 9,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-09T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 2,
+                "awayScore": 2,
+                "homeShootoutScore": 3,
+                "awayShootoutScore": 4
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 10,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-09T15:00:00Z",
+              "advancesTo": {
+                "matchNumber": 13,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 1,
+                "homeShootoutScore": 4,
+                "awayShootoutScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 11,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-10T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "AWAY",
+                "homeScore": 1,
+                "awayScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 0,
+                  "awayScore": 1
+                }
+              ]
+            },
+            {
+              "matchNumber": 12,
+              "roundNumber": 2,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-10T15:00:00Z",
+              "advancesTo": {
+                "matchNumber": 14,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 1,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 13,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-13T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "HOME"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 14,
+              "roundNumber": 3,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-14T19:00:00Z",
+              "advancesTo": {
+                "matchNumber": 15,
+                "side": "AWAY"
+              },
+              "result": {
+                "winner": "HOME",
+                "homeScore": 2,
+                "awayScore": 0
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 1,
+                  "awayScore": 0
+                }
+              ]
+            },
+            {
+              "matchNumber": 15,
+              "roundNumber": 4,
+              "home": null,
+              "away": null,
+              "isNeutralSite": true,
+              "scheduledAt": "2022-12-18T15:00:00Z",
+              "advancesTo": null,
+              "result": {
+                "winner": "HOME",
+                "homeScore": 3,
+                "awayScore": 3,
+                "homeShootoutScore": 4,
+                "awayShootoutScore": 2
+              },
+              "periodScores": [
+                {
+                  "periodNumber": 1,
+                  "homeScore": 2,
+                  "awayScore": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
