@@ -15,6 +15,9 @@
  *   `roundValues[N - 1]` plus the upset bonus of the game it won. A pick whose team is out is
  *   busted. Max possible points (design Q3.10) adds the round value of every pick still pending; it
  *   is an upper bound, since two teams still in can meet before the round the entry picked them to win.
+ * - **A team withdrawn after the draw** (#704) and replaced in its first-round place is no longer
+ *   in its game, but a pick of it made before stands, and loses in the first round: busted from
+ *   its first game on, as is every later pick of it. A new pick can't name it.
  * - **The tiebreaker** is the total points scored in the final, both teams together (design §5.2);
  *   the entry closest to it ranks first among entries with the same points.
  */
@@ -75,12 +78,14 @@ function withSides(match: SportEventMatch, sides: PredictedSides): SportEventMat
 
 /**
  * Each game's predicted sides under the entry's picks, and which picks stand. `bracket` is the
- * event's games (cancelled ones left out); `seedOf` is the field's seeds (`knockoutSeeds`).
+ * event's games (cancelled ones left out); `seedOf` is the field's seeds (`knockoutSeeds`);
+ * `withdrawn` the rows withdrawn after the draw (`withdrawnRowIds` in score-team), whose first-round picks stand.
  */
 export function resolveBracketPicks<Pick extends BracketPick>(
   bracket: readonly SportEventMatch[],
   picks: readonly Pick[],
   seedOf: ReadonlyMap<string, number | null>,
+  withdrawn: ReadonlySet<string> = new Set(),
 ): ResolvedBracket<Pick> {
   const rounds = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
   const firstRound = rounds.at(0);
@@ -140,17 +145,18 @@ export function resolveBracketPicks<Pick extends BracketPick>(
         : pick.sportEventParticipantId === placed.home ? MatchSide.HOME
           : pick.sportEventParticipantId === placed.away ? MatchSide.AWAY
             : null;
-      if (pick !== undefined && winnerSide !== null) {
+      // A first-round pick of a team withdrawn from this game stands, and carries the team on.
+      const pickedWithdrawn = pick !== undefined && roundNumber === firstRound && withdrawn.has(pick.sportEventParticipantId);
+      if (pick !== undefined && (winnerSide !== null || pickedWithdrawn)) {
         kept.push(pick);
         keptTeamByMatchId.set(match.id, pick.sportEventParticipantId);
       } else if (pick !== undefined) {
         stranded.push(pick);
       }
-      predicted.push({
-        ...withSides(match, placed),
-        status: winnerSide === null ? MatchStatus.SCHEDULED : MatchStatus.COMPLETED,
-        winnerSide,
-      });
+      // A withdrawn team the entry picked wins its game in the entry's bracket, so reseeding moves it on.
+      predicted.push(pickedWithdrawn
+        ? { ...withSides(match, { home: pick.sportEventParticipantId, away: null }), status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME }
+        : { ...withSides(match, placed), status: winnerSide === null ? MatchStatus.SCHEDULED : MatchStatus.COMPLETED, winnerSide });
       for (const side of SIDES) {
         const team = storedSide(match, side);
         if (team !== null) teamsBefore.add(team);
@@ -213,18 +219,20 @@ export interface BracketScore {
 
 /**
  * Scores an entry's standing picks against the bracket's results. `bracket` holds every game of
- * the event, with each completed game's winner.
+ * the event, with each completed game's winner; a team in `withdrawn` lost in its first round.
  */
 export function scoreBracketPicks(
   bracket: readonly SportEventMatch[],
   picks: readonly BracketPick[],
   seedOf: ReadonlyMap<string, number | null>,
   settings: KnockoutRoundPointsSettings,
+  withdrawn: ReadonlySet<string> = new Set(),
 ): BracketScore {
   const roundByMatchId = new Map(bracket.map((match) => [match.id, match.roundNumber]));
   /** For each team, the games it won by round (with the team it beat), and the round it lost in. */
   const wins = new Map<string, Map<number, string | null>>();
-  const lostIn = new Map<string, number>();
+  const firstRound = Math.min(...bracket.map((match) => match.roundNumber));
+  const lostIn = new Map<string, number>([...withdrawn].map((sportEventParticipantId) => [sportEventParticipantId, firstRound]));
   for (const match of bracket) {
     if (match.status !== MatchStatus.COMPLETED || match.winnerSide === null) continue;
     const winner = storedSide(match, match.winnerSide);

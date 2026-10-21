@@ -18,7 +18,7 @@ import {
   scoreBracketPicks,
   type BracketScore,
 } from '../scoring-families/head-to-head/bracket-picks';
-import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
+import { knockoutSeeds, withdrawnRowIds } from '../scoring-families/head-to-head/score-team';
 import { resolveContestScoringDefinition, type ContestScoringResolutionFailure } from './contest-leaderboard-calculator';
 import {
   loadContestScoringConfiguration,
@@ -90,6 +90,7 @@ export async function loadBracketStandings(
   const startsAtRound = rules?.selectionType === SelectionType.BRACKET ? rules.startsAtRound : 1;
   const games = eventCancelled ? [] : contestBracketGames(matches, startsAtRound);
   const seedOf = knockoutSeeds(field.map((row) => row.entry));
+  const withdrawn = withdrawnRowIds(field.map((row) => row.entry), matches);
   const predictions = await deps.predictions.findByEntriesAndEvent(entries.map((entry) => entry.id), sportEventId);
 
   const picksByEntry = new Map<string, typeof predictions>();
@@ -101,8 +102,8 @@ export async function loadBracketStandings(
 
   const scored = entries.map((entry) => {
     // A bracket pick names a team (#792): a tie pick is never one.
-    const { kept } = resolveBracketPicks(games, (picksByEntry.get(entry.id) ?? []).filter(isTeamChoice), seedOf);
-    return { entry, score: scoreBracketPicks(games, kept, seedOf, settings) };
+    const { kept } = resolveBracketPicks(games, (picksByEntry.get(entry.id) ?? []).filter(isTeamChoice), seedOf, withdrawn);
+    return { entry, score: scoreBracketPicks(games, kept, seedOf, settings, withdrawn) };
   });
   const finalTotal = finalTotalPoints(games);
   const ranks = new Map(rankPredictionStandings(

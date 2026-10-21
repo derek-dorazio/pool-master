@@ -67,7 +67,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { resolveContestScoringDefinition } from '../contests/contest-leaderboard-calculator';
 import { areMatchPicksOpen, areMatchPicksRevealed, contestCutoff, cutoffTiming, openingRoundNumber, type EventTiming } from '../contests/entry-window';
-import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
+import { knockoutSeeds, withdrawnRowIds } from '../scoring-families/head-to-head/score-team';
 import { contestBracketGames, type PredictedSides, type ScoredBracketPick } from '../scoring-families/head-to-head/bracket-picks';
 import { hasSportEventStarted } from '../events/operational-timing';
 import { getPredictionEngine } from './prediction-engines/registry';
@@ -194,6 +194,8 @@ interface WeekContext {
   /** The event's field, and each row's seed as a reseeded bracket and the upset bonus read it. */
   field: SportEventParticipant[];
   seedOf: Map<string, number | null>;
+  /** The field rows withdrawn after the draw (#704): a pick of one made before stands, and loses. */
+  withdrawn: Set<string>;
   entry: ContestEntry & { squadName: string };
   /** The games the entry picks, in game-number order: cancelled games are not picked, and a bracket's start at its starting round. */
   games: SportEventMatch[];
@@ -251,6 +253,10 @@ export class PredictionService {
           'Refused a tie pick in a pool that takes none',
         );
         throw selectionErrors.tieNotOffered(game.id);
+      }
+      // A team withdrawn after the draw (#704) is in no game: an earlier pick of it stands, a new one can't.
+      if (isTeamChoice(pick) && context.withdrawn.has(pick.sportEventParticipantId)) {
+        throw selectionErrors.teamNotInGame(pick.sportEventParticipantId, game.id);
       }
     }
 
@@ -453,7 +459,7 @@ export class PredictionService {
   }
 
   private resolvePicks<Pick extends WeekPrediction>(context: WeekContext, predictions: readonly Pick[]) {
-    return context.engine.resolvePicks({ games: context.games, predictions, seedOf: context.seedOf });
+    return context.engine.resolvePicks({ games: context.games, predictions, seedOf: context.seedOf, withdrawn: context.withdrawn });
   }
 
   private assertOwner(context: WeekContext, actorUserId: string | undefined): void {
@@ -556,6 +562,7 @@ export class PredictionService {
       openingRound: openingRoundNumber(matches),
       field,
       seedOf: knockoutSeeds(field),
+      withdrawn: withdrawnRowIds(field, matches),
       entry,
       games,
       tiebreakerGame: engine.tiebreakerGame({ games, eventStart: sportEvent.startDate }),
@@ -711,6 +718,7 @@ export class PredictionService {
       games: context.games,
       predictions,
       seedOf: context.seedOf,
+      withdrawn: context.withdrawn,
       scoring: scoring.ok ? scoring.scoring : null,
     });
   }

@@ -23,6 +23,7 @@ export const Sport = {
   HOCKEY: 'HOCKEY',
   BASEBALL: 'BASEBALL',
   SOCCER: 'SOCCER',
+  TENNIS: 'TENNIS',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
 

@@ -12,11 +12,14 @@
  *   is locked from release (design Q3.1).
  * - A team placed straight into a later round (a bye) has no match in the round it skipped, so it
  *   scores nothing for it (design Q3.4).
+ * - A team withdrawn after the draw (#704) and replaced in its place has no match: it scores
+ *   nothing and is out, a first-round loss.
  * - Until the bracket has a result, no team is scored: nobody has won or lost yet.
  */
 import {
   MatchSide,
   MatchStatus,
+  ParticipantInactiveReason,
   UpsetBonusRule,
   assertNever,
   type KnockoutRoundPointsSettings,
@@ -24,6 +27,20 @@ import {
   type UpsetBonus,
 } from '@poolmaster/shared/domain';
 import type { SportEventParticipantView } from '../../events/sport-event-participant-service';
+
+/**
+ * The field rows withdrawn after the draw and replaced (#704): inactive as WITHDRAWN, and named
+ * by no match of `bracket`. A row inactivated while still in its place is not one of them.
+ */
+export function withdrawnRowIds(
+  field: ReadonlyArray<{ id: string; isActive: boolean; inactiveReason?: ParticipantInactiveReason | null }>,
+  bracket: ReadonlyArray<Pick<SportEventMatch, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>>,
+): Set<string> {
+  const named = new Set(bracket.flatMap((match) => [match.homeSportEventParticipantId, match.awaySportEventParticipantId]));
+  return new Set(field
+    .filter((row) => !row.isActive && row.inactiveReason === ParticipantInactiveReason.WITHDRAWN && !named.has(row.id))
+    .map((row) => row.id));
+}
 
 /** How a team's knockout score came about: what a leaderboard pick shows beside its points. */
 export interface KnockoutTeamRecord {
@@ -88,6 +105,7 @@ export function scoreKnockoutField(
     }
   }
   const seedById = knockoutSeeds(field.map((row) => row.entry));
+  const withdrawn = withdrawnRowIds(field.map((row) => row.entry), field.flatMap((row) => row.matches));
 
   return field.map((row) => {
     const results = row.matches.flatMap((match) => {
@@ -104,7 +122,7 @@ export function scoreKnockoutField(
     const record: KnockoutTeamRecord = {
       wins: won.length,
       upsetBonusPoints,
-      isAlive: results.length === won.length,
+      isAlive: !withdrawn.has(row.entry.id) && results.length === won.length,
     };
     const scoredRounds = roundPoints.filter((points): points is number => points !== undefined);
     if (decided.size === 0 || scoredRounds.length < roundPoints.length) {

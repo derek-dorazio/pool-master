@@ -18,6 +18,8 @@ describe('contest rules sentence', () => {
   it('names the picks in the event sport\'s words, so a horse racing contest reads horses, not golfers', () => {
     expect(formatContestRules({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 3 }, 3, HORSE))
       .toBe('Pick 1 horse from each of 3 tiers. Every score counts.');
+    expect(formatContestRules({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, tiersUsed: 4 }, 6, HORSE))
+      .toBe('Pick 1 horse from each of the first 4 of 6 tiers. Every score counts.');
     expect(formatContestRules({ selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 2, countedScores: 1 }, 3, HORSE))
       .toBe('The draw deals each entry 2 horses at random. The best score counts.');
     expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, rosterSize: '13' }, SelectionType.BUDGET_PICK, 0, HORSE).error)
@@ -90,6 +92,25 @@ describe('contest rules form', () => {
   it('refuses a picks-per-tier or entry limit that is not a positive whole number', () => {
     expect(parseContestRules({ ...valid, picksPerTier: '0' }, SelectionType.TIERED, 6, GOLFER).error).toBe('Picks per tier must be a positive whole number.');
     expect(parseContestRules({ ...valid, maxEntriesPerTeam: '1.5' }, SelectionType.TIERED, 6, GOLFER).error).toBe('Entries per member must be a positive whole number.');
+  });
+
+  it('sends the tiers to pick from when given, and counts the roster from those tiers alone', () => {
+    expect(parseContestRules({ ...valid, tiersUsed: '4' }, SelectionType.TIERED, 6, GOLFER).configuration)
+      .toEqual({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, tiersUsed: 4, maxEntriesPerSquad: 2 });
+    expect(parseContestRules({ ...valid, tiersUsed: '4', countedScores: '5' }, SelectionType.TIERED, 6, GOLFER).error)
+      .toBe('Scores that count must be between 1 and the 4 golfers picked.');
+  });
+
+  it('refuses more tiers to pick from than the event has, or a number that is not a whole one', () => {
+    expect(parseContestRules({ ...valid, tiersUsed: '7' }, SelectionType.TIERED, 6, GOLFER).error)
+      .toBe('Tiers to pick from must be between 1 and the event\'s 6, or left empty for every tier.');
+    expect(parseContestRules({ ...valid, tiersUsed: '0' }, SelectionType.TIERED, 6, GOLFER).error)
+      .toBe('Tiers to pick from must be between 1 and the event\'s 6, or left empty for every tier.');
+  });
+
+  it('fills the tiers to pick from from saved rules, and leaves it empty for rules that pick from every tier', () => {
+    expect(toContestRulesValues({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, tiersUsed: 4, maxEntriesPerSquad: 1 }).tiersUsed).toBe('4');
+    expect(toContestRulesValues({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 }).tiersUsed).toBe('');
   });
 
   it('turns budget fields into budget rules, leaving the salary cap to the event', () => {

@@ -97,7 +97,8 @@ Two readings of this chain have both been held at once, so it is worth stating p
 - **A pool against the spread scores the team that covers** (`againstTheSpread`, #720), in
   either mode. Each game carries its spread from the home side (`homeSpread`, "Chiefs -3.5"); a
   team covers when its score plus its spread beats the other team's. A game landing exactly on
-  the spread is a **push**, worth nothing to either side.
+  the spread is a **push**, worth nothing to either side. A game ended early (a retirement,
+  walkover or default, #825) has no real final score, so its winner covers.
 - **A survivor entry plays until it loses** (`SURVIVOR`, #719): one pick a week, each team once
   a season (by participant, not field row), out after a loss, a tie or a week not submitted by
   its first kickoff, and out for good. A pick on a cancelled game survives, and since it locks only at
@@ -143,7 +144,7 @@ Shown By Its Name*.
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
-| `Sport` | sport | Golf, horse racing, auto racing, cycling, running, basketball, American football, hockey, baseball and soccer, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
+| `Sport` | sport | Golf, horse racing, auto racing, cycling, running, basketball, American football, hockey, baseball, soccer and tennis, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
 | `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA. A bracket league may name its own rounds (`roundNames`: the NBA's Conference Finals), shown in place of the sport's, and start its events on its own tier count (`tierCount`: the College Football Playoff's six) | `League`, the office pool |
 | `EventSeries` | (series) | A recurring named event, "The Masters", across all years | One year's edition, which is the `SportEvent` |
 | `SportEvent` | tournament, event | One edition of a series in one `eventYear`, with a start date, round count and status | `Contest`, which is the pool's game played on it |
@@ -210,6 +211,12 @@ Shown By Its Name*.
 - **Scratched, withdrawn**: a runner taken out of a race before the start is a field member made
   inactive with `inactiveReason` `WITHDRAWN`; horse racing shows it as "Scratched". A runner
   that did not start is a result (`DID_NOT_START`), which also leaves it `WITHDRAWN` in the standing.
+- **Withdrawn after the draw, replacement** (#704): in any bracket sport, a field member who
+  withdraws before their first-round match is made inactive (`WITHDRAWN`) and a replacement (a
+  tennis lucky loser) gets a field row of its own in that bracket place; a bye's place is not
+  replaced. "Withdrawn" in scoring means `WITHDRAWN` and named by no match. Picks stay on the withdrawn row
+  and score as a first-round loss; they never move to the replacement, unlike a play-in place,
+  which stands for whoever wins it. After the match starts a withdrawal is a walkover result.
 - **Official**: a race's result counts for contest scoring only once the admin marks it official,
   which applies to the whole race. Until then its places are provisional.
 - **Dead heat**: runners who share a finishing place. Both take that place's full points, and the

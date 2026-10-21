@@ -12,7 +12,7 @@ import { survivorPredictionEngine } from '../../../packages/core-api/src/modules
 import { PredictionIssueKind } from '../../../packages/core-api/src/modules/selections/prediction-engines/prediction-engine';
 import { getPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/registry';
 import { expectDefined } from '../../support/expect-defined';
-import { EIGHT_SEEDS, bracketPick, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
+import { EIGHT_SEEDS, NONE_WITHDRAWN, bracketPick, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 
 const STRAIGHT_UP = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false };
 const CONFIDENCE = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false };
@@ -129,6 +129,7 @@ describe('pick\'em engine — resolvePicks, scorePicks and the tiebreaker', () =
       games,
       predictions: [{ ...bracketPick(1, 'T8'), confidence: null }, { ...bracketPick(2, 'T1'), confidence: null }],
       seedOf: EIGHT_SEEDS,
+      withdrawn: NONE_WITHDRAWN,
     });
 
     expect(resolved.sides.get('m1')).toEqual({ home: 'T1', away: 'T8' });
@@ -137,9 +138,9 @@ describe('pick\'em engine — resolvePicks, scorePicks and the tiebreaker', () =
   });
 
   it('scores a week by its pool\'s mode, and cannot score one whose rules are not pick\'em rules', () => {
-    expect(pickEmPredictionEngine.scorePicks({ configuration: STRAIGHT_UP, games, predictions: [], seedOf: EIGHT_SEEDS, scoring: null }))
+    expect(pickEmPredictionEngine.scorePicks({ configuration: STRAIGHT_UP, games, predictions: [], seedOf: EIGHT_SEEDS, withdrawn: NONE_WITHDRAWN, scoring: null }))
       .toMatchObject({ points: 0, maxPossiblePoints: 0 });
-    expect(pickEmPredictionEngine.scorePicks({ configuration: undefined, games, predictions: [], seedOf: EIGHT_SEEDS, scoring: null })).toBeNull();
+    expect(pickEmPredictionEngine.scorePicks({ configuration: undefined, games, predictions: [], seedOf: EIGHT_SEEDS, withdrawn: NONE_WITHDRAWN, scoring: null })).toBeNull();
   });
 
   it('takes the week\'s last game by kickoff as its tiebreaker game', () => {
@@ -178,6 +179,7 @@ describe('bracket engine', () => {
       games: eightTeamBracket(),
       predictions: fullBracket.map((each) => (each.sportEventMatchId === 'm1' ? { ...each, sportEventParticipantId: 'T8' } : each)),
       seedOf: EIGHT_SEEDS,
+      withdrawn: NONE_WITHDRAWN,
     });
 
     expect(resolved.sides.get('m5')).toEqual({ home: 'T8', away: 'T4' });
@@ -186,7 +188,7 @@ describe('bracket engine', () => {
 
   it('scores the picks with the contest\'s knockout round values', () => {
     const played = withResults(eightTeamBracket(), new Map([[1, { winner: MatchSide.HOME }], [2, { winner: MatchSide.AWAY }]]));
-    const score = expectDefined(bracketPredictionEngine.scorePicks({ configuration: undefined, games: played, predictions: fullBracket, seedOf: EIGHT_SEEDS, scoring: KNOCKOUT }));
+    const score = expectDefined(bracketPredictionEngine.scorePicks({ configuration: undefined, games: played, predictions: fullBracket, seedOf: EIGHT_SEEDS, withdrawn: NONE_WITHDRAWN, scoring: KNOCKOUT }));
 
     expect(score.picks.get('m1')).toEqual({ outcome: PickOutcome.CORRECT, points: 1 });
     expect(score.picks.get('m2')).toEqual({ outcome: PickOutcome.BUSTED, points: 0 });
@@ -195,12 +197,13 @@ describe('bracket engine', () => {
   });
 
   it('scores nothing when the contest has no knockout round-points scoring', () => {
-    expect(bracketPredictionEngine.scorePicks({ configuration: undefined, games: eightTeamBracket(), predictions: fullBracket, seedOf: EIGHT_SEEDS, scoring: null })).toBeNull();
+    expect(bracketPredictionEngine.scorePicks({ configuration: undefined, games: eightTeamBracket(), predictions: fullBracket, seedOf: EIGHT_SEEDS, withdrawn: NONE_WITHDRAWN, scoring: null })).toBeNull();
     expect(bracketPredictionEngine.scorePicks({
       configuration: undefined,
       games: eightTeamBracket(),
       predictions: fullBracket,
       seedOf: EIGHT_SEEDS,
+      withdrawn: NONE_WITHDRAWN,
       scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
     })).toBeNull();
   });
@@ -238,21 +241,21 @@ describe('tie picks in each engine (#792)', () => {
   });
 
   it('keeps a pick\'em tie pick on a game of the week and strands one on a game the week does not have', () => {
-    const resolved = pickEmPredictionEngine.resolvePicks({ games, predictions: [tie(1), team(2, 'T4'), tie(99)], seedOf: EIGHT_SEEDS });
+    const resolved = pickEmPredictionEngine.resolvePicks({ games, predictions: [tie(1), team(2, 'T4'), tie(99)], seedOf: EIGHT_SEEDS, withdrawn: NONE_WITHDRAWN });
 
     expect(resolved.kept.map((each) => each.sportEventMatchId)).toEqual(['m1', 'm2']);
     expect(resolved.stranded.map((each) => each.sportEventMatchId)).toEqual(['m99']);
   });
 
   it('strands a tie pick in a bracket, keeping the team picks around it', () => {
-    const resolved = bracketPredictionEngine.resolvePicks({ games: eightTeamBracket(), predictions: [team(1, 'T1'), tie(2)], seedOf: EIGHT_SEEDS });
+    const resolved = bracketPredictionEngine.resolvePicks({ games: eightTeamBracket(), predictions: [team(1, 'T1'), tie(2)], seedOf: EIGHT_SEEDS, withdrawn: NONE_WITHDRAWN });
 
     expect(resolved.kept.map((each) => each.sportEventMatchId)).toEqual(['m1']);
     expect(resolved.stranded.map((each) => each.sportEventMatchId)).toEqual(['m2']);
   });
 
   it('strands a tie pick in a survivor week, so the week holds no pick', () => {
-    const resolved = survivorPredictionEngine.resolvePicks({ games, predictions: [tie(1)], seedOf: EIGHT_SEEDS });
+    const resolved = survivorPredictionEngine.resolvePicks({ games, predictions: [tie(1)], seedOf: EIGHT_SEEDS, withdrawn: NONE_WITHDRAWN });
 
     expect(resolved.kept).toEqual([]);
     expect(resolved.stranded.map((each) => each.sportEventMatchId)).toEqual(['m1']);

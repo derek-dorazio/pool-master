@@ -7,8 +7,9 @@ import { ContestScoringSettingsSchema, KNOCKOUT_ROUND_VALUES_MAX_ROUNDS } from '
  * A contest's rules (#93): one shape per selection type, told apart by `selectionType`, which
  * always matches the contest's own. A new selection type adds its own arm here.
  *
- * - **Tiered:** the entry picks `picksPerTier` golfers from each of the event's tiers, so its
- *   roster is the event's tier count times that (see tiered-roster.ts).
+ * - **Tiered:** the entry picks `picksPerTier` golfers from each of the event's tiers, or only
+ *   its first `tiersUsed` tiers, so its roster is that many tiers times `picksPerTier` (see
+ *   tiered-roster.ts).
  * - **Budget:** the entry picks `rosterSize` golfers whose prices fit under the salary cap. The
  *   cap is the event's (its field was priced against it), copied onto the contest when it is
  *   created or its rules change; the commissioner never sets it.
@@ -39,7 +40,9 @@ export const TieredContestRulesSchema = z.object({
   picksPerTier: z.number().int().min(1)
     .describe("How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this."),
   countedScores: countedScoresSchema,
-}).describe('Tiered rules: pick the same number of golfers from every tier of the event.');
+  tiersUsed: z.number().int().min(1).optional()
+    .describe("How many of the event's tiers an entry picks from, the first ones in tier order (tennis's \"Seeds only\": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout."),
+}).describe('Tiered rules: pick the same number of golfers from every tier of the event, or from its first tiersUsed tiers.');
 export type TieredContestRules = z.infer<typeof TieredContestRulesSchema>;
 
 export const BudgetContestRulesSchema = z.object({

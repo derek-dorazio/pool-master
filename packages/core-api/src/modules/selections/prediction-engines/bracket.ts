@@ -25,12 +25,12 @@ export const bracketPredictionEngine: PredictionEngine = {
     return confidence === null;
   },
 
-  resolvePicks({ games, predictions, seedOf }) {
+  resolvePicks({ games, predictions, seedOf, withdrawn }) {
     // A bracket pick names a team: a tie pick never stands. Each team pick is resolved under a
     // copy that keeps the pick it came from.
     const teamPicks = predictions.filter(isTeamChoice)
       .map((source) => ({ sportEventMatchId: source.sportEventMatchId, sportEventParticipantId: source.sportEventParticipantId, source }));
-    const resolved = resolveBracketPicks(games, teamPicks, seedOf);
+    const resolved = resolveBracketPicks(games, teamPicks, seedOf, withdrawn);
     return {
       sides: resolved.sides,
       kept: resolved.kept.map((pick) => pick.source),
@@ -38,10 +38,10 @@ export const bracketPredictionEngine: PredictionEngine = {
     };
   },
 
-  scorePicks({ games, predictions, seedOf, scoring }) {
+  scorePicks({ games, predictions, seedOf, withdrawn, scoring }) {
     // A bracket scores with the knockout round values; contest setup refuses any other definition.
     return scoring?.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS'
-      ? scoreBracketPicks(games, predictions.filter(isTeamChoice), seedOf, scoring.config)
+      ? scoreBracketPicks(games, predictions.filter(isTeamChoice), seedOf, scoring.config, withdrawn)
       : null;
   },
 

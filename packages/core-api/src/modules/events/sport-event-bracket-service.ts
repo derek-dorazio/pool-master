@@ -15,6 +15,9 @@
  *
  * The March Madness First Four is not played here: each play-in place is one field row standing
  * for the pairing, which `fillPlayInSlot` points at the winning team once the game is played.
+ *
+ * A named participant who withdraws after the draw (a tennis lucky loser's chance, #704) is
+ * replaced in its bracket place by `replaceWithdrawn` until its first match starts, in any sport.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -22,13 +25,16 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestEntryMatchPredictionRepository,
   ParticipantRepository,
+  ReplacementValuation,
   SportLeagueRepository,
   SportEventMatchPatch,
   SportEventMatchRepository,
   SportEventMatchWrite,
   SportEventParticipantRepository,
+  SportEventParticipantValuationRepository,
   SportEventRepository,
   SportEventRoundRepository,
+  SportEventTierRepository,
 } from '@poolmaster/shared/db';
 import {
   BracketAdvancement,
@@ -175,6 +181,9 @@ export interface SportEventBracketServiceDeps {
   field: SportEventParticipantRepository;
   participants: Pick<ParticipantRepository, 'findById'>;
   matches: SportEventMatchRepository;
+  /** The event's tiers and valuations, which a replacement joins at the bottom of. */
+  tiers: Pick<SportEventTierRepository, 'findBySportEvent'>;
+  valuations: Pick<SportEventParticipantValuationRepository, 'findBySportEvent'>;
   /** Whether a game has picks: a released game's spread is fixed once it has (#720). */
   predictions: Pick<ContestEntryMatchPredictionRepository, 'hasAnyOnMatch'>;
   newId?: () => string;
@@ -458,6 +467,126 @@ export class SportEventBracketService {
       { sportEventId, sportEventParticipantId, winnerParticipantId, pairingParticipantId: pairing.id },
       'Filled a play-in place with its winner',
     );
+  }
+
+  /**
+   * A withdrawal after the draw (#704 slice 3): puts `replacementParticipantId` in the bracket place
+   * of a field row that withdrew before its first-round match, before or after release, in any sport.
+   * The replacement gets a field row of its own, unseeded, in the event's last tier and at its
+   * lowest price, so roster pools can pick it while entries are open; the withdrawn row stays on
+   * the field, inactive as WITHDRAWN, keeping every pick of it, which then scores as a first-round
+   * loss. 404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 409
+   * EVENT_PARTICIPANT_IS_PLAY_IN_PLACE for a play-in place, which is filled instead; 409
+   * EVENT_PARTICIPANT_NOT_IN_BRACKET for a row no match names (one already replaced, too); 409
+   * BRACKET_PARTICIPANT_ALREADY_PLAYED once its match has started; 409
+   * BRACKET_PLACE_NOT_FIRST_ROUND for a place after the first round (a bye); and the play-in winner's
+   * refusals for the replacement: 404 PARTICIPANT_NOT_FOUND, 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD.
+   * Returns the replacement's field row id.
+   */
+  async replaceWithdrawn(sportEventId: string, sportEventParticipantId: string, replacementParticipantId: string): Promise<string> {
+    await this.requireBracketEvent(sportEventId);
+    const entry = await this.deps.field.findById(sportEventParticipantId);
+    if (!entry || entry.sportEventId !== sportEventId) {
+      throw new SportEventError(
+        `Field row ${sportEventParticipantId} is not on sport event ${sportEventId}.`,
+        'EVENT_PARTICIPANT_NOT_FOUND',
+        404,
+      );
+    }
+    if (entry.isPlayInPlace) {
+      this.deps.logger?.warn({ sportEventId, sportEventParticipantId }, 'Refused to replace a play-in place');
+      throw new SportEventError(
+        `Field row ${sportEventParticipantId} is a play-in place: fill it with its winner instead.`,
+        'EVENT_PARTICIPANT_IS_PLAY_IN_PLACE',
+        409,
+      );
+    }
+    const bracket = await this.deps.matches.findBySportEvent(sportEventId);
+    const named = bracket.flatMap((match) => SIDES.filter((side) => sideOf(match, side) === entry.id).map((side) => ({ match, side })));
+    const place = named.at(0);
+    if (place === undefined) {
+      throw new SportEventError(
+        `Field row ${sportEventParticipantId} has no place in sport event ${sportEventId}'s bracket.`,
+        'EVENT_PARTICIPANT_NOT_IN_BRACKET',
+        409,
+      );
+    }
+    // A row in a second match got there by winning the first.
+    if (named.length > 1 || place.match.status !== MatchStatus.SCHEDULED) {
+      this.deps.logger?.warn({ sportEventId, sportEventParticipantId, matchNumber: place.match.matchNumber }, 'Refused to replace a participant whose match has started');
+      throw new SportEventError(
+        `Field row ${sportEventParticipantId}'s match ${place.match.matchNumber} has started, so a withdrawal is now a walkover.`,
+        'BRACKET_PARTICIPANT_ALREADY_PLAYED',
+        409,
+      );
+    }
+    // A pick of a withdrawn row stands only in the bracket's first round, so a place a bye put
+    // later is not replaced: the withdrawal is a walkover there.
+    if (place.match.roundNumber !== Math.min(...bracket.map((match) => match.roundNumber))) {
+      this.deps.logger?.warn({ sportEventId, sportEventParticipantId, matchNumber: place.match.matchNumber }, 'Refused to replace a participant placed after the first round');
+      throw new SportEventError(
+        `Field row ${sportEventParticipantId}'s place is in round ${place.match.roundNumber}, not the first round, so a withdrawal is a walkover.`,
+        'BRACKET_PLACE_NOT_FIRST_ROUND',
+        409,
+      );
+    }
+    const [withdrawn, replacement] = await Promise.all([
+      this.deps.participants.findById(entry.participantId),
+      this.deps.participants.findById(replacementParticipantId),
+    ]);
+    if (!withdrawn || !replacement || replacement.sportId !== withdrawn.sportId || replacement.status !== ParticipantStatus.ACTIVE) {
+      throw new SportEventError(
+        `Participant ${replacementParticipantId} is not an active participant of this event's sport.`,
+        'PARTICIPANT_NOT_FOUND',
+        404,
+      );
+    }
+    const field = await this.deps.field.findBySportEvent(sportEventId);
+    if (field.some((row) => row.participantId === replacementParticipantId)) {
+      throw new SportEventError(
+        `${replacement.name} is already on sport event ${sportEventId}'s field.`,
+        'EVENT_PARTICIPANT_ALREADY_ON_FIELD',
+        409,
+      );
+    }
+
+    const replacementId = await this.deps.field.replaceWithdrawn({
+      withdrawnId: entry.id,
+      matchId: place.match.id,
+      side: place.side,
+      replacementParticipantId,
+      valuation: await this.bottomValuation(sportEventId),
+    });
+    this.deps.logger?.info(
+      { sportEventId, withdrawnId: entry.id, replacementId, replacementParticipantId, matchNumber: place.match.matchNumber, side: place.side },
+      'Replaced a withdrawn participant in the bracket',
+    );
+    return replacementId;
+  }
+
+  /**
+   * Where a replacement joins the event's valuations: last in its last tier, at the field's
+   * lowest price, the bottom of the budget curve. Null when the event has neither tiers nor prices.
+   */
+  private async bottomValuation(sportEventId: string): Promise<ReplacementValuation | null> {
+    const [tiers, valuations] = await Promise.all([
+      this.deps.tiers.findBySportEvent(sportEventId),
+      this.deps.valuations.findBySportEvent(sportEventId),
+    ]);
+    const lastTier = tiers.at(-1) ?? null;
+    const prices = valuations.flatMap((valuation) => (valuation.price === null ? [] : [valuation.price]));
+    const price = prices.length > 0 ? Math.min(...prices) : null;
+    if (lastTier === null && price === null) {
+      return null;
+    }
+    const orders = valuations
+      .filter((valuation) => lastTier !== null && valuation.sportEventTierId === lastTier.id)
+      .flatMap((valuation) => (valuation.tierOrderIndex === null ? [] : [valuation.tierOrderIndex]));
+    return {
+      sportEventTierId: lastTier?.id ?? null,
+      tierOrderIndex: lastTier === null ? null : Math.max(0, ...orders) + 1,
+      price,
+    };
   }
 
   private async findSideEditProblems(

@@ -11,6 +11,7 @@ import {
   ContestFormat,
   ContestStatus,
   MatchSide,
+  ParticipantInactiveReason,
   PickOutcome,
   SelectionType,
   UpsetBonusRule,
@@ -352,5 +353,57 @@ describe('PredictionService on a bracket — what each viewer sees, and the scor
     expect(game(view, 7).pickScore).toEqual({ outcome: PickOutcome.PENDING, points: null });
     // 1 + 2 + 1 so far, and T1 can still win game 5 (2) and the final (4).
     expect(view).toMatchObject({ points: 4, maxPossiblePoints: 10 });
+  });
+});
+
+describe('PredictionService on a bracket — a team withdrawn after the draw (#704)', () => {
+  /** T1 withdraws before game 1, and a lucky loser takes its place against T8. */
+  function withdrawT1(context: ReturnType<typeof setup>) {
+    const sportEventId = expectDefined(context.games.matches.get('m1')).sportEventId;
+    Object.assign(expectDefined(context.games.field.get('T1')), { isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN });
+    context.games.addTeam(sportEventId, 'Lucky Loser', { id: 'LL' });
+    context.games.putMatches([...context.games.matches.values()].map((match) => (match.matchNumber === 1 ? { ...match, homeSportEventParticipantId: 'LL' } : match)));
+  }
+
+  it('keeps the entry\'s picks of the withdrawn team, each busted as a first-round loss, rather than dropping them', async () => {
+    const context = setup();
+    await context.service.saveGamePicks({ ...context.input, picks: CHALK, tiebreakerValue: 140 });
+    await context.service.submitGamePicks(context.input);
+    withdrawT1(context);
+    context.goLive();
+
+    const view = await context.service.getGamePicks(context.input);
+
+    expect(view.pickedCount).toBe(7);
+    expect(game(view, 1).pickScore).toEqual({ outcome: PickOutcome.BUSTED, points: 0 });
+    expect(game(view, 5).pickScore).toEqual({ outcome: PickOutcome.BUSTED, points: 0 });
+    expect(game(view, 7).pickScore).toEqual({ outcome: PickOutcome.BUSTED, points: 0 });
+    expect(predicted(view, 5)).toEqual(['T1', 'T4']);
+    // Games 2, 3, 4 (1 each) and game 6 (2) are all that can still score.
+    expect(view).toMatchObject({ points: 0, maxPossiblePoints: 3 + 2 });
+  });
+
+  it('keeps the entry\'s picks of the withdrawn team when it saves another pick while open, rather than clearing them as stranded', async () => {
+    const context = setup();
+    await context.service.saveGamePicks({ ...context.input, picks: CHALK, tiebreakerValue: 140 });
+    withdrawT1(context);
+
+    await context.service.saveGamePicks({ ...context.input, picks: [{ ...bracketPick(2, 'T5'), confidence: null }] });
+
+    expect(context.storedPicks()).toEqual(expect.arrayContaining([['m1', 'T1'], ['m2', 'T5']]));
+    expect(context.storedPicks().filter(([, team]) => team === 'T1')).toHaveLength(3);
+  });
+
+  it('refuses a new pick of the withdrawn team with 400 PREDICTION_TEAM_NOT_IN_GAME, and takes its replacement while the entry is open', async () => {
+    const context = setup();
+    withdrawT1(context);
+
+    await expectRefused(
+      context.service.saveGamePicks({ ...context.input, picks: [{ ...bracketPick(1, 'T1'), confidence: null }] }),
+      'PREDICTION_TEAM_NOT_IN_GAME', 400,
+    );
+    await context.service.saveGamePicks({ ...context.input, picks: [{ ...bracketPick(1, 'LL'), confidence: null }] });
+
+    expect(context.storedPicks()).toEqual([['m1', 'LL']]);
   });
 });

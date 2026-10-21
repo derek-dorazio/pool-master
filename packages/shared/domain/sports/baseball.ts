@@ -36,6 +36,7 @@ export const baseballSportDefinition: SportDefinition = {
     eventStart: 'first pitch',
     match: { one: 'series', many: 'series' },
     tie: 'Tie',
+    scoreUnit: 'games',
   },
   // A four-round postseason reads Wild Card Series, Division Series, League Championship Series,
   // World Series; a shorter one keeps the names counted back from its final.

@@ -64,9 +64,10 @@ const FieldEntrySchema = z.object({
   ranking: z.number().int().positive().optional(),
   /**
    * The bracket seed, where it is not the entry's place in the field: 1-16 in each March
-   * Madness region, 1-7 in each NFL conference. Left out, the seed is that place.
+   * Madness region, 1-7 in each NFL conference. Left out, the seed is that place; null, the
+   * entry is unseeded, as a tennis draw's players outside its 32 seeds are (#704).
    */
-  seed: z.number().int().positive().optional(),
+  seed: z.number().int().positive().nullable().optional(),
   /** A bracket sport's only: this place stands for a play-in pairing ("Texas / Xavier"), whose winner is named after release. */
   isPlayInPlace: z.boolean().optional(),
   // Test data only (RESULTS):
@@ -158,7 +159,8 @@ const EventSchema = z.object({
   startsAt: z.string().datetime({ offset: true }).optional(),
   venue: z.string().min(1).nullable(),
   location: z.string().min(1).nullable(),
-  rounds: z.number().int().min(1).max(6),
+  /** Seven at most: a tennis Grand Slam's 128-player draw (#704). */
+  rounds: z.number().int().min(1).max(7),
   /** Par per round: a stroke-play sport's only, null for every other. */
   roundsPar: z.number().int().min(60).max(80).nullable(),
   /** Test data only: whether the made-up winner is the public one. */

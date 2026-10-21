@@ -14,6 +14,7 @@ import type {
   ParticipantLeagueAffiliationRepository,
   ParticipantRanking,
   PriceAssignment,
+  ReplacementValuation,
   SportEventCreate,
   SportEventFilters,
   SportEventParticipantCreate,
@@ -39,7 +40,6 @@ import type {
 import type {
   EventPricingConfig,
   EventSeries,
-  ParticipantInactiveReason,
   ParticipantLeagueAffiliation,
   Sport,
   SportConfig,
@@ -52,9 +52,8 @@ import type {
   SportEventSyncScope,
   SportEventTier,
   SportLeague,
-  ValuationSource,
 } from '@poolmaster/shared/domain';
-import { EventPricingConfigSchema, ParticipantStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import { EventPricingConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { mapToParticipant } from './prisma-participant-repository';
 
 type Db = PrismaClient;
@@ -550,6 +549,46 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
       this.prisma.sportEventParticipant.update({ where: { id: input.id }, data: { participantId: input.winnerParticipantId, isPlayInPlace: false } }),
       this.prisma.participant.update({ where: { id: input.pairingParticipantId }, data: { status: ParticipantStatus.INACTIVE } }),
     ]);
+  }
+
+  async replaceWithdrawn(input: {
+    withdrawnId: string;
+    matchId: string;
+    side: MatchSide;
+    replacementParticipantId: string;
+    valuation: ReplacementValuation | null;
+  }): Promise<string> {
+    return this.prisma.$transaction(async (tx) => {
+      const withdrawn = await tx.sportEventParticipant.update({
+        where: { id: input.withdrawnId },
+        data: { isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN },
+      });
+      const { valuation } = input;
+      const replacement = await tx.sportEventParticipant.create({
+        data: {
+          sportEventId: withdrawn.sportEventId,
+          participantId: input.replacementParticipantId,
+          ...(valuation && {
+            valuation: {
+              create: {
+                sportEventTierId: valuation.sportEventTierId,
+                tierOrderIndex: valuation.tierOrderIndex,
+                tierAssignedSource: valuation.sportEventTierId === null ? null : ValuationSource.MANUAL,
+                price: valuation.price,
+                priceAssignedSource: valuation.price === null ? null : ValuationSource.MANUAL,
+              },
+            },
+          }),
+        },
+      });
+      await tx.sportEventMatch.update({
+        where: { id: input.matchId },
+        data: input.side === MatchSide.HOME
+          ? { homeSportEventParticipantId: replacement.id }
+          : { awaySportEventParticipantId: replacement.id },
+      });
+      return replacement.id;
+    });
   }
 }
 

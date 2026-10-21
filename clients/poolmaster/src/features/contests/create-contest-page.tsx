@@ -68,6 +68,7 @@ import {
   DEFAULT_CONTEST_RULES,
   defaultCountedScoresFor,
   parseContestRules,
+  tiersInPlayFor,
   toContestRulesValues,
 } from './contest-rules-form';
 
@@ -148,6 +149,7 @@ const createContestFormSchema = z.object({
   roundValues: z.string(),
   scoringDefinitionId: ParticipantScoringDefinitionIdSchema,
   startsAtRound: z.string(),
+  tiersUsed: z.string(),
   selectedTemplateId: z.string(),
   selectionType: z.enum(creatableSelectionTypes),
   sport: z.custom<Sport>((value) => SUPPORTED_SPORTS.some((sport) => sport === value)),
@@ -488,7 +490,7 @@ export function CreateContestPage() {
       && String(preset.configuration.picksPerTier) === picksPerTier) {
       return;
     }
-    const countedScores = defaultCountedScoresFor(picksPerTier, tierCount);
+    const countedScores = defaultCountedScoresFor(picksPerTier, tiersInPlayFor(form.getValues('tiersUsed'), tierCount));
     if (countedScores !== null) {
       setFormValues({ countedScores });
     }

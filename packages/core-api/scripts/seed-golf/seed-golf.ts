@@ -546,7 +546,7 @@ class Loader {
       if (!row) add.push({ name, participantId });
       const patch: Omit<FieldPatch, 'sportEventParticipantId'> = {};
       if (entry.ranking !== undefined && row?.ranking !== entry.ranking) patch.ranking = entry.ranking;
-      const seed = entry.seed ?? index + 1;
+      const seed = entry.seed === undefined ? index + 1 : entry.seed;
       if (row?.seedNumber !== seed) patch.seedNumber = seed;
       if (entry.isPlayInPlace !== undefined && (row?.isPlayInPlace ?? false) !== entry.isPlayInPlace) {
         patch.isPlayInPlace = entry.isPlayInPlace;

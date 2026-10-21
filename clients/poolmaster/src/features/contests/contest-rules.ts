@@ -1,4 +1,4 @@
-import { PickEmMode, SelectionType, getTieredRosterSize, type ContestRules, type SportNoun } from '@poolmaster/shared/domain';
+import { PickEmMode, SelectionType, getTieredRosterSize, getTiersInPlay, type ContestRules, type SportNoun } from '@poolmaster/shared/domain';
 import { formatDollars } from '@/features/shared/ui';
 
 /**
@@ -57,14 +57,17 @@ function formatCountedScores(countedScores: number, rosterSize: number | null) {
       : `The best ${countedScores} scores count.`;
 }
 
-function formatTieredRules({ countedScores, picksPerTier }: TieredRules, tierCount: number, participant: SportNoun) {
+function formatTieredRules({ countedScores, picksPerTier, tiersUsed }: TieredRules, tierCount: number, participant: SportNoun) {
   const golfers = countParticipants(picksPerTier, participant);
+  const inPlay = getTiersInPlay(tierCount, tiersUsed);
   const pick = tierCount === 0
-    ? `Pick ${golfers} from each of the event's tiers.`
-    : tierCount === 1
-      ? `Pick ${golfers} from the event's one tier.`
-      : `Pick ${golfers} from each of ${tierCount} tiers.`;
-  const rosterSize = tierCount > 0 ? getTieredRosterSize(tierCount, picksPerTier) : null;
+    ? tiersUsed === undefined ? `Pick ${golfers} from each of the event's tiers.` : `Pick ${golfers} from each of the event's first ${tiersUsed} tiers.`
+    : inPlay < tierCount
+      ? `Pick ${golfers} from each of the first ${inPlay} of ${tierCount} tiers.`
+      : tierCount === 1
+        ? `Pick ${golfers} from the event's one tier.`
+        : `Pick ${golfers} from each of ${tierCount} tiers.`;
+  const rosterSize = tierCount > 0 ? getTieredRosterSize(inPlay, picksPerTier) : null;
   return `${pick} ${formatCountedScores(countedScores, rosterSize)}`;
 }
 
@@ -199,7 +202,7 @@ export function suggestContestName(
   switch (selectionType) {
     case SelectionType.TIERED:
       return configuration?.selectionType === SelectionType.TIERED && tierCount > 0
-        ? `${eventName} Pick ${getTieredRosterSize(tierCount, configuration.picksPerTier)}`
+        ? `${eventName} Pick ${getTieredRosterSize(getTiersInPlay(tierCount, configuration.tiersUsed), configuration.picksPerTier)}`
         : `${eventName} Tiered`;
     case SelectionType.BUDGET_PICK:
       return configuration?.selectionType === SelectionType.BUDGET_PICK

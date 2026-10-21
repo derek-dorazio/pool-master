@@ -246,7 +246,7 @@ filling them in rather than by finding guards scattered through the code:
   permission (§2 *Validity / Compatibility Matrices Source of Truth*).
 - **The sport's scoring family** holds what is behaviour: how results are stored, scored and
   shown. Several sports share a family (golf is stroke play; basketball, American football,
-  hockey, baseball and soccer are head to head; races are finish position), and each family owns one set of result
+  hockey, baseball, soccer and tennis are head to head; races are finish position), and each family owns one set of result
   extension tables beside the cross-sport event core. Never one table set per sport. An
   entry's settled total is not one of them: it is one integer in every family, read through
   the contest's scoring definition, so it lives on `ContestEntryStanding.totalScore` and a

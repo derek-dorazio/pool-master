@@ -344,6 +344,18 @@ week is, and every week's field holds all the league's teams:
 A drawn match's result has no `winner` (null), which only a week's game may have. Every match
 carries its half-time score. Kickoffs and scores are real, and the odds are made up.
 
+## Seeded tennis draws
+
+`tennis-2026-us-open-test.json` holds the 2026 US Open men's and women's singles as played, one
+event each in the ATP and the WTA. Each is a 128-player draw in seven rounds, every quarter of
+the draw a region through the quarterfinals. The 32 seeds carry their seed (the men's 31: Ruud,
+the 19th, withdrew and a lucky loser took his place) and everyone else is unseeded. Each draw's
+16 qualifier places are play-in places that take their qualifier after release. A match's score
+is sets won, and the men's two retirements count only the sets finished. Alexander Zverev beat
+Ben Shelton 3-1 and Elena Rybakina beat Aryna Sabalenka 2-1. Pairings, winners, sets and match
+times are real. The seeds' rankings are real; the unseeded players' are an ordering after the
+seeds, and the odds are made up. It loads as the hockey seeds do.
+
 ## Seeded 2026 races
 
 To try racing contests without setting up a race, load a test seed of the 2026 season as run.

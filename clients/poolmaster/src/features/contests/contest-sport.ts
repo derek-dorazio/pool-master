@@ -15,6 +15,27 @@ export function contestParticipantNoun(sport: Sport | null | undefined): SportNo
   return sport ? getSportDefinition(sport).vocabulary.participant : PARTICIPANT_WITHOUT_SPORT;
 }
 
+/** What a contest's screens call one match when its sport names none (#704). */
+const MATCH_WITHOUT_WORD: SportNoun = { one: 'game', many: 'games' };
+
+/** What a contest's sport calls one match: "match" in tennis, "game" wherever the sport names none. */
+export function contestMatchNoun(sport: Sport | null | undefined): SportNoun {
+  return (sport ? getSportDefinition(sport).vocabulary.match : undefined) ?? MATCH_WITHOUT_WORD;
+}
+
+/**
+ * The moment a contest's first match starts, read after "the": "first kickoff" in American
+ * football, "first match" in tennis, "first game" for a contest with no sport.
+ */
+export function contestEventStart(sport: Sport | null | undefined): string {
+  return sport ? getSportDefinition(sport).vocabulary.eventStart : 'first game';
+}
+
+/** What a match's score counts, as a tiebreaker reads it: "sets" in tennis, "points" wherever the sport names none. */
+export function contestScoreUnit(sport: Sport | null | undefined): string {
+  return (sport ? getSportDefinition(sport).vocabulary.scoreUnit : undefined) ?? 'points';
+}
+
 /** What a game that ends level is called (#792): "Draw" in soccer, "Tie" wherever the sport names none. */
 export function tieWord(vocabulary: SportVocabulary | undefined): string {
   return vocabulary?.tie ?? 'Tie';

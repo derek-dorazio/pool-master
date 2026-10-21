@@ -14,5 +14,6 @@ export const SPORT_BLURBS: Record<Sport, string> = {
   AMERICAN_FOOTBALL: 'Weekly pick\'em and survivor, playoff brackets, and squares on the big game.',
   HOCKEY: 'NHL, PWHL and college playoff brackets, survivor pools, and squares on the big games.',
   BASEBALL: 'MLB postseason brackets and survivor pools, from the Wild Card round to the World Series.',
-  SOCCER: 'World Cup, Euros, Copa América and Champions League: brackets, sweepstakes, survivor, and squares on the final.',
+  SOCCER: 'World Cup, Euros, Copa América and Champions League: brackets, sweepstakes, survivor, and squares on the final. Premier League weeks and group matchdays: pick\'em with draw picks, and Last Man Standing.',
+  TENNIS: 'The four Grand Slams, men\'s and women\'s draws: tiered and budget picks, full-draw brackets, sweepstakes and survivor.',
 };

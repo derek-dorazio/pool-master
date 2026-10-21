@@ -89,6 +89,11 @@ export const FillPlayInSlotRequestSchema = z.object({
 }).describe('The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing\'s participant is inactivated.');
 export type FillPlayInSlotRequest = z.infer<typeof FillPlayInSlotRequestSchema>;
 
+export const ReplaceWithdrawnParticipantRequestSchema = z.object({
+  participantId: z.string().uuid().describe('Who takes the place: an active participant of the event\'s sport not yet on the field, such as a tennis lucky loser.'),
+}).describe('A replacement for a field row that withdrew before its first match. The replacement gets its own field row in the withdrawn row\'s bracket place, unseeded, last in the event\'s last tier and at its lowest price. The withdrawn row stays on the field, inactive as WITHDRAWN, and every pick of it scores as a first-round loss.');
+export type ReplaceWithdrawnParticipantRequest = z.infer<typeof ReplaceWithdrawnParticipantRequestSchema>;
+
 export const RecordSportEventMatchResultRequestSchema = z.object({
   winnerSide: MatchSideDtoSchema.nullable().describe('The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.'),
   homeScore: z.number().int().min(0).nullable().describe('The home side\'s score (games won, for a series), or null with the away score null too.'),
@@ -133,6 +138,7 @@ registerSchema('SportEventMatchResponse', SportEventMatchResponseSchema);
 registerSchema('LoadSportEventBracketRequest', LoadSportEventBracketRequestSchema);
 registerSchema('UpdateSportEventMatchRequest', UpdateSportEventMatchRequestSchema);
 registerSchema('FillPlayInSlotRequest', FillPlayInSlotRequestSchema);
+registerSchema('ReplaceWithdrawnParticipantRequest', ReplaceWithdrawnParticipantRequestSchema);
 registerSchema('RecordSportEventMatchResultRequest', RecordSportEventMatchResultRequestSchema);
 registerSchema('RecordSportEventMatchPeriodScoreRequest', RecordSportEventMatchPeriodScoreRequestSchema);
 registerSchema('RoundMatchupDto', RoundMatchupDtoSchema);

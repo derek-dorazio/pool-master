@@ -42,6 +42,7 @@ import type {
   LoadSportEventBracketRequest,
   RecordSportEventMatchPeriodScoreRequest,
   RecordSportEventMatchResultRequest,
+  ReplaceWithdrawnParticipantRequest,
   SetSportEventRoundMatchupsRequest,
   SportEventBracketResponse,
   SportEventMatchResponse,
@@ -463,6 +464,15 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       const { eventId, sportEventParticipantId } = request.params;
       await bracket.fillPlayInSlot(eventId, sportEventParticipantId, request.body.participantId);
       const participant = (await field.listEventParticipants(eventId)).find((view) => view.entry.id === sportEventParticipantId);
+      return { participant: mapSportEventParticipantToDto(participant as NonNullable<typeof participant>) };
+    },
+
+    replaceEventParticipant: async (
+      request: FastifyRequest<{ Params: { eventId: string; sportEventParticipantId: string }; Body: ReplaceWithdrawnParticipantRequest }>,
+    ): Promise<SportEventParticipantResponse> => {
+      const { eventId, sportEventParticipantId } = request.params;
+      const replacementId = await bracket.replaceWithdrawn(eventId, sportEventParticipantId, request.body.participantId);
+      const participant = (await field.listEventParticipants(eventId)).find((view) => view.entry.id === replacementId);
       return { participant: mapSportEventParticipantToDto(participant as NonNullable<typeof participant>) };
     },
   };

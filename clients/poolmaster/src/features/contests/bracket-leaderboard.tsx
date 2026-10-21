@@ -13,6 +13,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { formatPoints } from './bracket-layout';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
+import { contestScoreUnit } from './contest-sport';
 import { ContestStatusBadge } from './contest-status-badge';
 import { fetchContestEntries } from './use-contest-entries';
 import { useBracketLeaderboardQuery } from './use-contest-leaderboard';
@@ -166,7 +167,7 @@ export function BracketLeaderboard({ contest, leagueCode: hintedLeagueCode }: { 
           ) : null}
           {board.finalTotalPoints !== null ? (
             <p data-testid="bracket-leaderboard-final-total">
-              {`The final scored ${board.finalTotalPoints} total points: tiebreakers are measured against it.`}
+              {`The final scored ${board.finalTotalPoints} total ${contestScoreUnit(contest.sport)}: tiebreakers are measured against it.`}
             </p>
           ) : null}
           {board.eventCancelled ? (

@@ -34,7 +34,7 @@ import type {
   SportRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, findSportRow, MatchSide, MatchStatus, ParticipantStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, findSportRow, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
 import type {
   GolfRoundResult,
   GolfStandingResult,
@@ -415,6 +415,28 @@ export class InMemorySportEvents {
         row.participantId = winnerParticipantId;
         row.isPlayInPlace = false;
         pairing.status = ParticipantStatus.INACTIVE;
+      },
+      replaceWithdrawn: async ({ withdrawnId, matchId, side, replacementParticipantId, valuation }) => {
+        const withdrawn = this.field.find((entry) => entry.id === withdrawnId);
+        const match = this.matchRows.find((row) => row.id === matchId);
+        if (!withdrawn || !match) throw new Error('unknown field row or match');
+        withdrawn.isActive = false;
+        withdrawn.inactiveReason = ParticipantInactiveReason.WITHDRAWN;
+        const replacement = this.addToField(withdrawn.sportEventId, replacementParticipantId);
+        if (valuation) {
+          this.valuationRows.push(stamp({
+            id: this.id('valuation'),
+            sportEventParticipantId: replacement.id,
+            sportEventTierId: valuation.sportEventTierId,
+            tierOrderIndex: valuation.tierOrderIndex,
+            tierAssignedSource: valuation.sportEventTierId === null ? null : ValuationSource.MANUAL,
+            price: valuation.price,
+            priceAssignedSource: valuation.price === null ? null : ValuationSource.MANUAL,
+          }));
+        }
+        if (side === MatchSide.HOME) match.homeSportEventParticipantId = replacement.id;
+        else match.awaySportEventParticipantId = replacement.id;
+        return replacement.id;
       },
     };
   }

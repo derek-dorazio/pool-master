@@ -9,6 +9,7 @@ import {
   assertNever,
   getSportDefinition,
   getTieredRosterSize,
+  getTiersInPlay,
   isRosterSelectionType,
   sportAllowsSelectionType,
   sportPlaysMatches,
@@ -188,7 +189,7 @@ describe('Seeded contest templates and their sport leagues', () => {
 describe('Seeded PGA TOUR majors pool template', () => {
   it('seeds an active majors template on the PGA TOUR and on the LPGA Tour, neither a default, naming each tour\'s majors\' series, with golf\'s one-a-tier, best-four rules', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { eventSeriesNames: { isEmpty: false } },
+      where: { sport: Sport.GOLF, eventSeriesNames: { isEmpty: false } },
       include: { sportLeague: true },
       orderBy: { templateKey: 'asc' },
     });
@@ -230,6 +231,27 @@ describe('Seeded PGA TOUR majors pool template', () => {
 const CYCLING_TOP_10_POINTS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
 describe('Seeded cycling tours and their Top 10 templates', () => {
+  it('seeds golf\'s "Top four tiers" setup beside its default tiered one: one golfer from each of the first four tiers, all four count, not a default (#704)', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.GOLF, sportLeagueId: null, active: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+
+    expect(templates.map((template) => template.templateKey)).toEqual([
+      'golf-tiered-pick-6',
+      'golf-tiered-pick-12',
+      'golf-tiered-top-four-tiers',
+      'golf-budget-pick-6-best-4',
+      'golf-budget-pick-6-all-count',
+      'golf-random-draw-1',
+      'golf-random-draw-3-best-2',
+    ]);
+    expect(templates.find((template) => template.templateKey === 'golf-tiered-top-four-tiers')).toMatchObject({
+      isDefault: false,
+      configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, tiersUsed: 4, countedScores: 4, maxEntriesPerSquad: 1 },
+    });
+  });
+
   it('seeds cycling\'s two tours, each with a tiered, a budget and a random-draw template of its own, every one the default of its format', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { sport: Sport.CYCLING },
@@ -567,6 +589,76 @@ describe('Seeded soccer week templates', () => {
   );
 });
 
+// Tennis (#704): the ATP and the WTA, each a fixed knockout draw of seven rounds, their presets
+// doubling to 64 in the final, with a Slams pool over the four Grand Slams.
+const TENNIS_ROUND_VALUES = [1, 2, 4, 8, 16, 32, 64];
+
+describe('Seeded tennis tours and their knockout templates', () => {
+  it('seeds the ATP and the WTA as fixed brackets on the sport\'s own round names and tiers, read back through the sport league repository', async () => {
+    const tennis = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.TENNIS } });
+    const leagues = await new PrismaSportLeagueRepository(getPrisma()).findAll({ sportId: tennis.id });
+
+    expect(tennis.participantType).toBe('INDIVIDUAL');
+    expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames, league.tierCount])).toEqual([
+      ['ATP', 'FIXED', [], null],
+      ['WTA', 'FIXED', [], null],
+    ]);
+  });
+
+  it.each([['ATP', 'atp'], ['WTA', 'wta']] as const)('gives the %s thirteen knockout templates, one default per format, with Seeds only picking from the first four tiers and the second-week bracket starting at the fourth round', async (name, prefix) => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.TENNIS, sportLeague: { name } },
+      orderBy: [{ sortOrder: 'asc' }],
+    });
+
+    expect(templates.map((template) => [template.templateKey, template.selectionType, template.eventType, template.isDefault])).toEqual([
+      [`${prefix}-tiered-doubling`, SelectionType.TIERED, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-tiered-doubling-upset-bonus`, SelectionType.TIERED, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-tiered-seeds-only-doubling`, SelectionType.TIERED, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-tiered-best-four-doubling`, SelectionType.TIERED, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-budget-doubling`, SelectionType.BUDGET_PICK, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-budget-doubling-upset-bonus`, SelectionType.BUDGET_PICK, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-random-draw-doubling`, SelectionType.RANDOM_DRAW, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-random-draw-doubling-upset-bonus`, SelectionType.RANDOM_DRAW, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-bracket-doubling`, SelectionType.BRACKET, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-bracket-doubling-upset-bonus`, SelectionType.BRACKET, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-bracket-second-week-doubling`, SelectionType.BRACKET, ContestTemplateEventType.KNOCKOUT, false],
+      [`${prefix}-knockout-survivor`, SelectionType.SURVIVOR, ContestTemplateEventType.KNOCKOUT, true],
+      [`${prefix}-slams-tiered-doubling`, SelectionType.TIERED, ContestTemplateEventType.KNOCKOUT, false],
+    ]);
+    for (const template of templates) {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      if (rules.selectionType === SelectionType.SURVIVOR) continue;
+      expect(rules.scoring).toEqual({
+        participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
+        config: {
+          roundValues: TENNIS_ROUND_VALUES,
+          upsetBonus: template.templateKey.endsWith('-upset-bonus') ? { rule: 'SEED_DIFFERENCE', multiplier: 1 } : { rule: 'NONE' },
+        },
+      });
+      if (rules.selectionType === SelectionType.TIERED) {
+        const seedsOnly = template.templateKey.includes('seeds-only');
+        expect([rules.tiersUsed, rules.countedScores]).toEqual(seedsOnly ? [4, 4] : [undefined, template.templateKey.includes('best-four') ? 4 : 6]);
+      }
+      if (rules.selectionType === SelectionType.BUDGET_PICK) expect([rules.rosterSize, rules.countedScores]).toEqual([6, 6]);
+      if (rules.selectionType === SelectionType.BRACKET) expect(rules.startsAtRound).toBe(template.templateKey.includes('second-week') ? 4 : 1);
+    }
+  });
+
+  it('names the four Grand Slams on each tour\'s Slams pool, and on no other tennis template', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sport: Sport.TENNIS, eventSeriesNames: { isEmpty: false } },
+      include: { sportLeague: true },
+      orderBy: { templateKey: 'asc' },
+    });
+
+    expect(templates.map((template) => [template.sportLeague?.name, template.templateKey, template.eventSeriesNames])).toEqual([
+      ['ATP', 'atp-slams-tiered-doubling', ['Australian Open', 'Roland Garros', 'Wimbledon', 'US Open']],
+      ['WTA', 'wta-slams-tiered-doubling', ['Australian Open', 'Roland Garros', 'Wimbledon', 'US Open']],
+    ]);
+  });
+});
+
 // The NFL's knockout presets (#702): four playoff rounds, so the doubling stops at 8.
 describe('The seeded NFL league and its knockout templates', () => {
   it('seeds the NFL, which reseeds, with a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default', async () => {
@@ -691,7 +783,10 @@ describe('Every seeded contest template, whatever its sport', () => {
       const held = (() => {
         switch (rules.selectionType) {
           case SelectionType.TIERED:
-            return getTieredRosterSize(template.sportLeague?.tierCount ?? getSportDefinition(template.sport).defaultTierLayout.tierCount, rules.picksPerTier);
+            return getTieredRosterSize(
+              getTiersInPlay(template.sportLeague?.tierCount ?? getSportDefinition(template.sport).defaultTierLayout.tierCount, rules.tiersUsed),
+              rules.picksPerTier,
+            );
           case SelectionType.BUDGET_PICK:
             return rules.rosterSize;
           case SelectionType.RANDOM_DRAW:
@@ -936,7 +1031,7 @@ describe('Every seeded sport league\'s default templates and their names (#802)'
     const problems = templates.flatMap((template) => {
       const format = FORMAT_NAMES[template.selectionType];
       const found: string[] = [];
-      if (!new RegExp(`^${format}( majors pool)?: \\S`).test(template.name)) found.push(`${template.templateKey}: "${template.name}" does not start "${format}: "`);
+      if (!new RegExp(`^${format}( (majors|Slams) pool)?: \\S`).test(template.name)) found.push(`${template.templateKey}: "${template.name}" does not start "${format}: "`);
       if (template.name.length >= 60) found.push(`${template.templateKey}: name is ${template.name.length} characters`);
       if (template.name.endsWith('.')) found.push(`${template.templateKey}: name ends with a full stop`);
       return found;

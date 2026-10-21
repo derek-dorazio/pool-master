@@ -3,7 +3,7 @@ import { PickEmMode, RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SQUARES_PER_ENTRY_MAX, Sel
 import { Checkbox, FormField, formatDollars, Input, SegmentedControl, Select } from '@/features/shared/ui';
 import type { BracketStartRoundOption } from './bracket-start-round';
 import { describeBracketRules, describePickEmMode, describeSurvivorRules, formatPickEmModeName, isSecondChanceBracket } from './contest-rules';
-import { defaultCountedScoresFor, perEntryLabel, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
+import { defaultCountedScoresFor, perEntryLabel, tiersInPlayFor, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
 function TieredRulesInputs({
   onChange,
@@ -17,15 +17,16 @@ function TieredRulesInputs({
   values: ContestRulesValues;
 }) {
   const picksPerTier = Number(values.picksPerTier);
+  const tiersInPlay = tiersInPlayFor(values.tiersUsed, tierCount);
   const rosterSize = tierCount > 0 && Number.isInteger(picksPerTier) && picksPerTier >= 1
-    ? getTieredRosterSize(tierCount, picksPerTier)
+    ? getTieredRosterSize(tiersInPlay, picksPerTier)
     : null;
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <FormField
         helperText={tierCount > 0
-          ? `${tierCount} tiers × ${values.picksPerTier || '?'} = ${rosterSize ?? '—'} ${participant.many} per entry`
+          ? `${tiersInPlay} tiers × ${values.picksPerTier || '?'} = ${rosterSize ?? '—'} ${participant.many} per entry`
           : 'The event has no tiers yet.'}
         label="Picks per tier"
       >
@@ -34,11 +35,26 @@ function TieredRulesInputs({
           min={1}
           onChange={(event) => {
             const next = event.target.value;
-            const countedScores = defaultCountedScoresFor(next, tierCount);
+            const countedScores = defaultCountedScoresFor(next, tiersInPlay);
             onChange(countedScores === null ? { picksPerTier: next } : { countedScores, picksPerTier: next });
           }}
           type="number"
           value={values.picksPerTier}
+        />
+      </FormField>
+      <FormField
+        helperText={tierCount > 0
+          ? `The first tiers only, in tier order. Leave empty for all ${tierCount}.`
+          : 'The first tiers only, in tier order. Leave empty for every tier.'}
+        label="Tiers to pick from"
+      >
+        <Input
+          data-testid="contest-tiered-tiers-used"
+          min={1}
+          onChange={(event) => onChange({ tiersUsed: event.target.value })}
+          placeholder={tierCount > 0 ? `All ${tierCount}` : 'All'}
+          type="number"
+          value={values.tiersUsed}
         />
       </FormField>
       <FormField

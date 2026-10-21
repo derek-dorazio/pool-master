@@ -778,4 +778,27 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     },
     handler: handler.setEventPlayInWinner,
   });
+
+  fastify.put('/:eventId/participants/:sportEventParticipantId/replacement', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Replace a participant who withdrew after the draw',
+      description: 'For a field row named in the bracket whose match has not started, before or after release: the replacement (a tennis lucky loser) gets its own field row in that bracket place, unseeded, last in the event\'s last tier and at its lowest price. '
+        + 'The withdrawn row stays on the field, inactive as WITHDRAWN, keeping every pick of it, which scores as a first-round loss. '
+        + '404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 404 PARTICIPANT_NOT_FOUND when the replacement is not an active participant of the event\'s sport; '
+        + '409 EVENT_PARTICIPANT_IS_PLAY_IN_PLACE for a play-in place, which is filled instead; 409 EVENT_PARTICIPANT_NOT_IN_BRACKET for a row no match names; '
+        + '409 BRACKET_PARTICIPANT_ALREADY_PLAYED once its match has started; 409 BRACKET_PLACE_NOT_FIRST_ROUND for a place after the first round (a bye); 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the replacement already has a field row. '
+        + `422 ${BRACKET_NOT_A_BRACKET} Returns the replacement's field row. Root admin only.`,
+      operationId: 'replaceEventParticipant',
+      params: {
+        type: 'object',
+        required: ['eventId', 'sportEventParticipantId'],
+        properties: { eventId: uuid, sportEventParticipantId: uuid },
+      },
+      body: schemaRef('ReplaceWithdrawnParticipantRequest'),
+      response: { 200: schemaRef('SportEventParticipantResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+    },
+    handler: handler.replaceEventParticipant,
+  });
 }

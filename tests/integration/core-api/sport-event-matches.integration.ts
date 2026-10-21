@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { MatchEnding, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import type { SportEventMatchWrite } from '@poolmaster/shared/db';
 import { expectDefined } from '../../support/expect-defined';
 import {
@@ -323,6 +323,51 @@ describe('PrismaSportEventParticipantRepository.fillPlayInSlot', () => {
 
     await expect(repos().field.findById(slot.id)).resolves.toMatchObject({ participantId: xavier.id, seedNumber: 11, isPlayInPlace: false });
     await expect(prisma.participant.findUnique({ where: { id: pairing.id } })).resolves.toMatchObject({ status: ParticipantStatus.INACTIVE });
+  });
+});
+
+describe('PrismaSportEventParticipantRepository.replaceWithdrawn', () => {
+  it('adds the replacement with its valuation, names it on the withdrawn row\'s side and inactivates that row as WITHDRAWN, together', async () => {
+    const { event, sport, entryOf } = await createBracketEvent();
+    const prisma = getPrisma();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const tier = await prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 } });
+    const luckyLoser = await prisma.participant.create({ data: { sportId: sport.id, name: 'Lucky Loser', participantType: 'TEAM' } });
+    const [first] = await repos().matches.findBySportEvent(event.id);
+
+    const replacementId = await repos().field.replaceWithdrawn({
+      withdrawnId: entryOf('Vermont').id,
+      matchId: expectDefined(first).id,
+      side: MatchSide.AWAY,
+      replacementParticipantId: luckyLoser.id,
+      valuation: { sportEventTierId: tier.id, tierOrderIndex: 5, price: 4500 },
+    });
+
+    await expect(repos().field.findById(replacementId)).resolves.toMatchObject({ participantId: luckyLoser.id, isActive: true, seedNumber: undefined });
+    await expect(repos().field.findById(entryOf('Vermont').id)).resolves.toMatchObject({ isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN, seedNumber: 2 });
+    const [replaced] = await repos().matches.findBySportEvent(event.id);
+    expect(replaced).toMatchObject({ homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: replacementId });
+    const valuation = await prisma.sportEventParticipantValuation.findUniqueOrThrow({ where: { sportEventParticipantId: replacementId } });
+    expect(valuation).toMatchObject({ sportEventTierId: tier.id, tierOrderIndex: 5, tierAssignedSource: 'MANUAL', priceAssignedSource: 'MANUAL' });
+    expect(Number(valuation.price)).toBe(4500);
+  });
+
+  it('writes nothing when the replacement is already on the field, so the withdrawn row keeps its place', async () => {
+    const { event, entryOf } = await createBracketEvent();
+    await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
+    const [first] = await repos().matches.findBySportEvent(event.id);
+
+    await expect(repos().field.replaceWithdrawn({
+      withdrawnId: entryOf('Vermont').id,
+      matchId: expectDefined(first).id,
+      side: MatchSide.AWAY,
+      replacementParticipantId: entryOf('Houston').participantId,
+      valuation: null,
+    })).rejects.toThrow();
+
+    await expect(repos().field.findById(entryOf('Vermont').id)).resolves.toMatchObject({ isActive: true });
+    const [unchanged] = await repos().matches.findBySportEvent(event.id);
+    expect(expectDefined(unchanged).awaySportEventParticipantId).toBe(entryOf('Vermont').id);
   });
 });
 
