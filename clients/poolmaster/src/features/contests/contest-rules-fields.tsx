@@ -172,6 +172,8 @@ const PICK_EM_MODES = Object.values(PickEmMode);
 
 const AGAINST_THE_SPREAD_HINT = 'Pick the team that covers each game\'s spread. A game that lands exactly on the spread scores nothing.';
 
+const SURVIVOR_REUSE_TEAMS_HINT = 'Each entry starts again once it has picked every team. It matters only when the contest has more weeks than the league has teams.';
+
 /** The pick'em inputs (#716): straight up or ranked by confidence, and against the spread or not (#720). */
 function PickEmRulesInputs({
   onChange,
@@ -281,8 +283,22 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
   [SelectionType.BRACKET]: ({ bracketStartRounds, onChange, values }: RulesInputsProps) => (
     <BracketRulesInputs onChange={onChange} startRounds={bracketStartRounds} values={values} />
   ),
-  [SelectionType.SURVIVOR]: () => (
-    <p className="text-sm text-muted-foreground" data-testid="contest-survivor-rules">{describeSurvivorRules()}</p>
+  [SelectionType.SURVIVOR]: ({ onChange, values }: RulesInputsProps) => (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground" data-testid="contest-survivor-rules">{describeSurvivorRules(values.survivorReuseTeams)}</p>
+      <div className="space-y-1 text-sm">
+        <label className="flex items-center gap-3 font-medium text-foreground">
+          <Checkbox
+            aria-describedby="contest-survivor-reuse-teams-hint"
+            checked={values.survivorReuseTeams}
+            data-testid="contest-survivor-reuse-teams"
+            onChange={(event) => onChange({ survivorReuseTeams: event.target.checked })}
+          />
+          <span>Teams can be picked again once every team is used</span>
+        </label>
+        <p className="text-muted-foreground" id="contest-survivor-reuse-teams-hint">{SURVIVOR_REUSE_TEAMS_HINT}</p>
+      </div>
+    </div>
   ),
   [SelectionType.SQUARES]: ({ onChange, values }: RulesInputsProps) => (
     <FormField helperText="Boxes nobody claims stay empty, and a quarter won by an empty box has no winner." label="Boxes per entry">

@@ -81,7 +81,7 @@ import {
 } from './prediction-engines/prediction-engine';
 import { selectionErrors, type SelectionError } from './selection-errors';
 import { loadSurvivorWeeks, survivorPicksByEntry, survivorWeeksOf } from '../contests/survivor-standings';
-import { survivorRun } from '../scoring-families/head-to-head/survivor';
+import { survivorRun, survivorTeamsUsedInCycle } from '../scoring-families/head-to-head/survivor';
 
 export interface PredictionServiceDeps {
   contests: Pick<ContestRepository, 'findById'>;
@@ -567,7 +567,9 @@ export class PredictionService {
       games,
       tiebreakerGame: engine.tiebreakerGame({ games, eventStart: sportEvent.startDate }),
       predictions,
-      season: engine.readsEarlierWeeks ? await this.loadSeason(contest, entry, sportEventId, field, now) : null,
+      season: engine.readsEarlierWeeks
+        ? await this.loadSeason(contest, entry, sportEventId, field, rules.selectionType !== SelectionType.SURVIVOR || (rules.reuseTeamsOnceAllUsed ?? true), now)
+        : null,
       ownEntry: actorUserId !== undefined && memberships.some((membership) => membership.userId === actorUserId),
       now,
     };
@@ -577,13 +579,16 @@ export class PredictionService {
    * The entry's season as a survivor week reads it: the week that put it out, if any, and the
    * teams it picked in the other events it submitted, earlier or later (a later week can be picked
    * ahead), so no team is picked twice. In a playoff (#785) the event's rounds are weeks of their
-   * own: a round after the one that put the entry out takes no pick.
+   * own: a round after the one that put the entry out takes no pick. When teams can be picked
+   * again once every team is used (#787), only the week's own cycle counts, every team being the
+   * week's field.
    */
   private async loadSeason(
     contest: Contest,
     entry: ContestEntry,
     sportEventId: string,
     field: readonly SportEventParticipant[],
+    reuseTeamsOnceAllUsed: boolean,
     now: Date,
   ): Promise<PredictionSeason> {
     const weeks = await loadSurvivorWeeks(this.deps, contest, now);
@@ -591,12 +596,13 @@ export class PredictionService {
     const picks = survivorPicksByEntry(predictions, weeks).get(entry.id) ?? new Map<string, never>();
     const entryWeeks = survivorWeeksOf(entry, weeks, picks);
     const run = survivorRun(entryWeeks);
-    const usedParticipantIds = new Set<string>();
-    for (const week of entryWeeks) {
-      if (week.sportEventId !== sportEventId && !week.cancelled && week.submitted && week.pickedParticipantId !== null) {
-        usedParticipantIds.add(week.pickedParticipantId);
-      }
-    }
+    // This event's own rounds are read from its picks; it takes one place, at its first week.
+    const weekIndex = entryWeeks.findIndex((week) => week.sportEventId === sportEventId);
+    const usedParticipantIds = survivorTeamsUsedInCycle(
+      entryWeeks.map((week) => (week.sportEventId !== sportEventId && !week.cancelled && week.submitted ? week.pickedParticipantId : null)),
+      weekIndex,
+      reuseTeamsOnceAllUsed ? new Set(field.map((row) => row.participantId)).size : null,
+    );
     const ownWeeks = weeks.filter((week) => week.event.id === sportEventId);
     const first = ownWeeks.at(0);
     return {

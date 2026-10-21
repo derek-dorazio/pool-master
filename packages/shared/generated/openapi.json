@@ -6639,6 +6639,10 @@
                   "SURVIVOR"
                 ]
               },
+              "reuseTeamsOnceAllUsed": {
+                "type": "boolean",
+                "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes."
+              },
               "maxEntriesPerSquad": {
                 "type": [
                   "integer",
@@ -6798,7 +6802,7 @@
               "selectionType"
             ],
             "additionalProperties": false,
-            "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+            "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
           }
         ],
         "description": "Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest's."
@@ -7355,6 +7359,10 @@
                       "SURVIVOR"
                     ]
                   },
+                  "reuseTeamsOnceAllUsed": {
+                    "type": "boolean",
+                    "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes."
+                  },
                   "id": {
                     "type": "string",
                     "description": "Contest-configuration identifier."
@@ -7378,7 +7386,7 @@
                   "contestId"
                 ],
                 "additionalProperties": false,
-                "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
               }
             ],
             "description": "Current commissioner-managed contest configuration."
@@ -8619,6 +8627,10 @@
                       "SURVIVOR"
                     ]
                   },
+                  "reuseTeamsOnceAllUsed": {
+                    "type": "boolean",
+                    "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -8778,7 +8790,7 @@
                   "selectionType"
                 ],
                 "additionalProperties": false,
-                "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
               }
             ],
             "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -9210,6 +9222,10 @@
                           "SURVIVOR"
                         ]
                       },
+                      "reuseTeamsOnceAllUsed": {
+                        "type": "boolean",
+                        "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes."
+                      },
                       "id": {
                         "type": "string",
                         "description": "Contest-configuration identifier."
@@ -9233,7 +9249,7 @@
                       "contestId"
                     ],
                     "additionalProperties": false,
-                    "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                    "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
                   }
                 ],
                 "description": "Current commissioner-managed contest configuration."
@@ -10527,6 +10543,10 @@
                             "SURVIVOR"
                           ]
                         },
+                        "reuseTeamsOnceAllUsed": {
+                          "type": "boolean",
+                          "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes."
+                        },
                         "maxEntriesPerSquad": {
                           "type": [
                             "integer",
@@ -10686,7 +10706,7 @@
                         "selectionType"
                       ],
                       "additionalProperties": false,
-                      "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                      "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
                     }
                   ],
                   "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -11849,6 +11869,10 @@
                       "SURVIVOR"
                     ]
                   },
+                  "reuseTeamsOnceAllUsed": {
+                    "type": "boolean",
+                    "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -12008,7 +12032,7 @@
                   "selectionType"
                 ],
                 "additionalProperties": false,
-                "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
               }
             ],
             "description": "Updated persisted configuration payload copied into future contests when this template is selected."
@@ -13217,6 +13241,10 @@
                           "SURVIVOR"
                         ]
                       },
+                      "reuseTeamsOnceAllUsed": {
+                        "type": "boolean",
+                        "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes."
+                      },
                       "maxEntriesPerSquad": {
                         "type": [
                           "integer",
@@ -13376,7 +13404,7 @@
                       "selectionType"
                     ],
                     "additionalProperties": false,
-                    "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                    "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
                   }
                 ],
                 "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
@@ -21194,6 +21222,10 @@
                       "SURVIVOR"
                     ]
                   },
+                  "reuseTeamsOnceAllUsed": {
+                    "type": "boolean",
+                    "description": "Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the week's field, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes."
+                  },
                   "maxEntriesPerSquad": {
                     "type": [
                       "integer",
@@ -21353,7 +21385,7 @@
                   "selectionType"
                 ],
                 "additionalProperties": false,
-                "description": "Survivor rules: pick one team to win each week, each team once a season. A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
+                "description": "Survivor rules: pick one team to win each week, each team once (a cycle, when teams can be picked again). A loss, a tie or a week left unsubmitted puts the entry out; the last entries standing win."
               }
             ],
             "description": "The contest configuration. With a template, replaces the template's configuration; without one, is the configuration."

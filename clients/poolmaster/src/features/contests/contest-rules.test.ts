@@ -1,6 +1,7 @@
 import { PickEmMode, SelectionType, Sport, getSportDefinition } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import {
+  describeSurvivorRules,
   formatBracketStartLabel,
   formatContestRules,
   formatEntriesPerTeam,
@@ -180,19 +181,29 @@ describe('pick\'em rules', () => {
 describe('survivor rules', () => {
   const TEAM = getSportDefinition(Sport.AMERICAN_FOOTBALL).vocabulary.participant;
 
-  it('names survivor and reads its rules as one winner a week, each team once, out after a loss', () => {
+  it('names survivor and reads its rules as one winner a week, each team once until all are picked (unless set otherwise), out after a loss', () => {
     expect(formatSelectionTypeName(SelectionType.SURVIVOR)).toBe('Survivor');
     expect(formatContestRules({ selectionType: SelectionType.SURVIVOR }, 0, TEAM)).toBe(
+      'Pick one team to win each week, and never the same team twice until every team has been picked. A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.',
+    );
+    expect(formatContestRules({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false }, 0, TEAM)).toBe(
       'Pick one team to win each week, and never the same team twice. A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.',
+    );
+    expect(describeSurvivorRules(null)).toBe(
+      'Pick one team to win each week. A loss, a tie or a week not submitted by its first kickoff puts the entry out; the last entries standing win.',
     );
     expect(suggestContestName('NFL Week 1', SelectionType.SURVIVOR, null, 0)).toBe('NFL Week 1 Survivor');
   });
 
-  it('turns the rules fields into survivor rules with only the entry limit, and fills only the entry limit back', () => {
+  it('turns the rules fields into survivor rules with the team reuse setting and entry limit, and fills both back', () => {
     expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxEntriesPerTeam: '2' }, SelectionType.SURVIVOR, 0, TEAM))
-      .toEqual({ configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 2 }, error: null });
-    expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: null }, DEFAULT_CONTEST_RULES))
+      .toEqual({ configuration: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true, maxEntriesPerSquad: 2 }, error: null });
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, survivorReuseTeams: false }, SelectionType.SURVIVOR, 0, TEAM).configuration)
+      .toEqual({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, maxEntriesPerSquad: 1 });
+    expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: null }, { ...DEFAULT_CONTEST_RULES, survivorReuseTeams: false }))
       .toEqual({ ...DEFAULT_CONTEST_RULES, unlimitedEntries: true });
+    expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, maxEntriesPerSquad: 1 }, DEFAULT_CONTEST_RULES))
+      .toEqual({ ...DEFAULT_CONTEST_RULES, survivorReuseTeams: false });
   });
 });
 

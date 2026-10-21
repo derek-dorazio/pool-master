@@ -261,13 +261,13 @@ describe('sport data bracket', () => {
     away: string | null;
     advancesTo: { matchNumber: number; side: string } | null;
     regionLabel?: string;
-    result?: { winner: string; homeScore: number | null; awayScore: number | null; ending?: string };
+    result?: { winner: string | null; homeScore: number | null; awayScore: number | null; homeShootoutScore?: number; awayShootoutScore?: number; ending?: string };
     periodScores?: Array<{ periodNumber: number; homeScore: number; awayScore: number }>;
   }
   interface BracketFile {
     testData: boolean;
     scope: { contents: string[] };
-    sportLeagues: Array<{ bracketAdvancement?: string; events: Array<{ field: unknown[]; matches: BracketMatch[] }> }>;
+    sportLeagues: Array<{ bracketAdvancement?: string; events: Array<{ rounds?: number; field: unknown[]; matches: BracketMatch[] }> }>;
   }
 
   function bracketFile(): BracketFile {
@@ -378,6 +378,39 @@ describe('sport data bracket', () => {
     const matches = parseSportDataFile(file, { allowTestData: true }).sportLeagues[0].events[0].matches;
 
     expect(matches?.map((match) => match.result?.ending)).toEqual(['RETIREMENT', 'WALKOVER', undefined]);
+  });
+
+  /** The test seed's event as a week: one round of two games that link nowhere. */
+  function weekTestSeed(): BracketFile {
+    const file = bracketTestSeed();
+    const event = file.sportLeagues[0].events[0];
+    event.rounds = 1;
+    event.matches = event.matches.slice(0, 2).map((match) => ({ ...match, advancesTo: null }));
+    return file;
+  }
+
+  it('reads a week\'s game left level with no winner (#787)', () => {
+    const file = weekTestSeed();
+    file.sportLeagues[0].events[0].matches[0].result = { winner: null, homeScore: 1, awayScore: 1 };
+
+    const matches = parseSportDataFile(file, { allowTestData: true }).sportLeagues[0].events[0].matches;
+
+    expect(matches?.map((match) => match.result?.winner)).toEqual([null, 'HOME']);
+  });
+
+  it('refuses no winner on a bracket match, on unequal scores, with a shoot-out or with an ending', () => {
+    const bracket = bracketTestSeed();
+    bracket.sportLeagues[0].events[0].matches[0].result = { winner: null, homeScore: 1, awayScore: 1 };
+    expect(problemsOf(bracket, true)).toContain('NCAA Men, Tournament: match 1 has no winner, but a bracket match always has one.');
+
+    const week = weekTestSeed();
+    const [first, second] = week.sportLeagues[0].events[0].matches;
+    first.result = { winner: null, homeScore: 2, awayScore: 1 };
+    second.result = { winner: null, homeScore: 1, awayScore: 1, homeShootoutScore: 4, awayShootoutScore: 3 };
+    expect(problemsOf(week, true)).toEqual([
+      'NCAA Men, Tournament: match 1 has no winner, so it needs level scores, played to its end with no shoot-out.',
+      'NCAA Men, Tournament: match 2 has no winner, so it needs level scores, played to its end with no shoot-out.',
+    ]);
   });
 
   it('refuses a result with an ending that is not one', () => {

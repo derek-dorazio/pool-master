@@ -295,6 +295,14 @@ to penalties, and the shoot-out's winner takes that game), so it has no half-tim
 NCAA men's 16 seeds are placed straight into the second round. The higher seed is the home side
 until a neutral-site final (the NWSL championship, each College Cup).
 
+Soccer's league seasons and group matchdays (#787) are week events, as an NFL week is: one event
+per Premier League matchweek, and one per group matchday of the World Cup, the Euros and the Copa
+América, or per Champions League league phase matchday, each in its competition's own sport
+league. A week takes pick'em, with draw picks, and the Premier League's also takes Last Man
+Standing, a survivor pool whose teams can be picked again once an entry has used all 20. A drawn
+game's result is entered with no winner. A postponed match is cancelled from its week; when it is
+replayed later, it is a game of the week it is played in.
+
 **Squares rounds.** A sport league whose early rounds are not single games names its first
 squares round (`squaresFromRound`): the Champions League's final (round 5) and MLS's conference
 semifinals (round 3). A squares contest is refused on an earlier game, and the create form does

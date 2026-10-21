@@ -10,7 +10,9 @@
  *   submitted pick. Once out it plays no later week, whatever it picked there. A playoff round
  *   that starts with no pick puts the entry out too, as does running out of unused teams.
  * - **Each team once:** a team picked in a week the entry submitted is used for the rest of the
- *   season, by its participant, since each week has its own field rows.
+ *   season, by its participant, since each week has its own field rows. When the contest lets
+ *   teams be picked again once every team is used (#787), the season runs in cycles: each team
+ *   once a cycle, and a cycle ends when the entry has used every team (`survivorTeamsUsedInCycle`).
  * - **The score** is the weeks survived: entries out in the same week tie, and entries still
  *   standing at the end share the win.
  */
@@ -94,4 +96,39 @@ export function survivorRun(weeks: readonly SurvivorWeek[]): SurvivorRun {
     results.push({ sportEventId: week.sportEventId, roundNumber: week.roundNumber, outcome });
   }
   return { weeks: results, eliminatedAt, weeksSurvived, usedParticipantIds };
+}
+
+/**
+ * The teams an entry has used, by participant, around one of its weeks: what that week's pick may
+ * not repeat (#787). `picks` holds each week's picked participant in week order, null for a week
+ * with none that counts (not submitted, or cancelled); the week at `weekIndex` is the one being
+ * picked, and its own pick is left out. With `teamCount` null each team is used once all season,
+ * so every other week's pick counts. Otherwise the weeks run in cycles, the week being picked
+ * taking one place in its cycle: a cycle ends once it holds `teamCount` teams, and only the picks
+ * of the week's own cycle, before it or picked ahead after it, count.
+ */
+export function survivorTeamsUsedInCycle(
+  picks: readonly (string | null)[],
+  weekIndex: number,
+  teamCount: number | null,
+): Set<string> {
+  if (teamCount === null) {
+    return new Set(picks.flatMap((pick, index) => (index !== weekIndex && pick !== null ? [pick] : [])));
+  }
+  let cycle = new Set<string>();
+  let holdsWeek = false;
+  for (const [index, pick] of picks.entries()) {
+    if (index === weekIndex) {
+      holdsWeek = true;
+    } else if (pick !== null) {
+      cycle.add(pick);
+    } else {
+      continue;
+    }
+    if (cycle.size + (holdsWeek ? 1 : 0) >= teamCount) {
+      if (holdsWeek) return cycle;
+      cycle = new Set<string>();
+    }
+  }
+  return cycle;
 }
