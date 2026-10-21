@@ -1,0 +1,693 @@
+Source: https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_Group_E
+Final URL: https://en.wikipedia.org/wiki/2023_FIFA_Women%27s_World_Cup_Group_E
+HTTP 200
+Fetched: 2026-10-21T06:16:57.070Z
+
+2023 FIFA Women's World Cup Group E - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Teams
+2
+Standings
+3
+Matches
+Toggle Matches subsection
+3.1
+United States vs Vietnam
+3.2
+Netherlands vs Portugal
+3.3
+United States vs Netherlands
+3.4
+Portugal vs Vietnam
+3.5
+Portugal vs United States
+3.6
+Vietnam vs Netherlands
+4
+Discipline
+5
+See also
+6
+References
+7
+External links
+Toggle the table of contents
+2023 FIFA Women's World Cup Group E
+13 languages
+العربية
+Dansk
+Deutsch
+Español
+Euskara
+日本語
+한국어
+Simple English
+Српски / srpski
+Svenska
+Türkçe
+Tiếng Việt
+中文
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+Football tournament teams
+Group E of the 2023 FIFA Women's World Cup was one of eight groups that formed the opening round of the tournament with the matches played from 22 July to 1 August 2023. [ 1 ] The group consisted of defending world champions the United States , Vietnam , the Netherlands and Portugal . The top two teams, the Netherlands and the United States (both finalists in 2019 ), advanced to the round of 16 . [ 2 ]
+The United States finished as group runners-up for only the second time in the tournament's history, and the first since 2011 , the most recent Women's World Cup without the Netherlands participating. The five points they earned was their lowest ever in a Women's World Cup group stage, having won at least two group games in all previous tournaments (including 1991 when only two points were awarded for a win). Debutants Vietnam were eliminated without scoring a single goal, finishing bottom of the group with zero points and twelve goals conceded.
+Teams
+[ edit ]
+Draw position
+Team
+Pot
+Confederation
+Method of
+qualification
+Date of
+qualification
+Finals
+appearance
+Last
+appearance
+Previous best
+performance
+FIFA Rankings
+October 2022 [ nb 1 ]
+June 2023
+E1 United States 1 CONCACAF 2022 CONCACAF W Championship champions 7 July 2022 9th 2019 Winners ( 1991 , 1999 , 2015 , 2019 ) 1 1
+E2 Vietnam 3 AFC 2022 AFC Women's Asian Cup play-off winners 6 February 2022 1st — Debut 34 32
+E3 Netherlands 2 UEFA UEFA Group C winners 6 September 2022 3rd 2019 Runners-up ( 2019 ) 8 9
+E4 Portugal 4 {{cite web |url=https://digitalhub.fifa.com/m/2703755dc034786f/original/Draw-Procedures-FIFA-Women-s-World-Cup-2023-EN.pdf |title=Draw Procedures for the FIFA Women's World Cup Australia & New Zealand 2023 |publisher=FIFA |date=October 2022 |access-date=18 October 2022}}</ref>"}},"i":0}}]}'> [ nb 2 ] UEFA Inter-confederation play-off Group A winners 22 February 2023 1st — Debut 23 [ nb 2 ] 21
+Notes
+↑ The rankings of October 2022 were used for seeding for the final draw .
+1 2 As the identity of the inter-confederation play-off Group A winners was not known at the time of the final draw, positions in the FIFA Rankings were not taken into account, and the placeholder in the draw was automatically seeded into pot 4. [ 3 ]
+Standings
+[ edit ]
+Pos
+Team v
+t
+e
+Pld
+W
+D
+L
+GF
+GA
+GD
+Pts
+Qualification
+1
+Netherlands
+3
+2
+1
+0
+9
+1
++8
+7
+Advance to knockout stage
+2
+United States
+3
+1
+2
+0
+4
+1
++3
+5
+3
+Portugal
+3
+1
+1
+1
+2
+1
++1
+4
+4
+Vietnam
+3
+0
+0
+3
+0
+12
+− 12
+0
+Source: FIFA
+Rules for classification: Group stage tiebreakers
+In the round of 16 :
+The winners of Group E, the Netherlands, advanced to play the runners-up of Group G , South Africa .
+The runners-up of Group E, the United States, advanced to play the winners of Group G , Sweden .
+Matches
+[ edit ]
+All times listed are local, NZST ( UTC+12 ).
+United States vs Vietnam
+[ edit ]
+[[UTC+12]]</includeonly>"},"team1":{"wt":"{{fbw-rt|USA}}"},"score":{"wt":"{{score link|2023 FIFA Women's World Cup Group E#United States vs Vietnam|3–0}}"},"report":{"wt":"https://www.fifatrainingcentre.com/media/native/tournaments/womens-world-cup/2023/report_131896_1.pdf"},"team2":{"wt":"{{fbw|VIE}}"},"goals1":{"wt":"*[[Sophia Smith (soccer, born 2000)|Smith]] {{goal|14||45+7}}\n*[[Lindsey Horan|Horan]] {{goal|77}}"},"goals2":{"wt":""},"stadium":{"wt":"[[Eden Park]], [[Auckland]]"},"attendance":{"wt":"41,107"},"referee":{"wt":"Bouchra Karboubi ([[Royal Moroccan Football Federation|Morocco]])"}},"i":0}}]}'>
+22 July 2023 ( 2023-07-22 )
+13:00
+United States 3–0 Vietnam
+Smith 14' , 45+7'
+Horan 77'
+Report
+Eden Park , Auckland
+Attendance: 41,107
+Referee: Bouchra Karboubi ( Morocco )
+United States
+Vietnam
+GK 1 Alyssa Naeher
+RB 23 Emily Fox 84'
+CB 8 Julie Ertz
+CB 4 Naomi Girma
+LB 19 Crystal Dunn 84'
+DM 17 Andi Sullivan
+CM 9 Savannah DeMelo 61'
+CM 10 Lindsey Horan ( c ) 56'
+RF 20 Trinity Rodman 76'
+CF 13 Alex Morgan 61'
+LF 11 Sophia Smith
+Substitutions:
+MF 16 Rose Lavelle 61'
+FW 15 Megan Rapinoe 61'
+FW 7 Alyssa Thompson 76'
+DF 3 Sofia Huerta 84'
+DF 5 Kelley O'Hara 84'
+Manager:
+Vlatko Andonovski
+GK 14 Trần Thị Kim Thanh
+CB 2 Lương Thị Thu Thương 61'
+CB 13 Lê Thị Diễm My
+CB 4 Trần Thị Thu
+RWB 17 Trần Thị Thu Thảo
+LWB 5 Hoàng Thị Loan
+RM 23 Nguyễn Thị Bích Thùy 61'
+CM 10 Trần Thị Hải Linh 89'
+CM 11 Thái Thị Thảo
+LM 7 Nguyễn Thị Tuyết Dung 46'
+CF 9 Huỳnh Như ( c ) 76' 76'
+Substitutions:
+MF 21 Ngân Thị Vạn Sự 46'
+DF 22 Nguyễn Thị Mỹ Anh 61'
+DF 3 Chương Thị Kiều 61'
+FW 12 Phạm Hải Yến 76'
+MF 16 Dương Thị Vân 89'
+Manager:
+Mai Đức Chung
+Player of the Match:
+Sophia Smith (United States)
+Assistant referees :
+Fatiha Jermoumi ( Morocco )
+Soukaina Hamdi ( Morocco )
+Fourth official :
+Ivana Martinčić ( Croatia )
+Video assistant referee :
+Juan Martínez Munuera ( Spain )
+Assistant video assistant referee:
+Ella De Vries ( Belgium )
+Offside video assistant referee:
+Michelle O'Neill ( Republic of Ireland )
+Netherlands vs Portugal
+[ edit ]
+[[UTC+12]]</includeonly>"},"team1":{"wt":"{{fbw-rt|NED}}"},"score":{"wt":"{{score link|2023 FIFA Women's World Cup Group E#Netherlands vs Portugal|1–0}}"},"report":{"wt":"https://www.fifatrainingcentre.com/media/native/tournaments/womens-world-cup/2023/report_131897.pdf"},"team2":{"wt":"{{fbw|POR}}"},"goals1":{"wt":"[[Stefanie van der Gragt|Van der Gragt]] {{goal|13}}"},"goals2":{"wt":""},"stadium":{"wt":"[[Forsyth Barr Stadium]], [[Dunedin]]"},"attendance":{"wt":"11,991"},"referee":{"wt":"[[Kateryna Monzul]] ([[Ukrainian Association of Football|Ukraine]])"}},"i":0}}]}'>
+23 July 2023 ( 2023-07-23 )
+19:30
+Netherlands 1–0 Portugal
+Van der Gragt 13'
+Report
+Forsyth Barr Stadium , Dunedin
+Attendance: 11,991
+Referee: Kateryna Monzul ( Ukraine )
+Netherlands
+Portugal
+GK 1 Daphne van Domselaar
+CB 8 Sherida Spitse ( c )
+CB 3 Stefanie van der Gragt
+CB 20 Dominique Janssen
+RM 17 Victoria Pelova 90+4'
+CM 6 Jill Roord
+CM 14 Jackie Groenen
+CM 10 Daniëlle van de Donk 78' 80'
+LM 22 Esmee Brugts
+CF 7 Lineth Beerensteyn 87'
+CF 11 Lieke Martens
+Substitutions:
+MF 21 Damaris Egurrola 80'
+FW 9 Katja Snoeijs 87'
+MF 18 Kerstin Casparij 90+4'
+Manager:
+Andries Jonker
+GK 1 Inês Pereira
+CB 9 Ana Borges
+CB 15 Carole Costa
+CB 19 Diana Gomes 84'
+RM 11 Tatiana Pinto
+CM 14 Dolores Silva ( c ) 67'
+CM 13 Fátima Pinto
+LM 2 Catarina Amado 78'
+AM 8 Andreia Norton 78'
+CF 10 Jéssica Silva 56'
+CF 16 Diana Silva 78'
+Substitutions:
+MF 20 Kika Nazareth 67'
+MF 6 Andreia Jacinto 78'
+FW 23 Telma Encarnação 78'
+DF 3 Lúcia Alves 78'
+Manager:
+Francisco Neto
+Player of the Match:
+Stefanie van der Gragt (Netherlands)
+Assistant referees :
+Maryna Striletska ( Ukraine )
+Paulina Baranowska ( Poland )
+Fourth official :
+Myriam Marcotte ( Canada )
+Video assistant referee :
+Drew Fischer ( Canada )
+Assistant video assistant referee:
+Abdulla Al-Marri ( Qatar )
+Offside video assistant referee:
+Joanna Charaktis ( Australia )
+United States vs Netherlands
+[ edit ]
+The two teams met at the 2019 final , in which the United States won 2–0.
+[[UTC+12]]</includeonly>"},"team1":{"wt":"{{fbw-rt|USA}}"},"score":{"wt":"{{score link|2023 FIFA Women's World Cup Group E#United States vs Netherlands|1–1}}"},"report":{"wt":"https://www.fifatrainingcentre.com/media/native/tournaments/womens-world-cup/2023/report_131898.pdf"},"team2":{"wt":"{{fbw|NED}}"},"goals1":{"wt":"[[Lindsey Horan|Horan]] {{goal|62}}"},"goals2":{"wt":"[[Jill Roord|Roord]] {{goal|17}}"},"stadium":{"wt":"[[Wellington Regional Stadium]], [[Wellington]]"},"attendance":{"wt":"27,312"},"referee":{"wt":"[[Yoshimi Yamashita]] ([[Japan Football Association|Japan]])"}},"i":0}}]}'>
+27 July 2023 ( 2023-07-27 )
+13:00
+United States 1–1 Netherlands
+Horan 62'
+Report
+Roord 17'
+Wellington Regional Stadium , Wellington
+Attendance: 27,312
+Referee: Yoshimi Yamashita ( Japan )
+United States
+Netherlands
+GK 1 Alyssa Naeher
+RB 23 Emily Fox
+CB 8 Julie Ertz
+CB 4 Naomi Girma
+LB 19 Crystal Dunn
+DM 17 Andi Sullivan
+CM 9 Savannah DeMelo 46'
+CM 10 Lindsey Horan ( c )
+RF 20 Trinity Rodman
+CF 13 Alex Morgan
+LF 11 Sophia Smith
+Substitutions:
+MF 16 Rose Lavelle 51' 46'
+Manager:
+Vlatko Andonovski
+GK 1 Daphne van Domselaar
+CB 8 Sherida Spitse ( c )
+CB 3 Stefanie van der Gragt 46'
+CB 20 Dominique Janssen
+RM 17 Victoria Pelova 86'
+CM 6 Jill Roord 90+4'
+CM 14 Jackie Groenen
+CM 10 Daniëlle van de Donk
+LB 22 Esmee Brugts
+CF 9 Katja Snoeijs 71'
+LF 11 Lieke Martens
+Substitutions:
+DF 4 Aniek Nouwen 46'
+MF 21 Damaris Egurrola 71'
+MF 18 Kerstin Casparij 86'
+FW 13 Renate Jansen 90+4'
+Manager:
+Andries Jonker
+Player of the Match:
+Jill Roord (Netherlands)
+Assistant referees :
+Makoto Bozono ( Japan )
+Naomi Teshirogi ( Japan )
+Fourth official :
+Kim Yu-jeong ( South Korea )
+Video assistant referee :
+Juan Soto ( Venezuela )
+Assistant video assistant referee:
+Nicolás Gallo ( Colombia )
+Offside video assistant referee:
+Leslie Vásquez ( Chile )
+Portugal vs Vietnam
+[ edit ]
+[[UTC+12]]</includeonly>"},"team1":{"wt":"{{fbw-rt|POR}}"},"score":{"wt":"{{score link|2023 FIFA Women's World Cup Group E#Portugal vs Vietnam|2–0}}"},"report":{"wt":"https://www.fifatrainingcentre.com/media/native/tournaments/womens-world-cup/2023/report_131899.pdf"},"team2":{"wt":"{{fbw|VIE}}"},"goals1":{"wt":"*[[Telma Encarnação|Encarnação]] {{goal|7}}\n*[[Kika Nazareth|Nazareth]] {{goal|21}}"},"goals2":{"wt":""},"stadium":{"wt":"[[Waikato Stadium]], [[Hamilton, New Zealand|Hamilton]]"},"attendance":{"wt":"6,645"},"referee":{"wt":"[[Salima Mukansanga]] ([[Rwanda Football Federation|Rwanda]])"}},"i":0}}]}'>
+27 July 2023 ( 2023-07-27 )
+19:30
+Portugal 2–0 Vietnam
+Encarnação 7'
+Nazareth 21'
+Report
+Waikato Stadium , Hamilton
+Attendance: 6,645
+Referee: Salima Mukansanga ( Rwanda )
+Portugal
+Vietnam
+GK 12 Patrícia Morais
+CB 9 Ana Borges ( c ) 86'
+CB 15 Carole Costa
+CB 17 Ana Seiça 90'
+RM 3 Lúcia Alves
+CM 6 Andreia Jacinto 90'
+CM 11 Tatiana Pinto
+LM 5 Joana Marchão
+AM 20 Kika Nazareth 69'
+CF 10 Jéssica Silva 69'
+CF 23 Telma Encarnação 75'
+Substitutions:
+FW 21 Ana Capeta 69'
+MF 8 Andreia Norton 69'
+FW 18 Carolina Mendes 75'
+MF 7 Ana Rute 90'
+DF 4 Sílvia Rebelo 90'
+Manager:
+Francisco Neto
+GK 14 Trần Thị Kim Thanh
+CB 2 Lương Thị Thu Thương 72'
+CB 13 Lê Thị Diễm My
+CB 4 Trần Thị Thu
+RWB 17 Trần Thị Thu Thảo
+LWB 5 Hoàng Thị Loan
+RM 23 Nguyễn Thị Bích Thùy 64'
+CM 16 Dương Thị Vân 64'
+CM 11 Thái Thị Thảo
+LM 19 Nguyễn Thị Thanh Nhã
+CF 9 Huỳnh Như ( c ) 72'
+Substitutions:
+MF 10 Trần Thị Hải Linh 64'
+MF 21 Ngân Thị Vạn Sự 64'
+DF 3 Chương Thị Kiều 72'
+FW 12 Phạm Hải Yến 72'
+Manager:
+Mai Đức Chung
+Player of the Match:
+Telma Encarnação (Portugal)
+Assistant referees :
+Queency Victoire ( Mauritius )
+Mary Njoroge ( Kenya )
+Fourth official :
+Anahí Fernández ( Uruguay )
+Video assistant referee :
+Adil Zourak ( Morocco )
+Assistant video assistant referee:
+Daiane Muniz dos Santos ( Brazil )
+Offside video assistant referee:
+Fatiha Jermoumi ( Morocco )
+Portugal vs United States
+[ edit ]
+[[UTC+12]]</includeonly>"},"team1":{"wt":"{{fbw-rt|POR}}"},"score":{"wt":"{{score link|2023 FIFA Women's World Cup Group E#Portugal vs United States|0–0}}"},"report":{"wt":"https://www.fifatrainingcentre.com/media/native/tournaments/womens-world-cup/2023/report_131900.pdf"},"team2":{"wt":"{{fbw|USA}}"},"goals1":{"wt":""},"goals2":{"wt":""},"stadium":{"wt":"[[Eden Park]], [[Auckland]]"},"attendance":{"wt":"42,958"},"referee":{"wt":"[[Rebecca Welch]] ([[The Football Association|England]])"}},"i":0}}]}'>
+1 August 2023 ( 2023-08-01 )
+19:00
+Portugal 0–0 United States
+Report
+Eden Park , Auckland
+Attendance: 42,958
+Referee: Rebecca Welch ( England )
+Portugal
+United States
+GK 1 Ines Pereira
+RB 9 Ana Borges
+CB 19 Diana Gomes 72'
+CB 15 Carole Costa 56'
+LB 2 Catarina Amado 86' 89'
+DM 14 Dolores Silva ( c )
+CM 11 Tatiana Pinto
+CM 8 Andreia Norton 81'
+AM 20 Kika Nazareth 62'
+CF 10 Jéssica Silva
+CF 16 Diana Silva 89'
+Substitutions:
+MF 6 Andreia Jacinto 62'
+FW 23 Telma Encarnação 81'
+FW 21 Ana Capeta 89'
+DF 5 Joana Marchão 89'
+Manager:
+Francisco Neto
+GK 1 Alyssa Naeher
+RB 23 Emily Fox
+CB 4 Naomi Girma 81'
+CB 8 Julie Ertz
+LB 19 Crystal Dunn 90+7'
+DM 17 Andi Sullivan
+CM 16 Rose Lavelle 39'
+CM 10 Lindsey Horan ( c ) 84'
+RF 6 Lynn Williams 84'
+CF 13 Alex Morgan 90+7'
+LF 11 Sophia Smith 52' 61'
+Substitutions:
+FW 15 Megan Rapinoe 61'
+DF 14 Emily Sonnett 84'
+FW 20 Trinity Rodman 84'
+FW 7 Alyssa Thompson 90+7'
+DF 5 Kelley O'Hara 90+7'
+Manager:
+Vlatko Andonovski
+Player of the Match:
+Alex Morgan (United States)
+Assistant referees :
+Natalie Aspinall ( England )
+Anita Vad ( Hungary )
+Fourth official :
+Anahí Fernández ( Uruguay )
+Video assistant referee :
+Marco Fritz ( Germany )
+Assistant video assistant referee:
+Tatiana Guzmán ( Nicaragua )
+Offside video assistant referee:
+Maryna Striletska ( Ukraine )
+Vietnam vs Netherlands
+[ edit ]
+[[UTC+12]]</includeonly>"},"team1":{"wt":"{{fbw-rt|VIE}}"},"score":{"wt":"{{score link|2023 FIFA Women's World Cup Group E#Vietnam vs Netherlands|0–7}}"},"report":{"wt":"https://www.fifatrainingcentre.com/media/native/tournaments/womens-world-cup/2023/report_131901.pdf"},"team2":{"wt":"{{fbw|NED}}"},"goals1":{"wt":""},"goals2":{"wt":"*[[Lieke Martens|Martens]] {{goal|8}}\n*[[Katja Snoeijs|Snoeijs]] {{goal|11}}\n*[[Esmee Brugts|Brugts]] {{goal|18||57}}\n*[[Jill Roord|Roord]] {{goal|23||83}}\n*[[Daniëlle van de Donk|Van de Donk]] {{goal|45}}"},"stadium":{"wt":"[[Forsyth Barr Stadium]], [[Dunedin]]"},"attendance":{"wt":"8,215"},"referee":{"wt":"Ivana Martinčić ([[Croatian Football Federation|Croatia]])"}},"i":0}}]}'>
+1 August 2023 ( 2023-08-01 )
+19:00
+Vietnam 0–7 Netherlands
+Report
+Martens 8'
+Snoeijs 11'
+Brugts 18' , 57'
+Roord 23' , 83'
+Van de Donk 45'
+Forsyth Barr Stadium , Dunedin
+Attendance: 8,215
+Referee: Ivana Martinčić ( Croatia )
+Vietnam
+Netherlands
+GK 14 Trần Thị Kim Thanh 46'
+CB 2 Lương Thị Thu Thương 28'
+CB 13 Lê Thị Diễm My
+CB 4 Trần Thị Thu
+RWB 17 Trần Thị Thu Thảo
+LWB 5 Hoàng Thị Loan 28'
+RM 23 Nguyễn Thị Bích Thùy 60'
+CM 16 Dương Thị Vân 83'
+CM 10 Trần Thị Hải Linh
+LM 19 Nguyễn Thị Thanh Nhã
+CF 12 Phạm Hải Yến ( c ) 60'
+Substitutions:
+DF 3 Chương Thị Kiều 28'
+DF 22 Nguyễn Thị Mỹ Anh 28'
+GK 20 Khổng Thị Hằng 46'
+MF 7 Nguyễn Thị Tuyết Dung 60'
+FW 9 Huỳnh Như 60'
+Manager:
+Mai Đức Chung
+GK 1 Daphne van Domselaar
+CB 8 Sherida Spitse ( c ) 73'
+CB 3 Stefanie van der Gragt
+CB 20 Dominique Janssen
+RM 17 Victoria Pelova 46'
+CM 6 Jill Roord
+CM 14 Jackie Groenen 62'
+CM 10 Daniëlle van de Donk 46'
+LM 22 Esmee Brugts 80'
+CF 9 Katja Snoeijs
+CF 11 Lieke Martens
+Substitutions:
+MF 19 Wieke Kaptein 46'
+MF 18 Kerstin Casparij 46'
+MF 21 Damaris Egurrola 62'
+DF 15 Caitlin Dijkstra 73'
+DF 5 Merel van Dongen 80'
+Manager:
+Andries Jonker
+Player of the Match:
+Esmee Brugts (Netherlands)
+Assistant referees :
+Sanja Rođak-Karšić ( Croatia )
+Karolin Kaivoja ( Estonia )
+Fourth official :
+Iuliana Demetrescu ( Romania )
+Video assistant referee :
+Carol Anne Chenard ( Canada )
+Assistant video assistant referee:
+Nicolás Gallo ( Colombia )
+Offside video assistant referee:
+Chantal Boudreau ( Canada )
+Discipline
+[ edit ]
+Fair play points would have been used as tiebreakers in the group should the overall and head-to-head records of teams were tied. These were calculated based on yellow and red cards received in all group matches as follows: [ 2 ]
+first yellow card: minus 1 point;
+indirect red card (second yellow card): minus 3 points;
+direct red card: minus 4 points;
+yellow card and direct red card: minus 5 points;
+Only one of the above deductions was applied to a player in a single match.
+Team
+Match 1
+Match 2
+Match 3
+Points
+Netherlands
+1
+–1
+Vietnam
+1
+1
+–2
+United States
+1
+1
+3
+–5
+Portugal
+2
+1
+3
+–6
+See also
+[ edit ]
+Netherlands at the FIFA Women's World Cup
+Portugal at the FIFA Women's World Cup
+United States at the FIFA Women's World Cup
+Vietnam at the FIFA Women's World Cup
+References
+[ edit ]
+↑ "Match schedule: FIFA Women's World Cup Australia & New Zealand 2023" (PDF) . FIFA . 24 October 2022 . Retrieved 24 October 2022 .
+1 2 "Regulations: FIFA Women's World Cup Australia & New Zealand 2023" (PDF) . FIFA . Retrieved 14 December 2022 .
+↑ "Draw Procedures for the FIFA Women's World Cup Australia & New Zealand 2023" (PDF) . FIFA. October 2022 . Retrieved 18 October 2022 .
+External links
+[ edit ]
+Official website
+v
+t
+e
+2023 FIFA Women's World Cup
+Stages
+Group stage
+Group A
+Group B
+Group C
+Group D
+Group E
+Group F
+Group G
+Group H
+Knockout stage
+Final
+General information
+Qualification
+Broadcasting rights
+Bids
+Controversies
+Big Five broadcasting rights
+OneLove
+Rubiales case
+Officials
+Squads
+Matildas fever
+Retrieved from " https://en.wikipedia.org/w/index.php?title=2023_FIFA_Women%27s_World_Cup_Group_E&oldid=1362842662 "
+Categories : 2023 FIFA Women's World Cup group stage
+Netherlands at the 2023 FIFA Women's World Cup
+Portugal at the 2023 FIFA Women's World Cup
+United States at the 2023 FIFA Women's World Cup
+Vietnam at the 2023 FIFA Women's World Cup
+Hidden categories: Articles with short description
+Short description matches Wikidata
+Use dmy dates from October 2022
+Official website not in Wikidata
+This page was last edited on 6 July 2026, at 15:15 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+2023 FIFA Women's World Cup Group E
+13 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"2023 FIFA Women's World Cup Group E","url":"https:\/\/en.wikipedia.org\/wiki\/2023_FIFA_Women%27s_World_Cup_Group_E","sameAs":"http:\/\/www.wikidata.org\/entity\/Q114680481","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q114680481","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2021-12-02T09:40:05Z","dateModified":"2026-07-06T15:15:15Z","headline":"Football tournament teams"}
