@@ -71,7 +71,7 @@ pick'em. Pick'em by day of play and squares don't suit tennis and aren't offered
 ## The PRs
 
 1. **How a match ended: retirements, walkovers and defaults** (shared, sport-agnostic). After #791.
-2. **Tennis and the Grand Slams**: the sport, both draws of the four Slams, every pool type,
+2. **Tennis and the Grand Slams**: the sport, the ATP and WTA draws of the four Slams, every pool type,
    test seeds. After slice 1 and #792.
 3. **Withdrawals after the draw**: lucky losers, in any sport that plays a bracket. After slice 2;
    can fold into it if small.
@@ -128,8 +128,10 @@ The `add-sport` skill, as hockey did it.
   "Withdrawn", eventStart "first match". Round names counted back from the final: Final,
   Semifinals, Quarterfinals, Fourth round, Third round, Second round, First round. A league
   that names its rounds differently sets `SportLeague.roundNames`.
-- **League:** one sport league, **Grand Slams**, holding eight event series: the men's and the
-  women's singles of the Australian Open, Roland Garros, Wimbledon and the US Open (see Q2.1).
+- **Leagues:** **ATP** (men's singles) and **WTA** (women's singles), split as every other
+  sport's men's and women's competitions are (see Q2.1). Each holds four event series: the
+  Australian Open, Roland Garros, Wimbledon and the US Open. Their 1000-level events join the
+  same leagues later (Q4.2).
   The sport's `defaultTierLayout` is six tiers of eight (Q2.2).
 - **Draw layout:** `regionLabel` names each quarter of the draw ("Top quarter" ... "Bottom
   quarter") through the quarterfinals, so the 127-pick bracket screen groups the first round's
@@ -147,9 +149,8 @@ The `add-sport` skill, as hockey did it.
   - Bracket: the full draw (default), and a "second week" bracket from the fourth round (#760).
     See Q2.3.
   - Survivor: one player per round, each once.
-  - Multi-event: a "Slams season" tiered pool over a year's four Slams of one draw, and a
-    "both draws" tiered pool over one Slam's men's and women's draws (`event_series_names`, as
-    golf's majors pool).
+  - Multi-event: a "Slams season" tiered pool over a year's four Slams in one league
+    (`event_series_names`, as golf's majors pool).
 - **Qualifier places** use play-in places as they are. The admin screen's copy for them reads a
   new vocabulary word, `playInPlace` ("Qualifier"; basketball "Play-in").
 - **Test seed:** the 2026 US Open men's and women's singles as played, through
@@ -161,8 +162,11 @@ Questions:
 
 - **Q2.1** One "Grand Slams" sport league holding both draws, or an ATP league and a WTA league?
   A contest's events all come from one sport league (#713), so separate leagues rule out a pool
-  covering both draws of a Slam. Recommendation: one Grand Slams league. ATP and WTA leagues can
-  come later for the 1000-level events (Q4.2), which really are theirs.
+  covering both draws of a Slam. Recommendation (revised 2026-10-21 after Derek's question):
+  ATP and WTA, split as basketball, hockey and golf are. A one-league exception for tennis would
+  be the only one, and the 1000-level events belong to the ATP and WTA anyway. If a men's plus
+  women's pool is wanted, it should come as a general "contest across leagues of one sport"
+  feature, which would also give a combined men's and women's March Madness pool.
 - **Q2.2** How should the roster pool's tiers be cut? A draw has 32 seeds and 96 others.
   Recommendation: six tiers of eight by ranking, the last taking everyone else (1-8, 9-16,
   17-24, 25-32, 33-40, and 41 down); pick one from each, all six count. Ranking and seeding agree
