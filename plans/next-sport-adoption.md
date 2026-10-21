@@ -388,9 +388,12 @@ Questions:
 
 - **Q3.4** Is a Champions League knockout pool interesting to your users, or is soccer only worth
   it for World Cups? If only World Cups, soccer drops behind racing until 2030 (the 2027 Women's
-  World Cup aside).
+  World Cup aside). Decided 2026-10-21: both. Derek wants every soccer competition supported,
+  built in order of shape; the scope and slices are on #787.
 - **Q3.5** For group stages, score teams by group-stage points (3 for a win, 1 for a draw) plus
   knockout advancement? That is the usual pool rule but it needs per-match results.
+  Decided 2026-10-21: no. Group matchdays are pick'em only, and roster and bracket pools start at
+  the knockout round (#787).
 
 ### 3.3 March Madness full bracket pick'em — rank 5
 
