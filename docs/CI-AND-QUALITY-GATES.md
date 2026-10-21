@@ -410,6 +410,12 @@ untouched. The cost is on the critical path: four jobs declare
 tree being linted at all; #345 Phase 0 records the incremental-program options
 considered for clawing it back.
 
+Memory is the other cost. By October 2026 `lint:service` had outgrown Node's default heap of
+about 4 GB on the runner and failed with "JavaScript heap out of memory" before reporting
+anything, so its CI step sets `NODE_OPTIONS=--max-old-space-size=6144`. A local run with a
+larger default heap does not show this; reproduce a CI failure with
+`NODE_OPTIONS=--max-old-space-size=4096 npm run lint:service`.
+
 Note that `npm run lint` and `npm run typecheck` each build that program, in
 separate processes. This is not deduplicable: ESLint's `projectService` builds
 its program inside the ESLint process, and there is no way to hand it to a
