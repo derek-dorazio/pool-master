@@ -66,7 +66,7 @@ export function bracketErrorMessages(
     SPORT_EVENT_BRACKET_LOCKED: `The ${vocabulary.event.one} has been released, so its pairings are locked.`,
     BRACKET_INVALID: `That pairing could not be saved. Each ${team.one} plays one opening ${noun.one}, and two different ${team.many} meet in a ${noun.one}.`,
     BRACKET_MATCH_NOT_FOUND: `That ${noun.one} is no longer in the bracket. Refresh the page.`,
-    EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: `That place is not a play-in place, so its ${team.one} can't be replaced.`,
+    EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: `That place is not a ${vocabulary.playInPlace ?? 'play-in'} place, so its ${team.one} can't be replaced.`,
     EVENT_PARTICIPANT_ALREADY_ON_FIELD: `That ${team.one} is already in the ${vocabulary.event.one}.`,
     PLAY_IN_SLOT_ALREADY_PLAYED: `That place has already played a ${noun.one}, so its ${team.one} can't change.`,
     PARTICIPANT_NOT_FOUND: `That ${team.one} is no longer active. Pick another.`,

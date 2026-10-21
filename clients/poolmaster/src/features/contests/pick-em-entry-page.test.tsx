@@ -354,7 +354,7 @@ describe('Pick\'em contest entry page', () => {
 
     fireEvent.click(await screen.findByTestId(`pick-em-game-2-team-${NFL_TEAMS.bills.sportEventParticipantId}`));
 
-    expect(await screen.findByTestId('pick-em-pick-error')).toHaveTextContent('That game has kicked off, so its pick is locked.');
+    expect(await screen.findByTestId('pick-em-pick-error')).toHaveTextContent('That game has started, so its pick is locked.');
     await waitFor(() => expect(getGamePicksMock).toHaveBeenCalledTimes(2));
   });
 });
@@ -466,6 +466,17 @@ describe('Playoff survivor entry page', () => {
     expect(screen.queryByTestId('pick-em-game-2')).not.toBeInTheDocument();
     expect(screen.getByTestId('survivor-pick')).toHaveTextContent('Bills');
     expect(screen.getByTestId('contest-entry-builder-heading')).toHaveTextContent('Picks');
+  });
+
+  // #704: a tennis survivor pool picks players to win matches.
+  it('words a tennis survivor round in its sport\'s own nouns: a player to pick before the round\'s first match', async () => {
+    primeMocks({ week: playoffSurvivorFixture() });
+    getContestMock.mockResolvedValue({ data: { contest: playoffSurvivorContestFixture({ sport: 'TENNIS' }) } });
+    renderPickEmEntry();
+
+    expect(await screen.findByTestId('survivor-round-needs-pick')).toHaveTextContent('Pick a player before this round\'s first match, or the entry is out.');
+    expect(screen.getByText('Your pick locks when its match starts.')).toBeInTheDocument();
+    expect(screen.getByText(/^Tap the one player you think wins this round\./)).toBeInTheDocument();
   });
 
   it('says which round put an entry out', async () => {

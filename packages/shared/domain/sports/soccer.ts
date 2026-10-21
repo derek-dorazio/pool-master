@@ -45,6 +45,7 @@ export const soccerSportDefinition: SportDefinition = {
     match: { one: 'match', many: 'matches' },
     overtime: 'extra time',
     tie: 'Draw',
+    scoreUnit: 'goals',
   },
   // A four-round knockout reads Round of 16, Quarter-finals, Semi-finals, Final; a five-round one
   // starts at the Round of 32.

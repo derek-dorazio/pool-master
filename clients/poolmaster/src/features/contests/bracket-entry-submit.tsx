@@ -1,14 +1,15 @@
-import { ContestEntryStatus } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, type Sport } from '@poolmaster/shared/domain';
 import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
 import { Alert, Button, FormField, Input, Tile } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { formatPickProgress, parseBracketTiebreaker } from './bracket-layout';
+import { contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
 
 /** Why the bracket cannot be submitted yet, in the order the entry would fix it, or null. */
-function submitHint(gamePicks: GamePicksResponse): string | null {
+function submitHint(gamePicks: GamePicksResponse, sport: Sport | null | undefined): string | null {
   const stillToPick = gamePicks.gameCount - gamePicks.pickedCount;
   if (stillToPick > 0) {
-    return `Pick every game to submit: ${stillToPick} still to pick.`;
+    return `Pick every ${contestMatchNoun(sport).one} to submit: ${stillToPick} still to pick.`;
   }
   if (gamePicks.tiebreakerValue === null) {
     return 'Save your tiebreaker to submit.';
@@ -17,12 +18,13 @@ function submitHint(gamePicks: GamePicksResponse): string | null {
 }
 
 /**
- * The entry's tiebreaker (the final's total points, both teams together) and the Submit action
+ * The entry's tiebreaker (the final's total points, both sides together) and the Submit action
  * (#721). The tiebreaker saves on its own, with no picks; Submit follows the server's `canSubmit`,
  * so it opens once every game is picked and the tiebreaker is saved.
  */
 export function BracketSubmitPanel({
   gamePicks,
+  sport,
   isSaving,
   isSubmitting,
   onSaveTiebreaker,
@@ -33,6 +35,8 @@ export function BracketSubmitPanel({
   tiebreakerText,
 }: {
   gamePicks: GamePicksResponse;
+  /** The contest's sport, whose words the copy reads (#704): "sets" and "players" in tennis. */
+  sport: Sport | null | undefined;
   isSaving: boolean;
   isSubmitting: boolean;
   onSaveTiebreaker: (value: number) => void;
@@ -48,7 +52,8 @@ export function BracketSubmitPanel({
   const isTyped = tiebreakerText.trim() !== '';
   const isUnchanged = parsed !== null && parsed === gamePicks.tiebreakerValue;
   const isSubmitted = gamePicks.status === ContestEntryStatus.SUBMITTED;
-  const hint = isSubmitted ? null : submitHint(gamePicks);
+  const hint = isSubmitted ? null : submitHint(gamePicks, sport);
+  const scoreUnit = contestScoreUnit(sport);
 
   return (
     <Tile className="space-y-4" data-testid="bracket-submit-panel">
@@ -70,7 +75,7 @@ export function BracketSubmitPanel({
         <FormField
           className="min-w-[12rem] flex-1"
           error={isTyped && parsed === null ? `Enter a whole number from 0 to ${GAME_PICKS_TIEBREAKER_MAX}.` : undefined}
-          helperText="Total points in the final, both teams together. It only breaks a tie on points."
+          helperText={`Total ${scoreUnit} in the final, both ${contestParticipantNoun(sport).many} together. It only breaks a tie on points.`}
           label="Tiebreaker"
         >
           <Input
@@ -95,14 +100,14 @@ export function BracketSubmitPanel({
       </form>
       {gamePicks.tiebreakerValue !== null ? (
         <p className="text-sm text-muted-foreground" data-testid="bracket-tiebreaker-saved">
-          {`Saved tiebreaker: ${gamePicks.tiebreakerValue} total points.`}
+          {`Saved tiebreaker: ${gamePicks.tiebreakerValue} total ${scoreUnit}.`}
         </p>
       ) : null}
       {saveError ? <Alert data-testid="bracket-save-error" tone="danger">{saveError}</Alert> : null}
 
       {isSubmitted ? (
         <Alert data-testid="bracket-submitted" title="Submitted" tone="success">
-          Your bracket counts. You can still change picks until the games lock; a change that leaves a game unpicked needs submitting again.
+          {`Your bracket counts. You can still change picks until the ${contestMatchNoun(sport).many} lock; a change that leaves a ${contestMatchNoun(sport).one} unpicked needs submitting again.`}
         </Alert>
       ) : (
         <div className="space-y-3">

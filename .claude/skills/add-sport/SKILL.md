@@ -44,7 +44,7 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
 1. **Scoring family.** Does an existing family already score this sport?
    - Stroke play: lowest total wins (golf).
    - Head to head: a bracket of matches, points per round won plus an optional seed upset
-     bonus (basketball, American football, hockey, baseball, soccer; tennis next). A league whose rounds the sport's names
+     bonus (basketball, American football, hockey, baseball, soccer, tennis). A league whose rounds the sport's names
      do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's), and a league whose field the
      sport's default tiers do not fit sets its own tier count (`SportLeague.tierCount`: the
      College Football Playoff's six). Its matches are `SportEventMatch` rows in the event core, not family tables.
@@ -259,6 +259,17 @@ down: a lesson that was true mid-series may not be by the end.
 - **A bye on the away side.** A fixed bracket may name a team placed straight into a later
   round on either side of its match (MLB's byes are home sides, the Champions League's away
   sides); the earlier round's winner fills the other side through `advancesTo`.
+- **Team words in a match sport's screens.** The bracket and survivor screens read the sport's
+  participant noun, its `vocabulary.match` ("match", else "game"), its `eventStart` and its
+  `vocabulary.scoreUnit` ("sets" for tennis, else "points") through the helpers in
+  `contest-sport.ts`. An individual sport in the head-to-head family shows any "team" left in
+  copy at once; render one screen on the new sport and read it.
+- **A tie word for a sport that never ties.** Every head-to-head sport names a tie
+  (`vocabulary.tie`), tennis included, because the shared result and pick screens read it; the
+  definition test refuses one without.
+- **A second tier layout for a variation.** Tiers live on the event and every contest shares
+  them, so a variation that picks from fewer tiers (tennis's Seeds only, golf's Top four tiers)
+  is the tiered rules' `tiersUsed`, not a new tier layout.
 - **Squares on a league whose final is a series.** A series is one bracket match scored in
   games won, so it has no single game for a grid. Leave squares out of such a sport's selection
   types and its period layout off the definition, and add the league to the template checks'

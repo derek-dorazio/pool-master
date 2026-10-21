@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { ContestEntryStatus, PickEmMode } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PickEmMode, type Sport } from '@poolmaster/shared/domain';
 import {
   getGamePicks,
   saveGamePicks,
@@ -36,7 +36,7 @@ import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { formatPickEmRulesName, formatSelectionTypeName } from './contest-rules';
-import { contestTieLabel } from './contest-sport';
+import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
   CONTEST_ENTRY_STATUS_TONES,
@@ -67,20 +67,25 @@ import { useBracketRoundLabel } from './use-bracket-round-label';
 import { fetchContestEntries } from './use-contest-entries';
 
 /**
- * Copy for the refusals a week's picks, tiebreaker and submit can meet (#718). The codes are the
+ * Copy for the refusals a week's picks, tiebreaker and submit can meet (#718), in the contest's
+ * sport's words (#704: a tennis survivor pool picks players in matches). The codes are the
  * contract; the server's own sentences are a fallback for anything not listed.
  */
-const PICK_EM_CODE_MESSAGES: ErrorCodeMessages = {
-  PREDICTION_WEEK_INCOMPLETE: 'Every game needs a pick before this week can be submitted.',
-  PREDICTION_CONFIDENCE_INVALID: 'Give each pick a different confidence value, from 1 up to the number of games.',
-  PREDICTION_TIEBREAKER_MISSING: 'Save your tiebreaker, the total points of the tiebreaker game, before you submit.',
-  PREDICTION_GAME_STARTED: 'That game has kicked off, so its pick is locked.',
-  PREDICTION_CLEAR_AFTER_FIRST_KICKOFF: 'The week has started, so a pick can be changed to the other team but not removed.',
-  CONTEST_ENTRY_LOCKED: 'The games have kicked off, so this can no longer change.',
-  PREDICTION_ONE_PICK_REQUIRED: 'Pick one team to win this week, or in a playoff, this round.',
-  PREDICTION_TEAM_ALREADY_USED: 'You picked that team in another week or round. Each team can be picked once.',
-  PREDICTION_ENTRY_ELIMINATED: 'This entry is out, so it picks no more.',
-};
+function pickEmCodeMessages(sport: Sport | null | undefined): ErrorCodeMessages {
+  const match = contestMatchNoun(sport);
+  const participant = contestParticipantNoun(sport);
+  return {
+    PREDICTION_WEEK_INCOMPLETE: `Every ${match.one} needs a pick before this week can be submitted.`,
+    PREDICTION_CONFIDENCE_INVALID: `Give each pick a different confidence value, from 1 up to the number of ${match.many}.`,
+    PREDICTION_TIEBREAKER_MISSING: `Save your tiebreaker, the total ${contestScoreUnit(sport)} of the tiebreaker ${match.one}, before you submit.`,
+    PREDICTION_GAME_STARTED: `That ${match.one} has started, so its pick is locked.`,
+    PREDICTION_CLEAR_AFTER_FIRST_KICKOFF: `The week has started, so a pick can be changed to the other ${participant.one} but not removed.`,
+    CONTEST_ENTRY_LOCKED: `The ${match.many} have started, so this can no longer change.`,
+    PREDICTION_ONE_PICK_REQUIRED: `Pick one ${participant.one} to win this week, or in a playoff, this round.`,
+    PREDICTION_TEAM_ALREADY_USED: `You picked that ${participant.one} in another week or round. Each ${participant.one} can be picked once.`,
+    PREDICTION_ENTRY_ELIMINATED: 'This entry is out, so it picks no more.',
+  };
+}
 
 /** What the entry has scored, once anyone can see it; a dash before. */
 function formatScore(points: number | null) {
@@ -116,6 +121,9 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const [requestedRound, setRequestedRound] = useState<number | null>(null);
   const roundLabel = useBracketRoundLabel(contest.sport, sportEventId);
   const tieLabel = contestTieLabel(contest.sport);
+  const match = contestMatchNoun(contest.sport);
+  const participant = contestParticipantNoun(contest.sport);
+  const eventStart = contestEventStart(contest.sport);
 
   const gamePicksQuery = useQuery({
     queryKey: gamePicksKey,
@@ -254,7 +262,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     }
   };
   const errorMessage = (error: Error | null, fallback: string) => (error
-    ? extractErrorMessage(error, { codeMessages: PICK_EM_CODE_MESSAGES, fallback })
+    ? extractErrorMessage(error, { codeMessages: pickEmCodeMessages(contest.sport), fallback })
     : null);
   // A save with no picks is the tiebreaker's: its refusal shows beside the tiebreaker field.
   const isTiebreakerSave = saveMutation.variables?.picks.length === 0;
@@ -334,20 +342,20 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       {canChange && !isSubmitted && kickoff ? (
         <Alert data-testid="pick-em-not-submitted-warning" title="Not submitted yet" tone="warning">
           {isSurvivor
-            ? `Submit this week before the first kickoff, ${formatDateTimeDisplay(kickoff)}. An entry that hasn't submitted by then is out.`
-            : `Submit this week before the first kickoff, ${formatDateTimeDisplay(kickoff)}. A week that isn't submitted by then scores nothing.`}
+            ? `Submit this week before the ${eventStart}, ${formatDateTimeDisplay(kickoff)}. An entry that hasn't submitted by then is out.`
+            : `Submit this week before the ${eventStart}, ${formatDateTimeDisplay(kickoff)}. A week that isn't submitted by then scores nothing.`}
         </Alert>
       ) : null}
       {roundNeedsPick ? (
         <Alert data-testid="survivor-round-needs-pick" title="No pick yet" tone="warning">
-          Pick a team before this round&apos;s first game, or the entry is out.
+          {`Pick a ${participant.one} before this round's first ${match.one}, or the entry is out.`}
         </Alert>
       ) : null}
       {missedWeek(gamePicks) && eliminatedInWeek === null ? (
         <Alert data-testid="pick-em-missed-week">
           {isSurvivor
-            ? 'This week wasn\'t submitted before its first kickoff, so this entry is out.'
-            : 'This week wasn\'t submitted before its first kickoff, so it scores nothing.'}
+            ? `This week wasn't submitted before its ${eventStart}, so this entry is out.`
+            : `This week wasn't submitted before its ${eventStart}, so it scores nothing.`}
         </Alert>
       ) : null}
 
@@ -355,12 +363,12 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         {isSurvivor ? (
           <MetricGrid className="md:grid-cols-2">
             <MetricTile
-              helperText={canChange ? 'Your pick locks at its game\'s kickoff.' : 'No pick can change now.'}
+              helperText={canChange ? `Your pick locks when its ${match.one} starts.` : 'No pick can change now.'}
               label="Your pick"
               value={<span data-testid="survivor-pick">{survivorTeam?.name ?? 'None yet'}</span>}
             />
             <MetricTile
-              helperText={isSubmitted ? `This ${isPlayoff ? 'entry' : 'week'} counts.` : 'Submit before the first kickoff to stay in.'}
+              helperText={isSubmitted ? `This ${isPlayoff ? 'entry' : 'week'} counts.` : `Submit before the ${eventStart} to stay in.`}
               label="Status"
               value={<span data-testid="pick-em-status">{statusLabel}</span>}
             />
@@ -400,7 +408,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
         {canChange ? (
           <p className="mb-5 text-sm text-muted-foreground">
             {isSurvivor
-              ? `Tap the one team you think wins this ${period}. If it loses or ties, the entry is out. A team you picked in another ${period} can't be picked again.`
+              ? `Tap the one ${participant.one} you think wins this ${period}. If it loses or ties, the entry is out. A ${participant.one} you picked in another ${period} can't be picked again.`
               : gamePicks.mode === PickEmMode.CONFIDENCE
               ? `${pickInstruction}, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value.`
               : `${pickInstruction}. Each correct pick scores 1 point.`}
@@ -434,7 +442,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           {isSubmitted ? (
             <Alert data-testid="pick-em-submitted" title="Submitted" tone="success">
               {isSurvivor
-                ? `This ${isPlayoff ? 'entry' : 'week'} counts. You can still change your pick until its game kicks off.`
+                ? `This ${isPlayoff ? 'entry' : 'week'} counts. You can still change your pick until its ${match.one} starts.`
                 : 'This week counts. You can still change a pick until its game kicks off.'}
             </Alert>
           ) : (

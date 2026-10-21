@@ -247,6 +247,18 @@ describe('Bracket contest entry page', () => {
     expect(await screen.findByTestId('bracket-submit-error')).toHaveTextContent(message);
   });
 
+  // #704: a tennis draw's bracket reads players, matches and sets, never teams, games or points.
+  it('words a tennis bracket in its sport\'s own nouns: players and matches to pick, and the final\'s total sets as the tiebreaker', async () => {
+    primeMocks({ contest: bracketContestFixture({ sport: 'TENNIS' }) });
+    renderBracketEntry();
+
+    await screen.findByTestId('bracket-submit');
+    expect(screen.getByText(/^Pick the winner of each match\. A later match offers the players you picked/)).toBeInTheDocument();
+    expect(screen.getByTestId('bracket-submit-hint')).toHaveTextContent('Pick every match to submit: 7 still to pick.');
+    expect(screen.getByText('Total sets in the final, both players together. It only breaks a tie on points.')).toBeInTheDocument();
+    expect(screen.getByTestId('bracket-submit-panel')).not.toHaveTextContent(/\bteams?\b|\bgames?\b/);
+  });
+
   it('refuses a tiebreaker outside 0 to 999 at the field without saving it', async () => {
     primeMocks({ gamePicks: gamePicksFixture({ games: filledBracketGames() }) });
     renderBracketEntry();

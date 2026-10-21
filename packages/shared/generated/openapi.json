@@ -7442,7 +7442,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Sport this template applies to."
           },
@@ -9298,7 +9299,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Only templates for this sport."
           },
@@ -9348,7 +9350,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ],
                   "description": "Sport this template applies to."
                 },
@@ -12037,7 +12040,8 @@
                   "AMERICAN_FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
-                  "SOCCER"
+                  "SOCCER",
+                  "TENNIS"
                 ],
                 "description": "Sport this template applies to."
               },
@@ -14285,7 +14289,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "The sport."
           },
@@ -14353,7 +14358,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ],
                   "description": "The sport."
                 },
@@ -14520,7 +14526,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Only sport leagues of this sport."
           },
@@ -14771,7 +14778,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "The sport the new sport league belongs to."
           },
@@ -15673,7 +15681,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Sport the event belongs to."
           },
@@ -15954,7 +15963,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Only events of this sport."
           },
@@ -16020,7 +16030,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -16326,7 +16337,8 @@
                   "AMERICAN_FOOTBALL",
                   "HOCKEY",
                   "BASEBALL",
-                  "SOCCER"
+                  "SOCCER",
+                  "TENNIS"
                 ],
                 "description": "Sport the event belongs to."
               },
@@ -16777,7 +16789,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ],
                   "description": "Sport the event belongs to."
                 },
@@ -21626,6 +21639,7 @@
               "HOCKEY",
               "BASEBALL",
               "SOCCER",
+              "TENNIS",
               null
             ]
           },
@@ -22451,7 +22465,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
           },
@@ -23408,6 +23423,7 @@
                   "HOCKEY",
                   "BASEBALL",
                   "SOCCER",
+                  "TENNIS",
                   null
                 ]
               },
@@ -23575,6 +23591,7 @@
                     "HOCKEY",
                     "BASEBALL",
                     "SOCCER",
+                    "TENNIS",
                     null
                   ]
                 },
@@ -26233,7 +26250,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "minItems": 1
@@ -26337,7 +26355,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "minItems": 1,
@@ -26351,7 +26370,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ],
             "description": "Sports that scheduled ingestion is allowed to run automatically."
           },
@@ -26461,7 +26481,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ]
                   },
                   "minItems": 1
@@ -26664,7 +26685,8 @@
                         "AMERICAN_FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
-                        "SOCCER"
+                        "SOCCER",
+                        "TENNIS"
                       ]
                     },
                     "minItems": 1,
@@ -26678,7 +26700,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -26788,7 +26811,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1
@@ -26904,7 +26928,8 @@
                         "AMERICAN_FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
-                        "SOCCER"
+                        "SOCCER",
+                        "TENNIS"
                       ]
                     },
                     "minItems": 1,
@@ -26918,7 +26943,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -27028,7 +27054,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1
@@ -27607,7 +27634,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1,
@@ -27621,7 +27649,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -27731,7 +27760,8 @@
                                     "AMERICAN_FOOTBALL",
                                     "HOCKEY",
                                     "BASEBALL",
-                                    "SOCCER"
+                                    "SOCCER",
+                                    "TENNIS"
                                   ]
                                 },
                                 "minItems": 1
@@ -27847,7 +27877,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1,
@@ -27861,7 +27892,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -27971,7 +28003,8 @@
                                     "AMERICAN_FOOTBALL",
                                     "HOCKEY",
                                     "BASEBALL",
-                                    "SOCCER"
+                                    "SOCCER",
+                                    "TENNIS"
                                   ]
                                 },
                                 "minItems": 1
@@ -28507,7 +28540,8 @@
                         "AMERICAN_FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
-                        "SOCCER"
+                        "SOCCER",
+                        "TENNIS"
                       ]
                     },
                     "minItems": 1,
@@ -28619,7 +28653,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1
@@ -28974,7 +29009,8 @@
                         "AMERICAN_FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
-                        "SOCCER"
+                        "SOCCER",
+                        "TENNIS"
                       ]
                     },
                     "minItems": 1,
@@ -28988,7 +29024,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -29098,7 +29135,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1
@@ -29214,7 +29252,8 @@
                         "AMERICAN_FOOTBALL",
                         "HOCKEY",
                         "BASEBALL",
-                        "SOCCER"
+                        "SOCCER",
+                        "TENNIS"
                       ]
                     },
                     "minItems": 1,
@@ -29228,7 +29267,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ],
                     "description": "Sports that scheduled ingestion is allowed to run automatically."
                   },
@@ -29338,7 +29378,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1
@@ -29875,7 +29916,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1,
@@ -29889,7 +29931,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -29999,7 +30042,8 @@
                                     "AMERICAN_FOOTBALL",
                                     "HOCKEY",
                                     "BASEBALL",
-                                    "SOCCER"
+                                    "SOCCER",
+                                    "TENNIS"
                                   ]
                                 },
                                 "minItems": 1
@@ -30115,7 +30159,8 @@
                               "AMERICAN_FOOTBALL",
                               "HOCKEY",
                               "BASEBALL",
-                              "SOCCER"
+                              "SOCCER",
+                              "TENNIS"
                             ]
                           },
                           "minItems": 1,
@@ -30129,7 +30174,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ],
                           "description": "Sports that scheduled ingestion is allowed to run automatically."
                         },
@@ -30239,7 +30285,8 @@
                                     "AMERICAN_FOOTBALL",
                                     "HOCKEY",
                                     "BASEBALL",
-                                    "SOCCER"
+                                    "SOCCER",
+                                    "TENNIS"
                                   ]
                                 },
                                 "minItems": 1
@@ -33165,7 +33212,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "description": "Sports the provider covers that ingestion is scheduled for."
@@ -33248,7 +33296,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ]
                   },
                   "description": "Sports the provider covers that ingestion is scheduled for."
@@ -33305,7 +33354,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           },
           "eventId": {
@@ -33388,7 +33438,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ]
                   },
                   "eventId": {
@@ -33551,7 +33602,8 @@
                       "AMERICAN_FOOTBALL",
                       "HOCKEY",
                       "BASEBALL",
-                      "SOCCER"
+                      "SOCCER",
+                      "TENNIS"
                     ]
                   },
                   "eventExternalId": {
@@ -33843,7 +33895,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           },
           "status": {
@@ -33896,7 +33949,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ]
                 },
                 "eventId": {
@@ -33979,7 +34033,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ]
                         },
                         "eventId": {
@@ -34142,7 +34197,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ]
                         },
                         "eventExternalId": {
@@ -34439,7 +34495,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           },
           "eventId": {
@@ -34485,7 +34542,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ]
                 },
                 "eventId": {
@@ -34568,7 +34626,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ]
                         },
                         "eventId": {
@@ -34731,7 +34790,8 @@
                             "AMERICAN_FOOTBALL",
                             "HOCKEY",
                             "BASEBALL",
-                            "SOCCER"
+                            "SOCCER",
+                            "TENNIS"
                           ]
                         },
                         "eventExternalId": {
@@ -35046,7 +35106,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           }
         },
@@ -35094,7 +35155,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ]
                 }
               },
@@ -35138,7 +35200,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           },
           "name": {
@@ -35230,7 +35293,8 @@
               "AMERICAN_FOOTBALL",
               "HOCKEY",
               "BASEBALL",
-              "SOCCER"
+              "SOCCER",
+              "TENNIS"
             ]
           },
           "sportLeagueId": {
@@ -35284,7 +35348,8 @@
                     "AMERICAN_FOOTBALL",
                     "HOCKEY",
                     "BASEBALL",
-                    "SOCCER"
+                    "SOCCER",
+                    "TENNIS"
                   ]
                 },
                 "name": {
@@ -40662,7 +40727,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "query",
@@ -40841,7 +40907,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "query",
@@ -44746,7 +44813,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "query",
@@ -46104,7 +46172,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "path",
@@ -46178,7 +46247,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "path",
@@ -46344,7 +46414,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "query",
@@ -46453,7 +46524,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "path",
@@ -46597,7 +46669,8 @@
                 "AMERICAN_FOOTBALL",
                 "HOCKEY",
                 "BASEBALL",
-                "SOCCER"
+                "SOCCER",
+                "TENNIS"
               ]
             },
             "in": "query",

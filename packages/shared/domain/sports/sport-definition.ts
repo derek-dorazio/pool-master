@@ -61,6 +61,17 @@ export interface SportVocabulary {
    * a screen of a sport without one says "Tie".
    */
   tie?: string;
+  /**
+   * What a field place filled after the draw is made is called (#709), read before "place"
+   * ("Qualifier places", "Mark a qualifier place"): "qualifier" for tennis. Absent reads
+   * "play-in", as March Madness's First Four places are.
+   */
+  playInPlace?: string;
+  /**
+   * What one match's score counts, as a bracket's tiebreaker reads it ("total sets in the final"):
+   * "sets" for tennis, "goals" for soccer. Absent reads "points".
+   */
+  scoreUnit?: string;
 }
 
 /**

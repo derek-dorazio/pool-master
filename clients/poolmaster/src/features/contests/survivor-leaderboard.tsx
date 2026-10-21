@@ -72,8 +72,8 @@ function WeekCell({ entryId, week, weekId }: { entryId: string; week: SurvivorRo
   }
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5" data-testid={`survivor-leaderboard-week-${weekId}-${entryId}`}>
-      {/* A pending week has a pick, kept hidden until its game kicks off; a week lost with no team named had none. */}
-      {week.team ?? (week.outcome === SurvivorWeekOutcome.PENDING ? 'Shown at kickoff' : 'No pick')}
+      {/* A pending week has a pick, kept hidden until its match starts; a week lost with no pick named had none. */}
+      {week.team ?? (week.outcome === SurvivorWeekOutcome.PENDING ? 'Hidden until it starts' : 'No pick')}
       {week.outcome ? <Chip tone={OUTCOME_TONES[week.outcome]}>{OUTCOME_LABELS[week.outcome]}</Chip> : null}
     </span>
   );

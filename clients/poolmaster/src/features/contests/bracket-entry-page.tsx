@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { ContestEntryStatus, PredictedResult, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PredictedResult, type Sport } from '@poolmaster/shared/domain';
 import {
   getGamePicks,
   saveGamePicks,
@@ -31,6 +31,7 @@ import { BracketBoard } from './bracket-board';
 import { BracketSubmitPanel } from './bracket-entry-submit';
 import { buildBracketRounds, describeBracketClose, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
 import { ContestHeader, ContestSubMenu } from './contest-header';
+import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
 import { firstContestEvent } from './contest-events';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
@@ -44,16 +45,21 @@ import { useBracketRoundLabel } from './use-bracket-round-label';
 import { fetchContestEntries } from './use-contest-entries';
 
 /**
- * Copy for the refusals a bracket's picks, tiebreaker and submit can meet (#721). The codes are
- * the contract; the server's own sentences are a fallback for anything not listed.
+ * Copy for the refusals a bracket's picks, tiebreaker and submit can meet (#721), in the
+ * contest's sport's words (#704). The codes are the contract; the server's own sentences are a
+ * fallback for anything not listed.
  */
-const BRACKET_CODE_MESSAGES: ErrorCodeMessages = {
-  PREDICTION_WEEK_INCOMPLETE: 'Every game needs a pick before your bracket can be submitted.',
-  PREDICTION_TIEBREAKER_MISSING: 'Save your tiebreaker, the total points of the final, before you submit.',
-  PREDICTION_GAME_STARTED: 'That game has started, so its pick is locked.',
-  PREDICTION_TEAM_NOT_IN_GAME: 'That team can’t reach this game in your bracket any more. Your bracket has been refreshed.',
-  CONTEST_ENTRY_LOCKED: 'The games have started, so this bracket can no longer change.',
-};
+function bracketCodeMessages(sport: Sport | null | undefined): ErrorCodeMessages {
+  const match = contestMatchNoun(sport);
+  const participant = contestParticipantNoun(sport);
+  return {
+    PREDICTION_WEEK_INCOMPLETE: `Every ${match.one} needs a pick before your bracket can be submitted.`,
+    PREDICTION_TIEBREAKER_MISSING: `Save your tiebreaker, the total ${contestScoreUnit(sport)} of the final, before you submit.`,
+    PREDICTION_GAME_STARTED: `That ${match.one} has started, so its pick is locked.`,
+    PREDICTION_TEAM_NOT_IN_GAME: `That ${participant.one} can’t reach this ${match.one} in your bracket any more. Your bracket has been refreshed.`,
+    CONTEST_ENTRY_LOCKED: `The ${match.many} have started, so this bracket can no longer change.`,
+  };
+}
 
 /** What the entry has scored, once anyone can see it; a dash before. */
 function formatScore(points: number | null) {
@@ -164,8 +170,9 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   }
 
   const gamePicks = gamePicksQuery.data;
-  const vocabulary = contest.sport ? getSportDefinition(contest.sport).vocabulary : null;
-  const eventStart = vocabulary?.eventStart ?? 'first game';
+  const eventStart = contestEventStart(contest.sport);
+  const match = contestMatchNoun(contest.sport);
+  const participant = contestParticipantNoun(contest.sport);
   const backLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
   const backToContestPath = backLeagueCode ? buildLeagueContestPath(backLeagueCode, contestId) : `/contests/${contestId}`;
   const entrySummary = contestEntriesQuery.data?.entries.find((entry) => entry.id === entryId) ?? null;
@@ -186,7 +193,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     });
   };
   const errorMessage = (error: Error | null, fallback: string) => (error
-    ? extractErrorMessage(error, { codeMessages: BRACKET_CODE_MESSAGES, fallback })
+    ? extractErrorMessage(error, { codeMessages: bracketCodeMessages(contest.sport), fallback })
     : null);
   // A save with no picks is the tiebreaker's: its refusal shows beside the tiebreaker field.
   const isTiebreakerSave = saveMutation.variables?.picks.length === 0;
@@ -284,7 +291,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
             </h3>
             {canPick ? (
               <p className="mb-5 text-sm text-muted-foreground">
-                Pick the winner of each game. A later game offers the teams you picked to get there, and changing a pick clears the later picks that depended on it.
+                {`Pick the winner of each ${match.one}. A later ${match.one} offers the ${participant.many} you picked to get there, and changing a pick clears the later picks that depended on it.`}
               </p>
             ) : null}
             <BracketBoard canPick={canPick} isBusy={saveMutation.isPending} onPick={pick} rounds={rounds} />
@@ -293,6 +300,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
           {canPick ? (
             <BracketSubmitPanel
               gamePicks={gamePicks}
+              sport={contest.sport}
               isSaving={saveMutation.isPending}
               isSubmitting={submitMutation.isPending}
               onSaveTiebreaker={(tiebreakerValue) => {
@@ -313,7 +321,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
               <p className="text-sm">
                 {gamePicks.tiebreakerValue === null
                   ? 'No tiebreaker was saved.'
-                  : `Tiebreaker: ${gamePicks.tiebreakerValue} total points in the final.`}
+                  : `Tiebreaker: ${gamePicks.tiebreakerValue} total ${contestScoreUnit(contest.sport)} in the final.`}
               </p>
             </Tile>
           )}

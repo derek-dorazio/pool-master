@@ -267,6 +267,7 @@ enum PrismaSport {
   HOCKEY
   BASEBALL
   SOCCER
+  TENNIS
 }
 
 /// Tournament structural format — drives which contest types are valid

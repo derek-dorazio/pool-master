@@ -279,6 +279,18 @@ leg, its home side the first leg's host. A tie level on aggregate goes to its sh
 single match does. The Copa América starts at the quarter-finals; every other competition
 starts on four tiers of four.
 
+Tennis (#704) has two sport leagues, the ATP (men's singles) and the WTA (women's singles), each
+holding the four Grand Slams; every bracket is fixed. A Slam singles draw is 128 players in seven
+rounds, First round to Final, with the tournament's 32 seeds as seeds 1 to 32 and everyone else
+unseeded (the admin's "derive seeds from ranking" action is not used, because it would overwrite
+the real seeds). Each quarter of the draw is a region ("Top quarter" to "Bottom quarter")
+through the quarterfinals. The draw's qualifier places are play-in places, named "qualifier"
+on the Bracket tab, and are filled once qualifying ends. A match's score is sets won (3-1) and
+is optional: choosing the winner is enough. A match that ended early is entered with **Ended
+early**: a retirement, a walkover (no score) or a default; the winner advances in full. There
+are no periods, so no squares pools. A draw starts on six tiers of eight by ranking, the last
+taking everyone else, so the first four tiers are the seeds.
+
 **Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
 `RESEED_BY_SEED`) loads each round that is placed by seed with no next game in the round
 before it, and names only its byes. The NFL's Wild Card and Divisional games both link nowhere,
