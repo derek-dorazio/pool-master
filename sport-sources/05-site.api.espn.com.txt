@@ -1,0 +1,6 @@
+Source: https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?dates=20260217-20260530
+Final URL: https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?dates=20260217-20260530
+HTTP 400
+Fetched: 2026-10-21T02:20:22.729Z
+
+{"code":400,"message":"Failed to get events endpoint."}

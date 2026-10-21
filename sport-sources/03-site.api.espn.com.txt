@@ -1,0 +1,6 @@
+Source: https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.euro/scoreboard?dates=20240629-20240714
+Final URL: https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.euro/scoreboard?dates=20240629-20240714
+HTTP 400
+Fetched: 2026-10-21T02:20:22.387Z
+
+{"code":400,"message":"Failed to get events endpoint."}

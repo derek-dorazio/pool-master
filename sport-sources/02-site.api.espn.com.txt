@@ -1,0 +1,6 @@
+Source: https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.wwc/scoreboard?dates=20230805-20230820
+Final URL: https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.wwc/scoreboard?dates=20230805-20230820
+HTTP 400
+Fetched: 2026-10-21T02:20:22.303Z
+
+{"code":400,"message":"Failed to get events endpoint."}
