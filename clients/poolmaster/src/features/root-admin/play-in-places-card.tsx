@@ -7,8 +7,8 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, describeEntry } from './bracket-copy';
-import { useEventLeagueCandidatesQuery } from './use-sport-catalog';
+import { bracketErrorMessages, describeEntry, offLeagueRosterMessages } from './bracket-copy';
+import { useEventLeagueCandidatesQuery, useSportLeagueNoun } from './use-sport-catalog';
 
 const logger = getLogger().child({ feature: 'root-admin-play-in' });
 
@@ -162,6 +162,7 @@ function PlayInWinnerPicker({
 }) {
   const [participantId, setParticipantId] = useState(NONE);
   const teamsQuery = useEventLeagueCandidatesQuery(event);
+  const sportLeague = useSportLeagueNoun(event.sport, event.sportLeagueId);
   const inEvent = new Set(field.map((entry) => entry.participantId));
   const candidates = (teamsQuery.data ?? []).filter((participant) => !inEvent.has(participant.id));
 
@@ -219,7 +220,7 @@ function PlayInWinnerPicker({
       </Button>
       {mutation.isError ? (
         <p className="w-full text-sm text-destructive" role="alert">
-          {extractErrorMessage(mutation.error, { codeMessages: bracketErrorMessages(vocabulary), fallback: 'The winner could not be saved. Try again.' })}
+          {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: 'The winner could not be saved. Try again.' })}
         </p>
       ) : null}
     </>

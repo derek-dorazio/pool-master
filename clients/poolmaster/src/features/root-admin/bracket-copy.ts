@@ -65,6 +65,16 @@ export function feederOf(match: SportEventMatchDto, side: MatchSide, bracket: re
 }
 
 /**
+ * The refusal of a replacement or play-in winner off the event's league roster (#830), in the
+ * league's own word: a tour for the ATP, a league for the NCAA.
+ */
+export function offLeagueRosterMessages(vocabulary: SportVocabulary, sportLeague: SportNoun): ErrorCodeMessages {
+  return {
+    PARTICIPANT_NOT_IN_SPORT_LEAGUE: `That ${vocabulary.participant.one} isn't on this ${sportLeague.one}'s roster, so they can't join this ${vocabulary.event.one}. Pick another.`,
+  };
+}
+
+/**
  * The bracket's refusals in product copy, worded for the sport (#700). `match` is the match the
  * admin acted on, so a locked result can name the match to clear first.
  */
@@ -96,7 +106,6 @@ export function bracketErrorMessages(
     BRACKET_PARTICIPANT_ALREADY_PLAYED: `That ${team.one}'s ${noun.one} has started, so enter the withdrawal as a walkover.`,
     BRACKET_PLACE_NOT_FIRST_ROUND: `That ${team.one} skipped the first round, so enter the withdrawal as a walkover.`,
     PARTICIPANT_NOT_FOUND: `That ${team.one} is no longer active. Pick another.`,
-    PARTICIPANT_NOT_IN_SPORT_LEAGUE: `That ${team.one} plays in another league, so they can't join this ${vocabulary.event.one}. Pick another.`,
     MATCH_SPREAD_LOCKED: `This ${noun.one} already has picks, so its spread can no longer change.`,
     MATCH_PERIOD_SCORE_INVALID: 'A score can only go up as the game goes on. Check it against the other scores of this game.',
     MATCH_PERIOD_INVALID: `This ${noun.one}'s score at that point can't be entered here.`,

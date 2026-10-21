@@ -1,7 +1,7 @@
-import { MatchEnding } from '@poolmaster/shared/domain';
+import { MatchEnding, Sport, SportLeagueNoun, getSportDefinition, sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { SportEventMatchDto } from '@/lib/api';
-import { reseededRounds, roundStarted, unfinishedBefore } from './bracket-copy';
+import { offLeagueRosterMessages, reseededRounds, roundStarted, unfinishedBefore } from './bracket-copy';
 
 function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventMatchDto {
   return {
@@ -67,5 +67,16 @@ describe('roundStarted', () => {
 describe('unfinishedBefore', () => {
   it('lists the games of the round before that have no result yet', () => {
     expect(unfinishedBefore(nfl, 2).map((game) => game.matchNumber)).toEqual([1]);
+  });
+});
+
+describe('offLeagueRosterMessages', () => {
+  const tennis = getSportDefinition(Sport.TENNIS).vocabulary;
+
+  it('names a tour\'s roster for the ATP and a league\'s roster for the NCAA when a player is refused as off it', () => {
+    expect(offLeagueRosterMessages(tennis, sportLeagueNounOf(Sport.TENNIS, null)).PARTICIPANT_NOT_IN_SPORT_LEAGUE)
+      .toBe('That player isn\'t on this tour\'s roster, so they can\'t join this draw. Pick another.');
+    expect(offLeagueRosterMessages(tennis, sportLeagueNounOf(Sport.TENNIS, SportLeagueNoun.LEAGUE)).PARTICIPANT_NOT_IN_SPORT_LEAGUE)
+      .toBe('That player isn\'t on this league\'s roster, so they can\'t join this draw. Pick another.');
   });
 });

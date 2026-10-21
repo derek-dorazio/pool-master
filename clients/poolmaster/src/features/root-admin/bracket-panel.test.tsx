@@ -797,6 +797,20 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       expect(screen.queryByTestId('root-admin-withdrawals')).not.toBeInTheDocument();
     });
 
+    it('shows a replacement refused as off the league\'s roster in product copy, naming the league by its own word', async () => {
+      seedWithdrawals();
+      replaceEventParticipantMock.mockResolvedValue({ error: { error: { code: 'PARTICIPANT_NOT_IN_SPORT_LEAGUE', message: 'Xavier is not on the roster.' } } });
+      renderPage();
+
+      const replacedBy = await screen.findByTestId('root-admin-withdrawal-replacement-select');
+      await waitFor(() => expect(within(replacedBy).getAllByRole('option')).toHaveLength(2));
+      await userEvent.selectOptions(screen.getByTestId('root-admin-withdrawal-select'), 'sep-3');
+      await userEvent.selectOptions(replacedBy, 'p-6');
+      await userEvent.click(screen.getByTestId('root-admin-withdrawal-replace'));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('That team isn\'t on this league\'s roster, so they can\'t join this tournament. Pick another.');
+    });
+
     it('shows a refused replacement in product copy', async () => {
       seedWithdrawals();
       replaceEventParticipantMock.mockResolvedValue({ error: { error: { code: 'BRACKET_PARTICIPANT_ALREADY_PLAYED', message: 'Match 2 has started.' } } });
