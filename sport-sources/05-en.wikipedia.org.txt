@@ -1,0 +1,4305 @@
+Source: https://en.wikipedia.org/wiki/2025_Major_League_Soccer_season
+Final URL: https://en.wikipedia.org/wiki/2025_Major_League_Soccer_season
+HTTP 200
+Fetched: 2026-10-21T04:13:26.978Z
+
+2025 Major League Soccer season - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Teams
+Toggle Teams subsection
+1.1
+Stadiums and locations
+1.2
+Transfers
+1.3
+MLS expansion draft
+1.4
+Personnel and sponsorships
+1.5
+Coaching changes
+2
+Regular season
+Toggle Regular season subsection
+2.1
+Format
+2.2
+Conference standings
+2.3
+Overall table
+2.4
+Results table
+2.5
+MLS All-Star Game
+3
+MLS Cup playoffs
+Toggle MLS Cup playoffs subsection
+3.1
+Bracket
+3.2
+MLS Cup
+4
+Attendance
+Toggle Attendance subsection
+4.1
+Average home attendances
+4.2
+Highest attendances
+5
+Player statistics
+Toggle Player statistics subsection
+5.1
+Goals
+5.2
+Hat-tricks
+5.3
+Assists
+5.4
+Clean sheets
+6
+Awards
+Toggle Awards subsection
+6.1
+Team/Player of the Matchday
+6.2
+Goal of the Matchday
+6.3
+Player of the Month
+6.4
+End-of-season awards
+6.5
+MLS Best XI
+7
+Broadcasting
+Toggle Broadcasting subsection
+7.1
+United States
+7.2
+Canada
+7.3
+International
+8
+See also
+9
+References
+10
+External links
+Toggle the table of contents
+2025 Major League Soccer season
+9 languages
+العربية
+Deutsch
+Español
+Français
+Magyar
+Italiano
+Português
+Русский
+Українська
+Edit links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+30th season of Major League Soccer
+(regular season)}}\n| {{nowrap|October 22 – December 6}}<br />([[2025 MLS Cup playoffs|playoffs]])}}"},"mlscup":{"wt":"[[Inter Miami CF]]<br />(1st title)"},"shield":{"wt":"[[Philadelphia Union]]<br>(2nd shield)"},"continentalcup1":{"wt":"{{nowrap|[[2026 CONCACAF Champions Cup|Champions Cup]]<br />([[United States Soccer Federation|United States]])}}"},"continentalcup1 qualifiers":{"wt":"[[FC Cincinnati]]<br />[[Inter Miami CF]]<br />[[LA Galaxy]]<br />[[Los Angeles FC]]<br />[[Nashville SC]]<br />Philadelphia Union<br />[[Seattle Sounders FC]]"},"continentalcup2":{"wt":"[[2026 CONCACAF Champions Cup|Champions Cup]]<br />([[Canadian Soccer Association|Canada]])"},"continentalcup2 qualifiers":{"wt":"[[Vancouver Whitecaps FC]]"},"matches":{"wt":"510"},"total goals":{"wt":"1530"},"best player":{"wt":"[[Lionel Messi]]<ref>{{cite news|url=https://apnews.com/article/lionel-messi-mls-mvp-9ea0907f5d2c46bcc16fc784f4ac0808|title=It’s Messi. Repeat, Messi. The Inter Miami star is MLS’ first back-to-back MVP winner|first=Tim|last=Reynolds|publisher=Associated Press|date=9 December 2025|accessdate=9 December 2025}}</ref>"},"league topscorer":{"wt":"Lionel Messi<br />(29 goals)"},"best goalkeeper":{"wt":"[[Yohei Takaoka]]<br />(13 clean sheets)"},"biggest home win":{"wt":"[[New York Red Bulls|Red Bulls]] 7–0 LA Galaxy<br />(May 10)<br />Vancouver 7–0 Philadelphia<br />(September 13)"},"biggest away win":{"wt":"[[D.C. United|DC]] 1–7 [[Chicago Fire FC|Chicago]]<br />(June 7)"},"highest scoring":{"wt":"9 goals:<br />Nashville 7–2 [[Chicago Fire FC|Chicago]]<br />(April 26)<br />[[Atlanta United FC|Atlanta]] 4–5 [[Columbus Crew|Columbus]]<br />(September 13)"},"longest wins":{"wt":"9 matches:<br/ >[[Charlotte FC|Charlotte]]<br />(July 12&nbsp;– September 13)"},"longest unbeaten":{"wt":"12 matches:<br />[[Orlando City SC|Orlando]]<br />(March 15&nbsp;– May 24)<br />Nashville<br />(April 26&nbsp;– July 5)"},"longest winless":{"wt":"16 matches:<br />LA Galaxy<br />(February 23&nbsp;– May 28)"},"longest losses":{"wt":"5 matches:<br />LA Galaxy<br />(April 19&nbsp;– May 14)<br />[[D.C. United|D.C.]]<br />(July 12&nbsp;– August 9)<br />[[Sporting Kansas City|Kansas City]]<br />(September 7&nbsp;– October 4)"},"highest attendance":{"wt":"65,520<br />ATL 3–2 [[CF Montréal|MTL]] (February 22)<ref name=\"Five-Stripes-Home-Opener\"/>"},"lowest attendance":{"wt":"10,645<br />DC 1–1 [[New England Revolution|NE]] (May 28)<ref>{{cite web |title=DCvsNE 05-28-2025 – MLS Match Recap |url=https://www.mlssoccer.com/competitions/mls-regular-season/2025/matches/dcvsne-05-28-2025/ |date=May 28, 2025 |publisher=Major League Soccer |access-date=May 28, 2025}}</ref><ref name=\"Frisco\">{{Cite web|url=https://www.fcdallas.com/news/toyota-stadium-to-undergo-multi-million-dollar-renovation|title=Toyota Stadium to Undergo Multi-Million Dollar Renovation|author=Staff|date=September 17, 2024|publisher=FC Dallas|access-date=March 12, 2025}}</ref>"},"attendance":{"wt":"11,094,594<ref name =\"attendance\">{{cite web |title=Major League Soccer 2025 |url=https://www.worldfootball.net/competition/co73/se84074/attendance/ |website=WorldFootball |access-date=September 22, 2025}}</ref>"},"average attendance":{"wt":"21,754<ref name =\"attendance\">{{cite web |title=Major League Soccer 2025 |url=https://www.worldfootball.net/competition/co73/se84074/attendance/ |website=WorldFootball |access-date=September 22, 2025}}</ref>"},"prevseason":{"wt":"[[2024 Major League Soccer season|2024]]"},"nextseason":{"wt":"[[2026 Major League Soccer season|2026]]"}},"i":0}}]}'>Football league season
+Major League Soccer Season 2025
+Dates February 22 – October 18
+(regular season)
+October 22 – December 6
+( playoffs )
+Teams 30
+MLS Cup Inter Miami CF
+(1st title)
+Supporters' Shield Philadelphia Union
+(2nd shield)
+Champions Cup
+( United States ) FC Cincinnati
+Inter Miami CF
+LA Galaxy
+Los Angeles FC
+Nashville SC
+Philadelphia Union
+Seattle Sounders FC
+Champions Cup
+( Canada ) Vancouver Whitecaps FC
+Matches 510
+Goals 1,530 (3 per match)
+Best player Lionel Messi [ 1 ]
+Top goalscorer Lionel Messi
+(29 goals)
+Best goalkeeper Yohei Takaoka
+(13 clean sheets)
+Biggest home win Red Bulls 7–0 LA Galaxy
+(May 10)
+Vancouver 7–0 Philadelphia
+(September 13)
+Biggest away win DC 1–7 Chicago
+(June 7)
+Highest scoring 9 goals:
+Nashville 7–2 Chicago
+(April 26)
+Atlanta 4–5 Columbus
+(September 13)
+Longest winning run 9 matches:
+Charlotte
+(July 12 – September 13)
+Longest unbeaten run 12 matches:
+Orlando
+(March 15 – May 24)
+Nashville
+(April 26 – July 5)
+Longest winless run 16 matches:
+LA Galaxy
+(February 23 – May 28)
+Longest losing run 5 matches:
+LA Galaxy
+(April 19 – May 14)
+D.C.
+(July 12 – August 9)
+Kansas City
+(September 7 – October 4)
+Highest attendance 65,520
+ATL 3–2 MTL (February 22) [ 2 ]
+Lowest attendance 10,645
+DC 1–1 NE (May 28) [ 3 ] [ 4 ]
+Total attendance 11,094,594 [ 5 ]
+Average attendance 21,754 [ 5 ]
+← 2024
+2026 →
+The 2025 Major League Soccer season was the 30th season of Major League Soccer (MLS), the top professional soccer league in the United States and Canada, and the 47th season overall of a national first-division league in the United States.
+MLS expanded to 30 clubs this season with the addition of San Diego FC , an expansion team awarded in 2023. [ 6 ] The league's 30 teams were divided into the Eastern and Western conferences, which each had 15 teams. The regular season ran from February 22 to October 18 and comprised 34 matches for each team, with a schedule that was primarily intra-conference with six inter-conference matches per team. [ 7 ] There was a break for the 2025 FIFA Club World Cup and 2025 CONCACAF Gold Cup in late June but no break for the 2025 Leagues Cup in August. The playoffs began on October 22 and concluded with MLS Cup 2025 on December 6. [ 8 ] [ 9 ] The San Jose Earthquakes hosted D.C. United on April 6, 2025, in a nod to the inaugural MLS match played by the same two teams, as part of recognition of the league's 30th anniversary. [ 8 ]
+All MLS games were broadcast on MLS Season Pass for the third year as part of a ten-year partnership between MLS and Apple Inc. for the broadcast and streaming rights to all MLS and Leagues Cup games, as well as select MLS Next and MLS Next Pro games. [ 10 ]
+The 2025 FIFA Club World Cup , hosted by the United States, took place during the middle of the season and included MLS participants Seattle Sounders FC , Inter Miami CF , and Los Angeles FC . [ 11 ] The 2025 edition of the Leagues Cup took place between July 29 and August 31. [ 12 ]
+The LA Galaxy were the reigning MLS Cup champions and Inter Miami CF were the Supporters' Shield holders, having set the all-time points record during the 2024 season . The Philadelphia Union won the Supporters' Shield for a second time, [ 13 ] while Inter Miami CF won a first MLS Cup title after defeating Vancouver Whitecaps FC 3–1 at Chase Stadium in Fort Lauderdale, Florida . [ 14 ]
+Teams
+[ edit ]
+Stadiums and locations
+[ edit ]
+Main article: List of Major League Soccer stadiums
+Locations of teams for the 2025 Major League Soccer season<br />[[File:ButtonRed.svg|8px]] [[Western Conference (MLS)|Western Conference]] &nbsp; [[File:ButtonBlue.svg|8px]] [[Eastern Conference (MLS)|Eastern Conference]]</div>"},"places":{"wt":"{{Location map~ |United States |lat=33.755361 |long=-84.4 |label='''[[Atlanta United FC|Atlanta]]''' |position=right |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=35.225833 |long=-80.852778 |label='''[[Charlotte FC|Charlotte]]'''|position=right |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=41.8623 |long=-87.6167 |label='''[[Chicago Fire FC|Chicago]]''' |position=left |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=39.968461 |long=-83.017089 |label='''[[Columbus Crew|Columbus]]''' |position=top |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=39.111389 |long=-84.522222 |label='''[[FC Cincinnati|Cincinnati]]''' |position=bottom|mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=38.868333 |long=-77.012222 |label='''[[D.C. United|D.C.]]''' |position=bottom |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=26.193056 |long=-80.161111 |label='''[[Inter Miami CF|Miami]]''' |position=right |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=45.563056 |long=-73.5525 |label='''[[CF Montréal|Montréal]]''' |position=top |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=36.130278 |long=-86.765556 |label='''[[Nashville SC|Nashville]]''' |position=bottom |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=42.091 |long=-71.264 |label='''{{nowrap|[[New England Revolution|New England]]}}''' |position=top |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=40.829167 |long=-73.926389 |label='''[[New York City FC|NYCFC]]''' |position=right |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=40.736667 |long=-74.150278 |label='''[[New York Red Bulls|Red Bulls]]''' |position=left |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=28.5711 |long=-81.3893 |label='''[[Orlando City SC|Orlando]]''' |position=right |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=39.832222 |long=-75.378889 |label='''[[Philadelphia Union|Philadelphia]]''' |position=right |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=43.632778 |long=-79.418611 |label='''[[Toronto FC|Toronto]]''' |position=top |mark=ButtonBlue.svg}}\n{{Location map~ |United States |lat=30.338206 |long=-97.719837 |label='''[[Austin FC|Austin]]''' |position=left |mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=39.388206 |long=-104.891944 |label='''[[Colorado Rapids|Colorado]]''' |position=bottom |mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=33.154444 |long=-96.835278 |label='''[[FC Dallas|Dallas]]''' |position=right |mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=29.7522 |long=-95.3524 |label='''[[Houston Dynamo FC|Houston]]''' |position=right |mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=34.013 |long=-118.285 |label='''[[Los Angeles FC|LAFC]]''' |position=left |mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=33.864 |long=-118.261 |label='''[[LA Galaxy]]''' |position=right|mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=44.952778 |long=-93.165 |label='''[[Minnesota United FC|Minnesota]]''' |position=left |mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=45.521389 |long=-122.691667 |label='''[[Portland Timbers|Portland]]''' |position=right |mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=40.582923 |long=-111.893156 |label='''[[Real Salt Lake|Salt Lake]]''' |position=top |mark=ButtonRed.svg}}\n{{location map~ |United States |lat=32.7841 |long=-117.1224 |label='''[[San Diego FC|San Diego]]''' |position=bottom | mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=37.351389 |long=-121.925 |label='''[[San Jose Earthquakes|San Jose]]''' |position=top |mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=47.5952 |long=-122.3316 |label='''[[Seattle Sounders FC|Seattle]]'''|position=left |mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=39.1214 |long=-94.821 |label='''[[Sporting Kansas City|Kansas City]]''' |position=bottom|mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=38.37517 |long=-90.12393 |label='''[[St. Louis City SC|St. Louis]]''' |position=top |mark=ButtonRed.svg}}\n{{Location map~ |United States |lat=49.276667 |long=-123.111944 |label='''[[Vancouver Whitecaps FC|Vancouver]]'''|position=right |mark=ButtonRed.svg}}"}},"i":0}}]}"> <a rel=\"mw:WikiLink\" href=\"./Atlanta_United_FC\" title=\"Atlanta United FC\" id=\"mweA\">Atlanta</a></b>"}'>
+Atlanta
+<a rel=\"mw:WikiLink\" href=\"./Charlotte_FC\" title=\"Charlotte FC\" id=\"mweg\">Charlotte</a></b>"}'>
+Charlotte
+<a rel=\"mw:WikiLink\" href=\"./Chicago_Fire_FC\" title=\"Chicago Fire FC\" id=\"mwfA\">Chicago</a></b>"}'>
+Chicago
+<a rel=\"mw:WikiLink\" href=\"./Columbus_Crew\" title=\"Columbus Crew\" id=\"mwfg\">Columbus</a></b>"}'>
+Columbus
+<a rel=\"mw:WikiLink\" href=\"./FC_Cincinnati\" title=\"FC Cincinnati\" id=\"mwgA\">Cincinnati</a></b>"}'>
+Cincinnati
+<a rel=\"mw:WikiLink\" href=\"./D.C._United\" title=\"D.C. United\" id=\"mwgg\">D.C.</a></b>"}'>
+D.C.
+<a rel=\"mw:WikiLink\" href=\"./Inter_Miami_CF\" title=\"Inter Miami CF\" id=\"mwhA\">Miami</a></b>"}'>
+Miami
+<a rel=\"mw:WikiLink\" href=\"./CF_Montréal\" title=\"CF Montréal\" id=\"mwhg\">Montréal</a></b>"}'>
+Montréal
+<a rel=\"mw:WikiLink\" href=\"./Nashville_SC\" title=\"Nashville SC\" id=\"mwiA\">Nashville</a></b>"}'>
+Nashville
+<span class=\"nowrap\" id=\"mwig\"><a rel=\"mw:WikiLink\" href=\"./New_England_Revolution\" title=\"New England Revolution\" id=\"mwiw\">New England</a></span></b>"}'>
+New England
+<a rel=\"mw:WikiLink\" href=\"./New_York_City_FC\" title=\"New York City FC\" id=\"mwjQ\">NYCFC</a></b>"}'>
+NYCFC
+<a rel=\"mw:WikiLink\" href=\"./New_York_Red_Bulls\" title=\"New York Red Bulls\" id=\"mwjw\">Red Bulls</a></b>"}'>
+Red Bulls
+<a rel=\"mw:WikiLink\" href=\"./Orlando_City_SC\" title=\"Orlando City SC\" id=\"mwkQ\">Orlando</a></b>"}'>
+Orlando
+<a rel=\"mw:WikiLink\" href=\"./Philadelphia_Union\" title=\"Philadelphia Union\" id=\"mwkw\">Philadelphia</a></b>"}'>
+Philadelphia
+<a rel=\"mw:WikiLink\" href=\"./Toronto_FC\" title=\"Toronto FC\" id=\"mwlQ\">Toronto</a></b>"}'>
+Toronto
+<a rel=\"mw:WikiLink\" href=\"./Austin_FC\" title=\"Austin FC\" id=\"mwlw\">Austin</a></b>"}'>
+Austin
+<a rel=\"mw:WikiLink\" href=\"./Colorado_Rapids\" title=\"Colorado Rapids\" id=\"mwmQ\">Colorado</a></b>"}'>
+Colorado
+<a rel=\"mw:WikiLink\" href=\"./FC_Dallas\" title=\"FC Dallas\" id=\"mwmw\">Dallas</a></b>"}'>
+Dallas
+<a rel=\"mw:WikiLink\" href=\"./Houston_Dynamo_FC\" title=\"Houston Dynamo FC\" id=\"mwnQ\">Houston</a></b>"}'>
+Houston
+<a rel=\"mw:WikiLink\" href=\"./Los_Angeles_FC\" title=\"Los Angeles FC\" id=\"mwnw\">LAFC</a></b>"}'>
+LAFC
+<a rel=\"mw:WikiLink\" href=\"./LA_Galaxy\" title=\"LA Galaxy\" id=\"mwoQ\">LA Galaxy</a></b>"}'>
+LA Galaxy
+<a rel=\"mw:WikiLink\" href=\"./Minnesota_United_FC\" title=\"Minnesota United FC\" id=\"mwow\">Minnesota</a></b>"}'>
+Minnesota
+<a rel=\"mw:WikiLink\" href=\"./Portland_Timbers\" title=\"Portland Timbers\" id=\"mwpQ\">Portland</a></b>"}'>
+Portland
+<a rel=\"mw:WikiLink\" href=\"./Real_Salt_Lake\" title=\"Real Salt Lake\" id=\"mwpw\">Salt Lake</a></b>"}'>
+Salt Lake
+<a rel=\"mw:WikiLink\" href=\"./San_Diego_FC\" title=\"San Diego FC\" id=\"mwqQ\">San Diego</a></b>"}'>
+San Diego
+<a rel=\"mw:WikiLink\" href=\"./San_Jose_Earthquakes\" title=\"San Jose Earthquakes\" id=\"mwqw\">San Jose</a></b>"}'>
+San Jose
+<a rel=\"mw:WikiLink\" href=\"./Seattle_Sounders_FC\" title=\"Seattle Sounders FC\" id=\"mwrQ\">Seattle</a></b>"}'>
+Seattle
+<a rel=\"mw:WikiLink\" href=\"./Sporting_Kansas_City\" title=\"Sporting Kansas City\" id=\"mwrw\">Kansas City</a></b>"}'>
+Kansas City
+<a rel=\"mw:WikiLink\" href=\"./St._Louis_City_SC\" title=\"St. Louis City SC\" id=\"mwsQ\">St. Louis</a></b>"}'>
+St. Louis
+<a rel=\"mw:WikiLink\" href=\"./Vancouver_Whitecaps_FC\" title=\"Vancouver Whitecaps FC\" id=\"mwsw\">Vancouver</a></b>"}'>
+Vancouver
+Locations of teams for the 2025 Major League Soccer season
+Western Conference Eastern Conference
+Team
+Stadium
+Capacity
+Atlanta United FC
+Mercedes-Benz Stadium [A]
+42,500
+Austin FC
+Q2 Stadium
+20,738
+CF Montréal
+Saputo Stadium
+19,619
+Charlotte FC
+Bank of America Stadium [A]
+38,000 [ 15 ]
+Chicago Fire FC
+Soldier Field [A]
+24,955
+Colorado Rapids
+Dick's Sporting Goods Park
+18,061
+Columbus Crew
+Lower.com Field
+20,011
+D.C. United
+Audi Field
+20,000
+FC Cincinnati
+TQL Stadium
+26,000
+FC Dallas
+Toyota Stadium
+20,500
+Houston Dynamo FC
+Shell Energy Stadium
+22,039
+Inter Miami CF
+Chase Stadium [B]
+21,550
+LA Galaxy
+Dignity Health Sports Park
+27,000
+Los Angeles FC
+BMO Stadium
+22,000
+Minnesota United FC
+Allianz Field
+19,400
+Nashville SC
+Geodis Park
+30,000
+New England Revolution
+Gillette Stadium [A]
+20,000
+New York City FC
+Yankee Stadium [A] Citi Field [A]
+28,743
+41,992
+New York Red Bulls
+Sports Illustrated Stadium
+25,000
+Orlando City SC
+Inter&Co Stadium
+25,500
+Philadelphia Union
+Subaru Park
+18,500
+Portland Timbers
+Providence Park
+25,218
+Real Salt Lake
+America First Field
+20,213
+San Diego FC
+Snapdragon Stadium
+35,000
+San Jose Earthquakes
+PayPal Park
+18,000
+Seattle Sounders FC
+Lumen Field [A]
+37,722
+Sporting Kansas City
+Children's Mercy Park
+18,467
+St. Louis City SC
+Energizer Park
+22,423
+Toronto FC
+BMO Field
+28,351
+Vancouver Whitecaps FC
+BC Place [A]
+22,120
+^ Non- soccer specific stadium and artificially reduced capacity. Capacity could be increased to full capacity if demand required.
+^ Temporary stadium.
+Transfers
+[ edit ]
+Main article: List of Major League Soccer transfers 2025
+MLS expansion draft
+[ edit ]
+Main article: 2024 MLS expansion draft
+Personnel and sponsorships
+[ edit ]
+{{cite news |last=McCaskill |first=Steve |date=November 17, 2022 |title=MLS clubs to promote Apple TV season pass with sleeve sponsorship |url=https://www.sportspromedia.com/news/mls-apple-tv-streaming-sponsorship-season-pass/ |access-date=November 22, 2022 |website=SportsPro |archive-date=November 17, 2022 |archive-url=https://web.archive.org/web/20221117131824/https://www.sportspromedia.com/news/mls-apple-tv-streaming-sponsorship-season-pass/ |url-status=live }}</ref>"}},"i":0}}]}'>Note: All teams used Adidas as universal kit manufacturer. As part of Apple's broadcast contract, all MLS kits included Apple TV+ as a sleeve sponsor. [ 16 ]
+Team
+Head coach
+Captain
+Shirt sponsor
+Sleeve sponsor
+Atlanta United FC
+Ronny Deila
+Brad Guzan
+American Family Insurance
+Emory Healthcare
+Austin FC
+Nico Estévez
+Ilie Sánchez
+Yeti
+Siete Foods
+Charlotte FC
+Dean Smith
+Ashley Westwood
+Ally
+Rugs.com
+Chicago Fire FC
+Gregg Berhalter
+Kellyn Acosta
+Carvana [ 17 ]
+Magellan Corporation
+FC Cincinnati
+Pat Noonan
+Miles Robinson
+Mercy Health
+Kroger
+Colorado Rapids
+Chris Armas
+Keegan Rosenberry
+UCHealth
+Kiewit
+Columbus Crew
+Wilfried Nancy
+Darlington Nagbe
+Nationwide
+DHL Supply Chain [ 18 ]
+FC Dallas
+Eric Quill
+Maarten Paes
+Children's Health (Home) UT Southwestern (Away)
+—
+D.C. United
+René Weiler
+Christian Benteke
+Guidehouse
+Fruitist
+Houston Dynamo FC
+Ben Olsen
+Artur
+MD Anderson
+—
+Inter Miami CF
+Javier Mascherano
+Lionel Messi
+Royal Caribbean
+Fracht Group
+LA Galaxy
+Greg Vanney
+Maya Yoshida
+Herbalife
+RBC
+Los Angeles FC
+Steve Cherundolo
+Aaron Long
+BMO Bank [ t 1 ]
+Ford
+Minnesota United FC
+Eric Ramsay
+Michael Boxall
+Target [ t 2 ]
+NutriSource
+CF Montréal
+Marco Donadel (interim)
+Samuel Piette
+Bank of Montreal
+Telus
+Nashville SC
+B.J. Callaghan
+Walker Zimmerman
+Renasant Bank [ t 3 ]
+Hyundai
+New England Revolution
+Pablo Moreira (interim)
+Carles Gil
+Gillette
+—
+New York City FC
+Pascal Jansen
+Thiago Martins
+Etihad Airways [ t 4 ]
+Judi Health
+New York Red Bulls
+Sandro Schwarz
+Emil Forsberg
+Red Bull
+OANDA
+Orlando City SC
+Óscar Pareja
+Robin Jansson
+Orlando Health
+Exploria
+Philadelphia Union
+Bradley Carnell
+Alejandro Bedoya
+Bimbo Bakeries USA
+Independence Blue Cross
+Portland Timbers
+Phil Neville
+Diego Chará
+Tillamook [ 19 ] [ t 5 ]
+—
+Real Salt Lake
+Pablo Mastroeni
+Rafael Cabral
+Select Health
+Intermountain Health
+San Diego FC
+Mikey Varas
+Jeppe Tverskov
+DirecTV [ 20 ]
+Adriana's Insurance
+San Jose Earthquakes
+Bruce Arena
+Cristian Espinoza
+El Camino Health
+Habbas Law
+Seattle Sounders FC
+Brian Schmetzer
+Stefan Frei
+Providence [ t 6 ]
+Emerald Queen Casino
+Sporting Kansas City
+Kerry Zavagnin (interim)
+Erik Thommy
+Compass Minerals
+—
+St. Louis City SC
+David Critchley (interim)
+Roman Bürki
+Purina
+BJC HealthCare
+Toronto FC
+Robin Fraser
+Jonathan Osorio
+Bank of Montreal
+LG
+Vancouver Whitecaps FC
+Jesper Sørensen
+Ryan Gauld
+Telus
+BLG
+↑ Rockstar sponsored training and special event jerseys
+↑ Blue Cross and Blue Shield of Minnesota sponsored training and special event jerseys
+↑ Vanderbilt Health sponsored training and special event jerseys
+↑ Montefiore Einstein sponsored training and special event jerseys
+↑ Dutch Bros. Coffee sponsored training and special event jerseys
+↑ Providence Swedish sponsored training and special event jerseys
+Coaching changes
+[ edit ]
+Team Outgoing coach Manner of departure Date of vacancy Position in table Incoming coach Date of appointment
+Austin FC
+Davy Arnaud (interim)
+End of interim period
+October 25, 2024
+Pre-season
+Nico Estévez
+October 25, 2024 [ 21 ]
+Philadelphia Union
+Jim Curtin
+Mutual consent
+November 7, 2024 [ 22 ]
+Bradley Carnell
+January 2, 2025 [ 23 ]
+San Jose Earthquakes
+Ian Russell (interim)
+End of interim period
+November 7, 2024
+Bruce Arena
+November 7, 2024 [ 24 ]
+FC Dallas
+Peter Luccin (interim)
+November 20, 2024
+Eric Quill
+November 20, 2024 [ 25 ]
+Inter Miami CF
+Gerardo Martino
+Resigned
+November 22, 2024 [ 26 ]
+Javier Mascherano
+November 26, 2024 [ 27 ]
+Vancouver Whitecaps FC
+Vanni Sartini
+Mutual consent
+November 25, 2024 [ 28 ]
+Jesper Sørensen
+January 14, 2025 [ 29 ]
+Atlanta United FC
+Rob Valentino (interim)
+End of interim period
+November 26, 2024 [ 30 ]
+Ronny Deila
+December 20, 2024 [ 31 ]
+New York City FC
+Nick Cushing
+Fired
+November 26, 2024 [ 32 ]
+Pascal Jansen
+January 6, 2025 [ 33 ]
+St. Louis City SC
+John Hackworth (interim)
+End of interim period
+November 26, 2024
+Olof Mellberg
+November 26, 2024 [ 34 ]
+Toronto FC
+John Herdman
+Resigned
+November 29, 2024 [ 35 ]
+Robin Fraser
+January 10, 2025 [ 36 ]
+CF Montréal
+Laurent Courtois
+Fired
+March 24, 2025 [ 37 ]
+15th in East, 30th overall
+Marco Donadel (interim)
+March 24, 2025
+Sporting Kansas City
+Peter Vermes
+Mutual consent
+March 31, 2025 [ 38 ]
+15th in West, 30th overall
+Kerry Zavagnin (interim)
+March 31, 2025
+St. Louis City SC
+Olof Mellberg
+Fired
+May 27, 2025 [ 39 ]
+14th in West, 28th overall
+David Critchley (interim)
+May 27, 2025
+D.C. United
+Troy Lesesne
+July 10, 2025 [ 40 ]
+12th in East, 25th overall
+Kevin Flanagan (interim)
+July 10, 2025
+Kevin Flanagan (interim)
+End of interim period
+July 16, 2025
+14th in East, 27th overall
+René Weiler
+July 16, 2025 [ 41 ] [ 42 ]
+New England Revolution
+Caleb Porter
+Fired
+September 15, 2025 [ 43 ]
+11th in East, 23rd overall
+Pablo Moreira (interim)
+September 15, 2025
+Regular season
+[ edit ]
+Format
+[ edit ]
+The MLS regular season began on February 22 and ended on October 18 with "Decision Day". Each team played 34 matches – 17 at home and 17 away – primarily against opponents from the same conference. The schedule included two matches against opponents in the same conference, comprising a total of 28 matches, and six matches against opponents from the other conference. The regular season included breaks for the FIFA Club World Cup and CONCACAF Gold Cup from June 15 to 24. MLS did not include a break in regular season play for the month-long Leagues Cup , which began in late July. [ 44 ] The MLS Cup playoffs began on October 22 and comprised nine teams from each conference over five rounds in a variety of formats, beginning with a single match for the lowest-seeded wild card teams. The next round was a best-of-three round, which was then followed by single-elimination matches hosted by the team with the better regular season record. MLS Cup 2025 was played on December 6. [ 45 ] [ 46 ]
+Conference standings
+[ edit ]
+MLS Eastern Conference table (2025)
+Pos
+Team v
+t
+e
+Pld
+W
+L
+T
+GF
+GA
+GD
+Pts
+Qualification
+1
+Philadelphia Union
+34
+20
+8
+6
+57
+35
++22
+66
+Qualification for round one and the CONCACAF Champions Cup round one
+2
+FC Cincinnati
+34
+20
+9
+5
+52
+40
++12
+65
+Qualification for round one
+3
+Inter Miami CF
+34
+19
+7
+8
+81
+55
++26
+65
+4
+Charlotte FC
+34
+19
+13
+2
+55
+46
++9
+59
+5
+New York City FC
+34
+17
+12
+5
+50
+44
++6
+56
+6
+Nashville SC
+34
+16
+12
+6
+58
+45
++13
+54
+7
+Columbus Crew
+34
+14
+8
+12
+55
+51
++4
+54
+8
+Chicago Fire FC
+34
+15
+11
+8
+68
+60
++8
+53
+Qualification for the wild card round
+9
+Orlando City SC
+34
+14
+9
+11
+63
+51
++12
+53
+10
+New York Red Bulls
+34
+12
+15
+7
+48
+47
++1
+43
+11
+New England Revolution
+34
+9
+16
+9
+44
+51
+− 7
+36
+12
+Toronto FC
+34
+6
+14
+14
+37
+44
+− 7
+32
+13
+CF Montréal
+34
+6
+18
+10
+34
+60
+− 26
+28
+14
+Atlanta United FC
+34
+5
+16
+13
+38
+63
+− 25
+28
+15
+D.C. United
+34
+5
+18
+11
+30
+66
+− 36
+26
+Source: MLS
+Rules for classification: 1) points; 2) total wins; 3) total goal differential; 4) total goals scored; 5) fewer disciplinary points; 6) away goal differential; 7) away goals scored; 8) home goals differential; 9) home goals scored; 10) coin toss (2 clubs tied) or drawing of lots (≥3 clubs tied)
+MLS Western Conference table (2025)
+Pos
+Team v
+t
+e
+Pld
+W
+L
+T
+GF
+GA
+GD
+Pts
+Qualification
+1
+San Diego FC
+34
+19
+9
+6
+64
+41
++23
+63
+Qualification for round one and the CONCACAF Champions Cup round one
+2
+Vancouver Whitecaps FC (C)
+34
+18
+7
+9
+66
+38
++28
+63
+Qualification for round one
+3
+Los Angeles FC
+34
+17
+8
+9
+65
+40
++25
+60
+4
+Minnesota United FC
+34
+16
+8
+10
+56
+39
++17
+58
+5
+Seattle Sounders FC
+34
+15
+9
+10
+58
+48
++10
+55
+6
+Austin FC
+34
+13
+13
+8
+37
+45
+− 8
+47
+7
+FC Dallas
+34
+11
+12
+11
+52
+55
+− 3
+44
+8
+Portland Timbers
+34
+11
+12
+11
+41
+48
+− 7
+44
+Qualification for the wild card round
+9
+Real Salt Lake
+34
+12
+17
+5
+38
+49
+− 11
+41
+10
+San Jose Earthquakes
+34
+11
+15
+8
+60
+63
+− 3
+41
+11
+Colorado Rapids
+34
+11
+15
+8
+44
+56
+− 12
+41
+12
+Houston Dynamo FC
+34
+9
+15
+10
+43
+56
+− 13
+37
+13
+St. Louis City SC
+34
+8
+18
+8
+44
+58
+− 14
+32
+14
+LA Galaxy
+34
+7
+18
+9
+46
+66
+− 20
+30
+15
+Sporting Kansas City
+34
+7
+20
+7
+46
+70
+− 24
+28
+Source: MLS
+Rules for classification: 1) points; 2) total wins; 3) total goal differential; 4) total goals scored; 5) fewer disciplinary points; 6) away goal differential; 7) away goals scored; 8) home goals differential; 9) home goals scored; 10) coin toss (2 clubs tied) or drawing of lots (≥3 clubs tied)
+(C) Conference champion
+Overall table
+[ edit ]
+The leading team in this table won the Supporters' Shield .
+Overall MLS standings table (2025)
+Pos
+Team v
+t
+e
+Pld
+W
+L
+T
+GF
+GA
+GD
+Pts
+Qualification
+1
+Philadelphia Union (S)
+34
+20
+8
+6
+57
+35
++22
+66
+Qualification for the CONCACAF Champions Cup round one [ a ]
+2
+FC Cincinnati
+34
+20
+9
+5
+52
+40
++12
+65
+Qualification for the CONCACAF Champions Cup round one [ b ]
+3
+Inter Miami CF (C)
+34
+19
+7
+8
+81
+55
++26
+65
+Qualification for the CONCACAF Champions Cup round of 16 [ c ]
+4
+San Diego FC
+34
+19
+9
+6
+64
+41
++23
+63
+Qualification for the CONCACAF Champions Cup round one [ d ]
+5
+Vancouver Whitecaps FC (V)
+34
+18
+7
+9
+66
+38
++28
+63
+Qualification for the CONCACAF Champions Cup round one [ e ]
+6
+Los Angeles FC
+34
+17
+8
+9
+65
+40
++25
+60
+Qualification for the CONCACAF Champions Cup round one [ f ]
+7
+Charlotte FC
+34
+19
+13
+2
+55
+46
++9
+59
+8
+Minnesota United FC
+34
+16
+8
+10
+56
+39
++17
+58
+9
+New York City FC
+34
+17
+12
+5
+50
+44
++6
+56
+10
+Seattle Sounders FC (L)
+34
+15
+9
+10
+58
+48
++10
+55
+Qualification for the CONCACAF Champions Cup round of 16 [ g ]
+11
+Nashville SC (U)
+34
+16
+12
+6
+58
+45
++13
+54
+Qualification for the CONCACAF Champions Cup round one [ h ]
+12
+Columbus Crew
+34
+14
+8
+12
+55
+51
++4
+54
+13
+Chicago Fire FC
+34
+15
+11
+8
+68
+60
++8
+53
+14
+Orlando City SC
+34
+14
+9
+11
+63
+51
++12
+53
+15
+Austin FC
+34
+13
+13
+8
+37
+45
+− 8
+47
+16
+FC Dallas
+34
+11
+12
+11
+52
+55
+− 3
+44
+17
+Portland Timbers
+34
+11
+12
+11
+41
+48
+− 7
+44
+18
+New York Red Bulls
+34
+12
+15
+7
+48
+47
++1
+43
+19
+Real Salt Lake
+34
+12
+17
+5
+38
+49
+− 11
+41
+20
+San Jose Earthquakes
+34
+11
+15
+8
+60
+63
+− 3
+41
+21
+Colorado Rapids
+34
+11
+15
+8
+44
+56
+− 12
+41
+22
+Houston Dynamo FC
+34
+9
+15
+10
+43
+56
+− 13
+37
+23
+New England Revolution
+34
+9
+16
+9
+44
+51
+− 7
+36
+24
+St. Louis City SC
+34
+8
+18
+8
+44
+58
+− 14
+32
+25
+Toronto FC
+34
+6
+14
+14
+37
+44
+− 7
+32
+26
+LA Galaxy
+34
+7
+18
+9
+46
+66
+− 20
+30
+Qualification for the CONCACAF Champions Cup round one [ i ]
+27
+Sporting Kansas City
+34
+7
+20
+7
+46
+70
+− 24
+28
+28
+CF Montréal
+34
+6
+18
+10
+34
+60
+− 26
+28
+29
+Atlanta United FC
+34
+5
+16
+13
+38
+63
+− 25
+28
+30
+D.C. United
+34
+5
+18
+11
+30
+66
+− 36
+26
+Source: MLS
+Rules for classification: 1) points; 2) total wins; 3) total goal differential; 4) total goals scored; 5) fewer disciplinary points; 6) away goal differential; 7) away goals scored; 8) home goals differential; 9) home goals scored; 10) coin toss (2 clubs tied) or drawing of lots (≥3 clubs tied)
+(C) MLS Cup champions; (L) Leagues Cup winners; (S) Supporters' Shield winners; (U) U.S. Open Cup winners; (V) Canadian Championship winners
+Notes:
+↑ As 2025 MLS Supporters' Shield champions
+↑ As highest-ranked club in 2025 MLS Supporters' Shield not already qualified
+↑ As 2025 MLS Cup champions
+↑ As Western Conference regular season winners
+↑ As second highest-ranked club in 2025 MLS Supporters' Shield not already qualified
+↑ As third highest-ranked club in 2025 MLS Supporters' Shield not already qualified
+↑ As winners of Leagues Cup
+↑ As winners of 2025 U.S. Open Cup
+↑ As third place of Leagues Cup
+Results table
+[ edit ]
+v
+t
+e
+Home \ Away
+ATL
+AUS
+CHI
+CIN
+CLB
+CLT
+COL
+DAL
+DCU
+HOU
+LAX
+LFC
+MIA
+MIN
+MTL
+NEW
+NSH
+NYC
+NYR
+ORL
+PHI
+POR
+RSL
+SEA
+SDC
+SJO
+SKC
+STL
+TOR
+VAN
+Atlanta United FC
+2–2
+4–2
+4–5
+2–3
+1–1
+1–1
+1–2
+3–2
+0–1
+1–1
+4–3
+0–0
+3–2
+0–1
+2–2
+1–1
+0–0
+Austin FC
+1–1
+0–1
+1–1
+2–2
+1–0
+1–0
+0–3
+0–0
+2–1
+0–0
+1–1
+2–1
+2–1
+3–1
+1–0
+1–3
+0–0
+Chicago Fire FC
+2–1
+2–3
+2–0
+3–2
+2–2
+2–2
+0–0
+1–1
+3–2
+0–2
+1–3
+1–0
+0–0
+0–1
+1–2
+3–2
+FC Cincinnati
+2–2
+2–1
+2–1
+2–4
+0–1
+3–3
+1–2
+3–0
+3–0
+1–0
+2–1
+0–1
+1–0
+1–1
+0–1
+2–1
+2–0
+Columbus Crew
+3–1
+4–2
+1–1
+4–2
+2–1
+0–0
+0–1
+2–1
+1–2
+2–2
+0–0
+3–1
+1–3
+1–0
+2–1
+1–1
+2–1
+Charlotte FC
+2–0
+1–4
+2–0
+3–2
+2–1
+3–0
+1–4
+0–1
+2–1
+2–0
+1–0
+2–2
+2–0
+1–0
+3–0
+4–1
+2–0
+Colorado Rapids
+3–1
+0–2
+2–0
+3–3
+2–1
+2–0
+2–2
+1–1
+0–1
+0–3
+1–0
+1–1
+3–2
+0–2
+1–2
+1–0
+3–0
+FC Dallas
+2–0
+1–3
+3–1
+0–2
+2–1
+1–1
+1–2
+3–4
+0–0
+2–0
+1–1
+0–1
+2–3
+2–4
+2–1
+3–0
+0–1
+D.C. United
+0–0
+2–4
+1–7
+0–1
+1–2
+0–1
+2–1
+1–1
+0–0
+1–1
+0–1
+0–0
+0–2
+1–1
+0–6
+2–1
+2–2
+Houston Dynamo FC
+2–0
+2–2
+1–2
+1–1
+1–0
+1–4
+2–0
+1–3
+1–1
+1–0
+1–2
+1–3
+2–4
+1–2
+1–3
+1–0
+0–3
+LA Galaxy
+1–2
+2–3
+3–0
+2–1
+2–1
+1–1
+2–2
+2–1
+1–2
+2–4
+2–0
+0–4
+0–2
+0–1
+4–1
+0–3
+3–0
+Los Angeles FC
+1–0
+0–1
+3–0
+2–0
+2–0
+3–3
+1–0
+1–0
+0–1
+4–1
+4–0
+1–2
+2–1
+3–1
+2–2
+2–0
+0–1
+Inter Miami CF
+4–0
+3–5
+0–0
+5–1
+1–0
+3–4
+3–2
+3–1
+4–2
+4–1
+2–1
+2–2
+4–1
+0–3
+2–1
+3–1
+1–1
+Minnesota United FC
+1–1
+0–3
+1–2
+0–0
+3–1
+2–2
+0–1
+4–1
+1–0
+1–1
+2–0
+1–0
+2–4
+4–1
+3–0
+3–0
+1–3
+CF Montréal
+1–1
+3–2
+0–2
+1–3
+1–1
+0–1
+1–1
+2–2
+1–4
+0–3
+1–1
+1–0
+0–2
+0–0
+1–2
+0–2
+1–6
+New England Revolution
+2–0
+2–2
+0–1
+0–1
+1–2
+3–3
+2–0
+0–2
+1–2
+1–3
+2–3
+2–0
+2–1
+2–1
+0–2
+0–0
+1–1
+Nashville SC
+0–1
+7–2
+1–2
+3–0
+2–1
+0–0
+3–1
+2–5
+3–0
+0–0
+2–2
+2–1
+5–1
+1–0
+2–0
+2–1
+1–0
+New York City FC
+4–0
+3–1
+1–0
+3–2
+2–0
+1–2
+0–3
+0–4
+1–2
+0–1
+2–1
+2–1
+2–0
+2–1
+1–0
+1–2
+3–1
+New York Red Bulls
+2–0
+2–1
+0–1
+0–0
+4–2
+1–2
+7–0
+1–5
+2–2
+1–0
+5–3
+2–0
+2–3
+2–2
+1–0
+2–1
+2–1
+Orlando City SC
+3–0
+1–3
+1–2
+1–1
+3–1
+4–1
+4–1
+1–1
+3–3
+3–2
+1–2
+0–0
+2–4
+1–0
+3–1
+4–2
+1–2
+Philadelphia Union
+3–0
+4–0
+4–1
+2–2
+2–1
+3–1
+3–0
+3–2
+3–3
+2–1
+1–0
+1–3
+1–0
+2–0
+0–0
+1–0
+1–1
+Portland Timbers
+1–0
+2–3
+2–1
+2–2
+3–1
+1–1
+3–3
+1–1
+2–1
+2–1
+0–1
+1–1
+0–4
+1–1
+1–0
+2–1
+1–4
+Real Salt Lake
+3–1
+0–1
+1–0
+0–1
+2–0
+1–0
+2–0
+1–4
+1–3
+0–0
+2–0
+1–3
+2–1
+2–1
+3–2
+0–1
+2–3
+Seattle Sounders FC
+2–0
+1–1
+2–2
+3–3
+1–0
+0–0
+2–2
+5–2
+2–3
+3–0
+1–0
+1–0
+1–0
+3–2
+5–2
+4–1
+2–2
+San Diego FC
+2–0
+1–1
+2–0
+5–0
+3–4
+2–1
+3–2
+1–3
+1–0
+0–0
+1–3
+3–0
+0–1
+0–0
+0–0
+0–1
+1–1
+San Jose Earthquakes
+2–1
+1–2
+2–2
+6–1
+3–3
+1–1
+2–4
+3–3
+0–1
+1–1
+4–1
+4–0
+1–1
+1–2
+3–5
+1–3
+2–1
+Sporting Kansas City
+1–2
+2–1
+4–2
+2–4
+0–0
+1–0
+0–2
+3–3
+3–3
+1–1
+2–4
+1–1
+2–3
+0–2
+1–2
+2–0
+0–2
+St. Louis City SC
+0–1
+1–2
+0–0
+1–1
+2–3
+3–3
+0–3
+1–2
+3–1
+2–4
+2–1
+2–2
+1–0
+1–2
+2–1
+2–2
+0–0
+Toronto FC
+1–1
+1–2
+0–1
+1–1
+0–2
+2–0
+1–1
+0–0
+1–1
+0–2
+1–2
+0–1
+1–1
+4–2
+1–2
+3–0
+0–0
+Vancouver Whitecaps FC
+5–1
+1–3
+2–0
+1–2
+1–1
+2–1
+2–2
+0–0
+2–0
+7–0
+1–1
+2–1
+3–0
+3–5
+4–1
+3–0
+3–2
+Source: MLS
+Legend: Blue = home team win; Yellow = draw; Red = away team win.
+MLS All-Star Game
+[ edit ]
+Main article: 2025 MLS All-Star Game
+2025 MLS All-Star Game
+July 23, 2025 ( 2025-07-23 )
+8:00 p.m. CDT
+MLS All-Stars 3–1 Liga MX All-Stars
+Surridge 28'
+Baribo 51'
+White 80'
+Report
+Mora 64'
+Q2 Stadium , Austin, Texas
+Attendance: 20,738
+Referee: Rosendo Mendoza ( United States )
+MLS Cup playoffs
+[ edit ]
+Main article: 2025 MLS Cup playoffs
+Bracket
+[ edit ]
+The higher seeded teams hosted single-elimination matches, with the MLS Cup host determined by overall points in the Supporters' Shield table. During the best-of-three round, the team with higher seed hosted the first match (and the third match, if required).
+Wild card
+single match
+Round one
+best-of-three series
+Conference semifinals
+single match
+Conference finals
+single match
+MLS Cup
+single match
+E1
+Philadelphia Union
+2 (4)
+3
+–
+E8
+Chicago Fire FC
+3
+E8
+Chicago Fire FC
+2 (2)
+0
+–
+E9
+Orlando City SC
+1
+E1
+Philadelphia Union
+0
+E5
+New York City FC
+1
+E4
+Charlotte FC
+0
+0 (7)
+1
+Eastern Conference
+E5
+New York City FC
+1
+0 (6)
+3
+E5
+New York City FC
+1
+E3
+Inter Miami CF
+5
+E3
+Inter Miami CF
+3
+1
+4
+E6
+Nashville SC
+1
+2
+0
+E3
+Inter Miami CF
+4
+E2
+FC Cincinnati
+0
+E2
+FC Cincinnati
+1
+0
+2
+E7
+Columbus Crew
+0
+4
+1
+E3
+Inter Miami CF
+3
+W2
+Vancouver Whitecaps FC
+1
+W1
+San Diego FC
+2
+2 (2)
+4
+W8
+Portland Timbers
+3
+W8
+Portland Timbers
+1
+2 (3)
+0
+W9
+Real Salt Lake
+1
+W1
+San Diego FC
+1
+W4
+Minnesota United FC
+0
+W4
+Minnesota United FC
+0 (3)
+2
+3 (7)
+Western Conference
+W5
+Seattle Sounders FC
+0 (2)
+4
+3 (6)
+W1
+San Diego FC
+1
+W2
+Vancouver Whitecaps FC
+3
+W3
+Los Angeles FC
+2
+4
+–
+W6
+Austin FC
+1
+1
+–
+W3
+Los Angeles FC
+2 (3)
+W2
+Vancouver Whitecaps FC ( p )
+2 (4)
+W2
+Vancouver Whitecaps FC
+3
+1 (4)
+–
+W7
+FC Dallas
+0
+1 (2)
+–
+MLS Cup
+[ edit ]
+Main article: MLS Cup 2025
+December 6, 2025 ( 2025-12-06 )
+2:30 p.m. EST
+Inter Miami CF 3–1 Vancouver Whitecaps FC
+Ocampo 8' ( o.g. )
+De Paul 71'
+Allende 90+6'
+Report
+Ahmed 60'
+Chase Stadium , Fort Lauderdale, Florida
+Attendance: 21,556
+Referee: Drew Fischer
+Attendance
+[ edit ]
+See also: Major League Soccer attendance
+Average home attendances
+[ edit ]
+As of October 18, 2025
+Rank
+Team
+Home games played</span>"}]]}'>GP
+Cumulative total of all home games attendance</span>"}]]}'>Cumulative
+Highest season attendance</span>"}]]}'>High
+Lowest season attendance</span>"}]]}'>Low
+Statistical mean season attendance</span>"}]]}'>Mean
+1 Atlanta United FC 17 747,859 65,520 38,882 43,992
+2 Seattle Sounders FC 17 526,882 32,913 30,041 30,993
+3 Charlotte FC 17 521,282 51,002 26,606 30,664
+4 San Diego FC 17 477,091 34,506 22,361 28,064
+5 Nashville SC 17 449,367 30,109 22,549 26,433
+6 FC Cincinnati 17 419,354 25,513 22,747 24,668
+7 New England Revolution 17 416,107 43,293 15,596 24,477
+8 Chicago Fire FC 17 398,644 62,358 16,278 23,450
+9 Columbus Crew 17 387,511 60,614 19,671 22,795
+10 St. Louis City SC 17 381,191 22,423 22,423 22,423
+11 Portland Timbers 17 380,891 25,218 20,012 22,405
+12 Los Angeles FC 17 372,834 22,937 17,031 21,931
+13 New York City FC 17 371,502 40,845 17,070 21,853
+14 Vancouver Whitecaps FC 17 370,707 26,741 17,012 21,806
+15 Toronto FC 17 362,998 28,855 14,018 21,353
+16 Austin FC 17 352,546 20,738 20,738 20,738
+17 Orlando City SC 17 349,746 25,046 17,007 20,573
+18 Inter Miami CF 17 346,289 21,184 16,888 20,370
+19 LA Galaxy 17 341,146 25,224 15,345 20,067
+20 Real Salt Lake 17 336,183 20,338 18,853 19,775
+21 New York Red Bulls 17 335,077 25,219 11,135 19,710
+22 San Jose Earthquakes 17 333,432 50,978 14,147 19,614
+23 Minnesota United FC 17 327,203 19,784 17,124 19,247
+24 Philadelphia Union 17 311,623 19,357 15,539 18,331
+25 Houston Dynamo FC 17 300,781 20,810 14,266 17,693
+26 Sporting Kansas City 17 282,261 18,116 14,867 16,604
+27 D.C. United 17 278,617 19,365 10,645 16,389
+28 CF Montréal 17 274,752 19,619 15,012 16,162
+29 Colorado Rapids 17 270,129 18,258 14,497 15,890
+30 FC Dallas {{Cite web|url=https://www.fcdallas.com/tickets/stm/faq|publisher=FC Dallas|access-date=April 27, 2026|title=FC Dallas Season Ticket Member FAQ}}</ref>"}},"i":0}}]}'> [ a ] 17 187,216 11,004 11,004 11,013
+Total 510 11,181,221 65,520 10,645 21,983
+↑ Construction at Toyota Stadium temporarily lowered attendance seating to about 11,000. [ 47 ]
+Highest attendances
+[ edit ]
+Regular season
+Rank
+Home team
+Score
+Away team
+Attendance
+Date
+Match ­ day
+Stadium
+Ref.
+1 Atlanta United FC 3–2 CF Montréal 65,520 February 22, 2025 1 Mercedes-Benz Stadium [ 2 ]
+2 Chicago Fire FC 0–0 Inter Miami CF 62,358 April 13, 2025 8 Soldier Field [ 48 ]
+3 Columbus Crew 0–1 Inter Miami CF 60,614 April 19, 2025 9 Huntington Bank Field [ 49 ]
+4 Charlotte FC 2–0 Atlanta United FC 51,002 March 1, 2025 2 Bank of America Stadium [ 50 ]
+5 Atlanta United FC 1–2 Inter Miami CF 42,843 March 16, 2025 4 Mercedes-Benz Stadium [ 51 ]
+6 Atlanta United FC 0–0 New York Red Bulls 42,562 March 8, 2025 3 Mercedes-Benz Stadium [ 52 ]
+7 Atlanta United FC 4–3 New York City FC 42,518 March 29, 2025 6 Mercedes-Benz Stadium [ 53 ]
+8 Atlanta United FC 1–1 FC Dallas 41,984 April 5, 2025 7 Mercedes-Benz Stadium [ 54 ]
+9 Atlanta United FC 1–1 Nashville SC 41,893 May 3, 2025 11 Mercedes-Benz Stadium [ 55 ]
+10 Atlanta United FC 0–1 New England Revolution 41,879 April 12, 2025 8 Mercedes-Benz Stadium [ 56 ]
+2025 MLS Cup playoffs
+Rank
+Home team
+Score
+Away team
+Attendance
+Date
+Stadium
+Ref.
+1 Vancouver Whitecaps FC 2–2
+(4–3 pen. ) Los Angeles FC 53,957 November 22, 2025 BC Place [ 57 ]
+2 Charlotte FC 1–3 New York City FC 34,473 November 7, 2025 Bank of America Stadium [ 58 ]
+3 Charlotte FC 0–1 New York City FC 33,709 October 28, 2025 Bank of America Stadium [ 59 ]
+4 San Diego FC 1–3 Vancouver Whitecaps FC 32,502 November 29, 2025 Snapdragon Stadium [ 60 ]
+5 San Diego FC 1–0 Minnesota United FC 32,502 November 24, 2025 Snapdragon Stadium [ 61 ]
+6 San Diego FC 4–0 Portland Timbers 32,502 November 9, 2025 Snapdragon Stadium [ 62 ]
+7 San Diego FC 2–1 Portland Timbers 32,502 October 26, 2025 Snapdragon Stadium [ 63 ]
+8 Vancouver Whitecaps FC 3–0 FC Dallas 32,066 October 26, 2025 BC Place [ 64 ]
+9 Nashville SC 2–1 Inter Miami CF 30,109 November 1, 2025 Geodis Park [ 65 ]
+10 Seattle Sounders FC 4–2 Minnesota United FC 30,085 November 3, 2025 Lumen Field [ 66 ]
+Player statistics
+[ edit ]
+Source: [ 67 ]
+Goals
+[ edit ]
+Rank Player Club Goals [ 68 ]
+1
+Lionel Messi
+Inter Miami CF
+29
+2
+Denis Bouanga
+Los Angeles FC
+24
+Sam Surridge
+Nashville SC
+4
+Anders Dreyer
+San Diego FC
+19
+5
+Evander
+FC Cincinnati
+18
+Dejan Joveljić
+Sporting Kansas City
+Petar Musa
+FC Dallas
+8
+Eric Maxim Choupo-Moting
+New York Red Bulls
+17
+Hugo Cuypers
+Chicago Fire FC
+Alonso Martínez
+New York City FC
+Hat-tricks
+[ edit ]
+Main article: List of Major League Soccer hat-tricks
+Player
+For
+Against
+Score
+Date
+Tai Baribo
+Philadelphia Union
+FC Cincinnati
+4–1 (H)
+March 1, 2025
+Josef Martínez
+San Jose Earthquakes
+D.C. United
+6–1 (H)
+April 6, 2025
+Brian White 4
+Vancouver Whitecaps FC
+Austin FC
+5–1 (H)
+April 12, 2025
+Sam Surridge 4
+Nashville SC
+Chicago Fire FC
+7–2 (H)
+April 26, 2025
+Martín Ojeda
+Orlando City SC
+New England Revolution
+3–3 (H)
+May 10, 2025
+Tom Barlow
+Chicago Fire FC
+D.C. United
+1−7 (A)
+June 7, 2025
+João Klauss
+St. Louis City SC
+LA Galaxy
+3−3 (H)
+June 14, 2025
+Sam Surridge
+Nashville SC
+New England Revolution
+2–3 (A)
+June 25, 2025
+Milan Iloski 4
+San Diego FC
+Vancouver Whitecaps FC
+3–5 (A)
+Alonso Martínez
+New York City FC
+FC Dallas
+3−4 (A)
+July 25, 2025
+Danny Musovski
+Seattle Sounders FC
+Sporting Kansas City
+5–2 (H)
+August 24, 2025
+Idan Toklomati
+Charlotte FC
+Inter Miami CF
+3–0 (H)
+September 13, 2025
+Diego Rossi
+Columbus Crew
+Atlanta United FC
+4–5 (A)
+Denis Bouanga
+Los Angeles FC
+San Jose Earthquakes
+2–4 (A)
+Thomas Müller
+Vancouver Whitecaps FC
+Philadelphia Union
+7–0 (H)
+Son Heung-min
+Los Angeles FC
+Real Salt Lake
+1–4 (A)
+September 17, 2025
+Denis Bouanga
+Los Angeles FC
+Real Salt Lake
+4–1 (H)
+September 21, 2025
+Joseph Paintsil
+LA Galaxy
+Sporting Kansas City
+4–1 (H)
+September 27, 2025
+Lionel Messi
+Inter Miami CF
+Nashville SC
+2–5 (A)
+October 18, 2025
+Notes
+(H) – Home team
+(A) – Away team
+4 Scored 4 goals
+Assists
+[ edit ]
+Rank Player Club Assists [ 69 ]
+1
+Anders Dreyer
+San Diego FC
+19
+Lionel Messi
+Inter Miami CF
+3
+Jordi Alba
+Inter Miami CF
+15
+Evander
+FC Cincinnati
+Martín Ojeda
+Orlando City SC
+Philip Zinckernagel
+Chicago Fire FC
+7
+Carles Gil
+New England Revolution
+14
+8
+Pep Biel
+Charlotte FC
+12
+Cristian Espinoza
+San Jose Earthquakes
+Hany Mukhtar
+Nashville SC
+Jeppe Tverskov
+San Diego FC
+Clean sheets
+[ edit ]
+Rank Player Club Clean
+sheets [ 70 ]
+1
+Yohei Takaoka
+Vancouver Whitecaps FC
+13
+2
+Kristijan Kahlina
+Charlotte FC
+12
+Hugo Lloris
+Los Angeles FC
+4
+Roman Celentano
+FC Cincinnati
+10
+Carlos Coronel
+New York Red Bulls
+CJ dos Santos
+San Diego FC
+Dayne St. Clair
+Minnesota United FC
+8
+Andre Blake
+Philadelphia Union
+9
+Brad Stuver
+Austin FC
+Joe Willis
+Nashville SC
+Awards
+[ edit ]
+Team/Player of the Matchday
+[ edit ]
+Bold denotes the Player of the Matchday.
+Team of the Matchday
+Matchday Goalkeeper Defenders Midfielders Forwards Bench Coach
+1
+[ 71 ] [ 72 ]
+Steffen ( COL )
+Ceballos ( NE )
+Robinson ( CIN )
+Rodrigues ( SJ )
+Rossi ( CLB )
+Gutiérrez ( CHI )
+Enow ( DC )
+Nelson ( VAN )
+Dreyer ( SD )
+Latte Lath ( ATL )
+Messi ( MIA )
+Daniel ( SJ )
+Marlon ( LAFC )
+Espinoza ( SJ )
+Vite ( VAN )
+Pašalić ( ORL )
+Baribo ( PHI )
+Morris ( SEA )
+Musa ( DAL )
+Denkey ( CIN )
+Mikey Varas ( SD )
+2
+[ 73 ] [ 74 ]
+Brady ( CHI )
+Hollingshead ( LAFC )
+Boxall ( MIN )
+Farsi ( CLB )
+Zaha ( CLT )
+Forsberg ( RBNY )
+Araújo ( ORL )
+Segovia ( MIA )
+White ( VAN )
+Baribo ( PHI )
+Suárez ( MIA )
+Pantemis ( POR )
+Freeman ( ORL )
+Tverskov ( SD )
+Q. Sullivan ( PHI )
+Da Costa ( POR )
+Yeboah ( MIN )
+Navarro ( COL )
+Musa ( DAL )
+Cuypers ( CHI )
+Bradley Carnell ( PHI )
+3
+[ 75 ] [ 76 ]
+Bürki ( STL )
+Laborda ( VAN )
+Boxall ( MIN )
+Najar ( NSH )
+Rusnák ( SEA )
+Bright ( MIA )
+Lukić ( PHI )
+Teuchert ( STL )
+Kubo ( CIN )
+Cuypers ( CHI )
+Dreyer ( SD )
+Coronel ( RBNY )
+Allen ( MIA )
+Wagner ( PHI )
+Tagseth ( NSH )
+Shore ( NYC )
+Kossa-Rienzi ( SEA )
+Rothrock ( SEA )
+Allende ( MIA )
+Navarro ( COL )
+Brian Schmetzer ( SEA )
+4
+[ 77 ] [ 78 ]
+Steffen ( COL )
+Gutman ( CHI )
+Blackmon ( VAN )
+Gallagher ( ATX )
+Luna ( RSL )
+Atuesta ( ORL )
+Löwen ( STL )
+Valakari ( SD )
+Oluwaseyi ( MIN )
+Surridge ( NSH )
+Messi ( MIA )
+Sirois ( MTL )
+Kessler ( STL )
+Zimmerman ( NSH )
+Eneli ( RSL )
+Berhalter ( VAN )
+A. Martínez ( NYC )
+Joveljić ( SKC )
+Choupo-Moting ( RBNY )
+Agyemang ( CLT )
+Jesper Sørensen ( VAN )
+5
+[ 79 ] [ 80 ]
+Freese ( NYC )
+Zimmerman ( NSH )
+Long ( LAFC )
+Freeman ( ORL )
+Evander ( CIN )
+Forsberg ( RBNY )
+Wolff ( ATX )
+Biel ( CLT )
+Ojeda ( ORL )
+Yeboah ( MIN )
+Zinckernagel ( CHI )
+Lloris ( LAFC )
+Glavinovich ( PHI )
+Garcés ( LA )
+Westwood ( CLT )
+Acosta ( DAL )
+Pérez ( NSH )
+Antony ( POR )
+Lobjanidze ( ATL )
+Muriel ( ORL )
+Gregg Berhalter ( CHI )
+6
+[ 81 ] [ 82 ]
+Celentano ( CIN )
+Díaz ( MIN )
+McVey ( SD )
+Campbell ( MTL )
+Mihailovic ( COL )
+Gil ( NE )
+Evander ( CIN )
+Antony ( POR )
+Rossi ( CLB )
+Oluwaseyi ( MIN )
+Latte Lath ( ATL )
+Daniel ( SJ )
+Hines-Ike ( ATX )
+Acosta ( DAL )
+Rusnák ( SEA )
+Messi ( MIA )
+Uzuni ( ATX )
+Valakari ( SD )
+Almirón ( ATL )
+Mora ( POR )
+Mikey Varas ( SD )
+7
+[ 83 ] [ 84 ]
+Coronel ( RBNY )
+Engel ( CIN )
+Blackmon ( VAN )
+Dorsey ( HOU )
+Bernardeschi ( TOR )
+Luna ( RSL )
+Trapp ( MIN )
+Lozano ( SD )
+J. Martínez ( SJ )
+Joveljić ( SKC )
+Russell-Rowe ( CLB )
+Stuver ( ATX )
+Valencia ( RBNY )
+Tverskov ( SD )
+Pereyra ( MIN )
+McGlynn ( HOU )
+García ( SKC )
+Espinoza ( SJ )
+Toklomati ( CLT )
+Musa ( DAL )
+Kerry Zavagnin ( SKC )
+8
+[ 85 ] [ 86 ]
+Ivačič ( NE )
+Lovitz ( NSH )
+Moreira ( CLB )
+Palencia ( LAFC )
+Valenzuela ( CIN )
+Ayala ( POR )
+Gil ( NE )
+Fagúndez ( LA )
+White ( VAN )
+Kelsy ( POR )
+Navarro ( COL )
+Ustari ( MIA )
+Malanda ( CLT )
+Robinson ( CIN )
+Tagseth ( NSH )
+Vargas ( SEA )
+Mihailovic ( COL )
+Sabbi ( VAN )
+A. Martínez ( NYC )
+Rossi ( CLB )
+Jesper Sørensen ( VAN )
+9
+[ 87 ] [ 88 ]
+Johnson ( TOR )
+Ndenbe ( SKC )
+Privett ( CLT )
+Weigandt ( MIA )
+Cremaschi ( MIA )
+Q. Sullivan ( PHI )
+Evander ( CIN )
+Peglow ( DC )
+Sallói ( SKC )
+Mora ( POR )
+Ganago ( NE )
+Gallese ( ORL )
+Gómez ( SEA )
+Ocampo ( VAN )
+Wolff ( ATX )
+Mihailovic ( COL )
+Lingr ( HOU )
+Ferreira ( SEA )
+Bouanga ( LAFC )
+Arango ( SJ )
+Dean Smith ( CLT )
+10
+[ 89 ] [ 90 ]
+Ivačič ( NE )
+Arfsten ( CLB )
+Glesnes ( PHI )
+Najar ( NSH )
+Antony ( POR )
+Luna ( RSL )
+Vite ( VAN )
+Mukhtar ( NSH )
+Surridge ( NSH )
+Denkey ( CIN )
+Bouanga ( LAFC )
+Blake ( PHI )
+Eile ( RBNY )
+Freeman ( ORL )
+Gil ( NE )
+Mihailovic ( COL )
+Pedrinho ( DAL )
+Lingr ( HOU )
+Pašalić ( ORL )
+A. Martínez ( NYC )
+B. J. Callaghan ( NSH )
+11
+[ 91 ] [ 92 ]
+Gallese ( ORL )
+Nouhou ( SEA )
+Blackmon ( VAN )
+Weigandt ( MIA )
+Gil ( NE )
+Pereyra ( MIN )
+Chambost ( CLB )
+Vassilev ( PHI )
+Lozano ( SD )
+Dreyer ( SD )
+Espinoza ( SJ )
+Freese ( NYC )
+Voloder ( SKC )
+Lovitz ( NSH )
+Farsi ( CLB )
+Vargas ( SEA )
+Kent ( SEA )
+Ordaz ( LAFC )
+Arango ( SJ )
+Benteke ( DC )
+Wilfried Nancy ( CLB )
+12
+[ 93 ] [ 94 ]
+Johnson ( TOR )
+Najar ( NSH )
+Zawadzki ( CLB )
+Jones ( SJ )
+Ojeda ( ORL )
+Forsberg ( RBNY )
+Evander ( CIN )
+Rusnák ( SEA )
+Choupo-Moting ( RBNY )
+Owusu ( MTL )
+White ( VAN )
+Freese ( NYC )
+Valencia ( RBNY )
+Kouamé ( CHI )
+Lod ( MIN )
+Luna ( RSL )
+Moreno ( POR )
+Gil ( NE )
+Insigne ( TOR )
+Dreyer ( SD )
+Eric Ramsay ( MIN )
+13
+[ 95 ] [ 96 ]
+Barraza ( DC )
+Andrade ( HOU )
+Harriel ( PHI )
+Brekalo ( ORL )
+Mukhtar ( NSH )
+Leroux ( SJ )
+Ojeda ( ORL )
+Allende ( MIA )
+Ünder ( LAFC )
+Baribo ( PHI )
+Dreyer ( SD )
+Dos Santos ( SD )
+McVey ( SD )
+Petrasso ( MTL )
+Alba ( MIA )
+Pompeu ( STL )
+Reus ( LA )
+Vázquez ( ATX )
+Joveljić ( SKC )
+Denkey ( CIN )
+Óscar Pareja ( ORL )
+14
+[ 97 ] [ 98 ]
+Gallese ( ORL )
+Gutman ( CHI )
+Voloder ( SKC )
+Dorsey ( HOU )
+Gutiérrez ( CHI )
+Pereyra ( MIN )
+Mihailovic ( COL )
+Reus ( LA )
+Bernardeschi ( TOR )
+A. Martínez ( NYC )
+Corbeanu ( TOR )
+Celentano ( CIN )
+Thiago Martins ( NYC )
+Gerbet ( ORL )
+McGlynn ( HOU )
+Rusnák ( SEA )
+Rossi ( CLB )
+Bouanga ( LAFC )
+Brynhildsen ( TOR )
+Oluwaseyi ( MIN )
+Óscar Pareja ( ORL )
+15
+[ 99 ] [ 100 ]
+Coronel ( RBNY )
+Kolmanič ( ATX )
+Williams ( ATL )
+Dorsey ( HOU )
+Lozano ( SD )
+Biel ( CLT )
+Delgado ( LAFC )
+Messi ( MIA )
+Agyemang ( CLT )
+White ( VAN )
+Surridge ( NSH )
+Guzan ( ATL )
+Boxall ( MIN )
+Atuesta ( ORL )
+Rusnák ( SEA )
+Luna ( RSL )
+Zaha ( CLT )
+Wolf ( NYC )
+Judd ( SJ )
+Baribo ( PHI )
+Ronny Deila ( ATL )
+16
+[ 101 ] [ 102 ]
+Frei ( SEA )
+Fory ( POR )
+Harriel ( PHI )
+Wagner ( PHI )
+Messi ( MIA )
+Miranchuk ( ATL )
+Mukhtar ( NSH )
+Antony ( POR )
+Segal ( HOU )
+Suárez ( MIA )
+Choupo-Moting ( RBNY )
+Edwards Jr. ( SJ )
+Ibeagha ( DAL )
+Awodesu ( HOU )
+Slisz ( ATL )
+Da Costa ( POR )
+Pirani ( DC )
+Ferreira ( SEA )
+Surridge ( NSH )
+Rubio ( ATX )
+Ben Olsen ( HOU )
+17
+[ 103 ] [ 104 ]
+Pulskamp ( SKC )
+Miller ( NE )
+Hack ( RBNY )
+Feingold ( NE )
+Wolf ( NYC )
+Pirani ( DC )
+Löwen ( STL )
+Messi ( MIA )
+Cuypers ( CHI )
+Joveljić ( SKC )
+Oluwaseyi ( MIN )
+Bingham ( CLT )
+Antley ( DC )
+Sanabria ( LA )
+De la Torre ( SD )
+Parks ( NYC )
+Lod ( MIN )
+Zinckernagel ( CHI )
+Harper ( RBNY )
+Surridge ( NSH )
+Javier Mascherano ( MIA )
+18
+[ 105 ]
+Barlow ( CHI )
+19
+[ 106 ] [ 107 ]
+Willis ( NSH )
+Biro ( ATX )
+Neal ( MTL )
+Mosquera ( POR )
+Wolf ( NYC )
+Acosta ( DAL )
+Reus ( LA )
+Dreyer ( SD )
+Klauss ( STL )
+Owusu ( MTL )
+Iloski ( SD )
+Celentano ( CIN )
+Schlegel ( ORL )
+Tverskov ( SD )
+Moralez ( NYC )
+Gabriel Pec ( LA )
+Rossi ( CLB )
+Surridge ( NSH )
+Anderson ( PHI )
+Denkey ( CIN )
+Bradley Carnell ( PHI )
+20
+[ 108 ] [ 109 ]
+Pulskamp ( SKC )
+Engel ( CIN )
+Boxall ( MIN )
+Herrera ( CLB )
+Hlongwane ( MIN )
+Evander ( CIN )
+Atuesta ( ORL )
+Dreyer ( SD )
+Enrique ( ORL )
+Surridge ( NSH )
+Iloski ( SD )
+Johnson ( TOR )
+Markanich ( MIN )
+García ( SKC )
+Mihailovic ( COL )
+Espinoza ( SJ )
+Pašalić ( ORL )
+Russell-Rowe ( CLB )
+Damiani ( PHI )
+Arango ( SJ )
+Mikey Varas ( SD )
+21
+[ 110 ] [ 111 ]
+Daniel ( SJ )
+Andrade ( HOU )
+Duncan ( RBNY )
+Farsi ( CLB )
+Dreyer ( SD )
+Gil ( NE )
+Evander ( CIN )
+Zinckernagel ( CHI )
+Choupo-Moting ( RBNY )
+Ferreira ( SEA )
+Navarro ( COL )
+Pulskamp ( SKC )
+Miazga ( CIN )
+Coello ( TOR )
+Loturi ( CF )
+Biel ( CLT )
+Thommy ( SKC )
+Reus ( LA )
+Sabbi ( VAN )
+Yapi ( COL )
+Pat Noonan ( CIN )
+22
+[ 112 ] [ 113 ]
+Pulskamp ( SKC )
+Harvey ( MIN )
+Bartlow ( HOU )
+Ilenič ( NYC )
+Evander ( CIN )
+Thommy ( SKC )
+Biel ( CLT )
+Wolf ( NYC )
+Paintsil ( LA )
+Ponce ( HOU )
+Messi ( MIA )
+Ustari ( MIA )
+Smith ( POR )
+Markanich ( MIN )
+Gonçalves ( RSL )
+Da Costa ( POR )
+Valakari ( SD )
+Allende ( MIA )
+Mukhtar ( NSH )
+Enrique ( ORL )
+Ben Olsen ( HOU )
+23
+No team created
+24
+[ 114 ] [ 115 ]
+Stuver ( ATX )
+Bombino ( SD )
+Maxsø ( COL )
+Arfsten ( CLB )
+Reus ( LA )
+Mihailovic ( COL )
+Hartel ( STL )
+Dreyer ( SD )
+Bouanga ( LAFC )
+Oluwaseyi ( MIN )
+Messi ( MIA )
+Ivačič ( NE )
+Makhanya ( PHI )
+Vassilev ( PHI )
+Rusnák ( SEA )
+Rossi ( CLB )
+Lozano ( SD )
+Yeboah ( MIN )
+Agada ( RSL )
+Toklomati ( CLT )
+Wilfried Nancy ( CLB )
+25
+[ 116 ] [ 117 ]
+Freese ( NYC )
+Najar ( NSH )
+Makhanya ( PHI )
+Segura ( LAFC )
+Biel ( CLT )
+Evander ( CIN )
+Rusnák ( SEA )
+Forsberg ( RBNY )
+Uzuni ( ATX )
+Choupo-Moting ( RBNY )
+Musa ( DAL )
+Willis ( NSH )
+Donkor ( RBNY )
+Berhalter ( VAN )
+Gonçalves ( RSL )
+Zinckernagel ( CHI )
+Corbeanu ( TOR )
+Campana ( NE )
+Surridge ( NSH )
+J. Martínez ( SJ )
+Pat Noonan ( CIN )
+26
+[ 118 ] [ 119 ]
+Celentano ( CIN )
+Alba ( MIA )
+Elliott ( CHI )
+Yoshida ( LA )
+Bouanga ( LAFC )
+Ojeda ( ORL )
+Biel ( CLT )
+Segovia ( MIA )
+Musovski ( SEA )
+Musa ( DAL )
+Messi ( MIA )
+Brady ( CHI )
+Pilcher ( SD )
+Orellano ( CIN )
+Gazdag ( CLB )
+Fernandez ( POR )
+De la Vega ( SEA )
+Zaha ( CLT )
+Gabriel Pec ( LA )
+Surridge ( NSH )
+Javier Mascherano ( MIA )
+27
+[ 120 ] [ 121 ]
+Gallese ( ORL )
+Elliot ( CHI )
+Duah ( SD )
+Laborda ( VAN )
+Ojeda ( ORL )
+Wolff ( ATX )
+Ngando ( VAN )
+Uhre ( PHI )
+A. Martínez ( NYC )
+Enrique ( ORL )
+Yeboah ( MIN )
+Sisniega ( SD )
+Cremaschi ( MIA )
+Paredes ( POR )
+Ojeda ( RSL )
+Moralez ( NYC )
+Miranchuk ( ATL )
+Bukari ( ATX )
+Angulo ( ORL )
+Farrington ( DAL )
+Óscar Pareja ( ORL )
+28
+[ 122 ] [ 123 ]
+Kahlina ( CLT )
+Hollingshead ( LAFC )
+Abubakar ( DAL )
+Orozco ( STL )
+Zinckernagel ( CHI )
+Gil ( NE )
+McGlynn ( HOU )
+Dreyer ( SD )
+Muriel ( ORL )
+Musovski ( SEA )
+Choupo-Moting ( RBNY )
+Dos Santos ( SD )
+Biro ( ATX )
+A. Roldán ( SEA )
+Miranchuk ( ATL )
+Ojeda ( ORL )
+Zaha ( CLT )
+Kerr ( TOR )
+Judd ( SJ )
+Yapi ( COL )
+Óscar Pareja ( ORL )
+29
+[ 124 ] [ 125 ]
+Kahlina ( CLT )
+Alba ( MIA )
+Ream ( CLT )
+Nealis ( RBNY )
+Messi ( MIA )
+Bucha ( CIN )
+Evander ( CIN )
+Zinckernagel ( CHI )
+Ingvartsen ( SD )
+Navarro ( COL )
+Son ( LAFC )
+Coronel ( RBNY )
+Petrasso ( MTL )
+Artur ( HOU )
+Delgado ( LAFC )
+Wolff ( ATX )
+Gutiérrez ( CHI )
+Ojeda ( ORL )
+Suárez ( MIA )
+Kelsy ( POR )
+Mikey Varas ( SD )
+30
+[ 126 ] [ 127 ]
+Collodi ( DAL )
+Wagner ( PHI )
+Munie ( SJ )
+Fofana ( NE )
+Yamane ( LA )
+Lod ( MIN )
+O'Neill ( NYC )
+Mukhtar ( NSH )
+Musovski ( SEA )
+Surridge ( NSH )
+Son ( LAFC )
+Kahlina ( CLT )
+Bauer ( NSH )
+Wynder ( LA )
+Leyva ( SEA )
+Rodríguez ( MIA )
+Iloski ( PHI )
+Müller ( VAN )
+Owusu ( MTL )
+A. Martínez ( NYC )
+Pascal Jansen ( NYC )
+31
+[ 128 ] [ 129 ]
+Hibbert ( ATL )
+Nealis ( RBNY )
+Hernández ( ATL )
+Wagner ( PHI )
+Wolff ( ATX )
+Osorio ( TOR )
+Tverskov ( SD )
+Lingr ( HOU )
+Dreyer ( SD )
+Joveljić ( SKC )
+Pirani ( DC )
+Schulte ( CLB )
+Haak ( NYC )
+Lod ( MIN )
+Alzate ( ATL )
+Westwood ( CLT )
+Ponce ( HOU )
+Damiani ( PHI )
+Bukari ( ATX )
+Sallói ( SKC )
+Bradley Carnell ( PHI )
+32
+[ 130 ]
+Jackson ( DAL )
+33
+[ 131 ] [ 132 ]
+St. Clair ( MIN )
+Kamungo ( DAL )
+Yamane ( LA )
+Freeman ( ORL )
+Sabbi ( VAN )
+Evander ( CIN )
+Triantis ( MIN )
+Rossi ( CLB )
+Bouanga ( LAFC )
+Toklomati ( CLT )
+Müller ( VAN )
+Kahlina ( CLT )
+Laborda ( VAN )
+Wallem ( STL )
+Berhalter ( VAN )
+Ahmed ( VAN )
+Gazdag ( CLB )
+Gozo ( RSL )
+Thiaré ( ATL )
+Musovski ( SEA )
+Jesper Sørensen ( VAN )
+34
+[ 133 ]
+Son ( LAFC )
+35
+[ 134 ] [ 135 ]
+Stuver ( ATX )
+Laryea ( TOR )
+Waterman ( CHI )
+Ocampo ( VAN )
+McSorley ( STL )
+Evander ( CIN )
+Ojeda ( ORL )
+Bouanga ( LAFC )
+Messi ( MIA )
+A. Martínez ( NYC )
+Son ( LAFC )
+Freese ( NYC )
+Parker ( RBNY )
+Cappis ( DAL )
+McGlynn ( HOU )
+Almirón ( ATL )
+Hartel ( STL )
+Uzuni ( ATX )
+Benteke ( DC )
+Brenner ( CIN )
+Pascal Jansen ( NYC )
+36
+No team created
+37
+[ 136 ] [ 137 ]
+Johnson ( TOR )
+Gutman ( CHI )
+Thiago Martins ( NYC )
+Freeman ( ORL )
+Vassilev ( PHI )
+Triantis ( MIN )
+Ojeda ( RSL )
+Sealy ( MTL )
+Turgeman ( NE )
+Son ( LAFC )
+Paintsil ( LA )
+Gallese ( ORL )
+Smolyakov ( LAFC )
+Najar ( NSH )
+Rusnák ( SEA )
+Luna ( RSL )
+Iloski ( PHI )
+Uhre ( PHI )
+Musa ( DAL )
+J. Martínez ( SJ )
+Pascal Jansen ( NYC )
+38
+[ 138 ] [ 139 ]
+Cabral ( RSL )
+Alba ( MIA )
+Elliott ( CHI )
+Markanich ( MIN )
+Messi ( MIA )
+Berhalter ( VAN )
+Hartel ( STL )
+Müller ( VAN )
+Dreyer ( SD )
+Uhre ( PHI )
+Allende ( MIA )
+Brady ( CHI )
+Herrera ( CLB )
+Delgado ( DAL )
+Pereyra ( MIN )
+Zinckernagel ( CHI )
+De la Vega ( SEA )
+Bouanga ( LAFC )
+Pellegrino ( SD )
+Denkey ( CIN )
+Bradley Carnell ( PHI )
+39
+[ 140 ] [ 141 ]
+Kahlina ( CLT )
+Urhoghide ( DAL )
+Ragen ( SEA )
+Herrera ( CLB )
+Vargas ( CLT )
+Evander ( CIN )
+Mihailovic ( TOR )
+Pellegrino ( SD )
+Dreyer ( SD )
+Olatunji ( RSL )
+Messi ( MIA )
+Collodi ( DAL )
+Kaick ( DAL )
+Osorio ( TOR )
+Gazdag ( CLB )
+Tsakiris ( SJ )
+Almirón ( ATL )
+Moran ( LAFC )
+Zinckernagel ( CHI )
+Paintsil ( LA )
+Eric Quill ( DAL )
+Goal of the Matchday
+[ edit ]
+Goal of the Matchday
+Matchday Player Club Ref.
+1
+Edwin Mosquera
+Atlanta United FC
+[ 142 ]
+2
+Tadeo Allende
+Inter Miami CF
+[ 143 ]
+3
+[ 144 ]
+4
+Alonso Martínez
+New York City FC
+[ 145 ]
+5
+Marco Pašalić
+Orlando City SC
+[ 146 ]
+6
+Carles Gil
+New England Revolution
+[ 147 ]
+7
+Idan Toklomati
+Charlotte FC
+[ 148 ]
+8
+Diego Fagúndez
+LA Galaxy
+[ 149 ]
+9
+Quinn Sullivan
+Philadelphia Union
+[ 150 ]
+10
+Kévin Denkey
+FC Cincinnati
+[ 151 ]
+11
+Lionel Messi
+Inter Miami CF
+[ 152 ]
+12
+Santiago Moreno
+Portland Timbers
+[ 153 ]
+13
+Célio Pompeu
+St. Louis City SC
+[ 154 ]
+14
+Jack McGlynn
+Houston Dynamo FC
+[ 155 ]
+15
+Lionel Messi
+Inter Miami CF
+[ 156 ]
+16
+[ 157 ]
+17
+Dejan Joveljić
+Sporting Kansas City
+[ 158 ]
+18
+Antony
+Portland Timbers
+[ 159 ]
+19
+João Klauss
+St. Louis City SC
+[ 160 ]
+20
+Bongokuhle Hlongwane
+Minnesota United FC
+[ 161 ]
+21
+Beau Leroux
+San Jose Earthquakes
+[ 162 ]
+22
+Lionel Messi
+Inter Miami CF
+[ 163 ]
+23
+No goal awarded
+24
+Lionel Messi
+Inter Miami CF
+[ 164 ]
+25
+Emil Forsberg
+New York Red Bulls
+[ 165 ]
+26
+Jordi Alba
+Inter Miami CF
+[ 166 ]
+27
+Aleksei Miranchuk
+Atlanta United FC
+[ 167 ]
+28
+Hirving Lozano
+San Diego FC
+[ 168 ]
+29
+Lionel Messi
+Inter Miami CF
+[ 169 ]
+30
+Son Heung-min
+Los Angeles FC
+[ 170 ]
+31
+Eduard Löwen
+St. Louis City SC
+[ 171 ]
+32
+No goal awarded
+33
+Nectarios Triantis
+Minnesota United FC
+[ 172 ]
+34
+No goal awarded
+35
+Lionel Messi
+Inter Miami CF
+[ 173 ]
+36 & 37
+Kamal Miller
+Portland Timbers
+[ 174 ]
+38
+Kévin Denkey
+FC Cincinnati
+[ 175 ]
+Player of the Month
+[ edit ]
+Main article: MLS Player of the Month
+Month Player Club Stats Ref.
+February/March
+Tai Baribo
+Philadelphia Union
+5 matches played, 6 goals, 0 assists
+[ 176 ]
+April
+Brian White
+Vancouver Whitecaps FC
+3 matches played, 5 goals, 0 assists
+[ 177 ]
+May
+Lionel Messi
+Inter Miami CF
+7 matches played, 7 goals, 4 assists
+[ 178 ]
+June
+Anders Dreyer
+San Diego FC
+3 matches played, 3 goals, 6 assists
+[ 179 ]
+July
+Lionel Messi
+Inter Miami CF
+5 matches played, 8 goals, 3 assists
+[ 180 ]
+August
+Anders Dreyer
+San Diego FC
+4 matches played, 3 goals, 2 assists
+[ 181 ]
+September
+Denis Bouanga
+Los Angeles FC
+4 matches played, 8 goals, 1 assist
+[ 182 ]
+October
+Lionel Messi
+Inter Miami CF
+3 matches played, 5 goals, 5 assists
+[ 183 ]
+End-of-season awards
+[ edit ]
+Award
+Winner (club)
+Ref.
+Most Valuable Player
+Lionel Messi ( Inter Miami CF )
+[ 184 ]
+Defender of the Year
+Tristan Blackmon ( Vancouver Whitecaps FC )
+[ 185 ]
+Goalkeeper of the Year
+Dayne St. Clair ( Minnesota United FC )
+[ 186 ]
+Coach of the Year
+Bradley Carnell ( Philadelphia Union )
+[ 187 ]
+Young Player of the Year
+Alex Freeman ( Orlando City SC )
+[ 188 ]
+Newcomer of the Year
+Anders Dreyer ( San Diego FC )
+[ 189 ]
+Comeback Player of the Year
+Nick Hagglund ( FC Cincinnati )
+[ 190 ]
+Golden Boot
+Lionel Messi ( Inter Miami CF )
+[ 191 ]
+Audi Goals Drive Progress Impact Award
+Diego Luna ( Real Salt Lake )
+[ 192 ]
+Referee of the Year
+Drew Fischer
+[ 193 ]
+Assistant Referee of the Year
+Cory Richardson
+[ 193 ]
+Goal of the Year
+Son Heung-min ( Los Angeles FC )
+[ 194 ]
+Save of the Year
+Roman Celentano ( FC Cincinnati )
+[ 195 ]
+MLS Best XI
+[ edit ]
+Goalkeeper
+Defenders
+Midfielders
+Forwards
+Ref.
+Dayne St. Clair , Minnesota
+Tristan Blackmon , Vancouver
+Alex Freeman , Orlando
+Jakob Glesnes , Philadelphia
+Kai Wagner , Philadelphia
+Sebastian Berhalter , Vancouver
+Evander , Cincinnati
+Cristian Roldan , Seattle
+Denis Bouanga , LAFC
+Anders Dreyer , San Diego
+Lionel Messi , Miami
+[ 196 ]
+Broadcasting
+[ edit ]
+Apple TV , through MLS Season Pass , held the rights to stream every MLS match around the world via a 10-year deal that started in 2023. [ 197 ] [ 198 ] This was the first season MLS Season Pass aired Sunday Night Soccer , a primetime Sunday game each week that was available to all Apple TV+ subscribers. [ 199 ]
+United States
+[ edit ]
+This was the third-year of a four-year deal with Fox Sports for the exclusive rights to MLS games on linear television in the United States. Fox Sports aired 34 matches during the 2025 season, with 19 on Fox Sports 1 and 15 on Fox in English. All 34 matches aired in Spanish on Fox Deportes . [ 200 ]
+This was the first year DirecTV and Xfinity held the right to distribute MLS Season Pass to residential customers via their cable services. [ 201 ] [ 199 ]
+For the first time, several teams announced agreements with local over-the-air stations , to rebroadcast matches at least 48 hours after their conclusion. FC Dallas announced an agreement with KDFI-TV , Charlotte FC with WAXN-TV , FC Cincinnati with WXIX-TV and Rock Entertainment Sports Network , LAFC with KCOP-TV , St. Louis City SC with KMOV-TV (the Matrix Midwest network) and the Seattle Sounders with KCPQ-TV . These were the first such agreements since 2022. [ 202 ] [ 203 ] [ 204 ] [ 205 ] [ 206 ] [ 207 ]
+Canada
+[ edit ]
+This was the third-year of a four-year deal with TSN and RDS for the exclusive rights to MLS games on linear television in Canada. TSN and RDS aired 41 matches during the 2025 season. [ 208 ]
+International
+[ edit ]
+Internationally, since Apple TV acquired the rights to Major League Soccer in 2023, MLS Season Pass exclusively aired the MLS outside the United States and Canada. However, in 2025, Major League Soccer announced agreements with SBS in Australia, [ 209 ] Dubai TV in the Middle East, TV3 in Spain, Sportdigital in Germany, and SkyK in South Korea to air Sunday Night Soccer matches. [ 210 ] [ 211 ]
+See also
+[ edit ]
+2025 U.S. Open Cup
+2025 Leagues Cup
+2025 Canadian Championship
+2025 CONCACAF Champions Cup
+2025 FIFA Club World Cup
+References
+[ edit ]
+↑ Reynolds, Tim (December 9, 2025). "It's Messi. Repeat, Messi. The Inter Miami star is MLS' first back-to-back MVP winner" . Associated Press . Retrieved December 9, 2025 .
+1 2 "ATLvsMTL 02-22-2025 – MLS Match Recap" . Major League Soccer. February 22, 2025 . Retrieved February 23, 2025 .
+↑ "DCvsNE 05-28-2025 – MLS Match Recap" . Major League Soccer. May 28, 2025 . Retrieved May 28, 2025 .
+↑ Staff (September 17, 2024). "Toyota Stadium to Undergo Multi-Million Dollar Renovation" . FC Dallas . Retrieved March 12, 2025 .
+1 2 "Major League Soccer 2025" . WorldFootball . Retrieved September 22, 2025 .
+↑ Hernandez, Cesar (May 18, 2023). "San Diego awarded 30th MLS team, will debut in 2025" . Archived from the original on May 25, 2023 . Retrieved November 9, 2023 .
+↑ Zeigler, Mark (October 21, 2024). "San Diego FC learns its first two Major League Soccer opponents" . MSN . Retrieved October 21, 2024 .
+1 2 Vertelney, Seth (December 19, 2024). "MLS releases full 2025 schedule" . Pro Soccer Wire. USA Today . Retrieved December 24, 2024 .
+↑ Zeigler, Mark (December 19, 2024). "San Diego FC learns its full schedule, signs a midfielder" . The San Diego Union-Tribune . Retrieved December 19, 2024 .
+↑ Noor Haq, Sana (June 15, 2022). "MLS and Apple announce 10-year streaming deal" . CNN . Archived from the original on October 31, 2022 . Retrieved October 30, 2022 .
+↑ Kaufman, Michelle (October 20, 2024). "Inter Miami earns spot in 2025 Club World Cup, will play opener at Hard Rock Stadium" . Miami Herald . Retrieved October 24, 2024 .
+↑ "Schedule Updates Announced for Leagues Cup 2025" . Leagues Cup . December 16, 2024 . Retrieved December 16, 2024 .
+↑ "Philadelphia Union win 2025 Supporters' Shield" . Major League Soccer. October 4, 2025 . Retrieved October 4, 2025 .
+↑ Sigal, Jonathan (December 6, 2025). "CHAMPIONS! Inter Miami & Lionel Messi win MLS Cup over Vancouver Whitecaps" . Major League Soccer . Retrieved December 6, 2025 .
+↑ Spanberg, Erik (February 11, 2022). "Charlotte FC moving closer to sellout for season opener at Bank of America Stadium" . Charlotte Business Journal . Retrieved May 10, 2024 .
+↑ McCaskill, Steve (November 17, 2022). "MLS clubs to promote Apple TV season pass with sleeve sponsorship" . SportsPro . Archived from the original on November 17, 2022 . Retrieved November 22, 2022 .
+↑ "Chicago Fire FC Kicks Off Multi-Year Partnership with Carvana as Official Online Auto Retailer and Front of Kit Sponsor – Chicago Fire FC" . Chicago Fire FC. December 12, 2023. Archived from the original on December 13, 2023 . Retrieved December 13, 2023 .
+↑ "Columbus Crew announce official partnership with DHL Supply Chain, who will be featured on kit sleeve" . Columbus Crew. February 5, 2025 . Retrieved February 5, 2025 .
+↑ "Portland Timbers unveil Tillamook as jersey partner" . Portland Timbers. May 12, 2024 . Retrieved May 14, 2024 .
+↑ Finley, Ryan (July 18, 2024). "San Diego FC announces jersey sponsor ahead of first Major League Soccer season" . San Diego Union-Tribune . Retrieved October 23, 2024 .
+↑ "Austin FC Announces Nico Estévez as Club's New Head Coach" . Austin FC Communications . Austin FC. October 25, 2024 . Retrieved October 25, 2024 .
+↑ "Philadelphia Union part ways with Jim Curtin" . Major League Soccer. November 7, 2024 . Retrieved November 7, 2024 .
+↑ "Bradley Carnell Named Philadelphia Union Head Coach" . Philadelphia Union Communications . Philadelphia Union. January 2, 2025 . Retrieved January 2, 2025 .
+↑ "San Jose Earthquakes name Bruce Arena head coach & sporting director" . Major League Soccer. November 7, 2024 . Retrieved November 7, 2024 .
+↑ "FC Dallas name Eric Quill head coach" . Major League Soccer. November 20, 2024 . Retrieved November 20, 2024 .
+↑ "Head Coach Gerardo 'Tata' Martino Departs Inter Miami CF Due to Personal Reasons" . Inter Miami CF. November 22, 2024 . Retrieved November 25, 2024 .
+↑ "Inter Miami CF Appoints Javier Mascherano as Head Coach" . Inter Miami CF. November 26, 2024 . Retrieved November 27, 2024 .
+↑ "Grazie Mille Vanni Sartini" . Vancouver Whitecaps FC. November 25, 2024 . Retrieved November 25, 2024 .
+↑ "Whitecaps FC appoint Jesper Sørensen as new head coach" . Vancouver Whitecaps FC. January 14, 2024 . Retrieved January 15, 2024 .
+↑ "Garth Lagerwey: 'Head coaching finalists are proven winners' " . Atlanta United FC. November 26, 2024 . Retrieved December 5, 2024 .
+↑ "Atlanta United name Ronny Deila head coach" . Major League Soccer. December 20, 2024 . Retrieved December 20, 2024 .
+↑ "New York City FC part ways with Nick Cushing" . Major League Soccer. November 26, 2024 . Retrieved November 26, 2024 .
+↑ "New York City FC name Pascal Jansen head coach" . Major League Soccer. January 6, 2025 . Retrieved January 6, 2025 .
+↑ "Olof Mellberg Named Head Coach of St. Louis City SC" . St. Louis City SC. November 26, 2024 . Retrieved November 27, 2024 .
+↑ "Toronto FC announces resignation of Head Coach John Herdman" . Toronto FC. November 29, 2024 . Retrieved November 29, 2024 .
+↑ "Toronto FC appoint Robin Fraser as Head Coach" . Toronto FC. January 10, 2025 . Retrieved January 10, 2025 .
+↑ "CF Montréal part ways with Laurent Courtois" . Major League Soccer. March 24, 2025 . Retrieved March 24, 2025 .
+↑ "Sporting KC mutually agrees to part ways with Manager Peter Vermes" . Sporting Kansas City. March 31, 2025 . Retrieved March 31, 2025 .
+↑ Sigal, Jonathan (May 27, 2025). "St. Louis CITY part ways with Olof Mellberg" . Major League Soccer . Retrieved May 29, 2025 .
+↑ Umaña, José (July 10, 2025). "DC United fires head coach Troy Lesesne after less than 2 seasons" . WTOP News . Retrieved July 10, 2025 .
+↑ Goff, Stephen (July 16, 2025). "D.C. United officially names René Weiler its new coach" . The Washington Post . Retrieved July 19, 2025 .
+↑ "DC United name René Weiler head coach" . Major League Soccer. July 16, 2025 . Retrieved July 19, 2025 .
+↑ "New England Revolution part ways with Caleb Porter" . Major League Soccer. September 15, 2025 . Retrieved September 16, 2025 .
+↑ "MLS Announces 2025 Regular Season Schedule" (Press release). Major League Soccer. December 19, 2024 . Retrieved August 9, 2025 .
+↑ Roberson, Doug (August 7, 2025). "MLS announces playoff schedule" . Atlanta Journal-Constitution . Retrieved August 9, 2025 .
+↑ "Major League Soccer Announces Audi 2025 MLS Cup Playoffs Schedule" (Press release). Major League Soccer. August 7, 2025 . Retrieved August 9, 2025 .
+↑ "FC Dallas Season Ticket Member FAQ" . FC Dallas . Retrieved April 27, 2026 .
+↑ "Chicago Fire set attendance record as Inter Miami visit Soldier Field" . Major League Soccer. April 13, 2025 . Retrieved April 22, 2025 .
+↑ "Columbus Crew set attendance record against Inter Miami" . Major League Soccer. April 19, 2025 . Retrieved April 22, 2025 .
+↑ "CLTvsATL 03-01-2025 – MLS Match Recap" . Major League Soccer. March 1, 2025 . Retrieved March 1, 2025 .
+↑ "ATLvsMIA 03-16-2025 – MLS Match Recap" . Major League Soccer. March 16, 2025 . Retrieved March 17, 2025 .
+↑ "ATLvsRBNY 03-08-2025 – MLS Match Recap" . Major League Soccer. March 8, 2025 . Retrieved March 9, 2025 .
+↑ "ATLvsNYC 03-29-2025 – MLS Match Recap" . Major League Soccer. March 29, 2025 . Retrieved March 30, 2025 .
+↑ "ATLvsDAL 04-05-2025 – MLS Match Recap" . Major League Soccer. April 5, 2025 . Retrieved April 7, 2025 .
+↑ "ATLvsNSH 05-03-2025 – MLS Match Recap" . Major League Soccer. May 3, 2025 . Retrieved May 5, 2025 .
+↑ "ATLvsNE 04-12-2025 – MLS Match Recap" . Major League Soccer. April 12, 2025 . Retrieved April 13, 2025 .
+↑ "VANvsLAFC 11-22-2025 – MLS Match Recap" . Major League Soccer. November 22, 2025 . Retrieved November 23, 2025 .
+↑ "CLTvsNYC 11-07-2025 – MLS Match Recap" . Major League Soccer. November 7, 2025 . Retrieved November 7, 2025 .
+↑ "CLTvsNYC 10-28-2025 – MLS Match Recap" . Major League Soccer. October 28, 2025 . Retrieved October 29, 2025 .
+↑ "SDvsVAN 11-29-2025 – MLS Match Recap" . Major League Soccer. November 29, 2025 . Retrieved November 30, 2025 .
+↑ "SDvsMIN 11-24-2025 – MLS Match Recap" . Major League Soccer. November 24, 2025 . Retrieved November 25, 2025 .
+↑ "SDvsPOR 11-09-2025 – MLS Match Recap" . Major League Soccer. November 9, 2025 . Retrieved November 10, 2025 .
+↑ "SDvsPOR 10-26-2025 – MLS Match Recap" . Major League Soccer. October 26, 2025 . Retrieved October 27, 2025 .
+↑ "VANvsDAL 10-26-2025 – MLS Match Recap" . Major League Soccer. October 26, 2025 . Retrieved October 27, 2025 .
+↑ "NSHvsMIA 11-01-2025 – MLS Match Recap" . Major League Soccer. November 1, 2025 . Retrieved November 3, 2025 .
+↑ "SEAvsMIN 11-03-2025 – MLS Match Recap" . Major League Soccer. November 3, 2025 . Retrieved November 4, 2025 .
+↑ "Stats" . MLSsoccer.com . Retrieved August 17, 2025 .
+↑ "MLS Player Stats – Goals" . Major League Soccer . Retrieved May 14, 2025 .
+↑ "MLS Player Stats – Assists" . Major League Soccer . Retrieved May 14, 2025 .
+↑ "MLS Player Stats – Clean Sheets" . Major League Soccer . Retrieved May 14, 2025 .
+↑ Ruderman, Justin (February 24, 2025). "Team of the Matchday: Who shined brightest on MLS is Back weekend?" . Major League Soccer . Retrieved February 25, 2025 .
+↑ "San Diego FC: Anders Dreyer named Player of the Matchday" . Major League Soccer. February 24, 2025 . Retrieved February 25, 2025 .
+↑ Ruderman, Justin (March 3, 2025). "Team of the Matchday: Luis Suárez, Emil Forsberg answer the call" . Major League Soccer . Retrieved March 4, 2025 .
+↑ "Philadelphia Union: Tai Baribo named Player of the Matchday" . Major League Soccer. March 3, 2025 . Retrieved March 4, 2025 .
+↑ Ruderman, Justin (March 10, 2025). "Team of the Matchday: Inter Miami, St. Louis City close Matchday 3 with a bang" . Major League Soccer . Retrieved March 11, 2025 .
+↑ "St. Louis City: Roman Bürki named Player of the Matchday" . Major League Soccer. March 10, 2025 . Retrieved March 11, 2025 .
+↑ Ruderman, Justin (March 17, 2025). "Team of the Matchday: Messi, Luna make their mark in Matchday 4" . Major League Soccer . Retrieved March 18, 2025 .
+↑ "Minnesota United: Tani Oluwaseyi named Player of the Matchday" . Major League Soccer. March 17, 2025 . Retrieved March 18, 2025 .
+↑ Ruderman, Justin (March 24, 2025). "Team of the Matchday: Chicago Fire, Orlando City turn heads in Matchday 5" . Major League Soccer . Retrieved March 24, 2025 .
+↑ "Charlotte FC: Pep Biel named Player of the Matchday" . Major League Soccer. March 24, 2025 . Retrieved March 24, 2025 .
+↑ Ruderman, Justin (March 31, 2025). "Team of the Matchday: Atlanta's comeback, San Diego's history highlight Matchday 6" . Major League Soccer . Retrieved April 1, 2025 .
+↑ "Colorado Rapids: Djordje Mihailovic named Player of the Matchday" . Major League Soccer. March 31, 2025 . Retrieved April 1, 2025 .
+↑ Ruderman, Justin (April 7, 2025). "Team of the Matchday: Sporting KC begin new era, Josef climbs record books" . Major League Soccer . Retrieved April 8, 2025 .
+↑ "San Jose Earthquakes: Josef Martínez named Player of the Matchday" . Major League Soccer. April 7, 2025 . Retrieved April 8, 2025 .
+↑ Ruderman, Justin (April 14, 2025). "Team of the Matchday: Vancouver run rampant, New England rebound" . Major League Soccer . Retrieved April 15, 2025 .
+↑ "Vancouver Whitecaps FC: Brian White named Player of the Matchday" . Major League Soccer. April 14, 2025 . Retrieved April 15, 2025 .
+↑ Ruderman, Justin (April 21, 2025). "Team of the Matchday: Inter Miami remain unbeaten, Charlotte make a statement" . Major League Soccer . Retrieved April 22, 2025 .
+↑ "Sporting Kansas City: Dániel Sallói named Player of the Matchday" . Major League Soccer. April 21, 2025 . Retrieved April 22, 2025 .
+↑ Ruderman, Justin (April 28, 2025). "Team of the Matchday: Nashville score a touchdown, Cincinnati surge ahead" . Major League Soccer . Retrieved April 29, 2025 .
+↑ "Nashville SC: Sam Surridge named Player of the Matchday" . Major League Soccer. April 28, 2025 . Retrieved April 29, 2025 .
+↑ Ruderman, Justin (May 5, 2025). "Team of the Matchday: Columbus Crew turn heads, San Diego FC rebound" . Major League Soccer . Retrieved May 5, 2025 .
+↑ "San Diego FC: Chucky Lozano named Player of the Matchday" . Major League Soccer. May 5, 2025 . Retrieved May 5, 2025 .
+↑ Ruderman, Justin (May 12, 2025). "Team of the Matchday: Forsberg, Ojeda make history on Matchday 12" . Major League Soccer . Retrieved May 13, 2025 .
+↑ "New York Red Bulls: Emil Forsberg named Player of the Matchday" . Major League Soccer. May 12, 2025 . Retrieved May 13, 2025 .
+↑ Ruderman, Justin (May 15, 2025). "Team of the Matchday: Baribo takes Golden Boot lead, Ojeda stays red-hot" . Major League Soccer . Retrieved May 16, 2025 .
+↑ "Philadelphia Union: Tai Baribo named Player of the Matchday" . Major League Soccer. May 15, 2025 . Retrieved May 16, 2025 .
+↑ Ruderman, Justin (May 19, 2025). "Team of the Matchday: Toronto dominate Montréal, Orlando shut down Miami" . Major League Soccer . Retrieved May 23, 2025 .
+↑ "LA Galaxy: Marco Reus named Player of the Matchday" . Major League Soccer. May 19, 2025 . Retrieved May 23, 2025 .
+↑ Ruderman, Justin (May 26, 2025). "Team of the Matchday: Messi revives Miami, White rescues Vancouver" . Major League Soccer . Retrieved May 30, 2025 .
+↑ "Charlotte FC: Patrick Agyemang named Player of the Matchday" . Major League Soccer. May 27, 2025 . Retrieved May 30, 2025 .
+↑ Ruderman, Justin (May 29, 2025). "Team of the Matchday: Atlanta United & Philadelphia Union boosted by late-game drama" . Major League Soccer . Retrieved May 31, 2025 .
+↑ "Inter Miami: Lionel Messi named Player of the Matchday" . Major League Soccer. May 29, 2025 . Retrieved May 31, 2025 .
+↑ Ruderman, Justin (June 2, 2025). "Team of the Matchday: Tani carries Minnesota, Joveljić sparks Sporting KC" . Major League Soccer . Retrieved June 3, 2025 .
+↑ "Inter Miami: Lionel Messi named Player of the Matchday" . Major League Soccer. June 2, 2025 . Retrieved June 3, 2025 .
+↑ "Chicago Fire FC: Tom Barlow named Player of the Matchday" . Major League Soccer. June 9, 2025 . Retrieved July 19, 2025 .
+↑ Ruderman, Justin (June 16, 2025). "Team of the Matchday: San Diego stars key big win at Minnesota United" . Major League Soccer . Retrieved July 18, 2025 .
+↑ "St. Louis CITY: João Klauss named Player of the Matchday" . Major League Soccer. June 16, 2025 . Retrieved July 18, 2025 .
+↑ Ruderman, Justin (June 26, 2025). "Team of the Matchday: MLS All-Stars show out on Matchday 20" . Major League Soccer . Retrieved July 18, 2025 .
+↑ "San Diego FC: Milan Iloski named Player of the Matchday" . Major League Soccer. June 26, 2025 . Retrieved July 18, 2025 .
+↑ Ruderman, Justin (June 30, 2025). "Team of the Matchday: MVP favorites shine bright in Matchday 21" . Major League Soccer . Retrieved July 18, 2025 .
+↑ "FC Cincinnati: Evander named Player of the Matchday" . Major League Soccer. June 30, 2025 . Retrieved July 18, 2025 .
+↑ Ruderman, Justin (July 7, 2025). "Team of the Matchday: Houston Dynamo stars pilot thrilling win over San Diego" . Major League Soccer . Retrieved July 18, 2025 .
+↑ "Inter Miami: Lionel Messi named Player of the Matchday" . Major League Soccer. July 7, 2025 . Retrieved July 18, 2025 .
+↑ Ruderman, Justin (July 14, 2025). "Team of the Matchday: Dreyer, Messi keep MVP pace in Matchday 24" . Major League Soccer . Retrieved July 18, 2025 .
+↑ "Inter Miami: Lionel Messi named Player of the Matchday" . Major League Soccer. July 14, 2025 . Retrieved July 18, 2025 .
+↑ Ruderman, Justin (July 17, 2025). "Team of the Matchday: FC Cincinnati, Nashville SC produce statement wins" . Major League Soccer . Retrieved July 18, 2025 .
+↑ "FC Cincinnati: Evander named Player of the Matchday" . Major League Soccer. July 17, 2025 . Retrieved July 18, 2025 .
+↑ Ruderman, Justin (July 20, 2025). "Team of the Matchday: Inter Miami turn on afterburners, El Tráfico stars deliver" . Major League Soccer . Retrieved July 21, 2025 .
+↑ "Inter Miami: Lionel Messi named Player of the Matchday" . Major League Soccer. July 20, 2025 . Retrieved July 21, 2025 .
+↑ Ruderman, Justin (July 28, 2025). "Team of the Matchday: Orlando City stars shine, Alonso Martínez makes waves" . Major League Soccer . Retrieved July 28, 2025 .
+↑ "New York City FC: Alonso Martínez named Player of the Matchday" . Major League Soccer . Retrieved July 28, 2025 .
+↑ Ruderman, Justin (August 11, 2025). "Team of the Matchday: Orlando secure rivalry sweep, San Diego rewrite record books" . Major League Soccer . Retrieved August 11, 2025 .
+↑ "Orlando City: Luis Muriel named Player of the Matchday" . Major League Soccer . Retrieved August 11, 2025 .
+↑ Ruderman, Justin (August 18, 2025). "Team of the Matchday: Son spurs on LAFC, Miami bounce back" . Major League Soccer . Retrieved August 18, 2025 .
+↑ "Colorado Rapids: Rafael Navarro named Player of the Matchday" . Major League Soccer. August 18, 2025 . Retrieved August 18, 2025 .
+↑ Ruderman, Justin (August 25, 2025). "Team of the Matchday: Mukhtar & Surridge stun Orlando, Son stays hot" . Major League Soccer . Retrieved August 25, 2025 .
+↑ "Seattle Sounders: Danny Musovski named Player of the Matchday" . Major League Soccer. August 25, 2025 . Retrieved August 25, 2025 .
+↑ Ruderman, Justin (September 2, 2025). "Team of the Matchday: Philly on a roll, San Diego make history" . Major League Soccer . Retrieved September 2, 2025 .
+↑ "San Diego FC: Anders Dreyer named Player of the Matchday" . Major League Soccer. September 2, 2025 . Retrieved September 2, 2025 .
+↑ "FC Dallas: Jacob Jackson named Player of the Matchday" . Major League Soccer. September 8, 2025 . Retrieved September 8, 2025 .
+↑ Ruderman, Justin (September 15, 2025). "Team of the Matchday: Four hat tricks highlight historic MLS weekend" . Major League Soccer . Retrieved September 15, 2025 .
+↑ "Vancouver Whitecaps: Thomas Müller named Player of the Matchday" . Major League Soccer. September 15, 2025 . Retrieved September 15, 2025 .
+↑ "LAFC: Son Heung-Min named Player of the Matchday" . Major League Soccer. September 18, 2025 . Retrieved September 18, 2025 .
+↑ Ruderman, Justin (September 22, 2025). "Team of the Matchday: Messi marvels, LAFC's star duo dominates" . Major League Soccer . Retrieved September 23, 2025 .
+↑ "LAFC: Denis Bouanga named Player of the Matchday" . Major League Soccer. September 22, 2025 . Retrieved September 23, 2025 .
+↑ Ruderman, Justin (September 29, 2025). "Team of the Matchday: Son shines over St. Louis, Hudson River Derby delivers drama" . Major League Soccer . Retrieved September 29, 2025 .
+↑ "LA Galaxy: Joseph Paintsil named Player of the Matchday" . Major League Soccer. September 29, 2025 . Retrieved September 30, 2025 .
+↑ Ruderman, Justin (October 6, 2025). "Team of the Matchday: Philadelphia secure Shield, San Diego keep setting records" . Major League Soccer . Retrieved October 6, 2025 .
+↑ "Vancouver Whitecaps: Sebastian Berhalter named Player of the Matchday" . Major League Soccer. October 6, 2025 . Retrieved October 7, 2025 .
+↑ Ruderman, Justin (October 20, 2025). "Team of the Matchday: Messi lifts Golden Boot, San Diego seal West" . Major League Soccer . Retrieved October 20, 2025 .
+↑ "Inter Miami: Lionel Messi named Player of the Matchday" . Major League Soccer. October 20, 2025 . Retrieved October 20, 2025 .
+↑ "Atlanta United's Edwin Mosquera wins Goal of the Matchday" . Major League Soccer. February 26, 2025 . Retrieved February 26, 2025 .
+↑ "Inter Miami's Tadeo Allende wins Goal of the Matchday" . Major League Soccer. March 5, 2025 . Retrieved March 7, 2025 .
+↑ "Inter Miami's Tadeo Allende wins Goal of the Matchday again" . Major League Soccer. March 12, 2025 . Retrieved March 13, 2025 .
+↑ "New York City FC's Alonso Martínez wins Goal of the Matchday" . Major League Soccer. March 19, 2025 . Retrieved March 19, 2025 .
+↑ "Orlando City SC's Marco Pašalić wins Goal of the Matchday" . Major League Soccer. March 26, 2025 . Retrieved March 27, 2025 .
+↑ "New England Revolution's Carles Gil wins Goal of the Matchday" . Major League Soccer. April 2, 2025 . Retrieved April 3, 2025 .
+↑ "Charlotte FC's Idan Toklomati wins Goal of the Matchday" . Major League Soccer. April 9, 2025 . Retrieved April 9, 2025 .
+↑ "LA Galaxy's Diego Fagúndez wins Goal of the Matchday" . Major League Soccer. April 16, 2025 . Retrieved April 19, 2025 .
+↑ "Philadelphia Union's Quinn Sullivan wins Goal of the Matchday" . Major League Soccer. April 23, 2025 . Retrieved April 24, 2025 .
+↑ "FC Cincinnati's Kévin Denkey wins Goal of the Matchday" . Major League Soccer. April 30, 2025 . Retrieved May 3, 2025 .
+↑ "Inter Miami CF's Lionel Messi wins Goal of the Matchday" . Major League Soccer. May 7, 2025 . Retrieved May 8, 2025 .
+↑ "Portland Timbers' Santiago Moreno wins Goal of the Matchday" . Major League Soccer. May 13, 2025 . Retrieved May 13, 2025 .
+↑ "St. Louis City SC's Célio Pompeu wins Goal of the Matchday" . Major League Soccer. May 16, 2025 . Retrieved May 16, 2025 .
+↑ "Houston Dynamo FC's Jack McGlynn wins Goal of the Matchday" . Major League Soccer. May 21, 2025 . Retrieved May 23, 2025 .
+↑ "Inter Miami CF's Lionel Messi wins Goal of the Matchday" . Major League Soccer. May 27, 2025 . Retrieved May 30, 2025 .
+↑ "Inter Miami's Lionel Messi wins Goal of the Matchday" . Major League Soccer. May 30, 2025 . Retrieved May 31, 2025 .
+↑ "Sporting Kansas City's Dejan Joveljić wins Goal of the Matchday" . Major League Soccer. June 4, 2025 . Retrieved June 4, 2025 .
+↑ "Portland Timbers' Antony wins Goal of the Matchday" . Major League Soccer. June 11, 2025 . Retrieved July 19, 2025 .
+↑ "St. Louis City SC's João Klauss wins Goal of the Matchday" . Major League Soccer. June 18, 2025 . Retrieved July 19, 2025 .
+↑ "Minnesota United's Bongi Hlongwane wins Goal of the Matchday" . Major League Soccer. June 27, 2025 . Retrieved July 24, 2025 .
+↑ "San Jose Earthquakes' Beau Leroux wins Goal of the Matchday" . Major League Soccer. July 2, 2025 . Retrieved July 24, 2025 .
+↑ "Inter Miami's Lionel Messi wins Goal of the Matchday" . Major League Soccer. July 9, 2025 . Retrieved July 2, 2025 .
+↑ "Inter Miami's Lionel Messi wins Goal of the Matchday" . Major League Soccer. July 16, 2025 . Retrieved July 24, 2025 .
+↑ "New York Red Bulls' Emil Forsberg wins Goal of the Matchday" . Major League Soccer. July 18, 2025 . Retrieved July 24, 2025 .
+↑ "Inter Miami's Jordi Alba wins Goal of the Matchday" . Major League Soccer. July 21, 2025 . Retrieved July 24, 2025 .
+↑ "Atlanta United's Alexey Miranchuk wins Goal of the Matchday" . Major League Soccer. July 30, 2025 . Retrieved July 30, 2025 .
+↑ "San Diego FC's Chucky Lozano wins Goal of the Matchday" . Major League Soccer. August 13, 2025 . Retrieved August 14, 2025 .
+↑ "Inter Miami's Lionel Messi wins Goal of the Matchday" . Major League Soccer. August 20, 2025 . Retrieved August 20, 2025 .
+↑ "LAFC's Son Heung-Min wins Goal of the Matchday" . Major League Soccer. August 27, 2025 . Retrieved August 29, 2025 .
+↑ "St. Louis CITY's Eduard Löwen wins Goal of the Matchday" . Major League Soccer. September 3, 2025 . Retrieved September 4, 2025 .
+↑ "Minnesota United's Nectarios Triantis wins Goal of the Matchday" . Major League Soccer. September 17, 2025 . Retrieved September 19, 2025 .
+↑ "Inter Miami's Lionel Messi wins Goal of the Matchday" . Major League Soccer. September 24, 2025 . Retrieved September 25, 2025 .
+↑ "Portland Timbers' Kamal Miller wins Goal of the Matchday" . Major League Soccer. October 1, 2025 . Retrieved October 2, 2025 .
+↑ "FC Cincinnati's Kévin Denkey wins Goal of the Matchday" . Major League Soccer. October 8, 2025 . Retrieved October 8, 2025 .
+↑ "Philadelphia Union's Tai Baribo named MLS Player of the Month" . Major League Soccer. April 3, 2025 . Retrieved April 3, 2025 .
+↑ "Vancouver Whitecaps FC's Brian White named MLS Player of the Month" . Major League Soccer. April 30, 2025 . Retrieved May 3, 2025 .
+↑ "Inter Miami CF's Lionel Messi named MLS Player of the Month" . Major League Soccer. June 5, 2025 . Retrieved June 5, 2025 .
+↑ "San Diego FC's Anders Dreyer named MLS Player of the Month" . Major League Soccer. July 2, 2025 . Retrieved July 8, 2025 .
+↑ "Inter Miami's Lionel Messi named Player of the Month" . Major League Soccer. July 30, 2025 . Retrieved July 30, 2025 .
+↑ "San Diego FC's Anders Dreyer named MLS Player of the Month" . Major League Soccer. September 5, 2025 . Retrieved September 18, 2025 .
+↑ "LAFC's Denis Bouanga named MLS Player of the Month" . Major League Soccer. October 3, 2025 . Retrieved October 3, 2025 .
+↑ "Inter Miami's Lionel Messi named Player of the Month" . Major League Soccer. October 21, 2025 . Retrieved October 22, 2025 .
+↑ "Inter Miami's Lionel Messi repeats as Landon Donovan MLS MVP" . Major League Soccer. December 9, 2025 . Retrieved December 9, 2025 .
+↑ "Vancouver Whitecaps FC's Tristan Blackmon named 2025 MLS Defender of the Year" . Major League Soccer. October 28, 2025 . Retrieved October 30, 2025 .
+↑ "Minnesota United FC's Dayne St. Clair named 2025 MLS Goalkeeper of the Year" . Major League Soccer. November 3, 2025 . Retrieved November 3, 2025 .
+↑ "Philadelphia Union's Bradley Carnell named 2025 Sigi Schmid MLS Coach of the Year" . Major League Soccer. November 6, 2025 . Retrieved November 6, 2025 .
+↑ "Orlando City's Alex Freeman named 2025 MLS Young Player of the Year" . Major League Soccer. October 30, 2025 . Retrieved October 30, 2025 .
+↑ "San Diego FC's Anders Dreyer named 2025 MLS Newcomer of the Year" . Major League Soccer. November 4, 2025 . Retrieved November 4, 2025 .
+↑ "FC Cincinnati's Nick Hagglund named 2025 MLS Comeback Player of the Year" . Major League Soccer. October 29, 2025 . Retrieved October 30, 2025 .
+↑ "Inter Miami's Lionel Messi wins 2025 MLS Golden Boot presented by Audi" . Major League Soccer. October 18, 2025 . Retrieved October 18, 2025 .
+↑ "Real Salt Lake Star Diego Luna Named Recipient of the 2025 Audi Goals Drive Progress Impact Award" . Major League Soccer. November 19, 2025 . Retrieved December 4, 2025 .
+1 2 "Drew Fischer Named MLS Referee of the Year, Cory Richardson Earns MLS Assistant Referee of the Year Accolades" . Major League Soccer. October 24, 2025 . Retrieved November 13, 2025 .
+↑ "LAFC's Son Heung-Min wins 2025 AT&T MLS Goal of the Year" . Major League Soccer. October 27, 2025 . Retrieved October 27, 2025 .
+↑ "FC Cincinnati's Roman Celentano wins 2025 MLS Save of the Year" . Major League Soccer. October 28, 2025 . Retrieved October 30, 2025 .
+↑ "2025 MLS Best XI" . Major League Soccer. November 5, 2025 . Retrieved November 6, 2025 .
+↑ "Apple and MLS to present all MLS matches for 10 years, beginning in 2023" . Apple Newsroom (Canada) . Retrieved June 18, 2022 .
+↑ "MLS faces race against time to build broadcast operation ahead of Apple TV deal" . The Athletic . October 27, 2022.
+1 2 Costa, Brandon (January 30, 2025). "Major League Soccer Adds Featured Sunday Night Soccer Match to Apple TV+; Expands Availability of MLS Season Pass to Xfinity, DirecTV; Centralizes Graphics Workflow" . Sports Video Group . Retrieved February 14, 2025 .
+↑ "MLS Announces 2025 Regular Season Schedule" . Major League Soccer . December 19, 2024 . Retrieved April 12, 2025 .
+↑ "MLS Season Pass Now Available to DirecTV Residential Customers for the First Time" . DirecTV . January 29, 2025 . Retrieved January 30, 2025 .
+↑ "FC Dallas Matches to Re-Air in the Dallas-Ft. Worth Market on KDFI More 27" . Sports Video Group . April 15, 2025 . Retrieved April 15, 2025 .
+↑ "Charlotte FC and TV64 collaborate to bring MLS games to free, over-the-air TV" . WSOC-TV . March 14, 2025 . Retrieved March 15, 2025 .
+↑ "FC Cincinnati games to re-air locally on FOX 19 and Rock Entertainment Sports Network" . FC Cincinnati. May 30, 2025 . Retrieved September 13, 2025 .
+↑ "LAFC and Fox 11 Launch "LAFC Encore" to Re-Air Matches" . LAFC. April 28, 2025 . Retrieved September 13, 2025 .
+↑ "St. Louis CITY SC and First Alert 4 Expand Media Partnership to Bring Fans More CITY Soccer" . St. Louis CITY SC. May 9, 2025 . Retrieved September 13, 2025 .
+↑ Oshan, Jeremiah (July 1, 2025). "Sounders games will re-air on Fox13+ starting tonight" . Sounder at Heart . Retrieved September 13, 2025 .
+↑ "MLS Announces TSN and RDS Broadcast Schedules for the 2025 Regular Season" . Major League Soccer . February 5, 2025 . Retrieved April 12, 2025 .
+↑ Sim, Josh (March 11, 2025). "MLS signs first overseas TV deal since partnering with Apple" . SportsPro . Retrieved March 28, 2025 .
+↑ Gorostieta, Diego (March 28, 2025). "MLS busca alcanzar nuevos rincones con su Sunday Night Soccer" . Diario AS . Retrieved March 28, 2025 .
+↑ Arrieta, Facundo Trotta (March 28, 2025). "MLS expands Sunday Night Soccer broadcasts to global markets" . Daily Sports . Retrieved March 28, 2025 .
+External links
+[ edit ]
+Official website
+v
+t
+e
+2025 MLS season
+Expansion draft
+SuperDraft
+All-Star Game
+Playoffs
+MLS Cup
+Transfers
+Eastern
+Atlanta United FC
+Charlotte FC
+Chicago Fire
+FC Cincinnati
+Columbus Crew
+D.C. United
+Inter Miami CF
+CF Montréal
+Nashville SC
+New England Revolution
+New York City FC
+New York Red Bulls
+Orlando City SC
+Philadelphia Union
+Toronto FC
+Western
+Austin FC
+Colorado Rapids
+FC Dallas
+Houston Dynamo FC
+LA Galaxy
+Los Angeles FC
+Minnesota United FC
+Portland Timbers
+Real Salt Lake
+San Diego FC
+San Jose Earthquakes
+Seattle Sounders FC
+St. Louis City SC
+Sporting Kansas City
+Vancouver Whitecaps FC
+v
+t
+e
+Major League Soccer seasons
+1990s
+1996
+1997
+1998
+1999
+2000s
+2000
+2001
+2002
+2003
+2004
+2005
+2006
+2007
+2008
+2009
+2010s
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020s
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+2027
+2027–28
+Related articles
+v
+t
+e
+2025 in American soccer
+« 2024
+2026 »
+National teams
+Men
+Senior
+2024–25 CONCACAF Nations League A
+2025 CONCACAF Gold Cup
+U-20
+2025 FIFA U-20 World Cup
+U-17
+2025 FIFA U-17 World Cup ( Qualification )
+Women
+Senior
+2025 SheBelieves Cup
+U-20
+U-17
+2025 CONCACAF U-17 Women's World Cup qualification – Final round
+League competitions
+Level 1
+Major League Soccer ( All-Star Game , Playoffs , MLS Cup )
+National Women's Soccer League ( Challenge Cup , Playoffs , Championship )
+USL Super League ( Final )
+Level 2
+USL Championship ( Playoffs )
+Level 3
+MLS Next Pro ( Playoffs )
+USL League One ( Playoffs )
+Amateur
+NPSL
+USL League Two
+NISA Nation
+UPSL
+TLC
+Collegiate
+NCAA
+Division I
+Division II
+Division III
+NAIA
+NJCAA
+Cup competitions
+Domestic
+U.S. Open Cup ( Qualification , Final )
+USL Cup
+National Amateur Cup
+NISA Independent Cup
+NISA Pro Cup
+Steinbrecher Cup
+International
+FIFA Club World Cup
+CONCACAF Champions Cup
+CONCACAF W Champions Cup
+Final
+Campeones Cup
+Leagues Cup
+league phase
+knockout stage
+final
+Youth competitions
+Under-23
+NCAA College Cup ( Final )
+Under-18
+MLS Next
+2024–25
+2025–26
+v
+t
+e
+2025 in Canadian soccer
+« 2024
+2026 »
+Men's leagues
+Canadian Premier League
+draft
+transfers
+final
+Major League Soccer
+transfers
+playoffs
+final
+League1 Canada
+Alberta
+British Columbia
+Ontario
+Québec
+MLS Next Pro
+Canadian Soccer League
+Women's leagues
+Northern Super League
+League1 Canada
+Alberta
+British Columbia
+Ontario
+Québec
+Other
+Canadian Championship
+final
+U Sports
+Men's
+Women's
+Challenge Trophy
+Jubilee Trophy
+International
+Clubs
+Men
+CONCACAF Champions Cup
+final
+Leagues Cup
+league phase
+Women
+CONCACAF W Champions Cup
+National teams
+Men
+CONCACAF Nations League
+Finals
+CONCACAF Gold Cup
+Group B
+knockout stage
+Canadian Shield
+Women
+Pinatar Cup
+v
+t
+e
+2024 – 25 in North and Central America and Caribbean association football ( CONCACAF )
+« 2023–24
+2025–26 »
+Domestic leagues
+Anguilla '24 '25
+Antigua and Barbuda
+Aruba
+Bahamas
+Barbados '24 '25
+Belize
+Bermuda
+Bonaire
+British Virgin Islands
+Canada '24 '25
+Cayman Islands
+Costa Rica
+Cuba '24 '25
+Curaçao
+Dominica '24 '25
+Dominican Republic '24 '25
+El Salvador
+French Guiana
+Greenland '24 '25
+Grenada '24 '25
+Guadeloupe
+Guatemala
+Guyana
+Haiti
+Honduras
+Jamaica
+Martinique
+Mexico
+Montserrat
+Nicaragua
+Panama '24 '25
+Puerto Rico
+Saint-Barthelemy '24 '25
+Saint Kitts and Nevis
+Saint Lucia '24 '25
+Saint-Martin
+Saint Pierre and Miquelon '24 '25
+Saint Vincent and the Grenadines
+Sint Maarten
+Suriname '24 '25
+Trinidad and Tobago '24 '25
+Turks and Caicos Islands
+United States '24 '25
+U.S. Virgin Islands
+Domestic cups
+Anguilla '24 '25
+Aruba
+Barbados '24 '25
+Bermuda
+British Virgin Islands
+Canada '24 '25
+Cayman Islands
+Costa Rica
+El Salvador
+French Guiana
+Guadeloupe '24 '25
+Guatemala
+Honduras '24
+Martinique '24 '25
+Nicaragua
+Panama
+Puerto Rico '24 '25
+Saint Kitts and Nevis
+Saint Lucia '24 '25
+Suriname
+Trinidad and Tobago
+United States '24 '25
+League cups
+Mexico–United States : Leagues Cup
+group stage
+knockout stage
+Final
+Super cups
+Campeones
+CONCACAF competitions
+National
+Nations League
+Finals
+Final
+Gold Cup
+qualification
+Club
+Caribbean Cup
+Caribbean Club Shield
+Central American Cup
+Champions Cup
+Final
+International competitions
+Club
+FIFA Intercontinental Cup
+FIFA Club World Cup
+v
+t
+e
+2025 – 26 in North and Central America and Caribbean association football ( CONCACAF )
+« 2024–25
+2026–27 »
+Domestic leagues
+Anguilla '25 '26
+Antigua and Barbuda
+Aruba '25 '26
+Bahamas
+Barbados '25 '26
+Belize
+Bermuda
+Bonaire
+British Virgin Islands
+Canada '25 '26
+Cayman Islands
+Costa Rica
+Cuba '25 '26
+Curaçao
+Dominica '25 '26
+Dominican Republic '25 '26
+El Salvador
+French Guiana
+Greenland '25 '26
+Grenada '25 '26
+Guadeloupe
+Guatemala
+Guyana
+Haiti
+Honduras
+Jamaica
+Martinique
+Mexico
+Montserrat
+Nicaragua
+Panama '25 '26
+Puerto Rico
+Saint-Barthelemy '25 '26
+Saint Kitts and Nevis
+Saint Lucia '25 '26
+Saint-Martin
+Saint Pierre and Miquelon '25 '26
+Saint Vincent and the Grenadines
+Sint Maarten
+Suriname
+Trinidad and Tobago
+Turks and Caicos Islands
+United States '25 '26
+U.S. Virgin Islands '25 '26
+Domestic cups
+Anguilla '25 '26
+Aruba
+Barbados '25 '26
+Bermuda
+British Virgin Islands
+Canada '25 '26
+Cayman Islands
+Costa Rica
+Dominican Republic '25 '26
+El Salvador
+French Guiana
+Guadeloupe '25 '26
+Guatemala
+Honduras '25 '26
+Martinique '25 '26
+Nicaragua
+Panama
+Puerto Rico '25 '26
+Saint Kitts and Nevis
+Saint Lucia '25 '26
+Suriname
+Trinidad and Tobago
+United States '25 '26
+League cups
+Mexico–United States : Leagues Cup
+league phase
+knockout stage
+Final
+Super cups
+Campeones '25 '26
+CONCACAF competitions
+National
+2026 FIFA World Cup qualification
+CONCACAF third round
+CONCACAF Series
+Club
+Caribbean Cup '25 '26
+Caribbean Club Shield '25 '26
+Central American Cup '25 '26
+Champions Cup
+Final
+International competitions
+Club
+FIFA Intercontinental Cup
+v
+t
+e
+United States Soccer – Division 1 seasons
+Men's
+American League of Professional Football
+1894–95
+American Soccer League
+1921–22
+1922–23
+1923–24
+1924–25
+1925–26
+1926–27
+1927–28
+1928–29
+1929
+1930
+1931
+1932
+1932–33
+United Soccer Association
+1967
+National Professional Soccer League
+1967
+North American Soccer League
+1968
+1969
+1970
+1971
+1972
+1973
+1974
+1975
+1976
+1977
+1978
+1979
+1980
+1981
+1982
+1983
+1984
+Major League Soccer
+1996
+1997
+1998
+1999
+2000
+2001
+2002
+2003
+2004
+2005
+2006
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+2027
+2027–28
+Women's
+Women's United Soccer Association
+2001
+2002
+2003
+Women's Professional Soccer
+2009
+2010
+2011
+National Women's Soccer League
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+USL Super League
+2024–25
+2025–26
+2026
+v
+t
+e
+Canadian Soccer – Division 1 seasons ( CSA & USSF )
+Canadian Professional Soccer League
+1983
+Canadian Soccer League
+1987
+1988
+1989
+1990
+1991
+1992
+Canadian Premier League
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+USSF (U.S. based leagues)
+United Soccer Association
+1967
+National Professional Soccer League
+1967
+North American Soccer League
+1968
+1971
+1972
+1973
+1974
+1975
+1976
+1977
+1978
+1979
+1980
+1981
+1982
+1983
+1984
+Major League Soccer
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+2027
+2027–28
+Note: there is no clear information from CSA about tier of U.S. based leagues which have Canadian clubs. In terms of historical information, they have been deployed as tier 1 league as USSF have done.
+Retrieved from " https://en.wikipedia.org/w/index.php?title=2025_Major_League_Soccer_season&oldid=1380582535 "
+Categories : 2025 Major League Soccer season
+Major League Soccer seasons
+2025 in American men's soccer leagues
+2025 in men's top-tier association football leagues
+Hidden categories: Articles with short description
+Short description matches Wikidata
+Use mdy dates from October 2024
+Use American English from October 2024
+All Wikipedia articles written in American English
+Short description is different from Wikidata
+Articles with hCards
+Use mdy dates from March 2025
+Use mdy dates from September 2024
+Official website not in Wikidata
+This page was last edited on 16 October 2026, at 16:57 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+2025 Major League Soccer season
+9 languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"2025 Major League Soccer season","url":"https:\/\/en.wikipedia.org\/wiki\/2025_Major_League_Soccer_season","sameAs":"http:\/\/www.wikidata.org\/entity\/Q130686780","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q130686780","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2023-11-13T15:34:57Z","dateModified":"2026-10-16T16:57:34Z","headline":"30th season of Major League Soccer"}

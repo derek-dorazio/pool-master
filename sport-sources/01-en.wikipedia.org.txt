@@ -1,0 +1,1231 @@
+Source: https://en.wikipedia.org/wiki/2025_MLS_Cup_playoffs
+Final URL: https://en.wikipedia.org/wiki/2025_MLS_Cup_playoffs
+HTTP 200
+Fetched: 2026-10-21T04:13:26.343Z
+
+2025 MLS Cup playoffs - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Format
+2
+Qualified teams
+3
+Conference standings
+4
+Bracket
+5
+Wild card round
+Toggle Wild card round subsection
+5.1
+Eastern Conference
+5.2
+Western Conference
+6
+Round one
+Toggle Round one subsection
+6.1
+Eastern Conference
+6.2
+Western Conference
+7
+Conference semifinals
+Toggle Conference semifinals subsection
+7.1
+Eastern Conference
+7.2
+Western Conference
+8
+Conference finals
+Toggle Conference finals subsection
+8.1
+Eastern Conference
+8.2
+Western Conference
+9
+MLS Cup 2025
+10
+Top goalscorers
+11
+References
+Toggle the table of contents
+2025 MLS Cup playoffs
+Add languages
+Add links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+2025 edition of the MLS playoffs
+Canada"},"image":{"wt":""},"dates":{"wt":"{{nowrap|October 22 – December 6}}"},"num_teams":{"wt":"18"},"winners":{"wt":"[[Inter Miami CF]] (1st title)"},"second":{"wt":"[[Vancouver Whitecaps FC]]"},"semifinal1":{"wt":"[[New York City FC]]"},"semifinal2":{"wt":"[[San Diego FC]]"},"matches":{"wt":"30"},"goals":{"wt":"99"},"updated":{"wt":""},"attendance":{"wt":"{{#expr:<!-- Wild Card round --> 13783 + 16243 <!-- Round One --><!-- PHI v CHI --> + 19019 + 17431 <!-- CHA v NYC --> + 33709 + 19051 + 34473 <!-- MIA v NSH --> + 21398 + 30109 + 19049 <!-- CIN v CLM --> + 23371 + 19506 + 25513 <!-- SND v POR --> + 32502 + 19260 + 32502 <!-- MIN v SEA --> + 16945 + 30085 + 18645 <!-- LFC v AUS --> + 22142 + 20738 <!-- VAN v DAL --> + 32066 + 11004 <!-- East SF --> + 25513 + 19210 <!-- West SF --> + 53957 + 32502 <!-- Conference Finals --> + 19136 + 32502 <!-- MLS Cup --> + 21556 }}"},"scoring_leader":{"wt":"{{nowrap|[[Tadeo Allende]] ([[Inter Miami CF]])}}<br>9 goals"},"prev_season":{"wt":"[[2024 MLS Cup playoffs|2024]]"},"next_season":{"wt":"''[[2026 MLS Cup playoffs|2026]]''"}},"i":0}}]}'>Football tournament season
+2025 MLS Cup playoffs Tournament details
+Country United States
+Canada
+Dates October 22 – December 6
+Teams 18
+Final positions
+Champions Inter Miami CF (1st title)
+Runners-up Vancouver Whitecaps FC
+Semifinalists New York City FC
+San Diego FC
+Tournament statistics
+Matches played 30
+Goals scored 99 (3.3 per match)
+Attendance 732,920 (24,431 per match)
+Top goal scorer(s) Tadeo Allende ( Inter Miami CF )
+9 goals
+← 2024
+2026 →
+The 2025 MLS Cup playoffs (branded as the Audi 2025 MLS Cup Playoffs for sponsorship reasons) was the post-season championship of Major League Soccer (MLS), the top soccer league in the United States and Canada. It was the 30th edition of the MLS Cup playoffs , following the conclusion of the 2025 season . The playoffs began on October 22 and concluded with MLS Cup 2025 on December 6. [ 1 ] [ 2 ]
+Both of the previous year's MLS Cup finalists, champions LA Galaxy and runners-up New York Red Bulls , failed to qualify, the latter for the first time since 2009 . San Diego FC qualified for the playoffs as Western Conference champions in their inaugural MLS season , but were eliminated in the conference finals by Vancouver Whitecaps FC . The Philadelphia Union entered as Supporters' Shield and Eastern Conference champions, but were eliminated in the conference semifinals by New York City FC .
+Inter Miami CF won their first MLS Cup title after defeating the Vancouver Whitecaps FC 3–1.
+Format
+[ edit ]
+Since the 2023 edition , the MLS Cup playoffs had been contested by a field of 18 teams—the top nine teams from each conference. [ 3 ] The top seven teams in each conference automatically qualified for round one, while the eighth and ninth-placed teams in each conference played a single wild card match to determine who drew the best-ranked team in their conference, with only a penalty shoot-out occurring if the game was tied.
+The first round comprised a best-of-three format, with higher seeds playing against lower seeds. The round did not use an aggregate score , and tied matches proceeded directly to a penalty shoot-out to determine the winner. The remaining three rounds—the conference semifinals, conference finals, and MLS Cup—were single-elimination matches played with extra time and a penalty shoot-out if still tied. [ 1 ]
+The team with the better regular season record hosted in all rounds except the best-of-three series in round one, where the team with the lower regular season record hosted the second of three possible matches. All matches were broadcast globally on MLS Season Pass , a streaming service operated by Apple . [ 1 ] Select matches were available on Fox Sports channels in the US. [ 4 ]
+Qualified teams
+[ edit ]
+The playoffs was contested by 18 teams. The date listed indicates when each team qualified for the playoffs.
+{{cite news|url=https://www.mlssoccer.com/news/charlotte-fc-clinch-audi-2025-mls-cup-playoffs-spot|title=Charlotte FC clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 14, 2025 |access-date=September 14, 2025}}</ref>\n*[[Chicago Fire FC]] (September 30)<ref>{{cite news|url=https://www.mlssoccer.com/news/chicago-fire-fc-clinch-audi-2025-mls-cup-playoffs-spot|title=Chicago Fire FC clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 30, 2025 |access-date=September 30, 2025}}</ref>\n*[[FC Cincinnati]] (September 13)<ref>{{cite news|url=https://www.mlssoccer.com/news/fc-cincinnati-clinch-audi-2025-mls-cup-playoffs-spot|title=FC Cincinnati clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 13, 2025 |access-date=September 14, 2025}}</ref>\n*[[Columbus Crew]] (September 27)<ref>{{cite news|url=https://www.mlssoccer.com/news/columbus-crew-clinch-audi-2025-mls-cup-playoffs-spot|title=Columbus Crew clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 27, 2025 |access-date=September 27, 2025}}</ref>\n*[[Inter Miami CF]] (September 24)<ref>{{cite news|url=https://www.mlssoccer.com/news/inter-miami-clinch-audi-2025-mls-cup-playoffs-spot|title=Inter Miami clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 24, 2025 |access-date=September 24, 2025}}</ref>\n*[[Nashville SC]] (September 27)<ref>{{cite news|url=https://www.mlssoccer.com/news/nashville-sc-clinch-audi-2025-mls-cup-playoffs-spot|title=Nashville SC clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 27, 2025 |access-date=September 27, 2025}}</ref>\n*[[New York City FC]] (September 20)<ref>{{cite news|url=https://www.mlssoccer.com/news/new-york-city-fc-clinch-audi-2025-mls-cup-playoffs-spot|title=New York City FC clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 20, 2025 |access-date=September 20, 2025}}</ref>\n*[[Orlando City SC]] (September 27)<ref>{{cite news|url=https://www.mlssoccer.com/news/orlando-city-clinch-audi-2025-mls-cup-playoffs-spot|title=Orlando City clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 27, 2025 |access-date=September 27, 2025}}</ref>\n*[[Philadelphia Union]] (August 30)<ref>{{cite news|url=https://www.mlssoccer.com/news/philadelphia-union-clinch-audi-2025-mls-cup-playoffs-spot|title=Philadelphia Union clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=August 30, 2025|access-date=August 30, 2025}}</ref>\n\n",{"template":{"target":{"wt":"col-break","href":"./Template:Col-break"},"params":{},"i":2}},"\n;Western Conference\n*[[Austin FC]] (October 5)<ref>{{cite news|url=https://www.mlssoccer.com/news/austin-fc-clinch-audi-2025-mls-cup-playoffs-spot|title=Austin FC clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=October 5, 2025 |access-date=October 5, 2025}}</ref>\n*[[FC Dallas]] (October 18)<ref>{{cite news|url=https://www.mlssoccer.com/playoffs/2025/news/fc-dallas-clinch-audi-2025-mls-cup-playoffs-spot|title=FC Dallas clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=October 18, 2025 |access-date=October 18, 2025}}</ref>\n*[[Los Angeles FC]] (September 20)<ref>{{cite news|url=https://www.mlssoccer.com/news/lafc-clinch-audi-2025-mls-cup-playoffs-spot|title=LAFC clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 21, 2025 |access-date=September 21, 2025}}</ref>\n*[[Minnesota United FC]] (August 30)<ref>{{cite news|date=August 30, 2025|url=https://www.mlssoccer.com/news/minnesota-united-fc-clinch-audi-2025-mls-cup-playoffs-spot|title=Minnesota United FC clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|access-date=August 30, 2025}}</ref>\n*[[Portland Timbers]] (October 5)<ref>{{cite news|url=https://www.mlssoccer.com/news/portland-timbers-clinch-audi-2025-mls-cup-playoffs-spot|title=Portland Timbers clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=October 5, 2025 |access-date=October 5, 2025}}</ref>\n*[[Real Salt Lake]] (October 18)<ref>{{cite news|url=https://www.mlssoccer.com/playoffs/2025/news/real-salt-lake-clinch-audi-2025-mls-cup-playoffs-spot|title=Real Salt Lake clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=October 18, 2025 |access-date=October 18, 2025}}</ref>\n*[[San Diego FC]] (August 23)<ref>{{cite news|date=August 23, 2025|title=San Diego FC clinch Audi 2025 MLS Cup Playoffs spot|url=https://www.sandiegofc.com/news/san-diego-fc-clinches-2025-audi-mls-cup-playoffs-berth-in-historic-inaugural-season|publisher=Major League Soccer|access-date=August 23, 2025}}</ref>\n*[[Seattle Sounders FC]] (September 27)<ref>{{cite news|url=https://www.mlssoccer.com/news/seattle-sounders-fc-clinch-audi-2025-mls-cup-playoffs-spot|title=Seattle Sounders FC clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 27, 2025 |access-date=September 27, 2025}}</ref>\n*[[Vancouver Whitecaps FC]] (September 13)<ref>{{cite news|url=https://www.mlssoccer.com/news/vancouver-whitecaps-fc-clinch-audi-2025-mls-cup-playoffs-spot|title=Vancouver Whitecaps FC clinch Audi 2025 MLS Cup Playoffs spot|publisher=Major League Soccer|date=September 13, 2025 |access-date=September 13, 2025}}</ref>\n",{"template":{"target":{"wt":"col-end","href":"./Template:Col-end"},"params":{},"i":3}}]}'>
+Eastern Conference
+Charlotte FC (September 13) [ 5 ]
+Chicago Fire FC (September 30) [ 6 ]
+FC Cincinnati (September 13) [ 7 ]
+Columbus Crew (September 27) [ 8 ]
+Inter Miami CF (September 24) [ 9 ]
+Nashville SC (September 27) [ 10 ]
+New York City FC (September 20) [ 11 ]
+Orlando City SC (September 27) [ 12 ]
+Philadelphia Union (August 30) [ 13 ]
+Western Conference
+Austin FC (October 5) [ 14 ]
+FC Dallas (October 18) [ 15 ]
+Los Angeles FC (September 20) [ 16 ]
+Minnesota United FC (August 30) [ 17 ]
+Portland Timbers (October 5) [ 18 ]
+Real Salt Lake (October 18) [ 19 ]
+San Diego FC (August 23) [ 20 ]
+Seattle Sounders FC (September 27) [ 21 ]
+Vancouver Whitecaps FC (September 13) [ 22 ]
+Conference standings
+[ edit ]
+Eastern Conference
+MLS Eastern Conference table (2025)
+Pos
+Team v
+t
+e
+Pld
+Pts
+1
+Philadelphia Union
+34
+66
+2
+FC Cincinnati
+34
+65
+3
+Inter Miami CF
+34
+65
+4
+Charlotte FC
+34
+59
+5
+New York City FC
+34
+56
+6
+Nashville SC
+34
+54
+7
+Columbus Crew
+34
+54
+8
+Chicago Fire FC
+34
+53
+9
+Orlando City SC
+34
+53
+Source: MLS
+Western Conference
+MLS Western Conference table (2025)
+Pos
+Team v
+t
+e
+Pld
+Pts
+1
+San Diego FC
+34
+63
+2
+Vancouver Whitecaps FC (C)
+34
+63
+3
+Los Angeles FC
+34
+60
+4
+Minnesota United FC
+34
+58
+5
+Seattle Sounders FC
+34
+55
+6
+Austin FC
+34
+47
+7
+FC Dallas
+34
+44
+8
+Portland Timbers
+34
+44
+9
+Real Salt Lake
+34
+41
+Source: MLS
+(C) Conference champion
+Bracket
+[ edit ]
+The higher seeded teams hosted single-elimination matches, with the MLS Cup host determined by overall points in the Supporters' Shield table. During the best-of-three round, the team with higher seed hosted the first match (and the third match, if required).
+''single match''\n"},"5":{"wt":"RD2=[[2025 MLS Cup playoffs#Round one|Round one]]<br />''best-of-three series''\n"},"6":{"wt":"RD3=[[2025 MLS Cup playoffs#Conference semifinals|Conference semifinals]]<br />''single match''\n"},"7":{"wt":"RD4=[[2025 MLS Cup playoffs#Conference finals|Conference finals]]<br />''single match''\n"},"8":{"wt":"RD5=[[MLS Cup 2025|MLS Cup]]<br />''single match''\n\n"},"9":{"wt":"RD3-group1='''[[Eastern Conference (MLS)|Eastern Conference]]'''\n"},"10":{"wt":"RD3-group2='''[[Western Conference (MLS)|Western Conference]]'''\n"},"11":{"wt":"team-width=180 "},"12":{"wt":"score-width=35\n\n"},"13":{"wt":"RD1-seed1=E8\n"},"14":{"wt":"RD1-team1='''[[Chicago Fire FC]]'''\n"},"15":{"wt":"RD1-score1='''3'''\n"},"16":{"wt":"RD1-seed2=E9\n"},"17":{"wt":"RD1-team2=[[Orlando City SC]]\n"},"18":{"wt":"RD1-score2=1\n\n"},"19":{"wt":"RD1-seed3=W8\n"},"20":{"wt":"RD1-team3='''[[Portland Timbers]]'''\n"},"21":{"wt":"RD1-score3='''3'''\n"},"22":{"wt":"RD1-seed4=W9\n"},"23":{"wt":"RD1-team4=[[Real Salt Lake]]\n"},"24":{"wt":"RD1-score4=1\n\n"},"25":{"wt":"RD2-seed1=E1\n"},"26":{"wt":"RD2-team1='''[[Philadelphia Union]]'''\n"},"27":{"wt":"RD2-score1-1='''2 (4)'''\n"},"28":{"wt":"RD2-score1-2='''3'''\n"},"29":{"wt":"RD2-score1-3=–\n"},"30":{"wt":"RD2-seed2=E8\n"},"31":{"wt":"RD2-team2=[[Chicago Fire FC]]\n"},"32":{"wt":"RD2-score2-1=2 (2)\n"},"33":{"wt":"RD2-score2-2=0\n"},"34":{"wt":"RD2-score2-3=–\n\n"},"35":{"wt":"RD2-seed3=E4\n"},"36":{"wt":"RD2-team3=[[Charlotte FC]]\n"},"37":{"wt":"RD2-score3-1=0\n"},"38":{"wt":"RD2-score3-2='''0 (7)'''\n"},"39":{"wt":"RD2-score3-3=1\n"},"40":{"wt":"RD2-seed4=E5\n"},"41":{"wt":"RD2-team4='''[[New York City FC]]'''\n"},"42":{"wt":"RD2-score4-1='''1'''\n"},"43":{"wt":"RD2-score4-2=0 (6)\n"},"44":{"wt":"RD2-score4-3='''3'''\n\n"},"45":{"wt":"RD2-seed5=E3\n"},"46":{"wt":"RD2-team5='''[[Inter Miami CF]]'''\n"},"47":{"wt":"RD2-score5-1='''3'''\n"},"48":{"wt":"RD2-score5-2= 1\n"},"49":{"wt":"RD2-score5-3='''4'''\n"},"50":{"wt":"RD2-seed6=E6\n"},"51":{"wt":"RD2-team6=[[Nashville SC]]\n"},"52":{"wt":"RD2-score6-1=1\n"},"53":{"wt":"RD2-score6-2= '''2'''\n"},"54":{"wt":"RD2-score6-3=0\n\n"},"55":{"wt":"RD2-seed7=E2\n"},"56":{"wt":"RD2-team7='''[[FC Cincinnati]]'''\n"},"57":{"wt":"RD2-score7-1='''1'''\n"},"58":{"wt":"RD2-score7-2=0\n"},"59":{"wt":"RD2-score7-3='''2'''\n"},"60":{"wt":"RD2-seed8=E7\n"},"61":{"wt":"RD2-team8=[[Columbus Crew]]\n"},"62":{"wt":"RD2-score8-1=0\n"},"63":{"wt":"RD2-score8-2='''4'''\n"},"64":{"wt":"RD2-score8-3=1\n\n"},"65":{"wt":"RD2-seed9=W1\n"},"66":{"wt":"RD2-team9='''[[San Diego FC]]'''\n"},"67":{"wt":"RD2-score9-1='''2'''\n"},"68":{"wt":"RD2-score9-2=2 (2)\n"},"69":{"wt":"RD2-score9-3='''4'''\n"},"70":{"wt":"RD2-seed10=W8\n"},"71":{"wt":"RD2-team10=[[Portland Timbers]]\n"},"72":{"wt":"RD2-score10-1=1\n"},"73":{"wt":"RD2-score10-2='''2 (3)'''\n"},"74":{"wt":"RD2-score10-3=0\n\n"},"75":{"wt":"RD2-seed11=W4\n"},"76":{"wt":"RD2-team11='''[[Minnesota United FC]]'''\n"},"77":{"wt":"RD2-score11-1='''0 (3)'''\n"},"78":{"wt":"RD2-score11-2=2\n"},"79":{"wt":"RD2-score11-3='''3 (7)'''\n"},"80":{"wt":"RD2-seed12=W5\n"},"81":{"wt":"RD2-team12=[[Seattle Sounders FC]]\n"},"82":{"wt":"RD2-score12-1=0 (2)\n"},"83":{"wt":"RD2-score12-2='''4'''\n"},"84":{"wt":"RD2-score12-3=3 (6)\n\n"},"85":{"wt":"RD2-seed13=W3\n"},"86":{"wt":"RD2-team13='''[[Los Angeles FC]]'''\n"},"87":{"wt":"RD2-score13-1='''2'''\n"},"88":{"wt":"RD2-score13-2='''4'''\n"},"89":{"wt":"RD2-score13-3=–\n"},"90":{"wt":"RD2-seed14=W6\n"},"91":{"wt":"RD2-team14=[[Austin FC]]\n"},"92":{"wt":"RD2-score14-1=1\n"},"93":{"wt":"RD2-score14-2=1\n"},"94":{"wt":"RD2-score14-3=–\n\n"},"95":{"wt":"RD2-seed15=W2\n"},"96":{"wt":"RD2-team15='''[[Vancouver Whitecaps FC]]'''\n"},"97":{"wt":"RD2-score15-1='''3'''\n"},"98":{"wt":"RD2-score15-2='''1 (4)'''\n"},"99":{"wt":"RD2-score15-3=–\n"},"100":{"wt":"RD2-seed16=W7\n"},"101":{"wt":"RD2-team16=[[FC Dallas]]\n"},"102":{"wt":"RD2-score16-1=0\n"},"103":{"wt":"RD2-score16-2=1 (2)\n"},"104":{"wt":"RD2-score16-3=–\n\n"},"105":{"wt":"RD3-seed01=E1\n"},"106":{"wt":"RD3-team01=[[Philadelphia Union]]\n"},"107":{"wt":"RD3-score01=0\n"},"108":{"wt":"RD3-seed02=E5\n"},"109":{"wt":"RD3-team02='''[[New York City FC]]'''\n"},"110":{"wt":"RD3-score02='''1'''\n\n"},"111":{"wt":"RD3-seed03=E3\n"},"112":{"wt":"RD3-team03='''[[Inter Miami CF]]'''\n"},"113":{"wt":"RD3-score03='''4'''\n"},"114":{"wt":"RD3-seed04=E2\n"},"115":{"wt":"RD3-team04=[[FC Cincinnati]]\n"},"116":{"wt":"RD3-score04=0\n\n"},"117":{"wt":"RD3-seed05=W1\n"},"118":{"wt":"RD3-team05='''[[San Diego FC]]'''\n"},"119":{"wt":"RD3-score05='''1'''\n"},"120":{"wt":"RD3-seed06=W4\n"},"121":{"wt":"RD3-team06=[[Minnesota United FC]]\n"},"122":{"wt":"RD3-score06=0\n\n"},"123":{"wt":"RD3-seed07=W3\n"},"124":{"wt":"RD3-team07=[[Los Angeles FC]]\n"},"125":{"wt":"RD3-score07=2 (3)\n"},"126":{"wt":"RD3-seed08=W2\n"},"127":{"wt":"RD3-team08='''[[Vancouver Whitecaps FC]] {{pso}}'''\n"},"128":{"wt":"RD3-score08='''2 (4)'''\n\n"},"129":{"wt":"RD4-seed01=E5\n"},"130":{"wt":"RD4-team01=[[New York City FC]]\n"},"131":{"wt":"RD4-score01=1\n"},"132":{"wt":"RD4-seed02=E3\n"},"133":{"wt":"RD4-team02='''[[Inter Miami CF]]'''\n"},"134":{"wt":"RD4-score02='''5'''\n\n"},"135":{"wt":"RD4-seed03=W1\n"},"136":{"wt":"RD4-team03=[[San Diego FC]]\n"},"137":{"wt":"RD4-score03=1\n"},"138":{"wt":"RD4-seed04=W2\n"},"139":{"wt":"RD4-team04='''[[Vancouver Whitecaps FC]]'''\n"},"140":{"wt":"RD4-score04='''3'''\n\n"},"141":{"wt":"RD5-seed01=E3\n"},"142":{"wt":"RD5-team01='''[[Inter Miami CF]]'''\n"},"143":{"wt":"RD5-score01='''3'''\n"},"144":{"wt":"RD5-seed02=W2\n"},"145":{"wt":"RD5-team02=[[Vancouver Whitecaps FC]]\n"},"146":{"wt":"RD5-score02=1\n"}},"i":0}}]}'> Wild card
+single match
+Round one
+best-of-three series
+Conference semifinals
+single match
+Conference finals
+single match
+MLS Cup
+single match
+E1
+Philadelphia Union
+2 (4)
+3
+–
+E8
+Chicago Fire FC
+3
+E8
+Chicago Fire FC
+2 (2)
+0
+–
+E9
+Orlando City SC
+1
+E1
+Philadelphia Union
+0
+E5
+New York City FC
+1
+E4
+Charlotte FC
+0
+0 (7)
+1
+Eastern Conference
+E5
+New York City FC
+1
+0 (6)
+3
+E5
+New York City FC
+1
+E3
+Inter Miami CF
+5
+E3
+Inter Miami CF
+3
+1
+4
+E6
+Nashville SC
+1
+2
+0
+E3
+Inter Miami CF
+4
+E2
+FC Cincinnati
+0
+E2
+FC Cincinnati
+1
+0
+2
+E7
+Columbus Crew
+0
+4
+1
+E3
+Inter Miami CF
+3
+W2
+Vancouver Whitecaps FC
+1
+W1
+San Diego FC
+2
+2 (2)
+4
+W8
+Portland Timbers
+3
+W8
+Portland Timbers
+1
+2 (3)
+0
+W9
+Real Salt Lake
+1
+W1
+San Diego FC
+1
+W4
+Minnesota United FC
+0
+W4
+Minnesota United FC
+0 (3)
+2
+3 (7)
+Western Conference
+W5
+Seattle Sounders FC
+0 (2)
+4
+3 (6)
+W1
+San Diego FC
+1
+W2
+Vancouver Whitecaps FC
+3
+W3
+Los Angeles FC
+2
+4
+–
+W6
+Austin FC
+1
+1
+–
+W3
+Los Angeles FC
+2 (3)
+W2
+Vancouver Whitecaps FC ( p )
+2 (4)
+W2
+Vancouver Whitecaps FC
+3
+1 (4)
+–
+W7
+FC Dallas
+0
+1 (2)
+–
+Wild card round
+[ edit ]
+Home team Score Away team
+Eastern Conference
+Chicago Fire FC 3–1 Orlando City SC
+Western Conference
+Portland Timbers 3–1 Real Salt Lake
+Eastern Conference
+[ edit ]
+October 22
+7:30 pm CDT
+Chicago Fire FC 3–1 Orlando City SC
+Gutiérrez 48'
+Cuypers 57' , 68'
+Report
+Spicer 89'
+SeatGeek Stadium , Bridgeview, Illinois
+Attendance: 13,783
+Referee: Drew Fischer
+Western Conference
+[ edit ]
+October 22
+7:30 pm PDT
+Portland Timbers 3–1 Real Salt Lake
+Mora 24' , 35'
+K. Miller 82'
+Report
+Glad 39'
+Providence Park , Portland, Oregon
+Attendance: 16,243
+Referee: Guido Gonzales Jr.
+Round one
+[ edit ]
+Team 1 Series Team 2 Game 1 Game 2 Game 3
+Eastern Conference
+Philadelphia Union 2–0 Chicago Fire FC 2–2 (4–2 p ) 3–0 —
+FC Cincinnati 2–1 Columbus Crew 1–0 0–4 2–1
+Inter Miami CF 2–1 Nashville SC 3–1 1–2 4–0
+Charlotte FC 1–2 New York City FC 0–1 0–0 (7–6 p ) 1–3
+Western Conference
+San Diego FC 2–1 Portland Timbers 2–1 2–2 (2–3 p ) 4–0
+Vancouver Whitecaps FC 2–0 FC Dallas 3–0 2–2 (4–2 p ) —
+Los Angeles FC 2–0 Austin FC 2–1 4–1 —
+Minnesota United FC 2–1 Seattle Sounders FC 0–0 (3–2 p ) 2–4 3–3 (7–6 p )
+Eastern Conference
+[ edit ]
+October 26
+5:30 pm EDT
+Philadelphia Union 2–2 Chicago Fire FC
+Vassilev 70'
+Iloski 75'
+Report
+Bamba 84'
+Elliott 90+3'
+Penalties
+Uhre
+Westfield
+Iloski
+Baribo
+Bueno
+4–2
+Elliott
+Gutiérrez
+Cuypers
+Waterman
+Subaru Park , Chester, Pennsylvania
+Attendance: 19,019
+Referee: Serhiy Boyko
+November 1
+4:30 pm CDT
+Chicago Fire FC 0–3 Philadelphia Union
+Report
+Baribo 8' , 16'
+Damiani 35'
+SeatGeek Stadium , Bridgeview, Illinois
+Attendance: 17,431
+Referee: Jon Freemon
+Philadelphia Union won the series 2–0.
+October 27
+6:45 pm EDT
+FC Cincinnati 1–0 Columbus Crew
+Denkey 78'
+Report
+TQL Stadium , Cincinnati, Ohio
+Attendance: 23,371
+Referee: Rubiel Vazquez
+November 2
+6:30 pm EST
+Columbus Crew 4–0 FC Cincinnati
+Arfsten 33'
+Chambost 41'
+Herrera 65'
+Russell-Rowe 69'
+Report
+Lower.com Field , Columbus, Ohio
+Attendance: 19,506
+Referee: Guido Gonzales Jr.
+November 8
+6:00 pm EST
+FC Cincinnati 2–1 Columbus Crew
+Brenner 67' , 86'
+Report
+Russell-Rowe 63'
+TQL Stadium , Cincinnati, Ohio
+Attendance: 25,513
+Referee: Chris Penso
+FC Cincinnati won the series 2–1.
+{{cite news |title=Miami 3-1 Nashville|date=October 24, 2025 |url=https://www.espn.com/soccer/match/_/gameId/760079/nashville-sc-inter-miami-cf |access-date=October 30, 2025 |work=ESPN}}</ref>"},"referee":{"wt":"[[Filip Dujic]]"}},"i":0}}]}'>
+October 24
+8:00 pm EDT
+Inter Miami CF 3–1 Nashville SC
+Messi 19' , 90+6'
+Allende 62'
+Report
+Mukhtar 90+11'
+Chase Stadium , Fort Lauderdale, Florida
+Attendance: 21,398 [ 23 ]
+Referee: Filip Dujic
+November 1
+6:30 pm CDT
+Nashville SC 2–1 Inter Miami CF
+Surridge 9' ( pen. )
+Bauer 45'
+Report
+Messi 90'
+Geodis Park , Nashville, Tennessee
+Attendance: 30,109
+Referee: Allen Chapman
+November 8
+8:00 pm EST
+Inter Miami CF 4–0 Nashville SC
+Messi 10' , 39'
+Allende 73' , 76'
+Report
+Chase Stadium , Fort Lauderdale, Florida
+Attendance: 19,049
+Referee: Rosendo Mendoza
+Inter Miami CF won the series 2–1.
+October 28
+6:45 pm EDT
+Charlotte FC 0–1 New York City FC
+Report
+Martínez 34'
+Bank of America Stadium , Charlotte, North Carolina
+Attendance: 33,709
+Referee: Jon Freemon
+November 1
+3:30 pm EDT
+New York City FC 0–0 Charlotte FC
+Report
+Penalties
+Martínez
+O'Neill
+Thiago Martins
+Fernández
+Haak
+Wolf
+Raul Gustavo
+Ojeda
+6–7
+Goodwin
+Westwood
+Toklomati
+Toffolo
+Zaha
+Malanda
+Diani
+Byrne
+Yankee Stadium , New York City, New York
+Attendance: 19,051
+Referee: Rubiel Vazquez
+November 7
+7:00 pm EST
+Charlotte FC 1–3 New York City FC
+Toklomati 81'
+Report
+Fernández 45+2' , 90+10'
+Martínez 50'
+Bank of America Stadium , Charlotte, North Carolina
+Attendance: 34,473
+Referee: Pierre-Luc Lauzière
+New York City FC won the series 2–1.
+Western Conference
+[ edit ]
+October 26
+6:30 pm PDT
+San Diego FC 2–1 Portland Timbers
+Valakari 23'
+Dreyer 30'
+Report
+Velde 36'
+Snapdragon Stadium , San Diego, California
+Attendance: 32,502
+Referee: Chris Penso
+November 1
+6:30 pm PDT
+Portland Timbers 2–2 San Diego FC
+Velde 18'
+Guerra 90+8'
+Report
+Pellegrino 45+12'
+Lozano 51'
+Penalties
+Mora
+Paredes
+Fernandez
+Velde
+Antony
+3–2
+Dreyer
+Lozano
+Valakari
+Ingvartsen
+Tverskov
+Providence Park , Portland, Oregon
+Attendance: 19,260
+Referee: Drew Fischer
+November 9
+6:00 pm PST
+San Diego FC 4–0 Portland Timbers
+Dreyer 5' , 79'
+Pellegrino 17' , 53'
+Report
+Snapdragon Stadium , San Diego, California
+Attendance: 32,502
+Referee: Joe Dickerson
+San Diego FC won the series 2–1.
+October 26
+4:30 pm PDT
+Vancouver Whitecaps FC 3–0 FC Dallas
+Ríos 43'
+Müller 60' ( pen. )
+Cabrera 83'
+Report
+BC Place , Vancouver, British Columbia
+Attendance: 32,066
+Referee: Victor Rivas
+November 1
+8:30 pm CDT
+FC Dallas 1–1 Vancouver Whitecaps FC
+Musa 25'
+Report
+Priso 90+3'
+Penalties
+Musa
+Delgado
+Moore
+Norris
+2–4
+Müller
+Berhalter
+Cabrera
+Halbouni
+Toyota Stadium , Frisco, Texas
+Attendance: 11,004
+Referee: Tori Penso
+Vancouver Whitecaps FC won the series 2–0.
+October 29
+7:30 pm PDT
+Los Angeles FC 2–1 Austin FC
+Hines-Ike 20' ( o.g. )
+Ordaz 79'
+Report
+Gallagher 63'
+BMO Stadium , Los Angeles, California
+Attendance: 22,142
+Referee: Rosendo Mendoza
+November 2
+7:30 pm CST
+Austin FC 1–4 Los Angeles FC
+Pereira 45+6' ( pen. )
+Report
+Son Heung-min 21'
+Bouanga 25' , 44'
+Ebobisse 90+3'
+Q2 Stadium , Austin, Texas
+Attendance: 20,738
+Referee: Joe Dickerson
+Los Angeles FC won the series 2–0.
+October 27
+8:00 pm CDT
+Minnesota United FC 0–0 Seattle Sounders FC
+Report
+Penalties
+Yeboah
+Triantis
+Pereyra
+Gressel
+3–2
+Rusnák
+Á. Roldán
+Ragen
+C. Roldan
+Leyva
+Allianz Field , St. Paul, Minnesota
+Attendance: 16,945
+Referee: Alexis Da Silva
+November 3
+7:30 pm PST
+Seattle Sounders FC 4–2 Minnesota United FC
+Vargas 8' , 86'
+Morris 21'
+Musovski 41'
+Report
+Triantis 45+1'
+Lod 45+5'
+Lumen Field , Seattle, Washington
+Attendance: 30,085
+Referee: Pierre-Luc Lauzière
+November 8
+3:00 pm CST
+Minnesota United FC 3–3 Seattle Sounders FC
+Pereyra 19'
+Díaz 62'
+Markanich 71'
+Report
+Rusnák 5'
+Musovski 8'
+Morris 88'
+Penalties
+Pereyra
+Triantis
+Gene
+Duggan
+Boxall
+Harvey
+Markanich
+Dotson
+Hlongwane
+St. Clair
+7–6
+Rusnák
+Morris
+Ragen
+Kent
+Rothrock
+Minoungou
+Vargas
+De Rosario
+Á. Roldán
+Thomas
+Allianz Field , St. Paul, Minnesota
+Attendance: 18,645
+Referee: Victor Rivas
+Minnesota United FC won the series 2–1.
+Conference semifinals
+[ edit ]
+The higher-seeded team as determined by regular season ranking hosted the match. [ 1 ]
+Home team Score Away team
+Eastern Conference
+Philadelphia Union 0–1 New York City FC
+FC Cincinnati 0–4 Inter Miami CF
+Western Conference
+San Diego FC 1–0 Minnesota United FC
+Vancouver Whitecaps FC 2–2 ( a.e.t. ) (4–3 p ) Los Angeles FC
+Eastern Conference
+[ edit ]
+November 23
+5:00 pm EST
+FC Cincinnati 0–4 Inter Miami CF
+Report
+Messi 19'
+Silvetti 57'
+Allende 62' , 74'
+TQL Stadium , Cincinnati, Ohio
+Attendance: 25,513
+Referee: Drew Fischer
+November 23
+7:30 pm EST
+Philadelphia Union 0–1 New York City FC
+Report
+Moralez 27'
+Subaru Park , Chester, Pennsylvania
+Attendance: 19,210
+Referee: Guido Gonzales Jr.
+Western Conference
+[ edit ]
+November 22
+6:30 pm PST
+Vancouver Whitecaps FC 2–2 ( a.e.t. ) Los Angeles FC
+Sabbi 39'
+Laborda 45+1'
+Report
+Son Heung-min 60' , 90+5'
+Penalties
+Berhalter
+Nelson
+Gauld
+Ocampo
+Laborda
+4–3
+Son Heung-min
+Bouanga
+Delgado
+Moran
+Amaya
+BC Place , Vancouver, British Columbia
+Attendance: 53,957
+Referee: Rubiel Vazquez
+November 24
+7:00 pm PST
+San Diego FC 1–0 Minnesota United FC
+Dreyer 72'
+Report
+Snapdragon Stadium , San Diego, California
+Attendance: 32,502
+Referee: Rosendo Mendoza
+Conference finals
+[ edit ]
+The higher-seeded team as determined by regular season ranking hosted the match. [ 1 ]
+Home team Score Away team
+Eastern Conference
+Inter Miami CF 5–1 New York City FC
+Western Conference
+San Diego FC 1–3 Vancouver Whitecaps FC
+Eastern Conference
+[ edit ]
+November 29
+6:00 pm EST
+Inter Miami CF 5–1 New York City FC
+Allende 14' , 23' , 89'
+Silvetti 67'
+Segovia 83'
+Report
+Haak 37'
+Chase Stadium , Fort Lauderdale, Florida
+Attendance: 19,136
+Referee: Jon Freemon
+Western Conference
+[ edit ]
+November 29
+6:00 pm PST
+San Diego FC 1–3 Vancouver Whitecaps FC
+Lozano 60'
+Report
+White 8' , 45+2'
+Sisniega 11' ( o.g. )
+Snapdragon Stadium , San Diego, California
+Attendance: 32,502
+Referee: Joe Dickerson
+MLS Cup 2025
+[ edit ]
+Main article: MLS Cup 2025
+The higher-ranked finalist in the overall Supporters' Shield table ( Inter Miami CF ) hosted the match. [ 1 ]
+December 6, 2025 ( 2025-12-06 )
+2:30 p.m. EST
+Inter Miami CF 3–1 Vancouver Whitecaps FC
+Ocampo 8' ( o.g. )
+De Paul 71'
+Allende 90+6'
+Report
+Ahmed 60'
+Chase Stadium , Fort Lauderdale, Florida
+Attendance: 21,556
+Referee: Drew Fischer
+Top goalscorers
+[ edit ]
+Rank
+Player
+Club
+Goals [ 24 ]
+1
+Tadeo Allende
+Inter Miami CF
+9
+2
+Lionel Messi
+Inter Miami CF
+6
+3
+Anders Dreyer
+San Diego FC
+4
+4
+Amahl Pellegrino
+San Diego FC
+3
+Son Heung-min
+Los Angeles FC
+6
+Tai Baribo
+Philadelphia Union
+2
+Denis Bouanga
+Los Angeles FC
+Brenner
+FC Cincinnati
+Hugo Cuypers
+Chicago Fire FC
+Nicolás Fernández
+New York City FC
+Hirving Lozano
+San Diego FC
+Alonso Martínez
+New York City FC
+Felipe Mora
+Portland Timbers
+Jordan Morris
+Seattle Sounders FC
+Danny Musovski
+Seattle Sounders FC
+Jacen Russell-Rowe
+Columbus Crew
+Mateo Silvetti
+Inter Miami CF
+Obed Vargas
+Seattle Sounders FC
+Kristoffer Velde
+Portland Timbers
+Brian White
+Vancouver Whitecaps FC
+References
+[ edit ]
+1 2 3 4 5 6 "MLS announces new playoff format for 2023 season" . Major League Soccer. February 21, 2023 . Retrieved September 17, 2023 .
+↑ "2025 MLS playoff bracket schedule scores" . Fox Sports . Retrieved October 22, 2025 .
+↑ "MLS adds best-of-3 series to expanded playoffs for 2023 season" . ESPN . February 21, 2023 . Retrieved September 5, 2025 .
+↑ "Audi 2025 MLS Cup Playoffs: Key dates & schedule information" . Major League Soccer. August 7, 2025 . Retrieved November 11, 2025 .
+↑ "Charlotte FC clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 14, 2025 . Retrieved September 14, 2025 .
+↑ "Chicago Fire FC clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 30, 2025 . Retrieved September 30, 2025 .
+↑ "FC Cincinnati clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 13, 2025 . Retrieved September 14, 2025 .
+↑ "Columbus Crew clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 27, 2025 . Retrieved September 27, 2025 .
+↑ "Inter Miami clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 24, 2025 . Retrieved September 24, 2025 .
+↑ "Nashville SC clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 27, 2025 . Retrieved September 27, 2025 .
+↑ "New York City FC clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 20, 2025 . Retrieved September 20, 2025 .
+↑ "Orlando City clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 27, 2025 . Retrieved September 27, 2025 .
+↑ "Philadelphia Union clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. August 30, 2025 . Retrieved August 30, 2025 .
+↑ "Austin FC clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. October 5, 2025 . Retrieved October 5, 2025 .
+↑ "FC Dallas clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. October 18, 2025 . Retrieved October 18, 2025 .
+↑ "LAFC clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 21, 2025 . Retrieved September 21, 2025 .
+↑ "Minnesota United FC clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. August 30, 2025 . Retrieved August 30, 2025 .
+↑ "Portland Timbers clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. October 5, 2025 . Retrieved October 5, 2025 .
+↑ "Real Salt Lake clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. October 18, 2025 . Retrieved October 18, 2025 .
+↑ "San Diego FC clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. August 23, 2025 . Retrieved August 23, 2025 .
+↑ "Seattle Sounders FC clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 27, 2025 . Retrieved September 27, 2025 .
+↑ "Vancouver Whitecaps FC clinch Audi 2025 MLS Cup Playoffs spot" . Major League Soccer. September 13, 2025 . Retrieved September 13, 2025 .
+↑ "Miami 3-1 Nashville" . ESPN . October 24, 2025 . Retrieved October 30, 2025 .
+↑ "MLS Player Stats" . MLSsoccer.com . Major League Soccer . Retrieved December 6, 2025 .
+v
+t
+e
+MLS Cup
+MLS Cup finals
+MLS Cup playoffs
+Finals
+1996
+1997
+1998
+1999
+2000
+2001
+2002
+2003
+2004
+2005
+2006
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+Playoffs
+1996
+1997
+1998
+1999
+2000
+2001
+2002
+2003
+2004
+2005
+2006
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+2026
+Broadcasters
+Television ratings
+Post-season droughts
+Referees
+Winning head coaches
+Most Valuable Player
+Ring
+Trophy
+v
+t
+e
+2025 MLS season
+Expansion draft
+SuperDraft
+All-Star Game
+Playoffs
+MLS Cup
+Transfers
+Eastern
+Atlanta United FC
+Charlotte FC
+Chicago Fire
+FC Cincinnati
+Columbus Crew
+D.C. United
+Inter Miami CF
+CF Montréal
+Nashville SC
+New England Revolution
+New York City FC
+New York Red Bulls
+Orlando City SC
+Philadelphia Union
+Toronto FC
+Western
+Austin FC
+Colorado Rapids
+FC Dallas
+Houston Dynamo FC
+LA Galaxy
+Los Angeles FC
+Minnesota United FC
+Portland Timbers
+Real Salt Lake
+San Diego FC
+San Jose Earthquakes
+Seattle Sounders FC
+St. Louis City SC
+Sporting Kansas City
+Vancouver Whitecaps FC
+v
+t
+e
+2025 in American soccer
+« 2024
+2026 »
+National teams
+Men
+Senior
+2024–25 CONCACAF Nations League A
+2025 CONCACAF Gold Cup
+U-20
+2025 FIFA U-20 World Cup
+U-17
+2025 FIFA U-17 World Cup ( Qualification )
+Women
+Senior
+2025 SheBelieves Cup
+U-20
+U-17
+2025 CONCACAF U-17 Women's World Cup qualification – Final round
+League competitions
+Level 1
+Major League Soccer ( All-Star Game , Playoffs , MLS Cup )
+National Women's Soccer League ( Challenge Cup , Playoffs , Championship )
+USL Super League ( Final )
+Level 2
+USL Championship ( Playoffs )
+Level 3
+MLS Next Pro ( Playoffs )
+USL League One ( Playoffs )
+Amateur
+NPSL
+USL League Two
+NISA Nation
+UPSL
+TLC
+Collegiate
+NCAA
+Division I
+Division II
+Division III
+NAIA
+NJCAA
+Cup competitions
+Domestic
+U.S. Open Cup ( Qualification , Final )
+USL Cup
+National Amateur Cup
+NISA Independent Cup
+NISA Pro Cup
+Steinbrecher Cup
+International
+FIFA Club World Cup
+CONCACAF Champions Cup
+CONCACAF W Champions Cup
+Final
+Campeones Cup
+Leagues Cup
+league phase
+knockout stage
+final
+Youth competitions
+Under-23
+NCAA College Cup ( Final )
+Under-18
+MLS Next
+2024–25
+2025–26
+v
+t
+e
+2025 in Canadian soccer
+« 2024
+2026 »
+Men's leagues
+Canadian Premier League
+draft
+transfers
+final
+Major League Soccer
+transfers
+playoffs
+final
+League1 Canada
+Alberta
+British Columbia
+Ontario
+Québec
+MLS Next Pro
+Canadian Soccer League
+Women's leagues
+Northern Super League
+League1 Canada
+Alberta
+British Columbia
+Ontario
+Québec
+Other
+Canadian Championship
+final
+U Sports
+Men's
+Women's
+Challenge Trophy
+Jubilee Trophy
+International
+Clubs
+Men
+CONCACAF Champions Cup
+final
+Leagues Cup
+league phase
+Women
+CONCACAF W Champions Cup
+National teams
+Men
+CONCACAF Nations League
+Finals
+CONCACAF Gold Cup
+Group B
+knockout stage
+Canadian Shield
+Women
+Pinatar Cup
+Retrieved from " https://en.wikipedia.org/w/index.php?title=2025_MLS_Cup_playoffs&oldid=1380583206 "
+Categories : 2025 Major League Soccer season
+MLS Cup playoffs
+October 2025 sports events in Canada
+October 2025 sports events in the United States
+November 2025 sports events in Canada
+November 2025 sports events in the United States
+December 2025 sports events in the United States
+Hidden categories: Articles with short description
+Short description is different from Wikidata
+Use mdy dates from September 2025
+Use American English from September 2025
+All Wikipedia articles written in American English
+Use mdy dates from March 2025
+Use mdy dates from September 2024
+This page was last edited on 16 October 2026, at 17:03 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+2025 MLS Cup playoffs
+Add languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"2025 MLS Cup playoffs","url":"https:\/\/en.wikipedia.org\/wiki\/2025_MLS_Cup_playoffs","sameAs":"http:\/\/www.wikidata.org\/entity\/Q132816738","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q132816738","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2024-12-05T01:45:21Z","dateModified":"2026-10-16T17:03:15Z","headline":"2025 edition of the MLS Cup playoffs"}

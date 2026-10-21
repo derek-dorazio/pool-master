@@ -1,0 +1,2426 @@
+Source: https://en.wikipedia.org/wiki/2025_NCAA_Division_I_women%27s_soccer_tournament
+Final URL: https://en.wikipedia.org/wiki/2025_NCAA_Division_I_women%27s_soccer_tournament
+HTTP 200
+Fetched: 2026-10-21T04:13:26.923Z
+
+2025 NCAA Division I women's soccer tournament - Wikipedia
+Jump to content
+Main menu
+Main menu
+move to sidebar
+hide
+Navigation
+Main page
+Contents
+Current events
+Random article
+About Wikipedia
+Contact us
+Contribute
+Help
+Learn to edit
+Community portal
+Recent changes
+Upload file
+Special pages
+Search
+Search
+Appearance
+Donate
+Create account
+Log in
+Personal tools
+Donate
+Create account
+Log in
+Contents
+move to sidebar
+hide
+(Top)
+1
+Qualification
+2
+Bracket
+Toggle Bracket subsection
+2.1
+Notre Dame bracket
+2.1.1
+Schedule
+2.1.1.1
+First round
+2.1.1.2
+Second round
+2.1.1.3
+Round of 16
+2.1.1.4
+Quarterfinals
+2.2
+Vanderbilt bracket
+2.2.1
+Schedule
+2.2.1.1
+First round
+2.2.1.2
+Second round
+2.2.1.3
+Round of 16
+2.2.1.4
+Quarterfinals
+2.3
+Stanford bracket
+2.3.1
+Schedule
+2.3.1.1
+First round
+2.3.1.2
+Second round
+2.3.1.3
+Round of 16
+2.3.1.4
+Quarterfinals
+2.4
+Virginia bracket
+2.4.1
+Schedule
+2.4.1.1
+First round
+2.4.1.2
+Second round
+2.4.1.3
+Round of 16
+2.4.1.4
+Quarterfinals
+2.5
+College Cup
+2.5.1
+Schedule
+2.5.1.1
+Semi-finals
+2.5.1.2
+Final
+3
+Record by conference
+4
+Statistics
+Toggle Statistics subsection
+4.1
+Goalscorers
+5
+All-tournament team
+6
+See also
+7
+References
+Toggle the table of contents
+2025 NCAA Division I women's soccer tournament
+Add languages
+Add links
+Article
+Talk
+English
+Read
+Edit
+View history
+Tools
+Tools
+move to sidebar
+hide
+Actions
+Read
+Edit
+View history
+General
+What links here
+Related changes
+Upload file
+Permanent link
+Page information
+Cite this page
+Get shortened URL
+Switch to legacy parser
+Print/export
+Download as PDF
+Printable version
+In other projects
+Wikidata item
+Appearance
+move to sidebar
+hide
+From Wikipedia, the free encyclopedia
+Football tournament season
+2025 NCAA women's soccer tournament Women's College Cup (Semifinals & Final)
+Tournament details
+Country United States
+Dates November 14 – December 8, 2025
+Teams 64
+Final positions
+Champions (3) Florida State (5th title)
+Runners-up (1) Stanford
+Semifinalists (2) TCU
+(2) Duke
+Tournament statistics
+Matches played 63
+Goals scored 192 (3.05 per match)
+Attendance 93,767 (1,488 per match)
+Top goal scorers
+Jasmine Aikey , Stanford , (6 goals)
+Mia Minestrella, Duke , (6 goals)
+Awards
+Most Outstanding Player
+Wrianna Hudson , Florida State (Offensive)
+Kate Ockene , Florida State (Defensive)
+← 2024
+2026 →
+All statistics correct as of 12/08/2025.
+The 2025 NCAA Division I women's soccer tournament was the 44th edition of the NCAA Division I women's soccer tournament, a postseason tournament to determine the national champion of NCAA Division I women's college soccer . The College Cup was played on December 5 and December 8 at CPKC Stadium in Kansas City, Missouri , and televised on ESPNU . [ 1 ]
+North Carolina were the defending national champion . [ 2 ] North Carolina received an unseeded, at-large bid, and was unable to defend their title falling to TCU in penalties in the Round of 16. [ 3 ]
+Three teams from the Atlantic Coast Conference (ACC) and one team from the Big 12 Conference qualified for the college cup, and Florida State prevailed, claiming their fifth college cup. [ 4 ]
+Qualification
+[ edit ]
+Main article: 2025 NCAA Division I women's soccer season
+All Division I women's soccer programs were eligible to qualify for the tournament. 29 teams received automatic bids by winning their conference tournaments, 1 team received an automatic bid by claiming the conference regular season crown ( West Coast Conference doesn't hold a conference tournament), and an additional 34 teams earned at-large bids based on their regular season records. [ 5 ]
+{{cite web|url=https://s3.amazonaws.com/fs.ncaa.org/Docs/stats/w_soccer_RB/D1champs.pdf|title=Division I Women's Soccer Championships Record Book|publisher=[[National Collegiate Athletic Association]]|access-date=November 3, 2025}}</ref>\n!scope=\"col\"|Last Bid<ref name=\"NCAA Record Book\" />\n|-\n| [[American Athletic Conference|American]]\n| style={{NCAA color cell|UTSA Roadrunners}}| [[UTSA Roadrunners women's soccer|{{white|UTSA}}]]\n| rowspan=9 | November 9\n| 10–5–6\n| 3rd\n| [[2022 NCAA Division I women's soccer tournament|2022]]\n|-\n| [[America East Conference|America East]]\n| style={{NCAA color cell|Maine Black Bears}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Maine Black Bears"},"2":{"wt":"Maine Black Bears women's soccer"},"3":{"wt":"Maine"}},"i":1}},"\n| 6–7–4\n| 3rd\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Atlantic Coast Conference|ACC]]\n| style={{NCAA color cell|Stanford Cardinal}}| [[2025 Stanford Cardinal women's soccer team|{{white|Stanford}}]]\n| 16–1–2\n| 34th\n| [[2024 NCAA Division I women's soccer tournament|2024]] \n|-\n| [[Atlantic 10 Conference|Atlantic 10]]\n| style={{NCAA color cell|Dayton Flyers}}| [[Dayton Flyers|{{white|Dayton}}]]\n| 15–3–3\n| 11th\n| [[2016 NCAA Division I women's soccer tournament|2016]] \n|-\n| [[ASUN Conference|ASUN]]\n| style={{NCAA color cell|Lipscomb Bisons}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Lipscomb Bisons"},"2":{"wt":"Lipscomb Bisons women's soccer"},"3":{"wt":"Lipscomb"}},"i":2}},"\n| 14–5–2\n| 5th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Big East Conference|Big East]]\n| style={{NCAA color cell|Xavier Musketeers}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Xavier Musketeers"},"2":{"wt":"Xavier Musketeers women's soccer"},"3":{"wt":"Xavier"}},"i":3}},"\n| 15–3–2\n| 7th\n| [[2023 NCAA Division I women's soccer tournament|2023]]\n|-\n| [[Big Sky Conference|Big Sky]]\n| style={{NCAA color cell|Montana Grizzlies}}| [[Montana Grizzlies women's soccer|{{white|Montana}}]]\n| 12–3–5\n| 7th\n| [[2021 NCAA Division I Women's Soccer Tournament|2021]]\n|-\n| [[Big South Conference|Big South]]\n| style={{NCAA color cell|High Point Panthers}}| [[High Point Panthers women's soccer|{{white|High Point}}]]\n| 5–9–5\n| 8th\n| [[2021 NCAA Division I women's soccer tournament|2021]]\n|- \n| [[Big Ten Conference|Big Ten]]\n| style={{NCAA color cell|Washington Huskies }}\"| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Washington Huskies"},"2":{"wt":"Washington Huskies women's soccer"},"3":{"wt":"Washington"}},"i":4}},"\n| 13–2–6\n| 17th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Big 12 Conference|Big 12]]\n|style={{NCAA color cell|BYU Cougars}}| [[BYU Cougars women's soccer|{{white|BYU}}]]\n| November 8\n| 11–6–4\n| 26th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Big West Conference|Big West]]\n| style={{NCAA color cell|Cal Poly Mustangs}}|",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Cal Poly Mustangs"},"2":{"wt":"Cal Poly Mustangs women's soccer"},"3":{"wt":"Cal Poly"}},"i":5}},"\n| rowspan=2 | November 9\n| 10–2–9\n| 6th\n| [[2004 NCAA Division I women's soccer tournament|2004]]\n|-\n| [[Coastal Athletic Association|CAA]]\n| style={{NCAA color cell|Elon Phoenix}}\"| [[Elon Phoenix women's soccer|{{white|Elon}}]]\n| 11–2–7\n| 3rd\n| [[2020 NCAA Division I women's soccer tournament|2020]]\n|-\n| [[Conference USA|C-USA]]\n| style={{NCAA color cell|Liberty Flames}}| [[Liberty Flames women's soccer|{{white|Liberty}}]]\n| November 7\n| 14–3–4\n| 9th\n| [[2023 NCAA Division I women's soccer tournament|2023]]\n|-\n| [[Horizon League|Horizon]]\n| style={{NCAA color cell|Milwaukee Panthers}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Milwaukee Panthers"},"2":{"wt":"Milwaukee Panthers women's soccer"},"3":{"wt":"Milwaukee"}},"i":6}},"\n| November 8\n| 13–4–3\n| 19th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Ivy League|Ivy]]\n| style={{NCAA color cell|Dartmouth Big Green}}| [[Dartmouth Big Green|{{white|Dartmouth}}]]\n| rowspan=2 | November 9\n| 11–3–4\n| 11th\n| [[2005 NCAA Division I women's soccer tournament|2005]]\n|-\n| [[Metro Atlantic Athletic Conference|MAAC]]\n| style={{NCAA color cell|Sacred Heart Pioneers women's soccer}}| [[Sacred Heart Pioneers women's soccer|{{white|Sacred Heart}}]]\n| 11–8–2\n| 2nd\n| [[2001 NCAA Division I women's soccer tournament|2001]]\n|-\n| [[Mid-American Conference|MAC]]\n| style={{NCAA color cell|Western Michigan Broncos}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Western Michigan Broncos"},"2":{"wt":"Western Michigan women's soccer"},"3":{"wt":"Western Michigan"}},"i":7}},"\n| November 7\n| 16–3–1\n| 5th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Missouri Valley Conference|Missouri Valley]]\n| style={{NCAA color cell|UIC Flames}}| [[UIC Flames women's soccer|{{white|UIC}}]]\n| November 9\n| 8–7–6\n| 1st\n| ''None''\n|-\n| [[Mountain West Conference|Mountain West]]\n| style={{NCAA color cell|Utah State Aggies}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Utah State Aggies"},"2":{"wt":"Utah State Aggies women's soccer"},"3":{"wt":"Utah State"}},"i":8}},"\n| November 8\n| 10–6–6\n| 5th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Northeast Conference|Northeast]]\n| style={{NCAA color cell|Wagner Seahawks}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Wagner Seahawks"},"2":{"wt":"Wagner Seahawks women's soccer"},"3":{"wt":"Wagner"}},"i":9}},"\n| rowspan=7 | November 9\n| 11–2–6\n| 1st\n| ''None''\n|-\n| [[Ohio Valley Conference|Ohio Valley]]\n| style={{NCAA color cell|Tennessee Tech Golden Eagles}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Tennessee Tech Golden Eagles"},"2":{"wt":"Tennessee Tech Golden Eagles women's soccer"},"3":{"wt":"Tennessee Tech"}},"i":10}},"\n| 7–6–8\n| 2nd\n| [[2000 NCAA Division I women's soccer tournament|2000]]\n|-\n| [[Patriot League|Patriot]]\n| style={{NCAA color cell|Army Black Knights women's soccer}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Army Black Knights"},"2":{"wt":"Army Black Knights women's soccer"},"3":{"wt":"Army West Point"}},"i":11}},"\n| 14–5–2\n| 3rd\n| [[2011 NCAA Division I women's soccer tournament|2011]]\n|-\n| [[Southeastern Conference|SEC]]\n| style={{NCAA color cell|LSU Tigers}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"LSU Tigers"},"2":{"wt":"LSU Tigers women's soccer"},"3":{"wt":"LSU"}},"i":12}},"\n| 13–6–3\n| 11th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Southern Conference|SoCon]]\n| style={{NCAA color cell|Samford Bulldogs}}| [[Samford Bulldogs women's soccer|{{white|Samford}}]]\n| 13–2–5\n| 9th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Southland Conference|Southland]]\n| style={{NCAA color cell|Houston Christian Huskies}}|[[Houston Christian Huskies women's soccer|{{white|Houston Christian}}]]\n| 12–8–2\n| 3rd\n| [[2016 NCAA Division I women's soccer tournament|2016]] \n|-\n| [[Summit League]]\n| style={{NCAA color cell|South Dakota State Jackrabbits}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"South Dakota State Jackrabbits"},"2":{"wt":"South Dakota State Jackrabbits women's soccer"},"3":{"wt":"South Dakota State"}},"i":13}},"\n| 13–2–6\n| 9th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Sun Belt Conference|Sun Belt]]\n| style={{NCAA color cell|Texas State Bobcats}}| [[Texas State Bobcats women's soccer|{{white|Texas State}}]]\n| November 8\n| 10–3–7\n| 6th\n| [[2011 NCAA Division I women's soccer tournament|2011]]\n|-\n| [[Southwestern Athletic Conference|SWAC]]\n| style={{NCAA color cell|Grambling State Tigers}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Grambling State Tigers"},"2":{"wt":"Grambling State Tigers women's soccer"},"3":{"wt":"Grambling State"}},"i":14}},"\n| November 9\n| 10–6–5\n| 3rd\n| [[2023 NCAA Division I women's soccer tournament|2023]]\n|-\n| [[Western Athletic Conference|WAC]]\n| style={{NCAA color cell|California Baptist Lancers}}| [[Cal Baptist Lancers|{{white|California Baptist}}]]\n| rowspan=2 | November 8\n| 12–8–2\n| 2nd\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[West Coast Conference|West Coast]]\n| style={{NCAA color cell|Pepperdine Waves}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Pepperdine Waves"},"2":{"wt":"Pepperdine Waves women's soccer"},"3":{"wt":"Pepperdine"}},"i":15}},"\n| 11–6–2\n| 15th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|}\n{|class=\"wikitable sortable plainrowheaders\" style=\"text-align:center;\"\n! colspan=\"6\" style=\"background:#ffdead;\" | At-Large Bids\n|-\n!scope=\"col\"|Conference\n!scope=\"col\"|Team\n!scope=\"col\" data-sort-type=\"number\"|Record\n!scope=\"col\"|Appearance<ref name=\"NCAA Record Book\"/>\n!scope=\"col\"|Last Bid<ref name=\"NCAA Record Book\" />\n|-\n|-\n| [[American Conference (NCAA)|American]]\n| style={{NCAA color cell|Memphis Tigers}}| [[Memphis Tigers women's soccer|{{white|Memphis}}]]\n| 16–0–3\n| 13th\n| [[2023 NCAA Division I women's soccer tournament|2023]]\n|-\n| rowspan=8 | [[Atlantic Coast Conference|ACC]]\n| style={{NCAA color cell|Clemson Tigers}}| [[2025 Clemson Tigers women's soccer team|{{color|black|Clemson}}]]\n| 7–5–5\n| 25th\n| [[2023 NCAA Division I women's soccer tournament|2023]]\n|-\n| style={{NCAA color cell|Duke Blue Devils}}| [[2025 Duke Blue Devils women's soccer team|{{white|Duke}}]]\n| 13–4–1\n| 30th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Florida State Seminoles}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Florida State Seminoles"},"2":{"wt":"2025 Florida State Seminoles women's soccer team"},"3":{"wt":"Florida State"}},"i":16}},"\n| 10–2–4\n| 26th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Louisville Cardinals}}|[[2025 Louisville Cardinals women's soccer team|{{white|Louisville}}]]\n| 13–4–2\n| 7th\n| [[2019 NCAA Division I women's soccer tournament|2019]]\n|-\n| style={{NCAA color cell|North Carolina Tar Heels}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"North Carolina Tar Heels"},"2":{"wt":"2025 North Carolina Tar Heels women's soccer team"},"3":{"wt":"North Carolina"}},"i":17}},"\n| 12–6–0\n| 44th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Notre Dame Fighting Irish}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Notre Dame Fighting Irish"},"2":{"wt":"2025 Notre Dame Fighting Irish women's soccer team"},"3":{"wt":"Notre Dame"}},"i":18}},"\n| 14–1–3\n| 31st\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Virginia Cavaliers}}| [[2025 Virginia Cavaliers women's soccer team|{{white|Virginia}}]]\n| 12–3–4\n| 37th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Wake Forest Demon Deacons}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Wake Forest Demon Deacons"},"2":{"wt":"2025 Wake Forest Demon Deacons women's soccer team"},"3":{"wt":"Wake Forest"}},"i":19}},"\n| 10–4–4\n| 24th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Big East]]\n| style={{NCAA color cell|Georgetown Hoyas}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Georgetown Hoyas"},"2":{"wt":"Georgetown Hoyas women's soccer"},"3":{"wt":"Georgetown"}},"i":20}},"\n| 15–3–2\n| 16th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| rowspan=8 | [[Big Ten Conference|Big Ten]] \n| style={{NCAA color cell|Illinois Fighting Illini}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Illinois Fighting Illini"},"2":{"wt":"Illinois Fighting Illini women's soccer"},"3":{"wt":"Illinois"}},"i":21}},"\n| 13–5–2\n| 13th\n| [[2013 NCAA Division I women's soccer tournament|2013]]\n|-\n| style={{NCAA color cell|Iowa Hawkeyes}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Iowa Hawkeyes"},"2":{"wt":"Iowa Hawkeyes women's soccer"},"3":{"wt":"Iowa"}},"i":22}},"\n| 11–4–4\n| 6th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Michigan State Spartans}}| [[Michigan State Spartans women's soccer|{{white|Michigan State}}]]\n| 12–3–6\n| 8th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Northwestern Wildcats}}| [[Northwestern Wildcats women's soccer|{{white|Northwestern}}]]\n| 9–4–7\n| 8th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Ohio State Buckeyes}}| [[Ohio State Buckeyes women's soccer|{{white|Ohio State}}]]\n| 8–4–6\n| 19th\n| [[2022 NCAA Division I women's soccer tournament|2022]]\n|-\n| style={{NCAA color cell|Penn State Nittany Lions}}| [[Penn State Nittany Lions women's soccer|{{white|Penn State}}]]\n| 9–7–3\n| 31st\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|UCLA Bruins}}| [[UCLA Bruins women's soccer|{{white|UCLA}}]]\n| 11–5–3\n| 29th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Wisconsin Badgers}}| [[Wisconsin Badgers women's soccer|{{white|Wisconsin}}]]\n| 13–5–2\n| 26th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| rowspan=7 | [[Big 12 Conference|Big 12]] \n| style={{NCAA color cell|Baylor Bears}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Baylor Bears"},"2":{"wt":"Baylor Bears women's soccer"},"3":{"wt":"Baylor"}},"i":23}},"\n| 12–4–4\n| 7th\n| [[2018 NCAA Division I women's soccer tournament|2018]]\n|-\n| style={{NCAA color cell|Colorado Buffaloes}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Colorado Buffaloes"},"2":{"wt":"Colorado Buffaloes women's soccer"},"3":{"wt":"Colorado"}},"i":24}},"\n| 15–3–3\n| 15th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|- \n| style={{NCAA color cell|Kansas Jayhawks}}\"| [[Kansas Jayhawks women's soccer|{{white|Kansas}}]]\n| 14–5–3\n| 11th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|TCU Horned Frogs}}| [[TCU Horned Frogs soccer|{{white|TCU}}]]\n| 15–2–2\n| 9th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Texas Tech Red Raiders}}| [[Texas Tech Red Raiders women's soccer|{{color|black|Texas Tech}}]]\n| 13–2–4\n| 10th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|UCF Knights}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"UCF Knights"},"2":{"wt":"UCF Knights women's soccer"},"3":{"wt":"UCF"}},"i":25}},"\n| 11–3–5\n| 23rd\n| [[2022 NCAA Division I women's soccer tournament|2022]]\n|-\n| style={{NCAA color cell|West Virginia Mountaineers }}\"| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"West Virginia Mountaineers"},"2":{"wt":"West Virginia Mountaineers women's soccer"},"3":{"wt":"West Virginia"}},"i":26}},"\n| 13–3–3\n| 24th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| rowspan=8 | [[Southeastern Conference|SEC]] \n| style={{NCAA color cell|Arkansas Razorbacks}}| [[Arkansas Razorbacks women's soccer|{{white|Arkansas}}]]\n| 9–4–4\n| 12th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Alabama Crimson Tide}}| [[Alabama Crimson Tide women's soccer|{{white|Alabama}}]]\n| 11–8–1\n| 7th\n| [[2023 NCAA Division I women's soccer tournament|2023]]\n|-\n| style={{NCAA color cell|Georgia Bulldogs}}| [[Georgia Bulldogs women's soccer|{{white|Georgia}}]]\n| 11–4–5\n| 13th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Kentucky Wildcats}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Kentucky Wildcats"},"2":{"wt":"Kentucky Wildcats women's soccer"},"3":{"wt":"Kentucky"}},"i":27}},"\n| 12–5–3\n| 13th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Mississippi State Bulldogs}}| [[Mississippi State Bulldogs women's soccer|{{white|Mississippi State}}]]\n| 12–6–1\n| 5th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|South Carolina Gamecocks}}| [[South Carolina Gamecocks women's soccer|{{white|South Carolina}}]]\n| 10–4–5\n| 19th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Tennessee Volunteers}}| [[Tennessee Volunteers women's soccer|{{color|black|Tennessee}}]]\n| 12–3–3\n| 17th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| style={{NCAA color cell|Vanderbilt Commodores}}| ",{"template":{"target":{"wt":"CollegeSecondaryColorLink","href":"./Template:CollegeSecondaryColorLink"},"params":{"1":{"wt":"Vanderbilt Commodores"},"2":{"wt":"Vanderbilt Commodores women's soccer"},"3":{"wt":"Vanderbilt"}},"i":28}},"\n| 16–3–1\n| 14th\n| [[2024 NCAA Division I women's soccer tournament|2024]]\n|-\n| [[Western Athletic Conference|WAC]]\n| style={{NCAA color cell|Utah Valley Wolverines}}| [[Utah Valley Wolverines women's soccer|{{white|Utah Valley}}]]\n| 14–4–3\n| 5th\n| [[2022 NCAA Division I women's soccer tournament|2022]]\n|}\n\n",{"template":{"target":{"wt":"div col end","href":"./Template:Div_col_end"},"params":{},"i":29}}]}'>
+Automatic bids
+Conference
+Team
+Date qualified
+Record
+Appearance [ 6 ]
+Last Bid [ 6 ]
+American
+background-color:#0B2240!important;color:#FFFFFF!important;</span>"}]]}'> UTSA
+November 9
+10–5–6
+3rd
+2022
+America East
+background-color:#003263!important;color:#FFFFFF!important;</span>"}]]}'> Maine
+6–7–4
+3rd
+2024
+ACC
+background-color:#8C1515!important;color:#FFFFFF!important;</span>"}]]}'> Stanford
+16–1–2
+34th
+2024
+Atlantic 10
+background-color:#002F87!important;color:#FFFFFF!important;</span>"}]]}'> Dayton
+15–3–3
+11th
+2016
+ASUN
+background-color:#331E54!important;color:#FFFFFF!important;</span>"}]]}'> Lipscomb
+14–5–2
+5th
+2024
+Big East
+background-color:#0C2340!important;color:#FFFFFF!important;</span>"}]]}'> Xavier
+15–3–2
+7th
+2023
+Big Sky
+background-color:#5E001D!important;color:#FFFFFF!important;</span>"}]]}'> Montana
+12–3–5
+7th
+2021
+Big South
+background-color:#330072!important;color:#FFFFFF!important;</span>"}]]}'> High Point
+5–9–5
+8th
+2021
+Big Ten
+background-color:#33006F!important;color:#FFFFFF!important;</span>\""}]]}'> Washington
+13–2–6
+17th
+2024
+Big 12
+background-color:#003DA5!important;color:#FFFFFF!important;</span>"}]]}'> BYU
+November 8
+11–6–4
+26th
+2024
+Big West
+background-color:#154734!important;color:#FFFFFF!important;</span>"}]]}'> Cal Poly
+November 9
+10–2–9
+6th
+2004
+CAA
+background-color:#73000A!important;color:#FFFFFF!important;</span>\""}]]}'> Elon
+11–2–7
+3rd
+2020
+C-USA
+background-color:#0A254E!important;color:#FFFFFF!important;</span>"}]]}'> Liberty
+November 7
+14–3–4
+9th
+2023
+Horizon
+background-color:#222222!important;color:#FFFFFF!important;</span>"}]]}'> Milwaukee
+November 8
+13–4–3
+19th
+2024
+Ivy
+background-color:#00693E!important;color:#FFFFFF!important;</span>"}]]}'> Dartmouth
+November 9
+11–3–4
+11th
+2005
+MAAC
+background-color:#CD1041!important;color:#FFFFFF!important;</span>"}]]}'> Sacred Heart
+11–8–2
+2nd
+2001
+MAC
+background-color:#532E1F!important;color:#FFFFFF!important;</span>"}]]}'> Western Michigan
+November 7
+16–3–1
+5th
+2024
+Missouri Valley
+background-color:#001E62!important;color:#FFFFFF!important;</span>"}]]}'> UIC
+November 9
+8–7–6
+1st
+None
+Mountain West
+background-color:#00263A!important;color:#FFFFFF!important;</span>"}]]}'> Utah State
+November 8
+10–6–6
+5th
+2024
+Northeast
+background-color:#004331!important;color:#FFFFFF!important;</span>"}]]}'> Wagner
+November 9
+11–2–6
+1st
+None
+Ohio Valley
+background-color:#4F2984!important;color:#FFFFFF!important;</span>"}]]}'> Tennessee Tech
+7–6–8
+2nd
+2000
+Patriot
+background-color:#2C2A29!important;color:#FFFFFF!important;</span>"}]]}'> Army West Point
+14–5–2
+3rd
+2011
+SEC
+background-color:#461D7C!important;color:#FFFFFF!important;</span>"}]]}'> LSU
+13–6–3
+11th
+2024
+SoCon
+background-color:#0C2340!important;color:#FFFFFF!important;</span>"}]]}'> Samford
+13–2–5
+9th
+2024
+Southland
+background-color:#062F87!important;color:#FFFFFF!important;</span>"}]]}'> Houston Christian
+12–8–2
+3rd
+2016
+Summit League
+background-color:#0032A0!important;color:#FFFFFF!important;</span>"}]]}'> South Dakota State
+13–2–6
+9th
+2024
+Sun Belt
+background-color:#501214!important;color:#FFFFFF!important;</span>"}]]}'> Texas State
+November 8
+10–3–7
+6th
+2011
+SWAC
+background-color:#000000!important;color:#FFFFFF!important;</span>"}]]}'> Grambling State
+November 9
+10–6–5
+3rd
+2023
+WAC
+background-color:#002554!important;color:#FFFFFF!important;</span>"}]]}'> California Baptist
+November 8
+12–8–2
+2nd
+2024
+West Coast
+background-color:#00205C!important;color:#FFFFFF!important;</span>"}]]}'> Pepperdine
+11–6–2
+15th
+2024
+At-Large Bids
+Conference
+Team
+Record
+Appearance [ 6 ]
+Last Bid [ 6 ]
+American
+background-color:#004991!important;color:#FFFFFF!important;</span>"}]]}'> Memphis
+16–0–3
+13th
+2023
+ACC
+background-color:#F56600!important;color:#000000!important;</span>"}]]}'> Clemson
+7–5–5
+25th
+2023
+background-color:#013088!important;color:#FFFFFF!important;</span>"}]]}'> Duke
+13–4–1
+30th
+2024
+background-color:#782F40!important;color:#FFFFFF!important;</span>"}]]}'> Florida State
+10–2–4
+26th
+2024
+background-color:#C9001F!important;color:#FFFFFF!important;</span>"}]]}'> Louisville
+13–4–2
+7th
+2019
+background-color:#7BAFD4!important;color:#000000!important;</span>"}]]}'> North Carolina
+12–6–0
+44th
+2024
+background-color:#0C2340!important;color:#FFFFFF!important;</span>"}]]}'> Notre Dame
+14–1–3
+31st
+2024
+background-color:#232D4B!important;color:#FFFFFF!important;</span>"}]]}'> Virginia
+12–3–4
+37th
+2024
+background-color:#2C2A29!important;color:#FFFFFF!important;</span>"}]]}'> Wake Forest
+10–4–4
+24th
+2024
+Big East
+background-color:#041E42!important;color:#FFFFFF!important;</span>"}]]}'> Georgetown
+15–3–2
+16th
+2024
+Big Ten
+background-color:#13294B!important;color:#FFFFFF!important;</span>"}]]}'> Illinois
+13–5–2
+13th
+2013
+background-color:#000000!important;color:#FFFFFF!important;</span>"}]]}'> Iowa
+11–4–4
+6th
+2024
+background-color:#173F35!important;color:#FFFFFF!important;</span>"}]]}'> Michigan State
+12–3–6
+8th
+2024
+background-color:#582C83!important;color:#FFFFFF!important;</span>"}]]}'> Northwestern
+9–4–7
+8th
+2024
+background-color:#BA0C2F!important;color:#FFFFFF!important;</span>"}]]}'> Ohio State
+8–4–6
+19th
+2022
+background-color:#001E44!important;color:#FFFFFF!important;</span>"}]]}'> Penn State
+9–7–3
+31st
+2024
+background-color:#2774AE!important;color:#FFFFFF!important;</span>"}]]}'> UCLA
+11–5–3
+29th
+2024
+background-color:#C5050C!important;color:#FFFFFF!important;</span>"}]]}'> Wisconsin
+13–5–2
+26th
+2024
+Big 12
+background-color:#154734!important;color:#FFFFFF!important;</span>"}]]}'> Baylor
+12–4–4
+7th
+2018
+background-color:#000000!important;color:#FFFFFF!important;</span>"}]]}'> Colorado
+15–3–3
+15th
+2024
+background-color:#0051BA!important;color:#FFFFFF!important;</span>\""}]]}'> Kansas
+14–5–3
+11th
+2024
+background-color:#4D1979!important;color:#FFFFFF!important;</span>"}]]}'> TCU
+15–2–2
+9th
+2024
+background-color:#C30020!important;color:#FFFFFF!important;</span>"}]]}'> Texas Tech
+13–2–4
+10th
+2024
+background-color:#000000!important;color:#FFFFFF!important;</span>"}]]}'> UCF
+11–3–5
+23rd
+2022
+background-color:#002855!important;color:#FFFFFF!important;</span>\""}]]}'> West Virginia
+13–3–3
+24th
+2024
+SEC
+background-color:#A41F35!important;color:#FFFFFF!important;</span>"}]]}'> Arkansas
+9–4–4
+12th
+2024
+background-color:#B30838!important;color:#FFFFFF!important;</span>"}]]}'> Alabama
+11–8–1
+7th
+2023
+background-color:#BA0C2F!important;color:#FFFFFF!important;</span>"}]]}'> Georgia
+11–4–5
+13th
+2024
+background-color:#0033A0!important;color:#FFFFFF!important;</span>"}]]}'> Kentucky
+12–5–3
+13th
+2024
+background-color:#5D1725!important;color:#FFFFFF!important;</span>"}]]}'> Mississippi State
+12–6–1
+5th
+2024
+background-color:#73000A!important;color:#FFFFFF!important;</span>"}]]}'> South Carolina
+10–4–5
+19th
+2024
+background-color:#FF8200!important;color:#000000!important;</span>"}]]}'> Tennessee
+12–3–3
+17th
+2024
+background-color:#000000!important;color:#FFFFFF!important;</span>"}]]}'> Vanderbilt
+16–3–1
+14th
+2024
+WAC
+background-color:#275D38!important;color:#FFFFFF!important;</span>"}]]}'> Utah Valley
+14–4–3
+5th
+2022
+Bracket
+[ edit ]
+The bracket was announced on Monday, November 10, 2025. [ 7 ] First round games were played on November 14 and 15 at the campus site of the seeded team. [ 8 ]
+Notre Dame bracket
+[ edit ]
+''Campus Sites''"},"RD2":{"wt":"'''Second round'''<br>''Regional Campus Sites''"},"RD3":{"wt":"'''Round of 16'''<br>''Regional Campus Sites''"},"RD4":{"wt":"'''Quarterfinal'''<br>''Campus Sites''"},"team-width":{"wt":"160"},"RD1-seed01":{"wt":"1"},"RD1-team01":{"wt":"'''[[2025 Notre Dame Fighting Irish women's soccer team|Notre Dame]]*'''"},"RD1-score01":{"wt":"'''4'''"},"RD1-seed02":{"wt":""},"RD1-team02":{"wt":"{{csoc link|2025|sex=women|team=UIC Flames|title=UIC}}"},"RD1-score02":{"wt":"0"},"RD1-seed03":{"wt":""},"RD1-team03":{"wt":"'''{{csoc link|2025|sex=women|team=Ohio State Buckeyes|title=Ohio State}}'''"},"RD1-score03":{"wt":"'''2'''"},"RD1-seed04":{"wt":"8"},"RD1-team04":{"wt":"{{csoc link|2025|sex=women|team=Georgia Bulldogs|title=Georgia}}*"},"RD1-score04":{"wt":"0"},"RD1-seed05":{"wt":"5"},"RD1-team05":{"wt":"'''{{csoc link|2025|sex=women|team=Baylor Bears|title=Baylor}}'''*"},"RD1-score05":{"wt":"'''3'''"},"RD1-seed06":{"wt":""},"RD1-team06":{"wt":"{{csoc link|2025|sex=women|team=Texas State Bobcats|title=Texas State}}"},"RD1-score06":{"wt":"0"},"RD1-seed07":{"wt":""},"RD1-team07":{"wt":"{{csoc link|2025|sex=women|team=Western Michigan Broncos|title=Western Michigan}}"},"RD1-score07":{"wt":"2"},"RD1-seed08":{"wt":"4"},"RD1-team08":{"wt":"'''{{csoc link|2025|sex=women|team=Wisconsin Badgers|title=Wisconsin}}'''*"},"RD1-score08":{"wt":"'''3'''"},"RD1-seed09":{"wt":"3"},"RD1-team09":{"wt":"'''[[2025 Florida State Seminoles women's soccer team|Florida State]]'''*"},"RD1-score09":{"wt":"'''4'''"},"RD1-seed10":{"wt":""},"RD1-team10":{"wt":"{{csoc link|2025|sex=women|team=Samford Bulldogs|title=Samford}}"},"RD1-score10":{"wt":"0"},"RD1-seed11":{"wt":""},"RD1-team11":{"wt":"'''{{csoc link|2025|sex=women|team=Lipscomb Bison|title=Lipscomb}}'''"},"RD1-score11":{"wt":"'''1'''"},"RD1-seed12":{"wt":"6"},"RD1-team12":{"wt":"{{csoc link|2025|sex=women|team=Mississippi State Bulldogs|title=Mississippi State}}*"},"RD1-score12":{"wt":"0"},"RD1-seed13":{"wt":"7"},"RD1-team13":{"wt":"'''{{csoc link|2025|sex=women|team=West Virginia Mountaineers|title=West Virginia}}'''*"},"RD1-score13":{"wt":"'''5'''"},"RD1-seed14":{"wt":""},"RD1-team14":{"wt":"{{csoc link|2025|sex=women|team=Wagner Seahawks|title=Wagner}}"},"RD1-score14":{"wt":"0"},"RD1-seed15":{"wt":""},"RD1-team15":{"wt":"{{csoc link|2025|sex=women|team=Sacred Heart Pioneers|title=Sacred Heart}}"},"RD1-score15":{"wt":"0"},"RD1-seed16":{"wt":"2"},"RD1-team16":{"wt":"'''{{csoc link|2025|sex=women|team=Georgetown Hoyas|title=Georgetown}}'''*"},"RD1-score16":{"wt":"'''3'''"},"RD2-seed01":{"wt":"1"},"RD2-team01":{"wt":"Notre Dame*"},"RD2-score01":{"wt":"0"},"RD2-seed02":{"wt":"{{nbsp}}"},"RD2-team02":{"wt":"'''Ohio State ([[Overtime (sports)#Association football|a.e.t.]])'''"},"RD2-score02":{"wt":"'''1'''"},"RD2-seed03":{"wt":"5"},"RD2-team03":{"wt":"'''Baylor'''"},"RD2-score03":{"wt":"'''1'''"},"RD2-seed04":{"wt":"4"},"RD2-team04":{"wt":"Wisconsin"},"RD2-score04":{"wt":"0"},"RD2-seed05":{"wt":"3"},"RD2-team05":{"wt":"'''Florida State'''"},"RD2-score05":{"wt":"'''1'''"},"RD2-seed06":{"wt":""},"RD2-team06":{"wt":"Lipscomb"},"RD2-score06":{"wt":"0"},"RD2-seed07":{"wt":"7"},"RD2-team07":{"wt":"West Virginia"},"RD2-score07":{"wt":"1 (3)"},"RD2-seed08":{"wt":"2"},"RD2-team08":{"wt":"'''Georgetown ([[Penalty shoot-out (association football)|pen.]])'''"},"RD2-score08":{"wt":"'''1 (4)'''"},"RD3-seed01":{"wt":""},"RD3-team01":{"wt":"'''Ohio State ([[Overtime (sports)#Association football|a.e.t.]])'''"},"RD3-score01":{"wt":"'''2'''"},"RD3-seed02":{"wt":"5"},"RD3-team02":{"wt":"Baylor"},"RD3-score02":{"wt":"1"},"RD3-seed03":{"wt":"3"},"RD3-team03":{"wt":"'''Florida State'''"},"RD3-score03":{"wt":"'''3'''"},"RD3-seed04":{"wt":"2"},"RD3-team04":{"wt":"Georgetown*"},"RD3-score04":{"wt":"1"},"RD4-seed01":{"wt":""},"RD4-team01":{"wt":"Ohio State"},"RD4-score01":{"wt":"1"},"RD4-seed02":{"wt":"3"},"RD4-team02":{"wt":"'''Florida State*'''"},"RD4-score02":{"wt":"'''4'''"}},"i":0}}]}'> First round
+Campus Sites
+Second round
+Regional Campus Sites
+Round of 16
+Regional Campus Sites
+Quarterfinal
+Campus Sites
+1
+Notre Dame *
+4
+UIC
+0
+1
+Notre Dame*
+0
+Ohio State ( a.e.t. )
+1
+Ohio State
+2
+8
+Georgia *
+0
+Ohio State ( a.e.t. )
+2
+5
+Baylor
+1
+5
+Baylor *
+3
+Texas State
+0
+5
+Baylor
+1
+4
+Wisconsin
+0
+Western Michigan
+2
+4
+Wisconsin *
+3
+Ohio State
+1
+3
+Florida State*
+4
+3
+Florida State *
+4
+Samford
+0
+3
+Florida State
+1
+Lipscomb
+0
+Lipscomb
+1
+6
+Mississippi State *
+0
+3
+Florida State
+3
+2
+Georgetown*
+1
+7
+West Virginia *
+5
+Wagner
+0
+7
+West Virginia
+1 (3)
+2
+Georgetown ( pen. )
+1 (4)
+Sacred Heart
+0
+2
+Georgetown *
+3
+* Host institution
+Schedule
+[ edit ]
+First round
+[ edit ]
+(8) Georgia v Ohio State
+November 14 (8) Georgia 0–2 Ohio State Athens, GA
+3:00 p.m. EST
+Report
+9' Amanda Schlueter
+69' Riley Lijewski
+Stadium: Turner Soccer Complex
+Attendance: 1,203
+Referee: Benjamin Oakley
+Assistant referees: Alexandru Focea
+Assistant referees: Kevin Huet
+Fourth official: Wesley Williams
+(3) Florida State v Samford
+November 14 (3) Florida State 4–0 Samford Tallahassee, FL
+5:00 p.m. EST
+Yuna McCormack 11'
+Taylor Suarez 49'
+Wrianna Hudson 61'
+Lara Dantas 79'
+Report
+64' Martha Bishop
+Stadium: Seminole Soccer Complex
+Attendance: 1,517
+Referee: Benjamin Meyer
+Assistant referees: Dean Morgan
+Assistant referees: Godwin Sevor
+Fourth official: Mario Maric
+(2) Georgetown v Sacred Heart
+November 14 (2) Georgetown 3–0 Sacred Heart Washington, D.C.
+6:30 p.m. EST
+Natalie Means 18' , 63'
+Shay Montgomery 27'
+Report
+Stadium: Shaw Field
+Attendance: 537
+Referee: Danielle Cornetta
+Assistant referees: Sami Card
+Assistant referees: Elena Dauphinais
+Fourth official: Stephen Foster
+(7) West Virginia v Wagner
+November 14 (7) West Virginia 5–0 Wagner Morgantown, WV
+7:00 p.m. EST
+Anna Hauer 1' ( pen. )
+Abbey Olexa 22' , 57'
+Alicia Riggins 40' , 42'
+Report
+Stadium: Dick Dlesk Soccer Stadium
+Attendance: 736
+Referee: Cedrick Cook
+Assistant referees: Ashley Smyda
+Assistant referees: Taylor Bombalski
+Fourth official: Scarlet Agrawal
+(5) Baylor v Texas State
+November 14 (5) Baylor 3–0 Texas State Waco, TX
+8:00 p.m. EST
+Kai Hayes 36'
+Hallie Augustyn 61'
+Olivia Hess 66'
+Report
+Stadium: Betty Lou Mays Soccer Field
+Attendance: 827
+Referee: Gloria Martinez Resendiz
+Assistant referees: Chana Forstall
+Assistant referees: Xiana Pang-Abbs
+Fourth official: Kaitlyn Trowbridge
+(4) Wisconsin v Western Michigan
+November 14 (4) Wisconsin 3–2 Western Michigan Madison, WI
+8:00 p.m. EST
+Erin Connolly 58' ( pen. ) , 72'
+Ashley Martinez 77'
+Adee Boer 80'
+Report
+24' Abby Smothers
+81' Meredith Vance
+Stadium: McClimmon Soccer Complex
+Attendance: 826
+Referee: Peter Bernardy
+Assistant referees: Eulogio Villalpando
+Assistant referees: Ryan Birdsall
+Fourth official: Ryan Shanklin
+(6) Mississippi State v Lipscomb
+November 15 (6) Mississippi State 0–1 Lipscomb Starkville, MS
+6:00 p.m. EST
+Report
+32' Bella Carapazza
+55' Annessa Shively
+90' Maddy Rhodes
+Stadium: MSU Soccer Park
+Attendance: 1,590
+Referee: Alexander Connelly
+Assistant referees: Laith Dahhan
+Assistant referees: Laadi Issaka
+Fourth official: Dorian Del Toro
+(1) Notre Dame v UIC
+November 15 (1) Notre Dame 4–0 UIC Notre Dame, IN
+6:00 p.m. EST
+Tessa Knapp 7'
+Charlie Codd 64' , 84'
+Ellie Hodsden 90'
+Report
+Stadium: Alumni Stadium
+Attendance: 1,296
+Referee: Ryan Homik
+Assistant referees: Race Williams
+Assistant referees: Fernando Pina
+Fourth official: Abdu Bensalah
+Second round
+[ edit ]
+(3) Florida State v Lipscomb
+November 20 (3) Florida State 1–0 Lipscomb Washington, D.C.
+2:00 p.m. EST
+Heather Gilchrist 24'
+Report
+Stadium: Shaw Field
+Attendance: 413
+Referee: Marie Durr
+Assistant referees: Josh Pitt
+Assistant referees: Amelia Graytock
+Fourth official: Scarlet Agrawal
+(4) Wisconsin v (5) Baylor
+November 20 (4) Wisconsin 0–1 (5) Baylor Notre Dame, IN
+2:00 p.m. EST
+UW Team 85'
+Report
+23' Kai Hayes
+45' Tyler Isgrig
+Stadium: Alumni Stadium
+Attendance: 100
+Referee: Erin Patterson
+Assistant referees: Khalaf Al-Latayfeh Malkawi
+Assistant referees: Khary Williams
+Fourth official: Abdu Bensalah
+(7) West Virginia v (2) Georgetown
+November 20 (7) West Virginia 1–1 ( a.e.t. )
+( 3–4 p ) (2) Georgetown Washington, D.C.
+5:00 p.m. EST
+Ajanae Respass 3'
+Report
+23' Lizzie Heller
+104' GU Team
+Stadium: Shaw Field
+Attendance: 834
+Referee: Meghan Mullen
+Assistant referees: Ariel Raban
+Assistant referees: Taylor Heemstra
+Fourth official: Alla Stepanov
+Penalties
+Anna Hauer
+Nyema Ingleton
+Maya Leoni
+Mackenzie Smith
+Ava Arnold
+Shay Montgomery
+Henley Tippins
+Maja Lardner
+Lizzie Heller
+Natalie Means
+(1) Notre Dame v Ohio State
+November 20 (1) Notre Dame 0–1 ( a.e.t. ) Ohio State Notre Dame, IN
+6:00 p.m. EST
+Report
+102' Ava Bramblett
+110' Jadin Bonham
+Stadium: Alumni Stadium
+Attendance: 1,009
+Referee: Aaron Hernandez
+Assistant referees: Laura Snyder
+Assistant referees: Shawn Westerfield
+Fourth official: John Kennedy
+Round of 16
+[ edit ]
+(2) Georgetown v (3) Florida State
+November 23 (2) Georgetown 1–3 (3) Florida State Washington, D.C.
+12:00 PM EST
+Mary Cochran 58'
+Report
+40' Mimi Van Zanten
+47' Nyanya Touray
+78' Jaida McGrew
+Stadium: Shaw Field
+Attendance: 1,625
+Referee: John Griggs
+Assistant referees: Ashley Smyda
+Assistant referees: Taylor Bombalski
+Fourth official: Andrea Pileri
+(5) Baylor v Ohio State
+November 23 (5) Baylor 1–2 ( a.e.t. ) Ohio State Notre Dame, IN
+2:00 PM EST
+Kai Hayes 50' 70'
+Report
+65' Amanda Schlueter
+105' Anika Poremba
+Stadium: Alumni Stadium
+Attendance: 202
+Referee: Alex Beehler
+Assistant referees: Marcus Barnett
+Assistant referees: Miklos Hendricks
+Fourth official: Dylan Seitz
+Quarterfinals
+[ edit ]
+(3) Florida State v Ohio State
+November 28 (3) Florida State 4–1 Ohio State Tallahassee, FL
+5:00 PM EST
+Jordynn Dudley 36' , 40'
+Yuna McCormack 51'
+Wrianna Hudson 85'
+Report
+50' Amanda Schlueter
+Stadium: Seminole Soccer Complex
+Attendance: 2,408
+Referee: Elvis Osmanovic
+Assistant referees: Sam Bilbo
+Assistant referees: Kenan Mehmedic
+Fourth official: Arnel Selman
+Rankings shown are seeds in this bracket of the tournament.
+Vanderbilt bracket
+[ edit ]
+''Campus Sites''"},"RD2":{"wt":"'''Second round'''<br>''Regional Campus Sites''"},"RD3":{"wt":"'''Round of 16'''<br>''Regional Campus Sites''"},"RD4":{"wt":"'''Quarterfinal'''<br>''Campus Sites''"},"team-width":{"wt":"160"},"RD1-seed01":{"wt":"2"},"RD1-team01":{"wt":"'''{{csoc link|2025|sex=women|team=TCU Horned Frogs|title=TCU}}'''*"},"RD1-score01":{"wt":"'''7'''"},"RD1-seed02":{"wt":""},"RD1-team02":{"wt":"{{csoc link|2025|sex=women|team=Grambling State Tigers|title=Grambling}}"},"RD1-score02":{"wt":"0"},"RD1-seed03":{"wt":""},"RD1-team03":{"wt":"{{csoc link|2025|sex=women|team=Illinois Fighting Illini|title=Illinois}}"},"RD1-score03":{"wt":"1"},"RD1-seed04":{"wt":"7"},"RD1-team04":{"wt":"'''{{csoc link|2025|sex=women|team=Memphis Tigers|title=Memphis}}'''*"},"RD1-score04":{"wt":"'''2'''"},"RD1-seed05":{"wt":"6"},"RD1-team05":{"wt":"'''{{csoc link|2025|sex=women|team=Texas Tech Red Raiders|title=Texas Tech}}'''*"},"RD1-score05":{"wt":"'''2'''"},"RD1-seed06":{"wt":""},"RD1-team06":{"wt":"{{csoc link|2025|sex=women|team=UTSA Roadrunners|title=UTSA}}"},"RD1-score06":{"wt":"1"},"RD1-seed07":{"wt":""},"RD1-team07":{"wt":"'''[[2025 North Carolina Tar Heels women's soccer team|North Carolina]]'''"},"RD1-score07":{"wt":"'''3'''"},"RD1-seed08":{"wt":"3"},"RD1-team08":{"wt":"{{csoc link|2025|sex=women|team=Tennessee Volunteers|title=Tennessee}}*"},"RD1-score08":{"wt":"1"},"RD1-seed09":{"wt":"4"},"RD1-team09":{"wt":"'''{{csoc link|2025|sex=women|team=LSU Tigers|title=LSU}}'''*"},"RD1-score09":{"wt":"'''4'''"},"RD1-seed10":{"wt":""},"RD1-team10":{"wt":"{{csoc link|2025|sex=women|team=Houston Christian Huskies|title=Houston Christian}}"},"RD1-score10":{"wt":"1"},"RD1-seed11":{"wt":""},"RD1-team11":{"wt":"{{csoc link|2025|sex=women|team=South Dakota State Jackrabbits|title=South Dakota State}}"},"RD1-score11":{"wt":"0"},"RD1-seed12":{"wt":"5"},"RD1-team12":{"wt":"'''{{csoc link|2025|sex=women|team=Iowa Hawkeyes|title=Iowa}}'''*"},"RD1-score12":{"wt":"'''1'''"},"RD1-seed13":{"wt":"8"},"RD1-team13":{"wt":"'''[[2025 Clemson Tigers women's soccer team|Clemson]]'''*"},"RD1-score13":{"wt":"'''2'''"},"RD1-seed14":{"wt":""},"RD1-team14":{"wt":"{{csoc link|2025|sex=women|team=Liberty Flames|title=Liberty}}"},"RD1-score14":{"wt":"1"},"RD1-seed15":{"wt":""},"RD1-team15":{"wt":"{{csoc link|2025|sex=women|team=Tennessee Tech Golden Eagles|title=Tennessee Tech}}"},"RD1-score15":{"wt":"0"},"RD1-seed16":{"wt":"1"},"RD1-team16":{"wt":"'''{{csoc link|2025|sex=women|team=Vanderbilt Commodores|title=Vanderbilt}}'''*"},"RD1-score16":{"wt":"'''2'''"},"RD2-seed01":{"wt":"2"},"RD2-team01":{"wt":"'''TCU*'''"},"RD2-score01":{"wt":"'''4'''"},"RD2-seed02":{"wt":"7"},"RD2-team02":{"wt":"Memphis"},"RD2-score02":{"wt":"0"},"RD2-seed03":{"wt":"6"},"RD2-team03":{"wt":"Texas Tech"},"RD2-score03":{"wt":"1 (3)"},"RD2-seed04":{"wt":""},"RD2-team04":{"wt":"'''North Carolina ([[Penalty shoot-out (association football)|pen.]])'''"},"RD2-score04":{"wt":"'''1 (4)'''"},"RD2-seed05":{"wt":"4"},"RD2-team05":{"wt":"'''LSU'''"},"RD2-score05":{"wt":"'''2'''"},"RD2-seed06":{"wt":"5"},"RD2-team06":{"wt":"Iowa"},"RD2-score06":{"wt":"1"},"RD2-seed07":{"wt":"8"},"RD2-team07":{"wt":"Clemson"},"RD2-score07":{"wt":"2"},"RD2-seed08":{"wt":"1"},"RD2-team08":{"wt":"'''Vanderbilt* ([[Overtime (sports)#Association football|a.e.t.]])'''"},"RD2-score08":{"wt":"'''3'''"},"RD3-seed01":{"wt":"2"},"RD3-team01":{"wt":"'''TCU* (pen.)'''"},"RD3-score01":{"wt":"'''1 (4)'''"},"RD3-seed02":{"wt":""},"RD3-team02":{"wt":"North Carolina"},"RD3-score02":{"wt":"1 (3)"},"RD3-seed03":{"wt":"4"},"RD3-team03":{"wt":"LSU"},"RD3-score03":{"wt":"0"},"RD3-seed04":{"wt":"1"},"RD3-team04":{"wt":"'''Vanderbilt*'''"},"RD3-score04":{"wt":"'''1'''"},"RD4-seed01":{"wt":"2"},"RD4-team01":{"wt":"'''TCU (a.e.t.)'''"},"RD4-score01":{"wt":"'''2'''"},"RD4-seed02":{"wt":"1"},"RD4-team02":{"wt":"Vanderbilt*"},"RD4-score02":{"wt":"1"}},"i":0}}]}'> First round
+Campus Sites
+Second round
+Regional Campus Sites
+Round of 16
+Regional Campus Sites
+Quarterfinal
+Campus Sites
+2
+TCU *
+7
+Grambling
+0
+2
+TCU*
+4
+7
+Memphis
+0
+Illinois
+1
+7
+Memphis *
+2
+2
+TCU* (pen.)
+1 (4)
+North Carolina
+1 (3)
+6
+Texas Tech *
+2
+UTSA
+1
+6
+Texas Tech
+1 (3)
+North Carolina ( pen. )
+1 (4)
+North Carolina
+3
+3
+Tennessee *
+1
+2
+TCU (a.e.t.)
+2
+1
+Vanderbilt*
+1
+4
+LSU *
+4
+Houston Christian
+1
+4
+LSU
+2
+5
+Iowa
+1
+South Dakota State
+0
+5
+Iowa *
+1
+4
+LSU
+0
+1
+Vanderbilt*
+1
+8
+Clemson *
+2
+Liberty
+1
+8
+Clemson
+2
+1
+Vanderbilt* ( a.e.t. )
+3
+Tennessee Tech
+0
+1
+Vanderbilt *
+2
+* Host institution
+Schedule
+[ edit ]
+First round
+[ edit ]
+(8) Clemson v Liberty
+November 14 (8) Clemson 2–1 Liberty Clemson, SC
+6:00 p.m. EST
+Elle Bissinger 19'
+Taylor Leib 82'
+Tatum Short 90'
+Report
+20' Ivy Garner
+Stadium: Riggs Field
+Attendance: 962
+Referee: Kyle Johnson
+Assistant referees: Jason Kent
+Assistant referees: Wilmer Soriano
+Fourth official: Kevin Broadley
+(5) Iowa v South Dakota State
+November 14 (5) Iowa 1–0 South Dakota State Iowa City, IA
+6:00 p.m. EST
+Kenzie Roling 3'
+Fernanda Mayrink 50'
+Report
+Stadium: UI Soccer Complex
+Attendance: 2,711
+Referee: Alex Hofstetter
+Assistant referees: Jared Kuehl
+Assistant referees: Aaron Valley
+Fourth official: Esad Omanovic
+(3) Tennessee v North Carolina
+November 14 (3) Tennessee 1–3 North Carolina Knoxville, TN
+6:00 p.m. EST
+Kate Runyon 27'
+67' Reese Mattern
+84' Sarah Kate Rath
+Report
+30' , 58' Kate Faasse
+36' Caitlin Mara
+Stadium: Regal Soccer Stadium
+Attendance: 1,721
+Referee: Dorian Del Toro
+Assistant referees: Logan Busby
+Assistant referees: Mary Fernandez
+Fourth official: Christopher Heintzman
+(6) Texas Tech v UTSA
+November 14 (6) Texas Tech 2–1 UTSA Lubbock, TX
+7:00 p.m. EST
+Peyton Parsons 14'
+Taylor Zdrojewski 77'
+Report
+61' Jasmine Kessler
+75' Leah Varela
+Stadium: John Walker Soccer Complex
+Attendance: 1,299
+Referee: Travis Haight
+Assistant referees: Eric Guzman
+Assistant referees: Chris Danfour
+Fourth official: Brandon Queri
+(4) LSU v Houston Christian
+November 14 (4) LSU 4–1 Houston Christian Baton Rouge, LA
+8:00 p.m. EST
+Sariyah Bailey 26' , 81'
+Gabbi Ceballos 50'
+Ída Marín Hermannsdóttir 80'
+Report
+68' Ella Remy
+Stadium: LSU Soccer Stadium
+Attendance: 2,132
+Referee: Sean Caouette
+Assistant referees: Sam Bilbo
+Assistant referees: Jalen Gray
+Fourth official: Jordan Gray
+(2) TCU v Grambling
+November 14 (2) TCU 7–0 Grambling Fort Worth, TX
+8:00 p.m. EST
+Seven Castain 11' , 61' , 68'
+Emma Yolinsky 22' , 53'
+Cameron Patton 78'
+Grace Vest 85' ( pen. )
+Report
+67' Aaniyah Frye
+Stadium: Garvey-Rosenthal Stadium
+Attendance: 700
+Referee: Habeeb Hooshmand
+Assistant referees: Emily Gomez
+Assistant referees: Joshua Ell
+Fourth official: Tim Debysingh
+(1) Vanderbilt v Tennessee Tech
+November 14 (1) Vanderbilt 2–0 Tennessee Tech Nashville, TN
+8:00 p.m. EST
+Courtney Jones 56'
+Mary Beth McLaughlin 61'
+Report
+Stadium: Vanderbilt Soccer/Lacrosse Complex
+Attendance: 1,277
+Referee: Celeste Roberts
+Assistant referees: Lila Remache
+Assistant referees: Samantha Burket
+Fourth official: Jessica Medley
+(7) Memphis v Illinois
+November 15 (7) Memphis 2–1 Illinois Memphis, TN
+8:00 p.m. EST
+Ai Kitagawa 12' , 45'
+Evelyn Mackay 83'
+Report
+Ellen Persson 8'
+Sydney Stephens 27'
+Stadium: Mike Rose Soccer Complex
+Attendance: 1,801
+Referee: Kylie Rhodes
+Assistant referees: Jessica Hoeft
+Assistant referees: Logan Reeves
+Fourth official: Melinda Homa
+Second round
+[ edit ]
+(4) LSU v (5) Iowa
+November 21 (4) LSU 2–1 (5) Iowa Memphis, TN
+3:00 p.m. EST
+Ída Marín Hermannsdóttir 17' ( pen. )
+Ava Galligan 66'
+Jocelyn Ollivierre 71'
+Report
+14' Elle Wildman
+Stadium: Mike Rose Soccer Complex
+Attendance: 110
+Referee: Amin Hadzic
+Assistant referees: Deny Kulasinac
+Assistant referees: Jessica Hoeft
+Fourth official: Don Eubank
+(6) Texas Tech v North Carolina
+November 21 (6) Texas Tech 1–1 ( a.e.t. )
+( 3–4 p ) North Carolina Fort Worth, TX
+5:00 p.m. EST
+Macy Blackburn 60'
+Report
+58' Linda Ullmark
+85' Kate Faasse
+Stadium: Garvey-Rosenthal Stadium
+Attendance: 0
+Referee: Daniel Radford
+Assistant referees: Aaron Donahoe
+Assistant referees: Jason Guillen
+Fourth official: Muhammad Kaleia
+Penalties
+Macy Blackburn
+Peyton Parsons
+Sam Courtwright
+Taylor Zdrojewski
+Millie Elwood
+Kate Faasse
+Tessa Dellarose
+Lauren Malsom
+Linda Ullmark
+Olivia Thomas
+(2) TCU v (7) Memphis
+November 21 (2) TCU 4–0 (7) Memphis Fort Worth, TX
+8:00 p.m. EST
+Seven Castain 2' , 42'
+Katana Norman 10'
+Sydney Becerra 12'
+Evelyn Mackay 59'
+Report
+Stadium: Garvey-Rosenthal Stadium
+Attendance: 1,543
+Referee: Travis Haight
+Assistant referees: Chris Danfort
+Assistant referees: Emily Gomez
+Fourth official: Gloria Martinez Resendiz
+(1) Vanderbilt v (8) Clemson
+November 21 (1) Vanderbilt 3–2 ( a.e.t. ) (8) Clemson Nashville, TN
+7:00 p.m. EST
+Sydney Watts 55'
+Mary Beth McLaughlin 57'
+VU Team 68'
+Maci Teater 89'
+Adysen Armenta 107'
+Report
+1' ( pen. ) Renee Lyles
+32' Renee Lyles
+65' Anna Castenfelt
+Stadium: Vanderbilt Soccer/Lacrosse Complex
+Attendance: 635
+Referee: Dorian Del Torro
+Assistant referees: Ryan Starr
+Assistant referees: Mary Fernandez
+Fourth official: Eric Phillips
+Round of 16
+[ edit ]
+(2) TCU v North Carolina
+November 24 (2) TCU 1–1 ( a.e.t. )
+( 4–3 p ) North Carolina Fort Worth, TX
+2:00 PM EST
+Katana Norman 32'
+Kamdyn Fuller 90'
+Kaela Martinez 75'
+Report
+33' Bella Gaetino
+82' Bella Devey
+Stadium: Garvey-Rosenthal Stadium
+Attendance: 1,684
+Referee: Alexander Connelly
+Assistant referees: Tiffini Turpin
+Assistant referees: Fevzi Demirhan
+Fourth official: Brandon Queri
+Penalties
+Sydney Becerra
+Seven Castain
+Kamdyn Fuller
+Cate Sarinopoulos
+AJ Hennessey
+Kate Faasse
+Tessa Dellarose
+Lauren Malsom
+Olivia Thomas
+Bella Gaetino
+(1) Vanderbilt v (4) LSU
+November 24 (1) Vanderbilt 1–0 (4) LSU Nashville, TN
+3:00 PM EST
+Sydney Watts 57'
+Melania Fullerton 65'
+Hannah McLaughlin 73'
+Report
+33' Ída Marín Hermannsdóttir
+Stadium: Vanderbilt Soccer/Lacrosse Complex
+Attendance: 1,005
+Referee: Aaron Hernandez
+Assistant referees: Jackson Krauser
+Assistant referees: Justin Higgins
+Fourth official: Donovan Eubank
+Quarterfinals
+[ edit ]
+(1) Vanderbilt v (2) TCU
+November 29 (1) Vanderbilt 1–2 ( a.e.t. ) (2) TCU Nashville, TN
+7:30 PM EST
+Reagan Pentz 63'
+Sydney Watts 77'
+Sara Wojdelko 86'
+VU Team 88'
+Report
+70' 86' Emma Yolinsky
+78' TCU Team
+96' ( pen. ) Sydney Becerra
+Stadium: Vanderbilt Soccer/Lacrosse Complex
+Attendance: 989
+Referee: Nick Balcer
+Assistant referees: Deny Kulsinac
+Assistant referees: Jessica Hoeft
+Fourth official: Don Eubank
+Rankings shown are seeds in this bracket of the tournament.
+Stanford bracket
+[ edit ]
+''Campus Sites''"},"RD2":{"wt":"'''Second round'''<br>''Regional Campus Sites''"},"RD3":{"wt":"'''Round of 16'''<br>''Regional Campus Sites''"},"RD4":{"wt":"'''Quarterfinal'''<br>''Campus Sites''"},"team-width":{"wt":"160"},"RD1-seed01":{"wt":"1"},"RD1-team01":{"wt":"'''[[2025 Stanford Cardinal women's soccer team|Stanford]]'''*"},"RD1-score01":{"wt":"'''3'''"},"RD1-seed02":{"wt":""},"RD1-team02":{"wt":"{{csoc link|2025|sex=women|team=Cal Poly Mustangs|title=Cal Poly}}"},"RD1-score02":{"wt":"1"},"RD1-seed03":{"wt":""},"RD1-team03":{"wt":"{{csoc link|2025|sex=women|team=Northwestern Wildcats|title=Northwestern}}"},"RD1-score03":{"wt":"2 (1)"},"RD1-seed04":{"wt":"8"},"RD1-team04":{"wt":"'''{{csoc link|2025|sex=women|team=Alabama Crimson Tide|title=Alabama}} ([[Penalty shoot-out (association football)|pen.]])'''*"},"RD1-score04":{"wt":"'''2 (3)'''"},"RD1-seed05":{"wt":"5"},"RD1-team05":{"wt":"'''{{csoc link|2025|sex=women|team=BYU Cougars|title=BYU}} ([[Penalty shoot-out (association football)|pen.]])'''*"},"RD1-score05":{"wt":"'''1 (7)'''"},"RD1-seed06":{"wt":""},"RD1-team06":{"wt":"{{csoc link|2025|sex=women|team=Utah State Aggies|title=Utah State}}"},"RD1-score06":{"wt":"1 (6)"},"RD1-seed07":{"wt":""},"RD1-team07":{"wt":"{{csoc link|2025|sex=women|team=Pepperdine Waves|title=Pepperdine}}"},"RD1-score07":{"wt":"1"},"RD1-seed08":{"wt":"4"},"RD1-team08":{"wt":"'''{{csoc link|2025|sex=women|team=UCLA Bruins|title=UCLA}}'''*"},"RD1-score08":{"wt":"'''3'''"},"RD1-seed09":{"wt":"3"},"RD1-team09":{"wt":"'''{{csoc link|2025|sex=women|team=Colorado Buffaloes|title=Colorado}} ([[Overtime (sports)#Association football|a.e.t.]])'''*"},"RD1-score09":{"wt":"'''2'''"},"RD1-seed10":{"wt":""},"RD1-team10":{"wt":"{{csoc link|2025|sex=women|team=Utah Valley Wolverines|title=Utah Valley}}"},"RD1-score10":{"wt":"1"},"RD1-seed11":{"wt":""},"RD1-team11":{"wt":"{{csoc link|2025|sex=women|team=Dayton Flyers|title=Dayton}}"},"RD1-score11":{"wt":"0"},"RD1-seed12":{"wt":"6"},"RD1-team12":{"wt":"'''{{csoc link|2025|sex=women|team=Xavier Musketeers|title=Xavier}}'''*"},"RD1-score12":{"wt":"'''2'''"},"RD1-seed13":{"wt":"7"},"RD1-team13":{"wt":"'''[[2025 Wake Forest Demon Deacons women's soccer team|Wake Forest]]'''*"},"RD1-score13":{"wt":"'''2'''"},"RD1-seed14":{"wt":""},"RD1-team14":{"wt":"{{csoc link|2025|sex=women|team=South Carolina Gamecocks|title=South Carolina}}"},"RD1-score14":{"wt":"1"},"RD1-seed15":{"wt":""},"RD1-team15":{"wt":"{{csoc link|2025|sex=women|team=Milwaukee Panthers|title=Milwaukee}}"},"RD1-score15":{"wt":"1"},"RD1-seed16":{"wt":"2"},"RD1-team16":{"wt":"'''{{csoc link|2025|sex=women|team=Michigan State Spartans|title=Michigan State}}'''*"},"RD1-score16":{"wt":"'''4'''"},"RD2-seed01":{"wt":"1"},"RD2-team01":{"wt":"'''Stanford*'''"},"RD2-score01":{"wt":"'''7'''"},"RD2-seed02":{"wt":"8"},"RD2-team02":{"wt":"Alabama"},"RD2-score02":{"wt":"3"},"RD2-seed03":{"wt":"5"},"RD2-team03":{"wt":"'''BYU'''"},"RD2-score03":{"wt":"'''1'''"},"RD2-seed04":{"wt":"4"},"RD2-team04":{"wt":"UCLA"},"RD2-score04":{"wt":"1"},"RD2-seed05":{"wt":"3"},"RD2-team05":{"wt":"'''Colorado'''"},"RD2-score05":{"wt":"'''4'''"},"RD2-seed06":{"wt":"6"},"RD2-team06":{"wt":"Xavier"},"RD2-score06":{"wt":"1"},"RD2-seed07":{"wt":"7"},"RD2-team07":{"wt":"Wake Forest"},"RD2-score07":{"wt":"0"},"RD2-seed08":{"wt":"2"},"RD2-team08":{"wt":"'''Michigan State'''*"},"RD2-score08":{"wt":"'''1'''"},"RD3-seed01":{"wt":"1"},"RD3-team01":{"wt":"'''Stanford*'''"},"RD3-score01":{"wt":"'''6'''"},"RD3-seed02":{"wt":"5"},"RD3-team02":{"wt":"BYU"},"RD3-score02":{"wt":"0"},"RD3-seed03":{"wt":"3"},"RD3-team03":{"wt":"Colorado"},"RD3-score03":{"wt":"1"},"RD3-seed04":{"wt":"2"},"RD3-team04":{"wt":"'''Michigan State*'''"},"RD3-score04":{"wt":"'''2'''"},"RD4-seed01":{"wt":"1"},"RD4-team01":{"wt":"'''Stanford*'''"},"RD4-score01":{"wt":"'''5'''"},"RD4-seed02":{"wt":"2"},"RD4-team02":{"wt":"Michigan State"},"RD4-score02":{"wt":"1"}},"i":0}}]}'> First round
+Campus Sites
+Second round
+Regional Campus Sites
+Round of 16
+Regional Campus Sites
+Quarterfinal
+Campus Sites
+1
+Stanford *
+3
+Cal Poly
+1
+1
+Stanford*
+7
+8
+Alabama
+3
+Northwestern
+2 (1)
+8
+Alabama ( pen. ) *
+2 (3)
+1
+Stanford*
+6
+5
+BYU
+0
+5
+BYU ( pen. ) *
+1 (7)
+Utah State
+1 (6)
+5
+BYU
+1
+4
+UCLA
+1
+Pepperdine
+1
+4
+UCLA *
+3
+1
+Stanford*
+5
+2
+Michigan State
+1
+3
+Colorado ( a.e.t. ) *
+2
+Utah Valley
+1
+3
+Colorado
+4
+6
+Xavier
+1
+Dayton
+0
+6
+Xavier *
+2
+3
+Colorado
+1
+2
+Michigan State*
+2
+7
+Wake Forest *
+2
+South Carolina
+1
+7
+Wake Forest
+0
+2
+Michigan State *
+1
+Milwaukee
+1
+2
+Michigan State *
+4
+* Host institution
+Schedule
+[ edit ]
+First round
+[ edit ]
+(2) Michigan State v Milwaukee
+November 14 (2) Michigan State 4–1 Milwaukee East Lansing, MI
+6:00 p.m. EST
+Kennedy Bell 10' 20'
+Kayla Briggs 54'
+Emerson Sargeant 57'
+Adelle Francis 68'
+Report
+77' Lola Wojcik
+Stadium: DeMartin Soccer Complex
+Attendance: 1,359
+Referee: Alex Beehler
+Assistant referees: Shane Richards
+Assistant referees: Miklos Hendricks
+Fourth official: Doug Ferguson
+(7) Wake Forest v South Carolina
+November 14 (7) Wake Forest 2–1 South Carolina Winston-Salem, NC
+6:00 p.m. EST
+Kylie Maxwell 15'
+Sammi Wiemann 60'
+Carly Wilson 76'
+Report
+24' Gracie Falla
+29' Reagan Schubach
+64' Cuyler Zulauf
+Stadium: Spry Stadium
+Attendance: 1,824
+Referee: Matthew Thompson
+Assistant referees: Justin Howard
+Assistant referees: Amy Balbier
+Fourth official: John Matto
+(8) Alabama v Northwestern
+November 14 (8) Alabama 2–2 ( a.e.t. )
+( 3–1 p ) Northwestern Tuscaloosa, AL
+7:00 p.m. EST
+Larkin Thomason 68'
+Maddie Padelski 85'
+Report
+28' Kennedy Roesch
+74' Megan Norkett
+81' Keira Wagner
+Stadium: Alabama Soccer Stadium
+Attendance: 936
+Referee: Amin Hadzic
+Assistant referees: Sam Bierster
+Assistant referees: Justin Higgins
+Fourth official: Damir Setkic
+Penalties
+Nadia Ramadan
+Larkin Thomason
+Melina Rebimbas
+Kennedy Roesch
+Caterina Regazzoni
+Liz Cardwell
+Megan Norkett
+(5) BYU v Utah State
+November 14 (5) BYU 1–1 ( a.e.t. )
+( 7–6 p ) Utah State Provo, UT
+8:00 p.m. EST
+Mia Goettsche 19'
+Afton Perry 99'
+Report
+53' Mia Mullenmeister
+101' Tess Werts
+Stadium: South Field
+Attendance: 3,566
+Referee: Nathan Boone
+Assistant referees: Josh Bertagnole
+Assistant referees: Kyler Baker
+Fourth official: Jason Allen
+Penalties
+MacKenzee Vance
+Ellie Walbruch
+Izzi Stratton
+Lucy Kesler
+Mika Krommenhoek
+Halle Dixon
+Afton Perry
+Mattyn Summers-Oviatt
+Mia Lopez
+Mia Goettsche
+Izzi Stratton
+Rachel Reitz
+Tess Werts
+Rine Yonaha
+Hadli Barrera
+Ellie Hendrix
+Mia Mullenmeister
+Samantha Sellers
+Summer Sofonia
+Capriel Winder
+Talia Winder
+Rachel Reitz
+(3) Colorado v Utah Valley
+November 14 (3) Colorado 2–1 ( a.e.t. ) Utah Valley Boulder, CO
+9:00 p.m. EST
+CU Team 31'
+Vivi Zacarias 39'
+Reagan Kotschau 106'
+Report
+5' Bailey Peterson
+Stadium: Prentup Field
+Attendance: 2,171
+Referee: Jared Mosher
+Assistant referees: Jacob Herold
+Assistant referees: Jae Lehman
+Fourth official: Brian Yip
+(1) Stanford v Cal Poly
+November 14 (1) Stanford 3–1 Cal Poly Stanford, CA
+9:00 p.m. EST
+Shae Harvey 7'
+Joelle Jung 37'
+Charlotte Kohler 46'
+Report
+1' , 72' Jessie Halladay
+43' Brennan Cole
+Stadium: Cagan Stadium
+Attendance: 1,920
+Referee: Iryna Petrunok
+Assistant referees: Jessica Peralta
+Assistant referees: Isai Baltezar
+Fourth official: Victor Mba
+(6) Xavier v Dayton
+November 15 (6) Xavier 2–0 Dayton Cincinnati, OH
+6:30 p.m. EST
+Regan Dancer 53'
+Elin Hansson 54'
+Report
+34' Lauren Fields
+Stadium: Corcoran Field
+Attendance: 1,430
+Referee: Nicole Green
+Assistant referees: Audra Fullen
+Assistant referees: Grace Barrett
+Fourth official: Brian Apwisch
+(4) UCLA v Pepperdine
+November 15 (4) UCLA 3–1 Pepperdine Los Angeles, CA
+9:00 p.m. EST
+Emma Egizii 3'
+Bella Winn 31'
+Payten Cooper 90'
+Leena Powell 90'
+Report
+15' Tatum Wynalda
+36' Kendall Campbell
+89' Tabitha LaParl
+Stadium: Wallis Annenberg Stadium
+Attendance: 613
+Referee: Michael Zapata
+Assistant referees: Abdu Razzaq Juma
+Assistant referees: Jennifer Fite
+Fourth official: Adrian Gonzalez
+Second round
+[ edit ]
+(3) Colorado v (6) Xavier
+November 20 (3) Colorado 4–1 (6) Xavier East Lansing, MI
+3:00 pm EST
+Faith Leyba 18'
+Reagan Kotschau 32' 83'
+Hope Leyba 87'
+Riley MacDonald 89'
+Report
+83' Natalie Bain
+89' Presley Pennekamp
+Stadium: DeMartin Soccer Complex
+Attendance: 100
+Referee: Nick Balcer
+Assistant referees: Jake Brochu
+Assistant referees: Justin Tatsak
+Fourth official: Mykela Hawkins
+(2) Michigan State v (7) Wake Forest
+November 20 (2) Michigan State 1–0 (7) Wake Forest East Lansing, MI
+6:00 pm EST
+Sofia Beerworth 33'
+Kayla Briggs 69'
+Report
+33' Sierra Sythe
+80' Alex Wood
+84' Laine DeNatale
+Stadium: DeMartin Soccer Complex
+Attendance: 1,247
+Referee: Nicole Green
+Assistant referees: Audra Fullen
+Assistant referees: Grace Barrett
+Fourth official: Stephen Castro
+(4) UCLA v (5) BYU
+November 21 (4) UCLA 1–1 ( a.e.t. )
+( 2–4 p ) (5) BYU Stanford, CA
+7:00 pm EST
+Bridgette Marin-Valencia 71'
+Emma Egizii 81'
+Report
+70' Ella Labrum
+72' Mattyn Summers-Oviatt
+Stadium: Cagan Stadium
+Attendance: 2,076
+Referee: Victor Mba
+Assistant referees: Jessica Peralta
+Assistant referees: Isai Baltezar
+Fourth official: Cecilia Chavez
+Penalties
+America Frias
+Emma Egizii
+Val Vargas
+Paloma Daubert
+MacKenzee Vance
+Ellie Walbruch
+Izzi Stratton
+Halle Dixon
+(1) Stanford v (8) Alabama
+November 21 (1) Stanford 7–3 (8) Alabama Stanford, CA
+10:00pm EST
+Jasmine Aikey 4' , 74'
+Andrea Kitahata 18'
+Elise Evans 41' , 48'
+Y-Lan Nguyen 88'
+Allie Montoya 90'
+Report
+12' , 54' Gianna Paul
+15' Ulla Sharp
+34' Maddie Padelski
+Stadium: Cagan Stadium
+Attendance: 2,076
+Referee: Oscar Guillen
+Assistant referees: Cecilia Chavez
+Assistant referees: Roxana Guillen
+Fourth official: Isai Baltezar
+Round of 16
+[ edit ]
+(2) Michigan State v (3) Colorado
+November 23 (2) Michigan State 2–1 (3) Colorado East Lansing, MI
+1:00 pm EST
+Bella Najera 1' , 56' ( pen. )
+Adelle Francis 76'
+Report
+18' Greer Maguire
+33' Faith Leyba
+89' CU Team
+Stadium: DeMartin Soccer Complex
+Attendance: 1,898
+Referee: Nikola Aleksic
+Assistant referees: Fernado Pina
+Assistant referees: Colton Odem
+Fourth official: Jason Cross
+(1) Stanford v (5) BYU
+November 24 (1) Stanford 6–0 (5) BYU Stanford, CA
+4:00 pm EST
+Jasmine Aikey 8' , 19'
+Andrea Kitahata 11'
+Eleanor Klinger 35' , 58'
+Lily Freer 39'
+Charlotte Kohler 55'
+Report
+Stadium: Maloney Field at Laird Q. Cagan Stadium
+Attendance: 1,744
+Referee: Michael Gebreslassie
+Assistant referees: Peter Hanson
+Assistant referees: Adriana Contreras
+Fourth official: Levi Rippy
+Quarterfinals
+[ edit ]
+(1) Stanford v (2) Michigan State
+November 28 (1) Stanford 5–1 (2) Michigan State Stanford, CA
+5:00 PM EST
+Eleanor Klinger 15'
+Charlotte Kohler 25'
+Andrea Kitahata 60' , 63'
+Jasmine Aikey 68'
+Report
+47' Maggie Illig
+76' Bella Najera
+Stadium: Maloney Field at Laird Q. Cagan Stadium
+Attendance: 2,088
+Referee: Amber OConnor
+Assistant referees: Andrew Hanks
+Assistant referees: Ritesh Chotu
+Fourth official: Isai Baltezar
+Rankings shown are seeds in this bracket of the tournament.
+Virginia bracket
+[ edit ]
+''Campus Sites''"},"RD2":{"wt":"'''Second round'''<br>''Regional Campus Sites''"},"RD3":{"wt":"'''Round of 16'''<br>''Regional Campus Sites''"},"RD4":{"wt":"'''Quarterfinal'''<br>''Campus Sites''"},"team-width":{"wt":"160"},"RD1-seed01":{"wt":"2"},"RD1-team01":{"wt":"'''[[2025 Duke Blue Devils women's soccer team|Duke]]'''*"},"RD1-score01":{"wt":"'''3'''"},"RD1-seed02":{"wt":""},"RD1-team02":{"wt":"{{csoc link|2025|sex=women|team=Elon Phoenix|title=Elon}}"},"RD1-score02":{"wt":"0"},"RD1-seed03":{"wt":""},"RD1-team03":{"wt":"{{csoc link|2025|sex=women|team=Maine Black Bears|title=Maine}}"},"RD1-score03":{"wt":"0"},"RD1-seed04":{"wt":"7"},"RD1-team04":{"wt":"'''{{csoc link|2025|sex=women|team=UCF Knights|title=UCF}}'''*"},"RD1-score04":{"wt":"'''2'''"},"RD1-seed05":{"wt":"'''6'''"},"RD1-team05":{"wt":"'''[[2025 Louisville Cardinals women's soccer team|Louisville]] ([[Penalty shoot-out (association football)|pen.]])'''*"},"RD1-score05":{"wt":"'''1 (5)'''"},"RD1-seed06":{"wt":""},"RD1-team06":{"wt":"{{csoc link|2025|sex=women|team=Kentucky Wildcats|title=Kentucky}}"},"RD1-score06":{"wt":"1 (4)"},"RD1-seed07":{"wt":""},"RD1-team07":{"wt":"{{csoc link|2025|sex=women|team=California Baptist Lancers|title=Cal Baptist}}"},"RD1-score07":{"wt":"1"},"RD1-seed08":{"wt":"3"},"RD1-team08":{"wt":"'''{{csoc link|2025|sex=women|team=Kansas Jayhawks|title=Kansas}}'''*"},"RD1-score08":{"wt":"'''3'''"},"RD1-seed09":{"wt":"4"},"RD1-team09":{"wt":"'''{{csoc link|2025|sex=women|team=Washington Huskies|title=Washington}}'''*"},"RD1-score09":{"wt":"'''2'''"},"RD1-seed10":{"wt":""},"RD1-team10":{"wt":"{{csoc link|2025|sex=women|team=Montana Grizzlies|title=Montana}}"},"RD1-score10":{"wt":"0"},"RD1-seed11":{"wt":""},"RD1-team11":{"wt":"{{csoc link|2025|sex=women|team=Dartmouth Big Green|title=Dartmouth}}"},"RD1-score11":{"wt":"0"},"RD1-seed12":{"wt":"5"},"RD1-team12":{"wt":"'''{{csoc link|2025|sex=women|team=Arkansas Razorbacks|title=Arkansas}}'''*"},"RD1-score12":{"wt":"'''1'''"},"RD1-seed13":{"wt":"8"},"RD1-team13":{"wt":"'''{{csoc link|2025|sex=women|team=Penn State Nittany Lions|title=Penn State}}'''*"},"RD1-score13":{"wt":"'''3'''"},"RD1-seed14":{"wt":""},"RD1-team14":{"wt":"{{csoc link|2025|sex=women|team=Army Black Knights|title=Army}}"},"RD1-score14":{"wt":"0"},"RD1-seed15":{"wt":""},"RD1-team15":{"wt":"{{csoc link|2025|sex=women|team=High Point Panthers|title=High Point}}"},"RD1-score15":{"wt":"0"},"RD1-seed16":{"wt":"1"},"RD1-team16":{"wt":"'''[[2025 Virginia Cavaliers women's soccer team|Virginia]]'''*"},"RD1-score16":{"wt":"'''5'''"},"RD2-seed01":{"wt":"2"},"RD2-team01":{"wt":"'''Duke'''*"},"RD2-score01":{"wt":"'''1'''"},"RD2-seed02":{"wt":"7"},"RD2-team02":{"wt":"UCF"},"RD2-score02":{"wt":"0"},"RD2-seed03":{"wt":"6"},"RD2-team03":{"wt":"Louisville"},"RD2-score03":{"wt":"1"},"RD2-seed04":{"wt":"3"},"RD2-team04":{"wt":"'''Kansas'''"},"RD2-score04":{"wt":"'''3'''"},"RD2-seed05":{"wt":"4"},"RD2-team05":{"wt":"'''Washington ([[Overtime (sports)#Association football|a.e.t.]])'''*"},"RD2-score05":{"wt":"'''1'''"},"RD2-seed06":{"wt":"5"},"RD2-team06":{"wt":"Arkansas"},"RD2-score06":{"wt":"0"},"RD2-seed07":{"wt":"8"},"RD2-team07":{"wt":"Penn State"},"RD2-score07":{"wt":"0"},"RD2-seed08":{"wt":"1"},"RD2-team08":{"wt":"'''Virginia'''*"},"RD2-score08":{"wt":"'''2'''"},"RD3-seed01":{"wt":"2"},"RD3-team01":{"wt":"'''Duke*'''"},"RD3-score01":{"wt":"'''2'''"},"RD3-seed02":{"wt":"3"},"RD3-team02":{"wt":"Kansas"},"RD3-score02":{"wt":"0"},"RD3-seed03":{"wt":"4"},"RD3-team03":{"wt":"'''Washington ([[Penalty shoot-out (association football)|pen.]])'''"},"RD3-score03":{"wt":"'''1 (5)'''"},"RD3-seed04":{"wt":"1"},"RD3-team04":{"wt":"Virginia*"},"RD3-score04":{"wt":"1 (4)"},"RD4-seed01":{"wt":"2"},"RD4-team01":{"wt":"'''Duke*'''"},"RD4-score01":{"wt":"'''3'''"},"RD4-seed02":{"wt":"4"},"RD4-team02":{"wt":"Washington"},"RD4-score02":{"wt":"0"}},"i":0}}]}'> First round
+Campus Sites
+Second round
+Regional Campus Sites
+Round of 16
+Regional Campus Sites
+Quarterfinal
+Campus Sites
+2
+Duke *
+3
+Elon
+0
+2
+Duke *
+1
+7
+UCF
+0
+Maine
+0
+7
+UCF *
+2
+2
+Duke*
+2
+3
+Kansas
+0
+6
+Louisville ( pen. ) *
+1 (5)
+Kentucky
+1 (4)
+6
+Louisville
+1
+3
+Kansas
+3
+Cal Baptist
+1
+3
+Kansas *
+3
+2
+Duke*
+3
+4
+Washington
+0
+4
+Washington *
+2
+Montana
+0
+4
+Washington ( a.e.t. ) *
+1
+5
+Arkansas
+0
+Dartmouth
+0
+5
+Arkansas *
+1
+4
+Washington ( pen. )
+1 (5)
+1
+Virginia*
+1 (4)
+8
+Penn State *
+3
+Army
+0
+8
+Penn State
+0
+1
+Virginia *
+2
+High Point
+0
+1
+Virginia *
+5
+* Host institution
+Schedule
+[ edit ]
+First round
+[ edit ]
+(2) Duke v Elon
+November 14 (2) Duke 3–0 Elon Durham, NC
+6:00 p.m. EST
+Mia Minestrella 11' , 23' , 48'
+Report
+Stadium: Koskinen Stadium
+Attendance: 706
+Referee: Kevin Maurer
+Assistant referees: Robert Dail
+Assistant referees: Richard Wells
+Fourth official: Dustin Thorne
+(5) Arkansas v Dartmouth
+November 14 (5) Arkansas 1–0 Dartmouth Fayetteville, AR
+7:00 p.m. EST
+Natalie Wagner 29'
+Team 49'
+Team 49'
+Vailana Tu'ua 61'
+Report
+Stadium: Razorback Field
+Attendance: 1,158
+Referee: Rodrigo Albequerque
+Assistant referees: Will Franklin
+Assistant referees: Eric Aplis
+Fourth official: Chris Thresher
+(3) Kansas v Cal Baptist
+November 14 (3) Kansas 3–1 Cal Baptist Lawrence, KS
+7:00 p.m. EST
+Saige Wimes 4'
+Jillian Gregorski 25'
+Faith Johnston 37'
+Report
+29' Anja Jestrovic
+Stadium: Rock Chalk Park
+Attendance: 2,613
+Referee: Drew Klemp
+Assistant referees: Luis Tribaldo
+Assistant referees: Brendan Sweetman
+Fourth official: Zachary Richter
+(7) UCF v Maine
+November 14 (7) UCF 2–0 Maine Orlando, FL
+7:00 p.m. EST
+Rajanah Reed 21'
+Hannah Boughton 65'
+Report
+Stadium: UCF Soccer and Track Stadium
+Attendance: 1,132
+Referee: Elvis Osmonovic
+Assistant referees: Carlos Morales-Lastra
+Assistant referees: Kamil Sikor
+Fourth official: Jake Joyce
+(1) Virginia v High Point
+November 14 (1) Virginia 5–0 High Point Charlottesville, VA
+7:00 p.m. EST
+Ella Carter 13'
+Allie Ross 36'
+Addison Halpern 61'
+Maggie Cagle 66'
+Kiki Maki 76'
+Sophia Bradley 87'
+Report
+Stadium: Klöckner Stadium
+Attendance: 1,212
+Referee: Danielle Chesky
+Assistant referees: Sean Conlee
+Assistant referees: Katelyn Bourque
+Fourth official: Kevin Uitto
+(4) Washington v Montana
+November 14 (4) Washington 2–0 Montana Seattle, WA
+10:00 p.m. EST
+Alex Buck 11' , 90'
+Anna Menti 22'
+Report
+44' Lucie Rokos
+Stadium: Husky Soccer Stadium
+Attendance: 2,564
+Referee: Cedric Adams
+Assistant referees: Cody Zipp
+Assistant referees: Pavel Spichak
+Fourth official: Jesus Mejia
+(6) Louisville v Kentucky
+November 15 (6) Louisville 1–1 ( a.e.t. )
+( 5–4 p ) Kentucky Louisville, KY
+2:00 p.m. EST
+Brooklyn Lee 45'
+Amelia Swinarski 75' 79'
+Lizzie Sexton 81'
+Report
+45' Sydni Fink
+47' Thalia Morisi
+81' UKY Team
+98' Tanner Strickland
+Stadium: Lynn Stadium
+Attendance: 1,016
+Referee: Austin Saini
+Assistant referees: Eric Burton
+Assistant referees: Erin Patterson
+Fourth official: Aaron Rawlins
+Penalties
+Karsyn Cherry
+Amelia Swinarski
+AG Gibson
+Erynn Floyd
+Fina Davy
+Grace Maddox
+Mackenzie Geigle
+Anne Sikorski
+Grace Sikorski
+Thalia Morisi
+Sydni Fink
+Maddie Eastman
+Catherine Rapp
+Marilia Nieves-Melchor
+Kendall Campbell
+(8) Penn State v Army
+November 15 (8) Penn State 3–0 Army State College, PA
+5:00 p.m. EST
+Kaitlyn MacBean 9'
+Amelia White 19'
+Dikte Bang 76'
+Report
+Stadium: Jeffrey Field
+Attendance: 676
+Referee: Ashley Cedro
+Assistant referees: Amelia Graytock
+Assistant referees: Taylor Heemstra
+Fourth official: Sarah Siegel
+Second round
+[ edit ]
+(4) Washington v (5) Arkansas
+November 20 (4) Washington 1–0 ( a.e.t. ) (5) Arkansas Charlottesville, VA
+3:00 p.m. EST
+Alex Buck 96' 99'
+Report
+76' Aniyah Nurse-Whyte
+82' Dejionee Anderson
+95' Makenzie Malham
+Stadium: Klöckner Stadium
+Attendance: N/A
+Referee: Dustin Thorne
+Assistant referees: Bill Dittmar
+Assistant referees: Sean Conlee
+Fourth official: Richard Crowgey
+(3) Kansas v (6) Louisville
+November 20 (3) Kansas 3–1 (6) Louisville Durham, NC
+4:00 p.m. EST
+Faith Johnston 42'
+Jillian Gregorski 82'
+Lexi Watts 86'
+Report
+19' Grace Maddox
+Stadium: Koskinen Stadium
+Attendance: 882
+Referee: Kevin Maurer
+Assistant referees: Aaron Hormuth
+Assistant referees: Marcus Moss
+Fourth official: Lauren Aldrich
+(1) Virginia v (8) Penn State
+November 20 (1) Virginia 2–0 (8) Penn State Charlottesville, VA
+6:00 p.m. EST
+Maggie Cagle 33' 82'
+Lia Godfrey 68'
+Kiki Maki 80'
+Report
+22' Riley Gleason
+53' Hannah Jordan
+77' Molly Martin
+Stadium: Klöckner Stadium
+Attendance: 1,107
+Referee: JC Griggs
+Assistant referees: Nicholas Seymour
+Assistant referees: Kevin Uitto
+Fourth official: Esli Leon
+(2) Duke v (7) UCF
+November 20 (2) Duke 1–0 (7) UCF Durham, NC
+6:30 p.m. EST
+Mia Minestrella 35'
+Report
+Stadium: Koskinen Stadium
+Attendance: 882
+Referee: John Rush
+Assistant referees: Jeremy L.B. Smith
+Assistant referees: Adonis Alawar
+Fourth official: Thomas Rutherford
+Round of 16
+[ edit ]
+(1) Virginia v (4) Washington
+November 23 (1) Virginia 1–1 ( a.e.t. )
+( 4–5 p ) (4) Washington Charlottesville, VA
+2:00 p.m. EST
+Addison Halpern 53'
+Victoria Safradin 110'
+Report
+13' 80' Kalea Eichenberger
+110' Tanner Ijams
+Stadium: Klöckner Stadium
+Attendance: 1,610
+Referee: Meghan Mullen
+Assistant referees: Amelia Graytock
+Assistant referees: Josh Pitt
+Fourth official: Robert Velds
+Penalties
+Maggie Cagle
+Lia Godfrey
+Jordyn Hardeman
+Pearl Cecil
+Addison Halpern
+Anna Menti
+Julia Hüsch
+Alex Buck
+Samiah Shell
+Lucy Newlin
+(2) Duke v (3) Kansas
+November 23 (2) Duke 2–0 (3) Kansas Durham, NC
+2:00 p.m. EST
+Elle Piper 15'
+Mia Minestrella 37'
+Kat Rader 47'
+Report
+49' KU Team
+Stadium: Koskinen Stadium
+Attendance: 826
+Referee: Nicole Green
+Assistant referees: Marcus Moss
+Assistant referees: Katelyn Bourque
+Fourth official: Esli (Otto) Leon
+Quarterfinals
+[ edit ]
+(2) Duke v (4) Washington
+November 28 (2) Duke 3–0 (4) Washington Durham, NC
+4:00 PM EST
+Kat Rader 35'
+Devin Lynch 57'
+Jocelyn Travers 60'
+Cameron Roller 60'
+Mia Minestrella 81'
+Report
+Stadium: Koskinen Stadium
+Attendance: 1,200
+Referee: JC Griggs
+Assistant referees: Justin Howard
+Assistant referees: Sharon Gingrich
+Fourth official: John Matto
+Rankings shown are seeds in this bracket of the tournament.
+College Cup
+[ edit ]
+December 5<br>[[CPKC Stadium]]<br>[[Kansas City, Missouri]]"},"RD2":{"wt":"'''Final'''<br>December 8<br>[[CPKC Stadium]]<br>[[Kansas City, Missouri]]"},"score-width":{"wt":"35"},"RD1-seed1":{"wt":"2"},"RD1-team1":{"wt":"{{csoc link|2025|sex=women|team=TCU Horned Frogs|title=TCU}}"},"RD1-score1":{"wt":"0"},"RD1-seed2":{"wt":"3"},"RD1-team2":{"wt":"'''[[2025 Florida State Seminoles women's soccer team|Florida State]]'''"},"RD1-score2":{"wt":"'''1'''"},"RD1-seed3":{"wt":"1"},"RD1-team3":{"wt":"'''[[2025 Stanford Cardinal women's soccer team|Stanford]]'''"},"RD1-score3":{"wt":"'''1'''"},"RD1-seed4":{"wt":"2"},"RD1-team4":{"wt":"[[2025 Duke Blue Devils women's soccer team|Duke]]"},"RD1-score4":{"wt":"0"},"RD2-seed1":{"wt":"3"},"RD2-team1":{"wt":"'''Florida State'''"},"RD2-score1":{"wt":"'''1'''"},"RD2-seed2":{"wt":"1"},"RD2-team2":{"wt":"Stanford"},"RD2-score2":{"wt":"0"}},"i":0}}]}'> Semifinals
+December 5
+CPKC Stadium
+Kansas City, Missouri
+Final
+December 8
+CPKC Stadium
+Kansas City, Missouri
+2
+TCU
+0
+3
+Florida State
+1
+3
+Florida State
+1
+1
+Stanford
+0
+1
+Stanford
+1
+2
+Duke
+0
+Schedule
+[ edit ]
+Semi-finals
+[ edit ]
+#5 TCU v #6 Florida State
+December 5 #5 TCU 0–1 #6 Florida State Kansas City, MO
+5:00 PM EST
+Report
+73' Wrianna Hudson
+34' Nawreen Ahmad
+Stadium: CPKC Stadium
+Attendance: 7,066
+Referee: Amin Hadzic
+Assistant referees: Jennifer Dumaine
+Assistant referees: Jessica Paola Peralta Meza
+Fourth official: Matt Geringer
+#1 Stanford v #11 Duke
+December 5 #1 Stanford 1–0 #11 Duke Kansas City, MO
+7:45 PM EST
+Jasmine Aikey 10'
+Y-Lan Nguyen 74'
+Report
+49' Duke Team
+Stadium: CPKC Stadium
+Attendance: 7,066
+Referee: Marie Durr
+Assistant referees: Tiffini Turpin
+Assistant referees: Chana Forstall
+Fourth official: Emily Brownback
+Final
+[ edit ]
+#1 Stanford v #6 Florida State
+December 8 #1 Stanford 0–1 #6 Florida State Kansas City, MO
+7:00 PM EST
+Sophie Murdock 34'
+Report
+85' Jordynn Dudley
+85' FSU Team
+87' Wrianna Hudson
+Stadium: CPKC Stadium
+Attendance: 3,311
+Referee: Richonne Clark
+Assistant referees: Melissa Beck
+Assistant referees: Audra Fullen
+Fourth official: Velimir Stefanovic
+Rankings from United Soccer Coaches Final Regular Season Rankings
+Record by conference
+[ edit ]
+Conference
+Bids
+Record
+Pct.
+R32
+R16
+E8
+F4
+CG
+NC
+ACC
+9
+21–4–6
+.774
+9
+5
+3
+3
+2
+1
+Big 12
+8
+12–5–6
+.652
+8
+5
+1
+1
+–
+–
+Big Ten
+9
+9–7–6
+.545
+7
+3
+3
+–
+–
+–
+SEC
+9
+5–7–4
+.438
+4
+2
+1
+–
+–
+–
+Big East
+2
+2–2–1
+.500
+2
+1
+–
+–
+–
+–
+ASUN
+1
+1–1–0
+.500
+1
+–
+–
+–
+–
+–
+American
+2
+1–2–0
+.333
+1
+–
+–
+–
+–
+–
+WAC
+2
+0–2–0
+.000
+–
+–
+–
+–
+–
+–
+Other
+22
+0–21–1
+.023
+–
+–
+–
+–
+–
+–
+The R32, S16, E8, F4, CG, and NC columns indicate how many teams from each conference were in the Round of 32 (second round), Round of 16 (third round), Quarterfinals (Elite Eight), Semi-finals (Final Four), Championship Game, and National Champion, respectively.
+The following conferences received one bid and failed to place a team into the round of 32: American East, Atlantic 10, Big Sky, Big South, Big West, CAA, C-USA, Horizon, Ivy, MAAC, MAC, Missouri Valley, Mountain West, Northeast, Ohio Valley, Patriot, SoCon, Southland, Summit League, Sun Belt, SWAC, West Coast. These conference's records have been consolidated in the "Other" row.
+Statistics
+[ edit ]
+Goalscorers
+[ edit ]
+There were 192 goals scored in 63 matches, for an average of 3.05 goals per match (as of December 8, 2025).
+6 goals
+Mia Minestrella – Duke
+Jasmine Aikey – Stanford
+5 goals
+Seven Castain – TCU
+4 goals
+Wrianna Hudson – Florida State
+Andrea Kitahata – Stanford
+3 goals
+Eleanor Klinger – Stanford
+Charlotte Kohler – Stanford
+Bella Najera – Michigan State
+Amanda Schlueter – Ohio State
+Emma Yolinsky – TCU
+Alex Buck – Washington
+2 goals
+Maddie Padelski – Alabama
+Gianna Paul – Alabama
+Kai Hayes – Baylor
+Reagan Kotschau – Colorado
+Faith Leyba – Colorado
+Kat Rader – Duke
+Jordynn Dudley – Florida State
+Yuna McCormack – Florida State
+Natalie Means – Georgetown
+Jillian Gregorski – Kansas
+Faith Johnston – Kansas
+Sariyah Bailey – LSU
+Ída Marín Hermannsdóttir – LSU
+Ai Kitagawa – Memphis
+Kayla Briggs – Michigan State
+Kate Faasse – North Carolina
+Charlie Codd – Notre Dame
+Elise Evans – Stanford
+Sydney Becerra – TCU
+Emma Egizii – UCLA
+Mary Beth McLaughlin – Vanderbilt
+Sydney Watts – Vanderbilt
+Maggie Cagle – Virginia
+Addison Halpern – Virginia
+Abbey Olexa – West Virginia
+Alicia Riggins – West Virginia
+Erin Connolly – Wisconsin
+1 goal
+Larkin Thomason – Alabama
+Vailana Tu'ua – Arkansas
+Hallie Augustyn – Baylor
+Olivia Hess – Baylor
+Tyler Isgrig – Baylor
+Mia Goettsche – BYU
+Mattyn Summers-Oviatt – BYU
+Anja Jestrović – Cal Baptist
+Jessie Halladay – Cal Poly
+Elle Bissinger – Clemson
+Anna Castenfelt – Clemson
+Taylor Leib – Clemson
+Renee Lyles – Clemson
+Hope Leyba – Colorado
+Riley MacDonald – Colorado
+Vivi Zacarias – Colorado
+Devin Lynch – Duke
+Lara Dantas – Florida State
+Heather Gilchrist – Florida State
+Jaida McGrew – Florida State
+Taylor Suarez – Florida State
+Nyanya Touray – Florida State
+Mimi Van Zanten – Florida State
+Mary Cochran – Georgetown
+Lizzie Heller – Georgetown
+Shay Montgomery – Georgetown
+Ella Remy – Houston Christian
+Sydney Stephens – Illinois
+Kenzie Roling – Iowa
+Elle Wildman – Iowa
+Saige Wimes – Kansas
+Lexi Watts – Kansas
+Thalia Morisi – Kentucky
+Ivy Garner – Liberty
+Bella Carapazza – Lipscomb
+Grace Maddox – Louisville
+Amelia Swinarski – Louisville
+Gabbi Ceballos – LSU
+Ava Galligan – LSU
+Kennedy Bell – Michigan State
+Adelle Francis – Michigan State
+Emerson Sargeant – Michigan State
+Lola Wojcik – Milwaukee
+Bella Devey – North Carolina
+Caitlin Mara – North Carolina
+Linda Ullmark – North Carolina
+Megan Norkett – Northwestern
+Kennedy Roesch – Northwestern
+Ellie Hodsden – Notre Dame
+Tessa Knapp – Notre Dame
+Jadin Bonham – Ohio State
+Riley Lijewski – Ohio State
+Anika Poremba – Ohio State
+Kaitlyn MacBean – Penn State
+Amelia White – Penn State
+Dikte Bang – Penn State
+Tabitha LaParl – Pepperdine
+Cuyler Zulauf – South Carolina
+Shae Harvey – Stanford
+Joelle Jung – Stanford
+Allie Montoya – Stanford
+Y-Lan Nguyen – Stanford
+Kate Runyon – Tennessee
+Kamdyn Fuller – TCU
+Katana Norman – TCU
+Cameron Patton – TCU
+Grace Vest – TCU
+Macy Blackburn – Texas Tech
+Peyton Parsons – Texas Tech
+Taylor Zdrojewski – Texas Tech
+Rajanah Reed – UCF
+Hannah Boughton – UCF
+Bella Winn – UCLA
+Payten Cooper – UCLA
+Jasmine Kessler – UTSA
+Mia Mullenmeister – Utah State
+Bailey Peterson – Utah Valley
+Adysen Armenta – Vanderbilt
+Melania Fullerton – Vanderbilt
+Courtney Jones – Vanderbilt
+Sophia Bradley – Virginia
+Ella Carter – Virginia
+Lia Godfrey – Virginia
+Allie Ross – Virginia
+Kylie Maxwell – Wake Forest
+Sammi Wiemann – Wake Forest
+Kalea Eichenberger – Washington
+Anna Hauer – West Virginia
+Ajanae Respass – West Virginia
+Abby Smothers – Western Michigan
+Meredith Vance – Western Michigan
+Adee Boer – Wisconsin
+Regan Dancer – Xavier
+Elin Hansson – Xavier
+Presley Pennekamp – Xavier
+= Golden Goal
+All-tournament team
+[ edit ]
+Jasmine Aikey , Stanford
+Morgan Brown , TCU
+Heather Gilchrist , Florida State
+Shae Harvey , Stanford
+Wrianna Hudson , Florida State ( Most Outstanding Offensive Player )
+Peyton McGovern , Florida State
+Y-Lan Nguyen , Stanford
+Kate Ockene , Florida State ( Most Outstanding Defensive Player )
+Avery Oder , Duke
+Kat Rader , Duke
+Taylor Suarez , Florida State
+[ 9 ]
+See also
+[ edit ]
+2025 NCAA Division I men's soccer tournament
+References
+[ edit ]
+↑ "Future Dates & Sites" . ncaa.com . NCAA . Retrieved November 3, 2025 .
+↑ "North Carolina beats Wake Forest to win Women's College Cup" . ESPN . Associated Press . December 9, 2024 . Retrieved December 10, 2024 .
+↑ "UNC women's soccer falls in NCAA tournament third round, 1(4)-1(3), to No. 2-seeded TCU in penalties" . The Daily Tar Heel . The Daily Tar Heel . November 24, 2025 . Retrieved December 8, 2025 .
+↑ "FSU captures national title on late winner" . ESPN . ESPN . December 8, 2025 . Retrieved December 8, 2025 .
+↑ Jackson, Gabriel (October 24, 2025). "Tracking all 30 automatic bids to the 2025 NCAA women's soccer tournament" . ncaa.com . NCAA . Retrieved November 3, 2025 .
+1 2 3 4 "Division I Women's Soccer Championships Record Book" (PDF) . National Collegiate Athletic Association . Retrieved November 3, 2025 .
+↑ "2025 NCAA DI women's soccer tournament: Selection show info, bracket, schedule" . ncaa.com . NCAA . Retrieved November 10, 2025 .
+↑ "2025 Division I Women's Soccer Official Bracket" . ncaa.com . NCAA . Retrieved November 10, 2025 .
+↑ "Florida State Wins 2025 NCAA Women's Soccer National Championship" . Atlantic Coast Conference . December 8, 2025 . Retrieved December 8, 2025 .
+v
+t
+e
+NCAA Division I women's soccer tournament
+Tournaments
+1982
+1983
+1984
+1985
+1986
+1987
+1988
+1989
+1990
+1991
+1992
+1993
+1994
+1995
+1996
+1997
+1998
+1999
+2000
+2001
+2002
+2003
+2004
+2005
+2006
+2007
+2008
+2009
+2010
+2011
+2012
+2013
+2014
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+2025
+Finals
+2018
+2019
+2020
+2021
+2022
+2023
+2024
+Records & statistics
+All-time team appearances
+Most Outstanding Players
+v
+t
+e
+2025 NCAA Division I women's soccer season
+Regular season
+ACC
+America East
+American
+ASUN
+Atlantic 10
+Big 12
+Big East
+Big Sky
+Big South
+Big Ten
+Big West
+CAA
+Conference USA
+Horizon
+Ivy
+MAAC
+Mid-American
+Missouri Valley
+Mountain West
+Northeast
+Ohio Valley
+Patriot
+SEC
+Southern
+Southland
+Sun Belt
+SWAC
+Summit League
+WAC
+West Coast
+Conference tournaments
+ACC
+America East
+American
+ASUN
+Atlantic 10
+Big 12
+Big East
+Big Sky
+Big South
+Big Ten
+Big West
+CAA
+Conference USA
+Horizon
+Ivy
+MAAC
+Mid-American
+Missouri Valley
+Mountain West
+Northeast
+Ohio Valley
+Patriot League
+SEC
+Southern
+Southland
+Sun Belt
+SWAC
+Summit League
+WAC
+National tournaments
+NCAA tournament
+Final
+Rankings
+Rankings
+v
+t
+e
+2025–26 NCAA Division I championships
+Baseball
+Men's basketball
+Women's basketball
+Beach volleyball
+Bowling
+Cross country
+Men's fencing
+Women's fencing
+Field hockey
+Football (FBS) †
+Football (FCS)
+Men's golf
+Women's golf
+Men's gymnastics
+Women's gymnastics
+Men's ice hockey
+Women's ice hockey
+Indoor track and field
+Men's lacrosse
+Women's lacrosse
+Outdoor track and field
+Rifle
+Rowing
+Skiing
+Men's soccer
+Women's soccer
+Softball
+Men's swimming and diving
+Women's swimming and diving
+Men's tennis
+Women's tennis
+Men's volleyball
+Women's volleyball
+Men's water polo
+Women's water polo
+Men's wrestling
+Women's wrestling
+† Not an officially sanctioned NCAA championship
+Retrieved from " https://en.wikipedia.org/w/index.php?title=2025_NCAA_Division_I_women%27s_soccer_tournament&oldid=1367212057 "
+Categories : NCAA Division I women's soccer tournament
+2025 NCAA Division I women's soccer season
+Soccer competitions in Missouri
+College soccer tournaments in Missouri
+2025 in sports in Missouri
+Women's sports in Missouri
+Hidden categories: Use mdy dates from November 2025
+Pages with non-numeric formatnum arguments
+Articles with short description
+Short description matches Wikidata
+This page was last edited on 1 August 2026, at 19:06 (UTC) .
+Page was rendered with Parsoid .
+Text is available under the Creative Commons Attribution-ShareAlike 4.0 License ;
+additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy . Wikipedia® is a registered trademark of the Wikimedia Foundation, Inc. , a non-profit organization.
+Privacy policy
+About Wikipedia
+Disclaimers
+Contact Wikipedia
+Legal & safety contacts
+Code of Conduct
+Developers
+Statistics
+Cookie statement
+Mobile view
+Search
+Search
+Toggle the table of contents
+2025 NCAA Division I women's soccer tournament
+Add languages
+Add topic
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@type":"Article","name":"2025 NCAA Division I women's soccer tournament","url":"https:\/\/en.wikipedia.org\/wiki\/2025_NCAA_Division_I_women%27s_soccer_tournament","sameAs":"http:\/\/www.wikidata.org\/entity\/Q136841705","mainEntity":"http:\/\/www.wikidata.org\/entity\/Q136841705","author":{"@type":"Organization","name":"Contributors to Wikimedia projects"},"publisher":{"@type":"Organization","name":"Wikimedia Foundation, Inc.","logo":{"@type":"ImageObject","url":"https:\/\/www.wikimedia.org\/static\/images\/wmf-hor-googpub.png"}},"datePublished":"2025-11-04T01:09:25Z","dateModified":"2026-08-01T19:06:26Z","image":"https:\/\/upload.wikimedia.org\/wikipedia\/en\/7\/7f\/2025_women%27s_college_cup_logo.jpeg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original","headline":"football tournament season"}

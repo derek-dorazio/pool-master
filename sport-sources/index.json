@@ -1,0 +1,75 @@
+{
+  "fetchedAt": "2026-10-21T04:13:28.061Z",
+  "results": [
+    {
+      "url": "https://en.wikipedia.org/wiki/2025_MLS_Cup_playoffs",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025_NWSL_playoffs",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025_NCAA_Division_I_men%27s_soccer_tournament",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025_NCAA_Division_I_women%27s_soccer_tournament",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025_Major_League_Soccer_season",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/2025_National_Women%27s_Soccer_League_season",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/scoreboard?dates=20251206",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.nwsl/scoreboard?dates=20251122",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "08-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.ncaa.m.1/scoreboard?dates=20251215",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "09-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/usa.ncaa.w.1/scoreboard?dates=20251208",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "10-site.api.espn.com.txt"
+    }
+  ]
+}
