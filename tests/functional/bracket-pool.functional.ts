@@ -36,6 +36,7 @@ import {
   ContestStatus,
   MatchSide,
   PickOutcome,
+  PredictedResult,
   SelectionType,
   Sport,
   findSportRow,
@@ -272,7 +273,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     const entryOf = async (client: Client) => expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
     const entries = { alice: await entryOf(alice.client), bob: await entryOf(bob.client), cara: await entryOf(cara.client) };
     const path = (entryId: string) => ({ contestId, entryId, sportEventId: eventId });
-    const pick = (matchNumber: number, seed: number) => ({ sportEventMatchId: gameId(matchNumber), sportEventParticipantId: row(seed), confidence: null });
+    const pick = (matchNumber: number, seed: number) => ({ sportEventMatchId: gameId(matchNumber), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
     const picksOf = (winners: readonly number[]) => winners.map((seed, index) => pick(index + 1, seed));
     const predictedSeeds = (view: { games: Array<{ matchNumber: number; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }, matchNumber: number) => {
       const game = expectDefined(view.games.find((each) => each.matchNumber === matchNumber));
@@ -477,7 +478,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     const aliceEntry = expectDefined((await enterContest({ client: commissioner.client, path: { contestId } })).data).entry.id;
     const bobEntry = expectDefined((await enterContest({ client: bob.client, path: { contestId } })).data).entry.id;
     const path = (entryId: string) => ({ contestId, entryId, sportEventId: eventId });
-    const pick = (matchNumber: number, seed: number) => ({ sportEventMatchId: gameId(matchNumber), sportEventParticipantId: row(seed), confidence: null });
+    const pick = (matchNumber: number, seed: number) => ({ sportEventMatchId: gameId(matchNumber), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
     const divisional = (view: { games: Array<{ matchNumber: number; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }) =>
       [4, 5].map((matchNumber) => {
         const game = expectDefined(view.games.find((each) => each.matchNumber === matchNumber));
@@ -600,7 +601,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     };
     const entries = { alice: await entryOf(alice.client), bob: await entryOf(bob.client), cara: await entryOf(cara.client) };
     const path = (entryId: string) => ({ contestId, entryId, sportEventId: eventId });
-    const pick = (matchNumber: number, seed: number) => ({ sportEventMatchId: gameId(matchNumber), sportEventParticipantId: row(seed), confidence: null });
+    const pick = (matchNumber: number, seed: number) => ({ sportEventMatchId: gameId(matchNumber), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
     const sides = (view: { games: Array<{ matchNumber: number; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }, matchNumber: number) => {
       const game = expectDefined(view.games.find((each) => each.matchNumber === matchNumber));
       return [game.predictedHome?.sportEventParticipantId ?? null, game.predictedAway?.sportEventParticipantId ?? null];

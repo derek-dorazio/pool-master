@@ -184,7 +184,8 @@ describe('MatchResultService.recordResult', () => {
   it.each([
     ['one score without the other', { winnerSide: MatchSide.HOME, homeScore: 80, awayScore: null }],
     ['the winner scoring less', { winnerSide: MatchSide.HOME, homeScore: 60, awayScore: 70 }],
-    ['a tie', { winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 70 }],
+    ['a winner on level scores', { winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 70 }],
+    ['a tie in a bracket match, which always has a winner', { winnerSide: null, homeScore: 70, awayScore: 70 }],
   ])('refuses (422 MATCH_RESULT_INVALID) %s and saves nothing', async (_label, input) => {
     const { service, event, store } = await setup();
 
@@ -448,6 +449,38 @@ describe('MatchResultService on a week of games that form no bracket', () => {
     await service.clearResult(event.id, 1);
 
     expect([standingOf(bills.id)?.status, standingOf(jets.id)?.status]).toEqual([ParticipantStandingStatus.ACTIVE, ParticipantStandingStatus.ACTIVE]);
+  });
+
+  it('records a tie (#792): the game COMPLETED with no winner and its level scores, both teams COMPLETE with no place', async () => {
+    const { service, event, bills, jets, standingOf } = await week();
+
+    const games = await service.recordResult(event.id, 1, { winnerSide: null, homeScore: 20, awayScore: 20 });
+
+    expect(games.find((game) => game.matchNumber === 1)).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: null, homeScore: 20, awayScore: 20 });
+    for (const team of [bills, jets]) {
+      expect(standingOf(team.id)).toMatchObject({ position: null, status: ParticipantStandingStatus.COMPLETE });
+    }
+  });
+
+  it('changes a tie to a win and back, since a week\'s game sends nobody on', async () => {
+    const { service, event } = await week();
+    await service.recordResult(event.id, 1, { winnerSide: null, homeScore: 20, awayScore: 20 });
+
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 23, awayScore: 20 });
+    const games = await service.recordResult(event.id, 1, { winnerSide: null, homeScore: 23, awayScore: 23 });
+
+    expect(games.find((game) => game.matchNumber === 1)).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: null, homeScore: 23, awayScore: 23 });
+  });
+
+  it.each([
+    ['without its scores', { winnerSide: null, homeScore: null, awayScore: null }],
+    ['with one score only', { winnerSide: null, homeScore: 20, awayScore: null }],
+    ['with scores that are not level', { winnerSide: null, homeScore: 21, awayScore: 20 }],
+  ])('refuses (422 MATCH_RESULT_INVALID) a tie %s and saves nothing', async (_label, input) => {
+    const { service, event, store } = await week();
+
+    await expect(service.recordResult(event.id, 1, input)).rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
+    expect(store.matchRows.every((match) => match.status === MatchStatus.SCHEDULED)).toBe(true);
   });
 
   it('marks a cancelled game\'s teams COMPLETE with no place, since their week is over', async () => {

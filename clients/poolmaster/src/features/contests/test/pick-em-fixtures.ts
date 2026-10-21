@@ -56,7 +56,21 @@ function game(matchNumber: number, kickoff: string, away: Team, home: Team, over
 /** The pick a game holds: its team, still pending until the game is played. */
 export function weekPick(picked: Team, overrides: Partial<NonNullable<Game['pick']>> = {}): NonNullable<Game['pick']> {
   return {
+    predictedResult: 'TEAM',
     sportEventParticipantId: picked.sportEventParticipantId,
+    confidence: null,
+    pickedAt: '2099-09-01T12:00:00.000Z',
+    outcome: 'PENDING',
+    points: null,
+    ...overrides,
+  };
+}
+
+/** A tie pick (#792), still pending until the game is played. */
+export function weekTiePick(overrides: Partial<NonNullable<Game['pick']>> = {}): NonNullable<Game['pick']> {
+  return {
+    predictedResult: 'TIE',
+    sportEventParticipantId: null,
     confidence: null,
     pickedAt: '2099-09-01T12:00:00.000Z',
     outcome: 'PENDING',
@@ -87,6 +101,7 @@ export function pickEmWeekFixture(overrides: Partial<GamePicksResponse> = {}): G
     selectionType: 'PICK_EM',
     mode: 'STRAIGHT_UP',
     againstTheSpread: false,
+    tiePicksOffered: false,
     survivor: null,
     status: 'DRAFT',
     submittedAt: null,

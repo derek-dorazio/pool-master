@@ -28,6 +28,7 @@ import {
   MatchSide,
   MatchStatus,
   PickEmMode,
+  PredictedResult,
   SelectionType,
   Sport,
   findSportRow,
@@ -195,6 +196,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     const week = { contestId, entryId, sportEventId: eventId };
     const pick = (game: typeof game1, side: 'home' | 'away', confidence: number) => ({
       sportEventMatchId: game.id,
+      predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId),
       confidence,
     });
@@ -202,6 +204,17 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     const empty = expectDefined((await getGamePicks({ client: commissioner.client, path: week })).data);
     expect([empty.mode, empty.status, empty.gameCount, empty.pickedCount, empty.canSubmit]).toEqual([PickEmMode.CONFIDENCE, ContestEntryStatus.DRAFT, 2, 0, false]);
     expect(empty.games.map((game) => game.matchNumber)).toEqual([1, 2]);
+    // Basketball offers no tie pick (#792): a tie pick is refused, and a pick naming a team and a
+    // tie at once is malformed.
+    expect(empty.tiePicksOffered).toBe(false);
+    expectFunctionalError(
+      await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [{ sportEventMatchId: game1.id, predictedResult: PredictedResult.TIE, sportEventParticipantId: null, confidence: 1 }] } }),
+      { status: 422, code: 'PREDICTION_TIE_NOT_OFFERED' },
+    );
+    expectFunctionalError(
+      await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [{ ...pick(game1, 'home', 1), predictedResult: PredictedResult.TIE }] } }),
+      { status: 400, code: 'PREDICTION_PICK_INVALID' },
+    );
 
     // --- Picking and submitting before the first kickoff ---------------------------------------
     expectFunctionalError(

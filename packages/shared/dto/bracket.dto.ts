@@ -30,7 +30,7 @@ export const SportEventMatchDtoSchema = z.object({
   isNeutralSite: z.boolean().describe('True when neither side is at home: screens then say "vs" rather than "@".'),
   scheduledDate: z.string().datetime().nullable().describe('Tip-off or kickoff; null until it is announced.'),
   status: MatchStatusDtoSchema,
-  winnerSide: MatchSideDtoSchema.nullable().describe('Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has.'),
+  winnerSide: MatchSideDtoSchema.nullable().describe('Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.'),
   homeScore: z.number().int().nullable().describe('The home side\'s score; in a series, games won.'),
   awayScore: z.number().int().nullable().describe('The away side\'s score; in a series, games won.'),
   advancesToMatchId: z.string().uuid().nullable().describe('The match the winner moves on to; null for the final.'),
@@ -86,10 +86,10 @@ export const FillPlayInSlotRequestSchema = z.object({
 export type FillPlayInSlotRequest = z.infer<typeof FillPlayInSlotRequestSchema>;
 
 export const RecordSportEventMatchResultRequestSchema = z.object({
-  winnerSide: MatchSideDtoSchema.describe('The side that won.'),
+  winnerSide: MatchSideDtoSchema.nullable().describe('The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.'),
   homeScore: z.number().int().min(0).nullable().describe('The home side\'s score (games won, for a series), or null with the away score null too.'),
   awayScore: z.number().int().min(0).nullable().describe('The away side\'s score, or null with the home score null too.'),
-}).describe('A match\'s result: who won, and both scores or neither. The winner\'s score must be the higher.');
+}).describe('A match\'s result: who won, or a tie, and both scores or neither. The winner\'s score must be the higher; a tie\'s scores are level.');
 export type RecordSportEventMatchResultRequest = z.infer<typeof RecordSportEventMatchResultRequestSchema>;
 
 export const RecordSportEventMatchPeriodScoreRequestSchema = z.object({

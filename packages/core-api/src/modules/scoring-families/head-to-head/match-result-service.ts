@@ -1,7 +1,8 @@
 /**
  * MatchResultService — the admin's results for a bracket event (#699, plans/knockout-and-pickem-design.md
  * §3.3), the head-to-head counterpart of racing's finishing order. The admin marks a match's winner,
- * with both scores or neither (a series' score is games won); saving it, all or none:
+ * with both scores or neither (a series' score is games won), or a game of a week as a tie (#792)
+ * with its level scores; saving it, all or none:
  *
  * - completes the match with its winner and scores,
  * - puts the winner on the side of the match it advances to,
@@ -45,8 +46,9 @@ import type { EventLifecycleService } from '../../events/event-lifecycle-service
 import { formsNoBracket } from '../../events/sport-event-bracket-service';
 
 export interface MatchResultInput {
-  winnerSide: MatchSide;
-  /** Both scores or neither: the winner's must be the higher. */
+  /** The side that won; null for a tie (#792), only in a game of a week, which forms no bracket. */
+  winnerSide: MatchSide | null;
+  /** Both scores or neither: the winner's must be the higher. A tie needs both, level. */
   homeScore: number | null;
   awayScore: number | null;
 }
@@ -149,18 +151,18 @@ export class MatchResultService {
   constructor(private readonly deps: MatchResultServiceDeps) {}
 
   /**
-   * Enters or changes one match's result. 404 BRACKET_MATCH_NOT_FOUND; 422 MATCH_SIDES_NOT_SET while
-   * a side still waits for its team; 422 MATCH_RESULT_INVALID for one score without the other, or
-   * scores the winner did not win by; 409 SPORT_EVENT_MATCH_RESULT_LOCKED for a new winner once the
-   * next match has a result.
+   * Enters or changes one match's result: a winner, or a tie (#792) in a game of a week, which
+   * forms no bracket (a knockout always has a winner). 404 BRACKET_MATCH_NOT_FOUND; 422
+   * MATCH_SIDES_NOT_SET while a side still waits for its team; 422 MATCH_RESULT_INVALID for one
+   * score without the other, scores the winner did not win by, a tie without level scores, or a
+   * tie in a bracket match; 409 SPORT_EVENT_MATCH_RESULT_LOCKED for a new winner once the next
+   * match has a result.
    */
   async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput): Promise<SportEventMatch[]> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = this.requireMatch(sportEventId, bracket, matchNumber);
-    const winnerId = sideRowId(match, input.winnerSide);
-    const loserId = sideRowId(match, input.winnerSide === MatchSide.HOME ? MatchSide.AWAY : MatchSide.HOME);
-    if (winnerId === null || loserId === null) {
+    if (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null) {
       this.deps.logger?.warn({ sportEventId, matchNumber }, 'Refused a result for a match whose teams are not both known');
       throw new SportEventError(
         `Match ${matchNumber} does not have both teams yet: enter the results of the matches that feed it first.`,
@@ -168,7 +170,9 @@ export class MatchResultService {
         422,
       );
     }
-    const scoreProblem = describeScoreProblem(input) ?? describeFinalBelowPeriods(match, input, matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null));
+    const scoreProblem = describeScoreProblem(input)
+      ?? (input.winnerSide === null && !formsNoBracket(bracket, linksOn) ? 'a bracket match always has a winner' : null)
+      ?? describeFinalBelowPeriods(match, input, matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null));
     if (scoreProblem) {
       this.deps.logger?.warn({ sportEventId, matchNumber, scoreProblem }, 'Refused a match result with invalid scores');
       throw new SportEventError(`Match ${matchNumber}'s result cannot be saved: ${scoreProblem}.`, 'MATCH_RESULT_INVALID', 422);
@@ -179,7 +183,8 @@ export class MatchResultService {
     }
 
     const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore };
-    const sideFill = this.advance(bracket, match, winnerId);
+    // A tie sends nobody on: only a game that forms no bracket can end level.
+    const sideFill = input.winnerSide === null ? null : this.advance(bracket, match, sideRowId(match, input.winnerSide));
     await this.write(sportEventId, bracket, result, sideFill);
     this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, winnerChanges }, 'Saved a match result');
     const now = this.deps.now?.() ?? new Date();
@@ -440,8 +445,14 @@ function placementOf(bracket: readonly SportEventMatch[], match: SportEventMatch
   return undefined;
 }
 
-/** What is wrong with a result's scores, or null: both or neither, and the winner's the higher. */
+/**
+ * What is wrong with a result's scores, or null: both or neither, and the winner's the higher. A
+ * tie needs both, level.
+ */
 function describeScoreProblem({ winnerSide, homeScore, awayScore }: MatchResultInput): string | null {
+  if (winnerSide === null) {
+    return homeScore !== null && awayScore !== null && homeScore === awayScore ? null : 'a tie needs both scores, level';
+  }
   if (homeScore === null && awayScore === null) return null;
   if (homeScore === null || awayScore === null) return 'give both scores or neither';
   const [winner, loser] = winnerSide === MatchSide.HOME ? [homeScore, awayScore] : [awayScore, homeScore];

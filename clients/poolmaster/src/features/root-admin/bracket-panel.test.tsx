@@ -297,6 +297,39 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       expect(screen.queryByTestId('root-admin-bracket-cancel-1')).not.toBeInTheDocument();
     });
 
+    // #792: a game of a week can end level; a tie is saved with each side's score.
+    it('saves a tie on a week game with the score each side reached, and shows a saved tie', async () => {
+      seed(week);
+      recordEventMatchResultMock.mockResolvedValue({ data: { matches: [] } });
+      const { unmount } = renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-tie-1'));
+      expect(screen.getByTestId('root-admin-bracket-tie-1-save')).toBeDisabled();
+      await userEvent.type(screen.getByTestId('root-admin-bracket-tie-1-score'), '17');
+      await userEvent.click(screen.getByTestId('root-admin-bracket-tie-1-save'));
+      expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
+        path: { eventId: 'evt-1', matchNumber: '1' },
+        body: { winnerSide: null, homeScore: 17, awayScore: 17 },
+      }));
+      unmount();
+
+      seed([{ ...week[0], status: 'COMPLETED', winnerSide: null, homeScore: 17, awayScore: 17 }, week[1]]);
+      renderPage();
+      expect(await screen.findByTestId('root-admin-bracket-tie-1')).toHaveTextContent('Tie 17-17');
+      expect(screen.getByTestId('root-admin-bracket-tie-1')).toBeDisabled();
+      expect(screen.getByTestId('root-admin-bracket-clear-1')).toBeInTheDocument();
+    });
+
+    it('offers no tie on a game of a bracket', async () => {
+      seed([
+        { ...week[0], advancesToMatchId: 'm-3', advancesToSide: 'HOME' },
+        match({ id: 'm-3', matchNumber: 3, roundNumber: 2, awaySportEventParticipantId: 'sep-3' }),
+      ]);
+      renderPage();
+      expect(await screen.findByTestId('root-admin-bracket-winner-1-HOME')).toBeInTheDocument();
+      expect(screen.queryByTestId('root-admin-bracket-tie-1')).not.toBeInTheDocument();
+    });
+
     // #720: a pool scored against the spread reads each game's spread from the home side.
     it('shows each game\'s spread from the home team\'s side, and no spread column for a bracket', async () => {
       seed([{ ...week[0], homeSpread: -3.5 }, week[1]]);
@@ -431,8 +464,9 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       await waitFor(() => expect(getEventBracketMock).toHaveBeenCalledTimes(3));
     });
 
-    it('saves the final score as the game\'s result, the higher score winning, and refuses a tie before sending it', async () => {
-      seed([superBowl()], { event: playoffs });
+    it('saves the final score as the game\'s result, the higher score winning, and refuses a tie in a bracket before sending it', async () => {
+      const conferenceFinal = match({ id: 'm-2', matchNumber: 2, roundNumber: 1, advancesToMatchId: 'm-1', advancesToSide: 'AWAY' });
+      seed([superBowl({ roundNumber: 2 }), conferenceFinal], { event: playoffs });
       recordEventMatchResultMock.mockResolvedValue({ data: { matches: [] } });
       renderPage();
 
@@ -448,6 +482,23 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
         path: { eventId: 'evt-1', matchNumber: '1' },
         body: { winnerSide: 'AWAY', homeScore: 13, awayScore: 29 },
+      }));
+    });
+
+    // #792: a game of a week can end level, so its level final score is saved as a tie.
+    it('saves a level final score of a week game as a tie with no winner', async () => {
+      seed([superBowl(), match({ id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4' })], { event: playoffs });
+      recordEventMatchResultMock.mockResolvedValue({ data: { matches: [] } });
+      renderPage();
+
+      await userEvent.click(await screen.findByTestId('root-admin-bracket-score-1-final-edit'));
+      await userEvent.type(screen.getByTestId('root-admin-bracket-score-1-final-away'), '20');
+      await userEvent.type(screen.getByTestId('root-admin-bracket-score-1-final-home'), '20');
+      expect(screen.queryByText('The final score can\'t be a tie: the winner\'s score is the higher.')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-final-save'));
+      expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
+        path: { eventId: 'evt-1', matchNumber: '1' },
+        body: { winnerSide: null, homeScore: 20, awayScore: 20 },
       }));
     });
 

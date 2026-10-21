@@ -36,6 +36,7 @@ import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { formatPickEmRulesName, formatSelectionTypeName } from './contest-rules';
+import { contestTieLabel } from './contest-sport';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
   CONTEST_ENTRY_STATUS_TONES,
@@ -56,6 +57,7 @@ import {
   roundWeek,
   survivorPickTeam,
   teamPick,
+  tiePick,
   weekRounds,
   weekSubmitHint,
   type PickEmGame,
@@ -113,6 +115,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   // A playoff survivor pool's round on screen (#785), until the member switches: the one being picked.
   const [requestedRound, setRequestedRound] = useState<number | null>(null);
   const roundLabel = useBracketRoundLabel(contest.sport, sportEventId);
+  const tieLabel = contestTieLabel(contest.sport);
 
   const gamePicksQuery = useQuery({
     queryKey: gamePicksKey,
@@ -239,6 +242,11 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     saveMutation.mutate(body);
   };
   const pick = (game: PickEmGame, team: PickEmTeam) => save({ picks: [teamPick(game, team, gamePicks.mode)] });
+  const pickTie = (game: PickEmGame) => save({ picks: [tiePick(game, gamePicks.mode)] });
+  // A pool that takes tie picks (#792) says so where it says how to pick.
+  const pickInstruction = gamePicks.tiePicksOffered
+    ? `Tap the team you think wins each game, or ${tieLabel} if you think it ends level`
+    : 'Tap the team you think wins each game';
   const rank = (game: PickEmGame, value: number | null) => {
     const picks = confidencePicks(gamePicks.games, game, value);
     if (picks.length) {
@@ -394,8 +402,8 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
             {isSurvivor
               ? `Tap the one team you think wins this ${period}. If it loses or ties, the entry is out. A team you picked in another ${period} can't be picked again.`
               : gamePicks.mode === PickEmMode.CONFIDENCE
-              ? `Tap the team you think wins each game, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value.`
-              : 'Tap the team you think wins each game. Each correct pick scores 1 point.'}
+              ? `${pickInstruction}, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value.`
+              : `${pickInstruction}. Each correct pick scores 1 point.`}
           </p>
         ) : null}
         <PickEmGames
@@ -404,6 +412,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           isBusy={saveMutation.isPending}
           onConfidence={rank}
           onPick={pick}
+          tie={{ label: tieLabel, onPick: pickTie }}
           tiebreaker={{
             isSaving: saveMutation.isPending,
             onChange: setTiebreakerDraft,

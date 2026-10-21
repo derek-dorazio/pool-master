@@ -118,6 +118,9 @@ export const CONTEST_SCORING_ROUNDS_MISMATCH = 'CONTEST_SCORING_ROUNDS_MISMATCH'
 /** Error code for a selection type the event's sport does not offer (#602). */
 export const CONTEST_SELECTION_TYPE_NOT_ALLOWED = 'CONTEST_SELECTION_TYPE_NOT_ALLOWED';
 
+/** Error code for a pick'em pool against the spread in a sport whose pools have no spread (#792): soccer. */
+export const CONTEST_SPREAD_NOT_OFFERED = 'CONTEST_SPREAD_NOT_OFFERED';
+
 /**
  * Error code for a configuration edit on a contest that is no longer DRAFT (#117). Opening a
  * contest to its league locks its configuration for good: members enter against those rules.

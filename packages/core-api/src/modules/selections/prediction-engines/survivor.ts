@@ -9,7 +9,7 @@
  * have their teams. A team picked in one round is used for every other.
  */
 
-import { PickEmMode, SelectionType } from '@poolmaster/shared/domain';
+import { PickEmMode, SelectionType, isTeamChoice } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../contests/entry-window';
 import { scoreGamePicks } from '../../scoring-families/head-to-head/game-picks';
 import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from './prediction-engine';
@@ -19,6 +19,7 @@ export const survivorPredictionEngine: PredictionEngine = {
   pickWindow: PickWindow.UNTIL_MATCH_START,
   onePickPerRound: true,
   readsEarlierWeeks: true,
+  takesTiePicks: false,
 
   tiebreakerGame() {
     return null;
@@ -30,9 +31,10 @@ export const survivorPredictionEngine: PredictionEngine = {
       away: game.awaySportEventParticipantId,
     }]));
     const roundOf = new Map(games.map((game) => [game.id, game.roundNumber]));
+    // A survivor pick names a team: a tie pick never stands.
     const valid = (prediction: (typeof predictions)[number]) => {
       const game = sides.get(prediction.sportEventMatchId);
-      return game !== undefined
+      return game !== undefined && isTeamChoice(prediction)
         && (prediction.sportEventParticipantId === game.home || prediction.sportEventParticipantId === game.away);
     };
     // Each round holds one pick: the latest valid one stands, and any other is cleared.
@@ -73,7 +75,7 @@ export const survivorPredictionEngine: PredictionEngine = {
       issues.push({ kind: PredictionIssueKind.ONE_PICK_REQUIRED, pickedCount: crowded ?? firstRoundCount });
     }
     const seen = new Set<string>();
-    for (const pick of picked) {
+    for (const pick of picked.filter(isTeamChoice)) {
       const participantId = season?.participantIdOf.get(pick.sportEventParticipantId);
       if (seen.has(pick.sportEventParticipantId)
         || (participantId !== undefined && season?.usedParticipantIds.has(participantId) === true)) {

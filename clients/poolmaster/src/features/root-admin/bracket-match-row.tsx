@@ -8,7 +8,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, describeEntry, feederOf, formsNoBracket, matchNoun, sideEntry } from './bracket-copy';
+import { bracketErrorMessages, describeEntry, feederOf, formsNoBracket, matchNoun, sideEntry, tieWord } from './bracket-copy';
 import { MatchScoresRow } from './match-scores-row';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
@@ -71,7 +71,7 @@ function bracketInvalidates(eventId: string) {
  * One match of the bracket tab (#700). Before release an admin edits the pairing of any side no
  * earlier match fills; once the event is released one tap names the winner, and a final result
  * can be switched or cleared while the next match has none. A released game of a week that forms
- * no bracket can be cancelled once it is postponed (#715).
+ * no bracket can be cancelled once it is postponed (#715), or end in a tie (#792).
  */
 export function BracketMatchRow({ match, released, context }: { match: SportEventMatchDto; released: boolean; context: BracketContext }) {
   const [editing, setEditing] = useState(false);
@@ -117,7 +117,8 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
   const homeFed = feederOf(match, MatchSide.HOME, context.bracket) !== undefined;
   const awayFed = feederOf(match, MatchSide.AWAY, context.bracket) !== undefined;
   const pairingEditable = !released && !(homeFed && awayFed);
-  const cancellable = released && match.status === MatchStatus.SCHEDULED && formsNoBracket(context.bracket);
+  const weekGame = formsNoBracket(context.bracket);
+  const cancellable = released && match.status === MatchStatus.SCHEDULED && weekGame;
   const closeCancel = () => {
     if (!cancel.isPending) {
       cancel.reset();
@@ -170,6 +171,7 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
                   </Button>
                 );
               })}
+              {weekGame ? <TieResult context={context} match={match} /> : null}
               {decided ? (
                 <Button
                   data-testid={`root-admin-bracket-clear-${match.matchNumber}`}
@@ -226,6 +228,90 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
       </tr>
       {periods ? <MatchScoresRow columns={context.spreads ? 6 : 5} context={context} match={match} periods={periods} /> : null}
     </>
+  );
+}
+
+/**
+ * A game of a week that ended level (#792), called by the sport's word ("Draw" in soccer): a tie
+ * needs its score, the same for both sides, so the button asks for it before saving.
+ */
+function TieResult({ match, context }: { match: SportEventMatchDto; context: BracketContext }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState('');
+  const word = tieWord(context.vocabulary);
+  const isTie = match.status === MatchStatus.COMPLETED && match.winnerSide === null;
+  const score = /^\d{1,3}$/.test(value.trim()) ? Number(value.trim()) : null;
+  const testId = `root-admin-bracket-tie-${match.matchNumber}`;
+
+  const save = useInvalidatingMutation({
+    mutationFn: async (level: number) => {
+      const response = await recordEventMatchResult({
+        path: { eventId: context.eventId, matchNumber: match.matchNumber },
+        body: { winnerSide: null, homeScore: level, awayScore: level },
+      });
+      if (response.error) {
+        throwApiError(response.error);
+      }
+      return response.data;
+    },
+    invalidates: bracketInvalidates(context.eventId),
+    onSuccess: () => setEditing(false),
+    onError: (error) => {
+      logger.warn({ action: 'event.bracket.tie.failed', data: { matchNumber: match.matchNumber }, err: error }, 'Tie result was rejected');
+    },
+  });
+
+  if (!editing) {
+    return (
+      <Button
+        aria-pressed={isTie}
+        data-testid={testId}
+        disabled={isTie}
+        onClick={() => {
+          save.reset();
+          setValue('');
+          setEditing(true);
+        }}
+        size="sm"
+        variant={isTie ? 'primary' : 'secondary'}
+      >
+        {isTie ? `${word} ${match.awayScore ?? ''}-${match.homeScore ?? ''}` : word}
+      </Button>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-end gap-2" data-testid={`${testId}-editor`}>
+      <label className="flex w-36 flex-col gap-1 text-xs text-muted-foreground">
+        Each side scored
+        <Input
+          data-testid={`${testId}-score`}
+          inputMode="numeric"
+          min="0"
+          onChange={(change) => setValue(change.target.value)}
+          type="number"
+          value={value}
+        />
+      </label>
+      <Button
+        data-testid={`${testId}-save`}
+        disabled={save.isPending || score === null}
+        onClick={() => {
+          if (score !== null) save.mutate(score);
+        }}
+        size="sm"
+      >
+        {`Save ${word.toLowerCase()}`}
+      </Button>
+      <Button disabled={save.isPending} onClick={() => setEditing(false)} size="sm" variant="ghost">Cancel</Button>
+      {save.isError ? (
+        <p className="w-full text-sm text-destructive" data-testid={`${testId}-error`} role="alert">
+          {extractErrorMessage(save.error, {
+            codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
+            fallback: `This ${word.toLowerCase()} could not be saved. Try again.`,
+          })}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

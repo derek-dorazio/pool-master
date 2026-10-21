@@ -5,7 +5,7 @@
  * pick locks, and is revealed, when the event starts.
  */
 
-import { SelectionType } from '@poolmaster/shared/domain';
+import { SelectionType, isTeamChoice } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../contests/entry-window';
 import { bracketFinal, resolveBracketPicks, scoreBracketPicks } from '../../scoring-families/head-to-head/bracket-picks';
 import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from './prediction-engine';
@@ -15,6 +15,7 @@ export const bracketPredictionEngine: PredictionEngine = {
   pickWindow: PickWindow.UNTIL_EVENT_START,
   onePickPerRound: false,
   readsEarlierWeeks: false,
+  takesTiePicks: false,
 
   tiebreakerGame({ games }) {
     return bracketFinal(games);
@@ -25,13 +26,23 @@ export const bracketPredictionEngine: PredictionEngine = {
   },
 
   resolvePicks({ games, predictions, seedOf }) {
-    return resolveBracketPicks(games, predictions, seedOf);
+    // A bracket pick names a team: a tie pick never stands. Each team pick is resolved under a
+    // copy that keeps the pick it came from.
+    const teamPicks = predictions.flatMap((source) => (source.sportEventParticipantId === null
+      ? []
+      : [{ sportEventMatchId: source.sportEventMatchId, sportEventParticipantId: source.sportEventParticipantId, source }]));
+    const resolved = resolveBracketPicks(games, teamPicks, seedOf);
+    return {
+      sides: resolved.sides,
+      kept: resolved.kept.map((pick) => pick.source),
+      stranded: [...resolved.stranded.map((pick) => pick.source), ...predictions.filter((prediction) => prediction.sportEventParticipantId === null)],
+    };
   },
 
   scorePicks({ games, predictions, seedOf, scoring }) {
     // A bracket scores with the knockout round values; contest setup refuses any other definition.
     return scoring?.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS'
-      ? scoreBracketPicks(games, predictions, seedOf, scoring.config)
+      ? scoreBracketPicks(games, predictions.filter(isTeamChoice), seedOf, scoring.config)
       : null;
   },
 

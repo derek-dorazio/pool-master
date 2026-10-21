@@ -7,7 +7,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, sideEntry } from './bracket-copy';
+import { bracketErrorMessages, formsNoBracket, sideEntry, tieWord } from './bracket-copy';
 import type { BracketContext } from './bracket-match-row';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
@@ -77,6 +77,12 @@ export function MatchScoresRow({
   );
 }
 
+/** The side a final score names the winner, or null for a level score: a tie (#792). */
+function finalWinner(score: { homeScore: number; awayScore: number }): MatchSide | null {
+  if (score.homeScore === score.awayScore) return null;
+  return score.homeScore > score.awayScore ? MatchSide.HOME : MatchSide.AWAY;
+}
+
 /** One scoring moment: a period's end by number, or the final score. */
 function ScoreMoment({
   match,
@@ -105,7 +111,9 @@ function ScoreMoment({
   const parse = (value: string) => (/^\d{1,3}$/.test(value.trim()) ? Number(value.trim()) : null);
   const homeScore = parse(homeValue);
   const awayScore = parse(awayValue);
-  const tied = moment === 'final' && homeScore !== null && homeScore === awayScore;
+  // A game of a week, which forms no bracket, can end level (#792); a bracket match always has a winner.
+  const tiesAllowed = formsNoBracket(context.bracket);
+  const tied = moment === 'final' && !tiesAllowed && homeScore !== null && homeScore === awayScore;
 
   const invalidates = [QueryKeys.rootAdmin.manageSport.event(context.eventId)];
   const path = { eventId: context.eventId, matchNumber: match.matchNumber };
@@ -116,7 +124,7 @@ function ScoreMoment({
   const save = useInvalidatingMutation({
     mutationFn: async (score: { homeScore: number; awayScore: number }) => {
       const response = moment === 'final'
-        ? await recordEventMatchResult({ path, body: { winnerSide: score.homeScore > score.awayScore ? MatchSide.HOME : MatchSide.AWAY, ...score } })
+        ? await recordEventMatchResult({ path, body: { winnerSide: finalWinner(score), ...score } })
         : await recordEventMatchPeriodScore({ path: { ...path, periodNumber: moment }, body: score });
       if (response.error) {
         throwApiError(response.error);
@@ -180,7 +188,7 @@ function ScoreMoment({
       ) : (
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <span className={saved ? 'text-sm' : 'text-sm text-muted-foreground'} data-testid={`${testId}-value`}>
-            {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}` : empty}
+            {saved ? `${away} ${saved.awayScore}, ${home} ${saved.homeScore}${moment === 'final' && saved.awayScore === saved.homeScore ? ` (${tieWord(context.vocabulary).toLowerCase()})` : ''}` : empty}
           </span>
           <Button
             data-testid={`${testId}-edit`}

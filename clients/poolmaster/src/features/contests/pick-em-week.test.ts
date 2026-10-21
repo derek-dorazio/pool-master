@@ -52,8 +52,8 @@ describe('pick\'em week helpers', () => {
       2: { pick: weekPick(NFL_TEAMS.chiefs, { confidence: null }) },
     });
     expect(confidencePicks(games, games[1], 3)).toEqual([
-      { sportEventMatchId: 'match-2', sportEventParticipantId: id(NFL_TEAMS.chiefs), confidence: 3 },
-      { sportEventMatchId: 'match-1', sportEventParticipantId: id(NFL_TEAMS.packers), confidence: null },
+      { sportEventMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: id(NFL_TEAMS.chiefs), confidence: 3 },
+      { sportEventMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: id(NFL_TEAMS.packers), confidence: null },
     ]);
   });
 
@@ -63,7 +63,7 @@ describe('pick\'em week helpers', () => {
       3: { pick: weekPick(NFL_TEAMS.eagles, { confidence: 1 }) },
     });
     expect(confidencePicks(games, games[2], 2)).toEqual([
-      { sportEventMatchId: 'match-3', sportEventParticipantId: id(NFL_TEAMS.eagles), confidence: 2 },
+      { sportEventMatchId: 'match-3', predictedResult: 'TEAM', sportEventParticipantId: id(NFL_TEAMS.eagles), confidence: 2 },
     ]);
     expect(confidencePicks(games, games[0], 1)).toEqual([]);
   });

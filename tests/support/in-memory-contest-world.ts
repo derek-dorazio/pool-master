@@ -49,6 +49,7 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SelectionType,
+  Sport,
   SportEventStatus,
   SquadMembershipStatus,
   TeamIconKey,
@@ -216,6 +217,7 @@ export class InMemoryContestWorld {
     const event = {
       id: this.nextId('event'),
       name: 'The Masters',
+      sport: Sport.GOLF,
       status: SportEventStatus.SCHEDULED,
       createdAt: T0,
       updatedAt: T0,

@@ -31,6 +31,7 @@ import {
   ContestFormat,
   ContestStatus,
   MatchSide,
+  PredictedResult,
   SelectionType,
   Sport,
   SurvivorWeekOutcome,
@@ -155,6 +156,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   /** A pick of game `matchNumber`'s home or away team. */
   const pick = (matchNumber: number, side: Side) => ({
     sportEventMatchId: game(matchNumber).id,
+    predictedResult: PredictedResult.TEAM,
     sportEventParticipantId: expectDefined(side === 'home' ? game(matchNumber).homeSportEventParticipantId : game(matchNumber).awaySportEventParticipantId),
   });
   /** The admin enters game `matchNumber`'s result: `side` wins it. */

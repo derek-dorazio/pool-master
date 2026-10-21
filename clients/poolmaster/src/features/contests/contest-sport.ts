@@ -15,6 +15,11 @@ export function contestParticipantNoun(sport: Sport | null | undefined): SportNo
   return sport ? getSportDefinition(sport).vocabulary.participant : PARTICIPANT_WITHOUT_SPORT;
 }
 
+/** What a game that ends level is called (#792): "Draw" in soccer, "Tie" wherever the sport names none. */
+export function contestTieLabel(sport: Sport | null | undefined): string {
+  return (sport ? getSportDefinition(sport).vocabulary.tie : undefined) ?? 'Tie';
+}
+
 /**
  * The tiebreaker a contest's entries predict, from its sport's scoring family: a golf entry's
  * winning score against par, none for a race. A contest with no sport asks for none.

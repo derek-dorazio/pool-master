@@ -10,6 +10,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { PredictedResult } from '@poolmaster/shared/domain';
 import {
   UserResponseSchema,
   AuthResponseSchema,
@@ -946,7 +947,7 @@ describe('Contract verification (web)', () => {
       method: 'PUT',
       url,
       headers: owner.headers,
-      payload: { picks: [{ sportEventMatchId: game.id, sportEventParticipantId: away.id, confidence: 1 }], tiebreakerValue: 41 },
+      payload: { picks: [{ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: away.id, confidence: 1 }], tiebreakerValue: 41 },
     });
     expect(saveRes.statusCode).toBe(200);
     const saved = GamePicksResponseSchema.safeParse(saveRes.json());

@@ -20,6 +20,7 @@ import {
   ContestStatus,
   MatchSide,
   MatchStatus,
+  PredictedResult,
   SelectionType,
   SportEventStatus,
   SurvivorWeekOutcome,
@@ -132,7 +133,7 @@ function setup(options: { untimedLaterRounds?: boolean } = {}) {
     actorUserId: expectDefined(users.get(name)),
   });
   const game = (matchNumber: number) => expectDefined(games.matches.get(`game-${matchNumber}`));
-  const pick = (matchNumber: number, team: Team) => ({ sportEventMatchId: `game-${matchNumber}`, sportEventParticipantId: teamRow[team], confidence: null });
+  const pick = (matchNumber: number, team: Team) => ({ sportEventMatchId: `game-${matchNumber}`, predictedResult: PredictedResult.TEAM, sportEventParticipantId: teamRow[team], confidence: null });
   const save = (name: Name, matchNumber: number, team: Team) => predictions.saveGamePicks({ ...input(name), picks: [pick(matchNumber, team)] });
   /** The game is played: `winner` wins it. */
   const play = (matchNumber: number, winner: MatchSide) => {

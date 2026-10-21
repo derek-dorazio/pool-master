@@ -10940,9 +10940,13 @@ export type SaveGamePicksRequest = {
          */
         sportEventMatchId: string;
         /**
-         * The team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it.
+         * What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE.
          */
-        sportEventParticipantId: string;
+        predictedResult: 'TEAM' | 'TIE';
+        /**
+         * With TEAM, the team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it. Null with TIE.
+         */
+        sportEventParticipantId: string | null;
         /**
          * A confidence pool's value for this pick, 1 to the week's number of games. Omitted or null in a straight-up pool, and until the entry gives one. A value may repeat until the week is submitted.
          */
@@ -11205,6 +11209,10 @@ export type GamePicksResponse = {
      */
     againstTheSpread: boolean;
     /**
+     * Whether a pick may say the game ends level (#792): a pick'em pool in a sport that offers tie picks, a draw in soccer. False in a bracket or survivor pool.
+     */
+    tiePicksOffered: boolean;
+    /**
      * A survivor pool's season for the entry; null in the other pools.
      */
     survivor: {
@@ -11329,16 +11337,20 @@ export type GamePicksResponse = {
          */
         pick: {
             /**
-             * The team picked to win.
+             * What the pick says happens: TEAM, its team wins; TIE, the game ends level (#792).
              */
-            sportEventParticipantId: string;
+            predictedResult: 'TEAM' | 'TIE';
+            /**
+             * The team picked to win; null for a TIE pick.
+             */
+            sportEventParticipantId: string | null;
             /**
              * The pick's confidence value; null in a straight-up pool, in a bracket, or until given.
              */
             confidence: number | null;
             pickedAt: string;
             /**
-             * How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING.
+             * How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), or for a TIE pick once the game ended level, BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING.
              */
             outcome: 'CORRECT' | 'BUSTED' | 'PUSH' | 'PENDING' | null;
             /**
@@ -14237,7 +14249,7 @@ export type SportEventMatchDto = {
      */
     status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
     /**
-     * Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has.
+     * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
      */
     winnerSide: 'HOME' | 'AWAY' | null;
     /**
@@ -14322,7 +14334,7 @@ export type SportEventBracketResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
         /**
-         * Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has.
+         * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
         winnerSide: 'HOME' | 'AWAY' | null;
         /**
@@ -14408,7 +14420,7 @@ export type SportEventMatchResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
         /**
-         * Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has.
+         * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
         winnerSide: 'HOME' | 'AWAY' | null;
         /**
@@ -14532,13 +14544,13 @@ export type FillPlayInSlotRequest = {
 };
 
 /**
- * A match's result: who won, and both scores or neither. The winner's score must be the higher.
+ * A match's result: who won, or a tie, and both scores or neither. The winner's score must be the higher; a tie's scores are level.
  */
 export type RecordSportEventMatchResultRequest = {
     /**
-     * The side that won.
+     * The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.
      */
-    winnerSide: 'HOME' | 'AWAY';
+    winnerSide: 'HOME' | 'AWAY' | null;
     /**
      * The home side's score (games won, for a series), or null with the away score null too.
      */
@@ -14786,7 +14798,7 @@ export type SquaresBoardResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
         /**
-         * Who won; null until the match is COMPLETED. A COMPLETED match with none is a draw, which a knockout never has.
+         * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
         winnerSide: 'HOME' | 'AWAY' | null;
         /**
@@ -18057,7 +18069,7 @@ export type CreateContestErrors = {
      */
     409: ErrorEnvelope;
     /**
-     * The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).
+     * The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).
      */
     422: ErrorEnvelope;
 };
@@ -18241,7 +18253,7 @@ export type SetContestSportEventsErrors = {
      */
     409: ErrorEnvelope;
     /**
-     * SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules.
+     * SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules. CONTEST_SPREAD_NOT_OFFERED — a pick'em pool against the spread in a sport whose pools have no spread (#792).
      */
     422: ErrorEnvelope;
 };

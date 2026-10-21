@@ -12,6 +12,7 @@ export * from './sport-rows';
 export * from './tournament-format';
 export * from './sports';
 export * from './squares';
+export * from './predicted-choice';
 export { assertNever } from './assert-never';
 export {
   compareScores,

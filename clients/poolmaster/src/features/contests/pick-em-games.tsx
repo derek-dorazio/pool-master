@@ -4,7 +4,7 @@ import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
 import { Button, Chip, FormField, Input, Select, cn, formatDateTimeDisplay } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { describePickOutcome, parseBracketTiebreaker } from './bracket-layout';
-import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, teamSpread, type PickEmGame, type PickEmTeam } from './pick-em-week';
+import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, isTiePicked, teamSpread, type PickEmGame, type PickEmTeam } from './pick-em-week';
 
 /** A survivor pick's mark (#719): its team won, or the entry is out. */
 const SURVIVOR_OUTCOME_LABELS: Record<PickOutcome, string> = {
@@ -21,6 +21,13 @@ function pickOutcome(gamePicks: GamePicksResponse, pick: NonNullable<PickEmGame[
   return outcome && isSurvivorWeek(gamePicks) && pick.outcome !== null
     ? { ...outcome, label: SURVIVOR_OUTCOME_LABELS[pick.outcome] }
     : outcome;
+}
+
+/** A pool's tie pick (#792): what the sport calls a game that ends level, and its save. */
+export interface PickEmTie {
+  /** "Draw" in soccer, "Tie" elsewhere. */
+  label: string;
+  onPick: (game: PickEmGame) => void;
 }
 
 /** The tiebreaker's draft and its save, owned by the page: the field sits on its game's card. */
@@ -101,6 +108,60 @@ function TeamLine({ game, isPicked, spread, team }: { game: PickEmGame; isPicked
       <TeamName game={game} spread={spread} team={team} />
       {isPicked ? <Check aria-label="Picked" size={16} /> : null}
     </div>
+  );
+}
+
+/**
+ * The middle choice of a game in a pool that takes tie picks (#792): the game ends level, called
+ * by the sport's word ("Draw" in soccer). A button while the game can change, a line after.
+ */
+function TieChoice({
+  choosable,
+  game,
+  isBusy,
+  isPicked,
+  label,
+  onPick,
+}: {
+  choosable: boolean;
+  game: PickEmGame;
+  isBusy: boolean;
+  isPicked: boolean;
+  label: string;
+  onPick: (game: PickEmGame) => void;
+}) {
+  if (!choosable) {
+    return (
+      <div
+        className={cn(
+          'flex h-9 items-center justify-between gap-2 rounded-2xl border px-3 text-sm',
+          isPicked ? 'border-primary/30 bg-primary/10 font-semibold' : 'border-border text-muted-foreground',
+        )}
+        data-picked={isPicked || undefined}
+        data-testid={`pick-em-game-${game.matchNumber}-tie`}
+      >
+        <span>{label}</span>
+        {isPicked ? <Check aria-label="Picked" size={16} /> : null}
+      </div>
+    );
+  }
+  return (
+    <Button
+      aria-pressed={isPicked}
+      className="w-full justify-between text-left"
+      data-testid={`pick-em-game-${game.matchNumber}-tie`}
+      disabled={isBusy}
+      onClick={() => {
+        if (!isPicked) {
+          onPick(game);
+        }
+      }}
+      size="sm"
+      variant={isPicked ? 'subtle' : 'secondary'}
+    >
+      <span>{label}</span>
+      {isPicked ? <Check aria-label="Your pick" size={16} /> : null}
+    </Button>
   );
 }
 
@@ -206,6 +267,7 @@ function GameCard({
   isBusy,
   onConfidence,
   onPick,
+  tie,
   tiebreaker,
 }: {
   canChange: boolean;
@@ -214,6 +276,7 @@ function GameCard({
   isBusy: boolean;
   onConfidence: (game: PickEmGame, value: number | null) => void;
   onPick: (game: PickEmGame, team: PickEmTeam) => void;
+  tie: PickEmTie;
   tiebreaker: PickEmTiebreaker;
 }) {
   const choosable = canChange && !game.locked;
@@ -239,18 +302,30 @@ function GameCard({
           {outcome ? <Chip data-testid={`pick-em-game-${game.matchNumber}-outcome`} tone={outcome.tone}>{outcome.label}</Chip> : null}
         </span>
       </div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {gameTeams(game).map((team, index) => {
+      <div className={cn('grid gap-2', gamePicks.tiePicksOffered ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
+        {gameTeams(game).flatMap((team, index) => {
+          // A pool that takes tie picks offers the tie between the two teams (#792).
+          const tieChoice = index === 1 && gamePicks.tiePicksOffered ? [(
+            <TieChoice
+              choosable={choosable}
+              game={game}
+              isBusy={isBusy}
+              isPicked={!isHidden && isTiePicked(game)}
+              key="tie"
+              label={tie.label}
+              onPick={tie.onPick}
+            />
+          )] : [];
           if (!team) {
-            return (
+            return [...tieChoice, (
               <div className="flex h-9 items-center rounded-2xl border border-dashed border-border px-3 text-sm text-muted-foreground" key={index}>
                 To be decided
               </div>
-            );
+            )];
           }
           const isPicked = !isHidden && team.sportEventParticipantId === pickedId;
           const spread = teamSpread(gamePicks, game, team);
-          return choosable ? (
+          return [...tieChoice, choosable ? (
             <TeamChoice
               game={game}
               isBusy={isBusy}
@@ -263,7 +338,7 @@ function GameCard({
             />
           ) : (
             <TeamLine game={game} isPicked={isPicked} key={team.sportEventParticipantId} spread={spread} team={team} />
-          );
+          )];
         })}
       </div>
       {isHidden ? (
@@ -287,7 +362,8 @@ function GameCard({
 
 /**
  * A pick'em week's games in kickoff order (#718): a tap on a team picks it, a confidence pool
- * ranks each pick, and the tiebreaker is typed on its game. In a survivor week (#719) the tap
+ * ranks each pick, and the tiebreaker is typed on its game. A pool that takes tie picks (#792)
+ * offers the tie between the two teams. In a survivor week (#719) the tap
  * replaces the entry's one pick, and a team it used in another week can't be tapped. A game that has kicked off is locked
  * and marked against its result; on another entry each pick shows from its game's kickoff.
  */
@@ -297,6 +373,7 @@ export function PickEmGames({
   isBusy,
   onConfidence,
   onPick,
+  tie,
   tiebreaker,
 }: {
   /** Whether the viewer may change this week now: their own entry, before its games lock. */
@@ -306,6 +383,8 @@ export function PickEmGames({
   isBusy: boolean;
   onConfidence: (game: PickEmGame, value: number | null) => void;
   onPick: (game: PickEmGame, team: PickEmTeam) => void;
+  /** The tie choice, shown on each game when the pool takes tie picks (`tiePicksOffered`). */
+  tie: PickEmTie;
   tiebreaker: PickEmTiebreaker;
 }) {
   const games = [...gamePicks.games].sort(
@@ -325,6 +404,7 @@ export function PickEmGames({
           key={game.sportEventMatchId}
           onConfidence={onConfidence}
           onPick={onPick}
+          tie={tie}
           tiebreaker={tiebreaker}
         />
       ))}

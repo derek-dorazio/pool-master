@@ -4,16 +4,30 @@ import type {
   ContestEntryMatchPredictionSave,
   ContestEntrySeasonPrediction,
 } from '@poolmaster/shared/db';
-import { ContestEntryStatus, type ContestEntryMatchPrediction } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PredictedResult, type ContestEntryMatchPrediction, type PredictedChoice } from '@poolmaster/shared/domain';
 
 type PredictionRow = Awaited<ReturnType<PrismaClient['contestEntryMatchPrediction']['findMany']>>[number];
+
+/**
+ * What the row predicts: its team, or a tie. The database's check keeps the team named exactly
+ * when the result is TEAM, so a team row without one is a broken row.
+ */
+function toChoice(row: PredictionRow): PredictedChoice {
+  if (row.predictedResult === PredictedResult.TIE) {
+    return { predictedResult: PredictedResult.TIE, sportEventParticipantId: null };
+  }
+  if (row.sportEventParticipantId === null) {
+    throw new Error(`Match prediction ${row.id} is a team pick with no team.`);
+  }
+  return { predictedResult: PredictedResult.TEAM, sportEventParticipantId: row.sportEventParticipantId };
+}
 
 function toPrediction(row: PredictionRow): ContestEntryMatchPrediction {
   return {
     id: row.id,
     contestEntryId: row.contestEntryId,
     sportEventMatchId: row.sportEventMatchId,
-    sportEventParticipantId: row.sportEventParticipantId,
+    ...toChoice(row),
     confidence: row.confidence,
     pickedAt: row.pickedAt,
     createdAt: row.createdAt,
@@ -53,11 +67,17 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
       include: { sportEventMatch: { select: { sportEventId: true } }, sportEventParticipant: { select: { participantId: true } } },
       orderBy: [{ contestEntryId: 'asc' }, { sportEventMatch: { matchNumber: 'asc' } }],
     });
-    return rows.map((row) => ({
-      ...toPrediction(row),
-      sportEventId: row.sportEventMatch.sportEventId,
-      participantId: row.sportEventParticipant.participantId,
-    }));
+    return rows.map((row): ContestEntrySeasonPrediction => {
+      const prediction = toPrediction(row);
+      const sportEventId = row.sportEventMatch.sportEventId;
+      if (prediction.predictedResult === PredictedResult.TIE) {
+        return { ...prediction, sportEventId, participantId: null };
+      }
+      if (row.sportEventParticipant === null) {
+        throw new Error(`Match prediction ${row.id} is a team pick with no team.`);
+      }
+      return { ...prediction, sportEventId, participantId: row.sportEventParticipant.participantId };
+    });
   }
 
   async hasAnyOnMatch(sportEventMatchId: string): Promise<boolean> {
@@ -73,11 +93,11 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
           where: { contestEntryId, sportEventMatchId: { in: [...clearedMatchIds] } },
         });
       }
-      for (const { sportEventMatchId, sportEventParticipantId, confidence } of saves) {
+      for (const { sportEventMatchId, predictedResult, sportEventParticipantId, confidence } of saves) {
         await tx.contestEntryMatchPrediction.upsert({
           where: { contestEntryId_sportEventMatchId: { contestEntryId, sportEventMatchId } },
-          create: { contestEntryId, sportEventMatchId, sportEventParticipantId, confidence, pickedAt: at },
-          update: { sportEventParticipantId, confidence, pickedAt: at },
+          create: { contestEntryId, sportEventMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at },
+          update: { predictedResult, sportEventParticipantId, confidence, pickedAt: at },
         });
       }
       const statusChange = eventStatus === null

@@ -19,6 +19,7 @@ import {
   ContestStatus,
   MatchSide,
   MatchStatus,
+  PredictedResult,
   SelectionType,
   SportEventStatus,
   SurvivorWeekOutcome,
@@ -112,6 +113,7 @@ function setup() {
       const [game, picked] = week.pick;
       games.predictions.set(`${entry.id}:${game.id}`, {
         id: `prediction-${entry.id}-${game.id}`, contestEntryId: entry.id, sportEventMatchId: game.id,
+        predictedResult: PredictedResult.TEAM,
         sportEventParticipantId: sideOf(game, picked), confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
       });
     }
@@ -264,8 +266,8 @@ describe('survivorPredictionEngine', () => {
   const games = [game('a'), game('b')];
 
   it('keeps the latest pick of the week and clears the other, as a new pick replaces the entry\'s one', () => {
-    const first = { sportEventMatchId: 'a', sportEventParticipantId: 'a-home', confidence: null };
-    const second = { sportEventMatchId: 'b', sportEventParticipantId: 'b-away', confidence: null };
+    const first = { sportEventMatchId: 'a', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'a-home', confidence: null };
+    const second = { sportEventMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-away', confidence: null };
     const resolved = survivorPredictionEngine.resolvePicks({ games, predictions: [first, second], seedOf: new Map() });
     expect(resolved.kept).toEqual([second]);
     expect(resolved.stranded).toEqual([first]);
@@ -282,7 +284,7 @@ describe('survivorPredictionEngine', () => {
       weekNumberOfRound: new Map([[1, 3]]),
       firstWeekNumber: 3,
     };
-    const issues = (predictions: Array<{ sportEventMatchId: string; sportEventParticipantId: string }>, eliminatedInWeek: number | null = null) =>
+    const issues = (predictions: Array<{ sportEventMatchId: string; predictedResult: typeof PredictedResult.TEAM; sportEventParticipantId: string }>, eliminatedInWeek: number | null = null) =>
       survivorPredictionEngine.findWeekIssues({
         configuration: { selectionType: SelectionType.SURVIVOR },
         gameMatchIds: ['a', 'b'],
@@ -291,12 +293,12 @@ describe('survivorPredictionEngine', () => {
         season: { ...season, eliminatedInWeek },
       }).map((issue) => issue.kind);
 
-    expect(issues([{ sportEventMatchId: 'b', sportEventParticipantId: 'b-home' }])).toEqual([]);
+    expect(issues([{ sportEventMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-home' }])).toEqual([]);
     expect(issues([])).toEqual([PredictionIssueKind.ONE_PICK_REQUIRED]);
-    expect(issues([{ sportEventMatchId: 'a', sportEventParticipantId: 'a-home' }, { sportEventMatchId: 'b', sportEventParticipantId: 'b-home' }]))
+    expect(issues([{ sportEventMatchId: 'a', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'a-home' }, { sportEventMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-home' }]))
       .toEqual([PredictionIssueKind.ONE_PICK_REQUIRED, PredictionIssueKind.TEAM_ALREADY_USED]);
-    expect(issues([{ sportEventMatchId: 'a', sportEventParticipantId: 'a-home' }])).toEqual([PredictionIssueKind.TEAM_ALREADY_USED]);
-    expect(issues([{ sportEventMatchId: 'b', sportEventParticipantId: 'b-home' }], 2)).toEqual([PredictionIssueKind.ENTRY_ELIMINATED]);
+    expect(issues([{ sportEventMatchId: 'a', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'a-home' }])).toEqual([PredictionIssueKind.TEAM_ALREADY_USED]);
+    expect(issues([{ sportEventMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-home' }], 2)).toEqual([PredictionIssueKind.ENTRY_ELIMINATED]);
   });
 
   it('takes no confidence value and has no tiebreaker game', () => {
@@ -320,7 +322,7 @@ describe('PredictionService — a survivor week', () => {
       sportEventId: context.week3.id,
       actorUserId: context.userOf(name),
     });
-    const pickOf = (game: SportEventMatch, name: TeamName) => ({ sportEventMatchId: game.id, sportEventParticipantId: context.sideOf(game, name), confidence: null });
+    const pickOf = (game: SportEventMatch, name: TeamName) => ({ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.sideOf(game, name), confidence: null });
     return { ...context, input, pickOf };
   }
 
@@ -481,6 +483,7 @@ describe('ContestSettlementService — a survivor contest', () => {
     // Alice picks the Raiders in week 3, on the game that is cancelled.
     context.games.predictions.set('entry-alice:game-5', {
       id: 'prediction-alice-5', contestEntryId: 'entry-alice', sportEventMatchId: 'game-5',
+      predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: context.sideOf(context.gamesByNumber.g5, 'Raiders'), confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
     });
     const alice = expectDefined(context.world.entries.get('entry-alice'));

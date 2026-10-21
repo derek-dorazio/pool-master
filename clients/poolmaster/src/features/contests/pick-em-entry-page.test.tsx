@@ -15,6 +15,7 @@ import {
   survivorWeekFixture,
   week1Games,
   weekPick,
+  weekTiePick,
 } from './test/pick-em-fixtures';
 
 const {
@@ -140,6 +141,31 @@ describe('Pick\'em contest entry page', () => {
     expect(screen.getByTestId('pick-em-submit')).toBeDisabled();
   });
 
+  // #792: a sport whose games can end level offers a tie choice between the two teams.
+  it('offers a tie between the teams when the sport allows tie picks, saving it as a tie with no team', async () => {
+    primeMocks({ week: pickEmWeekFixture({ tiePicksOffered: true }) });
+    saveGamePicksMock.mockResolvedValue({
+      data: pickEmWeekFixture({ tiePicksOffered: true, games: week1Games({ 2: { pick: weekTiePick() } }) }),
+    });
+    renderPickEmEntry();
+
+    const sunday = within(await screen.findByTestId('pick-em-game-2')).getAllByRole('button').map((button) => button.textContent);
+    expect(sunday).toEqual(['Bills', 'Tie', 'Chiefs']);
+    fireEvent.click(screen.getByTestId('pick-em-game-2-tie'));
+
+    await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
+    expect(savedBody()).toEqual({ picks: [{ sportEventMatchId: 'match-2', predictedResult: 'TIE', sportEventParticipantId: null }] });
+    await waitFor(() => expect(screen.getByTestId('pick-em-game-2-tie')).toHaveAttribute('aria-pressed', 'true'));
+  });
+
+  it('offers no tie choice when the sport allows no tie picks', async () => {
+    primeMocks();
+    renderPickEmEntry();
+
+    await screen.findByTestId('pick-em-game-2');
+    expect(screen.queryByTestId('pick-em-game-2-tie')).not.toBeInTheDocument();
+  });
+
   it('saves a tapped team as the game\'s pick and shows the week the server answers with', async () => {
     primeMocks();
     saveGamePicksMock.mockResolvedValue({
@@ -150,7 +176,7 @@ describe('Pick\'em contest entry page', () => {
     fireEvent.click(await screen.findByTestId(`pick-em-game-2-team-${NFL_TEAMS.chiefs.sportEventParticipantId}`));
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
-    expect(savedBody()).toEqual({ picks: [{ sportEventMatchId: 'match-2', sportEventParticipantId: NFL_TEAMS.chiefs.sportEventParticipantId }] });
+    expect(savedBody()).toEqual({ picks: [{ sportEventMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: NFL_TEAMS.chiefs.sportEventParticipantId }] });
     await waitFor(() => expect(team(2, NFL_TEAMS.chiefs.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'true'));
     expect(screen.getByTestId('pick-em-picked-count')).toHaveTextContent('1 of 3 picked');
   });
@@ -213,8 +239,8 @@ describe('Pick\'em contest entry page', () => {
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(savedBody()).toEqual({
       picks: [
-        { sportEventMatchId: 'match-2', sportEventParticipantId: NFL_TEAMS.chiefs.sportEventParticipantId, confidence: 3 },
-        { sportEventMatchId: 'match-1', sportEventParticipantId: NFL_TEAMS.packers.sportEventParticipantId, confidence: 1 },
+        { sportEventMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: NFL_TEAMS.chiefs.sportEventParticipantId, confidence: 3 },
+        { sportEventMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: NFL_TEAMS.packers.sportEventParticipantId, confidence: 1 },
       ],
     });
   });
@@ -229,7 +255,7 @@ describe('Pick\'em contest entry page', () => {
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(savedBody()).toEqual({
-      picks: [{ sportEventMatchId: 'match-2', sportEventParticipantId: NFL_TEAMS.bills.sportEventParticipantId, confidence: 2 }],
+      picks: [{ sportEventMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: NFL_TEAMS.bills.sportEventParticipantId, confidence: 2 }],
     });
   });
 
@@ -374,7 +400,7 @@ describe('Survivor contest entry page', () => {
     fireEvent.click(await screen.findByTestId(`pick-em-game-3-team-${NFL_TEAMS.eagles.sportEventParticipantId}`));
 
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
-    expect(savedBody()).toEqual({ picks: [{ sportEventMatchId: 'match-3', sportEventParticipantId: NFL_TEAMS.eagles.sportEventParticipantId }] });
+    expect(savedBody()).toEqual({ picks: [{ sportEventMatchId: 'match-3', predictedResult: 'TEAM', sportEventParticipantId: NFL_TEAMS.eagles.sportEventParticipantId }] });
     await waitFor(() => expect(screen.getByTestId('survivor-pick')).toHaveTextContent('Eagles'));
     expect(screen.getByTestId('pick-em-submit')).toBeEnabled();
   });

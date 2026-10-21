@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { ContestEntryStatus, ContestStatus, Sport, contestEntryEventStatus, contestEntryEventTiebreaker } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, PredictedResult, Sport, contestEntryEventStatus, contestEntryEventTiebreaker } from '@poolmaster/shared/domain';
 import {
   PrismaContestEntryMatchPredictionRepository,
   PrismaContestEntryRepository,
@@ -138,6 +138,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
       sportEventId: event.id,
       saves: [3, 1, 2].map((matchNumber) => ({
         sportEventMatchId: game(matchNumber).id,
+        predictedResult: PredictedResult.TEAM,
         sportEventParticipantId: expectDefined(game(matchNumber).homeSportEventParticipantId),
         confidence: matchNumber,
       })),
@@ -160,7 +161,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     const first = game(1);
     const save = (sportEventParticipantId: string, confidence: number | null, at: Date) => repos().predictions.save({
       contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at,
-      saves: [{ sportEventMatchId: first.id, sportEventParticipantId, confidence }],
+      saves: [{ sportEventMatchId: first.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId, confidence }],
     });
 
     await save(expectDefined(first.homeSportEventParticipantId), 2, AT);
@@ -182,7 +183,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     const { entry } = await createPickEmEntry([event.id]);
     await repos().predictions.save({
       contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT,
-      saves: [{ sportEventMatchId: game(2).id, sportEventParticipantId: expectDefined(game(2).homeSportEventParticipantId), confidence: null }],
+      saves: [{ sportEventMatchId: game(2).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game(2).homeSportEventParticipantId), confidence: null }],
     });
 
     await expect(repos().predictions.hasAnyOnMatch(game(2).id)).resolves.toBe(true);
@@ -196,6 +197,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
       contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT,
       saves: [1, 2, 3].map((matchNumber) => ({
         sportEventMatchId: game(matchNumber).id,
+        predictedResult: PredictedResult.TEAM,
         sportEventParticipantId: expectDefined(game(matchNumber).awaySportEventParticipantId),
         confidence: null,
       })),
@@ -212,7 +214,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
   it('stamps submittedAt when the week is set SUBMITTED, clears it when set back to DRAFT, and leaves the status alone when none is given', async () => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry } = await createPickEmEntry([event.id]);
-    const pick = { sportEventMatchId: game(1).id, sportEventParticipantId: expectDefined(game(1).homeSportEventParticipantId), confidence: null };
+    const pick = { sportEventMatchId: game(1).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game(1).homeSportEventParticipantId), confidence: null };
     const reread = async () => weekStatus(expectDefined(await repos().entries.findByIdWithSquad(entry.id)), event.id);
 
     await repos().predictions.save({ contestEntryId: entry.id, sportEventId: event.id, saves: [], clearedMatchIds: [], eventStatus: ContestEntryStatus.SUBMITTED, at: AT });
@@ -232,7 +234,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     for (const week of [week1, week2]) {
       await repos().predictions.save({
         contestEntryId: entry.id, sportEventId: week.event.id, clearedMatchIds: [], eventStatus: null, at: AT,
-        saves: [{ sportEventMatchId: week.game(1).id, sportEventParticipantId: expectDefined(week.game(1).homeSportEventParticipantId), confidence: null }],
+        saves: [{ sportEventMatchId: week.game(1).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(week.game(1).homeSportEventParticipantId), confidence: null }],
       });
     }
 
@@ -247,8 +249,8 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     await expect(repos().predictions.save({
       contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: ContestEntryStatus.SUBMITTED, at: AT,
       saves: [
-        { sportEventMatchId: game(1).id, sportEventParticipantId: expectDefined(game(1).homeSportEventParticipantId), confidence: 1 },
-        { sportEventMatchId: game(2).id, sportEventParticipantId: expectDefined(game(2).homeSportEventParticipantId), confidence: 0 },
+        { sportEventMatchId: game(1).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game(1).homeSportEventParticipantId), confidence: 1 },
+        { sportEventMatchId: game(2).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game(2).homeSportEventParticipantId), confidence: 0 },
       ],
     })).rejects.toThrow();
 
@@ -269,7 +271,7 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
   }
 
   const homePick = (game: { id: string; homeSportEventParticipantId: string | null }) =>
-    ({ sportEventMatchId: game.id, sportEventParticipantId: expectDefined(game.homeSportEventParticipantId), confidence: null });
+    ({ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game.homeSportEventParticipantId), confidence: null });
 
   it('reads several entries\' picks on one event in game order, then entry order, leaving out other entries and other events', async () => {
     const week1 = await createWeek('Week 1', AT);
@@ -325,6 +327,27 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
     ].sort((left, right) => left.localeCompare(right)));
     expect(picks.find((pick) => pick.contestEntryId === second.id)?.participantId).toBe(participantOf(week1.game(3).homeSportEventParticipantId));
     await expect(repos().predictions.findByEntriesAndEvents([], [week1.event.id])).resolves.toEqual([]);
+  });
+
+  it('saves a tie pick naming no team, reads it back as a tie on one event and across events, and swaps it for a team pick (#792)', async () => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { entry } = await createPickEmEntry([event.id]);
+    const save = (saves: Parameters<ReturnType<typeof repos>['predictions']['save']>[0]['saves']) =>
+      repos().predictions.save({ contestEntryId: entry.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT, saves });
+
+    await save([{ sportEventMatchId: game(1).id, predictedResult: PredictedResult.TIE, sportEventParticipantId: null, confidence: null }]);
+
+    expect(await repos().predictions.findByEntryAndEvent(entry.id, event.id)).toEqual([
+      expect.objectContaining({ sportEventMatchId: game(1).id, predictedResult: PredictedResult.TIE, sportEventParticipantId: null }),
+    ]);
+    expect(await repos().predictions.findByEntriesAndEvents([entry.id], [event.id])).toEqual([
+      expect.objectContaining({ sportEventId: event.id, predictedResult: PredictedResult.TIE, sportEventParticipantId: null, participantId: null }),
+    ]);
+
+    await save([homePick(game(1))]);
+    expect(await repos().predictions.findByEntryAndEvent(entry.id, event.id)).toEqual([
+      expect.objectContaining({ predictedResult: PredictedResult.TEAM, sportEventParticipantId: game(1).homeSportEventParticipantId }),
+    ]);
   });
 
   it('reads no picks for no entries', async () => {
@@ -389,6 +412,7 @@ describe('contest_entry_match_predictions constraints', () => {
     const row = (confidence: number | null) => ({
       contestEntryId: entry.id,
       sportEventMatchId: week.game(1).id,
+      predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(week.game(1).homeSportEventParticipantId),
       confidence,
       pickedAt: AT,
@@ -400,6 +424,15 @@ describe('contest_entry_match_predictions constraints', () => {
     const { row } = await seeded();
     await expect(getPrisma().contestEntryMatchPrediction.create({ data: row(confidence) }))
       .rejects.toThrow(/contest_entry_match_predictions_confidence_positive/);
+  });
+
+  it.each([
+    ['a team pick naming no team', { predictedResult: PredictedResult.TEAM, sportEventParticipantId: null }],
+    ['a tie pick naming a team', { predictedResult: PredictedResult.TIE }],
+  ])('refuses %s with the team-with-team-result check (#792)', async (_label, choice) => {
+    const { row } = await seeded();
+    await expect(getPrisma().contestEntryMatchPrediction.create({ data: { ...row(null), ...choice } }))
+      .rejects.toThrow(/contest_entry_match_predictions_team_with_team_result/);
   });
 
   it('allows a pick with no confidence value', async () => {
@@ -440,6 +473,7 @@ describe('PrismaContestRepository.replaceSportEvents with game picks', () => {
         contestEntryId: entry.id, sportEventId: week.event.id, clearedMatchIds: [], eventStatus: null, at: AT,
         saves: [1, 2].map((matchNumber) => ({
           sportEventMatchId: week.game(matchNumber).id,
+          predictedResult: PredictedResult.TEAM,
           sportEventParticipantId: expectDefined(week.game(matchNumber).homeSportEventParticipantId),
           confidence: matchNumber,
         })),

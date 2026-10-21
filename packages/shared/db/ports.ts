@@ -10,6 +10,8 @@ import type {
   ContestEntry,
   ContestEntryMatchPrediction,
   ContestEntryStatus,
+  PredictedChoice,
+  PredictedResult,
   League,
   LeagueInvitation,
   LeagueMembership,
@@ -384,11 +386,10 @@ export interface ContestEntryRepository {
 }
 
 /** One game's pick as it is saved (#716): replaces the entry's pick on that game, if any. */
-export interface ContestEntryMatchPredictionWrite {
+export type ContestEntryMatchPredictionWrite = PredictedChoice & {
   sportEventMatchId: string;
-  sportEventParticipantId: string;
   confidence: number | null;
-}
+};
 
 /** A change to an entry's picks for one event's games, written all or none. */
 export interface ContestEntryMatchPredictionSave {
@@ -404,11 +405,11 @@ export interface ContestEntryMatchPredictionSave {
   at: Date;
 }
 
-/** A pick read across several events (#719): which event its game is in, and the participant its field row stands for. */
-export interface ContestEntrySeasonPrediction extends ContestEntryMatchPrediction {
-  sportEventId: string;
-  participantId: string;
-}
+/** A pick read across several events (#719): which event its game is in, and the participant its field row stands for (null for a tie pick, #792). */
+export type ContestEntrySeasonPrediction = ContestEntryMatchPrediction & { sportEventId: string } & (
+  | { predictedResult: typeof PredictedResult.TEAM; participantId: string }
+  | { predictedResult: typeof PredictedResult.TIE; participantId: null }
+);
 
 export interface ContestEntryMatchPredictionRepository {
   /** The entry's picks on the event's games. */
