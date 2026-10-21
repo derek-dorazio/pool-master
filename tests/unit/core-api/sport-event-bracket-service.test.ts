@@ -38,6 +38,7 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
+    affiliations: store.affiliationRepo(),
     matches: store.matchRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
@@ -47,7 +48,19 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
       return `match-${sequence}`;
     },
   });
-  return { store, service, event, sportRow, duke, vermont, houston, texas };
+  return { store, service, event, sportRow, sportLeague, duke, vermont, houston, texas };
+}
+
+/**
+ * The event's league given a roster with `onRoster` on it, and the sport's other league, whose
+ * own team is on its roster only: men's and women's are separate leagues (#830).
+ */
+function withRosters(context: ReturnType<typeof setup>, ...onRoster: string[]) {
+  for (const participantId of onRoster) context.store.affiliate(context.sportLeague.id, participantId);
+  const women = context.store.addSportLeague(context.sportRow.id, 'NCAA Division I Women');
+  const otherLeagueTeam = context.store.addParticipant(context.sportRow.id, 'South Carolina', { participantType: 'TEAM' });
+  context.store.affiliate(women.id, otherLeagueTeam.id);
+  return otherLeagueTeam;
 }
 
 /** Two semifinals feeding a final: the smallest whole bracket. */
@@ -346,6 +359,7 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
     const service = new SportEventBracketService({
       sportEvents: store.sportEventRepo(),
       sportLeagues: store.sportLeagueRepo(),
+      affiliations: store.affiliationRepo(),
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
       participants: store.participantRepo(),
@@ -426,6 +440,26 @@ describe('SportEventBracketService.fillPlayInSlot', () => {
 
     await expect(service.fillPlayInSlot(event.id, slot.id, golfer.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
     await expect(service.fillPlayInSlot(event.id, slot.id, retired.id)).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND' });
+  });
+
+  it('refuses (409 PARTICIPANT_NOT_IN_SPORT_LEAGUE) a winner off the event\'s league roster, as a women\'s team in a men\'s bracket, and leaves the place alone', async () => {
+    const context = withPlayInPlace();
+    const { service, store, event, slot, pairing } = context;
+    const otherLeagueTeam = withRosters(context, context.xavier.id);
+
+    await expect(service.fillPlayInSlot(event.id, slot.id, otherLeagueTeam.id))
+      .rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_SPORT_LEAGUE', statusCode: 409 });
+    expect(store.field.find((entry) => entry.id === slot.id)).toMatchObject({ participantId: pairing.id, isPlayInPlace: true });
+  });
+
+  it('takes a winner on the event\'s league roster once the league has one', async () => {
+    const context = withPlayInPlace();
+    const { service, store, event, slot, xavier } = context;
+    withRosters(context, xavier.id);
+
+    await service.fillPlayInSlot(event.id, slot.id, xavier.id);
+
+    expect(store.field.find((entry) => entry.id === slot.id)?.participantId).toBe(xavier.id);
   });
 
   it('refuses (409 EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE) a row that is not a play-in place, leaving the team and its participant alone', async () => {
@@ -656,6 +690,27 @@ describe('SportEventBracketService.replaceWithdrawn', () => {
       .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_ALREADY_ON_FIELD', statusCode: 409 });
     await expect(service.replaceWithdrawn(event.id, vermont.id, golfer.id))
       .rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('refuses (409 PARTICIPANT_NOT_IN_SPORT_LEAGUE) a replacement off the event\'s league roster, as a WTA player in an ATP draw, and changes nothing', async () => {
+    const context = await released();
+    const { service, store, event, vermont, luckyLoser } = context;
+    const otherLeaguePlayer = withRosters(context, luckyLoser.id);
+
+    await expect(service.replaceWithdrawn(event.id, vermont.id, otherLeaguePlayer.id))
+      .rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_SPORT_LEAGUE', statusCode: 409 });
+    expect(store.field.find((entry) => entry.id === vermont.id)?.isActive).toBe(true);
+    expect(store.field.some((entry) => entry.participantId === otherLeaguePlayer.id)).toBe(false);
+  });
+
+  it('takes a replacement on the event\'s league roster once the league has one', async () => {
+    const context = await released();
+    const { service, store, event, vermont, luckyLoser } = context;
+    withRosters(context, luckyLoser.id);
+
+    const replacementId = await service.replaceWithdrawn(event.id, vermont.id, luckyLoser.id);
+
+    expect(store.field.find((entry) => entry.id === replacementId)?.participantId).toBe(luckyLoser.id);
   });
 
   it('refuses (404 EVENT_PARTICIPANT_NOT_FOUND) a field row of another event', async () => {

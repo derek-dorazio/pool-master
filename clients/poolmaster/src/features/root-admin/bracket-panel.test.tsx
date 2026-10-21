@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportEventResultsPage } from './root-admin-sport-event-results-page';
-import { fieldEntryFixture, participantFixture, sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { affiliationFixture, fieldEntryFixture, participantFixture, sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
 
 // MSW hands path parameters over as strings, so a match number reads '1'.
 // #698, #700: a basketball tournament's results page shows its bracket round by round, chosen by
@@ -30,6 +30,7 @@ const {
   listSportsMock,
   listParticipantsMock,
   listSportLeaguesMock,
+  listParticipantLeagueAffiliationsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -57,6 +58,7 @@ const {
     listSportsMock: vi.fn(),
     listParticipantsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
+    listParticipantLeagueAffiliationsMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -77,6 +79,7 @@ bindApiMocks({
   listSports: listSportsMock,
   listParticipants: listParticipantsMock,
   listSportLeagues: listSportLeaguesMock,
+  listParticipantLeagueAffiliations: listParticipantLeagueAffiliationsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -129,8 +132,20 @@ function seed(matches: SportEventMatchDto[], options: { event?: SportEventDto; f
     data: { sportLeagues: [sportLeagueFixture({ id: tournament.sportLeagueId, name: 'NCAA Division I Men', roundNames: options.roundNames ?? [], matchPeriodLayout: options.matchPeriodLayout ?? null })] },
   });
   listEventParticipantsMock.mockResolvedValue({ data: { participants: options.field ?? [duke, vermont, houston, texas] } });
+  // No roster: every active team of the sport may be named.
+  listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: { affiliations: [] } });
   getEventBracketMock.mockResolvedValue({ data: { matches } });
 }
+
+/** The tournament's league roster: once it has one, only its teams replace or win a place (#830). */
+function rosterOf(...participants: ReturnType<typeof participantFixture>[]) {
+  listParticipantLeagueAffiliationsMock.mockResolvedValue({
+    data: { affiliations: participants.map((participant) => affiliationFixture({ sportLeagueId: tournament.sportLeagueId, participantId: participant.id, participant })) },
+  });
+}
+
+/** A team of the sport's other league, on its roster and not the tournament's. */
+const southCarolina = participantFixture({ id: 'p-9', name: 'South Carolina', sportId: 'sport-basketball' });
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -681,6 +696,16 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       }));
     });
 
+    it('offers only the teams on the tournament\'s league roster once the league has one, leaving out another league\'s team', async () => {
+      seedPlayIn();
+      listParticipantsMock.mockResolvedValue({ data: { participants: [xavier, southCarolina] } });
+      rosterOf(xavier);
+      renderPage();
+
+      const select = await screen.findByTestId('root-admin-play-in-winner-select-sep-5');
+      await waitFor(() => expect(within(select).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose the winning team', 'Xavier']));
+    });
+
     it('lists only the marked places', async () => {
       seedPlayIn();
       renderPage();
@@ -736,6 +761,16 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
         path: { eventId: 'evt-1', sportEventParticipantId: 'sep-4' },
         body: { participantId: 'p-6' },
       }));
+    });
+
+    it('offers only replacements on the tournament\'s league roster once the league has one, leaving out another league\'s team', async () => {
+      seedWithdrawals();
+      listParticipantsMock.mockResolvedValue({ data: { participants: [replacement, southCarolina] } });
+      rosterOf(replacement, duke.participant);
+      renderPage();
+
+      const replacedBy = await screen.findByTestId('root-admin-withdrawal-replacement-select');
+      await waitFor(() => expect(within(replacedBy).getAllByRole('option').map((option) => option.textContent)).toEqual(['Choose a team', 'Xavier']));
     });
 
     it('leaves out a winner already placed in its next game, as the server refuses to replace it', async () => {
