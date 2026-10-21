@@ -19,6 +19,8 @@ import { pathToFileURL } from 'node:url';
 
 const MAX_URLS = 20;
 const MAX_FILE_CHARS = 1_500_000;
+/** A saved PDF is cut at this size; a printed bracket is a few hundred KB. */
+const MAX_FILE_BYTES = 10_000_000;
 const TIMEOUT_MS = 30_000;
 /** How long a rendered page may keep loading after its first paint before it is saved. */
 const RENDER_SETTLE_MS = 15_000;
@@ -101,8 +103,8 @@ async function fetchOne(index, url, outputDir) {
   // A PDF (a printed bracket) is saved as it is, for the skill to read with pdftotext.
   if (contentType.includes('application/pdf')) {
     const file = fileNameFor(index, url, 'pdf');
-    writeFileSync(join(outputDir, file), Buffer.from(await response.arrayBuffer()));
-    return { status: response.ok ? 'OK' : 'HTTP_ERROR', httpStatus: response.status, file };
+    writeFileSync(join(outputDir, file), Buffer.from(await response.arrayBuffer()).subarray(0, MAX_FILE_BYTES));
+    return { status: response.ok ? 'OK' : 'HTTP_ERROR', httpStatus: response.status, file, finalUrl: response.url };
   }
   const body = await response.text();
   const isJson = contentType.includes('json');
