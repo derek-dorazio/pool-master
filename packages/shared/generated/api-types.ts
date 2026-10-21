@@ -1912,7 +1912,7 @@ export interface paths {
         get?: never;
         /**
          * Enter a match's result
-         * @description Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. 422 MATCH_RESULT_INVALID for one score without the other, or a winner without the higher score. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         * @description Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score, or shoot-out scores on a match that is not a level bracket match of such a sport. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
          */
         put: operations["recordEventMatchResult"];
         post?: never;
@@ -13115,6 +13115,10 @@ export interface components {
             homeScore: number | null;
             /** @description The away side's score; in a series, games won. */
             awayScore: number | null;
+            /** @description The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score. */
+            homeShootoutScore: number | null;
+            /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
+            awayShootoutScore: number | null;
             /**
              * Format: uuid
              * @description The match the winner moves on to; null for the final.
@@ -13182,6 +13186,10 @@ export interface components {
                 homeScore: number | null;
                 /** @description The away side's score; in a series, games won. */
                 awayScore: number | null;
+                /** @description The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score. */
+                homeShootoutScore: number | null;
+                /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
+                awayShootoutScore: number | null;
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.
@@ -13250,6 +13258,10 @@ export interface components {
                 homeScore: number | null;
                 /** @description The away side's score; in a series, games won. */
                 awayScore: number | null;
+                /** @description The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score. */
+                homeShootoutScore: number | null;
+                /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
+                awayShootoutScore: number | null;
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.
@@ -13338,7 +13350,7 @@ export interface components {
              */
             participantId: string;
         };
-        /** @description A match's result: who won, and both scores or neither. The winner's score must be the higher. */
+        /** @description A match's result: who won, and both scores or neither. The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. */
         RecordSportEventMatchResultRequest: {
             /**
              * @description The side that won.
@@ -13349,6 +13361,10 @@ export interface components {
             homeScore: number | null;
             /** @description The away side's score, or null with the home score null too. */
             awayScore: number | null;
+            /** @description The home side's kicks scored in a shoot-out, for a bracket match level after extra time in a sport settled that way; omitted or null with the away side's for none. */
+            homeShootoutScore?: number | null;
+            /** @description The away side's kicks scored in a shoot-out; omitted or null with the home side's. */
+            awayShootoutScore?: number | null;
         };
         /** @description Both sides' score at the end of one period, as the scoreboard shows it. Neither may be below its score at an earlier period's end, or above its score at a later one's or its final score. */
         RecordSportEventMatchPeriodScoreRequest: {
@@ -13518,6 +13534,10 @@ export interface components {
                 homeScore: number | null;
                 /** @description The away side's score; in a series, games won. */
                 awayScore: number | null;
+                /** @description The home side's kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side's when there was none. Not part of the match score. */
+                homeShootoutScore: number | null;
+                /** @description The away side's kicks scored in the shoot-out; null with the home side's. */
+                awayShootoutScore: number | null;
                 /**
                  * Format: uuid
                  * @description The match the winner moves on to; null for the final.

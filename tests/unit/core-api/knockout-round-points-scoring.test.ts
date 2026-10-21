@@ -66,6 +66,8 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     winnerSide: input.winner ?? null,
     homeScore: null,
     awayScore: null,
+    homeShootoutScore: null,
+    awayShootoutScore: null,
     advancesToMatchId: input.advancesTo === undefined ? null : `match-${input.advancesTo}`,
     advancesToSide: input.advancesTo === undefined ? null : MatchSide.HOME,
     regionLabel: null,

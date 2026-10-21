@@ -160,7 +160,7 @@ describe('SportEventParticipantService — changing the field', () => {
     store.matchRows.push({
       id: 'match-1', sportEventId: event.id, roundNumber: 1, matchNumber: 1,
       homeSportEventParticipantId: null, awaySportEventParticipantId: duke.id, isNeutralSite: true,
-      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null,
+      scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null,
       advancesToMatchId: null, advancesToSide: null, regionLabel: null, homeSpread: null, periodScores: [], createdAt: new Date(), updatedAt: new Date(),
     });
 

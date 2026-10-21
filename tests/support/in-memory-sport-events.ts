@@ -612,6 +612,8 @@ export class InMemorySportEvents {
             winnerSide: null,
             homeScore: null,
             awayScore: null,
+            homeShootoutScore: null,
+            awayShootoutScore: null,
           })),
         ];
       },

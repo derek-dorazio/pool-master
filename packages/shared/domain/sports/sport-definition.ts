@@ -63,6 +63,15 @@ export interface SportMatchPeriods {
   label: SportNoun;
 }
 
+/**
+ * How a sport settles a knockout match level after extra time by a shoot-out (#791): penalties
+ * in soccer. The shoot-out's scores are kept apart from the match score.
+ */
+export interface SportShootout {
+  /** What a result's shoot-out is called after its scores: "pens" ("1-1 (4-3 pens)"). */
+  label: string;
+}
+
 /** How a new event's pick tiers are laid out before an admin edits them. */
 export interface SportTierLayout {
   /** How many tiers a new event gets. */
@@ -108,6 +117,12 @@ export interface SportDefinition {
    * pools (#711) are not offered on it.
    */
   matchPeriodLayout?: MatchPeriodLayout;
+  /**
+   * Whether a bracket match level after extra time is settled by a shoot-out, and what screens
+   * call it; null for a sport whose knockout matches always end with one side ahead. A shoot-out
+   * is entered only on a bracket match of such a sport (`MatchResultService`).
+   */
+  shootout: SportShootout | null;
   /** How one round is labelled: "Round 2" for golf, "Quarterfinal" for tennis. */
   roundLabel: (roundNumber: number, roundCount: number) => string;
 }

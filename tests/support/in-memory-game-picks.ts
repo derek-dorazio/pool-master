@@ -94,6 +94,8 @@ export class InMemoryGamePicks {
       winnerSide: null,
       homeScore: null,
       awayScore: null,
+      homeShootoutScore: null,
+      awayShootoutScore: null,
       advancesToMatchId: null,
       advancesToSide: null,
       regionLabel: null,

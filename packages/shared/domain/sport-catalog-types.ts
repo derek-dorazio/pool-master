@@ -188,6 +188,13 @@ export interface SportEventMatch extends DomainEntity {
   winnerSide: MatchSide | null;
   homeScore: number | null;
   awayScore: number | null;
+  /**
+   * The shoot-out that settled a knockout match level after extra time (#791): both sides' kicks
+   * scored, or neither. Not part of the match score (IFAB Law 10), which every scorer reads, so
+   * only the winner it names counts. Null in a sport without shoot-outs (`SportDefinition.shootout`).
+   */
+  homeShootoutScore: number | null;
+  awayShootoutScore: number | null;
   advancesToMatchId: string | null;
   advancesToSide: MatchSide | null;
   /** The bracket region or conference ("East", "AFC"); null where the bracket has none. */
