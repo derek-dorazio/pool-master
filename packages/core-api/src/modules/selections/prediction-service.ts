@@ -580,9 +580,9 @@ export class PredictionService {
    * teams it picked in the other events it submitted, earlier or later (a later week can be picked
    * ahead), so no team is picked twice. In a playoff (#785) the event's rounds are weeks of their
    * own: a round after the one that put the entry out takes no pick. When teams can be picked
-   * again once every team is used (#787), only the week's own cycle counts, every team being each
-   * team in any of the contest's weeks (#836): a week missing a postponed game's teams does not
-   * end a cycle early.
+   * again once every team is used (#787), only the week's own cycle counts, and a cycle holds
+   * every team in any of the contest's weeks (#836): a week missing a postponed game's teams does
+   * not end a cycle early.
    */
   private async loadSeason(
     contest: Contest,
