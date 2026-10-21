@@ -141,6 +141,7 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     bracketAdvancement: 'FIXED',
     roundNames: [],
     matchPeriodLayout: null,
+    squaresFromRound: null,
     currentEventYear: null,
     isActive: true,
     affiliationCount: 0,

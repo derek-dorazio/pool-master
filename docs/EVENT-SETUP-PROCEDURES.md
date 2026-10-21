@@ -279,6 +279,19 @@ leg, its home side the first leg's host. A tie level on aggregate goes to its sh
 single match does. The Copa América starts at the quarter-finals; every other competition
 starts on four tiers of four.
 
+Soccer's club and college playoffs are four more sport leagues, each naming its own rounds:
+MLS, the NWSL, and the NCAA Division I men's and women's tournaments. MLS starts at its wild
+card round, the 8 and 9 seeds of each conference playing for the 1 seed's place. Its round one
+is a best-of-three series entered as one game, scored in games won (a drawn game goes straight
+to penalties, and the shoot-out's winner takes that game), so it has no half-time score. The
+NCAA men's 16 seeds are placed straight into the second round. The higher seed is the home side
+until a neutral-site final (the NWSL championship, each College Cup).
+
+**Squares rounds.** A sport league whose early rounds are not single games names its first
+squares round (`squaresFromRound`): the Champions League's final (round 5) and MLS's conference
+semifinals (round 3). A squares contest is refused on an earlier game, and the create form does
+not offer one. Every other league takes squares on any round.
+
 **Reseeded brackets.** A sport league that reseeds (the NFL, `bracketAdvancement`
 `RESEED_BY_SEED`) loads each round that is placed by seed with no next game in the round
 before it, and names only its byes. The NFL's Wild Card and Divisional games both link nowhere,

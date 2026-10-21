@@ -38,6 +38,13 @@ export interface SportLeague extends DomainEntity {
    * where the league is seeded.
    */
   matchPeriodLayout: MatchPeriodLayout | null;
+  /**
+   * The first round whose matches are single games a squares pool can be played on; null when
+   * every round's are (#787: the Champions League's two-legged ties and MLS's best-of-three
+   * series are one match each). Read through `isSquaresRound`. Reference data, set where the
+   * league is seeded.
+   */
+  squaresFromRound: number | null;
 }
 
 /**

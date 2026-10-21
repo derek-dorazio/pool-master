@@ -87,6 +87,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
         loadedParticipantCount: loaded.get(sportEventId) ?? 0,
         rounds: event.rounds ?? null,
         salaryCap: event.pricingConfig?.salaryCap ?? null,
+        squaresFromRound: event.squaresFromRound ?? null,
       };
     },
     findActiveFieldPrices: async (sportEventId) => {
@@ -112,8 +113,10 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
       const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
       return findBracketProblem(contestBracketGames(games, startsAtRound), knockoutSeeds(entries), startsAtRound);
     },
-    findGameStatus: async (sportEventId, sportEventMatchId) =>
-      (await matches.findBySportEvent(sportEventId)).find((match) => match.id === sportEventMatchId)?.status ?? null,
+    findGame: async (sportEventId, sportEventMatchId) => {
+      const game = (await matches.findBySportEvent(sportEventId)).find((match) => match.id === sportEventMatchId);
+      return game === undefined ? null : { status: game.status, roundNumber: game.roundNumber };
+    },
     findCutoffTiming: async (sportEvent, cutoff) => cutoff.kind === ContestCutoffKind.EVENT_START
       ? sportEvent
       : cutoffTiming(cutoff, sportEvent, await matches.findBySportEvent(sportEvent.id)),

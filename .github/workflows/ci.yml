@@ -166,8 +166,12 @@ jobs:
       - run: npm ci
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
       - run: npm run build --workspace @poolmaster/shared
+      # Type-aware ESLint over packages/, scripts/ and tests/ outgrew Node's default ~4 GB heap
+      # on the runner (#787 slice 4: main itself was at the limit), so it gets 6 GB.
       - name: service - lint
         run: npm run lint:service
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
       - name: service - typecheck
         run: npm run typecheck:service
       # turbo typecheck compiles packages/ only (#181), so tests/ was never

@@ -48,6 +48,15 @@ describe('squares board helpers', () => {
     expect(squaresGameChoices(games, now).map((game) => game.id)).toEqual(['final', 'early-semi', 'late-semi']);
   });
 
+  it('leaves out games before the sport league\'s first squares round, so a Champions League pool offers only its final', () => {
+    const now = new Date('2099-01-20T00:00:00.000Z');
+    const games = [
+      squaresGameFixture({ id: 'semi-tie', roundNumber: 4, matchNumber: 11, scheduledDate: '2099-04-28T19:00:00.000Z', advancesToMatchId: 'final' }),
+      squaresGameFixture({ id: 'final', roundNumber: 5, matchNumber: 13, scheduledDate: '2099-05-30T16:00:00.000Z' }),
+    ];
+    expect(squaresGameChoices(games, now, 5).map((game) => game.id)).toEqual(['final']);
+  });
+
   it('names a game away team first, "vs" at a neutral site, and a side still to be decided as such', () => {
     const names = new Map([['field-chiefs', 'Chiefs']]);
     expect(formatSquaresGameTeams(squaresGameFixture(), names)).toBe('Chiefs vs To be decided');
