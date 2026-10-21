@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -12,7 +13,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportLeaguePath, capitalize } from './manage-navigation';
-import { useSportLeaguesQuery } from './use-sport-catalog';
+import { useSportLeagueNoun, useSportLeaguesQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 
 const editSchema = z.object({
@@ -27,8 +28,8 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
     feature: 'root-admin-sport-league-edit-page',
   });
   const navigate = useNavigate();
-  const { sport, definition } = useManagedSport();
-  const { sportLeague: sportLeagueNoun } = definition.vocabulary;
+  const { sport } = useManagedSport();
+  const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
   const homePath = buildSportLeaguePath(sport, sportLeague.id);
 
   const form = useForm<EditValues>({
@@ -89,8 +90,8 @@ function SportLeagueEditForm({ sportLeague }: { sportLeague: SportLeagueDto }) {
 /** Edit a sport league's name and match keyword, with one Save. */
 export function RootAdminSportLeagueEditPage() {
   const { leagueId = '' } = useParams<{ leagueId: string }>();
-  const { sport, definition } = useManagedSport();
-  const { sportLeague: sportLeagueNoun } = definition.vocabulary;
+  const { sport } = useManagedSport();
+  const sportLeagueNoun = useSportLeagueNoun(sport, leagueId);
   const leaguesQuery = useSportLeaguesQuery(sport);
   const sportLeague = useMemo(
     () => leaguesQuery.data?.find((candidate) => candidate.id === leagueId),

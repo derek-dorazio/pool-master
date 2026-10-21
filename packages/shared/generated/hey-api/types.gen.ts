@@ -6144,6 +6144,10 @@ export type SportLeagueDto = {
      */
     squaresFromRound: number | null;
     /**
+     * What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
+     */
+    noun: 'LEAGUE' | null;
+    /**
      * Participants currently affiliated with the sport league.
      */
     affiliationCount: number;
@@ -6224,6 +6228,10 @@ export type SportLeagueListResponse = {
          */
         squaresFromRound: number | null;
         /**
+         * What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
+         */
+        noun: 'LEAGUE' | null;
+        /**
          * Participants currently affiliated with the sport league.
          */
         affiliationCount: number;
@@ -6290,6 +6298,10 @@ export type SportLeagueResponse = {
          * The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.
          */
         squaresFromRound: number | null;
+        /**
+         * What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
+         */
+        noun: 'LEAGUE' | null;
         /**
          * Participants currently affiliated with the sport league.
          */

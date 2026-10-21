@@ -1,3 +1,4 @@
+import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createEventFromProviderEvent } from '@/lib/api';
@@ -252,7 +253,7 @@ export function SportEventProviderBrowse({
               <p className="text-sm font-medium text-destructive">
                 {extractErrorMessage(createMutation.error, {
                   codeMessages: {
-                    EVENT_EDITION_ALREADY_EXISTS: `This ${definition.vocabulary.sportLeague.one} already has a ${edition.eventYear} edition of this ${eventNoun.one}.`,
+                    EVENT_EDITION_ALREADY_EXISTS: `This ${sportLeagueNounOf(sport, scopedSportLeague?.noun ?? null).one} already has a ${edition.eventYear} edition of this ${eventNoun.one}.`,
                   },
                   fallback: `We could not create this ${eventNoun.one}.`,
                 })}

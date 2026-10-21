@@ -731,6 +731,18 @@ describe('The seeded NFL league and its knockout templates', () => {
     const leagues = await getPrisma().sportLeague.findMany({ where: { matchPeriodLayout: { not: null } }, select: { name: true, matchPeriodLayout: true } });
     expect(leagues).toEqual([{ name: 'NCAA Division I Men', matchPeriodLayout: 'HALVES' }]);
   });
+
+  it('calls the NCAA Division I tennis championships leagues and leaves every other seeded sport league on its sport\'s noun (#834)', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({
+      where: { noun: { not: null } },
+      select: { name: true, noun: true, sport: { select: { sport: true } } },
+      orderBy: { name: 'asc' },
+    });
+    expect(leagues).toEqual([
+      { name: 'NCAA Division I Men', noun: 'LEAGUE', sport: { sport: 'TENNIS' } },
+      { name: 'NCAA Division I Women', noun: 'LEAGUE', sport: { sport: 'TENNIS' } },
+    ]);
+  });
 });
 
 // What contest creation holds a template's rules to, checked on every seeded template of every

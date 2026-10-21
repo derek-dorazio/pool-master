@@ -18,6 +18,7 @@ import {
   type RosterUploadRow,
 } from './sport-admin-utils';
 import { capitalize, sportPathSegment } from './manage-navigation';
+import { useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 
 type RosterPreviewRow = ParticipantLeagueAffiliationUploadPreviewResponse['rows'][number];
@@ -44,7 +45,8 @@ function describeRow(row: RosterPreviewRow['row']): string {
  */
 export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
   const { sport, definition } = useManagedSport();
-  const { participant, sportLeague } = definition.vocabulary;
+  const { participant } = definition.vocabulary;
+  const sportLeague = useSportLeagueNoun(sport, leagueId);
   const logger = getLogger().child({
     feature: 'root-admin-sport-league-home-page',
   });

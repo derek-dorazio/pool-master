@@ -3,6 +3,7 @@ import {
   getSportDefinition,
   ParticipantInactiveReason,
   type Sport,
+  type SportNoun,
 } from '@poolmaster/shared/domain';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
@@ -194,10 +195,13 @@ export function EventFieldGridCard({
   fieldLoading,
   pricesLocked = false,
   sport,
+  sportLeagueNoun,
 }: {
   entries: EventFieldEntry[];
   eventId: string;
   sport: Sport;
+  /** What the event's sport league is called (#834), for the copy. */
+  sportLeagueNoun: SportNoun;
   fieldError: string | null;
   fieldLoading: boolean;
   pricesLocked?: boolean;
@@ -249,7 +253,7 @@ export function EventFieldGridCard({
     () => ({ draft, setDraft, pricesLocked, sport }),
     [draft, pricesLocked, sport],
   );
-  const { event, participant, sportLeague } = getSportDefinition(sport).vocabulary;
+  const { event, participant } = getSportDefinition(sport).vocabulary;
 
   return (
     <Tile>
@@ -286,7 +290,7 @@ export function EventFieldGridCard({
           emptyMessage={
             fieldLoading
               ? 'Loading field…'
-              : `No ${participant.many} in the field yet. Seed from the ${sportLeague.one} roster or add participants.`
+              : `No ${participant.many} in the field yet. Seed from the ${sportLeagueNoun.one} roster or add participants.`
           }
           getRowId={(entry) => entry.id}
           meta={meta}

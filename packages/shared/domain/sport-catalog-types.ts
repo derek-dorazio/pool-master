@@ -6,7 +6,7 @@
  */
 
 import type { DomainEntity, Participant } from './types';
-import type { BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantStandingStatus, RaceResultStatus, ValuationSource } from './enums';
+import type { BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {
@@ -45,6 +45,12 @@ export interface SportLeague extends DomainEntity {
    * league is seeded.
    */
   squaresFromRound: number | null;
+  /**
+   * What screens call it, when not what its sport calls a sport league (#834: the NCAA's tennis
+   * championships are leagues, not tours); null takes the sport's. Read through
+   * `sportLeagueNounOf`. Reference data, set where the league is seeded.
+   */
+  noun: SportLeagueNoun | null;
 }
 
 /**

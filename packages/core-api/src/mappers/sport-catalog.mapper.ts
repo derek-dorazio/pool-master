@@ -36,6 +36,7 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     roundNames: [...sportLeague.roundNames],
     matchPeriodLayout: sportLeague.matchPeriodLayout,
     squaresFromRound: sportLeague.squaresFromRound,
+    noun: sportLeague.noun,
     affiliationCount: sportLeague.affiliationCount,
     sportEventCount: sportLeague.sportEventCount,
     createdAt: sportLeague.createdAt.toISOString(),

@@ -56,7 +56,8 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
      first leg, with no period scores; it needs no model of its own. Nor does a series (MLS's
      best-of-three round one): one match scored in games won. Either one can't take a squares
      pool, so a league with them sets `SportLeague.squaresFromRound` to its first round of
-     single games.
+     single games. A league its sport's word for a sport league does not fit (tennis's "tour"
+     for the NCAA's championships) sets `SportLeague.noun`, seeded with the league.
    - Finish position: points by place (horse racing, auto racing, cycling).
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.

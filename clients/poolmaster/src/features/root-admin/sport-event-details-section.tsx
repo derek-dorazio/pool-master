@@ -8,6 +8,7 @@ import {
 } from '@/features/shared/ui';
 import { buildSportEventPath, buildSportLeaguePath, capitalize } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
+import { useSportLeagueNoun } from './use-sport-catalog';
 
 /**
  * The event's properties as labelled rows, with one Edit for all of them
@@ -22,6 +23,7 @@ export function SportEventDetailsSection({
   tournament: SportEventDto;
 }) {
   const { vocabulary } = getSportDefinition(tournament.sport);
+  const sportLeagueNoun = useSportLeagueNoun(tournament.sport, tournament.sportLeagueId);
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament.sport);
   return (
     <SettingsSection
@@ -47,7 +49,7 @@ export function SportEventDetailsSection({
         <SettingsRow label="Par per round" value={tournament.roundsPar ?? 'From scores'} />
       ) : null}
       <SettingsRow
-        label={capitalize(vocabulary.sportLeague.one)}
+        label={capitalize(sportLeagueNoun.one)}
         value={(
           <LinkButton
             data-testid="root-admin-sport-event-home-tour-link"
@@ -55,7 +57,7 @@ export function SportEventDetailsSection({
             to={buildSportLeaguePath(tournament.sport, tournament.sportLeagueId)}
             variant="ghost"
           >
-            {sportLeagueName ?? `Open ${vocabulary.sportLeague.one}`}
+            {sportLeagueName ?? `Open ${sportLeagueNoun.one}`}
           </LinkButton>
         )}
       />

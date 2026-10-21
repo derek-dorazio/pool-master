@@ -755,6 +755,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     tierCount: row.tierCount,
     matchPeriodLayout: row.matchPeriodLayout,
     squaresFromRound: row.squaresFromRound,
+    noun: row.noun,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

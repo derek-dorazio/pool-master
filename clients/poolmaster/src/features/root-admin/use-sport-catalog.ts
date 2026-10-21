@@ -1,4 +1,4 @@
-import { eventRoundLabel, findSportRow, getSportDefinition, matchPeriodsOf, type Sport, type SportMatchPeriods } from '@poolmaster/shared/domain';
+import { eventRoundLabel, findSportRow, getSportDefinition, matchPeriodsOf, sportLeagueNounOf, type Sport, type SportMatchPeriods, type SportNoun } from '@poolmaster/shared/domain';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getParticipant, listEvents, listParticipantLeagueAffiliations, listParticipants, listSportLeagues, listSports } from '@/lib/api';
 import type { ParticipantDto, ParticipantLeagueAffiliationDto, SportEventDto, SportLeagueDto } from '@/lib/api';
@@ -47,6 +47,17 @@ export function useEventMatchPeriods(event: Pick<SportEventDto, 'sport' | 'sport
   if (!leaguesQuery.data) return undefined;
   const league = leaguesQuery.data.find((candidate) => candidate.id === event.sportLeagueId);
   return matchPeriodsOf(event.sport, league?.matchPeriodLayout ?? null);
+}
+
+/**
+ * What screens call one sport league (#834): its own noun where it has one (the NCAA's tennis
+ * championships are leagues), else its sport's (the ATP is a tour). The sport's while the sport
+ * leagues load, or when no sport league is in view yet.
+ */
+export function useSportLeagueNoun(sport: Sport, sportLeagueId: string | undefined): SportNoun {
+  const leaguesQuery = useSportLeaguesQuery(sport);
+  const league = leaguesQuery.data?.find((candidate) => candidate.id === sportLeagueId);
+  return sportLeagueNounOf(sport, league?.noun ?? null);
 }
 
 /** One golf tour's tournaments, every event year, earliest start first. */
@@ -145,7 +156,7 @@ export function useLeagueRosterQuery(sportLeagueId: string, options: { enabled?:
 export function useEventLeagueCandidatesQuery(event: Pick<SportEventDto, 'sport' | 'sportLeagueId'>): {
   data: ParticipantDto[] | undefined;
   isError: boolean;
-  error: unknown;
+  error: Error | null;
 } {
   const sportQuery = useParticipantsQuery({
     sport: event.sport,

@@ -11,6 +11,7 @@ import { EventFieldRefreshAction } from './event-field-refresh-action';
 import { EventFieldAddParticipantsModal } from './event-field-add-participants-modal';
 import { EventFieldUploadCard } from './event-field-upload-card';
 import { useSportEventFieldQuery, useSportEventQuery } from './use-sport-event';
+import { useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 
 /**
@@ -22,12 +23,14 @@ export function RootAdminSportEventFieldPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
   const [addOpen, setAddOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const { event } = useManagedSport().definition.vocabulary;
+  const { sport, definition } = useManagedSport();
+  const { event } = definition.vocabulary;
 
   const tournamentQuery = useSportEventQuery(eventId);
   const fieldQuery = useSportEventFieldQuery(eventId);
 
   const tournament = tournamentQuery.data;
+  const sportLeagueNoun = useSportLeagueNoun(sport, tournament?.sportLeagueId);
   useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
@@ -58,7 +61,7 @@ export function RootAdminSportEventFieldPage() {
 
           <div className="flex flex-wrap items-center justify-end gap-3">
             <div className="flex flex-wrap gap-2">
-              <EventFieldSeedAction eventId={eventId} sport={tournament.sport} />
+              <EventFieldSeedAction eventId={eventId} sport={tournament.sport} sportLeague={sportLeagueNoun} />
               <Button
                 data-testid="root-admin-event-field-add"
                 onClick={() => setAddOpen(true)}
@@ -106,6 +109,7 @@ export function RootAdminSportEventFieldPage() {
             fieldLoading={fieldQuery.isLoading}
             pricesLocked={eventTiersLocked(tournament.status)}
             sport={tournament.sport}
+            sportLeagueNoun={sportLeagueNoun}
           />
 
           {addOpen ? (

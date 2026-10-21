@@ -10,7 +10,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { BracketAdvancement, MatchPeriodLayout, ParticipantType, Sport, TournamentFormat } from '../domain/enums';
+import { BracketAdvancement, MatchPeriodLayout, ParticipantType, Sport, SportLeagueNoun, TournamentFormat } from '../domain/enums';
 import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 
@@ -44,6 +44,7 @@ export const SportLeagueDtoSchema = z.object({
   roundNames: z.array(z.string()).describe('What the sport league calls its bracket\'s rounds, first to final (the NBA: First Round, Conference Semifinals, Conference Finals, NBA Finals). Empty when the sport\'s round names are used. Set with the league\'s reference data, never by a request.'),
   matchPeriodLayout: z.nativeEnum(MatchPeriodLayout).nullable().describe('The periods the sport league\'s games are played in, when not its sport\'s: HALVES for men\'s college basketball. Null plays the sport\'s layout. Set with the league\'s reference data, never by a request.'),
   squaresFromRound: z.number().int().min(1).nullable().describe('The first round whose matches are single games a squares contest can be played on, when not every round\'s are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round\'s matches can take one. Set with the league\'s reference data, never by a request.'),
+  noun: z.nativeEnum(SportLeagueNoun).nullable().describe('What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport\'s noun. Set with the league\'s reference data, never by a request.'),
   affiliationCount: z.number().int().describe('Participants currently affiliated with the sport league.'),
   sportEventCount: z.number().int().describe('Events on record for the sport league, across every series and year.'),
   createdAt: DateTimeSchema,

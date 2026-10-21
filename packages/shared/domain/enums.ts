@@ -169,6 +169,16 @@ export const MatchPeriodLayout = {
 export type MatchPeriodLayout = (typeof MatchPeriodLayout)[keyof typeof MatchPeriodLayout];
 
 /**
+ * What screens call a sport league when its sport's noun does not fit (#834): the NCAA Division I
+ * tennis championships are leagues, where the ATP and the WTA are tours. A sport league with
+ * none set takes its sport's (`SportVocabulary.sportLeague`); read through `sportLeagueNounOf`.
+ */
+export const SportLeagueNoun = {
+  LEAGUE: 'LEAGUE',
+} as const;
+export type SportLeagueNoun = (typeof SportLeagueNoun)[keyof typeof SportLeagueNoun];
+
+/**
  * How one field member's race ended (#622): the finish-position family's result status. Only a
  * FINISHED runner has a finishing place; every other status scores the contest's "did not
  * finish" points. A horse scratched before the start is WITHDRAWN on the field, not here.

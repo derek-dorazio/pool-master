@@ -1,3 +1,4 @@
+import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { Route } from 'lucide-react';
 import { useState } from 'react';
 import { updateSportLeague } from '@/lib/api';
@@ -73,7 +74,9 @@ export function SportLeagueDangerZone({ sportLeague }: { sportLeague: SportLeagu
   const logger = getLogger().child({
     feature: 'root-admin-sport-league-home-page',
   });
-  const { sportLeague: sportLeagueNoun, event } = useManagedSport().definition.vocabulary;
+  const { sport, definition } = useManagedSport();
+  const { event } = definition.vocabulary;
+  const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const actionLabel = sportLeague.isActive ? `Deactivate ${sportLeagueNoun.one}` : `Activate ${sportLeagueNoun.one}`;
 

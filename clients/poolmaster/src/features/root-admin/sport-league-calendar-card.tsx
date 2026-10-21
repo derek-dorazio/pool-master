@@ -1,3 +1,4 @@
+import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { FormField, LinkButton, Select, Tile } from '@/features/shared/ui';
 import type { SportLeagueDto } from '@/lib/api';
@@ -76,7 +77,7 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
         </div>
       </div>
       <div className="mt-4">
-        <SportLeagueEventCalendar isError={tournamentsQuery.isError} tournaments={yearTournaments} />
+        <SportLeagueEventCalendar isError={tournamentsQuery.isError} sportLeague={sportLeagueNounOf(sport, sportLeague.noun)} tournaments={yearTournaments} />
       </div>
     </Tile>
   );
