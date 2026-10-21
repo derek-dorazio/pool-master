@@ -311,6 +311,9 @@ From: Office League <officeleague@qa.ultimateofficepoolmanager.com>
   `Poolmaster <noreply@…>`, with the display name from the app-name decision.
 - The registry entry says whether a template is league-scoped; league-scoped emails must carry
   their `leagueId`, so the From address can't be forgotten.
+- **Reserved codes.** A league can't use a code that is a role address: `NOREPLY`, `POSTMASTER`,
+  `ABUSE`, `ADMIN`, `SUPPORT`, `SECURITY`, `BOUNCE`, `HOSTMASTER`, `WEBMASTER`. League creation
+  refuses them; slice 2 checks no existing league has one.
 - The league code already appears in invite emails and league links, so showing it in the From
   line exposes nothing new; joining still needs an invite.
 
