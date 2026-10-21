@@ -87,9 +87,8 @@ test code into HTML files (and optionally sends them to Mailpit), so copy can be
 running a whole flow. Fixtures stay out of application source
 (`rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*).
 
-> **Q2.1 Templates: in code or in SES?** Recommendation: **in code**, as today, with SES used only to
-> deliver. SES templates would trade compile-checked tokens for silent drops and a second deploy path,
-> for no feature we lack.
+> **Q2.1 Templates: in code or in SES? Decided (Derek 2026-10-21): in code**, as today, with SES
+> used only to deliver.
 
 ## 3. Typed template IDs
 
@@ -162,10 +161,61 @@ faster than a rate held in `EMAIL_CONFIG` (default 10 per second; SES production
 queued; the commissioner's pending invites list shows the email's state ("Sent", "Bounced", "Could
 not send") and Resend works as today.
 
-> **Q5.1 Invites through the outbox?** Recommendation: **yes**, every email goes through the outbox, and
+> **Q5.1 Invites through the outbox?** Recommendation: **yes** (Derek leaning yes 2026-10-21, after the
+> worked example below), every email goes through the outbox, and
 > the pending invites list shows each invite's email state. The alternative keeps invites synchronous
 > so the commissioner sees an error at once, but leaves two send paths, and SES rarely refuses at
 > submit time anyway: a bad address shows up minutes later as a bounce, which only the outbox sees.
+
+### Worked example: a contest release email to one league
+
+Every email goes to **one person**. There is no league mailing list or alias address, and no send
+with the whole league in `To`. Reasons:
+
+- a shared `To` (or an alias) shows every member's address to everyone, and to anyone a member
+  forwards it to;
+- each email is personal: the member's name, their own unsubscribe link, later their own row in
+  the standings;
+- each person's preference and bounce state is checked separately, and a bad address affects only
+  that one email;
+- SES charges per recipient either way, so batching saves nothing. (SES `SendBulkEmail` can carry
+  50 recipients per call, but only with SES stored templates, which Q2.1 ruled out.)
+
+The league is the scope, not the address: recipients are resolved from the league, then each gets
+their own email, from that league, linking only into that league (leagues are tenants, §7).
+
+Say the commissioner of *Office League* (24 members) releases the *Masters Pool* contest.
+
+1. **The release action calls the email service once**, inside the release transaction:
+   `emailService.sendToMany(CONTEST_RELEASED, audience: LEAGUE_MEMBERS(leagueId), data, refs: { leagueId, contestId })`.
+   Who the audience is comes from the notifications catalog (#845); this mechanism only resolves it.
+2. **Resolve the audience to people.** One query: the league's active memberships → users →
+   email addresses. 24 rows, one per person even if they own several squads.
+3. **Filter, person by person,** and record why anyone is left out:
+
+   | Check | Result in this example |
+   |---|---|
+   | `EMAIL_CONFIG.enabled` and the template's switch | on, nobody dropped |
+   | Address on the suppression list (bounced or complained before) | 1 member → `SKIPPED / SUPPRESSED` |
+   | Member turned off this category (`CONTEST_UPDATES`) | 2 members → `SKIPPED / OPTED_OUT` |
+   | QA recipient guard (`.invalid` addresses, allow list) | 1 smoke user → `SKIPPED / NOT_ALLOWED_IN_ENVIRONMENT` |
+   | Already queued with this idempotency key (`CONTEST_RELEASED:<contestId>:<userId>`) | nobody; a second release click would stop here |
+
+4. **Render and queue.** For each of the 20 remaining members, render the email with their own
+   data (their name, their unsubscribe link) and insert an `email_message` row, `QUEUED`. The 4
+   skipped ones get a `SKIPPED` row, so "why didn't I get it?" has an answer. The transaction
+   commits; the commissioner's release returns at once, without waiting for SES.
+5. **Send.** The sender wakes, claims the 20 due rows and makes 20 SES `SendEmail` calls, each with
+   `To` = one address, `From` = the environment's `noreply@` address, the configuration set, and the
+   `List-Unsubscribe` headers. At 10 a second that takes two seconds. Each call returns a SES message
+   id; the row becomes `SENT` with that id.
+6. **If a call fails**: SES throttling or a network error pushes the row's `nextAttemptAt` (1, 5,
+   30 minutes); after the last try it is `FAILED` and logged. Other rows carry on.
+7. **Minutes later**, SES reports what happened to each one (§8): 19 `DELIVERED`, 1 `BOUNCED`. The
+   bounced address goes on the suppression list, so the next league email skips it at step 3, and
+   the member sees a "fix your email address" banner.
+
+An invite is the same flow with an audience of one address that has no user yet.
 
 ## 6. Domain, sender and getting out of the sandbox
 
@@ -199,15 +249,16 @@ Steps, in order (slice 1; Derek runs the Terraform applies and the AWS console r
 9. **Turn it on**: `EMAIL_CONFIG.enabled = true` on QA's /manage/settings, send an invite to a Gmail
    address, check "Show original" for DKIM, SPF and DMARC all PASS.
 
-> **Q6.1 Sending address per environment.** Today QA would send as `noreply@ultimateofficepoolmanager.com`,
+> **Q6.1 Sending address per environment. Decided (Derek 2026-10-21): yes.** Today QA would send as `noreply@ultimateofficepoolmanager.com`,
 > the same identity prod would use. Recommendation: **each environment sends from its own subdomain
 > identity** (QA `noreply@qa.ultimateofficepoolmanager.com`, prod the bare domain later), so QA
 > bounces and test complaints never touch prod's sending reputation. The display name follows the
 > app-name decision in its own thread.
 >
-> **Q6.2 Reply-To.** `noreply@` can't take replies. Recommendation: keep `noreply@` as sender and set
-> `EMAIL_CONFIG.replyTo` to a real inbox Derek reads (league emails could later reply to the
-> commissioner instead; that belongs with the notifications design).
+> **Q6.2 Reply-To. Decided (Derek 2026-10-21): none.** System email has no Reply-To. A reply to
+> `noreply@` bounces back to the person who replied, so the footer says "This mailbox isn't
+> monitored" and points to the league page. Slice 2 deletes the unused `EMAIL_CONFIG.replyTo`
+> setting and the `replyTo` field on the transport message.
 
 ## 7. Unsubscribe and preferences
 
@@ -264,7 +315,12 @@ topic. Core-api receives them on `POST /api/email/ses-events`, an SNS HTTPS subs
 
 The SES account suppression list (§6) is the backstop; our table is what the app can read and show.
 
-> **Q8.1 How events reach core-api.** Recommendation: **SNS → HTTPS webhook** on core-api. It fits "no
+> **Q8.1 How events reach core-api.** In plain terms: SES only says "accepted" when we hand it an
+> email. Whether it then reached the inbox, bounced, or was marked as spam is known minutes later.
+> SES posts each of those reports to an AWS notification topic (SNS), and the topic calls a URL on
+> our server. Core-api checks the report really came from AWS (it is signed), finds the email row by
+> its SES message id, updates its state, and suppresses the address on a hard bounce or spam
+> complaint. Recommendation (Derek leaning yes 2026-10-21): **SNS → HTTPS webhook** on core-api. It fits "no
 > external queue" and needs only signature checking. The alternative, SNS → SQS polled by core-api,
 > survives core-api being down longer (SNS retries a webhook for about an hour), but adds a queue the
 > architecture rules deliberately avoid. Losing an hour-old delivery event costs little; a bounce is
