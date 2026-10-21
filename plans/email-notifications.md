@@ -219,11 +219,11 @@ places when they are outside it, with movement since the last email.
 | # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
 |---|---|---|---|---|---|---|---|
 | E1 | Contest is live, good luck | The contest goes `OPEN` → `ACTIVE` at its cutoff | Every active league member (Q3.8, decided) | At once | "Good luck, everyone." The event (dates, venue, rounds or games) and the contest's rules in a few lines (selection type, scoring, prizes), entry count, Leaderboard button. No list of entries (Q3.9, decided) | 🟡 `CONTEST_STARTED_SUMMARY` (no cap, no leaderboard link, no "good luck", entrants only) | P1 |
-| E2 | Round standings | A stroke-play event's round ends: its `scheduledEndAt` has passed, or the next round has started, whichever is first | Every league member with an entry, plus commissioners | Once per round; not after the final round (F1 covers it) | "After round 2 of the Masters." Top 10 with movement, the reader's entries, cut news for their picks, Leaderboard button | | P1 |
-| E3 | Week results | A pick'em or survivor week settles | Same as E2 | Once per week; not for the last week | The week's winner (#717), the week's top 10, contest standings top 10, next week's first kickoff, Make picks for next week button | | P1 |
-| E4 | Bracket round results | Every match of a bracket round has a result | Same as E2 | Once per round; not after the final | Top 10, the reader's busted picks and remaining champions, next round's start, Bracket link | | P1 |
+| E2 | Round standings | Every golfer still playing a stroke-play round has finished it (Q3.11) | Every league member with an entry, plus commissioners | Once per round, after the buffer (Q3.11); not after the final round (F1 covers it) | "After round 2 of the Masters." Top 10 with movement, the reader's entries, cut news for their picks, Leaderboard button | | P1 |
+| E3 | Week results | A pick'em or survivor week settles | Same as E2 | Once per week, after the buffer; not for the last week | The week's winner (#717), the week's top 10, contest standings top 10, next week's first kickoff, Make picks for next week button | | P1 |
+| E4 | Bracket round results | Every match of a bracket round has a result | Same as E2 | Once per round, after the buffer; not after the final | Top 10, the reader's busted picks and remaining champions, next round's start, Bracket link | | P1 |
 | E5 | You're out | A survivor entry is eliminated (losing pick, a draw where draws knock you out, or no unused team left) | Owners of that entry | With E3 | Which week and pick, how many are left, Leaderboard link | | P2 |
-| E6 | Event results in a season contest | One event of a multi-event roster contest (a majors pool) settles and more events remain | Same as E2 | Once per event | That event's result for each entry, contest standings top 10, next event and its pick deadline | | P2 |
+| E6 | Event results in a season contest | One event of a multi-event roster contest (a majors pool) settles and more events remain | Same as E2 | Once per event, after the buffer | That event's result for each entry, contest standings top 10, next event and its pick deadline | | P2 |
 | E7 | Squares quarter winner | A squares contest's scoring moment is decided (end of a quarter) | Every entry owner on the board | Once per quarter, not the final one | Winning numbers and box, who holds it, Grid link | | P3 |
 | E8 | Next round is set | A reseeded or second-chance round's matchups are set, and picks are open for it | Owners of entries that pick that round | At once | The round's games, picks close at, Make picks button | | P2 |
 
@@ -239,9 +239,23 @@ the top 10 is a real order, so it starts with the standings emails (E2–E4).
 **Q3.10 One-day racing.** A horse race, a NASCAR race or a marathon is one round.
 *Recommendation:* no E2 for single-round events; E1 then F1 is the whole story.
 
-**Q3.11 Golf round timing.** Golf rounds finish over several hours and scores trickle in.
-*Recommendation:* send E2 when `scheduledEndAt` has passed (the admin sets it to the last
-group's expected finish plus an hour), or when the next round starts if no end is set. It goes to everyone at once, like the reminders.
+**Q3.11 When a round counts as finished.** **Decided (Derek 2026-10-21):** standings emails
+fire from what actually happened, never from a scheduled end, plus a buffer (30 minutes by
+default, in `EMAIL_CONFIG`) so a late correction lands first. What "finished" reads in each
+shape:
+
+- **Event (F1, E6):** the event is `COMPLETED` and its contests have settled. Recorded today.
+- **Pick'em or survivor week (E3), bracket round (E4):** the last game of the week or round
+  gets its result (or is cancelled). Each game records its own result, so the moment is known
+  when that result is entered.
+- **Golf round (E2):** there is no round-level "finished" record; each golfer's round is
+  marked complete on its own (`SportEventParticipantRound`, with `completedAt`). A round is
+  finished when every golfer still playing it (cut and withdrawn golfers left out) has
+  completed it, and it finished at the latest of their `completedAt` times. A weather delay
+  that carries a round into the next morning simply finishes it then. Slice 3 derives this;
+  no new column is needed.
+
+The lifecycle scheduler sends each email on its first sweep after "finished" plus the buffer.
 
 ### F. Settlement
 
