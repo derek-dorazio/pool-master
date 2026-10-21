@@ -537,7 +537,7 @@ describe('soccer-2025-mls-cup-playoffs-test.json', () => {
 
   it('scores each round one series in games won with no half-time score, and every single game with one, Inter Miami beating Vancouver 3-1 in MLS Cup', () => {
     const series = matches.filter((match) => match.roundNumber === 2);
-    expect(series.every((match) => match.result !== undefined && Math.max(match.result.homeScore, match.result.awayScore) === 2 && match.periodScores === undefined)).toBe(true);
+    expect(series.every((match) => match.result !== undefined && Math.max(expectDefined(match.result.homeScore), expectDefined(match.result.awayScore)) === 2 && match.periodScores === undefined)).toBe(true);
     expect(matches.filter((match) => match.roundNumber !== 2).every((match) => match.periodScores?.length === 1)).toBe(true);
     expect(matches.at(-1)).toMatchObject({
       home: null, away: null, isNeutralSite: false, advancesTo: null, scheduledAt: '2025-12-06T19:30:00Z',
@@ -599,7 +599,9 @@ describe('soccer-2025-ncaa-tournaments-test.json', () => {
     for (const result of results) {
       const level = result.homeScore === result.awayScore;
       expect(result.homeShootoutScore !== undefined && result.awayShootoutScore !== undefined).toBe(level);
-      const [home, away] = level ? [result.homeShootoutScore ?? 0, result.awayShootoutScore ?? 0] : [result.homeScore, result.awayScore];
+      const [home, away] = level
+        ? [result.homeShootoutScore ?? 0, result.awayShootoutScore ?? 0]
+        : [expectDefined(result.homeScore), expectDefined(result.awayScore)];
       expect(result.winner).toBe(home > away ? 'HOME' : 'AWAY');
     }
   });
