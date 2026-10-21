@@ -1,3 +1,4 @@
+import { MatchEnding } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
   ContestEntryListResponse,
@@ -41,6 +42,7 @@ export function squaresGameFixture(overrides: Partial<SportEventMatchDto> = {}):
     awayScore: null,
     homeShootoutScore: null,
     awayShootoutScore: null,
+    ending: MatchEnding.PLAYED,
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,

@@ -261,7 +261,7 @@ describe('sport data bracket', () => {
     away: string | null;
     advancesTo: { matchNumber: number; side: string } | null;
     regionLabel?: string;
-    result?: { winner: string; homeScore: number; awayScore: number };
+    result?: { winner: string; homeScore: number | null; awayScore: number | null; ending?: string };
     periodScores?: Array<{ periodNumber: number; homeScore: number; awayScore: number }>;
   }
   interface BracketFile {
@@ -367,6 +367,24 @@ describe('sport data bracket', () => {
 
     expect(event.field.map((entry) => entry.oddsToWin)).toEqual([3, 4, 5, 6]);
     expect(event.matches?.map((match) => match.result?.winner)).toEqual(['HOME', 'HOME', 'HOME']);
+  });
+
+  it('reads a test seed\'s retirement and walkover with no score, and a result with no ending as played (#704)', () => {
+    const file = bracketTestSeed();
+    const [first, second] = file.sportLeagues[0].events[0].matches;
+    first.result = { winner: 'AWAY', homeScore: 1, awayScore: 0, ending: 'RETIREMENT' };
+    second.result = { winner: 'HOME', homeScore: null, awayScore: null, ending: 'WALKOVER' };
+
+    const matches = parseSportDataFile(file, { allowTestData: true }).sportLeagues[0].events[0].matches;
+
+    expect(matches?.map((match) => match.result?.ending)).toEqual(['RETIREMENT', 'WALKOVER', undefined]);
+  });
+
+  it('refuses a result with an ending that is not one', () => {
+    const file = bracketTestSeed();
+    file.sportLeagues[0].events[0].matches[0].result = { winner: 'HOME', homeScore: 1, awayScore: 0, ending: 'ABANDONED' };
+
+    expect(problemsOf(file, true).join(' ')).toMatch(/ending/);
   });
 
   it('refuses a bracket test seed without odds, with golf\'s stroke rounds, or without its bracket', () => {

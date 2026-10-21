@@ -3,7 +3,7 @@
  * week's tiebreaker game, and the ranking that breaks level points with the tiebreaker.
  */
 import { expect } from '@jest/globals';
-import { MatchSide, MatchStatus, PickEmMode, PickOutcome, PredictedResult, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, PickEmMode, PickOutcome, PredictedResult, type SportEventMatch } from '@poolmaster/shared/domain';
 import { rankPredictionStandings } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/bracket-picks';
 import {
   gameTotalPoints,
@@ -31,7 +31,7 @@ function game(matchNumber: number, overrides: Partial<SportEventMatch> = {}): Sp
     homeScore: null,
     awayScore: null,
     homeShootoutScore: null,
-    awayShootoutScore: null,
+    awayShootoutScore: null, ending: MatchEnding.PLAYED,
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,

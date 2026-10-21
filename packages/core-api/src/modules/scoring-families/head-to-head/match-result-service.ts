@@ -19,6 +19,10 @@
  * A bracket match level after extra time, in a sport settled by shoot-out (#791), names its winner
  * by the shoot-out's scores, kept apart from the match score (IFAB Law 10).
  *
+ * A match in any sport may end early (#704): a retirement or a default stops it where it stood, so
+ * its winner's score may be the lower, and a walkover was never played, so it has no score. Its
+ * winner wins in full: every scorer reads only `winnerSide`.
+ *
  * In a reseeded bracket (#722) a match before a reseed links nowhere: its winner's next match is
  * the one the admin placed it in. Changing or clearing that result swaps or empties the winner's
  * place there, under the same lock, and the admin can set the round again before it starts.
@@ -31,6 +35,7 @@ import type {
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import {
+  MatchEnding,
   MatchSide,
   MatchStatus,
   type SportShootout,
@@ -61,10 +66,12 @@ export interface MatchResultInput {
   /** Both or neither (left out is neither): a level bracket match's shoot-out, the winner's the higher. */
   homeShootoutScore?: number | null;
   awayShootoutScore?: number | null;
+  /** How the match ended (#704); left out is PLAYED. */
+  ending?: MatchEnding;
 }
 
-/** A result with no shoot-out, as a cleared or cancelled match is written. */
-const NO_SHOOTOUT = { homeShootoutScore: null, awayShootoutScore: null } as const;
+/** A result with no shoot-out that was not ended early, as a cleared or cancelled match is written. */
+const NO_RESULT_DETAILS = { homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED } as const;
 
 /** Both sides' score at the end of one period, as the scoreboard shows it. */
 export interface PeriodScoreInput {
@@ -167,8 +174,8 @@ export class MatchResultService {
    * Enters or changes one match's result: a winner, or a tie (#792) in a game of a week, which
    * forms no bracket (a knockout always has a winner). 404 BRACKET_MATCH_NOT_FOUND; 422
    * MATCH_SIDES_NOT_SET while a side still waits for its team; 422 MATCH_RESULT_INVALID for one
-   * score without the other, scores the winner did not win by, a tie that does not fit, or a
-   * shoot-out that does not fit (`describeScoreProblem`); 409 SPORT_EVENT_MATCH_RESULT_LOCKED for
+   * score without the other, scores the winner did not win by, a tie that does not fit, a
+   * shoot-out that does not fit, or an early ending that does not (`describeScoreProblem`); 409 SPORT_EVENT_MATCH_RESULT_LOCKED for
    * a new winner once the next match has a result.
    */
   async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput): Promise<SportEventMatch[]> {
@@ -187,10 +194,11 @@ export class MatchResultService {
       homeShootoutScore: input.homeShootoutScore ?? null,
       awayShootoutScore: input.awayShootoutScore ?? null,
     };
+    const ending = input.ending ?? MatchEnding.PLAYED;
     const scoreProblem = describeScoreProblem(input, shootout, {
       inBracket: !formsNoBracket(bracket, linksOn),
       shootout: getSportDefinition(sportEvent.sport).shootout,
-    }) ?? describeFinalBelowPeriods(match, input, matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null));
+    }) ?? describeWalkoverPeriods(match, ending) ?? describeFinalBelowPeriods(match, input, matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null));
     if (scoreProblem) {
       this.deps.logger?.warn({ sportEventId, matchNumber, scoreProblem }, 'Refused a match result with invalid scores');
       throw new SportEventError(`Match ${matchNumber}'s result cannot be saved: ${scoreProblem}.`, 'MATCH_RESULT_INVALID', 422);
@@ -200,11 +208,11 @@ export class MatchResultService {
       this.assertNextMatchOpen(sportEventId, bracket, match);
     }
 
-    const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout };
+    const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout, ending };
     // A tie sends nobody on: only a game that forms no bracket can end level.
     const sideFill = input.winnerSide === null ? null : this.advance(bracket, match, sideRowId(match, input.winnerSide));
     await this.write(sportEventId, bracket, result, sideFill);
-    this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, winnerChanges }, 'Saved a match result');
+    this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, ending, winnerChanges }, 'Saved a match result');
     const now = this.deps.now?.() ?? new Date();
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
       await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, now);
@@ -226,7 +234,7 @@ export class MatchResultService {
       return bracket;
     }
     this.assertNextMatchOpen(sportEventId, bracket, match);
-    const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_SHOOTOUT };
+    const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS };
     await this.write(sportEventId, bracket, result, this.advance(bracket, match, null));
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cleared a match result');
     return this.deps.matches.findBySportEvent(sportEventId);
@@ -264,7 +272,7 @@ export class MatchResultService {
         422,
       );
     }
-    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_SHOOTOUT };
+    const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS };
     await this.write(sportEventId, bracket, result, null);
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cancelled a game');
     // A squares contest on the game ends Final with no scores (#711, #743).
@@ -375,7 +383,7 @@ export class MatchResultService {
   private async write(
     sportEventId: string,
     bracket: readonly SportEventMatch[],
-    result: Pick<SportEventMatch, 'id' | 'status' | 'winnerSide' | 'homeScore' | 'awayScore' | 'homeShootoutScore' | 'awayShootoutScore'>,
+    result: Pick<SportEventMatch, 'id' | 'status' | 'winnerSide' | 'homeScore' | 'awayScore' | 'homeShootoutScore' | 'awayShootoutScore' | 'ending'>,
     sideFill: MatchSideFill | null,
   ): Promise<void> {
     // The standings are read off the bracket as it will stand after this write.
@@ -474,14 +482,22 @@ export interface ScoreRules {
  * higher; except that a bracket match of a sport settled by shoot-out (#791) may be level, its
  * winner named by both shoot-out scores, the winner's the higher. Shoot-out scores are refused
  * anywhere else, and on a result that is not level. A tie (#792) is only for a game of a week,
- * and needs both scores, level.
+ * and needs both scores, level. A match ended early (#704) has a winner and no shoot-out: after a
+ * retirement or a default both scores or neither, the winner's possibly the lower; after a
+ * walkover none.
  */
 export function describeScoreProblem(
-  { winnerSide, homeScore, awayScore }: Pick<MatchResultInput, 'winnerSide' | 'homeScore' | 'awayScore'>,
+  { winnerSide, homeScore, awayScore, ending = MatchEnding.PLAYED }: Pick<MatchResultInput, 'winnerSide' | 'homeScore' | 'awayScore' | 'ending'>,
   { homeShootoutScore, awayShootoutScore }: Pick<SportEventMatch, 'homeShootoutScore' | 'awayShootoutScore'>,
   rules: ScoreRules,
 ): string | null {
   const hasShootout = homeShootoutScore !== null || awayShootoutScore !== null;
+  if (ending !== MatchEnding.PLAYED) {
+    if (winnerSide === null) return 'a tie is played to its end';
+    if (hasShootout) return 'a match that ended early has no shoot-out';
+    if (ending === MatchEnding.WALKOVER) return homeScore === null && awayScore === null ? null : 'a walkover has no score';
+    return (homeScore === null) === (awayScore === null) ? null : 'give both scores or neither';
+  }
   if (hasShootout && (!rules.shootout || !rules.inBracket)) {
     return rules.shootout ? 'only a bracket match is settled by a shoot-out' : 'this sport has no shoot-outs';
   }
@@ -508,14 +524,16 @@ export function describeScoreProblem(
 /**
  * What is wrong with the score at the end of `periodNumber`, or null. A scoreboard's score never
  * goes down, so neither side's may be below its score at the end of an earlier period, or above
- * its score at the end of a later one or its final score (overtime included).
+ * its score at the end of a later one or its final score (overtime included). A walkover (#704)
+ * has no score at all.
  */
 export function describePeriodScoreProblem(
-  match: Pick<SportEventMatch, 'periodScores' | 'status' | 'homeScore' | 'awayScore'>,
+  match: Pick<SportEventMatch, 'periodScores' | 'status' | 'homeScore' | 'awayScore' | 'ending'>,
   periodNumber: number,
   score: PeriodScoreInput,
   periods: SportMatchPeriods,
 ): string | null {
+  if (match.status === MatchStatus.COMPLETED && match.ending === MatchEnding.WALKOVER) return 'it was a walkover, which has no score';
   const below = (left: PeriodScoreInput, right: PeriodScoreInput) => left.homeScore < right.homeScore || left.awayScore < right.awayScore;
   for (const other of match.periodScores) {
     if (other.periodNumber < periodNumber && below(score, other)) {
@@ -530,6 +548,11 @@ export function describePeriodScoreProblem(
     return 'a side\'s score is higher than its final score';
   }
   return null;
+}
+
+/** A walkover was never played, so a match with a score at the end of a period was not one (#704). */
+function describeWalkoverPeriods(match: Pick<SportEventMatch, 'periodScores'>, ending: MatchEnding): string | null {
+  return ending === MatchEnding.WALKOVER && match.periodScores.length > 0 ? 'a walkover has no score, so clear its period scores first' : null;
 }
 
 /** A final score below a side's score at the end of an entered period, or null when it fits them all. */

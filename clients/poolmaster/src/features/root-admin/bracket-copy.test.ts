@@ -1,3 +1,4 @@
+import { MatchEnding } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { SportEventMatchDto } from '@/lib/api';
 import { reseededRounds, roundStarted, unfinishedBefore } from './bracket-copy';
@@ -15,6 +16,7 @@ function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto,
     awayScore: null,
     homeShootoutScore: null,
     awayShootoutScore: null,
+    ending: MatchEnding.PLAYED,
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,

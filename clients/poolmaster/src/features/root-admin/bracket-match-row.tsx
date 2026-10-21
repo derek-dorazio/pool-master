@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MatchSide, MatchStatus, type SportMatchPeriods, type SportShootout, type SportVocabulary } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, type SportMatchPeriods, type SportShootout, type SportVocabulary } from '@poolmaster/shared/domain';
 import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { tieWord } from '@/features/contests/contest-sport';
@@ -9,7 +9,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, describeEntry, feederOf, formsNoBracket, matchNoun, sideEntry } from './bracket-copy';
+import { bracketErrorMessages, describeEntry, feederOf, formsNoBracket, MATCH_ENDING_MARK, matchNoun, sideEntry } from './bracket-copy';
 import { MatchScoresRow } from './match-scores-row';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
@@ -26,6 +26,13 @@ const MATCH_STATUS_TONE: Record<MatchStatus, 'neutral' | 'active' | 'final' | 'w
   [MatchStatus.IN_PROGRESS]: 'active',
   [MatchStatus.COMPLETED]: 'final',
   [MatchStatus.CANCELLED]: 'warning',
+};
+
+/** The ways a match can stop early (#704), as the admin picks one; PLAYED is the winner buttons. */
+const EARLY_ENDING_LABEL: Readonly<Record<Exclude<MatchEnding, typeof MatchEnding.PLAYED>, string>> = {
+  [MatchEnding.RETIREMENT]: 'Retired',
+  [MatchEnding.WALKOVER]: 'Walkover',
+  [MatchEnding.DEFAULT]: 'Defaulted',
 };
 
 /** The select's value for a side left without a team. */
@@ -74,7 +81,8 @@ function bracketInvalidates(eventId: string) {
  * One match of the bracket tab (#700). Before release an admin edits the pairing of any side no
  * earlier match fills; once the event is released one tap names the winner, and a final result
  * can be switched or cleared while the next match has none. A released game of a week that forms
- * no bracket can be cancelled once it is postponed (#715), or end in a tie (#792).
+ * no bracket can be cancelled once it is postponed (#715), or end in a tie (#792). A match that
+ * stopped early, in any sport (#704), is entered under "Ended early".
  */
 export function BracketMatchRow({ match, released, context }: { match: SportEventMatchDto; released: boolean; context: BracketContext }) {
   const [editing, setEditing] = useState(false);
@@ -160,6 +168,7 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
             <div className="flex flex-wrap gap-2">
               {([[MatchSide.HOME, home], [MatchSide.AWAY, away]] as const).map(([side, entry]) => {
                 const won = decided && match.winnerSide === side;
+                const mark = MATCH_ENDING_MARK[match.ending];
                 return (
                   <Button
                     aria-pressed={won}
@@ -170,11 +179,12 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
                     size="sm"
                     variant={won ? 'primary' : 'secondary'}
                   >
-                    {won ? `${entry.participant.name} won` : `${entry.participant.name} wins`}
+                    {won ? `${entry.participant.name} won${mark ? ` (${mark})` : ''}` : `${entry.participant.name} wins`}
                   </Button>
                 );
               })}
               {weekGame ? <TieResult context={context} match={match} /> : null}
+              <EarlyEndingResult away={away} context={context} home={home} match={match} />
               {decided ? (
                 <Button
                   data-testid={`root-admin-bracket-clear-${match.matchNumber}`}
@@ -311,6 +321,95 @@ function TieResult({ match, context }: { match: SportEventMatchDto; context: Bra
           {extractErrorMessage(save.error, {
             codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
             fallback: `This ${word.toLowerCase()} could not be saved. Try again.`,
+          })}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * A match that stopped early (#704): the loser retired, never started (a walkover) or was
+ * disqualified. Collapsed under one button so the usual one-tap winner stays as it is; it saves
+ * the winner and the ending with no score, which every ending takes.
+ */
+function EarlyEndingResult({
+  match,
+  home,
+  away,
+  context,
+}: {
+  match: SportEventMatchDto;
+  home: SportEventParticipantDto;
+  away: SportEventParticipantDto;
+  context: BracketContext;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [ending, setEnding] = useState<keyof typeof EARLY_ENDING_LABEL>(MatchEnding.RETIREMENT);
+  const [winnerSide, setWinnerSide] = useState<MatchSide>(MatchSide.HOME);
+  const testId = `root-admin-bracket-early-${match.matchNumber}`;
+
+  const save = useInvalidatingMutation({
+    mutationFn: async () => {
+      const response = await recordEventMatchResult({
+        path: { eventId: context.eventId, matchNumber: match.matchNumber },
+        body: { winnerSide, homeScore: null, awayScore: null, ending },
+      });
+      if (response.error) {
+        throwApiError(response.error);
+      }
+      return response.data;
+    },
+    invalidates: bracketInvalidates(context.eventId),
+    onSuccess: () => setEditing(false),
+    onError: (error) => {
+      logger.warn({ action: 'event.bracket.early-ending.failed', data: { matchNumber: match.matchNumber, ending }, err: error }, 'Early ending was rejected');
+    },
+  });
+
+  if (!editing) {
+    return (
+      <Button
+        data-testid={testId}
+        onClick={() => {
+          save.reset();
+          setEnding(match.ending === MatchEnding.PLAYED ? MatchEnding.RETIREMENT : match.ending);
+          setWinnerSide(match.winnerSide ?? MatchSide.HOME);
+          setEditing(true);
+        }}
+        size="sm"
+        variant="ghost"
+      >
+        Ended early
+      </Button>
+    );
+  }
+  return (
+    <div className="flex w-full flex-wrap items-end gap-2" data-testid={`${testId}-editor`}>
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        How it ended
+        <Select data-testid={`${testId}-ending`} onChange={(change) => setEnding(change.target.value as keyof typeof EARLY_ENDING_LABEL)} value={ending}>
+          {Object.entries(EARLY_ENDING_LABEL).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </Select>
+      </label>
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        Winner
+        <Select data-testid={`${testId}-winner`} onChange={(change) => setWinnerSide(change.target.value as MatchSide)} value={winnerSide}>
+          <option value={MatchSide.HOME}>{home.participant.name}</option>
+          <option value={MatchSide.AWAY}>{away.participant.name}</option>
+        </Select>
+      </label>
+      <Button data-testid={`${testId}-save`} disabled={save.isPending} onClick={() => save.mutate()} size="sm">
+        Save result
+      </Button>
+      <Button disabled={save.isPending} onClick={() => setEditing(false)} size="sm" variant="ghost">Cancel</Button>
+      {save.isError ? (
+        <p className="w-full text-sm text-destructive" data-testid={`${testId}-error`} role="alert">
+          {extractErrorMessage(save.error, {
+            codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
+            fallback: `This ${matchNoun(context.vocabulary).one}'s result could not be saved. Try again.`,
           })}
         </p>
       ) : null}

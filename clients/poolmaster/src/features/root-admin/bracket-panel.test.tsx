@@ -1,3 +1,4 @@
+import { MatchEnding } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -109,6 +110,7 @@ function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto,
     awayScore: null,
     homeShootoutScore: null,
     awayShootoutScore: null,
+    ending: MatchEnding.PLAYED,
     advancesToMatchId: null,
     advancesToSide: null,
     regionLabel: null,
@@ -215,6 +217,35 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
 
     await userEvent.click(screen.getByTestId('root-admin-bracket-clear-1'));
     expect(clearEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'evt-1', matchNumber: '1' } }));
+  });
+
+  it('saves a game that ended early, from under "Ended early", as its ending and winner with no score', async () => {
+    seed([match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2' })]);
+    recordEventMatchResultMock.mockResolvedValue({ data: { matches: [] } });
+    renderPage();
+
+    expect(screen.queryByTestId('root-admin-bracket-early-1-editor')).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByTestId('root-admin-bracket-early-1'));
+    await userEvent.selectOptions(screen.getByTestId('root-admin-bracket-early-1-ending'), 'WALKOVER');
+    await userEvent.selectOptions(screen.getByTestId('root-admin-bracket-early-1-winner'), 'AWAY');
+    await userEvent.click(screen.getByTestId('root-admin-bracket-early-1-save'));
+
+    expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { eventId: 'evt-1', matchNumber: '1' },
+      body: { winnerSide: 'AWAY', homeScore: null, awayScore: null, ending: 'WALKOVER' },
+    }));
+    await waitFor(() => expect(screen.queryByTestId('root-admin-bracket-early-1-editor')).not.toBeInTheDocument());
+  });
+
+  it('marks the winner of a game that ended early with how it ended: "ret." and "w/o"', async () => {
+    seed([
+      match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'COMPLETED', winnerSide: 'HOME', ending: MatchEnding.RETIREMENT }),
+      match({ id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4', status: 'COMPLETED', winnerSide: 'AWAY', ending: MatchEnding.WALKOVER }),
+    ]);
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-bracket-winner-1-HOME')).toHaveTextContent('Duke won (ret.)');
+    expect(screen.getByTestId('root-admin-bracket-winner-2-AWAY')).toHaveTextContent('Texas won (w/o)');
   });
 
   it('explains in product copy that a winner who already played the next game must have that result cleared first', async () => {
@@ -439,6 +470,20 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       expect(screen.getByTestId('root-admin-bracket-score-1-final-value')).toHaveTextContent('Vermont 29, Duke 13');
     });
 
+    it('marks the final score of a game that ended early, and a walkover\'s missing score, with how it ended', async () => {
+      seed([superBowl({ status: 'COMPLETED', winnerSide: 'HOME', homeScore: 10, awayScore: 14, ending: MatchEnding.DEFAULT })], { event: playoffs });
+      renderPage();
+
+      expect(await screen.findByTestId('root-admin-bracket-score-1-final-value')).toHaveTextContent('Vermont 14, Duke 10 def.');
+    });
+
+    it('says a walkover has its winner entered and no score, marked "w/o"', async () => {
+      seed([superBowl({ status: 'COMPLETED', winnerSide: 'AWAY', ending: MatchEnding.WALKOVER })], { event: playoffs });
+      renderPage();
+
+      expect(await screen.findByTestId('root-admin-bracket-score-1-final-value')).toHaveTextContent('Winner entered, no score (w/o)');
+    });
+
     it('says a game finished with its winner alone has a winner entered but no final score', async () => {
       seed([superBowl({ status: 'COMPLETED', winnerSide: 'AWAY' })], { event: playoffs });
       renderPage();
@@ -483,7 +528,7 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-final-save'));
       expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
         path: { eventId: 'evt-1', matchNumber: '1' },
-        body: { winnerSide: 'AWAY', homeScore: 13, awayScore: 29 },
+        body: { winnerSide: 'AWAY', homeScore: 13, awayScore: 29, ending: 'PLAYED' },
       }));
     });
 
@@ -500,7 +545,7 @@ describe('RootAdminSportEventResultsPage for a basketball tournament', () => {
       await userEvent.click(screen.getByTestId('root-admin-bracket-score-1-final-save'));
       expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
         path: { eventId: 'evt-1', matchNumber: '1' },
-        body: { winnerSide: null, homeScore: 20, awayScore: 20 },
+        body: { winnerSide: null, homeScore: 20, awayScore: 20, ending: 'PLAYED' },
       }));
     });
 

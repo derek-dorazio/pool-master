@@ -142,7 +142,9 @@ seeds), which the load sets after release, before any result. A bye is a team na
 into a later round's match, its other side filled by a link (the College Football Playoff's top
 four seeds in the quarterfinals). A match of a sport with periods (American football) may also
 carry `periodScores`, the score at the end of each period but the last, which the load enters
-before its result: the 2026 NFL seed's Super Bowl and the college hockey title games do, for squares pools. A league of weekly
+before its result: the 2026 NFL seed's Super Bowl and the college hockey title games do, for squares pools. A match that
+stopped early says how in its result's `ending` (`RETIREMENT`, `WALKOVER`, `DEFAULT`; left out is
+played), and a walkover's scores are null. A league of weekly
 games tries pick'em on last season's weeks as played: each week its own event, every game a
 match that links nowhere, with its real `result`
 (`american-football-2025-nfl-weeks-test.json`, `docs/SPORT-DATA-LOADING.md` *Seeded NFL
