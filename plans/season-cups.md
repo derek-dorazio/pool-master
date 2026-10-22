@@ -31,9 +31,10 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
   here is always the Poolmaster league, the tenant; "sports league" is the PGA Tour, the LPGA
   Tour, the NFL. Each sports league a league plays gets a FedEx-style cup for the season (the
   "2026 PGA Tour Cup", the "2025 NFL Cup"). No cup per sport and no hand-picked cups.
-- **The league-wide championship across every sport is split off** to #863 and deferred
-  (Derek, 2026-10-22), because sports league seasons don't line up with the calendar year. See
-  section 8 for the simpler shape it is likely to take.
+- **The league-wide championship across every sport is split off** to #863 (Derek,
+  2026-10-22), because sports league seasons don't line up with the calendar year. It counts
+  contests by the calendar year they end, with a trophy, medal tiles and a finish matrix; see
+  section 8.
 - **A cup is a rule, not a copy of results.** Standings are worked out on read from the places
   every contest already freezes when it settles (`ContestEntryStanding`), the same read #837
   builds. Nothing is kept in step by hand, and nobody sets a cup up.
@@ -91,8 +92,8 @@ CupStanding                         frozen when the cup is crowned, like Contest
 - **Where weights live.** On the contest, not the event and not the cup. Events are shared by
   every league on the site, so they can't carry one league's choice; a cup-by-cup setting would
   make the commissioner set it again for #863's championship. One `cupWeight` on the contest's
-  settings applies in every cup it counts toward. Default `NORMAL`. Editable until the cup is
-  crowned.
+  settings applies in every cup it counts toward. Default `NORMAL`. Editable until the contest is
+  Final (typed error `CONTEST_FINAL`), so a settled result's weight never moves.
 - **Names.** Cups have no name column. Screens build it from the season and the sports league's
   name: "2026 PGA Tour Cup". The "cup name" league setting Derek chose (Q2.6) names #863's
   championship, so it moves there.
@@ -115,7 +116,7 @@ CupStanding                         frozen when the cup is crowned, like Contest
 Decided:
 
 - **Q2.1** (Derek, 2026-10-22) The league-wide championship across every sport is split off to
-  #863 and deferred.
+  #863, by calendar year (section 8).
 - **Q2.2** (Derek, 2026-10-21) One cup per sports league. No combined cup per sport (men's and
   women's golf together) and no hand-picked cups.
 - **Q2.3** (Derek, 2026-10-21) No cross-league cups, ever, for members or commissioners. A
@@ -182,8 +183,8 @@ commissioner once every counted contest is Final.
 - It writes the `CupStanding` rows, hands out `CHAMPION`, `RUNNER_UP` and `THIRD` trophies
   (ties share a trophy), and moves the cup to `CROWNED`.
 - After that the cup is frozen: a contest that goes Final later in the same season doesn't
-  change it (the cup page lists it as "After the cup was crowned"), and the `cupWeight` of a
-  contest it counted can't change (typed error `CUP_CROWNED`).
+  change it (the cup page lists it as "After the cup was crowned"). A counted contest's
+  `cupWeight` is already fixed, since it can't change once the contest is Final.
 - #837 lets the commissioner change a contest's season any time; that becomes "any time until a
   cup it counted in is crowned".
 
@@ -219,7 +220,7 @@ Crowning is the only write on a cup itself: nobody creates, edits or deletes one
   CupContestCount` (`COUNTED`, `NO_RESULT`, `NOT_FINAL`, `AFTER_CROWNING`), and the winner.
 - `CupDto.canCrown` for the commissioner, and `unfinishedContests`: the counted contests still
   Open or Live.
-- Typed errors: `CUP_NOT_FOUND`, `CUP_CROWNED`, `CUP_HAS_UNFINISHED_CONTESTS`.
+- Typed errors: `CUP_NOT_FOUND`, `CUP_CROWNED` (season change into a crowned cup), `CUP_HAS_UNFINISHED_CONTESTS`, `CONTEST_FINAL` (weight change on a Final contest).
 - Read cost: one query per page over the league's settled standings for the season, the same
   shape as #837 section 5. If a league ever gets slow, the escape hatch is the same cache keyed
   by its latest `settledAt`.
@@ -266,30 +267,88 @@ Slices 2 and 3 can go in parallel after 1; 4 after 2; 5 after 2.
 
 Decided (Derek, 2026-10-22): Q7.1 projected points, as the last slice.
 
-## 8. League championship (split off)
+## 8. League championship
 
-**Tracking issue:** #863 (deferred). Not part of this plan's slices; kept here so the design
-isn't lost.
+**Tracking issue:** #863. Its own slices (below), separate from the cup slices in section 7.
 
 A "2026 Derek's league" championship across every contest in every sport. Cups by season don't
 work for it: an NFL season is mid-way on 31 December and a Premier League season runs August to
-May. Derek's simpler shape (2026-10-22):
+May. Derek's design (2026-10-22):
 
-- **Count by the year a contest ends.** A contest counts in the calendar year it went Final
-  (`settledAt`). One still running on 31 December counts toward the year it finishes in. No
-  `seasonYear` needed.
-- **A finish matrix.** Squads are rows; columns 1st to 10th count how many times each squad
-  finished there that year, from its best entry in each contest.
-- **A points column ranks it**: each column's count times a fixed value for that place (the
-  same league points table as the cups) times the contest's `cupWeight`. Ties go to most 1sts,
-  then most 2nds.
-- **No crowning step.** Once the year is over nothing new can count toward it, so the leader on
-  1 January is the champion. The screen works that out from the date when it is read; nothing
-  runs on a timer.
-- **The name** is the "cup name" league setting (`League.cupName`, default "<league name> Cup"),
-  shown with the year: "2026 Derek's Pool Cup".
+### What counts
 
-Options weighed: the matrix with points (recommended, the table shows why each squad ranks
-where it does); a medal table ranked by 1sts then 2nds then 3rds (no weights, but a squad 4th
-every time ranks below one lucky win, and most squads tie at zero); an average finish percentile
-(fair across field sizes, hard to read on a phone).
+- **A contest counts in the calendar year it went Final.** One still running on 31 December
+  counts toward the year it finishes in. No `seasonYear` involved.
+- A squad's **best entry** in each contest counts, once (#837 Q3.2). Its place is the frozen
+  `ContestEntryStanding.position`. Contests set to `NOT_COUNTED` (`cupWeight`) are left out;
+  cancelled contests have no places and count for nothing.
+
+### The page, top to bottom
+
+1. **The trophy** (from 1 January of the next year): a trophy with the league's cup name under
+   it ("2026 Derek's Pool Cup") and the champion squad's name under that. Before 1 January the
+   space shows the current leader, "leads with 3 contests to go" style.
+2. **Medal tiles** (option B): power tiles for the year's leaders: most 1sts, most 2nds, most
+   3rds, most podiums, most contests played. Each tile shows the squad and its count.
+3. **The finish matrix** (option A): squads as rows; columns 1st to 10th count how often each
+   squad finished there; a Points column ranks the table. Points = for each finish, the place's
+   value in the points table times the contest's `cupWeight`. Ties split the points of the
+   places they cover, as in the cups. Equal totals go to most 1sts, then most 2nds.
+
+**Freezing on 1 January** needs no job and no crowning: once the year is over, no contest can
+go Final in it, so its rows can never change. "The trophy is presented" is the page seeing that
+the year it shows has ended. The frozen year becomes that year's history view (#837).
+
+### Stored as contests settle
+
+Derek's call: materialize it, so history never has to read every contest for all time. Rows
+are written **when a contest settles**, in the same transaction that writes its
+`ContestEntryStanding` rows, so they can't drift and no year-end step exists:
+
+```
+LeagueYearFinish                    one per squad per counted contest
+  leagueId, year, squadId, contestId    unique (contestId, squadId)
+  place          Int                1 best
+  tiedCount      Int                how many entries share that place (for the point split)
+  weight         CupWeight          the contest's cupWeight at settlement
+  points         Int                tenths of a point, from the points table at settlement
+  settledAt
+  index (leagueId, year)
+```
+
+- The year page sums one league-year of rows: a few hundred at most. Medal counts and the
+  matrix columns are `count(*)` by place; points are a sum.
+- Written by settlement, through a `ChampionshipService.recordContest(contestId)` that
+  contest-management calls. A backfill in the migration writes rows for every contest already
+  Final.
+- `place` is never re-derived later, and a Final contest's `cupWeight` can't change (typed
+  error `CONTEST_FINAL`), so a row is written once. The one exception is a row whose squad is
+  deleted, which #837 Q3.1 already refuses.
+
+Questions:
+
+- **Q8.1** Which time zone decides the year? A contest settled at 7pm US Eastern on 31 December
+  is already 1 January in UTC. Recommendation: US Eastern for every league until leagues get
+  their own time zone (they have none today; times are converted for display only). The year
+  is fixed on the row when the contest settles, so it never moves later.
+- **Q8.2** Store each finish's points at settlement, or work them out from the place when the
+  page is read? Recommendation: store them. Then changing the league's points table in June
+  changes only contests that settle after it, and past years can never shift. The page says
+  which table was in force when.
+- **Q8.3** Medal tiles: most 1sts, most 2nds, most 3rds, most podiums, most contests played?
+  Recommendation: those five. Ties on a tile show every squad tied.
+- **Q8.4** Is #863 still deferred? Recommendation: build it after #837 slice 1, alongside the
+  cup slices. It needs nothing from `seasonYear`, so it could even go first.
+
+### Slices (#863)
+
+1. **Storage and read.** `LeagueYearFinish`, `League.cupName` (default "<league name> Cup" at
+   creation, Q2.6), written at settlement, backfill migration, `GET
+   /leagues/:leagueId/championship/:year` (trophy, tiles, matrix) and `.../championship` (years
+   with their champions, for history).
+2. **The page.** Trophy, medal tiles and matrix; league settings gains the cup name. History's
+   year view shows the same page frozen (with #837).
+
+Options weighed: the matrix with points (A, chosen for the ranking); a medal table ranked by
+1sts, then 2nds, then 3rds (B, chosen as the tiles); an average finish percentile (fair across
+field sizes, hard to read on a phone; not used).
