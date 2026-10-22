@@ -15,8 +15,8 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
 - **A. Points race leaderboard.** The cup page: cup switcher, leader and "you" summary, the
   table with movement arrows and wins, a points-race chart of the top five, and the counted
   contests with their weights and why one doesn't count.
-- **B. Trophy cabinet.** The Cups page: a card per cup with its leader and progress, a "waiting
-  on" banner before the cups crown themselves, the crowned podium, and the trophy shelf on a
+- **B. Trophy cabinet.** The Cups page: a card per cup with its leader and progress, the
+  commissioner's "Ready to crown" banner, the crowned podium, and the trophy shelf on a
   team page.
 - **C. Past seasons.** History's Cups tab: most cups won, then each season's cup champions,
   newest first.
@@ -39,8 +39,9 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
 - **Points:** FedEx-like table by place, tied squads split the points, and a weight on each
   contest (x1, x1.5, x2, or not counted) set once on the contest's settings. Every contest
   counts, however few entries. The total is a plain running sum: no playoff reset.
-- **Cups crown themselves** once their year is over and every counted contest is Final. That
-  freezes the standings and hands out trophies; it is what history shows six years later.
+- **The commissioner crowns each cup** when its season is done, once every counted contest is
+  Final. That freezes the standings and hands out trophies; it is what history shows six years
+  later.
 - **Five slices:** model and read API; cup pages; commissioner settings; crowning, trophies and
   past cups; projected points from live contests.
 
@@ -54,7 +55,6 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
 | Season | `Contest.seasonYear`, added by #837 slice 1 | Which season a contest counts toward |
 | A squad's best entry | #837 `history` module, Q3.2 | A squad with several entries in a contest scores once, from its best place |
 | Squad delete guard | #837 slice 1, Q3.1 | A squad with results can't be deleted, so cup standings can't lose a row |
-| Scheduled sweep | `EventLifecycleScheduler` (a fixed-interval sweep in core-api) | The pattern for the year-end crowning check |
 
 A contest's events all belong to one sports league today (contests are made from that sports
 league's templates), so a contest counts toward exactly one sports league cup.
@@ -183,44 +183,29 @@ Questions:
 A cup belongs to one `seasonYear` (#837 slice 1). It is `OPEN` from creation and its standings
 move each time a counted contest goes Final.
 
-**Cups crown themselves.** A cup is crowned automatically when both are true:
+**The commissioner crowns each cup** (Derek, 2026-10-22), with `POST .../cups/:cupId/crown`,
+whenever they decide its season is done: the PGA Tour Cup after the last golf pool in
+September, the league cup at year end, an NFL Cup after the Super Bowl pool. Nothing runs on a
+timer and nothing waits for the calendar. The Cups page shows a "Ready to crown" button to the
+commissioner once every counted contest is Final.
 
-1. its season's calendar year is over (1 January of the next year has passed), and
-2. none of its counted contests is still Open or Live. Draft contests never opened don't count
-   and don't hold it up.
+- Crowning refuses while a counted contest is still Open or Live (typed error
+  `CUP_HAS_UNFINISHED_CONTESTS`, listing them). The commissioner settles it or sets it to Not
+  counted first. Draft contests never opened don't count and don't hold it up.
+- It writes the `CupStanding` rows, hands out `CHAMPION`, `RUNNER_UP` and `THIRD` trophies
+  (ties share a trophy), and moves the cup to `CROWNED`.
+- After that the cup is frozen: a contest that goes Final later in the same season doesn't
+  change it (the cup page lists it as "After the cup was crowned"), and the `cupWeight` of a
+  contest it counted can't change (typed error `CUP_CROWNED`). The contest still counts in any
+  other cup that is open, such as the league cup.
+- #837 lets the commissioner change a contest's season any time; that becomes "any time until a
+  cup it counted in is crowned".
 
-Crowning writes the `CupStanding` rows, hands out `CHAMPION`, `RUNNER_UP` and `THIRD` trophies
-(ties share a trophy) and moves the cup to `CROWNED`. The check runs in two places, through one
-`CupService.crownIfReady`: when a contest settles (settlement calls the cups service), and in a
-once-a-day sweep shaped like `EventLifecycleScheduler`, for a year that ends with nothing left to
-settle.
-
-How it plays out:
-
-- A golf league whose last pool settles in November: its 2026 cups crown on 1 January 2027.
-- An NFL league whose contests carry season 2025: the playoff and Super Bowl pools are still
-  Live in January, so its 2025 cups wait and crown the moment the Super Bowl pool settles in
-  February.
-- A contest nobody settles: the Cups page shows "Waiting on: <contest>" to everyone, and the
-  commissioner can settle it or set it to Not counted.
-
-After crowning, the season is closed for that league: a contest can't be given that
-`seasonYear` and its contests' `cupWeight` can't change (typed error `CUP_CROWNED`). #837
-lets the commissioner change a contest's season any time; that becomes "any time until the
-season's cups are crowned".
-
-This is a timed action, which the codebase usually avoids in favour of explicit release
-actions. It fits here because crowning cuts nobody off: by the time it runs, every result it
-reads is already frozen, so it records an outcome that can no longer change.
-
-Decided (Derek, 2026-10-22): Q4.2 a crowned cup can't be un-crowned (the root admin can fix a
-mistake in the database; no screen for it); Q4.3 no playoff reset, a plain running sum.
-
-Questions:
-
-- **Q4.1** Crown automatically as above? Recommendation: yes. Nobody has to remember to do it,
-  and the NFL case works on its own. A "Crown now" button for the commissioner isn't needed,
-  since the cup can't be final before the year is over anyway.
+Decided (Derek, 2026-10-22): Q4.1 crowned by hand by the commissioner, not automatically and not
+at a fixed date. An automatic crown would need each cup to know its own set of events and end
+date, which is more setup than a league should have to do. Q4.2 a crowned cup can't be
+un-crowned (the root admin can fix a mistake in the database; no screen for it). Q4.3 no
+playoff reset, a plain running sum.
 
 ## 5. API
 
@@ -233,20 +218,22 @@ check as the league's contests. Shapes in `packages/shared/dto/cups.dto.ts`, rou
 | `GET /cups?seasonYear=` | Member | The league's cups for a season (default: the current one), each with its leader and the viewer's squad's place |
 | `GET /cups/:cupId` | Member | Standings (`CupStandingRowDto[]`) and the counted contests (`CupContestRowDto[]`) |
 | `GET /cups/:cupId/squads/:squadId` | Member | One squad's points contest by contest |
+| `POST /cups/:cupId/crown` | Commissioner | Crown the champion (section 4) |
 | `GET /cups/past` | Member | Crowned cups across every season, newest first, paged; used by history |
 | `PATCH /leagues/:leagueId` (existing) | Commissioner | Gains `cupName`, `cupPointsScale`, `cupCustomPoints` |
 | `PATCH` contest settings (existing) | Commissioner | Gains `cupWeight` |
 
-No write routes on cups themselves: nobody creates, edits or crowns a cup by hand.
+Crowning is the only write on a cup itself: nobody creates, edits or deletes one.
 
 - `CupDto` carries `displayName` built by the server, so every screen names cups the same way.
 - `CupStandingRowDto`: squad ref (id, current name, icon, `isActive`), `position`,
   `displayPosition`, `points` (number, one decimal), `wins`, `podiums`, `contestsCounted`,
   `movement` (places gained or lost since the last Final contest), `trophy`.
 - `CupContestRowDto`: contest ref, sports league, settled date, `weight`, `counts:
-  CupContestCount` (`COUNTED`, `NO_RESULT`, `NOT_FINAL`), and the winner.
-- `CupDto.waitingOn`: the counted contests still Open or Live, once the year is over.
-- Typed errors: `CUP_NOT_FOUND`, `CUP_CROWNED`.
+  CupContestCount` (`COUNTED`, `NO_RESULT`, `NOT_FINAL`, `AFTER_CROWNING`), and the winner.
+- `CupDto.canCrown` for the commissioner, and `unfinishedContests`: the counted contests still
+  Open or Live.
+- Typed errors: `CUP_NOT_FOUND`, `CUP_CROWNED`, `CUP_HAS_UNFINISHED_CONTESTS`.
 - Read cost: one query per page over the league's settled standings for the season, the same
   shape as #837 section 5. If a league ever gets slow, the escape hatch is the same cache keyed
   by its latest `settledAt`.
@@ -255,7 +242,7 @@ No write routes on cups themselves: nobody creates, edits or crowns a cup by han
 
 | Page | Route | Content |
 |---|---|---|
-| Cups | `/league/:code/cups` | This season's cups as cards: name, leader, viewer's place, contests counted of total; the "Waiting on" banner after year end. Sports league cups show once they have two counted contests |
+| Cups | `/league/:code/cups` | This season's cups as cards: name, leader, viewer's place, contests counted of total; "Ready to crown" for the commissioner. Sports league cups show once they have two counted contests |
 | Cup | `/league/:code/cups/:cupId` | The leaderboard (place, movement, squad, points, wins, contests), a points-race chart of the top five across the season, and the counted contests with their weights and winners |
 | Squad in a cup | sheet from a leaderboard row | That squad's points contest by contest |
 | League home | existing | A small league cup card: top three and the viewer's place |
@@ -284,9 +271,9 @@ guard).
    points-race chart, the squad sheet, the league home card.
 3. **Commissioner settings.** Cup name and points table on league settings with a preview; cup
    weight on contest settings. Depends on Q3.6.
-4. **Crowning, trophies and past cups.** `crownIfReady` from settlement and the daily sweep,
-   frozen `CupStanding`, the "Waiting on" banner, trophies on team pages, `GET /cups/past` and
-   the History Cups tab (with #837 slices 2 and 5), the closed-season checks. Depends on Q4.1.
+4. **Crowning, trophies and past cups.** `POST .../crown` and the "Ready to crown" button,
+   frozen `CupStanding`, trophies on team pages, `GET /cups/past` and
+   the History Cups tab (with #837 slices 2 and 5), the frozen-cup checks.
 5. **Projected points.** Points from live contests' current leaderboards, shown greyed as
    "if it ended now".
 
