@@ -219,6 +219,8 @@ describe('a second-chance bracket — open while the event is under way, until i
     const submitted = await context.predictions.submitGamePicks(context.input);
     expect(submitted.status).toBe(ContestEntryStatus.SUBMITTED);
     expect(context.status()).toBe(ContestEntryStatus.SUBMITTED);
+    // Its picks close with its starting round, not at the event's start two days ago.
+    expect(submitted.picksCloseAt).toEqual(ROUND_TWO_FIRST_GAME);
   });
 
   it('locks every pick with 409 PREDICTION_GAME_STARTED and the tiebreaker with 409 CONTEST_ENTRY_LOCKED once the starting round\'s first game time passes', async () => {

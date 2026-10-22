@@ -98,24 +98,32 @@ export class EntryReceipts implements GamePicksReceiptNotice {
     const tiebreaker = describeTiebreaker(view, sportEvent);
     const entryUrl = buildEntryUrl(this.deps.appBaseUrl, league.leagueCode, contest.id, entry.id);
     for (const user of await this.activeOwners(entry.squadId)) {
-      await this.deps.email.send('CONTEST_ENTRY_COMPLETED', {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
-        // One receipt per submission of the entry in the event.
-        about: `${entry.id}:${sportEvent.id}:${submittedAt.toISOString()}`,
-        league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
-        refs: { contestId: contest.id, entryId: entry.id },
-        data: {
-          userName: formatUserName(user),
-          leagueName: league.name,
-          contestName: contest.name,
-          teamName: entry.squadName,
-          entryName: entry.name,
-          entryUrl,
-          submittedAt,
-          ...(tiebreaker !== null && { tiebreaker }),
-          receipt,
-        },
-      });
+      // One owner's failure never costs the others their receipt.
+      try {
+        await this.deps.email.send('CONTEST_ENTRY_COMPLETED', {
+          to: { email: user.email, userId: user.id, timeZone: user.timezone },
+          // One receipt per submission of the entry in the event.
+          about: `${entry.id}:${sportEvent.id}:${submittedAt.toISOString()}`,
+          league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+          refs: { contestId: contest.id, entryId: entry.id },
+          data: {
+            userName: formatUserName(user),
+            leagueName: league.name,
+            contestName: contest.name,
+            teamName: entry.squadName,
+            entryName: entry.name,
+            entryUrl,
+            submittedAt,
+            ...(tiebreaker !== null && { tiebreaker }),
+            receipt,
+          },
+        });
+      } catch (error) {
+        this.deps.logger?.error({
+          action: 'email.entryReceipt.failed',
+          data: { contestId: contest.id, entryId: entry.id, sportEventId: sportEvent.id, userId: user.id, error: error instanceof Error ? error.message : String(error) },
+        }, 'Failed to queue an entry receipt');
+      }
     }
   }
 
@@ -147,9 +155,9 @@ export class EntryReceipts implements GamePicksReceiptNotice {
           kind: EntryReceiptKind.BRACKET,
           eventName: sportEvent.name,
           rounds: await this.bracketRounds(picked, sportEvent),
-          // A bracket's picks lock at its first game: the event's start, or a second-chance
-          // bracket's starting round.
-          changeUntil: new Date(Math.min(...view.games.map((game) => game.kickoff.getTime()))),
+          // A bracket's picks lock together: at the event's start, or a second-chance bracket's
+          // starting round.
+          changeUntil: view.picksCloseAt,
         };
       case SelectionType.SURVIVOR:
         return {

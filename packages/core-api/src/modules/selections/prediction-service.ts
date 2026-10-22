@@ -159,6 +159,8 @@ export interface GamePicksView {
   survivor: GamePicksSurvivorView | null;
   status: ContestEntryStatus;
   submittedAt: Date | null;
+  /** When the entry's picks for the event close as a whole: the event's start, or a second-chance bracket's starting round. */
+  picksCloseAt: Date;
   ownEntry: boolean;
   canSubmit: boolean;
   pickedCount: number;
@@ -688,6 +690,7 @@ export class PredictionService {
       },
       status,
       submittedAt: entry.events.find((event) => event.sportEventId === sportEvent.id)?.submittedAt ?? null,
+      picksCloseAt: window.startDate,
       ownEntry,
       canSubmit,
       pickedCount: viewGames.filter((game) => game.pick !== null).length,

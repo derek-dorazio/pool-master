@@ -141,6 +141,7 @@ describe('EntryReceipts', () => {
       survivor: null,
       status: ContestEntryStatus.SUBMITTED,
       submittedAt: SUBMITTED_AT,
+      picksCloseAt: KICKOFF,
       ownEntry: true,
       canSubmit: false,
       pickedCount: 0,
@@ -216,6 +217,7 @@ describe('EntryReceipts', () => {
 
     await receipts().gamePicksSubmitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       selectionType: SelectionType.BRACKET,
+      picksCloseAt: new Date('2026-03-19T16:15:00.000Z'),
       games: [
         game({ id: 'r1', away: 'Duke', home: 'Vermont', picked: 'Duke', roundNumber: 1, kickoff: new Date('2026-03-19T16:15:00.000Z') }),
         game({ id: 'r2-1', away: 'TBD1', home: 'TBD2', predictedAway: 'Duke', predictedHome: 'Alabama', picked: 'Duke', roundNumber: 2, matchNumber: 1 }),
@@ -233,6 +235,27 @@ describe('EntryReceipts', () => {
     expect(text).not.toContain('First Round');
     expect(text.indexOf('Championship')).toBeLessThan(text.indexOf('Elite Eight'));
     expect(text).toContain('You can change your bracket until Mar 19, 2026');
+  });
+
+  it('says a second-chance bracket locks at its starting round, not at the event start its untimed later games fall back to', async () => {
+    const eventStart = new Date('2026-03-19T16:15:00.000Z');
+    const sweetSixteen = new Date('2026-03-26T23:10:00.000Z');
+    const { contest, event, entry, owners } = await entryIn(SelectionType.BRACKET, {
+      name: 'NCAA Tournament', sport: Sport.BASKETBALL, rounds: 4, startDate: eventStart,
+    });
+    roundNames = ['Sweet 16', 'Elite Eight', 'Final Four', 'Championship'];
+
+    await receipts().gamePicksSubmitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
+      selectionType: SelectionType.BRACKET,
+      picksCloseAt: sweetSixteen,
+      games: [
+        game({ id: 's16', away: 'Duke', home: 'Arizona', picked: 'Duke', roundNumber: 1, kickoff: sweetSixteen }),
+        // A later game with no time yet reports the event's start as its kickoff.
+        game({ id: 'e8', away: 'TBD1', home: 'TBD2', predictedAway: 'Duke', predictedHome: 'Houston', picked: 'Duke', roundNumber: 2, kickoff: eventStart }),
+      ],
+    }));
+
+    expect(textTo(owners[0].id)).toContain('You can change your bracket until Mar 26, 2026, 11:10 PM UTC.');
   });
 
   it('sends a survivor receipt with the team, its game and when the pick locks', async () => {
@@ -253,14 +276,16 @@ describe('EntryReceipts', () => {
     expect(text).not.toContain('Bills at Chiefs');
   });
 
-  it('logs and resolves, sending nothing, when the receipt cannot be queued, so the submit it follows stands', async () => {
-    const { contest, event, entry } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
-    outbox.record = async () => Promise.reject(new Error('database unavailable'));
+  it('still sends the other owners their receipt, and resolves, when one owner\'s cannot be queued, so the submit it follows stands', async () => {
+    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    const record = outbox.record.bind(outbox);
+    outbox.record = async (input) => (input.recipientUserId === owners[0].id ? Promise.reject(new Error('database unavailable')) : record(input));
 
     await expect(receipts().gamePicksSubmitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       games: [game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Chiefs' })],
     }))).resolves.toBeUndefined();
 
+    expect(outbox.rows.map((row) => row.recipientUserId)).toEqual([owners[1].id]);
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'email.entryReceipt.failed' }),
       'Failed to queue an entry receipt',
