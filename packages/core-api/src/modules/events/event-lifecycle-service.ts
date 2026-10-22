@@ -17,32 +17,20 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestConfigurationRepository,
-  ContestEntryRepository,
   ContestRepository,
-  LeagueMembershipRepository,
-  LeagueRepository,
   SportEventMatchRepository,
   SportEventRepository,
-  SquadMembershipRepository,
-  UserRepository,
 } from '@poolmaster/shared/db';
-import type { Contest, League, SportEvent, SportEventMatch, User } from '@poolmaster/shared/domain';
+import type { Contest, SportEvent, SportEventMatch } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
-  LeagueRole,
-  LeagueMembershipStatus,
   SelectionType,
   SportEventStatus,
   isDeclaredSportEventTransition,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
 import { hasSportEventStarted } from './operational-timing';
-import {
-  buildContestUrl,
-  formatUserName,
-  type ContestStartedEntrySummary,
-  type EmailService,
-} from '../email';
+import type { ContestStartedNotice } from '../notifications/contest-notices';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export interface FinishedSportEventSettlement {
@@ -96,27 +84,15 @@ export class EventLifecycleError extends Error {
 }
 
 /**
- * The contest side of an event transition (#247): which contests start, and who is told. Before
- * #247 this was a raw PrismaClient; contests are slice 3's cluster and now have ports.
+ * The contest side of an event transition (#247): which contests start. Before #247 this was a
+ * raw PrismaClient; contests are slice 3's cluster and now have ports. Who is told is the
+ * notifications module's ContestStartedNotice (#845).
  */
 export interface EventLifecycleContestDeps {
   contests: ContestRepository;
-  entries: ContestEntryRepository;
-  leagues: LeagueRepository;
-  memberships: LeagueMembershipRepository;
-  squadMemberships: SquadMembershipRepository;
-  users: UserRepository;
   /** A second-chance bracket's rules and games: it goes live at its starting round, not the event's start (#721). */
   configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
-}
-
-/** A contest being started, with everything its summary email reads. */
-interface ContestStartedSummary {
-  contest: Contest;
-  league: League;
-  entries: Array<{ name: string; squadName: string }>;
-  recipients: User[];
 }
 
 /** A contest starts from OPEN; any other status is left where it is. */
@@ -127,8 +103,7 @@ export class EventLifecycleService {
     private readonly contestDeps: EventLifecycleContestDeps,
     private readonly sportEvents: SportEventRepository,
     private readonly logger?: FastifyBaseLogger,
-    private readonly email?: EmailService,
-    private readonly appBaseUrl = 'http://localhost:5173',
+    private readonly contestStarted?: ContestStartedNotice,
     private readonly contestSettlement?: FinishedSportEventSettlement,
     private readonly releasedEditionContests?: ReleasedEditionContests,
   ) {}
@@ -257,113 +232,20 @@ export class EventLifecycleService {
         eventExternalId: sportEvent.externalId,
         cutoff: cutoff.kind,
       }, 'Activated contest from in-progress sport event');
-      await this.deliverContestStartedSummaryEmails(contest, sportEvent);
+      await this.tellContestStarted(contest, sportEvent);
     }
   }
 
-  /**
-   * The contest's league, its entries submitted for the starting event (entry number, then
-   * name) and the people told:
-   * the league's active commissioners, then each entry's active squad members, active users
-   * only, each once. Null when the league is gone.
-   */
-  private async loadContestStartedSummary(contest: Contest, sportEvent: SportEvent): Promise<ContestStartedSummary | null> {
-    const { entries, leagues, memberships, squadMemberships, users } = this.contestDeps;
-    const [league, leagueMemberships, contestEntries] = await Promise.all([
-      leagues.findById(contest.leagueId),
-      memberships.findByLeague(contest.leagueId),
-      entries.findByContestWithSquad(contest.id, { submittedFor: sportEvent.id }),
-    ]);
-    if (!league) {
-      return null;
-    }
-    const orderedEntries = [...contestEntries].sort((a, b) =>
-      a.entryNumber - b.entryNumber || a.name.localeCompare(b.name));
-
-    const commissionerIds = leagueMemberships
-      .filter((membership) => membership.status === LeagueMembershipStatus.ACTIVE && membership.role === LeagueRole.COMMISSIONER)
-      .map((membership) => membership.userId);
-    const squadMemberIds = (await Promise.all(
-      orderedEntries.map((entry) => squadMemberships.findBySquad(entry.squadId)),
-    )).flat().map((membership) => membership.userId);
-    const recipientIds = [...new Set([...commissionerIds, ...squadMemberIds])];
-    const recipients = (await Promise.all(recipientIds.map((id) => users.findById(id))))
-      .filter((user): user is User => user !== null && user.isActive);
-
-    return {
-      contest,
-      league,
-      entries: orderedEntries.map((entry) => ({ name: entry.name, squadName: entry.squadName })),
-      recipients,
-    };
-  }
-
-  private async deliverContestStartedSummaryEmails(
-    contest: Contest,
-    sportEvent: SportEvent,
-  ): Promise<void> {
-    if (!this.email) {
-      this.logger?.debug({
+  /** E1, "Contest is live": queued for the league, never failing the transition. */
+  private async tellContestStarted(contest: Contest, sportEvent: SportEvent): Promise<void> {
+    try {
+      await this.contestStarted?.contestStarted(contest, sportEvent);
+    } catch (err) {
+      this.logger?.error({
         contestId: contest.id,
         leagueId: contest.leagueId,
-      }, 'Skipped contest started summary email because the email service is unavailable');
-      return;
-    }
-
-    const summary = await this.loadContestStartedSummary(contest, sportEvent);
-    if (!summary) {
-      this.logger?.warn({
-        contestId: contest.id,
-        leagueId: contest.leagueId,
-      }, 'Skipped contest started summary email because the league was not found');
-      return;
-    }
-    const entries: ContestStartedEntrySummary[] = summary.entries.map((entry) => ({
-      entryName: entry.name,
-      teamName: entry.squadName,
-    }));
-    // The contest belongs to this event, so its name and start are the event's own.
-    const contestUrl = buildContestUrl(
-      this.appBaseUrl,
-      summary.league.leagueCode,
-      contest.id,
-    );
-
-    const templateKey = 'CONTEST_STARTED_SUMMARY';
-    const league = { id: summary.league.id, name: summary.league.name, leagueCode: summary.league.leagueCode };
-    for (const user of summary.recipients) {
-      try {
-        await this.email.send(templateKey, {
-          to: { email: user.email, userId: user.id, timeZone: user.timezone },
-          about: `${contest.id}:${sportEvent.id}`,
-          league,
-          refs: { contestId: contest.id },
-          data: {
-            userName: formatUserName(user),
-            leagueName: summary.league.name,
-            contestName: contest.name,
-            eventName: sportEvent.name,
-            contestUrl,
-            startedAt: sportEvent.startDate,
-            entryCount: entries.length,
-            entries,
-          },
-        });
-        this.logger?.info({
-          contestId: contest.id,
-          leagueId: contest.leagueId,
-          userId: user.id,
-          templateKey,
-        }, 'Queued contest started summary email');
-      } catch (err) {
-        this.logger?.error({
-          contestId: contest.id,
-          leagueId: contest.leagueId,
-          userId: user.id,
-          templateKey,
-          error: err instanceof Error ? err.message : String(err),
-        }, 'Failed to queue contest started summary email');
-      }
+        error: err instanceof Error ? err.message : String(err),
+      }, 'Failed to queue contest started emails');
     }
   }
 }

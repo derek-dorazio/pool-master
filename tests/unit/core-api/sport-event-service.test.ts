@@ -9,12 +9,7 @@ import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-
 import { standardEventPricing } from '../../support/budget-pricing';
 import {
   fakeContestConfigurationRepo,
-  fakeContestEntryRepo,
   fakeContestRepo,
-  fakeLeagueMembershipRepo,
-  fakeLeagueRepo,
-  fakeSquadMembershipRepo,
-  fakeUserRepo,
 } from '../../support/repo-fakes';
 
 /** Before every event's start in this file, so the release cutoff never depends on today. */
@@ -33,11 +28,6 @@ function setup(sportName: Sport = Sport.GOLF) {
   const lifecycle = new EventLifecycleService(
     {
       contests: fakeContestRepo(),
-      entries: fakeContestEntryRepo(),
-      leagues: fakeLeagueRepo(),
-      memberships: fakeLeagueMembershipRepo(),
-      squadMemberships: fakeSquadMembershipRepo(),
-      users: fakeUserRepo(),
       configurations: fakeContestConfigurationRepo(),
       matches: store.matchRepo(),
     },

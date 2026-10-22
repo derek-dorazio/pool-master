@@ -24,7 +24,7 @@ import { expectDefined } from '../../support/expect-defined';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
-import { createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
+import { createContestNotices, createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -828,20 +828,30 @@ describe('ContestEntryStandingRepository', () => {
 });
 
 describe('EventLifecycleService — starting an event\'s contests on the ports (#247)', () => {
-  it('activates the event\'s OPEN contest once and tells its commissioner and entrants, active users only', async () => {
+  it('activates the event\'s OPEN contest once and wishes every active league member good luck, entrant or not (#845)', async () => {
     const prisma = getPrisma();
     const { owner, league, squads, event } = await createLeagueAndEvent();
     const open = await createContest(league.id, event.id, 'Starts With The Event', ContestStatus.OPEN);
+    await prisma.contestConfiguration.create({
+      data: {
+        contestId: open.id,
+        selectionType: 'TIERED',
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
+      },
+    });
     const draft = await createContest(league.id, event.id, 'Never Opened', ContestStatus.DRAFT);
-    const [member, lapsed] = await Promise.all([
+    const [member, lapsed, onlooker] = await Promise.all([
       createTestUser({ displayName: 'Squad Member' }),
       createTestUser({ displayName: 'Lapsed Member' }),
+      createTestUser({ displayName: 'No Entry' }),
     ]);
     await prisma.user.update({ where: { id: lapsed.user.id }, data: { isActive: false } });
-    for (const user of [member, lapsed]) {
+    for (const user of [member, lapsed, onlooker]) {
       await prisma.leagueMembership.create({
         data: { leagueId: league.id, userId: user.user.id, role: 'MEMBER', status: 'ACTIVE', joinedAt: new Date() },
       });
+    }
+    for (const user of [member, lapsed]) {
       await prisma.squadMembership.create({
         data: { squadId: squads[0].id, leagueId: league.id, userId: user.user.id, status: 'ACTIVE', joinedAt: new Date() },
       });
@@ -850,8 +860,10 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await repos().entries.setEventStatus(alphaEntry.id, event.id, 'SUBMITTED', new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
     const lifecycle = createEventLifecycleService(prisma, {
-      email: emailServiceOver({ providerName: 'smtp', send }),
-      appBaseUrl: 'https://app.example.test',
+      contestStarted: createContestNotices(prisma, {
+        email: emailServiceOver({ providerName: 'smtp', send }),
+        appBaseUrl: 'https://app.example.test',
+      }),
     });
 
     await lifecycle.applySportEventStatusTransition({
@@ -865,14 +877,21 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     expect(started).toEqual(expect.objectContaining({ status: ContestStatus.ACTIVE, startsAt: event.startDate }));
     expect(untouched?.status).toBe(ContestStatus.DRAFT);
     await deliverQueuedEmail();
-    expect(send.mock.calls.map(([message]) => message.to).sort()).toEqual([owner.user.email, member.user.email].sort());
-    expect(send.mock.calls[0][0].text).toContain('- Alpha Entry: Alpha');
+    expect(send.mock.calls.map(([message]) => message.to).sort())
+      .toEqual([owner.user.email, member.user.email, onlooker.user.email].sort());
+    const textTo = (to: string) => send.mock.calls.find(([message]) => message.to === to)?.[0].text ?? '';
+    expect(textTo(member.user.email)).toContain('Good luck, everyone.');
+    expect(textTo(member.user.email)).toContain('Entries: 1');
+    expect(textTo(member.user.email)).toContain(`Leaderboard: https://app.example.test/league/${league.leagueCode}/contests/${open.id}/leaderboard`);
+    expect(textTo(member.user.email)).not.toContain('You didn\'t enter this one');
+    expect(textTo(onlooker.user.email)).toContain('You didn\'t enter this one');
 
     // The provider re-sending IN_PROGRESS finds nothing left to start, so nobody is told twice.
     await lifecycle.applySportEventStatusTransition({
       sportEventId: event.id, toStatus: 'IN_PROGRESS', actor: { type: 'SYSTEM' },
     });
-    expect(send).toHaveBeenCalledTimes(2);
+    await deliverQueuedEmail();
+    expect(send).toHaveBeenCalledTimes(3);
   });
 });
 

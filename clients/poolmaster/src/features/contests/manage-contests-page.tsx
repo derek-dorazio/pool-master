@@ -1,4 +1,4 @@
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, formatSelectionTypeName  } from '@poolmaster/shared/domain';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -22,7 +22,6 @@ import {
 } from '@/features/shared/ui';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { firstContestEvent, type ContestSportEvent } from './contest-events';
-import { formatSelectionTypeName } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
 import { isHistoricalContest } from './contest-status';
 import { useLeagueContestsQuery } from './use-league-contests-query';

@@ -384,7 +384,7 @@ export class SelectionService {
         { action: 'selection.submitEntry.submitted', data: { contestId, entryId, sportEventId: context.sportEvent.id } },
         'Submitted a contest entry\'s picks for one event',
       );
-      await this.deps.entryReceipts?.sendEntrySubmittedEmail(contestId, entryId, actorUserId, context.sportEvent.id);
+      await this.deps.entryReceipts?.sendEntrySubmittedEmail(contestId, entryId, context.sportEvent.id);
     }
 
     return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId });

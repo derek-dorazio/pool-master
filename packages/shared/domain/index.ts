@@ -5,6 +5,7 @@ export * from './tiered-roster';
 export * from './contest-events';
 export * from './budget-pricing';
 export * from './contest-rules';
+export * from './contest-rules-text';
 export * from './sport-event-lifecycle';
 export * from './email-delivery';
 export * from './providers';

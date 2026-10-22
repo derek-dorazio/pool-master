@@ -8,15 +8,22 @@ import { requireCommissioner } from '../leagues/permissions';
 import { createContestManagementHandlers } from './handler';
 import { createContestManagementService } from './wiring';
 import { getAppPrisma } from '../../core/prisma-context';
+import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
+import { createContestNotices } from '../notifications/wiring';
 
 export function contestManagementModule(
   fastify: FastifyInstance,
+  opts: MailModuleOptions,
 ): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
-  const contestManagementService = createContestManagementService(prisma, fastify.log);
+  const contestManagementService = createContestManagementService(prisma, fastify.log, createContestNotices(prisma, {
+    email: opts.email,
+    appBaseUrl: readApplicationBaseUrl(process.env),
+    logger: fastify.log,
+  }));
   const handlers = createContestManagementHandlers(contestManagementService);
 
   fastify.get('/contests/:contestId', {

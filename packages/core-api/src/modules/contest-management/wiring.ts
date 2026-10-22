@@ -3,6 +3,7 @@
  * module's `createContest` route (#245) and the configuration reads and writes on this module's,
  * so both build the service here rather than each wiring its dependencies.
  */
+import type { ContestOpenedNotice } from '../notifications/contest-notices';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
@@ -33,6 +34,8 @@ import { ContestManagementService, type ContestCreateSportEventReader } from './
 export function createContestManagementService(
   prisma: PrismaClient,
   logger: FastifyBaseLogger,
+  /** Who is told a contest has opened (#845); without it, nobody is. */
+  contestOpened?: ContestOpenedNotice,
 ): ContestManagementService {
   const sportEventTierService = createSportEventTierService(prisma, logger);
   return new ContestManagementService(
@@ -49,6 +52,7 @@ export function createContestManagementService(
       valuations: new PrismaSportEventParticipantValuationRepository(prisma),
       matches: new PrismaSportEventMatchRepository(prisma),
     }),
+    contestOpened,
   );
 }
 

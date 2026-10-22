@@ -381,7 +381,7 @@ describe('ContestService entries — confirmation email', () => {
     await deliverQueuedEmail();
     expect(mail.sent).toHaveLength(0);
 
-    await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id, contest.sportEventIds[0] ?? '');
+    await service.sendEntrySubmittedEmail(contest.id, created.id, contest.sportEventIds[0] ?? '');
     await deliverQueuedEmail();
 
     expect(mail.sent).toHaveLength(1);
@@ -390,13 +390,32 @@ describe('ContestService entries — confirmation email', () => {
     expect(mail.sent[0].text).toContain('-10');
   });
 
+  it('emails the confirmation to every active owner of the entry\'s squad, each saying until when the picks can change (#845)', async () => {
+    const mail = capturingMail();
+    const { world, league, owner, squad, contest, service } = setupOnTieredEvent({ mailDelivery: mail });
+    const coOwner = world.addUser({ firstName: 'Cora', lastName: 'Owner', email: 'cora@example.com' });
+    world.addMember(league.id, coOwner.id);
+    world.addSquadMember(squad.id, coOwner.id);
+    const closed = world.addUser({ firstName: 'Cal', lastName: 'Closed', email: 'cal@example.com', isActive: false });
+    world.addMember(league.id, closed.id);
+    world.addSquadMember(squad.id, closed.id);
+    const created = await service.createEntry(contest.id, owner.id);
+    completeLineup(world, created.id);
+
+    await service.sendEntrySubmittedEmail(contest.id, created.id, contest.sportEventIds[0] ?? '');
+
+    await deliverQueuedEmail();
+    expect(mail.sent.map((message) => message.to).sort()).toEqual(['cora@example.com', 'olive@example.com']);
+    expect(mail.sent.every((message) => message.text.includes('You can change your picks until'))).toBe(true);
+  });
+
   it('emails the confirmation for a lineup submitted without a tiebreaker, showing the tiebreaker as None', async () => {
     const mail = capturingMail();
     const { world, owner, contest, service } = setupOnTieredEvent({ mailDelivery: mail });
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
 
-    await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id, contest.sportEventIds[0] ?? '');
+    await service.sendEntrySubmittedEmail(contest.id, created.id, contest.sportEventIds[0] ?? '');
 
     await deliverQueuedEmail();
     expect(mail.sent).toHaveLength(1);
@@ -411,7 +430,7 @@ describe('ContestService entries — confirmation email', () => {
     completeLineup(world, created.id);
     await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -4 });
 
-    await expect(service.sendEntrySubmittedEmail(contest.id, created.id, owner.id, contest.sportEventIds[0] ?? '')).resolves.toBeUndefined();
+    await expect(service.sendEntrySubmittedEmail(contest.id, created.id, contest.sportEventIds[0] ?? '')).resolves.toBeUndefined();
     expect(world.entries.get(created.id)?.tiebreakerValue).toBe(-4);
   });
 });

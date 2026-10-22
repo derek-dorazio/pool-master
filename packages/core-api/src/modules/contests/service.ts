@@ -32,6 +32,7 @@ import type {
   SportEvent,
   SportEventMatch,
   SquadMembership,
+  User,
 } from '@poolmaster/shared/domain';
 import {
   ContestFormat,
@@ -119,6 +120,7 @@ interface ContestEntryReceiptData {
   id: string;
   contestId: string;
   name: string;
+  squadId: string;
   tiebreakerValue: number | null;
   updatedAt: Date;
   squad: {
@@ -1063,13 +1065,13 @@ export class ContestService {
 
   /**
    * The "Entry submitted" confirmation, sent by the selection room when an entry is submitted
-   * (#481). The selection room only calls it once the lineup has passed the submit check, so it
-   * does not judge the lineup again.
+   * (#481), to every owner of the entry's squad (#845, catalog row D3), with when picks close so
+   * they know how long it can still change. The selection room only calls it once the lineup has
+   * passed the submit check, so it does not judge the lineup again.
    */
   async sendEntrySubmittedEmail(
     contestId: string,
     entryId: string,
-    userId: string,
     sportEventId: string,
   ): Promise<void> {
     if (!this.deps.email) {
@@ -1079,66 +1081,67 @@ export class ContestService {
       }, 'Skipped contest entry confirmation email because dependencies are unavailable');
       return;
     }
+    const email = this.deps.email;
 
-    const [entry, user] = await Promise.all([
+    const [entry, sportEvent] = await Promise.all([
       this.loadContestEntryReceiptData(entryId),
-      this.deps.users.findById(userId),
+      this.deps.sportEvents.findById(sportEventId),
     ]);
-
-    if (!entry || entry.contestId !== contestId) {
+    if (!entry || entry.contestId !== contestId || !sportEvent) {
       this.logger.warn({
         action: 'contestEntry.emailDelivery.entryMissing',
         data: { contestId, entryId },
       }, 'Skipped contest entry confirmation email because entry data was unavailable');
       return;
     }
-    if (!user) {
-      this.logger.warn({
-        action: 'contestEntry.emailDelivery.userMissing',
-        data: { contestId, entryId, userId },
-      }, 'Skipped contest entry confirmation email because user data was unavailable');
-      return;
-    }
 
+    const owners = (await Promise.all((await this.deps.squadMemberships.findBySquad(entry.squadId))
+      .map((membership) => this.deps.users.findById(membership.userId))))
+      .filter((user): user is User => user !== null && user.isActive);
     const templateKey = 'CONTEST_ENTRY_COMPLETED';
     const league = entry.contest.league;
-    try {
-      await this.deps.email.send(templateKey, {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
-        // One receipt per submission of the entry in the event.
-        about: `${entryId}:${sportEventId}:${entry.updatedAt.toISOString()}`,
-        league: { id: entry.contest.leagueId, name: league.name, leagueCode: league.leagueCode },
-        refs: { contestId, entryId },
-        data: {
-          userName: formatUserName(user),
-          leagueName: league.name,
-          contestName: entry.contest.name,
-          teamName: entry.squad.name,
-          entryName: entry.name,
-          entryUrl: buildEntryUrl(this.appBaseUrl, league.leagueCode, contestId, entryId),
-          submittedAt: entry.updatedAt,
-          // The tiebreaker is a predicted winning score relative to par. Submit does not require
-          // one, so a lineup submitted without it says so.
-          tiebreaker: entry.tiebreakerValue === null
-            ? 'None'
-            : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
-          tiers: await this.buildEntryTierSelectionsForEmail(entry, sportEventId),
-        },
-      });
-      this.logger.info({
-        action: 'contestEntry.emailDelivery.success',
-        data: { contestId, entryId, templateKey },
-      }, 'Queued contest entry confirmation email');
-    } catch (err) {
-      this.logger.error({
-        action: 'contestEntry.emailDelivery.failure',
-        data: {
-          contestId,
-          entryId,
-          templateKey,
-          error: err instanceof Error ? err.message : String(err),
-        },
-      }, 'Failed to queue contest entry confirmation email');
+    const data = {
+      leagueName: league.name,
+      contestName: entry.contest.name,
+      teamName: entry.squad.name,
+      entryName: entry.name,
+      entryUrl: buildEntryUrl(this.appBaseUrl, league.leagueCode, contestId, entryId),
+      submittedAt: entry.updatedAt,
+      // A roster contest's picks close when its event starts.
+      changeUntil: sportEvent.startDate,
+      // The tiebreaker is a predicted winning score relative to par. Submit does not require
+      // one, so a lineup submitted without it says so.
+      tiebreaker: entry.tiebreakerValue === null
+        ? 'None'
+        : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
+      tiers: await this.buildEntryTierSelectionsForEmail(entry, sportEventId),
+    };
+    for (const user of owners) {
+      try {
+        await email.send(templateKey, {
+          to: { email: user.email, userId: user.id, timeZone: user.timezone },
+          // One receipt per submission of the entry in the event.
+          about: `${entryId}:${sportEventId}:${entry.updatedAt.toISOString()}`,
+          league: { id: entry.contest.leagueId, name: league.name, leagueCode: league.leagueCode },
+          refs: { contestId, entryId },
+          data: { userName: formatUserName(user), ...data },
+        });
+        this.logger.info({
+          action: 'contestEntry.emailDelivery.success',
+          data: { contestId, entryId, userId: user.id, templateKey },
+        }, 'Queued contest entry confirmation email');
+      } catch (err) {
+        this.logger.error({
+          action: 'contestEntry.emailDelivery.failure',
+          data: {
+            contestId,
+            entryId,
+            userId: user.id,
+            templateKey,
+            error: err instanceof Error ? err.message : String(err),
+          },
+        }, 'Failed to queue contest entry confirmation email');
+      }
     }
   }
 
@@ -1185,6 +1188,7 @@ export class ContestService {
       id: entry.id,
       contestId: entry.contestId,
       name: entry.name,
+      squadId: entry.squadId,
       tiebreakerValue: entry.tiebreakerValue ?? null,
       updatedAt: entry.updatedAt,
       squad: { name: entry.squadName },

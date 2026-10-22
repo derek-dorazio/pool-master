@@ -248,6 +248,11 @@ export interface Contest extends DomainEntity {
   sport?: Sport;
 
   // Timing
+  /**
+   * When the commissioner opened the contest to the league (#845). Absent for a draft, and for a
+   * contest opened before this was kept.
+   */
+  openedAt?: Date;
   startsAt?: Date;
   endsAt?: Date;
   /**

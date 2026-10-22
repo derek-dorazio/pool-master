@@ -1,7 +1,6 @@
-import type { SportNoun } from '@poolmaster/shared/domain';
+import { countParticipants, type SportNoun } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
 import { Alert, formatDateTimeDisplay, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
-import { countParticipants } from './contest-rules';
 import { selectionParticipantLabel } from './contest-sport';
 import type { SelectionGroup } from './contest-entry-selection';
 

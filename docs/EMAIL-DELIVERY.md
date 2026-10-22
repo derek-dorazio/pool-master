@@ -275,8 +275,15 @@ the invitation a new invite code and a fresh seven-day expiry and queues a new e
 old link stops working.
 
 Contest entry confirmation emails ("Entry submitted") are receipts, queued when a member
-submits an entry (#481), not when its picks or tiebreaker are saved. A repeat submit of an
-already submitted entry sends nothing.
+submits an entry (#481), not when its picks or tiebreaker are saved. They go to every active
+owner of the entry's squad, and say until when the picks can still change (#845). A repeat
+submit of an already submitted entry sends nothing.
+
+"New contest open" emails (#845) are queued when a commissioner opens a contest (`DRAFT` to
+`OPEN`), to every active league member: the contest's events, its rules in the same sentence
+its page shows, the entry limit and when picks close. The contest records when it was opened
+(`opened_at`), and no entry reminder goes within 6 hours of it. A failure to queue one is
+logged and never undoes the open.
 
 Password reset emails (#847) are queued like every other email, from the app's `noreply@`
 address. Queuing wakes the sender, so the email goes out at once; the link expires 10 minutes
@@ -290,10 +297,12 @@ Password changed emails (#848) are queued after a reset by link and after a pers
 own password, not after a root admin's reset, once the password write commits. Like the reset,
 they have no switch in EMAIL_CONFIG. A failure to queue one is logged and never undoes the change.
 
-Contest started summary emails are queued when a sport event moves to `IN_PROGRESS` (a root
-admin's transition, or the lifecycle scheduler) and first moves its contests from `OPEN` to
-`ACTIVE`. They go to the league's commissioners and the team members of each submitted entry,
-once each. An already-active contest is not told again.
+"Contest is live" emails (`CONTEST_STARTED_SUMMARY`) are queued when a sport event moves to
+`IN_PROGRESS` (a root admin's transition, or the lifecycle scheduler) and first moves its
+contests from `OPEN` to `ACTIVE`. They go to every active league member, once each: "Good luck,
+everyone", the event, the contest's rules, the number of entries and a link to the leaderboard,
+with a line telling a member without an entry they can still follow it. They list no entries.
+An already-active contest is not told again.
 
 Entry reminders ("Picks close soon", #845) are the first email sent on the clock rather than
 on an action. Each lifecycle scheduler sweep (every 5 minutes) ends with a "notifications due"
@@ -303,9 +312,10 @@ contest takes entries, every active league member with nothing submitted for the
 reminded; once it is live (week 7 of a pick'em season), only the owners of entries whose week is
 still a draft. Everyone gets a reminder at the same moment, one email per person however many
 squads they own. Only the latest reminder whose time has passed is sent, and none more than an
-hour late, so a contest opened after a reminder's time skips it. The idempotency key (contest,
+hour late, so a contest opened after a reminder's time skips it, and none within 6 hours of the
+contest opening. The idempotency key (contest,
 event, offset, person) keeps a second sweep or task from sending one twice. Tiered, budget,
 pick'em and bracket contests are reminded today; survivor, random draw and squares follow.
 
-If the outbox cannot record a welcome, a receipt or a contest-started email, the action that
+If the outbox cannot record a welcome, a receipt, a new contest or a contest-started email, the action that
 sends it still succeeds and PoolMaster logs the template and ids.

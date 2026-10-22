@@ -153,7 +153,7 @@ async function enteredContest() {
   });
   const member = await buildRegisteredUser({ displayName: 'Entering Member' });
   await inviteAndJoin(commissioner, league.id, member);
-  // A league member who enters nothing is not told the contest started.
+  // A league member who enters nothing is still told the contest opened and started (#845).
   const bystander = await buildRegisteredUser({ displayName: 'Idle Member' });
   await inviteAndJoin(commissioner, league.id, bystander);
 
@@ -181,6 +181,13 @@ async function enteredContest() {
   const contestId = created.data?.contest.id as string;
   const opened = await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
   expect(opened.data?.contest.status).toBe('OPEN');
+  const contestUrl = `${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/contests/${contestId}`;
+  for (const recipient of [commissioner, member, bystander]) {
+    const announcements = await awaitSentMailTo(recipient.email, 1, `New contest: ${contestName}`);
+    expect(announcements).toHaveLength(1);
+    expect(announcements[0].to).toEqual([recipient.email]);
+    expect(linksIn(announcements[0])[0]).toBe(contestUrl);
+  }
 
   const entered = await enterContest({ client: member.client, path: { contestId } });
   const entryId = entered.data?.entry.id as string;
@@ -206,7 +213,7 @@ async function enteredContest() {
   // The confirmation goes out when the entry is submitted (#481), not when its details are saved.
   expect(await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
 
-  return { commissioner, league, member, bystander, event, contestId, entryId, contestName };
+  return { commissioner, league, member, bystander, event, contestId, contestUrl, entryId, contestName };
 }
 
 /** The token in an email's List-Unsubscribe header, as a mail app would post it back. */
@@ -304,8 +311,8 @@ describe('SDK Functional: system emails', () => {
     expect(newLink.response.status).toBe(201);
   });
 
-  it('sends the entry confirmation to the member who completed the entry, linking to that entry, and a contest-started summary to the commissioner and each entrant when an admin starts the event', async () => {
-    const { commissioner, league, member, bystander, event, contestId, entryId, contestName } = await enteredContest();
+  it('tells every league member a contest opened, sends the entry confirmation to the entry\'s owner linking to that entry, and wishes every member good luck with a leaderboard link when an admin starts the event', async () => {
+    const { commissioner, member, bystander, event, contestId, contestUrl, entryId, contestName } = await enteredContest();
 
     const submitted = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
     expect(submitted.response.status).toBe(200);
@@ -315,7 +322,7 @@ describe('SDK Functional: system emails', () => {
     expect(confirmations).toHaveLength(1);
     expect(confirmations[0].to).toEqual([member.email]);
     const [entryLink, unsubscribeLink] = linksIn(confirmations[0]);
-    expect(entryLink).toBe(`${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/contests/${contestId}/entries/${entryId}`);
+    expect(entryLink).toBe(`${contestUrl}/entries/${entryId}`);
     // An entry receipt is an email a member can turn off: it ends with their own unsubscribe link.
     expect(unsubscribeLink).toMatch(new RegExp(`^${FUNCTIONAL_APP_BASE_URL}/email/unsubscribe\\?token=`));
     expect(await sentMailWithSubject(commissioner.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
@@ -330,15 +337,14 @@ describe('SDK Functional: system emails', () => {
     });
     expect(started.response.status).toBe(200);
 
-    const startedSubject = `${contestName} has started`;
-    const contestUrl = `${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/contests/${contestId}`;
-    for (const recipient of [commissioner, member]) {
+    const startedSubject = `${contestName} is live`;
+    for (const recipient of [commissioner, member, bystander]) {
       const summaries = await awaitSentMailTo(recipient.email, 1, startedSubject);
       expect(summaries).toHaveLength(1);
       expect(summaries[0].to).toEqual([recipient.email]);
-      expect(linksIn(summaries[0])[0]).toBe(contestUrl);
+      expect(linksIn(summaries[0])[0]).toBe(`${contestUrl}/leaderboard`);
     }
-    expect(await sentMailWithSubject(bystander.email, startedSubject)).toHaveLength(0);
+    // The root admin is not in the league, so is told nothing.
     expect(await sentMailWithSubject(admin.email, startedSubject)).toHaveLength(0);
   });
 });
@@ -374,8 +380,8 @@ describe('SDK Functional: email preferences and unsubscribe', () => {
     expect(started.response.status).toBe(200);
 
     // The commissioner still gets theirs; the member, who turned live standings off, does not.
-    expect(await awaitSentMailTo(commissioner.email, 1, `${contestName} has started`)).toHaveLength(1);
-    expect(await sentMailWithSubject(member.email, `${contestName} has started`)).toHaveLength(0);
+    expect(await awaitSentMailTo(commissioner.email, 1, `${contestName} is live`)).toHaveLength(1);
+    expect(await sentMailWithSubject(member.email, `${contestName} is live`)).toHaveLength(0);
   });
 });
 

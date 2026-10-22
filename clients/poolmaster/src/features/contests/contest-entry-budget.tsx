@@ -1,4 +1,4 @@
-import type { Sport, SportNoun } from '@poolmaster/shared/domain';
+import { formatDollars, type Sport, type SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import type { SelectionStateResponse } from '@/lib/api';
 import {
@@ -8,7 +8,6 @@ import {
   Chip,
   cn,
   FormField,
-  formatDollars,
   Input,
   ListStack,
   ProgressIndicator,

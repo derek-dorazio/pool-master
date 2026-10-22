@@ -57,7 +57,7 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
-import { createEntryReminders } from './modules/notifications';
+import { createContestNotices, createEntryReminders } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
@@ -105,8 +105,7 @@ export function buildApp() {
   const contestSettlement = createContestSettlementService(prisma, app.log);
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,
-    email,
-    appBaseUrl,
+    contestStarted: createContestNotices(prisma, { email, appBaseUrl, logger: app.log }),
     contestSettlement,
     releasedEditionContests: createContestManagementService(prisma, app.log),
   });
@@ -205,6 +204,7 @@ export function buildApp() {
   app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email });
   app.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
+    email,
   });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests', email });
   app.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });

@@ -1,9 +1,7 @@
 import {
   ContestStatus,
-  LeagueRole,
   SPORT_EVENT_STATUS_TRANSITIONS,
   SportEventStatus,
-  SquadMembershipStatus,
   type SportEvent,
 } from '@poolmaster/shared/domain';
 import {
@@ -11,100 +9,41 @@ import {
   EventLifecycleService,
   type EventLifecycleContestDeps,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
+import type { ContestStartedNotice } from '../../../packages/core-api/src/modules/notifications';
+import { buildContest } from '../../factories';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
-import {
-  fakeContestConfigurationRepo,
-  fakeContestEntryRepo,
-  fakeContestRepo,
-  fakeLeagueMembershipRepo,
-  fakeLeagueRepo,
-  fakeSquadMembershipRepo,
-  fakeUserRepo,
-} from '../../support/repo-fakes';
+import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
 import { fakeLogger } from '../../support/fake-logger';
 import { mockFn } from '../../support/mock-fn';
-import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
-import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
-import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
 
 const STARTED_EVENT_START = new Date('2026-05-02T20:00:00.000Z');
 
-const USERS = [
-  buildUser({
-    id: 'commissioner-1',
-    email: 'commissioner@example.com',
-    firstName: 'Chris',
-    lastName: 'Commissioner',
-    username: 'commissioner',
-  }),
-  buildUser({
-    id: 'member-1',
-    email: 'member@example.com',
-    firstName: 'Mia',
-    lastName: 'Member',
-    username: 'member',
-  }),
-];
+const STARTED_CONTEST = buildContest({
+  id: 'contest-1',
+  leagueId: 'league-1',
+  sportEventIds: ['sport-event-1'],
+  name: 'Masters Pick 6',
+  status: ContestStatus.OPEN,
+});
 
 /**
- * The contest ports, empty by default. `startedContest` adds one OPEN contest on the event, in a
- * league with one commissioner and one entry whose squad has one member; `transitioned` is
- * whether the guarded write finds it still startable.
+ * The contest ports, empty by default. `startedContest` adds one OPEN contest on the event;
+ * `transitioned` is whether the guarded write finds it still startable.
  */
 function contestDeps(options: { startedContest?: boolean; transitioned?: boolean } = {}): EventLifecycleContestDeps {
-  const contest = buildContest({
-    id: 'contest-1',
-    leagueId: 'league-1',
-    sportEventIds: ['sport-event-1'],
-    name: 'Masters Pick 6',
-    status: ContestStatus.OPEN,
-  });
   return {
     contests: fakeContestRepo({
-      findBySportEvent: jest.fn().mockResolvedValue(options.startedContest ? [contest] : []),
+      findBySportEvent: jest.fn().mockResolvedValue(options.startedContest ? [STARTED_CONTEST] : []),
       transitionStatus: jest.fn().mockResolvedValue(options.transitioned ?? true),
-    }),
-    entries: fakeContestEntryRepo({
-      findByContestWithSquad: jest.fn().mockResolvedValue([{
-        id: 'entry-1',
-        contestId: 'contest-1',
-        squadId: 'squad-1',
-        entryNumber: 1,
-        name: 'Entry 1',
-        status: 'ACTIVE',
-        createdAt: new Date('2026-05-01'),
-        updatedAt: new Date('2026-05-01'),
-        squadName: 'Derek Team',
-      }]),
-    }),
-    leagues: fakeLeagueRepo({
-      findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' })),
-    }),
-    memberships: fakeLeagueMembershipRepo({
-      findByLeague: jest.fn().mockResolvedValue([
-        buildMembership({ leagueId: 'league-1', userId: 'commissioner-1', role: LeagueRole.COMMISSIONER }),
-        buildMembership({ leagueId: 'league-1', userId: 'member-1', role: LeagueRole.MEMBER }),
-      ]),
-    }),
-    squadMemberships: fakeSquadMembershipRepo({
-      findBySquad: jest.fn().mockResolvedValue([{
-        id: 'squad-membership-1',
-        squadId: 'squad-1',
-        leagueId: 'league-1',
-        userId: 'member-1',
-        status: SquadMembershipStatus.ACTIVE,
-        joinedAt: new Date('2026-05-01'),
-        createdAt: new Date('2026-05-01'),
-        updatedAt: new Date('2026-05-01'),
-      }]),
-    }),
-    users: fakeUserRepo({
-      findById: jest.fn().mockImplementation(async (id: string) => USERS.find((user) => user.id === id) ?? null),
     }),
     configurations: fakeContestConfigurationRepo(),
     matches: { findBySportEvent: jest.fn().mockResolvedValue([]) },
   };
+}
+
+/** A contest-started notice that records whom it was asked to tell. */
+function startedNotice(): ContestStartedNotice & { contestStarted: jest.Mock } {
+  return { contestStarted: mockFn<ContestStartedNotice['contestStarted']>(async () => undefined) };
 }
 
 /** An in-memory store holding the one event under test, and the port over it. */
@@ -179,7 +118,7 @@ describe('EventLifecycleService release guard (#431)', () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.DRAFT });
     const releasedEditionContests = { addReleasedEditionToTemplateContests: jest.fn().mockResolvedValue([]) };
     const service = new EventLifecycleService(
-      contestDeps(), sportEvents, fakeLogger(), undefined, undefined, undefined, releasedEditionContests,
+      contestDeps(), sportEvents, fakeLogger(), undefined, undefined, releasedEditionContests,
     );
 
     await service.applySportEventStatusTransition({
@@ -257,7 +196,6 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       sportEvents,
       fakeLogger(),
       undefined,
-      'http://localhost:5173',
       contestSettlement,
     );
 
@@ -351,7 +289,6 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       sportEvents,
       fakeLogger(),
       undefined,
-      'http://localhost:5173',
       settlement,
     );
 
@@ -379,7 +316,6 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       sportEvents,
       fakeLogger(),
       undefined,
-      'http://localhost:5173',
       settlement,
     );
 
@@ -395,20 +331,11 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   // pool-master-9ya — relocated from ingestion-persistence.test.ts.
-  it('pool-master-9ya activates open contests and sends contest-started summary emails when an event starts', async () => {
+  it('pool-master-9ya activates open contests when an event starts and asks for each one\'s contest-started emails', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps({ startedContest: true });
-    const mailDelivery = {
-      providerName: 'smtp' as const,
-      send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
-    };
-    const service = new EventLifecycleService(
-      contests,
-      sportEvents,
-      fakeLogger(),
-      emailServiceOver(mailDelivery),
-      'https://app.primetimecommissioner.com',
-    );
+    const notice = startedNotice();
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger(), notice);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -424,42 +351,14 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       to: ContestStatus.ACTIVE,
       startsAt: STARTED_EVENT_START,
     });
-    await deliverQueuedEmail();
-    expect(mailDelivery.send).toHaveBeenCalledTimes(2);
-    expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
-      to: 'commissioner@example.com',
-      subject: 'Masters Pick 6 has started',
-      metadata: {
-        templateKey: 'CONTEST_STARTED_SUMMARY',
-        leagueId: 'league-1',
-        contestId: 'contest-1',
-      },
-    }));
-    const memberMessage = mailDelivery.send.mock.calls.find(
-      ([message]) => message.to === 'member@example.com',
-    )?.[0];
-    expect(memberMessage?.text).toContain('Manual Test Golf Tournament');
-    expect(memberMessage?.text).toContain('Entries: 1');
-    expect(memberMessage?.text).toContain('- Entry 1: Derek Team');
-    expect(memberMessage?.text).toContain(
-      'Open contest board: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1',
-    );
-    expect(memberMessage?.html).toContain('Prime Time Commissioner');
+    expect(notice.contestStarted).toHaveBeenCalledTimes(1);
+    expect(notice.contestStarted).toHaveBeenCalledWith(STARTED_CONTEST, expect.objectContaining({ id: 'sport-event-1' }));
   });
 
-  it('pool-master-9ya does not resend contest-started email when the contest is already active', async () => {
+  it('pool-master-9ya does not ask for contest-started emails again when the contest is already active', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const contests = contestDeps({ startedContest: true, transitioned: false });
-    const mailDelivery = {
-      providerName: 'smtp' as const,
-      send: jest.fn(),
-    };
-    const service = new EventLifecycleService(
-      contests,
-      sportEvents,
-      fakeLogger(),
-      emailServiceOver(mailDelivery),
-    );
+    const notice = startedNotice();
+    const service = new EventLifecycleService(contestDeps({ startedContest: true, transitioned: false }), sportEvents, fakeLogger(), notice);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -467,22 +366,14 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       actor: { type: 'SYSTEM' },
     });
 
-    await deliverQueuedEmail();
-    expect(mailDelivery.send).not.toHaveBeenCalled();
+    expect(notice.contestStarted).not.toHaveBeenCalled();
   });
 
   it('keeps the transition successful, and logs it, when the contest-started emails cannot be queued', async () => {
     const logger = fakeLogger();
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const contests = contestDeps({ startedContest: true });
-    const outbox = inMemoryEmailMessages();
-    outbox.record = () => Promise.reject(new Error('database unavailable'));
-    const service = new EventLifecycleService(
-      contests,
-      sportEvents,
-      logger,
-      emailServiceOver({ providerName: 'smtp', send: jest.fn() }, outbox),
-    );
+    const notice = { contestStarted: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+    const service = new EventLifecycleService(contestDeps({ startedContest: true }), sportEvents, logger, notice);
 
     await expect(
       service.applySportEventStatusTransition({
@@ -493,12 +384,22 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     ).resolves.toMatchObject({ toStatus: SportEventStatus.IN_PROGRESS });
 
     expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contestId: 'contest-1',
-        templateKey: 'CONTEST_STARTED_SUMMARY',
-      }),
-      'Failed to queue contest started summary email',
+      expect.objectContaining({ contestId: 'contest-1', error: 'database unavailable' }),
+      'Failed to queue contest started emails',
     );
+  });
+
+  it('still starts the contest when no contest-started notice is wired', async () => {
+    const { sportEvents } = seededEvents();
+    const contests = contestDeps({ startedContest: true });
+
+    await new EventLifecycleService(contests, sportEvents, fakeLogger()).applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.IN_PROGRESS,
+      actor: { type: 'SYSTEM' },
+    });
+
+    expect(contests.contests.transitionStatus).toHaveBeenCalledWith('contest-1', expect.objectContaining({ to: ContestStatus.ACTIVE }));
   });
 });
 
@@ -524,69 +425,5 @@ describe('EventLifecycleError', () => {
     expect(error.code).toBe('SPORT_EVENT_INVALID_TRANSITION');
     expect(error.statusCode).toBe(422);
     expect(error.name).toBe('EventLifecycleError');
-  });
-});
-
-describe('EventLifecycleService contest-started emails', () => {
-  const START = { sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' as const } };
-
-  function mail() {
-    return {
-      providerName: 'smtp' as const,
-      send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
-    };
-  }
-
-  it('still starts the contest when no mail delivery is wired, and sends nothing', async () => {
-    const { sportEvents } = seededEvents();
-    const contests = contestDeps({ startedContest: true });
-
-    await new EventLifecycleService(contests, sportEvents, fakeLogger()).applySportEventStatusTransition(START);
-
-    expect(contests.contests.transitionStatus).toHaveBeenCalledWith('contest-1', expect.objectContaining({ to: ContestStatus.ACTIVE }));
-    expect(contests.users.findById).not.toHaveBeenCalled();
-  });
-
-  it('starts the contest but emails nobody when its league is gone', async () => {
-    const { sportEvents } = seededEvents();
-    const contests = contestDeps({ startedContest: true });
-    contests.leagues.findById = jest.fn().mockResolvedValue(null);
-    const mailDelivery = mail();
-
-    await new EventLifecycleService(contests, sportEvents, fakeLogger(), emailServiceOver(mailDelivery)).applySportEventStatusTransition(START);
-
-    expect(contests.contests.transitionStatus).toHaveBeenCalled();
-    await deliverQueuedEmail();
-    expect(mailDelivery.send).not.toHaveBeenCalled();
-  });
-
-  it('emails each active person once, skipping deactivated users, and greets a user with no name by username, then email', async () => {
-    const { sportEvents } = seededEvents();
-    const contests = contestDeps({ startedContest: true });
-    const people = [
-      buildUser({ id: 'commissioner-1', email: 'commissioner@example.com', firstName: '', lastName: '', username: 'chris' }),
-      buildUser({ id: 'member-1', email: 'member@example.com', firstName: ' ', lastName: '', username: '' }),
-      buildUser({ id: 'gone-1', email: 'gone@example.com', isActive: false }),
-    ];
-    contests.users.findById = jest.fn().mockImplementation(async (id: string) => people.find((user) => user.id === id) ?? null);
-    contests.memberships.findByLeague = jest.fn().mockResolvedValue([
-      buildMembership({ leagueId: 'league-1', userId: 'commissioner-1', role: LeagueRole.COMMISSIONER }),
-      buildMembership({ leagueId: 'league-1', userId: 'gone-1', role: LeagueRole.COMMISSIONER }),
-    ]);
-    // The commissioner is also on the entry's squad: one email, not two.
-    contests.squadMemberships.findBySquad = jest.fn().mockResolvedValue([
-      { userId: 'member-1' }, { userId: 'commissioner-1' },
-    ]);
-    const mailDelivery = mail();
-
-    await new EventLifecycleService(contests, sportEvents, fakeLogger(), emailServiceOver(mailDelivery)).applySportEventStatusTransition(START);
-
-    await deliverQueuedEmail();
-    const recipients = mailDelivery.send.mock.calls.map(([message]) => message.to);
-    expect(recipients).toHaveLength(2);
-    expect(recipients).toEqual(expect.arrayContaining(['commissioner@example.com', 'member@example.com']));
-    const textTo = (to: string) => mailDelivery.send.mock.calls.find(([message]) => message.to === to)?.[0].text ?? '';
-    expect(textTo('commissioner@example.com')).toContain('chris');
-    expect(textTo('member@example.com')).toContain('member@example.com');
   });
 });

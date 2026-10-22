@@ -1,14 +1,12 @@
-import { PickEmMode, SelectionType, Sport, getSportDefinition } from '@poolmaster/shared/domain';
-import { describe, expect, it } from 'vitest';
-import {
+import { PickEmMode, SelectionType, Sport, getSportDefinition,
   describeSurvivorRules,
   formatBracketStartLabel,
   formatContestRules,
   formatEntriesPerTeam,
   formatEntriesPerTeamSentence,
   formatSelectionTypeName,
-  suggestContestName,
-} from './contest-rules';
+  suggestContestName } from '@poolmaster/shared/domain';
+import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONTEST_RULES, parseContestRules, toContestRulesValues } from './contest-rules-form';
 
 const GOLFER = getSportDefinition(Sport.GOLF).vocabulary.participant;

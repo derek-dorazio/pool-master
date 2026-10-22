@@ -23,3 +23,8 @@ export function buildContestUrl(appBaseUrl: string, leagueCode: string, contestI
 export function buildEntryUrl(appBaseUrl: string, leagueCode: string, contestId: string, entryId: string): string {
   return `${buildContestUrl(appBaseUrl, leagueCode, contestId)}/entries/${encodeURIComponent(entryId)}`;
 }
+
+/** The contest's leaderboard. */
+export function buildLeaderboardUrl(appBaseUrl: string, leagueCode: string, contestId: string): string {
+  return `${buildContestUrl(appBaseUrl, leagueCode, contestId)}/leaderboard`;
+}

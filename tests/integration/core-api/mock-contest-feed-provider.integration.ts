@@ -869,7 +869,6 @@ describe('mock contest feed provider event-first verification', () => {
     registry.register(Sport.GOLF, provider, 'PRIMARY');
     const settlement = createContestSettlementService(prisma);
     const eventLifecycleService = createEventLifecycleService(prisma, {
-      appBaseUrl: 'http://localhost:5173',
       contestSettlement: settlement,
     });
     const persistence = new IngestionPersistence(prisma);

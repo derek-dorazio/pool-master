@@ -51,6 +51,7 @@ function entryReceipt(userId: string | undefined): EmailSendInput<'CONTEST_ENTRY
       entryName: 'Entry 1',
       entryUrl: 'https://qa.example.com/entries/entry-1',
       submittedAt: '2026-10-22T12:00:00.000Z',
+      changeUntil: new Date('2026-10-23T12:00:00.000Z'),
       tiers: [],
     },
   };

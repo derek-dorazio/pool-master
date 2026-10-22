@@ -1,5 +1,5 @@
 import type { ContestConfigTemplateDto } from '@/lib/api';
-import { formatSelectionTypeName } from '@/features/contests/contest-rules';
+import { formatSelectionTypeName } from '@poolmaster/shared/domain';
 import { SELECTION_TYPE_ICONS } from '@/features/contests/selection-type-icons';
 import { LinkButton, Tile } from '@/features/shared/ui';
 import type { ContestTypeTile } from './contest-catalog';

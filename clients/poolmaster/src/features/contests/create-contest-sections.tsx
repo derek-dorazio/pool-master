@@ -1,9 +1,15 @@
-import { SUPPORTED_SPORTS, getSportDefinition, type Sport, type SportDefinition } from '@poolmaster/shared/domain';
+import {
+  SUPPORTED_SPORTS,
+  type Sport,
+  type SportDefinition,
+  countParticipants,
+  getSportDefinition,
+  pluralize,
+} from '@poolmaster/shared/domain';
 import type { ReactNode } from 'react';
 import type { SportEventDto } from '@/lib/api';
 import { Alert, ChoiceCard, Chip, formatDateTimeDisplay, SegmentedControl } from '@/features/shared/ui';
 import { formatStartsIn } from './contest-readiness';
-import { countParticipants, pluralize } from './contest-rules';
 
 /** One numbered part of the form: 1 Event, 2 Format, 3 Rules, 4 Name. */
 export function SetupSection({

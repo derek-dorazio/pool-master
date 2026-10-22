@@ -1,8 +1,20 @@
 import type { ReactElement } from 'react';
-import { PickEmMode, RANDOM_DRAW_PICKS_PER_ENTRY_MAX, SQUARES_PER_ENTRY_MAX, SelectionType, getTieredRosterSize, type SportNoun } from '@poolmaster/shared/domain';
-import { Checkbox, FormField, formatDollars, Input, SegmentedControl, Select } from '@/features/shared/ui';
+import {
+  PickEmMode,
+  RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
+  SQUARES_PER_ENTRY_MAX,
+  SelectionType,
+  type SportNoun,
+  describeBracketRules,
+  formatDollars,
+  describePickEmMode,
+  describeSurvivorRules,
+  formatPickEmModeName,
+  getTieredRosterSize,
+  isSecondChanceBracket,
+} from '@poolmaster/shared/domain';
+import { Checkbox, FormField, Input, SegmentedControl, Select } from '@/features/shared/ui';
 import type { BracketStartRoundOption } from './bracket-start-round';
-import { describeBracketRules, describePickEmMode, describeSurvivorRules, formatPickEmModeName, isSecondChanceBracket } from './contest-rules';
 import { defaultCountedScoresFor, perEntryLabel, tiersInPlayFor, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
 
 function TieredRulesInputs({

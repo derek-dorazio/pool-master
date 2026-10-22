@@ -1,5 +1,27 @@
-import { PickEmMode, SelectionType, getTieredRosterSize, getTiersInPlay, type ContestRules, type SportNoun } from '@poolmaster/shared/domain';
-import { formatDollars } from '@/features/shared/ui';
+/**
+ * Contest rules in words: the names and sentences the web app shows and the emails send (#845),
+ * from one place so the two never read differently.
+ */
+
+import type { ContestRules } from './contest-rules';
+import { PickEmMode, SelectionType } from './enums';
+import type { SportNoun } from './sports';
+import { getTieredRosterSize, getTiersInPlay } from './tiered-roster';
+
+/**
+ * Money as budget contests show it (#93): whole dollars, grouped, such as "$50,000". Prices and
+ * salary caps are whole dollars; cents appear only if a value carries them.
+ */
+const DOLLARS = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 0,
+});
+
+export function formatDollars(value: number) {
+  return DOLLARS.format(value);
+}
 
 /**
  * The name a commissioner and a member read for each way of picking. A `Record` over the enum,

@@ -148,11 +148,6 @@ function setup(options: { startsAtRound?: number } = {}) {
   };
   const lifecycle = new EventLifecycleService({
     contests: world.contestRepo(),
-    entries: world.entryRepo(),
-    leagues: world.leagueRepo(),
-    memberships: world.membershipRepo(),
-    squadMemberships: world.squadMembershipRepo(),
-    users: world.userRepo(),
     configurations: world.configurationRepo(),
     matches: games.matchRepo(),
   }, sportEvents, fakeLogger());

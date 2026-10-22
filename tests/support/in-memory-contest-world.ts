@@ -339,6 +339,7 @@ export class InMemoryContestWorld {
         this.contests.set(id, {
           ...existing,
           status: transition.to,
+          ...(transition.openedAt && { openedAt: transition.openedAt }),
           ...(transition.startsAt && { startsAt: transition.startsAt }),
           ...(transition.endsAt && { endsAt: transition.endsAt }),
         });

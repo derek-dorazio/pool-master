@@ -11530,7 +11530,7 @@ export type GamePicksResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED';
 
 /**
  * Whether and how system email is sent.
@@ -11576,6 +11576,10 @@ export type EmailConfig = {
          * Whether this email is sent.
          */
         CONTEST_ENTRY_REMINDER: boolean;
+        /**
+         * Whether this email is sent.
+         */
+        CONTEST_OPENED: boolean;
     };
 };
 
@@ -12403,6 +12407,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             CONTEST_ENTRY_REMINDER: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_OPENED: boolean;
         };
     };
     /**
@@ -12449,6 +12457,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             CONTEST_ENTRY_REMINDER: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_OPENED: boolean;
         };
     };
 } | {
@@ -12951,6 +12963,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 CONTEST_ENTRY_REMINDER: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_OPENED: boolean;
             };
         };
         /**
@@ -12997,6 +13013,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 CONTEST_ENTRY_REMINDER: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_OPENED: boolean;
             };
         };
     } | {
@@ -13299,6 +13319,10 @@ export type SettingsGroupUpdateRequest = {
              * Whether this email is sent.
              */
             CONTEST_ENTRY_REMINDER: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_OPENED: boolean;
         };
     };
     /**
@@ -13720,6 +13744,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             CONTEST_ENTRY_REMINDER: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_OPENED: boolean;
         };
     } | null;
     /**
@@ -13766,6 +13794,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             CONTEST_ENTRY_REMINDER: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_OPENED: boolean;
         };
     };
 } | {
@@ -14235,6 +14267,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 CONTEST_ENTRY_REMINDER: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_OPENED: boolean;
             };
         } | null;
         /**
@@ -14281,6 +14317,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 CONTEST_ENTRY_REMINDER: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_OPENED: boolean;
             };
         };
     } | {

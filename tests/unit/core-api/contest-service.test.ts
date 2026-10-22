@@ -1379,6 +1379,7 @@ describe('ContestService', () => {
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP),
+          findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
         entries: createMockEntryRepo({
           findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
@@ -1396,7 +1397,7 @@ describe('ContestService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1', 'event-1');
+      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1');
 
       expect(tiers.getEffectiveValuationsForSportEvent).toHaveBeenCalledWith('event-1');
       await deliverQueuedEmail();
@@ -1448,6 +1449,7 @@ describe('ContestService', () => {
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue(ACTIVE_SQUAD_MEMBERSHIP),
+          findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
         entries: entryRepo,
         picks: fakeContestEntryPickRepo({
@@ -1459,7 +1461,7 @@ describe('ContestService', () => {
         email: emailServiceOver(mailDelivery),
       });
 
-      await expect(service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1', 'event-1')).resolves.toBeUndefined();
+      await expect(service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1')).resolves.toBeUndefined();
       await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(entryRepo.update).not.toHaveBeenCalled();

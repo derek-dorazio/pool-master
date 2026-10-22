@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, getSportDefinition, pluralize  } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { Check, X } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -11,7 +11,6 @@ import {
 import { DateDisplay, formatDateTimeDisplay, LinkButton } from '@/features/shared/ui';
 import { OpenContestAction } from './open-contest-action';
 import { formatTimeUntil, getContestReadinessChecks } from './contest-readiness';
-import { pluralize } from './contest-rules';
 import { RunDrawAction } from './run-draw-action';
 import { useContestDrawState } from './use-contest-draw';
 import { hasSubmittedAnyEvent } from './contest-events';

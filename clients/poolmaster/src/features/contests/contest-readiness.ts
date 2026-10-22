@@ -1,6 +1,5 @@
-import { SportEventStatus, TournamentFormat, getSportDefinition } from '@poolmaster/shared/domain';
+import { SportEventStatus, TournamentFormat, getSportDefinition, countParticipants  } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
-import { countParticipants } from './contest-rules';
 
 const HOUR_MS = 60 * 60_000;
 const DAY_MS = 24 * HOUR_MS;
