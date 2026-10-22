@@ -416,6 +416,36 @@ describe('EntryReminders.queueDue', () => {
     expect(outbox.rows[0]?.textBody).toContain('Join the contest: ');
   });
 
+  it('sends no squares reminder once every box on the grid is claimed, since there is nothing left to claim', async () => {
+    const league = world.addLeague();
+    const week = world.addSportEvent({ name: 'Super Bowl', startDate: new Date('2026-04-09T10:00:00.000Z') });
+    const contest = world.addContest(league.id, {
+      selectionType: SelectionType.SQUARES,
+      sportEventIds: [week.id],
+      squaresGameMatchId: 'big-game',
+    });
+    world.addConfiguration(contest.id, {
+      selectionType: SelectionType.SQUARES,
+      configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 100 },
+    });
+    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventMatch];
+    const holder = member(league.id, 'Sam');
+    member(league.id, 'Nora');
+    const holding = await enter(contest.id, holder.squad.id);
+    boxes = Array.from({ length: 100 }, (_, index) => ({
+      contestId: contest.id,
+      contestEntryId: holding.id,
+      rowIndex: Math.floor(index / 10),
+      columnIndex: index % 10,
+      claimedByUserId: holder.user.id,
+      claimedAt: new Date(),
+    }));
+
+    await reminders().queueDue(before(CLOSES_AT, 24, 1));
+
+    expect(outbox.rows).toHaveLength(0);
+  });
+
   it('asks squares members without a box to claim one before the game\'s kickoff, and nobody once the numbers are drawn', async () => {
     const league = world.addLeague();
     const week = world.addSportEvent({ name: 'Super Bowl', startDate: new Date('2026-04-09T10:00:00.000Z') });
