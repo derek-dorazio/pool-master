@@ -77,7 +77,11 @@ export function createPredictionService(
   });
 }
 
-export function createSquaresService(prisma: PrismaClient, logger: FastifyBaseLogger): SquaresService {
+export function createSquaresService(
+  prisma: PrismaClient,
+  logger: FastifyBaseLogger,
+  options?: { email?: EmailService; appBaseUrl?: string },
+): SquaresService {
   return new SquaresService({
     contests: new PrismaContestRepository(prisma),
     configurations: new PrismaContestConfigurationRepository(prisma),
@@ -90,6 +94,9 @@ export function createSquaresService(prisma: PrismaClient, logger: FastifyBaseLo
     participants: new PrismaParticipantRepository(prisma),
     squares: new PrismaSquaresRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
+    ...(options?.email && options.appBaseUrl !== undefined && {
+      receipts: createEntryReceipts(prisma, { email: options.email, appBaseUrl: options.appBaseUrl, logger }),
+    }),
     logger,
   });
 }

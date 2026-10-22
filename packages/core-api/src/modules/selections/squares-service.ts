@@ -48,6 +48,7 @@ import { hasMatchStarted } from '../contests/entry-window';
 import { seededShuffle } from './selection-engines/random-draw';
 import { SelectionError, selectionErrors } from './selection-errors';
 import { isCommissionerRole } from './selection-rules';
+import type { SquaresDrawnNotice } from '../notifications/entry-receipts';
 
 export interface SquaresServiceDeps {
   contests: Pick<ContestRepository, 'findById'>;
@@ -61,6 +62,8 @@ export interface SquaresServiceDeps {
   participants: Pick<ParticipantRepository, 'findByIds'>;
   squares: ContestSquaresRepository;
   standings: Pick<ContestEntryStandingRepository, 'findByContest'>;
+  /** Sends each entry with a box a receipt of its boxes' numbers once they are drawn (#867); none sends nothing. */
+  receipts?: SquaresDrawnNotice;
   now?: () => Date;
   /** The seed the digits are shuffled by; a fresh random one per draw unless given. */
   drawSeed?: () => string;
@@ -236,7 +239,9 @@ export class SquaresService {
       { action: 'squares.draw.drawn', data: { contestId, boxCount: context.squares.length, userId: actor.userId } },
       'Drew a squares contest\'s numbers',
     );
-    return this.getBoard(contestId, actor);
+    const board = await this.getBoard(contestId, actor);
+    await this.deps.receipts?.squaresDrawn(board);
+    return board;
   }
 
   private async loadContext(contestId: string, actor: SquaresActor): Promise<SquaresContext> {

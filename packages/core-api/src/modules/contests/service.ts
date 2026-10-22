@@ -1071,7 +1071,8 @@ export class ContestService {
    * The "Entry submitted" confirmation, sent by the selection room when an entry is submitted
    * (#481), to every owner of the entry's squad (#845, catalog row D3), with when picks close so
    * they know how long it can still change. The selection room only calls it once the lineup has
-   * passed the submit check, so it does not judge the lineup again.
+   * passed the submit check, so it does not judge the lineup again. A quick pick contest's draw
+   * sends it for every entry it dealt (#867), listing the dealt picks.
    */
   async sendEntrySubmittedEmail(
     contestId: string,
@@ -1109,27 +1110,34 @@ export class ContestService {
       this.deps.configurations.findByContest(contestId),
     ]);
     const rules = configuration?.configJson;
+    // A quick pick entry is dealt its picks by the draw (#867): nobody submitted it, and there is
+    // nothing left to change.
+    const quickPick = rules?.selectionType === SelectionType.RANDOM_DRAW;
+    const golf = getSportDefinition(sportEvent.sport).scoringFamily === ScoringFamily.STROKE_PLAY;
     const data = {
       leagueName: league.name,
       contestName: entry.contest.name,
       teamName: entry.squad.name,
       entryName: entry.name,
       entryUrl: buildEntryUrl(this.appBaseUrl, league.leagueCode, contestId, entryId),
-      submittedAt: entry.updatedAt,
+      ...(!quickPick && { submittedAt: entry.updatedAt }),
       // Only golf's roster has a tiebreaker: a predicted winning score relative to par. Submit
-      // does not require one, so a lineup submitted without it says so.
-      ...(getSportDefinition(sportEvent.sport).scoringFamily === ScoringFamily.STROKE_PLAY && {
+      // does not require one, so a lineup submitted without it says so; a quick pick shows one
+      // only when its entry gave it.
+      ...(golf && (!quickPick || entry.tiebreakerValue !== null) && {
         tiebreaker: entry.tiebreakerValue === null
           ? 'None'
           : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
       }),
-      receipt: {
-        kind: EntryReceiptKind.LINEUP,
-        tiers: lineup.tiers,
-        ...(rules?.selectionType === SelectionType.BUDGET_PICK && { budget: { spent: lineup.spent, salaryCap: rules.salaryCap } }),
-        // A roster contest's picks close when its event starts.
-        changeUntil: sportEvent.startDate,
-      },
+      receipt: quickPick
+        ? { kind: EntryReceiptKind.QUICK_PICK, picks: lineup.tiers.flatMap((tier) => tier.participantNames) }
+        : {
+          kind: EntryReceiptKind.LINEUP,
+          tiers: lineup.tiers,
+          ...(rules?.selectionType === SelectionType.BUDGET_PICK && { budget: { spent: lineup.spent, salaryCap: rules.salaryCap } }),
+          // A roster contest's picks close when its event starts.
+          changeUntil: sportEvent.startDate,
+        },
     } satisfies Omit<ContestEntryCompletedEmailData, 'userName'>;
     for (const user of owners) {
       try {

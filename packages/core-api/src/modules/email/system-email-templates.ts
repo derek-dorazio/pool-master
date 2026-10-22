@@ -44,6 +44,10 @@ export const EntryReceiptKind = {
   BRACKET: 'BRACKET',
   /** A survivor week: the one team picked. */
   SURVIVOR: 'SURVIVOR',
+  /** A quick pick contest's entry once the draw deals it its picks: nothing to submit or change. */
+  QUICK_PICK: 'QUICK_PICK',
+  /** A squares entry's boxes once the numbers are drawn, each with its two numbers. */
+  SQUARES: 'SQUARES',
 } as const;
 export type EntryReceiptKind = (typeof EntryReceiptKind)[keyof typeof EntryReceiptKind];
 
@@ -96,7 +100,22 @@ export interface SurvivorReceipt {
   picks: SurvivorPickLine[];
 }
 
-export type EntryReceipt = LineupReceipt | GamePicksReceipt | BracketReceipt | SurvivorReceipt;
+export interface QuickPickReceipt {
+  kind: typeof EntryReceiptKind.QUICK_PICK;
+  /** The field members the draw dealt the entry. */
+  picks: string[];
+}
+
+export interface SquaresReceipt {
+  kind: typeof EntryReceiptKind.SQUARES;
+  /** The team whose score's last digit picks the row, and the one that picks the column. */
+  rowTeam: string;
+  columnTeam: string;
+  /** The entry's boxes by their drawn numbers, row then column. */
+  boxes: Array<{ rowNumber: number; columnNumber: number }>;
+}
+
+export type EntryReceipt = LineupReceipt | GamePicksReceipt | BracketReceipt | SurvivorReceipt | QuickPickReceipt | SquaresReceipt;
 
 export interface ContestEntryCompletedEmailData {
   userName: string;
@@ -457,10 +476,15 @@ function renderLeagueJoinSuccessEmail(
   });
 }
 
-/** A receipt's content: its sections, and when its picks can still change. */
+/**
+ * A receipt's content: its sections, and when its picks can still change or why they can't. A
+ * receipt for an entry nobody submitted (a quick pick's draw, a squares draw) says what happened
+ * instead of "was submitted".
+ */
 function entryReceiptContent(receipt: EntryReceipt, timeZone: string): {
   sections: Array<{ title: string; rows: Array<[string, string]> }>;
   changeLine: string;
+  event?: { subject: string; lead: string };
 } {
   switch (receipt.kind) {
     case EntryReceiptKind.LINEUP:
@@ -508,6 +532,24 @@ function entryReceiptContent(receipt: EntryReceipt, timeZone: string): {
           ? `You can change your pick until ${formatInstant(receipt.picks[0].kickoff, timeZone)}.`
           : 'You can change each pick until its game starts.',
       };
+    case EntryReceiptKind.QUICK_PICK:
+      return {
+        sections: [{ title: 'Your picks', rows: receipt.picks.map((pick, index): [string, string] => [`Pick ${String(index + 1)}`, pick]) }],
+        changeLine: 'The quick pick made these picks for you, so there\'s nothing to change.',
+        event: { subject: 'Your quick picks', lead: 'got its picks in the quick pick draw for' },
+      };
+    case EntryReceiptKind.SQUARES:
+      return {
+        sections: [{
+          title: 'Your boxes',
+          rows: receipt.boxes.map((box, index): [string, string] => [
+            `Box ${String(index + 1)}`,
+            `${receipt.rowTeam} ${String(box.rowNumber)}, ${receipt.columnTeam} ${String(box.columnNumber)}`,
+          ]),
+        }],
+        changeLine: 'A box wins when the last digit of each team\'s score matches its numbers.',
+        event: { subject: 'Your numbers', lead: 'has its numbers drawn for' },
+      };
   }
 }
 
@@ -516,14 +558,11 @@ function renderContestEntryCompletedEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const submittedLine = formatDateTime(data.submittedAt, context.timeZone);
-  const { sections, changeLine } = entryReceiptContent(data.receipt, context.timeZone);
-  const subject = `Entry submitted: ${data.contestName}`;
+  const { sections, changeLine, event } = entryReceiptContent(data.receipt, context.timeZone);
+  const subject = `${event?.subject ?? 'Entry submitted'}: ${data.contestName}`;
+  const lead = event?.lead ?? 'was submitted for';
   const bodyBlocks = [
-    paragraph(
-      `${escapeHtml(data.userName)}, your ${strong(data.entryName)} entry was submitted for ${strong(
-        data.contestName,
-      )}.`,
-    ),
+    paragraph(`${escapeHtml(data.userName)}, your ${strong(data.entryName)} entry ${lead} ${strong(data.contestName)}.`),
     detailList([
       ['League', data.leagueName],
       ['Playing as', data.teamName],
@@ -536,7 +575,7 @@ function renderContestEntryCompletedEmail(
     button('Review entry', data.entryUrl),
   ].join('');
   const textLines = [
-    `${data.userName}, your ${data.entryName} entry was submitted for ${data.contestName}.`,
+    `${data.userName}, your ${data.entryName} entry ${lead} ${data.contestName}.`,
     `League: ${data.leagueName}`,
     `Playing as: ${data.teamName}`,
     ...(submittedLine ? [`Submitted: ${submittedLine}`] : []),

@@ -1,16 +1,19 @@
 /**
- * Entry receipts for the formats whose members pick games (#867, catalog row D3): a pick'em week,
- * a bracket and a survivor week. When an entry's picks for an event are submitted, every active
- * owner of its squad gets a receipt listing them, from the contest's league and no other.
+ * Entry receipts (#867, catalog row D3) for the formats whose members pick games, a pick'em week,
+ * a bracket and a survivor week, and for squares. When an entry's picks for an event are
+ * submitted, every active owner of its squad gets a receipt listing them, from the contest's
+ * league and no other. A squares entry has no submit: its receipt goes when the numbers are drawn,
+ * listing its boxes with their numbers.
  *
  * A receipt is queued once per submission: its outbox idempotency key is the entry, the event and
  * the submit time, so submitting a week, changing it back to a draft and submitting it again
- * sends a second one.
+ * sends a second one. A squares draw is final, so its receipt is keyed by the entry alone.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestEntryRepository,
+  ContestEntryWithSquad,
   ContestRepository,
   LeagueRepository,
   SportEventRepository,
@@ -24,6 +27,8 @@ import {
   eventRoundLabel,
   formatSpread,
   getSportDefinition,
+  type Contest,
+  type League,
   type SportEvent,
   type SportEventMatch,
   type User,
@@ -32,11 +37,13 @@ import {
   EntryReceiptKind,
   buildEntryUrl,
   formatUserName,
+  type ContestEntryCompletedEmailData,
   type EmailService,
   type EntryReceipt,
   type GamePickLine,
 } from '../email';
 import type { GamePickGame, GamePickTeam, GamePicksView } from '../selections/prediction-service';
+import type { SquaresBoard } from '../selections/squares-service';
 
 /** How many of a bracket's rounds its receipt lists, the final first: the final, the semifinals and the quarterfinals. */
 const BRACKET_RECEIPT_ROUNDS = 3;
@@ -61,7 +68,13 @@ export interface GamePicksReceiptNotice {
   gamePicksSubmitted(view: GamePicksView): Promise<void>;
 }
 
-export class EntryReceipts implements GamePicksReceiptNotice {
+/** The seam SquaresService calls once a squares contest's numbers are drawn. */
+export interface SquaresDrawnNotice {
+  /** Never throws: a receipt that cannot be queued is logged, and the draw stands. */
+  squaresDrawn(board: SquaresBoard): Promise<void>;
+}
+
+export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice {
   constructor(private readonly deps: EntryReceiptDeps) {}
 
   /**
@@ -96,14 +109,74 @@ export class EntryReceipts implements GamePicksReceiptNotice {
     const submittedAt = view.submittedAt;
     const receipt = await this.receiptOf(view, sportEvent);
     const tiebreaker = describeTiebreaker(view, sportEvent);
+    await this.sendToOwners({
+      contest,
+      league,
+      entry,
+      about: `${entry.id}:${sportEvent.id}:${submittedAt.toISOString()}`,
+      data: { submittedAt, ...(tiebreaker !== null && { tiebreaker }), receipt },
+    });
+  }
+
+  /**
+   * Queues each entry with a box a receipt of its boxes' numbers, once the squares draw is in.
+   * Rows take the away team's score and columns the home team's, as the grid shows them.
+   */
+  async squaresDrawn(board: SquaresBoard): Promise<void> {
+    const { contest, digits } = board;
+    try {
+      const league = await this.deps.leagues.findById(contest.leagueId);
+      if (!league || digits === null) {
+        this.deps.logger?.warn({ action: 'email.entryReceipt.skipped', data: { contestId: contest.id } }, 'Skipped squares receipts because the league or the draw is gone');
+        return;
+      }
+      const entryIds = [...new Set(board.boxes.map((box) => box.contestEntryId))];
+      for (const entryId of entryIds) {
+        const entry = await this.deps.entries.findByIdWithSquad(entryId);
+        if (!entry) continue;
+        const boxes = board.boxes
+          .filter((box) => box.contestEntryId === entryId)
+          .map((box) => ({ rowNumber: digits.rowDigits[box.rowIndex], columnNumber: digits.columnDigits[box.columnIndex] }))
+          .sort((left, right) => left.rowNumber - right.rowNumber || left.columnNumber - right.columnNumber);
+        await this.sendToOwners({
+          contest,
+          league,
+          entry,
+          // The draw is final: one receipt per entry.
+          about: `${entry.id}:squares-draw`,
+          data: {
+            receipt: {
+              kind: EntryReceiptKind.SQUARES,
+              rowTeam: board.awayTeamName ?? 'Away',
+              columnTeam: board.homeTeamName ?? 'Home',
+              boxes,
+            },
+          },
+        });
+      }
+    } catch (error) {
+      this.deps.logger?.error({
+        action: 'email.entryReceipt.failed',
+        data: { contestId: contest.id, error: error instanceof Error ? error.message : String(error) },
+      }, 'Failed to queue an entry receipt');
+    }
+  }
+
+  /** Queues the receipt to every active owner of the entry's squad; one owner's failure never costs the others theirs. */
+  private async sendToOwners(input: {
+    contest: Contest;
+    league: League;
+    entry: ContestEntryWithSquad;
+    about: string;
+    data: Pick<ContestEntryCompletedEmailData, 'submittedAt' | 'tiebreaker' | 'receipt'>;
+  }): Promise<void> {
+    const { contest, league, entry } = input;
     const entryUrl = buildEntryUrl(this.deps.appBaseUrl, league.leagueCode, contest.id, entry.id);
     for (const user of await this.activeOwners(entry.squadId)) {
-      // One owner's failure never costs the others their receipt.
       try {
         await this.deps.email.send('CONTEST_ENTRY_COMPLETED', {
           to: { email: user.email, userId: user.id, timeZone: user.timezone },
-          // One receipt per submission of the entry in the event.
-          about: `${entry.id}:${sportEvent.id}:${submittedAt.toISOString()}`,
+          about: input.about,
           league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
           refs: { contestId: contest.id, entryId: entry.id },
           data: {
@@ -113,15 +186,13 @@ export class EntryReceipts implements GamePicksReceiptNotice {
             teamName: entry.squadName,
             entryName: entry.name,
             entryUrl,
-            submittedAt,
-            ...(tiebreaker !== null && { tiebreaker }),
-            receipt,
+            ...input.data,
           },
         });
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.entryReceipt.failed',
-          data: { contestId: contest.id, entryId: entry.id, sportEventId: sportEvent.id, userId: user.id, error: error instanceof Error ? error.message : String(error) },
+          data: { contestId: contest.id, entryId: entry.id, userId: user.id, error: error instanceof Error ? error.message : String(error) },
         }, 'Failed to queue an entry receipt');
       }
     }

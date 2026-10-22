@@ -229,7 +229,7 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
 
   // --- Squares (#711) ---------------------------------------------------------------
 
-  const squares = createSquaresHandlers(createSquaresService(prisma, fastify.log));
+  const squares = createSquaresHandlers(createSquaresService(prisma, fastify.log, mail));
 
   fastify.get('/:contestId/squares', {
     schema: {

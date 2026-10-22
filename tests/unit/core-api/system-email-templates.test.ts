@@ -157,6 +157,43 @@ describe('pool-master-98i system email templates', () => {
     expect(message.text).toContain('You can change your pick until Sep 20, 2026, 5:00 PM UTC.');
   });
 
+  it('renders a quick pick receipt with the dealt picks, saying the draw made them and leaving out a submit time', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
+      ...ENTRY,
+      submittedAt: undefined,
+      contestName: 'Masters Quick Pick',
+      receipt: { kind: EntryReceiptKind.QUICK_PICK, picks: ['Scottie Scheffler', 'Min Woo Lee'] },
+    }, UTC);
+
+    expect(message.subject).toBe('Your quick picks: Masters Quick Pick');
+    expect(message.text).toContain('Derek Dorazio, your Entry 1 entry got its picks in the quick pick draw for Masters Quick Pick.');
+    expect(message.text).toContain('- Pick 1: Scottie Scheffler');
+    expect(message.text).toContain('- Pick 2: Min Woo Lee');
+    expect(message.text).toContain('The quick pick made these picks for you, so there\'s nothing to change.');
+    expect(message.text).not.toContain('Submitted:');
+  });
+
+  it('renders a squares receipt with each box\'s row and column numbers by team', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
+      ...ENTRY,
+      submittedAt: undefined,
+      contestName: 'Super Bowl Squares',
+      receipt: {
+        kind: EntryReceiptKind.SQUARES,
+        rowTeam: 'Eagles',
+        columnTeam: 'Chiefs',
+        boxes: [{ rowNumber: 0, columnNumber: 7 }, { rowNumber: 3, columnNumber: 3 }],
+      },
+    }, UTC);
+
+    expect(message.subject).toBe('Your numbers: Super Bowl Squares');
+    expect(message.text).toContain('your Entry 1 entry has its numbers drawn for Super Bowl Squares.');
+    expect(message.text).toContain('Your boxes:');
+    expect(message.text).toContain('- Box 1: Eagles 0, Chiefs 7');
+    expect(message.text).toContain('- Box 2: Eagles 3, Chiefs 3');
+    expect(message.text).toContain('A box wins when the last digit of each team\'s score matches its numbers.');
+  });
+
   it('renders the contest is live email with good luck, the event, the rules, the entry count and a Leaderboard button, and no entry list', () => {
     const message = renderSystemEmailTemplate('CONTEST_STARTED_SUMMARY', {
       userName: 'Derek Dorazio',
