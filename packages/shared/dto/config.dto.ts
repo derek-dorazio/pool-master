@@ -75,6 +75,12 @@ export type EmailTemplateKey = z.infer<typeof EmailTemplateKeySchema>;
 
 const templateSwitch = z.boolean().describe('Whether this email is sent.');
 
+/** A whole address, or `@domain` for every address at that domain. Compared case-insensitively. */
+export const EmailRecipientPatternSchema = z.string().trim().toLowerCase().max(254).regex(
+  /^([^\s@]+)?@[a-z0-9-]+(\.[a-z0-9-]+)+$/,
+  'Enter an email address or @domain.',
+).describe('An email address, or @domain for every address at that domain.');
+
 /**
  * EMAIL_CONFIG (#450): whether system email is sent. Transport and sender address stay in env.
  * A skipped email still counts as sent, so an invite by email still succeeds.
@@ -83,6 +89,10 @@ export const EmailConfigSchema = z.object({
   enabled: z.boolean().describe('Whether any system email is sent. Off: every email is skipped and logged.'),
   replyTo: z.string().email().nullable().describe(
     'Reply-To address for system email, or null to let replies go to the sender.',
+  ),
+  allowedRecipients: z.array(EmailRecipientPatternSchema).max(100).describe(
+    'When not empty, the only addresses email is sent to (addresses or @domain); every other '
+    + 'recipient is skipped and logged. Empty: no limit.',
   ),
   templates: z.object({
     LEAGUE_MEMBER_INVITE: templateSwitch,

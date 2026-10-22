@@ -70,7 +70,7 @@ this plan's settings.
 | Template keys | `EmailTemplateKeySchema` in `packages/shared/dto/config.dto.ts` | A zod enum: `LEAGUE_MEMBER_INVITE`, `LEAGUE_JOIN_SUCCESS`, `CONTEST_ENTRY_COMPLETED`, `CONTEST_STARTED_SUMMARY`. |
 | Rendering | `system-email-templates.ts` | One typed renderer per key (`SystemEmailTemplateDataByKey`), a shared branded HTML shell, plain-text twin, HTML escaping. |
 | Callers | leagues `invitation-service.ts`, contests `service.ts`, events `event-lifecycle-service.ts` | Each renders, then calls `mailDelivery.send` inline, one recipient at a time. Invites fail the request on a provider error; the others are best effort and log. |
-| Terraform | `infrastructure/terraform/main.tf` | SES domain identity and Easy DKIM for `domain_name` (QA: `ultimateofficepoolmanager.com`), DKIM CNAMEs in Route 53, IAM `ses:SendEmail`/`SendRawEmail` for the ECS task, `EMAIL_PROVIDER=ses`, `SES_FROM_EMAIL=noreply@<domain>`. **Never applied to QA** (#120): the DKIM `for_each` needs a two-pass `-target` apply. |
+| Terraform | `infrastructure/terraform/main.tf` | SES domain identity and Easy DKIM for `domain_name` (QA: `ultimateofficepoolmanager.com`), DKIM CNAMEs in Route 53, IAM `ses:SendEmail`/`SendRawEmail` for the ECS task, `EMAIL_PROVIDER=ses`, `SES_FROM_EMAIL=noreply@<domain>`. **Never applied to QA** (#120): the DKIM `for_each` needed a two-pass `-target` apply. Slice 1 makes it `count = 3`, one apply. |
 | Local and tests | `infrastructure/docker/docker-compose.dev.yml`, `tests/support/smtp-sink.ts` | Mailpit catches every local email; functional and integration lanes assert against an SMTP sink. |
 | Docs | `docs/EMAIL-DELIVERY.md` | Describes all of the above. |
 
@@ -250,8 +250,9 @@ An invite is the same flow with an audience of one address that has no user yet.
 
 Steps, in order (slice 1; Derek runs the Terraform applies and the AWS console request, as today):
 
-1. **Fix the DKIM two-pass apply** (#120): `terraform apply -target=aws_ses_domain_identity.mail
-   -target=aws_ses_domain_dkim.mail`, then a full apply. Document it in
+1. **One apply for DKIM** (#120): the DKIM CNAMEs use `count = 3` (Easy DKIM always issues three
+   tokens) instead of a `for_each` over tokens unknown until the identity exists, so a single
+   apply creates the identity and its records; no two-pass `-target` apply. Documented in
    `infrastructure/terraform/README.md`.
 2. **DKIM**: Easy DKIM (already in Terraform), three CNAMEs in Route 53. Signs every message.
 3. **SPF via a custom MAIL FROM domain**: `aws_ses_domain_mail_from` with
@@ -263,8 +264,10 @@ Steps, in order (slice 1; Derek runs the Terraform applies and the AWS console r
    bulk senders.
 5. **Configuration set** (`aws_sesv2_configuration_set`) with reputation metrics on and an event
    destination for bounces, complaints, deliveries and rejects (§8). Every send names it.
-6. **Account suppression list** (`aws_sesv2_account_suppression_attributes`) for `BOUNCE` and
-   `COMPLAINT`, so SES itself refuses addresses that bounced or complained, across environments.
+6. **Suppression on the configuration set** (`suppression_options` with `BOUNCE` and
+   `COMPLAINT`), so SES itself refuses addresses on the account suppression list that bounced or
+   complained, across environments. Not `aws_sesv2_account_suppression_attributes`: that is an
+   account-wide singleton, and QA, staging and prod, each with its own state, would fight over it.
 7. **QA recipient guard** before turning QA email on: never send to reserved domains (`.invalid`,
    `.test`, `.example`, `example.com`), which the smoke users use; and an `EMAIL_CONFIG`
    `allowedRecipients` list (addresses or `@domain`) that, when set, limits who QA can email. A
@@ -439,8 +442,8 @@ None of these is built now; #853 (deferred) tracks revisiting them.
 
 This plan's slices:
 
-1. **Domain and sender** (Terraform + docs; Derek applies): two-pass DKIM apply, custom MAIL FROM,
-   DMARC, configuration set, account suppression list, per-environment sender (Q6.1), sandbox exit
+1. **Domain and sender** (Terraform + docs; Derek applies): single-apply DKIM (`count = 3`), custom
+   MAIL FROM, DMARC, configuration set with set-level suppression, per-environment sender (Q6.1), sandbox exit
    request, QA recipient guard in `EMAIL_CONFIG`. Done when a QA invite reaches Gmail with DKIM, SPF
    and DMARC passing. Closes #120.
 2. **Email service and registry**: `EmailCategory` with the catalog's categories, template registry,
