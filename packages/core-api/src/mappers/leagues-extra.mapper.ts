@@ -1,4 +1,5 @@
-import type { EmailMessageStatus, LeagueInvitation, LeagueMembership, User } from '@poolmaster/shared/domain';
+import type { EmailMessageState } from '@poolmaster/shared/db';
+import type { LeagueInvitation, LeagueMembership, User } from '@poolmaster/shared/domain';
 import type { LeagueInvitationDto, LeagueMembershipDto } from '@poolmaster/shared/dto';
 import { toUserDto } from './users.mapper';
 
@@ -37,7 +38,7 @@ export function mapLeagueMembershipToDto(
  */
 export function mapLeagueInvitationToDto(
   invitation: LeagueInvitation,
-  emailStatus: EmailMessageStatus | null,
+  emailState: EmailMessageState | null,
 ): LeagueInvitationDto {
   return {
     id: invitation.id,
@@ -52,7 +53,8 @@ export function mapLeagueInvitationToDto(
     expiresAt: invitation.expiresAt?.toISOString() ?? null,
     acceptedAt: invitation.acceptedAt?.toISOString() ?? null,
     acceptedBy: invitation.acceptedBy ?? null,
-    emailStatus,
+    emailStatus: emailState?.status ?? null,
+    emailSkipReason: emailState?.skipReason ?? null,
     createdAt: invitation.createdAt.toISOString(),
     updatedAt: invitation.updatedAt.toISOString(),
   };

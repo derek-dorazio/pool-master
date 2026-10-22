@@ -383,6 +383,16 @@ topic. Core-api receives them on `POST /api/email/ses-events`, an SNS HTTPS subs
 
 The SES account suppression list (§6) is the backstop; our table is what the app can read and show.
 
+As built (slice 4): the route is `POST /api/v1/email/ses-events`, under the API's version prefix,
+and believes only messages from `SES_EVENTS_TOPIC_ARN`. A suppressed address gets every email
+skipped with `SUPPRESSED`, account emails included, as the SES account list would refuse them
+anyway; a changed account address is a new address, so it is not suppressed. The invite list shows
+`emailSkipReason` beside `emailStatus`, so a commissioner sees "this address bounced". The member's
+"fix your email" banner moved to slice 5, which builds the account page's email section it sits
+in. SNS confirms an https subscription only when it is created, and core-api can answer only once
+it runs with the topic variable, so the subscription is a second apply
+(`ses_events_subscribed`, `infrastructure/terraform/README.md`).
+
 > **Q8.1 How events reach core-api.** In plain terms: SES only says "accepted" when we hand it an
 > email. Whether it then reached the inbox, bounced, or was marked as spam is known minutes later.
 > SES posts each of those reports to an AWS notification topic (SNS), and the topic calls a URL on
@@ -461,7 +471,8 @@ This plan's slices:
    `email_suppression`, the invite and member warnings. The catalog's G2 delivery-problems email
    follows it.
 5. **Preferences and unsubscribe**: preference table and account-page switches, unsubscribe token,
-   page and one-click endpoint, footer link and `List-Unsubscribe` headers.
+   page and one-click endpoint, footer link and `List-Unsubscribe` headers, and the member's banner
+   when their address is suppressed (moved from slice 4).
 
 One order across both plans ("SES n" here, "Catalog n" in `plans/email-notifications.md` §5).
 Steps on the same line can run in parallel:

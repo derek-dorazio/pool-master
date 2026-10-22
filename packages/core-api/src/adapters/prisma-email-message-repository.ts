@@ -7,9 +7,12 @@ import type {
   EmailMessageRecord,
   EmailMessageRecordResult,
   EmailMessageRepository,
+  EmailMessageState,
 } from '@poolmaster/shared/db';
 import {
+  DELIVERY_OUTCOME_FROM,
   EmailMessageStatus,
+  type DeliveryOutcomeStatus,
   type EmailMessage,
   type EmailTemplateKey,
 } from '@poolmaster/shared/domain';
@@ -126,6 +129,21 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
     });
   }
 
+  async recordDeliveryOutcome(
+    providerMessageId: string,
+    outcome: { status: DeliveryOutcomeStatus; error?: string },
+  ): Promise<EmailMessage | undefined> {
+    await this.prisma.emailMessage.updateMany({
+      where: { providerMessageId, status: { in: [...DELIVERY_OUTCOME_FROM[outcome.status]] } },
+      data: {
+        status: outcome.status,
+        ...(outcome.error === undefined ? {} : { lastError: outcome.error }),
+      },
+    });
+    const row = await this.prisma.emailMessage.findFirst({ where: { providerMessageId } });
+    return row ? toEmailMessage(row) : undefined;
+  }
+
   async clearContentCreatedBefore(cutoff: Date): Promise<number> {
     const { count } = await this.prisma.emailMessage.updateMany({
       where: { createdAt: { lt: cutoff }, subject: { not: null } },
@@ -134,20 +152,20 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
     return count;
   }
 
-  async findLatestStatusByInvitations(
+  async findLatestStateByInvitations(
     invitationIds: string[],
     templateKey: EmailTemplateKey,
-  ): Promise<Map<string, EmailMessageStatus>> {
+  ): Promise<Map<string, EmailMessageState>> {
     if (invitationIds.length === 0) return new Map();
     const rows = await this.prisma.emailMessage.findMany({
       where: { invitationId: { in: invitationIds }, templateKey },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      select: { invitationId: true, status: true },
+      select: { invitationId: true, status: true, skipReason: true },
     });
-    const latest = new Map<string, EmailMessageStatus>();
+    const latest = new Map<string, EmailMessageState>();
     for (const row of rows) {
       if (row.invitationId && !latest.has(row.invitationId)) {
-        latest.set(row.invitationId, row.status);
+        latest.set(row.invitationId, { status: row.status, skipReason: row.skipReason ?? undefined });
       }
     }
     return latest;

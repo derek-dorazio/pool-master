@@ -32,9 +32,37 @@ Every email is a row in `email_messages` (#844 slice 3), one per recipient:
   waits behind a large send.
 - **Content is cleared after 30 days**; the row stays, so "why didn't I get it?" still has an
   answer.
+- **After it is sent**, SES reports what happened, and the row moves on from `SENT` to
+  `DELIVERED`, `BOUNCED` or `COMPLAINED`, or to `FAILED` when SES rejected it (*Bounces and
+  Complaints* below).
 
 The logs (`email.send.queued`, `email.send.skip`, `email.sender.sent`, `email.sender.retry`,
-`email.sender.failed`, `email.sender.expired`) carry the template key and ids, never the body or an address.
+`email.sender.failed`, `email.sender.expired`, `email.deliveryEvent.*`) carry the template key and
+ids, never the body or an address.
+
+## Bounces and Complaints
+
+SES publishes a delivery, bounce, complaint or reject event for each email sent through the
+configuration set to the environment's SNS topic, and SNS posts it to
+`POST /api/v1/email/ses-events` (#844 slice 4). The route is public: its authority is the SNS
+signature, checked against a certificate from an `sns.<region>.amazonaws.com` URL, and the topic,
+which must be `SES_EVENTS_TOPIC_ARN`. Anything else gets 403 `EMAIL_EVENT_UNVERIFIED`; with the
+variable unset (local, tests) every message does. The first message is the subscription
+confirmation, which core-api confirms.
+
+Each event finds its email by the SES message id the sender stored:
+
+- a **delivery** marks it `DELIVERED`;
+- a **permanent bounce** marks it `BOUNCED` and a **complaint** (marked as spam) `COMPLAINED`, and
+  both put the address on `email_suppressions`; from then on `EmailService.send` records any email
+  to that address as `SKIPPED` with the reason `SUPPRESSED`, and the commissioner's invites list
+  says the address bounced. The SES account suppression list does the same inside SES; this table
+  is the one the app can read and show;
+- a **transient bounce** is only logged, since SES retries it itself;
+- a **reject** marks it `FAILED`.
+
+An event never moves an email backwards (a late delivery after a bounce changes nothing), and an
+event for an email this environment didn't send is logged and answered 200 so SNS doesn't retry it.
 
 ## Templates
 
@@ -84,6 +112,8 @@ content):
 - `SES_FROM_EMAIL` is the environment's `noreply@` address at the verified sending domain.
 - `SES_CONFIGURATION_SET` names the configuration set every send goes through
   (reputation metrics and bounce/complaint suppression). Terraform sets it.
+- `SES_EVENTS_TOPIC_ARN` is the SNS topic the configuration set publishes delivery events to; the
+  events route accepts messages from it only. Terraform sets it.
 - `AWS_ENDPOINT`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` are supported
   for LocalStack/dev overrides.
 
@@ -156,7 +186,7 @@ tests run the real service and sender over an in-memory outbox (`tests/support/e
 
 Terraform sets the core-api ECS task's `EMAIL_PROVIDER` to `ses` in every
 environment; QA's "send nothing yet" is the `EMAIL_CONFIG` default above. Terraform also configures
-`APP_BASE_URL`, `AWS_REGION`, `SES_FROM_EMAIL`, `SES_CONFIGURATION_SET` and
+`APP_BASE_URL`, `AWS_REGION`, `SES_FROM_EMAIL`, `SES_CONFIGURATION_SET`, `SES_EVENTS_TOPIC_ARN` and
 `POOLMASTER_ENVIRONMENT`, and grants the ECS task role `ses:SendEmail` and `ses:SendRawEmail`
 for the SES identity and the configuration set.
 
@@ -171,7 +201,10 @@ that sending domain:
 - a DMARC TXT record at `_dmarc.<sending domain>`, starting at `p=none`, with aggregate reports
   to `dmarc_report_email` when set;
 - the configuration set `<project>-<environment>`, with reputation metrics on and bounces and
-  complaints suppressed through the SES account suppression list.
+  complaints suppressed through the SES account suppression list;
+- the SNS topic `<project>-<environment>-ses-events`, which only that configuration set may
+  publish to, the event destination that publishes delivery, bounce, complaint and reject events
+  to it, and (once `ses_events_subscribed` is true) core-api's https subscription.
 
 When no domain is configured, Terraform creates an email identity for the configured sender
 address; that address must be verified in SES before deployed delivery can succeed.
@@ -187,8 +220,10 @@ one: the email is queued, and the outbox retries it.
 League invite by email returns success once the invitation exists and its email is recorded.
 Each sent invitation carries `emailStatus`, and the commissioner's pending invites list
 (Commissioner tools › Invites) shows where each invite's latest email stands: sending, sent,
-could not be sent (`FAILED`), or not sent (`SKIPPED`, with email switched off or the address
-not allowed here), when the commissioner copies the link and shares it another way. Resend gives
+delivered, bounced, marked as spam, could not be sent (`FAILED`), or not sent (`SKIPPED`, with
+email switched off or the address not allowed here; `emailSkipReason` `SUPPRESSED` says the
+address bounced or complained before), when the commissioner copies the link and shares it
+another way. Resend gives
 the invitation a new invite code and a fresh seven-day expiry and queues a new email, so the
 old link stops working.
 

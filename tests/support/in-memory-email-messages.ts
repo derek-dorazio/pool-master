@@ -8,9 +8,13 @@ import type {
   EmailMessageRecord,
   EmailMessageRecordResult,
   EmailMessageRepository,
+  EmailMessageState,
+  EmailSuppressionRepository,
 } from '@poolmaster/shared/db';
 import {
+  DELIVERY_OUTCOME_FROM,
   EmailMessageStatus,
+  type EmailSuppression,
   type EmailMessage,
   type EmailTemplateKey,
 } from '@poolmaster/shared/domain';
@@ -92,6 +96,14 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
       });
       return Promise.resolve();
     },
+    recordDeliveryOutcome(providerMessageId, outcome) {
+      const row = rows.find((candidate) => candidate.providerMessageId === providerMessageId);
+      const allowedFrom: readonly EmailMessageStatus[] = DELIVERY_OUTCOME_FROM[outcome.status];
+      if (row && allowedFrom.includes(row.status)) {
+        update(row.id, { status: outcome.status, ...(outcome.error === undefined ? {} : { lastError: outcome.error }) });
+      }
+      return Promise.resolve(row ? { ...row } : undefined);
+    },
     clearContentCreatedBefore(cutoff) {
       const old = rows.filter((row) => row.createdAt < cutoff && row.subject !== undefined);
       for (const row of old) {
@@ -99,14 +111,38 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
       }
       return Promise.resolve(old.length);
     },
-    findLatestStatusByInvitations(invitationIds: string[], templateKey: EmailTemplateKey) {
-      const latest = new Map<string, EmailMessageStatus>();
+    findLatestStateByInvitations(invitationIds: string[], templateKey: EmailTemplateKey) {
+      const latest = new Map<string, EmailMessageState>();
       for (const row of rows) {
         if (row.invitationId && invitationIds.includes(row.invitationId) && row.templateKey === templateKey) {
-          latest.set(row.invitationId, row.status);
+          latest.set(row.invitationId, { status: row.status, skipReason: row.skipReason });
         }
       }
       return Promise.resolve(latest);
+    },
+  };
+}
+
+export interface InMemoryEmailSuppressions extends EmailSuppressionRepository {
+  rows: EmailSuppression[];
+}
+
+/** An in-memory EmailSuppressionRepository; the Prisma one is tested in email-outbox.integration. */
+export function inMemoryEmailSuppressions(): InMemoryEmailSuppressions {
+  const rows: EmailSuppression[] = [];
+  return {
+    rows,
+    suppress({ email, suppressionReason, emailMessageId }) {
+      const address = email.toLowerCase();
+      if (!rows.some((row) => row.email === address)) {
+        const at = new Date();
+        rows.push({ id: `suppression-${String(rows.length + 1)}`, email: address, suppressionReason, emailMessageId, createdAt: at, updatedAt: at });
+      }
+      return Promise.resolve();
+    },
+    findByEmail(email) {
+      const found = rows.find((row) => row.email === email.toLowerCase());
+      return Promise.resolve(found ? { ...found } : undefined);
     },
   };
 }

@@ -622,7 +622,8 @@ resource "aws_ses_email_identity" "sender" {
 
 # Every send names this configuration set. Its suppression options make SES refuse addresses on
 # the account suppression list that bounced or complained, without managing the account-wide
-# setting from one environment's state. Bounce and complaint events reach core-api in a later slice.
+# setting from one environment's state. Its event destination below reports what happened to each
+# email to core-api.
 resource "aws_sesv2_configuration_set" "mail" {
   configuration_set_name = local.name_prefix
 
@@ -637,6 +638,66 @@ resource "aws_sesv2_configuration_set" "mail" {
   suppression_options {
     suppressed_reasons = ["BOUNCE", "COMPLAINT"]
   }
+}
+
+# SES delivery events (#844 slice 4): the configuration set publishes delivery, bounce, complaint
+# and reject events to this topic, and the topic posts them to core-api, which checks the SNS
+# signature and that they came from this topic.
+resource "aws_sns_topic" "ses_events" {
+  name = "${local.name_prefix}-ses-events"
+}
+
+data "aws_iam_policy_document" "ses_events_topic" {
+  statement {
+    sid       = "SesPublishesThisEnvironmentsEvents"
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.ses_events.arn]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ses.amazonaws.com"]
+    }
+
+    condition {
+      test     = "ArnLike"
+      variable = "AWS:SourceArn"
+      values   = [aws_sesv2_configuration_set.mail.arn]
+    }
+  }
+}
+
+resource "aws_sns_topic_policy" "ses_events" {
+  arn    = aws_sns_topic.ses_events.arn
+  policy = data.aws_iam_policy_document.ses_events_topic.json
+}
+
+resource "aws_sesv2_configuration_set_event_destination" "ses_events" {
+  configuration_set_name = aws_sesv2_configuration_set.mail.configuration_set_name
+  event_destination_name = "core-api"
+
+  event_destination {
+    enabled              = true
+    matching_event_types = ["DELIVERY", "BOUNCE", "COMPLAINT", "REJECT"]
+
+    sns_destination {
+      topic_arn = aws_sns_topic.ses_events.arn
+    }
+  }
+
+  depends_on = [aws_sns_topic_policy.ses_events]
+}
+
+# SNS confirms an https subscription once, when it is created, by posting to the endpoint. core-api
+# answers only once its running task has SES_EVENTS_TOPIC_ARN, which CI deploys after this apply,
+# so the subscription is a second step: see infrastructure/terraform/README.md, System email (SES).
+resource "aws_sns_topic_subscription" "ses_events" {
+  count = var.ses_events_subscribed ? 1 : 0
+
+  topic_arn              = aws_sns_topic.ses_events.arn
+  protocol               = "https"
+  endpoint               = "${local.app_url}/api/v1/email/ses-events"
+  endpoint_auto_confirms = false
+  raw_message_delivery   = false
 }
 
 # --- CloudWatch Log Groups ---
@@ -700,6 +761,7 @@ resource "aws_ecs_task_definition" "core_api" {
       { name = "AWS_REGION", value = var.region },
       { name = "SES_FROM_EMAIL", value = local.ses_from_email },
       { name = "SES_CONFIGURATION_SET", value = aws_sesv2_configuration_set.mail.configuration_set_name },
+      { name = "SES_EVENTS_TOPIC_ARN", value = aws_sns_topic.ses_events.arn },
       { name = "AUTO_START_SCHEDULER", value = "true" },
     ])
     # pool-master-rop.76.1 — JWT_SECRET injected from Secrets Manager.

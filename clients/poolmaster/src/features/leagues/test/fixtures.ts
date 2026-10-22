@@ -91,6 +91,7 @@ type GeneratedInviteLinkFixture = Pick<
   | 'currentUses'
   | 'invitedBy'
   | 'emailStatus'
+  | 'emailSkipReason'
   | 'createdAt'
   | 'updatedAt'
 >;
@@ -175,6 +176,7 @@ const baseGeneratedInviteLink: GeneratedInviteLinkFixture = {
   currentUses: 0,
   invitedBy: 'user-1',
   emailStatus: null,
+  emailSkipReason: null,
   createdAt: '2026-04-16T00:00:00.000Z',
   updatedAt: '2026-04-16T00:00:00.000Z',
 };

@@ -3,6 +3,7 @@
  */
 
 import type {
+  EmailMessageState,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
@@ -11,7 +12,6 @@ import type {
   UserRepository,
 } from '@poolmaster/shared/db';
 import type {
-  EmailMessageStatus,
   League,
   LeagueInvitation,
   LeagueMembership,
@@ -48,13 +48,13 @@ export interface GenerateInviteLinkInput {
 }
 
 /** An invitation and where its latest invite email stands; null for a join link. */
-export interface InvitationWithEmailStatus {
+export interface InvitationWithEmailState {
   invitation: LeagueInvitation;
-  emailStatus: EmailMessageStatus | null;
+  emailState: EmailMessageState | null;
 }
 
 export interface SendInvitationsResult {
-  sent: InvitationWithEmailStatus[];
+  sent: InvitationWithEmailState[];
   skippedMembers: string[];
   skippedDuplicates: string[];
 }
@@ -116,7 +116,7 @@ export class InvitationService {
     // The commissioner guard has found the league already; its name and code are the email's sender.
     if (!league) throw new LeagueNotFoundError(input.leagueId);
     this.requireActiveLeague(league, 'sendEmail');
-    const sent: InvitationWithEmailStatus[] = [];
+    const sent: InvitationWithEmailState[] = [];
     const skippedMembers: string[] = [];
     const skippedDuplicates: string[] = [];
     for (const email of input.emails) {
@@ -151,7 +151,7 @@ export class InvitationService {
         invitedBy: input.invitedBy,
         expiresAt,
       });
-      const emailStatus = await this.queueLeagueInvitationEmail({
+      const emailState = await this.queueLeagueInvitationEmail({
         invitationId: invitation.id,
         email: normalised,
         inviterName,
@@ -164,7 +164,7 @@ export class InvitationService {
         expiresAt,
         message: input.message,
       });
-      sent.push({ invitation, emailStatus });
+      sent.push({ invitation, emailState });
     }
     this.logger?.info({
       action: 'leagueInvitation.sendEmail.success',
@@ -191,7 +191,7 @@ export class InvitationService {
     inviteCode: string;
     expiresAt: Date;
     message?: string;
-  }): Promise<EmailMessageStatus | null> {
+  }): Promise<EmailMessageState | null> {
     if (!this.deps.email) {
       this.logger?.debug({
         action: 'leagueInvitation.emailDelivery.skipped',
@@ -215,7 +215,7 @@ export class InvitationService {
         expiresAt: input.expiresAt,
       },
     });
-    return queued.status;
+    return { status: queued.status, skipReason: queued.skipReason };
   }
 
   /**
@@ -309,7 +309,7 @@ export class InvitationService {
    * email invites that went EXPIRED unaccepted. An invite is outstanding until it is accepted or
    * cancelled; an expired email invite is listed so the commissioner can resend it.
    */
-  async listOutstandingInvitations(leagueId: string): Promise<InvitationWithEmailStatus[]> {
+  async listOutstandingInvitations(leagueId: string): Promise<InvitationWithEmailState[]> {
     this.logger?.debug({
       action: 'leagueInvitation.listOutstanding.enter',
       data: { leagueId },
@@ -318,16 +318,16 @@ export class InvitationService {
     const emailInvitationIds = invitations
       .filter((invitation) => invitation.inviteType === InviteType.EMAIL)
       .map((invitation) => invitation.id);
-    const emailStatuses = this.deps.email
-      ? await this.deps.email.latestInviteStatusByInvitation(emailInvitationIds)
-      : new Map<string, EmailMessageStatus>();
+    const emailStates = this.deps.email
+      ? await this.deps.email.latestInviteStateByInvitation(emailInvitationIds)
+      : new Map<string, EmailMessageState>();
     this.logger?.info({
       action: 'leagueInvitation.listOutstanding.success',
       data: { leagueId, invitationCount: invitations.length },
     }, 'Listed outstanding league invitations');
     return invitations.map((invitation) => ({
       invitation,
-      emailStatus: emailStatuses.get(invitation.id) ?? null,
+      emailState: emailStates.get(invitation.id) ?? null,
     }));
   }
 
@@ -339,7 +339,7 @@ export class InvitationService {
     leagueId: string,
     invitationId: string,
     resentBy: string,
-  ): Promise<InvitationWithEmailStatus> {
+  ): Promise<InvitationWithEmailState> {
     this.logger?.debug({
       action: 'leagueInvitation.resend.enter',
       data: { leagueId, invitationId, resentBy },
@@ -381,7 +381,7 @@ export class InvitationService {
       status: InvitationStatus.PENDING,
       expiresAt,
     });
-    const emailStatus = await this.queueLeagueInvitationEmail({
+    const emailState = await this.queueLeagueInvitationEmail({
       invitationId: renewed.id,
       email: invitation.email,
       inviterName,
@@ -397,7 +397,7 @@ export class InvitationService {
       action: 'leagueInvitation.resend.success',
       data: { leagueId, invitationId, resentBy },
     }, 'Resent league email invitation');
-    return { invitation: renewed, emailStatus };
+    return { invitation: renewed, emailState };
   }
 
   /** Cancels an invitation by code: a join link or an email invite (#221). It can no longer be accepted. */

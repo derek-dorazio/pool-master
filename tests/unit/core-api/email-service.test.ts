@@ -6,7 +6,12 @@ import {
   type MailDeliveryProviderName,
 } from '../../../packages/core-api/src/modules/email';
 import { fakeLogger } from '../../support/fake-logger';
-import { inMemoryEmailMessages, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
+import {
+  inMemoryEmailMessages,
+  inMemoryEmailSuppressions,
+  type InMemoryEmailMessages,
+  type InMemoryEmailSuppressions,
+} from '../../support/in-memory-email-messages';
 
 const LEAGUE = { id: 'league-1', name: 'Office League', leagueCode: 'OFFICE24' };
 const NOW = new Date('2026-10-22T12:00:00.000Z');
@@ -35,6 +40,7 @@ function emailConfig(overrides: Partial<EmailConfig> = {}): EmailConfig {
 
 function service(options: {
   outbox?: InMemoryEmailMessages;
+  suppressions?: InMemoryEmailSuppressions;
   providerName?: MailDeliveryProviderName;
   readConfig?: () => EmailConfig;
   logger?: ReturnType<typeof fakeLogger>;
@@ -42,6 +48,7 @@ function service(options: {
 } = {}) {
   return new EmailService({
     messages: options.outbox ?? inMemoryEmailMessages(),
+    suppressions: options.suppressions ?? inMemoryEmailSuppressions(),
     providerName: options.providerName ?? 'smtp',
     readConfig: options.readConfig ?? (() => emailConfig()),
     senderAddress: 'noreply@qa.example.com',
@@ -153,7 +160,7 @@ describe('email service: what it queues', () => {
     await expect(service({ outbox }).send('LEAGUE_MEMBER_INVITE', invite('member@gmail.com'))).rejects.toThrow('database unavailable');
   });
 
-  it('reports the latest invite email\'s status for each invitation', async () => {
+  it('reports the latest invite email\'s status and skip reason for each invitation', async () => {
     const outbox = inMemoryEmailMessages();
     const email = service({ outbox, readConfig: () => emailConfig({ allowedRecipients: ['@gmail.com'] }) });
     await email.send('LEAGUE_MEMBER_INVITE', invite('member@gmail.com', { about: 'invite-1:a' }));
@@ -162,9 +169,12 @@ describe('email service: what it queues', () => {
       refs: { invitationId: 'invite-2' },
     }));
 
-    const statuses = await email.latestInviteStatusByInvitation(['invite-1', 'invite-2', 'invite-3']);
+    const states = await email.latestInviteStateByInvitation(['invite-1', 'invite-2', 'invite-3']);
 
-    expect(Object.fromEntries(statuses)).toEqual({ 'invite-1': 'QUEUED', 'invite-2': 'SKIPPED' });
+    expect(Object.fromEntries(states)).toEqual({
+      'invite-1': { status: 'QUEUED', skipReason: undefined },
+      'invite-2': { status: 'SKIPPED', skipReason: 'NOT_ALLOWED_IN_ENVIRONMENT' },
+    });
   });
 });
 
@@ -308,6 +318,32 @@ describe('email service: who may be emailed', () => {
       'NOT_ALLOWED_IN_ENVIRONMENT',
     ]);
     expect(results[0].recipientEmail).toBe('Derek+Alice@Gmail.com');
+  });
+
+  it('skips any email to an address that bounced for good or complained, whatever its case, with no content and no address in the log', async () => {
+    const outbox = inMemoryEmailMessages();
+    const suppressions = inMemoryEmailSuppressions();
+    await suppressions.suppress({ email: 'Gone@Gmail.com', suppressionReason: 'BOUNCE' });
+    const logger = fakeLogger();
+    const email = service({ outbox, suppressions, logger, providerName: 'ses' });
+
+    const skipped = await email.send('LEAGUE_MEMBER_INVITE', invite('gone@gmail.com'));
+    const queued = await email.send('LEAGUE_MEMBER_INVITE', invite('member@gmail.com', { about: 'invite-2:a' }));
+
+    expect(skipped).toMatchObject({ status: 'SKIPPED', skipReason: 'SUPPRESSED' });
+    expect(skipped.textBody).toBeUndefined();
+    expect(queued.status).toBe('QUEUED');
+    expect(JSON.stringify(logger.info.mock.calls)).not.toContain('gone@gmail.com');
+  });
+
+  it('reports a suppressed address as switched off when email is off, since that is why nothing would be sent anyway', async () => {
+    const suppressions = inMemoryEmailSuppressions();
+    await suppressions.suppress({ email: 'gone@gmail.com', suppressionReason: 'COMPLAINT' });
+
+    const message = await service({ suppressions, readConfig: () => emailConfig({ enabled: false }) })
+      .send('LEAGUE_MEMBER_INVITE', invite('gone@gmail.com'));
+
+    expect(message.skipReason).toBe('EMAIL_DISABLED');
   });
 
   it('with an allow list, also limits SMTP delivery', async () => {

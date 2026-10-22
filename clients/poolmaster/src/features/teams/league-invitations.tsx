@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { EmailMessageStatus, InvitationStatus, InviteType } from '@poolmaster/shared/domain';
+import { EmailMessageStatus, EmailSkipReason, InvitationStatus, InviteType } from '@poolmaster/shared/domain';
 import { Check, Copy } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import {
@@ -85,6 +85,9 @@ function isExpiredInvitation(invitation: LeagueInvitationDto): boolean {
 function describeInviteResult(result: SendLeagueInvitationsResponse): string | null {
   const sent = result.sent.at(0);
   if (sent) {
+    if (sent.emailSkipReason === EmailSkipReason.SUPPRESSED) {
+      return `Invitation made for ${sent.email}, but no email was sent: earlier email to that address bounced or was marked as spam. Copy its link below to share it.`;
+    }
     return sent.emailStatus === EmailMessageStatus.SKIPPED
       ? `Invitation made for ${sent.email}, but no email was sent. Copy its link below to share it.`
       : `Invitation sent to ${sent.email}.`;
@@ -105,9 +108,29 @@ const EMAIL_STATUS_LABELS: Record<EmailMessageStatus, string> = {
   [EmailMessageStatus.QUEUED]: 'Sending email',
   [EmailMessageStatus.SENDING]: 'Sending email',
   [EmailMessageStatus.SENT]: 'Email sent',
+  [EmailMessageStatus.DELIVERED]: 'Email delivered',
+  [EmailMessageStatus.BOUNCED]: 'Email bounced. Check the address, or copy the link to share it.',
+  [EmailMessageStatus.COMPLAINED]: 'Email marked as spam. Copy the link to share it.',
   [EmailMessageStatus.FAILED]: 'Email could not be sent. Resend it, or copy the link to share it.',
   [EmailMessageStatus.SKIPPED]: 'Email not sent. Copy the link to share it.',
 };
+
+/** Not sent because earlier email to the address bounced or was marked as spam. */
+const SUPPRESSED_LABEL = 'Email not sent: this address bounced or marked an earlier email as spam. Check the address, or copy the link to share it.';
+
+const EMAIL_PROBLEM_STATUSES: ReadonlySet<EmailMessageStatus> = new Set([
+  EmailMessageStatus.FAILED,
+  EmailMessageStatus.BOUNCED,
+  EmailMessageStatus.COMPLAINED,
+]);
+
+function emailStatusLabel(invitation: LeagueInvitationDto, status: EmailMessageStatus): string {
+  return invitation.emailSkipReason === EmailSkipReason.SUPPRESSED ? SUPPRESSED_LABEL : EMAIL_STATUS_LABELS[status];
+}
+
+function isEmailProblem(invitation: LeagueInvitationDto, status: EmailMessageStatus): boolean {
+  return EMAIL_PROBLEM_STATUSES.has(status) || invitation.emailSkipReason === EmailSkipReason.SUPPRESSED;
+}
 
 function joinedCount(count: number): string {
   return count === 1 ? '1 person has used it' : `${String(count)} people have used it`;
@@ -431,10 +454,10 @@ function WaitingInvites({
               )}
               {invitation.emailStatus ? (
                 <div
-                  className={invitation.emailStatus === EmailMessageStatus.FAILED ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}
+                  className={isEmailProblem(invitation, invitation.emailStatus) ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}
                   data-testid={`league-invitation-email-status-${invitation.id}`}
                 >
-                  {EMAIL_STATUS_LABELS[invitation.emailStatus]}
+                  {emailStatusLabel(invitation, invitation.emailStatus)}
                 </div>
               ) : null}
               {rowCopy?.invitationId === invitation.id && rowCopy.state === 'failed' ? (

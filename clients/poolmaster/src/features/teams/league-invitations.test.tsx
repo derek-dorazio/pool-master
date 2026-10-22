@@ -111,6 +111,42 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     expect(screen.queryByTestId('league-invitation-email-status-link-1')).not.toBeInTheDocument();
   });
 
+  it('says when an invite email was delivered, bounced or marked as spam, and shows a bounce as a problem', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [
+          emailInvite({ id: 'delivered-1', email: 'delivered@gmail.com', emailStatus: 'DELIVERED' }),
+          emailInvite({ id: 'bounced-1', email: 'bounced@gmail.com', emailStatus: 'BOUNCED' }),
+          emailInvite({ id: 'spam-1', email: 'spam@gmail.com', emailStatus: 'COMPLAINED' }),
+        ],
+      },
+    });
+
+    renderInvitations();
+
+    expect(await screen.findByTestId('league-invitation-email-status-delivered-1')).toHaveTextContent('Email delivered');
+    expect(screen.getByTestId('league-invitation-email-status-delivered-1')).not.toHaveClass('text-destructive');
+    expect(screen.getByTestId('league-invitation-email-status-bounced-1')).toHaveTextContent('Email bounced. Check the address');
+    expect(screen.getByTestId('league-invitation-email-status-bounced-1')).toHaveClass('text-destructive');
+    expect(screen.getByTestId('league-invitation-email-status-spam-1')).toHaveTextContent('Email marked as spam');
+  });
+
+  it('says an invite email was not sent because the address bounced before, rather than the generic not-sent line', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [
+          emailInvite({ id: 'suppressed-1', email: 'gone@gmail.com', emailStatus: 'SKIPPED', emailSkipReason: 'SUPPRESSED' }),
+        ],
+      },
+    });
+
+    renderInvitations();
+
+    const status = await screen.findByTestId('league-invitation-email-status-suppressed-1');
+    expect(status).toHaveTextContent('Email not sent: this address bounced or marked an earlier email as spam.');
+    expect(status).toHaveClass('text-destructive');
+  });
+
   it('keeps an email invite past its expiry out of Pending and lists it under Expired, still offering Resend', async () => {
     listLeagueInvitationsMock.mockResolvedValue({
       data: { invitations: [emailInvite({ expiresAt: '2026-01-01T00:00:00.000Z' }), joinLink()] },
@@ -394,6 +430,22 @@ describe('Commissioner tools › Invites: invite people', () => {
 
     expect(await screen.findByText(
       'Invitation made for friend@example.com, but no email was sent. Copy its link below to share it.',
+    )).toBeInTheDocument();
+  });
+
+  it('tells the commissioner no email went out because the address bounced or complained before', async () => {
+    sendLeagueInvitationsMock.mockResolvedValue({
+      data: {
+        sent: [emailInvite({ emailStatus: 'SKIPPED', emailSkipReason: 'SUPPRESSED' })],
+        skippedMembers: [],
+        skippedDuplicates: [],
+      },
+    });
+
+    await sendInviteTo('friend@example.com');
+
+    expect(await screen.findByText(
+      'Invitation made for friend@example.com, but no email was sent: earlier email to that address bounced or was marked as spam. Copy its link below to share it.',
     )).toBeInTheDocument();
   });
 

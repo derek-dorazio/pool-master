@@ -20,7 +20,7 @@ import {
 } from '../../../packages/core-api/src/modules/email';
 import type { EmailConfig } from '../../../packages/shared/dto';
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
-import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
+import { inMemoryEmailMessages, inMemoryEmailSuppressions } from '../../support/in-memory-email-messages';
 import { AuthProvider, type User } from '../../../packages/shared/domain';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
@@ -69,6 +69,7 @@ function buildService(overrides: {
     prisma: asPrismaClient(prisma),
     email: new EmailService({
       messages: outbox,
+      suppressions: inMemoryEmailSuppressions(),
       providerName: 'smtp',
       readConfig: () => overrides.emailConfig ?? EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
       senderAddress: 'noreply@poolmaster.test',
@@ -335,6 +336,7 @@ describe('PasswordChangedNotifier', () => {
       fakeUserRepo({ findById: jest.fn().mockResolvedValue(USER) }),
       new EmailService({
         messages: outbox,
+        suppressions: inMemoryEmailSuppressions(),
         providerName: 'smtp',
         readConfig: () => config,
         senderAddress: 'noreply@poolmaster.test',

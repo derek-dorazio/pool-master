@@ -3,7 +3,18 @@
  * sent by the sender loop, or skipped with the reason.
  */
 
-import type { EmailMessage, EmailMessageStatus, EmailSkipReason, EmailTemplateKey } from '../domain';
+import type {
+  DeliveryOutcomeStatus,
+  EmailMessage,
+  EmailMessageStatus,
+  EmailSkipReason,
+  EmailSuppression,
+  EmailSuppressionReason,
+  EmailTemplateKey,
+} from '../domain';
+
+/** Where one email stands: its status, and why it was skipped when it was. */
+export type EmailMessageState = Pick<EmailMessage, 'status' | 'skipReason'>;
 
 interface EmailMessageRecordBase {
   templateKey: EmailTemplateKey;
@@ -62,11 +73,30 @@ export interface EmailMessageRepository {
   markThrottled(id: string, nextAttemptAt: Date): Promise<void>;
   /** FAILED for good. `clearContent` as for `markSent`. */
   markFailed(id: string, failed: { error: string; clearContent: boolean }): Promise<void>;
+  /**
+   * Records what SES reported about a sent email, found by its SES message id: DELIVERED from
+   * SENT; BOUNCED or COMPLAINED from SENT or DELIVERED (a bounce or a complaint can follow a
+   * delivery); FAILED, with `error`, from SENT when SES rejected it. A report that would move the
+   * email backwards, or repeats, changes nothing. Returns the email, or undefined for an id the
+   * outbox never sent (another environment's, or a test send from the console).
+   */
+  recordDeliveryOutcome(
+    providerMessageId: string,
+    outcome: { status: DeliveryOutcomeStatus; error?: string },
+  ): Promise<EmailMessage | undefined>;
   /** Clears the subject and bodies of emails created before `cutoff`; returns how many. */
   clearContentCreatedBefore(cutoff: Date): Promise<number>;
-  /** The status of each invitation's latest email of `templateKey`, by invitation id. */
-  findLatestStatusByInvitations(
+  /** Where each invitation's latest email of `templateKey` stands, by invitation id. */
+  findLatestStateByInvitations(
     invitationIds: string[],
     templateKey: EmailTemplateKey,
-  ): Promise<Map<string, EmailMessageStatus>>;
+  ): Promise<Map<string, EmailMessageState>>;
+}
+
+/** Addresses the app no longer emails (#844 slice 4): a permanent bounce or a complaint. */
+export interface EmailSuppressionRepository {
+  /** Adds the address (lower-cased) unless it is already there; the first reason stands. */
+  suppress(input: { email: string; suppressionReason: EmailSuppressionReason; emailMessageId?: string }): Promise<void>;
+  /** The address's suppression, if it has one. */
+  findByEmail(email: string): Promise<EmailSuppression | undefined>;
 }
