@@ -24,11 +24,22 @@ export interface MailDeliveryMessage {
   };
 }
 
+/** Why an email was not submitted to the transport. */
+export const EmailSkipReason = {
+  /** EMAIL_CONFIG has system email switched off. */
+  EMAIL_DISABLED: 'EMAIL_DISABLED',
+  /** EMAIL_CONFIG has this template switched off. */
+  TEMPLATE_DISABLED: 'TEMPLATE_DISABLED',
+  /** No recipient may be emailed here: a reserved domain on a real transport, or not on the allow list. */
+  NOT_ALLOWED_IN_ENVIRONMENT: 'NOT_ALLOWED_IN_ENVIRONMENT',
+} as const;
+export type EmailSkipReason = (typeof EmailSkipReason)[keyof typeof EmailSkipReason];
+
 export interface MailDeliveryResult {
   provider: MailDeliveryProviderName;
   messageId?: string;
-  /** Set when EMAIL_CONFIG switched the email off, so nothing was submitted. */
-  skipped?: 'emailDisabled' | 'templateDisabled';
+  /** Set when nothing was submitted, with the reason. */
+  skipped?: EmailSkipReason;
 }
 
 export interface MailDeliveryProvider {

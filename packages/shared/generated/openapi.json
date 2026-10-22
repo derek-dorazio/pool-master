@@ -26216,6 +26216,21 @@
             "format": "email",
             "description": "Reply-To address for system email, or null to let replies go to the sender."
           },
+          "allowedRecipients": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 254,
+              "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+              "description": "An email address, or @domain for every address at that domain.",
+              "x-transform": [
+                "trim",
+                "toLowerCase"
+              ]
+            },
+            "maxItems": 100,
+            "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+          },
           "templates": {
             "type": "object",
             "properties": {
@@ -26249,6 +26264,7 @@
         "required": [
           "enabled",
           "replyTo",
+          "allowedRecipients",
           "templates"
         ],
         "additionalProperties": false,
@@ -27383,6 +27399,21 @@
                     "format": "email",
                     "description": "Reply-To address for system email, or null to let replies go to the sender."
                   },
+                  "allowedRecipients": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 254,
+                      "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+                      "description": "An email address, or @domain for every address at that domain.",
+                      "x-transform": [
+                        "trim",
+                        "toLowerCase"
+                      ]
+                    },
+                    "maxItems": 100,
+                    "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -27416,6 +27447,7 @@
                 "required": [
                   "enabled",
                   "replyTo",
+                  "allowedRecipients",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -27436,6 +27468,21 @@
                     "format": "email",
                     "description": "Reply-To address for system email, or null to let replies go to the sender."
                   },
+                  "allowedRecipients": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 254,
+                      "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+                      "description": "An email address, or @domain for every address at that domain.",
+                      "x-transform": [
+                        "trim",
+                        "toLowerCase"
+                      ]
+                    },
+                    "maxItems": 100,
+                    "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -27469,6 +27516,7 @@
                 "required": [
                   "enabled",
                   "replyTo",
+                  "allowedRecipients",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -28332,6 +28380,21 @@
                           "format": "email",
                           "description": "Reply-To address for system email, or null to let replies go to the sender."
                         },
+                        "allowedRecipients": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 254,
+                            "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+                            "description": "An email address, or @domain for every address at that domain.",
+                            "x-transform": [
+                              "trim",
+                              "toLowerCase"
+                            ]
+                          },
+                          "maxItems": 100,
+                          "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -28365,6 +28428,7 @@
                       "required": [
                         "enabled",
                         "replyTo",
+                        "allowedRecipients",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -28385,6 +28449,21 @@
                           "format": "email",
                           "description": "Reply-To address for system email, or null to let replies go to the sender."
                         },
+                        "allowedRecipients": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 254,
+                            "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+                            "description": "An email address, or @domain for every address at that domain.",
+                            "x-transform": [
+                              "trim",
+                              "toLowerCase"
+                            ]
+                          },
+                          "maxItems": 100,
+                          "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -28418,6 +28497,7 @@
                       "required": [
                         "enabled",
                         "replyTo",
+                        "allowedRecipients",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -28939,6 +29019,21 @@
                     "format": "email",
                     "description": "Reply-To address for system email, or null to let replies go to the sender."
                   },
+                  "allowedRecipients": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 254,
+                      "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+                      "description": "An email address, or @domain for every address at that domain.",
+                      "x-transform": [
+                        "trim",
+                        "toLowerCase"
+                      ]
+                    },
+                    "maxItems": 100,
+                    "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -28972,6 +29067,7 @@
                 "required": [
                   "enabled",
                   "replyTo",
+                  "allowedRecipients",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -29693,6 +29789,21 @@
                     "format": "email",
                     "description": "Reply-To address for system email, or null to let replies go to the sender."
                   },
+                  "allowedRecipients": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 254,
+                      "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+                      "description": "An email address, or @domain for every address at that domain.",
+                      "x-transform": [
+                        "trim",
+                        "toLowerCase"
+                      ]
+                    },
+                    "maxItems": 100,
+                    "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29726,6 +29837,7 @@
                 "required": [
                   "enabled",
                   "replyTo",
+                  "allowedRecipients",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -29746,6 +29858,21 @@
                     "format": "email",
                     "description": "Reply-To address for system email, or null to let replies go to the sender."
                   },
+                  "allowedRecipients": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 254,
+                      "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+                      "description": "An email address, or @domain for every address at that domain.",
+                      "x-transform": [
+                        "trim",
+                        "toLowerCase"
+                      ]
+                    },
+                    "maxItems": 100,
+                    "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29779,6 +29906,7 @@
                 "required": [
                   "enabled",
                   "replyTo",
+                  "allowedRecipients",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -30600,6 +30728,21 @@
                           "format": "email",
                           "description": "Reply-To address for system email, or null to let replies go to the sender."
                         },
+                        "allowedRecipients": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 254,
+                            "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+                            "description": "An email address, or @domain for every address at that domain.",
+                            "x-transform": [
+                              "trim",
+                              "toLowerCase"
+                            ]
+                          },
+                          "maxItems": 100,
+                          "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -30633,6 +30776,7 @@
                       "required": [
                         "enabled",
                         "replyTo",
+                        "allowedRecipients",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -30653,6 +30797,21 @@
                           "format": "email",
                           "description": "Reply-To address for system email, or null to let replies go to the sender."
                         },
+                        "allowedRecipients": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 254,
+                            "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+                            "description": "An email address, or @domain for every address at that domain.",
+                            "x-transform": [
+                              "trim",
+                              "toLowerCase"
+                            ]
+                          },
+                          "maxItems": 100,
+                          "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -30686,6 +30845,7 @@
                       "required": [
                         "enabled",
                         "replyTo",
+                        "allowedRecipients",
                         "templates"
                       ],
                       "additionalProperties": false,

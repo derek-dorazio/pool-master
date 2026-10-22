@@ -45,6 +45,7 @@ const SAVED_INGESTION: SettingsGroup = {
 const EMAIL_DEFAULTS = {
   enabled: true,
   replyTo: null,
+  allowedRecipients: [] as string[],
   templates: {
     LEAGUE_MEMBER_INVITE: true,
     LEAGUE_JOIN_SUCCESS: true,
@@ -56,7 +57,7 @@ const EMAIL_DEFAULTS = {
 const DEFAULT_EMAIL: SettingsGroup = {
   key: 'EMAIL_CONFIG',
   title: 'Email',
-  description: 'Whether system email is sent, which emails, and their Reply-To address.',
+  description: 'Whether system email is sent, which emails, who it may go to, and their Reply-To address.',
   source: 'defaults',
   updatedAt: null,
   updatedBy: null,
@@ -163,6 +164,7 @@ describe('RootAdminSettingsPage email card', () => {
         value: {
           enabled: false,
           replyTo: 'support@example.com',
+          allowedRecipients: [],
           templates: { ...EMAIL_DEFAULTS.templates, CONTEST_STARTED_SUMMARY: false },
         },
       },
@@ -180,6 +182,41 @@ describe('RootAdminSettingsPage email card', () => {
     await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
     const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { replyTo: string | null } } }];
     expect(request.body.value.replyTo).toBeNull();
+  });
+
+  it('saves the allow list one address or @domain per line, lowercased, skipping blank lines', async () => {
+    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-email-settings-allowed-recipients'), {
+      target: { value: 'Derek+Alice@Gmail.com\n\n  @simulator.amazonses.com  \n' },
+    });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+
+    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
+    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { allowedRecipients: string[] } } }];
+    expect(request.body.value.allowedRecipients).toEqual(['derek+alice@gmail.com', '@simulator.amazonses.com']);
+  });
+
+  it('shows the saved allow list one per line', async () => {
+    listSettingsGroupsMock.mockResolvedValue({
+      data: { groups: [{ ...DEFAULT_EMAIL, value: { ...EMAIL_DEFAULTS, allowedRecipients: ['a@gmail.com', '@b.com'] } }] },
+    });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-email-settings-allowed-recipients')).toHaveValue('a@gmail.com\n@b.com');
+  });
+
+  it('refuses to save an allow list line that is not an address or @domain, naming the line', async () => {
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-email-settings-allowed-recipients'), {
+      target: { value: 'a@gmail.com\ngmail.com' },
+    });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+
+    expect(await screen.findByText('"gmail.com" is not an email address or @domain.')).toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 
   it('refuses to save a Reply-To that is not an email address', async () => {

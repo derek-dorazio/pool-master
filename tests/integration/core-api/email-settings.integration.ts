@@ -127,4 +127,18 @@ describe('league invite by email under the EMAIL_CONFIG setting', () => {
     expect(statusCode).toBe(201);
     expect(sentTo(inviteeEmail)).toBe(1);
   });
+
+  it('with an allow list, invites anyone but emails only the listed addresses and domains', async () => {
+    await saveEmailConfig((current) => ({ ...current, allowedRecipients: ['@allowed.integration.test'] }));
+    const allowedEmail = `allowed-invitee-${Date.now()}@allowed.integration.test`;
+    const otherEmail = `other-invitee-${Date.now()}@integration.test`;
+
+    const allowed = await inviteByEmail(allowedEmail);
+    const other = await inviteByEmail(otherEmail);
+
+    expect([allowed.statusCode, other.statusCode]).toEqual([201, 201]);
+    expect(other.body.sent.map((invitation) => invitation.email)).toEqual([otherEmail]);
+    expect(sentTo(allowedEmail)).toBe(1);
+    expect(sentTo(otherEmail)).toBe(0);
+  });
 });

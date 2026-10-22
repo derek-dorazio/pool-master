@@ -11495,6 +11495,10 @@ export type EmailConfig = {
      */
     replyTo: string | null;
     /**
+     * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
+     */
+    allowedRecipients: Array<string>;
+    /**
      * Per-template switches. A template that is off is skipped even while email is on.
      */
     templates: {
@@ -12179,6 +12183,10 @@ export type SettingsGroup = {
          */
         replyTo: string | null;
         /**
+         * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
+         */
+        allowedRecipients: Array<string>;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -12212,6 +12220,10 @@ export type SettingsGroup = {
          * Reply-To address for system email, or null to let replies go to the sender.
          */
         replyTo: string | null;
+        /**
+         * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
+         */
+        allowedRecipients: Array<string>;
         /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
@@ -12703,6 +12715,10 @@ export type SettingsGroupList = {
              */
             replyTo: string | null;
             /**
+             * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
+             */
+            allowedRecipients: Array<string>;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -12736,6 +12752,10 @@ export type SettingsGroupList = {
              * Reply-To address for system email, or null to let replies go to the sender.
              */
             replyTo: string | null;
+            /**
+             * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
+             */
+            allowedRecipients: Array<string>;
             /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
@@ -13026,6 +13046,10 @@ export type SettingsGroupUpdateRequest = {
          * Reply-To address for system email, or null to let replies go to the sender.
          */
         replyTo: string | null;
+        /**
+         * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
+         */
+        allowedRecipients: Array<string>;
         /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
@@ -13436,6 +13460,10 @@ export type SettingsChange = {
          */
         replyTo: string | null;
         /**
+         * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
+         */
+        allowedRecipients: Array<string>;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -13469,6 +13497,10 @@ export type SettingsChange = {
          * Reply-To address for system email, or null to let replies go to the sender.
          */
         replyTo: string | null;
+        /**
+         * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
+         */
+        allowedRecipients: Array<string>;
         /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
@@ -13927,6 +13959,10 @@ export type SettingsChangeList = {
              */
             replyTo: string | null;
             /**
+             * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
+             */
+            allowedRecipients: Array<string>;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -13960,6 +13996,10 @@ export type SettingsChangeList = {
              * Reply-To address for system email, or null to let replies go to the sender.
              */
             replyTo: string | null;
+            /**
+             * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
+             */
+            allowedRecipients: Array<string>;
             /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */

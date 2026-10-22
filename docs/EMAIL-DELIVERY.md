@@ -18,7 +18,8 @@ same rendered subject, text, and HTML through AWS SES:
 
 - `AWS_REGION` selects the SES region.
 - `SES_FROM_EMAIL` is the verified sender address.
-- `SES_CONFIGURATION_SET` is optional for SES event tracking.
+- `SES_CONFIGURATION_SET` names the configuration set every send goes through
+  (reputation metrics and bounce/complaint suppression). Terraform sets it.
 - `AWS_ENDPOINT`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` are supported
   for LocalStack/dev overrides.
 
@@ -28,18 +29,39 @@ Whether email is sent is the `EMAIL_CONFIG` app setting, which a root admin chan
 Email card of `/manage/settings`; every core-api task picks a save up within 30 seconds. It
 holds:
 
-- `enabled`: whether any system email is sent. It defaults to off when `POOLMASTER_ENVIRONMENT=qa` (until
-  real delivery is set up, #120) and on everywhere else.
+- `enabled`: whether any system email is sent. It defaults to off when `POOLMASTER_ENVIRONMENT=qa`
+  and on everywhere else.
 - `templates`: one switch per system email, all on by default. Account emails (the password reset
   email) have no switch: switching one off would silently break password recovery. They still
-  obey `enabled`.
+  obey `enabled` and "Only send to".
+- `allowedRecipients` ("Only send to"): when not empty, the only recipients email goes to, each
+  a whole address or `@domain`, compared without case. Every other recipient is skipped. Empty
+  (the default) means no limit.
 - `replyTo`: the Reply-To address, or none (the default), so replies go to the sender.
 
-An email that is switched off is skipped, and the send still reports success, so invite by
-email still creates the invitation and the request succeeds. Each skip is logged as
-`mailDelivery.skip` with the reason (`emailDisabled` or `templateDisabled`), the template key and
-ids, never the body or an address. The transport (`EMAIL_PROVIDER`) and the sender address stay
-in env, because they describe how the deployment is wired.
+Through SES, an address at a domain reserved by RFC 2606 and RFC 6761 (`.invalid`, `.test`,
+`.example`, `.localhost`, `example.com`, `example.net`, `example.org`) is always skipped: no mail
+server answers for them, so a send would only hard-bounce. The e2e smoke users are
+`@e2e.invalid`, so smoke runs on QA never send. Mailpit and the test SMTP sink catch every
+address, so SMTP sends to them.
+
+An email that is skipped still reports success, so invite by email still creates the invitation
+and the request succeeds. Each skip is logged as `mailDelivery.skip` with the reason
+(`EMAIL_DISABLED`, `TEMPLATE_DISABLED` or `NOT_ALLOWED_IN_ENVIRONMENT`), the template key and
+ids, never the body or an address. An email to several recipients that drops only some of them
+logs `mailDelivery.skipRecipients` with how many. The transport (`EMAIL_PROVIDER`) and the
+sender address stay in env, because they describe how the deployment is wired.
+
+## Testing on QA Without Emailing Real People
+
+1. On `/manage/settings`, set "Only send to" to your own address(es), and to
+   `@simulator.amazonses.com` for the SES mailbox simulator.
+2. Give manual test users plus-addresses of your inbox (`you+alice@gmail.com`,
+   `you+bob@gmail.com`); Gmail delivers them all to you, through real SES.
+3. Switch "Send system email" on and send an invite to one of them. In Gmail, "Show original"
+   should show DKIM, SPF and DMARC all `PASS`.
+4. Bounces and complaints are tried by inviting `bounce@simulator.amazonses.com` and
+   `complaint@simulator.amazonses.com`, which hurts no sending reputation.
 
 `APP_BASE_URL` is required for links in email bodies. Local development uses
 `http://localhost:5173`; Terraform sets the deployed webapp URL.
@@ -61,25 +83,34 @@ right subject and link; the functional server runs with a fixed
 `APP_BASE_URL` so links are exact. `tests/functional/password-reset.functional.ts`
 reads the reset link out of the reset email and uses it. Functional tests read the sink through
 `tests/functional/mail.ts`. `tests/integration/core-api/email-settings.integration.ts`
-covers switching email, and one email, off.
+covers switching email, and one email, off, and the allow list.
 
 ## SES Infrastructure
 
 Terraform sets the core-api ECS task's `EMAIL_PROVIDER` to `ses` in every
 environment; QA's "send nothing yet" is the `EMAIL_CONFIG` default above. Terraform also configures
-`APP_BASE_URL`, `AWS_REGION`, `SES_FROM_EMAIL`, and `POOLMASTER_ENVIRONMENT`. It also
-grants the ECS task role `ses:SendEmail` and `ses:SendRawEmail` for the managed
-SES identity.
+`APP_BASE_URL`, `AWS_REGION`, `SES_FROM_EMAIL`, `SES_CONFIGURATION_SET` and
+`POOLMASTER_ENVIRONMENT`, and grants the ECS task role `ses:SendEmail` and `ses:SendRawEmail`
+for the SES identity and the configuration set.
 
-When `domain_name` is configured, Terraform creates an SES domain identity for
-that domain and DKIM tokens. If `route53_zone_id` is also configured, Terraform
-creates the DKIM CNAME records. When no domain is configured, Terraform creates
-an email identity for the configured sender address; that address must be
-verified in SES before deployed delivery can succeed.
+Each environment sends from its own subdomain, the same one the app is served on
+(QA `noreply@qa.<domain_name>`, prod `noreply@<domain_name>`), so QA bounces and test complaints
+never touch prod's sending reputation. When `domain_name` is configured, Terraform creates for
+that sending domain:
 
-SES sandbox accounts can send only to verified recipients. Move the account out
-of sandbox before production-style invitations are sent to arbitrary member
-emails.
+- the SES domain identity with Easy DKIM, and (with `route53_zone_id`) its three DKIM CNAMEs;
+- a custom MAIL FROM domain `bounce.<sending domain>` with its MX and SPF TXT records, so SPF
+  passes for our domain and counts toward DMARC;
+- a DMARC TXT record at `_dmarc.<sending domain>`, starting at `p=none`, with aggregate reports
+  to `dmarc_report_email` when set;
+- the configuration set `<project>-<environment>`, with reputation metrics on and bounces and
+  complaints suppressed through the SES account suppression list.
+
+When no domain is configured, Terraform creates an email identity for the configured sender
+address; that address must be verified in SES before deployed delivery can succeed.
+
+The one-time AWS steps (applying, and requesting production access to leave the SES sandbox) are
+in `infrastructure/terraform/README.md`, *System email (SES)*.
 
 ## Success Semantics
 
