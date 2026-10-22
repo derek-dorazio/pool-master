@@ -15,19 +15,18 @@ tab, **C** All years summary.
 
 ---
 
-## Open questions for Derek
+## Answered 2026-10-22
 
-1. **Q1. Which time zone decides the year?** A contest settled at 7pm US Eastern on 31 December
-   is already 1 January in UTC. Recommendation: US Eastern for every league, until leagues get
-   their own time zone (they have none today). The year is fixed on the row at settlement.
-2. **Q2. Medal tiles:** most 1sts, most 2nds, most 3rds, most podiums, most contests played,
-   most top-ten finishes? Recommendation: those six, two to a row; ties show every squad tied.
-3. **Q3. Delete My team history** (`my-team-history-page.tsx`, one request per past contest)
-   once the trophy shelf and All years page replace it? Recommendation: yes, in #837 slice 3.
-4. **Q4. Build history open to every league now**, gating it once paid plans exist?
-   Recommendation: yes; section 8 says which class each view is in.
-5. **Q5. Trophy, cup and standings emails** take their feature's class (B, from Pro), not D as
-   the email catalog has them? Recommendation: yes; the change goes in the email catalog.
+1. **Q1** The year is decided in **US Eastern** for every league, fixed on the row at settlement.
+2. **Q2** Medal tiles: most 1sts, 2nds, 3rds, podiums (a podium is a 1st, 2nd or 3rd), top-ten
+   finishes, and contests played. Ties show every squad tied.
+3. **Q3** Delete My team history (`my-team-history-page.tsx`) in #837 slice 3. Every contest's
+   leaderboard stays one click away: a cup's Points race lists all its contests, and each opens
+   its leaderboard, in season and for past years.
+4. **Q4** Everything is free for now. Each view is categorized by feature (section 7) so plans
+   can be drawn later, or Platinum given away for a trial period, without touching the views.
+5. **Q5** Trophy, cup and standings emails take their feature's class, B. The email catalog
+   changes to match.
 
 ## Decisions
 
@@ -149,7 +148,7 @@ later is listed "After the cup was crowned" and changes nothing.
 A "2026 Derek's Pool Cup" across every contest in every sport. Cups by season can't do it: an
 NFL season is mid-way on 31 December.
 
-- **A contest counts in the calendar year it went Final** (Q1 picks the time zone). One still
+- **A contest counts in the calendar year it went Final**, in US Eastern (Q1). One still
   running on 31 December counts toward the year it finishes. Best entry once per squad; Not
   counted and cancelled contests are out.
 - **Stored at settlement**, in the same transaction that writes `ContestEntryStanding`, through
@@ -175,9 +174,10 @@ guard keeps its squad.
 
 **The page, top to bottom (mockup D):**
 
-1. **Trophy and podium**, from 1 January of the next year: the cup name, the champion, then 1st,
+1. **Trophy and podium**, from 1 January (US Eastern) of the next year: the cup name, the champion, then 1st,
    2nd and 3rd. Before then it shows the leader ("leads with 3 contests to go").
-2. **Medal tiles** (Q2): each with the squad and its count.
+2. **Medal tiles** (Q2): most 1sts, 2nds, 3rds, podiums, top-ten finishes and contests
+   played, each with the squad and its count, two to a row.
 3. **Finish matrix:** squads as rows, 1st to 10th as columns counting finishes there, and a
    Points column that ranks the table. Equal totals go to most 1sts, then most 2nds.
 
@@ -196,8 +196,10 @@ League menu: Championships
 - **Two levels:** page tabs pick the view; chips inside Points race pick the sports league and
   scroll sideways.
 - **Points race:** place, movement, squad, points, wins, contests; a race chart of the top five;
-  the counted contests with weights and winners, and why one doesn't count. A row opens the
-  squad's points contest by contest. Crowned, B's podium sits above the table.
+  every contest in the cup with its weight, winner and state (Live, Final, Not counted), and
+  why one doesn't count. A standings row opens the squad's points contest by contest; a contest
+  row opens that contest's leaderboard, live or final (Q3). So Points race → the cup's contests →
+  a leaderboard is two taps, in any year. Crowned, B's podium sits above the table.
 - **Trophy case:** a card per cup with leader or champion and the viewer's place; "Ready to
   crown" for the commissioner. A card opens Points race with its chip selected.
 - **Links:** a matrix row or tile opens the squad's year; a matrix cell narrows it to that place;
@@ -257,17 +259,23 @@ serves views and emails, using the email catalog's letters (`plans/email-notific
 *Class*): Essential every league, A free and up, B from Pro, C from Premium, D Platinum. The
 upper plans differ mainly through the levers in `plans/monetization-strategy.md`, *The levers*.
 
-| View | Class |
-|---|---|
-| Contest results, places, a past contest's leaderboard, the Contests page History view | Essential |
-| Cups, the championship, crowning, trophy shelf entries, weights, points table, cup name | B (Pro) |
-| Past years and drill-through of cups and the championship | The feature's own class |
-| All years summary | D (Platinum) |
+Each view belongs to one **feature**, and each feature to one class. Plans map classes later;
+the views only ask about their feature (Q4).
+
+| Feature (`ChampionshipFeature`) | What | Class |
+|---|---|---|
+| `CONTEST_RESULTS` | Contest results and places, any contest's leaderboard, the Contests page History view | Essential |
+| `CUP_STANDINGS` | Trophy case, Points race, race chart, movement, squad breakdown, projected points, league home card | B (Pro) |
+| `CUP_CROWNING` | Ready to crown, crowned podiums, cup trophies | B (Pro) |
+| `CHAMPIONSHIP` | The Championship tab: trophy, podium, medal tiles, finish matrix, year's contests | B (Pro) |
+| `TROPHY_SHELF` | Cup and championship trophies on team pages | B (Pro) |
+| `CUP_SETTINGS` | Points table, cup weights, cup name | B (Pro) |
+| `PAST_YEARS` | The year picker's earlier years, on every tab, and their drill-through | B (Pro) |
+| `ALL_TIME_SUMMARY` | All years | D (Platinum) |
 
 Downgrades hide, never delete: rows are written for every league, the locked view shows the name
 and leader with a short note, and only the commissioner sees how to upgrade. Routes ask an
-entitlements function about the feature (`HistoryFeature`, cup and championship features mapped
-to `ServiceClass`), never about a plan. Nothing is gated yet (Q4).
+entitlements function about the feature, never about a plan. Nothing is gated yet (Q4).
 
 ## 8. Slices
 
@@ -305,3 +313,27 @@ journey row once a page exists.
 3. **All years.** `GET /history/summary` and the page; delete `my-team-history-page.tsx` (Q3).
 
 1 and 2 in parallel; 3 after 1.
+
+## 9. Parked ideas
+
+From the research (`plans/league-history-research.md`) and the first history design, dropped
+when history became additive. None is in a slice; each is built from the same stored rows unless
+it says otherwise, and each needs Derek's yes and a ticket.
+
+- **Record book.** Most championships, back-to-back champions, most wins in a year, longest run
+  of podiums, biggest field won (needs `rankedEntryCount`, already on the row), each with the
+  holder and the next best.
+- **Hall of Lame.** The bad records beside the good: most runner-up finishes, most last places,
+  longest drought without a win, earliest survivor exit. A league setting hides it.
+- **Perpetual trophies.** One trophy per recurring contest (the Masters pool every year), with a
+  plate per year's winner, linked by the contest's event series.
+- **Head to head.** For two squads, who finished higher in the contests both played. Shown only
+  for rivals with five or more shared contests.
+- **Squad career page.** A team page section with a finish strip across the years and all-time
+  counts, and the medal tiles and finish matrix summed over every year as an all-time table.
+- **Contest medals on the trophy shelf.** A single contest's 1st to 3rd as small medals, so a
+  season trophy still stands out.
+- **Season recap.** An end-of-year awards card per member, pushed by email (#845) or shown once
+  on login. Needs a "seen" flag.
+- **Past winners entered by hand.** For leagues older than Poolmaster. Needs a new "historical
+  result" record outside the read-only model, so only if leagues ask.
