@@ -227,7 +227,7 @@ describe('pool-master-98i system email templates', () => {
       }, UTC);
 
       expect(message.subject).toBe('Entries close soon: Office Pool');
-      expect(message.text).toContain('You haven\'t joined Office Pool yet. In this contest your picks are drawn for you at random, so just join before entries close.');
+      expect(message.text).toContain('Just join Office Pool before entries close. It\'s a quick pick contest, so your picks are made for you.');
       expect(message.text).toContain('Entries close: Apr 9, 2026');
       expect(message.text).toContain(`Join the contest: ${base.contestUrl}`);
       expect(message.text).not.toContain('Make your picks');

@@ -412,7 +412,7 @@ describe('EntryReminders.queueDue', () => {
     await reminders().queueDue(before(CLOSES_AT, 48, 1));
 
     expect(remindedUserIds()).toEqual([nora.user.id]);
-    expect(outbox.rows[0]?.textBody).toContain('You haven\'t joined Sweepstake yet.');
+    expect(outbox.rows[0]?.textBody).toContain('Just join Sweepstake before entries close.');
     expect(outbox.rows[0]?.textBody).toContain('Join the contest: ');
   });
 
