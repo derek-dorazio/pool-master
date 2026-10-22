@@ -8,7 +8,7 @@ feature list came from the monetization strategy (#581, `plans/monetization-stra
 plan checks those ideas against main and cuts them into slices. Questions sit under the section
 they belong to, each with a recommendation; none blocks slice 1.
 
-**Updated 2026-10-22** to line up with the league championship (#863, `plans/season-cups.md`
+**Updated 2026-10-22** (twice) to line up with the league championship (#863, `plans/season-cups.md`
 section 8) and the sports league cups (#841, same plan). Derek's direction: a league's year is
 the calendar year, its championship page (trophy, medal tiles, finish matrix) freezes on
 1 January and *is* that year's history view, and year results are stored as contests settle so
@@ -27,8 +27,10 @@ history never re-reads every contest. Research input: `plans/league-history-rese
 - **Records count finishes, not scores.** A golf to-par total, a pick'em points total and a
   squares box count can't be compared, so all-time numbers are wins, podiums and places.
 - **One gap left in the model:** deleting a squad erases its past results. Slice 1 refuses it.
-- **Five slices:** past contests with winners and the squad delete guard; the History home and
-  year view (on top of #863's page); team history; all-time; record book and trophies.
+- **Single-year views first, then all-time.** Each year is the championship and cup pages with a
+  year toggle; an all-time summary (mockup C) fronts them later.
+- **Five slices:** past contests with winners and the squad delete guard; the year's contests
+  under the championship page; team history; the all-time summary and table; the record book.
 
 ## 1. What exists today
 
@@ -46,10 +48,10 @@ Planned elsewhere and used here:
 | Piece | Ticket | Used for |
 |---|---|---|
 | `LeagueYearFinish` (league, year, squad, contest, place, tie count, weight, points), written at settlement, backfilled | #863 slice 1 | Year view, all-time, records, trophies |
-| Championship page and `GET .../championship/:year`, `GET .../championship` | #863 | The year view and the History home's list of years and champions |
+| Championship page and `GET .../championship/:year`, `GET .../championship` | #863 | The year view (with its year toggle) and the all-time summary's list of years and champions |
 | `League.cupName` | #863 | The trophy's name in history ("2026 Derek's Pool Cup") |
 | `Contest.cupWeight` `NOT_COUNTED` | #841 | Side bets and test pools left out of the championship, and so of history's numbers |
-| Crowned cups, `GET .../cups/past` | #841 slice 4 | History's Cups tab and cup trophies |
+| Crowned cups, trophy shelf, `GET .../cups/past` | #841 slices 4 and 6 | Cup trophies on team pages and the all-time summary |
 
 A contest whose events were all cancelled ends `COMPLETED` with no standings (#743). History
 shows it as "No result".
@@ -62,7 +64,7 @@ the 2026 history page and the 2026 championship never disagree. A 2025 NFL seaso
 goes Final in January 2026 is a 2026 contest in history, as in the championship.
 
 `Contest.seasonYear` (the first version of this plan) is no longer used by history. Only the
-sports league cups (#841) group by it, and history's Cups tab shows each cup under its own
+sports league cups (#841) group by it, and the cup pages and the all-time summary show each cup under its own
 season ("2025 NFL Cup").
 
 Questions:
@@ -187,16 +189,22 @@ the league's contests. Shapes in `packages/shared/dto/history.dto.ts`:
 
 ## 6. Pages
 
+**Single-year views come first** (Derek, 2026-10-22). Each year's pages are the championship
+page (#863) and the Cups and Cup pages (#841), and a **year toggle** on those same pages shows a
+past year, frozen. History adds no second copy of them. Later, an **all-time summary** (mockup C
+on the season cups canvas) fronts the per-year pages: most championships and cups won, then each
+year's champions, each row opening that year's pages. It is built once, shared by #841 slice 6
+and this epic.
+
 Member menu gets **History** (replacing today's link to My team history):
 
 | Page | Route | Content |
 |---|---|---|
-| History home | `/league/:code/history` | Years, newest first, each with its trophy (champion squad) and contest count. Tabs: Years, All-time, Record book, Cups |
-| Year | `/league/:code/history/:year` | #863's championship page frozen: trophy, medal tiles, finish matrix. Under it, the year's contests with winners (tap opens the contest's final leaderboard). The current year shows the live page with the leader instead of the trophy |
-| All-time | `/league/:code/history/all-time` | Medal tiles and finish matrix across every year, with a Championships column; sortable |
+| Year contests | under the championship page, `/league/:code/championship` with its year toggle | The year's contests with winners (tap opens the contest's final leaderboard), below #863's trophy, podium, medal tiles and matrix |
+| All-time summary | `/league/:code/history` | Mockup C: most championships, most cups, then each year's champions, newest first; each row opens that year's championship and cups. Tabs: Summary, All-time table, Record book |
+| All-time table | `/league/:code/history/all-time` | Medal tiles and finish matrix across every year, with a Championships column; sortable |
 | Record book | `/league/:code/history/records` | One card per record type with the holder(s) and the next best |
-| Cups | `/league/:code/history/cups` | #841's crowned cups by season |
-| Team page history | `/league/:code/teams/:teamId` and My team | A history section: trophy shelf (championships, cups, contest podiums), the finish counts, and the list of contests played with place. Replaces `my-team-history-page.tsx`, and works for any squad |
+| Team page history | `/league/:code/teams/:teamId` and My team | The trophy shelf (#841 slice 4, #863 slice 2: every top-3 finish in a crowned cup and the championship) plus contest podiums from this epic; the finish counts; the list of contests played with place, with the same year toggle. Replaces `my-team-history-page.tsx`, and works for any squad |
 
 The Contests page's History view gains a winner line on each card and a year filter, and reads
 the new paged endpoint instead of the full contest list. Copy follows the UI wording rule: squads
@@ -204,13 +212,13 @@ appear by name, never as "team" or "squad".
 
 Questions:
 
-- **Q6.1** Does `/league/:code/history` become the league's History page, with the old My team
-  history folded into each team page? Recommendation: yes.
-- **Q6.2** Is the History tab shown to a league with no Final contest yet? Recommendation: yes,
-  with an empty state ("Results appear here when a contest is final").
-- **Q6.3** Does the current year appear in History, or only in the championship's own menu
-  item? Recommendation: History lists it at the top as "2026 so far", linking to the live page,
-  so members find the year in one place.
+- **Q6.1** Does `/league/:code/history` become the league's all-time summary, with the old My
+  team history folded into each team page? Recommendation: yes.
+- **Q6.2** Is History shown to a league with no Final contest yet? Recommendation: yes, with an
+  empty state ("Results appear here when a contest is final").
+- **Q6.3** Contest podiums (1st to 3rd in a single contest) on the trophy shelf beside cup and
+  championship trophies? Recommendation: yes, but as smaller medals, so a season trophy stands
+  out from one weekend's win.
 
 ## 7. Monetization
 
@@ -235,14 +243,16 @@ and a browser journey row once the pages exist.
    `GET .../history/contests`; winners on the Contests page History view with a year filter and
    paging. Squad delete refuses a squad with final results, with a failing test first. Needs
    nothing from #863 (the year comes from settlement dates). #841 and #863 depend on this slice.
-2. **History home and year view.** The History menu item, History home, and the year page
-   wrapping #863's championship page with the year's contests. Needs #863 slice 2.
+2. **Year contests.** The year's contests with winners under #863's championship page, following
+   its year toggle. Needs #863 slice 2.
 3. **Team history.** `GET .../history/squads/:squadId`; the history section on every team page
-   and My team; delete `my-team-history-page.tsx` and its per-contest fetch loop. Contest
-   podiums now; championship and cup trophies join as #863 and #841 land.
-4. **All-time.** `GET .../history/all-time`; tiles and matrix across every year. Needs #863
-   slice 1.
-5. **Record book and trophies.** `GET .../history/records`; the Record book tab, the Cups tab
-   (with #841 slice 4) and the trophy shelf on team pages. Depends on Q4.1, Q4.2 and Q4.5.
+   and My team, with contest podiums on the trophy shelf and a year toggle; delete
+   `my-team-history-page.tsx` and its per-contest fetch loop. Cup and championship trophies join
+   the shelf as #841 slice 4 and #863 slice 2 land.
+4. **All-time summary and table.** The History menu item; `GET .../history/all-time`; the
+   summary (with #841 slice 6, built once) and the all-time table. Needs #863 slice 1.
+5. **Record book.** `GET .../history/records`; the Record book tab. Depends on Q4.1, Q4.2 and
+   Q4.5.
 
-Slice 1 goes first; 3 can go in parallel with #863; 2 and 4 follow #863; 5 last.
+Slice 1 goes first. Single-year views (2, 3) come before all-time (4, 5); 3 can go in parallel
+with #863; 2 follows #863 slice 2; 4 goes with #841 slice 6; 5 last.
