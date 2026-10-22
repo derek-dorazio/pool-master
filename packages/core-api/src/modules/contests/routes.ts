@@ -35,7 +35,7 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const contestService = createContestService(prisma, fastify.log, {
-    mailDelivery: opts.mailDelivery,
+    email: opts.email,
     appBaseUrl: readApplicationBaseUrl(process.env),
   });
   const handlers = createContestHandlers(contestService);
@@ -105,7 +105,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const contestService = createContestService(prisma, fastify.log, {
-    mailDelivery: opts.mailDelivery,
+    email: opts.email,
     appBaseUrl: readApplicationBaseUrl(process.env),
   });
   const contestRepo = new PrismaContestRepository(prisma);

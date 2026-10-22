@@ -64,7 +64,7 @@ import { createContestManagementService } from './modules/contest-management/wir
 import { scoringFamilyForSport } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
-  SettingsAwareMailDeliveryProvider,
+  EmailService,
   createMailDeliveryProvider,
   readApplicationBaseUrl,
   readMailDeliveryConfig,
@@ -90,17 +90,19 @@ export function buildApp() {
     env: process.env,
     logger: app.log,
   });
-  // One mail delivery for the whole app; EMAIL_CONFIG decides on every send whether it goes out.
-  const mailDelivery = new SettingsAwareMailDeliveryProvider(
-    createMailDeliveryProvider(readMailDeliveryConfig(process.env), app.log),
-    () => appSettings.get(EMAIL_SETTINGS),
-    app.log,
-  );
+  // One email service for the whole app; EMAIL_CONFIG decides on every send whether it goes out.
+  const mailConfig = readMailDeliveryConfig(process.env);
+  const email = new EmailService({
+    transport: createMailDeliveryProvider(mailConfig, app.log),
+    readConfig: () => appSettings.get(EMAIL_SETTINGS),
+    senderAddress: mailConfig.fromEmail,
+    logger: app.log,
+  });
   const appBaseUrl = readApplicationBaseUrl(process.env);
   const contestSettlement = createContestSettlementService(prisma, app.log);
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,
-    mailDelivery,
+    email,
     appBaseUrl,
     contestSettlement,
     releasedEditionContests: createContestManagementService(prisma, app.log),
@@ -187,15 +189,15 @@ export function buildApp() {
   // =========================================================================
   // Domain modules (protected by auth-guard)
   // =========================================================================
-  app.register(leaguesModule, { prefix: '/api/v1/leagues', mailDelivery });
+  app.register(leaguesModule, { prefix: '/api/v1/leagues', email });
   app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
-  app.register(invitationsModule, { prefix: '/api/v1/invitations', mailDelivery });
+  app.register(invitationsModule, { prefix: '/api/v1/invitations', email });
   app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations' });
-  app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', mailDelivery });
+  app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email });
   app.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
   });
-  app.register(contestsByIdModule, { prefix: '/api/v1/contests', mailDelivery });
+  app.register(contestsByIdModule, { prefix: '/api/v1/contests', email });
   app.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   app.register(eventsModule, {
     prefix: '/api/v1/events',
@@ -213,7 +215,7 @@ export function buildApp() {
   // =========================================================================
   // Draft module
   // =========================================================================
-  app.register(selectionsModule, { prefix: '/api/v1/selections', mailDelivery });
+  app.register(selectionsModule, { prefix: '/api/v1/selections', email });
 
   // =========================================================================
   // Lifecycle hooks

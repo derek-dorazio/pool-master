@@ -25,6 +25,7 @@ import {
 import { fakeLogger } from '../../support/fake-logger';
 import { mockFn } from '../../support/mock-fn';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
+import { emailServiceOver } from '../../support/email-service';
 
 const STARTED_EVENT_START = new Date('2026-05-02T20:00:00.000Z');
 
@@ -404,7 +405,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       contests,
       sportEvents,
       fakeLogger(),
-      mailDelivery,
+      emailServiceOver(mailDelivery),
       'https://app.primetimecommissioner.com',
     );
 
@@ -455,7 +456,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       contests,
       sportEvents,
       fakeLogger(),
-      mailDelivery,
+      emailServiceOver(mailDelivery),
     );
 
     await service.applySportEventStatusTransition({
@@ -472,14 +473,14 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps({ startedContest: true });
     const mailDelivery = {
-      providerName: 'ses' as const,
+      providerName: 'smtp' as const,
       send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
     };
     const service = new EventLifecycleService(
       contests,
       sportEvents,
       logger,
-      mailDelivery,
+      emailServiceOver(mailDelivery),
     );
 
     await expect(
@@ -552,7 +553,7 @@ describe('EventLifecycleService contest-started emails', () => {
     contests.leagues.findById = jest.fn().mockResolvedValue(null);
     const mailDelivery = mail();
 
-    await new EventLifecycleService(contests, sportEvents, fakeLogger(), mailDelivery).applySportEventStatusTransition(START);
+    await new EventLifecycleService(contests, sportEvents, fakeLogger(), emailServiceOver(mailDelivery)).applySportEventStatusTransition(START);
 
     expect(contests.contests.transitionStatus).toHaveBeenCalled();
     expect(mailDelivery.send).not.toHaveBeenCalled();
@@ -577,7 +578,7 @@ describe('EventLifecycleService contest-started emails', () => {
     ]);
     const mailDelivery = mail();
 
-    await new EventLifecycleService(contests, sportEvents, fakeLogger(), mailDelivery).applySportEventStatusTransition(START);
+    await new EventLifecycleService(contests, sportEvents, fakeLogger(), emailServiceOver(mailDelivery)).applySportEventStatusTransition(START);
 
     const recipients = mailDelivery.send.mock.calls.map(([message]) => message.to);
     expect(recipients).toHaveLength(2);

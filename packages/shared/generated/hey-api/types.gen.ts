@@ -11463,10 +11463,6 @@ export type EmailConfig = {
      */
     enabled: boolean;
     /**
-     * Reply-To address for system email, or null to let replies go to the sender.
-     */
-    replyTo: string | null;
-    /**
      * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
      */
     allowedRecipients: Array<string>;
@@ -12151,10 +12147,6 @@ export type SettingsGroup = {
          */
         enabled: boolean;
         /**
-         * Reply-To address for system email, or null to let replies go to the sender.
-         */
-        replyTo: string | null;
-        /**
          * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
          */
         allowedRecipients: Array<string>;
@@ -12188,10 +12180,6 @@ export type SettingsGroup = {
          * Whether any system email is sent. Off: every email is skipped and logged.
          */
         enabled: boolean;
-        /**
-         * Reply-To address for system email, or null to let replies go to the sender.
-         */
-        replyTo: string | null;
         /**
          * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
          */
@@ -12683,10 +12671,6 @@ export type SettingsGroupList = {
              */
             enabled: boolean;
             /**
-             * Reply-To address for system email, or null to let replies go to the sender.
-             */
-            replyTo: string | null;
-            /**
              * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
              */
             allowedRecipients: Array<string>;
@@ -12720,10 +12704,6 @@ export type SettingsGroupList = {
              * Whether any system email is sent. Off: every email is skipped and logged.
              */
             enabled: boolean;
-            /**
-             * Reply-To address for system email, or null to let replies go to the sender.
-             */
-            replyTo: string | null;
             /**
              * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
              */
@@ -13014,10 +12994,6 @@ export type SettingsGroupUpdateRequest = {
          * Whether any system email is sent. Off: every email is skipped and logged.
          */
         enabled: boolean;
-        /**
-         * Reply-To address for system email, or null to let replies go to the sender.
-         */
-        replyTo: string | null;
         /**
          * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
          */
@@ -13428,10 +13404,6 @@ export type SettingsChange = {
          */
         enabled: boolean;
         /**
-         * Reply-To address for system email, or null to let replies go to the sender.
-         */
-        replyTo: string | null;
-        /**
          * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
          */
         allowedRecipients: Array<string>;
@@ -13465,10 +13437,6 @@ export type SettingsChange = {
          * Whether any system email is sent. Off: every email is skipped and logged.
          */
         enabled: boolean;
-        /**
-         * Reply-To address for system email, or null to let replies go to the sender.
-         */
-        replyTo: string | null;
         /**
          * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
          */
@@ -13927,10 +13895,6 @@ export type SettingsChangeList = {
              */
             enabled: boolean;
             /**
-             * Reply-To address for system email, or null to let replies go to the sender.
-             */
-            replyTo: string | null;
-            /**
              * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
              */
             allowedRecipients: Array<string>;
@@ -13964,10 +13928,6 @@ export type SettingsChangeList = {
              * Whether any system email is sent. Off: every email is skipped and logged.
              */
             enabled: boolean;
-            /**
-             * Reply-To address for system email, or null to let replies go to the sender.
-             */
-            replyTo: string | null;
             /**
              * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
              */

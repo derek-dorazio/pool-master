@@ -1,22 +1,30 @@
 import {
-  SESClient,
+  SESv2Client,
   SendEmailCommand,
   type SendEmailCommandOutput,
-} from '@aws-sdk/client-ses';
+} from '@aws-sdk/client-sesv2';
 import nodemailer, { type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import type { FastifyBaseLogger } from 'fastify';
+import type { SystemEmailTemplateKey } from './system-email-templates';
 
 export type MailDeliveryProviderName = 'smtp' | 'ses';
 
+/** A sender: a display name and an address at the environment's sending domain. */
+export interface MailAddress {
+  name: string;
+  address: string;
+}
+
+/** One rendered email to one person. There is no Reply-To: replies to the sender bounce. */
 export interface MailDeliveryMessage {
-  to: string | string[];
+  from: MailAddress;
+  to: string;
   subject: string;
   text: string;
   html: string;
-  replyTo?: string;
-  metadata?: {
-    templateKey?: string;
+  metadata: {
+    templateKey: SystemEmailTemplateKey;
     leagueId?: string;
     contestId?: string;
     entryId?: string;
@@ -49,6 +57,7 @@ export interface MailDeliveryProvider {
 
 export interface MailDeliveryConfig {
   provider: MailDeliveryProviderName;
+  /** The environment's `noreply@` address; its domain is the sending domain. */
   fromEmail: string;
   smtp?: SmtpMailDeliveryConfig;
   ses?: SesMailDeliveryConfig;
@@ -92,13 +101,34 @@ export class MailDeliveryError extends Error {
   }
 }
 
+/**
+ * The From header value. A display name that is not plain ASCII is RFC 2047 encoded, since SES
+ * takes the header as given, in words of ten characters so none passes the 75-character limit;
+ * a quoted ASCII name escapes its quotes and backslashes.
+ */
+export function formatMailAddress(from: MailAddress): string {
+  if (/^[\x20-\x7e]*$/.test(from.name)) {
+    return `"${from.name.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}" <${from.address}>`;
+  }
+  const characters = Array.from(from.name);
+  const words: string[] = [];
+  for (let start = 0; start < characters.length; start += ENCODED_WORD_CHARACTERS) {
+    const chunk = characters.slice(start, start + ENCODED_WORD_CHARACTERS).join('');
+    words.push(`=?UTF-8?B?${Buffer.from(chunk, 'utf8').toString('base64')}?=`);
+  }
+  return `${words.join(' ')} <${from.address}>`;
+}
+
+/** At most 4 UTF-8 bytes each: 40 bytes is 56 base64 characters, plus 12 for the markers. */
+const ENCODED_WORD_CHARACTERS = 10;
+
 export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
   readonly providerName = 'smtp' as const;
 
   private readonly transport: Transporter<SMTPTransport.SentMessageInfo>;
 
   constructor(
-    private readonly config: MailDeliveryConfig,
+    config: MailDeliveryConfig,
     transport?: Transporter<SMTPTransport.SentMessageInfo>,
     private readonly logger?: FastifyBaseLogger,
   ) {
@@ -116,23 +146,22 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
   }
 
   async send(message: MailDeliveryMessage): Promise<MailDeliveryResult> {
-    const recipients = normalizeRecipients(message.to);
+    const recipients = [message.to];
     this.logger?.debug({
       action: 'mailDelivery.smtp.send.enter',
       data: {
         toCount: recipients.length,
-        templateKey: message.metadata?.templateKey ?? null,
-        leagueId: message.metadata?.leagueId ?? null,
-        contestId: message.metadata?.contestId ?? null,
-        entryId: message.metadata?.entryId ?? null,
-        invitationId: message.metadata?.invitationId ?? null,
+        templateKey: message.metadata.templateKey,
+        leagueId: message.metadata.leagueId ?? null,
+        contestId: message.metadata.contestId ?? null,
+        entryId: message.metadata.entryId ?? null,
+        invitationId: message.metadata.invitationId ?? null,
       },
     }, 'Submitting SMTP email');
     try {
       const result = await this.transport.sendMail({
-        from: this.config.fromEmail,
+        from: message.from,
         to: recipients,
-        replyTo: message.replyTo,
         subject: message.subject,
         text: message.text,
         html: message.html,
@@ -143,11 +172,11 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
         data: {
           toCount: recipients.length,
           messageId: messageId ?? null,
-          templateKey: message.metadata?.templateKey ?? null,
-          leagueId: message.metadata?.leagueId ?? null,
-          contestId: message.metadata?.contestId ?? null,
-          entryId: message.metadata?.entryId ?? null,
-          invitationId: message.metadata?.invitationId ?? null,
+          templateKey: message.metadata.templateKey,
+          leagueId: message.metadata.leagueId ?? null,
+          contestId: message.metadata.contestId ?? null,
+          entryId: message.metadata.entryId ?? null,
+          invitationId: message.metadata.invitationId ?? null,
         },
       }, 'Submitted SMTP email');
       return { provider: this.providerName, messageId };
@@ -156,11 +185,11 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
         action: 'mailDelivery.smtp.send.failure',
         data: {
           toCount: recipients.length,
-          templateKey: message.metadata?.templateKey ?? null,
-          leagueId: message.metadata?.leagueId ?? null,
-          contestId: message.metadata?.contestId ?? null,
-          entryId: message.metadata?.entryId ?? null,
-          invitationId: message.metadata?.invitationId ?? null,
+          templateKey: message.metadata.templateKey,
+          leagueId: message.metadata.leagueId ?? null,
+          contestId: message.metadata.contestId ?? null,
+          entryId: message.metadata.entryId ?? null,
+          invitationId: message.metadata.invitationId ?? null,
           error: err instanceof Error ? err.message : String(err),
         },
       }, 'SMTP email submission failed');
@@ -182,7 +211,7 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
     if (!config.ses) {
       throw new MailDeliveryConfigError('SES mail provider requires ses configuration.');
     }
-    this.client = client ?? new SESClient({
+    this.client = client ?? new SESv2Client({
       region: config.ses.region,
       endpoint: config.ses.endpoint,
       credentials: config.ses.accessKeyId && config.ses.secretAccessKey
@@ -195,30 +224,31 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
   }
 
   async send(message: MailDeliveryMessage): Promise<MailDeliveryResult> {
-    const recipients = normalizeRecipients(message.to);
+    const recipients = [message.to];
     const configurationSetName = this.config.ses?.configurationSetName;
     this.logger?.debug({
       action: 'mailDelivery.ses.send.enter',
       data: {
         toCount: recipients.length,
-        templateKey: message.metadata?.templateKey ?? null,
-        leagueId: message.metadata?.leagueId ?? null,
-        contestId: message.metadata?.contestId ?? null,
-        entryId: message.metadata?.entryId ?? null,
-        invitationId: message.metadata?.invitationId ?? null,
+        templateKey: message.metadata.templateKey,
+        leagueId: message.metadata.leagueId ?? null,
+        contestId: message.metadata.contestId ?? null,
+        entryId: message.metadata.entryId ?? null,
+        invitationId: message.metadata.invitationId ?? null,
       },
     }, 'Submitting SES email');
     try {
       const command = new SendEmailCommand({
-        Source: this.config.fromEmail,
+        FromEmailAddress: formatMailAddress(message.from),
         Destination: { ToAddresses: recipients },
-        ReplyToAddresses: message.replyTo ? [message.replyTo] : undefined,
         ConfigurationSetName: configurationSetName || undefined,
-        Message: {
-          Subject: { Data: message.subject, Charset: 'UTF-8' },
-          Body: {
-            Text: { Data: message.text, Charset: 'UTF-8' },
-            Html: { Data: message.html, Charset: 'UTF-8' },
+        Content: {
+          Simple: {
+            Subject: { Data: message.subject, Charset: 'UTF-8' },
+            Body: {
+              Text: { Data: message.text, Charset: 'UTF-8' },
+              Html: { Data: message.html, Charset: 'UTF-8' },
+            },
           },
         },
       });
@@ -228,11 +258,11 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
         data: {
           toCount: recipients.length,
           messageId: result.MessageId ?? null,
-          templateKey: message.metadata?.templateKey ?? null,
-          leagueId: message.metadata?.leagueId ?? null,
-          contestId: message.metadata?.contestId ?? null,
-          entryId: message.metadata?.entryId ?? null,
-          invitationId: message.metadata?.invitationId ?? null,
+          templateKey: message.metadata.templateKey,
+          leagueId: message.metadata.leagueId ?? null,
+          contestId: message.metadata.contestId ?? null,
+          entryId: message.metadata.entryId ?? null,
+          invitationId: message.metadata.invitationId ?? null,
         },
       }, 'Submitted SES email');
       return { provider: this.providerName, messageId: result.MessageId };
@@ -241,11 +271,11 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
         action: 'mailDelivery.ses.send.failure',
         data: {
           toCount: recipients.length,
-          templateKey: message.metadata?.templateKey ?? null,
-          leagueId: message.metadata?.leagueId ?? null,
-          contestId: message.metadata?.contestId ?? null,
-          entryId: message.metadata?.entryId ?? null,
-          invitationId: message.metadata?.invitationId ?? null,
+          templateKey: message.metadata.templateKey,
+          leagueId: message.metadata.leagueId ?? null,
+          contestId: message.metadata.contestId ?? null,
+          entryId: message.metadata.entryId ?? null,
+          invitationId: message.metadata.invitationId ?? null,
           error: err instanceof Error ? err.message : String(err),
         },
       }, 'SES email submission failed');
@@ -320,9 +350,4 @@ function parsePort(value: string | undefined, fallback: number): number {
 
 function parseBoolean(value: string | undefined): boolean {
   return value?.trim().toLowerCase() === 'true';
-}
-
-function normalizeRecipients(to: string | string[]): string[] {
-  const recipients = Array.isArray(to) ? to : [to];
-  return recipients.map((recipient) => recipient.trim()).filter(Boolean);
 }

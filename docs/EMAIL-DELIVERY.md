@@ -1,8 +1,40 @@
 # Email Delivery
 
-PoolMaster sends system emails through the core-api mail-delivery abstraction.
-The message body is rendered by the source-controlled Prime Time Commissioner
-template registry in `packages/core-api/src/modules/email`.
+PoolMaster sends every system email through one call, `EmailService.send(templateKey, input)`
+in `packages/core-api/src/modules/email`. It checks `EMAIL_CONFIG` and who may be emailed,
+renders the template for the recipient, picks the sender, and hands one email to one person to
+the transport. Callers never render or call a transport themselves.
+
+## Templates
+
+Templates are typed TypeScript renderers, not SES stored templates (#844, Q2.1).
+`EMAIL_TEMPLATES` in `system-email-templates.ts` is the registry: one entry per
+`EmailTemplateKey`, each with its `EmailCategory` (`ACCOUNT`, `MEMBERSHIP`,
+`COMMISSIONER_UPDATES`, `CONTEST_UPDATES`, `LIVE_STANDINGS`, `RESULTS`, `RECEIPTS`, the
+notification catalog's categories) and its renderer. Adding a key without a registry entry, a
+scope in `EmailTemplateScopeByKey`, a settings switch or a preview example is a compile error.
+Each template's data is a TypeScript type, so a missing token can't merge, and every value is
+HTML-escaped. Dates are shown in the recipient's time zone (their account setting), with the
+zone named, or in UTC when they have none.
+
+`npm run email:preview` renders every template with the examples in
+`tests/support/email-template-fixtures.ts` into `tmp/email-preview/` (HTML and plain text);
+`npm run email:preview -- --send` also sends each one to local Mailpit.
+
+## Sender
+
+There is no Reply-To (#844, Q6.2): a reply to the sender bounces.
+
+- **League emails** (every email about one league, which is every email today) come from that
+  league's address in its name: `Office League <office24@qa.ultimateofficepoolmanager.com>`, the
+  league code lowercased at the sending domain (the domain of `SES_FROM_EMAIL` or
+  `SMTP_FROM`). It is presentation only; nothing receives mail there, and SES needs nothing per
+  league. A league can't take a code that is a role address (`NOREPLY`, `POSTMASTER`, `ABUSE`,
+  `ADMIN`, `SUPPORT`, `SECURITY`, `BOUNCE`, `HOSTMASTER`, `WEBMASTER`):
+  creation refuses it with `LEAGUE_CODE_RESERVED`, and a league that has one already sends from
+  the `noreply@` address in its name.
+- **Platform emails** (account emails, with no league) come from `Prime Time Commissioner
+  <noreply@…>`.
 
 ## Providers
 
@@ -14,10 +46,11 @@ developer stack:
 - `SMTP_FROM=noreply@poolmaster.local`
 
 `EMAIL_PROVIDER=ses` is used in deployed environments. The provider sends the
-same rendered subject, text, and HTML through AWS SES:
+same rendered subject, text, and HTML through the AWS SES v2 API (`SendEmail` with simple
+content):
 
 - `AWS_REGION` selects the SES region.
-- `SES_FROM_EMAIL` is the verified sender address.
+- `SES_FROM_EMAIL` is the environment's `noreply@` address at the verified sending domain.
 - `SES_CONFIGURATION_SET` names the configuration set every send goes through
   (reputation metrics and bounce/complaint suppression). Terraform sets it.
 - `AWS_ENDPOINT`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` are supported
@@ -35,7 +68,6 @@ holds:
 - `allowedRecipients` ("Only send to"): when not empty, the only recipients email goes to, each
   a whole address or `@domain`, compared without case. Every other recipient is skipped. Empty
   (the default) means no limit.
-- `replyTo`: the Reply-To address, or none (the default), so replies go to the sender.
 
 Through SES, an address at a domain reserved by RFC 2606 and RFC 6761 (`.invalid`, `.test`,
 `.example`, `.localhost`, `example.com`, `example.net`, `example.org`) is always skipped: no mail
@@ -44,10 +76,9 @@ server answers for them, so a send would only hard-bounce. The e2e smoke users a
 address, so SMTP sends to them.
 
 An email that is skipped still reports success, so invite by email still creates the invitation
-and the request succeeds. Each skip is logged as `mailDelivery.skip` with the reason
+and the request succeeds. Each skip is logged as `email.send.skip` with the reason
 (`EMAIL_DISABLED`, `TEMPLATE_DISABLED` or `NOT_ALLOWED_IN_ENVIRONMENT`), the template key and
-ids, never the body or an address. An email to several recipients that drops only some of them
-logs `mailDelivery.skipRecipients` with how many. The transport (`EMAIL_PROVIDER`) and the
+ids, never the body or an address. The transport (`EMAIL_PROVIDER`) and the
 sender address stay in env, because they describe how the deployment is wired.
 
 ## Testing on QA Without Emailing Real People

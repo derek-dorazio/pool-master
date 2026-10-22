@@ -33,7 +33,7 @@ import {
   PrismaSquadMembershipRepository,
   PrismaUserRepository,
 } from '../../adapters';
-import type { MailDeliveryProvider } from '../email';
+import type { EmailService } from '../email';
 import { GolfScoreService } from '../golf/golf-score-service';
 import { RaceResultService } from '../scoring-families/finish-position/race-result-service';
 import { MatchResultService } from '../scoring-families/head-to-head/match-result-service';
@@ -194,7 +194,7 @@ export function createEventLifecycleService(
   prisma: PrismaClient,
   options: {
     logger?: FastifyBaseLogger;
-    mailDelivery?: MailDeliveryProvider;
+    email?: EmailService;
     appBaseUrl?: string;
     contestSettlement?: FinishedSportEventSettlement;
     releasedEditionContests?: ReleasedEditionContests;
@@ -213,7 +213,7 @@ export function createEventLifecycleService(
     },
     new PrismaSportEventRepository(prisma),
     options.logger,
-    options.mailDelivery,
+    options.email,
     options.appBaseUrl,
     options.contestSettlement,
     options.releasedEditionContests,

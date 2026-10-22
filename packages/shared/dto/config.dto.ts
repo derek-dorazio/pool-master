@@ -82,14 +82,12 @@ export const EmailRecipientPatternSchema = z.string().trim().toLowerCase().max(2
 ).describe('An email address, or @domain for every address at that domain.');
 
 /**
- * EMAIL_CONFIG (#450): whether system email is sent. Transport and sender address stay in env.
+ * EMAIL_CONFIG (#450): whether system email is sent, and to whom. Transport and sender address
+ * stay in env. System email has no Reply-To (#844).
  * A skipped email still counts as sent, so an invite by email still succeeds.
  */
 export const EmailConfigSchema = z.object({
   enabled: z.boolean().describe('Whether any system email is sent. Off: every email is skipped and logged.'),
-  replyTo: z.string().email().nullable().describe(
-    'Reply-To address for system email, or null to let replies go to the sender.',
-  ),
   allowedRecipients: z.array(EmailRecipientPatternSchema).max(100).describe(
     'When not empty, the only addresses email is sent to (addresses or @domain); every other '
     + 'recipient is skipped and logged. Empty: no limit.',

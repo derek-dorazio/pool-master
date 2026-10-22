@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { EmailConfigSchema, EmailRecipientPatternSchema } from '@poolmaster/shared/dto';
 import { updateSettingsGroup, type EmailConfig, type SettingsGroup } from '@/lib/api';
-import { Alert, Button, Checkbox, FormField, Input, Textarea } from '@/features/shared/ui';
+import { Alert, Button, Checkbox, FormField, Textarea } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { hasErrorCode, throwApiError, extractErrorMessage } from '@/lib/errors';
@@ -18,12 +18,8 @@ function recipientLines(text: string): string[] {
   return text.split('\n').map((line) => line.trim()).filter(Boolean);
 }
 
-/**
- * The stored shape, except that an empty Reply-To box means "none" and the allowed recipients
- * are one box with one address or @domain per line.
- */
+/** The stored shape, except that the allowed recipients are one box, one address or @domain per line. */
 const EmailSettingsFormSchema = EmailConfigSchema.extend({
-  replyTo: z.string().trim().email('Enter an email address, or leave it blank.').or(z.literal('')),
   allowedRecipients: z.string().superRefine((text, context) => {
     const lines = recipientLines(text);
     const invalid = lines.find((line) => !EmailRecipientPatternSchema.safeParse(line).success);
@@ -40,7 +36,6 @@ function toFormValues(config: EmailConfig): EmailSettingsFormValues {
   return {
     ...config,
     templates: { ...config.templates },
-    replyTo: config.replyTo ?? '',
     allowedRecipients: config.allowedRecipients.join('\n'),
   };
 }
@@ -48,7 +43,6 @@ function toFormValues(config: EmailConfig): EmailSettingsFormValues {
 function toConfig(values: EmailSettingsFormValues): EmailConfig {
   return {
     ...values,
-    replyTo: values.replyTo === '' ? null : values.replyTo,
     allowedRecipients: recipientLines(values.allowedRecipients)
       .map((line) => EmailRecipientPatternSchema.parse(line)),
   };
@@ -133,13 +127,6 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
           </label>
         ))}
       </fieldset>
-      <FormField
-        error={form.formState.errors.replyTo?.message}
-        helperText="Leave blank to let replies go to the sender address."
-        label="Reply-To address"
-      >
-        <Input data-testid="root-admin-email-settings-reply-to" type="email" {...form.register('replyTo')} />
-      </FormField>
       <FormField
         error={form.formState.errors.allowedRecipients?.message}
         helperText="One address or @domain per line. When the list is not empty, email goes only to these recipients and every other one is skipped. Leave it empty to email everyone."

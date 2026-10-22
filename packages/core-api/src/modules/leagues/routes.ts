@@ -47,7 +47,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const userRepo = new PrismaUserRepository(prisma);
-  const mailDelivery = opts.mailDelivery;
+  const email = opts.email;
   const appBaseUrl = readApplicationBaseUrl(process.env);
 
   const leagueService = new LeagueService({
@@ -68,7 +68,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
     users: userRepo,
     prisma,
     logger: fastify.log,
-    mailDelivery,
+    email,
     appBaseUrl,
   });
   const memberService = new MemberService({

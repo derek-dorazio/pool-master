@@ -26158,14 +26158,6 @@
             "type": "boolean",
             "description": "Whether any system email is sent. Off: every email is skipped and logged."
           },
-          "replyTo": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "email",
-            "description": "Reply-To address for system email, or null to let replies go to the sender."
-          },
           "allowedRecipients": {
             "type": "array",
             "items": {
@@ -26213,7 +26205,6 @@
         },
         "required": [
           "enabled",
-          "replyTo",
           "allowedRecipients",
           "templates"
         ],
@@ -27341,14 +27332,6 @@
                     "type": "boolean",
                     "description": "Whether any system email is sent. Off: every email is skipped and logged."
                   },
-                  "replyTo": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "email",
-                    "description": "Reply-To address for system email, or null to let replies go to the sender."
-                  },
                   "allowedRecipients": {
                     "type": "array",
                     "items": {
@@ -27396,7 +27379,6 @@
                 },
                 "required": [
                   "enabled",
-                  "replyTo",
                   "allowedRecipients",
                   "templates"
                 ],
@@ -27410,14 +27392,6 @@
                     "type": "boolean",
                     "description": "Whether any system email is sent. Off: every email is skipped and logged."
                   },
-                  "replyTo": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "email",
-                    "description": "Reply-To address for system email, or null to let replies go to the sender."
-                  },
                   "allowedRecipients": {
                     "type": "array",
                     "items": {
@@ -27465,7 +27439,6 @@
                 },
                 "required": [
                   "enabled",
-                  "replyTo",
                   "allowedRecipients",
                   "templates"
                 ],
@@ -28322,14 +28295,6 @@
                           "type": "boolean",
                           "description": "Whether any system email is sent. Off: every email is skipped and logged."
                         },
-                        "replyTo": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "email",
-                          "description": "Reply-To address for system email, or null to let replies go to the sender."
-                        },
                         "allowedRecipients": {
                           "type": "array",
                           "items": {
@@ -28377,7 +28342,6 @@
                       },
                       "required": [
                         "enabled",
-                        "replyTo",
                         "allowedRecipients",
                         "templates"
                       ],
@@ -28391,14 +28355,6 @@
                           "type": "boolean",
                           "description": "Whether any system email is sent. Off: every email is skipped and logged."
                         },
-                        "replyTo": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "email",
-                          "description": "Reply-To address for system email, or null to let replies go to the sender."
-                        },
                         "allowedRecipients": {
                           "type": "array",
                           "items": {
@@ -28446,7 +28402,6 @@
                       },
                       "required": [
                         "enabled",
-                        "replyTo",
                         "allowedRecipients",
                         "templates"
                       ],
@@ -28961,14 +28916,6 @@
                     "type": "boolean",
                     "description": "Whether any system email is sent. Off: every email is skipped and logged."
                   },
-                  "replyTo": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "email",
-                    "description": "Reply-To address for system email, or null to let replies go to the sender."
-                  },
                   "allowedRecipients": {
                     "type": "array",
                     "items": {
@@ -29016,7 +28963,6 @@
                 },
                 "required": [
                   "enabled",
-                  "replyTo",
                   "allowedRecipients",
                   "templates"
                 ],
@@ -29731,14 +29677,6 @@
                     "type": "boolean",
                     "description": "Whether any system email is sent. Off: every email is skipped and logged."
                   },
-                  "replyTo": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "email",
-                    "description": "Reply-To address for system email, or null to let replies go to the sender."
-                  },
                   "allowedRecipients": {
                     "type": "array",
                     "items": {
@@ -29786,7 +29724,6 @@
                 },
                 "required": [
                   "enabled",
-                  "replyTo",
                   "allowedRecipients",
                   "templates"
                 ],
@@ -29800,14 +29737,6 @@
                     "type": "boolean",
                     "description": "Whether any system email is sent. Off: every email is skipped and logged."
                   },
-                  "replyTo": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "format": "email",
-                    "description": "Reply-To address for system email, or null to let replies go to the sender."
-                  },
                   "allowedRecipients": {
                     "type": "array",
                     "items": {
@@ -29855,7 +29784,6 @@
                 },
                 "required": [
                   "enabled",
-                  "replyTo",
                   "allowedRecipients",
                   "templates"
                 ],
@@ -30670,14 +30598,6 @@
                           "type": "boolean",
                           "description": "Whether any system email is sent. Off: every email is skipped and logged."
                         },
-                        "replyTo": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "email",
-                          "description": "Reply-To address for system email, or null to let replies go to the sender."
-                        },
                         "allowedRecipients": {
                           "type": "array",
                           "items": {
@@ -30725,7 +30645,6 @@
                       },
                       "required": [
                         "enabled",
-                        "replyTo",
                         "allowedRecipients",
                         "templates"
                       ],
@@ -30739,14 +30658,6 @@
                           "type": "boolean",
                           "description": "Whether any system email is sent. Off: every email is skipped and logged."
                         },
-                        "replyTo": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "email",
-                          "description": "Reply-To address for system email, or null to let replies go to the sender."
-                        },
                         "allowedRecipients": {
                           "type": "array",
                           "items": {
@@ -30794,7 +30705,6 @@
                       },
                       "required": [
                         "enabled",
-                        "replyTo",
                         "allowedRecipients",
                         "templates"
                       ],
