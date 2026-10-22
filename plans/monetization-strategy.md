@@ -2,7 +2,7 @@
 
 **Tracking issue:** #581
 
-Written 2026-10-10 for Derek's review; sports and pool styles added 2026-10-12. Open questions sit under the section they belong to,
+Written 2026-10-10 for Derek's review; sports and pool styles added 2026-10-12; tier order and the levers revised 2026-10-22. Open questions sit under the section they belong to,
 each with a recommendation. Research and strategy only: no implementation is
 scheduled. **Taking payments is out of scope** throughout: this document covers what to sell
 and how the app would know a league or contest has it, not how money is collected.
@@ -15,13 +15,18 @@ and how the app would know a league or contest has it, not how money is collecte
 - Sell two things, which stack:
   1. **Per-contest unlocks** (à la carte): a bigger entry cap, or a non-default selection
      type, bought for one contest.
-  2. **League membership** (annual): Premium, Pro and Platinum. Each raises the cap for every
+  2. **League membership** (annual): **Pro, then Premium, then Platinum** (Derek's order,
+     2026-10-22). Each raises the cap for every
      contest in the league, opens the other selection types, and adds features that make the
      league stickier year over year: history, automated reminders, live standings updates.
 - Two more ways to package it (added 2026-10-12, Derek's ideas): by **how many sports** a
   league plays (free plays one, paid tiers play them all), and by **pool style**, office
   pool, pick'em or DFS-style, each sold almost as its own product with light branding, and
   Platinum getting all of them. See *Sports and pool styles*.
+- **Plans differ mostly by levers, not by feature lists** (Derek, 2026-10-22): entries per
+  contest, how many sports leagues a league plays, league size and pool styles. Features
+  (cups, championship, history, emails) are classed only as finely as they naturally need,
+  often just free or paid. See *The levers*.
 - Charge for **scale, depth and automation**. Keep the core loop free: invite, pick, watch the
   leaderboard, see who won. A league that cannot get started never pays.
 - The commissioner is the buyer in every model we found. Never charge a member to join.
@@ -91,7 +96,7 @@ secondary sources and some are dated; they are for orientation, not quotation.
 4. **Majors pass** (new). A bundle between the two: one price unlocks the same upgrades for
    every contest a league runs on the four majors in a year. Golf pools cluster around the
    majors; many leagues will never need a weekly membership but run four big contests.
-5. **Free trial of the top tier** (new). A new league's first contest gets Pro features, so the
+5. **Free trial of the top tier** (new). A new league's first contest gets top-tier features, so the
    commissioner sees reminders and history working before being asked to pay.
 6. **Branding** (new). League logo upload, colours, custom trophy names. Cheap to build, and
    OfficePoolStop sells it on its own. Fits into a tier rather than as a separate sale.
@@ -114,29 +119,28 @@ Out of scope: any cut of entry fees or prize pools (payments).
 
 A starting point to react to, not a decision. Names follow Derek's message.
 
-| | Free | Premium | Pro | Platinum |
+| | Free | Pro | Premium | Platinum |
 |---|---|---|---|---|
-| Entries per contest | 20 | 100 | 200 | Unlimited |
-| Sports | 1 | All | All | All |
-| Pool styles (office pool, pick'em, DFS-style) | 1 | 1 | 2 | All |
+| **Entries per contest** | 20 | 50 | 100 | Unlimited |
+| **Sports leagues the league plays** (PGA Tour, NFL, ...) | 1 | 3 | 10 | All |
+| **League size** (active squads) | 20 | 50 | 100 | Unlimited |
+| **Pool styles** (office pool, pick'em, DFS-style) | 1 | 1 | 2 | All |
 | Selection types | Tiered | All in its styles | All in its styles | All |
 | Core loop: invites, picks, live leaderboard, results | ✓ | ✓ | ✓ | ✓ |
 | Results of this season's contests | ✓ | ✓ | ✓ | ✓ |
-| History: list of every past contest and its results | | ✓ | ✓ | ✓ |
-| History dashboards: by season, by team, all-time | | | ✓ | ✓ |
-| Record book and trophy case | | | | ✓ |
-| Entry deadline reminders (one day before) | ✓ | ✓ | ✓ | ✓ |
-| Last-hour reminder, only to teams not yet submitted | | ✓ | ✓ | ✓ |
-| Contest opened and final results emails | | ✓ | ✓ | ✓ |
-| End-of-day standings email during a live event | | | ✓ | ✓ |
-| Branding: logo, colours | | | ✓ | ✓ |
-| League championship: calendar-year standings and trophy (#863) | | ✓ | | ✓ |
 | Sports league cups, FedEx-style (#841) | | ✓ | ✓ | ✓ |
+| League championship: calendar-year standings and trophy (#863) | | ✓ | ✓ | ✓ |
+| History: past years, all-time summary (#837) | see `plans/league-history.md` | | | |
+| Emails (#845) | see `plans/email-notifications.md`, *Class* | | | |
+| Branding: logo, colours | | | ✓ | ✓ |
 | Export results (CSV) | | | | ✓ |
+
+The bold rows are the levers; Derek's numbers (2026-10-22) are examples to tune in app
+settings, not decisions. The feature rows only say from which plan a feature starts.
 
 Rules that make the two mechanisms work together:
 
-- **A contest gets whichever is better**, its league's tier or its own unlocks. A Premium
+- **A contest gets whichever is better**, its league's tier or its own unlocks. A Pro
   league can still buy "unlimited" for its one huge Masters contest.
 - **Unlocks belong to the contest and never expire.** A cap upgrade can be bought any time
   until picks close, because the moment of need is a full contest mid-signup. A selection-type
@@ -155,8 +159,8 @@ Each has a recommendation; answer only where you disagree.
 1. **Offer both mechanisms from the start, or one first?** Both is the plan, but league
    tiers alone are simpler to explain and build. Recommended: build the model for both, ship
    league tiers first, and add contest unlocks once a commissioner hits a cap.
-2. **Three paid tiers or two?** Three gives room; two (Premium and Platinum) is simpler to
-   explain. Recommended: start with two, add Pro if the gap feels too wide.
+2. **Three paid tiers or two?** Decided (Derek, 2026-10-22): three, Pro, Premium and
+   Platinum, told apart mainly by the levers.
 3. **Which features can be bought à la carte?** Recommended: only entry caps and selection
    types. History, reminders and branding are league-wide by nature and stay tier-only, which
    gives a league a reason to subscribe.
@@ -191,8 +195,9 @@ Derek asked whether the cap belongs on squads per league or entries per contest.
 
 1. **Cap on entries per contest rather than squads per league?** Recommended: entries per
    contest.
-2. **Free cap of 20, and bands of 100, 200 and unlimited?** Recommended: keep them; tune the
-   numbers in app settings later.
+2. **Free cap of 20, then 50 (Pro), 100 (Premium) and unlimited (Platinum)?** Derek's examples
+   (2026-10-22). Recommended: start there; the numbers live in app settings, so tuning needs no
+   deploy.
 3. **Do draft (unsubmitted) entries count toward the cap?** Recommended: yes, every entry
    counts, so the count never surprises anyone at submit time. Deleting a draft frees a slot.
 4. **What does a member see when the contest is full?** Recommended: the contest page shows
@@ -211,37 +216,55 @@ Two more vectors from Derek (2026-10-12). Both narrow *what a league can run*, w
 narrows *how big* it can run. Both reuse the same plan level, the same unlocks and the same
 entitlements function as the rest of this document.
 
-### Vector: number of sports
+### Vector: number of sports leagues
 
-A free league plays **one sport**. Paid tiers play **every sport** that is built. Golf is
-the only built sport today; the next candidates are tennis, March Madness and NFL pick'em
-(`plans/next-sport-adoption.md`, `plans/pickem-pools.md`).
+Revised 2026-10-22 (Derek): the count is of **sports leagues** (PGA Tour, LPGA Tour, NFL, NBA,
+Premier League), not sports, and it rises with the plan: for example Free 1, Pro 3, Premium
+10, Platinum all. Men's and women's leagues are separate leagues already, so the PGA Tour and
+the LPGA Tour are two.
 
-- **How a league "has" a sport**: the league picks its sports in league settings. A free
-  league picks one; creating a contest on an event of another sport shows that sport locked
-  with an upgrade note.
-- **Per-contest unlock**: a free league can pay once to run one contest in a second sport,
-  the same way it can buy a bigger cap. This matters most for March Madness: it is the
-  biggest office-pool event of the year, and a golf league that hits a locked wall there
-  instead of a small one-off price is the league most likely to leave.
+- **How a league "has" a sports league**: the league picks its sports leagues in league
+  settings, up to its plan's number. Creating a contest on an event of another sports league
+  shows it locked with an upgrade note to the commissioner.
+- **Per-contest unlock**: a league can pay once to run one contest in a sports league past its
+  number, the same way it can buy a bigger cap. This matters most for March Madness: the
+  biggest office-pool event of the year, and a golf league that hits a locked wall there instead
+  of a small one-off price is the league most likely to leave.
 - **Market note**: in the sites we looked at, sport is not what is charged for. RunYourPool
-  prices per entry across 11 sports. Charging by sport count is a differentiator but also a
-  risk: it puts a wall in front of growth. The per-contest unlock is what softens it.
+  prices per entry across 11 sports. Charging by count is a differentiator but also a risk: it
+  puts a wall in front of growth. The per-contest unlock is what softens it.
 
-#### Open questions: number of sports
+#### Open questions: number of sports leagues
 
-1. **One sport free, all sports on every paid tier?** Recommended: yes. A middle step (say
-   three sports on Premium) adds a number to explain for little gain while we have few
-   sports.
-2. **Can a free league switch its one sport?** Recommended: yes, between contests (no open
-   contest on the old sport); its past results stay visible under the usual history rules.
-3. **What counts as "in use"?** Recommended: the league's chosen sports in settings, not the
-   sports of its past contests, so history never counts against a league.
-4. **Offer a per-contest sport unlock?** Recommended: yes, priced like the cap bands (around
-   $10), so a free league can run its one March Madness pool.
-5. **Does a new sport launch open to everyone first?** Recommended: yes, every league gets a
-   new sport free for its first season, then it follows the plan. Early users are the
-   feedback loop.
+1. **Numbers per plan**: Free 1, Pro 3, Premium 10, Platinum all? Derek's examples.
+   Recommended: start there, in app settings.
+2. **Can a league swap one of its sports leagues?** Recommended: yes, between contests (no open
+   contest on the one being dropped); its past results stay visible under the usual history
+   rules.
+3. **What counts as "in use"?** Recommended: the league's chosen sports leagues in settings,
+   not those of its past contests, so history never counts against a league.
+4. **Offer a per-contest sports league unlock?** Recommended: yes, priced like the cap bands
+   (around $10), so a free golf league can run its one March Madness pool.
+5. **Does a new sports league launch open to everyone first?** Recommended: yes, every league
+   gets a new sports league free for its first season, then it follows the plan. Early users are
+   the feedback loop.
+
+### Vector: league size
+
+New 2026-10-22 (Derek): upper plans unlock larger leagues, counted as **active squads** (for
+example Free 20, Pro 50, Premium 100, Platinum unlimited). This sits beside the entry cap; it
+does not replace it (*Where the cap goes*).
+
+#### Open questions: league size
+
+1. **Count active squads, not members?** Recommended: yes. Co-owners share a squad, so
+   counting squads matches how leagues think and never punishes a shared team.
+   Inactive squads don't count, so a commissioner can make room without deleting anyone.
+2. **What happens at the limit?** Recommended: invites still send, because invites are how
+   leagues grow. Accepting one past the limit shows "This league is full" and tells the
+   commissioner how to upgrade; nobody already in the league is affected.
+3. **Same numbers as the entry cap?** Recommended: yes for now (20, 50, 100, unlimited), so
+   there is one set of numbers to explain.
 
 ### Vector: pool style as a product line
 
@@ -262,8 +285,8 @@ its own light branding, and Platinum gets all of them. Three styles:
 - **Conflict with the earlier unlock**: budget selection was a $5 per-contest unlock above. In
   this model budget belongs to DFS-style, so an office pool league buying budget for one
   contest is the same per-contest unlock, just named as "a DFS-style contest".
-- **Pricing shape**: Free gets one style (office pool by default), Premium the full selection
-  types within its one style, Pro two styles, Platinum all.
+- **Pricing shape**: Free gets one style (office pool by default), Pro the full selection
+  types within its one style, Premium two styles, Platinum all.
 
 #### Open questions: pool styles
 
@@ -281,23 +304,42 @@ its own light branding, and Platinum gets all of them. Three styles:
 6. **Does a member see the style?** Recommended: only through the look; no style label or
    plan badge for members.
 
-## Features being built for paid plans
+## The levers
 
-Derek (2026-10-22): these features are built so there is something worth upgrading for. Each
-one tags its views, tiles or emails with a plan-agnostic **service class** (Essential, A, B, C,
-D); this plan maps classes to plans when it is built (Essential every league; A free and up; B
-the first paid level, Pro; C the second, Premium; D Platinum). Derek's ordering (2026-10-22) is
-Pro, then Premium, then Platinum, so the packaging table's column order (Premium before Pro)
-needs swapping when this plan is next revised. Nothing is gated yet.
+Derek (2026-10-22): plans differ along several levers at once, and the levers do most of the
+work. A feature does not need a different version on every plan.
+
+| Lever | Kind | Where it is checked |
+|---|---|---|
+| Entries per contest | Number | Adding an entry (*Where the cap goes*) |
+| Sports leagues the league plays | Number | League settings and Create contest (*Number of sports leagues*) |
+| League size (active squads) | Number | Accepting an invite (*League size*) |
+| Pool styles | Number, plus which | League settings and Create contest (*Pool style*) |
+| Selection types | Set | Create contest (*Enablement*) |
+| Features | Feature classes | Each feature's routes, tiles or emails |
+
+The numbers live in an app settings group, one row per plan, so they change without a deploy.
+All levers go through the one entitlements function (*How it fits the current system*).
+
+### Features being built for paid plans
+
+These features are built so there is something worth upgrading for. Each one tags its views,
+tiles or emails with a plan-agnostic **service class** (Essential every league, A free and up,
+B from Pro, C from Premium, D Platinum), and uses only as many classes as it naturally needs;
+two (free and paid) is often enough. This plan maps each class to the first
+plan that gets it. Nothing is gated yet.
 
 | Feature | Ticket | Classes | Documented in |
 |---|---|---|---|
-| Sports league cups (FedEx-style points race per sports league) | #841 | B (Pro); race chart, projected points, custom points tables D | `plans/season-cups.md` §9 |
-| League championship (calendar-year standings, trophy, medal tiles, finish matrix) | #863 | C (Premium) | `plans/season-cups.md` §9 |
-| League history (past years, drill to past contests, all-time summary) | #837 | Past years in their feature's class or higher; all-time summary D | `plans/league-history.md` §5 |
-| Email notifications | #845 | Essential to D per email | `plans/email-notifications.md`, *Class* |
+| Sports league cups (FedEx-style points race per sports league) | #841 | B (paid, from Pro): every cup view | `plans/season-cups.md` §9 |
+| League championship (calendar-year standings, trophy, medal tiles, finish matrix) | #863 | B (paid, from Pro): every championship view | `plans/season-cups.md` §9 |
+| League history (past years, drill to past contests, all-time summary) | #837 | Contest results Essential; past years follow the championship's and cups' class; all-time summary D | `plans/league-history.md` §5 |
+| Email notifications | #845 | Per email | `plans/email-notifications.md`, *Class* |
 
-## Premium features worth paying for
+Pro and Premium leagues see the same cups and championship; Premium's bigger numbers on the
+levers (more entries, more sports leagues, more squads) are what make it worth more.
+
+## Paid features worth paying for
 
 Grouped by area, with why each is worth money. Engagement features that bring people back
 (chat, trash talk, live leaderboard) stay free: they feed growth.
@@ -323,7 +365,7 @@ is mostly reading and aggregating data we keep, not new data capture.
    last week's winner would read as a bug.
 2. **What is a season?** Recommended: the calendar year of the event's start.
 3. **How do locked pages behave?** Recommended: the History tab is shown to every league; on
-   a free league it lists past seasons by name with a short "Premium shows past seasons"
+   a free league it lists past seasons by name with a short "Pro shows past seasons"
    note instead of the results.
 4. **Who sees the upgrade note?** Recommended: everyone sees that history is locked, but only
    the commissioner sees how to unlock it.
@@ -337,7 +379,7 @@ is mostly reading and aggregating data we keep, not new data capture.
   otherwise nags by text. Competitors give a basic reminder away, so the split above keeps a
   one-day reminder free.
 - **Contest opened**: tells the league a new contest is ready for picks.
-- **End-of-day standings** during a live event (Derek's Platinum idea; Pro above): who leads,
+- **End-of-day standings** during a live event (Derek's Platinum idea; Premium above): who leads,
   who moved, your team's position.
 - **Final results**: winner and full standings when the contest settles.
 - **Commissioner announcement**: a message to the whole league from the commissioner.
@@ -366,7 +408,7 @@ is mostly reading and aggregating data we keep, not new data capture.
 #### Open questions: scale and formats
 
 1. **How does the Create contest page show a locked selection type?** Recommended: the
-   format card is shown with a lock and "Budget is a Premium format", and can't be picked;
+   format card is shown with a lock and "Budget is a Pro format", and can't be picked;
    the commissioner sees how to unlock it.
 2. **Which selection types are free?** Recommended: tiered only, as you said.
 3. **Is season-long standings a top-tier feature?** Recommended: yes, it pairs with history.
@@ -384,7 +426,7 @@ is mostly reading and aggregating data we keep, not new data capture.
 #### Open questions: commissioner convenience
 
 1. **Is paid tracking in scope?** It records payments made elsewhere and takes no money.
-   Recommended: yes, as a Premium feature.
+   Recommended: yes, as a Pro feature.
 2. **Who sees who has paid?** Recommended: commissioner only.
 3. **How many co-commissioners per tier?** Recommended: one on free, unlimited on paid tiers.
 
@@ -397,7 +439,7 @@ is mostly reading and aggregating data we keep, not new data capture.
 
 #### Open questions: live event extras
 
-1. **Pick popularity: which tier?** Recommended: Pro and above, shown only after picks are
+1. **Pick popularity: which tier?** Recommended: Premium and above, shown only after picks are
    revealed.
 2. **Projected finish worth building?** Recommended: later; the live leaderboard covers most
    of it.

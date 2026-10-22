@@ -370,42 +370,33 @@ field sizes, hard to read on a phone; not used).
 ## 9. Service classes
 
 Derek (2026-10-22): cups, the championship, history and notifications are built to be paid
-features. Each view and tile below carries a **service class**, the same plan-agnostic letters
-the email catalog uses (`plans/email-notifications.md`, *Class*): **Essential** for every league
-always; **A** the free plan and up; **B** the first paid level (Pro); **C** the second (Premium);
-**D** the top level (Platinum). `plans/monetization-strategy.md` maps classes to plans. Nothing is
-gated now: every class is built and shown to every league until the entitlements function
-exists, and then each check is one call per route or tile.
+features, but a feature uses only as many classes as it naturally needs, and the upper plans
+differ mainly through the other levers (entries per contest, sports leagues, league size;
+`plans/monetization-strategy.md`, *The levers*). The letters are the email catalog's
+(`plans/email-notifications.md`, *Class*): Essential every league, A free and up, B from Pro,
+C from Premium, D Platinum.
 
-| Feature or view | Class | Why |
+Cups and the championship need two:
+
+| Class | What | Why |
 |---|---|---|
-| Contest results, places and the contest's own podium (exists today) | A | The core loop stays free |
-| **League championship (#863)**: trophy and podium presented on 1 January, finish matrix | C | Derek: the league-wide running standings and trophy are Premium |
-| Championship medal tiles: most 1sts, 2nds, 3rds | C | Part of the championship page |
-| Championship medal tiles: most podiums, contests played, top tens | C | Cheap extras; one page, one class keeps it simple |
-| Championship trophies on the team trophy shelf | C | Comes with the championship |
-| Cup name league setting | C | Names the championship |
-| **Sports league cups (#841)**: Cups page, Cup leaderboard with movement, counted contests, squad breakdown | B | Derek: the FedEx-style sports league cup is Pro |
-| Contest cup weights (x1.5, x2, not counted) | B | Only matter once cups exist |
-| Crowning, the cup podium and cup trophies on the shelf | B | Part of the cup |
-| League home cups card | B | Shows the cups |
-| Points-race chart on the Cup page | D | An extra view, reserved for the top level |
-| Projected points ("if it ended now") | D | The most engaging live extra |
-| Points tables other than `STANDARD` (top ten, field beaten, custom) | D | Commissioner customisation |
-| Past years and the all-time summary | History (#837, `plans/league-history.md` §5) | history's own classes; a past-year view is never in a lower class than its feature |
+| A (free) | Contest results, places and each contest's own podium (exists today) | The core loop stays free |
+| B (from Pro) | Everything in this plan: sports league cups (Cups page, Cup leaderboard, race chart, movement, counted contests, squad breakdown, projected points, crowning, podium), the league championship (trophy and podium, medal tiles, finish matrix), cup and championship trophies on the trophy shelf, contest cup weights, the points table and cup name settings, the league home cups card | Derek: no real difference between Pro and Premium here; Premium is worth more through its bigger levers |
 
-How a league below the class sees it (recommendation, matching the history plan's locked-page
-idea in the monetization plan): the menu item stays, and the page shows its name and this
-season's leader with a short "Pro shows the full cup" note. Only the commissioner sees how to
-upgrade. Data is still stored for every league (cups and `LeagueYearFinish` rows are written
-regardless), so upgrading shows the whole season at once.
+Past years of cups and the championship take the same class as the feature (history,
+`plans/league-history.md` §5). The all-time summary is history's and D.
+
+How a free league sees it (recommendation, matching the history plan's locked-page idea): the
+Cups menu item stays, and the page shows the cup's name and this season's leader with a short
+"Pro shows the full cup" note. Only the commissioner sees how to upgrade. Data is still stored
+for every league (cups and `LeagueYearFinish` rows are written regardless), so upgrading shows
+the whole season at once.
 
 Questions:
 
 - **Q9.1** One shared `ServiceClass` enum (`ESSENTIAL`, `A`, `B`, `C`, `D`) in
   `packages/shared/domain`, used by both emails and views, instead of a notification-only class?
   Recommendation: yes. Monetization then maps one enum to plans in one place.
-- **Q9.2** The email catalog puts trophy, cup and season-standings emails in D. With cups now
-  Pro (B) and the championship Premium (C), should those emails follow their features (cup
-  emails B, championship emails C)? Recommendation: yes, an email's class matches the feature it reports
-  on. That change belongs to the email catalog.
+- **Q9.2** The email catalog puts trophy, cup and season-standings emails in D. Should they take
+  their features' class (B)? Recommendation: yes, an email's class matches the feature it
+  reports on. That change belongs to the email catalog.
