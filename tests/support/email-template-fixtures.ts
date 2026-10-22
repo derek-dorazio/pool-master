@@ -52,6 +52,15 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
       { entryName: 'Entry 2', teamName: 'Casey\'s Crew' },
     ],
   },
+  CONTEST_ENTRY_REMINDER: {
+    userName: 'Morgan Member',
+    leagueName: 'Office League',
+    contestName: 'Masters Pick 6',
+    eventName: 'The Masters',
+    closesAt: new Date('2026-04-09T11:40:00.000Z'),
+    hasDraft: true,
+    contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
+  },
   PASSWORD_RESET: {
     firstName: 'Morgan',
     username: 'morgan',

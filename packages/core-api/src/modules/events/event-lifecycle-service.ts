@@ -38,6 +38,8 @@ import {
 import { ContestCutoffKind, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
 import { hasSportEventStarted } from './operational-timing';
 import {
+  buildContestUrl,
+  formatUserName,
   type ContestStartedEntrySummary,
   type EmailService,
 } from '../email';
@@ -364,20 +366,4 @@ export class EventLifecycleService {
       }
     }
   }
-}
-
-function formatUserName(user: User): string {
-  const fullName = [user.firstName, user.lastName]
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join(' ');
-  return fullName || user.username || user.email;
-}
-
-function buildContestUrl(
-  appBaseUrl: string,
-  leagueCode: string,
-  contestId: string,
-): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}`;
 }

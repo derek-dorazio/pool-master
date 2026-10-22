@@ -482,7 +482,7 @@ Steps on the same line can run in parallel:
 | Step | Slices | Why here |
 |---|---|---|
 | 1 | SES 1 and SES 2 | Terraform and code don't touch each other |
-| 2 | SES 3 and Catalog 1 | The outbox, and the scheduler's "notifications due" step with the offsets and buffer settings, are separate code |
+| 2 | SES 3 and Catalog 1 | The outbox, and the scheduler's "notifications due" step with the reminder offsets and the entry reminders, are separate code |
 | 3 | SES 4 and SES 5 | Bounce handling and unsubscribe must exist before email goes to many people |
 | 4 | Catalog 2, then 3, 4, 5, 6 | Each new email is a registry entry plus a trigger; they all reuse the steps above |
 

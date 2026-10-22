@@ -340,6 +340,7 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
     findById: one(),
     findByLeague: many(),
     findBySportEvent: many(),
+    findByStatuses: many(),
     create: echoCreate('contest'),
     update: echoUpdate(),
     replaceSportEvents: nothing(),

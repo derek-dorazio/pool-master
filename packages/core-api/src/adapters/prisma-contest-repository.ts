@@ -67,6 +67,15 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
+  async findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]> {
+    const rows = await this.prisma.contest.findMany({
+      where: { status: { in: [...statuses] } },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: CONTEST_INCLUDE,
+    });
+    return rows.map(mapToContest);
+  }
+
   async create(contest: ContestCreate): Promise<Contest> {
     const row = await this.prisma.contest.create({
       data: {

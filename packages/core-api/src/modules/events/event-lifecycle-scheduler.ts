@@ -14,6 +14,10 @@
  * A DRAFT event is never touched: only an admin's release moves it (#431). This
  * scheduler's job is the two status writes below, and, while an event is in progress, starting
  * the contests whose cutoff comes after the event's start (a second-chance bracket, #721).
+ *
+ * Each sweep ends with the "notifications due" step (#845): the emails that fire on the clock
+ * rather than on an action, such as entry reminders, are queued once their time has come. The
+ * outbox's idempotency key keeps a second sweep, or a second server task, from sending one twice.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -23,16 +27,38 @@ import type { EventLifecycleService } from './event-lifecycle-service';
 
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 
+/** The emails that come due on the clock (#845): each sweep asks them to queue what is due. */
+export interface DueNotifications {
+  queueDue(now: Date): Promise<void>;
+}
+
+export interface EventLifecycleSchedulerOptions {
+  sportEvents: Pick<SportEventRepository, 'findAutoLifecycleCandidates'>;
+  rounds: Pick<SportEventRoundRepository, 'findBySportEvents'>;
+  eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff'>;
+  /** The "notifications due" step; omitted, a sweep only moves events and contests. */
+  notificationsDue?: DueNotifications;
+  logger?: FastifyBaseLogger;
+  now?: () => Date;
+}
+
 export class EventLifecycleScheduler {
   private timer?: ReturnType<typeof setInterval>;
+  private readonly sportEvents: EventLifecycleSchedulerOptions['sportEvents'];
+  private readonly rounds: EventLifecycleSchedulerOptions['rounds'];
+  private readonly eventLifecycleService: EventLifecycleSchedulerOptions['eventLifecycleService'];
+  private readonly notificationsDue?: DueNotifications;
+  private readonly logger?: FastifyBaseLogger;
+  private readonly now: () => Date;
 
-  constructor(
-    private readonly sportEvents: Pick<SportEventRepository, 'findAutoLifecycleCandidates'>,
-    private readonly rounds: Pick<SportEventRoundRepository, 'findBySportEvents'>,
-    private readonly eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff'>,
-    private readonly logger?: FastifyBaseLogger,
-    private readonly now: () => Date = () => new Date(),
-  ) {}
+  constructor(options: EventLifecycleSchedulerOptions) {
+    this.sportEvents = options.sportEvents;
+    this.rounds = options.rounds;
+    this.eventLifecycleService = options.eventLifecycleService;
+    this.notificationsDue = options.notificationsDue;
+    this.logger = options.logger;
+    this.now = options.now ?? (() => new Date());
+  }
 
   start(): void {
     if (this.timer) {
@@ -67,6 +93,15 @@ export class EventLifecycleScheduler {
           error: error instanceof Error ? error.message : String(error),
         }, 'Event lifecycle scheduler failed to apply a due transition');
       }
+    }
+
+    // After the transitions, so a contest that just went live is not reminded about.
+    try {
+      await this.notificationsDue?.queueDue(now);
+    } catch (error) {
+      this.logger?.error({
+        error: error instanceof Error ? error.message : String(error),
+      }, 'Event lifecycle scheduler failed to queue the notifications due');
     }
   }
 

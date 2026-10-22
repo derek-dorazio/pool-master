@@ -98,6 +98,8 @@ import {
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
+  buildEntryUrl,
+  formatUserName,
   type ContestEntryCompletedTierSelection,
   type EmailService,
 } from '../email';
@@ -142,13 +144,6 @@ interface ContestEntryReceiptData {
       };
     };
   }>;
-}
-
-interface EmailRecipientUser {
-  email: string;
-  firstName: string;
-  lastName: string;
-  username: string;
 }
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
@@ -1546,23 +1541,6 @@ function buildEntryTierSelections(
     tierName,
     participantNames,
   }));
-}
-
-function formatUserName(user: EmailRecipientUser): string {
-  const fullName = [user.firstName, user.lastName]
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join(' ');
-  return fullName || user.username || user.email;
-}
-
-function buildEntryUrl(
-  appBaseUrl: string,
-  leagueCode: string,
-  contestId: string,
-  entryId: string,
-): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}/entries/${encodeURIComponent(entryId)}`;
 }
 
 /** The entry with its event statuses in the contest's event order (#713). */

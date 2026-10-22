@@ -143,6 +143,8 @@ holds:
 - `sendRatePerSecond` ("Emails a second"): the most emails each core-api task sends a second,
   10 by default. Production runs two tasks; keep the total within the SES account's rate
   (14 a second when production access is granted).
+- `entryReminderHours` ("Entry reminders"): how many hours before a contest's picks close each
+  entry reminder goes, `[48, 24, 3]` by default, one to five whole numbers from 1 to 168.
 
 Through SES, an address at a domain reserved by RFC 2606 and RFC 6761 (`.invalid`, `.test`,
 `.example`, `.localhost`, `example.com`, `example.net`, `example.org`) is always skipped: no mail
@@ -256,6 +258,18 @@ Contest started summary emails are queued when a sport event moves to `IN_PROGRE
 admin's transition, or the lifecycle scheduler) and first moves its contests from `OPEN` to
 `ACTIVE`. They go to the league's commissioners and the team members of each submitted entry,
 once each. An already-active contest is not told again.
+
+Entry reminders ("Picks close soon", #845) are the first email sent on the clock rather than
+on an action. Each lifecycle scheduler sweep (every 5 minutes) ends with a "notifications due"
+step, which queues the reminder whose time has come, at the `entryReminderHours` offsets before
+each event's cutoff (the event's start, a second-chance bracket's starting round). While a
+contest takes entries, every active league member with nothing submitted for the event is
+reminded; once it is live (week 7 of a pick'em season), only the owners of entries whose week is
+still a draft. Everyone gets a reminder at the same moment, one email per person however many
+squads they own. Only the latest reminder whose time has passed is sent, and none more than an
+hour late, so a contest opened after a reminder's time skips it. The idempotency key (contest,
+event, offset, person) keeps a second sweep or task from sending one twice. Tiered, budget,
+pick'em and bracket contests are reminded today; survivor, random draw and squares follow.
 
 If the outbox cannot record a welcome, a receipt or a contest-started email, the action that
 sends it still succeeds and PoolMaster logs the template and ids.

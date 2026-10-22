@@ -40,7 +40,13 @@ export const EMAIL_TEMPLATE_LABELS: ReadonlyArray<readonly [keyof EmailConfig['t
   ['LEAGUE_JOIN_SUCCESS', 'League welcome'],
   ['CONTEST_ENTRY_COMPLETED', 'Entry confirmation'],
   ['CONTEST_STARTED_SUMMARY', 'Contest started'],
+  ['CONTEST_ENTRY_REMINDER', 'Entry reminders'],
 ];
+
+/** The entry reminder offsets as a reader sees them, e.g. "48, 24, 3 hours before picks close". */
+function formatReminderHours(hours: readonly number[]): string {
+  return `${hours.join(', ')} hours before picks close`;
+}
 
 export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
   const off = EMAIL_TEMPLATE_LABELS.filter(([key]) => !config.templates[key]).map(([, label]) => label);
@@ -53,6 +59,7 @@ export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
       value: config.allowedRecipients.length > 0 ? config.allowedRecipients.join(', ') : 'Everyone',
     },
     { id: 'sendRatePerSecond', label: 'Emails a second', value: String(config.sendRatePerSecond) },
+    { id: 'entryReminderHours', label: 'Entry reminders', value: formatReminderHours(config.entryReminderHours) },
   ];
 }
 

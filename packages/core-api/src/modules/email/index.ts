@@ -5,6 +5,7 @@ export * from './email-settings';
 export * from './email-service';
 export * from './email-sender';
 export * from './wiring';
+export * from './email-content';
 export * from './email-delivery-events';
 export * from './sns-message-verifier';
 export * from './email-events-routes';

@@ -184,6 +184,7 @@ enum PrismaEmailTemplateKey {
   CONTEST_STARTED_SUMMARY
   PASSWORD_RESET
   PASSWORD_CHANGED
+  CONTEST_ENTRY_REMINDER
 }
 
 enum PrismaEmailMessageStatus {

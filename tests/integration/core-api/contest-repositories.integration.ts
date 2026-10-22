@@ -23,6 +23,8 @@ import { mockFn } from '../../support/mock-fn';
 import { expectDefined } from '../../support/expect-defined';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
+import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
+import { createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -192,6 +194,23 @@ describe('ContestRepository', () => {
     });
 
     expect(pending.map((contest) => contest.id)).toEqual([open.id, live.id]);
+  });
+
+  it('finds every league\'s contests in the given statuses, oldest first, with their events', async () => {
+    const first = await createLeagueAndEvent();
+    const second = await createLeagueAndEvent();
+    const open = await createContest(first.league.id, first.event.id, 'Open', ContestStatus.OPEN);
+    await createContest(first.league.id, first.event.id, 'Draft', ContestStatus.DRAFT);
+    const live = await createContest(second.league.id, second.event.id, 'Live', ContestStatus.ACTIVE);
+    await createContest(second.league.id, second.event.id, 'Completed', ContestStatus.COMPLETED);
+
+    const found = await repos().contests.findByStatuses([ContestStatus.OPEN, ContestStatus.ACTIVE]);
+
+    const ours = found.filter((contest) => [first.league.id, second.league.id].includes(contest.leagueId));
+    expect(ours.map((contest) => [contest.id, contest.sportEventIds])).toEqual([
+      [open.id, [first.event.id]],
+      [live.id, [second.event.id]],
+    ]);
   });
 
   it('transitions a contest only from the given statuses: the second run changes nothing and says so', async () => {
@@ -854,5 +873,45 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
       sportEventId: event.id, toStatus: 'IN_PROGRESS', actor: { type: 'SYSTEM' },
     });
     expect(send).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('Entry reminders on the Prisma adapters (#845)', () => {
+  it('reminds the league members with nothing submitted for the event, each once, and skips the one who submitted', async () => {
+    const prisma = getPrisma();
+    const { owner, league, squads, event } = await createLeagueAndEvent();
+    const open = await createContest(league.id, event.id, 'Reminded Pool', ContestStatus.OPEN);
+    const [drafting, submitted, removed] = await Promise.all([
+      createTestUser({ displayName: 'Drafting Member' }),
+      createTestUser({ displayName: 'Submitted Member' }),
+      createTestUser({ displayName: 'Removed Member' }),
+    ]);
+    for (const [user, squad, status] of [[drafting, squads[0], 'ACTIVE'], [submitted, squads[1], 'ACTIVE'], [removed, squads[0], 'INACTIVE']] as const) {
+      await prisma.leagueMembership.create({
+        data: { leagueId: league.id, userId: user.user.id, role: 'MEMBER', status, joinedAt: new Date() },
+      });
+      await prisma.squadMembership.create({
+        data: { squadId: squad.id, leagueId: league.id, userId: user.user.id, status: 'ACTIVE', joinedAt: new Date() },
+      });
+    }
+    await createEntry(open.id, squads[0].id, 1, 'Alpha Entry');
+    const bravoEntry = await createEntry(open.id, squads[1].id, 1, 'Bravo Entry');
+    await repos().entries.setEventStatus(bravoEntry.id, event.id, 'SUBMITTED', new Date());
+    const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
+    const reminders = createEntryReminders(prisma, {
+      email: emailServiceOver({ providerName: 'smtp', send }),
+      readConfig: () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
+      appBaseUrl: 'https://app.example.test',
+    });
+    const dayBefore = new Date(event.startDate.getTime() - 24 * 60 * 60_000 + 60_000);
+
+    await reminders.queueDue(dayBefore);
+    await reminders.queueDue(dayBefore);
+    await deliverQueuedEmail();
+
+    // Other suites' contests may be due too; only this league's emails are this test's.
+    const ours = send.mock.calls.map(([message]) => message).filter((message) => message.from.name === league.name);
+    expect(ours.map((message) => message.to).sort()).toEqual([owner.user.email, drafting.user.email].sort());
+    expect(ours.every((message) => message.subject === 'Picks close soon: Reminded Pool')).toBe(true);
   });
 });
