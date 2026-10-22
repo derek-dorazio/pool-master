@@ -13,6 +13,7 @@ import { FASTIFY_AJV_OPTIONS } from './plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from './plugins/serializer-cache';
 import { globalErrorHandler } from './core/error-handler';
 import { createFastifyLoggerOptions } from './core/logger';
+import { readTrustProxy } from './core/config';
 
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
@@ -73,6 +74,7 @@ import {
 export function buildApp() {
   const app = Fastify({
     logger: createFastifyLoggerOptions('core-api'),
+    trustProxy: readTrustProxy(),
     ajv: FASTIFY_AJV_OPTIONS,
     schemaController: FASTIFY_SCHEMA_CONTROLLER,
   });

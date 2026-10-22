@@ -24,6 +24,8 @@
  * are deliberately avoided.
  */
 
+import { BlockList, isIP } from 'node:net';
+
 export class JwtSecretMissingError extends Error {
   constructor() {
     super(
@@ -131,4 +133,57 @@ export function readAppEnv(
     );
   }
   return value;
+}
+
+// ---------------------------------------------------------------------------
+// Proxies in front of the app (#856)
+// ---------------------------------------------------------------------------
+
+/** Fastify's `trustProxy` as a function: whether the address `hop` steps back is a trusted proxy. */
+export type TrustProxyFn = (address: string, hop: number) => boolean;
+
+/**
+ * Which proxies in front of this process to believe about the caller, passed to Fastify as
+ * `trustProxy`, so `request.ip` (which the per-address rate limits key on) is the caller rather
+ * than a proxy.
+ *
+ * `TRUSTED_PROXY_HOPS` is how many proxies add an `X-Forwarded-For` entry, and
+ * `TRUSTED_PROXY_NETWORK` is the CIDR the nearest one connects from. Deployed, Terraform sets
+ * 2 (CloudFront, then the ALB) and the VPC's CIDR. A connection from outside that network trusts
+ * no header at all, so a caller who reaches the task some other way cannot choose their address.
+ * The hop behind the ALB is believed because the ALB security group admits CloudFront alone.
+ *
+ * Both unset means no proxy and no forwarded header is trusted, which is right for local runs
+ * and tests. One without the other, or a malformed value, throws at startup.
+ */
+export function readTrustProxy(
+  env: {
+    readonly TRUSTED_PROXY_HOPS?: string;
+    readonly TRUSTED_PROXY_NETWORK?: string;
+    readonly [name: string]: string | undefined;
+  } = process.env,
+): TrustProxyFn | false {
+  const rawHops = env.TRUSTED_PROXY_HOPS?.trim();
+  const rawNetwork = env.TRUSTED_PROXY_NETWORK?.trim();
+  if (!rawHops && !rawNetwork) return false;
+  if (!rawHops || !rawNetwork) {
+    throw new Error('TRUSTED_PROXY_HOPS and TRUSTED_PROXY_NETWORK must be set together.');
+  }
+  const hops = Number(rawHops);
+  if (!Number.isInteger(hops) || hops < 1 || hops > 5) {
+    throw new Error(`TRUSTED_PROXY_HOPS "${rawHops}" must be a whole number from 1 to 5.`);
+  }
+  const [networkAddress = '', prefixText = ''] = rawNetwork.split('/');
+  const prefix = prefixText === '' ? Number.NaN : Number(prefixText);
+  if (isIP(networkAddress) !== 4 || !Number.isInteger(prefix) || prefix < 0 || prefix > 32) {
+    throw new Error(`TRUSTED_PROXY_NETWORK "${rawNetwork}" must be an IPv4 CIDR such as 10.0.0.0/16.`);
+  }
+  const nearestProxies = new BlockList();
+  nearestProxies.addSubnet(networkAddress, prefix, 'ipv4');
+  return (address, hop) => {
+    if (hop >= hops) return false;
+    if (hop > 0) return true;
+    const ipv4 = address.startsWith('::ffff:') ? address.slice('::ffff:'.length) : address;
+    return isIP(ipv4) === 4 && nearestProxies.check(ipv4, 'ipv4');
+  };
 }
