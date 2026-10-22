@@ -425,6 +425,15 @@ None of these is built now; #853 (deferred) tracks revisiting them.
   email once, now waiting for the sender to drain rather than assuming the send was inline.
   The sender is the real one; no test-mode path.
 - **QA**: smoke users stay on `@e2e.invalid`, which the recipient guard skips, so smoke never sends.
+- **Manual testing on QA without emailing real people** (Derek 2026-10-22): set
+  `EMAIL_CONFIG.allowedRecipients` to your own address(es), and give manual test users
+  plus-addresses of your inbox (`derek+alice@gmail.com`, `derek+bob@gmail.com`). Gmail delivers them
+  all to you, through real SES, so DKIM, links and layout are tested for real; every other address is
+  skipped and logged. Bounces and complaints are tested by sending to the SES mailbox simulator
+  (`bounce@simulator.amazonses.com`, `complaint@simulator.amazonses.com`,
+  `success@simulator.amazonses.com`), which is allowed in the list and hurts no reputation. A
+  hosted Mailpit for QA was considered and not chosen: it would bypass SES, the one thing QA must
+  prove.
 
 ## 10. Slices, and the order across both plans
 
