@@ -115,11 +115,15 @@ export class CupService {
     this.deps.logger?.debug({ action: 'cup.ensure', data: { ...key, cupId: cup.id } }, 'Ensured the cup a contest counts toward');
   }
 
-  /** The league's cups of one season, each with its standings and contests. */
+  /**
+   * The league's cups of one season, each with its standings and contests. A cup none of whose
+   * contests is listed (its only contest was moved to another season, or is still a draft) is left out.
+   */
   async listSeasonCups(leagueId: string, seasonYear: number): Promise<CupView[]> {
     const cups = await this.deps.cups.findByLeagueSeason(leagueId, seasonYear);
     const squads = await this.deps.squads.findByLeague(leagueId, true);
-    const views = await Promise.all(cups.map((cup) => this.buildCupView(cup, squads)));
+    const views = (await Promise.all(cups.map((cup) => this.buildCupView(cup, squads))))
+      .filter((view) => view.contests.length > 0);
     this.deps.logger?.debug({ action: 'cup.list', data: { leagueId, seasonYear, cupCount: views.length } }, 'Listed a season\'s cups');
     return views;
   }

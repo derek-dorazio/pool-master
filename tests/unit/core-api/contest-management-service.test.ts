@@ -1788,6 +1788,7 @@ describe('ContestManagementService — a contest of several events', () => {
     storedConfigJson?: { selectionType: typeof SelectionType.BUDGET_PICK; rosterSize: number; salaryCap: number; countedScores: number };
   } = {}) {
     const contestRepo = createContestRepo();
+    const cupsAsked: CupKey[] = [];
     if (options.contest) {
       (contestRepo.findById as jest.Mock).mockResolvedValue({
         id: 'contest-1',
@@ -1797,6 +1798,8 @@ describe('ContestManagementService — a contest of several events', () => {
         status: ContestStatus.DRAFT,
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
+        seasonYear: 2026,
+        cupWeight: CupWeight.NORMAL,
         createdAt: new Date('2026-04-07T12:00:00.000Z'),
         updatedAt: new Date('2026-04-07T12:00:00.000Z'),
         ...options.contest,
@@ -1822,12 +1825,12 @@ describe('ContestManagementService — a contest of several events', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: options.reader ?? multiEventReader(READER_EVENTS),
       now: () => CONTEST_MANAGEMENT_TEST_NOW,
-      cups: createCupKeeper(),
+      cups: createCupKeeper(cupsAsked),
     });
     jest.mocked(configurationRepo.findByTemplateEventSeries).mockResolvedValue([
       { id: 'config-1', contestId: 'contest-1', selectionType: SelectionType.TIERED, configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, maxEntriesPerSquad: 1, createdAt: new Date('2026-04-07T12:00:00.000Z'), updatedAt: new Date('2026-04-07T12:00:00.000Z') },
     ]);
-    return { service, contestRepo, configurationRepo };
+    return { service, contestRepo, configurationRepo, cupsAsked };
   }
 
   const tiered = (sportEventIds: string[]): CreateContestRequest => ({
@@ -1911,6 +1914,28 @@ describe('ContestManagementService — a contest of several events', () => {
     await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS]))
       .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LOCKED', statusCode: 409 });
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+  });
+
+  it('moves a draft swapped onto next year\'s edition into that season: its season year becomes 2027 and the 2027 cup is made', async () => {
+    const NEXT_MASTERS = '66666666-6666-4666-8666-666666666666';
+    const { service, contestRepo, cupsAsked } = build({
+      reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', eventYear: 2027 }]),
+      contest: { status: ContestStatus.DRAFT },
+    });
+
+    await service.setContestSportEvents('league-1', 'contest-1', [NEXT_MASTERS]);
+
+    expect(contestRepo.update).toHaveBeenCalledWith('contest-1', { seasonYear: 2027 });
+    expect(cupsAsked).toEqual([{ leagueId: 'league-1', seasonYear: 2027, sportLeagueId: PGA_TOUR_LEAGUE_ID }]);
+  });
+
+  it('keeps a contest whose events stay in the same year in its season, asking for no cup', async () => {
+    const { service, contestRepo, cupsAsked } = build({ contest: { status: ContestStatus.OPEN } });
+
+    await service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]);
+
+    expect(contestRepo.update).not.toHaveBeenCalled();
+    expect(cupsAsked).toEqual([]);
   });
 
   it('removes an event from a contest none of whose events has started', async () => {

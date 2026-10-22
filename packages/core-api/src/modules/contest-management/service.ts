@@ -559,10 +559,18 @@ export class ContestManagementService {
       await this.contestConfigurationRepo.update(configuration.id, { configJson });
     }
 
-    await this.contestRepo.replaceSportEvents(contestId, orderContestEvents(sportEvents));
+    const orderedIds = orderContestEvents(sportEvents);
+    await this.contestRepo.replaceSportEvents(contestId, orderedIds);
+    // A contest's season is its first event's year, so new events can move it to another cup.
+    const newFirst = sportEvents.find((sportEvent) => sportEvent.id === orderedIds[0]);
+    if (newFirst && newFirst.eventYear !== contest.seasonYear) {
+      await this.contestRepo.update(contestId, { seasonYear: newFirst.eventYear });
+      await this.cups.ensureCup({ leagueId, seasonYear: newFirst.eventYear, sportLeagueId: newFirst.sportLeagueId });
+      this.logger.info({ contestId, fromSeasonYear: contest.seasonYear, seasonYear: newFirst.eventYear }, 'contest management set sport events moved the contest to another season');
+    }
     this.logger.info({
       contestId,
-      sportEventIds: orderContestEvents(sportEvents),
+      sportEventIds: orderedIds,
       addedCount: added.length,
       removedCount: removed.length,
     }, 'contest management set sport events completed');

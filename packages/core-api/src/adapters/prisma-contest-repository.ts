@@ -118,6 +118,7 @@ export class PrismaContestRepository implements ContestRepository {
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
+        ...(updates.seasonYear !== undefined && { seasonYear: updates.seasonYear }),
       },
       include: CONTEST_INCLUDE,
     });

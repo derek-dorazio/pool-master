@@ -197,6 +197,19 @@ describe('CupService (#841)', () => {
     ]);
   });
 
+  it('leaves out of the season list a cup none of whose contests is listed, as when its only contest moved to another season, while the cup itself still opens', async () => {
+    const { cups, service, contest } = build();
+    await service.ensureCup(KEY);
+    await service.ensureCup({ ...KEY, sportLeagueId: NFL });
+    contest('masters', [['eagles', 1]]);
+    const emptyCupId = cups.cups.find((cup) => cup.sportLeagueId === NFL)?.id ?? '';
+
+    const listed = await service.listSeasonCups(LEAGUE, 2026);
+
+    expect(listed.map((view) => view.sportLeagueName)).toEqual(['PGA Tour']);
+    await expect(service.getCup(LEAGUE, emptyCupId)).resolves.toMatchObject({ contests: [] });
+  });
+
   it('refuses another league\'s cup with CUP_NOT_FOUND and another league\'s squad with SQUAD_NOT_FOUND', async () => {
     const { cups, service } = build();
     await service.ensureCup(KEY);
