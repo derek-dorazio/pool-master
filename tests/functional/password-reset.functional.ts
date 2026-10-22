@@ -7,7 +7,7 @@ import {
 import { ErrorEnvelopeSchema, SuccessResponseSchema } from '@poolmaster/shared/dto';
 import type { CapturedMail } from '../support/smtp-sink';
 import { buildRegisteredUser } from './builders';
-import { sentMailWithSubject } from './mail';
+import { awaitSentMailTo, sentMailWithSubject } from './mail';
 import {
   cleanupFunctionalData,
   createCookieSessionClient,
@@ -33,15 +33,6 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-async function waitForResetMail(address: string, count = 1): Promise<CapturedMail[]> {
-  const deadline = Date.now() + 10_000;
-  for (;;) {
-    const mail = await sentMailWithSubject(address, RESET_SUBJECT);
-    if (mail.length >= count || Date.now() > deadline) return mail;
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-}
-
 function resetTokenIn(mail: CapturedMail): string {
   const prefix = `${FUNCTIONAL_APP_BASE_URL}/reset-password#token=`;
   const start = mail.text.indexOf(prefix);
@@ -61,7 +52,7 @@ describe('SDK Functional: password recovery (#847)', () => {
     expect(requested.response.status).toBe(202);
     expect(SuccessResponseSchema.safeParse(requested.data).success).toBe(true);
 
-    const mail = expectDefined((await waitForResetMail(user.email))[0]);
+    const mail = expectDefined((await awaitSentMailTo(user.email, 1, RESET_SUBJECT))[0]);
     const confirmed = await confirmPasswordReset({
       client: getSdkClient(),
       body: { token: resetTokenIn(mail), newPassword: 'Recovered-Pass2', confirmNewPassword: 'Recovered-Pass2' },
@@ -101,14 +92,14 @@ describe('SDK Functional: password recovery (#847)', () => {
     expect(unknownAnswer.data).toEqual(knownAnswer.data);
     // The known account's email is the control: once it has arrived, the earlier unknown
     // request has long finished its single lookup.
-    expect(await waitForResetMail(known.email)).toHaveLength(1);
+    expect(await awaitSentMailTo(known.email, 1, RESET_SUBJECT)).toHaveLength(1);
     expect(await sentMailWithSubject(unknownEmail, RESET_SUBJECT)).toHaveLength(0);
   });
 
   it('refuses a used link with PASSWORD_RESET_LINK_INVALID in the error envelope', async () => {
     const user = await buildRegisteredUser();
     await requestPasswordReset({ client: getSdkClient(), body: { identifier: user.username } });
-    const token = resetTokenIn(expectDefined((await waitForResetMail(user.email))[0]));
+    const token = resetTokenIn(expectDefined((await awaitSentMailTo(user.email, 1, RESET_SUBJECT))[0]));
     await confirmPasswordReset({
       client: getSdkClient(),
       body: { token, newPassword: 'Recovered-Pass2', confirmNewPassword: 'Recovered-Pass2' },

@@ -64,10 +64,8 @@ import { createContestManagementService } from './modules/contest-management/wir
 import { scoringFamilyForSport } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
-  EmailService,
-  createMailDeliveryProvider,
+  createEmailOutbox,
   readApplicationBaseUrl,
-  readMailDeliveryConfig,
 } from './modules/email';
 
 export function buildApp() {
@@ -90,12 +88,11 @@ export function buildApp() {
     env: process.env,
     logger: app.log,
   });
-  // One email service for the whole app; EMAIL_CONFIG decides on every send whether it goes out.
-  const mailConfig = readMailDeliveryConfig(process.env);
-  const email = new EmailService({
-    transport: createMailDeliveryProvider(mailConfig, app.log),
+  // One email outbox for the whole app; EMAIL_CONFIG decides on every email whether it is queued.
+  const { email, sender: emailSender } = createEmailOutbox({
+    prisma,
     readConfig: () => appSettings.get(EMAIL_SETTINGS),
-    senderAddress: mailConfig.fromEmail,
+    env: process.env,
     logger: app.log,
   });
   const appBaseUrl = readApplicationBaseUrl(process.env);
@@ -241,12 +238,16 @@ export function buildApp() {
     // only provider-sync loops.
     eventLifecycleScheduler.start();
     app.log.info('Event lifecycle scheduler started');
+
+    // The email outbox's sender always runs: every email waits in the outbox for it.
+    emailSender.start();
   });
 
   app.addHook('onClose', async () => {
     appSettings.stop();
     ingestionScheduler.stop();
     eventLifecycleScheduler.stop();
+    emailSender.stop();
     await prisma.$disconnect();
   });
 

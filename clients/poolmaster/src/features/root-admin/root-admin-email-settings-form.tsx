@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { EmailConfigSchema, EmailRecipientPatternSchema } from '@poolmaster/shared/dto';
 import { updateSettingsGroup, type EmailConfig, type SettingsGroup } from '@/lib/api';
-import { Alert, Button, Checkbox, FormField, Textarea } from '@/features/shared/ui';
+import { Alert, Button, Checkbox, FormField, Input, Textarea } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { hasErrorCode, throwApiError, extractErrorMessage } from '@/lib/errors';
@@ -133,6 +133,20 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
         label="Only send to"
       >
         <Textarea data-testid="root-admin-email-settings-allowed-recipients" rows={4} {...form.register('allowedRecipients')} />
+      </FormField>
+      <FormField
+        error={form.formState.errors.sendRatePerSecond?.message}
+        helperText="The most emails each server sends a second, from 1 to 100. Keep the total for all servers within the SES sending rate."
+        label="Emails a second"
+      >
+        <Input
+          data-testid="root-admin-email-settings-send-rate"
+          inputMode="numeric"
+          max={100}
+          min={1}
+          type="number"
+          {...form.register('sendRatePerSecond', { valueAsNumber: true })}
+        />
       </FormField>
       {saveMutation.isError ? (
         <Alert

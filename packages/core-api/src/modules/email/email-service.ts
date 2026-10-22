@@ -1,22 +1,26 @@
 /**
  * The one way core-api sends a system email (#844): `emailService.send(templateKey, input)`.
  * It checks EMAIL_CONFIG and who may be emailed here, renders the template for the recipient,
- * picks the sender (the league's address for a league email, the app's otherwise) and hands
- * the email to the transport. Callers never render or call a transport themselves.
+ * picks the sender (the league's address for a league email, the app's otherwise) and records
+ * the email in the outbox, queued for the sender or skipped with the reason. Callers never
+ * render or call a transport themselves.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
+import type { EmailMessageRepository } from '@poolmaster/shared/db';
 import {
+  EmailMessageStatus,
   EmailSkipReason,
-  type MailAddress,
-  type MailDeliveryProvider,
-  type MailDeliveryResult,
-} from './mail-delivery';
+  EmailTemplateKey,
+  type EmailMessage,
+} from '@poolmaster/shared/domain';
+import type { MailAddress, MailDeliveryProviderName } from './mail-delivery';
 import {
   hasSettingsSwitch,
   PLATFORM_SENDER_NAME,
   renderSystemEmailTemplate,
+  type EmailTemplateScope,
   type EmailTemplateScopeByKey,
   type SystemEmailTemplateDataByKey,
   type SystemEmailTemplateKey,
@@ -25,6 +29,8 @@ import {
 /** The person an email goes to. */
 export interface EmailRecipient {
   email: string;
+  /** Their account, when they have one; an invite goes to an address with none yet. */
+  userId?: string;
   /** The recipient's IANA time zone, when they have one; dates are shown in UTC otherwise. */
   timeZone?: string | null;
 }
@@ -36,7 +42,7 @@ export interface EmailLeague {
   leagueCode: string;
 }
 
-/** What else the email is about, for the log and, from slice 3, the sent record. */
+/** What else the email is about, for the log and the outbox row. */
 export interface EmailRefs {
   contestId?: string;
   entryId?: string;
@@ -44,12 +50,18 @@ export interface EmailRefs {
 }
 
 type LeagueOf<Key extends SystemEmailTemplateKey> =
-  EmailTemplateScopeByKey[Key] extends 'LEAGUE'
+  EmailTemplateScopeByKey[Key] extends typeof EmailTemplateScope.LEAGUE
     ? { league: EmailLeague }
     : { league?: never };
 
 export type EmailSendInput<Key extends SystemEmailTemplateKey> = {
   to: EmailRecipient;
+  /**
+   * What this one email is about, such as an invitation and its code: with the template and the
+   * recipient it makes the idempotency key, so the same email is recorded once however often
+   * the action that sends it runs. Something the person asked to have sent again is a new subject.
+   */
+  about: string;
   data: SystemEmailTemplateDataByKey[Key];
   refs?: EmailRefs;
 } & LeagueOf<Key>;
@@ -80,11 +92,16 @@ const RESERVED_DOMAINS = ['example.com', 'example.net', 'example.org'];
 const DEFAULT_TIME_ZONE = 'UTC';
 
 export interface EmailServiceOptions {
-  transport: MailDeliveryProvider;
+  messages: Pick<EmailMessageRepository, 'record' | 'findLatestStatusByInvitations'>;
+  /** Which transport sends: reserved domains are skipped only on SES. */
+  providerName: MailDeliveryProviderName;
   readConfig: () => EmailConfig;
   /** The environment's `noreply@` address. League addresses share its domain. */
   senderAddress: string;
+  /** Called once an email is queued, to wake the sender. */
+  onQueued?: () => void;
   logger?: FastifyBaseLogger;
+  now?: () => Date;
 }
 
 export class EmailService {
@@ -95,18 +112,18 @@ export class EmailService {
   }
 
   /**
-   * Sends one email to one person. An email that is switched off, or to a recipient who may not
-   * be emailed here, is skipped and logged with ids only, never the body or the address, and
-   * still reports success, so invite by email creates the invitation either way. A transport
-   * failure is thrown for the caller to handle.
+   * Records one email to one person: queued with its content, or skipped, logged with ids only
+   * (never the body or the address), when it is switched off or the recipient may not be emailed
+   * here. An email already recorded under the same key is returned as it stands and not queued
+   * again. A failed write is thrown for the caller to handle.
    */
   async send<Key extends SystemEmailTemplateKey>(
     templateKey: Key,
     input: EmailSendInput<Key>,
-  ): Promise<MailDeliveryResult> {
+  ): Promise<EmailMessage> {
     const config = this.options.readConfig();
     const league: EmailLeague | undefined = input.league;
-    const metadata = {
+    const refs = {
       templateKey,
       leagueId: league?.id,
       contestId: input.refs?.contestId,
@@ -114,29 +131,57 @@ export class EmailService {
       invitationId: input.refs?.invitationId,
     };
     const address = input.to.email.trim();
+    const from = this.senderFor(league);
+    const recipient = {
+      ...refs,
+      recipientUserId: input.to.userId,
+      recipientEmail: address,
+      idempotencyKey: `${templateKey}:${input.about}:${input.to.userId ?? address.toLowerCase()}`,
+      fromName: from.name,
+      fromAddress: from.address,
+    };
     const skipped = switchedOffReason(config, templateKey)
       ?? (this.mayReceive(address, config) ? undefined : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT);
     if (skipped) {
-      this.options.logger?.info({
-        action: 'email.send.skip',
-        data: { reason: skipped, ...logRefs(metadata) },
-      }, skipped === EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT
-        ? 'Recipient may not be emailed in this environment; skipped sending email'
-        : 'Email is switched off in settings; skipped sending email');
-      return { provider: this.options.transport.providerName, skipped };
+      const { message, created } = await this.options.messages.record({
+        ...recipient,
+        status: EmailMessageStatus.SKIPPED,
+        skipReason: skipped,
+      });
+      if (created) {
+        this.options.logger?.info({
+          action: 'email.send.skip',
+          data: { reason: skipped, ...logRefs(refs) },
+        }, skipped === EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT
+          ? 'Recipient may not be emailed in this environment; skipped sending email'
+          : 'Email is switched off in settings; skipped sending email');
+      }
+      return message;
     }
 
-    const message = renderSystemEmailTemplate(templateKey, input.data, {
-      timeZone: this.resolveTimeZone(input.to.timeZone, metadata),
+    const content = renderSystemEmailTemplate(templateKey, input.data, {
+      timeZone: this.resolveTimeZone(input.to.timeZone, refs),
     });
-    return this.options.transport.send({
-      from: this.senderFor(league),
-      to: address,
-      subject: message.subject,
-      text: message.text,
-      html: message.html,
-      metadata,
+    const { message, created } = await this.options.messages.record({
+      ...recipient,
+      status: EmailMessageStatus.QUEUED,
+      subject: content.subject,
+      textBody: content.text,
+      htmlBody: content.html,
+      dueAt: this.options.now?.() ?? new Date(),
     });
+    if (created) {
+      this.options.logger?.info({ action: 'email.send.queued', data: logRefs(refs) }, 'Queued email');
+      this.options.onQueued?.();
+    } else {
+      this.options.logger?.info({ action: 'email.send.duplicate', data: logRefs(refs) }, 'Email already recorded; not queued again');
+    }
+    return message;
+  }
+
+  /** The status of each invitation's latest invite email, by invitation id. */
+  latestInviteStatusByInvitation(invitationIds: string[]): Promise<Map<string, EmailMessageStatus>> {
+    return this.options.messages.findLatestStatusByInvitations(invitationIds, EmailTemplateKey.LEAGUE_MEMBER_INVITE);
   }
 
   /**
@@ -181,7 +226,7 @@ export class EmailService {
    */
   private mayReceive(address: string, config: EmailConfig): boolean {
     const normalized = address.toLowerCase();
-    if (this.options.transport.providerName === 'ses' && isReservedDomain(domainOf(normalized))) {
+    if (this.options.providerName === 'ses' && isReservedDomain(domainOf(normalized))) {
       return false;
     }
     if (config.allowedRecipients.length === 0) return true;

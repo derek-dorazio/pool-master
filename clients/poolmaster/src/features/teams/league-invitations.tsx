@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { InvitationStatus, InviteType } from '@poolmaster/shared/domain';
+import { EmailMessageStatus, InvitationStatus, InviteType } from '@poolmaster/shared/domain';
 import { Check, Copy } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import {
@@ -40,7 +40,8 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
  * one stops working. A join link can only be cancelled.
  *
  * Every row can copy its own link (#476). With the invite email switched off, a resend sends
- * nothing, so copying the new link is how the commissioner gets it to the invitee.
+ * nothing, so copying the new link is how the commissioner gets it to the invitee. Each email
+ * invite says where its email stands (#844): it is sent a moment after the invite is made.
  */
 type LeagueInvitationsProps = {
   isInactiveLeague: boolean;
@@ -84,7 +85,9 @@ function isExpiredInvitation(invitation: LeagueInvitationDto): boolean {
 function describeInviteResult(result: SendLeagueInvitationsResponse): string | null {
   const sent = result.sent.at(0);
   if (sent) {
-    return `Invitation sent to ${sent.email}.`;
+    return sent.emailStatus === EmailMessageStatus.SKIPPED
+      ? `Invitation made for ${sent.email}, but no email was sent. Copy its link below to share it.`
+      : `Invitation sent to ${sent.email}.`;
   }
   const [member] = result.skippedMembers;
   if (member) {
@@ -96,6 +99,15 @@ function describeInviteResult(result: SendLeagueInvitationsResponse): string | n
   }
   return null;
 }
+
+/** What an email invite's row says about its latest email. */
+const EMAIL_STATUS_LABELS: Record<EmailMessageStatus, string> = {
+  [EmailMessageStatus.QUEUED]: 'Sending email',
+  [EmailMessageStatus.SENDING]: 'Sending email',
+  [EmailMessageStatus.SENT]: 'Email sent',
+  [EmailMessageStatus.FAILED]: 'Email could not be sent. Resend it, or copy the link to share it.',
+  [EmailMessageStatus.SKIPPED]: 'Email not sent. Copy the link to share it.',
+};
 
 function joinedCount(count: number): string {
   return count === 1 ? '1 person has used it' : `${String(count)} people have used it`;
@@ -417,6 +429,14 @@ function WaitingInvites({
               {isEmail ? null : (
                 <div className="text-xs text-muted-foreground">{String(invitation.currentUses)} joined</div>
               )}
+              {invitation.emailStatus ? (
+                <div
+                  className={invitation.emailStatus === EmailMessageStatus.FAILED ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}
+                  data-testid={`league-invitation-email-status-${invitation.id}`}
+                >
+                  {EMAIL_STATUS_LABELS[invitation.emailStatus]}
+                </div>
+              ) : null}
               {rowCopy?.invitationId === invitation.id && rowCopy.state === 'failed' ? (
                 <p
                   className="break-all font-mono text-xs text-foreground"

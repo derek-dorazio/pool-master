@@ -2,7 +2,8 @@
  * EMAIL_CONFIG (#450): whether system email is sent, which templates are on, and who it may go
  * to. Root admins change it on /manage/settings; every core-api task sees a save within the
  * settings refresh. Transport and sender address stay in env (`EMAIL_PROVIDER`, `SMTP_*`,
- * `SES_*`), since they describe how the deployment is wired. EmailService reads it on every send.
+ * `SES_*`), since they describe how the deployment is wired. EmailService reads it on every
+ * email it records, and the sender reads the rate on every batch.
  */
 
 import { EmailConfigSchema } from '@poolmaster/shared/dto';
@@ -20,6 +21,7 @@ export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
   defaults: (env) => ({
     enabled: readAppEnv(env) !== AppEnvironment.QA,
     allowedRecipients: [],
+    sendRatePerSecond: 10,
     templates: {
       LEAGUE_MEMBER_INVITE: true,
       LEAGUE_JOIN_SUCCESS: true,

@@ -401,7 +401,7 @@ export const activateLeague = <ThrowOnError extends boolean = false>(options: Op
 /**
  * List a league's outstanding invitations
  *
- * Lists the league's outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted. Accepted and cancelled invitations are not listed. Commissioner only.
+ * Lists the league's outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted, each email invite with where its latest email stands. Accepted and cancelled invitations are not listed. Commissioner only.
  */
 export const listLeagueInvitations = <ThrowOnError extends boolean = false>(options: Options<ListLeagueInvitationsData, ThrowOnError>) => (options.client ?? client).get<ListLeagueInvitationsResponses, ListLeagueInvitationsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -412,7 +412,7 @@ export const listLeagueInvitations = <ThrowOnError extends boolean = false>(opti
 /**
  * Send email invitations to join a league
  *
- * Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
+ * Creates direct email invitations for the target league and queues each one's email; each sent invitation carries its email status. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
  */
 export const sendLeagueInvitations = <ThrowOnError extends boolean = false>(options: Options<SendLeagueInvitationsData, ThrowOnError>) => (options.client ?? client).post<SendLeagueInvitationsResponses, SendLeagueInvitationsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -427,7 +427,7 @@ export const sendLeagueInvitations = <ThrowOnError extends boolean = false>(opti
 /**
  * Resend an email invitation
  *
- * Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.
+ * Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email queued again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive. Commissioner only.
  */
 export const resendLeagueInvitation = <ThrowOnError extends boolean = false>(options: Options<ResendLeagueInvitationData, ThrowOnError>) => (options.client ?? client).post<ResendLeagueInvitationResponses, ResendLeagueInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

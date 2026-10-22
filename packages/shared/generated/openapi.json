@@ -2918,6 +2918,17 @@
         "additionalProperties": false,
         "description": "A membership of a user in a league, with the member embedded."
       },
+      "EmailMessageStatus": {
+        "type": "string",
+        "enum": [
+          "QUEUED",
+          "SENDING",
+          "SENT",
+          "FAILED",
+          "SKIPPED"
+        ],
+        "description": "Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail service, FAILED not sent after every try, SKIPPED not sent because email is switched off or the address may not be emailed here."
+      },
       "LeagueInvitationDto": {
         "type": "object",
         "properties": {
@@ -2993,6 +3004,21 @@
             ],
             "description": "User ID that accepted the invite, when known."
           },
+          "emailStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "QUEUED",
+              "SENDING",
+              "SENT",
+              "FAILED",
+              "SKIPPED",
+              null
+            ],
+            "description": "Where the latest email of an email invite stands; null for a join link, which has no email."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -3013,6 +3039,7 @@
           "maxUses",
           "currentUses",
           "invitedBy",
+          "emailStatus",
           "createdAt",
           "updatedAt"
         ],
@@ -4178,6 +4205,21 @@
                   ],
                   "description": "User ID that accepted the invite, when known."
                 },
+                "emailStatus": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "QUEUED",
+                    "SENDING",
+                    "SENT",
+                    "FAILED",
+                    "SKIPPED",
+                    null
+                  ],
+                  "description": "Where the latest email of an email invite stands; null for a join link, which has no email."
+                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -4198,13 +4240,14 @@
                 "maxUses",
                 "currentUses",
                 "invitedBy",
+                "emailStatus",
                 "createdAt",
                 "updatedAt"
               ],
               "additionalProperties": false,
               "description": "Invitation record returned from commissioner invite-management APIs."
             },
-            "description": "Invitation records successfully created and sent."
+            "description": "Invitations created, each with its email queued or skipped."
           },
           "skippedMembers": {
             "type": "array",
@@ -4307,6 +4350,21 @@
                 ],
                 "description": "User ID that accepted the invite, when known."
               },
+              "emailStatus": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "QUEUED",
+                  "SENDING",
+                  "SENT",
+                  "FAILED",
+                  "SKIPPED",
+                  null
+                ],
+                "description": "Where the latest email of an email invite stands; null for a join link, which has no email."
+              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -4327,6 +4385,7 @@
               "maxUses",
               "currentUses",
               "invitedBy",
+              "emailStatus",
               "createdAt",
               "updatedAt"
             ],
@@ -4420,6 +4479,21 @@
                   ],
                   "description": "User ID that accepted the invite, when known."
                 },
+                "emailStatus": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "QUEUED",
+                    "SENDING",
+                    "SENT",
+                    "FAILED",
+                    "SKIPPED",
+                    null
+                  ],
+                  "description": "Where the latest email of an email invite stands; null for a join link, which has no email."
+                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -4440,6 +4514,7 @@
                 "maxUses",
                 "currentUses",
                 "invitedBy",
+                "emailStatus",
                 "createdAt",
                 "updatedAt"
               ],
@@ -4533,6 +4608,21 @@
                 ],
                 "description": "User ID that accepted the invite, when known."
               },
+              "emailStatus": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "QUEUED",
+                  "SENDING",
+                  "SENT",
+                  "FAILED",
+                  "SKIPPED",
+                  null
+                ],
+                "description": "Where the latest email of an email invite stands; null for a join link, which has no email."
+              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -4553,6 +4643,7 @@
               "maxUses",
               "currentUses",
               "invitedBy",
+              "emailStatus",
               "createdAt",
               "updatedAt"
             ],
@@ -26197,7 +26288,8 @@
           "LEAGUE_MEMBER_INVITE",
           "LEAGUE_JOIN_SUCCESS",
           "CONTEST_ENTRY_COMPLETED",
-          "CONTEST_STARTED_SUMMARY"
+          "CONTEST_STARTED_SUMMARY",
+          "PASSWORD_RESET"
         ],
         "description": "A system email template."
       },
@@ -26222,6 +26314,12 @@
             },
             "maxItems": 100,
             "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+          },
+          "sendRatePerSecond": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
           },
           "templates": {
             "type": "object",
@@ -26256,6 +26354,7 @@
         "required": [
           "enabled",
           "allowedRecipients",
+          "sendRatePerSecond",
           "templates"
         ],
         "additionalProperties": false,
@@ -27397,6 +27496,12 @@
                     "maxItems": 100,
                     "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
                   },
+                  "sendRatePerSecond": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -27430,6 +27535,7 @@
                 "required": [
                   "enabled",
                   "allowedRecipients",
+                  "sendRatePerSecond",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -27457,6 +27563,12 @@
                     "maxItems": 100,
                     "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
                   },
+                  "sendRatePerSecond": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -27490,6 +27602,7 @@
                 "required": [
                   "enabled",
                   "allowedRecipients",
+                  "sendRatePerSecond",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -28360,6 +28473,12 @@
                           "maxItems": 100,
                           "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
                         },
+                        "sendRatePerSecond": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100,
+                          "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -28393,6 +28512,7 @@
                       "required": [
                         "enabled",
                         "allowedRecipients",
+                        "sendRatePerSecond",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -28420,6 +28540,12 @@
                           "maxItems": 100,
                           "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
                         },
+                        "sendRatePerSecond": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100,
+                          "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -28453,6 +28579,7 @@
                       "required": [
                         "enabled",
                         "allowedRecipients",
+                        "sendRatePerSecond",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -28981,6 +29108,12 @@
                     "maxItems": 100,
                     "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
                   },
+                  "sendRatePerSecond": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29014,6 +29147,7 @@
                 "required": [
                   "enabled",
                   "allowedRecipients",
+                  "sendRatePerSecond",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -29742,6 +29876,12 @@
                     "maxItems": 100,
                     "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
                   },
+                  "sendRatePerSecond": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29775,6 +29915,7 @@
                 "required": [
                   "enabled",
                   "allowedRecipients",
+                  "sendRatePerSecond",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -29802,6 +29943,12 @@
                     "maxItems": 100,
                     "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
                   },
+                  "sendRatePerSecond": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29835,6 +29982,7 @@
                 "required": [
                   "enabled",
                   "allowedRecipients",
+                  "sendRatePerSecond",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -30663,6 +30811,12 @@
                           "maxItems": 100,
                           "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
                         },
+                        "sendRatePerSecond": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100,
+                          "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -30696,6 +30850,7 @@
                       "required": [
                         "enabled",
                         "allowedRecipients",
+                        "sendRatePerSecond",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -30723,6 +30878,12 @@
                           "maxItems": 100,
                           "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
                         },
+                        "sendRatePerSecond": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100,
+                          "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -30756,6 +30917,7 @@
                       "required": [
                         "enabled",
                         "allowedRecipients",
+                        "sendRatePerSecond",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -37676,7 +37838,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.",
+        "description": "Creates direct email invitations for the target league and queues each one's email; each sent invitation carries its email status. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.",
         "requestBody": {
           "required": true,
           "content": {
@@ -37727,16 +37889,6 @@
                 }
               }
             }
-          },
-          "502": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
           }
         }
       },
@@ -37746,7 +37898,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Lists the league's outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted. Accepted and cancelled invitations are not listed. Commissioner only.",
+        "description": "Lists the league's outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted, each email invite with where its latest email stands. Accepted and cancelled invitations are not listed. Commissioner only.",
         "parameters": [
           {
             "schema": {
@@ -37788,7 +37940,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.",
+        "description": "Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email queued again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive. Commissioner only.",
         "parameters": [
           {
             "schema": {
@@ -37839,16 +37991,6 @@
             }
           },
           "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "502": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

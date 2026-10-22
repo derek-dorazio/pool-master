@@ -9,6 +9,7 @@ export { PrismaMembershipTransaction } from './prisma-membership-transaction';
 export { PrismaContestRepository } from './prisma-contest-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';
 export { PrismaParticipantProviderMappingRepository } from './prisma-participant-provider-mapping-repository';
+export { PrismaEmailMessageRepository } from './prisma-email-message-repository';
 export { PrismaPlatformRuntimeConfigRepository } from './prisma-platform-runtime-config-repository';
 export { PrismaProviderSyncRunRepository } from './prisma-provider-sync-run-repository';
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';

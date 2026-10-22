@@ -10,7 +10,12 @@ import type {
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
-import type { League, LeagueInvitation, LeagueMembership } from '@poolmaster/shared/domain';
+import type {
+  EmailMessageStatus,
+  League,
+  LeagueInvitation,
+  LeagueMembership,
+} from '@poolmaster/shared/domain';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
@@ -42,8 +47,14 @@ export interface GenerateInviteLinkInput {
   maxUses?: number;
 }
 
+/** An invitation and where its latest invite email stands; null for a join link. */
+export interface InvitationWithEmailStatus {
+  invitation: LeagueInvitation;
+  emailStatus: EmailMessageStatus | null;
+}
+
 export interface SendInvitationsResult {
-  sent: LeagueInvitation[];
+  sent: InvitationWithEmailStatus[];
   skippedMembers: string[];
   skippedDuplicates: string[];
 }
@@ -60,18 +71,6 @@ export interface InvitationPreview {
 
 const DEFAULT_INVITE_EXPIRY_DAYS = 7;
 const DEFAULT_INVITER_NAME = 'League commissioner';
-
-export class InvitationEmailDeliveryError extends Error {
-  constructor(
-    readonly invitationId: string,
-    readonly email: string,
-    cause: unknown,
-  ) {
-    super(`Failed to deliver league invitation email: ${invitationId}`);
-    this.name = 'InvitationEmailDeliveryError';
-    this.cause = cause;
-  }
-}
 
 /**
  * Everything InvitationService reads and writes (#211). It replaced a nine-parameter positional
@@ -117,7 +116,7 @@ export class InvitationService {
     // The commissioner guard has found the league already; its name and code are the email's sender.
     if (!league) throw new LeagueNotFoundError(input.leagueId);
     this.requireActiveLeague(league, 'sendEmail');
-    const sent: LeagueInvitation[] = [];
+    const sent: InvitationWithEmailStatus[] = [];
     const skippedMembers: string[] = [];
     const skippedDuplicates: string[] = [];
     for (const email of input.emails) {
@@ -152,7 +151,7 @@ export class InvitationService {
         invitedBy: input.invitedBy,
         expiresAt,
       });
-      await this.deliverLeagueInvitationEmail({
+      const emailStatus = await this.queueLeagueInvitationEmail({
         invitationId: invitation.id,
         email: normalised,
         inviterName,
@@ -165,7 +164,7 @@ export class InvitationService {
         expiresAt,
         message: input.message,
       });
-      sent.push(invitation);
+      sent.push({ invitation, emailStatus });
     }
     this.logger?.info({
       action: 'leagueInvitation.sendEmail.success',
@@ -180,7 +179,11 @@ export class InvitationService {
     return { sent, skippedMembers, skippedDuplicates };
   }
 
-  private async deliverLeagueInvitationEmail(input: {
+  /**
+   * Queues the invite email in the outbox and returns its status. A new invite code is a new
+   * email, so a resend is queued again while a repeated request for the same code is not.
+   */
+  private async queueLeagueInvitationEmail(input: {
     invitationId: string;
     email: string;
     inviterName: string;
@@ -188,49 +191,31 @@ export class InvitationService {
     inviteCode: string;
     expiresAt: Date;
     message?: string;
-  }): Promise<void> {
+  }): Promise<EmailMessageStatus | null> {
     if (!this.deps.email) {
       this.logger?.debug({
         action: 'leagueInvitation.emailDelivery.skipped',
         data: { invitationId: input.invitationId },
       }, 'No email service configured for league invitation');
-      return;
+      return null;
     }
     const templateKey = 'LEAGUE_MEMBER_INVITE';
-    this.logger?.debug({
-      action: 'leagueInvitation.emailDelivery.enter',
-      data: { invitationId: input.invitationId, templateKey },
-    }, 'Delivering league invitation email');
-    try {
-      await this.deps.email.send(templateKey, {
-        to: { email: input.email },
-        league: input.league,
-        refs: { invitationId: input.invitationId },
-        data: {
-          recipientEmail: input.email,
-          inviterName: input.inviterName,
-          leagueName: input.league.name,
-          leagueCode: input.league.leagueCode,
-          inviteUrl: buildInviteUrl(this.appBaseUrl, input.inviteCode),
-          message: input.message,
-          expiresAt: input.expiresAt,
-        },
-      });
-      this.logger?.info({
-        action: 'leagueInvitation.emailDelivery.success',
-        data: { invitationId: input.invitationId, templateKey },
-      }, 'Delivered league invitation email');
-    } catch (err) {
-      this.logger?.error({
-        action: 'leagueInvitation.emailDelivery.failure',
-        data: {
-          invitationId: input.invitationId,
-          templateKey,
-          error: err instanceof Error ? err.message : String(err),
-        },
-      }, 'Failed to deliver league invitation email');
-      throw new InvitationEmailDeliveryError(input.invitationId, input.email, err);
-    }
+    const queued = await this.deps.email.send(templateKey, {
+      to: { email: input.email },
+      about: `${input.invitationId}:${input.inviteCode}`,
+      league: input.league,
+      refs: { invitationId: input.invitationId },
+      data: {
+        recipientEmail: input.email,
+        inviterName: input.inviterName,
+        leagueName: input.league.name,
+        leagueCode: input.league.leagueCode,
+        inviteUrl: buildInviteUrl(this.appBaseUrl, input.inviteCode),
+        message: input.message,
+        expiresAt: input.expiresAt,
+      },
+    });
+    return queued.status;
   }
 
   /**
@@ -324,17 +309,26 @@ export class InvitationService {
    * email invites that went EXPIRED unaccepted. An invite is outstanding until it is accepted or
    * cancelled; an expired email invite is listed so the commissioner can resend it.
    */
-  async listOutstandingInvitations(leagueId: string): Promise<LeagueInvitation[]> {
+  async listOutstandingInvitations(leagueId: string): Promise<InvitationWithEmailStatus[]> {
     this.logger?.debug({
       action: 'leagueInvitation.listOutstanding.enter',
       data: { leagueId },
     }, 'Listing outstanding league invitations');
     const invitations = (await this.deps.invitations.findByLeague(leagueId)).filter(isOutstanding);
+    const emailInvitationIds = invitations
+      .filter((invitation) => invitation.inviteType === InviteType.EMAIL)
+      .map((invitation) => invitation.id);
+    const emailStatuses = this.deps.email
+      ? await this.deps.email.latestInviteStatusByInvitation(emailInvitationIds)
+      : new Map<string, EmailMessageStatus>();
     this.logger?.info({
       action: 'leagueInvitation.listOutstanding.success',
       data: { leagueId, invitationCount: invitations.length },
     }, 'Listed outstanding league invitations');
-    return invitations;
+    return invitations.map((invitation) => ({
+      invitation,
+      emailStatus: emailStatuses.get(invitation.id) ?? null,
+    }));
   }
 
   /**
@@ -345,7 +339,7 @@ export class InvitationService {
     leagueId: string,
     invitationId: string,
     resentBy: string,
-  ): Promise<LeagueInvitation> {
+  ): Promise<InvitationWithEmailStatus> {
     this.logger?.debug({
       action: 'leagueInvitation.resend.enter',
       data: { leagueId, invitationId, resentBy },
@@ -387,7 +381,7 @@ export class InvitationService {
       status: InvitationStatus.PENDING,
       expiresAt,
     });
-    await this.deliverLeagueInvitationEmail({
+    const emailStatus = await this.queueLeagueInvitationEmail({
       invitationId: renewed.id,
       email: invitation.email,
       inviterName,
@@ -403,7 +397,7 @@ export class InvitationService {
       action: 'leagueInvitation.resend.success',
       data: { leagueId, invitationId, resentBy },
     }, 'Resent league email invitation');
-    return renewed;
+    return { invitation: renewed, emailStatus };
   }
 
   /** Cancels an invitation by code: a join link or an email invite (#221). It can no longer be accepted. */
@@ -602,7 +596,8 @@ export class InvitationService {
     const templateKey = 'LEAGUE_JOIN_SUCCESS';
     try {
       await this.deps.email.send(templateKey, {
-        to: { email: recipient.email, timeZone: recipient.timeZone },
+        to: { email: recipient.email, userId: input.userId, timeZone: recipient.timeZone },
+        about: input.invitationId,
         league: { id: input.leagueId, name: input.leagueName, leagueCode: input.leagueCode },
         refs: { invitationId: input.invitationId },
         data: {
@@ -620,7 +615,7 @@ export class InvitationService {
           leagueId: input.leagueId,
           templateKey,
         },
-      }, 'Delivered league join success email');
+      }, 'Queued league join success email');
     } catch (err) {
       this.logger?.error({
         action: 'leagueInvitation.joinSuccessEmail.failure',
@@ -630,7 +625,7 @@ export class InvitationService {
           templateKey,
           error: err instanceof Error ? err.message : String(err),
         },
-      }, 'Failed to deliver league join success email');
+      }, 'Failed to queue league join success email');
     }
   }
 

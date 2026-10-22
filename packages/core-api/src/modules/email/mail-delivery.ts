@@ -32,22 +32,9 @@ export interface MailDeliveryMessage {
   };
 }
 
-/** Why an email was not submitted to the transport. */
-export const EmailSkipReason = {
-  /** EMAIL_CONFIG has system email switched off. */
-  EMAIL_DISABLED: 'EMAIL_DISABLED',
-  /** EMAIL_CONFIG has this template switched off. */
-  TEMPLATE_DISABLED: 'TEMPLATE_DISABLED',
-  /** No recipient may be emailed here: a reserved domain on a real transport, or not on the allow list. */
-  NOT_ALLOWED_IN_ENVIRONMENT: 'NOT_ALLOWED_IN_ENVIRONMENT',
-} as const;
-export type EmailSkipReason = (typeof EmailSkipReason)[keyof typeof EmailSkipReason];
-
 export interface MailDeliveryResult {
   provider: MailDeliveryProviderName;
   messageId?: string;
-  /** Set when nothing was submitted, with the reason. */
-  skipped?: EmailSkipReason;
 }
 
 export interface MailDeliveryProvider {
@@ -98,6 +85,14 @@ export class MailDeliveryError extends Error {
   ) {
     super(message);
     this.name = 'MailDeliveryError';
+  }
+}
+
+/** The transport refused the email for now because it is sending too fast; the try doesn't count. */
+export class MailDeliveryThrottledError extends MailDeliveryError {
+  constructor(provider: MailDeliveryProviderName, cause?: unknown) {
+    super('Email submission was throttled', provider, cause);
+    this.name = 'MailDeliveryThrottledError';
   }
 }
 
@@ -198,6 +193,9 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
   }
 }
 
+/** What SES v2 calls a send over the account's sending rate. */
+const SES_THROTTLED_ERROR = 'TooManyRequestsException';
+
 export class SesMailDeliveryProvider implements MailDeliveryProvider {
   readonly providerName = 'ses' as const;
 
@@ -279,6 +277,9 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
           error: err instanceof Error ? err.message : String(err),
         },
       }, 'SES email submission failed');
+      if (err instanceof Error && err.name === SES_THROTTLED_ERROR) {
+        throw new MailDeliveryThrottledError(this.providerName, err);
+      }
       throw new MailDeliveryError('SES email submission failed', this.providerName, err);
     }
   }

@@ -1,17 +1,7 @@
-import type { EmailConfig, EmailTemplateKey } from '@poolmaster/shared/dto';
+import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { EmailCategory } from './email-categories';
 
-/**
- * Account emails (#847, plans/password-recovery.md Q4.1). EMAIL_CONFIG has no switch for them,
- * because switching one off would silently break password recovery. They still obey the global
- * `enabled` switch, which is what keeps QA quiet.
- */
-export const AccountEmailTemplateKey = {
-  PASSWORD_RESET: 'PASSWORD_RESET',
-} as const;
-export type AccountEmailTemplateKey = (typeof AccountEmailTemplateKey)[keyof typeof AccountEmailTemplateKey];
-
-export type SystemEmailTemplateKey = EmailTemplateKey | AccountEmailTemplateKey;
+export type SystemEmailTemplateKey = EmailTemplateKey;
 
 export interface SystemEmailMessage {
   templateKey: SystemEmailTemplateKey;
@@ -105,6 +95,12 @@ export interface EmailTemplateDefinition<Key extends SystemEmailTemplateKey> {
    * account email such as a password reset) follows only the overall switch.
    */
   settingsSwitch: boolean;
+  /**
+   * Whether the outbox keeps the email's subject and bodies once it is sent (for 30 days). False
+   * for an email that carries a secret, such as a password reset link: the outbox clears it the
+   * moment the email is sent or given up on.
+   */
+  keepsContent: boolean;
   render: TemplateRenderer<Key>;
 }
 
@@ -114,12 +110,18 @@ export interface EmailTemplateDefinition<Key extends SystemEmailTemplateKey> {
  * not a registry field: EmailService.send requires `league` exactly for the LEAGUE ones, and a
  * key missing here doesn't compile.
  */
+export const EmailTemplateScope = {
+  LEAGUE: 'LEAGUE',
+  PLATFORM: 'PLATFORM',
+} as const;
+export type EmailTemplateScope = (typeof EmailTemplateScope)[keyof typeof EmailTemplateScope];
+
 export interface EmailTemplateScopeByKey {
-  LEAGUE_MEMBER_INVITE: 'LEAGUE';
-  LEAGUE_JOIN_SUCCESS: 'LEAGUE';
-  CONTEST_ENTRY_COMPLETED: 'LEAGUE';
-  CONTEST_STARTED_SUMMARY: 'LEAGUE';
-  PASSWORD_RESET: 'PLATFORM';
+  LEAGUE_MEMBER_INVITE: typeof EmailTemplateScope.LEAGUE;
+  LEAGUE_JOIN_SUCCESS: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_ENTRY_COMPLETED: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_STARTED_SUMMARY: typeof EmailTemplateScope.LEAGUE;
+  PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
 }
 
 type EmailTemplateRegistry = {
@@ -146,7 +148,7 @@ const EMAIL_THEME = {
 } as const;
 
 /** Whether EMAIL_CONFIG has a switch for `templateKey`, as the registry says. */
-export function hasSettingsSwitch(templateKey: SystemEmailTemplateKey): templateKey is keyof EmailConfig['templates'] {
+export function hasSettingsSwitch(templateKey: SystemEmailTemplateKey): templateKey is SwitchableEmailTemplateKey {
   return EMAIL_TEMPLATES[templateKey].settingsSwitch;
 }
 
@@ -170,26 +172,31 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   LEAGUE_MEMBER_INVITE: {
     category: EmailCategory.MEMBERSHIP,
     settingsSwitch: true,
+    keepsContent: true,
     render: renderLeagueMemberInviteEmail,
   },
   LEAGUE_JOIN_SUCCESS: {
     category: EmailCategory.MEMBERSHIP,
     settingsSwitch: true,
+    keepsContent: true,
     render: renderLeagueJoinSuccessEmail,
   },
   CONTEST_ENTRY_COMPLETED: {
     category: EmailCategory.RECEIPTS,
     settingsSwitch: true,
+    keepsContent: true,
     render: renderContestEntryCompletedEmail,
   },
   CONTEST_STARTED_SUMMARY: {
     category: EmailCategory.LIVE_STANDINGS,
     settingsSwitch: true,
+    keepsContent: true,
     render: renderContestStartedSummaryEmail,
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
     settingsSwitch: false,
+    keepsContent: false,
     render: renderPasswordResetEmail,
   },
 };
@@ -384,7 +391,7 @@ function renderPasswordResetEmail(
   ];
 
   return buildMessage({
-    templateKey: AccountEmailTemplateKey.PASSWORD_RESET,
+    templateKey: 'PASSWORD_RESET',
     subject,
     preheader: `Choose a new password. The link expires in ${data.expiresInMinutes} minutes.`,
     title: 'Reset your password',

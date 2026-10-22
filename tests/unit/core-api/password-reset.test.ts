@@ -19,6 +19,7 @@ import {
   renderSystemEmailTemplate,
 } from '../../../packages/core-api/src/modules/email';
 import type { EmailConfig } from '../../../packages/shared/dto';
+import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { AuthProvider, type User } from '../../../packages/shared/domain';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
@@ -39,7 +40,7 @@ const USER: User = {
 };
 
 function buildService(overrides: {
-  send?: jest.Mock;
+  recordEmail?: jest.Mock;
   emailConfig?: EmailConfig;
   limits?: { requestsPerMinute?: number; confirmsPerMinute?: number };
   now?: () => Date;
@@ -48,7 +49,7 @@ function buildService(overrides: {
     passwordResetToken: {
       deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
       updateMany: jest.fn().mockResolvedValue({ count: 0 }),
-      create: jest.fn().mockResolvedValue({}),
+      create: jest.fn().mockResolvedValue({ id: 'reset-1' }),
     },
   };
   const prisma = {
@@ -59,13 +60,15 @@ function buildService(overrides: {
     },
     $transaction: jest.fn().mockImplementation(async (work: (client: typeof tx) => Promise<unknown>) => work(tx)),
   };
-  const send = overrides.send ?? jest.fn().mockResolvedValue({ provider: 'smtp' });
+  const outbox = inMemoryEmailMessages();
+  if (overrides.recordEmail) outbox.record = overrides.recordEmail;
   const logger = fakeLogger();
   const service = new PasswordResetService({
     users: fakeUserRepo({ findByIdentifier: jest.fn().mockResolvedValue(USER) }),
     prisma: asPrismaClient(prisma),
     email: new EmailService({
-      transport: { providerName: 'smtp', send },
+      messages: outbox,
+      providerName: 'smtp',
       readConfig: () => overrides.emailConfig ?? EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
       senderAddress: 'noreply@poolmaster.test',
     }),
@@ -74,7 +77,7 @@ function buildService(overrides: {
     now: overrides.now,
     ...overrides.limits,
   });
-  return { service, prisma, send, logger };
+  return { service, prisma, outbox, logger };
 }
 
 describe('SlidingWindowRateLimiter', () => {
@@ -129,8 +132,23 @@ describe('PasswordResetService address limits', () => {
 });
 
 describe('PasswordResetService.requestReset', () => {
-  it('resolves without reporting anything when the email cannot be sent', async () => {
-    const { service, logger } = buildService({ send: jest.fn().mockRejectedValue(new Error('SMTP down')) });
+  it('queues the reset email for the account, about its link, with the link in the body', async () => {
+    const { service, outbox } = buildService();
+
+    await service.requestReset('riley@example.com');
+
+    expect(outbox.rows).toHaveLength(1);
+    expect(outbox.rows[0]).toMatchObject({
+      templateKey: 'PASSWORD_RESET',
+      status: 'QUEUED',
+      recipientUserId: USER.id,
+      idempotencyKey: `PASSWORD_RESET:reset-1:${USER.id}`,
+    });
+    expect(outbox.rows[0]?.textBody).toContain('https://app.example.test/reset-password#token=');
+  });
+
+  it('resolves without reporting anything when the email cannot be queued', async () => {
+    const { service, logger } = buildService({ recordEmail: jest.fn().mockRejectedValue(new Error('Database down')) });
 
     await expect(service.requestReset('riley@example.com')).resolves.toBeUndefined();
     expect(logger.error).toHaveBeenCalledTimes(1);
@@ -148,18 +166,18 @@ describe('PasswordResetService.requestReset', () => {
       expect.any(String),
     );
     expect(logger.info).not.toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'authService.passwordReset.emailSent' }),
+      expect.objectContaining({ action: 'authService.passwordReset.emailQueued' }),
       expect.any(String),
     );
   });
 
   it('sends nothing for an account that signs in without a password', async () => {
-    const { service, prisma, send } = buildService();
+    const { service, prisma, outbox } = buildService();
     prisma.user.findUnique.mockResolvedValue({ passwordHash: null });
 
     await service.requestReset('riley@example.com');
 
-    expect(send).not.toHaveBeenCalled();
+    expect(outbox.rows).toEqual([]);
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });

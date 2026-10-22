@@ -3,7 +3,13 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { BudgetPricingProfileSchema, Sport, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import {
+  BudgetPricingProfileSchema,
+  EmailTemplateKey,
+  Sport,
+  SUPPORTED_SPORTS,
+  type SwitchableEmailTemplateKey,
+} from '@poolmaster/shared/domain';
 
 const SportSchema = z.nativeEnum(Sport);
 
@@ -65,13 +71,7 @@ export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSche
 // Served by the platform module (platform/routes.ts). IngestionFeedSchedulePolicy is not registered directly: it appears only
 // nested inside IngestionScheduleConfig, and no route serves it on its own (check 2).
 /** The system emails core-api can send, one per template. */
-export const EmailTemplateKeySchema = z.enum([
-  'LEAGUE_MEMBER_INVITE',
-  'LEAGUE_JOIN_SUCCESS',
-  'CONTEST_ENTRY_COMPLETED',
-  'CONTEST_STARTED_SUMMARY',
-]).describe('A system email template.');
-export type EmailTemplateKey = z.infer<typeof EmailTemplateKeySchema>;
+export const EmailTemplateKeySchema = z.nativeEnum(EmailTemplateKey).describe('A system email template.');
 
 const templateSwitch = z.boolean().describe('Whether this email is sent.');
 
@@ -92,12 +92,15 @@ export const EmailConfigSchema = z.object({
     'When not empty, the only addresses email is sent to (addresses or @domain); every other '
     + 'recipient is skipped and logged. Empty: no limit.',
   ),
+  sendRatePerSecond: z.number().int().min(1).max(100).describe(
+    'The most emails each API server task sends a second. SES accounts start at 14 a second in all.',
+  ),
   templates: z.object({
     LEAGUE_MEMBER_INVITE: templateSwitch,
     LEAGUE_JOIN_SUCCESS: templateSwitch,
     CONTEST_ENTRY_COMPLETED: templateSwitch,
     CONTEST_STARTED_SUMMARY: templateSwitch,
-  } satisfies Record<EmailTemplateKey, z.ZodBoolean>).describe(
+  } satisfies Record<SwitchableEmailTemplateKey, z.ZodBoolean>).describe(
     'Per-template switches. A template that is off is skipped even while email is on.',
   ),
 }).describe('Whether and how system email is sent.');

@@ -185,7 +185,7 @@ also wakes it, so an invite goes out within a second rather than at the next tic
 faster than a rate held in `EMAIL_CONFIG` (default 10 per second; SES production accounts start at
 14), and a throttling error just pushes `nextAttemptAt`.
 
-**What this changes for invites.** Today a provider error fails the invite request with
+**What this changes for invites.** Before slice 3 a provider error failed the invite request with
 `LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED`. With the outbox the invite is created and its email
 queued; the commissioner's pending invites list shows the email's state ("Sent", "Bounced", "Could
 not send") and Resend works as today.

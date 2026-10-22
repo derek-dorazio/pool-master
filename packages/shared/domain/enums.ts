@@ -742,3 +742,47 @@ export const Severity = {
   ERROR: 'ERROR',
 } as const;
 export type Severity = (typeof Severity)[keyof typeof Severity];
+
+// --- System email (#844) ---
+
+/** The system emails core-api can send, one per template. */
+export const EmailTemplateKey = {
+  LEAGUE_MEMBER_INVITE: 'LEAGUE_MEMBER_INVITE',
+  LEAGUE_JOIN_SUCCESS: 'LEAGUE_JOIN_SUCCESS',
+  CONTEST_ENTRY_COMPLETED: 'CONTEST_ENTRY_COMPLETED',
+  CONTEST_STARTED_SUMMARY: 'CONTEST_STARTED_SUMMARY',
+  PASSWORD_RESET: 'PASSWORD_RESET',
+} as const;
+export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
+
+/**
+ * The emails EMAIL_CONFIG has a switch for. Account emails (the password reset) have none:
+ * switching one off would silently break password recovery. They still obey the overall switch.
+ */
+export type SwitchableEmailTemplateKey = Exclude<EmailTemplateKey, typeof EmailTemplateKey.PASSWORD_RESET>;
+
+/** Where one email in the outbox stands. */
+export const EmailMessageStatus = {
+  /** Waiting for the sender, first time or after a failed try. */
+  QUEUED: 'QUEUED',
+  /** Claimed by a sender, which is handing it to the transport. */
+  SENDING: 'SENDING',
+  /** The transport accepted it. */
+  SENT: 'SENT',
+  /** Every try failed; it will not be sent. */
+  FAILED: 'FAILED',
+  /** Never queued, for the skip reason. */
+  SKIPPED: 'SKIPPED',
+} as const;
+export type EmailMessageStatus = (typeof EmailMessageStatus)[keyof typeof EmailMessageStatus];
+
+/** Why an email was skipped rather than queued. */
+export const EmailSkipReason = {
+  /** EMAIL_CONFIG has system email switched off. */
+  EMAIL_DISABLED: 'EMAIL_DISABLED',
+  /** EMAIL_CONFIG has this template switched off. */
+  TEMPLATE_DISABLED: 'TEMPLATE_DISABLED',
+  /** The recipient may not be emailed here: a reserved domain on a real transport, or not on the allow list. */
+  NOT_ALLOWED_IN_ENVIRONMENT: 'NOT_ALLOWED_IN_ENVIRONMENT',
+} as const;
+export type EmailSkipReason = (typeof EmailSkipReason)[keyof typeof EmailSkipReason];

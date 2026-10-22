@@ -47,7 +47,7 @@ import {
 import { mockFn } from '../../support/mock-fn';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { expectDefined } from '../../support/expect-defined';
-import { emailServiceOver } from '../../support/email-service';
+import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
@@ -1399,6 +1399,7 @@ describe('ContestService', () => {
       await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1', 'event-1');
 
       expect(tiers.getEffectiveValuationsForSportEvent).toHaveBeenCalledWith('event-1');
+      await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
         to: 'derek@example.com',
@@ -1459,6 +1460,7 @@ describe('ContestService', () => {
       });
 
       await expect(service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1', 'event-1')).resolves.toBeUndefined();
+      await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(entryRepo.update).not.toHaveBeenCalled();
     });
@@ -1504,6 +1506,7 @@ describe('ContestService', () => {
       await service.updateEntry('contest-1', 'entry-1', 'user-1', { tiebreakerValue: -12 });
 
       expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { tiebreakerValue: -12 });
+      await deliverQueuedEmail();
       expect(mailDelivery.send).not.toHaveBeenCalled();
     });
   });

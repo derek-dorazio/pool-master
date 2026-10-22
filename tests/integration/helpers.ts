@@ -46,12 +46,7 @@ import { IngestionConfigService } from '../../packages/core-api/src/modules/plat
 import { AppSettingsService } from '../../packages/core-api/src/modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from '../../packages/core-api/src/modules/platform/settings-groups';
 import { PlatformSettingsService } from '../../packages/core-api/src/modules/platform/platform-settings-service';
-import {
-  EMAIL_SETTINGS,
-  EmailService,
-  createMailDeliveryProvider,
-  readMailDeliveryConfig,
-} from '../../packages/core-api/src/modules/email';
+import { EMAIL_SETTINGS, createEmailOutbox, type EmailSender } from '../../packages/core-api/src/modules/email';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -99,6 +94,7 @@ const INTEGRATION_TEST_LEAGUE_CODE_PREFIXES = [
 let app: FastifyInstance;
 let prisma: PrismaClient;
 let integrationSmtpServer: SmtpSinkServer | undefined;
+let emailSender: EmailSender | undefined;
 let previousMailEnv: Partial<Record<MailEnvironmentKey, string | undefined>> | undefined;
 
 const MAIL_ENVIRONMENT_KEYS = [
@@ -146,12 +142,15 @@ async function buildTestApp(): Promise<FastifyInstance> {
   });
   await settings.load();
   appSettings = settings;
-  const mailConfig = readMailDeliveryConfig(process.env);
-  const email = new EmailService({
-    transport: createMailDeliveryProvider(mailConfig),
+  // The outbox's sender has no timer here: a queued email wakes it, as in the app, and
+  // deliverQueuedIntegrationEmail() waits for it to reach the sink.
+  const outbox = createEmailOutbox({
+    prisma,
     readConfig: () => settings.get(EMAIL_SETTINGS),
-    senderAddress: mailConfig.fromEmail,
+    env: process.env,
   });
+  const { email } = outbox;
+  emailSender = outbox.sender;
   const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({
     settings,
@@ -212,6 +211,11 @@ export async function setupIntegrationTests(): Promise<void> {
   await cleanupTestData();
   await startIntegrationMailSink();
   app = await buildTestApp();
+}
+
+/** Waits until every email the app has queued so far has been handed to the SMTP sink. */
+export async function deliverQueuedIntegrationEmail(): Promise<void> {
+  await emailSender?.drain();
 }
 
 /** The emails this worker's app has sent to the integration SMTP sink, oldest first (#442). */
@@ -619,6 +623,10 @@ export async function cleanupTestData(): Promise<void> {
   await cleanupSportEventParticipantArtifacts(prisma, providerSportEventParticipantIds);
 
   if (leagueIds.length > 0) {
+    // The outbox keeps an email when what it is about goes, so the test leagues' emails go first.
+    await prisma.emailMessage.deleteMany({
+      where: { leagueId: { in: leagueIds } },
+    });
     await prisma.squadMembership.deleteMany({
       where: { leagueId: { in: leagueIds } },
     });

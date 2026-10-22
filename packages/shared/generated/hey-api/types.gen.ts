@@ -1433,6 +1433,11 @@ export type LeagueMembershipDto = {
 };
 
 /**
+ * Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail service, FAILED not sent after every try, SKIPPED not sent because email is switched off or the address may not be emailed here.
+ */
+export type EmailMessageStatus = 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED';
+
+/**
  * Invitation record returned from commissioner invite-management APIs.
  */
 export type LeagueInvitationDto = {
@@ -1484,6 +1489,10 @@ export type LeagueInvitationDto = {
      * User ID that accepted the invite, when known.
      */
     acceptedBy?: string | null;
+    /**
+     * Where the latest email of an email invite stands; null for a join link, which has no email.
+     */
+    emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED' | null;
     /**
      * Invitation creation timestamp.
      */
@@ -2140,7 +2149,7 @@ export type LeagueMembershipResponse = {
  */
 export type SendLeagueInvitationsResponse = {
     /**
-     * Invitation records successfully created and sent.
+     * Invitations created, each with its email queued or skipped.
      */
     sent: Array<{
         /**
@@ -2191,6 +2200,10 @@ export type SendLeagueInvitationsResponse = {
          * User ID that accepted the invite, when known.
          */
         acceptedBy?: string | null;
+        /**
+         * Where the latest email of an email invite stands; null for a join link, which has no email.
+         */
+        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -2267,6 +2280,10 @@ export type GenerateInviteLinkResponse = {
          */
         acceptedBy?: string | null;
         /**
+         * Where the latest email of an email invite stands; null for a join link, which has no email.
+         */
+        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED' | null;
+        /**
          * Invitation creation timestamp.
          */
         createdAt: string;
@@ -2334,6 +2351,10 @@ export type ListLeagueInvitationsResponse = {
          */
         acceptedBy?: string | null;
         /**
+         * Where the latest email of an email invite stands; null for a join link, which has no email.
+         */
+        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED' | null;
+        /**
          * Invitation creation timestamp.
          */
         createdAt: string;
@@ -2400,6 +2421,10 @@ export type ResendLeagueInvitationResponse = {
          * User ID that accepted the invite, when known.
          */
         acceptedBy?: string | null;
+        /**
+         * Where the latest email of an email invite stands; null for a join link, which has no email.
+         */
+        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -11480,7 +11505,7 @@ export type GamePicksResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'PASSWORD_RESET';
 
 /**
  * Whether and how system email is sent.
@@ -11494,6 +11519,10 @@ export type EmailConfig = {
      * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
      */
     allowedRecipients: Array<string>;
+    /**
+     * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
+     */
+    sendRatePerSecond: number;
     /**
      * Per-template switches. A template that is off is skipped even while email is on.
      */
@@ -12179,6 +12208,10 @@ export type SettingsGroup = {
          */
         allowedRecipients: Array<string>;
         /**
+         * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
+         */
+        sendRatePerSecond: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -12212,6 +12245,10 @@ export type SettingsGroup = {
          * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
          */
         allowedRecipients: Array<string>;
+        /**
+         * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
+         */
+        sendRatePerSecond: number;
         /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
@@ -12703,6 +12740,10 @@ export type SettingsGroupList = {
              */
             allowedRecipients: Array<string>;
             /**
+             * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
+             */
+            sendRatePerSecond: number;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -12736,6 +12777,10 @@ export type SettingsGroupList = {
              * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
              */
             allowedRecipients: Array<string>;
+            /**
+             * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
+             */
+            sendRatePerSecond: number;
             /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
@@ -13026,6 +13071,10 @@ export type SettingsGroupUpdateRequest = {
          * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
          */
         allowedRecipients: Array<string>;
+        /**
+         * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
+         */
+        sendRatePerSecond: number;
         /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
@@ -13436,6 +13485,10 @@ export type SettingsChange = {
          */
         allowedRecipients: Array<string>;
         /**
+         * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
+         */
+        sendRatePerSecond: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -13469,6 +13522,10 @@ export type SettingsChange = {
          * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
          */
         allowedRecipients: Array<string>;
+        /**
+         * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
+         */
+        sendRatePerSecond: number;
         /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
@@ -13927,6 +13984,10 @@ export type SettingsChangeList = {
              */
             allowedRecipients: Array<string>;
             /**
+             * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
+             */
+            sendRatePerSecond: number;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -13960,6 +14021,10 @@ export type SettingsChangeList = {
              * When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit.
              */
             allowedRecipients: Array<string>;
+            /**
+             * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
+             */
+            sendRatePerSecond: number;
             /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
@@ -17327,10 +17392,6 @@ export type SendLeagueInvitationsErrors = {
      * Standard API error envelope.
      */
     403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    502: ErrorEnvelope;
 };
 
 export type SendLeagueInvitationsError = SendLeagueInvitationsErrors[keyof SendLeagueInvitationsErrors];
@@ -17367,10 +17428,6 @@ export type ResendLeagueInvitationErrors = {
      * Standard API error envelope.
      */
     409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    502: ErrorEnvelope;
 };
 
 export type ResendLeagueInvitationError = ResendLeagueInvitationErrors[keyof ResendLeagueInvitationErrors];

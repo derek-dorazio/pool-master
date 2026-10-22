@@ -16,18 +16,20 @@ import {
   createTestUser,
 } from '../helpers';
 import { expectDefined } from '../../support/expect-defined';
-import { emailServiceOver } from '../../support/email-service';
 import {
   PASSWORD_RESET_LINK_MINUTES,
   PasswordResetService,
   hashResetToken,
 } from '../../../packages/core-api/src/modules/auth/password-reset-service';
 import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
-import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
-import type {
-  MailDeliveryMessage,
-  MailDeliveryProvider,
-  MailDeliveryResult,
+import { PrismaEmailMessageRepository, PrismaUserRepository } from '../../../packages/core-api/src/adapters';
+import {
+  EMAIL_SETTINGS,
+  EmailSender,
+  EmailService,
+  type MailDeliveryMessage,
+  type MailDeliveryProvider,
+  type MailDeliveryResult,
 } from '../../../packages/core-api/src/modules/email';
 
 const APP_BASE_URL = 'https://app.example.test';
@@ -54,16 +56,36 @@ function tokenFrom(message: MailDeliveryMessage): string {
   return match[1];
 }
 
+/** The service over the real outbox; each request waits for its email to reach the transport. */
+class DeliveringPasswordResetService extends PasswordResetService {
+  constructor(deps: ConstructorParameters<typeof PasswordResetService>[0], private readonly sender: EmailSender) {
+    super(deps);
+  }
+
+  override async requestReset(identifier: string): Promise<void> {
+    await super.requestReset(identifier);
+    await this.sender.drain();
+  }
+}
+
 function buildService(options: { now?: () => Date } = {}) {
   const prisma = getPrisma();
   const mail = new RecordingMailDelivery();
-  const service = new PasswordResetService({
+  const messages = new PrismaEmailMessageRepository(prisma);
+  const readConfig = () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
+  const sender = new EmailSender({ messages, transport: mail, readConfig });
+  const service = new DeliveringPasswordResetService({
     users: new PrismaUserRepository(prisma),
     prisma,
-    email: emailServiceOver(mail),
+    email: new EmailService({
+      messages,
+      providerName: mail.providerName,
+      readConfig,
+      senderAddress: 'noreply@integration.test',
+    }),
     appBaseUrl: APP_BASE_URL,
     now: options.now,
-  });
+  }, sender);
   return { service, mail };
 }
 
@@ -97,6 +119,20 @@ describe('password reset request (#847)', () => {
     expect(row.tokenHash).toBe(hashResetToken(token));
     expect(row.tokenHash).not.toContain(token);
     expect(row.expiresAt.getTime()).toBe(issuedAt.getTime() + PASSWORD_RESET_LINK_MINUTES * MINUTE_MS);
+  });
+
+  it('keeps no copy of the reset link in the outbox once the email is sent', async () => {
+    const { service } = buildService();
+    const { user } = await createTestUser();
+
+    await service.requestReset(user.email);
+
+    const sent = await getPrisma().emailMessage.findMany({
+      where: { recipientUserId: user.id, templateKey: 'PASSWORD_RESET' },
+    });
+    expect(sent.map((email) => [email.status, email.subject, email.textBody, email.htmlBody])).toEqual([
+      ['SENT', null, null, null],
+    ]);
   });
 
   it('finds the account by username as well as by email, and mails the account email', async () => {

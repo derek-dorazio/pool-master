@@ -236,14 +236,13 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
       tags: ['Leagues'],
       summary: 'Send email invitations to join a league',
       description:
-        'Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.',
+        'Creates direct email invitations for the target league and queues each one\'s email; each sent invitation carries its email status. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.',
       operationId: 'sendLeagueInvitations',
       body: schemaRef('SendLeagueInvitationsRequest'),
       response: {
         201: schemaRef('SendLeagueInvitationsResponse'),
         400: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
-        502: schemaRef('ErrorEnvelope'),
       },
     },
     preHandler: requireCommissioner(membershipRepo),
@@ -255,7 +254,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
       tags: ['Leagues'],
       summary: 'List a league\'s outstanding invitations',
       description:
-        'Lists the league\'s outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted. Accepted and cancelled invitations are not listed. Commissioner only.',
+        'Lists the league\'s outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted, each email invite with where its latest email stands. Accepted and cancelled invitations are not listed. Commissioner only.',
       operationId: 'listLeagueInvitations',
       response: {
         200: schemaRef('ListLeagueInvitationsResponse'),
@@ -271,14 +270,13 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
       tags: ['Leagues'],
       summary: 'Resend an email invitation',
       description:
-        'Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.',
+        'Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email queued again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive. Commissioner only.',
       operationId: 'resendLeagueInvitation',
       response: {
         200: schemaRef('ResendLeagueInvitationResponse'),
         403: schemaRef('ErrorEnvelope'),
         404: schemaRef('ErrorEnvelope'),
         409: schemaRef('ErrorEnvelope'),
-        502: schemaRef('ErrorEnvelope'),
       },
     },
     preHandler: requireCommissioner(membershipRepo),

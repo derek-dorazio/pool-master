@@ -39,6 +39,7 @@ function emailInvite(overrides: Partial<LeagueInvitationDto> = {}): LeagueInvita
     inviteType: 'EMAIL',
     email: 'friend@example.com',
     expiresAt: IN_A_WEEK,
+    emailStatus: 'QUEUED',
     ...overrides,
   };
 }
@@ -86,6 +87,28 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     expect(link).toHaveTextContent('Never');
     expect(within(link).queryByTestId('league-invitation-resend-link-1')).not.toBeInTheDocument();
     expect(within(link).getByTestId('league-invitation-cancel-link-1')).toBeInTheDocument();
+  });
+
+  it('says where each email invite\'s email stands, warns when it could not be sent, and says nothing on a join link', async () => {
+    listLeagueInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [
+          emailInvite({ id: 'sent-1', email: 'sent@gmail.com', emailStatus: 'SENT' }),
+          emailInvite({ id: 'queued-1', email: 'queued@gmail.com', emailStatus: 'QUEUED' }),
+          emailInvite({ id: 'failed-1', email: 'failed@gmail.com', emailStatus: 'FAILED' }),
+          emailInvite({ id: 'skipped-1', email: 'skipped@gmail.com', emailStatus: 'SKIPPED' }),
+          joinLink(),
+        ],
+      },
+    });
+
+    renderInvitations();
+
+    expect(await screen.findByTestId('league-invitation-email-status-sent-1')).toHaveTextContent('Email sent');
+    expect(screen.getByTestId('league-invitation-email-status-queued-1')).toHaveTextContent('Sending email');
+    expect(screen.getByTestId('league-invitation-email-status-failed-1')).toHaveTextContent('Email could not be sent');
+    expect(screen.getByTestId('league-invitation-email-status-skipped-1')).toHaveTextContent('Email not sent. Copy the link to share it.');
+    expect(screen.queryByTestId('league-invitation-email-status-link-1')).not.toBeInTheDocument();
   });
 
   it('keeps an email invite past its expiry out of Pending and lists it under Expired, still offering Resend', async () => {
@@ -206,21 +229,21 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
   it('shows the reason when a resend fails', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
     resendLeagueInvitationMock.mockResolvedValue({
-      error: { error: { code: 'LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED', message: 'Invitation email delivery failed.' } },
-      status: 502,
+      error: { error: { code: 'LEAGUE_INVITATION_NOT_RESENDABLE', message: 'Only an outstanding email invitation can be resent.' } },
+      status: 409,
     });
 
     renderInvitations();
     fireEvent.click(await screen.findByTestId('league-invitation-resend-email-1'));
 
-    expect(await screen.findByTestId('league-invitation-resend-error')).toBeInTheDocument();
+    expect(await screen.findByTestId('league-invitation-resend-error')).toHaveTextContent('Only an outstanding email invitation can be resent.');
   });
 
   it('reloads the list after a failed resend, since the server may already have replaced the invite code', async () => {
     listLeagueInvitationsMock.mockResolvedValue({ data: { invitations: [emailInvite()] } });
     resendLeagueInvitationMock.mockResolvedValue({
-      error: { error: { code: 'LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED', message: 'Invitation email delivery failed.' } },
-      status: 502,
+      error: { error: { code: 'LEAGUE_INVITATION_NOT_RESENDABLE', message: 'Only an outstanding email invitation can be resent.' } },
+      status: 409,
     });
 
     renderInvitations();
@@ -360,6 +383,18 @@ describe('Commissioner tools › Invites: invite people', () => {
     expect(await screen.findByText('Invitation sent to friend@example.com.')).toBeInTheDocument();
     await waitFor(() => expect(listLeagueInvitationsMock).toHaveBeenCalledTimes(2));
     expect(screen.getByRole('textbox', { name: 'Invite by email' })).toHaveValue('');
+  });
+
+  it('tells the commissioner when the invite was made but no email went out, so they share its link instead', async () => {
+    sendLeagueInvitationsMock.mockResolvedValue({
+      data: { sent: [emailInvite({ emailStatus: 'SKIPPED' })], skippedMembers: [], skippedDuplicates: [] },
+    });
+
+    await sendInviteTo('friend@example.com');
+
+    expect(await screen.findByText(
+      'Invitation made for friend@example.com, but no email was sent. Copy its link below to share it.',
+    )).toBeInTheDocument();
   });
 
   it('sends the invite when the commissioner presses Enter in the email field', async () => {

@@ -19,7 +19,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
-import { emailServiceOver } from '../../support/email-service';
+import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 
 function setup(options: { mailDelivery?: MailDeliveryProvider } = {}) {
   const world = new InMemoryContestWorld();
@@ -378,6 +378,7 @@ describe('ContestService entries — confirmation email', () => {
     completeLineup(world, created.id);
     await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -10 });
     // Saving the tiebreaker sends nothing: the confirmation is the submit's (#481).
+    await deliverQueuedEmail();
     expect(mail.sent).toHaveLength(0);
 
     await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id, contest.sportEventIds[0] ?? '');
@@ -396,6 +397,7 @@ describe('ContestService entries — confirmation email', () => {
 
     await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id, contest.sportEventIds[0] ?? '');
 
+    await deliverQueuedEmail();
     expect(mail.sent).toHaveLength(1);
     expect(mail.sent[0].text).toContain('Tiebreaker: None');
   });

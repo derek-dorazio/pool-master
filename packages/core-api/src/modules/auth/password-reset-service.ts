@@ -18,7 +18,8 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
-import { AccountEmailTemplateKey, type EmailService } from '../email';
+import { EmailMessageStatus, EmailTemplateKey } from '@poolmaster/shared/domain';
+import type { EmailService } from '../email';
 import { cancelOpenPasswordResetTokens, revokeUserSessions } from '../users/user-lifecycle';
 import { SlidingWindowRateLimiter } from '../../core/sliding-window-rate-limiter';
 
@@ -136,7 +137,7 @@ export class PasswordResetService {
       }
 
       const token = randomBytes(32).toString('base64url');
-      await this.deps.prisma.$transaction(async (tx) => {
+      const issued = await this.deps.prisma.$transaction(async (tx) => {
         await tx.passwordResetToken.deleteMany({
           where: {
             userId: user.id,
@@ -145,7 +146,8 @@ export class PasswordResetService {
         });
         // One live link per account: a new request cancels the earlier ones.
         await cancelOpenPasswordResetTokens(tx, user.id, now);
-        await tx.passwordResetToken.create({
+        return tx.passwordResetToken.create({
+          select: { id: true },
           data: {
             userId: user.id,
             tokenHash: hashResetToken(token),
@@ -159,9 +161,10 @@ export class PasswordResetService {
         data: { userId: user.id },
       }, 'Issued password reset link');
 
-      // Sent now, not queued: the link is dead in 10 minutes.
-      const delivery = await this.deps.email.send(AccountEmailTemplateKey.PASSWORD_RESET, {
-        to: { email: user.email, timeZone: user.timezone },
+      // Queuing wakes the sender, so the email goes out at once; the link is dead in 10 minutes.
+      const email = await this.deps.email.send(EmailTemplateKey.PASSWORD_RESET, {
+        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        about: issued.id,
         data: {
           firstName: user.firstName,
           username: user.username,
@@ -169,17 +172,17 @@ export class PasswordResetService {
           expiresInMinutes: PASSWORD_RESET_LINK_MINUTES,
         },
       });
-      if (delivery.skipped) {
+      if (email.status === EmailMessageStatus.SKIPPED) {
         logger?.warn({
           action: 'authService.passwordReset.emailSkipped',
-          data: { userId: user.id, reason: delivery.skipped },
-        }, 'Password reset email skipped by email settings');
+          data: { userId: user.id, reason: email.skipReason },
+        }, 'Password reset email skipped by email settings or the allow list');
         return;
       }
       logger?.info({
-        action: 'authService.passwordReset.emailSent',
+        action: 'authService.passwordReset.emailQueued',
         data: { userId: user.id },
-      }, 'Handed password reset email to mail delivery');
+      }, 'Queued password reset email');
     } catch (err) {
       // The caller has already been answered; a failure here only ever reaches the log.
       logger?.error({
