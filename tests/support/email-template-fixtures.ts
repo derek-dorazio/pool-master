@@ -1,6 +1,7 @@
-import type {
-  SystemEmailTemplateDataByKey,
-  SystemEmailTemplateKey,
+import {
+  EntryReminderKind,
+  type SystemEmailTemplateDataByKey,
+  type SystemEmailTemplateKey,
 } from '../../packages/core-api/src/modules/email';
 
 /**
@@ -57,7 +58,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     contestName: 'Masters Pick 6',
     eventName: 'The Masters',
     closesAt: new Date('2026-04-09T11:40:00.000Z'),
-    hasDraft: true,
+    standing: { kind: EntryReminderKind.DRAFT, drafts: 1, progress: { made: 4, of: 6 } },
     contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
   },
   CONTEST_OPENED: {

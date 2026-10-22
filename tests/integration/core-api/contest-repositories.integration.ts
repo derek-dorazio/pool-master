@@ -932,5 +932,6 @@ describe('Entry reminders on the Prisma adapters (#845)', () => {
     const ours = send.mock.calls.map(([message]) => message).filter((message) => message.from.name === league.name);
     expect(ours.map((message) => message.to).sort()).toEqual([owner.user.email, drafting.user.email].sort());
     expect(ours.every((message) => message.subject === 'Picks close soon: Reminded Pool')).toBe(true);
+    expect(ours.find((message) => message.to === drafting.user.email)?.text).toMatch(/Your .+ entry is (a draft with \d+ of \d+ picked|saved as a draft)\./);
   });
 });

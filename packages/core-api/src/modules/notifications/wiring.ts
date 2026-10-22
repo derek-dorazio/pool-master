@@ -9,6 +9,8 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import {
   PrismaContestConfigurationRepository,
+  PrismaContestEntryMatchPredictionRepository,
+  PrismaContestEntryPickRepository,
   PrismaContestEntryRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
@@ -17,6 +19,7 @@ import {
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
   PrismaSquadMembershipRepository,
+  PrismaSquaresRepository,
   PrismaUserRepository,
 } from '../../adapters';
 import type { EmailService } from '../email';
@@ -36,6 +39,10 @@ export function createEntryReminders(prisma: PrismaClient, options: {
     configurations: new PrismaContestConfigurationRepository(prisma),
     matches: new PrismaSportEventMatchRepository(prisma),
     entries: new PrismaContestEntryRepository(prisma),
+    picks: new PrismaContestEntryPickRepository(prisma),
+    predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
+    tiers: createSportEventTierService(prisma, options.logger),
+    squares: new PrismaSquaresRepository(prisma),
     leagues: new PrismaLeagueRepository(prisma),
     memberships: new PrismaLeagueMembershipRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),

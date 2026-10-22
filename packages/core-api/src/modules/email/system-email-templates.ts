@@ -85,15 +85,40 @@ export interface ContestOpenedEmailData {
   contestUrl: string;
 }
 
+/** Why a reminder goes to its reader (#845, catalog row D2), which decides what it asks of them. */
+export const EntryReminderKind = {
+  /** No entry for the event yet, in a contest whose members pick. */
+  NOT_ENTERED: 'NOT_ENTERED',
+  /** An entry saved for the event but not submitted. */
+  DRAFT: 'DRAFT',
+  /** Not in a random draw yet: the draw deals the picks, so joining is all there is to do. */
+  NOT_JOINED: 'NOT_JOINED',
+  /** No box claimed on a squares grid yet. */
+  NO_BOX: 'NO_BOX',
+} as const;
+export type EntryReminderKind = (typeof EntryReminderKind)[keyof typeof EntryReminderKind];
+
+/** How far along a draft is: "4 of 6 picked". */
+export interface DraftProgress {
+  made: number;
+  of: number;
+}
+
+export type EntryReminderStanding =
+  | { kind: typeof EntryReminderKind.NOT_ENTERED }
+  /** `progress` is shown for a reader with one draft, in a format that counts picks. */
+  | { kind: typeof EntryReminderKind.DRAFT; drafts: number; progress?: DraftProgress }
+  | { kind: typeof EntryReminderKind.NOT_JOINED }
+  | { kind: typeof EntryReminderKind.NO_BOX };
+
 export interface ContestEntryReminderEmailData {
   userName: string;
   leagueName: string;
   contestName: string;
   eventName: string;
-  /** When the event's picks close. */
+  /** When the event's picks, the draw's entries or the grid's boxes close. */
   closesAt: Date;
-  /** Whether the reader has an entry saved as a draft; otherwise they haven't entered yet. */
-  hasDraft: boolean;
+  standing: EntryReminderStanding;
   contestUrl: string;
 }
 
@@ -511,40 +536,86 @@ function renderContestOpenedEmail(
   });
 }
 
+/** What a reminder says to its reader, by why it goes to them. */
+function entryReminderWording(data: ContestEntryReminderEmailData): {
+  subject: string;
+  title: string;
+  message: string;
+  closesLabel: string;
+  action: string;
+} {
+  const { standing } = data;
+  switch (standing.kind) {
+    case EntryReminderKind.NOT_JOINED:
+      return {
+        subject: `Entries close soon: ${data.contestName}`,
+        title: 'Entries close soon',
+        message: `You haven't joined ${data.contestName} yet. The draw deals every entry its picks, so joining is all you need to do.`,
+        closesLabel: 'Entries close',
+        action: 'Join the contest',
+      };
+    case EntryReminderKind.NO_BOX:
+      return {
+        subject: `Boxes close soon: ${data.contestName}`,
+        title: 'Boxes close soon',
+        message: `You haven't claimed a box on the ${data.contestName} grid yet. Boxes close at kickoff, or sooner if the numbers are drawn first.`,
+        closesLabel: 'Kickoff',
+        action: 'Claim your boxes',
+      };
+    case EntryReminderKind.DRAFT:
+      return {
+        subject: `Picks close soon: ${data.contestName}`,
+        title: 'Picks close soon',
+        message: standing.drafts > 1
+          ? `You have ${String(standing.drafts)} draft entries for ${data.eventName}. They won't count until you submit them.`
+          : standing.progress === undefined
+            ? `Your ${data.eventName} entry is saved as a draft. It won't count until you submit it.`
+            : `Your ${data.eventName} entry is a draft with ${String(standing.progress.made)} of ${String(standing.progress.of)} picked. It won't count until you submit it.`,
+        closesLabel: 'Picks close',
+        action: 'Make your picks',
+      };
+    case EntryReminderKind.NOT_ENTERED:
+      return {
+        subject: `Picks close soon: ${data.contestName}`,
+        title: 'Picks close soon',
+        message: `You haven't entered ${data.contestName} for ${data.eventName} yet.`,
+        closesLabel: 'Picks close',
+        action: 'Make your picks',
+      };
+  }
+}
+
 function renderContestEntryReminderEmail(
   data: ContestEntryReminderEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const closesLine = formatInstant(data.closesAt, context.timeZone);
-  const subject = `Picks close soon: ${data.contestName}`;
-  const status = data.hasDraft
-    ? `Your ${data.eventName} entry is saved as a draft. It won't count until you submit it.`
-    : `You haven't entered ${data.contestName} for ${data.eventName} yet.`;
+  const wording = entryReminderWording(data);
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.userName)},`),
-    paragraph(escapeHtml(status)),
+    paragraph(escapeHtml(wording.message)),
     detailList([
       ['League', data.leagueName],
       ['Contest', data.contestName],
-      ['Picks close', closesLine],
+      [wording.closesLabel, closesLine],
     ]),
-    button('Make your picks', data.contestUrl),
+    button(wording.action, data.contestUrl),
   ].join('');
   const textLines = [
     `Hi ${data.userName},`,
     '',
-    status,
+    wording.message,
     `League: ${data.leagueName}`,
     `Contest: ${data.contestName}`,
-    `Picks close: ${closesLine}`,
-    `Make your picks: ${data.contestUrl}`,
+    `${wording.closesLabel}: ${closesLine}`,
+    `${wording.action}: ${data.contestUrl}`,
   ];
 
   return buildMessage(context, {
     templateKey: 'CONTEST_ENTRY_REMINDER',
-    subject,
-    preheader: `Picks for ${data.eventName} close ${closesLine}.`,
-    title: 'Picks close soon',
+    subject: wording.subject,
+    preheader: `${wording.closesLabel} ${closesLine}.`,
+    title: wording.title,
     bodyBlocks,
     textLines,
   });
