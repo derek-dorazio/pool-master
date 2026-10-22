@@ -142,7 +142,7 @@ first paid tier (Premium); C from the second (Pro); D the top tier's (Platinum).
   plan, History Q3 and Q4).
 - **Typed:** a `HistoryFeature` enum (`CONTEST_RESULT`, `CURRENT_YEAR_RESULTS`,
   `CHAMPIONSHIP_PAST_YEARS`, `CHAMPIONSHIP_DRILL_THROUGH`, `CUP_PAST_SEASONS`,
-  `ALL_TIME_SUMMARY`) with a single map from feature to class in `packages/shared/domain`. The
+  `ALL_TIME_SUMMARY`) with a single map from feature to the shared `ServiceClass` enum (`ESSENTIAL`, `A` to `D`, `plans/season-cups.md` Q9.1) in `packages/shared/domain`. The
   routes ask the entitlements function about the feature, never about a plan.
 
 Questions:
