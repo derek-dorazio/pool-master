@@ -130,7 +130,8 @@ A starting point to react to, not a decision. Names follow Derek's message.
 | Contest opened and final results emails | | ✓ | ✓ | ✓ |
 | End-of-day standings email during a live event | | | ✓ | ✓ |
 | Branding: logo, colours | | | ✓ | ✓ |
-| Season-long league standings across contests | | | | ✓ |
+| League championship: calendar-year standings and trophy (#863) | | ✓ | ✓ | ✓ |
+| Sports league cups, FedEx-style (#841) | | | ✓ | ✓ |
 | Export results (CSV) | | | | ✓ |
 
 Rules that make the two mechanisms work together:
@@ -279,6 +280,20 @@ its own light branding, and Platinum gets all of them. Three styles:
    picks the league's main style for its look; contests of every style are available.
 6. **Does a member see the style?** Recommended: only through the look; no style label or
    plan badge for members.
+
+## Features being built for paid plans
+
+Derek (2026-10-22): these features are built so there is something worth upgrading for. Each
+one tags its views, tiles or emails with a plan-agnostic **service class** (Essential, A, B, C,
+D); this plan maps classes to plans when it is built (Essential and A every league; B Premium;
+C Pro; D Platinum). Nothing is gated yet.
+
+| Feature | Ticket | Classes | Documented in |
+|---|---|---|---|
+| Sports league cups (FedEx-style points race per sports league) | #841 | C (Pro); race chart, projected points, custom points tables D | `plans/season-cups.md` §9 |
+| League championship (calendar-year standings, trophy, medal tiles, finish matrix) | #863 | B (Premium) | `plans/season-cups.md` §9 |
+| League history (past years, drill to past contests, all-time summary) | #837 | Championship past years B, cup past seasons C, all-time summary D | `plans/league-history.md` §5 |
+| Email notifications | #845 | Essential to D per email | `plans/email-notifications.md`, *Class* |
 
 ## Premium features worth paying for
 
