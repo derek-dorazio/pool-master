@@ -458,6 +458,18 @@ export class SelectionService {
       },
       'Ran a random draw',
     );
+    // Every entry's owners get a receipt of the picks the draw dealt it (#867). The draw is
+    // already recorded, so a receipt that fails is logged and never fails it.
+    for (const entry of context.entries) {
+      try {
+        await this.deps.entryReceipts?.sendEntrySubmittedEmail(contestId, entry.id, context.sportEvent.id);
+      } catch (error) {
+        this.deps.logger?.error(
+          { action: 'selection.runDraw.receiptFailed', data: { contestId, entryId: entry.id, error: error instanceof Error ? error.message : String(error) } },
+          'Failed to send a quick pick entry its receipt',
+        );
+      }
+    }
 
     const drawnContext = await this.loadContext(contestId, context.sportEvent.id);
     return this.buildRoomView({ context: drawnContext, engine, actorUserId });

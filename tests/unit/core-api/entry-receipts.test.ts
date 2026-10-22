@@ -13,7 +13,7 @@ import {
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
-import { EntryReceipts } from '../../../packages/core-api/src/modules/notifications';
+import { EntryReceipts, type DrawnSquaresBoard } from '../../../packages/core-api/src/modules/notifications';
 import type { GamePickGame, GamePickTeam, GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
@@ -290,5 +290,71 @@ describe('EntryReceipts', () => {
       expect.objectContaining({ action: 'email.entryReceipt.failed' }),
       'Failed to queue an entry receipt',
     );
+  });
+
+  describe('squaresDrawn', () => {
+    /** The drawn board: rows take the away team's digits, columns the home team's. */
+    function drawnBoard(contestId: string, boxes: Array<{ rowIndex: number; columnIndex: number; contestEntryId: string }>): DrawnSquaresBoard {
+      return {
+        contest: expectDefinedContest(contestId),
+        homeTeamName: 'Chiefs',
+        awayTeamName: 'Eagles',
+        boxes: boxes.map((box) => ({ ...box, entryName: '' })),
+        digits: {
+          contestId,
+          seed: 'seed',
+          rowDigits: [3, 0, 1, 2, 4, 5, 6, 7, 8, 9],
+          columnDigits: [7, 1, 2, 3, 4, 5, 6, 0, 8, 9],
+          drawnByUserId: null,
+          drawnAt: SUBMITTED_AT,
+        },
+      };
+    }
+
+    function expectDefinedContest(contestId: string) {
+      const contest = world.contests.get(contestId);
+      if (!contest) throw new Error('contest missing');
+      return contest;
+    }
+
+    it('sends every active owner of each entry with a box its boxes\' numbers by team, once, and nothing to an entry without one', async () => {
+      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const empty = await world.entryRepo().create({ contestId: contest.id, squadId: entry.squadId, entryNumber: 2, name: 'Entry 2', tiebreakerValue: null });
+      if (empty.status !== 'created') throw new Error('entry not created');
+      const board = drawnBoard(contest.id, [
+        { rowIndex: 0, columnIndex: 0, contestEntryId: entry.id },
+        { rowIndex: 1, columnIndex: 7, contestEntryId: entry.id },
+      ]);
+
+      await receipts().squaresDrawn(board);
+      await receipts().squaresDrawn(board);
+
+      expect(outbox.rows.map((row) => row.recipientUserId ?? '').sort((left, right) => left.localeCompare(right)))
+        .toEqual(owners.map((owner) => owner.id).sort((left, right) => left.localeCompare(right)));
+      const text = textTo(owners[0].id);
+      expect(outbox.rows[0].subject).toBe('Your numbers: Office Pool');
+      expect(text).toContain('- Box 1: Eagles 0, Chiefs 0');
+      expect(text).toContain('- Box 2: Eagles 3, Chiefs 7');
+      expect(text).toContain(`Review entry: https://app.example.test/league/OFFICE24/contests/${contest.id}/entries/${entry.id}`);
+    });
+
+    it('names the row and column sides Away and Home while the game\'s teams are not known', async () => {
+      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const board = { ...drawnBoard(contest.id, [{ rowIndex: 0, columnIndex: 0, contestEntryId: entry.id }]), homeTeamName: null, awayTeamName: null };
+
+      await receipts().squaresDrawn(board);
+
+      expect(textTo(owners[0].id)).toContain('- Box 1: Away 3, Home 7');
+    });
+
+    it('logs and resolves, sending nothing, when the draw is missing from the board', async () => {
+      const { contest, entry } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const board = { ...drawnBoard(contest.id, [{ rowIndex: 0, columnIndex: 0, contestEntryId: entry.id }]), digits: null };
+
+      await expect(receipts().squaresDrawn(board)).resolves.toBeUndefined();
+
+      expect(outbox.rows).toHaveLength(0);
+      expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'email.entryReceipt.skipped' }), expect.any(String));
+    });
   });
 });

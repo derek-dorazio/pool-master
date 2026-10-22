@@ -23,6 +23,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
+import type { DrawnSquaresBoard } from '../../../packages/core-api/src/modules/notifications';
 import { SquaresService, type SquaresActor } from '../../../packages/core-api/src/modules/selections/squares-service';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
@@ -77,6 +78,8 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
   const bob = enter('Bob');
 
   let now = later(KICKOFF, -24);
+  // The boards the service asked receipts for, one per draw (#867).
+  const receipts: DrawnSquaresBoard[] = [];
   const service = new SquaresService({
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
@@ -89,6 +92,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
     participants: games.participantRepo(),
     squares: squares.repo(),
     standings: world.standingRepo(),
+    receipts: { squaresDrawn: async (board) => { receipts.push(board); } },
     now: () => now,
     drawSeed: () => 'seed',
   });
@@ -104,7 +108,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
     squares.draws.set(contest.id, { contestId: contest.id, seed: 'seed', rowDigits: IN_ORDER, columnDigits: IN_ORDER, drawnByUserId: null, drawnAt: T0 });
   };
   return {
-    world, games, squares, contest, superBowl, game, alice, bob, service, settlement, actor, updateGame, drawInOrder,
+    world, games, squares, contest, superBowl, game, alice, bob, service, settlement, actor, updateGame, drawInOrder, receipts,
     setNow: (when: Date) => { now = when; },
     contestStatus: () => expectDefined(world.contests.get(contest.id)).status,
     entryStatus: (entry: ContestEntry) => expectDefined(world.entries.get(entry.id)).events[0]?.status,
@@ -250,6 +254,16 @@ describe('SquaresService drawing the numbers', () => {
     const first = await context.service.draw(context.contest.id, context.actor('Carol'));
     await expectRefused(context.service.draw(context.contest.id, context.actor('Carol')), 'SQUARES_ALREADY_DRAWN', 409);
     expect(context.squares.draws.get(context.contest.id)?.rowDigits).toEqual(first.digits?.rowDigits);
+  });
+
+  it('asks for the entries\' receipts once, with the drawn board, and not for a refused second draw', async () => {
+    const context = setup();
+    context.squares.addBox(context.contest.id, context.alice.id, 0, 0);
+    const board = await context.service.draw(context.contest.id, context.actor('Carol'));
+    await expectRefused(context.service.draw(context.contest.id, context.actor('Carol')), 'SQUARES_ALREADY_DRAWN', 409);
+
+    expect(context.receipts).toEqual([board]);
+    expect(context.receipts[0].digits).not.toBeNull();
   });
 
   it('still draws once the game is under way, until the first quarter\'s score is in', async () => {

@@ -46,7 +46,7 @@ writing the first slice's tickets.
 |---|---|---|---|
 | `LEAGUE_MEMBER_INVITE` | A commissioner invites by email, and again on Resend Invite | The invited address | Inviter, league, league code, optional message, expiry, Join league button |
 | `LEAGUE_JOIN_SUCCESS` | An invitation is accepted | The person who joined | League, their squad's name, League Home button |
-| `CONTEST_ENTRY_COMPLETED` | An entry's lineup is submitted for an event in the selection room | The person who submitted (not co-owners) | Lineup by tier and the tiebreaker. Roster contests only: pick'em and survivor submits send nothing, and the tiebreaker is always formatted as golf to-par (since #867: every owner, every entry type but random draw and squares, see D3) |
+| `CONTEST_ENTRY_COMPLETED` | An entry's lineup is submitted for an event in the selection room | The person who submitted (not co-owners) | Lineup by tier and the tiebreaker. Roster contests only: pick'em and survivor submits send nothing, and the tiebreaker is always formatted as golf to-par (since #867: every owner, every entry type, see D3) |
 | `CONTEST_STARTED_SUMMARY` | An `OPEN` contest becomes `ACTIVE` at its cutoff | Active commissioners plus owners of squads with a submitted entry, each once | Event, start time, entry count and **every** entry (no cap), contest link. No "good luck", no leaderboard link, and members with no entry are not told |
 
 Each template can be switched off on the root admin Settings page (`EMAIL_CONFIG`). QA sends
@@ -116,10 +116,10 @@ they don't fit). **Essential**: account, security and membership email, every le
 **A**: the basics, free plan too (a contest opening, receipts, final results, an event cancelled
 or moved). **B**: paid conveniences (reminders, commissioner nudges, the good luck and "you're
 out" emails, standings while an event is live, a commissioner's "remind everyone" button if
-built). An email about a feature that is itself gated, such as sports league cups, the league
-championship, season standings or trophies, follows that feature's gate rather than an email
-class; those rows come with #841, #863 and #837. The class is the `notificationClass` field of
-each `EMAIL_TEMPLATES` entry; nothing reads it yet.
+built). Emails about sports league cups, the league championship, season standings and
+trophies are **B** too, matching those features' class in `plans/season-cups.md` §7 (Derek
+2026-10-22); their rows come with #841, #863 and #837. The class is the `notificationClass`
+field of each `EMAIL_TEMPLATES` entry; nothing reads it yet.
 
 ### A. Accounts
 
@@ -193,11 +193,11 @@ listed. Members without an entry don't need to know.
 |---|---|---|---|---|---|---|---|---|
 | D1 | New contest open | Commissioner opens a contest (`DRAFT` → `OPEN`) | Every active league member | At once | Contest name, event(s) and start, selection type in a line ("pick 6 golfers from 6 tiers"), entries per member, prizes if set, closes at, Enter contest button | | P1 | A |
 | D2 | Entry reminder | The contest is `OPEN`, its cutoff is near, and the member has no submitted entry for the starting event (no entry, or a draft) | Members with nothing submitted | 48 h, 24 h and 3 h before cutoff, with the rules in Q3.6 | "Entries close Thursday 7:00 am." Their draft's status if they have one ("4 of 6 picked"), Make picks button | | P1 | B |
-| D3 | Entry submitted | An entry's lineup is submitted for an event | Every owner of the squad | At once | Lineup, tiebreaker, "you can change picks until [time]", Entry link | 🟡 `CONTEST_ENTRY_COMPLETED`: rosters, pick'em, bracket and survivor; random draw and squares to come | P2 | A |
+| D3 | Entry submitted | An entry's lineup is submitted for an event | Every owner of the squad | At once | Lineup, tiebreaker, "you can change picks until [time]", Entry link | ✅ `CONTEST_ENTRY_COMPLETED`: every entry type (#867) | P2 | A |
 | D4 | Pick'em week submitted | A pick'em or survivor week is submitted | Every owner of the squad | At once | Their picks by game (confidence values), "each pick locks at its kickoff" | ✅ folded into D3 (#867) | P3 | A |
 | D5 | A pick withdrew | A field member in a submitted lineup withdraws (or is scratched) while that event's picks are still open | Owners of entries holding that pick | At once, at most once per entry per event | Who withdrew, whether the lineup is now short (back to draft) and won't count unless fixed, Make picks button | | P2 | B |
-| D6 | Your picks were drawn | A random draw contest's draw runs | Owners of every entry | At once | Their dealt picks, Leaderboard link | | P2 | A |
-| D7 | Squares numbers drawn | A squares contest's numbers are drawn | Owners of every entry with a box | At once | Their boxes with their numbers, the grid link | | P2 | A |
+| D6 | Your picks were drawn | A random draw contest's draw runs | Owners of every entry | At once | Their dealt picks, Leaderboard link | ✅ folded into D3 (#867), with an Entry link | P2 | A |
+| D7 | Squares numbers drawn | A squares contest's numbers are drawn | Owners of every entry with a box | At once | Their boxes with their numbers, the grid link | ✅ folded into D3 (#867), with an Entry link | P2 | A |
 
 **Q3.6 Reminder timing.** **Decided (Derek 2026-10-21):** three reminders, 48, 24 and 3 hours
 before the cutoff, and none once something is submitted. The same schedule applies to every
@@ -294,7 +294,7 @@ nothing to re-send. *Recommendation:* no email.
 
 Later, not now: cup standings and "crowned champion" emails belong to season cups (#841), and a
 season recap belongs to league history (#837). Each design adds its rows to this catalog when
-it is built.
+it is built, as class B.
 
 ---
 
@@ -333,8 +333,9 @@ SES 4 and 5, then slices 2 to 6 here.
    2c (#867, Derek 2026-10-22): an entry receipt (D3) for every entry type, to every squad
    owner, each showing that entry's content: pick'em, bracket, survivor, random draw (at the
    draw) and squares. Pick'em, bracket and survivor receipts come from the selections module's
-   submit through `EntryReceipts` in the notifications module; random draw and squares follow
-   in a second PR.
+   submit through `EntryReceipts` in the notifications module. Random draw and squares have no
+   submit: their receipts go out at their draw, which folds D6 and D7 into D3; claiming a box
+   sends nothing.
 3. **Live standings.** The standings buffer in `EMAIL_CONFIG`, E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,
    with the top 10 and the reader's entries.
 4. **Final results.** F1 with F3 folded in, F2.

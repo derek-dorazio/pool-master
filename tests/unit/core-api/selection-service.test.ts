@@ -1173,6 +1173,20 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
     expect(new Set(dealt).size).toBe(4);
   });
 
+  it('sends every dealt entry its quick pick receipt once the draw is recorded, and still answers when one receipt fails', async () => {
+    const context = setup({ ...DRAW, entries: [...DRAW.entries] });
+    const sendEntrySubmittedEmail = jest.fn()
+      .mockRejectedValueOnce(new Error('database unavailable'))
+      .mockResolvedValue(undefined);
+    context.deps.entryReceipts = { sendEntrySubmittedEmail };
+
+    await context.service.runDraw(runDraw);
+
+    expect(sendEntrySubmittedEmail).toHaveBeenCalledWith(CONTEST_ID, ENTRY_ID, EVENT_ID);
+    expect(sendEntrySubmittedEmail).toHaveBeenCalledWith(CONTEST_ID, OTHER_ENTRY_ID, EVENT_ID);
+    expect(context.recordDraw).toHaveBeenCalledTimes(1);
+  });
+
   it('never deals a golfer who is out of the field', async () => {
     const { service, recordDraw } = setup({
       ...DRAW,

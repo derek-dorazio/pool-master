@@ -142,8 +142,8 @@ Emails (Derek 2026-10-22): every email in `plans/email-notifications.md` carries
 **notification class**, not a plan name, so this plan only has to map classes to plans. There
 are three: Essential and A go to every league, free included (account and membership email; a
 contest opening, receipts, final results), and B goes to paid plans (reminders, nudges, live
-standings). An email about a gated feature (cups, the championship, season standings, trophies)
-goes wherever that feature is on. Derek reviews this first guess.
+standings). Emails about cups, the championship, season standings and trophies are B as well,
+matching those features (Derek 2026-10-22).
 
 Rules that make the two mechanisms work together:
 
@@ -341,7 +341,7 @@ plan that gets it. Nothing is gated yet.
 | Sports league cups (FedEx-style points race per sports league) | #841 | B (paid, from Pro): every cup view | `plans/season-cups.md` §7 |
 | League championship (calendar-year standings, trophy, medal tiles, finish matrix) | #863 | B (paid, from Pro): every championship view | `plans/season-cups.md` §7 |
 | League history (past years, drill to past contests, all-time summary) | #837 | Contest results Essential; past years follow the championship's and cups' class; all-time summary D | `plans/season-cups.md` §7 |
-| Email notifications | #845 | Per email | `plans/email-notifications.md`, *Class* |
+| Email notifications | #845 | Per email: Essential and A free, B paid; cup, championship, season standings and trophy emails B | `plans/email-notifications.md`, *Class* |
 
 Pro and Premium leagues see the same cups and championship; Premium's bigger numbers on the
 levers (more entries, more sports leagues, more squads) are what make it worth more.

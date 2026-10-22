@@ -1480,6 +1480,57 @@ describe('ContestService', () => {
       expect(sentMessage.text).not.toContain('Tiebreaker');
     });
 
+    it('sends a quick pick entry its dealt picks with no submit time and no tiebreaker line it never gave', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        sportEventIds: ['event-1'],
+        name: 'Masters Quick Pick',
+        status: ContestStatus.OPEN,
+      });
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
+      };
+      const service = buildService({
+        contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
+        configurations: createMockContestConfigurationRepo({
+          findByContest: jest.fn().mockResolvedValue({
+            id: 'configuration-1',
+            contestId: 'contest-1',
+            selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW,
+            configJson: { selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW, picksPerEntry: 2, countedScores: 2 },
+          }),
+        }),
+        leagues: fakeLeagueRepo({
+          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
+        }),
+        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        squadMemberships: createMockSquadMembershipRepo({
+          findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
+        }),
+        entries: createMockEntryRepo({ findByIdWithSquad: jest.fn().mockResolvedValue({ ...DEFAULT_ENTRY_WITH_SQUAD, tiebreakerValue: null }) }),
+        picks: fakeContestEntryPickRepo({
+          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
+            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
+            buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:01:00.000Z'),
+          ]),
+        }),
+        email: emailServiceOver(mailDelivery),
+        appBaseUrl: 'https://app.primetimecommissioner.com',
+      });
+
+      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1');
+
+      await deliverQueuedEmail();
+      const sentMessage = mailDelivery.send.mock.calls[0][0];
+      expect(sentMessage.subject).toBe('Your quick picks: Masters Quick Pick');
+      expect(sentMessage.text).toContain('- Pick 1: Rory McIlroy');
+      expect(sentMessage.text).toContain('- Pick 2: Tommy Fleetwood');
+      expect(sentMessage.text).not.toContain('Submitted:');
+      expect(sentMessage.text).not.toContain('Tiebreaker');
+    });
+
     it('resolves rather than throwing when confirmation delivery fails, so the submit it follows still succeeds', async () => {
       const contest = buildContest({
         id: 'contest-1',
