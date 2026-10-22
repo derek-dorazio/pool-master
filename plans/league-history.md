@@ -94,6 +94,10 @@ widened to include the championship):
 - **Then each year, newest first:** the championship trophy with its champion, and that year's
   cup champions underneath. The current year shows "2026 so far" with the leaders. Tapping a year
   opens its championship board (section 2) at that year; tapping a cup opens that cup's board.
+- **No tabs.** It is one page. The Seasons, Cups, All-time and Records tabs in mockup C come from
+  this plan's first version and go. A year opens the championship page for that year first; that
+  year's cups are one tap away from it (the Cups page at the same year), and a champion row
+  opens that cup's page for the year directly.
 
 One endpoint, `GET /leagues/:leagueId/history/summary`: the tile counts and, per year, the
 champion squad(s) and cup champions. It reads `LeagueYearFinish` and `CupStanding` for the
