@@ -123,20 +123,21 @@ Questions:
 History exists to be worth paying for (Derek, 2026-10-22). Nothing is gated yet; each view
 carries a **feature class**, not a plan name, so `plans/monetization-strategy.md` only has to map
 classes to plans. The letters are the same as the email notification classes in
-`plans/email-notifications.md`: Essential and A for every league, free included; B from the
-first paid tier (Premium); C from the second (Pro); D the top tier's (Platinum).
+`plans/email-notifications.md`, in Derek's order of plans (2026-10-22: free, then Pro, then
+Premium, then Platinum): Essential and A for every league, free included; B from the first paid
+tier (Pro); C from the second (Premium); D the top tier's (Platinum).
 
 | View | Class | Why |
 |---|---|---|
 | A past contest's final leaderboard, opened from the contest itself | Essential | A result never disappears. A league that drops a tier still sees every contest it played |
 | Contests page History view, this year: winners, year filter set to now | A | Hiding last week's winner reads as a bug (monetization plan) |
-| Past years of the championship board (year toggle) | B | The championship is a Premium feature (Derek); its own past years come with it |
-| Drill-through from the championship board, matrix cells included; earlier years on the Contests page History view | B | Same feature, one tap deeper |
-| Past seasons of the sports league cups (year toggle on Cups and Cup pages) | C | Cups are a Pro feature (Derek); a past season never sits below its own feature |
+| Past years of the championship board (year toggle) | C | The championship is a Premium feature (Derek); its own past years come with it |
+| Drill-through from the championship board, matrix cells included; earlier years on the Contests page History view | C | Same feature, one tap deeper |
+| Past seasons of the sports league cups (year toggle on Cups and Cup pages) | B | Cups are a Pro feature (Derek); a past season never sits below its own feature |
 | All-time summary across every year | D | Derek: the multi-year trend view is Platinum |
 
 - **One rule for past years:** a past-year view needs at least the class of the feature it shows.
-  The championship's past years are B, a cup's past seasons C.
+  The championship's past years are C, a cup's past seasons B.
 - **Downgrades hide, never delete.** A lapsed league still has every row; views above its class
   show a short locked note to everyone and the upgrade path to the commissioner (monetization
   plan, History Q3 and Q4).
