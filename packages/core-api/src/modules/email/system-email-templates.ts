@@ -1,4 +1,4 @@
-import type { EmailTemplateKey } from '@poolmaster/shared/dto';
+import type { EmailConfig, EmailTemplateKey } from '@poolmaster/shared/dto';
 import { EmailCategory } from './email-categories';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
@@ -82,6 +82,11 @@ type TemplateRenderer<Key extends SystemEmailTemplateKey> = (
 export interface EmailTemplateDefinition<Key extends SystemEmailTemplateKey> {
   /** Decides whether a member can turn the email off, and which unsubscribe link it carries. */
   category: EmailCategory;
+  /**
+   * Whether EMAIL_CONFIG has a switch for this email, under its key. An email without one (an
+   * account email such as a password reset) follows only the overall switch.
+   */
+  settingsSwitch: boolean;
   render: TemplateRenderer<Key>;
 }
 
@@ -121,6 +126,11 @@ const EMAIL_THEME = {
   subtleBorder: 'rgba(11, 30, 63, 0.10)',
 } as const;
 
+/** Whether EMAIL_CONFIG has a switch for `templateKey`, as the registry says. */
+export function hasSettingsSwitch(templateKey: SystemEmailTemplateKey): templateKey is keyof EmailConfig['templates'] {
+  return EMAIL_TEMPLATES[templateKey].settingsSwitch;
+}
+
 /** The app's sender name, for email that is not about one league. */
 export const PLATFORM_SENDER_NAME = BRAND_NAME;
 
@@ -140,18 +150,22 @@ export function renderSystemEmailTemplate<Key extends SystemEmailTemplateKey>(
 export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   LEAGUE_MEMBER_INVITE: {
     category: EmailCategory.MEMBERSHIP,
+    settingsSwitch: true,
     render: renderLeagueMemberInviteEmail,
   },
   LEAGUE_JOIN_SUCCESS: {
     category: EmailCategory.MEMBERSHIP,
+    settingsSwitch: true,
     render: renderLeagueJoinSuccessEmail,
   },
   CONTEST_ENTRY_COMPLETED: {
     category: EmailCategory.RECEIPTS,
+    settingsSwitch: true,
     render: renderContestEntryCompletedEmail,
   },
   CONTEST_STARTED_SUMMARY: {
     category: EmailCategory.LIVE_STANDINGS,
+    settingsSwitch: true,
     render: renderContestStartedSummaryEmail,
   },
 };

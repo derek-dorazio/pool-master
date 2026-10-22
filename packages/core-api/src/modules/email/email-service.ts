@@ -6,7 +6,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import { EmailTemplateKeySchema, type EmailConfig } from '@poolmaster/shared/dto';
+import type { EmailConfig } from '@poolmaster/shared/dto';
 import {
   EmailSkipReason,
   type MailAddress,
@@ -14,6 +14,7 @@ import {
   type MailDeliveryResult,
 } from './mail-delivery';
 import {
+  hasSettingsSwitch,
   PLATFORM_SENDER_NAME,
   renderSystemEmailTemplate,
   type EmailTemplateScopeByKey,
@@ -202,8 +203,7 @@ function logRefs(metadata: { templateKey: string } & EmailRefs & { leagueId?: st
 
 function switchedOffReason(config: EmailConfig, templateKey: SystemEmailTemplateKey): EmailSkipReason | undefined {
   if (!config.enabled) return EmailSkipReason.EMAIL_DISABLED;
-  const template = EmailTemplateKeySchema.safeParse(templateKey);
-  if (template.success && !config.templates[template.data]) return EmailSkipReason.TEMPLATE_DISABLED;
+  if (hasSettingsSwitch(templateKey) && !config.templates[templateKey]) return EmailSkipReason.TEMPLATE_DISABLED;
   return undefined;
 }
 

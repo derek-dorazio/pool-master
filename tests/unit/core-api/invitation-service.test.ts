@@ -237,6 +237,23 @@ describe('InvitationService', () => {
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
     });
 
+    it('refuses to invite into a league that does not exist, creating nothing, since its name and code are the email\'s sender', async () => {
+      const invitationRepo = createMockInvitationRepo();
+      const service = new InvitationService({
+        invitations: invitationRepo,
+        memberships: createMockMembershipRepo(),
+        leagues: createMockLeagueRepo({ findById: jest.fn().mockResolvedValue(null) }),
+        users: fakeUserRepo(),
+      });
+
+      await expect(service.sendEmailInvitations({
+        leagueId: 'missing-league',
+        emails: ['alice@example.com'],
+        invitedBy: 'owner-1',
+      })).rejects.toMatchObject({ code: 'LEAGUE_NOT_FOUND', statusCode: 404 });
+      expect(invitationRepo.create).not.toHaveBeenCalled();
+    });
+
     it('skips emails with existing pending invitations', async () => {
       const invitationRepo = createMockInvitationRepo({
         findByEmail: jest.fn().mockImplementation(async (_leagueId: string, email: string) => {

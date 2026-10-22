@@ -1,5 +1,6 @@
 import { EmailTemplateKeySchema } from '@poolmaster/shared/dto';
 import {
+  EMAIL_SETTINGS,
   EMAIL_TEMPLATES,
   EmailCategory,
   renderSystemEmailTemplate,
@@ -118,6 +119,14 @@ describe('the email template registry', () => {
       CONTEST_ENTRY_COMPLETED: EmailCategory.RECEIPTS,
       CONTEST_STARTED_SUMMARY: EmailCategory.LIVE_STANDINGS,
     });
+  });
+
+  it('marks as switchable exactly the emails EMAIL_CONFIG has a switch for, so the service checks the right ones', () => {
+    const switchable = Object.entries(EMAIL_TEMPLATES)
+      .filter(([, template]) => template.settingsSwitch)
+      .map(([key]) => key);
+
+    expect(switchable.sort()).toEqual(Object.keys(EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }).templates).sort());
   });
 
   it('renders every template\'s preview example with a subject, a plain-text twin, the branded HTML shell and the unread-replies footer', () => {

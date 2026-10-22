@@ -21,6 +21,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
+import { LeagueNotFoundError } from './service';
 import {
   type EmailLeague,
   type EmailService,
@@ -113,9 +114,9 @@ export class InvitationService {
       this.resolveInviterName(input.invitedBy),
       this.findActiveMemberEmails(input.leagueId),
     ]);
-    if (league) {
-      this.requireActiveLeague(league, 'sendEmail');
-    }
+    // The commissioner guard has found the league already; its name and code are the email's sender.
+    if (!league) throw new LeagueNotFoundError(input.leagueId);
+    this.requireActiveLeague(league, 'sendEmail');
     const sent: LeagueInvitation[] = [];
     const skippedMembers: string[] = [];
     const skippedDuplicates: string[] = [];
@@ -157,8 +158,8 @@ export class InvitationService {
         inviterName,
         league: {
           id: input.leagueId,
-          name: league?.name ?? 'your league',
-          leagueCode: league?.leagueCode ?? input.leagueId,
+          name: league.name,
+          leagueCode: league.leagueCode,
         },
         inviteCode: invitation.inviteCode,
         expiresAt,
@@ -376,9 +377,9 @@ export class InvitationService {
       this.deps.leagues.findById(leagueId),
       this.resolveInviterName(resentBy),
     ]);
-    if (league) {
-      this.requireActiveLeague(league, 'resend');
-    }
+    // The commissioner guard has found the league already; its name and code are the email's sender.
+    if (!league) throw new LeagueNotFoundError(leagueId);
+    this.requireActiveLeague(league, 'resend');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
     const renewed = await this.deps.invitations.update(invitation.id, {
@@ -392,8 +393,8 @@ export class InvitationService {
       inviterName,
       league: {
         id: leagueId,
-        name: league?.name ?? 'your league',
-        leagueCode: league?.leagueCode ?? leagueId,
+        name: league.name,
+        leagueCode: league.leagueCode,
       },
       inviteCode: renewed.inviteCode,
       expiresAt,
