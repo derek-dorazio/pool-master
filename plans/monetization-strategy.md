@@ -138,6 +138,13 @@ A starting point to react to, not a decision. Names follow Derek's message.
 The bold rows are the levers; Derek's numbers (2026-10-22) are examples to tune in app
 settings, not decisions. The feature rows only say from which plan a feature starts.
 
+Emails (Derek 2026-10-22): every email in `plans/email-notifications.md` carries a
+**notification class** (Essential, A, B, C, D), not a plan name, so this plan only has to map
+classes to plans. Essential and A go to every league, free included (account and membership
+email; a contest opening, receipts, final results). B starts at Pro (reminders, nudges, and
+the cup and championship emails), C at Premium (live standings), D is Platinum's. An email
+takes the class of the feature it reports on.
+
 Rules that make the two mechanisms work together:
 
 - **A contest gets whichever is better**, its league's tier or its own unlocks. A Pro
