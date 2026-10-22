@@ -1,4 +1,5 @@
 import {
+  changeUserPassword,
   confirmPasswordReset,
   loginUser,
   refreshToken,
@@ -24,6 +25,7 @@ import { expectDefined } from '../support/expect-defined';
 // password are both dead. The request answers before the email is sent, so the inbox is polled.
 
 const RESET_SUBJECT = 'Reset your Prime Time Commissioner password';
+const CHANGED_SUBJECT = 'Your Prime Time Commissioner password was changed';
 
 afterEach(async () => {
   await cleanupFunctionalData();
@@ -82,6 +84,21 @@ describe('SDK Functional: password recovery (#847)', () => {
       body: { identifier: user.username, password: 'Recovered-Pass2' },
     });
     expect(signedIn.data?.user.id).toBe(user.userId);
+    expect(await sentMailWithSubject(user.email, CHANGED_SUBJECT)).toHaveLength(1);
+  });
+
+  it('emails the account when its owner changes the password from My account', async () => {
+    const user = await buildRegisteredUser({ password: 'Original-Pass1' });
+
+    const changed = await changeUserPassword({
+      client: user.client,
+      path: { userId: 'me' },
+      body: { currentPassword: 'Original-Pass1', newPassword: 'Changed-Pass2', confirmNewPassword: 'Changed-Pass2' },
+    });
+
+    expect(changed.data).toEqual({ success: true });
+    const [mail] = await sentMailWithSubject(user.email, CHANGED_SUBJECT);
+    expect(expectDefined(mail).text).toContain(`${FUNCTIONAL_APP_BASE_URL}/forgot-password`);
   });
 
   it('answers an unknown email exactly as it answers a known one, and sends nothing', async () => {

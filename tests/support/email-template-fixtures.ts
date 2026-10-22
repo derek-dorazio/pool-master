@@ -58,4 +58,10 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     resetUrl: 'https://app.example.com/reset-password#token=example-token',
     expiresInMinutes: 10,
   },
+  PASSWORD_CHANGED: {
+    firstName: 'Morgan',
+    username: 'morgan',
+    changedAt: new Date('2026-10-22T14:05:00.000Z'),
+    forgotPasswordUrl: 'https://app.example.com/forgot-password',
+  },
 };

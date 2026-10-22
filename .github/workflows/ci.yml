@@ -661,6 +661,14 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      # #848 — catches the email core-api sends (SMTP on 1025, the default SMTP_HOST/PORT), so
+      # the password recovery spec can read its reset link from the HTTP API on 8025. The same
+      # image local development runs (infrastructure/docker/docker-compose.dev.yml).
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
     env:
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_e2e
       # core-api requires JWT_SECRET and POOLMASTER_ENVIRONMENT, and throws when
@@ -675,6 +683,9 @@ jobs:
       AUTO_START_SCHEDULER: 'false'
       POOLMASTER_E2E_BASE_URL: http://localhost:4175
       POOLMASTER_E2E_ADMIN_IDENTIFIER: e2e-ci-admin
+      # Links in email point at the served build, and the recovery spec reads them from Mailpit.
+      APP_BASE_URL: http://localhost:4175
+      POOLMASTER_E2E_MAILPIT_URL: http://localhost:8025
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -779,7 +790,7 @@ jobs:
           echo "### PoolMaster Browser E2E (local stack)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Target: production build via \`vite preview\`, \`/api\` proxied to core-api on a throwaway Postgres" >> $GITHUB_STEP_SUMMARY
-          echo "- Specs: all (guards, smoke, golden journey acts 1-7, squad management, racing and knockout journeys) — #278, #84, #280, #326, #327, #363, #623, #749" >> $GITHUB_STEP_SUMMARY
+          echo "- Specs: all (guards, smoke, golden journey acts 1-7, squad management, racing and knockout journeys, password recovery) — #278, #84, #280, #326, #327, #363, #623, #749, #848" >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
   # QA deploy: publish images -> migrate -> roll out -> browser e2e.

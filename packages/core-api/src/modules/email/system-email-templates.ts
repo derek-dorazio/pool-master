@@ -8,6 +8,7 @@ import { EmailCategory } from './email-categories';
  */
 export const AccountEmailTemplateKey = {
   PASSWORD_RESET: 'PASSWORD_RESET',
+  PASSWORD_CHANGED: 'PASSWORD_CHANGED',
 } as const;
 export type AccountEmailTemplateKey = (typeof AccountEmailTemplateKey)[keyof typeof AccountEmailTemplateKey];
 
@@ -78,12 +79,20 @@ export interface PasswordResetEmailData {
   expiresInMinutes: number;
 }
 
+export interface PasswordChangedEmailData {
+  firstName: string;
+  username: string;
+  changedAt: Date;
+  forgotPasswordUrl: string;
+}
+
 export interface SystemEmailTemplateDataByKey {
   LEAGUE_MEMBER_INVITE: LeagueMemberInviteEmailData;
   LEAGUE_JOIN_SUCCESS: LeagueJoinSuccessEmailData;
   CONTEST_ENTRY_COMPLETED: ContestEntryCompletedEmailData;
   CONTEST_STARTED_SUMMARY: ContestStartedSummaryEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
+  PASSWORD_CHANGED: PasswordChangedEmailData;
 }
 
 /** What a renderer knows about the person it renders for, beyond the template's own data. */
@@ -120,6 +129,7 @@ export interface EmailTemplateScopeByKey {
   CONTEST_ENTRY_COMPLETED: 'LEAGUE';
   CONTEST_STARTED_SUMMARY: 'LEAGUE';
   PASSWORD_RESET: 'PLATFORM';
+  PASSWORD_CHANGED: 'PLATFORM';
 }
 
 type EmailTemplateRegistry = {
@@ -191,6 +201,11 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     category: EmailCategory.ACCOUNT,
     settingsSwitch: false,
     render: renderPasswordResetEmail,
+  },
+  PASSWORD_CHANGED: {
+    category: EmailCategory.ACCOUNT,
+    settingsSwitch: false,
+    render: renderPasswordChangedEmail,
   },
 };
 
@@ -388,6 +403,37 @@ function renderPasswordResetEmail(
     subject,
     preheader: `Choose a new password. The link expires in ${data.expiresInMinutes} minutes.`,
     title: 'Reset your password',
+    bodyBlocks,
+    textLines,
+  });
+}
+
+function renderPasswordChangedEmail(
+  data: PasswordChangedEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const subject = `Your ${BRAND_NAME} password was changed`;
+  const changedSentence = `The password for your ${BRAND_NAME} account (${data.username}) was changed on ${formatDateTime(data.changedAt, context.timeZone) ?? ''}.`;
+  const bodyBlocks = [
+    paragraph(`Hi ${escapeHtml(data.firstName)},`),
+    paragraph(escapeHtml(changedSentence)),
+    paragraph("If this was you, there's nothing else to do. If this wasn't you, reset your password now."),
+    button('Reset your password', data.forgotPasswordUrl),
+  ].join('');
+  const textLines = [
+    `Hi ${data.firstName},`,
+    '',
+    changedSentence,
+    '',
+    "If this was you, there's nothing else to do. If this wasn't you, reset your password now:",
+    data.forgotPasswordUrl,
+  ];
+
+  return buildMessage({
+    templateKey: AccountEmailTemplateKey.PASSWORD_CHANGED,
+    subject,
+    preheader: `Your ${BRAND_NAME} password was changed.`,
+    title: 'Password changed',
     bodyBlocks,
     textLines,
   });

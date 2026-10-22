@@ -112,7 +112,7 @@ describe('pool-master-98i system email templates', () => {
 });
 
 describe('the email template registry', () => {
-  it('gives every template key a category, with invitations, welcomes and password resets ones a member can\'t turn off', () => {
+  it('gives every template key a category, with invitations, welcomes and the password reset and password changed emails ones a member can\'t turn off', () => {
     expect(Object.keys(EMAIL_TEMPLATES).sort()).toEqual(
       [...EmailTemplateKeySchema.options, ...Object.values(AccountEmailTemplateKey)].sort(),
     );
@@ -122,6 +122,7 @@ describe('the email template registry', () => {
       CONTEST_ENTRY_COMPLETED: EmailCategory.RECEIPTS,
       CONTEST_STARTED_SUMMARY: EmailCategory.LIVE_STANDINGS,
       PASSWORD_RESET: EmailCategory.ACCOUNT,
+      PASSWORD_CHANGED: EmailCategory.ACCOUNT,
     });
   });
 
