@@ -28,7 +28,8 @@ Research input: `plans/league-history-research.md`.
 | `LeagueYearFinish`, one row per squad per counted contest, written at settlement | #863 | The summary's counts. Nothing re-reads every contest |
 | Cups and Cup pages, frozen `CupStanding`, `GET /cups?seasonYear=`, `GET /cups/past` | #841 | Past seasons of the cup boards; the summary's cup champions |
 | Trophy shelf on team pages | #841 slice 4, #863 slice 2 | Already shows every past top-3 finish; history adds nothing there |
-| Squad delete guard (`SQUAD_DELETE_HAS_RESULTS`) and `Contest.seasonYear` | #841 slice 1 (moving there from #837, since history now goes last; cups plan to confirm) | A deleted squad can't punch a hole in a past year |
+| Squad delete guard (`SQUAD_DELETE_HAS_RESULTS`) and the best-entry-per-squad function | whichever of #841 slice 1 or #863 slice 1 goes first | A deleted squad can't punch a hole in a past year |
+| `Contest.seasonYear` | #841 slice 1 | Cup seasons |
 | Frozen contest leaderboards | existing: a `COMPLETED` contest's leaderboard reads `ContestEntryStanding` | The drill-through target. Already works for any past contest |
 
 A year is the calendar year a contest went Final (#863). Cups keep their own season
