@@ -233,15 +233,15 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).not.toContain('Make your picks');
     });
 
-    it('asks a squares member without a box to claim one before kickoff or the numbers\' draw', () => {
+    it('asks a squares member without a box to claim one before the game starts or the numbers are drawn', () => {
       const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
         ...base,
         standing: { kind: EntryReminderKind.NO_BOX },
       }, UTC);
 
       expect(message.subject).toBe('Boxes close soon: Office Pool');
-      expect(message.text).toContain('You haven\'t claimed a box on the Office Pool grid yet. Boxes close at kickoff, or sooner if the numbers are drawn first.');
-      expect(message.text).toContain('Kickoff: Apr 9, 2026');
+      expect(message.text).toContain('You haven\'t claimed a box on the Office Pool grid yet. Boxes close when the game starts, or sooner if the numbers are drawn first.');
+      expect(message.text).toContain('Game starts: Apr 9, 2026');
       expect(message.text).toContain(`Claim your boxes: ${base.contestUrl}`);
     });
   });

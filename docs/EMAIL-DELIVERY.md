@@ -324,7 +324,7 @@ Who is told depends on the format:
   games); a member with several drafts is told how many.
 - **Random draw** ("Entries close soon"): members not in it yet, while it takes entries. The
   draw deals the picks, so entrants have nothing to do.
-- **Squares** ("Boxes close soon"): members holding no box, until kickoff or the numbers' draw.
+- **Squares** ("Boxes close soon"): members holding no box, until the game starts or the numbers are drawn, and nobody once the grid is full.
 
 If the outbox cannot record a welcome, a receipt, a new contest or a contest-started email, the action that
 sends it still succeeds and PoolMaster logs the template and ids.

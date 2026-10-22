@@ -558,8 +558,8 @@ function entryReminderWording(data: ContestEntryReminderEmailData): {
       return {
         subject: `Boxes close soon: ${data.contestName}`,
         title: 'Boxes close soon',
-        message: `You haven't claimed a box on the ${data.contestName} grid yet. Boxes close at kickoff, or sooner if the numbers are drawn first.`,
-        closesLabel: 'Kickoff',
+        message: `You haven't claimed a box on the ${data.contestName} grid yet. Boxes close when the game starts, or sooner if the numbers are drawn first.`,
+        closesLabel: 'Game starts',
         action: 'Claim your boxes',
       };
     case EntryReminderKind.DRAFT:

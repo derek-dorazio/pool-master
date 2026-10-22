@@ -18,9 +18,9 @@
  * along it is ("4 of 6 picked") where the format counts picks.
  *
  * A random draw deals its picks, so only members not in it yet are told, while it takes entries.
- * A squares contest's members claim boxes, so only members without a box are told, until
- * kickoff or the numbers' draw. Nothing is sent within 6 hours of the contest opening, when the
- * "New contest open" email has just gone out.
+ * A squares contest's members claim boxes, so only members without a box are told, until the
+ * game starts or the numbers are drawn, and nobody once the grid is full. Nothing is sent
+ * within 6 hours of the contest opening, when the "New contest open" email has just gone out.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -41,6 +41,7 @@ import {
   ContestEntryStatus,
   ContestStatus,
   MatchStatus,
+  SQUARES_GRID_SIZE,
   SelectionType,
   contestEntryEventStatus,
   getTieredRosterSize,
@@ -252,7 +253,10 @@ export class EntryReminders implements DueNotifications {
       }
       case SelectionType.SQUARES: {
         if (!due.entriesOpen) return [];
-        const boxEntryIds = new Set((await this.deps.squares.findSquares(due.contest.id)).map((box) => box.contestEntryId));
+        const boxes = await this.deps.squares.findSquares(due.contest.id);
+        // A full grid has nothing left to claim.
+        if (boxes.length >= SQUARES_GRID_SIZE * SQUARES_GRID_SIZE) return [];
+        const boxEntryIds = new Set(boxes.map((box) => box.contestEntryId));
         const holding = new Set(entries.filter((entry) => boxEntryIds.has(entry.id)).flatMap(ownersOf));
         return members
           .filter((user) => !holding.has(user.id))
@@ -300,7 +304,9 @@ export class EntryReminders implements DueNotifications {
     return told.map((user): Recipient => {
       const own = drafts.get(user.id) ?? [];
       if (own.length === 0) return { user, standing: { kind: EntryReminderKind.NOT_ENTERED } };
-      const only = own.length === 1 ? progress.get(own[0]?.id ?? '') : undefined;
+      // `own` holds at least one draft here.
+      const [onlyDraft] = own;
+      const only = own.length === 1 ? progress.get(onlyDraft.id) : undefined;
       return {
         user,
         standing: { kind: EntryReminderKind.DRAFT, drafts: own.length, ...(only !== undefined && { progress: only }) },
