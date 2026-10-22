@@ -18,7 +18,9 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
 - **B. Trophy cabinet.** The Cups page: a card per cup with its leader and progress, the
   commissioner's "Ready to crown" banner, the crowned podium, and the trophy shelf on a
   team page.
-- The mockups were drawn before the split, so A's header shows the all-sports championship now
+- **D. League championship (#863).** The trophy presented on 1 January (a "presented" tweak
+  shows the leader view before then), the medal tiles, and the finish matrix.
+- Mockups A to C were drawn before the split, so A's header shows the all-sports championship now
   in #863. The same layout is the PGA Tour Cup page.
 - **C. Past seasons.** History's Cups tab: most cups won, then each season's cup champions,
   newest first.
@@ -288,8 +290,7 @@ May. Derek's design (2026-10-22):
 1. **The trophy** (from 1 January of the next year): a trophy with the league's cup name under
    it ("2026 Derek's Pool Cup") and the champion squad's name under that. Before 1 January the
    space shows the current leader, "leads with 3 contests to go" style.
-2. **Medal tiles** (option B): power tiles for the year's leaders: most 1sts, most 2nds, most
-   3rds, most podiums, most contests played. Each tile shows the squad and its count.
+2. **Medal tiles** (option B): power tiles for the year's leaders: most 1sts, most 2nds, most 3rds, most podiums, most contests played, most top-ten finishes. Each tile shows the squad and its count.
 3. **The finish matrix** (option A): squads as rows; columns 1st to 10th count how often each
    squad finished there; a Points column ranks the table. Points = for each finish, the place's
    value in the points table times the contest's `cupWeight`. Ties split the points of the
@@ -335,8 +336,8 @@ Questions:
   page is read? Recommendation: store them. Then changing the league's points table in June
   changes only contests that settle after it, and past years can never shift. The page says
   which table was in force when.
-- **Q8.3** Medal tiles: most 1sts, most 2nds, most 3rds, most podiums, most contests played?
-  Recommendation: those five. Ties on a tile show every squad tied.
+- **Q8.3** Medal tiles: most 1sts, most 2nds, most 3rds, most podiums, most contests played,
+  most top-ten finishes? Recommendation: those six, two to a row on a phone. Ties on a tile show every squad tied.
 - **Q8.4** Is #863 still deferred? Recommendation: build it after #837 slice 1, alongside the
   cup slices. It needs nothing from `seasonYear`, so it could even go first.
 
