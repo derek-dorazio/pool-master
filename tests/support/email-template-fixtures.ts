@@ -1,4 +1,5 @@
 import {
+  EntryReceiptKind,
   EntryReminderKind,
   type SystemEmailTemplateDataByKey,
   type SystemEmailTemplateKey,
@@ -33,13 +34,16 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     entryName: 'Entry 1',
     entryUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/entries/entry-1',
     submittedAt: '2026-04-08T15:30:00.000Z',
-    changeUntil: new Date('2026-04-09T11:40:00.000Z'),
     tiebreaker: '-12',
-    tiers: [
-      { tierName: 'Tier A', participantNames: ['Rory McIlroy', 'Ludvig Aberg'] },
-      { tierName: 'Tier B', participantNames: ['Tommy Fleetwood', 'Robert MacIntyre'] },
-      { tierName: 'Tier C', participantNames: ['Min Woo Lee', 'Sepp Straka'] },
-    ],
+    receipt: {
+      kind: EntryReceiptKind.LINEUP,
+      tiers: [
+        { tierName: 'Tier A', participantNames: ['Rory McIlroy', 'Ludvig Aberg'] },
+        { tierName: 'Tier B', participantNames: ['Tommy Fleetwood', 'Robert MacIntyre'] },
+        { tierName: 'Tier C', participantNames: ['Min Woo Lee', 'Sepp Straka'] },
+      ],
+      changeUntil: new Date('2026-04-09T11:40:00.000Z'),
+    },
   },
   CONTEST_STARTED_SUMMARY: {
     userName: 'Morgan Member',

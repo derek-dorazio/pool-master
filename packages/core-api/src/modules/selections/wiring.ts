@@ -25,6 +25,7 @@ import { ContestEntryPickService } from '../contest-entry-picks';
 import { createContestService } from '../contests/wiring';
 import type { EmailService } from '../email';
 import { createSportEventTierService } from '../events/wiring';
+import { createEntryReceipts } from '../notifications/wiring';
 import { PredictionService } from './prediction-service';
 import { SelectionService } from './service';
 import { SquaresService } from './squares-service';
@@ -53,7 +54,11 @@ export function createSelectionService(
   });
 }
 
-export function createPredictionService(prisma: PrismaClient, logger: FastifyBaseLogger): PredictionService {
+export function createPredictionService(
+  prisma: PrismaClient,
+  logger: FastifyBaseLogger,
+  options?: { email?: EmailService; appBaseUrl?: string },
+): PredictionService {
   return new PredictionService({
     contests: new PrismaContestRepository(prisma),
     configurations: new PrismaContestConfigurationRepository(prisma),
@@ -65,6 +70,9 @@ export function createPredictionService(prisma: PrismaClient, logger: FastifyBas
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
     predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
+    ...(options?.email && options.appBaseUrl !== undefined && {
+      receipts: createEntryReceipts(prisma, { email: options.email, appBaseUrl: options.appBaseUrl, logger }),
+    }),
     logger,
   });
 }

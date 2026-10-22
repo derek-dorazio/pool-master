@@ -22,7 +22,7 @@ import {
   type SportEvent,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
-import { PredictionService } from '../../../packages/core-api/src/modules/selections/prediction-service';
+import { PredictionService, type GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
@@ -76,6 +76,8 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
   world.entries.set(aliceEntry.id, aliceEntry);
 
   let now = NOW;
+  // The receipts the service asked for, one per submitted week (#867).
+  const receipts: GamePicksView[] = [];
   const service = new PredictionService({
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
@@ -87,6 +89,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
     field: week.fieldRepo(),
     participants: week.participantRepo(),
     predictions: week.predictionRepo(),
+    receipts: { gamePicksSubmitted: async (view) => { receipts.push(view); } },
     ...(options.tiePicks ? { sportDefinitionOf: offeringTiePicks } : {}),
     now: () => now,
   });
@@ -106,7 +109,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
   });
 
   return {
-    world, week, service, contest, sportEvent, otherEvent, alice, bob, input, pick, tiePick,
+    world, week, service, contest, sportEvent, otherEvent, alice, bob, input, pick, tiePick, receipts,
     games: { thursday, sunday, monday, cancelled, otherWeekGame },
     weekStatus: () => contestEntryEventStatus(expectDefined(world.entries.get(aliceEntry.id)), sportEvent.id),
     submittedAt: () => expectDefined(world.entries.get(aliceEntry.id)).events
@@ -298,6 +301,25 @@ describe('PredictionService.submitGamePicks — submitting the week', () => {
     expect(view.submittedAt).toEqual(NOW);
     expect(view.canSubmit).toBe(false);
     expect(context.weekStatus()).toBe(ContestEntryStatus.SUBMITTED);
+  });
+
+  it('asks for the entry\'s receipt once the week is submitted, with the submitted picks', async () => {
+    const context = setup();
+    const view = await submitFullWeek(context);
+
+    expect(context.receipts).toEqual([view]);
+    expect(context.receipts[0].submittedAt).toEqual(NOW);
+  });
+
+  it('asks for no receipt when a submit is refused, or when an already submitted week is submitted again', async () => {
+    const context = setup();
+    await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.thursday, 3)] });
+    await expectRefused(context.service.submitGamePicks(context.input), 'PREDICTION_WEEK_INCOMPLETE', 409);
+    expect(context.receipts).toHaveLength(0);
+
+    await submitFullWeek(context);
+    await context.service.submitGamePicks(context.input);
+    expect(context.receipts).toHaveLength(1);
   });
 
   it('leaves a cancelled game out of the week: three picks complete a week of four games one of which is cancelled', async () => {

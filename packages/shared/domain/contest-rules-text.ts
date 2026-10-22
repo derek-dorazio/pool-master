@@ -244,3 +244,11 @@ export function suggestContestName(
       return `${eventName} Squares`;
   }
 }
+
+/** "-3.5", "+7", or "PK" for a pick'em line: a spread as a sportsbook prints it. */
+export function formatSpread(spread: number): string {
+  if (spread === 0) {
+    return 'PK';
+  }
+  return spread > 0 ? `+${String(spread)}` : String(spread);
+}

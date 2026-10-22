@@ -1422,6 +1422,64 @@ describe('ContestService', () => {
       expect(sentMessage.html).toContain('Prime Time Commissioner');
     });
 
+    it('adds the salary a budget lineup spent to its confirmation, and no tiebreaker line where the sport has none', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        sportEventIds: ['event-1'],
+        name: 'Daytona Budget',
+        status: ContestStatus.OPEN,
+      });
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
+      };
+      const service = buildService({
+        contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
+        configurations: createMockContestConfigurationRepo({
+          findByContest: jest.fn().mockResolvedValue({
+            id: 'configuration-1',
+            contestId: 'contest-1',
+            selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK,
+            configJson: { selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 50_000, countedScores: 2 },
+          }),
+        }),
+        sportEvents: fakeSportEventRepo({
+          findById: jest.fn().mockResolvedValue({ ...STARTED_EVENT, sport: Sport.AUTO_RACING }),
+        }),
+        leagues: fakeLeagueRepo({
+          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
+        }),
+        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        squadMemberships: createMockSquadMembershipRepo({
+          findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
+        }),
+        entries: createMockEntryRepo({ findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(150)) }),
+        picks: fakeContestEntryPickRepo({
+          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
+            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Kyle Larson', '2026-01-01T12:00:00.000Z'),
+            buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Chase Elliott', '2026-01-01T12:01:00.000Z'),
+          ]),
+        }),
+        tiers: {
+          getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([
+            { sportEventParticipantId: 'sport-event-participant-1', tierLabel: null, price: 26_000 },
+            { sportEventParticipantId: 'sport-event-participant-2', tierLabel: null, price: 22_500 },
+          ]),
+          listTiers: jest.fn().mockResolvedValue([]),
+        },
+        email: emailServiceOver(mailDelivery),
+        appBaseUrl: 'https://app.primetimecommissioner.com',
+      });
+
+      await service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'event-1');
+
+      await deliverQueuedEmail();
+      const sentMessage = mailDelivery.send.mock.calls[0][0];
+      expect(sentMessage.text).toContain('- Salary: $48,500 of $50,000');
+      expect(sentMessage.text).not.toContain('Tiebreaker');
+    });
+
     it('resolves rather than throwing when confirmation delivery fails, so the submit it follows still succeeds', async () => {
       const contest = buildContest({
         id: 'contest-1',

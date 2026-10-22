@@ -25,6 +25,7 @@ import {
 import type { EmailService } from '../email';
 import { createSportEventTierService } from '../events/wiring';
 import { ContestNotices } from './contest-notices';
+import { EntryReceipts } from './entry-receipts';
 import { EntryReminders } from './entry-reminders';
 
 export function createEntryReminders(prisma: PrismaClient, options: {
@@ -68,6 +69,23 @@ export function createContestNotices(prisma: PrismaClient, options: {
     memberships: new PrismaLeagueMembershipRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
+    ...options,
+  });
+}
+
+export function createEntryReceipts(prisma: PrismaClient, options: {
+  email: EmailService;
+  appBaseUrl: string;
+  logger?: FastifyBaseLogger;
+}): EntryReceipts {
+  return new EntryReceipts({
+    contests: new PrismaContestRepository(prisma),
+    leagues: new PrismaLeagueRepository(prisma),
+    entries: new PrismaContestEntryRepository(prisma),
+    squadMemberships: new PrismaSquadMembershipRepository(prisma),
+    users: new PrismaUserRepository(prisma),
+    sportEvents: new PrismaSportEventRepository(prisma),
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
     ...options,
   });
 }

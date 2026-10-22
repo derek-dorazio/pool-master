@@ -80,6 +80,7 @@ import {
   type WeekPrediction,
 } from './prediction-engines/prediction-engine';
 import { selectionErrors, type SelectionError } from './selection-errors';
+import type { GamePicksReceiptNotice } from '../notifications/entry-receipts';
 import { loadSurvivorWeeks, survivorPicksByEntry, survivorWeeksOf } from '../contests/survivor-standings';
 import { survivorRun, survivorTeamsUsedInCycle } from '../scoring-families/head-to-head/survivor';
 
@@ -94,6 +95,8 @@ export interface PredictionServiceDeps {
   field: Pick<SportEventParticipantRepository, 'findBySportEvent' | 'countDistinctParticipants'>;
   participants: Pick<ParticipantRepository, 'findByIds'>;
   predictions: ContestEntryMatchPredictionRepository;
+  /** Sends the entry's owners a receipt of a submitted week (#867); none sends nothing. */
+  receipts?: GamePicksReceiptNotice;
   /** Each sport's definition, for what its pools offer (tie picks, #792); the sport registry unless given. */
   sportDefinitionOf?: (sport: Sport) => SportDefinition;
   now?: () => Date;
@@ -365,7 +368,9 @@ export class PredictionService {
       { action: 'prediction.submit.submitted', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventId: context.sportEvent.id } },
       'Submitted a contest entry\'s game picks for one event',
     );
-    return this.buildView(await this.reload(context));
+    const view = await this.buildView(await this.reload(context));
+    await this.deps.receipts?.gamePicksSubmitted(view);
+    return view;
   }
 
   /**

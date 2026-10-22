@@ -82,10 +82,11 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
-  const handlers = createSelectionHandlers(createSelectionService(prisma, fastify.log, {
-    email: opts.email,
-    appBaseUrl: readApplicationBaseUrl(process.env),
-  }), createPredictionService(prisma, fastify.log));
+  const mail = { email: opts.email, appBaseUrl: readApplicationBaseUrl(process.env) };
+  const handlers = createSelectionHandlers(
+    createSelectionService(prisma, fastify.log, mail),
+    createPredictionService(prisma, fastify.log, mail),
+  );
   // #291 — the selection room shows every entry's picks, so reading it needs membership of the
   // contest's league, as every other contest read does.
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
