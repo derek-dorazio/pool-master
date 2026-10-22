@@ -22,6 +22,7 @@ import { squadsModule } from './modules/squads/routes';
 import { invitationsModule } from './modules/invitations/routes';
 import { teamInvitationsModule } from './modules/team-invitations/routes';
 import { contestsModule, contestsByIdModule } from './modules/contests/routes';
+import { cupsModule } from './modules/cups/routes';
 import { contestManagementModule } from './modules/contest-management/routes';
 import { contestConfigTemplatesModule } from './modules/contest-config-templates/routes';
 import { eventsModule } from './modules/events/routes';
@@ -207,6 +208,7 @@ export function buildApp() {
     email,
   });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests', email });
+  app.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups' });
   app.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   app.register(eventsModule, {
     prefix: '/api/v1/events',

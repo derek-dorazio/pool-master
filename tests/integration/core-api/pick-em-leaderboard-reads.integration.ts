@@ -141,6 +141,7 @@ async function createPickEmContest(sportEventIds: string[]) {
   const squad = await prisma.squad.create({ data: { leagueId: league.id, createdBy: owner.user.id, name: `Pickers ${suffix}` } });
   const contest = await new PrismaContestRepository(prisma).create({
     leagueId: league.id,
+    seasonYear: 2026,
     sportEventIds,
     name: `Season ${suffix}`,
     status: ContestStatus.ACTIVE,

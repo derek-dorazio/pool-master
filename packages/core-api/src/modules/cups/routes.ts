@@ -1,0 +1,77 @@
+/**
+ * Cups module (#841) — a league's sports league cups, under /api/v1/leagues/:id/cups. Members of
+ * the league read them (root admins bypass).
+ */
+import type { FastifyInstance } from 'fastify';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+// Registers the named components these routes $ref (#192).
+import '@poolmaster/shared/dto';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+import { getAppPrisma } from '../../core/prisma-context';
+import { PrismaLeagueMembershipRepository } from '../../adapters';
+import { leagueFromPath, requireMemberOfLeague } from '../leagues/permissions';
+import { createCupHandlers } from './handler';
+import { createCupService } from './wiring';
+
+const MEMBERS_ONLY = 'Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.';
+
+export function cupsModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
+  const prisma = getAppPrisma(fastify);
+  const membersOnly = requireMemberOfLeague(new PrismaLeagueMembershipRepository(prisma), leagueFromPath);
+  const handlers = createCupHandlers(createCupService(prisma, fastify.log));
+
+  fastify.get('/', {
+    schema: {
+      tags: ['Cups'],
+      summary: 'List a season\'s cups',
+      description:
+        `The league's sports league cups of one season, oldest first: one per sports league the league has a contest of that season in, each with its standings and its contests. Standings are worked out from the contests' frozen places: a squad scores from its best entry on the league's points table, times each contest's weight. ${MEMBERS_ONLY}`,
+      operationId: 'listCups',
+      querystring: schemaRef('ListCupsQuery'),
+      response: {
+        200: schemaRef('CupListResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.listCups,
+  });
+
+  fastify.get('/:cupId', {
+    schema: {
+      tags: ['Cups'],
+      summary: 'Get a cup',
+      description: `One cup with its standings and contests: the Points race. 404 CUP_NOT_FOUND for a cup that is not the league's. ${MEMBERS_ONLY}`,
+      operationId: 'getCup',
+      response: {
+        200: schemaRef('CupResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.getCup,
+  });
+
+  fastify.get('/:cupId/squads/:squadId', {
+    schema: {
+      tags: ['Cups'],
+      summary: 'Get a squad\'s cup points',
+      description: `One squad's points in a cup, counted contest by counted contest, in the order they went final. 404 CUP_NOT_FOUND for a cup that is not the league's, SQUAD_NOT_FOUND for a squad that is not. ${MEMBERS_ONLY}`,
+      operationId: 'getCupSquadPoints',
+      response: {
+        200: schemaRef('CupSquadPointsResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.getCupSquadPoints,
+  });
+}

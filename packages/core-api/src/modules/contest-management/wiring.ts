@@ -26,6 +26,7 @@ import {
   PrismaSportRepository,
 } from '../../adapters';
 import { createSportEventTierService } from '../events/wiring';
+import { createCupService } from '../cups/wiring';
 import { contestBracketGames, findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
@@ -38,22 +39,23 @@ export function createContestManagementService(
   contestOpened?: ContestOpenedNotice,
 ): ContestManagementService {
   const sportEventTierService = createSportEventTierService(prisma, logger);
-  return new ContestManagementService(
-    new PrismaContestRepository(prisma),
-    new PrismaContestConfigTemplateRepository(prisma),
-    new PrismaContestConfigurationRepository(prisma),
-    new PrismaParticipantContestScoringRuleRepository(prisma),
-    sportEventTierService,
+  return new ContestManagementService({
+    contests: new PrismaContestRepository(prisma),
+    configTemplates: new PrismaContestConfigTemplateRepository(prisma),
+    configurations: new PrismaContestConfigurationRepository(prisma),
+    scoringRules: new PrismaParticipantContestScoringRuleRepository(prisma),
+    tiers: sportEventTierService,
     logger,
-    createContestSportEventReader({
+    sportEventReader: createContestSportEventReader({
       sportEvents: new PrismaSportEventRepository(prisma),
       sports: new PrismaSportRepository(prisma),
       field: new PrismaSportEventParticipantRepository(prisma),
       valuations: new PrismaSportEventParticipantValuationRepository(prisma),
       matches: new PrismaSportEventMatchRepository(prisma),
     }),
+    cups: createCupService(prisma, logger),
     contestOpened,
-  );
+  });
 }
 
 /**

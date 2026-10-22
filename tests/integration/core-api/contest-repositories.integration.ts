@@ -129,6 +129,7 @@ async function createContest(
 ) {
   return repos().contests.create({
     leagueId,
+    seasonYear: 2026,
     sportEventIds: typeof sportEventId === 'string' ? [sportEventId] : [...sportEventId],
     name,
     status,

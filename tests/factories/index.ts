@@ -15,6 +15,7 @@ import type {
   User,
 } from '@poolmaster/shared/domain/types';
 import {
+  CupWeight,
   ContestStatus,
   ContestFormat,
   InvitationStatus,
@@ -98,6 +99,8 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
     leagueId: 'league-1',
     sportEventIds: [],
     name: 'Masters Pool 2026',
+    seasonYear: 2026,
+    cupWeight: CupWeight.NORMAL,
     status: ContestStatus.DRAFT,
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,

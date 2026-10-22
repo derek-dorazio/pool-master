@@ -811,7 +811,7 @@ export interface paths {
         post?: never;
         /**
          * Permanently delete an inactive squad
-         * @description Permanently deletes an inactive squad and cascades related squad-owned data. This route is root-admin only and exists to support QA cleanup flows from the web app.
+         * @description Permanently deletes an inactive squad and cascades related squad-owned data. This route is root-admin only and exists to support QA cleanup flows from the web app. Refused with 400 SQUAD_DELETE_REQUIRES_INACTIVE for an active squad, and with 400 SQUAD_DELETE_HAS_RESULTS for a squad with a place in a finished contest, whose results cups and championships keep.
          */
         delete: operations["deleteLeagueSquad"];
         options?: never;
@@ -1344,6 +1344,66 @@ export interface paths {
          * @description Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest: the contest is OPEN, its event has not reached its scheduled start, and the entry has no picks. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad.
          */
         delete: operations["leaveContest"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/cups/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a season's cups
+         * @description The league's sports league cups of one season, oldest first: one per sports league the league has a contest of that season in, each with its standings and its contests. Standings are worked out from the contests' frozen places: a squad scores from its best entry on the league's points table, times each contest's weight. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["listCups"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/cups/{cupId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a cup
+         * @description One cup with its standings and contests: the Points race. 404 CUP_NOT_FOUND for a cup that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["getCup"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/cups/{cupId}/squads/{squadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a squad's cup points
+         * @description One squad's points in a cup, counted contest by counted contest, in the order they went final. 404 CUP_NOT_FOUND for a cup that is not the league's, SQUAD_NOT_FOUND for a squad that is not. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["getCupSquadPoints"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -14096,6 +14156,419 @@ export interface components {
              */
             contestEntryId: string;
         };
+        /** @description Which season's cups to list. */
+        ListCupsQuery: {
+            /** @description The season whose cups to list, such as 2026. */
+            seasonYear: number;
+        };
+        /** @description One squad's place in a cup. Every active squad has a row, at 0 points until it places. */
+        CupStandingRowDto: {
+            /** Format: uuid */
+            squadId: string;
+            /** @description The squad's current name. */
+            squadName: string;
+            /**
+             * @description The squad's built-in team icon.
+             * @enum {string}
+             */
+            squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+            /** @description False for an inactive squad, shown because it placed in a counted contest. */
+            squadIsActive: boolean;
+            /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+            position: number;
+            /** @description The place as shown: "T2" for a shared 2nd. */
+            displayPosition: string;
+            /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+            points: number;
+            /** @description Counted contests the squad won, alone or tied. */
+            wins: number;
+            /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+            podiums: number;
+            /** @description Counted contests the squad placed in. */
+            contestsCounted: number;
+            /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+            movement: number | null;
+        };
+        /** @description A squad that won a contest; a tie for 1st lists each. */
+        CupWinnerDto: {
+            /** Format: uuid */
+            squadId: string;
+            squadName: string;
+        };
+        /** @description One of the league's contests in the cup's season and sports league. */
+        CupContestRowDto: {
+            /** Format: uuid */
+            contestId: string;
+            name: string;
+            /**
+             * @description The contest's status; drafts are never listed.
+             * @enum {string}
+             */
+            status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+            /** @enum {string} */
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+            /**
+             * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+             * @enum {string}
+             */
+            cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+            /**
+             * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+             * @enum {string}
+             */
+            count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL";
+            /**
+             * Format: date-time
+             * @description When its first event starts (instant).
+             */
+            firstEventStartsAt: string;
+            /**
+             * Format: date-time
+             * @description When it went final (instant); null before.
+             */
+            completedAt: string | null;
+            /** @description The squads that won it; empty unless it counted. */
+            winners: {
+                /** Format: uuid */
+                squadId: string;
+                squadName: string;
+            }[];
+        };
+        /** @description A sports league cup in a league: one per season and sports league, made with its first contest. */
+        CupDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            leagueId: string;
+            seasonYear: number;
+            /** Format: uuid */
+            sportLeagueId: string;
+            /** @description The sports league, such as "PGA Tour". */
+            sportLeagueName: string;
+            /** @description The cup's name, built from season and sports league: "2026 PGA Tour Cup". */
+            name: string;
+            /** @description Best first; squads sharing a place in name order. */
+            standings: {
+                /** Format: uuid */
+                squadId: string;
+                /** @description The squad's current name. */
+                squadName: string;
+                /**
+                 * @description The squad's built-in team icon.
+                 * @enum {string}
+                 */
+                squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                squadIsActive: boolean;
+                /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                position: number;
+                /** @description The place as shown: "T2" for a shared 2nd. */
+                displayPosition: string;
+                /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                points: number;
+                /** @description Counted contests the squad won, alone or tied. */
+                wins: number;
+                /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                podiums: number;
+                /** @description Counted contests the squad placed in. */
+                contestsCounted: number;
+                /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                movement: number | null;
+            }[];
+            /** @description Every contest of the season and sports league, drafts left out, by first event start. */
+            contests: {
+                /** Format: uuid */
+                contestId: string;
+                name: string;
+                /**
+                 * @description The contest's status; drafts are never listed.
+                 * @enum {string}
+                 */
+                status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+                /** @enum {string} */
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                /**
+                 * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+                 * @enum {string}
+                 */
+                cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+                /**
+                 * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+                 * @enum {string}
+                 */
+                count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL";
+                /**
+                 * Format: date-time
+                 * @description When its first event starts (instant).
+                 */
+                firstEventStartsAt: string;
+                /**
+                 * Format: date-time
+                 * @description When it went final (instant); null before.
+                 */
+                completedAt: string | null;
+                /** @description The squads that won it; empty unless it counted. */
+                winners: {
+                    /** Format: uuid */
+                    squadId: string;
+                    squadName: string;
+                }[];
+            }[];
+        };
+        /** @description A season's cups. */
+        CupListResponse: {
+            /** @description The season's cups, oldest first. */
+            cups: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                seasonYear: number;
+                /** Format: uuid */
+                sportLeagueId: string;
+                /** @description The sports league, such as "PGA Tour". */
+                sportLeagueName: string;
+                /** @description The cup's name, built from season and sports league: "2026 PGA Tour Cup". */
+                name: string;
+                /** @description Best first; squads sharing a place in name order. */
+                standings: {
+                    /** Format: uuid */
+                    squadId: string;
+                    /** @description The squad's current name. */
+                    squadName: string;
+                    /**
+                     * @description The squad's built-in team icon.
+                     * @enum {string}
+                     */
+                    squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                    /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                    squadIsActive: boolean;
+                    /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                    position: number;
+                    /** @description The place as shown: "T2" for a shared 2nd. */
+                    displayPosition: string;
+                    /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                    points: number;
+                    /** @description Counted contests the squad won, alone or tied. */
+                    wins: number;
+                    /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                    podiums: number;
+                    /** @description Counted contests the squad placed in. */
+                    contestsCounted: number;
+                    /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                    movement: number | null;
+                }[];
+                /** @description Every contest of the season and sports league, drafts left out, by first event start. */
+                contests: {
+                    /** Format: uuid */
+                    contestId: string;
+                    name: string;
+                    /**
+                     * @description The contest's status; drafts are never listed.
+                     * @enum {string}
+                     */
+                    status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+                    /** @enum {string} */
+                    selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                    /**
+                     * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+                     * @enum {string}
+                     */
+                    cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+                    /**
+                     * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+                     * @enum {string}
+                     */
+                    count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL";
+                    /**
+                     * Format: date-time
+                     * @description When its first event starts (instant).
+                     */
+                    firstEventStartsAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When it went final (instant); null before.
+                     */
+                    completedAt: string | null;
+                    /** @description The squads that won it; empty unless it counted. */
+                    winners: {
+                        /** Format: uuid */
+                        squadId: string;
+                        squadName: string;
+                    }[];
+                }[];
+            }[];
+        };
+        /** @description One cup. */
+        CupResponse: {
+            /** @description A sports league cup in a league: one per season and sports league, made with its first contest. */
+            cup: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                seasonYear: number;
+                /** Format: uuid */
+                sportLeagueId: string;
+                /** @description The sports league, such as "PGA Tour". */
+                sportLeagueName: string;
+                /** @description The cup's name, built from season and sports league: "2026 PGA Tour Cup". */
+                name: string;
+                /** @description Best first; squads sharing a place in name order. */
+                standings: {
+                    /** Format: uuid */
+                    squadId: string;
+                    /** @description The squad's current name. */
+                    squadName: string;
+                    /**
+                     * @description The squad's built-in team icon.
+                     * @enum {string}
+                     */
+                    squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                    /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                    squadIsActive: boolean;
+                    /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                    position: number;
+                    /** @description The place as shown: "T2" for a shared 2nd. */
+                    displayPosition: string;
+                    /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                    points: number;
+                    /** @description Counted contests the squad won, alone or tied. */
+                    wins: number;
+                    /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                    podiums: number;
+                    /** @description Counted contests the squad placed in. */
+                    contestsCounted: number;
+                    /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                    movement: number | null;
+                }[];
+                /** @description Every contest of the season and sports league, drafts left out, by first event start. */
+                contests: {
+                    /** Format: uuid */
+                    contestId: string;
+                    name: string;
+                    /**
+                     * @description The contest's status; drafts are never listed.
+                     * @enum {string}
+                     */
+                    status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+                    /** @enum {string} */
+                    selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                    /**
+                     * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+                     * @enum {string}
+                     */
+                    cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+                    /**
+                     * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+                     * @enum {string}
+                     */
+                    count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL";
+                    /**
+                     * Format: date-time
+                     * @description When its first event starts (instant).
+                     */
+                    firstEventStartsAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When it went final (instant); null before.
+                     */
+                    completedAt: string | null;
+                    /** @description The squads that won it; empty unless it counted. */
+                    winners: {
+                        /** Format: uuid */
+                        squadId: string;
+                        squadName: string;
+                    }[];
+                }[];
+            };
+        };
+        /** @description One counted contest in a squad's cup points. */
+        CupSquadContestDto: {
+            /** Format: uuid */
+            contestId: string;
+            name: string;
+            /** @enum {string} */
+            cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+            /**
+             * Format: date-time
+             * @description When it went final (instant).
+             */
+            completedAt: string | null;
+            /** @description The squad's best entry's place, 1 best; null when it had no ranked entry. */
+            place: number | null;
+            /** @description The place as shown: "T2" for a shared 2nd; null when it had no ranked entry. */
+            displayPlace: string | null;
+            /** @description Entries ranked in the contest. */
+            rankedEntryCount: number;
+            /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+            points: number;
+        };
+        /** @description One squad's cup points, contest by contest. */
+        CupSquadPointsDto: {
+            /** Format: uuid */
+            cupId: string;
+            /** Format: uuid */
+            squadId: string;
+            squadName: string;
+            /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+            points: number;
+            /** @description Every counted contest, in the order they went final. */
+            contests: {
+                /** Format: uuid */
+                contestId: string;
+                name: string;
+                /** @enum {string} */
+                cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+                /**
+                 * Format: date-time
+                 * @description When it went final (instant).
+                 */
+                completedAt: string | null;
+                /** @description The squad's best entry's place, 1 best; null when it had no ranked entry. */
+                place: number | null;
+                /** @description The place as shown: "T2" for a shared 2nd; null when it had no ranked entry. */
+                displayPlace: string | null;
+                /** @description Entries ranked in the contest. */
+                rankedEntryCount: number;
+                /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                points: number;
+            }[];
+        };
+        /** @description One squad's cup points. */
+        CupSquadPointsResponse: {
+            /** @description One squad's cup points, contest by contest. */
+            squadPoints: {
+                /** Format: uuid */
+                cupId: string;
+                /** Format: uuid */
+                squadId: string;
+                squadName: string;
+                /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                points: number;
+                /** @description Every counted contest, in the order they went final. */
+                contests: {
+                    /** Format: uuid */
+                    contestId: string;
+                    name: string;
+                    /** @enum {string} */
+                    cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+                    /**
+                     * Format: date-time
+                     * @description When it went final (instant).
+                     */
+                    completedAt: string | null;
+                    /** @description The squad's best entry's place, 1 best; null when it had no ranked entry. */
+                    place: number | null;
+                    /** @description The place as shown: "T2" for a shared 2nd; null when it had no ranked entry. */
+                    displayPlace: string | null;
+                    /** @description Entries ranked in the contest. */
+                    rankedEntryCount: number;
+                    /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                    points: number;
+                }[];
+            };
+        };
         /** @description Feed-aware event sync request. */
         EventSyncRequest: {
             /** @description Feed types to run for a specific event sync request. */
@@ -18987,6 +19460,159 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listCups: {
+        parameters: {
+            query: {
+                /** @description The season whose cups to list, such as 2026. */
+                seasonYear: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A season's cups. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CupListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getCup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                cupId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One cup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CupResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getCupSquadPoints: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                cupId: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One squad's cup points. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CupSquadPointsResponse"];
                 };
             };
             /** @description Standard API error envelope. */

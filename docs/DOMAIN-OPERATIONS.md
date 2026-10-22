@@ -479,7 +479,7 @@ Never a sports team. Unique on `(leagueId, name)`.
 | List for a league | `member`, `commissioner` | **A4** · takes a league |
 | Update name, icon | `member:own`, `commissioner` | **A5 + A7** |
 | Inactivate *(soft)* | `commissioner` | `inactivateSquad` · `isActive`. The normal path. Ends every owner's league membership, so it is league administration, not an owner's button (#219). Undone by inviting an owner back |
-| Delete permanently *(hard)* | `rootAdmin` | `deleteInactiveSquad` (#292) — **gated: throws unless already inactive**, then cascades to its entries, picks, owner invitations and memberships. QA-residue cleanup. See the note below |
+| Delete permanently *(hard)* | `rootAdmin` | `deleteInactiveSquad` (#292) — **gated: throws unless already inactive** (400 `SQUAD_DELETE_REQUIRES_INACTIVE`), and refused for a squad with a place in a `COMPLETED` contest (400 `SQUAD_DELETE_HAS_RESULTS`, #841), whose results cups and championships keep; it stays inactive instead. Otherwise cascades to its entries, picks, owner invitations and memberships. QA-residue cleanup. See the note below |
 
 ### SquadMembership — the User↔Squad edge, and ownership
 
@@ -926,6 +926,28 @@ for a prediction contest. Cancelled games are not picked and are left out.
 | Read a bracket leaderboard | `member` | `getBracketLeaderboard`, `GET /api/v1/contests/:contestId/bracket-leaderboard` (#721): every entry that submitted its bracket with its points, its max possible points (points plus the round value of every pick whose team is still in, an upper bound), its correct picks and its place. Entries level on points are ordered, once the final is played, by how close their tiebreaker was to the final's total points; entries still level share a place. Once the event has started (400 `CONTEST_LEADERBOARD_PICKS_HIDDEN` before); 400 `CONTEST_FORMAT_MISMATCH` for any other contest. A `COMPLETED` contest answers from the standings frozen at settlement. A cancelled event counts for nothing (#743): `eventCancelled` is true, no game counts, and every entry stands unscored |
 | Read a survivor leaderboard | `member` | `getSurvivorLeaderboard`, `GET /api/v1/contests/:contestId/survivor-leaderboard` (#719): every entry that submitted a week, whether it is still in or the week number that put it out, its weeks survived and its place (entries still in first, then by weeks survived, ties sharing a place), and for each week its outcome (`SURVIVED`, `ELIMINATED`, `PENDING`, or none for a week not started, cancelled, or after it went out) and the team it picked once that game has kicked off. Each week carries how many entries came into it still in. Read live from the results; a `COMPLETED` contest's places are the frozen ones. 400 `CONTEST_FORMAT_MISMATCH` for any other contest |
 | Read a pick'em leaderboard | `member` | `getPickEmLeaderboard`, `GET /api/v1/contests/:contestId/pick-em-leaderboard` (#717): every entry that submitted a week, with its season total and place and, for each week, whether it submitted, its points and place, and whether it won the week. A week that has not started has no points; a week under way is scored live from its played games, so it shows nothing a kickoff has not revealed; a settled week answers from its frozen standings and names its winners. A `COMPLETED` contest's totals and places are the frozen ones. The season ranks by total alone, so level entries share a place. 400 `CONTEST_FORMAT_MISMATCH` for any other contest |
+
+### Cup — `cups`
+
+A sports league's season-long points race in a league (#841, `plans/season-cups.md`): the 2026
+PGA Tour Cup. One per league, season and sports league, made when the league's first contest of
+that season and sports league is created (`createContest` calls `CupService.ensureCup`), never set
+up or deleted by hand; it goes with its league. Its name is built from season and sports league.
+A contest's season is its first event's year at creation (`Contest.seasonYear`), and its
+`cupWeight` (`NORMAL` x1, `BONUS` x1.5, `DOUBLE` x2, `NOT_COUNTED`) says how much it counts.
+
+Standings are worked out on every read from the frozen places (`ContestEntryStanding.position`)
+of the cup's `COMPLETED` contests that are not `NOT_COUNTED`: a squad scores from its best entry
+on the league's points table (`League.cupPointsScale`, `STANDARD` by default; `cupCustomPoints`
+only for `CUSTOM`, a database check), tied entries splitting the points of the places they
+cover, times the weight. Points travel in tenths. Squads rank on points, then wins, then podiums,
+and share a place when equal on all three. The pure rules are `@poolmaster/shared/domain/cup-points.ts`.
+
+| Operation | Role | Notes |
+|---|---|---|
+| List a season's cups | `member` | `listCups`, `GET /leagues/:id/cups?seasonYear=`: each cup with its standings (every active squad, at 0 until it places; an inactive squad once it has placed; `movement`, places gained since before the latest counted contest went final, null until two have) and its contests (drafts left out, each `COUNTED`, `NOT_COUNTED`, `NO_RESULT` or `NOT_FINAL`, with its winners). No viewer context (A8): the client finds its own squad's row |
+| Read one cup | `member` | `getCup`, `GET /leagues/:id/cups/:cupId`; 404 `CUP_NOT_FOUND` for another league's cup |
+| Read a squad's cup points | `member` | `getCupSquadPoints`, `GET /leagues/:id/cups/:cupId/squads/:squadId`: the squad's place and points in each counted contest, in the order they went final; 404 `SQUAD_NOT_FOUND` for another league's squad |
 
 ### Squares — `selections`
 

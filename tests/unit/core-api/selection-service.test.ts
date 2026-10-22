@@ -1,4 +1,4 @@
-import { ContestFormat, ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, CupWeight, SelectionType } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -93,6 +93,8 @@ function contest(overrides: Partial<Contest> = {}): Contest {
     leagueId: LEAGUE_ID,
     sportEventIds: [EVENT_ID],
     name: 'Masters Pool',
+    seasonYear: 2026,
+    cupWeight: CupWeight.NORMAL,
     status: ContestStatus.OPEN,
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,

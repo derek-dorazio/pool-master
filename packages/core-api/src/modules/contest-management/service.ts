@@ -7,6 +7,7 @@ import type {
 } from '@poolmaster/shared/db';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import type { ContestOpenedNotice } from '../notifications/contest-notices';
+import type { CupService } from '../cups/service';
 import type {
   ContestManagementDetailDto,
   ContestManagementSportEventDto,
@@ -140,19 +141,45 @@ function createNoopLogger(): LifecycleLogger {
   };
 }
 
+export interface ContestManagementServiceDeps {
+  contests: ContestRepository;
+  configTemplates: ContestConfigTemplateRepository;
+  configurations: ContestConfigurationRepository;
+  scoringRules: ParticipantContestScoringRuleRepository;
+  tiers: SportEventTierService;
+  sportEventReader: ContestCreateSportEventReader;
+  /** Makes the cup a new contest counts toward, when its league has none yet (#841). */
+  cups: Pick<CupService, 'ensureCup'>;
+  logger?: LifecycleLogger;
+  /** Tells the league a contest has opened (#845, the "New contest open" email). */
+  contestOpened?: ContestOpenedNotice;
+  now?: () => Date;
+}
+
 export class ContestManagementService {
-  constructor(
-    private readonly contestRepo: ContestRepository,
-    private readonly contestConfigTemplateRepo: ContestConfigTemplateRepository,
-    private readonly contestConfigurationRepo: ContestConfigurationRepository,
-    private readonly participantContestScoringRuleRepo: ParticipantContestScoringRuleRepository,
-    private readonly sportEventTierService: SportEventTierService,
-    private readonly logger: LifecycleLogger = createNoopLogger(),
-    private readonly sportEventReader: ContestCreateSportEventReader,
-    /** Tells the league a contest has opened (#845, the "New contest open" email). */
-    private readonly contestOpened?: ContestOpenedNotice,
-    private readonly now: () => Date = () => new Date(),
-  ) {}
+  private readonly contestRepo: ContestRepository;
+  private readonly contestConfigTemplateRepo: ContestConfigTemplateRepository;
+  private readonly contestConfigurationRepo: ContestConfigurationRepository;
+  private readonly participantContestScoringRuleRepo: ParticipantContestScoringRuleRepository;
+  private readonly sportEventTierService: SportEventTierService;
+  private readonly sportEventReader: ContestCreateSportEventReader;
+  private readonly cups: Pick<CupService, 'ensureCup'>;
+  private readonly logger: LifecycleLogger;
+  private readonly contestOpened?: ContestOpenedNotice;
+  private readonly now: () => Date;
+
+  constructor(deps: ContestManagementServiceDeps) {
+    this.contestRepo = deps.contests;
+    this.contestConfigTemplateRepo = deps.configTemplates;
+    this.contestConfigurationRepo = deps.configurations;
+    this.participantContestScoringRuleRepo = deps.scoringRules;
+    this.sportEventTierService = deps.tiers;
+    this.sportEventReader = deps.sportEventReader;
+    this.cups = deps.cups;
+    this.logger = deps.logger ?? createNoopLogger();
+    this.contestOpened = deps.contestOpened;
+    this.now = deps.now ?? (() => new Date());
+  }
 
   /**
    * The one way a contest is created (#245). The configuration comes from the named template,
@@ -222,9 +249,14 @@ export class ContestManagementService {
       resolvedConfiguration.configuration,
       { requested: resolvedConfiguration.scoring, kept: null },
     );
+    const sportEventIds = orderContestEvents(sportEvents);
+    // Its season is its first event's year (#841): a pick'em season's January playoff weeks keep
+    // the season's year, because an edition's year is the one it is branded with.
+    const seasonYear = sportEvents.find((event) => event.id === sportEventIds[0])?.eventYear ?? sportEvent.eventYear;
     const contest = await this.contestRepo.create({
       leagueId: context.leagueId,
-      sportEventIds: orderContestEvents(sportEvents),
+      sportEventIds,
+      seasonYear,
       name: input.name,
       // A new contest is the commissioner's draft (#117): only they see it, nobody can enter,
       // and its settings stay editable until they open it to the league.
@@ -251,6 +283,7 @@ export class ContestManagementService {
       scoring,
       this.participantContestScoringRuleRepo,
     );
+    await this.cups.ensureCup({ leagueId: context.leagueId, seasonYear, sportLeagueId: sportEvent.sportLeagueId });
 
     this.logger.info({
       contestId: contest.id,

@@ -19,6 +19,7 @@ export * from './golf-scores.dto';
 export * from './race-results.dto';
 export * from './bracket.dto';
 export * from './squares.dto';
+export * from './cups.dto';
 export * from './ingestion.dto';
 export * from './live-score.dto';
 export * from './client-logs.dto';

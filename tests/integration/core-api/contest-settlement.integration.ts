@@ -108,6 +108,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       prisma.contest.create({
         data: {
           leagueId: league.id,
+          seasonYear: 2026,
           sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
           name: `Invalid Settlement ${suffix}`,
           status: 'ACTIVE',
@@ -399,6 +400,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
+        seasonYear: 2026,
         sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
         name: `Unplayed Settlement ${suffix}`,
         status: 'ACTIVE',
@@ -505,6 +507,7 @@ async function createSettlementContest(input: {
   const contest = await prisma.contest.create({
     data: {
       leagueId: input.leagueId,
+      seasonYear: 2026,
       sportEvents: { create: { sportEventId: input.sportEventId, sequence: 1 } },
       name: input.name,
       status: input.status ?? 'ACTIVE',

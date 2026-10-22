@@ -10,7 +10,7 @@ import type {
   ContestStatusTransition,
   ContestUpdate,
 } from '@poolmaster/shared/db';
-import type { Contest, ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
+import type { Contest, ContestFormat, ContestStatus, CupWeight, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
 
 /**
@@ -84,6 +84,7 @@ export class PrismaContestRepository implements ContestRepository {
         status: contest.status,
         contestFormat: contest.contestFormat,
         selectionType: contest.selectionType,
+        seasonYear: contest.seasonYear,
         sportEvents: {
           create: contest.sportEventIds.map((sportEventId, index) => ({ sportEventId, sequence: index + 1 })),
         },
@@ -187,6 +188,8 @@ function mapToContest(row: {
   openedAt: Date | null;
   startsAt: Date | null;
   endsAt: Date | null;
+  seasonYear: number;
+  cupWeight: CupWeight;
   createdAt: Date;
   updatedAt: Date;
 }): Contest {
@@ -206,6 +209,8 @@ function mapToContest(row: {
     // A contest has at most one of the two draws: a random draw's deal or squares' digits.
     drawnAt: row.draw?.drawnAt ?? row.squaresDraw?.drawnAt ?? undefined,
     squaresGameMatchId: row.squaresGame?.sportEventMatchId ?? undefined,
+    seasonYear: row.seasonYear,
+    cupWeight: row.cupWeight,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
