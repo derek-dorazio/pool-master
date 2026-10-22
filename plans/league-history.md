@@ -26,7 +26,7 @@ Research input: `plans/league-history-research.md`.
 |---|---|---|
 | Championship page, `GET /leagues/:leagueId/championship/:year`, `GET .../championship` (years with champions) | #863 | Past years of the championship board; the summary's list of years |
 | `LeagueYearFinish`, one row per squad per counted contest, written at settlement | #863 | The summary's counts. Nothing re-reads every contest |
-| Season page (Championship, Trophy case and Points race tabs, year picker, All years link), frozen `CupStanding`, `GET /cups?seasonYear=`, `GET /cups/past` | #841 | Past seasons of the cup boards; the summary's cup champions |
+| Championships page (Championship, Trophy case and Points race tabs, year picker, All years link), frozen `CupStanding`, `GET /cups?seasonYear=`, `GET /cups/past` | #841 | Past seasons of the cup boards; the summary's cup champions |
 | Trophy shelf on team pages | #841 slice 4, #863 slice 2 | Already shows every past top-3 finish; history adds nothing there |
 | Squad delete guard (`SQUAD_DELETE_HAS_RESULTS`) and the best-entry-per-squad function | whichever of #841 slice 1 or #863 slice 1 goes first | A deleted squad can't punch a hole in a past year |
 | `Contest.seasonYear` | #841 slice 1 | Cup seasons |
@@ -38,9 +38,9 @@ Final in February 2026. Each board labels its own year, so the two never sit on 
 
 ## 2. Past years
 
-The cups plan's **Season page** (`plans/season-cups.md` §6 *Navigation*) holds a year's three
+The cups plan's **Championships page** (titled "<year> Championship Race" in season, "<year> Championships" once the year is over) (`plans/season-cups.md` §6 *Navigation*) holds a year's three
 views as tabs: Championship (lands first, every year), Trophy case, and Points race with sports
-league chips, at `/league/:code/season/:year`. Its header has a **year picker** and an
+league chips, at `/league/:code/championships/:year`. Its header has a **year picker** and an
 **All years** link. History's past years are that picker: choosing 2025 changes every tab at
 once, and the year is in the path, so a past year can be linked and shared.
 
@@ -93,13 +93,13 @@ Questions:
 
 ## 4. All-time summary
 
-The Season page's **All years** link opens one page across every year, at `/league/:code/history` (mockup C on the season cups canvas,
+The Championships page's **All years** link opens one page across every year, at `/league/:code/history` (mockup C on the season cups canvas,
 widened to include the championship):
 
 - **Top:** most championships and most cups won, as tiles, each with the squad and its count.
 - **Then each year, newest first:** the championship trophy with its champion, and that year's
   cup champions underneath. The current year shows "2026 so far" with the leaders. Tapping a year
-  opens `/league/:code/season/:year` on its Championship tab; tapping a cup champion opens that
+  opens `/league/:code/championships/:year` on its Championship tab; tapping a cup champion opens that
   year's Points race with the cup's chip selected.
 - **No tabs.** It is one page. The Seasons, Cups, All-time and Records tabs in mockup C come from
   this plan's first version and go.
@@ -110,7 +110,7 @@ league, a few hundred rows a year, summed by pure functions in a small `history`
 (`rules/architecture-rules.md` §5 *Project Structure and Layer Boundaries*). `SummaryTile` is a
 typed enum (`MOST_CHAMPIONSHIPS`, `MOST_CUPS`).
 
-There is no separate History menu item: the summary is reached from the Season page's
+There is no separate History menu item: the summary is reached from the Championships page's
 All years link, and My team's "Contest history" link points at it instead. Today's
 `my-team-history-page.tsx` (the viewer's past contests, read with one request per contest) and
 its `/league/:code/history` route are deleted, since the trophy shelf and the drill-through cover
@@ -123,8 +123,8 @@ Questions:
   here.
 - **Q4.2** Two tiles only (championships, cups)? Recommendation: yes for now. More tiles (most
   podiums all-time, most contests won) can come later from the same rows if leagues ask.
-- **Q4.5** No History menu item, only the Season page's All years link? Recommendation: yes. One
-  Season menu item holds every year, and All years is one tap from any of them.
+- **Q4.5** No History menu item, only the Championships page's All years link? Recommendation: yes. One
+  Championships menu item holds every year, and All years is one tap from any of them.
 - **Q4.3** Delete My team history once the summary and trophy shelf are in? Recommendation: yes,
   in slice 3.
 - **Q4.4** Build history open to every league now, and gate it when paid plans exist? Section
@@ -162,7 +162,7 @@ All after #841 and #863 have shipped the pages they extend. Each slice is one PR
 unit tests of the pure functions, integration tests for each new query (`rules/testing-rules.md`
 §9), contract verification for each new endpoint, and a browser journey row.
 
-1. **Past years.** The Season page's year picker opens past years on every tab, with live parts
+1. **Past years.** The Championships page's year picker opens past years on every tab, with live parts
    hidden. Mostly web; the read endpoints exist. If the cups build the picker for the current
    year only, this slice fills its past years.
 2. **Drill-through.** `GET .../history/contests`; the Contests list under the Championship tab,
