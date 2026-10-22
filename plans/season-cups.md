@@ -234,8 +234,8 @@ Crowning is the only write on a cup itself: nobody creates, edits or deletes one
 
 | Page | Route | Content |
 |---|---|---|
-| Cups | `/league/:code/cups` | This season's cups as cards: name, leader, viewer's place, contests counted of total; "Ready to crown" for the commissioner. Sports league cups show once they have two counted contests |
-| Cup | `/league/:code/cups/:cupId` | The leaderboard (place, movement, squad, points, wins, contests), a points-race chart of the top five across the season, and the counted contests with their weights and winners |
+| Season, Trophy case tab | `/league/:code/season/:year/trophies` | This season's cups as cards: name, leader, viewer's place, contests counted of total; "Ready to crown" for the commissioner. Sports league cups show once they have two counted contests |
+| Season, Points race tab | `/league/:code/season/:year/race/:sportLeagueId` | The leaderboard (place, movement, squad, points, wins, contests), a points-race chart of the top five across the season, and the counted contests with their weights and winners |
 | Squad in a cup | sheet from a leaderboard row | That squad's points contest by contest |
 | League home | existing | A small cups card: each open cup's leader and the viewer's place |
 | Team page | existing | The trophy shelf: every top-3 finish in a crowned cup and the championship, beside #837's contest trophies |
@@ -251,6 +251,44 @@ page carries B's trophy shelf. The same podium also sits under the championship 
 Decided (Derek, 2026-10-22): Q6.1 Cups gets its own menu item for the current season, and past
 cups are also part of History; Q6.2 movement arrows beside each squad; Q6.3 no real trophy
 names (no "FedEx Cup").
+
+### Navigation (Derek, 2026-10-22)
+
+One **Season** page holds a year's three views, as tabs under one header:
+
+```
+League menu: Season
+  Season page                 /league/:code/season/:year      (year defaults to the current one)
+    header: ‹ league · year picker ("2026 season ▾") · "All years" link
+    tabs:
+      Championship  (lands here, every year, current and past)   mockup D
+      Trophy case   cup cards with leader or champion, podiums   mockup B
+      Points race   one cup's leaderboard                        mockup A
+        sports league chips: PGA Tour Cup · LPGA Tour Cup · NFL Cup ...
+  All years                   /league/:code/history           mockup C (history, #837)
+```
+
+- **Two levels of tabs, not three.** The page tabs pick the view; inside Points race, chips pick
+  the sports league. Chips are a filter, not more tabs, so they scroll sideways when a league
+  plays many sports leagues.
+- **Links between them:** a Trophy case cup card opens Points race with that cup's chip
+  selected. A championship matrix row or medal tile opens the squad's year (its finishes,
+  contest by contest). A points race contest row opens that contest's final leaderboard (the
+  drill-through history adds for past years). "All years" opens the all-time summary; tapping a
+  year there opens that year's Season page on Championship.
+- **Same page, any year.** The year picker changes every tab at once. Past years drop the live
+  parts (movement arrows, "Ready to crown", progress bars, projected points) and show finals.
+- Route segments: `/championship` (default), `/trophies`, `/race/:sportLeagueId`. A shared link
+  to a tab and year opens exactly that view.
+
+Questions:
+
+- **Q6.4** Call the menu item **Season** (it now holds the championship as well as the cups),
+  replacing the "Cups" item from Q6.1? Recommendation: yes. "Cups" undersells the championship,
+  which is the page's first tab.
+- **Q6.5** Should the current year also land on Championship? Recommendation: yes, one rule for
+  every year. In season it shows the leader and the race for the trophy, and the cups are one
+  tap away.
 
 ## 7. Slices
 
