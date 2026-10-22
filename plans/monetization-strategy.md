@@ -130,8 +130,8 @@ A starting point to react to, not a decision. Names follow Derek's message.
 | Contest opened and final results emails | | ✓ | ✓ | ✓ |
 | End-of-day standings email during a live event | | | ✓ | ✓ |
 | Branding: logo, colours | | | ✓ | ✓ |
-| League championship: calendar-year standings and trophy (#863) | | ✓ | ✓ | ✓ |
-| Sports league cups, FedEx-style (#841) | | | ✓ | ✓ |
+| League championship: calendar-year standings and trophy (#863) | | ✓ | | ✓ |
+| Sports league cups, FedEx-style (#841) | | ✓ | ✓ | ✓ |
 | Export results (CSV) | | | | ✓ |
 
 Rules that make the two mechanisms work together:
@@ -285,14 +285,16 @@ its own light branding, and Platinum gets all of them. Three styles:
 
 Derek (2026-10-22): these features are built so there is something worth upgrading for. Each
 one tags its views, tiles or emails with a plan-agnostic **service class** (Essential, A, B, C,
-D); this plan maps classes to plans when it is built (Essential and A every league; B Premium;
-C Pro; D Platinum). Nothing is gated yet.
+D); this plan maps classes to plans when it is built (Essential every league; A free and up; B
+the first paid level, Pro; C the second, Premium; D Platinum). Derek's ordering (2026-10-22) is
+Pro, then Premium, then Platinum, so the packaging table's column order (Premium before Pro)
+needs swapping when this plan is next revised. Nothing is gated yet.
 
 | Feature | Ticket | Classes | Documented in |
 |---|---|---|---|
-| Sports league cups (FedEx-style points race per sports league) | #841 | C (Pro); race chart, projected points, custom points tables D | `plans/season-cups.md` §9 |
-| League championship (calendar-year standings, trophy, medal tiles, finish matrix) | #863 | B (Premium) | `plans/season-cups.md` §9 |
-| League history (past years, drill to past contests, all-time summary) | #837 | Championship past years B, cup past seasons C, all-time summary D | `plans/league-history.md` §5 |
+| Sports league cups (FedEx-style points race per sports league) | #841 | B (Pro); race chart, projected points, custom points tables D | `plans/season-cups.md` §9 |
+| League championship (calendar-year standings, trophy, medal tiles, finish matrix) | #863 | C (Premium) | `plans/season-cups.md` §9 |
+| League history (past years, drill to past contests, all-time summary) | #837 | Past years in their feature's class or higher; all-time summary D | `plans/league-history.md` §5 |
 | Email notifications | #845 | Essential to D per email | `plans/email-notifications.md`, *Class* |
 
 ## Premium features worth paying for

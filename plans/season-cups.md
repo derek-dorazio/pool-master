@@ -371,28 +371,28 @@ field sizes, hard to read on a phone; not used).
 
 Derek (2026-10-22): cups, the championship, history and notifications are built to be paid
 features. Each view and tile below carries a **service class**, the same plan-agnostic letters
-the email catalog uses (`plans/email-notifications.md`, *Class*): **Essential** and **A** for
-every league, free included; **B** the first paid level (Premium); **C** the second (Pro); **D**
-the top level (Platinum). `plans/monetization-strategy.md` maps classes to plans. Nothing is
+the email catalog uses (`plans/email-notifications.md`, *Class*): **Essential** for every league
+always; **A** the free plan and up; **B** the first paid level (Pro); **C** the second (Premium);
+**D** the top level (Platinum). `plans/monetization-strategy.md` maps classes to plans. Nothing is
 gated now: every class is built and shown to every league until the entitlements function
 exists, and then each check is one call per route or tile.
 
 | Feature or view | Class | Why |
 |---|---|---|
 | Contest results, places and the contest's own podium (exists today) | A | The core loop stays free |
-| **League championship (#863)**: trophy and podium presented on 1 January, finish matrix | B | Derek: the league-wide running standings and trophy are Premium |
-| Championship medal tiles: most 1sts, 2nds, 3rds | B | Part of the championship page |
-| Championship medal tiles: most podiums, contests played, top tens | B | Cheap extras; one page, one class keeps it simple |
-| Championship trophies on the team trophy shelf | B | Comes with the championship |
-| Cup name league setting | B | Names the championship |
-| **Sports league cups (#841)**: Cups page, Cup leaderboard with movement, counted contests, squad breakdown | C | Derek: the FedEx-style sports league cup is Pro |
-| Contest cup weights (x1.5, x2, not counted) | C | Only matter once cups exist |
-| Crowning, the cup podium and cup trophies on the shelf | C | Part of the cup |
-| League home cups card | C | Shows the cups |
+| **League championship (#863)**: trophy and podium presented on 1 January, finish matrix | C | Derek: the league-wide running standings and trophy are Premium |
+| Championship medal tiles: most 1sts, 2nds, 3rds | C | Part of the championship page |
+| Championship medal tiles: most podiums, contests played, top tens | C | Cheap extras; one page, one class keeps it simple |
+| Championship trophies on the team trophy shelf | C | Comes with the championship |
+| Cup name league setting | C | Names the championship |
+| **Sports league cups (#841)**: Cups page, Cup leaderboard with movement, counted contests, squad breakdown | B | Derek: the FedEx-style sports league cup is Pro |
+| Contest cup weights (x1.5, x2, not counted) | B | Only matter once cups exist |
+| Crowning, the cup podium and cup trophies on the shelf | B | Part of the cup |
+| League home cups card | B | Shows the cups |
 | Points-race chart on the Cup page | D | An extra view, reserved for the top level |
 | Projected points ("if it ended now") | D | The most engaging live extra |
 | Points tables other than `STANDARD` (top ten, field beaten, custom) | D | Commissioner customisation |
-| Past years and the all-time summary | History (#837, `plans/league-history.md` §5) | Championship past years B, cup past seasons C, all-time summary D; a past-year view is never in a lower class than its feature |
+| Past years and the all-time summary | History (#837, `plans/league-history.md` §5) | history's own classes; a past-year view is never in a lower class than its feature |
 
 How a league below the class sees it (recommendation, matching the history plan's locked-page
 idea in the monetization plan): the menu item stays, and the page shows its name and this
@@ -406,6 +406,6 @@ Questions:
   `packages/shared/domain`, used by both emails and views, instead of a notification-only class?
   Recommendation: yes. Monetization then maps one enum to plans in one place.
 - **Q9.2** The email catalog puts trophy, cup and season-standings emails in D. With cups now
-  Pro and the championship Premium, should those emails follow their features (cup emails C,
-  championship emails B)? Recommendation: yes, an email's class matches the feature it reports
+  Pro (B) and the championship Premium (C), should those emails follow their features (cup
+  emails B, championship emails C)? Recommendation: yes, an email's class matches the feature it reports
   on. That change belongs to the email catalog.
