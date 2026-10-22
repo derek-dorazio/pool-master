@@ -4,9 +4,11 @@
 
 Written 2026-10-21 for Derek's ask: a season-long points race across a league's contests,
 FedEx Cup style. Every finishing place in a contest earns points, and the points add up across
-a group of contests into a cup leaderboard with a champion and trophies. Cups are an in-season
-feature first; finished cups then feed league history (#837, `plans/league-history.md`), which
-leaves this out of its own scope (its Q7.2). Questions sit under the section they belong to,
+a group of contests into a cup leaderboard with a champion and trophies. This plan owns every
+current-year view: cup pages, the championship page, podiums and the trophy shelf. League
+history (#837, `plans/league-history.md`) is a thin layer on top that goes after it (Derek,
+2026-10-22): the year toggle for past years, the drill from a year to its contests' final
+leaderboards, and one all-time summary. History adds no tables; it reads what this plan stores. Questions sit under the section they belong to,
 each with a recommendation; none blocks slice 1.
 
 Visual concepts: the "Season cups concepts" canvas,
@@ -19,13 +21,12 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
   commissioner's "Ready to crown" banner, the crowned podium, and the trophy shelf on a
   team page.
 - **C. Past seasons.** An all-time summary: most cups won, then each season's cup champions,
-  newest first.
+  newest first. Owned by history (#837), not this plan.
 - **D. League championship (#863).** The trophy presented on 1 January (a "presented" tweak
   shows the leader view before then), the medal tiles, and the finish matrix.
 
-A to C are the sports league cup views, and Derek wants all of them (2026-10-22): they aren't
-alternatives. D also has the podium under the trophy and a year toggle. Single-year views come first; C is a later page that fronts the per-year
-history pages.
+A and B are the sports league cup views, and Derek wants both (2026-10-22): they aren't
+alternatives. D also has the podium under the trophy; its year toggle is history's (#837).
 
 ---
 
@@ -58,9 +59,9 @@ history pages.
 | Frozen contest places | `ContestEntryStanding.position` (1 best, ties allowed), written at settlement | The only input to cup points |
 | Contest status | `Contest.status` `COMPLETED` | Only Final contests award points (projected points are slice 5) |
 | Contest's sports league | `ContestSportEvent` → `SportEvent.eventSeries.sportLeagueId` | Which sports league cup a contest counts toward |
-| Season | `Contest.seasonYear`, added by #837 slice 1 | Which season a contest counts toward |
-| A squad's best entry | #837 `history` module, Q3.2 | A squad with several entries in a contest scores once, from its best place |
-| Squad delete guard | #837 slice 1, Q3.1 | A squad with results can't be deleted, so cup standings can't lose a row |
+| Season | `Contest.seasonYear`, added by slice 1 here (moved from #837) | Which season a contest counts toward |
+| A squad's best entry | #837 Q3.2, built here (slice 1 of whichever ticket goes first) | A squad with several entries in a contest scores once, from its best place |
+| Squad delete guard | #837 Q3.1, built here: slice 1 of #841 or #863, whichever goes first, failing test first | A squad with results can't be deleted (`SQUAD_DELETE_HAS_RESULTS`), so cup standings can't lose a row |
 
 A contest's events all belong to one sports league today (contests are made from that sports
 league's templates), so a contest counts toward exactly one sports league cup.
@@ -172,7 +173,7 @@ the same function as #837.
 
 ## 4. Season and crowning
 
-A cup belongs to one `seasonYear` (#837 slice 1). It is `OPEN` from creation and its standings
+A cup belongs to one `seasonYear` (slice 1). It is `OPEN` from creation and its standings
 move each time a counted contest goes Final.
 
 **The commissioner crowns each cup** (Derek, 2026-10-22), with `POST .../cups/:cupId/crown`,
@@ -210,7 +211,7 @@ check as the league's contests. Shapes in `packages/shared/dto/cups.dto.ts`, rou
 | `GET /cups/:cupId` | Member | Standings (`CupStandingRowDto[]`) and the counted contests (`CupContestRowDto[]`) |
 | `GET /cups/:cupId/squads/:squadId` | Member | One squad's points contest by contest |
 | `POST /cups/:cupId/crown` | Commissioner | Crown the champion (section 4) |
-| `GET /cups/past` | Member | Crowned cups across every season, newest first, paged; used by history |
+| `GET /cups/past` | Member | Crowned cups across every season, newest first, paged; history's all-time summary calls it |
 | `PATCH /leagues/:leagueId` (existing) | Commissioner | Gains `cupPointsScale`, `cupCustomPoints` |
 | `PATCH` contest settings (existing) | Commissioner | Gains `cupWeight` |
 
@@ -238,8 +239,7 @@ Crowning is the only write on a cup itself: nobody creates, edits or deletes one
 | Squad in a cup | sheet from a leaderboard row | That squad's points contest by contest |
 | League home | existing | A small cups card: each open cup's leader and the viewer's place |
 | Team page | existing | The trophy shelf: every top-3 finish in a crowned cup and the championship, beside #837's contest trophies |
-| Past years | the Cups and Cup pages | A year toggle on the same pages shows a past season's cups, frozen |
-| All-time summary | `/league/:code/history/cups` | Mockup C: most cups won, then each season's champions; each row opens that year's pages. Later, with #837 |
+| Past years, all-time summary | history (#837) | Not here: the year toggle on these pages, the drill to past contests' leaderboards, and mockup C |
 | League settings | existing | Cup points table, with a live preview |
 | Contest settings | existing | Cup weight |
 
@@ -256,10 +256,11 @@ names (no "FedEx Cup").
 
 Each slice is one PR with its docs, unit tests of the pure points functions, integration tests
 for each new query (`rules/testing-rules.md` §9), contract verification for each endpoint, and a
-browser journey row once a page exists. All depend on #837 slice 1 (`seasonYear`, squad delete
-guard).
+browser journey row once a page exists. Nothing here depends on #837; #837 depends on this.
 
-1. **Model and read API.** `Cup`, `CupStanding`, the league's points table settings,
+1. **Model and read API.** `Contest.seasonYear` (default: calendar year of the first event,
+   commissioner-editable, backfilled); the squad delete guard and the best-entry function if
+   #863 slice 1 hasn't landed them; `Cup`, `CupStanding`, the league's points table settings,
    `Contest.cupWeight`, their enums; migration creating each (league, season, sports league)'s
    cup; automatic cups on contest create; `cup-points.ts` with every scale, ties and weights; `GET /cups`,
    `GET /cups/:cupId` and the squad breakdown.
@@ -269,14 +270,12 @@ guard).
    contest settings.
 4. **Crowning, podium and trophy shelf.** `POST .../crown` and the "Ready to crown" button,
    frozen `CupStanding`, the podium on a crowned Cup page, the trophy shelf on team pages, the
-   year toggle for past seasons, the frozen-cup checks.
+   frozen-cup checks.
 5. **Projected points.** Points from live contests' current leaderboards, shown greyed as
    "if it ended now".
-6. **All-time summary.** `GET /cups/past` and mockup C at `/league/:code/history/cups`, fronting
-   the per-year pages (with #837).
+6. **Past cups read.** `GET /cups/past`, for history's all-time summary. Small; can ride with 4.
 
-Slices 2 and 3 can go in parallel after 1; 4 after 2; 5 after 2; 6 after 4. Single-year views
-(1 to 5) come before 6.
+Slices 2 and 3 can go in parallel after 1; 4 after 2; 5 after 2. History (#837) follows.
 
 Decided (Derek, 2026-10-22): Q7.1 projected points, as the last slice.
 
@@ -350,18 +349,19 @@ Questions:
   which table was in force when.
 - **Q8.3** Medal tiles: most 1sts, most 2nds, most 3rds, most podiums, most contests played,
   most top-ten finishes? Recommendation: those six, two to a row on a phone. Ties on a tile show every squad tied.
-- **Q8.4** Is #863 still deferred? Recommendation: build it after #837 slice 1, alongside the
-  cup slices. It needs nothing from `seasonYear`, so it could even go first.
+- **Q8.4** Is #863 still deferred? Recommendation: no, build it alongside the cup slices. It
+  needs nothing from `seasonYear`, so it could even go first.
 
 ### Slices (#863)
 
-1. **Storage and read.** `LeagueYearFinish`, `League.cupName` (default "<league name> Cup" at
+1. **Storage and read.** The squad delete guard and the best-entry function if #841 slice 1
+   hasn't landed them; `LeagueYearFinish`, `League.cupName` (default "<league name> Cup" at
    creation, Q2.6), written at settlement, backfill migration, `GET
    /leagues/:leagueId/championship/:year` (trophy, tiles, matrix) and `.../championship` (years
    with their champions, for history).
-2. **The page.** Trophy and podium, medal tiles and matrix, a year toggle for past years;
-   league settings gains the cup name; championship trophies on the team page's trophy shelf.
-   History's year view shows the same page frozen (with #837).
+2. **The page.** Trophy and podium, medal tiles and matrix for the current year; league
+   settings gains the cup name; championship trophies on the team page's trophy shelf. History
+   (#837) adds the year toggle and shows past years on this same page.
 
 Options weighed: the matrix with points (A, chosen for the ranking); a medal table ranked by
 1sts, then 2nds, then 3rds (B, chosen as the tiles); an average finish percentile (fair across
