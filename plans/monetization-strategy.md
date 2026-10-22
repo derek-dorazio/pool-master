@@ -338,8 +338,8 @@ plan that gets it. Nothing is gated yet.
 
 | Feature | Ticket | Classes | Documented in |
 |---|---|---|---|
-| Sports league cups (FedEx-style points race per sports league) | #841 | B (paid, from Pro): every cup view | `plans/season-cups.md` §9 |
-| League championship (calendar-year standings, trophy, medal tiles, finish matrix) | #863 | B (paid, from Pro): every championship view | `plans/season-cups.md` §9 |
+| Sports league cups (FedEx-style points race per sports league) | #841 | B (paid, from Pro): every cup view | `plans/season-cups.md` §7 |
+| League championship (calendar-year standings, trophy, medal tiles, finish matrix) | #863 | B (paid, from Pro): every championship view | `plans/season-cups.md` §7 |
 | League history (past years, drill to past contests, all-time summary) | #837 | Contest results Essential; past years follow the championship's and cups' class; all-time summary D | `plans/season-cups.md` §7 |
 | Email notifications | #845 | Per email | `plans/email-notifications.md`, *Class* |
 
