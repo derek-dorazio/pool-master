@@ -310,11 +310,13 @@ SES 4 and 5, then slices 2 to 6 here.
    opened after it. The categories are registered in SES slice 2; the sent record, preferences
    and unsubscribe come from #844. The standings buffer setting arrives with slice 3, which first
    reads it.
-2. **Contest lifecycle.** D1 contest open, D2 for survivor (live entries only), random draw (members
-   with no entry) and squares (members with no box), the "no reminder within 6 hours of D1" rule, the draft's progress in the reminder ("4 of 6 picked";
-   slice 1 says only that a draft is saved),
-   E1 upgraded (all members, "good luck", event and rules summary instead of the entry list,
-   leaderboard link), D3 to every owner.
+2. **Contest lifecycle**, in two PRs. 2a: D1 contest open (with the contest's opening time
+   kept on the contest), the "no reminder within 6 hours of D1" rule, E1 upgraded (all members,
+   "good luck", event and rules summary instead of the entry list, leaderboard link), D3 to
+   every owner with "you can change picks until", and the web app's contest rules wording moved
+   to the shared package so the emails say the same thing. 2b: D2 for survivor (live entries
+   only), random draw (members with no entry) and squares (members with no box), and the
+   draft's progress in the reminder ("4 of 6 picked"; slice 1 says only that a draft is saved).
 3. **Live standings.** The standings buffer in `EMAIL_CONFIG`, E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,
    with the top 10 and the reader's entries.
 4. **Final results.** F1 with F3 folded in, F2.

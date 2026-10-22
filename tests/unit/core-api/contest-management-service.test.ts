@@ -48,6 +48,7 @@ import {
   ContestManagementService,
   type ContestCreateSportEventReader,
 } from '../../../packages/core-api/src/modules/contest-management/service';
+import type { ContestOpenedNotice } from '../../../packages/core-api/src/modules/notifications';
 import { cutoffTiming } from '../../../packages/core-api/src/modules/contests/entry-window';
 import { createContestSportEventReader } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
@@ -566,6 +567,7 @@ describe('ContestManagementService', () => {
       tierCount?: number;
       reader?: ReturnType<typeof createSportEventReader>;
       transitioned?: boolean;
+      contestOpened?: ContestOpenedNotice;
     }) {
       const contestCoreRepo = createContestRepo();
       const draft = {
@@ -596,11 +598,12 @@ describe('ContestManagementService', () => {
         undefined,
         options?.reader ?? createSportEventReader(),
         () => CONTEST_MANAGEMENT_TEST_NOW,
+        options?.contestOpened,
       );
       return { service, contestCoreRepo };
     }
 
-    it('moves a DRAFT contest to OPEN with a compare-and-set from DRAFT, and returns it open', async () => {
+    it('moves a DRAFT contest to OPEN with a compare-and-set from DRAFT, records when it opened, and returns it open', async () => {
       const { service, contestCoreRepo } = buildService();
 
       const opened = await service.openContest('league-1', 'contest-1');
@@ -608,7 +611,27 @@ describe('ContestManagementService', () => {
       expect(contestCoreRepo.transitionStatus).toHaveBeenCalledWith('contest-1', {
         from: [ContestStatus.DRAFT],
         to: ContestStatus.OPEN,
+        openedAt: CONTEST_MANAGEMENT_TEST_NOW,
       });
+      expect(opened.status).toBe(ContestStatus.OPEN);
+    });
+
+    it('asks for the new contest email once the contest is open, and not when another press already opened it (#845)', async () => {
+      const contestOpened = { contestOpened: jest.fn().mockResolvedValue(undefined) };
+      await buildService({ contestOpened }).service.openContest('league-1', 'contest-1');
+      expect(contestOpened.contestOpened).toHaveBeenCalledWith('contest-1');
+
+      const raced = { contestOpened: jest.fn().mockResolvedValue(undefined) };
+      await expect(buildService({ transitioned: false, contestOpened: raced }).service.openContest('league-1', 'contest-1'))
+        .rejects.toMatchObject({ code: CONTEST_NOT_DRAFT });
+      expect(raced.contestOpened).not.toHaveBeenCalled();
+    });
+
+    it('still opens the contest when the new contest email cannot be queued', async () => {
+      const contestOpened = { contestOpened: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+
+      const opened = await buildService({ contestOpened }).service.openContest('league-1', 'contest-1');
+
       expect(opened.status).toBe(ContestStatus.OPEN);
     });
 

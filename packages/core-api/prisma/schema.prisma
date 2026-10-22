@@ -185,6 +185,7 @@ enum PrismaEmailTemplateKey {
   PASSWORD_RESET
   PASSWORD_CHANGED
   CONTEST_ENTRY_REMINDER
+  CONTEST_OPENED
 }
 
 enum PrismaEmailMessageStatus {
@@ -905,6 +906,8 @@ model Contest {
   status        PrismaContestStatus @default(DRAFT)
   contestFormat PrismaContestFormat @default(ROSTER) @map("contest_format")
   selectionType PrismaSelectionType @map("selection_type")
+  /// When the commissioner opened the contest to the league (#845); null for a draft, and for contests opened before it was kept.
+  openedAt      DateTime?           @map("opened_at") @db.Timestamptz
   startsAt      DateTime?           @map("starts_at") @db.Timestamptz
   endsAt        DateTime?           @map("ends_at") @db.Timestamptz
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz

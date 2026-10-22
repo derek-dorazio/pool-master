@@ -53,6 +53,7 @@ const EMAIL_DEFAULTS = {
     CONTEST_ENTRY_COMPLETED: true,
     CONTEST_STARTED_SUMMARY: true,
     CONTEST_ENTRY_REMINDER: true,
+    CONTEST_OPENED: true,
   },
 };
 

@@ -1,5 +1,4 @@
-import type { BudgetPricingValues } from '@poolmaster/shared/domain';
-import { formatDollars } from '@/features/shared/ui';
+import { formatDollars, type BudgetPricingValues } from '@poolmaster/shared/domain';
 
 /**
  * A set of budget pricing values (#93) in one line, as the Settings page lists a profile and the

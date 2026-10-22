@@ -1,4 +1,4 @@
-import { ContestStatus, PickEmMode, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, PickEmMode, SelectionType, getSportDefinition, formatSelectionTypeName  } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
@@ -29,7 +29,6 @@ import {
 import { bracketRoundCount, bracketStartRoundOptions } from './bracket-start-round';
 import { firstContestEvent } from './contest-events';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
-import { formatSelectionTypeName } from './contest-rules';
 import { ContestRulesFields } from './contest-rules-fields';
 import {
   parseContestRules,

@@ -1,4 +1,13 @@
-import { ContestStatus, SelectionType, getSportDefinition, type SportNoun } from '@poolmaster/shared/domain';
+import {
+  ContestStatus,
+  SelectionType,
+  type SportNoun,
+  countParticipants,
+  formatContestRules,
+  formatEntriesPerTeam,
+  formatSelectionTypeName,
+  getSportDefinition,
+} from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { Lock, Trophy } from 'lucide-react';
 import { useState } from 'react';
@@ -32,7 +41,6 @@ import {
 } from '@/features/shared/ui';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { coversOneEvent, firstContestEvent } from './contest-events';
-import { countParticipants, formatContestRules, formatEntriesPerTeam, formatSelectionTypeName } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
 import { secondChanceRoundName } from './bracket-start-round';

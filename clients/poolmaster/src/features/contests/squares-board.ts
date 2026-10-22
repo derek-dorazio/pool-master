@@ -4,7 +4,7 @@ import {
   MatchStatus,
   SQUARES_GRID_SIZE,
   assertNever,
-  isSquaresRound,
+  isSquaresRound, pluralize 
 } from '@poolmaster/shared/domain';
 import type {
   SportEventMatchDto,
@@ -13,7 +13,6 @@ import type {
   SquaresBoxDto,
   SquaresWinnerDto,
 } from '@/lib/api';
-import { pluralize } from './contest-rules';
 
 /** The grid's positions, top to bottom and left to right. */
 export const SQUARES_POSITIONS = Array.from({ length: SQUARES_GRID_SIZE }, (_, index) => index);

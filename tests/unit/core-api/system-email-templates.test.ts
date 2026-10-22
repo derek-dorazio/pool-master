@@ -56,6 +56,7 @@ describe('pool-master-98i system email templates', () => {
       entryName: 'Entry 1',
       entryUrl: 'https://app.primetimecommissioner.com/entries/entry-1',
       submittedAt: '2026-04-04T15:30:00.000Z',
+      changeUntil: new Date('2026-04-09T11:40:00.000Z'),
       tiebreaker: '-12',
       tiers: [
         { tierName: 'Tier A', participantNames: ['Rory McIlroy', 'Ludvig Aberg'] },
@@ -64,6 +65,7 @@ describe('pool-master-98i system email templates', () => {
     }, UTC);
 
     expect(message.templateKey).toBe('CONTEST_ENTRY_COMPLETED');
+    expect(message.text).toContain('You can change your picks until Apr 9, 2026, 11:40 AM UTC.');
     expect(message.subject).toBe('Entry submitted: Masters Pick 6');
     expect(message.text).toContain('- Tier A: Rory McIlroy, Ludvig Aberg');
     expect(message.text).toContain('Tiebreaker: -12');
@@ -72,27 +74,89 @@ describe('pool-master-98i system email templates', () => {
     expect(message.html).toContain('Tommy Fleetwood, Robert MacIntyre');
   });
 
-  it('renders the contest started summary body with entry count and contest board link', () => {
+  it('renders the contest is live email with good luck, the event, the rules, the entry count and a Leaderboard button, and no entry list', () => {
     const message = renderSystemEmailTemplate('CONTEST_STARTED_SUMMARY', {
       userName: 'Derek Dorazio',
       leagueName: 'Mathworks',
       contestName: 'Masters Pick 6',
-      eventName: 'Manual Test Golf Tournament',
-      contestUrl: 'https://app.primetimecommissioner.com/contests/contest-1',
-      startedAt: '2026-04-05T14:00:00.000Z',
+      event: { name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z'), venue: 'Augusta National Golf Club' },
+      eventFormat: '4 rounds',
+      rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
       entryCount: 2,
-      entries: [
-        { entryName: 'Entry 1', teamName: "Derek Dorazio" },
-        { entryName: 'Entry 2', teamName: 'Member Team' },
-      ],
+      hasEntry: true,
+      leaderboardUrl: 'https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1/leaderboard',
     }, UTC);
 
-    expect(message.templateKey).toBe('CONTEST_STARTED_SUMMARY');
-    expect(message.subject).toBe('Masters Pick 6 has started');
+    expect(message.subject).toBe('Masters Pick 6 is live');
+    expect(message.text).toContain('Good luck, everyone.');
+    expect(message.text).toContain('Venue: Augusta National Golf Club');
+    expect(message.text).toContain('Starts: Apr 9, 2026, 11:40 AM UTC');
+    expect(message.text).toContain('Format: 4 rounds');
+    expect(message.text).toContain('Rules: Pick 1 golfer from each of 6 tiers. The best 4 scores count.');
     expect(message.text).toContain('Entries: 2');
-    expect(message.text).toContain('- Entry 2: Member Team');
-    expect(message.html).toContain('Contest started');
-    expect(message.html).toContain('Open contest board');
+    expect(message.text).toContain('Leaderboard: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1/leaderboard');
+    expect(message.text).not.toContain('You didn\'t enter this one');
+    expect(message.html).toContain('Leaderboard');
+  });
+
+  it('tells a member with no entry in a live contest that they can still follow it on the leaderboard', () => {
+    const message = renderSystemEmailTemplate('CONTEST_STARTED_SUMMARY', {
+      userName: 'Morgan Member',
+      leagueName: 'Mathworks',
+      contestName: 'NFL Week 1 Pick\'em',
+      event: { name: 'NFL Week 1', startsAt: new Date('2026-09-10T00:20:00.000Z') },
+      rules: 'Pick the winner of every game.',
+      entryCount: 1,
+      hasEntry: false,
+      leaderboardUrl: 'https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-2/leaderboard',
+    }, UTC);
+
+    expect(message.text).toContain('You didn\'t enter this one, but you can follow every entry on the leaderboard.');
+    expect(message.text).not.toContain('Venue:');
+    expect(message.text).not.toContain('Format:');
+    expect(message.html).toContain('is live with 1 entry.');
+  });
+
+  it('renders the new contest email with the event, the rules, the entry limit, when picks close and an Enter contest button', () => {
+    const message = renderSystemEmailTemplate('CONTEST_OPENED', {
+      userName: 'Morgan Member',
+      leagueName: 'Mathworks',
+      contestName: 'Masters Pick 6',
+      events: [{ name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z'), venue: 'Augusta National Golf Club' }],
+      rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
+      entriesPerMember: '1 entry per member',
+      closesAt: new Date('2026-04-09T11:40:00.000Z'),
+      contestUrl: 'https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1',
+    }, UTC);
+
+    expect(message.templateKey).toBe('CONTEST_OPENED');
+    expect(message.subject).toBe('New contest: Masters Pick 6');
+    expect(message.text).toContain('Masters Pick 6 is open in Mathworks.');
+    expect(message.text).toContain('Event: The Masters');
+    expect(message.text).toContain('Rules: Pick 1 golfer from each of 6 tiers. The best 4 scores count.');
+    expect(message.text).toContain('Entries: 1 entry per member');
+    expect(message.text).toContain('Picks close: Apr 9, 2026, 11:40 AM UTC');
+    expect(message.text).toContain('Enter contest: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1');
+    expect(message.html).toContain('New contest open');
+  });
+
+  it('lists every event of a multi-event contest in the new contest email, and says when the first picks close', () => {
+    const message = renderSystemEmailTemplate('CONTEST_OPENED', {
+      userName: 'Morgan Member',
+      leagueName: 'Mathworks',
+      contestName: 'Majors Pool',
+      events: [
+        { name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z') },
+        { name: 'PGA Championship', startsAt: new Date('2026-05-14T11:40:00.000Z') },
+      ],
+      rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
+      entriesPerMember: 'No limit on entries per member',
+      closesAt: new Date('2026-04-09T11:40:00.000Z'),
+      contestUrl: 'https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-3',
+    }, UTC);
+
+    expect(message.text).toContain('Events: The Masters (Apr 9, 2026, 11:40 AM UTC), PGA Championship (May 14, 2026, 11:40 AM UTC)');
+    expect(message.text).toContain('First picks close: Apr 9, 2026, 11:40 AM UTC');
   });
 
   it('renders the entry reminder with when picks close in the reader\'s time zone and a Make your picks button', () => {
@@ -152,6 +216,7 @@ describe('the email template registry', () => {
       CONTEST_ENTRY_COMPLETED: EmailCategory.RECEIPTS,
       CONTEST_STARTED_SUMMARY: EmailCategory.LIVE_STANDINGS,
       CONTEST_ENTRY_REMINDER: EmailCategory.CONTEST_UPDATES,
+      CONTEST_OPENED: EmailCategory.CONTEST_UPDATES,
       PASSWORD_RESET: EmailCategory.ACCOUNT,
       PASSWORD_CHANGED: EmailCategory.ACCOUNT,
     });

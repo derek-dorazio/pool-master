@@ -101,6 +101,7 @@ export class PrismaContestRepository implements ContestRepository {
       where: { id, status: { in: [...transition.from] } },
       data: {
         status: transition.to,
+        ...(transition.openedAt && { openedAt: transition.openedAt }),
         ...(transition.startsAt && { startsAt: transition.startsAt }),
         ...(transition.endsAt && { endsAt: transition.endsAt }),
       },
@@ -183,6 +184,7 @@ function mapToContest(row: {
   draw?: { drawnAt: Date } | null;
   squaresGame?: { sportEventMatchId: string } | null;
   squaresDraw?: { drawnAt: Date } | null;
+  openedAt: Date | null;
   startsAt: Date | null;
   endsAt: Date | null;
   createdAt: Date;
@@ -198,6 +200,7 @@ function mapToContest(row: {
     selectionType: row.selectionType,
     // Every event of a contest shares its sport (#713), so the first one answers for all.
     sport: row.sportEvents.at(0)?.sportEvent.sport,
+    openedAt: row.openedAt ?? undefined,
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
     // A contest has at most one of the two draws: a random draw's deal or squares' digits.

@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { eventRoundLabel, type Sport } from '@poolmaster/shared/domain';
+import { eventRoundLabel, type Sport, type RoundName  } from '@poolmaster/shared/domain';
 import { getSportLeague, type SportEventDto, type SportLeagueDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { BracketRoundLabel } from './bracket-layout';
 import { bracketRoundCount } from './bracket-start-round';
-import type { RoundName } from './contest-rules';
 import { sportEventQueryOptions } from './use-contest-schedule';
 
 /** A sport league's shared read; an empty `sportLeagueId` reads nothing. */

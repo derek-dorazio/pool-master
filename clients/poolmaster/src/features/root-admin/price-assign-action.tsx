@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   EventPricingConfigSchema,
   findBudgetPricingProblem,
+  formatDollars,
   priceOnBudgetCurve,
   getSportDefinition,
   type BudgetPricingProfile,
@@ -14,7 +15,6 @@ import {
   Button,
   ConfirmationModal,
   FormField,
-  formatDollars,
   Input,
   Select,
 } from '@/features/shared/ui';

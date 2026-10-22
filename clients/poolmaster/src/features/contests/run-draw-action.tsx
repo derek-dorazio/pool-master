@@ -1,4 +1,4 @@
-import type { SportNoun } from '@poolmaster/shared/domain';
+import { countParticipants, pluralize, type SportNoun } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { runContestDraw } from '@/lib/api';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -6,7 +6,6 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { Alert, Button, ConfirmDialog } from '@/features/shared/ui';
-import { countParticipants, pluralize } from './contest-rules';
 import { CONTEST_DRAW_CODE_MESSAGES } from './use-contest-draw';
 
 /**

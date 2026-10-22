@@ -5,13 +5,13 @@ import {
   RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
   SQUARES_PER_ENTRY_MAX,
   SelectionType,
+  type SportNoun,
+  countParticipants,
   getDefaultCountedScores,
   getTieredRosterSize,
   getTiersInPlay,
-  type SportNoun,
 } from '@poolmaster/shared/domain';
 import type { ContestConfigurationRequest } from '@poolmaster/shared/dto';
-import { countParticipants } from './contest-rules';
 
 /** The selection types the rules fields can edit: one arm each of the configuration request. */
 export type EditableSelectionType = ContestConfigurationRequest['selectionType'];

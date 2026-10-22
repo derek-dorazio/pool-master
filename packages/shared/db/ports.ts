@@ -336,6 +336,7 @@ export interface ContestStatusFilter {
 export interface ContestStatusTransition {
   from: readonly Contest['status'][];
   to: Contest['status'];
+  openedAt?: Date;
   startsAt?: Date;
   endsAt?: Date;
 }

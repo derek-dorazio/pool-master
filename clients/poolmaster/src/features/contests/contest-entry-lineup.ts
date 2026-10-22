@@ -1,6 +1,11 @@
-import { SelectionType, isRosterSelectionType, toCents, type RosterSelectionType } from '@poolmaster/shared/domain';
+import {
+  type RosterSelectionType,
+  SelectionType,
+  formatDollars,
+  isRosterSelectionType,
+  toCents,
+} from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
-import { formatDollars } from '@/features/shared/ui';
 import type { SelectionGroup } from './contest-entry-selection';
 import type { ErrorCodeMessages } from '@/lib/errors';
 

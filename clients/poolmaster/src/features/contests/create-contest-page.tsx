@@ -8,19 +8,23 @@ import { z } from 'zod';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import type { CreateContestRequest } from '@poolmaster/shared/dto';
 import {
+  type ContestScoringSettings,
   ParticipantScoringDefinitionIdSchema,
   PickEmMode,
-  SelectionType,
   SUPPORTED_SPORTS,
-  contestFormatForSelectionType,
-  contestTemplateEventTypeOf,
-  getSportDefinition,
-  sportAllowsSelectionType,
-  UpsetBonusRule,
-  type ContestScoringSettings,
+  SelectionType,
   type Sport,
   type SportDefinition,
   type SportNoun,
+  UpsetBonusRule,
+  contestFormatForSelectionType,
+  contestTemplateEventTypeOf,
+  formatContestRules,
+  formatEntriesPerTeamSentence,
+  formatSelectionTypeName,
+  getSportDefinition,
+  sportAllowsSelectionType,
+  suggestContestName,
 } from '@poolmaster/shared/domain';
 import { createContest, listContestConfigTemplates } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
@@ -51,12 +55,6 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import {
-  formatContestRules,
-  formatEntriesPerTeamSentence,
-  formatSelectionTypeName,
-  suggestContestName,
-} from './contest-rules';
 import {
   EMPTY_SCORING_SETTINGS_VALUES,
   SCORING_SETTINGS_UI,

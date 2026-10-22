@@ -42,24 +42,47 @@ export interface ContestEntryCompletedEmailData {
   entryName: string;
   entryUrl: string;
   submittedAt?: Date | string;
+  /** When the event's picks close; until then the entry's owners can still change it. */
+  changeUntil: Date;
   tiebreaker?: string;
   tiers: ContestEntryCompletedTierSelection[];
 }
 
-export interface ContestStartedEntrySummary {
-  entryName: string;
-  teamName: string;
+/** One event as a contest email lists it. */
+export interface ContestEmailEvent {
+  name: string;
+  startsAt: Date;
+  venue?: string;
 }
 
 export interface ContestStartedSummaryEmailData {
   userName: string;
   leagueName: string;
   contestName: string;
-  eventName: string;
-  contestUrl: string;
-  startedAt?: Date | string;
+  event: ContestEmailEvent;
+  /** How the event plays, such as "4 rounds" or "16 games", when known. */
+  eventFormat?: string;
+  /** The contest's rules in a sentence, as its page states them. */
+  rules: string;
   entryCount: number;
-  entries: ContestStartedEntrySummary[];
+  /** Whether the reader has an entry in the contest; a reader without one is told they can still follow it. */
+  hasEntry: boolean;
+  leaderboardUrl: string;
+}
+
+export interface ContestOpenedEmailData {
+  userName: string;
+  leagueName: string;
+  contestName: string;
+  /** The contest's events in sequence order: one for most contests, several for a season. */
+  events: ContestEmailEvent[];
+  /** The contest's rules in a sentence, as its page states them. */
+  rules: string;
+  /** "1 entry per member". */
+  entriesPerMember: string;
+  /** When the first event's picks close. */
+  closesAt: Date;
+  contestUrl: string;
 }
 
 export interface ContestEntryReminderEmailData {
@@ -94,6 +117,7 @@ export interface SystemEmailTemplateDataByKey {
   CONTEST_ENTRY_COMPLETED: ContestEntryCompletedEmailData;
   CONTEST_STARTED_SUMMARY: ContestStartedSummaryEmailData;
   CONTEST_ENTRY_REMINDER: ContestEntryReminderEmailData;
+  CONTEST_OPENED: ContestOpenedEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
 }
@@ -150,6 +174,7 @@ export interface EmailTemplateScopeByKey {
   CONTEST_ENTRY_COMPLETED: typeof EmailTemplateScope.LEAGUE;
   CONTEST_STARTED_SUMMARY: typeof EmailTemplateScope.LEAGUE;
   CONTEST_ENTRY_REMINDER: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_OPENED: typeof EmailTemplateScope.LEAGUE;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
 }
@@ -233,6 +258,13 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderContestEntryReminderEmail,
+  },
+  CONTEST_OPENED: {
+    category: EmailCategory.CONTEST_UPDATES,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderContestOpenedEmail,
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
@@ -325,6 +357,7 @@ function renderContestEntryCompletedEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const submittedLine = formatDateTime(data.submittedAt, context.timeZone);
+  const changeLine = `You can change your picks until ${formatInstant(data.changeUntil, context.timeZone)}.`;
   const subject = `Entry submitted: ${data.contestName}`;
   const tierRows = data.tiers
     .map((tier) => [
@@ -346,6 +379,7 @@ function renderContestEntryCompletedEmail(
     ]),
     sectionTitle('Selections'),
     detailList(tierRows),
+    paragraph(escapeHtml(changeLine)),
     button('Review entry', data.entryUrl),
   ].join('');
   const textLines = [
@@ -356,6 +390,7 @@ function renderContestEntryCompletedEmail(
     ...(data.tiebreaker ? [`Tiebreaker: ${data.tiebreaker}`] : []),
     'Selections:',
     ...tierRows.map(([tierName, participants]) => `- ${tierName}: ${participants}`),
+    changeLine,
     `Review entry: ${data.entryUrl}`,
   ];
 
@@ -373,44 +408,87 @@ function renderContestStartedSummaryEmail(
   data: ContestStartedSummaryEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const subject = `${data.contestName} has started`;
-  const startedLine = formatDateTime(data.startedAt, context.timeZone);
-  const entryRows = data.entries.map((entry) => [
-    entry.entryName,
-    entry.teamName,
-  ] as [string, string]);
+  const subject = `${data.contestName} is live`;
+  const intro = `${data.contestName} is live for ${data.event.name}.`;
+  const followAlong = data.hasEntry
+    ? null
+    : 'You didn\'t enter this one, but you can follow every entry on the leaderboard.';
+  const rows: Array<[string, string]> = [
+    ['League', data.leagueName],
+    ['Event', data.event.name],
+    ...(data.event.venue ? ([['Venue', data.event.venue]] as Array<[string, string]>) : []),
+    ['Starts', formatInstant(data.event.startsAt, context.timeZone)],
+    ...(data.eventFormat ? ([['Format', data.eventFormat]] as Array<[string, string]>) : []),
+    ['Rules', data.rules],
+    ['Entries', String(data.entryCount)],
+  ];
   const bodyBlocks = [
-    paragraph(
-      `${escapeHtml(data.userName)}, ${strong(data.contestName)} has started for ${strong(
-        data.eventName,
-      )}.`,
-    ),
-    detailList([
-      ['League', data.leagueName],
-      ['Entries', String(data.entryCount)],
-      ...(startedLine ? ([['Started', startedLine]] as Array<[string, string]>) : []),
-    ]),
-    sectionTitle('Entry summary'),
-    detailList(entryRows.length > 0 ? entryRows : [['Entries', 'No submitted entries']]),
-    button('Open contest board', data.contestUrl),
+    paragraph('Good luck, everyone.'),
+    paragraph(`${strong(data.contestName)} is live for ${strong(data.event.name)}.`),
+    detailList(rows),
+    ...(followAlong ? [paragraph(escapeHtml(followAlong))] : []),
+    button('Leaderboard', data.leaderboardUrl),
   ].join('');
   const textLines = [
-    `${data.userName}, ${data.contestName} has started for ${data.eventName}.`,
-    `League: ${data.leagueName}`,
-    `Entries: ${data.entryCount}`,
-    ...(startedLine ? [`Started: ${startedLine}`] : []),
-    'Entry summary:',
-    ...(entryRows.length > 0
-      ? entryRows.map(([entryName, teamName]) => `- ${entryName}: ${teamName}`)
-      : ['- No submitted entries']),
-    `Open contest board: ${data.contestUrl}`,
+    'Good luck, everyone.',
+    '',
+    intro,
+    ...rows.map(([label, value]) => `${label}: ${value}`),
+    ...(followAlong ? ['', followAlong] : []),
+    `Leaderboard: ${data.leaderboardUrl}`,
   ];
 
   return buildMessage({
     templateKey: 'CONTEST_STARTED_SUMMARY',
     subject,
-    preheader: `${data.contestName} is live with ${data.entryCount} entries.`,
-    title: 'Contest started',
+    preheader: `Good luck, everyone. ${data.contestName} is live with ${data.entryCount} ${data.entryCount === 1 ? 'entry' : 'entries'}.`,
+    title: 'Contest is live',
+    bodyBlocks,
+    textLines,
+  });
+}
+
+function renderContestOpenedEmail(
+  data: ContestOpenedEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const subject = `New contest: ${data.contestName}`;
+  const closesLine = formatInstant(data.closesAt, context.timeZone);
+  const onlyEvent = data.events.length === 1 ? data.events[0] : undefined;
+  const eventRows: Array<[string, string]> = onlyEvent
+    ? [
+      ['Event', onlyEvent.name],
+      ...(onlyEvent.venue ? ([['Venue', onlyEvent.venue]] as Array<[string, string]>) : []),
+      ['Starts', formatInstant(onlyEvent.startsAt, context.timeZone)],
+    ]
+    : [['Events', data.events.map((event) => `${event.name} (${formatInstant(event.startsAt, context.timeZone)})`).join(', ')]];
+  const rows: Array<[string, string]> = [
+    ['League', data.leagueName],
+    ...eventRows,
+    ['Rules', data.rules],
+    ['Entries', data.entriesPerMember],
+    [onlyEvent ? 'Picks close' : 'First picks close', closesLine],
+  ];
+  const intro = `${data.contestName} is open in ${data.leagueName}.`;
+  const bodyBlocks = [
+    paragraph(`Hi ${escapeHtml(data.userName)},`),
+    paragraph(`${strong(data.contestName)} is open in ${strong(data.leagueName)}.`),
+    detailList(rows),
+    button('Enter contest', data.contestUrl),
+  ].join('');
+  const textLines = [
+    `Hi ${data.userName},`,
+    '',
+    intro,
+    ...rows.map(([label, value]) => `${label}: ${value}`),
+    `Enter contest: ${data.contestUrl}`,
+  ];
+
+  return buildMessage({
+    templateKey: 'CONTEST_OPENED',
+    subject,
+    preheader: `${data.contestName} is open. Picks close ${closesLine}.`,
+    title: 'New contest open',
     bodyBlocks,
     textLines,
   });

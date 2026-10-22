@@ -105,6 +105,7 @@ export const EmailConfigSchema = z.object({
     CONTEST_ENTRY_COMPLETED: templateSwitch,
     CONTEST_STARTED_SUMMARY: templateSwitch,
     CONTEST_ENTRY_REMINDER: templateSwitch,
+    CONTEST_OPENED: templateSwitch,
   } satisfies Record<SwitchableEmailTemplateKey, z.ZodBoolean>).describe(
     'Per-template switches. A template that is off is skipped even while email is on.',
   ),

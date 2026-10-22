@@ -237,6 +237,20 @@ describe('EntryReminders.queueDue', () => {
     expect(outbox.rows[0]?.textBody).toContain('You haven\'t entered');
   });
 
+  it('sends no reminder within 6 hours of the contest opening, when the new contest email has just gone out', async () => {
+    const league = world.addLeague();
+    const event = world.addSportEvent({ startDate: CLOSES_AT });
+    const now = before(CLOSES_AT, 24, 1);
+    world.addContest(league.id, { sportEventIds: [event.id], openedAt: new Date(now.getTime() - 5 * HOUR) });
+    const settled = world.addContest(league.id, { sportEventIds: [event.id], openedAt: new Date(now.getTime() - 6 * HOUR) });
+    const nora = member(league.id, 'Nora');
+
+    await reminders().queueDue(now);
+
+    expect(remindedUserIds()).toEqual([nora.user.id]);
+    expect(outbox.rows[0]?.idempotencyKey).toContain(settled.id);
+  });
+
   it('leaves out survivor, random draw and squares contests, drawn contests and drafts not yet open', async () => {
     const league = world.addLeague();
     const event = world.addSportEvent({ startDate: CLOSES_AT });

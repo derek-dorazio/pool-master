@@ -6,14 +6,13 @@ import {
   buildLeagueContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
-import { ContestEntryStatus, ContestStatus, SelectionType, type SportNoun } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, ContestStatus, SelectionType, formatDollars, type SportNoun } from '@poolmaster/shared/domain';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import {
   Alert,
   DefinitionList,
-  formatDollars,
   ErrorState,
   formatDateTimeDisplay,
   FormField,

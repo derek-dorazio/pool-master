@@ -1,6 +1,11 @@
-import { KNOCKOUT_ROUND_VALUES_MAX_ROUNDS, getSportDefinition } from '@poolmaster/shared/domain';
+import {
+  KNOCKOUT_ROUND_VALUES_MAX_ROUNDS,
+  type RoundName,
+  formatBracketStartLabel,
+  getSportDefinition,
+  isSecondChanceBracket,
+} from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
-import { formatBracketStartLabel, isSecondChanceBracket, type RoundName } from './contest-rules';
 
 /** One round a bracket can start at, as the commissioner chooses it. */
 export interface BracketStartRoundOption {

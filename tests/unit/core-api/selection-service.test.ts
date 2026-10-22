@@ -869,7 +869,7 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
     first.deps.entryReceipts = { sendEntrySubmittedEmail };
 
     await first.service.submitEntry(submitEntryInput());
-    expect(sendEntrySubmittedEmail).toHaveBeenCalledWith(CONTEST_ID, ENTRY_ID, OWNER_USER_ID, EVENT_ID);
+    expect(sendEntrySubmittedEmail).toHaveBeenCalledWith(CONTEST_ID, ENTRY_ID, EVENT_ID);
 
     const repeat = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
     repeat.deps.entryReceipts = { sendEntrySubmittedEmail };

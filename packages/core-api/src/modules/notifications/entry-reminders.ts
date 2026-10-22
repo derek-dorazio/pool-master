@@ -13,7 +13,8 @@
  * - Later, such as week 7 of a live pick'em season, when nobody can join: the owners of the
  *   contest's entries.
  * Either way, a person with a submitted entry for the event is not told, and a person who owns
- * two squads, or is also a commissioner, gets one email.
+ * two squads, or is also a commissioner, gets one email. Nothing is sent within 6 hours of the
+ * contest opening, when the "New contest open" email has just gone out.
  *
  * Formats whose members submit a lineup or a week are reminded. A survivor entry may already be
  * out, a random draw is dealt rather than picked, and a squares member claims boxes: their
@@ -25,18 +26,15 @@ import type {
   ContestConfigurationRepository,
   ContestEntryRepository,
   ContestRepository,
-  LeagueMembershipRepository,
   LeagueRepository,
   SportEventMatchRepository,
   SportEventRepository,
   SquadMembershipRepository,
-  UserRepository,
 } from '@poolmaster/shared/db';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import {
   ContestEntryStatus,
   ContestStatus,
-  LeagueMembershipStatus,
   SelectionType,
   contestEntryEventStatus,
   type Contest,
@@ -55,6 +53,7 @@ import {
 import { buildContestUrl, formatUserName, type EmailService } from '../email';
 import { hasSportEventStarted } from '../events/operational-timing';
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
+import { activeLeagueMembers, type LeagueMemberDeps } from './league-members';
 
 /** The formats reminded today: their members pick and submit a lineup, a week or a bracket. */
 const REMINDED_SELECTION_TYPES: readonly SelectionType[] = [
@@ -74,6 +73,12 @@ const ENTRY_REMINDER_GRACE_MS = 60 * 60_000;
 const HOUR_MS = 60 * 60_000;
 
 /**
+ * No reminder lands this soon after the "New contest open" email (D1): a contest opened the day
+ * before its picks close has just told everyone, and a reminder hours later is noise.
+ */
+const AFTER_OPENED_QUIET_MS = 6 * HOUR_MS;
+
+/**
  * The reminder due now for picks closing at `closesAt`, as its offset in hours, or null. When
  * several reminder times have passed, only the latest counts: a sweep never sends the 48-hour
  * reminder after the 24-hour one's time. A reminder more than the grace period late is not sent.
@@ -87,7 +92,7 @@ export function dueReminderHours(closesAt: Date, reminderHours: readonly number[
   return lateBy <= ENTRY_REMINDER_GRACE_MS ? latest : null;
 }
 
-export interface EntryReminderDeps {
+export interface EntryReminderDeps extends LeagueMemberDeps {
   contests: Pick<ContestRepository, 'findByStatuses'>;
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
   /** A bracket's rules: a second-chance bracket closes at its starting round (#721). */
@@ -95,9 +100,7 @@ export interface EntryReminderDeps {
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
   entries: Pick<ContestEntryRepository, 'findByContest'>;
   leagues: Pick<LeagueRepository, 'findById'>;
-  memberships: Pick<LeagueMembershipRepository, 'findByLeague'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
-  users: Pick<UserRepository, 'findByLeague'>;
   email: Pick<EmailService, 'send'>;
   readConfig: () => Pick<EmailConfig, 'entryReminderHours'>;
   appBaseUrl: string;
@@ -150,6 +153,7 @@ export class EntryReminders implements DueNotifications {
     now: Date,
   ): Promise<DueReminder[]> {
     if (contest.drawnAt !== undefined) return [];
+    if (contest.openedAt !== undefined && now.getTime() - contest.openedAt.getTime() < AFTER_OPENED_QUIET_MS) return [];
     const cutoff = await this.cutoffOf(contest);
     // Each event's window closes at the contest's cutoff on it: a second-chance bracket's is its
     // starting round, after the event itself has started.
@@ -208,9 +212,8 @@ export class EntryReminders implements DueNotifications {
    * for the event.
    */
   private async recipients(due: DueReminder, league: League): Promise<Array<{ user: User; hasDraft: boolean }>> {
-    const [memberships, users, entries] = await Promise.all([
-      this.deps.memberships.findByLeague(league.id),
-      this.deps.users.findByLeague(league.id),
+    const [members, entries] = await Promise.all([
+      activeLeagueMembers(this.deps, league.id),
       this.deps.entries.findByContest(due.contest.id),
     ]);
     const owners = await this.deps.squadMemberships.findBySquads([...new Set(entries.map((entry) => entry.squadId))]);
@@ -226,11 +229,8 @@ export class EntryReminders implements DueNotifications {
       for (const userId of ownersBySquad.get(entry.squadId) ?? []) into.add(userId);
     }
 
-    const activeMembers = new Set(memberships
-      .filter((membership) => membership.status === LeagueMembershipStatus.ACTIVE)
-      .map((membership) => membership.userId));
-    return users
-      .filter((user) => user.isActive && activeMembers.has(user.id) && !submitted.has(user.id))
+    return members
+      .filter((user) => !submitted.has(user.id))
       .filter((user) => due.entriesOpen || drafting.has(user.id))
       .map((user) => ({ user, hasDraft: drafting.has(user.id) }));
   }

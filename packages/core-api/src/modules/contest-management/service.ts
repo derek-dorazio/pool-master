@@ -6,6 +6,7 @@ import type {
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
+import type { ContestOpenedNotice } from '../notifications/contest-notices';
 import type {
   ContestManagementDetailDto,
   ContestManagementSportEventDto,
@@ -149,6 +150,8 @@ export class ContestManagementService {
     private readonly logger: LifecycleLogger = createNoopLogger(),
     private readonly sportEventReader: ContestCreateSportEventReader,
     private readonly now: () => Date = () => new Date(),
+    /** Tells the league a contest has opened (#845, the "New contest open" email). */
+    private readonly contestOpened?: ContestOpenedNotice,
   ) {}
 
   /**
@@ -419,22 +422,28 @@ export class ContestManagementService {
     const opened = await this.contestRepo.transitionStatus(contestId, {
       from: [ContestStatus.DRAFT],
       to: ContestStatus.OPEN,
+      openedAt: this.now(),
     });
     if (!opened) {
       this.logger.warn({ contestId }, 'contest management open contest lost the race to another transition');
       throw contestNotDraftError();
     }
-    this.onContestOpened(contest.id, contest.leagueId);
+    await this.onContestOpened(contest.id, contest.leagueId);
 
     return this.getContest(contestId);
   }
 
   /**
-   * The seam for telling the league a contest has opened (#117). The League Feed post and the
-   * member email attach here when they are built; today it only records the fact.
+   * Tells the league a contest has opened (#117): the "New contest open" email to every member
+   * (#845). The contest is open whatever happens to the email, so a failure is only logged.
    */
-  private onContestOpened(contestId: string, leagueId: string): void {
+  private async onContestOpened(contestId: string, leagueId: string): Promise<void> {
     this.logger.info({ contestId, leagueId }, 'contest opened to league');
+    try {
+      await this.contestOpened?.contestOpened(contestId);
+    } catch (error) {
+      this.logger.error({ contestId, leagueId, error: error instanceof Error ? error.message : String(error) }, 'contest opened email could not be queued');
+    }
   }
 
   /**

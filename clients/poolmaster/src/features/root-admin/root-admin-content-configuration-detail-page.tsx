@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { listContestConfigTemplates, updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import { LayoutTemplate } from 'lucide-react';
-import { SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
+import { SelectionType, getSportDefinition, describeBracketRules, describePickEmRules  } from '@poolmaster/shared/domain';
 import {
   AsyncPage,
   Button,
@@ -25,7 +25,6 @@ import {
   type ContestConfigTemplate,
   updateTemplateRules,
 } from './content-configuration-utils';
-import { describeBracketRules, describePickEmRules } from '@/features/contests/contest-rules';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';

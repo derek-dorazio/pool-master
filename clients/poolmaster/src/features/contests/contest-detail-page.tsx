@@ -1,5 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ContestEntryStatus, ContestStatus, formatParticipantStatusLabel, type Sport } from '@poolmaster/shared/domain';
+import {
+  ContestEntryStatus,
+  ContestStatus,
+  type Sport,
+  formatParticipantStatusLabel,
+  formatSelectionTypeName,
+} from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -31,7 +37,6 @@ import {
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
-import { formatSelectionTypeName } from './contest-rules';
 import {
   areContestEntriesOpen,
   CONTEST_ENTRY_STATUS_LABELS,

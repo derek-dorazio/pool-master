@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation, useParams } from 'react-router-dom';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, describeSquaresRules  } from '@poolmaster/shared/domain';
 import type { ContestDto, SquaresBoardResponse, SquaresEntryDto } from '@/lib/api';
 import { buildLeagueContestPath, buildLeaguePath } from '@/features/leagues/league-routing';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
@@ -9,7 +9,6 @@ import { DataGrid, LinkButton, Tile } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { parseRouteState } from '@/routes/route-state';
 import { ContestHeader, ContestSubMenu } from './contest-header';
-import { describeSquaresRules } from './contest-rules';
 import { ContestStatusBadge } from './contest-status-badge';
 import { SquaresBoardView } from './squares-board-view';
 import { useSquaresBoardQuery } from './use-squares-board';

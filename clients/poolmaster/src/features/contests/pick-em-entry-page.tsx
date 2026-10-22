@@ -1,7 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { ContestEntryStatus, PickEmMode, type Sport } from '@poolmaster/shared/domain';
+import {
+  ContestEntryStatus,
+  PickEmMode,
+  type Sport,
+  formatPickEmRulesName,
+  formatSelectionTypeName,
+} from '@poolmaster/shared/domain';
 import {
   getGamePicks,
   saveGamePicks,
@@ -35,7 +41,6 @@ import { formatPickProgress, formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestHeader, ContestSubMenu } from './contest-header';
-import { formatPickEmRulesName, formatSelectionTypeName } from './contest-rules';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
   CONTEST_ENTRY_STATUS_LABELS,

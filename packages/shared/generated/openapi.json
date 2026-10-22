@@ -26393,6 +26393,7 @@
           "CONTEST_ENTRY_COMPLETED",
           "CONTEST_STARTED_SUMMARY",
           "CONTEST_ENTRY_REMINDER",
+          "CONTEST_OPENED",
           "PASSWORD_RESET",
           "PASSWORD_CHANGED"
         ],
@@ -26459,6 +26460,10 @@
               "CONTEST_ENTRY_REMINDER": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
+              },
+              "CONTEST_OPENED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
               }
             },
             "required": [
@@ -26466,7 +26471,8 @@
               "LEAGUE_JOIN_SUCCESS",
               "CONTEST_ENTRY_COMPLETED",
               "CONTEST_STARTED_SUMMARY",
-              "CONTEST_ENTRY_REMINDER"
+              "CONTEST_ENTRY_REMINDER",
+              "CONTEST_OPENED"
             ],
             "additionalProperties": false,
             "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -27741,6 +27747,10 @@
                       "CONTEST_ENTRY_REMINDER": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_OPENED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -27748,7 +27758,8 @@
                       "LEAGUE_JOIN_SUCCESS",
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
-                      "CONTEST_ENTRY_REMINDER"
+                      "CONTEST_ENTRY_REMINDER",
+                      "CONTEST_OPENED"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -27825,6 +27836,10 @@
                       "CONTEST_ENTRY_REMINDER": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_OPENED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -27832,7 +27847,8 @@
                       "LEAGUE_JOIN_SUCCESS",
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
-                      "CONTEST_ENTRY_REMINDER"
+                      "CONTEST_ENTRY_REMINDER",
+                      "CONTEST_OPENED"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28752,6 +28768,10 @@
                             "CONTEST_ENTRY_REMINDER": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_OPENED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -28759,7 +28779,8 @@
                             "LEAGUE_JOIN_SUCCESS",
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
-                            "CONTEST_ENTRY_REMINDER"
+                            "CONTEST_ENTRY_REMINDER",
+                            "CONTEST_OPENED"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28836,6 +28857,10 @@
                             "CONTEST_ENTRY_REMINDER": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_OPENED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -28843,7 +28868,8 @@
                             "LEAGUE_JOIN_SUCCESS",
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
-                            "CONTEST_ENTRY_REMINDER"
+                            "CONTEST_ENTRY_REMINDER",
+                            "CONTEST_OPENED"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29421,6 +29447,10 @@
                       "CONTEST_ENTRY_REMINDER": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_OPENED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -29428,7 +29458,8 @@
                       "LEAGUE_JOIN_SUCCESS",
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
-                      "CONTEST_ENTRY_REMINDER"
+                      "CONTEST_ENTRY_REMINDER",
+                      "CONTEST_OPENED"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30206,6 +30237,10 @@
                       "CONTEST_ENTRY_REMINDER": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_OPENED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -30213,7 +30248,8 @@
                       "LEAGUE_JOIN_SUCCESS",
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
-                      "CONTEST_ENTRY_REMINDER"
+                      "CONTEST_ENTRY_REMINDER",
+                      "CONTEST_OPENED"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30290,6 +30326,10 @@
                       "CONTEST_ENTRY_REMINDER": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_OPENED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -30297,7 +30337,8 @@
                       "LEAGUE_JOIN_SUCCESS",
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
-                      "CONTEST_ENTRY_REMINDER"
+                      "CONTEST_ENTRY_REMINDER",
+                      "CONTEST_OPENED"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -31175,6 +31216,10 @@
                             "CONTEST_ENTRY_REMINDER": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_OPENED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -31182,7 +31227,8 @@
                             "LEAGUE_JOIN_SUCCESS",
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
-                            "CONTEST_ENTRY_REMINDER"
+                            "CONTEST_ENTRY_REMINDER",
+                            "CONTEST_OPENED"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -31259,6 +31305,10 @@
                             "CONTEST_ENTRY_REMINDER": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_OPENED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -31266,7 +31316,8 @@
                             "LEAGUE_JOIN_SUCCESS",
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
-                            "CONTEST_ENTRY_REMINDER"
+                            "CONTEST_ENTRY_REMINDER",
+                            "CONTEST_OPENED"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."

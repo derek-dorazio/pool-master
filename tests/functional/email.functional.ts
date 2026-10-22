@@ -227,14 +227,14 @@ describe('SDK Functional: system emails', () => {
     expect(newLink.response.status).toBe(201);
   });
 
-  it('sends the entry confirmation to the member who completed the entry, linking to that entry, and a contest-started summary to the commissioner and each entrant when an admin starts the event', async () => {
+  it('tells every league member a contest opened, sends the entry confirmation to the entry\'s owner linking to that entry, and wishes every member good luck with a leaderboard link when an admin starts the event', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Contest Commissioner',
       leagueName: `Email Contest League ${randomUUID().slice(0, 6)}`,
     });
     const member = await buildRegisteredUser({ displayName: 'Entering Member' });
     await inviteAndJoin(commissioner, league.id, member);
-    // A league member who enters nothing is not told the contest started.
+    // A league member who enters nothing is still told the contest opened and started (#845).
     const bystander = await buildRegisteredUser({ displayName: 'Idle Member' });
     await inviteAndJoin(commissioner, league.id, bystander);
 
@@ -262,6 +262,13 @@ describe('SDK Functional: system emails', () => {
     const contestId = created.data?.contest.id as string;
     const opened = await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
     expect(opened.data?.contest.status).toBe('OPEN');
+    const contestUrl = `${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/contests/${contestId}`;
+    for (const recipient of [commissioner, member, bystander]) {
+      const announcements = await awaitSentMailTo(recipient.email, 1, `New contest: ${contestName}`);
+      expect(announcements).toHaveLength(1);
+      expect(announcements[0].to).toEqual([recipient.email]);
+      expect(linksIn(announcements[0])[0]).toBe(contestUrl);
+    }
 
     const entered = await enterContest({ client: member.client, path: { contestId } });
     const entryId = entered.data?.entry.id as string;
@@ -294,9 +301,7 @@ describe('SDK Functional: system emails', () => {
     const confirmations = await awaitSentMailTo(member.email, 1, `Entry submitted: ${contestName}`);
     expect(confirmations).toHaveLength(1);
     expect(confirmations[0].to).toEqual([member.email]);
-    expect(linksIn(confirmations[0])).toEqual([
-      `${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/contests/${contestId}/entries/${entryId}`,
-    ]);
+    expect(linksIn(confirmations[0])[0]).toBe(`${contestUrl}/entries/${entryId}`);
     expect(await sentMailWithSubject(commissioner.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
 
     // Post-#435 every event is admin-owned: the admin's transition is what starts its contests.
@@ -309,15 +314,14 @@ describe('SDK Functional: system emails', () => {
     });
     expect(started.response.status).toBe(200);
 
-    const startedSubject = `${contestName} has started`;
-    const contestUrl = `${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/contests/${contestId}`;
-    for (const recipient of [commissioner, member]) {
+    const startedSubject = `${contestName} is live`;
+    for (const recipient of [commissioner, member, bystander]) {
       const summaries = await awaitSentMailTo(recipient.email, 1, startedSubject);
       expect(summaries).toHaveLength(1);
       expect(summaries[0].to).toEqual([recipient.email]);
-      expect(linksIn(summaries[0])).toEqual([contestUrl]);
+      expect(linksIn(summaries[0])[0]).toBe(`${contestUrl}/leaderboard`);
     }
-    expect(await sentMailWithSubject(bystander.email, startedSubject)).toHaveLength(0);
+    // The root admin is not in the league, so is told nothing.
     expect(await sentMailWithSubject(admin.email, startedSubject)).toHaveLength(0);
   });
 });

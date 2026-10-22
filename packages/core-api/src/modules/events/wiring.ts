@@ -9,10 +9,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import {
   PrismaContestConfigurationRepository,
   PrismaContestEntryMatchPredictionRepository,
-  PrismaContestEntryRepository,
   PrismaContestRepository,
-  PrismaLeagueMembershipRepository,
-  PrismaLeagueRepository,
   PrismaEventSeriesRepository,
   PrismaParticipantLeagueAffiliationRepository,
   PrismaParticipantProviderMappingRepository,
@@ -30,16 +27,14 @@ import {
   PrismaSportEventTierRepository,
   PrismaSportLeagueRepository,
   PrismaSportRepository,
-  PrismaSquadMembershipRepository,
-  PrismaUserRepository,
 } from '../../adapters';
-import type { EmailService } from '../email';
 import { GolfScoreService } from '../golf/golf-score-service';
 import { RaceResultService } from '../scoring-families/finish-position/race-result-service';
 import { MatchResultService } from '../scoring-families/head-to-head/match-result-service';
 import { sportStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { sportStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
+import type { ContestStartedNotice } from '../notifications/contest-notices';
 import { EventLifecycleService, type FinishedSportEventSettlement, type ReleasedEditionContests } from './event-lifecycle-service';
 import { SportEventService } from './service';
 import { SportEventBracketService } from './sport-event-bracket-service';
@@ -194,8 +189,8 @@ export function createEventLifecycleService(
   prisma: PrismaClient,
   options: {
     logger?: FastifyBaseLogger;
-    email?: EmailService;
-    appBaseUrl?: string;
+    /** Who is told a contest has gone live (#845); without it, nobody is. */
+    contestStarted?: ContestStartedNotice;
     contestSettlement?: FinishedSportEventSettlement;
     releasedEditionContests?: ReleasedEditionContests;
   } = {},
@@ -203,18 +198,12 @@ export function createEventLifecycleService(
   return new EventLifecycleService(
     {
       contests: new PrismaContestRepository(prisma),
-      entries: new PrismaContestEntryRepository(prisma),
-      leagues: new PrismaLeagueRepository(prisma),
-      memberships: new PrismaLeagueMembershipRepository(prisma),
-      squadMemberships: new PrismaSquadMembershipRepository(prisma),
-      users: new PrismaUserRepository(prisma),
       configurations: new PrismaContestConfigurationRepository(prisma),
       matches: new PrismaSportEventMatchRepository(prisma),
     },
     new PrismaSportEventRepository(prisma),
     options.logger,
-    options.email,
-    options.appBaseUrl,
+    options.contestStarted,
     options.contestSettlement,
     options.releasedEditionContests,
   );
