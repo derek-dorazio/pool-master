@@ -46,11 +46,13 @@ const EMAIL_DEFAULTS = {
   enabled: true,
   allowedRecipients: [] as string[],
   sendRatePerSecond: 10,
+  entryReminderHours: [48, 24, 3],
   templates: {
     LEAGUE_MEMBER_INVITE: true,
     LEAGUE_JOIN_SUCCESS: true,
     CONTEST_ENTRY_COMPLETED: true,
     CONTEST_STARTED_SUMMARY: true,
+    CONTEST_ENTRY_REMINDER: true,
   },
 };
 
@@ -165,6 +167,7 @@ describe('RootAdminSettingsPage email card', () => {
           enabled: false,
           allowedRecipients: ['tester@gmail.com'],
           sendRatePerSecond: 10,
+          entryReminderHours: [48, 24, 3],
           templates: { ...EMAIL_DEFAULTS.templates, CONTEST_STARTED_SUMMARY: false },
         },
       },
@@ -204,6 +207,30 @@ describe('RootAdminSettingsPage email card', () => {
     fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
 
     expect(await screen.findByText(/greater than or equal to 1/)).toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
+  it('saves the entry reminder hours typed with commas as a list of numbers', async () => {
+    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
+    renderPage();
+
+    const field = await screen.findByTestId('root-admin-email-settings-reminder-hours');
+    expect(field).toHaveValue('48, 24, 3');
+    fireEvent.change(field, { target: { value: '72, 24,, 2 ' } });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+
+    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
+    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { entryReminderHours: number[] } } }];
+    expect(request.body.value.entryReminderHours).toEqual([72, 24, 2]);
+  });
+
+  it('refuses to save entry reminder hours that are not whole numbers from 1 to 168', async () => {
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-email-settings-reminder-hours'), { target: { value: '48, soon' } });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+
+    expect(await screen.findByText('List 1 to 5 whole numbers of hours from 1 to 168, separated by commas.')).toBeInTheDocument();
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 

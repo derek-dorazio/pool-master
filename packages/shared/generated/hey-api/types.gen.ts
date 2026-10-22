@@ -11505,7 +11505,7 @@ export type GamePicksResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED';
 
 /**
  * Whether and how system email is sent.
@@ -11523,6 +11523,10 @@ export type EmailConfig = {
      * The most emails each API server task sends a second. SES accounts start at 14 a second in all.
      */
     sendRatePerSecond: number;
+    /**
+     * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
+     */
+    entryReminderHours: Array<number>;
     /**
      * Per-template switches. A template that is off is skipped even while email is on.
      */
@@ -11543,6 +11547,10 @@ export type EmailConfig = {
          * Whether this email is sent.
          */
         CONTEST_STARTED_SUMMARY: boolean;
+        /**
+         * Whether this email is sent.
+         */
+        CONTEST_ENTRY_REMINDER: boolean;
     };
 };
 
@@ -12212,6 +12220,10 @@ export type SettingsGroup = {
          */
         sendRatePerSecond: number;
         /**
+         * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
+         */
+        entryReminderHours: Array<number>;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -12231,6 +12243,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             CONTEST_STARTED_SUMMARY: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_ENTRY_REMINDER: boolean;
         };
     };
     /**
@@ -12250,6 +12266,10 @@ export type SettingsGroup = {
          */
         sendRatePerSecond: number;
         /**
+         * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
+         */
+        entryReminderHours: Array<number>;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -12269,6 +12289,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             CONTEST_STARTED_SUMMARY: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_ENTRY_REMINDER: boolean;
         };
     };
 } | {
@@ -12744,6 +12768,10 @@ export type SettingsGroupList = {
              */
             sendRatePerSecond: number;
             /**
+             * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
+             */
+            entryReminderHours: Array<number>;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -12763,6 +12791,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 CONTEST_STARTED_SUMMARY: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_ENTRY_REMINDER: boolean;
             };
         };
         /**
@@ -12782,6 +12814,10 @@ export type SettingsGroupList = {
              */
             sendRatePerSecond: number;
             /**
+             * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
+             */
+            entryReminderHours: Array<number>;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -12801,6 +12837,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 CONTEST_STARTED_SUMMARY: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_ENTRY_REMINDER: boolean;
             };
         };
     } | {
@@ -13076,6 +13116,10 @@ export type SettingsGroupUpdateRequest = {
          */
         sendRatePerSecond: number;
         /**
+         * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
+         */
+        entryReminderHours: Array<number>;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -13095,6 +13139,10 @@ export type SettingsGroupUpdateRequest = {
              * Whether this email is sent.
              */
             CONTEST_STARTED_SUMMARY: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_ENTRY_REMINDER: boolean;
         };
     };
     /**
@@ -13489,6 +13537,10 @@ export type SettingsChange = {
          */
         sendRatePerSecond: number;
         /**
+         * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
+         */
+        entryReminderHours: Array<number>;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -13508,6 +13560,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             CONTEST_STARTED_SUMMARY: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_ENTRY_REMINDER: boolean;
         };
     } | null;
     /**
@@ -13527,6 +13583,10 @@ export type SettingsChange = {
          */
         sendRatePerSecond: number;
         /**
+         * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
+         */
+        entryReminderHours: Array<number>;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -13546,6 +13606,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             CONTEST_STARTED_SUMMARY: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_ENTRY_REMINDER: boolean;
         };
     };
 } | {
@@ -13988,6 +14052,10 @@ export type SettingsChangeList = {
              */
             sendRatePerSecond: number;
             /**
+             * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
+             */
+            entryReminderHours: Array<number>;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -14007,6 +14075,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 CONTEST_STARTED_SUMMARY: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_ENTRY_REMINDER: boolean;
             };
         } | null;
         /**
@@ -14026,6 +14098,10 @@ export type SettingsChangeList = {
              */
             sendRatePerSecond: number;
             /**
+             * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
+             */
+            entryReminderHours: Array<number>;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -14045,6 +14121,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 CONTEST_STARTED_SUMMARY: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_ENTRY_REMINDER: boolean;
             };
         };
     } | {

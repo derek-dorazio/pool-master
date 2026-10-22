@@ -18,8 +18,24 @@ function recipientLines(text: string): string[] {
   return text.split('\n').map((line) => line.trim()).filter(Boolean);
 }
 
-/** The stored shape, except that the allowed recipients are one box, one address or @domain per line. */
+/** Comma-separated hours; blanks are ignored. */
+function reminderHourItems(text: string): string[] {
+  return text.split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+const ReminderHoursSchema = EmailConfigSchema.shape.entryReminderHours;
+
+/**
+ * The stored shape, except that the allowed recipients are one box, one address or @domain per
+ * line, and the entry reminders one box of comma-separated hours.
+ */
 const EmailSettingsFormSchema = EmailConfigSchema.extend({
+  entryReminderHours: z.string().superRefine((text, context) => {
+    const parsed = ReminderHoursSchema.safeParse(reminderHourItems(text).map(Number));
+    if (!parsed.success) {
+      context.addIssue({ code: 'custom', message: 'List 1 to 5 whole numbers of hours from 1 to 168, separated by commas.' });
+    }
+  }),
   allowedRecipients: z.string().superRefine((text, context) => {
     const lines = recipientLines(text);
     const invalid = lines.find((line) => !EmailRecipientPatternSchema.safeParse(line).success);
@@ -37,6 +53,7 @@ function toFormValues(config: EmailConfig): EmailSettingsFormValues {
     ...config,
     templates: { ...config.templates },
     allowedRecipients: config.allowedRecipients.join('\n'),
+    entryReminderHours: config.entryReminderHours.join(', '),
   };
 }
 
@@ -45,6 +62,7 @@ function toConfig(values: EmailSettingsFormValues): EmailConfig {
     ...values,
     allowedRecipients: recipientLines(values.allowedRecipients)
       .map((line) => EmailRecipientPatternSchema.parse(line)),
+    entryReminderHours: ReminderHoursSchema.parse(reminderHourItems(values.entryReminderHours).map(Number)),
   };
 }
 
@@ -147,6 +165,13 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
           type="number"
           {...form.register('sendRatePerSecond', { valueAsNumber: true })}
         />
+      </FormField>
+      <FormField
+        error={form.formState.errors.entryReminderHours?.message}
+        helperText="Hours before a contest's picks close, separated by commas. Each reminder goes to every member with nothing submitted, all at the same moment."
+        label="Entry reminders"
+      >
+        <Input data-testid="root-admin-email-settings-reminder-hours" {...form.register('entryReminderHours')} />
       </FormField>
       {saveMutation.isError ? (
         <Alert

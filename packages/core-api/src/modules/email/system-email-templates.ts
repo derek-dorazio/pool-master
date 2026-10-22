@@ -62,6 +62,18 @@ export interface ContestStartedSummaryEmailData {
   entries: ContestStartedEntrySummary[];
 }
 
+export interface ContestEntryReminderEmailData {
+  userName: string;
+  leagueName: string;
+  contestName: string;
+  eventName: string;
+  /** When the event's picks close. */
+  closesAt: Date;
+  /** Whether the reader has an entry saved as a draft; otherwise they haven't entered yet. */
+  hasDraft: boolean;
+  contestUrl: string;
+}
+
 export interface PasswordResetEmailData {
   firstName: string;
   username: string;
@@ -81,6 +93,7 @@ export interface SystemEmailTemplateDataByKey {
   LEAGUE_JOIN_SUCCESS: LeagueJoinSuccessEmailData;
   CONTEST_ENTRY_COMPLETED: ContestEntryCompletedEmailData;
   CONTEST_STARTED_SUMMARY: ContestStartedSummaryEmailData;
+  CONTEST_ENTRY_REMINDER: ContestEntryReminderEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
 }
@@ -136,6 +149,7 @@ export interface EmailTemplateScopeByKey {
   LEAGUE_JOIN_SUCCESS: typeof EmailTemplateScope.LEAGUE;
   CONTEST_ENTRY_COMPLETED: typeof EmailTemplateScope.LEAGUE;
   CONTEST_STARTED_SUMMARY: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_ENTRY_REMINDER: typeof EmailTemplateScope.LEAGUE;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
 }
@@ -212,6 +226,13 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderContestStartedSummaryEmail,
+  },
+  CONTEST_ENTRY_REMINDER: {
+    category: EmailCategory.CONTEST_UPDATES,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderContestEntryReminderEmail,
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
@@ -390,6 +411,45 @@ function renderContestStartedSummaryEmail(
     subject,
     preheader: `${data.contestName} is live with ${data.entryCount} entries.`,
     title: 'Contest started',
+    bodyBlocks,
+    textLines,
+  });
+}
+
+function renderContestEntryReminderEmail(
+  data: ContestEntryReminderEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const closesLine = formatInstant(data.closesAt, context.timeZone);
+  const subject = `Picks close soon: ${data.contestName}`;
+  const status = data.hasDraft
+    ? `Your ${data.eventName} entry is saved as a draft. It won't count until you submit it.`
+    : `You haven't entered ${data.contestName} for ${data.eventName} yet.`;
+  const bodyBlocks = [
+    paragraph(`Hi ${escapeHtml(data.userName)},`),
+    paragraph(escapeHtml(status)),
+    detailList([
+      ['League', data.leagueName],
+      ['Contest', data.contestName],
+      ['Picks close', closesLine],
+    ]),
+    button('Make your picks', data.contestUrl),
+  ].join('');
+  const textLines = [
+    `Hi ${data.userName},`,
+    '',
+    status,
+    `League: ${data.leagueName}`,
+    `Contest: ${data.contestName}`,
+    `Picks close: ${closesLine}`,
+    `Make your picks: ${data.contestUrl}`,
+  ];
+
+  return buildMessage({
+    templateKey: 'CONTEST_ENTRY_REMINDER',
+    subject,
+    preheader: `Picks for ${data.eventName} close ${closesLine}.`,
+    title: 'Picks close soon',
     bodyBlocks,
     textLines,
   });

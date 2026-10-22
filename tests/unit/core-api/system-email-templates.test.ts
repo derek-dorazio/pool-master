@@ -95,6 +95,39 @@ describe('pool-master-98i system email templates', () => {
     expect(message.html).toContain('Open contest board');
   });
 
+  it('renders the entry reminder with when picks close in the reader\'s time zone and a Make your picks button', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
+      userName: 'Morgan Member',
+      leagueName: 'Office League',
+      contestName: 'Masters Pick 6',
+      eventName: 'The Masters',
+      closesAt: new Date('2026-04-09T11:40:00.000Z'),
+      hasDraft: false,
+      contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-1',
+    }, { timeZone: 'America/New_York' });
+
+    expect(message.subject).toBe('Picks close soon: Masters Pick 6');
+    expect(message.text).toContain('You haven\'t entered Masters Pick 6 for The Masters yet.');
+    expect(message.text).toContain('Picks close: Apr 9, 2026, 7:40 AM EDT');
+    expect(message.text).toContain('Make your picks: https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-1');
+    expect(message.html).toContain('Make your picks');
+  });
+
+  it('tells a reader with a draft entry that it won\'t count until submitted', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
+      userName: 'Morgan Member',
+      leagueName: 'Office League',
+      contestName: 'NFL Pick\'em',
+      eventName: 'Week 7',
+      closesAt: new Date('2026-10-22T00:15:00.000Z'),
+      hasDraft: true,
+      contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-2',
+    }, UTC);
+
+    expect(message.text).toContain('Your Week 7 entry is saved as a draft. It won\'t count until you submit it.');
+    expect(message.text).not.toContain('haven\'t entered');
+  });
+
   it('escapes untrusted HTML in themed message bodies', () => {
     const message = renderSystemEmailTemplate('LEAGUE_JOIN_SUCCESS', {
       userName: '<script>alert("x")</script>',
@@ -118,6 +151,7 @@ describe('the email template registry', () => {
       LEAGUE_JOIN_SUCCESS: EmailCategory.MEMBERSHIP,
       CONTEST_ENTRY_COMPLETED: EmailCategory.RECEIPTS,
       CONTEST_STARTED_SUMMARY: EmailCategory.LIVE_STANDINGS,
+      CONTEST_ENTRY_REMINDER: EmailCategory.CONTEST_UPDATES,
       PASSWORD_RESET: EmailCategory.ACCOUNT,
       PASSWORD_CHANGED: EmailCategory.ACCOUNT,
     });

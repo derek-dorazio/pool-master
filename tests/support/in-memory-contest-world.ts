@@ -302,6 +302,8 @@ export class InMemoryContestWorld {
           contest.sportEventIds.includes(sportEventId)
           && (!filter?.statuses || filter.statuses.includes(contest.status))
           && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
+      findByStatuses: async (statuses) =>
+        [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
       create: async (input) => this.addContest(input.leagueId, input),
       update: async (id, updates) => {
         const existing = this.contests.get(id);
@@ -547,6 +549,13 @@ export class InMemoryContestWorld {
   userRepo(): UserRepository {
     return fakeUserRepo({
       findById: async (id) => this.users.get(id) ?? null,
+      // Every membership status, as the port says.
+      findByLeague: async (leagueId) => {
+        const memberIds = new Set([...this.memberships.values()]
+          .filter((membership) => membership.leagueId === leagueId)
+          .map((membership) => membership.userId));
+        return [...this.users.values()].filter((user) => memberIds.has(user.id));
+      },
     });
   }
 

@@ -60,7 +60,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(undefined), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
     const now = () => new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger: fakeLogger(), now });
 
     await scheduler.runSweep();
 
@@ -86,7 +86,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(undefined), applySportEventStatusTransition: jest.fn() };
     const now = () => new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger: fakeLogger(), now });
 
     await scheduler.runSweep();
 
@@ -106,7 +106,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(undefined), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
     const now = () => new Date('2026-06-01T00:00:01.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger: fakeLogger(), now });
 
     await scheduler.runSweep();
 
@@ -131,7 +131,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(undefined), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
     const now = () => new Date('2026-06-02T21:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger: fakeLogger(), now });
 
     await scheduler.runSweep();
 
@@ -158,7 +158,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(undefined), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
     const now = () => new Date('2026-06-02T21:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger: fakeLogger(), now });
 
     await scheduler.runSweep();
 
@@ -180,7 +180,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(undefined), applySportEventStatusTransition: jest.fn() };
     const now = () => new Date('2026-06-02T21:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger: fakeLogger(), now });
 
     await scheduler.runSweep();
 
@@ -213,7 +213,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     };
     const logger = fakeLogger();
     const now = () => new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, logger, now);
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger, now });
 
     await scheduler.runSweep();
 
@@ -228,7 +228,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     jest.useFakeTimers();
     const { sportEvents, rounds } = storeWith([]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(undefined), applySportEventStatusTransition: jest.fn() };
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger());
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger: fakeLogger() });
 
     scheduler.start();
     scheduler.start();
@@ -257,7 +257,7 @@ describe('EventLifecycleScheduler after an admin cuts an event\'s round count', 
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(undefined), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
     const now = () => new Date('2026-06-04T00:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger: fakeLogger(), now });
 
     await scheduler.runSweep();
 
@@ -280,7 +280,7 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
       applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined),
     };
     const sweptAt = new Date('2026-06-02T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), () => sweptAt);
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger: fakeLogger(), now: () => sweptAt });
 
     await scheduler.runSweep();
     await scheduler.runSweep();
@@ -301,11 +301,41 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
       applySportEventStatusTransition: jest.fn(),
     };
     const logger = fakeLogger();
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, logger, () => new Date('2026-06-02T13:00:00.000Z'));
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, logger, now: () => new Date('2026-06-02T13:00:00.000Z') });
 
     await scheduler.runSweep();
 
     expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenNthCalledWith(2, expect.objectContaining({ id: 'evt-next' }), expect.any(Date));
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: 'evt-fails', error: 'boom' }), expect.any(String));
+  });
+
+  it('asks the notifications due step to queue what is due at the sweep time, after the event transitions', async () => {
+    const { sportEvents, rounds } = storeWith([
+      { event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-01T00:00:00.000Z') }, rounds: [] },
+    ]);
+    const order: string[] = [];
+    const eventLifecycleService = {
+      activateContestsPastCutoff: jest.fn(),
+      applySportEventStatusTransition: jest.fn().mockImplementation(async () => { order.push('transition'); }),
+    };
+    const notificationsDue = { queueDue: jest.fn(async () => { order.push('notifications'); }) };
+    const sweptAt = new Date('2026-06-01T13:00:00.000Z');
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, notificationsDue, logger: fakeLogger(), now: () => sweptAt });
+
+    await scheduler.runSweep();
+
+    expect(notificationsDue.queueDue).toHaveBeenCalledWith(sweptAt);
+    expect(order).toEqual(['transition', 'notifications']);
+  });
+
+  it('logs a failed notifications step without failing the sweep', async () => {
+    const { sportEvents, rounds } = storeWith([]);
+    const eventLifecycleService = { activateContestsPastCutoff: jest.fn(), applySportEventStatusTransition: jest.fn() };
+    const logger = fakeLogger();
+    const notificationsDue = { queueDue: jest.fn().mockRejectedValue(new Error('outbox down')) };
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, notificationsDue, logger });
+
+    await expect(scheduler.runSweep()).resolves.toBeUndefined();
+    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ error: 'outbox down' }), expect.any(String));
   });
 });

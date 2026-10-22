@@ -308,6 +308,8 @@ export interface ContestRepository {
   findByLeague(leagueId: string): Promise<Contest[]>;
   /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
+  /** Every contest in one of `statuses`, oldest first, across leagues: the entry reminders' sweep reads it (#845). */
+  findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
   create(contest: ContestCreate): Promise<Contest>;
   update(id: string, updates: ContestUpdate): Promise<Contest>;
   /**

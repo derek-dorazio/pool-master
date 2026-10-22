@@ -95,11 +95,16 @@ export const EmailConfigSchema = z.object({
   sendRatePerSecond: z.number().int().min(1).max(100).describe(
     'The most emails each API server task sends a second. SES accounts start at 14 a second in all.',
   ),
+  entryReminderHours: z.array(z.number().int().min(1).max(168)).min(1).max(5).describe(
+    'How many hours before a contest\'s picks close each entry reminder goes, to members with '
+    + 'nothing submitted (#845). Everyone gets each reminder at the same moment.',
+  ),
   templates: z.object({
     LEAGUE_MEMBER_INVITE: templateSwitch,
     LEAGUE_JOIN_SUCCESS: templateSwitch,
     CONTEST_ENTRY_COMPLETED: templateSwitch,
     CONTEST_STARTED_SUMMARY: templateSwitch,
+    CONTEST_ENTRY_REMINDER: templateSwitch,
   } satisfies Record<SwitchableEmailTemplateKey, z.ZodBoolean>).describe(
     'Per-template switches. A template that is off is skipped even while email is on.',
   ),

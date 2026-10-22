@@ -184,11 +184,13 @@ describe('EMAIL_CONFIG defaults', () => {
       enabled: true,
       allowedRecipients: [],
       sendRatePerSecond: 10,
+      entryReminderHours: [48, 24, 3],
       templates: {
         LEAGUE_MEMBER_INVITE: true,
         LEAGUE_JOIN_SUCCESS: true,
         CONTEST_ENTRY_COMPLETED: true,
         CONTEST_STARTED_SUMMARY: true,
+        CONTEST_ENTRY_REMINDER: true,
       },
     });
   });
@@ -205,6 +207,16 @@ describe('EMAIL_CONFIG send rate', () => {
 
     expect([1, 14, 100].map(parses)).toEqual([true, true, true]);
     expect([0, 101, 2.5].map(parses)).toEqual([false, false, false]);
+  });
+});
+
+describe('EMAIL_CONFIG entry reminder hours', () => {
+  it('takes one to five whole numbers of hours from 1 to 168 (a week)', () => {
+    const base = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'qa' });
+    const parses = (entryReminderHours: number[]) => EmailConfigSchema.safeParse({ ...base, entryReminderHours }).success;
+
+    expect([[3], [168, 48, 24, 3, 1]].map(parses)).toEqual([true, true]);
+    expect([[], [48, 24, 12, 6, 3, 1], [0], [169], [2.5]].map(parses)).toEqual([false, false, false, false, false]);
   });
 });
 

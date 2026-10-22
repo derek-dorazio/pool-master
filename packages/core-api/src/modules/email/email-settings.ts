@@ -22,11 +22,13 @@ export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
     enabled: readAppEnv(env) !== AppEnvironment.QA,
     allowedRecipients: [],
     sendRatePerSecond: 10,
+    entryReminderHours: [48, 24, 3],
     templates: {
       LEAGUE_MEMBER_INVITE: true,
       LEAGUE_JOIN_SUCCESS: true,
       CONTEST_ENTRY_COMPLETED: true,
       CONTEST_STARTED_SUMMARY: true,
+      CONTEST_ENTRY_REMINDER: true,
     },
   }),
 });

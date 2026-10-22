@@ -26289,6 +26289,7 @@
           "LEAGUE_JOIN_SUCCESS",
           "CONTEST_ENTRY_COMPLETED",
           "CONTEST_STARTED_SUMMARY",
+          "CONTEST_ENTRY_REMINDER",
           "PASSWORD_RESET",
           "PASSWORD_CHANGED"
         ],
@@ -26322,6 +26323,17 @@
             "maximum": 100,
             "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
           },
+          "entryReminderHours": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 168
+            },
+            "minItems": 1,
+            "maxItems": 5,
+            "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+          },
           "templates": {
             "type": "object",
             "properties": {
@@ -26340,13 +26352,18 @@
               "CONTEST_STARTED_SUMMARY": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
+              },
+              "CONTEST_ENTRY_REMINDER": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
               }
             },
             "required": [
               "LEAGUE_MEMBER_INVITE",
               "LEAGUE_JOIN_SUCCESS",
               "CONTEST_ENTRY_COMPLETED",
-              "CONTEST_STARTED_SUMMARY"
+              "CONTEST_STARTED_SUMMARY",
+              "CONTEST_ENTRY_REMINDER"
             ],
             "additionalProperties": false,
             "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -26356,6 +26373,7 @@
           "enabled",
           "allowedRecipients",
           "sendRatePerSecond",
+          "entryReminderHours",
           "templates"
         ],
         "additionalProperties": false,
@@ -27503,6 +27521,17 @@
                     "maximum": 100,
                     "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
                   },
+                  "entryReminderHours": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 168
+                    },
+                    "minItems": 1,
+                    "maxItems": 5,
+                    "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -27521,13 +27550,18 @@
                       "CONTEST_STARTED_SUMMARY": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_ENTRY_REMINDER": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
                       "LEAGUE_MEMBER_INVITE",
                       "LEAGUE_JOIN_SUCCESS",
                       "CONTEST_ENTRY_COMPLETED",
-                      "CONTEST_STARTED_SUMMARY"
+                      "CONTEST_STARTED_SUMMARY",
+                      "CONTEST_ENTRY_REMINDER"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -27537,6 +27571,7 @@
                   "enabled",
                   "allowedRecipients",
                   "sendRatePerSecond",
+                  "entryReminderHours",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -27570,6 +27605,17 @@
                     "maximum": 100,
                     "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
                   },
+                  "entryReminderHours": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 168
+                    },
+                    "minItems": 1,
+                    "maxItems": 5,
+                    "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -27588,13 +27634,18 @@
                       "CONTEST_STARTED_SUMMARY": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_ENTRY_REMINDER": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
                       "LEAGUE_MEMBER_INVITE",
                       "LEAGUE_JOIN_SUCCESS",
                       "CONTEST_ENTRY_COMPLETED",
-                      "CONTEST_STARTED_SUMMARY"
+                      "CONTEST_STARTED_SUMMARY",
+                      "CONTEST_ENTRY_REMINDER"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -27604,6 +27655,7 @@
                   "enabled",
                   "allowedRecipients",
                   "sendRatePerSecond",
+                  "entryReminderHours",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -28480,6 +28532,17 @@
                           "maximum": 100,
                           "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
                         },
+                        "entryReminderHours": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 168
+                          },
+                          "minItems": 1,
+                          "maxItems": 5,
+                          "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -28498,13 +28561,18 @@
                             "CONTEST_STARTED_SUMMARY": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_ENTRY_REMINDER": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
                             "LEAGUE_MEMBER_INVITE",
                             "LEAGUE_JOIN_SUCCESS",
                             "CONTEST_ENTRY_COMPLETED",
-                            "CONTEST_STARTED_SUMMARY"
+                            "CONTEST_STARTED_SUMMARY",
+                            "CONTEST_ENTRY_REMINDER"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28514,6 +28582,7 @@
                         "enabled",
                         "allowedRecipients",
                         "sendRatePerSecond",
+                        "entryReminderHours",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -28547,6 +28616,17 @@
                           "maximum": 100,
                           "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
                         },
+                        "entryReminderHours": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 168
+                          },
+                          "minItems": 1,
+                          "maxItems": 5,
+                          "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -28565,13 +28645,18 @@
                             "CONTEST_STARTED_SUMMARY": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_ENTRY_REMINDER": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
                             "LEAGUE_MEMBER_INVITE",
                             "LEAGUE_JOIN_SUCCESS",
                             "CONTEST_ENTRY_COMPLETED",
-                            "CONTEST_STARTED_SUMMARY"
+                            "CONTEST_STARTED_SUMMARY",
+                            "CONTEST_ENTRY_REMINDER"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28581,6 +28666,7 @@
                         "enabled",
                         "allowedRecipients",
                         "sendRatePerSecond",
+                        "entryReminderHours",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -29115,6 +29201,17 @@
                     "maximum": 100,
                     "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
                   },
+                  "entryReminderHours": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 168
+                    },
+                    "minItems": 1,
+                    "maxItems": 5,
+                    "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29133,13 +29230,18 @@
                       "CONTEST_STARTED_SUMMARY": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_ENTRY_REMINDER": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
                       "LEAGUE_MEMBER_INVITE",
                       "LEAGUE_JOIN_SUCCESS",
                       "CONTEST_ENTRY_COMPLETED",
-                      "CONTEST_STARTED_SUMMARY"
+                      "CONTEST_STARTED_SUMMARY",
+                      "CONTEST_ENTRY_REMINDER"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29149,6 +29251,7 @@
                   "enabled",
                   "allowedRecipients",
                   "sendRatePerSecond",
+                  "entryReminderHours",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -29883,6 +29986,17 @@
                     "maximum": 100,
                     "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
                   },
+                  "entryReminderHours": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 168
+                    },
+                    "minItems": 1,
+                    "maxItems": 5,
+                    "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29901,13 +30015,18 @@
                       "CONTEST_STARTED_SUMMARY": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_ENTRY_REMINDER": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
                       "LEAGUE_MEMBER_INVITE",
                       "LEAGUE_JOIN_SUCCESS",
                       "CONTEST_ENTRY_COMPLETED",
-                      "CONTEST_STARTED_SUMMARY"
+                      "CONTEST_STARTED_SUMMARY",
+                      "CONTEST_ENTRY_REMINDER"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29917,6 +30036,7 @@
                   "enabled",
                   "allowedRecipients",
                   "sendRatePerSecond",
+                  "entryReminderHours",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -29950,6 +30070,17 @@
                     "maximum": 100,
                     "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
                   },
+                  "entryReminderHours": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 168
+                    },
+                    "minItems": 1,
+                    "maxItems": 5,
+                    "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29968,13 +30099,18 @@
                       "CONTEST_STARTED_SUMMARY": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_ENTRY_REMINDER": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
                       "LEAGUE_MEMBER_INVITE",
                       "LEAGUE_JOIN_SUCCESS",
                       "CONTEST_ENTRY_COMPLETED",
-                      "CONTEST_STARTED_SUMMARY"
+                      "CONTEST_STARTED_SUMMARY",
+                      "CONTEST_ENTRY_REMINDER"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29984,6 +30120,7 @@
                   "enabled",
                   "allowedRecipients",
                   "sendRatePerSecond",
+                  "entryReminderHours",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -30818,6 +30955,17 @@
                           "maximum": 100,
                           "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
                         },
+                        "entryReminderHours": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 168
+                          },
+                          "minItems": 1,
+                          "maxItems": 5,
+                          "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -30836,13 +30984,18 @@
                             "CONTEST_STARTED_SUMMARY": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_ENTRY_REMINDER": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
                             "LEAGUE_MEMBER_INVITE",
                             "LEAGUE_JOIN_SUCCESS",
                             "CONTEST_ENTRY_COMPLETED",
-                            "CONTEST_STARTED_SUMMARY"
+                            "CONTEST_STARTED_SUMMARY",
+                            "CONTEST_ENTRY_REMINDER"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30852,6 +31005,7 @@
                         "enabled",
                         "allowedRecipients",
                         "sendRatePerSecond",
+                        "entryReminderHours",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -30885,6 +31039,17 @@
                           "maximum": 100,
                           "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
                         },
+                        "entryReminderHours": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 168
+                          },
+                          "minItems": 1,
+                          "maxItems": 5,
+                          "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -30903,13 +31068,18 @@
                             "CONTEST_STARTED_SUMMARY": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_ENTRY_REMINDER": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
                             "LEAGUE_MEMBER_INVITE",
                             "LEAGUE_JOIN_SUCCESS",
                             "CONTEST_ENTRY_COMPLETED",
-                            "CONTEST_STARTED_SUMMARY"
+                            "CONTEST_STARTED_SUMMARY",
+                            "CONTEST_ENTRY_REMINDER"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30919,6 +31089,7 @@
                         "enabled",
                         "allowedRecipients",
                         "sendRatePerSecond",
+                        "entryReminderHours",
                         "templates"
                       ],
                       "additionalProperties": false,

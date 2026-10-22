@@ -303,12 +303,18 @@ Each slice is one PR. The order across this plan and the SES design is in
 `plans/email-delivery-ses.md` §10: SES 1 and 2 first, then SES 3 alongside slice 1 here, then
 SES 4 and 5, then slices 2 to 6 here.
 
-1. **Foundation.** A "notifications due" step in the lifecycle scheduler sweep, and the reminder
-   offsets and standings buffer in `EMAIL_CONFIG`. The categories are registered in SES slice 2;
-   the sent record, preferences and unsubscribe come from #844. No new email yet.
-2. **Contest lifecycle.** D1 contest open, D2 reminders, E1 upgraded (all members, "good luck",
-   event and rules summary instead of the entry list, leaderboard link), D3 to every owner.
-3. **Live standings.** E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,
+1. **Foundation and reminders.** A "notifications due" step in the lifecycle scheduler sweep,
+   the reminder offsets in `EMAIL_CONFIG`, and D2 reminders as the step's first email, for the
+   formats whose members submit (tiered, budget, pick'em, bracket), so the step does real work
+   from the start. A reminder more than an hour past its time is skipped, which covers a contest
+   opened after it. The categories are registered in SES slice 2; the sent record, preferences
+   and unsubscribe come from #844. The standings buffer setting arrives with slice 3, which first
+   reads it.
+2. **Contest lifecycle.** D1 contest open, D2 for survivor (live entries only), random draw (members
+   with no entry) and squares (members with no box), the "no reminder within 6 hours of D1" rule,
+   E1 upgraded (all members, "good luck", event and rules summary instead of the entry list,
+   leaderboard link), D3 to every owner.
+3. **Live standings.** The standings buffer in `EMAIL_CONFIG`, E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,
    with the top 10 and the reader's entries.
 4. **Final results.** F1 with F3 folded in, F2.
 5. **Commissioner event emails.** C1, C2, C4, C6, C7, G1, to every commissioner. Choosing sport leagues is #851.
