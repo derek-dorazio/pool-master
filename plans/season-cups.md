@@ -18,12 +18,15 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
 - **B. Trophy cabinet.** The Cups page: a card per cup with its leader and progress, the
   commissioner's "Ready to crown" banner, the crowned podium, and the trophy shelf on a
   team page.
+- **C. Past seasons.** An all-time summary: most cups won, then each season's cup champions,
+  newest first.
 - **D. League championship (#863).** The trophy presented on 1 January (a "presented" tweak
   shows the leader view before then), the medal tiles, and the finish matrix.
-- Mockups A to C were drawn before the split, so A's header shows the all-sports championship now
-  in #863. The same layout is the PGA Tour Cup page.
-- **C. Past seasons.** History's Cups tab: most cups won, then each season's cup champions,
-  newest first.
+
+A to C are the sports league cup views, and Derek wants all of them (2026-10-22): they aren't
+alternatives. A's header still shows an all-sports cup from before the split; read it as the
+PGA Tour Cup page. Single-year views come first; C is a later page that fronts the per-year
+history pages.
 
 ---
 
@@ -235,10 +238,16 @@ Crowning is the only write on a cup itself: nobody creates, edits or deletes one
 | Cup | `/league/:code/cups/:cupId` | The leaderboard (place, movement, squad, points, wins, contests), a points-race chart of the top five across the season, and the counted contests with their weights and winners |
 | Squad in a cup | sheet from a leaderboard row | That squad's points contest by contest |
 | League home | existing | A small cups card: each open cup's leader and the viewer's place |
-| Team page | existing | Cup trophies won, beside #837's contest trophies |
-| History, Cups tab | `/league/:code/history/cups` | Crowned cups by season: champion, podium, link to the frozen table. Built with #837 |
+| Team page | existing | The trophy shelf: every top-3 finish in a crowned cup and the championship, beside #837's contest trophies |
+| Past years | the Cups and Cup pages | A year toggle on the same pages shows a past season's cups, frozen |
+| All-time summary | `/league/:code/history/cups` | Mockup C: most cups won, then each season's champions; each row opens that year's pages. Later, with #837 |
 | League settings | existing | Cup points table, with a live preview |
 | Contest settings | existing | Cup weight |
+
+What goes where (Derek, 2026-10-22): the Cup page is mockup A (points race leaderboard,
+movement, the race chart, the counted contests) and, once crowned, B's podium of 1st, 2nd and
+3rd above the table. The Cups page is B's cup cards, showing the viewer's place in each. The team
+page carries B's trophy shelf. The same podium also sits under the championship trophy (#863).
 
 Decided (Derek, 2026-10-22): Q6.1 Cups gets its own menu item for the current season, and past
 cups are also part of History; Q6.2 movement arrows beside each squad; Q6.3 no real trophy
@@ -259,13 +268,16 @@ guard).
    points-race chart, the squad sheet, the league home card.
 3. **Commissioner settings.** Points table on league settings with a preview; cup weight on
    contest settings.
-4. **Crowning, trophies and past cups.** `POST .../crown` and the "Ready to crown" button,
-   frozen `CupStanding`, trophies on team pages, `GET /cups/past` and
-   the History Cups tab (with #837 slices 2 and 5), the frozen-cup checks.
+4. **Crowning, podium and trophy shelf.** `POST .../crown` and the "Ready to crown" button,
+   frozen `CupStanding`, the podium on a crowned Cup page, the trophy shelf on team pages, the
+   year toggle for past seasons, the frozen-cup checks.
 5. **Projected points.** Points from live contests' current leaderboards, shown greyed as
    "if it ended now".
+6. **All-time summary.** `GET /cups/past` and mockup C at `/league/:code/history/cups`, fronting
+   the per-year pages (with #837).
 
-Slices 2 and 3 can go in parallel after 1; 4 after 2; 5 after 2.
+Slices 2 and 3 can go in parallel after 1; 4 after 2; 5 after 2; 6 after 4. Single-year views
+(1 to 5) come before 6.
 
 Decided (Derek, 2026-10-22): Q7.1 projected points, as the last slice.
 
@@ -288,7 +300,8 @@ May. Derek's design (2026-10-22):
 ### The page, top to bottom
 
 1. **The trophy** (from 1 January of the next year): a trophy with the league's cup name under
-   it ("2026 Derek's Pool Cup") and the champion squad's name under that. Before 1 January the
+   it ("2026 Derek's Pool Cup") and the champion squad's name under that, then the cup's
+   podium of 1st, 2nd and 3rd (mockup B's crowned podium). Before 1 January the
    space shows the current leader, "leads with 3 contests to go" style.
 2. **Medal tiles** (option B): power tiles for the year's leaders: most 1sts, most 2nds, most 3rds, most podiums, most contests played, most top-ten finishes. Each tile shows the squad and its count.
 3. **The finish matrix** (option A): squads as rows; columns 1st to 10th count how often each
@@ -347,8 +360,9 @@ Questions:
    creation, Q2.6), written at settlement, backfill migration, `GET
    /leagues/:leagueId/championship/:year` (trophy, tiles, matrix) and `.../championship` (years
    with their champions, for history).
-2. **The page.** Trophy, medal tiles and matrix; league settings gains the cup name. History's
-   year view shows the same page frozen (with #837).
+2. **The page.** Trophy and podium, medal tiles and matrix, a year toggle for past years;
+   league settings gains the cup name; championship trophies on the team page's trophy shelf.
+   History's year view shows the same page frozen (with #837).
 
 Options weighed: the matrix with points (A, chosen for the ranking); a medal table ranked by
 1sts, then 2nds, then 3rds (B, chosen as the tiles); an average finish percentile (fair across
