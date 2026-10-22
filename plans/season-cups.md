@@ -18,6 +18,8 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
 - **B. Trophy cabinet.** The Cups page: a card per cup with its leader and progress, the
   commissioner's "Ready to crown" banner, the crowned podium, and the trophy shelf on a
   team page.
+- The mockups were drawn before the split, so A's header shows the all-sports championship now
+  in #863. The same layout is the PGA Tour Cup page.
 - **C. Past seasons.** History's Cups tab: most cups won, then each season's cup champions,
   newest first.
 
@@ -25,14 +27,13 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
 
 ## TL;DR
 
-- **Two kinds of cup, both inside one Poolmaster league** (Derek, 2026-10-21). "League" here is
-  always the Poolmaster league, the tenant; "sports league" is the PGA Tour, the LPGA Tour, the
-  NFL. The **league cup** is the league's championship for the year, the one leaderboard across
-  every contest in every sport. A **sports league cup** (the PGA Tour Cup, the NFL Cup) covers
-  that sports league's contests. No cup per sport and no hand-picked cups.
-- **The league names its cup.** A new "cup name" league setting, defaulting at league creation to
-  "<league name> Cup". Screens show "2026 Derek's Pool Cup", and "2026 Derek's Pool Cup · PGA
-  Tour Cup" for a sports league cup.
+- **One cup per sports league, inside one Poolmaster league** (Derek, 2026-10-21/22). "League"
+  here is always the Poolmaster league, the tenant; "sports league" is the PGA Tour, the LPGA
+  Tour, the NFL. Each sports league a league plays gets a FedEx-style cup for the season (the
+  "2026 PGA Tour Cup", the "2025 NFL Cup"). No cup per sport and no hand-picked cups.
+- **The league-wide championship across every sport is split off** to #863 and deferred
+  (Derek, 2026-10-22), because sports league seasons don't line up with the calendar year. See
+  section 8 for the simpler shape it is likely to take.
 - **A cup is a rule, not a copy of results.** Standings are worked out on read from the places
   every contest already freezes when it settles (`ContestEntryStanding`), the same read #837
   builds. Nothing is kept in step by hand, and nobody sets a cup up.
@@ -63,7 +64,6 @@ league's templates), so a contest counts toward exactly one sports league cup.
 
 ```
 League (existing), new settings
-  cupName        String             "<league name> Cup" at creation; commissioner edits it
   cupPointsScale CupPointsScale     STANDARD | TOP_TEN | FIELD_BEATEN | CUSTOM; default STANDARD
   cupCustomPoints Int[]             points for 1st, 2nd, ... ; only for CUSTOM
 
@@ -72,8 +72,7 @@ Contest (existing), new setting
 
 Cup                                 one points race in one league and one season
   leagueId, seasonYear
-  scope          CupScope           ALL_CONTESTS | SPORT_LEAGUE
-  sportLeagueId                     set only for SPORT_LEAGUE
+  sportLeagueId                     the sports league whose contests it counts
   status         CupStatus          OPEN | CROWNED
   crownedAt      DateTime?
 
@@ -87,31 +86,26 @@ CupStanding                         frozen when the cup is crowned, like Contest
 ```
 
 - **Which contests count** is worked out on read: the league's contests with the cup's
-  `seasonYear` that match its scope and whose `cupWeight` is not `NOT_COUNTED`. A contest made
+  `seasonYear` in its sports league and whose `cupWeight` is not `NOT_COUNTED`. A contest made
   next month joins the PGA Tour Cup on its own.
 - **Where weights live.** On the contest, not the event and not the cup. Events are shared by
   every league on the site, so they can't carry one league's choice; a cup-by-cup setting would
-  make the commissioner set the Masters pool twice. One `cupWeight` on the contest's settings
-  applies in both cups it counts toward. Default `NORMAL`. Editable until a cup it counts toward
-  is crowned.
-- **Names.** Cups have no name column. Screens build it from the league's `cupName` and the
-  season: "2026 Derek's Pool Cup", and "2026 Derek's Pool Cup · PGA Tour Cup" with the sports
-  league's name. A league rename does not change `cupName`; the commissioner edits it on league
-  settings, and past cups show the current value (Q2.5).
+  make the commissioner set it again for #863's championship. One `cupWeight` on the contest's
+  settings applies in every cup it counts toward. Default `NORMAL`. Editable until the cup is
+  crowned.
+- **Names.** Cups have no name column. Screens build it from the season and the sports league's
+  name: "2026 PGA Tour Cup". The "cup name" league setting Derek chose (Q2.6) names #863's
+  championship, so it moves there.
 - **One points table per league**, on league settings, used by all of its cups. A crowned cup
   keeps its frozen points, so changing the table later changes only open cups.
-- Database checks keep the scope honest: `sportLeagueId` is set exactly when scope is
-  `SPORT_LEAGUE`, and `cupCustomPoints` is non-empty exactly when the scale is `CUSTOM`. Unique
-  indexes allow one `ALL_CONTESTS` cup per (league, season) and one cup per (league, season,
-  sports league).
+- A database check keeps `cupCustomPoints` non-empty exactly when the scale is `CUSTOM`. A
+  unique index allows one cup per (league, season, sports league).
 - **Cups are created, never set up.** When a contest is created, contest-management calls the
   cups service (modules call each other's services, `rules/architecture-rules.md` §4 *Service
-  Topology*), which makes the (league, season)'s league cup and its sports league's cup if they
-  don't exist yet. The migration does the same for every existing contest and sets each league's
-  `cupName`. Cups are never deleted and their scope never changes.
+  Topology*), which makes the (league, season, sports league)'s cup if it doesn't exist yet. The migration
+  does the same for every existing contest. Cups are never deleted.
 - A sports league cup stays off the Cups page until it has two counted contests, so a league
-  that plays one Super Bowl squares pool doesn't get an NFL Cup with one contest in it. The
-  league cup always shows.
+  that plays one Super Bowl squares pool doesn't get an NFL Cup with one contest in it.
 - Enums mirror domain consts in `packages/shared/domain/enums.ts` with the `Prisma` prefix,
   like every other status column.
 - **A cup never crosses leagues.** Leagues are tenants: a cup belongs to one league, counts only
@@ -120,19 +114,15 @@ CupStanding                         frozen when the cup is crowned, like Contest
 
 Decided:
 
-- **Q2.1** (Derek, 2026-10-21) Every league gets a league cup each season, the one leaderboard
-  across every contest in every sport. It is the league's championship for that year.
-- **Q2.2** (Derek, 2026-10-21) The cups are the league cup and one cup per sports league. No
-  combined cup per sport (men's and women's golf together) and no hand-picked cups.
+- **Q2.1** (Derek, 2026-10-22) The league-wide championship across every sport is split off to
+  #863 and deferred.
+- **Q2.2** (Derek, 2026-10-21) One cup per sports league. No combined cup per sport (men's and
+  women's golf together) and no hand-picked cups.
 - **Q2.3** (Derek, 2026-10-21) No cross-league cups, ever, for members or commissioners. A
   person in several leagues never sees cups, points or trophies added up across them: the
   league selector is always a hard partition.
-- **Q2.4** A contest counts toward both the league cup and its sports league's cup.
-- **Q2.5** (Derek, 2026-10-22) A crowned cup from a past season shows the league's current cup
-  name. Nothing about the name is frozen on the cup.
-- **Q2.6** (Derek, 2026-10-22) A "cup name" league setting, defaulted at league creation to
-  "<league name> Cup", names the league cup ("2026 Derek's Pool Cup") and prefixes the sports
-  league cups ("2026 Derek's Pool Cup · PGA Tour Cup").
+- **Q2.5, Q2.6** (Derek, 2026-10-22) A "cup name" league setting, defaulted at league creation
+  to "<league name> Cup", with past seasons shown under its current value. Both go with #863.
 
 ## 3. Points
 
@@ -182,7 +172,7 @@ move each time a counted contest goes Final.
 
 **The commissioner crowns each cup** (Derek, 2026-10-22), with `POST .../cups/:cupId/crown`,
 whenever they decide its season is done: the PGA Tour Cup after the last golf pool in
-September, the league cup at year end, an NFL Cup after the Super Bowl pool. Nothing runs on a
+September, an NFL Cup after the Super Bowl pool. Nothing runs on a
 timer and nothing waits for the calendar. The Cups page shows a "Ready to crown" button to the
 commissioner once every counted contest is Final.
 
@@ -193,8 +183,7 @@ commissioner once every counted contest is Final.
   (ties share a trophy), and moves the cup to `CROWNED`.
 - After that the cup is frozen: a contest that goes Final later in the same season doesn't
   change it (the cup page lists it as "After the cup was crowned"), and the `cupWeight` of a
-  contest it counted can't change (typed error `CUP_CROWNED`). The contest still counts in any
-  other cup that is open, such as the league cup.
+  contest it counted can't change (typed error `CUP_CROWNED`).
 - #837 lets the commissioner change a contest's season any time; that becomes "any time until a
   cup it counted in is crowned".
 
@@ -217,7 +206,7 @@ check as the league's contests. Shapes in `packages/shared/dto/cups.dto.ts`, rou
 | `GET /cups/:cupId/squads/:squadId` | Member | One squad's points contest by contest |
 | `POST /cups/:cupId/crown` | Commissioner | Crown the champion (section 4) |
 | `GET /cups/past` | Member | Crowned cups across every season, newest first, paged; used by history |
-| `PATCH /leagues/:leagueId` (existing) | Commissioner | Gains `cupName`, `cupPointsScale`, `cupCustomPoints` |
+| `PATCH /leagues/:leagueId` (existing) | Commissioner | Gains `cupPointsScale`, `cupCustomPoints` |
 | `PATCH` contest settings (existing) | Commissioner | Gains `cupWeight` |
 
 Crowning is the only write on a cup itself: nobody creates, edits or deletes one.
@@ -242,10 +231,10 @@ Crowning is the only write on a cup itself: nobody creates, edits or deletes one
 | Cups | `/league/:code/cups` | This season's cups as cards: name, leader, viewer's place, contests counted of total; "Ready to crown" for the commissioner. Sports league cups show once they have two counted contests |
 | Cup | `/league/:code/cups/:cupId` | The leaderboard (place, movement, squad, points, wins, contests), a points-race chart of the top five across the season, and the counted contests with their weights and winners |
 | Squad in a cup | sheet from a leaderboard row | That squad's points contest by contest |
-| League home | existing | A small league cup card: top three and the viewer's place |
+| League home | existing | A small cups card: each open cup's leader and the viewer's place |
 | Team page | existing | Cup trophies won, beside #837's contest trophies |
 | History, Cups tab | `/league/:code/history/cups` | Crowned cups by season: champion, podium, link to the frozen table. Built with #837 |
-| League settings | existing | Cup name and points table, with a live preview |
+| League settings | existing | Cup points table, with a live preview |
 | Contest settings | existing | Cup weight |
 
 Decided (Derek, 2026-10-22): Q6.1 Cups gets its own menu item for the current season, and past
@@ -259,15 +248,14 @@ for each new query (`rules/testing-rules.md` §9), contract verification for eac
 browser journey row once a page exists. All depend on #837 slice 1 (`seasonYear`, squad delete
 guard).
 
-1. **Model and read API.** `Cup`, `CupStanding`, `League.cupName` and the points table
-   settings, `Contest.cupWeight`, their enums; migration creating each (league, season)'s cups
-   and every league's `cupName`; `cupName` defaulted at league creation; automatic cups on
-   contest create; `cup-points.ts` with every scale, ties and weights; `GET /cups`,
+1. **Model and read API.** `Cup`, `CupStanding`, the league's points table settings,
+   `Contest.cupWeight`, their enums; migration creating each (league, season, sports league)'s
+   cup; automatic cups on contest create; `cup-points.ts` with every scale, ties and weights; `GET /cups`,
    `GET /cups/:cupId` and the squad breakdown.
 2. **Cup pages.** The Cups menu item, Cups page, Cup leaderboard with movement and the
    points-race chart, the squad sheet, the league home card.
-3. **Commissioner settings.** Cup name and points table on league settings with a preview; cup
-   weight on contest settings.
+3. **Commissioner settings.** Points table on league settings with a preview; cup weight on
+   contest settings.
 4. **Crowning, trophies and past cups.** `POST .../crown` and the "Ready to crown" button,
    frozen `CupStanding`, trophies on team pages, `GET /cups/past` and
    the History Cups tab (with #837 slices 2 and 5), the frozen-cup checks.
@@ -277,3 +265,31 @@ guard).
 Slices 2 and 3 can go in parallel after 1; 4 after 2; 5 after 2.
 
 Decided (Derek, 2026-10-22): Q7.1 projected points, as the last slice.
+
+## 8. League championship (split off)
+
+**Tracking issue:** #863 (deferred). Not part of this plan's slices; kept here so the design
+isn't lost.
+
+A "2026 Derek's league" championship across every contest in every sport. Cups by season don't
+work for it: an NFL season is mid-way on 31 December and a Premier League season runs August to
+May. Derek's simpler shape (2026-10-22):
+
+- **Count by the year a contest ends.** A contest counts in the calendar year it went Final
+  (`settledAt`). One still running on 31 December counts toward the year it finishes in. No
+  `seasonYear` needed.
+- **A finish matrix.** Squads are rows; columns 1st to 10th count how many times each squad
+  finished there that year, from its best entry in each contest.
+- **A points column ranks it**: each column's count times a fixed value for that place (the
+  same league points table as the cups) times the contest's `cupWeight`. Ties go to most 1sts,
+  then most 2nds.
+- **No crowning step.** Once the year is over nothing new can count toward it, so the leader on
+  1 January is the champion. The screen works that out from the date when it is read; nothing
+  runs on a timer.
+- **The name** is the "cup name" league setting (`League.cupName`, default "<league name> Cup"),
+  shown with the year: "2026 Derek's Pool Cup".
+
+Options weighed: the matrix with points (recommended, the table shows why each squad ranks
+where it does); a medal table ranked by 1sts then 2nds then 3rds (no weights, but a squad 4th
+every time ranks below one lucky win, and most squads tie at zero); an average finish percentile
+(fair across field sizes, hard to read on a phone).
