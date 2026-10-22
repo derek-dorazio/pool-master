@@ -149,9 +149,9 @@ export class ContestManagementService {
     private readonly sportEventTierService: SportEventTierService,
     private readonly logger: LifecycleLogger = createNoopLogger(),
     private readonly sportEventReader: ContestCreateSportEventReader,
-    private readonly now: () => Date = () => new Date(),
     /** Tells the league a contest has opened (#845, the "New contest open" email). */
     private readonly contestOpened?: ContestOpenedNotice,
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   /**

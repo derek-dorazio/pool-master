@@ -597,8 +597,8 @@ describe('ContestManagementService', () => {
         createSportEventTierServiceStub(options?.tierCount ?? 0),
         undefined,
         options?.reader ?? createSportEventReader(),
-        () => CONTEST_MANAGEMENT_TEST_NOW,
         options?.contestOpened,
+        () => CONTEST_MANAGEMENT_TEST_NOW,
       );
       return { service, contestCoreRepo };
     }
@@ -1195,6 +1195,7 @@ describe('ContestManagementService', () => {
         createSportEventTierServiceStub(),
         undefined,
         options.reader ?? createSportEventReader(),
+        undefined,
         () => CONTEST_MANAGEMENT_TEST_NOW,
       );
       return { service, contestRepo, configurationRepo };
@@ -1801,6 +1802,7 @@ describe('ContestManagementService — a contest of several events', () => {
       createSportEventTierServiceStub(),
       undefined,
       options.reader ?? multiEventReader(READER_EVENTS),
+      undefined,
       () => CONTEST_MANAGEMENT_TEST_NOW,
     );
     jest.mocked(configurationRepo.findByTemplateEventSeries).mockResolvedValue([
@@ -2392,6 +2394,7 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
       }),
+      undefined,
       () => now,
     );
     const request = (startsAtRound: number): CreateContestRequest => ({

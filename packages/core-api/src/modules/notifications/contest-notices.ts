@@ -119,8 +119,9 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
   }
 
   /**
-   * Queues one email per recipient. A failure for one person is logged and the rest still go:
-   * the contest has already moved, and the email must not undo it.
+   * Queues one email per recipient, all at once rather than one after another, so a large league
+   * doesn't hold the request that opened the contest. A failure for one person is logged and the
+   * rest still go: the contest has already moved, and the email must not undo it.
    */
   private async sendEach(
     templateKey: EmailTemplateKey,
@@ -129,7 +130,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     recipients: User[],
     send: (user: User) => Promise<unknown>,
   ): Promise<void> {
-    for (const user of recipients) {
+    await Promise.all(recipients.map(async (user) => {
       try {
         await send(user);
       } catch (error) {
@@ -138,7 +139,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
           data: { templateKey, contestId: contest.id, leagueId: league.id, userId: user.id, error: error instanceof Error ? error.message : String(error) },
         }, 'Failed to queue a contest email');
       }
-    }
+    }));
   }
 
   private skipped(action: string, contest: Contest, message: string): void {

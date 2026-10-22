@@ -52,7 +52,6 @@ export function createContestManagementService(
       valuations: new PrismaSportEventParticipantValuationRepository(prisma),
       matches: new PrismaSportEventMatchRepository(prisma),
     }),
-    undefined,
     contestOpened,
   );
 }
