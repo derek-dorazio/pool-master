@@ -317,6 +317,9 @@ SES 4 and 5, then slices 2 to 6 here.
    to the shared package so the emails say the same thing. 2b: D2 for survivor (live entries
    only), random draw (members with no entry) and squares (members with no box), and the
    draft's progress in the reminder ("4 of 6 picked"; slice 1 says only that a draft is saved).
+   2c (#867, Derek 2026-10-22): an entry receipt (D3) for every entry type, to every squad
+   owner, each showing that entry's content: pick'em, bracket, survivor, random draw (at the
+   draw) and squares.
 3. **Live standings.** The standings buffer in `EMAIL_CONFIG`, E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,
    with the top 10 and the reader's entries.
 4. **Final results.** F1 with F3 folded in, F2.
