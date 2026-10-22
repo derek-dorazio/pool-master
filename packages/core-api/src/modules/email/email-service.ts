@@ -174,7 +174,8 @@ export class EmailService {
       this.options.logger?.info({ action: 'email.send.queued', data: logRefs(refs) }, 'Queued email');
       this.options.onQueued?.();
     } else {
-      this.options.logger?.info({ action: 'email.send.duplicate', data: logRefs(refs) }, 'Email already recorded; not queued again');
+      // Debug: a scheduler sweep records a due email again on every pass until its time is past.
+      this.options.logger?.debug({ action: 'email.send.duplicate', data: logRefs(refs) }, 'Email already recorded; not queued again');
     }
     return message;
   }

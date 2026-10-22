@@ -194,10 +194,12 @@ export class EntryReminders implements DueNotifications {
         },
       });
     }
-    this.deps.logger?.info({
-      action: 'email.entryReminders.queued',
+    // Debug: the reminder stays due for its grace hour, so every sweep in it gets here; each email
+    // newly queued is logged once, at info, as email.send.queued.
+    this.deps.logger?.debug({
+      action: 'email.entryReminders.due',
       data: { contestId: contest.id, leagueId: league.id, sportEventId: sportEvent.id, hours: due.hours, recipients: recipients.length },
-    }, 'Queued entry reminders');
+    }, 'Entry reminder due; recorded for each recipient');
   }
 
   /**

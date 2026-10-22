@@ -311,7 +311,8 @@ SES 4 and 5, then slices 2 to 6 here.
    and unsubscribe come from #844. The standings buffer setting arrives with slice 3, which first
    reads it.
 2. **Contest lifecycle.** D1 contest open, D2 for survivor (live entries only), random draw (members
-   with no entry) and squares (members with no box), the "no reminder within 6 hours of D1" rule,
+   with no entry) and squares (members with no box), the "no reminder within 6 hours of D1" rule, the draft's progress in the reminder ("4 of 6 picked";
+   slice 1 says only that a draft is saved),
    E1 upgraded (all members, "good luck", event and rules summary instead of the entry list,
    leaderboard link), D3 to every owner.
 3. **Live standings.** The standings buffer in `EMAIL_CONFIG`, E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,

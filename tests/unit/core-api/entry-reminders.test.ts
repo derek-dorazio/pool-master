@@ -56,11 +56,13 @@ describe('EntryReminders.queueDue', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
   let matches: SportEventMatch[];
+  let logger: ReturnType<typeof fakeLogger>;
 
   beforeEach(() => {
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
     matches = [];
+    logger = fakeLogger();
   });
 
   function reminders(config = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' })): EntryReminders {
@@ -69,6 +71,7 @@ describe('EntryReminders.queueDue', () => {
       providerName: 'smtp',
       readConfig: () => config,
       senderAddress: 'noreply@poolmaster.test',
+      logger,
     });
     return new EntryReminders({
       contests: world.contestRepo(),
@@ -83,7 +86,7 @@ describe('EntryReminders.queueDue', () => {
       email,
       readConfig: () => config,
       appBaseUrl: 'https://app.example.test/',
-      logger: fakeLogger(),
+      logger,
     });
   }
 
@@ -148,6 +151,23 @@ describe('EntryReminders.queueDue', () => {
     expect(outbox.rows.map((row) => row.idempotencyKey)).toEqual(
       [48, 24, 3].map((hours) => `CONTEST_ENTRY_REMINDER:${[...world.contests.keys()][0]}:${event.id}:${String(hours)}h:${nora.user.id}`),
     );
+  });
+
+  it('logs at info only the sweep that queues a reminder, not the later sweeps in its grace hour', async () => {
+    const league = world.addLeague();
+    const event = world.addSportEvent({ startDate: CLOSES_AT });
+    world.addContest(league.id, { sportEventIds: [event.id] });
+    member(league.id, 'Nora');
+    member(league.id, 'Dana');
+    const service = reminders();
+
+    await service.queueDue(before(CLOSES_AT, 48, 1));
+    expect(logger.info).toHaveBeenCalledTimes(2);
+    logger.info.mockClear();
+    await service.queueDue(before(CLOSES_AT, 48, 6));
+
+    expect(logger.info).not.toHaveBeenCalled();
+    expect(outbox.rows).toHaveLength(2);
   });
 
   it('sends one email to a person who owns two squads, and none when either squad submitted', async () => {
