@@ -16,6 +16,11 @@ export const StringRecordSchema = z.record(z.string()).describe('String-keyed re
  * account (#500). Use it for every email a request carries.
  */
 export const EmailInputSchema = z.string().trim().toLowerCase().email();
+/**
+ * A new password a person chooses: 8 to 128 characters. One rule for register, change password
+ * and the reset link, so the three cannot drift apart (#847).
+ */
+export const NewPasswordInputSchema = z.string().min(8).max(128);
 
 // --- Success Envelope ---
 

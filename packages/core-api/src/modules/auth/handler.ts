@@ -6,6 +6,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { sendError } from '../../core/error-handler';
 import type { AuthService } from './auth-service';
 import { AuthError } from './auth-service';
+import { PasswordResetError, type PasswordResetService } from './password-reset-service';
+import type { PasswordResetConfirmRequest, PasswordResetRequest } from '@poolmaster/shared/dto';
 import {
   createClearedSessionCookieHeaders,
   createSessionCookieHeaders,
@@ -20,12 +22,17 @@ import {
   toTokenRefreshResponse,
 } from '../../mappers';
 
-export function createAuthHandlers(authService: AuthService) {
+export function createAuthHandlers(
+  authService: AuthService,
+  passwordResetService: PasswordResetService,
+) {
   return {
     register: handleRegister,
     login: handleLogin,
     refresh: handleRefresh,
     logout: handleLogout,
+    requestPasswordReset: handleRequestPasswordReset,
+    confirmPasswordReset: handleConfirmPasswordReset,
   };
 
   async function handleRegister(
@@ -228,6 +235,59 @@ export function createAuthHandlers(authService: AuthService) {
     }, 'Auth logout response ready');
     reply.header('Set-Cookie', createClearedSessionCookieHeaders());
     return reply.send({ success: true });
+  }
+
+  /**
+   * Answers 202 BEFORE the account lookup, token write and email, so a matching account is not
+   * measurably slower than none. Only the per-address limit can refuse, and it says nothing about
+   * any account.
+   */
+  async function handleRequestPasswordReset(
+    request: FastifyRequest<{ Body: PasswordResetRequest }>,
+    reply: FastifyReply,
+  ): Promise<FastifyReply> {
+    const logger = request.contextLogger ?? request.log;
+    try {
+      passwordResetService.assertRequestAllowed(request.ip);
+    } catch (err) {
+      if (err instanceof PasswordResetError) {
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      throw err;
+    }
+    logger.debug({
+      action: 'auth.passwordReset.request',
+      data: { identifierType: inferIdentifierType(request.body.identifier) },
+    }, 'Handling password reset request');
+    void reply.status(202).send({ success: true });
+    await passwordResetService.requestReset(request.body.identifier);
+    return reply;
+  }
+
+  async function handleConfirmPasswordReset(
+    request: FastifyRequest<{ Body: PasswordResetConfirmRequest }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    try {
+      passwordResetService.assertConfirmAllowed(request.ip);
+      const { token, newPassword, confirmNewPassword } = request.body;
+      await passwordResetService.confirmReset(token, newPassword, confirmNewPassword);
+      logger.info({
+        action: 'auth.passwordReset.confirmed',
+      }, 'Password reset with a reset link');
+      return reply.send({ success: true });
+    } catch (err) {
+      if (err instanceof PasswordResetError) {
+        logger.warn({
+          action: 'auth.passwordReset.rejected',
+          errorCode: err.code,
+          statusCode: err.statusCode,
+        }, 'Password reset confirm rejected');
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      throw err;
+    }
   }
 }
 

@@ -64,6 +64,10 @@ const PUBLIC_ROUTES = new Set([
   'POST /api/v1/auth/login',
   'POST /api/v1/auth/refresh',
   'POST /api/v1/auth/logout',
+  // #847 — password recovery is for someone who cannot sign in. The request answers the same
+  // whether or not an account matches, and the confirm's token is its whole authority.
+  'POST /api/v1/auth/password-reset/request',
+  'POST /api/v1/auth/password-reset/confirm',
   'POST /api/v1/client-logs',
   // #217 — registering against a squad-owner invitation. Public by necessity: the caller has no
   // account yet, which is the entire reason this route exists alongside

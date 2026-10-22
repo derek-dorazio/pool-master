@@ -30,7 +30,9 @@ holds:
 
 - `enabled`: whether any system email is sent. It defaults to off when `POOLMASTER_ENVIRONMENT=qa` (until
   real delivery is set up, #120) and on everywhere else.
-- `templates`: one switch per system email, all on by default.
+- `templates`: one switch per system email, all on by default. Account emails (the password reset
+  email) have no switch: switching one off would silently break password recovery. They still
+  obey `enabled`.
 - `replyTo`: the Reply-To address, or none (the default), so replies go to the sender.
 
 An email that is switched off is skipped, and the send still reports success, so invite by
@@ -56,7 +58,8 @@ subject and plain-text body. `tests/functional/email.functional.ts` asserts that
 each of the four system emails (league invite, league welcome, entry
 confirmation, contest started) is sent once, to the right person, with the
 right subject and link; the functional server runs with a fixed
-`APP_BASE_URL` so links are exact. Functional tests read the sink through
+`APP_BASE_URL` so links are exact. `tests/functional/password-reset.functional.ts`
+reads the reset link out of the reset email and uses it. Functional tests read the sink through
 `tests/functional/mail.ts`. `tests/integration/core-api/email-settings.integration.ts`
 covers switching email, and one email, off.
 
@@ -99,6 +102,11 @@ sent when a member submits an entry (#481), not when its picks or tiebreaker
 are saved. A repeat submit of an already submitted entry sends nothing. The
 submitted entry is not rolled back when provider submission fails; PoolMaster
 logs the template, league, contest, and entry identifiers for follow-up.
+
+Password reset emails (#847) are sent at once, inside the request that asked for them, never
+queued, because the link expires 10 minutes after it is issued. The request route has already
+answered 202 by then, the same answer it gives when no account matches, so a provider failure is
+only logged (user id, never the address, token or link) and the person asks again.
 
 Contest started summary emails are sent when a sport event moves to
 `IN_PROGRESS` (a root admin's transition, or the lifecycle scheduler) and first

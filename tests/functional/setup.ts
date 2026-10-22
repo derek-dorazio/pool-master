@@ -509,6 +509,13 @@ export async function cleanupFunctionalData(): Promise<void> {
         },
       },
     });
+    await database.passwordResetToken.deleteMany({
+      where: {
+        userId: {
+          in: userIds,
+        },
+      },
+    });
   }
   await database.platformRuntimeConfig.deleteMany();
   if (userIds.length > 0) {

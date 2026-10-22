@@ -82,6 +82,23 @@ export async function revokeUserSessions(
 }
 
 /**
+ * Cancels every open password reset link for the user (#847): a newer link, a reset or any
+ * password change makes the old ones dead. `now` is the caller's clock, so a reset and its
+ * cancels carry one instant.
+ */
+export async function cancelOpenPasswordResetTokens(
+  prisma: PrismaLike,
+  userId: string,
+  now: Date,
+): Promise<number> {
+  const result = await prisma.passwordResetToken.updateMany({
+    where: { userId, usedAt: null, cancelledAt: null },
+    data: { cancelledAt: now },
+  });
+  return result.count;
+}
+
+/**
  * Deletes the user and everything that references them, in one transaction.
  *
  * Takes a transaction client because partial completion would leave orphan rows pointing at
@@ -91,6 +108,7 @@ export async function revokeUserSessions(
  */
 export async function deleteUserCascade(tx: Prisma.TransactionClient, userId: string): Promise<void> {
   await tx.refreshToken.deleteMany({ where: { userId } });
+  await tx.passwordResetToken.deleteMany({ where: { userId } });
   await tx.leagueInvitation.deleteMany({
     where: { OR: [{ invitedBy: userId }, { acceptedBy: userId }] },
   });
