@@ -18,7 +18,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
-import { EmailInputSchema } from './common.dto';
+import { EmailInputSchema, NewPasswordInputSchema } from './common.dto';
 
 export const UserDtoSchema = z.object({
   id: z.string().describe('Stable user identifier.'),
@@ -131,16 +131,8 @@ export const UserPasswordChangeRequestSchema = z.object({
     .min(1)
     .max(128)
     .describe('Existing password, which must match before the password can be changed.'),
-  newPassword: z
-    .string()
-    .min(8)
-    .max(128)
-    .describe('New password to persist for future sign-in attempts.'),
-  confirmNewPassword: z
-    .string()
-    .min(8)
-    .max(128)
-    .describe('Repeat of the new password to guard against confirmation mistakes.'),
+  newPassword: NewPasswordInputSchema.describe('New password to persist for future sign-in attempts.'),
+  confirmNewPassword: NewPasswordInputSchema.describe('Repeat of the new password to guard against confirmation mistakes.'),
 }).describe('Password-change payload. Self only, because it requires the current password (A6).');
 export type UserPasswordChangeRequest = z.infer<typeof UserPasswordChangeRequestSchema>;
 

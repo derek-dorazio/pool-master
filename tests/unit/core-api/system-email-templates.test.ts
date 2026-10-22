@@ -1,5 +1,6 @@
 import { EmailTemplateKeySchema } from '@poolmaster/shared/dto';
 import {
+  AccountEmailTemplateKey,
   EMAIL_SETTINGS,
   EMAIL_TEMPLATES,
   EmailCategory,
@@ -111,13 +112,16 @@ describe('pool-master-98i system email templates', () => {
 });
 
 describe('the email template registry', () => {
-  it('gives every template key a category, with invitations and welcomes ones a member can\'t turn off', () => {
-    expect(Object.keys(EMAIL_TEMPLATES).sort()).toEqual([...EmailTemplateKeySchema.options].sort());
+  it('gives every template key a category, with invitations, welcomes and password resets ones a member can\'t turn off', () => {
+    expect(Object.keys(EMAIL_TEMPLATES).sort()).toEqual(
+      [...EmailTemplateKeySchema.options, ...Object.values(AccountEmailTemplateKey)].sort(),
+    );
     expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.category]))).toEqual({
       LEAGUE_MEMBER_INVITE: EmailCategory.MEMBERSHIP,
       LEAGUE_JOIN_SUCCESS: EmailCategory.MEMBERSHIP,
       CONTEST_ENTRY_COMPLETED: EmailCategory.RECEIPTS,
       CONTEST_STARTED_SUMMARY: EmailCategory.LIVE_STANDINGS,
+      PASSWORD_RESET: EmailCategory.ACCOUNT,
     });
   });
 

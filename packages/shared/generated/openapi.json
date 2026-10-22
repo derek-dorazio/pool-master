@@ -743,6 +743,56 @@
         "additionalProperties": false,
         "description": "Login payload for an existing username-or-email/password account."
       },
+      "PasswordResetRequest": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Email or username of the account to reset, matched the same way as sign in.",
+            "x-transform": [
+              "trim",
+              "toLowerCase"
+            ]
+          }
+        },
+        "required": [
+          "identifier"
+        ],
+        "additionalProperties": false,
+        "description": "Asks for a password reset link. The answer is the same whether or not an account matches."
+      },
+      "PasswordResetConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "The one-time token from the reset link. It works once and expires 10 minutes after it was sent."
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "description": "The new password for the account."
+          },
+          "confirmNewPassword": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "description": "Repeat of the new password to guard against typing mistakes."
+          }
+        },
+        "required": [
+          "token",
+          "newPassword",
+          "confirmNewPassword"
+        ],
+        "additionalProperties": false,
+        "description": "Sets a new password with a reset link. Every session of the account is signed out."
+      },
       "AuthResponse": {
         "type": "object",
         "properties": {
@@ -35970,6 +36020,110 @@
             }
           },
           "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password-reset/request": {
+      "post": {
+        "operationId": "requestPasswordReset",
+        "summary": "Email a password reset link",
+        "tags": [
+          "Auth"
+        ],
+        "description": "Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after 10 minutes, and a newer request cancels it. The answer is 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Minimal success response envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password-reset/confirm": {
+      "post": {
+        "operationId": "confirmPasswordReset",
+        "summary": "Set a new password with a reset link",
+        "tags": [
+          "Auth"
+        ],
+        "description": "Public; the token from the reset link is the whole authority. Sets the new password, cancels the account's other reset links and signs the account out on every device; the caller then signs in with the new password. 400 PASSWORD_RESET_LINK_INVALID for a link that is unknown, used, cancelled or expired (one code for all four), 400 PASSWORD_CONFIRMATION_MISMATCH when the two passwords differ, 429 PASSWORD_RESET_RATE_LIMITED when this address has tried too often in the last minute.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetConfirmRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Minimal success response envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

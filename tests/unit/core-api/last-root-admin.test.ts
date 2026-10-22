@@ -62,6 +62,7 @@ function createUserWorld(seed: User[]) {
       updateMany: async () => ({ count: 0 }),
       deleteMany: async () => ({ count: 0 }),
     },
+    passwordResetToken: { deleteMany: async () => ({ count: 0 }) },
     leagueInvitation: { deleteMany: async () => ({ count: 0 }) },
   };
   const prisma = {

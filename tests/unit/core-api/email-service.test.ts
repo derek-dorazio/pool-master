@@ -164,6 +164,22 @@ describe('email service: EMAIL_CONFIG switches', () => {
     expect(transport.sent.map((message) => message.metadata.templateKey)).toEqual(['LEAGUE_JOIN_SUCCESS']);
   });
 
+  it('sends a password reset from the app address even with every template switch off, since it has no switch', async () => {
+    const transport = recordingTransport();
+    const config = emailConfig();
+    const allOff = Object.fromEntries(Object.keys(config.templates).map((key) => [key, false])) as typeof config.templates;
+    const email = service(transport, () => ({ ...config, templates: allOff }));
+
+    const result = await email.send('PASSWORD_RESET', {
+      to: { email: 'member@gmail.com' },
+      data: { firstName: 'Morgan', username: 'morgan', resetUrl: 'https://qa.example.com/reset-password#token=abc', expiresInMinutes: 10 },
+    });
+
+    expect(result.skipped).toBeUndefined();
+    expect(transport.sent.map((message) => message.metadata.templateKey)).toEqual(['PASSWORD_RESET']);
+    expect(transport.sent[0].from).toEqual({ name: 'Prime Time Commissioner', address: 'noreply@qa.example.com' });
+  });
+
   it('reads the setting on every send, so a change applies to the next email without a restart', async () => {
     const transport = recordingTransport();
     let config = emailConfig({ enabled: false });

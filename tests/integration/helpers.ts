@@ -167,7 +167,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   });
 
   // Route modules
-  testApp.register(authModule, { prefix: '/api/v1/auth' });
+  testApp.register(authModule, { prefix: '/api/v1/auth', email });
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues', email });
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations', email });
@@ -678,6 +678,9 @@ export async function cleanupTestData(): Promise<void> {
   await appSettings?.refresh();
   if (userIds.length > 0) {
     await prisma.refreshToken.deleteMany({
+      where: { userId: { in: userIds } },
+    }).catch(() => {});
+    await prisma.passwordResetToken.deleteMany({
       where: { userId: { in: userIds } },
     }).catch(() => {});
     await prisma.user.deleteMany({

@@ -46,6 +46,13 @@ describe('shared user delete cascade (#202)', () => {
         expiresAt: new Date(Date.now() + 60_000),
       },
     });
+    await prisma.passwordResetToken.create({
+      data: {
+        tokenHash: `${user.id.replaceAll('-', '')}${'0'.repeat(32)}`,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    });
     const league = await prisma.league.create({
       data: {
         leagueCode: `${LEAGUE_CODE_PREFIX}1`,
@@ -68,6 +75,7 @@ describe('shared user delete cascade (#202)', () => {
 
     await expect(prisma.user.findUnique({ where: { id: user.id } })).resolves.toBeNull();
     await expect(prisma.refreshToken.count({ where: { userId: user.id } })).resolves.toBe(0);
+    await expect(prisma.passwordResetToken.count({ where: { userId: user.id } })).resolves.toBe(0);
     await expect(
       prisma.leagueInvitation.count({ where: { invitedBy: user.id } }),
     ).resolves.toBe(0);

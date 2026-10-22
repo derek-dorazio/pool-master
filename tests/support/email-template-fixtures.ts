@@ -52,4 +52,10 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
       { entryName: 'Entry 2', teamName: 'Casey\'s Crew' },
     ],
   },
+  PASSWORD_RESET: {
+    firstName: 'Morgan',
+    username: 'morgan',
+    resetUrl: 'https://app.example.com/reset-password#token=example-token',
+    expiresInMinutes: 10,
+  },
 };

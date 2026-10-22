@@ -425,6 +425,7 @@ are wider — see the league-scoped row.
 | Update profile, username, preferences | `self`, `rootAdmin` | A6 · **one operation, either caller** — `modules/users/user-profile-service.ts`; the authority rule is `requireWritableUser`, and a caller who is neither gets 403 `USER_WRITE_FORBIDDEN` |
 | Change own password | `self` | A6 · requires the current password |
 | Reset another's password | `rootAdmin` | A6 · no current password; the subject differs, not just the precondition |
+| Reset own password with an emailed link | `public` | **The one unauthenticated user write** (#847). The request route (`POST /auth/password-reset/request`) answers 202 whether or not an account matches; the confirm route writes the password of whichever account the token was issued to, with no session. The token is its whole authority: random 256-bit, stored only as SHA-256, single use, 10 minutes, cancelled by a newer link or any password change. A confirm signs the account out everywhere |
 | Disable *(set `isActive = false`)* | `self`, `rootAdmin` | A6 · self-inactivate and admin-disable are **one operation** |
 | Enable | `self`, `rootAdmin` | A6 |
 | Delete | `self`, `rootAdmin` | A6 |
