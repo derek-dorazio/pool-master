@@ -118,9 +118,8 @@ Questions:
 - **Q2.1** Decided (Derek, 2026-10-21): every league gets a league cup each season, the one
   leaderboard across every contest in every sport. It is the league's championship for that
   year and carries the league's name ("2026 Lakeside Pool League Cup").
-- **Q2.5** A crowned cup from a past season: show the league's name then, or now?
-  Recommendation: now. The league is the same tenant under a new name, and keeping the old name
-  would need a copy of it frozen on each cup for a rare case.
+- **Q2.5** Decided (Derek, 2026-10-22): a crowned cup from a past season shows the league's
+  current name. Nothing about the name is frozen on the cup.
 - **Q2.2** Decided (Derek, 2026-10-21): the cups are the league cup across everything and
   one cup per sports league (the PGA Tour Cup). No combined cup per sport (men's and women's golf
   together) and no hand-picked custom cups. Sports league cups appear on their own, like the
