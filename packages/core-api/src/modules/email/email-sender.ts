@@ -8,7 +8,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import type { EmailMessageRepository } from '@poolmaster/shared/db';
-import type { EmailMessage } from '@poolmaster/shared/domain';
+import type { EmailMessage, EmailTemplateKey } from '@poolmaster/shared/domain';
 import { MailDeliveryThrottledError, type MailDeliveryProvider } from './mail-delivery';
 import { EMAIL_TEMPLATES } from './system-email-templates';
 
@@ -104,7 +104,12 @@ export class EmailSender {
     for (;;) {
       const rate = this.options.readConfig().sendRatePerSecond;
       const startedAt = this.now().getTime();
-      const batch = await this.options.messages.claimDue(new Date(startedAt), rate, new Date(startedAt + CLAIM_MS));
+      const batch = await this.options.messages.claimDue({
+        now: new Date(startedAt),
+        limit: rate,
+        claimUntil: new Date(startedAt + CLAIM_MS),
+        firstTemplateKeys: TIME_CRITICAL_TEMPLATE_KEYS,
+      });
       await Promise.all(batch.map((message) => this.sendOne(message)));
       if (batch.length < rate) return;
       const elapsed = this.now().getTime() - startedAt;
@@ -115,6 +120,10 @@ export class EmailSender {
   private async sendOne(message: EmailMessage): Promise<void> {
     const refs = logRefs(message);
     try {
+      if (this.isPastSendBy(message, this.now().getTime())) {
+        await this.giveUpLate(message);
+        return;
+      }
       if (message.attempts > MAX_ATTEMPTS) {
         // Only a claim that lapsed again and again gets here: each task holding it stopped mid-send.
         await this.options.messages.markFailed(message.id, {
@@ -160,18 +169,44 @@ export class EmailSender {
     }
   }
 
+  /** Whether `at` is past the time the email may still go out (its template's send-by window). */
+  private isPastSendBy(message: EmailMessage, at: number): boolean {
+    const sendWithinMs = EMAIL_TEMPLATES[message.templateKey].sendWithinMs;
+    return sendWithinMs !== null && at > message.createdAt.getTime() + sendWithinMs;
+  }
+
+  /** FAILED, neither sent nor retried, once its send-by window has passed. */
+  private async giveUpLate(message: EmailMessage): Promise<void> {
+    await this.options.messages.markFailed(message.id, {
+      error: 'Not sent within its send-by window',
+      clearContent: carriesSecret(message),
+    });
+    this.options.logger?.warn({
+      action: 'email.sender.expired',
+      data: { ...logRefs(message), attempts: message.attempts },
+    }, 'Gave up on an email past its send-by window');
+  }
+
   private async recordFailure(message: EmailMessage, err: unknown): Promise<void> {
     const refs = logRefs(message);
     const error = describeError(err);
     const now = this.now().getTime();
     try {
       if (err instanceof MailDeliveryThrottledError) {
+        if (this.isPastSendBy(message, now + THROTTLED_DELAY_MS)) {
+          await this.giveUpLate(message);
+          return;
+        }
         await this.options.messages.markThrottled(message.id, new Date(now + THROTTLED_DELAY_MS));
         this.options.logger?.warn({ action: 'email.sender.throttled', data: refs }, 'Email transport throttled; trying again shortly');
         return;
       }
       if (message.attempts <= RETRY_DELAYS_MS.length) {
         const retryDelay = RETRY_DELAYS_MS[message.attempts - 1];
+        if (this.isPastSendBy(message, now + retryDelay)) {
+          await this.giveUpLate(message);
+          return;
+        }
         await this.options.messages.markRetry(message.id, { nextAttemptAt: new Date(now + retryDelay), error });
         this.options.logger?.warn({
           action: 'email.sender.retry',
@@ -205,6 +240,10 @@ export class EmailSender {
 }
 
 /** Ids only: never the address or the content. */
+/** Templates with a send-by window, claimed ahead of the rest so a backlog never holds them. */
+const TIME_CRITICAL_TEMPLATE_KEYS: readonly EmailTemplateKey[] = (Object.keys(EMAIL_TEMPLATES) as EmailTemplateKey[])
+  .filter((templateKey) => EMAIL_TEMPLATES[templateKey].sendWithinMs !== null);
+
 /** An email whose content is a secret (a reset link) keeps no copy once it is sent or given up on. */
 function carriesSecret(message: EmailMessage): boolean {
   return !EMAIL_TEMPLATES[message.templateKey].keepsContent;

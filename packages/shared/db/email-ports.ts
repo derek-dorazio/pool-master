@@ -43,10 +43,17 @@ export interface EmailMessageRepository {
   record(input: EmailMessageRecord): Promise<EmailMessageRecordResult>;
   /**
    * Claims up to `limit` due emails, oldest due first: queued ones whose time has come, and
-   * claimed ones whose claim lapsed (a sender stopped mid-send). Each becomes SENDING with one
-   * more attempt and is held until `claimUntil`. Rows another sender holds are passed over.
+   * claimed ones whose claim lapsed (a sender stopped mid-send). Emails of `firstTemplateKeys`
+   * come before the rest, so a time-critical email never waits behind a backlog. Each becomes
+   * SENDING with one more attempt and is held until `claimUntil`. Rows another sender holds are
+   * passed over.
    */
-  claimDue(now: Date, limit: number, claimUntil: Date): Promise<EmailMessage[]>;
+  claimDue(claim: {
+    now: Date;
+    limit: number;
+    claimUntil: Date;
+    firstTemplateKeys: readonly EmailTemplateKey[];
+  }): Promise<EmailMessage[]>;
   /** SENT. `clearContent` also clears the subject and bodies at once (an email carrying a secret). */
   markSent(id: string, sent: { providerMessageId?: string; sentAt: Date; clearContent: boolean }): Promise<void>;
   /** Back to QUEUED, due at `nextAttemptAt`, keeping the error of the try that failed. */

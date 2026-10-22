@@ -46,6 +46,15 @@ function queued(index: number, overrides: Partial<QueuedRecord> = {}): QueuedRec
   };
 }
 
+/** A password reset: a template with a 10-minute send-by window and content it doesn't keep. */
+const RESET = {
+  templateKey: 'PASSWORD_RESET' as const,
+  leagueId: undefined,
+  idempotencyKey: 'PASSWORD_RESET:reset-1:user-1',
+  fromName: 'Prime Time Commissioner',
+  fromAddress: 'noreply@qa.example.com',
+};
+
 function recordingTransport(fail?: (message: MailDeliveryMessage) => Error | undefined) {
   const sent: MailDeliveryMessage[] = [];
   const transport: MailDeliveryProvider = {
@@ -210,11 +219,88 @@ describe('email sender', () => {
     expect(outbox.rows[0]).toMatchObject({ status: 'QUEUED', attempts: 0, nextAttemptAt: new Date(START + 10_000) });
   });
 
+  it('gives up on a password reset whose next retry would land after its 10-minute link expires, clearing its content', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    await outbox.record(queued(1, RESET));
+    const { transport, sent } = recordingTransport(() => new MailDeliveryError('SES email submission failed', 'ses', new Error('Connection reset')));
+    const logger = fakeLogger();
+    const emailSender = sender({ outbox, transport, time, logger });
+
+    const dueTimes: Array<number | undefined> = [];
+    for (const wait of [0, MINUTE, 5 * MINUTE]) {
+      time.advance(wait);
+      await emailSender.drain();
+      dueTimes.push(outbox.rows[0].nextAttemptAt?.getTime());
+    }
+
+    // Tried at +0, +1 and +6 minutes; the next retry would be at +36, long after the link died.
+    expect(sent).toHaveLength(0);
+    expect(dueTimes).toEqual([START + MINUTE, START + 6 * MINUTE, undefined]);
+    expect(outbox.rows[0]).toMatchObject({
+      status: 'FAILED',
+      attempts: 3,
+      lastError: 'Not sent within its send-by window',
+      subject: undefined,
+      textBody: undefined,
+      htmlBody: undefined,
+    });
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'email.sender.expired' }),
+      expect.any(String),
+    );
+  });
+
+  it('gives up on a password reset still throttled when its 10-minute window ends, instead of retrying without limit', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    await outbox.record(queued(1, RESET));
+    const { transport, sent } = recordingTransport(() => new MailDeliveryThrottledError('ses'));
+    const emailSender = sender({ outbox, transport, time });
+
+    for (let tick = 0; tick < 70 && outbox.rows[0].status === 'QUEUED'; tick += 1) {
+      await emailSender.drain();
+      time.advance(10_000);
+    }
+
+    expect(sent).toHaveLength(0);
+    expect(outbox.rows[0]).toMatchObject({ status: 'FAILED', textBody: undefined });
+    expect(outbox.rows[0].updatedAt.getTime()).toBeLessThanOrEqual(START + 10 * MINUTE);
+  });
+
+  it('does not send a password reset claimed after its window, such as one whose claims lapsed', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    await outbox.record(queued(1, RESET));
+    await outbox.claimDue({ now: new Date(START), limit: 10, claimUntil: new Date(START + 11 * MINUTE), firstTemplateKeys: [] });
+    const { transport, sent } = recordingTransport();
+
+    time.advance(11 * MINUTE);
+    await sender({ outbox, transport, time }).drain();
+
+    expect(sent).toHaveLength(0);
+    expect(outbox.rows[0]).toMatchObject({ status: 'FAILED', lastError: 'Not sent within its send-by window' });
+  });
+
+  it('claims a password reset ahead of a backlog of emails queued before it', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    for (let index = 1; index <= 15; index += 1) await outbox.record(queued(index));
+    await outbox.record(queued(99, { ...RESET, dueAt: new Date(START + 1) }));
+    time.advance(1);
+    const { transport, sent } = recordingTransport();
+
+    await sender({ outbox, transport, time, config: { sendRatePerSecond: 5 } }).drain();
+
+    expect(sent[0]?.metadata.templateKey).toBe('PASSWORD_RESET');
+    expect(sent).toHaveLength(16);
+  });
+
   it('sends an email whose claim lapsed because the task holding it stopped mid-send', async () => {
     const time = clock();
     const outbox = inMemoryEmailMessages(time.now);
     await outbox.record(queued(1));
-    await outbox.claimDue(new Date(START), 10, new Date(START + 5 * MINUTE));
+    await outbox.claimDue({ now: new Date(START), limit: 10, claimUntil: new Date(START + 5 * MINUTE), firstTemplateKeys: [] });
     const { transport, sent } = recordingTransport();
     const emailSender = sender({ outbox, transport, time });
 
@@ -232,7 +318,7 @@ describe('email sender', () => {
     const outbox = inMemoryEmailMessages(time.now);
     await outbox.record(queued(1));
     for (let claim = 0; claim < 4; claim++) {
-      await outbox.claimDue(time.now(), 10, time.now());
+      await outbox.claimDue({ now: time.now(), limit: 10, claimUntil: time.now(), firstTemplateKeys: [] });
     }
     const { transport, sent } = recordingTransport();
 

@@ -1,7 +1,7 @@
 /**
  * Builds the app's email outbox (#844): the email service that records each email and the
- * sender that sends them, over one transport and one table. index.ts starts the sender; the
- * integration app does not, so what its tests send stays queued.
+ * sender that sends them, over one transport and one table. index.ts starts the sender's timer;
+ * the integration app starts none, but a queued email still wakes the sender, so it is sent.
  */
 
 import type { PrismaClient } from '@prisma/client';

@@ -51,11 +51,13 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
       rows.push(message);
       return Promise.resolve({ message: { ...message }, created: true });
     },
-    claimDue(at: Date, limit: number, claimUntil: Date): Promise<EmailMessage[]> {
+    claimDue({ now: at, limit, claimUntil, firstTemplateKeys }): Promise<EmailMessage[]> {
+      const isFirst = (row: EmailMessage) => (firstTemplateKeys.includes(row.templateKey) ? 0 : 1);
       const due = rows
         .filter((row) => (row.status === EmailMessageStatus.QUEUED || row.status === EmailMessageStatus.SENDING)
           && row.nextAttemptAt !== undefined && row.nextAttemptAt <= at)
-        .sort((a, b) => (a.nextAttemptAt?.getTime() ?? 0) - (b.nextAttemptAt?.getTime() ?? 0))
+        .sort((a, b) => isFirst(a) - isFirst(b)
+          || (a.nextAttemptAt?.getTime() ?? 0) - (b.nextAttemptAt?.getTime() ?? 0))
         .slice(0, limit);
       for (const row of due) {
         update(row.id, { status: EmailMessageStatus.SENDING, attempts: row.attempts + 1, nextAttemptAt: claimUntil });

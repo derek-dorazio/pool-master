@@ -101,6 +101,12 @@ export interface EmailTemplateDefinition<Key extends SystemEmailTemplateKey> {
    * moment the email is sent or given up on.
    */
   keepsContent: boolean;
+  /**
+   * How long after it is queued the email may still go out, or null for no limit. Past it the
+   * outbox gives up instead of sending or retrying: a password reset is useless once its link
+   * has expired. An email with a limit is also claimed ahead of the rest.
+   */
+  sendWithinMs: number | null;
   render: TemplateRenderer<Key>;
 }
 
@@ -127,6 +133,12 @@ export interface EmailTemplateScopeByKey {
 type EmailTemplateRegistry = {
   [Key in SystemEmailTemplateKey]: EmailTemplateDefinition<Key>;
 };
+
+/**
+ * How long a password reset link works (#847, Q2.2): short, so a forwarded or leaked link is soon
+ * useless. Its email is never sent after that.
+ */
+export const PASSWORD_RESET_LINK_MINUTES = 10;
 
 const BRAND_NAME = 'Prime Time Commissioner';
 const BRAND_TAGLINE = 'Ultimate Office Pool Manager';
@@ -173,30 +185,35 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     category: EmailCategory.MEMBERSHIP,
     settingsSwitch: true,
     keepsContent: true,
+    sendWithinMs: null,
     render: renderLeagueMemberInviteEmail,
   },
   LEAGUE_JOIN_SUCCESS: {
     category: EmailCategory.MEMBERSHIP,
     settingsSwitch: true,
     keepsContent: true,
+    sendWithinMs: null,
     render: renderLeagueJoinSuccessEmail,
   },
   CONTEST_ENTRY_COMPLETED: {
     category: EmailCategory.RECEIPTS,
     settingsSwitch: true,
     keepsContent: true,
+    sendWithinMs: null,
     render: renderContestEntryCompletedEmail,
   },
   CONTEST_STARTED_SUMMARY: {
     category: EmailCategory.LIVE_STANDINGS,
     settingsSwitch: true,
     keepsContent: true,
+    sendWithinMs: null,
     render: renderContestStartedSummaryEmail,
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
     settingsSwitch: false,
     keepsContent: false,
+    sendWithinMs: PASSWORD_RESET_LINK_MINUTES * 60_000,
     render: renderPasswordResetEmail,
   },
 };

@@ -114,11 +114,29 @@ describe('email outbox: claiming', () => {
     await repository().record(queued({ dueAt: new Date(DUE.getTime() + 2 * MINUTE) }));
     const claimUntil = new Date('2030-01-01T00:00:00.000Z');
 
-    const claimed = await repository().claimDue(new Date(DUE.getTime() + 2 * MINUTE), 2, claimUntil);
+    const claimed = await repository().claimDue({ now: new Date(DUE.getTime() + 2 * MINUTE), limit: 2, claimUntil, firstTemplateKeys: [] });
 
     expect(claimed.map((message) => message.id).sort()).toEqual([earlier.message.id, later.message.id].sort());
     expect(claimed.every((message) => message.status === 'SENDING' && message.attempts === 1)).toBe(true);
     expect(claimed.every((message) => message.nextAttemptAt?.getTime() === claimUntil.getTime())).toBe(true);
+  });
+
+  it('claims emails of the first template keys ahead of earlier-due ones, so a reset never waits behind a backlog', async () => {
+    await repository().record(queued());
+    await repository().record(queued());
+    const reset = await repository().record(queued({
+      templateKey: 'PASSWORD_RESET',
+      dueAt: new Date(DUE.getTime() + MINUTE),
+    }));
+
+    const claimed = await repository().claimDue({
+      now: new Date(DUE.getTime() + MINUTE),
+      limit: 1,
+      claimUntil: new Date(DUE.getTime() + 6 * MINUTE),
+      firstTemplateKeys: ['PASSWORD_RESET'],
+    });
+
+    expect(claimed.map((message) => message.id)).toEqual([reset.message.id]);
   });
 
   it('passes over skipped and sent emails and ones not yet due', async () => {
@@ -127,7 +145,7 @@ describe('email outbox: claiming', () => {
     await repository().markSent(sent.id, { providerMessageId: 'ses-1', sentAt: DUE, clearContent: false });
     await repository().record(queued({ dueAt: new Date(DUE.getTime() + MINUTE) }));
 
-    expect(await repository().claimDue(DUE, 10, new Date(DUE.getTime() + 5 * MINUTE))).toEqual([]);
+    expect(await repository().claimDue({ now: DUE, limit: 10, claimUntil: new Date(DUE.getTime() + 5 * MINUTE), firstTemplateKeys: [] })).toEqual([]);
   });
 
   it('never hands the same email to two senders claiming at once', async () => {
@@ -137,8 +155,8 @@ describe('email outbox: claiming', () => {
     const claimUntil = new Date(DUE.getTime() + 5 * MINUTE);
 
     const [first, second] = await Promise.all([
-      repository().claimDue(DUE, 4, claimUntil),
-      repository().claimDue(DUE, 4, claimUntil),
+      repository().claimDue({ now: DUE, limit: 4, claimUntil, firstTemplateKeys: [] }),
+      repository().claimDue({ now: DUE, limit: 4, claimUntil, firstTemplateKeys: [] }),
     ]);
 
     const ids = [...first, ...second].map((message) => message.id);
@@ -149,10 +167,10 @@ describe('email outbox: claiming', () => {
   it('claims an email again once its claim lapses, and not before', async () => {
     const { message } = await repository().record(queued());
     const lapsesAt = new Date(DUE.getTime() + 5 * MINUTE);
-    await repository().claimDue(DUE, 10, lapsesAt);
+    await repository().claimDue({ now: DUE, limit: 10, claimUntil: lapsesAt, firstTemplateKeys: [] });
 
-    expect(await repository().claimDue(new Date(lapsesAt.getTime() - 1), 10, lapsesAt)).toEqual([]);
-    const reclaimed = await repository().claimDue(lapsesAt, 10, new Date(lapsesAt.getTime() + 5 * MINUTE));
+    expect(await repository().claimDue({ now: new Date(lapsesAt.getTime() - 1), limit: 10, claimUntil: lapsesAt, firstTemplateKeys: [] })).toEqual([]);
+    const reclaimed = await repository().claimDue({ now: lapsesAt, limit: 10, claimUntil: new Date(lapsesAt.getTime() + 5 * MINUTE), firstTemplateKeys: [] });
     expect(reclaimed.map((row) => [row.id, row.attempts])).toEqual([[message.id, 2]]);
   });
 });
@@ -160,7 +178,7 @@ describe('email outbox: claiming', () => {
 describe('email outbox: outcomes', () => {
   it('records a sent email with the transport\'s id and when, and no due time', async () => {
     const { message } = await repository().record(queued());
-    await repository().claimDue(DUE, 10, new Date(DUE.getTime() + 5 * MINUTE));
+    await repository().claimDue({ now: DUE, limit: 10, claimUntil: new Date(DUE.getTime() + 5 * MINUTE), firstTemplateKeys: [] });
 
     await repository().markSent(message.id, { providerMessageId: 'ses-message-1', sentAt: new Date(DUE.getTime() + 1000), clearContent: false });
 
@@ -173,7 +191,7 @@ describe('email outbox: outcomes', () => {
     const sent = await repository().record(queued());
     const failed = await repository().record(queued());
     const kept = await repository().record(queued());
-    await repository().claimDue(DUE, 10, new Date(DUE.getTime() + 5 * MINUTE));
+    await repository().claimDue({ now: DUE, limit: 10, claimUntil: new Date(DUE.getTime() + 5 * MINUTE), firstTemplateKeys: [] });
 
     await repository().markSent(sent.message.id, { sentAt: DUE, clearContent: true });
     await repository().markFailed(failed.message.id, { error: 'Message rejected', clearContent: true });
@@ -194,7 +212,7 @@ describe('email outbox: outcomes', () => {
   it('puts a failed email back in the queue for its retry, keeping the error, and a throttled one without counting the try', async () => {
     const failed = await repository().record(queued());
     const throttled = await repository().record(queued());
-    await repository().claimDue(DUE, 10, new Date(DUE.getTime() + 5 * MINUTE));
+    await repository().claimDue({ now: DUE, limit: 10, claimUntil: new Date(DUE.getTime() + 5 * MINUTE), firstTemplateKeys: [] });
     const retryAt = new Date(DUE.getTime() + MINUTE);
 
     await repository().markRetry(failed.message.id, { nextAttemptAt: retryAt, error: 'Connection reset' });
@@ -212,7 +230,7 @@ describe('email outbox: outcomes', () => {
 
   it('records an email that will not be sent as FAILED with its last error and no due time', async () => {
     const { message } = await repository().record(queued());
-    await repository().claimDue(DUE, 10, new Date(DUE.getTime() + 5 * MINUTE));
+    await repository().claimDue({ now: DUE, limit: 10, claimUntil: new Date(DUE.getTime() + 5 * MINUTE), firstTemplateKeys: [] });
 
     await repository().markFailed(message.id, { error: 'Message rejected', clearContent: false });
 

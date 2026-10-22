@@ -179,6 +179,12 @@ New table `email_message` (one row per recipient per email):
 | `attempts`, `nextAttemptAt`, `lastError` | Retry with backoff (1 min, 5 min, 30 min, then `FAILED`) |
 | `providerMessageId`, `sentAt` | SES message id, to match bounce events |
 
+As built (slice 3): there is no `category` column, because the template registry gives each
+template's category. `DELIVERED`, `BOUNCED`, `COMPLAINED` and the skip reasons `SUPPRESSED` and
+`OPTED_OUT` arrive with slices 4 and 5. Each template may also set a send-by window: a password
+reset is given up (FAILED, content cleared) once its 10-minute link would be dead, and emails with a
+window are claimed ahead of the rest.
+
 **Sender.** An in-process loop, like the event lifecycle scheduler, claims due rows with
 `FOR UPDATE SKIP LOCKED` (prod runs two tasks), sends them, and records the outcome. A queue write
 also wakes it, so an invite goes out within a second rather than at the next tick. It sends no

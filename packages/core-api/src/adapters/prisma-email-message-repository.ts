@@ -53,13 +53,20 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
     return { message: toEmailMessage(row), created: count === 1 };
   }
 
-  async claimDue(now: Date, limit: number, claimUntil: Date): Promise<EmailMessage[]> {
+  async claimDue(claim: {
+    now: Date;
+    limit: number;
+    claimUntil: Date;
+    firstTemplateKeys: readonly EmailTemplateKey[];
+  }): Promise<EmailMessage[]> {
+    const { now, limit, claimUntil } = claim;
+    const firstKeys = [...claim.firstTemplateKeys];
     return this.prisma.$transaction(async (tx) => {
       // SKIP LOCKED: two senders (prod runs two tasks) never claim the same row.
       const due = await tx.$queryRaw<{ id: string }[]>`
         SELECT "id" FROM "email_messages"
         WHERE "status" IN ('QUEUED', 'SENDING') AND "next_attempt_at" <= ${now}
-        ORDER BY "next_attempt_at"
+        ORDER BY ("template_key"::text = ANY(${firstKeys}::text[])) DESC, "next_attempt_at"
         LIMIT ${limit}
         FOR UPDATE SKIP LOCKED`;
       if (due.length === 0) return [];

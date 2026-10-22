@@ -25,11 +25,16 @@ Every email is a row in `email_messages` (#844 slice 3), one per recipient:
   with its last error and logged. An SES throttle (`TooManyRequestsException`) is tried again 10
   seconds later without counting the try. A claim lapses after 5 minutes, so an email a stopped
   task held is sent by another.
+- **Send-by window.** A template may say how long after it is queued it may still go out
+  (`sendWithinMs` in the registry). The password reset's is its link's 10 minutes: a reset that
+  would be sent or retried later is marked `FAILED` with its content cleared
+  (`email.sender.expired`). Emails with a window are claimed ahead of the rest, so a reset never
+  waits behind a large send.
 - **Content is cleared after 30 days**; the row stays, so "why didn't I get it?" still has an
   answer.
 
 The logs (`email.send.queued`, `email.send.skip`, `email.sender.sent`, `email.sender.retry`,
-`email.sender.failed`) carry the template key and ids, never the body or an address.
+`email.sender.failed`, `email.sender.expired`) carry the template key and ids, never the body or an address.
 
 ## Templates
 
