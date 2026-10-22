@@ -116,9 +116,11 @@ built. **Essential**: account, security and membership email, every league alway
 basics, free plan too (a contest opening, receipts, final results, an event cancelled or
 moved). **B**: the first paid level and up (reminders, commissioner nudges, the good luck and
 "you're out" emails, a commissioner's "remind everyone" button if built). **C**: the second paid
-level and up (live standings during an event). **D**: the top level only (trophies, cups and
-season standings across contests, rows for which come with #841 and #863). The class is the
-`notificationClass` field of each `EMAIL_TEMPLATES` entry; nothing reads it yet.
+level and up (live standings during an event). **D**: the top level only (trophy extras). An
+email takes the class of the feature it reports on (Derek 2026-10-22): sports league cups are B,
+so cup emails are B; the league championship and season standings are C, so their emails are C.
+Rows for those come with #841 and #863. The class is the `notificationClass` field of each
+`EMAIL_TEMPLATES` entry; nothing reads it yet.
 
 ### A. Accounts
 

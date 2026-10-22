@@ -787,11 +787,11 @@ export const NotificationClass = {
   ESSENTIAL: 'ESSENTIAL',
   /** The basics, on the free plan too: a contest opening, receipts, final results. */
   A: 'A',
-  /** The first paid level and up: reminders and other conveniences. */
+  /** The first paid level and up: reminders and other conveniences, and sports league cups. */
   B: 'B',
-  /** The second paid level and up: live standings during an event. */
+  /** The second paid level and up: live standings, the league championship and season standings. */
   C: 'C',
-  /** The top level only: trophies, cups and season standings across contests. */
+  /** The top level only: trophy extras. */
   D: 'D',
 } as const;
 export type NotificationClass = (typeof NotificationClass)[keyof typeof NotificationClass];
