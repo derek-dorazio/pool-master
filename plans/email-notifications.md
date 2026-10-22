@@ -111,16 +111,15 @@ is when it goes relative to that; **Today** is ✅ exists, 🟡 partly, or blank
 **Priority** is P1 (Derek's list and the gaps that block it), P2 (clearly worth it), P3 (later).
 **Class** is the service level the email belongs to (Derek 2026-10-22, a first guess for him
 to review), so monetization can later send an email only to leagues whose plan includes it.
-Classes are not plan names; `plans/monetization-strategy.md` maps them to plans when it is
-built. **Essential**: account, security and membership email, every league always. **A**: the
-basics, free plan too (a contest opening, receipts, final results, an event cancelled or
-moved). **B**: the first paid level and up (reminders, commissioner nudges, the good luck and
-"you're out" emails, a commissioner's "remind everyone" button if built). **C**: the second paid
-level and up (live standings during an event). **D**: the top level only (trophy extras). An
-email takes the class of the feature it reports on (Derek 2026-10-22): sports league cups are B,
-so cup emails are B; the league championship and season standings are C, so their emails are C.
-Rows for those come with #841 and #863. The class is the `notificationClass` field of each
-`EMAIL_TEMPLATES` entry; nothing reads it yet.
+Classes are not plan names, and email needs only three (Derek: don't force four levels where
+they don't fit). **Essential**: account, security and membership email, every league always.
+**A**: the basics, free plan too (a contest opening, receipts, final results, an event cancelled
+or moved). **B**: paid conveniences (reminders, commissioner nudges, the good luck and "you're
+out" emails, standings while an event is live, a commissioner's "remind everyone" button if
+built). An email about a feature that is itself gated, such as sports league cups, the league
+championship, season standings or trophies, follows that feature's gate rather than an email
+class; those rows come with #841, #863 and #837. The class is the `notificationClass` field of
+each `EMAIL_TEMPLATES` entry; nothing reads it yet.
 
 ### A. Accounts
 
@@ -236,12 +235,12 @@ places when they are outside it, with movement since the last email.
 | # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
 |---|---|---|---|---|---|---|---|---|
 | E1 | Contest is live, good luck | The contest goes `OPEN` → `ACTIVE` at its cutoff | Every active league member (Q3.8, decided) | At once | "Good luck, everyone." The event (dates, venue, rounds or games) and the contest's rules in a few lines (selection type, scoring, prizes), entry count, Leaderboard button. No list of entries (Q3.9, decided) | 🟡 `CONTEST_STARTED_SUMMARY` (no cap, no leaderboard link, no "good luck", entrants only) | P1 | B |
-| E2 | Round standings | Every golfer still playing a stroke-play round has finished it (Q3.11) | Every league member with an entry, plus commissioners | Once per round, after the buffer (Q3.11); not after the final round (F1 covers it) | "After round 2 of the Masters." Top 10 with movement, the reader's entries, cut news for their picks, Leaderboard button | | P1 | C |
-| E3 | Week results | A pick'em or survivor week settles | Same as E2 | Once per week, after the buffer; not for the last week | The week's winner (#717), the week's top 10, contest standings top 10, next week's first kickoff, Make picks for next week button | | P1 | C |
-| E4 | Bracket round results | Every match of a bracket round has a result | Same as E2 | Once per round, after the buffer; not after the final | Top 10, the reader's busted picks and remaining champions, next round's start, Bracket link | | P1 | C |
+| E2 | Round standings | Every golfer still playing a stroke-play round has finished it (Q3.11) | Every league member with an entry, plus commissioners | Once per round, after the buffer (Q3.11); not after the final round (F1 covers it) | "After round 2 of the Masters." Top 10 with movement, the reader's entries, cut news for their picks, Leaderboard button | | P1 | B |
+| E3 | Week results | A pick'em or survivor week settles | Same as E2 | Once per week, after the buffer; not for the last week | The week's winner (#717), the week's top 10, contest standings top 10, next week's first kickoff, Make picks for next week button | | P1 | B |
+| E4 | Bracket round results | Every match of a bracket round has a result | Same as E2 | Once per round, after the buffer; not after the final | Top 10, the reader's busted picks and remaining champions, next round's start, Bracket link | | P1 | B |
 | E5 | You're out | A survivor entry is eliminated (losing pick, a draw where draws knock you out, or no unused team left) | Owners of that entry | With E3 | Which week and pick, how many are left, Leaderboard link | | P2 | B |
-| E6 | Event results in a season contest | One event of a multi-event roster contest (a majors pool) settles and more events remain | Same as E2 | Once per event, after the buffer | That event's result for each entry, contest standings top 10, next event and its pick deadline | | P2 | C |
-| E7 | Squares quarter winner | A squares contest's scoring moment is decided (end of a quarter) | Every entry owner on the board | Once per quarter, not the final one | Winning numbers and box, who holds it, Grid link | | P3 | C |
+| E6 | Event results in a season contest | One event of a multi-event roster contest (a majors pool) settles and more events remain | Same as E2 | Once per event, after the buffer | That event's result for each entry, contest standings top 10, next event and its pick deadline | | P2 | B |
+| E7 | Squares quarter winner | A squares contest's scoring moment is decided (end of a quarter) | Every entry owner on the board | Once per quarter, not the final one | Winning numbers and box, who holds it, Grid link | | P3 | B |
 | E8 | Next round is set | A reseeded or second-chance round's matchups are set, and picks are open for it | Owners of entries that pick that round | At once | The round's games, picks close at, Make picks button | | P2 | B |
 
 **Q3.8 Who gets E1?** Today it goes to commissioners and squads with an entry.
