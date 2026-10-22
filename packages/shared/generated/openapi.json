@@ -2924,10 +2924,23 @@
           "QUEUED",
           "SENDING",
           "SENT",
+          "DELIVERED",
+          "BOUNCED",
+          "COMPLAINED",
           "FAILED",
           "SKIPPED"
         ],
-        "description": "Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail service, FAILED not sent after every try, SKIPPED not sent because email is switched off or the address may not be emailed here."
+        "description": "Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail service, DELIVERED reached the recipient's mail server, BOUNCED refused for good by that server, COMPLAINED marked as spam by the recipient, FAILED not sent after every try or rejected by the mail service, SKIPPED not sent (see the skip reason)."
+      },
+      "EmailSkipReason": {
+        "type": "string",
+        "enum": [
+          "EMAIL_DISABLED",
+          "TEMPLATE_DISABLED",
+          "NOT_ALLOWED_IN_ENVIRONMENT",
+          "SUPPRESSED"
+        ],
+        "description": "Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED the address bounced for good or marked an earlier email as spam."
       },
       "LeagueInvitationDto": {
         "type": "object",
@@ -3013,11 +3026,28 @@
               "QUEUED",
               "SENDING",
               "SENT",
+              "DELIVERED",
+              "BOUNCED",
+              "COMPLAINED",
               "FAILED",
               "SKIPPED",
               null
             ],
             "description": "Where the latest email of an email invite stands; null for a join link, which has no email."
+          },
+          "emailSkipReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "EMAIL_DISABLED",
+              "TEMPLATE_DISABLED",
+              "NOT_ALLOWED_IN_ENVIRONMENT",
+              "SUPPRESSED",
+              null
+            ],
+            "description": "Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED."
           },
           "createdAt": {
             "type": "string",
@@ -3040,6 +3070,7 @@
           "currentUses",
           "invitedBy",
           "emailStatus",
+          "emailSkipReason",
           "createdAt",
           "updatedAt"
         ],
@@ -4214,11 +4245,28 @@
                     "QUEUED",
                     "SENDING",
                     "SENT",
+                    "DELIVERED",
+                    "BOUNCED",
+                    "COMPLAINED",
                     "FAILED",
                     "SKIPPED",
                     null
                   ],
                   "description": "Where the latest email of an email invite stands; null for a join link, which has no email."
+                },
+                "emailSkipReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "EMAIL_DISABLED",
+                    "TEMPLATE_DISABLED",
+                    "NOT_ALLOWED_IN_ENVIRONMENT",
+                    "SUPPRESSED",
+                    null
+                  ],
+                  "description": "Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED."
                 },
                 "createdAt": {
                   "type": "string",
@@ -4241,6 +4289,7 @@
                 "currentUses",
                 "invitedBy",
                 "emailStatus",
+                "emailSkipReason",
                 "createdAt",
                 "updatedAt"
               ],
@@ -4359,11 +4408,28 @@
                   "QUEUED",
                   "SENDING",
                   "SENT",
+                  "DELIVERED",
+                  "BOUNCED",
+                  "COMPLAINED",
                   "FAILED",
                   "SKIPPED",
                   null
                 ],
                 "description": "Where the latest email of an email invite stands; null for a join link, which has no email."
+              },
+              "emailSkipReason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "EMAIL_DISABLED",
+                  "TEMPLATE_DISABLED",
+                  "NOT_ALLOWED_IN_ENVIRONMENT",
+                  "SUPPRESSED",
+                  null
+                ],
+                "description": "Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED."
               },
               "createdAt": {
                 "type": "string",
@@ -4386,6 +4452,7 @@
               "currentUses",
               "invitedBy",
               "emailStatus",
+              "emailSkipReason",
               "createdAt",
               "updatedAt"
             ],
@@ -4488,11 +4555,28 @@
                     "QUEUED",
                     "SENDING",
                     "SENT",
+                    "DELIVERED",
+                    "BOUNCED",
+                    "COMPLAINED",
                     "FAILED",
                     "SKIPPED",
                     null
                   ],
                   "description": "Where the latest email of an email invite stands; null for a join link, which has no email."
+                },
+                "emailSkipReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "EMAIL_DISABLED",
+                    "TEMPLATE_DISABLED",
+                    "NOT_ALLOWED_IN_ENVIRONMENT",
+                    "SUPPRESSED",
+                    null
+                  ],
+                  "description": "Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED."
                 },
                 "createdAt": {
                   "type": "string",
@@ -4515,6 +4599,7 @@
                 "currentUses",
                 "invitedBy",
                 "emailStatus",
+                "emailSkipReason",
                 "createdAt",
                 "updatedAt"
               ],
@@ -4617,11 +4702,28 @@
                   "QUEUED",
                   "SENDING",
                   "SENT",
+                  "DELIVERED",
+                  "BOUNCED",
+                  "COMPLAINED",
                   "FAILED",
                   "SKIPPED",
                   null
                 ],
                 "description": "Where the latest email of an email invite stands; null for a join link, which has no email."
+              },
+              "emailSkipReason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "EMAIL_DISABLED",
+                  "TEMPLATE_DISABLED",
+                  "NOT_ALLOWED_IN_ENVIRONMENT",
+                  "SUPPRESSED",
+                  null
+                ],
+                "description": "Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED."
               },
               "createdAt": {
                 "type": "string",
@@ -4644,6 +4746,7 @@
               "currentUses",
               "invitedBy",
               "emailStatus",
+              "emailSkipReason",
               "createdAt",
               "updatedAt"
             ],
@@ -26833,6 +26936,90 @@
         "additionalProperties": false,
         "description": "Feed-aware ingestion scheduling configuration exposed to root-admin tooling."
       },
+      "SnsMessageType": {
+        "type": "string",
+        "enum": [
+          "Notification",
+          "SubscriptionConfirmation",
+          "UnsubscribeConfirmation"
+        ],
+        "description": "What the SNS message is: a delivery report, or one step of the subscription handshake."
+      },
+      "SnsMessage": {
+        "type": "object",
+        "properties": {
+          "Type": {
+            "type": "string",
+            "enum": [
+              "Notification",
+              "SubscriptionConfirmation",
+              "UnsubscribeConfirmation"
+            ],
+            "description": "What the SNS message is: a delivery report, or one step of the subscription handshake."
+          },
+          "MessageId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "SNS's id for this message."
+          },
+          "TopicArn": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The SNS topic that sent it; core-api accepts only its own."
+          },
+          "Subject": {
+            "type": "string",
+            "description": "Optional subject, signed when present."
+          },
+          "Message": {
+            "type": "string",
+            "description": "The payload: for a Notification, the SES event as a JSON string."
+          },
+          "Timestamp": {
+            "type": "string",
+            "minLength": 1,
+            "description": "When SNS published the message (ISO 8601)."
+          },
+          "SignatureVersion": {
+            "type": "string",
+            "enum": [
+              "1",
+              "2"
+            ],
+            "description": "1 signs with SHA1, 2 with SHA256."
+          },
+          "Signature": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Base64 RSA signature over the message's signed fields."
+          },
+          "SigningCertURL": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Where SNS serves the certificate that signed it; must be an sns.<region>.amazonaws.com https URL."
+          },
+          "SubscribeURL": {
+            "type": "string",
+            "description": "On a subscription confirmation, the URL that confirms the subscription."
+          },
+          "Token": {
+            "type": "string",
+            "description": "On a subscription confirmation, the confirmation token."
+          }
+        },
+        "required": [
+          "Type",
+          "MessageId",
+          "TopicArn",
+          "Message",
+          "Timestamp",
+          "SignatureVersion",
+          "Signature",
+          "SigningCertURL"
+        ],
+        "additionalProperties": false,
+        "description": "A message from Amazon SNS, as posted to an HTTPS subscription."
+      },
       "SettingsGroupKey": {
         "type": "string",
         "enum": [
@@ -47399,6 +47586,58 @@
             }
           },
           "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/email/ses-events": {
+      "post": {
+        "operationId": "receiveSesEvent",
+        "summary": "Receive an SES delivery event from SNS",
+        "tags": [
+          "Email"
+        ],
+        "description": "Public; called by Amazon SNS, never by the app. The message must come from this environment's SES events topic and carry a valid SNS signature from a certificate on the sns.<region>.amazonaws.com host of the topic's region, and be at most an hour old, or the answer is 403 EMAIL_EVENT_UNVERIFIED. A subscription confirmation is confirmed. A notification carries one SES event: a delivery marks the email DELIVERED; a permanent bounce marks it BOUNCED and a complaint COMPLAINED, and both stop the app from emailing that address again; a rejection marks it FAILED. A transient bounce changes nothing. An event for an email this environment did not send changes no email's status, though a permanent bounce or complaint still stops the app from emailing that address. Both still answer 200, so SNS does not retry them.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnsMessage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Minimal success response envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

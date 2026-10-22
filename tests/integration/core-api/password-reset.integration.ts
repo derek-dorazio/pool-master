@@ -24,7 +24,11 @@ import {
 } from '../../../packages/core-api/src/modules/auth/password-reset-service';
 import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
-import { PrismaEmailMessageRepository, PrismaUserRepository } from '../../../packages/core-api/src/adapters';
+import {
+  PrismaEmailMessageRepository,
+  PrismaEmailSuppressionRepository,
+  PrismaUserRepository,
+} from '../../../packages/core-api/src/adapters';
 import {
   EMAIL_SETTINGS,
   EmailSender,
@@ -97,6 +101,7 @@ function buildService(options: { now?: () => Date } = {}) {
     prisma,
     email: new EmailService({
       messages,
+      suppressions: new PrismaEmailSuppressionRepository(prisma),
       providerName: mail.providerName,
       readConfig,
       senderAddress: 'noreply@integration.test',

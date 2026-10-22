@@ -774,7 +774,13 @@ export const EmailMessageStatus = {
   SENDING: 'SENDING',
   /** The transport accepted it. */
   SENT: 'SENT',
-  /** Every try failed; it will not be sent. */
+  /** SES reports it reached the recipient's mail server. */
+  DELIVERED: 'DELIVERED',
+  /** SES reports the recipient's mail server refused it for good (a permanent bounce). */
+  BOUNCED: 'BOUNCED',
+  /** SES reports the recipient marked it as spam. */
+  COMPLAINED: 'COMPLAINED',
+  /** Every try failed, or SES rejected it; it will not be sent. */
   FAILED: 'FAILED',
   /** Never queued, for the skip reason. */
   SKIPPED: 'SKIPPED',
@@ -789,5 +795,16 @@ export const EmailSkipReason = {
   TEMPLATE_DISABLED: 'TEMPLATE_DISABLED',
   /** The recipient may not be emailed here: a reserved domain on a real transport, or not on the allow list. */
   NOT_ALLOWED_IN_ENVIRONMENT: 'NOT_ALLOWED_IN_ENVIRONMENT',
+  /** The address bounced for good or complained before; it is on the suppression list. */
+  SUPPRESSED: 'SUPPRESSED',
 } as const;
 export type EmailSkipReason = (typeof EmailSkipReason)[keyof typeof EmailSkipReason];
+
+/** Why an address is on the email suppression list. */
+export const EmailSuppressionReason = {
+  /** A permanent bounce: the mailbox does not exist or will never accept mail. */
+  BOUNCE: 'BOUNCE',
+  /** The recipient marked an email as spam. */
+  COMPLAINT: 'COMPLAINT',
+} as const;
+export type EmailSuppressionReason = (typeof EmailSuppressionReason)[keyof typeof EmailSuppressionReason];

@@ -77,7 +77,7 @@ export function createInvitationHandlers(
       },
     }, 'Sent league invitations');
     return reply.status(201).send({
-      sent: result.sent.map(({ invitation, emailStatus }) => mapLeagueInvitationToDto(invitation, emailStatus)),
+      sent: result.sent.map(({ invitation, emailState }) => mapLeagueInvitationToDto(invitation, emailState)),
       skippedMembers: result.skippedMembers,
       skippedDuplicates: result.skippedDuplicates,
     });
@@ -98,7 +98,7 @@ export function createInvitationHandlers(
       data: { leagueId: request.params.id, invitationCount: invitations.length },
     }, 'Listed league invitations');
     return reply.send({
-      invitations: invitations.map(({ invitation, emailStatus }) => mapLeagueInvitationToDto(invitation, emailStatus)),
+      invitations: invitations.map(({ invitation, emailState }) => mapLeagueInvitationToDto(invitation, emailState)),
     });
   }
 
@@ -113,7 +113,7 @@ export function createInvitationHandlers(
       data: { leagueId: request.params.id, invitationId: request.params.invitationId, userId },
     }, 'Handling resend league invitation request');
     try {
-      const { invitation, emailStatus } = await invitationService.resendEmailInvitation(
+      const { invitation, emailState } = await invitationService.resendEmailInvitation(
         request.params.id,
         request.params.invitationId,
         userId,
@@ -122,7 +122,7 @@ export function createInvitationHandlers(
         action: 'leagueInvitationRoute.resend.success',
         data: { leagueId: request.params.id, invitationId: invitation.id },
       }, 'Resent league invitation');
-      return reply.send({ invitation: mapLeagueInvitationToDto(invitation, emailStatus) });
+      return reply.send({ invitation: mapLeagueInvitationToDto(invitation, emailState) });
     } catch (err) {
       if (err instanceof InvitationNotFoundError) {
         logger.warn({

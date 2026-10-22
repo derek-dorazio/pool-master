@@ -113,3 +113,22 @@ After the first apply, by hand in the AWS console (SES, in the environment's reg
 4. **Turn email on** from the app, not Terraform: `/manage/settings` → Email. On QA, fill in
    "Only send to" first (`docs/EMAIL-DELIVERY.md`, *Testing on QA Without Emailing Real People*).
 
+### Delivery events (bounces and complaints)
+
+The configuration set publishes delivery, bounce, complaint and reject events to the SNS topic
+`<name prefix>-ses-events`, and core-api receives them at `/api/v1/email/ses-events` (it learns the
+topic from `SES_EVENTS_TOPIC_ARN`). SNS confirms an https subscription once, when it is created,
+and core-api can only answer once its running task has that variable, so subscribing takes two
+applies:
+
+1. **Apply with `ses_events_subscribed = false`** (the default). This creates the topic and the
+   event destination and adds `SES_EVENTS_TOPIC_ARN` to the core-api task definition.
+2. **Let CI deploy core-api** (the next merge to `main`), so the running task has the variable.
+3. **Set `ses_events_subscribed = true` and apply again.** SNS posts a confirmation and core-api
+   confirms it; the apply waits for that and fails if it doesn't come within a minute. If it
+   fails, check core-api's log for `email.deliveryEvent.unverified`, then apply again to send
+   another confirmation.
+
+Until step 3, SES still sends; the app just doesn't hear about bounces, and the account
+suppression list still stops repeat sends to a bad address.
+

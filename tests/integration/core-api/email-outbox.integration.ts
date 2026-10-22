@@ -256,7 +256,7 @@ describe('email outbox: outcomes', () => {
 });
 
 describe('email outbox: an invitation\'s email', () => {
-  it('reports each invitation\'s latest email of the template, and nothing for an invitation with none', async () => {
+  it('reports the status and skip reason of each invitation\'s latest email of the template, and nothing for an invitation with none', async () => {
     const commissioner = await createTestUser();
     const created = await getApp().inject({
       method: 'POST',
@@ -275,8 +275,11 @@ describe('email outbox: an invitation\'s email', () => {
     await repository().record({ ...queued({ invitationId: sentOnce.id, leagueId }), status: 'SKIPPED', skipReason: 'EMAIL_DISABLED' });
     await repository().record(queued({ invitationId: sentOnce.id, leagueId, templateKey: 'LEAGUE_JOIN_SUCCESS' }));
 
-    const statuses = await repository().findLatestStatusByInvitations([resent.id, sentOnce.id, none.id], 'LEAGUE_MEMBER_INVITE');
+    const states = await repository().findLatestStateByInvitations([resent.id, sentOnce.id, none.id], 'LEAGUE_MEMBER_INVITE');
 
-    expect(Object.fromEntries(statuses)).toEqual({ [resent.id]: 'QUEUED', [sentOnce.id]: 'SKIPPED' });
+    expect(Object.fromEntries(states)).toEqual({
+      [resent.id]: { status: 'QUEUED', skipReason: undefined },
+      [sentOnce.id]: { status: 'SKIPPED', skipReason: 'EMAIL_DISABLED' },
+    });
   });
 });

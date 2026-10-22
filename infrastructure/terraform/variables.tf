@@ -51,6 +51,12 @@ variable "dmarc_report_email" {
   default     = ""
 }
 
+variable "ses_events_subscribed" {
+  description = "Subscribe core-api to the SES events topic. Set true only once a deploy has core-api running with SES_EVENTS_TOPIC_ARN, so it can confirm the subscription (README, System email (SES))."
+  type        = bool
+  default     = false
+}
+
 # --- Database ---
 
 variable "db_instance_class" {

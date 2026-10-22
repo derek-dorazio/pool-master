@@ -960,7 +960,8 @@ Cluster: `ProviderSyncRun`, `PlatformRuntimeConfig`, and the provider registry t
 can exist because a root admin submitted it (condition 3), and a runtime-config row names the
 user who last wrote it (condition 1). Nor is either tenant data — nothing here belongs to a
 league. They are operational state, so both halves stay behind the claim. Each module takes
-`requireRootAdmin` as one `onRequest` hook for all its routes.
+`requireRootAdmin` as one `onRequest` hook for all its routes. The one exception is the SES
+delivery-events route at the end of this section, which Amazon SNS calls.
 
 **`admin` is the permission, not a place** (#205). The operations live with what they
 administer: runtime settings under `/api/v1/platform`, providers and syncs under
@@ -1000,6 +1001,16 @@ infrastructure and business metrics, error search and detail, alert rules and th
 the ingestion dashboard, the provider detail and provider config write, the manual health
 check, the one-off re-ingest (the event sync is the path), and the tables `plan_tiers`,
 `migration_runs`, `commissioner_action_items`, `ingestion_jobs` and `provider_health_log`.
+
+### Email delivery events — `email`
+
+`EmailMessage` and `EmailSuppression` are the outbox and the addresses it no longer emails
+(`docs/EMAIL-DELIVERY.md`). Nobody reads or writes them through the API except this one route,
+which Amazon SNS calls, not the app.
+
+| Operation | Role | Notes |
+|---|---|---|
+| Receive an SES delivery event | `public` *(SNS)* | `receiveSesEvent`, `POST /api/v1/email/ses-events` (#844 slice 4). **No session: the SNS signature and the topic are its whole authority.** The signing certificate must come from an https `sns.<region>.amazonaws.com` URL and the topic must be `SES_EVENTS_TOPIC_ARN`; anything else is 403 `EMAIL_EVENT_UNVERIFIED`. It moves an email forward only (`SENT` → `DELIVERED`, `BOUNCED`, `COMPLAINED` or `FAILED`), and a permanent bounce or a complaint suppresses the address |
 
 ---
 

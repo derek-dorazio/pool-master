@@ -2603,6 +2603,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/email/ses-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive an SES delivery event from SNS
+         * @description Public; called by Amazon SNS, never by the app. The message must come from this environment's SES events topic and carry a valid SNS signature from a certificate on the sns.<region>.amazonaws.com host of the topic's region, and be at most an hour old, or the answer is 403 EMAIL_EVENT_UNVERIFIED. A subscription confirmation is confirmed. A notification carries one SES event: a delivery marks the email DELIVERED; a permanent bounce marks it BOUNCED and a complaint COMPLAINED, and both stop the app from emailing that address again; a rejection marks it FAILED. A transient bounce changes nothing. An event for an email this environment did not send changes no email's status, though a permanent bounce or complaint still stops the app from emailing that address. Both still answer 200, so SNS does not retry them.
+         */
+        post: operations["receiveSesEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/selections/{contestId}": {
         parameters: {
             query?: never;
@@ -3860,10 +3880,15 @@ export interface components {
             };
         };
         /**
-         * @description Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail service, FAILED not sent after every try, SKIPPED not sent because email is switched off or the address may not be emailed here.
+         * @description Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail service, DELIVERED reached the recipient's mail server, BOUNCED refused for good by that server, COMPLAINED marked as spam by the recipient, FAILED not sent after every try or rejected by the mail service, SKIPPED not sent (see the skip reason).
          * @enum {string}
          */
-        EmailMessageStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED";
+        EmailMessageStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED";
+        /**
+         * @description Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED the address bounced for good or marked an earlier email as spam.
+         * @enum {string}
+         */
+        EmailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED";
         /** @description Invitation record returned from commissioner invite-management APIs. */
         LeagueInvitationDto: {
             /** @description Invitation record identifier. */
@@ -3906,7 +3931,12 @@ export interface components {
              * @description Where the latest email of an email invite stands; null for a join link, which has no email.
              * @enum {string|null}
              */
-            emailStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED" | null;
+            emailStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED" | null;
+            /**
+             * @description Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
+             * @enum {string|null}
+             */
+            emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | null;
             /**
              * Format: date-time
              * @description Invitation creation timestamp.
@@ -4450,7 +4480,12 @@ export interface components {
                  * @description Where the latest email of an email invite stands; null for a join link, which has no email.
                  * @enum {string|null}
                  */
-                emailStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED" | null;
+                emailStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED" | null;
+                /**
+                 * @description Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
+                 * @enum {string|null}
+                 */
+                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | null;
                 /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
@@ -4511,7 +4546,12 @@ export interface components {
                  * @description Where the latest email of an email invite stands; null for a join link, which has no email.
                  * @enum {string|null}
                  */
-                emailStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED" | null;
+                emailStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED" | null;
+                /**
+                 * @description Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
+                 * @enum {string|null}
+                 */
+                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | null;
                 /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
@@ -4568,7 +4608,12 @@ export interface components {
                  * @description Where the latest email of an email invite stands; null for a join link, which has no email.
                  * @enum {string|null}
                  */
-                emailStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED" | null;
+                emailStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED" | null;
+                /**
+                 * @description Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
+                 * @enum {string|null}
+                 */
+                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | null;
                 /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
@@ -4625,7 +4670,12 @@ export interface components {
                  * @description Where the latest email of an email invite stands; null for a join link, which has no email.
                  * @enum {string|null}
                  */
-                emailStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED" | null;
+                emailStatus: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED" | null;
+                /**
+                 * @description Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
+                 * @enum {string|null}
+                 */
+                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | null;
                 /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
@@ -11554,6 +11604,42 @@ export interface components {
                     };
                 };
             };
+        };
+        /**
+         * @description What the SNS message is: a delivery report, or one step of the subscription handshake.
+         * @enum {string}
+         */
+        SnsMessageType: "Notification" | "SubscriptionConfirmation" | "UnsubscribeConfirmation";
+        /** @description A message from Amazon SNS, as posted to an HTTPS subscription. */
+        SnsMessage: {
+            /**
+             * @description What the SNS message is: a delivery report, or one step of the subscription handshake.
+             * @enum {string}
+             */
+            Type: "Notification" | "SubscriptionConfirmation" | "UnsubscribeConfirmation";
+            /** @description SNS's id for this message. */
+            MessageId: string;
+            /** @description The SNS topic that sent it; core-api accepts only its own. */
+            TopicArn: string;
+            /** @description Optional subject, signed when present. */
+            Subject?: string;
+            /** @description The payload: for a Notification, the SES event as a JSON string. */
+            Message: string;
+            /** @description When SNS published the message (ISO 8601). */
+            Timestamp: string;
+            /**
+             * @description 1 signs with SHA1, 2 with SHA256.
+             * @enum {string}
+             */
+            SignatureVersion: "1" | "2";
+            /** @description Base64 RSA signature over the message's signed fields. */
+            Signature: string;
+            /** @description Where SNS serves the certificate that signed it; must be an sns.<region>.amazonaws.com https URL. */
+            SigningCertURL: string;
+            /** @description On a subscription confirmation, the URL that confirms the subscription. */
+            SubscribeURL?: string;
+            /** @description On a subscription confirmation, the confirmation token. */
+            Token?: string;
         };
         /**
          * @description The stored key of a settings group.
@@ -23217,6 +23303,48 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    receiveSesEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnsMessage"];
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

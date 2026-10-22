@@ -66,8 +66,10 @@ import { scoringFamilyForSport } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
   createEmailOutbox,
+  SnsMessageVerifier,
   readApplicationBaseUrl,
 } from './modules/email';
+import { emailEventsModule } from './modules/email/email-events-routes';
 
 export function buildApp() {
   const app = Fastify({
@@ -91,7 +93,7 @@ export function buildApp() {
     logger: app.log,
   });
   // One email outbox for the whole app; EMAIL_CONFIG decides on every email whether it is queued.
-  const { email, sender: emailSender } = createEmailOutbox({
+  const { email, sender: emailSender, deliveryEvents } = createEmailOutbox({
     prisma,
     readConfig: () => appSettings.get(EMAIL_SETTINGS),
     env: process.env,
@@ -210,6 +212,12 @@ export function buildApp() {
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService });
   app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
+  app.register(emailEventsModule, {
+    prefix: '/api/v1/email',
+    deliveryEvents,
+    verifier: new SnsMessageVerifier(),
+    topicArn: process.env.SES_EVENTS_TOPIC_ARN?.trim() || undefined,
+  });
 
   // =========================================================================
   // Draft module

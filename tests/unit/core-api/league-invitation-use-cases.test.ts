@@ -240,7 +240,7 @@ describe('InvitationService — inviting by email', () => {
     await deliverQueuedEmail();
 
     const [stored] = world.tables.leagueInvitations.where(() => true);
-    expect(result.sent).toEqual([{ invitation: stored, emailStatus: 'QUEUED' }]);
+    expect(result.sent).toEqual([{ invitation: stored, emailState: { status: 'QUEUED', skipReason: undefined } }]);
     expect(mail.sent).toHaveLength(0);
   });
 });

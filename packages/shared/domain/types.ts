@@ -16,6 +16,7 @@ import type {
   DateFormat,
   EmailMessageStatus,
   EmailSkipReason,
+  EmailSuppressionReason,
   EmailTemplateKey,
   InjuryStatusCode,
   InvitationStatus,
@@ -164,6 +165,15 @@ export interface EmailMessage extends DomainEntity {
   /** The transport's id for the sent email; SES's id matches its delivery events. */
   providerMessageId?: string;
   sentAt?: Date;
+}
+
+/** An address the app no longer emails: it bounced for good or its owner marked an email as spam. */
+export interface EmailSuppression extends DomainEntity {
+  /** Lower-cased. */
+  email: string;
+  suppressionReason: EmailSuppressionReason;
+  /** The email whose bounce or complaint put the address here, while that row exists. */
+  emailMessageId?: string;
 }
 
 // --- Sport & Participant ---

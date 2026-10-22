@@ -4,7 +4,11 @@ import {
   EmailService,
   type MailDeliveryProvider,
 } from '../../packages/core-api/src/modules/email';
-import { inMemoryEmailMessages, type InMemoryEmailMessages } from './in-memory-email-messages';
+import {
+  inMemoryEmailMessages,
+  inMemoryEmailSuppressions,
+  type InMemoryEmailMessages,
+} from './in-memory-email-messages';
 
 const pendingDeliveries: Promise<void>[] = [];
 
@@ -22,6 +26,7 @@ export function emailServiceOver(
   const sender = new EmailSender({ messages, transport, readConfig });
   return new EmailService({
     messages,
+    suppressions: inMemoryEmailSuppressions(),
     providerName: transport.providerName,
     readConfig,
     senderAddress: 'noreply@poolmaster.test',

@@ -45,6 +45,7 @@ declare global {
       SMTP_FROM?: string;
       SES_FROM_EMAIL?: string;
       SES_CONFIGURATION_SET?: string;
+      SES_EVENTS_TOPIC_ARN?: string;
       AWS_REGION?: string;
       AWS_ENDPOINT?: string;
       AWS_ACCESS_KEY_ID?: string;
