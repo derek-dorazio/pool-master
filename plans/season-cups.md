@@ -24,8 +24,7 @@ https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH (phone screens; sample squads,
   shows the leader view before then), the medal tiles, and the finish matrix.
 
 A to C are the sports league cup views, and Derek wants all of them (2026-10-22): they aren't
-alternatives. A's header still shows an all-sports cup from before the split; read it as the
-PGA Tour Cup page. Single-year views come first; C is a later page that fronts the per-year
+alternatives. D also has the podium under the trophy and a year toggle. Single-year views come first; C is a later page that fronts the per-year
 history pages.
 
 ---
