@@ -17,14 +17,12 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
-import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import { PASSWORD_RESET_LINK_MINUTES, type ApiErrorCode } from '@poolmaster/shared/dto';
 import { AccountEmailTemplateKey, type EmailService } from '../email';
 import { cancelOpenPasswordResetTokens, revokeUserSessions } from '../users/user-lifecycle';
 import { SlidingWindowRateLimiter } from '../../core/sliding-window-rate-limiter';
 import { PasswordChangedNotifier } from './password-changed-notifier';
 
-/** How long a reset link works. Short, so a forwarded or leaked link is soon useless (Q2.2). */
-export const PASSWORD_RESET_LINK_MINUTES = 10;
 /** Reset emails one account may be sent per hour. Over it the request still answers 202. */
 const RESET_EMAILS_PER_ACCOUNT_PER_HOUR = 3;
 /** An account's reset rows older than this are deleted on its next request. */

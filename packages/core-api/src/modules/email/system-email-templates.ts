@@ -413,7 +413,7 @@ function renderPasswordChangedEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `Your ${BRAND_NAME} password was changed`;
-  const changedSentence = `The password for your ${BRAND_NAME} account (${data.username}) was changed on ${formatDateTime(data.changedAt, context.timeZone) ?? ''}.`;
+  const changedSentence = `The password for your ${BRAND_NAME} account (${data.username}) was changed on ${formatInstant(data.changedAt, context.timeZone)}.`;
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.firstName)},`),
     paragraph(escapeHtml(changedSentence)),
@@ -550,6 +550,11 @@ function formatDateTime(value: Date | string | undefined, timeZone: string): str
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return null;
+  return formatInstant(date, timeZone);
+}
+
+/** A date that is always present, formatted as formatDateTime does. */
+function formatInstant(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',

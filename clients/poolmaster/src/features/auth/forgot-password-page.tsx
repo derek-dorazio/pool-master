@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { PasswordResetRequestSchema } from "@poolmaster/shared/dto";
+import { PASSWORD_RESET_LINK_MINUTES, PasswordResetRequestSchema } from "@poolmaster/shared/dto";
 import { requestPasswordReset } from "@/lib/api";
 import { extractErrorMessage, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
@@ -47,7 +47,7 @@ export function ForgotPasswordPage() {
         <h2 className="font-display text-lg font-extrabold text-foreground">Check your email</h2>
         <p className="text-sm text-muted-foreground" data-testid="forgot-password-sent">
           If an account matches, we&apos;ve sent a link to reset your password. The link works
-          once and expires in 10 minutes.
+          once and expires in {PASSWORD_RESET_LINK_MINUTES} minutes.
         </p>
         <LinkButton data-testid="forgot-password-back-to-sign-in" to="/" variant="secondary">
           Back to sign in

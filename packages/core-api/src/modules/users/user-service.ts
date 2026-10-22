@@ -68,8 +68,8 @@ export class UserService {
   constructor(
     private readonly users: UserRepository,
     private readonly prisma: PrismaClient,
+    private readonly passwordChanged: PasswordChangedNotifier,
     private readonly logger?: FastifyBaseLogger,
-    private readonly passwordChanged?: PasswordChangedNotifier,
   ) {}
 
   // --- Reads ------------------------------------------------------------------
@@ -229,7 +229,7 @@ export class UserService {
       data: { userId: targetUserId },
     }, 'Changed own password');
     // After the commit, so a send failure can never undo the change (#848).
-    await this.passwordChanged?.notify(targetUserId, changedAt);
+    await this.passwordChanged.notify(targetUserId, changedAt);
   }
 
   /**

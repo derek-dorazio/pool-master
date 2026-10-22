@@ -17,8 +17,8 @@ import {
 } from '../helpers';
 import { expectDefined } from '../../support/expect-defined';
 import { emailServiceOver } from '../../support/email-service';
+import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
 import {
-  PASSWORD_RESET_LINK_MINUTES,
   PasswordResetService,
   hashResetToken,
 } from '../../../packages/core-api/src/modules/auth/password-reset-service';
@@ -56,7 +56,7 @@ const CHANGED_SUBJECT = 'Your Prime Time Commissioner password was changed';
 
 function buildUserService(mail: MailDeliveryProvider): UserService {
   const users = new PrismaUserRepository(getPrisma());
-  return new UserService(users, getPrisma(), undefined, new PasswordChangedNotifier(users, emailServiceOver(mail), APP_BASE_URL));
+  return new UserService(users, getPrisma(), new PasswordChangedNotifier(users, emailServiceOver(mail), APP_BASE_URL));
 }
 
 /** The token from the link in a reset email's plain text. */
@@ -260,7 +260,7 @@ describe('password changes cancel open reset links (#847)', () => {
     const { user } = await createTestUser({ password: 'OldPass-1234' });
     await service.requestReset(user.email);
     const token = tokenFrom(expectDefined(mail.to(user.email)[0]));
-    const users = new UserService(new PrismaUserRepository(getPrisma()), getPrisma());
+    const users = buildUserService(mail);
 
     await users.changeOwnPassword(
       { userId: user.id, isRootAdmin: false },
@@ -278,7 +278,7 @@ describe('password changes cancel open reset links (#847)', () => {
     const { user: admin } = await createTestUser({ isRootAdmin: true });
     await service.requestReset(user.email);
     const token = tokenFrom(expectDefined(mail.to(user.email)[0]));
-    const users = new UserService(new PrismaUserRepository(getPrisma()), getPrisma());
+    const users = buildUserService(mail);
 
     await users.resetPassword({ userId: admin.id, isRootAdmin: true }, user.id);
 

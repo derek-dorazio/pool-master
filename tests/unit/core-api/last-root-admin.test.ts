@@ -16,6 +16,13 @@ import { UserOperationError } from '../../../packages/core-api/src/modules/users
 import { asPrismaClient } from '../../support/prisma-double';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { expectDefined } from '../../support/expect-defined';
+import { stubInstance } from '../../support/stub-instance';
+import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
+
+/** A notifier that sends nothing: these tests are about the password write, not its email. */
+function quietNotifier(): PasswordChangedNotifier {
+  return stubInstance(PasswordChangedNotifier, { notify: jest.fn() });
+}
 
 function buildUser(id: string, overrides: Partial<User> = {}): User {
   return {
@@ -73,7 +80,7 @@ function createUserWorld(seed: User[]) {
   };
 
   return {
-    service: new UserService(users, asPrismaClient(prisma)),
+    service: new UserService(users, asPrismaClient(prisma), quietNotifier()),
     row: (id: string) => rows.get(id),
   };
 }

@@ -14,6 +14,7 @@ import { generatePassword, registerFreshUser } from './helpers/user-session';
  */
 
 const RESET_SUBJECT = 'Reset your Prime Time Commissioner password';
+const CHANGED_SUBJECT = 'Your Prime Time Commissioner password was changed';
 
 test.use({ actionTimeout: 20_000 });
 
@@ -80,6 +81,12 @@ test('a person who forgot their password resets it from the emailed link and sig
     await page.getByTestId('reset-password-submit').click();
     await expect(page.getByTestId('reset-password-done')).toBeVisible();
     await expect(page).toHaveURL(/\/reset-password$/);
+  });
+
+  await test.step('a "password was changed" email follows, with a way back to recovery', async () => {
+    const text = await waitForMailText(user.email, CHANGED_SUBJECT);
+    expect(text).toContain(`account (${user.username}) was changed on`);
+    expect(text).toContain('/forgot-password');
   });
 
   await test.step('the new password signs in', async () => {

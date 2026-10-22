@@ -68,8 +68,8 @@ export function usersModule(fastify: FastifyInstance, opts: MailModuleOptions): 
   const service = new UserService(
     users,
     prisma,
-    fastify.log,
     new PasswordChangedNotifier(users, opts.email, readApplicationBaseUrl(process.env), fastify.log),
+    fastify.log,
   );
   const authService = new AuthService(users, prisma, fastify.log);
   const handlers = createUserHandlers(service, authService);

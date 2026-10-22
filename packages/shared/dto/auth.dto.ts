@@ -58,6 +58,12 @@ export const LogoutRequestSchema = z.object({
 }).optional().describe('Optional logout payload. Normally omitted when the refresh cookie is present.');
 export type LogoutRequest = z.infer<typeof LogoutRequestSchema>;
 
+/**
+ * How long an emailed reset link works (#847). Short, so a forwarded or leaked link is soon
+ * useless (plans/password-recovery.md Q2.2). The API sets it; the screens quote it.
+ */
+export const PASSWORD_RESET_LINK_MINUTES = 10;
+
 export const PasswordResetRequestSchema = z.object({
   identifier: z
     .string()
