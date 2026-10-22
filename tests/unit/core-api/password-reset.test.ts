@@ -13,7 +13,7 @@ import {
 } from '../../../packages/core-api/src/modules/auth/password-reset-service';
 import { AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { createAuthHandlers } from '../../../packages/core-api/src/modules/auth/handler';
-import { renderSystemEmailTemplate } from '../../../packages/core-api/src/modules/email';
+import { EmailSkipReason, renderSystemEmailTemplate } from '../../../packages/core-api/src/modules/email';
 import { AuthProvider, type User } from '../../../packages/shared/domain';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
@@ -47,7 +47,10 @@ function buildService(overrides: {
   };
   const prisma = {
     user: { findUnique: jest.fn().mockResolvedValue({ passwordHash: 'stored-hash' }) },
-    passwordResetToken: { count: jest.fn().mockResolvedValue(0) },
+    passwordResetToken: {
+      count: jest.fn().mockResolvedValue(0),
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
     $transaction: jest.fn().mockImplementation(async (work: (client: typeof tx) => Promise<unknown>) => work(tx)),
   };
   const send = overrides.send ?? jest.fn().mockResolvedValue({ provider: 'smtp' });
@@ -123,6 +126,23 @@ describe('PasswordResetService.requestReset', () => {
     expect(logger.error).toHaveBeenCalledTimes(1);
   });
 
+  it('logs the email as skipped, not sent, when email is switched off in settings', async () => {
+    const { service, logger } = buildService({
+      send: jest.fn().mockResolvedValue({ provider: 'smtp', skipped: EmailSkipReason.EMAIL_DISABLED }),
+    });
+
+    await service.requestReset('riley@example.com');
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'authService.passwordReset.emailSkipped' }),
+      expect.any(String),
+    );
+    expect(logger.info).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'authService.passwordReset.emailSent' }),
+      expect.any(String),
+    );
+  });
+
   it('sends nothing for an account that signs in without a password', async () => {
     const { service, prisma, send } = buildService();
     prisma.user.findUnique.mockResolvedValue({ passwordHash: null });
@@ -140,6 +160,14 @@ describe('PasswordResetService.confirmReset', () => {
 
     await expect(service.confirmReset('token', 'NewPass-1234', 'NewPass-5678'))
       .rejects.toMatchObject({ code: 'PASSWORD_CONFIRMATION_MISMATCH', statusCode: 400 });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('refuses a dead link with PASSWORD_RESET_LINK_INVALID before hashing or opening a transaction', async () => {
+    const { service, prisma } = buildService();
+
+    await expect(service.confirmReset('dead-token', 'NewPass-1234', 'NewPass-1234'))
+      .rejects.toMatchObject({ code: 'PASSWORD_RESET_LINK_INVALID', statusCode: 400 });
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });

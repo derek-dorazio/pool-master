@@ -170,13 +170,20 @@ export class PasswordResetService {
         resetUrl: buildResetUrl(this.deps.appBaseUrl, token),
         expiresInMinutes: PASSWORD_RESET_LINK_MINUTES,
       });
-      await this.deps.mailDelivery.send({
+      const delivery = await this.deps.mailDelivery.send({
         to: user.email,
         subject: message.subject,
         text: message.text,
         html: message.html,
         metadata: { templateKey: message.templateKey },
       });
+      if (delivery.skipped) {
+        logger?.warn({
+          action: 'authService.passwordReset.emailSkipped',
+          data: { userId: user.id, reason: delivery.skipped },
+        }, 'Password reset email skipped by email settings');
+        return;
+      }
       logger?.info({
         action: 'authService.passwordReset.emailSent',
         data: { userId: user.id },
@@ -204,8 +211,15 @@ export class PasswordResetService {
       );
     }
     const tokenHash = hashResetToken(token);
-    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
     const now = this.now();
+    // A cheap look before the costly hash, so dead links do not pay for bcrypt. The conditional
+    // claim below is still what guards the race.
+    const live = await this.deps.prisma.passwordResetToken.findFirst({
+      where: { tokenHash, usedAt: null, cancelledAt: null, expiresAt: { gt: now } },
+      select: { id: true },
+    });
+    if (!live) this.rejectDeadLink();
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 
     const userId = await this.deps.prisma.$transaction(async (tx) => {
       // The claim and the check are one statement, so two clicks at once cannot both win.
@@ -224,20 +238,22 @@ export class PasswordResetService {
       return claimedUserId;
     });
 
-    if (!userId) {
-      this.deps.logger?.warn({
-        action: 'authService.passwordReset.linkInvalid',
-      }, 'Rejected password reset with a dead link');
-      throw new PasswordResetError(
-        'This reset link has expired or has already been used.',
-        'PASSWORD_RESET_LINK_INVALID',
-        400,
-      );
-    }
+    if (!userId) this.rejectDeadLink();
     this.deps.logger?.info({
       action: 'authService.passwordReset.confirmed',
       data: { userId },
     }, 'Reset password with a reset link and signed the account out everywhere');
+  }
+
+  private rejectDeadLink(): never {
+    this.deps.logger?.warn({
+      action: 'authService.passwordReset.linkInvalid',
+    }, 'Rejected password reset with a dead link');
+    throw new PasswordResetError(
+      'This reset link has expired or has already been used.',
+      'PASSWORD_RESET_LINK_INVALID',
+      400,
+    );
   }
 
   private assertAddressAllowed(

@@ -273,9 +273,6 @@ export function createAuthHandlers(
       passwordResetService.assertConfirmAllowed(request.ip);
       const { token, newPassword, confirmNewPassword } = request.body;
       await passwordResetService.confirmReset(token, newPassword, confirmNewPassword);
-      logger.info({
-        action: 'auth.passwordReset.confirmed',
-      }, 'Password reset with a reset link');
       return reply.send({ success: true });
     } catch (err) {
       if (err instanceof PasswordResetError) {
