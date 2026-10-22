@@ -8,7 +8,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
-import type { EmailMessageRepository } from '@poolmaster/shared/db';
+import type { EmailMessageRepository, EmailMessageState, EmailSuppressionRepository } from '@poolmaster/shared/db';
 import {
   EmailMessageStatus,
   EmailSkipReason,
@@ -91,8 +91,17 @@ const RESERVED_DOMAINS = ['example.com', 'example.net', 'example.org'];
 
 const DEFAULT_TIME_ZONE = 'UTC';
 
+const SKIP_LOG_MESSAGES: Record<EmailSkipReason, string> = {
+  [EmailSkipReason.EMAIL_DISABLED]: 'Email is switched off in settings; skipped sending email',
+  [EmailSkipReason.TEMPLATE_DISABLED]: 'Email is switched off in settings; skipped sending email',
+  [EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT]: 'Recipient may not be emailed in this environment; skipped sending email',
+  [EmailSkipReason.SUPPRESSED]: 'Recipient bounced or complained before; skipped sending email',
+};
+
 export interface EmailServiceOptions {
-  messages: Pick<EmailMessageRepository, 'record' | 'findLatestStatusByInvitations'>;
+  messages: Pick<EmailMessageRepository, 'record' | 'findLatestStateByInvitations'>;
+  /** Addresses that bounced for good or complained: their email is skipped, not queued. */
+  suppressions: Pick<EmailSuppressionRepository, 'findByEmail'>;
   /** Which transport sends: reserved domains are skipped only on SES. */
   providerName: MailDeliveryProviderName;
   readConfig: () => EmailConfig;
@@ -141,7 +150,8 @@ export class EmailService {
       fromAddress: from.address,
     };
     const skipped = switchedOffReason(config, templateKey)
-      ?? (this.mayReceive(address, config) ? undefined : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT);
+      ?? (this.mayReceive(address, config) ? undefined : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT)
+      ?? (await this.options.suppressions.findByEmail(address) ? EmailSkipReason.SUPPRESSED : undefined);
     if (skipped) {
       const { message, created } = await this.options.messages.record({
         ...recipient,
@@ -152,9 +162,7 @@ export class EmailService {
         this.options.logger?.info({
           action: 'email.send.skip',
           data: { reason: skipped, ...logRefs(refs) },
-        }, skipped === EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT
-          ? 'Recipient may not be emailed in this environment; skipped sending email'
-          : 'Email is switched off in settings; skipped sending email');
+        }, SKIP_LOG_MESSAGES[skipped]);
       }
       return message;
     }
@@ -180,9 +188,9 @@ export class EmailService {
     return message;
   }
 
-  /** The status of each invitation's latest invite email, by invitation id. */
-  latestInviteStatusByInvitation(invitationIds: string[]): Promise<Map<string, EmailMessageStatus>> {
-    return this.options.messages.findLatestStatusByInvitations(invitationIds, EmailTemplateKey.LEAGUE_MEMBER_INVITE);
+  /** Where each invitation's latest invite email stands, by invitation id. */
+  latestInviteStateByInvitation(invitationIds: string[]): Promise<Map<string, EmailMessageState>> {
+    return this.options.messages.findLatestStateByInvitations(invitationIds, EmailTemplateKey.LEAGUE_MEMBER_INVITE);
   }
 
   /**

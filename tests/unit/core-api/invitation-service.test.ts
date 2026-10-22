@@ -194,7 +194,7 @@ describe('InvitationService', () => {
       });
 
       expect(result.sent).toHaveLength(1);
-      expect(result.sent[0].emailStatus).toBe('QUEUED');
+      expect(result.sent[0].emailState?.status).toBe('QUEUED');
       await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -403,10 +403,10 @@ describe('InvitationService', () => {
       const { invitationRepo, service } = createResendService(invitation, mailDelivery);
       const before = Date.now();
 
-      const { invitation: renewed, emailStatus } = await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
+      const { invitation: renewed, emailState } = await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
       await deliverQueuedEmail();
 
-      expect(emailStatus).toBe('QUEUED');
+      expect(emailState?.status).toBe('QUEUED');
       const update = jest.mocked(invitationRepo.update).mock.calls[0][1];
       expect(update.inviteCode).toBeDefined();
       expect(update.inviteCode).not.toBe('oldcode');

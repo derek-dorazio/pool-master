@@ -1433,9 +1433,14 @@ export type LeagueMembershipDto = {
 };
 
 /**
- * Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail service, FAILED not sent after every try, SKIPPED not sent because email is switched off or the address may not be emailed here.
+ * Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail service, DELIVERED reached the recipient's mail server, BOUNCED refused for good by that server, COMPLAINED marked as spam by the recipient, FAILED not sent after every try or rejected by the mail service, SKIPPED not sent (see the skip reason).
  */
-export type EmailMessageStatus = 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED';
+export type EmailMessageStatus = 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED';
+
+/**
+ * Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED the address bounced for good or marked an earlier email as spam.
+ */
+export type EmailSkipReason = 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED';
 
 /**
  * Invitation record returned from commissioner invite-management APIs.
@@ -1492,7 +1497,11 @@ export type LeagueInvitationDto = {
     /**
      * Where the latest email of an email invite stands; null for a join link, which has no email.
      */
-    emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED' | null;
+    emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED' | null;
+    /**
+     * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
+     */
+    emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | null;
     /**
      * Invitation creation timestamp.
      */
@@ -2203,7 +2212,11 @@ export type SendLeagueInvitationsResponse = {
         /**
          * Where the latest email of an email invite stands; null for a join link, which has no email.
          */
-        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED' | null;
+        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED' | null;
+        /**
+         * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
+         */
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -2282,7 +2295,11 @@ export type GenerateInviteLinkResponse = {
         /**
          * Where the latest email of an email invite stands; null for a join link, which has no email.
          */
-        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED' | null;
+        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED' | null;
+        /**
+         * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
+         */
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -2353,7 +2370,11 @@ export type ListLeagueInvitationsResponse = {
         /**
          * Where the latest email of an email invite stands; null for a join link, which has no email.
          */
-        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED' | null;
+        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED' | null;
+        /**
+         * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
+         */
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -2424,7 +2445,11 @@ export type ResendLeagueInvitationResponse = {
         /**
          * Where the latest email of an email invite stands; null for a join link, which has no email.
          */
-        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED' | null;
+        emailStatus: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED' | null;
+        /**
+         * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
+         */
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -11831,6 +11856,61 @@ export type IngestionScheduleConfig = {
             };
         };
     };
+};
+
+/**
+ * What the SNS message is: a delivery report, or one step of the subscription handshake.
+ */
+export type SnsMessageType = 'Notification' | 'SubscriptionConfirmation' | 'UnsubscribeConfirmation';
+
+/**
+ * A message from Amazon SNS, as posted to an HTTPS subscription.
+ */
+export type SnsMessage = {
+    /**
+     * What the SNS message is: a delivery report, or one step of the subscription handshake.
+     */
+    Type: 'Notification' | 'SubscriptionConfirmation' | 'UnsubscribeConfirmation';
+    /**
+     * SNS's id for this message.
+     */
+    MessageId: string;
+    /**
+     * The SNS topic that sent it; core-api accepts only its own.
+     */
+    TopicArn: string;
+    /**
+     * Optional subject, signed when present.
+     */
+    Subject?: string;
+    /**
+     * The payload: for a Notification, the SES event as a JSON string.
+     */
+    Message: string;
+    /**
+     * When SNS published the message (ISO 8601).
+     */
+    Timestamp: string;
+    /**
+     * 1 signs with SHA1, 2 with SHA256.
+     */
+    SignatureVersion: '1' | '2';
+    /**
+     * Base64 RSA signature over the message's signed fields.
+     */
+    Signature: string;
+    /**
+     * Where SNS serves the certificate that signed it; must be an sns.<region>.amazonaws.com https URL.
+     */
+    SigningCertURL: string;
+    /**
+     * On a subscription confirmation, the URL that confirms the subscription.
+     */
+    SubscribeURL?: string;
+    /**
+     * On a subscription confirmation, the confirmation token.
+     */
+    Token?: string;
 };
 
 /**
@@ -22210,6 +22290,35 @@ export type IngestClientLogsResponses = {
 };
 
 export type IngestClientLogsResponse = IngestClientLogsResponses[keyof IngestClientLogsResponses];
+
+export type ReceiveSesEventData = {
+    body: SnsMessage;
+    path?: never;
+    query?: never;
+    url: '/api/v1/email/ses-events';
+};
+
+export type ReceiveSesEventErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ReceiveSesEventError = ReceiveSesEventErrors[keyof ReceiveSesEventErrors];
+
+export type ReceiveSesEventResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: SuccessResponse;
+};
+
+export type ReceiveSesEventResponse = ReceiveSesEventResponses[keyof ReceiveSesEventResponses];
 
 export type GetSelectionStateData = {
     body?: never;

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
   EmailMessageStatus,
+  EmailSkipReason,
   InvitationStatus,
   InviteType,
   LeagueIconKey,
@@ -185,8 +186,15 @@ export type LeagueMembershipDto = z.infer<typeof LeagueMembershipDtoSchema>;
 
 export const EmailMessageStatusSchema = z.nativeEnum(EmailMessageStatus).describe(
   'Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail '
-  + 'service, FAILED not sent after every try, SKIPPED not sent because email is switched off or the '
-  + 'address may not be emailed here.',
+  + 'service, DELIVERED reached the recipient\'s mail server, BOUNCED refused for good by that server, '
+  + 'COMPLAINED marked as spam by the recipient, FAILED not sent after every try or rejected by the mail '
+  + 'service, SKIPPED not sent (see the skip reason).',
+);
+
+export const EmailSkipReasonSchema = z.nativeEnum(EmailSkipReason).describe(
+  'Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of '
+  + 'email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED '
+  + 'the address bounced for good or marked an earlier email as spam.',
 );
 
 export const LeagueInvitationDtoSchema = z.object({
@@ -213,6 +221,9 @@ export const LeagueInvitationDtoSchema = z.object({
   acceptedBy: z.string().nullable().optional().describe('User ID that accepted the invite, when known.'),
   emailStatus: EmailMessageStatusSchema.nullable().describe(
     'Where the latest email of an email invite stands; null for a join link, which has no email.',
+  ),
+  emailSkipReason: EmailSkipReasonSchema.nullable().describe(
+    'Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.',
   ),
   createdAt: DateTimeSchema.describe('Invitation creation timestamp.'),
   updatedAt: DateTimeSchema.describe('Last invitation update timestamp.'),
@@ -373,6 +384,7 @@ registerSchema('LeagueListQuery', LeagueListQuerySchema);
 registerSchema('LeagueDto', LeagueDtoSchema);
 registerSchema('LeagueMembershipDto', LeagueMembershipDtoSchema);
 registerSchema('EmailMessageStatus', EmailMessageStatusSchema);
+registerSchema('EmailSkipReason', EmailSkipReasonSchema);
 registerSchema('LeagueInvitationDto', LeagueInvitationDtoSchema);
 registerSchema('InvitationPreviewResponse', InvitationPreviewResponseSchema);
 registerSchema('LeagueResponse', LeagueResponseSchema);

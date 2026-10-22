@@ -115,4 +115,6 @@ export type {
   EmailMessageRecord,
   EmailMessageRecordResult,
   EmailMessageRepository,
+  EmailMessageState,
+  EmailSuppressionRepository,
 } from './email-ports';

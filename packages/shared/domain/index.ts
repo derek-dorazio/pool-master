@@ -6,6 +6,7 @@ export * from './contest-events';
 export * from './budget-pricing';
 export * from './contest-rules';
 export * from './sport-event-lifecycle';
+export * from './email-delivery';
 export * from './providers';
 export * from './sport-catalog-types';
 export * from './sport-rows';
@@ -62,6 +63,7 @@ export type {
   IntermediatePrize,
   League,
   EmailMessage,
+  EmailSuppression,
   LeagueInvitation,
   LeagueMembership,
   ContestEntryPick,

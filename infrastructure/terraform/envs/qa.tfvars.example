@@ -42,3 +42,7 @@ route53_zone_id     = "Z020704038X1AEGE6QNM9"
 
 # System email sends from noreply@qa.<domain_name>. DMARC aggregate reports go here (optional).
 # dmarc_report_email = "you@example.com"
+
+# SES delivery events reach core-api once this is true. Leave false for the first apply; set it
+# after the next deploy (README, System email (SES)).
+ses_events_subscribed = false

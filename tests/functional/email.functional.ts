@@ -7,6 +7,7 @@ import {
   listLeagueInvitations,
   resendLeagueInvitation,
   openContest,
+  receiveSesEvent,
   sendLeagueInvitations,
   submitContestEntry,
   submitContestSelection,
@@ -21,7 +22,7 @@ import {
   type RegisteredUserContext,
 } from './builders';
 import { awaitSentMailTo, linksIn, sentMailTo, sentMailWithSubject } from './mail';
-import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
+import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { FUNCTIONAL_APP_BASE_URL } from './state';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
@@ -318,5 +319,26 @@ describe('SDK Functional: system emails', () => {
     }
     expect(await sentMailWithSubject(bystander.email, startedSubject)).toHaveLength(0);
     expect(await sentMailWithSubject(admin.email, startedSubject)).toHaveLength(0);
+  });
+});
+
+describe('SDK Functional: SES delivery events', () => {
+  it('refuses, without a session, an SNS message the server cannot verify as its SES events topic\'s', async () => {
+    const answer = await receiveSesEvent({
+      client: getSdkClient(),
+      body: {
+        Type: 'Notification',
+        MessageId: randomUUID(),
+        TopicArn: 'arn:aws:sns:us-east-2:123456789012:someone-elses-topic',
+        Message: JSON.stringify({ eventType: 'Delivery', mail: { messageId: 'functional' } }),
+        Timestamp: new Date().toISOString(),
+        SignatureVersion: '2',
+        Signature: 'bm90IGEgc2lnbmF0dXJl',
+        SigningCertURL: 'https://sns.us-east-2.amazonaws.com/SimpleNotificationService-functional.pem',
+      },
+    });
+
+    expect(answer.response.status).toBe(403);
+    expect(answer.error?.error.code).toBe('EMAIL_EVENT_UNVERIFIED');
   });
 });

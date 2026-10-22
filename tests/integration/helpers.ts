@@ -46,7 +46,14 @@ import { IngestionConfigService } from '../../packages/core-api/src/modules/plat
 import { AppSettingsService } from '../../packages/core-api/src/modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from '../../packages/core-api/src/modules/platform/settings-groups';
 import { PlatformSettingsService } from '../../packages/core-api/src/modules/platform/platform-settings-service';
-import { EMAIL_SETTINGS, createEmailOutbox, type EmailSender } from '../../packages/core-api/src/modules/email';
+import {
+  EMAIL_SETTINGS,
+  SnsMessageVerifier,
+  createEmailOutbox,
+  emailEventsModule,
+  type EmailSender,
+} from '../../packages/core-api/src/modules/email';
+import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -110,6 +117,9 @@ type MailEnvironmentKey = (typeof MAIL_ENVIRONMENT_KEYS)[number];
 
 /** The shared app's settings cache; `cleanupTestData` refreshes it so deleted rows are not served. */
 let appSettings: AppSettingsService | undefined;
+// The SES events route believes messages signed by this key, from TEST_TOPIC_ARN (#844 slice 4).
+const integrationSns = snsSigner();
+const confirmedSnsSubscriptions: string[] = [];
 
 /** Get the shared Fastify app instance (created once per test suite). */
 export function getApp(): FastifyInstance {
@@ -185,6 +195,16 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
+  testApp.register(emailEventsModule, {
+    prefix: '/api/v1/email',
+    deliveryEvents: outbox.deliveryEvents,
+    verifier: new SnsMessageVerifier({ fetchCertificate: integrationSns.fetchCertificate }),
+    topicArn: TEST_TOPIC_ARN,
+    confirmSubscription: (subscribeUrl) => {
+      confirmedSnsSubscriptions.push(subscribeUrl);
+      return Promise.resolve();
+    },
+  });
 
   await testApp.ready();
   return testApp;
@@ -211,6 +231,16 @@ export async function setupIntegrationTests(): Promise<void> {
   await cleanupTestData();
   await startIntegrationMailSink();
   app = await buildTestApp();
+}
+
+/** Signs SNS messages the app's SES events route believes, as SNS would (#844 slice 4). */
+export function getSnsSigner(): typeof integrationSns {
+  return integrationSns;
+}
+
+/** The SubscribeURLs the SES events route has confirmed, oldest first. */
+export function getConfirmedSnsSubscriptions(): readonly string[] {
+  return confirmedSnsSubscriptions;
 }
 
 /** Waits until every email the app has queued so far has been handed to the SMTP sink. */
@@ -621,6 +651,11 @@ export async function cleanupTestData(): Promise<void> {
 
   await cleanupContestArtifacts(prisma, contestIds);
   await cleanupSportEventParticipantArtifacts(prisma, providerSportEventParticipantIds);
+
+  // Addresses a test bounced; real addresses never end in the integration domain.
+  await prisma.emailSuppression.deleteMany({
+    where: { email: { endsWith: INTEGRATION_TEST_EMAIL_DOMAIN } },
+  });
 
   if (leagueIds.length > 0) {
     // The outbox keeps an email when what it is about goes, so the test leagues' emails go first.

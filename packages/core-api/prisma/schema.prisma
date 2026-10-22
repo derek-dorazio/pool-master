@@ -193,12 +193,21 @@ enum PrismaEmailMessageStatus {
   SENT
   FAILED
   SKIPPED
+  DELIVERED
+  BOUNCED
+  COMPLAINED
 }
 
 enum PrismaEmailSkipReason {
   EMAIL_DISABLED
   TEMPLATE_DISABLED
   NOT_ALLOWED_IN_ENVIRONMENT
+  SUPPRESSED
+}
+
+enum PrismaEmailSuppressionReason {
+  BOUNCE
+  COMPLAINT
 }
 
 enum PrismaSquadOwnerInvitationStatus {
@@ -668,10 +677,28 @@ model EmailMessage {
   entry      ContestEntry?     @relation(fields: [entryId], references: [id], onDelete: SetNull)
   invitation LeagueInvitation? @relation(fields: [invitationId], references: [id], onDelete: SetNull)
 
+  suppressions EmailSuppression[]
+
   @@index([status, nextAttemptAt])
   @@index([invitationId, createdAt])
   @@index([createdAt])
+  @@index([providerMessageId])
   @@map("email_messages")
+}
+
+/// #844 SES slice 4: addresses the app no longer emails, after a permanent bounce or a complaint.
+model EmailSuppression {
+  id                String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Lower-cased.
+  email             String                       @unique @db.VarChar(255)
+  suppressionReason PrismaEmailSuppressionReason @map("suppression_reason")
+  emailMessageId    String?                      @map("email_message_id") @db.Uuid
+  createdAt         DateTime                     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime                     @updatedAt @map("updated_at") @db.Timestamptz
+
+  emailMessage EmailMessage? @relation(fields: [emailMessageId], references: [id], onDelete: SetNull)
+
+  @@map("email_suppressions")
 }
 
 model SquadOwnerInvitation {

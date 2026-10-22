@@ -7,7 +7,8 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
-import { PrismaEmailMessageRepository } from '../../adapters';
+import { PrismaEmailMessageRepository, PrismaEmailSuppressionRepository } from '../../adapters';
+import { EmailDeliveryEvents } from './email-delivery-events';
 import { EmailSender } from './email-sender';
 import { EmailService } from './email-service';
 import { createMailDeliveryProvider, readMailDeliveryConfig } from './mail-delivery';
@@ -15,6 +16,8 @@ import { createMailDeliveryProvider, readMailDeliveryConfig } from './mail-deliv
 export interface EmailOutbox {
   email: EmailService;
   sender: EmailSender;
+  /** Records what SES reports after it accepts an email. */
+  deliveryEvents: EmailDeliveryEvents;
 }
 
 export function createEmailOutbox(options: {
@@ -26,6 +29,7 @@ export function createEmailOutbox(options: {
   const mailConfig = readMailDeliveryConfig(options.env);
   const transport = createMailDeliveryProvider(mailConfig, options.logger);
   const messages = new PrismaEmailMessageRepository(options.prisma);
+  const suppressions = new PrismaEmailSuppressionRepository(options.prisma);
   const sender = new EmailSender({
     messages,
     transport,
@@ -34,11 +38,13 @@ export function createEmailOutbox(options: {
   });
   const email = new EmailService({
     messages,
+    suppressions,
     providerName: transport.providerName,
     readConfig: options.readConfig,
     senderAddress: mailConfig.fromEmail,
     onQueued: () => { sender.wake(); },
     logger: options.logger,
   });
-  return { email, sender };
+  const deliveryEvents = new EmailDeliveryEvents({ messages, suppressions, logger: options.logger });
+  return { email, sender, deliveryEvents };
 }

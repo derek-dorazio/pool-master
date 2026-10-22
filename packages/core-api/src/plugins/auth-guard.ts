@@ -69,6 +69,9 @@ const PUBLIC_ROUTES = new Set([
   'POST /api/v1/auth/password-reset/request',
   'POST /api/v1/auth/password-reset/confirm',
   'POST /api/v1/client-logs',
+  // #844 — SES delivery events, posted by Amazon SNS. The SNS signature and this environment's
+  // topic are the whole authority; the route refuses anything else with 403.
+  'POST /api/v1/email/ses-events',
   // #217 — registering against a squad-owner invitation. Public by necessity: the caller has no
   // account yet, which is the entire reason this route exists alongside
   // `POST /api/v1/team-invitations/accept`, which requires a session. It is not an open
