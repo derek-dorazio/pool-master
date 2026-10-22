@@ -368,6 +368,14 @@ contact list per account (shared by QA and prod), and it only covers SES sends, 
 > nothing combines several leagues into one email or one page. The preference switch is a setting
 > on the user's own account, not a league feature, so it doesn't break this rule.
 
+As built (slice 5): the table is `email_opt_outs` (a row means off), read and set through
+`GET`/`PUT /api/v1/users/:userId/email-preferences` under the users module's A6 rule, and shown as
+*Email notifications* on the profile. The one-click route is `POST /api/v1/email/unsubscribe`,
+under the API's version prefix; the page's link and the header both carry the same token. The
+token is an HMAC with a key derived from `JWT_SECRET`, not a JWT, since a JWT signed with that
+secret would verify as an access token. Only an email to someone with an account carries the
+links. The suppressed-address banner sits on the profile and in the dialog.
+
 ## 8. Bounces and complaints
 
 SES publishes bounce, complaint, delivery and reject events from the configuration set to an SNS

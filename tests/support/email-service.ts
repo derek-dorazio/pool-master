@@ -2,15 +2,24 @@ import {
   EMAIL_SETTINGS,
   EmailSender,
   EmailService,
+  UnsubscribeTokens,
+  type EmailServiceOptions,
   type MailDeliveryProvider,
 } from '../../packages/core-api/src/modules/email';
 import {
   inMemoryEmailMessages,
+  inMemoryEmailOptOuts,
   inMemoryEmailSuppressions,
   type InMemoryEmailMessages,
 } from './in-memory-email-messages';
 
 const pendingDeliveries: Promise<void>[] = [];
+
+/** What a test EmailService builds its "Stop these emails" links from. */
+export const TEST_UNSUBSCRIBE: EmailServiceOptions['unsubscribe'] = {
+  tokens: new UnsubscribeTokens('test-unsubscribe-secret'),
+  appBaseUrl: 'https://app.example.test',
+};
 
 /**
  * The real EmailService and EmailSender over an in-memory outbox and a test transport, with
@@ -27,6 +36,8 @@ export function emailServiceOver(
   return new EmailService({
     messages,
     suppressions: inMemoryEmailSuppressions(),
+    optOuts: inMemoryEmailOptOuts(),
+    unsubscribe: TEST_UNSUBSCRIBE,
     providerName: transport.providerName,
     readConfig,
     senderAddress: 'noreply@poolmaster.test',

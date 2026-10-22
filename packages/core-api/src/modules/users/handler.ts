@@ -11,6 +11,7 @@
  */
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
+  EmailPreferenceUpdateRequest,
   UserPasswordChangeRequest,
   UserPreferencesUpdateRequest,
   UserProfileUpdateRequest,
@@ -23,6 +24,7 @@ import {
   readRefreshCookie,
 } from '../../core/session-cookies';
 import type { AuthService } from '../auth/auth-service';
+import type { EmailPreferencesService } from '../email/email-preferences-service';
 import { AuthError } from '../auth/auth-service';
 import { UserOperationError } from './user-errors';
 import type { UserService, UserWriteActor } from './user-service';
@@ -30,13 +32,19 @@ import type { UserService, UserWriteActor } from './user-service';
 /** `me` is the caller. Every other value is a user id the authority rules then check. */
 const SELF = 'me';
 
-export function createUserHandlers(userService: UserService, authService: AuthService) {
+export function createUserHandlers(
+  userService: UserService,
+  authService: AuthService,
+  emailPreferences: EmailPreferencesService,
+) {
   return {
     listUsers,
     readUser,
     updateProfile,
     updateUsername,
     updatePreferences,
+    readEmailPreferences,
+    updateEmailPreference,
     changePassword,
     resetPassword,
     disableUser,
@@ -160,6 +168,29 @@ export function createUserHandlers(userService: UserService, authService: AuthSe
         request.body,
       );
       return reply.send({ user: toUserDto(user) });
+    });
+  }
+
+  // --- Email preferences ------------------------------------------------------
+
+  async function readEmailPreferences(
+    request: FastifyRequest<{ Params: { userId: string } }>,
+    reply: FastifyReply,
+  ) {
+    return run(request, reply, 'user.readEmailPreferences', async (actor) => {
+      const user = await userService.readUser(actor, subjectOf(actor, request.params.userId));
+      return reply.send(await emailPreferences.read(user));
+    });
+  }
+
+  async function updateEmailPreference(
+    request: FastifyRequest<{ Params: { userId: string }; Body: EmailPreferenceUpdateRequest }>,
+    reply: FastifyReply,
+  ) {
+    return run(request, reply, 'user.updateEmailPreference', async (actor) => {
+      const user = await userService.writableUser(actor, subjectOf(actor, request.params.userId));
+      const logger = request.contextLogger ?? request.log;
+      return reply.send(await emailPreferences.set(user, request.body.category, request.body.enabled, logger));
     });
   }
 

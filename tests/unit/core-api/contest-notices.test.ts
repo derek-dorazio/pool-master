@@ -16,7 +16,8 @@ import {
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
 import { ContestNotices } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
-import { inMemoryEmailMessages, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
+import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
+import { TEST_UNSUBSCRIBE } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 
 const STARTS_AT = new Date('2026-04-09T11:40:00.000Z');
@@ -46,6 +47,8 @@ describe('ContestNotices', () => {
       readConfig: () => config,
       senderAddress: 'noreply@poolmaster.test',
       suppressions: inMemoryEmailSuppressions(),
+      optOuts: inMemoryEmailOptOuts(),
+      unsubscribe: TEST_UNSUBSCRIBE,
       logger,
     });
     return new ContestNotices({

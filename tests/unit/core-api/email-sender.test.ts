@@ -352,6 +352,42 @@ describe('email sender', () => {
     expect(sent).toEqual(['member1@gmail.com', 'member2@gmail.com']);
   });
 
+  it('sends an email queued while the drain is clearing old content, rather than leaving it for the next tick', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    await outbox.record(queued(1));
+    const clearContent = outbox.clearContentCreatedBefore.bind(outbox);
+    outbox.clearContentCreatedBefore = async (cutoff) => {
+      // Another request queues an email while the drain sweeps old content.
+      await outbox.record(queued(2));
+      emailSender.wake();
+      return clearContent(cutoff);
+    };
+    const { transport, sent } = recordingTransport();
+    const emailSender = sender({ outbox, transport, time });
+
+    await emailSender.drain();
+
+    expect(sent.map((message) => message.to)).toEqual(['member1@gmail.com', 'member2@gmail.com']);
+  });
+
+  it('still sends due email when clearing old content fails, logging the failed sweep', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    await outbox.record(queued(1));
+    outbox.clearContentCreatedBefore = () => Promise.reject(new Error('sweep timed out'));
+    const { transport, sent } = recordingTransport();
+    const logger = fakeLogger();
+
+    await sender({ outbox, transport, time, logger }).drain();
+
+    expect(sent.map((message) => message.to)).toEqual(['member1@gmail.com']);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'email.sender.sweepFailure' }),
+      expect.any(String),
+    );
+  });
+
   it('logs a failed pass and resolves, so the next tick tries again', async () => {
     const time = clock();
     const outbox = inMemoryEmailMessages(time.now);

@@ -745,6 +745,38 @@ export type Severity = (typeof Severity)[keyof typeof Severity];
 
 // --- System email (#844) ---
 
+/**
+ * The email categories (#844, #845). Each system email sits in one; the category decides whether
+ * a member can turn the email off and which unsubscribe link it carries. The list is the
+ * notification catalog's (`plans/email-notifications.md` §2).
+ */
+export const EmailCategory = {
+  /** Account and security. Can't be turned off. */
+  ACCOUNT: 'ACCOUNT',
+  /** Invitations and membership. Can't be turned off. */
+  MEMBERSHIP: 'MEMBERSHIP',
+  COMMISSIONER_UPDATES: 'COMMISSIONER_UPDATES',
+  CONTEST_UPDATES: 'CONTEST_UPDATES',
+  LIVE_STANDINGS: 'LIVE_STANDINGS',
+  RESULTS: 'RESULTS',
+  RECEIPTS: 'RECEIPTS',
+} as const;
+export type EmailCategory = (typeof EmailCategory)[keyof typeof EmailCategory];
+
+/** The categories a member can turn off, one switch each on their account (#844 slice 5, Q7.1). */
+export const OptionalEmailCategory = {
+  COMMISSIONER_UPDATES: EmailCategory.COMMISSIONER_UPDATES,
+  CONTEST_UPDATES: EmailCategory.CONTEST_UPDATES,
+  LIVE_STANDINGS: EmailCategory.LIVE_STANDINGS,
+  RESULTS: EmailCategory.RESULTS,
+  RECEIPTS: EmailCategory.RECEIPTS,
+} as const;
+export type OptionalEmailCategory = (typeof OptionalEmailCategory)[keyof typeof OptionalEmailCategory];
+
+export function isOptionalEmailCategory(category: EmailCategory): category is OptionalEmailCategory {
+  return Object.values<EmailCategory>(OptionalEmailCategory).includes(category);
+}
+
 /** The system emails core-api can send, one per template. */
 export const EmailTemplateKey = {
   LEAGUE_MEMBER_INVITE: 'LEAGUE_MEMBER_INVITE',
@@ -799,6 +831,8 @@ export const EmailSkipReason = {
   NOT_ALLOWED_IN_ENVIRONMENT: 'NOT_ALLOWED_IN_ENVIRONMENT',
   /** The address bounced for good or complained before; it is on the suppression list. */
   SUPPRESSED: 'SUPPRESSED',
+  /** The recipient turned this email's category off on their account, or unsubscribed from it. */
+  OPTED_OUT: 'OPTED_OUT',
 } as const;
 export type EmailSkipReason = (typeof EmailSkipReason)[keyof typeof EmailSkipReason];
 

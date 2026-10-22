@@ -1,5 +1,6 @@
 import { expect } from '@jest/globals';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
+import { Writable } from 'node:stream';
 import {
   buildRequestLogBindings,
   createFastifyLoggerOptions,
@@ -32,6 +33,22 @@ describe('core-api logging foundation', () => {
           censor: '[REDACTED]',
         }),
       );
+    });
+
+    it('logs a request\'s URL without its token query value, so an unsubscribe link never reaches the logs', async () => {
+      const lines: string[] = [];
+      const stream = new Writable({
+        write(chunk: Buffer, _encoding, done) { lines.push(chunk.toString()); done(); },
+      });
+      const app = Fastify({ logger: { ...createFastifyLoggerOptions('core-api'), level: 'info', stream } });
+      app.get('/api/v1/email/unsubscribe', () => ({ ok: true }));
+
+      await app.inject({ method: 'GET', url: '/api/v1/email/unsubscribe?token=secret-token-value&keep=1' });
+      await app.close();
+
+      const logged = lines.join('');
+      expect(logged).toContain('/api/v1/email/unsubscribe?token=[REDACTED]&keep=1');
+      expect(logged).not.toContain('secret-token-value');
     });
   });
 

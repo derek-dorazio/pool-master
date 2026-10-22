@@ -423,6 +423,8 @@ are wider — see the league-scoped row.
 | **Read league peers** | `member` | **A4 + A6** · scoped through the `LeagueMembership` join; returns users sharing a league with the caller, as the canonical `UserDto` |
 | List / search *(unscoped)* | `rootAdmin` | **A1** |
 | Update profile, username, preferences | `self`, `rootAdmin` | A6 · **one operation, either caller** — `modules/users/user-profile-service.ts`; the authority rule is `requireWritableUser`, and a caller who is neither gets 403 `USER_WRITE_FORBIDDEN` |
+| Read / set email notifications | `self`, `rootAdmin` | A6 · `GET` and `PUT /users/:userId/email-preferences` (#844 slice 5): one switch per category a member can turn off, and whether the address is suppressed. Read through the read rule, written through `UserService.writableUser` |
+| Unsubscribe from one category by an email's link | `public` | `POST /email/unsubscribe?token=` (#844 slice 5). **No session: the token is its whole authority**, and it can only turn off the one category it names for the one user it names. Repeating it changes nothing; a token this app did not issue is 400 `EMAIL_UNSUBSCRIBE_LINK_INVALID` |
 | Change own password | `self` | A6 · requires the current password |
 | Reset another's password | `rootAdmin` | A6 · no current password; the subject differs, not just the precondition |
 | Reset own password with an emailed link | `public` | **The one unauthenticated user write** (#847). The request route (`POST /auth/password-reset/request`) answers 202 whether or not an account matches; the confirm route writes the password of whichever account the token was issued to, with no session. The token is its whole authority: random 256-bit, stored only as SHA-256, single use, 10 minutes, cancelled by a newer link or any password change. A confirm signs the account out everywhere |
@@ -1006,11 +1008,12 @@ check, the one-off re-ingest (the event sync is the path), and the tables `plan_
 
 `EmailMessage` and `EmailSuppression` are the outbox and the addresses it no longer emails
 (`docs/EMAIL-DELIVERY.md`). Nobody reads or writes them through the API except this one route,
-which Amazon SNS calls, not the app.
+which Amazon SNS calls, not the app, and the email-preferences read, which says whether the
+caller's own address is suppressed (*User*).
 
 | Operation | Role | Notes |
 |---|---|---|
-| Receive an SES delivery event | `public` *(SNS)* | `receiveSesEvent`, `POST /api/v1/email/ses-events` (#844 slice 4). **No session: the SNS signature and the topic are its whole authority.** The signing certificate must come from an https `sns.<region>.amazonaws.com` URL and the topic must be `SES_EVENTS_TOPIC_ARN`; anything else is 403 `EMAIL_EVENT_UNVERIFIED`. It moves an email forward only (`SENT` → `DELIVERED`, `BOUNCED`, `COMPLAINED` or `FAILED`), and a permanent bounce or a complaint suppresses the address |
+| Receive an SES delivery event | `public` *(SNS)* | `receiveSesEvent`, `POST /api/v1/email/ses-events` (#844 slice 4). **No session: the SNS signature and the topic are its whole authority.** The signing certificate must come from an https URL under `/SimpleNotificationService-` on the `sns.<region>.amazonaws.com` host of the topic's region, the message must be at most an hour old, and the topic must be `SES_EVENTS_TOPIC_ARN`; anything else is 403 `EMAIL_EVENT_UNVERIFIED`. It moves an email forward only (`SENT` → `DELIVERED`, `BOUNCED`, `COMPLAINED` or `FAILED`), and a permanent bounce or a complaint suppresses the address |
 
 ---
 

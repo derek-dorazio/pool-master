@@ -10,6 +10,9 @@ export interface CapturedMail {
   to: string[];
   subject: string;
   text: string;
+  /** The List-Unsubscribe and List-Unsubscribe-Post headers, on an email a member can turn off. */
+  listUnsubscribe?: string;
+  listUnsubscribePost?: string;
   receivedAt: string;
 }
 
@@ -191,12 +194,14 @@ function extractAddress(commandLine: string): string {
   return (match?.[1] ?? '').trim();
 }
 
-/** The subject and plain-text body of a raw RFC 5322 message, MIME-decoded. */
-function parseMessage(raw: string): { subject: string; text: string } {
+/** The subject, plain-text body and unsubscribe headers of a raw RFC 5322 message, MIME-decoded. */
+function parseMessage(raw: string): Pick<CapturedMail, 'subject' | 'text' | 'listUnsubscribe' | 'listUnsubscribePost'> {
   const { headers, body } = splitHeaders(raw);
   return {
     subject: decodeEncodedWords(headers.get('subject') ?? ''),
     text: findPlainText(headers, body) ?? '',
+    listUnsubscribe: headers.get('list-unsubscribe'),
+    listUnsubscribePost: headers.get('list-unsubscribe-post'),
   };
 }
 

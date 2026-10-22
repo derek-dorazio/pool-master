@@ -38,7 +38,10 @@ import {
   useMutationActionWorkflow,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
+import { QueryKeys } from '@/lib/query-keys';
 import { buildManageUserPath } from '@/features/root-admin/manage-navigation';
+import { EmailNotificationsDialog, EmailSuppressionBanner } from './email-notifications';
+import { useOwnEmailPreferences } from './email-preferences';
 import { UserAccountSummary } from './user-account-summary';
 import { formatUserName } from './user-name';
 import { buildUserPath, SELF_USER_ID } from './user-routing';
@@ -50,7 +53,7 @@ type UserUsernameFormValues = z.infer<typeof UserUsernameUpdateRequestSchema>;
 type UserPreferencesFormValues = z.infer<typeof UserPreferencesUpdateRequestSchema>;
 type UserPasswordFormValues = z.infer<typeof UserPasswordChangeRequestSchema>;
 
-type ActiveDialog = 'profile' | 'username' | 'preferences' | 'password' | 'lifecycle' | 'delete' | null;
+type ActiveDialog = 'profile' | 'username' | 'preferences' | 'email' | 'password' | 'lifecycle' | 'delete' | null;
 
 function formatMemberSince(createdAt?: string, dateFormat?: 'MDY' | 'DMY' | 'YMD') {
   if (!createdAt) {
@@ -169,6 +172,7 @@ export function UserPage() {
   const user = auth.user;
   const selfUserId = user?.id ?? '';
   const isSelf = Boolean(user && userId === selfUserId);
+  const emailPreferencesQuery = useOwnEmailPreferences(isSelf);
 
   useEffect(() => {
     if (!user) {
@@ -208,7 +212,8 @@ export function UserPage() {
     onSuccess: (updatedUser) => {
       setAuthSessionUser(queryClient, updatedUser);
     },
-    invalidates: [AUTH_ME_QUERY_KEY],
+    // A new email address is not suppressed, so the "we can't email you" banner may go.
+    invalidates: [AUTH_ME_QUERY_KEY, QueryKeys.emailPreferences.detail(SELF_USER_ID)],
   });
 
   const usernameMutation = useInvalidatingMutation({
@@ -455,7 +460,15 @@ export function UserPage() {
             update your details here, and reactivate or permanently delete the account.
           </Alert>
         ) : null}
+        <div className="mt-5 empty:hidden">
+          <EmailSuppressionBanner reason={emailPreferencesQuery.data?.emailSuppression} />
+        </div>
       </Tile>
+
+      <EmailNotificationsDialog
+        onOpenChange={(open) => setActiveDialog(open ? 'email' : null)}
+        open={activeDialog === 'email'}
+      />
 
       {deleteSuccess ? (
         <Alert
@@ -502,6 +515,14 @@ export function UserPage() {
               data-testid="user-page-open-preferences"
               label="Edit preferences"
               onClick={openPreferencesDialog}
+              trailing="Open"
+            />
+
+            <ActionTile
+              description="Choose which emails you get from your leagues."
+              data-testid="user-page-open-email-notifications"
+              label="Email notifications"
+              onClick={() => setActiveDialog('email')}
               trailing="Open"
             />
 

@@ -281,6 +281,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{userId}/email-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read which categories of email a user gets
+         * @description One switch per category of email a member can turn off, the same for every league; account and membership emails have none. Also says why the address gets no email at all, when it bounced for good or was marked as spam. Access rule A6: the subject themselves, or a root admin.
+         */
+        get: operations["getUserEmailPreferences"];
+        /**
+         * Turn one category of email on or off
+         * @description Sets one category's switch and returns them all. The same switch an email's "Stop these emails" link turns off. Access rule A6: the subject themselves, or a root admin.
+         */
+        put: operations["updateUserEmailPreference"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/{userId}/password": {
         parameters: {
             query?: never;
@@ -2623,6 +2647,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/email/unsubscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unsubscribe from one category of email by its link
+         * @description Public; the token from an email's "Stop these emails" link or List-Unsubscribe header is its whole authority. It turns off the category of email the token names for the user it names, the same switch as on their account. Repeating it changes nothing. A token this app did not issue, or one for an account since deleted, is 400 EMAIL_UNSUBSCRIBE_LINK_INVALID.
+         */
+        post: operations["unsubscribeFromEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/selections/{contestId}": {
         parameters: {
             query?: never;
@@ -3888,7 +3932,7 @@ export interface components {
          * @description Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED the address bounced for good or marked an earlier email as spam.
          * @enum {string}
          */
-        EmailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED";
+        EmailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | "OPTED_OUT";
         /** @description Invitation record returned from commissioner invite-management APIs. */
         LeagueInvitationDto: {
             /** @description Invitation record identifier. */
@@ -3936,7 +3980,7 @@ export interface components {
              * @description Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
              * @enum {string|null}
              */
-            emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | null;
+            emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | "OPTED_OUT" | null;
             /**
              * Format: date-time
              * @description Invitation creation timestamp.
@@ -4485,7 +4529,7 @@ export interface components {
                  * @description Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
                  * @enum {string|null}
                  */
-                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | null;
+                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | "OPTED_OUT" | null;
                 /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
@@ -4551,7 +4595,7 @@ export interface components {
                  * @description Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
                  * @enum {string|null}
                  */
-                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | null;
+                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | "OPTED_OUT" | null;
                 /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
@@ -4613,7 +4657,7 @@ export interface components {
                  * @description Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
                  * @enum {string|null}
                  */
-                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | null;
+                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | "OPTED_OUT" | null;
                 /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
@@ -4675,7 +4719,7 @@ export interface components {
                  * @description Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
                  * @enum {string|null}
                  */
-                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | null;
+                emailSkipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | "OPTED_OUT" | null;
                 /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
@@ -11648,6 +11692,62 @@ export interface components {
             Token?: string;
         };
         /**
+         * @description A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent.
+         * @enum {string}
+         */
+        OptionalEmailCategory: "COMMISSIONER_UPDATES" | "CONTEST_UPDATES" | "LIVE_STANDINGS" | "RESULTS" | "RECEIPTS";
+        /** @description One category of email and whether the user gets it. */
+        EmailPreferenceDto: {
+            /**
+             * @description A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent.
+             * @enum {string}
+             */
+            category: "COMMISSIONER_UPDATES" | "CONTEST_UPDATES" | "LIVE_STANDINGS" | "RESULTS" | "RECEIPTS";
+            /** @description Whether the user gets emails in this category. */
+            enabled: boolean;
+        };
+        /** @description Which categories of email the user gets, and whether their address can be emailed at all. */
+        EmailPreferencesResponse: {
+            /** @description Every category a member can turn off, in a fixed order. */
+            preferences: {
+                /**
+                 * @description A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent.
+                 * @enum {string}
+                 */
+                category: "COMMISSIONER_UPDATES" | "CONTEST_UPDATES" | "LIVE_STANDINGS" | "RESULTS" | "RECEIPTS";
+                /** @description Whether the user gets emails in this category. */
+                enabled: boolean;
+            }[];
+            /**
+             * @description Why no email reaches the account's address any more, or null: BOUNCE when mail to it bounced for good, COMPLAINT when an email was marked as spam. Changing the account's email fixes it.
+             * @enum {string|null}
+             */
+            emailSuppression: "BOUNCE" | "COMPLAINT" | null;
+        };
+        /** @description Turns one category of email on or off. */
+        EmailPreferenceUpdateRequest: {
+            /**
+             * @description A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent.
+             * @enum {string}
+             */
+            category: "COMMISSIONER_UPDATES" | "CONTEST_UPDATES" | "LIVE_STANDINGS" | "RESULTS" | "RECEIPTS";
+            /** @description Whether the user gets emails in this category. */
+            enabled: boolean;
+        };
+        /** @description The unsubscribe link's token. */
+        EmailUnsubscribeQuery: {
+            /** @description The token from the email's unsubscribe link. */
+            token: string;
+        };
+        /** @description The category the unsubscribe link turned off. */
+        EmailUnsubscribeResponse: {
+            /**
+             * @description The category of email that is now off.
+             * @enum {string}
+             */
+            category: "COMMISSIONER_UPDATES" | "CONTEST_UPDATES" | "LIVE_STANDINGS" | "RESULTS" | "RECEIPTS";
+        };
+        /**
          * @description The stored key of a settings group.
          * @enum {string}
          */
@@ -15491,6 +15591,128 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getUserEmailPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description `me` for the authenticated caller, or a user id. */
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Which categories of email the user gets, and whether their address can be emailed at all. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailPreferencesResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    updateUserEmailPreference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description `me` for the authenticated caller, or a user id. */
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailPreferenceUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Which categories of email the user gets, and whether their address can be emailed at all. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailPreferencesResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23405,6 +23627,38 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    unsubscribeFromEmail: {
+        parameters: {
+            query: {
+                /** @description The token from the email's unsubscribe link. */
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The category the unsubscribe link turned off. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailUnsubscribeResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

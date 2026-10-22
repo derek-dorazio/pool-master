@@ -2938,7 +2938,8 @@
           "EMAIL_DISABLED",
           "TEMPLATE_DISABLED",
           "NOT_ALLOWED_IN_ENVIRONMENT",
-          "SUPPRESSED"
+          "SUPPRESSED",
+          "OPTED_OUT"
         ],
         "description": "Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED the address bounced for good or marked an earlier email as spam."
       },
@@ -3045,6 +3046,7 @@
               "TEMPLATE_DISABLED",
               "NOT_ALLOWED_IN_ENVIRONMENT",
               "SUPPRESSED",
+              "OPTED_OUT",
               null
             ],
             "description": "Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED."
@@ -4264,6 +4266,7 @@
                     "TEMPLATE_DISABLED",
                     "NOT_ALLOWED_IN_ENVIRONMENT",
                     "SUPPRESSED",
+                    "OPTED_OUT",
                     null
                   ],
                   "description": "Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED."
@@ -4427,6 +4430,7 @@
                   "TEMPLATE_DISABLED",
                   "NOT_ALLOWED_IN_ENVIRONMENT",
                   "SUPPRESSED",
+                  "OPTED_OUT",
                   null
                 ],
                 "description": "Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED."
@@ -4574,6 +4578,7 @@
                     "TEMPLATE_DISABLED",
                     "NOT_ALLOWED_IN_ENVIRONMENT",
                     "SUPPRESSED",
+                    "OPTED_OUT",
                     null
                   ],
                   "description": "Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED."
@@ -4721,6 +4726,7 @@
                   "TEMPLATE_DISABLED",
                   "NOT_ALLOWED_IN_ENVIRONMENT",
                   "SUPPRESSED",
+                  "OPTED_OUT",
                   null
                 ],
                 "description": "Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED."
@@ -27044,6 +27050,158 @@
         "additionalProperties": false,
         "description": "A message from Amazon SNS, as posted to an HTTPS subscription."
       },
+      "OptionalEmailCategory": {
+        "type": "string",
+        "enum": [
+          "COMMISSIONER_UPDATES",
+          "CONTEST_UPDATES",
+          "LIVE_STANDINGS",
+          "RESULTS",
+          "RECEIPTS"
+        ],
+        "description": "A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent."
+      },
+      "EmailPreferenceDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "COMMISSIONER_UPDATES",
+              "CONTEST_UPDATES",
+              "LIVE_STANDINGS",
+              "RESULTS",
+              "RECEIPTS"
+            ],
+            "description": "A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the user gets emails in this category."
+          }
+        },
+        "required": [
+          "category",
+          "enabled"
+        ],
+        "additionalProperties": false,
+        "description": "One category of email and whether the user gets it."
+      },
+      "EmailPreferencesResponse": {
+        "type": "object",
+        "properties": {
+          "preferences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "COMMISSIONER_UPDATES",
+                    "CONTEST_UPDATES",
+                    "LIVE_STANDINGS",
+                    "RESULTS",
+                    "RECEIPTS"
+                  ],
+                  "description": "A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent."
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Whether the user gets emails in this category."
+                }
+              },
+              "required": [
+                "category",
+                "enabled"
+              ],
+              "additionalProperties": false,
+              "description": "One category of email and whether the user gets it."
+            },
+            "description": "Every category a member can turn off, in a fixed order."
+          },
+          "emailSuppression": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "BOUNCE",
+              "COMPLAINT",
+              null
+            ],
+            "description": "Why no email reaches the account's address any more, or null: BOUNCE when mail to it bounced for good, COMPLAINT when an email was marked as spam. Changing the account's email fixes it."
+          }
+        },
+        "required": [
+          "preferences",
+          "emailSuppression"
+        ],
+        "additionalProperties": false,
+        "description": "Which categories of email the user gets, and whether their address can be emailed at all."
+      },
+      "EmailPreferenceUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "COMMISSIONER_UPDATES",
+              "CONTEST_UPDATES",
+              "LIVE_STANDINGS",
+              "RESULTS",
+              "RECEIPTS"
+            ],
+            "description": "A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the user gets emails in this category."
+          }
+        },
+        "required": [
+          "category",
+          "enabled"
+        ],
+        "additionalProperties": false,
+        "description": "Turns one category of email on or off."
+      },
+      "EmailUnsubscribeQuery": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The token from the email's unsubscribe link."
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "additionalProperties": false,
+        "description": "The unsubscribe link's token."
+      },
+      "EmailUnsubscribeResponse": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "COMMISSIONER_UPDATES",
+              "CONTEST_UPDATES",
+              "LIVE_STANDINGS",
+              "RESULTS",
+              "RECEIPTS"
+            ],
+            "description": "The category of email that is now off."
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "additionalProperties": false,
+        "description": "The category the unsubscribe link turned off."
+      },
       "SettingsGroupKey": {
         "type": "string",
         "enum": [
@@ -37224,6 +37382,162 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{userId}/email-preferences": {
+      "get": {
+        "operationId": "getUserEmailPreferences",
+        "summary": "Read which categories of email a user gets",
+        "tags": [
+          "Users"
+        ],
+        "description": "One switch per category of email a member can turn off, the same for every league; account and membership emails have none. Also says why the address gets no email at all, when it bounced for good or was marked as spam. Access rule A6: the subject themselves, or a root admin.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+            },
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Which categories of email the user gets, and whether their address can be emailed at all.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailPreferencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateUserEmailPreference",
+        "summary": "Turn one category of email on or off",
+        "tags": [
+          "Users"
+        ],
+        "description": "Sets one category's switch and returns them all. The same switch an email's \"Stop these emails\" link turns off. Access rule A6: the subject themselves, or a root admin.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailPreferenceUpdateRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+            },
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Which categories of email the user gets, and whether their address can be emailed at all.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailPreferencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -47860,6 +48174,50 @@
             }
           },
           "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/email/unsubscribe": {
+      "post": {
+        "operationId": "unsubscribeFromEmail",
+        "summary": "Unsubscribe from one category of email by its link",
+        "tags": [
+          "Email"
+        ],
+        "description": "Public; the token from an email's \"Stop these emails\" link or List-Unsubscribe header is its whole authority. It turns off the category of email the token names for the user it names, the same switch as on their account. Repeating it changes nothing. A token this app did not issue, or one for an account since deleted, is 400 EMAIL_UNSUBSCRIBE_LINK_INVALID.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "description": "The token from the email's unsubscribe link."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The category the unsubscribe link turned off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailUnsubscribeResponse"
+                }
+              }
+            }
+          },
+          "400": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

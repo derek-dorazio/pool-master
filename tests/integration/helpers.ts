@@ -51,6 +51,7 @@ import {
   SnsMessageVerifier,
   createEmailOutbox,
   emailEventsModule,
+  emailUnsubscribeModule,
   type EmailSender,
 } from '../../packages/core-api/src/modules/email';
 import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
@@ -188,7 +189,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', email });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
-  testApp.register(usersModule, { prefix: '/api/v1/users', email });
+  testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
@@ -206,6 +207,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
       return Promise.resolve();
     },
   });
+  testApp.register(emailUnsubscribeModule, { prefix: '/api/v1/email', preferences: outbox.preferences });
 
   await testApp.ready();
   return testApp;

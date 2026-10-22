@@ -8,15 +8,23 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
-import type { EmailMessageRepository, EmailMessageState, EmailSuppressionRepository } from '@poolmaster/shared/db';
+import type {
+  EmailMessageRepository,
+  EmailMessageState,
+  EmailOptOutRepository,
+  EmailSuppressionRepository,
+} from '@poolmaster/shared/db';
 import {
   EmailMessageStatus,
   EmailSkipReason,
   EmailTemplateKey,
+  isOptionalEmailCategory,
   type EmailMessage,
+  type OptionalEmailCategory,
 } from '@poolmaster/shared/domain';
 import type { MailAddress, MailDeliveryProviderName } from './mail-delivery';
 import {
+  EMAIL_TEMPLATES,
   hasSettingsSwitch,
   PLATFORM_SENDER_NAME,
   renderSystemEmailTemplate,
@@ -25,6 +33,7 @@ import {
   type SystemEmailTemplateDataByKey,
   type SystemEmailTemplateKey,
 } from './system-email-templates';
+import type { UnsubscribeTokens } from './unsubscribe-tokens';
 
 /** The person an email goes to. */
 export interface EmailRecipient {
@@ -96,12 +105,21 @@ const SKIP_LOG_MESSAGES: Record<EmailSkipReason, string> = {
   [EmailSkipReason.TEMPLATE_DISABLED]: 'Email is switched off in settings; skipped sending email',
   [EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT]: 'Recipient may not be emailed in this environment; skipped sending email',
   [EmailSkipReason.SUPPRESSED]: 'Recipient bounced or complained before; skipped sending email',
+  [EmailSkipReason.OPTED_OUT]: 'Recipient turned this kind of email off; skipped sending email',
 };
+
+/** Where an email's "Stop these emails" page and one-click unsubscribe live (#844 slice 5). */
+export const UNSUBSCRIBE_PAGE_PATH = '/email/unsubscribe';
+export const ONE_CLICK_UNSUBSCRIBE_PATH = '/api/v1/email/unsubscribe';
 
 export interface EmailServiceOptions {
   messages: Pick<EmailMessageRepository, 'record' | 'findLatestStateByInvitations'>;
   /** Addresses that bounced for good or complained: their email is skipped, not queued. */
   suppressions: Pick<EmailSuppressionRepository, 'findByEmail'>;
+  /** Categories each user turned off: their email in one is skipped, not queued. */
+  optOuts: Pick<EmailOptOutRepository, 'isOptedOut'>;
+  /** Signs the unsubscribe links an email a member can turn off carries, under `appBaseUrl`. */
+  unsubscribe: { tokens: UnsubscribeTokens; appBaseUrl: string };
   /** Which transport sends: reserved domains are skipped only on SES. */
   providerName: MailDeliveryProviderName;
   readConfig: () => EmailConfig;
@@ -151,7 +169,8 @@ export class EmailService {
     };
     const skipped = switchedOffReason(config, templateKey)
       ?? (this.mayReceive(address, config) ? undefined : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT)
-      ?? (await this.options.suppressions.findByEmail(address) ? EmailSkipReason.SUPPRESSED : undefined);
+      ?? (await this.options.suppressions.findByEmail(address) ? EmailSkipReason.SUPPRESSED : undefined)
+      ?? (await this.optedOut(templateKey, input.to.userId) ? EmailSkipReason.OPTED_OUT : undefined);
     if (skipped) {
       const { message, created } = await this.options.messages.record({
         ...recipient,
@@ -167,8 +186,10 @@ export class EmailService {
       return message;
     }
 
+    const unsubscribe = this.unsubscribeLinks(templateKey, input.to.userId);
     const content = renderSystemEmailTemplate(templateKey, input.data, {
       timeZone: this.resolveTimeZone(input.to.timeZone, refs),
+      unsubscribeUrl: unsubscribe?.pageUrl,
     });
     const { message, created } = await this.options.messages.record({
       ...recipient,
@@ -176,6 +197,7 @@ export class EmailService {
       subject: content.subject,
       textBody: content.text,
       htmlBody: content.html,
+      listUnsubscribeUrl: unsubscribe?.oneClickUrl,
       dueAt: this.options.now?.() ?? new Date(),
     });
     if (created) {
@@ -186,6 +208,30 @@ export class EmailService {
       this.options.logger?.debug({ action: 'email.send.duplicate', data: logRefs(refs) }, 'Email already recorded; not queued again');
     }
     return message;
+  }
+
+  /** Whether the recipient turned off the category this email sits in; only users can. */
+  private async optedOut(templateKey: SystemEmailTemplateKey, userId: string | undefined): Promise<boolean> {
+    const category = optionalCategoryOf(templateKey);
+    return category !== undefined && userId !== undefined && this.options.optOuts.isOptedOut(userId, category);
+  }
+
+  /**
+   * The links an email a member can turn off carries: the "Stop these emails" page in its footer,
+   * and the one-click address for its List-Unsubscribe header (RFC 8058). None on the rest.
+   */
+  private unsubscribeLinks(
+    templateKey: SystemEmailTemplateKey,
+    userId: string | undefined,
+  ): { pageUrl: string; oneClickUrl: string } | undefined {
+    const category = optionalCategoryOf(templateKey);
+    if (category === undefined || userId === undefined) return undefined;
+    const token = encodeURIComponent(this.options.unsubscribe.tokens.issue({ userId, category }));
+    const base = this.options.unsubscribe.appBaseUrl;
+    return {
+      pageUrl: `${base}${UNSUBSCRIBE_PAGE_PATH}?token=${token}`,
+      oneClickUrl: `${base}${ONE_CLICK_UNSUBSCRIBE_PATH}?token=${token}`,
+    };
   }
 
   /** Where each invitation's latest invite email stands, by invitation id. */
@@ -269,4 +315,9 @@ function isReservedDomain(domain: string): boolean {
   const topLevel = domain.slice(domain.lastIndexOf('.') + 1);
   return RESERVED_TOP_LEVEL_DOMAINS.includes(topLevel)
     || RESERVED_DOMAINS.some((reserved) => domain === reserved || domain.endsWith(`.${reserved}`));
+}
+
+function optionalCategoryOf(templateKey: SystemEmailTemplateKey): OptionalEmailCategory | undefined {
+  const category = EMAIL_TEMPLATES[templateKey].category;
+  return isOptionalEmailCategory(category) ? category : undefined;
 }

@@ -232,3 +232,51 @@ describe('EMAIL_CONFIG allowed recipients', () => {
     }
   });
 });
+
+describe('one-click unsubscribe headers', () => {
+  function sesProvider(sentCommands: SendEmailCommand[]) {
+    return new SesMailDeliveryProvider(
+      { provider: 'ses', fromEmail: 'noreply@example.com', ses: { region: 'us-east-2' } },
+      {
+        send: (command: SendEmailCommand) => {
+          sentCommands.push(command);
+          return Promise.resolve({ MessageId: 'ses-message-1', $metadata: {} });
+        },
+      },
+    );
+  }
+
+  it('sends List-Unsubscribe and List-Unsubscribe-Post through SES on an email that carries an unsubscribe URL, so mail apps show a one-click Unsubscribe', async () => {
+    const sentCommands: SendEmailCommand[] = [];
+
+    await sesProvider(sentCommands).send({
+      from: { name: 'Office League', address: 'officeleague@qa.example.com' },
+      to: 'member@gmail.com',
+      subject: 'Entry submitted',
+      text: 'Plain text body',
+      html: '<p>HTML body</p>',
+      listUnsubscribeUrl: 'https://qa.example.com/api/v1/email/unsubscribe?token=abc',
+      metadata: { templateKey: 'CONTEST_ENTRY_COMPLETED' },
+    });
+
+    expect(sentCommands[0].input.Content?.Simple?.Headers).toEqual([
+      { Name: 'List-Unsubscribe', Value: '<https://qa.example.com/api/v1/email/unsubscribe?token=abc>' },
+      { Name: 'List-Unsubscribe-Post', Value: 'List-Unsubscribe=One-Click' },
+    ]);
+  });
+
+  it('sends no extra headers through SES on an email a member cannot turn off', async () => {
+    const sentCommands: SendEmailCommand[] = [];
+
+    await sesProvider(sentCommands).send({
+      from: { name: 'Office League', address: 'officeleague@qa.example.com' },
+      to: 'member@gmail.com',
+      subject: 'League invitation',
+      text: 'Plain text body',
+      html: '<p>HTML body</p>',
+      metadata: { templateKey: 'LEAGUE_MEMBER_INVITE' },
+    });
+
+    expect(sentCommands[0].input.Content?.Simple).not.toHaveProperty('Headers');
+  });
+});

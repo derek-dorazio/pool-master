@@ -3,6 +3,7 @@ import {
   acceptInvitation,
   createContest,
   enterContest,
+  getUserEmailPreferences,
   listContestConfigTemplates,
   listLeagueInvitations,
   resendLeagueInvitation,
@@ -12,7 +13,9 @@ import {
   submitContestEntry,
   submitContestSelection,
   transitionEvent,
+  unsubscribeFromEmail,
   updateContestEntry,
+  updateUserEmailPreference,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ParticipantType, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
@@ -139,6 +142,87 @@ async function inviteEmailStatusesOnceSettled(commissioner: RegisteredUserContex
   }
 }
 
+/**
+ * A league with a commissioner, a member and an idle member, and a one-pick golf contest the member
+ * has entered with a complete lineup, ready to submit; no receipt has gone out yet.
+ */
+async function enteredContest() {
+  const { commissioner, league } = await buildLeagueWithCommissioner({
+    displayName: 'Contest Commissioner',
+    leagueName: `Email Contest League ${randomUUID().slice(0, 6)}`,
+  });
+  const member = await buildRegisteredUser({ displayName: 'Entering Member' });
+  await inviteAndJoin(commissioner, league.id, member);
+  // A league member who enters nothing is still told the contest opened and started (#845).
+  const bystander = await buildRegisteredUser({ displayName: 'Idle Member' });
+  await inviteAndJoin(commissioner, league.id, bystander);
+
+  const event = await seedScheduledGolfEvent(`Email Open ${randomUUID().slice(0, 6)}`);
+  const templates = await listContestConfigTemplates({
+    client: commissioner.client,
+    query: { sport: Sport.GOLF, active: true },
+  });
+  const template = templates.data?.templates.find((candidate) => candidate.contestFormat === ContestFormat.ROSTER && candidate.isDefault);
+  expect(template).toBeDefined();
+  const contestName = `Email Contest ${randomUUID().slice(0, 6)}`;
+  const created = await createContest({
+    client: commissioner.client,
+    path: { id: league.id },
+    body: {
+      name: contestName,
+      sportEventIds: [event.sportEventId],
+      contestFormat: ContestFormat.ROSTER,
+      selectionType: SelectionType.TIERED,
+      templateId: template?.id as string,
+      configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
+    },
+  });
+  expect(created.response.status).toBe(201);
+  const contestId = created.data?.contest.id as string;
+  const opened = await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
+  expect(opened.data?.contest.status).toBe('OPEN');
+  const contestUrl = `${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/contests/${contestId}`;
+  for (const recipient of [commissioner, member, bystander]) {
+    const announcements = await awaitSentMailTo(recipient.email, 1, `New contest: ${contestName}`);
+    expect(announcements).toHaveLength(1);
+    expect(announcements[0].to).toEqual([recipient.email]);
+    expect(linksIn(announcements[0])[0]).toBe(contestUrl);
+  }
+
+  const entered = await enterContest({ client: member.client, path: { contestId } });
+  const entryId = entered.data?.entry.id as string;
+  expect(entryId).toBeTruthy();
+  // #481: an entry with an incomplete lineup cannot be submitted.
+  const early = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
+  expect(early.response.status).toBe(409);
+  expect(early.error?.error.code).toBe('ENTRY_LINEUP_INCOMPLETE');
+  const picked = await submitContestSelection({
+    client: member.client,
+    path: { contestId },
+    body: { entryId, participantId: event.sportEventParticipantId },
+  });
+  expect(picked.data?.isComplete).toBe(true);
+  expect(await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
+
+  const completed = await updateContestEntry({
+    client: member.client,
+    path: { contestId, entryId },
+    body: { tiebreakerValue: -12 },
+  });
+  expect(completed.response.status).toBe(200);
+  // The confirmation goes out when the entry is submitted (#481), not when its details are saved.
+  expect(await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
+
+  return { commissioner, league, member, bystander, event, contestId, contestUrl, entryId, contestName };
+}
+
+/** The token in an email's List-Unsubscribe header, as a mail app would post it back. */
+function oneClickToken(listUnsubscribe: string | undefined): string {
+  const url = /^<([^>]+)>$/.exec(listUnsubscribe ?? '')?.[1];
+  expect(url).toMatch(new RegExp(`^${FUNCTIONAL_APP_BASE_URL}/api/v1/email/unsubscribe\\?token=`));
+  return new URL(url as string).searchParams.get('token') as string;
+}
+
 afterEach(async () => {
   await cleanupEventFixtures();
   await cleanupFunctionalData();
@@ -228,71 +312,7 @@ describe('SDK Functional: system emails', () => {
   });
 
   it('tells every league member a contest opened, sends the entry confirmation to the entry\'s owner linking to that entry, and wishes every member good luck with a leaderboard link when an admin starts the event', async () => {
-    const { commissioner, league } = await buildLeagueWithCommissioner({
-      displayName: 'Contest Commissioner',
-      leagueName: `Email Contest League ${randomUUID().slice(0, 6)}`,
-    });
-    const member = await buildRegisteredUser({ displayName: 'Entering Member' });
-    await inviteAndJoin(commissioner, league.id, member);
-    // A league member who enters nothing is still told the contest opened and started (#845).
-    const bystander = await buildRegisteredUser({ displayName: 'Idle Member' });
-    await inviteAndJoin(commissioner, league.id, bystander);
-
-    const event = await seedScheduledGolfEvent(`Email Open ${randomUUID().slice(0, 6)}`);
-    const templates = await listContestConfigTemplates({
-      client: commissioner.client,
-      query: { sport: Sport.GOLF, active: true },
-    });
-    const template = templates.data?.templates.find((candidate) => candidate.contestFormat === ContestFormat.ROSTER && candidate.isDefault);
-    expect(template).toBeDefined();
-    const contestName = `Email Contest ${randomUUID().slice(0, 6)}`;
-    const created = await createContest({
-      client: commissioner.client,
-      path: { id: league.id },
-      body: {
-        name: contestName,
-        sportEventIds: [event.sportEventId],
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.TIERED,
-        templateId: template?.id as string,
-        configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
-      },
-    });
-    expect(created.response.status).toBe(201);
-    const contestId = created.data?.contest.id as string;
-    const opened = await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
-    expect(opened.data?.contest.status).toBe('OPEN');
-    const contestUrl = `${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/contests/${contestId}`;
-    for (const recipient of [commissioner, member, bystander]) {
-      const announcements = await awaitSentMailTo(recipient.email, 1, `New contest: ${contestName}`);
-      expect(announcements).toHaveLength(1);
-      expect(announcements[0].to).toEqual([recipient.email]);
-      expect(linksIn(announcements[0])[0]).toBe(contestUrl);
-    }
-
-    const entered = await enterContest({ client: member.client, path: { contestId } });
-    const entryId = entered.data?.entry.id as string;
-    expect(entryId).toBeTruthy();
-    // #481: an entry with an incomplete lineup cannot be submitted.
-    const early = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
-    expect(early.response.status).toBe(409);
-    expect(early.error?.error.code).toBe('ENTRY_LINEUP_INCOMPLETE');
-    const picked = await submitContestSelection({
-      client: member.client,
-      path: { contestId },
-      body: { entryId, participantId: event.sportEventParticipantId },
-    });
-    expect(picked.data?.isComplete).toBe(true);
-    expect(await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
-
-    const completed = await updateContestEntry({
-      client: member.client,
-      path: { contestId, entryId },
-      body: { tiebreakerValue: -12 },
-    });
-    expect(completed.response.status).toBe(200);
-    // The confirmation goes out when the entry is submitted (#481), not when its details are saved.
-    expect(await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
+    const { commissioner, member, bystander, event, contestId, contestUrl, entryId, contestName } = await enteredContest();
 
     const submitted = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
     expect(submitted.response.status).toBe(200);
@@ -301,7 +321,10 @@ describe('SDK Functional: system emails', () => {
     const confirmations = await awaitSentMailTo(member.email, 1, `Entry submitted: ${contestName}`);
     expect(confirmations).toHaveLength(1);
     expect(confirmations[0].to).toEqual([member.email]);
-    expect(linksIn(confirmations[0])[0]).toBe(`${contestUrl}/entries/${entryId}`);
+    const [entryLink, unsubscribeLink] = linksIn(confirmations[0]);
+    expect(entryLink).toBe(`${contestUrl}/entries/${entryId}`);
+    // An entry receipt is an email a member can turn off: it ends with their own unsubscribe link.
+    expect(unsubscribeLink).toMatch(new RegExp(`^${FUNCTIONAL_APP_BASE_URL}/email/unsubscribe\\?token=`));
     expect(await sentMailWithSubject(commissioner.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
 
     // Post-#435 every event is admin-owned: the admin's transition is what starts its contests.
@@ -323,6 +346,42 @@ describe('SDK Functional: system emails', () => {
     }
     // The root admin is not in the league, so is told nothing.
     expect(await sentMailWithSubject(admin.email, startedSubject)).toHaveLength(0);
+  });
+});
+
+describe('SDK Functional: email preferences and unsubscribe', () => {
+  it('stops a member\'s contest-started email once they turn live standings off, and turns receipts off from the one-click unsubscribe header of their entry receipt', async () => {
+    const { commissioner, member, event, contestId, entryId, contestName } = await enteredContest();
+    const liveOff = await updateUserEmailPreference({
+      client: member.client,
+      path: { userId: 'me' },
+      body: { category: 'LIVE_STANDINGS', enabled: false },
+    });
+    expect(liveOff.response.status).toBe(200);
+
+    const submitted = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
+    expect(submitted.response.status).toBe(200);
+    const [receipt] = await awaitSentMailTo(member.email, 1, `Entry submitted: ${contestName}`);
+    expect(receipt.listUnsubscribePost).toBe('List-Unsubscribe=One-Click');
+
+    // A mail app posts the header's URL with no session; the token is its whole authority.
+    const unsubscribed = await unsubscribeFromEmail({
+      client: getSdkClient(),
+      query: { token: oneClickToken(receipt.listUnsubscribe) },
+    });
+    expect(unsubscribed.data).toEqual({ category: 'RECEIPTS' });
+    const preferences = await getUserEmailPreferences({ client: member.client, path: { userId: 'me' } });
+    expect(preferences.data?.preferences.filter((preference) => !preference.enabled).map((preference) => preference.category))
+      .toEqual(['LIVE_STANDINGS', 'RECEIPTS']);
+
+    const admin = await buildRegisteredUser({ displayName: 'Preferences Root Admin' });
+    await promoteToRootAdmin(admin);
+    const started = await transitionEvent({ client: admin.client, path: { eventId: event.sportEventId }, body: { toStatus: 'IN_PROGRESS' } });
+    expect(started.response.status).toBe(200);
+
+    // The commissioner still gets theirs; the member, who turned live standings off, does not.
+    expect(await awaitSentMailTo(commissioner.email, 1, `${contestName} is live`)).toHaveLength(1);
+    expect(await sentMailWithSubject(member.email, `${contestName} is live`)).toHaveLength(0);
   });
 });
 
