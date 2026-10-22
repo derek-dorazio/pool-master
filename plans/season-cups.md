@@ -171,12 +171,9 @@ Decided (Derek, 2026-10-22): Q3.1 `STANDARD` is the default; Q3.2 three fixed we
 every contest counts, no minimum field for now; Q3.4 ties split points; Q3.5 best entry only,
 the same function as #837.
 
-Questions:
-
-- **Q3.6** Weight on the contest (set once, used by both cups) rather than per cup?
-  Recommendation: on the contest. It's one setting in the place the commissioner already edits
-  the contest, and a Masters pool that counts extra in the PGA Tour Cup should count extra in
-  the league cup too.
+- **Q3.6** (Derek, 2026-10-22) One weight per contest, on the contest's settings, used by every
+  cup the contest counts toward. Every contest defaults to x1 (`NORMAL`, the column default and
+  the create default), so a commissioner never has to touch it.
 
 ## 4. Season and crowning
 
@@ -270,7 +267,7 @@ guard).
 2. **Cup pages.** The Cups menu item, Cups page, Cup leaderboard with movement and the
    points-race chart, the squad sheet, the league home card.
 3. **Commissioner settings.** Cup name and points table on league settings with a preview; cup
-   weight on contest settings. Depends on Q3.6.
+   weight on contest settings.
 4. **Crowning, trophies and past cups.** `POST .../crown` and the "Ready to crown" button,
    frozen `CupStanding`, trophies on team pages, `GET /cups/past` and
    the History Cups tab (with #837 slices 2 and 5), the frozen-cup checks.
