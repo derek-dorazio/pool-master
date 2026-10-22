@@ -550,7 +550,7 @@ function entryReminderWording(data: ContestEntryReminderEmailData): {
       return {
         subject: `Entries close soon: ${data.contestName}`,
         title: 'Entries close soon',
-        message: `You haven't joined ${data.contestName} yet. The draw deals every entry its picks, so joining is all you need to do.`,
+        message: `You haven't joined ${data.contestName} yet. In this contest your picks are drawn for you at random, so just join before entries close.`,
         closesLabel: 'Entries close',
         action: 'Join the contest',
       };
