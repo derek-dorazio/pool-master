@@ -32,6 +32,7 @@ import { ApiError, extractErrorMessage, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { setAuthSessionUser } from "./auth-session-cache";
 import { useAuth } from "./auth-context";
+import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 
 const loginFormSchema = LoginRequestSchema.extend({
   password: z.string().min(1, "Password is required"),
@@ -450,6 +451,13 @@ export function AuthHomePage() {
                   type="password"
                 />
               </FormField>
+              <Link
+                className="inline-block text-sm font-medium text-primary hover:underline"
+                data-testid="auth-forgot-password"
+                to={FORGOT_PASSWORD_PATH}
+              >
+                Forgot password?
+              </Link>
 
               <Button
                 className="w-full"

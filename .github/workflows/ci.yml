@@ -661,6 +661,14 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      # #848 — catches the email core-api sends (SMTP on 1025, the default SMTP_HOST/PORT), so
+      # the password recovery spec can read its reset link from the HTTP API on 8025. The same
+      # image local development runs (infrastructure/docker/docker-compose.dev.yml).
+      mailpit:
+        image: axllent/mailpit:v1.31.6
+        ports:
+          - 1025:1025
+          - 8025:8025
     env:
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_e2e
       # core-api requires JWT_SECRET and POOLMASTER_ENVIRONMENT, and throws when
@@ -675,6 +683,9 @@ jobs:
       AUTO_START_SCHEDULER: 'false'
       POOLMASTER_E2E_BASE_URL: http://localhost:4175
       POOLMASTER_E2E_ADMIN_IDENTIFIER: e2e-ci-admin
+      # Links in email point at the served build, and the recovery spec reads them from Mailpit.
+      APP_BASE_URL: http://localhost:4175
+      POOLMASTER_E2E_MAILPIT_URL: http://localhost:8025
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -779,7 +790,7 @@ jobs:
           echo "### PoolMaster Browser E2E (local stack)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Target: production build via \`vite preview\`, \`/api\` proxied to core-api on a throwaway Postgres" >> $GITHUB_STEP_SUMMARY
-          echo "- Specs: all (guards, smoke, golden journey acts 1-7, squad management, racing and knockout journeys) — #278, #84, #280, #326, #327, #363, #623, #749" >> $GITHUB_STEP_SUMMARY
+          echo "- Specs: all (guards, smoke, golden journey acts 1-7, squad management, racing and knockout journeys, password recovery) — #278, #84, #280, #326, #327, #363, #623, #749, #848" >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
   # QA deploy: publish images -> migrate -> roll out -> browser e2e.
@@ -851,6 +862,7 @@ jobs:
         run: |
           CLUSTER="poolmaster-qa-cluster"
           CORE_SERVICE="poolmaster-qa-core-api"
+          CORE_FAMILY="poolmaster-qa-core-api"
           MOCK_PROVIDER_SERVICE="poolmaster-qa-mock-contest-feed-provider"
 
           if ! aws ecs describe-clusters --clusters "$CLUSTER" --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
@@ -868,14 +880,9 @@ jobs:
             exit 1
           fi
 
-          CORE_SERVICE_TASK_DEF=$(aws ecs describe-services \
-            --cluster "$CLUSTER" \
-            --services "$CORE_SERVICE" \
-            --query 'services[0].taskDefinition' \
-            --output text)
-
+          # The revision the deploy step copies: the family's latest (see there).
           aws ecs describe-task-definition \
-            --task-definition "$CORE_SERVICE_TASK_DEF" \
+            --task-definition "$CORE_FAMILY" \
             --query 'taskDefinition.containerDefinitions[0].environment' \
             --output json > /tmp/qa-core-api-env.json
 
@@ -944,6 +951,7 @@ jobs:
           MOCK_PROVIDER_IMAGE="${{ steps.image-ref.outputs.mock_provider_image }}"
           CLUSTER="poolmaster-qa-cluster"
           CORE_SERVICE="poolmaster-qa-core-api"
+          CORE_FAMILY="poolmaster-qa-core-api"
           MOCK_PROVIDER_SERVICE="poolmaster-qa-mock-contest-feed-provider"
           MIGRATE_FAMILY="poolmaster-qa-migrate"
           CORE_API_LOG_LEVEL="debug"
@@ -960,14 +968,13 @@ jobs:
           QA_MOCK_PROVIDER_TASK_DEF=""
 
           if [ -n "$CORE_API_IMAGE" ] && aws ecs describe-services --cluster "$CLUSTER" --services "$CORE_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
-            CORE_SERVICE_TASK_DEF=$(aws ecs describe-services \
-              --cluster "$CLUSTER" \
-              --services "$CORE_SERVICE" \
-              --query 'services[0].taskDefinition' \
-              --output text)
-
+            # Built from the family's latest revision, not the one the service runs: the service
+            # ignores Terraform's task definition changes (#281), so after a terraform apply the
+            # newest revision is Terraform's, and this is how its env (SES_*, TRUSTED_PROXY_*)
+            # reaches the service. Between applies the latest revision is this job's previous
+            # one, which carries the same env forward.
             aws ecs describe-task-definition \
-              --task-definition "$CORE_SERVICE_TASK_DEF" \
+              --task-definition "$CORE_FAMILY" \
               --query 'taskDefinition' \
               --output json \
               | jq \

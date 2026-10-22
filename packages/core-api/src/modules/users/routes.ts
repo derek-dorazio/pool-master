@@ -24,6 +24,8 @@ import { PrismaUserRepository } from '../../adapters';
 import { createUserHandlers } from './handler';
 import { UserService } from './user-service';
 import { AuthService } from '../auth/auth-service';
+import { PasswordChangedNotifier } from '../auth/password-changed-notifier';
+import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 
 /**
  * `:userId` is the caller's `me` or a user id. Anything else is a 400 here rather than reaching
@@ -58,12 +60,17 @@ function withUserErrorResponses(
   };
 }
 
-export function usersModule(fastify: FastifyInstance): void {
+export function usersModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const users = new PrismaUserRepository(prisma);
-  const service = new UserService(users, prisma, fastify.log);
+  const service = new UserService(
+    users,
+    prisma,
+    new PasswordChangedNotifier(users, opts.email, readApplicationBaseUrl(process.env), fastify.log),
+    fastify.log,
+  );
   const authService = new AuthService(users, prisma, fastify.log);
   const handlers = createUserHandlers(service, authService);
 

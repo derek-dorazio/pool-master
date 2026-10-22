@@ -60,17 +60,13 @@ jobs:
           TARGET_PREFIX="${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/poolmaster-${ENV}"
           TARGET_IMAGE="${TARGET_PREFIX}/core-api:${TAG}"
           CLUSTER="poolmaster-${ENV}-cluster"
-          CORE_SERVICE="poolmaster-${ENV}-core-api"
+          CORE_FAMILY="poolmaster-${ENV}-core-api"
           MIGRATE_FAMILY="poolmaster-${ENV}-migrate"
 
-          CORE_SERVICE_TASK_DEF=$(aws ecs describe-services \
-            --cluster "$CLUSTER" \
-            --services "$CORE_SERVICE" \
-            --query 'services[0].taskDefinition' \
-            --output text)
-
+          # The family's latest revision, not the one the service runs: the service ignores
+          # Terraform's task definition changes, so this is how a terraform apply's env reaches it.
           aws ecs describe-task-definition \
-            --task-definition "$CORE_SERVICE_TASK_DEF" \
+            --task-definition "$CORE_FAMILY" \
             --query 'taskDefinition' \
             --output json \
             | jq --arg IMAGE "$TARGET_IMAGE" '

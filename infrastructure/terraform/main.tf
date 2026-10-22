@@ -167,22 +167,26 @@ resource "aws_route_table_association" "private" {
 
 # --- Security Groups ---
 
+# CloudFront's origin-facing addresses, the only ones the ALB accepts (#856).
+data "aws_ec2_managed_prefix_list" "cloudfront_origin_facing" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
 resource "aws_security_group" "alb" {
   name_prefix = "${local.name_prefix}-alb-"
   vpc_id      = aws_vpc.main.id
 
+  # Only CloudFront may reach the ALB, on the port it uses (origin_protocol_policy = http-only).
+  # core-api believes the X-Forwarded-For entry the ALB adds for its peer (TRUSTED_PROXY_HOPS = 2),
+  # so a caller who could reach the ALB directly could choose the address the per-address rate
+  # limits key on. The prefix list
+  # counts as about 55 rules against the security group's quota of 60, so there is one rule, not
+  # one per port.
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront_origin_facing.id]
   }
 
   egress {
@@ -689,6 +693,10 @@ resource "aws_ecs_task_definition" "core_api" {
       # Whether email is sent, and to whom on QA, is the EMAIL_CONFIG app setting, not env (#450, #844).
       { name = "EMAIL_PROVIDER", value = "ses" },
       { name = "APP_BASE_URL", value = local.app_url },
+      # CloudFront, then the ALB, each add an X-Forwarded-For entry; the ALB connects from inside
+      # the VPC (#856). Safe only while the ALB security group admits CloudFront alone.
+      { name = "TRUSTED_PROXY_HOPS", value = "2" },
+      { name = "TRUSTED_PROXY_NETWORK", value = var.vpc_cidr },
       { name = "AWS_REGION", value = var.region },
       { name = "SES_FROM_EMAIL", value = local.ses_from_email },
       { name = "SES_CONFIGURATION_SET", value = aws_sesv2_configuration_set.mail.configuration_set_name },
